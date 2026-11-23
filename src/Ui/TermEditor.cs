@@ -17,6 +17,9 @@ namespace AdeeboMeter
     sealed class TermEditor
     {
         public readonly bool Vim; public string Path, Shown;   // Shown: the name in the bar (as typed in the shell)
+        public bool ReadOnly;    // less: the same screen, nothing can change - q leaves (shell scrutiny #65)
+        string saved = "";       // the text as last read or written: undoing back to it isn't "modified" (#90)
+        public bool UsesTabs;    // the file had tabs: they stay tabs, and Tab types one (#18)
         public Func<string, string, string> Save;               // (path, text) -> null when saved, else why not
         public Action Closed; public HashSet<string> Words = new HashSet<string>(StringComparer.OrdinalIgnoreCase);   // commands + tools to colour
         List<string> buf = new List<string> { "" }; int r, c, left, want = -1; bool dirty, numbers;
@@ -27,14 +30,16 @@ namespace AdeeboMeter
         public TermEditor(bool vim, string path, string shown, string text)
         {
             Vim = vim; Path = path; Shown = shown; mode = vim ? "NORMAL" : "EDIT";
-            if (text != null) { buf = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Select(z => z.Replace("\t", "    ")).ToList(); if (buf.Count > 1 && buf[buf.Count - 1] == "") buf.RemoveAt(buf.Count - 1); }
+            // shell scrutiny #18: tabs stay tabs (a Makefile's recipes survive); line endings and encoding are the shell's to keep
+            if (text != null) { buf = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').ToList(); if (buf.Count > 1 && buf[buf.Count - 1] == "") buf.RemoveAt(buf.Count - 1); UsesTabs = text.IndexOf('\t') >= 0; }
+            saved = Text;
             msg = text == null ? "[ New File ]" : "[ Read " + buf.Count + " line" + (buf.Count == 1 ? "" : "s") + " ]";
         }
         string Text { get { return string.Join("\n", buf) + "\n"; } }
         internal string Body { get { return Text; } }
         string Ln { get { return buf[r]; } set { buf[r] = value; } }
         void Snap() { undo.Add(buf.ToArray().Concat(new[] { r + "," + c }).ToArray()); if (undo.Count > 200) undo.RemoveAt(0); }
-        void Undo() { if (undo.Count == 0) { msg = "Already at oldest change"; return; } var u = undo[undo.Count - 1]; undo.RemoveAt(undo.Count - 1); buf = u.Take(u.Length - 1).ToList(); var rc = u[u.Length - 1].Split(','); r = Math.Min(buf.Count - 1, int.Parse(rc[0])); c = int.Parse(rc[1]); dirty = true; Clamp(); msg = "undone"; }
+        void Undo() { if (undo.Count == 0) { msg = "Already at oldest change"; return; } var u = undo[undo.Count - 1]; undo.RemoveAt(undo.Count - 1); buf = u.Take(u.Length - 1).ToList(); var rc = u[u.Length - 1].Split(','); r = Math.Min(buf.Count - 1, int.Parse(rc[0])); c = int.Parse(rc[1]); dirty = Text != saved; Clamp(); msg = "undone"; }
         void Clamp() { if (buf.Count == 0) buf.Add(""); r = Math.Max(0, Math.Min(buf.Count - 1, r)); int max = Ln.Length - (Vim && mode == "NORMAL" && Ln.Length > 0 ? 1 : 0); c = Math.Max(0, Math.Min(max, c)); }
         void Move(int dr) { if (want < 0) want = c; r += dr; Clamp(); c = Math.Min(want, Math.Max(0, Ln.Length - (Vim && mode == "NORMAL" && Ln.Length > 0 ? 1 : 0))); }
         void Hz(int nc) { c = nc; want = -1; Clamp(); }
@@ -42,7 +47,7 @@ namespace AdeeboMeter
         {
             if (string.IsNullOrEmpty(to)) { msg = "No file name"; return false; }
             string err = Save(to, Text); if (err != null) { msg = "Can't save: " + err; return false; }
-            Path = to; dirty = false; msg = "[ Wrote " + buf.Count + " line" + (buf.Count == 1 ? "" : "s") + " ]"; return true;
+            Path = to; dirty = false; saved = Text; msg = "[ Wrote " + buf.Count + " line" + (buf.Count == 1 ? "" : "s") + " ]"; return true;
         }
         void Close() { if (Closed != null) Closed(); }
 
@@ -51,7 +56,7 @@ namespace AdeeboMeter
         void Enter() { string rest = Ln.Substring(c); Ln = Ln.Substring(0, c); string indent = Regex.Match(Ln, @"^\s*").Value; buf.Insert(r + 1, indent + rest); r++; c = indent.Length; dirty = true; want = -1; }
         void Back() { if (c > 0) { Ln = Ln.Remove(c - 1, 1); c--; } else if (r > 0) { c = buf[r - 1].Length; buf[r - 1] += Ln; buf.RemoveAt(r); r--; } else return; dirty = true; want = -1; }
         void Del() { if (c < Ln.Length) Ln = Ln.Remove(c, 1); else if (r < buf.Count - 1) { Ln += buf[r + 1]; buf.RemoveAt(r + 1); } else return; dirty = true; }
-        void PasteClip() { string t; try { t = Clipboard.GetText(); } catch (System.Runtime.InteropServices.ExternalException) { return; } if (string.IsNullOrEmpty(t)) return; Snap(); var parts = t.Replace("\r\n", "\n").Replace("\t", "    ").Split('\n'); for (int i = 0; i < parts.Length; i++) { if (i > 0) { string rest = Ln.Substring(c); Ln = Ln.Substring(0, c); buf.Insert(r + 1, rest); r++; c = 0; } Ins(parts[i]); } }
+        void PasteClip() { string t; try { t = Clipboard.GetText(); } catch (System.Runtime.InteropServices.ExternalException) { return; } if (string.IsNullOrEmpty(t)) return; Snap(); var parts = t.Replace("\r\n", "\n").Split('\n'); for (int i = 0; i < parts.Length; i++) { if (i > 0) { string rest = Ln.Substring(c); Ln = Ln.Substring(0, c); buf.Insert(r + 1, rest); r++; c = 0; } Ins(parts[i]); } }
         bool Find(string s, int dir)
         {
             if (s == "") return false; int n = buf.Count;
@@ -69,14 +74,16 @@ namespace AdeeboMeter
         public void Key(KeyEventArgs e)
         {
             e.SuppressKeyPress = false;
+            if (ReadOnly) { PagerKey(e); if (e.Handled) e.SuppressKeyPress = true; return; }
             if (Vim) VimKey(e); else NanoKey(e);
             if (e.Handled) e.SuppressKeyPress = true;
         }
         public void Char(char ch)
         {
             if (char.IsControl(ch)) return;
+            if (ReadOnly) { PagerChar(ch); return; }
             if (Vim) { VimChar(ch); return; }
-            if (askSave) { if (ch == 'y' || ch == 'Y') { askSave = false; if (Path == null) { askName = true; cmdLine = ""; msg = ""; } else if (DoSave(Path)) Close(); } else if (ch == 'n' || ch == 'N') { askSave = false; Close(); } return; }
+            if (askSave) { if (ch == 'y' || ch == 'Y') { askSave = false; if (Path == null) { askName = true; closeAfter = true; cmdLine = ""; msg = ""; } else if (DoSave(Path)) Close(); } else if (ch == 'n' || ch == 'N') { askSave = false; Close(); } return; }
             if (askName || mode == "FIND") { cmdLine += ch; return; }
             Snap1(); Ins(ch.ToString());
         }
@@ -134,7 +141,7 @@ namespace AdeeboMeter
                 case Keys.Enter: Snap(); Enter(); return;
                 case Keys.Back: Snap1(); Back(); return;
                 case Keys.Delete: Snap1(); Del(); return;
-                case Keys.Tab: Snap1(); Ins("    "); return;
+                case Keys.Tab: Snap1(); Ins(UsesTabs ? "\t" : "    "); return;
                 case Keys.Escape: msg = ""; return;
             }
             e.Handled = false;
@@ -153,7 +160,7 @@ namespace AdeeboMeter
                 if (e.Control && k == Keys.W) { int a = c; while (a > 0 && Ln[a - 1] == ' ') a--; while (a > 0 && char.IsLetterOrDigit(Ln[a - 1])) a--; Ln = Ln.Remove(a, c - a); c = a; dirty = true; e.Handled = true; return; }
                 if (Common(e)) return;
                 e.Handled = true;
-                switch (k) { case Keys.Enter: Enter(); return; case Keys.Back: Back(); return; case Keys.Delete: Del(); return; case Keys.Tab: Ins("    "); return; }
+                switch (k) { case Keys.Enter: Enter(); return; case Keys.Back: Back(); return; case Keys.Delete: Del(); return; case Keys.Tab: Ins(UsesTabs ? "\t" : "    "); return; }
                 e.Handled = false; return;
             }
             if (mode == "COMMAND" || mode == "SEARCH" || mode == "SEARCHB")
@@ -183,7 +190,7 @@ namespace AdeeboMeter
             if (Common(e)) { count = ""; return; }
             if (k == Keys.Enter) { Move(Count); Hz(Indent(Ln)); count = ""; e.Handled = true; return; }
             if (k == Keys.Back) { if (c > 0) Hz(c - 1); e.Handled = true; return; }
-            if (k == Keys.Delete) { Snap(); Del(); Clamp(); e.Handled = true; return; }
+            if (k == Keys.Delete) { if (c < Ln.Length) { Snap(); Ln = Ln.Remove(c, 1); dirty = true; Clamp(); } e.Handled = true; return; }   // like vim: never joins the next line
         }
         static int Indent(string s) { return Regex.Match(s, @"^\s*").Length; }
         void VimChar(char ch)
@@ -193,6 +200,7 @@ namespace AdeeboMeter
             msg = "";
             if (char.IsDigit(ch) && (ch != '0' || count != "")) { count += ch; return; }
             int n = Count;
+            // d3w / y2j: the digits after an operator land in count above, so n already carries them (shell scrutiny #90)
             if (pending != "")
             {
                 string p = pending + ch; pending = "";
@@ -201,7 +209,15 @@ namespace AdeeboMeter
                     case "dd": Snap(); yank = string.Join("\n", buf.Skip(r).Take(n)); yankLines = true; buf.RemoveRange(r, Math.Min(n, buf.Count - r)); if (buf.Count == 0) buf.Add(""); dirty = true; Clamp(); Hz(Indent(Ln)); break;
                     case "yy": yank = string.Join("\n", buf.Skip(r).Take(n)); yankLines = true; msg = Math.Min(n, buf.Count - r) + " line" + (n == 1 ? "" : "s") + " yanked"; break;
                     case "gg": r = count == "" ? 0 : n - 1; Clamp(); Hz(Indent(Ln)); break;
-                    case "dw": case "cw": { Snap(); int e = WordEnd(r, c, p == "cw"); Ln = Ln.Remove(c, e - c); dirty = true; if (p == "cw") mode = "INSERT"; else Clamp(); break; }
+                    case "dw": case "cw": { Snap(); int e = c; for (int i = 0; i < n; i++) e = WordEnd(r, e, p == "cw" && i == n - 1); Ln = Ln.Remove(c, e - c); dirty = true; if (p == "cw") mode = "INSERT"; else Clamp(); break; }
+                    case "yw": { int e = c; for (int i = 0; i < n; i++) e = WordEnd(r, e, false); yank = Ln.Substring(c, e - c); yankLines = false; break; }
+                    case "dj": case "dk": case "yj": case "yk":
+                        {
+                            int a0 = p[1] == 'j' ? r : Math.Max(0, r - n), b0 = p[1] == 'j' ? Math.Min(buf.Count - 1, r + n) : r;
+                            yank = string.Join("\n", buf.Skip(a0).Take(b0 - a0 + 1)); yankLines = true;
+                            if (p[0] == 'd') { Snap(); buf.RemoveRange(a0, b0 - a0 + 1); if (buf.Count == 0) buf.Add(""); r = a0; dirty = true; Clamp(); Hz(Indent(Ln)); } else msg = (b0 - a0 + 1) + " lines yanked";
+                            break;
+                        }
                     case "d$": case "D$": Snap(); Ln = Ln.Substring(0, c); dirty = true; Clamp(); break;
                     case "cc": Snap(); Ln = new string(' ', Indent(Ln)); c = Ln.Length; mode = "INSERT"; dirty = true; break;
                     case "ZZ": if (dirty && !DoSave(Path)) break; Close(); break;
@@ -263,6 +279,7 @@ namespace AdeeboMeter
                 case "q!": Close(); return;
                 case "set": { string o = m.Groups[3].Value.Trim(); if (o == "nu" || o == "number") numbers = true; else if (o == "nonu" || o == "nonumber") numbers = false; else msg = "E518: Unknown option: " + o; return; }
                 case "noh": return;
+                case "e!": { Snap(); buf = saved.TrimEnd('\n').Split('\n').ToList(); if (buf.Count == 0) buf.Add(""); dirty = false; Clamp(); msg = "\"" + (Shown ?? "[No Name]") + "\" reverted to the saved text"; return; }
             }
             msg = "E492: Not an editor command: " + cmd;
         }
@@ -270,11 +287,44 @@ namespace AdeeboMeter
         {
             bool all = cmd.StartsWith("%", StringComparison.Ordinal); var p = (all ? cmd.Substring(2) : cmd.Substring(1)).Split('/');
             if (p.Length < 3) { msg = "usage: :%s/old/new/g"; return; }
-            bool g = p.Length > 3 && p[3].Contains("g"); Regex rx; try { rx = new Regex(p[1], p.Length > 3 && p[3].Contains("i") ? RegexOptions.IgnoreCase : RegexOptions.None); } catch (ArgumentException) { msg = "E486: bad pattern"; return; }
-            Snap(); int n = 0;
-            for (int i = all ? 0 : r; i <= (all ? buf.Count - 1 : r); i++) { int before = n; buf[i] = g ? rx.Replace(buf[i], z => { n++; return p[2]; }) : rx.Replace(buf[i], z => { n++; return p[2]; }, 1); }
+            bool g = p.Length > 3 && p[3].Contains("g"); Regex rx; try { rx = new Regex(p[1], p.Length > 3 && p[3].Contains("i") ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(1)); } catch (ArgumentException) { msg = "E486: bad pattern"; return; }
+            Snap(); int n = 0; var keep = buf.ToList();
+            try { for (int i = all ? 0 : r; i <= (all ? buf.Count - 1 : r); i++) buf[i] = g ? rx.Replace(buf[i], z => { n++; return p[2]; }) : rx.Replace(buf[i], z => { n++; return p[2]; }, 1); }
+            catch (RegexMatchTimeoutException) { buf = keep; msg = "E363: pattern took too long - nothing changed"; return; }   // shell scrutiny #50: never freezes the window
             if (n > 0) dirty = true; msg = n + " substitution" + (n == 1 ? "" : "s"); Clamp();
         }
+
+        // ---------- less: read only - space/f/PgDn, b/PgUp, j/k, g/G, /find, n/N, q
+        void PagerKey(KeyEventArgs e)
+        {
+            var k = e.KeyCode;
+            if (mode == "SEARCH") { e.Handled = true; if (k == Keys.Enter) { mode = "NORMAL"; if (cmdLine != "") search = cmdLine; cmdLine = ""; Find(search, 1); } else if (k == Keys.Escape) { mode = "NORMAL"; cmdLine = ""; } else if (k == Keys.Back) { if (cmdLine == "") mode = "NORMAL"; else cmdLine = cmdLine.Substring(0, cmdLine.Length - 1); } else e.Handled = false; return; }
+            e.Handled = true;
+            switch (k)
+            {
+                case Keys.Escape: Close(); return;
+                case Keys.Down: case Keys.Enter: r++; break; case Keys.Up: r--; break;
+                case Keys.PageDown: case Keys.Space: r += Page - 1; break; case Keys.PageUp: r -= Page - 1; break;
+                case Keys.Home: r = 0; break; case Keys.End: r = buf.Count; break;
+                default: e.Handled = false; return;
+            }
+            r = Math.Max(0, Math.Min(buf.Count - 1, r)); c = 0;
+        }
+        void PagerChar(char ch)
+        {
+            if (mode == "SEARCH") { cmdLine += ch; return; }
+            switch (ch)
+            {
+                case 'q': case 'Q': Close(); return;
+                case 'j': r++; break; case 'k': r--; break; case 'f': case ' ': r += Page - 1; break; case 'b': r -= Page - 1; break;
+                case 'd': r += Page / 2; break; case 'u': r -= Page / 2; break;
+                case 'g': case '<': r = 0; break; case 'G': case '>': r = buf.Count; break;
+                case '/': mode = "SEARCH"; cmdLine = ""; return;
+                case 'n': Find(search, 1); break; case 'N': Find(search, -1); break;
+            }
+            r = Math.Max(0, Math.Min(buf.Count - 1, r)); c = 0;
+        }
+        public void Wheel(int lines) { if (ReadOnly) { r = Math.Max(0, Math.Min(buf.Count - 1, r + lines)); return; } Move(lines); }
 
         // ---------- drawing (TermView hands us its font and cell size)
         int Page = 20;
@@ -282,7 +332,8 @@ namespace AdeeboMeter
         {
             int cols = Math.Max(10, (int)((size.Width - 2 * pad) / cw)); int rowsAll = Math.Max(4, (int)((size.Height - top - 6) / chh));
             int foot = Vim ? 1 : 3, head = Vim ? 0 : 1; int textRows = Math.Max(1, rowsAll - foot - head); Page = textRows;
-            if (r < top0) top0 = r; if (r >= top0 + textRows) top0 = r - textRows + 1;
+            if (ReadOnly) { top0 = Math.Max(0, Math.Min(r, Math.Max(0, buf.Count - textRows))); r = top0; }
+            else { if (r < top0) top0 = r; if (r >= top0 + textRows) top0 = r - textRows + 1; }
             int gutter = numbers || Vim && numbers ? buf.Count.ToString().Length + 1 : 0; int tcols = cols - gutter;
             if (c < left) left = c; if (c >= left + tcols - 1) left = c - tcols + 2;
             Func<int, float> Y = row => top + row * chh;
@@ -301,7 +352,7 @@ namespace AdeeboMeter
                 int li = top0 + i; float y = Y(head + i);
                 if (li >= buf.Count) { if (Vim) TextRenderer.DrawText(g, "~", mono, new Point((int)pad, (int)y), Accent, tf); continue; }
                 if (gutter > 0) TextRenderer.DrawText(g, (li + 1).ToString().PadLeft(gutter - 1), mono, new Point((int)pad, (int)y), Dim, tf);
-                string line = buf[li]; int col = 0;
+                string line = buf[li].Replace('\t', '→'); int col = 0;   // a tab is one cell here, shown as →, and saved as a tab
                 foreach (var sg in sh ? Colour(line) : new List<TermView.Seg> { new TermView.Seg(line, Fg) })
                 {
                     string t = sg.T; int a = Math.Max(0, left - col), b = Math.Min(t.Length, left + tcols - col);
@@ -311,7 +362,7 @@ namespace AdeeboMeter
             }
             // the cursor: a block in normal mode, a bar while inserting (like vim in a modern terminal)
             bool onCmd = (Vim && (mode == "COMMAND" || mode == "SEARCH" || mode == "SEARCHB")) || askName || mode == "FIND";
-            if (!onCmd && (caretOn || !focused))
+            if (!onCmd && !ReadOnly && (caretOn || !focused))
             {
                 float cx = pad + (gutter + c - left) * cw, cy = Y(head + r - top0);
                 bool bar = Vim ? mode == "INSERT" : true;
@@ -325,7 +376,7 @@ namespace AdeeboMeter
             float fy = Y(rowsAll - foot);
             if (Vim)
             {
-                string left0 = mode == "COMMAND" ? ":" + cmdLine : mode == "SEARCH" ? "/" + cmdLine : mode == "SEARCHB" ? "?" + cmdLine : msg != "" ? msg : mode == "INSERT" ? "-- INSERT --" : "\"" + (Shown ?? "[No Name]") + "\"" + (dirty ? " [+]" : "");
+                string left0 = ReadOnly && mode != "SEARCH" ? (msg != "" ? msg : (Shown ?? "less") + "  lines " + (top0 + 1) + "-" + Math.Min(buf.Count, top0 + textRows) + " of " + buf.Count + (top0 + textRows >= buf.Count ? " (END)" : "") + "   q quits · / finds · space next page") : mode == "COMMAND" ? ":" + cmdLine : mode == "SEARCH" ? "/" + cmdLine : mode == "SEARCHB" ? "?" + cmdLine : msg != "" ? msg : mode == "INSERT" ? "-- INSERT --" : "\"" + (Shown ?? "[No Name]") + "\"" + (dirty ? " [+]" : "");
                 TextRenderer.DrawText(g, left0, mono, new Point((int)pad, (int)fy), msg.StartsWith("E", StringComparison.Ordinal) && mode == "NORMAL" ? Color.FromArgb(248, 81, 73) : mode == "INSERT" && msg == "" ? Cmd : Fg, tf);
                 string pos = (pending + count).PadLeft(6) + "   " + (r + 1) + "," + (c + 1) + "        " + (buf.Count <= textRows ? "All" : top0 == 0 ? "Top" : top0 + textRows >= buf.Count ? "Bot" : (100 * top0 / Math.Max(1, buf.Count - textRows)) + "%");
                 TextRenderer.DrawText(g, pos, mono, new Point((int)(pad + (cols - pos.Length) * cw), (int)fy), Dim, tf);

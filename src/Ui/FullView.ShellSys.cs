@@ -20,6 +20,10 @@ namespace AdeeboMeter
     // as they do from the command line"): df du free ps top uptime ip ifconfig ss netstat lsblk lscpu nproc id who watch, /proc as
     // files, and the text tools people pipe into (cut tr sed awk xargs). All of it only reads - nothing here changes Windows,
     // stops a program or starts one.
+    //
+    // Shell scrutiny (22 Nov): numbers are measured, not dressed up - where Windows has no exact twin of a Linux figure the
+    // nearest honest one is used and the help says which (load average, %CPU, "free" memory). Units, column order and spellings
+    // follow the Linux tools, so scripts that parse them keep working.
     sealed partial class FullView
     {
         int SysCmd(string cmd, List<string> a, ShCtx c)
@@ -33,31 +37,31 @@ namespace AdeeboMeter
                 case "ps": return Ps(a, c);
                 case "top": case "htop": return ShTop(a, c);
                 case "ip": return Ip(a, c);
-                case "ifconfig": case "ipconfig": return IpAddr(c, null);
+                case "ifconfig": case "ipconfig": return IpAddr(c, null, a.Contains("-s") || cmd == "ifconfig");
                 case "route": { var dest = a.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal) && z != "print"); if (dest != null) return ToolAs("route", new List<string> { dest }, c, null); return IpRoute(c); }   // route 8.8.8.8: the Toolbox's "which route does this take?"
-                case "ss": case "netstat": return Ss(a, c);
+                case "ss": return Ss(a, c, false);
+                case "netstat": return Ss(a, c, true);
                 case "lsblk": return Lsblk(c);
                 case "lscpu": return Lscpu(c);
-                case "nproc": OL(c, Environment.ProcessorCount.ToString(CultureInfo.InvariantCulture)); return 0;
-                case "id": OL(c, "uid=" + ShUser + " (" + Environment.UserDomainName + "\\" + Environment.UserName + ")"); return 0;
-                case "who": case "w": OL(c, ShUser.PadRight(12) + "console      " + BootTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)); if (cmd == "w") OL(c, UptimeLine(), ShDim); return 0;
+                case "nproc": OL(c, (a.Contains("--all") ? Environment.ProcessorCount : UsableCpus()).ToString(CultureInfo.InvariantCulture)); return 0;   // #85
+                case "id": return Id(c);
+                case "who": case "w": return Who(cmd == "w", c);
                 case "watch": return ShWatch(a, c);
                 case "cut": return Cut(a, c);
                 case "tr": return Tr(a, c);
                 case "sed": return Sed(a, c);
-                case "awk": return Awk(a, c);
+                case "awk": case "gawk": return Awk(a, c);
                 case "xargs": return Xargs(a, c);
-                case "less": case "more": return Builtin("cat", a, c);
-                case "rev": { var l = InLines(a, c); if (l == null) return 1; foreach (var x in l) OL(c, new string(x.Reverse().ToArray())); return 0; }
-                case "nl": { var l = InLines(a, c); if (l == null) return 1; int n = 0; foreach (var x in l) OL(c, (x.Trim() == "" ? "" : (++n).ToString(CultureInfo.InvariantCulture)).PadLeft(6) + "  " + x); return 0; }
-                case "shuf": { var l = InLines(a, c); if (l == null) return 1; var rnd = new Random(); foreach (var x in l.OrderBy(z => rnd.Next())) OL(c, x); return 0; }
-                case "yes": { string w = a.Count > 0 ? string.Join(" ", a) : "y"; for (int i = 0; i < 1000 && !c.Job.Cancel; i++) OL(c, w); return 0; }
+                case "rev": { var l = InLines(Files(a), c); if (l == null) return 1; foreach (var x in l) { var si = StringInfo.GetTextElementEnumerator(x); var els = new List<string>(); while (si.MoveNext()) els.Add(si.GetTextElement()); els.Reverse(); OL(c, string.Concat(els)); } return 0; }   // #71: characters, not UTF-16 halves
+                case "nl": { var l = InLines(Files(a), c); if (l == null) return 1; int n = 0; foreach (var x in l) OL(c, (x.Trim() == "" ? "" : (++n).ToString(CultureInfo.InvariantCulture)).PadLeft(6) + (x.Trim() == "" ? "" : "\t" + x)); return 0; }
+                case "shuf": { var l = InLines(Files(a), c); if (l == null) return 1; var rnd = new Random(); foreach (var x in l.OrderBy(z => rnd.Next())) OL(c, x); return 0; }
+                case "yes": { string w = a.Count > 0 ? string.Join(" ", a) : "y"; for (int i = 0; i < 10000 && !c.Job.Cancel; i++) OL(c, w); return 0; }
                 case "base64": return B64(a, c);
-                case "md5sum": case "sha1sum": case "sha256sum": return HashSum(cmd, a, c);
-                // the Linux names for AdeeboMeter's own tools
-                case "traceroute": case "tracert": case "tracepath": return ToolAs("mtr", new List<string> { a.LastOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? "", "1" }, c, "traceroute here is MTR for a minute: every hop, its loss and its delay");
-                case "nslookup": case "host": { var w = a.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(); return ToolAs("dig", w.Take(2).ToList(), c, null); }
-                case "curl": case "wget": { var u = a.LastOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)); return ToolAs("http", new List<string> { u ?? "" }, c, "curl here looks at the answer - status, headers, TLS, timing - and downloads nothing"); }
+                case "md5sum": case "sha1sum": case "sha256sum": case "sha512sum": return HashSum(cmd, a, c);
+                // the Linux names for AdeeboMeter's own tools - #89: their arguments land where they belong, or the command says no
+                case "traceroute": case "tracert": case "tracepath": { var h = a.LastOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)); if (h == null) { Err(c, cmd + ": which address?"); return 2; } return ToolAs("mtr", new List<string> { h, "1" }, c, "traceroute here is MTR for a minute: every hop, its loss and its delay"); }
+                case "nslookup": case "host": return Lookup(cmd, a, c);
+                case "curl": case "wget": return Curl(cmd, a, c);
                 case "arp": return ToolAs("arp", new List<string>(), c, null);
             }
             return int.MinValue;
@@ -67,6 +71,36 @@ namespace AdeeboMeter
             var t = shTools.FirstOrDefault(x => x.Id == id); if (t == null) { Err(c, id + ": not in this build"); return 127; }
             if (note != null && c.Out.Screen) OL(c, note, ShDim);
             return RunTool(t, args, c);
+        }
+        int Lookup(string cmd, List<string> a, ShCtx c)
+        {
+            string type = null; var plain = new List<string>();
+            for (int i = 0; i < a.Count; i++)
+            {
+                string w = a[i];
+                if (w == "-t" && i + 1 < a.Count) { type = a[++i]; continue; }
+                if (w.StartsWith("-type=", StringComparison.OrdinalIgnoreCase) || w.StartsWith("-query=", StringComparison.OrdinalIgnoreCase) || w.StartsWith("-q=", StringComparison.OrdinalIgnoreCase)) { type = w.Substring(w.IndexOf('=') + 1); continue; }
+                if (w.StartsWith("-", StringComparison.Ordinal)) { Err(c, cmd + ": " + w + " isn't supported here - name and -t TYPE (or -type=TYPE)"); return 2; }
+                plain.Add(w);
+            }
+            if (plain.Count == 0) { Err(c, "usage: " + cmd + " name [-t MX]"); return 2; }
+            if (plain.Count > 1) { Err(c, cmd + ": asking a chosen server (" + plain[1] + ") isn't supported here - dig " + plain[0] + " " + (type ?? "A") + " asks your own"); return 2; }
+            return ToolAs("dig", new List<string> { plain[0], type ?? "A" }, c, null);
+        }
+        int Curl(string cmd, List<string> a, ShCtx c)
+        {
+            var takesValue = new HashSet<string> { "-o", "-O", "-H", "-d", "-X", "-A", "-u", "-e", "-w", "--output", "--header", "--data", "--request", "--user-agent", "--user", "--referer", "-T", "--upload-file", "-F", "--form", "-b", "--cookie", "-c", "--cookie-jar", "--max-time", "-m", "--connect-timeout", "-x", "--proxy" };
+            string url = null; var ignored = new List<string>();
+            for (int i = 0; i < a.Count; i++)
+            {
+                string w = a[i];
+                if (takesValue.Contains(w)) { ignored.Add(w + " " + (i + 1 < a.Count ? a[++i] : "")); continue; }
+                if (w.StartsWith("-", StringComparison.Ordinal)) { if (w != "-I" && w != "-s" && w != "-L" && w != "-v" && w != "-i" && w != "-sS" && w != "--head" && w != "--silent" && w != "--location") ignored.Add(w); continue; }
+                if (url == null) url = w; else ignored.Add(w);
+            }
+            if (url == null) { Err(c, cmd + ": which address? (" + cmd + " https://example.com)"); return 2; }
+            if (ignored.Count > 0) Err(c, cmd + ": here it looks at the answer (status, headers, TLS, timing) and downloads nothing - left out: " + string.Join(" ", ignored));
+            return ToolAs("http", new List<string> { url }, c, ignored.Count == 0 ? cmd + " here looks at the answer - status, headers, TLS, timing - and downloads nothing" : null);
         }
         static string Human(double bytes)
         {
@@ -86,169 +120,326 @@ namespace AdeeboMeter
             }
         }
 
+        // ---------- the machine's own counters: CPU busy and idle time (GetSystemTimes), a Linux-style load average
+        // #4: Windows keeps no load average. This one is CPU demand (busy share × logical CPUs), sampled every 5 s from the first
+        // time the shell needs it and averaged with Linux's own 1/5/15-minute decay - three different numbers, honestly made.
+        static readonly object loadLock = new object(); static Timer loadTimer; static double[] loadAvg; static long loadIdle0, loadTotal0;
+        static double[] LoadAvg()
+        {
+            lock (loadLock)
+            {
+                if (loadTimer == null)
+                {
+                    long i0, k0, u0; if (Native.GetSystemTimes(out i0, out k0, out u0)) { loadIdle0 = i0; loadTotal0 = k0 + u0; }
+                    loadAvg = new[] { double.NaN, double.NaN, double.NaN };
+                    loadTimer = new Timer(delegate
+                    {
+                        long i1, k1, u1; if (!Native.GetSystemTimes(out i1, out k1, out u1)) return;
+                        lock (loadLock)
+                        {
+                            long di = i1 - loadIdle0, dt = (k1 + u1) - loadTotal0; loadIdle0 = i1; loadTotal0 = k1 + u1; if (dt <= 0) return;
+                            double now = Math.Max(0, 1 - (double)di / dt) * Environment.ProcessorCount; var e = new[] { Math.Exp(-5.0 / 60), Math.Exp(-5.0 / 300), Math.Exp(-5.0 / 900) };
+                            for (int k = 0; k < 3; k++) loadAvg[k] = double.IsNaN(loadAvg[k]) ? now : loadAvg[k] * e[k] + now * (1 - e[k]);
+                        }
+                    }, null, 5000, 5000);
+                }
+                return loadAvg.ToArray();
+            }
+        }
+        static string LoadText(string sep) { var l = LoadAvg(); return string.Join(sep, l.Select(v => double.IsNaN(v) ? "0.00" : v.ToString("0.00", CultureInfo.InvariantCulture))); }
+        static DateTime BootTime() { try { return DateTime.Now - TimeSpan.FromMilliseconds(Native.GetTickCount64()); } catch (EntryPointNotFoundException) { return DateTime.Now; } }
+
+        // ---------- sessions (who, w, uptime's user count) - #17: real sessions and real logon times, from Windows' own list
+        [DllImport("wtsapi32.dll")] static extern bool WTSEnumerateSessions(IntPtr server, int reserved, int version, out IntPtr info, out int count);
+        [DllImport("wtsapi32.dll")] static extern bool WTSQuerySessionInformation(IntPtr server, int session, int cls, out IntPtr buf, out int bytes);
+        [DllImport("wtsapi32.dll")] static extern void WTSFreeMemory(IntPtr p);
+        sealed class Sess { public string User, Station, State; public DateTime Logon; }
+        static List<Sess> Sessions()
+        {
+            var l = new List<Sess>(); IntPtr info; int n; int ptr = Marshal.SizeOf(typeof(IntPtr));
+            try
+            {
+                if (!WTSEnumerateSessions(IntPtr.Zero, 0, 1, out info, out n)) return l;
+                try
+                {
+                    int size = ptr == 8 ? 24 : 12;   // WTS_SESSION_INFO: id, station name pointer, state
+                    for (int i = 0; i < n; i++)
+                    {
+                        IntPtr row = info + i * size; int id = Marshal.ReadInt32(row), st = Marshal.ReadInt32(row, ptr == 8 ? 16 : 8);
+                        string station = Marshal.PtrToStringUni(Marshal.ReadIntPtr(row, ptr == 8 ? 8 : 4)) ?? "";
+                        IntPtr b; int bytes; string user = "";
+                        if (WTSQuerySessionInformation(IntPtr.Zero, id, 5, out b, out bytes)) { user = Marshal.PtrToStringUni(b) ?? ""; WTSFreeMemory(b); }   // WTSUserName
+                        if (user == "") continue;
+                        DateTime logon = DateTime.MinValue;
+                        if (WTSQuerySessionInformation(IntPtr.Zero, id, 24, out b, out bytes)) { try { if (bytes >= 216) { long ft = Marshal.ReadInt64(b, 200); if (ft > 0) logon = DateTime.FromFileTime(ft); } } finally { WTSFreeMemory(b); } }   // WTSSessionInfo: LogonTime
+                        l.Add(new Sess { User = user.ToLowerInvariant(), Station = station == "" ? "session" + id : station.ToLowerInvariant(), State = st == 0 ? "active" : st == 4 ? "disconnected" : "other", Logon = logon });
+                    }
+                }
+                finally { WTSFreeMemory(info); }
+            }
+            catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; }
+            return l;
+        }
+        string UptimeLine()
+        {
+            var up = DateTime.Now - BootTime(); int users = Math.Max(1, Sessions().Count);
+            return " " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " up " + (up.Days > 0 ? up.Days + " day" + (up.Days == 1 ? "" : "s") + ", " : "") + up.Hours.ToString("00", CultureInfo.InvariantCulture) + ":" + up.Minutes.ToString("00", CultureInfo.InvariantCulture) + ",  " + users + " user" + (users == 1 ? "" : "s") + ",  load average: " + LoadText(", ");
+        }
+        int Who(bool w, ShCtx c)
+        {
+            var s = Sessions(); if (s.Count == 0) s.Add(new Sess { User = ShUser, Station = "console", State = "active", Logon = DateTime.MinValue });
+            if (w) OL(c, UptimeLine());
+            foreach (var x in s) OL(c, x.User.PadRight(12) + x.Station.PadRight(14) + (x.Logon == DateTime.MinValue ? "-" : x.Logon.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)) + (x.State != "active" ? "  (" + x.State + ")" : ""));
+            return 0;
+        }
+        // #41: uid, gid and groups are numbers (the last part of each Windows SID), with their names
+        int Id(ShCtx c)
+        {
+            using (var me = System.Security.Principal.WindowsIdentity.GetCurrent())
+            {
+                Func<System.Security.Principal.SecurityIdentifier, string> rid = sid => sid.Value.Substring(sid.Value.LastIndexOf('-') + 1);
+                Func<System.Security.Principal.IdentityReference, string> name = r => { try { var n = r.Translate(typeof(System.Security.Principal.NTAccount)).Value; return n.Substring(n.IndexOf('\\') + 1); } catch (Exception e) { if (!(e is System.Security.Principal.IdentityNotMappedException || e is SystemException)) throw; return r.Value; } };
+                var groups = (me.Groups ?? new System.Security.Principal.IdentityReferenceCollection()).OfType<System.Security.Principal.SecurityIdentifier>().Take(24).ToList();
+                var prim = groups.FirstOrDefault(g => g.Value.EndsWith("-513", StringComparison.Ordinal)) ?? groups.FirstOrDefault();
+                OL(c, "uid=" + rid(me.User) + "(" + ShUser + ")" + (prim != null ? " gid=" + rid(prim) + "(" + name(prim) + ")" : "") + " groups=" + string.Join(",", groups.Select(g => rid(g) + "(" + name(g) + ")")));
+                if (c.Out.Screen) OL(c, "(Windows: " + me.Name + " · the numbers are the last part of each SID)", ShDim);
+            }
+            return 0;
+        }
+        static int UsableCpus() { try { using (var p = Process.GetCurrentProcess()) { long m = p.ProcessorAffinity.ToInt64(); int n = 0; while (m != 0) { n += (int)(m & 1); m = (long)((ulong)m >> 1); } return Math.Max(1, n); } } catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException || e is NotSupportedException)) throw; return Environment.ProcessorCount; } }
+
         // ---------- disks
+        // #75/#76: like GNU - 1K blocks unless -h, the Filesystem column one word (C:), Use% = used / (used + avail) rounded up
         int Df(List<string> a, ShCtx c)
         {
-            bool kb = a.Contains("-k"), typ = a.Contains("-T");
-            var rows = new List<string[]> { typ ? new[] { "Filesystem", "Type", kb ? "1K-blocks" : "Size", "Used", "Avail", "Use%", "Mounted on" } : new[] { "Filesystem", kb ? "1K-blocks" : "Size", "Used", "Avail", "Use%", "Mounted on" } };
+            string fl = Flags(a); bool h = fl.Contains('h'), m = fl.Contains('m'), typ = fl.Contains('T');
+            string unitHead = h ? "Size" : m ? "1M-blocks" : "1K-blocks";
+            var rows = new List<string[]> { typ ? new[] { "Filesystem", "Type", unitHead, "Used", "Avail", "Use%", "Mounted on" } : new[] { "Filesystem", unitHead, "Used", "Avail", "Use%", "Mounted on" } };
             foreach (var d in DriveInfo.GetDrives())
             {
-                long tot = 0, free = 0; string fs = "-", label = "";
-                try { if (!d.IsReady) continue; tot = d.TotalSize; free = d.AvailableFreeSpace; fs = d.DriveFormat; label = d.VolumeLabel; } catch (IOException) { continue; } catch (UnauthorizedAccessException) { continue; }
-                long used = tot - d.TotalFreeSpace; Func<long, string> f = v => kb ? (v / 1024).ToString(CultureInfo.InvariantCulture) : Human(v);
-                string name = d.Name.TrimEnd('\\') + (label != "" ? " " + label : "");
-                string pct = tot > 0 ? Math.Ceiling(100.0 * used / tot).ToString("0", CultureInfo.InvariantCulture) + "%" : "-";
-                rows.Add(typ ? new[] { name, fs.ToLowerInvariant(), f(tot), f(used), f(free), pct, MntOf(d) } : new[] { name, f(tot), f(used), f(free), pct, MntOf(d) });
+                long tot, avail, free; string fs;
+                try { if (!d.IsReady) continue; tot = d.TotalSize; avail = d.AvailableFreeSpace; free = d.TotalFreeSpace; fs = d.DriveFormat; } catch (IOException) { continue; } catch (UnauthorizedAccessException) { continue; }
+                long used = tot - free; Func<long, string> f = v => h ? Human(v) : m ? (v / 1048576).ToString(CultureInfo.InvariantCulture) : (v / 1024).ToString(CultureInfo.InvariantCulture);
+                string pct = used + avail > 0 ? Math.Ceiling(100.0 * used / (used + avail)).ToString("0", CultureInfo.InvariantCulture) + "%" : "-";
+                string name = d.Name.TrimEnd('\\');
+                rows.Add(typ ? new[] { name, fs.ToLowerInvariant(), f(tot), f(used), f(avail), pct, MntOf(d) } : new[] { name, f(tot), f(used), f(avail), pct, MntOf(d) });
             }
             Table(c, rows, ShBlue, false, typ, true, true, true, true);
             return 0;
         }
+        // #13/#14/#83/#84: disks, then their own partitions under them (Windows' disk → partition → drive-letter links); drives that
+        // aren't on a fixed disk (DVD, card reader, network) listed by themselves; a missing physical-disk half says so
         int Lsblk(ShCtx c)
         {
-            var rows = new List<string[]> { new[] { "NAME", "SIZE", "TYPE", "FSTYPE", "LABEL", "MOUNTPOINT" } };
+            var rows = new List<string[]> { new[] { "NAME", "SIZE", "TYPE", "FSTYPE", "LABEL", "MOUNTPOINT", "MODEL" } }; var placed = new HashSet<string>(StringComparer.OrdinalIgnoreCase); string wmiErr = null;
             try
             {
-                using (var q = new System.Management.ManagementObjectSearcher("SELECT Index, Model, Size, MediaType, InterfaceType FROM Win32_DiskDrive"))
-                    foreach (System.Management.ManagementObject o in q.Get())
-                        using (o) { ulong sz = 0; try { sz = Convert.ToUInt64(o["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { } rows.Add(new[] { "disk" + o["Index"], Human(sz), "disk", Convert.ToString(o["InterfaceType"], CultureInfo.InvariantCulture), Convert.ToString(o["Model"], CultureInfo.InvariantCulture), "" }); }
+                using (var q = new System.Management.ManagementObjectSearcher("SELECT DeviceID, Index, Model, Size FROM Win32_DiskDrive"))
+                    foreach (var disk in q.Get().Cast<System.Management.ManagementObject>().OrderBy(o => Convert.ToInt32(o["Index"], CultureInfo.InvariantCulture)))
+                        using (disk)
+                        {
+                            ulong sz = 0; try { sz = Convert.ToUInt64(disk["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { }
+                            string dn = "disk" + disk["Index"];
+                            rows.Add(new[] { dn, Human(sz), "disk", "", "", "", Convert.ToString(disk["Model"], CultureInfo.InvariantCulture).Trim() });
+                            using (var pq = new System.Management.ManagementObjectSearcher("ASSOCIATORS OF {Win32_DiskDrive.DeviceID='" + Convert.ToString(disk["DeviceID"], CultureInfo.InvariantCulture).Replace("\\", "\\\\") + "'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"))
+                            {
+                                var parts = pq.Get().Cast<System.Management.ManagementObject>().OrderBy(p => Convert.ToInt32(p["Index"], CultureInfo.InvariantCulture)).ToList();
+                                for (int i = 0; i < parts.Count; i++)
+                                    using (var part = parts[i])
+                                    {
+                                        bool last = i == parts.Count - 1; ulong psz = 0; try { psz = Convert.ToUInt64(part["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { }
+                                        string letter = "", fs = "", label = "";
+                                        using (var lq = new System.Management.ManagementObjectSearcher("ASSOCIATORS OF {Win32_DiskPartition.DeviceID='" + Convert.ToString(part["DeviceID"], CultureInfo.InvariantCulture) + "'} WHERE AssocClass = Win32_LogicalDiskToPartition"))
+                                            foreach (System.Management.ManagementObject ld in lq.Get()) using (ld) { letter = Convert.ToString(ld["DeviceID"], CultureInfo.InvariantCulture); fs = Convert.ToString(ld["FileSystem"], CultureInfo.InvariantCulture).ToLowerInvariant(); label = Convert.ToString(ld["VolumeName"], CultureInfo.InvariantCulture); }
+                                        if (letter != "") placed.Add(letter);
+                                        rows.Add(new[] { (last ? "└─" : "├─") + dn + "p" + (i + 1), Human(psz), "part", fs, label, letter != "" ? "/mnt/" + letter.Substring(0, 1).ToLowerInvariant() : "", "" });
+                                    }
+                            }
+                        }
             }
-            catch (Exception e) { if (!(e is System.Management.ManagementException || e is UnauthorizedAccessException || e is COMException)) throw; }
-            foreach (var d in DriveInfo.GetDrives())
+            catch (Exception e) { if (!(e is System.Management.ManagementException || e is UnauthorizedAccessException || e is COMException)) throw; wmiErr = e.Message; }
+            foreach (var d in DriveInfo.GetDrives().Where(d => !placed.Contains(d.Name.Substring(0, 2))))
             {
                 string fs = "", lab = ""; long sz = 0; bool ready = false;
                 try { ready = d.IsReady; if (ready) { fs = d.DriveFormat.ToLowerInvariant(); lab = d.VolumeLabel; sz = d.TotalSize; } } catch (IOException) { }
-                rows.Add(new[] { "└─" + d.Name.Substring(0, 2).ToLowerInvariant(), ready ? Human(sz) : "-", d.DriveType == DriveType.Fixed ? "part" : d.DriveType.ToString().ToLowerInvariant(), fs, lab, ready ? MntOf(d) : "(not ready)" });
+                string type = d.DriveType == DriveType.CDRom ? "rom" : d.DriveType == DriveType.Network ? "net" : d.DriveType == DriveType.Removable ? "removable" : d.DriveType == DriveType.Ram ? "ram" : "volume";
+                rows.Add(new[] { d.Name.Substring(0, 2).ToLowerInvariant(), ready ? Human(sz) : "-", type, fs, lab, ready ? MntOf(d) : "(not ready)", "" });
             }
             Table(c, rows, ShBlue, false, true);
+            if (wmiErr != null) Err(c, "lsblk: Windows didn't list the physical disks (" + wmiErr.Trim() + ") - only drive letters are shown");
             return 0;
         }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern uint GetCompressedFileSizeW(string name, out uint high);
+        // #16/#75/#77/#78: GNU-style - 1K blocks unless -h (or -m), space actually taken on disk (compressed and sparse files count
+        // what they use; --apparent-size gives the lengths), junctions never followed, and every folder it couldn't read named
         int Du(List<string> a, ShCtx c)
         {
-            bool sum = a.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("s")); int depth = 1;
-            var md = a.FirstOrDefault(z => z.StartsWith("--max-depth=", StringComparison.Ordinal) || z.StartsWith("-d", StringComparison.Ordinal)); if (md != null) int.TryParse(md.Replace("--max-depth=", "").Replace("-d", ""), out depth);
-            var paths = a.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).DefaultIfEmpty(".").ToList(); int files = 0; var sw = Stopwatch.StartNew();
-            Func<string, long> size = null;
-            size = dir =>
+            string fl = Flags(a); bool sum = fl.Contains('s'), h = fl.Contains('h'), mb = fl.Contains('m'), apparent = a.Contains("--apparent-size") || fl.Contains('b'); int depth = sum ? 0 : int.MaxValue;
+            foreach (var x in a) { var m = Regex.Match(x, @"^(?:--max-depth=|-d)(\d+)$"); if (m.Success) depth = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); }
+            int di = a.IndexOf("-d"); if (di >= 0 && di + 1 < a.Count) int.TryParse(a[di + 1], out depth);
+            var paths = a.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(i > 0 && a[i - 1] == "-d")).DefaultIfEmpty(".").ToList();
+            int files = 0, denied = 0; var sw = Stopwatch.StartNew(); bool ex1 = false;
+            Func<long, string> unit = v => h ? Human(v) : mb ? ((v + 1048575) / 1048576).ToString(CultureInfo.InvariantCulture) : ((v + 1023) / 1024).ToString(CultureInfo.InvariantCulture);
+            Func<string, long> fileSize = f => { if (!apparent) { uint hi; uint lo = GetCompressedFileSizeW(f, out hi); if (!(lo == 0xFFFFFFFF && Marshal.GetLastWin32Error() != 0)) return ((long)hi << 32) | lo; } try { return new FileInfo(f).Length; } catch (IOException) { return 0; } };
+            Func<string, string, int, long> walk = null;
+            walk = (dir, shown, level) =>
             {
-                long t = 0; if (c.Job.Cancel || files > 500000) return 0;
-                try { foreach (var f in Directory.EnumerateFiles(dir)) { files++; try { t += new FileInfo(f).Length; } catch (IOException) { } } foreach (var d in Directory.EnumerateDirectories(dir)) { try { if ((new DirectoryInfo(d).Attributes & FileAttributes.ReparsePoint) != 0) continue; } catch (IOException) { continue; } t += size(d); } }
-                catch (UnauthorizedAccessException) { } catch (IOException) { }
+                long t = 0; if (c.Job.Cancel || files > 1000000) return 0;
+                try
+                {
+                    foreach (var f in Directory.EnumerateFiles(dir)) { files++; t += fileSize(f); }
+                    foreach (var d in Directory.EnumerateDirectories(dir)) { if (IsLink(d)) continue; t += walk(d, shown.TrimEnd('/') + "/" + Path.GetFileName(d), level + 1); }
+                }
+                catch (UnauthorizedAccessException) { denied++; if (denied <= 5) Err(c, "du: cannot read '" + shown + "': permission denied"); ex1 = true; }
+                catch (IOException e) { denied++; if (denied <= 5) Err(c, "du: cannot read '" + shown + "': " + e.Message.Trim()); ex1 = true; }
+                if (level <= depth && level > 0) OL(c, unit(t).PadRight(8) + shown);
                 if (c.Out.Screen && !c.Job.Bg && sw.ElapsedMilliseconds > 400) { sw.Restart(); int f0 = files; Ui(delegate { term.Live(new List<List<TermView.Seg>> { new List<TermView.Seg> { new TermView.Seg("du  ", ShCyan), new TermView.Seg(f0.ToString("N0", CultureInfo.CurrentCulture) + " files counted · Ctrl+C stops", ShDim) } }); }); }
                 return t;
             };
             foreach (var p in paths)
             {
-                string r = Real(Abs(p)); if (r == null || (!Directory.Exists(r) && !File.Exists(r))) { Err(c, "du: " + p + ": not a folder or file on a disk"); continue; }
-                if (File.Exists(r)) { OL(c, Human(new FileInfo(r).Length).PadRight(8) + p); continue; }
-                var kids = new List<KeyValuePair<string, long>>();
-                if (!sum && depth >= 1) { try { foreach (var d in Directory.EnumerateDirectories(r)) { if (c.Job.Cancel) break; kids.Add(new KeyValuePair<string, long>(d, size(d))); } } catch (UnauthorizedAccessException) { } }
-                long total = sum || depth < 1 ? size(r) : kids.Sum(k => k.Value) + FilesHere(r);
+                string r = Real(Abs(p)); if (r == null || (!Directory.Exists(r) && !File.Exists(r))) { Err(c, "du: " + p + ": not a folder or file on a disk"); ex1 = true; continue; }
+                if (File.Exists(r)) { OL(c, unit(fileSize(r)).PadRight(8) + p); continue; }
+                long total = walk(r, p, 0);
                 if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.EndLive(); });
-                foreach (var k in kids.OrderBy(k => k.Value)) OL(c, Human(k.Value).PadRight(8) + (p.TrimEnd('/') + "/" + Path.GetFileName(k.Key)), ShFg);
-                OL(c, Human(total).PadRight(8) + p, ShCyan);
+                OL(c, unit(total).PadRight(8) + p, ShCyan);
             }
-            if (files > 500000) OL(c, "(stopped counting at 500,000 files)", ShDim);
-            return c.Job.Cancel ? 130 : 0;
+            if (denied > 5) Err(c, "du: " + denied + " folders couldn't be read in all - the totals leave them out");
+            if (files > 1000000) Err(c, "du: stopped counting at 1,000,000 files - the totals are partial");
+            return c.Job.Cancel ? 130 : ex1 ? 1 : 0;
         }
-        static long FilesHere(string dir) { long t = 0; try { foreach (var f in Directory.EnumerateFiles(dir)) try { t += new FileInfo(f).Length; } catch (IOException) { } } catch (UnauthorizedAccessException) { } catch (IOException) { } return t; }
 
-        // ---------- memory, time, processor
+        // ---------- memory, processor
+        // #39: the Linux columns - free is memory nothing holds (Windows' free + zeroed pages), buff/cache what the standby cache
+        // holds and gives back on demand, available both together; used is the rest
+        static long FreePages()
+        {
+            try { using (var pc = new PerformanceCounter("Memory", "Free & Zero Page List Bytes", true)) return (long)pc.NextValue(); }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is UnauthorizedAccessException || e is System.ComponentModel.Win32Exception || e is FormatException)) throw; return -1; }
+        }
         int Free(List<string> a, ShCtx c)
         {
             var ms = new Native.MEMORYSTATUSEX(); if (!Native.GlobalMemoryStatusEx(ms)) { Err(c, "free: Windows didn't say"); return 1; }
-            Func<ulong, string> f = v => a.Contains("-b") ? v.ToString(CultureInfo.InvariantCulture) : a.Contains("-k") ? (v / 1024).ToString(CultureInfo.InvariantCulture) : a.Contains("-m") ? (v / 1048576).ToString(CultureInfo.InvariantCulture) : a.Contains("-g") ? (v / 1073741824).ToString(CultureInfo.InvariantCulture) : Human(v);
+            string fl = Flags(a);
+            Func<ulong, string> f = v => fl.Contains('b') ? v.ToString(CultureInfo.InvariantCulture) : fl.Contains('m') ? (v / 1048576).ToString(CultureInfo.InvariantCulture) : fl.Contains('g') ? (v / 1073741824).ToString(CultureInfo.InvariantCulture) : fl.Contains('h') ? Human(v) : (v / 1024).ToString(CultureInfo.InvariantCulture);
+            long fp = FreePages(); ulong avail = ms.ullAvailPhys, free = fp >= 0 ? Math.Min(avail, (ulong)fp) : avail, cache = avail - free;
             ulong swapT = ms.ullTotalPageFile > ms.ullTotalPhys ? ms.ullTotalPageFile - ms.ullTotalPhys : 0, swapF = ms.ullAvailPageFile > ms.ullAvailPhys ? Math.Min(swapT, ms.ullAvailPageFile - ms.ullAvailPhys) : 0;
             Table(c, new List<string[]> {
-                new[] { "", "total", "used", "free", "available" },
-                new[] { "Mem:", f(ms.ullTotalPhys), f(ms.ullTotalPhys - ms.ullAvailPhys), f(ms.ullAvailPhys), f(ms.ullAvailPhys) },
-                new[] { "Swap:", f(swapT), f(swapT - swapF), f(swapF), "" } }, ShBlue, false, true, true, true, true);
-            if (c.Out.Screen) OL(c, "Swap is Windows' page file beyond the RAM. In use: " + ms.dwMemoryLoad + "% of memory.", ShDim);
+                new[] { "", "total", "used", "free", "shared", "buff/cache", "available" },
+                new[] { "Mem:", f(ms.ullTotalPhys), f(ms.ullTotalPhys - avail), f(free), "-", fp >= 0 ? f(cache) : "-", f(avail) },
+                new[] { "Swap:", f(swapT), f(swapT - swapF), f(swapF) } }, ShBlue, false, true, true, true, true, true, true);
+            if (c.Out.Screen) OL(c, "buff/cache is Windows' standby list (given back on demand) · Swap is the page file beyond the RAM", ShDim);
             return 0;
-        }
-        static DateTime BootTime() { try { return DateTime.Now - TimeSpan.FromMilliseconds(Native.GetTickCount64()); } catch (EntryPointNotFoundException) { return DateTime.Now; } }
-        string UptimeLine()
-        {
-            var up = DateTime.Now - BootTime(); double cpu = snap != null ? snap.Cpu : double.NaN;
-            return " " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " up " + (up.Days > 0 ? up.Days + " day" + (up.Days == 1 ? "" : "s") + ", " : "") + up.Hours.ToString("00", CultureInfo.InvariantCulture) + ":" + up.Minutes.ToString("00", CultureInfo.InvariantCulture) + ",  1 user,  cpu " + (double.IsNaN(cpu) ? "?" : cpu.ToString("0", CultureInfo.InvariantCulture) + "%");
         }
         int Lscpu(ShCtx c)
         {
             string name = "", mhz = "";
             try { using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0")) if (k != null) { name = Convert.ToString(k.GetValue("ProcessorNameString"), CultureInfo.InvariantCulture).Trim(); mhz = Convert.ToString(k.GetValue("~MHz"), CultureInfo.InvariantCulture); } }
             catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is IOException)) throw; }
-            Action<string, string> kv = (k, v) => { O(c, (k + ":").PadRight(22), ShBlue); OL(c, v); };
-            kv("Architecture", Environment.Is64BitOperatingSystem ? (Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") ?? "x86_64").Replace("AMD64", "x86_64") : "x86");
-            kv("CPU(s)", Environment.ProcessorCount.ToString(CultureInfo.InvariantCulture) + " (logical)");
-            kv("Model name", name == "" ? "-" : name); if (mhz != "") kv("CPU MHz", mhz);
+            Action<string, string> kv = (k, v) => { O(c, (k + ":").PadRight(24), ShBlue); OL(c, v); };
+            string arch = (Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432") ?? Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") ?? "").ToUpperInvariant();
+            kv("Architecture", arch == "AMD64" ? "x86_64" : arch == "ARM64" ? "aarch64" : arch == "X86" ? "i686" : arch.ToLowerInvariant());   // #79
+            kv("CPU(s)", Environment.ProcessorCount.ToString(CultureInfo.InvariantCulture)); kv("On-line CPU(s) usable", UsableCpus().ToString(CultureInfo.InvariantCulture));
+            kv("Model name", name == "" ? "-" : name); if (mhz != "") kv("CPU rated MHz", mhz + "  (the rated speed - it boosts and throttles around it)");
             kv("Identifier", Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER") ?? "-");
             return 0;
         }
 
         // ---------- processes: what's running, what it costs (read only - nothing is stopped from here)
+        // #12: %CPU like Linux - 100 = one whole core (a busy 4-thread program can show 400). ps: since it started (CPU time ÷
+        // time alive, as ps does); top: over its own refresh window, timed per process (#46). #42: TIME is [D-]HH:MM:SS.
         sealed class PsRow { public int Pid, Threads; public string Name; public long Mem; public double Cpu = double.NaN; public TimeSpan Time; }
-        List<PsRow> PsSample(int ms, ShCtx c)
+        static string PsTime(TimeSpan t) { return (t.Days > 0 ? t.Days + "-" : "") + t.Hours.ToString("00", CultureInfo.InvariantCulture) + ":" + t.Minutes.ToString("00", CultureInfo.InvariantCulture) + ":" + t.Seconds.ToString("00", CultureInfo.InvariantCulture); }
+        static bool ProcErr(Exception e) { return e is System.ComponentModel.Win32Exception || e is InvalidOperationException || e is NotSupportedException; }
+        List<PsRow> PsLifetime()
         {
-            var first = new Dictionary<int, TimeSpan>(); var procs = Process.GetProcesses();
+            var l = new List<PsRow>(); var now = DateTime.Now;
+            foreach (var p in Process.GetProcesses())
+                using (p)
+                {
+                    var r = new PsRow { Pid = p.Id };
+                    try { r.Name = p.ProcessName; r.Mem = p.WorkingSet64; r.Threads = p.Threads.Count; } catch (Exception e) { if (!ProcErr(e)) throw; if (r.Name == null) continue; }
+                    try { r.Time = p.TotalProcessorTime; double alive = (now - p.StartTime).TotalSeconds; if (alive > 0.5) r.Cpu = 100 * r.Time.TotalSeconds / alive; } catch (Exception e) { if (!ProcErr(e)) throw; }
+                    l.Add(r);
+                }
+            return l;
+        }
+        // a window: every process timed at both ends of it with its own clock; the whole machine's busy share from the same window
+        List<PsRow> PsWindow(int ms, ShCtx c, out double machine)
+        {
+            var first = new Dictionary<int, KeyValuePair<TimeSpan, long>>(); var procs = Process.GetProcesses(); machine = double.NaN;
             try
             {
-                foreach (var p in procs) try { first[p.Id] = p.TotalProcessorTime; } catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException || e is NotSupportedException)) throw; }
-                var sw = Stopwatch.StartNew(); while (sw.ElapsedMilliseconds < ms && !c.Job.Cancel) Thread.Sleep(50); double secs = Math.Max(0.05, sw.Elapsed.TotalSeconds) * Environment.ProcessorCount;
+                long i0, k0, u0; bool st = Native.GetSystemTimes(out i0, out k0, out u0);
+                foreach (var p in procs) try { first[p.Id] = new KeyValuePair<TimeSpan, long>(p.TotalProcessorTime, Stopwatch.GetTimestamp()); } catch (Exception e) { if (!ProcErr(e)) throw; }
+                var sw = Stopwatch.StartNew(); while (sw.ElapsedMilliseconds < ms && !c.Job.Cancel) Thread.Sleep(50);
+                long i1, k1, u1; if (st && Native.GetSystemTimes(out i1, out k1, out u1) && (k1 + u1) - (k0 + u0) > 0) machine = 100 * Math.Max(0, 1 - (double)(i1 - i0) / ((k1 + u1) - (k0 + u0)));
                 var l = new List<PsRow>();
                 foreach (var p in procs)
                 {
                     var r = new PsRow { Pid = p.Id };
-                    try { r.Name = p.ProcessName; r.Mem = p.WorkingSet64; r.Threads = p.Threads.Count; } catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception || e is NotSupportedException)) throw; if (r.Name == null) continue; }
-                    try { p.Refresh(); var t = p.TotalProcessorTime; r.Time = t; TimeSpan t0; if (first.TryGetValue(p.Id, out t0)) r.Cpu = Math.Max(0, 100 * (t - t0).TotalSeconds / secs); } catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is InvalidOperationException || e is NotSupportedException)) throw; }
+                    try { r.Name = p.ProcessName; r.Mem = p.WorkingSet64; r.Threads = p.Threads.Count; } catch (Exception e) { if (!ProcErr(e)) throw; if (r.Name == null) continue; }
+                    try { p.Refresh(); var t = p.TotalProcessorTime; long now = Stopwatch.GetTimestamp(); r.Time = t; KeyValuePair<TimeSpan, long> t0; if (first.TryGetValue(p.Id, out t0)) { double win = (now - t0.Value) / (double)Stopwatch.Frequency; if (win > 0.05) r.Cpu = Math.Max(0, 100 * (t - t0.Key).TotalSeconds / win); } } catch (Exception e) { if (!ProcErr(e)) throw; }
                     l.Add(r);
                 }
                 return l;
             }
             finally { foreach (var p in procs) p.Dispose(); }
         }
-        static string PsTime(TimeSpan t) { return ((int)t.TotalMinutes).ToString(CultureInfo.InvariantCulture) + ":" + t.Seconds.ToString("00", CultureInfo.InvariantCulture); }
         int Ps(List<string> a, ShCtx c)
         {
-            string sort = a.FirstOrDefault(z => z.StartsWith("--sort", StringComparison.Ordinal)) ?? ""; var l = PsSample(500, c);
+            string sort = a.FirstOrDefault(z => z.StartsWith("--sort", StringComparison.Ordinal)) ?? ""; var l = PsLifetime();
             IEnumerable<PsRow> s = sort.Contains("cpu") ? l.OrderByDescending(r => double.IsNaN(r.Cpu) ? -1 : r.Cpu) : sort.Contains("mem") || sort.Contains("rss") ? l.OrderByDescending(r => r.Mem) : l.OrderBy(r => r.Pid);
             var rows = new List<string[]> { new[] { "PID", "%CPU", "RSS", "THR", "TIME", "COMMAND" } };
-            foreach (var r in s) rows.Add(new[] { r.Pid.ToString(CultureInfo.InvariantCulture), double.IsNaN(r.Cpu) ? "-" : r.Cpu.ToString("0.0", CultureInfo.InvariantCulture), Human(r.Mem), r.Threads.ToString(CultureInfo.InvariantCulture), PsTime(r.Time), r.Name });
+            foreach (var r in s) rows.Add(new[] { r.Pid.ToString(CultureInfo.InvariantCulture), double.IsNaN(r.Cpu) ? "-" : r.Cpu.ToString("0.0", CultureInfo.InvariantCulture), (r.Mem / 1024).ToString(CultureInfo.InvariantCulture), r.Threads.ToString(CultureInfo.InvariantCulture), PsTime(r.Time), r.Name });
             Table(c, rows, ShBlue, true, true, true, true, true);
             return 0;
         }
-        List<List<TermView.Seg>> TopFrame(List<PsRow> l, int n)
+        List<List<TermView.Seg>> TopFrame(List<PsRow> l, double machine, int n, double secs)
         {
             var f = new List<List<TermView.Seg>>(); var ms = new Native.MEMORYSTATUSEX(); Native.GlobalMemoryStatusEx(ms);
-            f.Add(new List<TermView.Seg> { new TermView.Seg("top - " + UptimeLine().Trim(), ShFg) });
-            f.Add(new List<TermView.Seg> { new TermView.Seg("Tasks: " + l.Count + " total · threads " + l.Sum(r => r.Threads), ShFg) });
-            f.Add(new List<TermView.Seg> { new TermView.Seg("Mem: " + Human(ms.ullTotalPhys) + " total, " + Human(ms.ullAvailPhys) + " free, " + Human(ms.ullTotalPhys - ms.ullAvailPhys) + " used (" + ms.dwMemoryLoad + "%)", ShFg) });
-            f.Add(new List<TermView.Seg> { new TermView.Seg("", ShFg) });
-            f.Add(new List<TermView.Seg> { new TermView.Seg("    PID  %CPU      RSS  THR      TIME  COMMAND", ShBlue) });
+            Func<string, Color, List<TermView.Seg>> one = (t, col) => new List<TermView.Seg> { new TermView.Seg(t, col) };
+            f.Add(one("top - " + UptimeLine().Trim(), ShFg));
+            f.Add(one("Tasks: " + l.Count + " total · threads " + l.Sum(r => r.Threads), ShFg));
+            f.Add(one("%Cpu(s): " + (double.IsNaN(machine) ? "?" : machine.ToString("0.0", CultureInfo.InvariantCulture)) + " used of " + Environment.ProcessorCount + " CPUs, over the same " + secs.ToString("0.#", CultureInfo.InvariantCulture) + " s as the rows", ShFg));
+            f.Add(one("MiB Mem: " + (ms.ullTotalPhys / 1048576) + " total, " + (ms.ullAvailPhys / 1048576) + " available, " + ((ms.ullTotalPhys - ms.ullAvailPhys) / 1048576) + " used (" + ms.dwMemoryLoad + "%)", ShFg));
+            f.Add(one("", ShFg));
+            f.Add(one("    PID   %CPU      RES  THR      TIME  COMMAND", ShBlue));
             foreach (var r in l.OrderByDescending(r => double.IsNaN(r.Cpu) ? -1 : r.Cpu).ThenByDescending(r => r.Mem).Take(n))
-                f.Add(new List<TermView.Seg> { new TermView.Seg(r.Pid.ToString(CultureInfo.InvariantCulture).PadLeft(7) + (double.IsNaN(r.Cpu) ? "-" : r.Cpu.ToString("0.0", CultureInfo.InvariantCulture)).PadLeft(6) + Human(r.Mem).PadLeft(9) + r.Threads.ToString(CultureInfo.InvariantCulture).PadLeft(5) + PsTime(r.Time).PadLeft(10) + "  " + r.Name, r.Cpu >= 50 ? ShRed : r.Cpu >= 10 ? ShAmber : ShFg) });
-            f.Add(new List<TermView.Seg> { new TermView.Seg("every 2 s · Ctrl+C to leave (reads only - nothing is stopped from here)", ShDim) });
+                f.Add(one(r.Pid.ToString(CultureInfo.InvariantCulture).PadLeft(7) + (double.IsNaN(r.Cpu) ? "-" : r.Cpu.ToString("0.0", CultureInfo.InvariantCulture)).PadLeft(7) + Human(r.Mem).PadLeft(9) + r.Threads.ToString(CultureInfo.InvariantCulture).PadLeft(5) + PsTime(r.Time).PadLeft(10) + "  " + r.Name, r.Cpu >= 90 ? ShRed : r.Cpu >= 25 ? ShAmber : ShFg));
+            f.Add(one("%CPU: 100 = one core · every " + secs.ToString("0.#", CultureInfo.InvariantCulture) + " s · Ctrl+C to leave (reads only - nothing is stopped from here)", ShDim));
             return f;
         }
         int ShTop(List<string> a, ShCtx c)
         {
             int iters = 0, ni = a.IndexOf("-n"); if (ni >= 0 && ni + 1 < a.Count) int.TryParse(a[ni + 1], out iters);
-            if (!c.Out.Screen || c.Job.Bg || a.Contains("-b")) { foreach (var row in TopFrame(PsSample(1000, c), 30)) { foreach (var sg in row) O(c, sg.T, sg.C); O(c, "\n", ShFg); } return 0; }
-            for (int i = 0; !c.Job.Cancel && (iters <= 0 || i < iters); i++) { var fr = TopFrame(PsSample(i == 0 ? 700 : 2000, c), 25); if (c.Job.Cancel) break; Ui(delegate { term.Live(fr); }); }
+            double delay = 2; int di = a.IndexOf("-d"); if (di >= 0 && di + 1 < a.Count) double.TryParse(a[di + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out delay); delay = Math.Max(0.5, Math.Min(60, delay));
+            double machine;
+            if (!c.Out.Screen || c.Job.Bg || a.Contains("-b")) { var once = PsWindow((int)(delay * 1000), c, out machine); foreach (var row in TopFrame(once, machine, 30, delay)) { foreach (var sg in row) O(c, sg.T, sg.C); O(c, "\n", ShFg); } return 0; }   // #86: the footer says the window
+            for (int i = 0; !c.Job.Cancel && (iters <= 0 || i < iters); i++) { var l = PsWindow((int)(delay * 1000), c, out machine); if (c.Job.Cancel) break; var fr = TopFrame(l, machine, 25, delay); Ui(delegate { term.Live(fr); }); }
             Ui(delegate { term.EndLive(); }); return 0;
         }
+        // #87: every N seconds from one start to the next (not after the command plus N); -n 5, -n5 and --interval=5
         int ShWatch(List<string> a, ShCtx c)
         {
             double every = 2; int k = 0;
-            while (k < a.Count && a[k].StartsWith("-", StringComparison.Ordinal)) { if ((a[k] == "-n" || a[k] == "--interval") && k + 1 < a.Count) { double.TryParse(a[k + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out every); k += 2; } else k++; }
-            string line = string.Join(" ", a.Skip(k).Select(z => z.Contains(" ") ? "\"" + z + "\"" : z)); every = Math.Max(0.5, Math.Min(3600, every));
+            while (k < a.Count && a[k].StartsWith("-", StringComparison.Ordinal))
+            {
+                string v; if ((a[k] == "-n" || a[k] == "--interval") && k + 1 < a.Count) { v = a[k + 1]; k += 2; } else if (a[k].StartsWith("-n", StringComparison.Ordinal) && a[k].Length > 2) { v = a[k].Substring(2); k++; } else if (a[k].StartsWith("--interval=", StringComparison.Ordinal)) { v = a[k].Substring(11); k++; } else { Err(c, "watch: " + a[k] + ": this watch knows -n SECONDS"); return 2; }
+                if (!double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out every)) { Err(c, "watch: " + v + ": not a number of seconds"); return 2; }
+            }
+            string line = string.Join(" ", a.Skip(k).Select(z => z.Contains(" ") ? ShQuote(z) : z)); every = Math.Max(0.5, Math.Min(3600, every));
             if (line == "") { Err(c, "usage: watch [-n secs] command"); return 2; }
             if (!c.Out.Screen || c.Job.Bg) { Err(c, "watch: needs the screen - not in a pipe or the background"); return 1; }
+            var env = Env.Clone();
             while (!c.Job.Cancel)
             {
-                var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job }; ShRunText(line, new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes, Script = true });
+                var start = DateTime.UtcNow; var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job }; cap.ErrCap = cap.Cap;
+                var saved = tEnv; tEnv = env.Clone(); try { ShRunText(line, new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes, Script = true }); } finally { tEnv = saved; }
                 var fr = new List<List<TermView.Seg>> { new List<TermView.Seg> { new TermView.Seg("Every " + every.ToString("0.#", CultureInfo.InvariantCulture) + "s: " + line, ShCyan), new TermView.Seg("    " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · Ctrl+C to leave", ShDim) }, new List<TermView.Seg>() };
-                foreach (var l in cap.Cap.ToString().Replace("\r", "").TrimEnd('\n').Split('\n').Take(60)) fr.Add(new List<TermView.Seg> { new TermView.Seg(l, ShFg) });
+                foreach (var l in SplitLines(cap.Cap.ToString()).Take(60)) fr.Add(new List<TermView.Seg> { new TermView.Seg(l, ShFg) });
                 Ui(delegate { term.Live(fr); });
-                var until = DateTime.UtcNow.AddSeconds(every); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50);
+                var until = start.AddSeconds(every); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50);
             }
             Ui(delegate { term.EndLive(); }); return 0;
         }
@@ -256,28 +447,31 @@ namespace AdeeboMeter
         // ---------- network: addresses, routes, sockets
         int Ip(List<string> a, ShCtx c)
         {
-            string sub = a.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? "addr";
-            switch (sub) { case "a": case "addr": case "address": return IpAddr(c, null); case "l": case "link": return IpAddr(c, "link"); case "r": case "route": case "ro": return IpRoute(c); case "n": case "neigh": case "neighbour": case "neighbor": return ToolAs("arp", new List<string>(), c, null); case "-s": return IpAddr(c, "stats"); }
-            Err(c, "ip: try  ip a · ip link · ip route · ip neigh"); return 2;
+            bool stats = a.Contains("-s"); string sub = a.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? "addr";
+            switch (sub) { case "a": case "addr": case "address": return IpAddr(c, null, stats); case "l": case "link": return IpAddr(c, "link", stats); case "r": case "route": case "ro": return IpRoute(c); case "n": case "neigh": case "neighbour": case "neighbor": return ToolAs("arp", new List<string>(), c, null); }
+            Err(c, "ip: try  ip a · ip -s link · ip route · ip neigh"); return 2;
         }
-        int IpAddr(ShCtx c, string mode)
+        // #80: the MTU from IPv6 when there's no IPv4, link/none for an interface with no hardware address, counters only with -s
+        int IpAddr(ShCtx c, string mode, bool stats)
         {
             int n = 0;
             foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 IPInterfaceProperties ip; try { ip = ni.GetIPProperties(); } catch (NetworkInformationException) { continue; }
-                int idx = -1, mtu = 0; try { var v4 = ip.GetIPv4Properties(); if (v4 != null) { idx = v4.Index; mtu = v4.Mtu; } } catch (NetworkInformationException) { }
-                bool up = ni.OperationalStatus == OperationalStatus.Up; string mac = string.Join(":", ni.GetPhysicalAddress().GetAddressBytes().Select(b => b.ToString("x2")));
-                O(c, (++n) + ": ", ShFg); O(c, ni.Name, ShCyan); OL(c, ": <" + (up ? "UP,LOWER_UP" : "DOWN") + "> mtu " + mtu + " state " + (up ? "UP" : "DOWN") + "  (" + ni.NetworkInterfaceType + (idx >= 0 ? ", if " + idx : "") + ")", up ? ShFg : ShDim);
-                OL(c, "    link/" + (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback ? "loopback" : "ether") + " " + (mac == "" ? "00:00:00:00:00:00" : mac) + "  " + ni.Description, ShDim);
-                if (mode == "link") continue;
-                foreach (var ua in ip.UnicastAddresses)
-                {
-                    bool v6 = ua.Address.AddressFamily == AddressFamily.InterNetworkV6; int pl = 0;
-                    try { pl = ua.PrefixLength; } catch (NotImplementedException) { if (ua.IPv4Mask != null) pl = ua.IPv4Mask.GetAddressBytes().Sum(b => Convert.ToString(b, 2).Count(ch => ch == '1')); }
-                    O(c, "    " + (v6 ? "inet6 " : "inet ") , ShFg); OL(c, ua.Address.ToString().Split('%')[0] + "/" + pl + (ua.Address.IsIPv6LinkLocal ? " scope link" : " scope global"), v6 ? ShFg : ShGreen);
-                }
-                if (mode == "stats" || mode == null) { try { var st = ni.GetIPStatistics(); OL(c, "    RX " + Human(st.BytesReceived) + "  TX " + Human(st.BytesSent), ShDim); } catch (Exception e) { if (!(e is NetworkInformationException || e is PlatformNotSupportedException)) throw; } }
+                int idx = -1, mtu = 0;
+                try { var v4 = ip.GetIPv4Properties(); if (v4 != null) { idx = v4.Index; mtu = v4.Mtu; } } catch (NetworkInformationException) { }
+                if (mtu <= 0) try { var v6 = ip.GetIPv6Properties(); if (v6 != null) { if (idx < 0) idx = v6.Index; mtu = v6.Mtu; } } catch (NetworkInformationException) { }
+                bool up = ni.OperationalStatus == OperationalStatus.Up; var hw = ni.GetPhysicalAddress().GetAddressBytes(); string mac = string.Join(":", hw.Select(b => b.ToString("x2")));
+                O(c, (++n) + ": ", ShFg); O(c, ni.Name, ShCyan); OL(c, ": <" + (up ? "UP,LOWER_UP" : "DOWN") + ">" + (mtu > 0 ? " mtu " + mtu : "") + " state " + (up ? "UP" : "DOWN") + "  (" + ni.NetworkInterfaceType + (idx >= 0 ? ", if " + idx : "") + ")", up ? ShFg : ShDim);
+                OL(c, "    " + (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback ? "link/loopback 00:00:00:00:00:00" : hw.Length == 0 ? "link/none" : "link/ether " + mac) + "  " + ni.Description, ShDim);
+                if (mode != "link")
+                    foreach (var ua in ip.UnicastAddresses)
+                    {
+                        bool v6 = ua.Address.AddressFamily == AddressFamily.InterNetworkV6; int pl = 0;
+                        try { pl = ua.PrefixLength; } catch (NotImplementedException) { if (ua.IPv4Mask != null) pl = ua.IPv4Mask.GetAddressBytes().Sum(b => Convert.ToString(b, 2).Count(ch => ch == '1')); }
+                        O(c, "    " + (v6 ? "inet6 " : "inet "), ShFg); OL(c, ua.Address.ToString().Split('%')[0] + "/" + pl + (ua.Address.IsIPv6LinkLocal ? " scope link" : IPAddress.IsLoopback(ua.Address) ? " scope host" : " scope global"), v6 ? ShFg : ShGreen);
+                    }
+                if (stats) { try { var st = ni.GetIPStatistics(); OL(c, "    RX: " + st.BytesReceived + " bytes  " + st.UnicastPacketsReceived + " packets  " + st.IncomingPacketsDiscarded + " dropped  " + st.IncomingPacketsWithErrors + " errors", ShDim); OL(c, "    TX: " + st.BytesSent + " bytes  " + st.UnicastPacketsSent + " packets  " + st.OutgoingPacketsDiscarded + " dropped  " + st.OutgoingPacketsWithErrors + " errors", ShDim); } catch (Exception e) { if (!(e is NetworkInformationException || e is PlatformNotSupportedException)) throw; } }
             }
             return 0;
         }
@@ -305,36 +499,76 @@ namespace AdeeboMeter
             finally { Marshal.FreeHGlobal(b); }
             return 0;
         }
-        int Ss(List<string> a, ShCtx c)
+        // #43: ss spells states the way ss does (ESTAB, TIME-WAIT...); netstat keeps netstat's (ESTABLISHED, TIME_WAIT)
+        static string SsState(string s)
         {
-            string fl = string.Concat(a.Where(z => z.StartsWith("-", StringComparison.Ordinal) && !z.StartsWith("--", StringComparison.Ordinal)).Select(z => z.Substring(1)));
-            bool listen = fl.Contains("l"), all = fl.Contains("a"), udp = fl.Contains("u"), tcp = fl.Contains("t") || !udp, proc = fl.Contains("p") || true;
+            switch (s) { case "ESTABLISHED": return "ESTAB"; case "TIME_WAIT": return "TIME-WAIT"; case "FIN_WAIT1": return "FIN-WAIT-1"; case "FIN_WAIT2": return "FIN-WAIT-2"; case "CLOSE_WAIT": return "CLOSE-WAIT"; case "LAST_ACK": return "LAST-ACK"; case "SYN_SENT": return "SYN-SENT"; case "SYN_RCVD": return "SYN-RECV"; case "BOUND": case "CLOSED": return "UNCONN"; case "DELETE_TCB": return "CLOSED"; }
+            return s;
+        }
+        // #5 #15 #44 #81 #82: UDP with the address it's really bound to, this PC talking to itself included, -p honoured, -a and
+        // -u include UDP; netstat says tcp6/udp6
+        int Ss(List<string> a, ShCtx c, bool netstat)
+        {
+            string fl = Flags(a);
+            bool listen = fl.Contains('l'), all = fl.Contains('a'), udpF = fl.Contains('u'), tcpF = fl.Contains('t'), proc = fl.Contains('p');
+            bool tcp = tcpF || !udpF, udp = udpF || (!tcpF && (all || listen));
             var names = new Dictionary<int, string>(); foreach (var p in Process.GetProcesses()) using (p) try { names[p.Id] = p.ProcessName; } catch (InvalidOperationException) { }
-            var rows = new List<string[]> { new[] { "Netid", "State", "Local Address:Port", "Peer Address:Port", "Process" } };
+            var head = netstat ? new List<string> { "Proto", "Local Address", "Foreign Address", "State" } : new List<string> { "Netid", "State", "Local Address:Port", "Peer Address:Port" };
+            if (proc) head.Add(netstat ? "PID/Program name" : "Process");
+            var rows = new List<string[]> { head.ToArray() };
+            Func<string, int, string> pr = (nm, pid) => netstat ? pid + "/" + nm : "users:((\"" + nm + "\",pid=" + pid + "))";
             if (tcp)
             {
-                List<Conn> l; try { l = Tables.Tcp(true, names); } catch (InvalidOperationException e) { Err(c, "ss: " + e.Message); return 1; }
-                foreach (var x in l.Where(x => listen ? x.State == "LISTEN" : all || x.State != "LISTEN").OrderBy(x => x.State).ThenBy(x => x.LocalPort))
-                    rows.Add(new[] { "tcp", x.State, x.Local, x.State == "LISTEN" ? "*:*" : x.Remote, proc ? (x.Proc ?? "") + " pid=" + x.Pid : "" });
+                List<Conn> l; try { l = Tables.Tcp(true, names, true); } catch (InvalidOperationException e) { Err(c, (netstat ? "netstat: " : "ss: ") + e.Message); return 1; }
+                foreach (var x in l.Where(x => listen ? x.State == "LISTEN" : all || (x.State != "LISTEN" && x.State != "BOUND")).OrderBy(x => x.State).ThenBy(x => x.LocalPort))
+                {
+                    bool v6 = x.Proto == "TCP6"; string st = netstat ? x.State : SsState(x.State), peer = x.State == "LISTEN" || x.State == "BOUND" ? (v6 ? "[::]:*" : "0.0.0.0:*") : x.Remote;
+                    var row = netstat ? new List<string> { v6 ? "tcp6" : "tcp", x.Local, peer, st } : new List<string> { "tcp", st, x.Local, peer };
+                    if (proc) row.Add(pr(x.Proc ?? "", x.Pid)); rows.Add(row.ToArray());
+                }
             }
-            if (udp && (listen || all || !fl.Contains("t")))
-                foreach (var u in Tables.Udp().OrderBy(u => u.Key)) { string nm; names.TryGetValue(u.Value, out nm); rows.Add(new[] { "udp", "UNCONN", "*:" + u.Key, "*:*", (nm ?? "") + " pid=" + u.Value }); }
+            if (udp)
+                foreach (var u in Tables.UdpFull().OrderBy(u => u.Port))
+                {
+                    string nm; names.TryGetValue(u.Pid, out nm); string local = u.V6 ? "[" + u.Addr + "]:" + u.Port : u.Addr + ":" + u.Port, peer = u.V6 ? "[::]:*" : "0.0.0.0:*";
+                    var row = netstat ? new List<string> { u.V6 ? "udp6" : "udp", local, peer, "" } : new List<string> { "udp", "UNCONN", local, peer };
+                    if (proc) row.Add(pr(nm ?? "", u.Pid)); rows.Add(row.ToArray());
+                }
             Table(c, rows, ShBlue);
             return 0;
         }
 
-        // ---------- /proc: this PC as files (cat /proc/meminfo)
+        // ---------- /proc: this PC as files (cat /proc/meminfo) - #4 #36 #37 #38: every number measured
         static readonly string[] ProcFiles = { "cpuinfo", "meminfo", "uptime", "version", "mounts", "loadavg" };
         string ProcFile(string name)
         {
             var sb = new StringBuilder(); var ms = new Native.MEMORYSTATUSEX(); Native.GlobalMemoryStatusEx(ms);
             switch (name)
             {
-                case "meminfo": sb.AppendLine("MemTotal:       " + (ms.ullTotalPhys / 1024) + " kB").AppendLine("MemFree:        " + (ms.ullAvailPhys / 1024) + " kB").AppendLine("MemAvailable:   " + (ms.ullAvailPhys / 1024) + " kB").AppendLine("CommitLimit:    " + (ms.ullTotalPageFile / 1024) + " kB").AppendLine("Committed_AS:   " + ((ms.ullTotalPageFile - ms.ullAvailPageFile) / 1024) + " kB"); break;
-                case "uptime": sb.AppendLine(((DateTime.Now - BootTime()).TotalSeconds).ToString("0.00", CultureInfo.InvariantCulture) + " 0.00"); break;
+                case "meminfo":
+                    {
+                        long fp = FreePages(); ulong avail = ms.ullAvailPhys, free = fp >= 0 ? Math.Min(avail, (ulong)fp) : avail;
+                        ulong swapT = ms.ullTotalPageFile > ms.ullTotalPhys ? ms.ullTotalPageFile - ms.ullTotalPhys : 0, swapF = ms.ullAvailPageFile > ms.ullAvailPhys ? Math.Min(swapT, ms.ullAvailPageFile - ms.ullAvailPhys) : 0;
+                        Action<string, ulong> kb = (k, v) => sb.AppendLine((k + ":").PadRight(16) + (v / 1024).ToString(CultureInfo.InvariantCulture).PadLeft(10) + " kB");
+                        kb("MemTotal", ms.ullTotalPhys); kb("MemFree", free); kb("MemAvailable", avail); kb("Cached", avail - free); kb("SwapTotal", swapT); kb("SwapFree", swapF); kb("CommitLimit", ms.ullTotalPageFile); kb("Committed_AS", ms.ullTotalPageFile - ms.ullAvailPageFile);
+                        break;
+                    }
+                case "uptime":
+                    {
+                        long idle, k0, u0; double idleSecs = Native.GetSystemTimes(out idle, out k0, out u0) ? idle / 1e7 : 0;   // idle time summed over every CPU, as Linux counts it
+                        sb.AppendLine((DateTime.Now - BootTime()).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture) + " " + idleSecs.ToString("0.00", CultureInfo.InvariantCulture)); break;
+                    }
                 case "version": sb.AppendLine("Windows " + Environment.OSVersion.Version + " (" + Environment.OSVersion + ") · AdeeboShell " + Program.Version); break;
-                case "loadavg": { double cpu = snap != null ? snap.Cpu : double.NaN; string l = double.IsNaN(cpu) ? "0.00" : (cpu / 100 * Environment.ProcessorCount).ToString("0.00", CultureInfo.InvariantCulture); sb.AppendLine(l + " " + l + " " + l); break; }
-                case "mounts": foreach (var d in DriveInfo.GetDrives()) { string fs = "-"; try { if (d.IsReady) fs = d.DriveFormat.ToLowerInvariant(); } catch (IOException) { } sb.AppendLine(d.Name.TrimEnd('\\') + " " + MntOf(d) + " " + fs + " rw 0 0"); } break;
+                case "loadavg":
+                    {
+                        int count = 0, newest = 0; DateTime newestAt = DateTime.MinValue;
+                        foreach (var p in Process.GetProcesses()) using (p) { count++; try { var s0 = p.StartTime; if (s0 > newestAt) { newestAt = s0; newest = p.Id; } } catch (Exception e) { if (!ProcErr(e)) throw; } }
+                        int runnable = 0; try { using (var pc = new PerformanceCounter("System", "Processor Queue Length", true)) runnable = (int)pc.NextValue(); } catch (Exception e) { if (!(e is InvalidOperationException || e is UnauthorizedAccessException || e is System.ComponentModel.Win32Exception)) throw; }
+                        sb.AppendLine(LoadText(" ") + " " + runnable + "/" + count + " " + newest); break;
+                    }
+                case "mounts":
+                    foreach (var d in DriveInfo.GetDrives()) { string fs = "-"; try { if (d.IsReady) fs = d.DriveFormat.ToLowerInvariant(); } catch (IOException) { } sb.AppendLine(d.Name.TrimEnd('\\') + " " + MntOf(d) + " " + fs + " " + (d.DriveType == DriveType.CDRom ? "ro" : "rw") + " 0 0"); }
+                    break;
                 case "cpuinfo":
                     {
                         string model = ""; try { using (var k = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0")) if (k != null) model = Convert.ToString(k.GetValue("ProcessorNameString"), CultureInfo.InvariantCulture).Trim(); } catch (Exception e) { if (!(e is System.Security.SecurityException || e is UnauthorizedAccessException || e is IOException)) throw; }
@@ -347,141 +581,157 @@ namespace AdeeboMeter
         }
 
         // ---------- text tools
+        // #60: fields come out in the line's own order, each once
         int Cut(List<string> a, ShCtx c)
         {
-            string d = "\t", f = null, ch = null; var files = new List<string>();
+            string d = "\t", f = null, ch = null; bool onlyDelim = false; var files = new List<string>();
             for (int i = 0; i < a.Count; i++)
             {
                 string w = a[i];
                 if (w == "-d" && i + 1 < a.Count) { d = a[++i]; continue; } if (w.StartsWith("-d", StringComparison.Ordinal)) { d = w.Substring(2); continue; }
                 if (w == "-f" && i + 1 < a.Count) { f = a[++i]; continue; } if (w.StartsWith("-f", StringComparison.Ordinal)) { f = w.Substring(2); continue; }
-                if (w == "-c" && i + 1 < a.Count) { ch = a[++i]; continue; } if (w.StartsWith("-c", StringComparison.Ordinal)) { ch = w.Substring(2); continue; }
+                if ((w == "-c" || w == "-b") && i + 1 < a.Count) { ch = a[++i]; continue; } if (w.StartsWith("-c", StringComparison.Ordinal) || w.StartsWith("-b", StringComparison.Ordinal)) { ch = w.Substring(2); continue; }
+                if (w == "-s") { onlyDelim = true; continue; }
                 files.Add(w);
             }
             if (f == null && ch == null) { Err(c, "usage: cut -d ',' -f 1,3   or   cut -c 1-10"); return 2; }
-            if (d == "") d = "\t";
+            if (d.Length != 1) { Err(c, "cut: the delimiter must be one character"); return 2; }
             var l = InLines(files, c); if (l == null) return 1;
-            Func<string, int, List<int>> pick = (spec, max) => { var r = new List<int>(); foreach (var part in spec.Split(',')) { var m = Regex.Match(part, @"^(\d*)-(\d*)$"); int x, y; if (m.Success) { x = m.Groups[1].Value == "" ? 1 : int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); y = m.Groups[2].Value == "" ? max : int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); for (int k = x; k <= Math.Min(y, max); k++) r.Add(k); } else if (int.TryParse(part, out x)) r.Add(x); } return r; };
+            Func<string, int, List<int>> pick = (spec, max) => { var r = new SortedSet<int>(); foreach (var part in spec.Split(',')) { var m = Regex.Match(part, @"^(\d*)-(\d*)$"); int x, y; if (m.Success) { x = m.Groups[1].Value == "" ? 1 : int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); y = m.Groups[2].Value == "" ? max : int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); for (int k = x; k <= Math.Min(y, max); k++) r.Add(k); } else if (int.TryParse(part, out x)) r.Add(x); } return r.ToList(); };
             foreach (var x in l)
             {
                 if (ch != null) { OL(c, string.Concat(pick(ch, x.Length).Where(k => k >= 1 && k <= x.Length).Select(k => x[k - 1]))); continue; }
-                var parts = x.Split(new[] { d[0] }); if (parts.Length == 1 && !a.Contains("-s")) { OL(c, x); continue; }
-                OL(c, string.Join(d[0].ToString(), pick(f, parts.Length).Where(k => k >= 1 && k <= parts.Length).Select(k => parts[k - 1])));
+                var parts = x.Split(d[0]); if (parts.Length == 1) { if (!onlyDelim) OL(c, x); continue; }
+                OL(c, string.Join(d, pick(f, parts.Length).Where(k => k >= 1 && k <= parts.Length).Select(k => parts[k - 1])));
             }
             return 0;
         }
         static string TrSet(string s)
         {
-            s = s.Replace("[:upper:]", "A-Z").Replace("[:lower:]", "a-z").Replace("[:digit:]", "0-9").Replace("[:space:]", " \t\n").Replace("\\n", "\n").Replace("\\t", "\t");
-            var sb = new StringBuilder(); for (int i = 0; i < s.Length; i++) { if (i + 2 < s.Length && s[i + 1] == '-') { for (char x = s[i]; x <= s[i + 2]; x++) sb.Append(x); i += 2; } else sb.Append(s[i]); }
+            s = s.Replace("[:upper:]", "A-Z").Replace("[:lower:]", "a-z").Replace("[:digit:]", "0-9").Replace("[:alpha:]", "A-Za-z").Replace("[:alnum:]", "A-Za-z0-9").Replace("[:space:]", " \t\n\r\f\v").Replace("[:punct:]", "!-/:-@[-`{-~");
+            s = s.Replace("\\n", "\n").Replace("\\t", "\t").Replace("\\r", "\r").Replace("\\\\", "\\");
+            var sb = new StringBuilder(); for (int i = 0; i < s.Length; i++) { if (i + 2 < s.Length && s[i + 1] == '-' && s[i] <= s[i + 2]) { for (char x = s[i]; x <= s[i + 2]; x++) sb.Append(x); i += 2; } else sb.Append(s[i]); }
             return sb.ToString();
         }
+        // #30: -c (complement), -d, -s and their mixes (-cd, -ds); a third word is refused - tr reads only from a pipe
         int Tr(List<string> a, ShCtx c)
         {
-            bool del = a.Contains("-d"), sq = a.Contains("-s"); var sets = a.Where(z => !z.StartsWith("-", StringComparison.Ordinal) || z.Length == 1).Select(TrSet).ToList();
-            if (sets.Count == 0) { Err(c, "usage: tr 'a-z' 'A-Z'  ·  tr -d '\\r'  ·  tr -s ' '"); return 2; }
-            string t = c.Stdin ?? ""; var sb = new StringBuilder(); char last = '\0';
+            string fl = string.Concat(a.Where(z => Regex.IsMatch(z, "^-[cCds]+$")).Select(z => z.Substring(1))); bool comp = fl.IndexOf('c') >= 0 || fl.IndexOf('C') >= 0, del = fl.Contains('d'), sq = fl.Contains('s');
+            var sets = a.Where(z => !Regex.IsMatch(z, "^-[cCds]+$")).ToList();
+            int want = del && !sq ? 1 : sq && !del && sets.Count == 1 ? 1 : 2;
+            if (sets.Count == 0 || sets.Count > 2 || (sets.Count > want && del && !sq)) { Err(c, sets.Count > want ? "tr: tr reads from a pipe, not a file - cat " + sets[sets.Count - 1] + " | tr ..." : "usage: tr 'a-z' 'A-Z'  ·  tr -d '\\r'  ·  tr -s ' '  ·  tr -cd '0-9'"); return 2; }
+            string s1 = TrSet(sets[0]), s2 = sets.Count > 1 ? TrSet(sets[1]) : null;
+            Func<char, bool> inS1 = x => (s1.IndexOf(x) >= 0) != comp;
+            string t = c.Stdin ?? ""; var sb = new StringBuilder(); char last = '\0'; bool lastSq = false;
             foreach (char x in t)
             {
-                int k = sets[0].IndexOf(x); char o = x;
-                if (k >= 0) { if (del) continue; if (sets.Count > 1) o = sets[1][Math.Min(k, sets[1].Length - 1)]; }
-                if (sq && o == last && (sets.Count > 1 ? sets[1] : sets[0]).IndexOf(o) >= 0) continue;
-                sb.Append(o); last = o;
+                char o = x; bool member = inS1(x);
+                if (del && member) continue;
+                if (!del && member && s2 != null && s2.Length > 0) o = comp ? s2[s2.Length - 1] : s2[Math.Min(s1.IndexOf(x), s2.Length - 1)];
+                bool sqMember = sq && (del ? (s2 != null && s2.IndexOf(o) >= 0) : s2 != null ? s2.IndexOf(o) >= 0 : inS1(o));
+                if (sqMember && lastSq && o == last) continue;
+                sb.Append(o); last = o; lastSq = sqMember;
             }
             O(c, sb.ToString(), ShFg); return 0;
         }
+        // #27 #66: each expression compiled once; basic regular expressions unless -E; addresses timed out like the rest; -i edits
+        // the file itself (its encoding and line endings kept, written whole, then swapped in)
         int Sed(List<string> a, ShCtx c)
         {
-            var progs = new List<string>(); var files = new List<string>(); bool quiet = false;
-            for (int i = 0; i < a.Count; i++) { if (a[i] == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (a[i] == "-n") { quiet = true; continue; } if (a[i] == "-E" || a[i] == "-r") continue; if (progs.Count == 0) progs.Add(a[i]); else files.Add(a[i]); }
-            if (progs.Count == 0) { Err(c, "usage: sed 's/old/new/g' [file]   ·   sed -n '2,5p'   ·   sed '/re/d'"); return 2; }
-            var l = InLines(files, c); if (l == null) return 1;
-            for (int n = 0; n < l.Count; n++)
+            var progs = new List<string>(); var files = new List<string>(); bool quiet = false, ere = false, inPlace = false;
+            for (int i = 0; i < a.Count; i++) { string w = a[i]; if (w == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (Regex.IsMatch(w, "^-[nEri]+$")) { quiet |= w.Contains("n"); ere |= w.Contains("E") || w.Contains("r"); inPlace |= w.Contains("i"); continue; } if (progs.Count == 0) progs.Add(w); else files.Add(w); }
+            if (progs.Count == 0) { Err(c, "usage: sed 's/old/new/g' [file]   ·   sed -n '2,5p'   ·   sed '/re/d'   ·   sed -i 's/a/b/' file"); return 2; }
+            var steps = new List<Func<string, int, int, string>>();   // (line, number, total) -> the line, null = deleted, "\u0000p" in front = print it too
+            foreach (var pr in progs.SelectMany(z => z.Split('\n')).Select(z => z.Trim()).Where(z => z != ""))
             {
-                string x = l[n]; bool del = false, print = false;
-                foreach (var pr in progs)
+                var sm = Regex.Match(pr, @"^s(.)(.*?)(?<!\\)\1(.*?)(?<!\\)\1([gipI0-9]*)$");
+                if (sm.Success)
                 {
-                    var sm = Regex.Match(pr, @"^s(.)(.*?)(?<!\\)\1(.*?)(?<!\\)\1([gip]*)$");
-                    if (sm.Success) { var rx = new Regex(sm.Groups[2].Value.Replace("\\" + sm.Groups[1].Value, sm.Groups[1].Value), sm.Groups[4].Value.Contains("i") ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); string rep = Regex.Replace(sm.Groups[3].Value, @"\\(\d)", "$$$1").Replace("&", "$0"); string y = sm.Groups[4].Value.Contains("g") ? rx.Replace(x, rep) : rx.Replace(x, rep, 1); if (y != x && sm.Groups[4].Value.Contains("p")) print = true; x = y; continue; }
-                    var dm = Regex.Match(pr, @"^/(.*)/([dp])$"); if (dm.Success) { if (Regex.IsMatch(x, dm.Groups[1].Value)) { if (dm.Groups[2].Value == "d") del = true; else print = true; } continue; }
-                    var nm = Regex.Match(pr, @"^(\d+|\$)(?:,(\d+|\$))?([dp])$"); if (nm.Success) { int from = nm.Groups[1].Value == "$" ? l.Count : int.Parse(nm.Groups[1].Value, CultureInfo.InvariantCulture), to = nm.Groups[2].Success ? (nm.Groups[2].Value == "$" ? l.Count : int.Parse(nm.Groups[2].Value, CultureInfo.InvariantCulture)) : from; if (n + 1 >= from && n + 1 <= to) { if (nm.Groups[3].Value == "d") del = true; else print = true; } continue; }
-                    Err(c, "sed: this shell's sed knows s/old/new/[gip], /re/d, /re/p, N,Md and N,Mp - not '" + pr + "'"); return 2;
+                    string sep = sm.Groups[1].Value, flags = sm.Groups[4].Value, pat = sm.Groups[2].Value.Replace("\\" + sep, sep);
+                    Regex rx; try { rx = new Regex(ere ? pat : BreToNet(pat), flags.IndexOf('i') >= 0 || flags.IndexOf('I') >= 0 ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + pat + ": not a pattern"); return 2; }
+                    string rep = Regex.Replace(sm.Groups[3].Value.Replace("\\" + sep, sep).Replace("$", "$$"), @"\\(\d)", "$${$1}").Replace("\\&", "\u0002").Replace("&", "$0").Replace("\u0002", "&").Replace("\\n", "\n").Replace("\\t", "\t");
+                    bool g = flags.Contains("g"), p = flags.Contains("p"); int nth; int.TryParse(Regex.Match(flags, @"\d+").Value, out nth);
+                    steps.Add((x, n, tot) => { string y; if (g) y = rx.Replace(x, rep); else if (nth > 1) { int k = 0; y = rx.Replace(x, m => ++k == nth ? m.Result(rep) : m.Value); } else y = rx.Replace(x, rep, 1); return p && y != x ? "\u0000p" + y : y; });
+                    continue;
                 }
-                if (del) continue; if (!quiet) OL(c, x); if (print) OL(c, x);
+                var dm = Regex.Match(pr, @"^/(.*)/(I?)([dp])$");
+                if (dm.Success) { Regex rx; try { rx = new Regex(ere ? dm.Groups[1].Value : BreToNet(dm.Groups[1].Value), dm.Groups[2].Value == "I" ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + dm.Groups[1].Value + ": not a pattern"); return 2; } bool del = dm.Groups[3].Value == "d"; steps.Add((x, n, tot) => rx.IsMatch(x) ? (del ? null : "\u0000p" + x) : x); continue; }
+                var nm = Regex.Match(pr, @"^(\d+|\$)(?:,(\d+|\$))?([dp])$");
+                if (nm.Success) { string f0 = nm.Groups[1].Value, t0 = nm.Groups[2].Success ? nm.Groups[2].Value : f0; bool del = nm.Groups[3].Value == "d"; steps.Add((x, n, tot) => { int from = f0 == "$" ? tot : int.Parse(f0, CultureInfo.InvariantCulture), to = t0 == "$" ? tot : int.Parse(t0, CultureInfo.InvariantCulture); return n >= from && n <= to ? (del ? null : "\u0000p" + x) : x; }); continue; }
+                Err(c, "sed: this sed knows s/old/new/[g i p N], /re/d, /re/p, N,Md and N,Mp - not '" + pr + "'"); return 2;
             }
-            return 0;
-        }
-        // awk: [-F sep] '[/re/ | NR>1 | $3>100] { print $1, $3 }', and the sums: '{ s += $2 } END { print s }'
-        int Awk(List<string> a, ShCtx c)
-        {
-            string sep = null, prog = null; var files = new List<string>();
-            for (int i = 0; i < a.Count; i++) { if (a[i] == "-F" && i + 1 < a.Count) { sep = a[++i]; continue; } if (a[i].StartsWith("-F", StringComparison.Ordinal)) { sep = a[i].Substring(2); continue; } if (prog == null) prog = a[i]; else files.Add(a[i]); }
-            if (prog == null) { Err(c, "usage: awk '{print $1}'  ·  awk -F, 'NR>1 {print $2, $5}'  ·  awk '{s+=$3} END {print s}'"); return 2; }
-            var l = InLines(files, c); if (l == null) return 1;
-            var m = Regex.Match(prog.Trim(), @"^(?<pat>[^{]*?)\s*(\{(?<body>[^}]*)\})?\s*(END\s*\{(?<end>[^}]*)\})?$");
-            if (!m.Success) { Err(c, "awk: this shell's awk reads  pattern { print ... }  and  { s += $N } END { print s }"); return 2; }
-            string pat = m.Groups["pat"].Value.Trim(), body = m.Groups["body"].Success ? m.Groups["body"].Value.Trim() : "print", end = m.Groups["end"].Value.Trim();
-            var vars = new Dictionary<string, double>(); int nr = 0;
-            Func<string[], string, string> field = (f, e) => { e = e.Trim(); if (e == "NR") return nr.ToString(CultureInfo.InvariantCulture); if (e == "NF") return (f.Length - 1).ToString(CultureInfo.InvariantCulture); if (e.StartsWith("\"", StringComparison.Ordinal)) return e.Trim('"'); var fm = Regex.Match(e, @"^\$(\d+|NF)$"); if (fm.Success) { int k = fm.Groups[1].Value == "NF" ? f.Length - 1 : int.Parse(fm.Groups[1].Value, CultureInfo.InvariantCulture); return k < f.Length ? f[k] : ""; } double v; if (vars.TryGetValue(e, out v)) return v.ToString(CultureInfo.InvariantCulture); return e; };
-            Func<string, double> num = s0 => { double v; return double.TryParse(s0, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0; };
-            Action<string[], string> run = (f, stmts) =>
+            if (inPlace && files.Count == 0) { Err(c, "sed -i: which file?"); return 2; }
+            foreach (var target in inPlace ? files : new List<string> { null })
             {
-                foreach (var st0 in stmts.Split(';'))
+                var l = target != null ? InLines(new List<string> { target }, c) : InLines(files, c); if (l == null) return 1;
+                var outp = new StringBuilder();
+                try
                 {
-                    string st = st0.Trim(); if (st == "") continue;
-                    var am = Regex.Match(st, @"^([A-Za-z_]\w*)\s*(\+=|-=|=)\s*(.+)$");
-                    if (am.Success) { double cur; vars.TryGetValue(am.Groups[1].Value, out cur); double v = num(field(f, am.Groups[3].Value)); vars[am.Groups[1].Value] = am.Groups[2].Value == "+=" ? cur + v : am.Groups[2].Value == "-=" ? cur - v : v; continue; }
-                    if (Regex.IsMatch(st, @"^\w+\+\+$")) { double cur; string nm = st.TrimEnd('+'); vars.TryGetValue(nm, out cur); vars[nm] = cur + 1; continue; }
-                    if (st.StartsWith("print", StringComparison.Ordinal)) { string rest = st.Substring(5).Trim(); OL(c, rest == "" ? f[0] : string.Join(" ", Regex.Matches(rest, "\"[^\"]*\"|[^,]+").Cast<Match>().Select(x => field(f, x.Value)))); continue; }
+                    for (int n = 0; n < l.Count; n++)
+                    {
+                        string x = l[n]; bool print = false;
+                        foreach (var st in steps) { x = st(x, n + 1, l.Count); if (x == null) break; if (x.StartsWith("\u0000p", StringComparison.Ordinal)) { print = true; x = x.Substring(2); } }
+                        if (x == null) continue;
+                        if (!quiet) outp.Append(x).Append('\n'); if (print) outp.Append(x).Append('\n');
+                        if (outp.Length > ShMaxCap) throw new ShTooBig();
+                    }
                 }
-            };
-            foreach (var x in l)
-            {
-                nr++; var parts = sep == null ? x.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries) : x.Split(new[] { sep }, StringSplitOptions.None);
-                var f = new[] { x }.Concat(parts).ToArray();
-                if (pat != "" && pat != "BEGIN")
-                {
-                    bool ok;
-                    var rm = Regex.Match(pat, @"^/(.*)/$"); var cm = Regex.Match(pat, @"^(\S+)\s*(==|!=|>=|<=|>|<)\s*(\S+)$");
-                    if (rm.Success) ok = Regex.IsMatch(x, rm.Groups[1].Value);
-                    else if (cm.Success) { string l0 = field(f, cm.Groups[1].Value), r0 = field(f, cm.Groups[3].Value); double p, q; bool n0 = double.TryParse(l0, NumberStyles.Float, CultureInfo.InvariantCulture, out p) & double.TryParse(r0, NumberStyles.Float, CultureInfo.InvariantCulture, out q); switch (cm.Groups[2].Value) { case "==": ok = n0 ? p == q : l0 == r0; break; case "!=": ok = n0 ? p != q : l0 != r0; break; case ">": ok = n0 && p > q; break; case "<": ok = n0 && p < q; break; case ">=": ok = n0 && p >= q; break; default: ok = n0 && p <= q; break; } }
-                    else { Err(c, "awk: pattern '" + pat + "' - use /regex/ or a comparison like NR>1 or $3>100"); return 2; }
-                    if (!ok) continue;
-                }
-                run(f, body);
+                catch (RegexMatchTimeoutException) { Err(c, "sed: the pattern took too long - stopped"); return 2; }
+                if (target == null) { O(c, outp.ToString(), ShFg); continue; }
+                string r = Real(Abs(target)); var shape = new TextShape(); try { ReadShaped(r, shape); WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
             }
-            if (end != "") run(new[] { "" }, end);
             return 0;
         }
         int Xargs(List<string> a, ShCtx c)
         {
-            int per = 0, ni = a.IndexOf("-n"); if (ni >= 0 && ni + 1 < a.Count) { int.TryParse(a[ni + 1], out per); a.RemoveRange(ni, 2); }
+            int per = 0, ni = a.IndexOf("-n"); if (ni >= 0 && ni + 1 < a.Count) { if (!int.TryParse(a[ni + 1], out per)) { Err(c, "xargs: -n needs a number"); return 2; } a.RemoveRange(ni, 2); }
             var items = Regex.Matches(c.Stdin ?? "", @"\S+").Cast<Match>().Select(m => m.Value).ToList(); if (items.Count == 0) return 0;
-            string cmd = a.Count == 0 ? "echo" : string.Join(" ", a.Select(z => z.Contains(" ") ? "\"" + z + "\"" : z)); int worst = 0;
+            var cmd = a.Count == 0 ? new List<string> { "echo" } : a; int worst = 0;
             foreach (var chunk in per > 0 ? items.Select((v, i) => new { v, i }).GroupBy(z => z.i / per).Select(g => g.Select(z => z.v).ToList()) : new[] { items })
             {
                 if (c.Job.Cancel) return 130;
-                worst = Math.Max(worst, ShRunText(cmd + " " + string.Join(" ", chunk.Select(z => "\"" + z.Replace("\"", "\\\"") + "\"")), new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script }));
+                worst = Math.Max(worst, ShRunText(string.Join(" ", cmd.Concat(chunk).Select(ShQuote)), new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script }));
             }
             return worst;
         }
+        // #70: wrapped at 76 like GNU (-w 0: one line)
         int B64(List<string> a, ShCtx c)
         {
-            bool dec = a.Contains("-d") || a.Contains("--decode"); var f = a.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal));
+            bool dec = a.Contains("-d") || a.Contains("--decode"); int wrap = 76; int wi = a.IndexOf("-w"); if (wi >= 0 && wi + 1 < a.Count) int.TryParse(a[wi + 1], out wrap);
+            var f = a.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(i > 0 && a[i - 1] == "-w")).FirstOrDefault();
             byte[] data;
-            if (f != null) { string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, "base64: " + f + ": no such file"); return 1; } if (new FileInfo(r).Length > 20 * 1048576) { Err(c, "base64: over 20 MB"); return 1; } data = File.ReadAllBytes(r); }
+            if (f != null && f != "-") { string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, "base64: " + f + ": no such file"); return 1; } if (new FileInfo(r).Length > 20 * 1048576) { Err(c, "base64: over 20 MB"); return 1; } data = File.ReadAllBytes(r); }
             else data = Encoding.UTF8.GetBytes(c.Stdin ?? "");
-            if (!dec) { OL(c, Convert.ToBase64String(data)); return 0; }
+            if (!dec) { string s = Convert.ToBase64String(data); if (wrap > 0) { var sb = new StringBuilder(); for (int i = 0; i < s.Length; i += wrap) sb.Append(s, i, Math.Min(wrap, s.Length - i)).Append('\n'); O(c, sb.ToString(), ShFg); } else OL(c, s); return 0; }
             try { O(c, Encoding.UTF8.GetString(Convert.FromBase64String(Regex.Replace(Encoding.UTF8.GetString(data), @"\s", ""))), ShFg); return 0; }
             catch (FormatException) { Err(c, "base64: that isn't base64"); return 1; }
         }
+        // #11: -c really checks - every listed file is hashed and compared, OK / FAILED each, exit 1 if any failed
         int HashSum(string cmd, List<string> a, ShCtx c)
         {
-            Func<System.Security.Cryptography.HashAlgorithm> mk = () => cmd == "md5sum" ? (System.Security.Cryptography.HashAlgorithm)System.Security.Cryptography.MD5.Create() : cmd == "sha1sum" ? (System.Security.Cryptography.HashAlgorithm)System.Security.Cryptography.SHA1.Create() : System.Security.Cryptography.SHA256.Create();
-            var files = a.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList();
-            if (files.Count == 0) { using (var h = mk()) OL(c, BitConverter.ToString(h.ComputeHash(Encoding.UTF8.GetBytes(c.Stdin ?? ""))).Replace("-", "").ToLowerInvariant() + "  -"); return 0; }
+            Func<System.Security.Cryptography.HashAlgorithm> mk = () => cmd == "md5sum" ? (System.Security.Cryptography.HashAlgorithm)System.Security.Cryptography.MD5.Create() : cmd == "sha1sum" ? (System.Security.Cryptography.HashAlgorithm)System.Security.Cryptography.SHA1.Create() : cmd == "sha512sum" ? (System.Security.Cryptography.HashAlgorithm)System.Security.Cryptography.SHA512.Create() : System.Security.Cryptography.SHA256.Create();
+            Func<string, string> ofFile = r => { using (var h = mk()) using (var fs = new FileStream(r, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) return BitConverter.ToString(h.ComputeHash(fs)).Replace("-", "").ToLowerInvariant(); };
+            var files = Files(a); bool check = Flags(a).Contains('c') || a.Contains("--check"), quiet = a.Contains("--quiet");
+            if (check)
+            {
+                string sums = files.Count == 0 ? c.Stdin ?? "" : ReadAll(files[0], c); if (sums == null) return 1;
+                int bad = 0, missing = 0, ok = 0; string baseDir = files.Count == 0 || files[0] == "-" ? "" : (files[0].Contains("/") ? files[0].Substring(0, files[0].LastIndexOf('/') + 1) : "");
+                foreach (var line in SplitLines(sums).Where(z => z.Trim() != ""))
+                {
+                    var m = Regex.Match(line.Trim(), @"^([0-9a-fA-F]{32,128})\s+\*?(.+)$"); if (!m.Success) { Err(c, cmd + ": a line that isn't 'hash  name': " + line); bad++; continue; }
+                    string name = m.Groups[2].Value.Trim(), r = Real(Abs(name.StartsWith("/", StringComparison.Ordinal) ? name : baseDir + name));
+                    if (r == null || !File.Exists(r)) { OL(c, name + ": FAILED open or read", ShRed); missing++; continue; }
+                    bool same = string.Equals(ofFile(r), m.Groups[1].Value, StringComparison.OrdinalIgnoreCase);
+                    if (same) { ok++; if (!quiet) OL(c, name + ": OK", ShGreen); } else { bad++; OL(c, name + ": FAILED", ShRed); }
+                }
+                if (bad > 0) Err(c, cmd + ": WARNING: " + bad + " computed checksum" + (bad == 1 ? " did" : "s did") + " NOT match");
+                if (missing > 0) Err(c, cmd + ": WARNING: " + missing + " listed file" + (missing == 1 ? "" : "s") + " could not be read");
+                if (ok + bad + missing == 0) { Err(c, cmd + ": no checksum lines found"); return 1; }
+                return bad + missing > 0 ? 1 : 0;
+            }
+            if (files.Count == 0 || (files.Count == 1 && files[0] == "-")) { using (var h = mk()) OL(c, BitConverter.ToString(h.ComputeHash(Encoding.UTF8.GetBytes(c.Stdin ?? ""))).Replace("-", "").ToLowerInvariant() + "  -"); return 0; }
             int ex = 0;
-            foreach (var f in files) { string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, cmd + ": " + f + ": no such file"); ex = 1; continue; } using (var h = mk()) using (var fs = File.OpenRead(r)) OL(c, BitConverter.ToString(h.ComputeHash(fs)).Replace("-", "").ToLowerInvariant() + "  " + f); }
+            foreach (var f in files) { string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, cmd + ": " + f + ": no such file"); ex = 1; continue; } OL(c, ofFile(r) + "  " + f); }
             return ex;
         }
     }

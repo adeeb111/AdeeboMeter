@@ -1025,7 +1025,31 @@ namespace AdeeboMeter
             }
             return r;
         }
-        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names)
+        // every UDP socket with the address it's bound to (AdeeboShell's ss - a 127.0.0.1-only service isn't "all interfaces")
+        public sealed class UdpSock { public string Addr; public int Port, Pid; public bool V6; }
+        public static List<UdpSock> UdpFull()
+        {
+            var r = new List<UdpSock>();
+            foreach (int af in new[] { 2, 23 })
+            {
+                IntPtr b = Get(false, af); if (b == IntPtr.Zero) continue;
+                try
+                {
+                    int n = Marshal.ReadInt32(b), size = af == 2 ? 12 : 28;
+                    for (int i = 0; i < n; i++)
+                    {
+                        IntPtr row = b + 4 + i * size; IPAddress a;
+                        if (af == 2) a = new IPAddress((uint)Marshal.ReadInt32(row, 0)); else { var by = new byte[16]; Marshal.Copy(row, by, 0, 16); a = new IPAddress(by); }
+                        r.Add(new UdpSock { Addr = a.ToString(), V6 = af == 23, Port = Port((uint)Marshal.ReadInt32(row, af == 2 ? 4 : 20)), Pid = Marshal.ReadInt32(row, af == 2 ? 8 : 24) });
+                    }
+                }
+                finally { Marshal.FreeHGlobal(b); }
+            }
+            return r;
+        }
+        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names) { return Tcp(includeIdle, names, false); }
+        // loopback: the monitor leaves out this PC talking to itself; the shell's ss shows it (shell scrutiny #15)
+        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names, bool loopback)
         {
             var list = new List<Conn>();
             Func<int, string> nm = delegate(int pid) { string s; return names.TryGetValue(pid, out s) ? s : (pid == 4 ? "System" : pid == 0 ? "Windows (no owner)" : "pid " + pid); };
@@ -1044,7 +1068,7 @@ namespace AdeeboMeter
                         if (!includeIdle && idle) continue;
                         var la = new IPAddress((uint)Marshal.ReadInt32(row, 4)); var ra = new IPAddress((uint)Marshal.ReadInt32(row, 12));
                         int lp = Port((uint)Marshal.ReadInt32(row, 8)), rp = Port((uint)Marshal.ReadInt32(row, 16)), pid = Marshal.ReadInt32(row, 20);
-                        if (!idle && IPAddress.IsLoopback(ra)) continue;
+                        if (!idle && !loopback && IPAddress.IsLoopback(ra)) continue;
                         list.Add(new Conn { Key = "T|" + la + ":" + lp + "|" + ra + ":" + rp + "|" + pid, Proto = "TCP", State = State(st), Local = la + ":" + lp, Remote = idle ? "*" : ra + ":" + rp, RemoteIp = idle ? "" : ra.ToString(), RemotePort = rp, LocalPort = lp, Pid = pid, Proc = nm(pid) });
                     }
                 }
@@ -1063,7 +1087,7 @@ namespace AdeeboMeter
                         byte[] l = new byte[16], r = new byte[16]; Marshal.Copy(row, l, 0, 16); Marshal.Copy(row + 24, r, 0, 16);
                         var la = new IPAddress(l); var ra = new IPAddress(r);
                         int lp = Port((uint)Marshal.ReadInt32(row, 20)), rp = Port((uint)Marshal.ReadInt32(row, 44)), pid = Marshal.ReadInt32(row, 52);
-                        if (!idle && IPAddress.IsLoopback(ra)) continue;
+                        if (!idle && !loopback && IPAddress.IsLoopback(ra)) continue;
                         list.Add(new Conn { Key = "T6|" + la + "|" + lp + "|" + ra + "|" + rp + "|" + pid, Proto = "TCP6", State = State(st), Local = "[" + la + "]:" + lp, Remote = idle ? "*" : "[" + ra + "]:" + rp, RemoteIp = idle ? "" : ra.ToString(), RemotePort = rp, LocalPort = lp, Pid = pid, Proc = nm(pid) });
                     }
                 }

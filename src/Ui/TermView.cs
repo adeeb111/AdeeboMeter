@@ -12,18 +12,23 @@ namespace AdeeboMeter
     // AdeeboShell's screen (Adeeb, 22 Nov: "top to bottom writing, it should look cool, maybe a blinking cursor"): a real
     // terminal surface - the text flows down from the top, the prompt and what you type sit right after the last line, a blinking
     // block cursor, a live region a running tool redraws in place, scroll back with the wheel, drag to select, right-click pastes.
+    //
+    // Shell scrutiny #3: wrapping is cached - only new lines and the live region are wrapped again, so a repaint (the caret blinks
+    // twice a second) costs the visible rows, not the whole scrollback. One line is kept to MaxLine characters on screen (a 20 MB
+    // base64 line can't freeze the window; > file still gets all of it). #64: tabs go to the next 8-column stop. #65: trimming the
+    // oldest lines leaves a marker saying so.
     sealed class TermView : Control
     {
         public struct Seg { public string T; public Color C; public Seg(string t, Color c) { T = t; C = c; } }
-        sealed class Line { public readonly List<Seg> S = new List<Seg>(); public int Len { get { int n = 0; foreach (var s in S) n += s.T.Length; return n; } } public string Text { get { var sb = new StringBuilder(); foreach (var s in S) sb.Append(s.T); return sb.ToString(); } } }
+        sealed class Line { public readonly List<Seg> S = new List<Seg>(); public int Len; public string Text { get { var sb = new StringBuilder(); foreach (var s in S) sb.Append(s.T); return sb.ToString(); } } public void Add(Seg s) { S.Add(s); Len += s.T.Length; } }
         readonly List<Line> lines = new List<Line> { new Line() };
-        const int MaxLines = 8000;
+        const int MaxLines = 8000, MaxLine = 20000;
         int liveAt = -1;                 // first line of the live region (a running tool's table or status), or -1
         public List<Seg> PromptSegs = new List<Seg>();
         public string Input = ""; public int Caret; public bool ShowInput = true; public bool Secret;
         public Color Bg = Color.FromArgb(12, 16, 22), Fg = Color.FromArgb(201, 209, 217), CaretColor = Color.FromArgb(63, 230, 120), SelColor = Color.FromArgb(70, 88, 166, 255);
         public string Title = "";
-        public TermEditor Editor;   // nano / vim: while set, it owns the screen and the keys
+        public TermEditor Editor;   // nano / vim / less: while set, it owns the screen and the keys
         Font mono; float cw, chh; int scroll;   // scroll: visual rows up from the bottom (0 = following the output)
         readonly Timer blink; bool caretOn = true; DateTime typedAt;
         Point selA = new Point(-1, -1), selB = new Point(-1, -1); bool selecting;
@@ -34,11 +39,11 @@ namespace AdeeboMeter
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
             mono = f; TabStop = true; Cursor = Cursors.IBeam;
             using (var g = CreateGraphics()) { var a = TextRenderer.MeasureText(g, new string('M', 40), mono, Size.Empty, TextFormatFlags.NoPadding); cw = a.Width / 40f; chh = (float)Math.Ceiling(mono.GetHeight(g) * 1.18f); }
-            blink = new Timer { Interval = 530 }; blink.Tick += delegate { caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
+            blink = new Timer { Interval = 530 }; blink.Tick += delegate { if (!Visible) return; caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
         }
         protected override void Dispose(bool disposing) { if (disposing) blink.Dispose(); base.Dispose(disposing); }
         protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return b == Keys.Tab || b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }
-        protected override void OnKeyDown(KeyEventArgs e) { typedAt = DateTime.UtcNow; caretOn = true; if (Editor != null) { Editor.Key(e); if (!e.Handled) { e.SuppressKeyPress = false; } Invalidate(); base.OnKeyDown(e); return; } if (TermKey != null) TermKey(this, e); base.OnKeyDown(e); }
+        protected override void OnKeyDown(KeyEventArgs e) { typedAt = DateTime.UtcNow; caretOn = true; if (Editor != null) { Editor.Key(e); Invalidate(); base.OnKeyDown(e); return; } if (TermKey != null) TermKey(this, e); base.OnKeyDown(e); }
         protected override void OnKeyPress(KeyPressEventArgs e) { if (Editor != null) { Editor.Char(e.KeyChar); e.Handled = true; Invalidate(); return; } if (TermChar != null) TermChar(this, e); base.OnKeyPress(e); }
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
@@ -51,57 +56,76 @@ namespace AdeeboMeter
             for (int i = 0; i < parts.Length; i++)
             {
                 if (i > 0) lines.Add(new Line());
-                if (parts[i].Length > 0) lines[lines.Count - 1].S.Add(new Seg(parts[i].Replace('\t', ' '), c));
+                var ln = lines[lines.Count - 1]; string t = parts[i];
+                if (t.Length == 0 || ln.Len > MaxLine) continue;
+                if (t.IndexOf('\t') >= 0) { var sb = new StringBuilder(); int col = ln.Len; foreach (char ch in t) { if (ch == '\t') { int n = 8 - (col % 8); sb.Append(' ', n); col += n; } else { sb.Append(ch); col++; } } t = sb.ToString(); }
+                if (ln.Len + t.Length > MaxLine) { int keep = Math.Max(0, MaxLine - ln.Len); ln.Add(new Seg(t.Substring(0, keep), c)); ln.Add(new Seg("  … (" + (t.Length - keep).ToString("N0") + " more characters on this line - not shown; > file keeps them all)", Color.FromArgb(125, 133, 144))); ln.Len = MaxLine + 1; continue; }
+                ln.Add(new Seg(t, c));
             }
             Trim(); Changed();
         }
-        public void Clear() { lines.Clear(); lines.Add(new Line()); liveAt = -1; scroll = 0; ClearSel(); Changed(); }
+        public void Clear() { lines.Clear(); lines.Add(new Line()); liveAt = -1; scroll = 0; ClearSel(); ResetCache(); Changed(); }
         // a live region: these lines replace the last live ones (a status line, a hop table) until EndLive
         public void Live(List<List<Seg>> rows)
         {
             if (liveAt < 0) { if (lines[lines.Count - 1].Len > 0) lines.Add(new Line()); liveAt = lines.Count - 1; }
-            lines.RemoveRange(liveAt, lines.Count - liveAt);
+            DirtyFrom(liveAt); lines.RemoveRange(liveAt, lines.Count - liveAt);
             if (rows.Count == 0) lines.Add(new Line());
-            foreach (var r in rows) { var l = new Line(); l.S.AddRange(r); lines.Add(l); }
+            foreach (var r in rows) { var l = new Line(); foreach (var sg in r) l.Add(sg); lines.Add(l); }
             Changed();
         }
-        public void EndLive() { if (liveAt < 0) return; lines.RemoveRange(liveAt, lines.Count - liveAt); lines.Add(new Line()); liveAt = -1; Changed(); }
+        public void EndLive() { if (liveAt < 0) return; DirtyFrom(liveAt); lines.RemoveRange(liveAt, lines.Count - liveAt); lines.Add(new Line()); liveAt = -1; Changed(); }
         public bool AtLineStart { get { return lines[lines.Count - 1].Len == 0; } }
-        void Trim() { if (lines.Count > MaxLines) { int n = lines.Count - MaxLines; lines.RemoveRange(0, n); if (liveAt >= 0) liveAt = Math.Max(0, liveAt - n); ClearSel(); } }
-        void Changed() { if (scroll == 0 || selecting) { } Invalidate(); }
+        void Trim()
+        {
+            if (lines.Count <= MaxLines + 500) return;   // in batches, so the cache isn't thrown away on every line
+            int n = lines.Count - MaxLines; lines.RemoveRange(0, n);
+            var note = new Line(); note.Add(new Seg("… older lines dropped - the last " + MaxLines.ToString("N0") + " are kept here (> file keeps everything)", Color.FromArgb(125, 133, 144))); lines.Insert(0, note);
+            if (liveAt >= 0) liveAt = Math.Max(1, liveAt - n + 1); ClearSel(); ResetCache();
+        }
+        void Changed() { Invalidate(); }
         public string AllText() { return string.Join("\n", lines.Select(l => l.Text)); }
 
-        // ---------- layout: every logical line wrapped into rows of cols characters
+        // ---------- layout: every logical line wrapped into rows of Cols characters; all but the last line cached
         int Cols { get { return Math.Max(10, (int)((ClientSize.Width - 2 * Pad) / cw)); } }
         float Pad { get { return 14 * Draw.S; } }
         float TopY { get { return 40 * Draw.S; } }   // the window bar
         sealed class Row { public List<Seg> S = new List<Seg>(); public int Line, From; public bool IsInput; }
-        List<Row> Rows()
+        readonly List<Row> cache = new List<Row>(); int cachedLines, cacheCols = -1;
+        List<Row> tail = new List<Row>();
+        void ResetCache() { cache.Clear(); cachedLines = 0; }
+        void DirtyFrom(int line)
         {
-            int cols = Cols; var rows = new List<Row>();
-            for (int li = 0; li < lines.Count; li++)
+            if (line >= cachedLines) return;
+            cachedLines = line; int k = cache.FindIndex(r => r.Line >= line); if (k >= 0) cache.RemoveRange(k, cache.Count - k);
+        }
+        List<Row> Wrap(int li, List<Seg> segs, bool input, int cols)
+        {
+            var rows = new List<Row>(); var row = new Row { Line = li, From = 0, IsInput = input }; int used = 0, pos = 0;
+            foreach (var sg in segs)
             {
-                bool last = li == lines.Count - 1; var segs = new List<Seg>(lines[li].S);
-                int inputFrom = -1;
-                if (last && ShowInput) { inputFrom = segs.Sum(z => z.T.Length) + PromptSegs.Sum(z => z.T.Length); segs.AddRange(PromptSegs); segs.Add(new Seg(Secret ? new string('*', Input.Length) : Input, Fg)); }
-                // cut into rows
-                var row = new Row { Line = li, From = 0, IsInput = last && ShowInput }; int used = 0, pos = 0;
-                foreach (var sg in segs)
+                string t = sg.T; int i = 0;
+                while (i < t.Length)
                 {
-                    string t = sg.T; int i = 0;
-                    while (i < t.Length)
-                    {
-                        int take = Math.Min(cols - used, t.Length - i);
-                        if (take <= 0) { rows.Add(row); row = new Row { Line = li, From = pos, IsInput = row.IsInput }; used = 0; continue; }
-                        row.S.Add(new Seg(t.Substring(i, take), sg.C)); used += take; i += take; pos += take;
-                    }
+                    int take = Math.Min(cols - used, t.Length - i);
+                    if (take <= 0) { rows.Add(row); row = new Row { Line = li, From = pos, IsInput = input }; used = 0; continue; }
+                    row.S.Add(new Seg(t.Substring(i, take), sg.C)); used += take; i += take; pos += take;
                 }
-                rows.Add(row);
-                if (last && ShowInput) { caretLine = li; caretCol = inputFrom + Caret; }
             }
-            return rows;
+            rows.Add(row); return rows;
         }
         int caretLine, caretCol;
+        // brings the cache up to date and wraps the last line (with the prompt and what you're typing); returns the row count
+        int Relayout()
+        {
+            int cols = Cols; if (cols != cacheCols) { ResetCache(); cacheCols = cols; }
+            while (cachedLines < lines.Count - 1) { cache.AddRange(Wrap(cachedLines, lines[cachedLines].S, false, cols)); cachedLines++; }
+            int li = lines.Count - 1; var segs = new List<Seg>(lines[li].S);
+            if (ShowInput) { int inputFrom = lines[li].Len + PromptSegs.Sum(z => z.T.Length); segs.AddRange(PromptSegs); segs.Add(new Seg(Secret ? new string('*', Input.Length) : Input, Fg)); caretLine = li; caretCol = inputFrom + Caret; }
+            tail = Wrap(li, segs, ShowInput, cols);
+            return cache.Count + tail.Count;
+        }
+        Row RowAt(int i) { return i < cache.Count ? cache[i] : tail[i - cache.Count]; }
         int VisibleRows { get { return Math.Max(1, (int)((ClientSize.Height - TopY - 8 * Draw.S) / chh)); } }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -115,15 +139,14 @@ namespace AdeeboMeter
             var dots = new[] { Color.FromArgb(255, 95, 86), Color.FromArgb(255, 189, 46), Color.FromArgb(39, 201, 63) };
             for (int i = 0; i < 3; i++) using (var b = new SolidBrush(dots[i])) g.FillEllipse(b, 14 * S + i * 18 * S, 10 * S, 11 * S, 11 * S);
             using (var tb = new SolidBrush(Color.FromArgb(139, 148, 158))) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(Title, Draw.fSmall, tb, new RectangleF(0, 0, Width, 30 * S), cf);
-
             if (Editor != null) { Editor.Bg = Bg; Editor.Fg = Fg; Editor.Paint(g, mono, cw, chh, Pad, TopY, ClientSize, caretOn, Focused); return; }
-            var rows = Rows(); int vis = VisibleRows; int maxScroll = Math.Max(0, rows.Count - vis); if (scroll > maxScroll) scroll = maxScroll;
-            int first = Math.Max(0, rows.Count - vis - scroll);
+
+            int count = Relayout(), vis = VisibleRows; int maxScroll = Math.Max(0, count - vis); if (scroll > maxScroll) scroll = maxScroll;
+            int first = Math.Max(0, count - vis - scroll), cols = Cols;
             float y = TopY; var sel = SelRange();
-            for (int r = first; r < rows.Count && r < first + vis; r++, y += chh)
+            for (int r = first; r < count && r < first + vis; r++, y += chh)
             {
-                float x = Pad; var row = rows[r]; int col = 0;
-                // selection band
+                float x = Pad; var row = RowAt(r); int col = 0;
                 if (sel != null)
                 {
                     int a = Math.Max(row.From, RowSelFrom(sel, row)), b = RowSelTo(sel, row);
@@ -135,7 +158,7 @@ namespace AdeeboMeter
                     col += sg.T.Length;
                 }
                 // the cursor: a glowing block
-                if (row.IsInput && row.Line == caretLine && caretCol >= row.From && (caretCol < row.From + Cols || r == rows.Count - 1) && caretCol - row.From <= Cols)
+                if (row.IsInput && row.Line == caretLine && caretCol >= row.From && (caretCol < row.From + cols || r == count - 1) && caretCol - row.From <= cols)
                 {
                     float cx = Pad + (caretCol - row.From) * cw;
                     if (caretOn || !Focused)
@@ -143,7 +166,8 @@ namespace AdeeboMeter
                         if (Focused) using (var glow = new SolidBrush(Color.FromArgb(50, CaretColor))) g.FillRectangle(glow, cx - 2 * S, y - 1 * S, cw + 4 * S, chh + 2 * S);
                         if (Focused) using (var cb = new SolidBrush(CaretColor)) g.FillRectangle(cb, cx, y + 1 * S, cw, chh - 2 * S);
                         else using (var cp = new Pen(CaretColor, 1)) g.DrawRectangle(cp, cx, y + 1 * S, cw, chh - 3 * S);
-                        string under = caretCol - inputStartCol() >= 0 && caretCol - inputStartCol() < Input.Length ? Input.Substring(caretCol - inputStartCol(), 1) : "";
+                        int ic = caretCol - InputStartCol();
+                        string under = ic >= 0 && ic < Input.Length ? Input.Substring(ic, 1) : "";
                         if (under != "" && Focused) TextRenderer.DrawText(g, Secret ? "*" : under, mono, new Point((int)cx, (int)y), Bg, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     }
                 }
@@ -154,19 +178,26 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(Color.FromArgb(200, 31, 111, 235))) { var sz = g.MeasureString(s, Draw.fSmall); var rr = new RectangleF(Width - sz.Width - 30 * S, Height - sz.Height - 14 * S, sz.Width + 16 * S, sz.Height + 6 * S); g.FillRectangle(b, rr); g.DrawString(s, Draw.fSmall, Brushes.White, rr.X + 8 * S, rr.Y + 3 * S); }
             }
         }
-        int inputStartCol() { return lines[lines.Count - 1].Len + PromptSegs.Sum(z => z.T.Length); }
-        void InvalidateCaret() { if (ShowInput || Editor != null) Invalidate(); }
+        int InputStartCol() { return lines[lines.Count - 1].Len + PromptSegs.Sum(z => z.T.Length); }
+        // the blink only repaints the caret's own rows
+        void InvalidateCaret()
+        {
+            if (Editor != null) { Invalidate(); return; }
+            if (!ShowInput || scroll > 0) return;
+            int count = Relayout(), vis = VisibleRows, first = Math.Max(0, count - vis);
+            for (int r = Math.Max(first, count - 3); r < count; r++) if (RowAt(r).IsInput) Invalidate(new Rectangle(0, (int)(TopY + (r - first) * chh) - 2, Width, (int)chh + 4));
+        }
 
         // ---------- scrolling and selection
-        protected override void OnMouseWheel(MouseEventArgs e) { if (Editor != null) return; var rows = Rows().Count; scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + (e.Delta > 0 ? 3 : -3))); Invalidate(); }
-        public void ScrollPage(int dir) { var rows = Rows().Count; scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + dir * (VisibleRows - 2))); Invalidate(); }
+        protected override void OnMouseWheel(MouseEventArgs e) { if (Editor != null) { Editor.Wheel(e.Delta > 0 ? -3 : 3); Invalidate(); return; } int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + (e.Delta > 0 ? 3 : -3))); Invalidate(); }
+        public void ScrollPage(int dir) { int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + dir * (VisibleRows - 2))); Invalidate(); }
         public void Follow() { scroll = 0; }
         Point CellAt(Point p)
         {
-            var rows = Rows(); int vis = VisibleRows; int first = Math.Max(0, rows.Count - vis - scroll);
-            int r = first + (int)Math.Floor((p.Y - TopY) / chh); r = Math.Max(0, Math.Min(rows.Count - 1, r));
-            int c = (int)Math.Round((p.X - Pad) / cw); c = Math.Max(0, Math.Min(rows[r].S.Sum(z => z.T.Length), c));
-            return new Point(rows[r].From + c, rows[r].Line);
+            int count = Relayout(), vis = VisibleRows; int first = Math.Max(0, count - vis - scroll);
+            int r = first + (int)Math.Floor((p.Y - TopY) / chh); r = Math.Max(0, Math.Min(count - 1, r));
+            var row = RowAt(r); int c = (int)Math.Round((p.X - Pad) / cw); c = Math.Max(0, Math.Min(row.S.Sum(z => z.T.Length), c));
+            return new Point(row.From + c, row.Line);
         }
         protected override void OnMouseDown(MouseEventArgs e)
         {

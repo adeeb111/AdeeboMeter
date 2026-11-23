@@ -27,16 +27,36 @@ namespace AdeeboMeter
         static readonly Color ShBg = Color.FromArgb(12, 16, 22), ShFg = Color.FromArgb(201, 209, 217), ShDim = Color.FromArgb(125, 133, 144),
             ShGreen = Color.FromArgb(63, 220, 110), ShAmber = Color.FromArgb(230, 170, 50), ShRed = Color.FromArgb(248, 81, 73), ShCyan = Color.FromArgb(57, 207, 220), ShBlue = Color.FromArgb(88, 166, 255), ShPurple = Color.FromArgb(188, 140, 255);
         readonly List<string> shHist = new List<string>(); int shHi = -1; string shDraft; string shLast = "";
-        string shCwd = "/home", shPrev = "/home"; readonly Dictionary<string, string> shVars = new Dictionary<string, string>(StringComparer.Ordinal);
-        List<Tool> shTools; int shLastExit;
-        volatile ShJob shFg; readonly List<ShJob> shJobs = new List<ShJob>(); int shJobN;
-        volatile ManualResetEvent shAskWait; string shAskAnswer; bool shTabTwice;
+        List<Tool> shTools;
+        volatile ShJob shFg; readonly List<ShJob> shJobs = new List<ShJob>(); int shJobN; readonly Dictionary<int, int> shDone = new Dictionary<int, int>();
+        volatile ManualResetEvent shAskWait; string shAskAnswer; bool shTabTwice; string shPasteBlock;
         bool ShBusy { get { return shFg != null || shJobs.Any(j => !j.Done); } }   // the window's Esc guard (FullView.cs)
 
-        sealed class ShJob { public int Id; public string Cmd = ""; public volatile bool Cancel, Done; public bool Bg; public int Exit; public readonly List<Toolkit.Run> Runs = new List<Toolkit.Run>(); public readonly StringBuilder Saved = new StringBuilder(); public DateTime CancelAt = DateTime.MinValue; }
-        // where output goes: the screen (coloured), or text for the next command in a pipe / a file
-        sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull; public ShOut ErrScreen; public ShJob Job; public bool Screen { get { return Cap == null; } } }
+        // where the shell is: its folder, its variables, the last exit status. The interactive shell has one; $( ), a pipeline's
+        // stages, background jobs and parallel's workers each work on a copy, so a cd or x=1 in there doesn't move yours
+        // (shell scrutiny #8). A sourced script shares it, as in bash.
+        sealed class ShEnv
+        {
+            public string Cwd = "/home", Prev = "/home"; public int LastExit, Depth;
+            public readonly Dictionary<string, string> Vars = new Dictionary<string, string>(StringComparer.Ordinal);
+            public ShEnv Clone() { var e = new ShEnv { Cwd = Cwd, Prev = Prev, LastExit = LastExit, Depth = Depth }; lock (Vars) foreach (var kv in Vars) e.Vars[kv.Key] = kv.Value; return e; }
+        }
+        readonly ShEnv shMain = new ShEnv();
+        [ThreadStatic] static ShEnv tEnv;
+        [ThreadStatic] static int loopDepth, substDepth, lastSubstExit;
+        ShEnv Env { get { return tEnv ?? shMain; } }
+        T InSub<T>(Func<T> f) { var saved = tEnv; tEnv = Env.Clone(); try { return f(); } finally { tEnv = saved; } }
+
+        sealed class ShJob { public int Id; public string Cmd = ""; public volatile bool Cancel, Done, Abandoned; public bool Bg; public int Exit; public readonly List<Toolkit.Run> Runs = new List<Toolkit.Run>(); public readonly StringBuilder Saved = new StringBuilder(); public DateTime CancelAt = DateTime.MinValue; }
+        // where output goes: the screen (coloured), or text for the next command in a pipe / a file. Errors have their own way
+        // (shell scrutiny #2): dropped (2>/dev/null), kept for a file (2> f), or passed on to where they went before (ErrTo) -
+        // never into the data a pipe hands on.
+        sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull; public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
         sealed class ShCtx { public ShJob Job; public ShOut Out; public string Stdin; public List<string> Args = new List<string>(); public bool Yes, Script; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, Stdin = stdin, Args = Args, Yes = Yes, Script = Script }; } }
+        // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
+        sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
+        sealed class ShTooBig : Exception { public ShTooBig() : base("more than 64 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
+        const int ShMaxCap = 64 * 1024 * 1024;
 
         Panel BuildShellPage()
         {
@@ -52,54 +72,88 @@ namespace AdeeboMeter
         static string ShUser { get { return Environment.UserName.ToLowerInvariant(); } }
         static string ShHost { get { return Environment.MachineName.ToLowerInvariant(); } }
         string ShShort(string v) { return v == "/home" ? "~" : v.StartsWith("/home/", StringComparison.Ordinal) ? "~" + v.Substring(5) : v; }
+        List<TermView.Seg> ShPromptSegs() { return new List<TermView.Seg> { new TermView.Seg(ShUser + "@" + ShHost, ShGreen), new TermView.Seg(":", ShFg), new TermView.Seg(ShShort(shMain.Cwd), ShBlue), new TermView.Seg("$ ", ShFg) }; }
         void ShPrompt()
         {
-            term.PromptSegs = new List<TermView.Seg> { new TermView.Seg(ShUser + "@" + ShHost, ShGreen), new TermView.Seg(":", ShFg), new TermView.Seg(ShShort(shCwd), ShBlue), new TermView.Seg("$ ", ShFg) };
-            term.Title = ShUser + "@" + ShHost + ": " + ShShort(shCwd) + "  —  AdeeboShell"; term.Secret = false;
-            term.ShowInput = shFg == null || shAskWait != null; term.Invalidate();
+            term.PromptSegs = ShPromptSegs();
+            term.Title = ShUser + "@" + ShHost + ": " + ShShort(shMain.Cwd) + "  —  AdeeboShell"; term.Secret = false;
+            term.ShowInput = (shFg == null || shAskWait != null) && shPasteBlock == null; term.Invalidate();
         }
         void ShWelcome()
         {
             term.Write("  █▀█ █▀▄ █▀▀ █▀▀ █▄▄ █▀█   " + "AdeeboShell · AdeeboMeter " + Program.Version + "\n", ShCyan);
             term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + "every tool is a command, every page is a folder\n", ShCyan);
             term.Write("\n", ShFg);
-            term.Write("  ls · cd pages · cd ~ · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
+            term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  help for everything · Tab completes · Ctrl+C stops · nothing here starts another program\n\n", ShDim);
         }
 
-        // ---------- the screen, from any thread
-        void SW(string s, Color c) { Ui(delegate { term.Write(s, c); }); }
-        void Ui(Action a) { try { if (IsDisposed) return; if (InvokeRequired) BeginInvoke(a); else a(); } catch (InvalidOperationException) { } }
-        void O(ShCtx c, string s, Color col) { if (c.Out.Screen) { if (c.Job != null && c.Job.Bg) { lock (c.Job.Saved) c.Job.Saved.Append(s); } else SW(s, col); } else lock (c.Out.Cap) c.Out.Cap.Append(s); }
+        // ---------- the screen, from any thread. Writes are batched (one UI call per burst, not per line - #3), and a batch is
+        // closed whenever another screen action is queued, so the order on screen is the order things happened.
+        readonly object swLock = new object(); List<KeyValuePair<string, Color>> swBatch;
+        void SW(string s, Color col)
+        {
+            List<KeyValuePair<string, Color>> b = null;
+            lock (swLock) { if (swBatch == null) { swBatch = new List<KeyValuePair<string, Color>>(); b = swBatch; } swBatch.Add(new KeyValuePair<string, Color>(s, col)); }
+            if (b == null) return;
+            Ui0(delegate
+            {
+                List<KeyValuePair<string, Color>> items; lock (swLock) { if (swBatch == b) swBatch = null; items = b.ToList(); }
+                var run = new StringBuilder(); Color rc = ShFg; bool any = false;
+                foreach (var kv in items) { if (any && kv.Value != rc) { term.Write(run.ToString(), rc); run.Clear(); } rc = kv.Value; any = true; run.Append(kv.Key); }
+                if (run.Length > 0) term.Write(run.ToString(), rc);
+            });
+        }
+        void Ui0(Action a) { try { if (IsDisposed) return; if (InvokeRequired) BeginInvoke(a); else a(); } catch (InvalidOperationException) { } }
+        void Ui(Action a) { lock (swLock) swBatch = null; Ui0(a); }
+        void O(ShCtx c, string s, Color col)
+        {
+            if (c.Job != null && c.Job.Abandoned) return;   // let go of with ^C^C: nothing more from it (#34)
+            if (c.Out.Screen) { if (c.Job != null && c.Job.Bg) { lock (c.Job.Saved) if (c.Job.Saved.Length < 4 * 1024 * 1024) c.Job.Saved.Append(s); } else SW(s, col); }
+            else lock (c.Out.Cap) { if (c.Out.Cap.Length + s.Length > ShMaxCap) throw new ShTooBig(); c.Out.Cap.Append(s); }
+        }
         void OL(ShCtx c, string s, Color col) { O(c, s + "\n", col); }
         void OL(ShCtx c, string s) { OL(c, s, ShFg); }
-        void Err(ShCtx c, string s)
+        void Err(ShCtx c, string s) { ErrRaw(c, s + "\n", ShRed); }
+        void ErrRaw(ShCtx c, string s, Color col)
         {
-            if (c.Out.ErrNull) return;
-            if (c.Out.ErrCap != null) { lock (c.Out.ErrCap) c.Out.ErrCap.Append(s + "\n"); return; }
-            if (c.Out.ErrScreen != null) { OL(c.With(c.Out.ErrScreen, c.Stdin), s, ShRed); return; }
-            OL(c, s, ShRed);
+            var o = c.Out;
+            for (int guard = 0; guard < 64; guard++) { if (o.ErrNull) return; if (o.ErrCap != null) { lock (o.ErrCap) o.ErrCap.Append(s); return; } if (o.ErrTo == null) break; o = o.ErrTo; }
+            O(c.With(o, c.Stdin), s, col);
         }
+        ShOut ShCapture(ShCtx c) { return new ShOut { Cap = new StringBuilder(), Job = c.Job, ErrTo = c.Out }; }
 
         // ---------- keys
         void ShChar(object s, KeyPressEventArgs e)
         {
-            if (char.IsControl(e.KeyChar)) return;
+            if (char.IsControl(e.KeyChar) || shPasteBlock != null) { e.Handled = shPasteBlock != null; return; }
             e.Handled = true; term.ClearSel(); term.Follow();
             term.Input = term.Input.Insert(term.Caret, e.KeyChar.ToString()); term.Caret++; shTabTwice = false; term.Invalidate();
         }
+        // a pasted block of lines is shown first and runs only on Enter (#48: "copy this into AdeeboShell" can't run on its own)
         void ShPaste()
         {
             string t; try { t = Clipboard.GetText(); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is ThreadStateException)) throw; return; }
-            if (string.IsNullOrEmpty(t)) return; t = t.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\t", "    ");
-            var lines = t.Split('\n').Where(z => z.Trim() != "" && !z.TrimStart().StartsWith("#", StringComparison.Ordinal)).ToList();
-            if (lines.Count <= 1 || shAskWait != null || shFg != null) { string one = string.Join(" ", lines); term.Input = term.Input.Insert(term.Caret, one); term.Caret += one.Length; term.Invalidate(); return; }
-            // a pasted script: run as one block (a for ... done across lines works), shown as you'd see it typed
-            string block = (term.Input.Trim() != "" ? term.Input + "\n" : "") + string.Join("\n", lines); term.Input = ""; term.Caret = 0; ShSubmit(block);
+            if (string.IsNullOrEmpty(t) || shPasteBlock != null) return; t = t.Replace("\r\n", "\n").Replace('\r', '\n');
+            var lines = t.Split('\n').Where(z => z.Trim() != "").ToList();
+            if (lines.Count <= 1 || shAskWait != null || shFg != null) { string one = string.Join(" ", lines).Replace("\t", " "); term.Input = term.Input.Insert(term.Caret, one); term.Caret += one.Length; term.Invalidate(); return; }
+            shPasteBlock = (term.Input.Trim() != "" ? term.Input + "\n" : "") + string.Join("\n", lines); term.Input = ""; term.Caret = 0;
+            term.Write("\n", ShFg);
+            foreach (var l in lines.Take(14)) term.Write("  │ " + l + "\n", ShDim);
+            if (lines.Count > 14) term.Write("  │ … " + (lines.Count - 14) + " more lines\n", ShDim);
+            term.Write("Pasted " + lines.Count + " lines. Enter runs them · Esc cancels\n", ShAmber);
+            ShPrompt();
         }
         void ShKey(object s, KeyEventArgs e)
         {
             var k = e.KeyCode; string inp = term.Input; int c = term.Caret;
+            if (shPasteBlock != null)
+            {
+                e.SuppressKeyPress = true;
+                if (k == Keys.Enter) { string b = shPasteBlock; shPasteBlock = null; ShSubmit(b); }
+                else if (k == Keys.Escape || (e.Control && k == Keys.C)) { shPasteBlock = null; term.Write("not run\n", ShDim); ShPrompt(); }
+                return;
+            }
             if (k != Keys.Tab) shTabTwice = false;
             if (e.Control && k == Keys.C) { e.SuppressKeyPress = true; if (term.Copy()) return; ShInterrupt(); return; }
             if (e.Control && k == Keys.V) { e.SuppressKeyPress = true; ShPaste(); return; }
@@ -109,7 +163,7 @@ namespace AdeeboMeter
             if (e.Control && k == Keys.A) { e.SuppressKeyPress = true; term.Caret = 0; term.Invalidate(); return; }
             if (e.Control && k == Keys.E) { e.SuppressKeyPress = true; term.Caret = inp.Length; term.Invalidate(); return; }
             if (e.Control && (k == Keys.W || k == Keys.Back)) { e.SuppressKeyPress = true; int a = c; while (a > 0 && inp[a - 1] == ' ') a--; while (a > 0 && inp[a - 1] != ' ' && inp[a - 1] != '/') a--; term.Input = inp.Remove(a, c - a); term.Caret = a; term.Invalidate(); return; }
-            if (e.Shift && (k == Keys.PageUp || k == Keys.PageDown) || k == Keys.PageUp || k == Keys.PageDown) { e.SuppressKeyPress = true; term.ScrollPage(k == Keys.PageUp ? 1 : -1); return; }
+            if (k == Keys.PageUp || k == Keys.PageDown) { e.SuppressKeyPress = true; term.ScrollPage(k == Keys.PageUp ? 1 : -1); return; }
             switch (k)
             {
                 case Keys.Enter: e.SuppressKeyPress = true; ShEnter(); return;
@@ -135,7 +189,8 @@ namespace AdeeboMeter
             if (shAskWait != null) { shAskAnswer = null; var w = shAskWait; shAskWait = null; term.Write(term.Input + "^C\n", ShDim); term.Input = ""; term.Caret = 0; w.Set(); return; }
             if (fg != null)
             {
-                if (fg.Cancel && (DateTime.UtcNow - fg.CancelAt).TotalSeconds > 2) { term.EndLive(); term.Write("^C again - let go of it (it ends in the background; its result is dropped)\n", ShAmber); ShFinishFg(fg, 130); return; }
+                // #34: let go means let go - nothing more from it reaches the screen or a file
+                if (fg.Cancel && (DateTime.UtcNow - fg.CancelAt).TotalSeconds > 2) { fg.Abandoned = true; term.EndLive(); term.Write("^C again - let go of it: it may still finish out of sight, but nothing more from it is shown or written\n", ShAmber); ShFinishFg(fg, 130); return; }
                 fg.Cancel = true; fg.CancelAt = DateTime.UtcNow; lock (fg.Runs) foreach (var r in fg.Runs) r.Stop = true; term.Write("^C\n", ShAmber); return;
             }
             term.Write(term.Input + "^C\n", ShDim); term.Input = ""; term.Caret = 0; ShPrompt();
@@ -152,71 +207,101 @@ namespace AdeeboMeter
             if (shFg != null) return;   // a command is running: Ctrl+C first
             // the line as typed goes on the screen right after the prompt (secrets as ****)
             var p = term.PromptSegs; foreach (var sg in p) term.Write(sg.T, sg.C);
-            string shown = string.Join("\n", line.Split('\n').Select(ShMasked)); term.Write(shown.Replace("\n", "\n> ") + "\n", ShFg);
+            string shown = ShMasked(line); term.Write(shown.Replace("\n", "\n> ") + "\n", ShFg);
             line = line.Trim(); shHi = -1; shDraft = null;
             if (line == "") { ShPrompt(); return; }
-            shown = shown.Replace("\n", " ; ").Replace("do ;", "do").Replace("then ;", "then").Replace("else ;", "else");   // history keeps it on one line
-            shHist.Remove(shown); shHist.Add(shown); if (shHist.Count > 500) shHist.RemoveAt(0);
-            var job = new ShJob { Id = 0, Cmd = shown }; shFg = job; term.ShowInput = false; term.Invalidate();
+            string hist = shown.Replace("\n", " ; ").Replace("do ;", "do").Replace("then ;", "then").Replace("else ;", "else");   // history keeps it on one line
+            shHist.Remove(hist); shHist.Add(hist); if (shHist.Count > 500) shHist.RemoveAt(0);
+            var job = new ShJob { Id = 0, Cmd = hist }; shFg = job; term.ShowInput = false; term.Invalidate();
             var t = new Thread(() =>
             {
                 int ex = 0;
                 try { ex = ShRunText(line, new ShCtx { Job = job, Out = new ShOut { Job = job } }); }
-                catch (Exception e2) { if (e2 is OutOfMemoryException) throw; Program.Log("shell: " + e2); SW("shell: " + e2.Message + "\n", ShRed); ex = 2; }
+                catch (OutOfMemoryException) { GC.Collect(); SW("shell: ran out of memory - that command was stopped (AdeeboMeter carries on)\n", ShRed); ex = 2; }   // #10: never the whole app
+                catch (Exception e2) { Program.Log("shell: " + e2); SW("shell: " + e2.Message + "\n", ShRed); ex = 2; }
                 Ui(delegate { if (shFg == job) ShFinishFg(job, ex); });
-            }) { IsBackground = true, Name = "adeeboshell" };
+            }, 16 * 1024 * 1024) { IsBackground = true, Name = "adeeboshell" };   // a deep script has room; nesting is still capped (#56)
             t.Start();
         }
         void ShFinishFg(ShJob job, int ex)
         {
-            job.Done = true; job.Exit = ex; shLastExit = ex; if (shFg == job) shFg = null;
+            job.Done = true; job.Exit = ex; shMain.LastExit = ex; if (shFg == job) shFg = null;
             term.EndLive(); if (!term.AtLineStart) term.Write("\n", ShFg);
             ShPrompt();
         }
         // a question from a running command (y/N, read): the answer comes back on the next Enter
         string ShAsk(string q, bool secret)
         {
-            var w = new ManualResetEvent(false); shAnswerReset();
+            var w = new ManualResetEvent(false); shAskAnswer = null;
             Ui(delegate { term.EndLive(); term.Write(q, ShAmber); term.PromptSegs = new List<TermView.Seg>(); term.Secret = secret; shAskWait = w; term.ShowInput = true; term.Input = ""; term.Caret = 0; term.Invalidate(); });
             w.WaitOne(); using (w) { }
             Ui(delegate { term.Secret = false; ShPromptKeepHidden(); });
             return shAskAnswer;
         }
-        void shAnswerReset() { shAskAnswer = null; }
-        void ShPromptKeepHidden() { term.PromptSegs = new List<TermView.Seg> { new TermView.Seg(ShUser + "@" + ShHost, ShGreen), new TermView.Seg(":", ShFg), new TermView.Seg(ShShort(shCwd), ShBlue), new TermView.Seg("$ ", ShFg) }; term.ShowInput = shFg == null; term.Invalidate(); }
+        void ShPromptKeepHidden() { term.PromptSegs = ShPromptSegs(); term.ShowInput = shFg == null; term.Invalidate(); }
 
-        // ---------- secrets never shown (shared secret, community, password, code boxes)
+        // ---------- secrets never shown (shared secret, community, password, code boxes). Carry-over C2: every place a command can
+        // start - after ; | && || &, after time / then / do / else / !, after NAME=value, and inside $( ) - not only the first word.
         string ShMasked(string line)
         {
-            var a = Lex(line ?? ""); if (a.Count < 2 || a[0].Op != null || shTools == null) return line ?? "";
-            var t = shTools.FirstOrDefault(x => string.Equals(x.Id, a[0].W, StringComparison.OrdinalIgnoreCase)); if (t == null) return line;
-            bool any = false; int box = 0;
-            for (int i = 1; i < a.Count; i++) { if (a[i].Op != null) break; if (a[i].W == "--yes" || a[i].W == "-y") continue; if (box < t.Inputs.Length && SecretInput(t.Inputs[box]) && a[i].W != "" && a[i].W != "-") { a[i].W = "****"; a[i].Q = false; any = true; } box++; }
-            return any ? string.Join(" ", a.Select(z => z.Op ?? (z.Q || z.W.Contains(" ") ? "\"" + z.W + "\"" : z.W))) : line;
+            if (shTools == null || string.IsNullOrEmpty(line)) return line ?? "";
+            List<Tok> a; try { a = Lex(line); } catch (FormatException) { return line; }
+            bool any = false, cmdPos = true;
+            for (int i = 0; i < a.Count; i++)
+            {
+                var tk = a[i];
+                if (tk.Op != null) { cmdPos = tk.Op == ";" || tk.Op == "|" || tk.Op == "&&" || tk.Op == "||" || tk.Op == "&"; continue; }
+                if (tk.W.IndexOf('\u0005') >= 0) tk.W = Regex.Replace(tk.W, "\u0005([^\u0006]*)\u0006", m => { string inner = ShMasked(m.Groups[1].Value); if (inner != m.Groups[1].Value) any = true; return "\u0005" + inner + "\u0006"; });
+                if (!cmdPos) continue;
+                if (!tk.Q && (tk.W == "time" || tk.W == "then" || tk.W == "do" || tk.W == "else" || tk.W == "!" || tk.W == "if" || tk.W == "while" || tk.W == "nohup" || Regex.IsMatch(tk.W, "^[A-Za-z_][A-Za-z0-9_]*="))) continue;
+                cmdPos = false;
+                var t = shTools.FirstOrDefault(x => string.Equals(x.Id, tk.W, StringComparison.OrdinalIgnoreCase)); if (t == null) continue;
+                int box = 0;
+                for (int j = i + 1; j < a.Count && a[j].Op == null; j++) { if (a[j].W == "--yes" || a[j].W == "-y") continue; if (box < t.Inputs.Length && SecretInput(t.Inputs[box]) && a[j].W != "" && a[j].W != "-") { a[j].W = "****"; a[j].Q = false; any = true; } box++; }
+            }
+            return any ? Unlex(a) : line;
+        }
+        static string Unlex(IEnumerable<Tok> a)
+        {
+            return string.Join(" ", a.Select(z =>
+            {
+                if (z.Op != null) return z.Op == ";" ? ";" : z.Op;
+                string w = Regex.Replace(z.W, "\u0005([^\u0006]*)\u0006", "$$($1)"); w = Regex.Replace(w, "\u0007([^\u0006]*)\u0006", "$$(($1))"); w = w.Replace('\u0001', '$');
+                return z.Q || w.Contains(" ") || w == "" ? "\"" + w.Replace("\"", "\\\"") + "\"" : w;
+            }));
         }
 
         // =====================================================================================================================
         // the language: words, operators, and the structures scripts use (for / while / if)
-        sealed class Tok { public string W, Op; public bool Q, SQ; public Tok Copy() { return new Tok { W = W, Op = Op, Q = Q, SQ = SQ }; } }
+        // In a word: \u0001 is a literal $ ('...' or \$), \u0005...\u0006 a $(command), \u0007...\u0006 a $((sum)).
+        sealed class Tok { public string W, Op; public bool Q; }
         static List<Tok> Lex(string s)
         {
-            var l = new List<Tok>(); var sb = new StringBuilder(); bool had = false, q = false, sq = false; char quote = '\0';
-            Action flush = () => { if (sb.Length > 0 || had) l.Add(new Tok { W = sb.ToString(), Q = q, SQ = sq }); sb.Clear(); had = false; q = false; sq = false; };
+            var l = new List<Tok>(); var sb = new StringBuilder(); bool had = false, q = false; char quote = '\0';
+            Action flush = () => { if (sb.Length > 0 || had) l.Add(new Tok { W = sb.ToString(), Q = q }); sb.Clear(); had = false; q = false; };
             for (int i = 0; i < s.Length; i++)
             {
                 char ch = s[i];
-                // $(command), `command`, $((math)): kept whole for Expand (raw text between \u0005 / \u0007 and \u0006)
+                // $(command), `command`, $((math)): kept whole for Expand
                 if (quote != '\'' && ((ch == '$' && i + 1 < s.Length && s[i + 1] == '(') || ch == '`'))
                 {
-                    int end; string inner;
-                    if (ch == '`') { end = s.IndexOf('`', i + 1); if (end > 0) { sb.Append('\u0005').Append(s, i + 1, end - i - 1).Append('\u0006'); i = end; had = true; continue; } }
-                    else if (i + 2 < s.Length && s[i + 2] == '(' && (end = MathEnd(s, i + 3)) > 0) { inner = s.Substring(i + 3, end - i - 3); sb.Append('\u0007').Append(inner).Append('\u0006'); i = end + 1; had = true; continue; }
-                    else if ((end = ParenEnd(s, i + 2)) > 0) { inner = s.Substring(i + 2, end - i - 2); sb.Append('\u0005').Append(inner).Append('\u0006'); i = end; had = true; continue; }
+                    int end;
+                    if (ch == '`') { end = -1; for (int j = i + 1; j < s.Length; j++) { if (s[j] == '\\') { j++; continue; } if (s[j] == '`') { end = j; break; } } if (end < 0) throw new FormatException("a ` isn't closed"); sb.Append('\u0005').Append(s, i + 1, end - i - 1).Append('\u0006'); i = end; had = true; continue; }
+                    if (i + 2 < s.Length && s[i + 2] == '(' && (end = MathEnd(s, i + 3)) > 0) { sb.Append('\u0007').Append(s, i + 3, end - i - 3).Append('\u0006'); i = end + 1; had = true; continue; }
+                    if ((end = ParenEnd(s, i + 2)) < 0) throw new FormatException("a $( isn't closed");
+                    sb.Append('\u0005').Append(s, i + 2, end - i - 2).Append('\u0006'); i = end; had = true; continue;
                 }
-                if (quote != '\0') { if (ch == quote) { quote = '\0'; continue; } if (ch == '\\' && quote == '"' && i + 1 < s.Length && (s[i + 1] == '"' || s[i + 1] == '\\' || s[i + 1] == '$')) { sb.Append(s[++i]); continue; } if (quote == '\'' && ch == '$') { sb.Append('\u0001'); continue; } sb.Append(ch); continue; }
-                if (ch == '"' || ch == '\'') { quote = ch; had = true; q = true; if (ch == '\'') sq = true; continue; }
-                if (ch == '\\' && i + 1 < s.Length) { sb.Append(s[++i]); had = true; q = true; continue; }
-                if (ch == '#' && sb.Length == 0 && !had) break;   // a comment
+                if (quote != '\0')
+                {
+                    if (ch == quote) { quote = '\0'; continue; }
+                    if (quote == '"' && ch == '\\' && i + 1 < s.Length && "\"\\$`".IndexOf(s[i + 1]) >= 0) { char n2 = s[++i]; sb.Append(n2 == '$' ? '\u0001' : n2); continue; }
+                    if (quote == '"' && ch == '\\' && i + 1 < s.Length && s[i + 1] == '\n') { i++; continue; }
+                    if (quote == '\'' && ch == '$') { sb.Append('\u0001'); continue; }
+                    sb.Append(ch); continue;
+                }
+                if (ch == '"' || ch == '\'') { quote = ch; had = true; q = true; continue; }
+                if (ch == '\\' && i + 1 < s.Length) { char n2 = s[++i]; if (n2 == '\n') continue; sb.Append(n2 == '$' ? '\u0001' : n2); had = true; q = true; continue; }
+                if (ch == '#' && sb.Length == 0 && !had) { while (i + 1 < s.Length && s[i + 1] != '\n') i++; continue; }   // a comment: to the end of its line only (#1)
                 if (ch == ' ' || ch == '\t') { flush(); continue; }
                 if (ch == '\n') { flush(); l.Add(new Tok { Op = ";" }); continue; }
                 string two = i + 1 < s.Length ? s.Substring(i, 2) : "";
@@ -229,11 +314,13 @@ namespace AdeeboMeter
                     continue;
                 }
                 if (two == "&>") { flush(); l.Add(new Tok { Op = "&>" }); i++; continue; }
-                if (two == ">&" && i + 2 < s.Length && (s[i + 2] == '1' || s[i + 2] == '2')) { flush(); i += 2; continue; }   // >&2: our errors and output share the screen anyway
+                if (two == ">&" && i + 2 < s.Length && s[i + 2] == '2') { flush(); l.Add(new Tok { Op = ">&2" }); i += 2; continue; }   // #21: this output goes the errors' way
+                if (two == ">&" && i + 2 < s.Length && s[i + 2] == '1') { flush(); i += 2; continue; }
                 if (two == "&&" || two == "||" || two == ">>") { flush(); l.Add(new Tok { Op = two }); i++; continue; }
                 if (ch == '|' || ch == ';' || ch == '&' || ch == '>' || ch == '<') { flush(); l.Add(new Tok { Op = ch.ToString() }); continue; }
                 sb.Append(ch);
             }
+            if (quote != '\0') throw new FormatException("a " + quote + " isn't closed");   // #51: a syntax error, not plausible output
             flush(); return l;
         }
         // the ) that closes a $( - quotes and nested ( ) respected; -1 when it never closes
@@ -259,19 +346,23 @@ namespace AdeeboMeter
         }
         abstract class Node { }
         sealed class NCmd : Node { public List<Tok> Words = new List<Tok>(); }
-        sealed class NPipe : Node { public List<Node> Cmds = new List<Node>(); public bool Bg; }   // a stage: a command, or a whole for/while/if (for ... done | sort)
+        sealed class NPipe : Node { public List<Node> Cmds = new List<Node>(); public bool Bg; public string Text; }   // a stage: a command, or a whole for/while/if (for ... done | sort)
         sealed class NAndOr : Node { public List<Node> Parts = new List<Node>(); public List<string> Ops = new List<string>(); }
         sealed class NSeq : Node { public List<Node> Items = new List<Node>(); }
         sealed class NFor : Node { public string Var; public List<Tok> In = new List<Tok>(); public NSeq Body; }
-        sealed class NWhile : Node { public NSeq Cond, Body; }
+        sealed class NWhile : Node { public NSeq Cond, Body; public bool Until; }
         sealed class NIf : Node { public List<NSeq> Conds = new List<NSeq>(), Bodies = new List<NSeq>(); public NSeq Else; }
+        sealed class NRedir : Node { public Node Inner; public List<Tok> Redirs = new List<Tok>(); }   // for ... done > file (#9)
+        static bool NeedsTarget(string op) { return op == ">" || op == ">>" || op == "<" || op == "2>" || op == "2>>" || op == "&>"; }
+        static bool IsRedir(string op) { return op != null && (NeedsTarget(op) || op == "2>&1" || op == ">&2"); }
         sealed class Parser
         {
-            readonly List<Tok> t; int i;
+            readonly List<Tok> t; int i, depth;
             public Parser(List<Tok> toks) { t = toks; }
             bool Sep() { return i < t.Count && t[i].Op == ";"; }
             bool Kw(params string[] k) { return i < t.Count && t[i].Op == null && !t[i].Q && k.Contains(t[i].W); }
             string Expect(params string[] k) { if (!Kw(k)) throw new FormatException("expected " + string.Join(" or ", k) + (i < t.Count ? " near '" + (t[i].Op ?? t[i].W) + "'" : " at the end")); return t[i++].W; }
+            void Deeper() { if (++depth > 120) throw new FormatException("nested more than 120 deep"); }   // #56
             public NSeq List(params string[] stop)
             {
                 var s = new NSeq();
@@ -279,46 +370,65 @@ namespace AdeeboMeter
                 {
                     while (Sep()) i++;
                     if (i >= t.Count || Kw(stop)) return s;
-                    s.Items.Add(Statement());
-                    if (i < t.Count && t[i].Op == "&") { var last = s.Items[s.Items.Count - 1]; var p = last as NPipe; if (p != null) p.Bg = true; else s.Items[s.Items.Count - 1] = new NPipe { Bg = true, Cmds = { new NCmd { Words = { new Tok { W = "\u0002" } } } } }; i++; if (last is NAndOr) throw new FormatException("& after && or || isn't supported - put it in a script"); }
+                    int st = i; var stmt = Statement();
+                    if (i < t.Count && t[i].Op == "&")   // #32: anything can go to the background - a loop too
+                    {
+                        var p = stmt as NPipe; if (p == null || p.Cmds.Count == 0) p = new NPipe { Cmds = { stmt } };
+                        p.Bg = true; p.Text = Unlex(t.GetRange(st, i - st)); s.Items.Add(p); i++;
+                    }
+                    else s.Items.Add(stmt);
                 }
             }
             Node Statement()
             {
+                Deeper();
                 var ao = new NAndOr(); ao.Parts.Add(Pipe());
                 while (i < t.Count && (t[i].Op == "&&" || t[i].Op == "||")) { ao.Ops.Add(t[i++].Op); while (Sep()) i++; ao.Parts.Add(Pipe()); }
+                depth--;
                 return ao.Parts.Count == 1 ? ao.Parts[0] : ao;
             }
+            NSeq Cond(string word, params string[] stop) { var c = List(stop); if (c.Items.Count == 0) throw new FormatException(word + " needs a condition"); return c; }   // #54
             Node Compound()
             {
+                Node n;
                 if (Kw("for"))
                 {
                     i++; var f = new NFor(); if (i >= t.Count || t[i].Op != null) throw new FormatException("for needs a name"); f.Var = t[i++].W;
                     if (Kw("in")) { i++; while (i < t.Count && t[i].Op == null && !Kw("do")) f.In.Add(t[i++]); }
-                    while (Sep()) i++; Expect("do"); f.Body = List("done"); Expect("done"); return f;
+                    else f.In.Add(new Tok { W = "\u0009@" });   // for x; do: the script's arguments
+                    while (Sep()) i++; Expect("do"); f.Body = List("done"); Expect("done"); n = f;
                 }
-                if (Kw("while")) { i++; var w = new NWhile { Cond = List("do") }; Expect("do"); w.Body = List("done"); Expect("done"); return w; }
-                if (Kw("if"))
+                else if (Kw("while", "until")) { bool until = t[i].W == "until"; i++; var w = new NWhile { Cond = Cond(until ? "until" : "while", "do"), Until = until }; Expect("do"); w.Body = List("done"); Expect("done"); n = w; }
+                else if (Kw("if"))
                 {
-                    i++; var n = new NIf(); n.Conds.Add(List("then")); Expect("then"); n.Bodies.Add(List("elif", "else", "fi"));
-                    while (Kw("elif")) { i++; n.Conds.Add(List("then")); Expect("then"); n.Bodies.Add(List("elif", "else", "fi")); }
-                    if (Kw("else")) { i++; n.Else = List("fi"); }
-                    Expect("fi"); return n;
+                    i++; var f = new NIf(); f.Conds.Add(Cond("if", "then")); Expect("then"); f.Bodies.Add(List("elif", "else", "fi"));
+                    while (Kw("elif")) { i++; f.Conds.Add(Cond("elif", "then")); Expect("then"); f.Bodies.Add(List("elif", "else", "fi")); }
+                    if (Kw("else")) { i++; f.Else = List("fi"); }
+                    Expect("fi"); n = f;
                 }
-                return Cmd();
+                else return Cmd();
+                // redirects after done / fi belong to the whole loop or if (#9)
+                if (i < t.Count && IsRedir(t[i].Op))
+                {
+                    var r = new NRedir { Inner = n };
+                    while (i < t.Count && IsRedir(t[i].Op)) { var op = t[i++]; r.Redirs.Add(op); if (NeedsTarget(op.Op)) { if (i >= t.Count || t[i].Op != null) throw new FormatException(op.Op + " needs a file name"); r.Redirs.Add(t[i++]); } }
+                    return r;
+                }
+                return n;
             }
             NPipe Pipe()
             {
-                var p = new NPipe(); p.Cmds.Add(Compound());
+                int st = i; var p = new NPipe(); p.Cmds.Add(Compound());
                 while (i < t.Count && t[i].Op == "|") { i++; while (Sep()) i++; p.Cmds.Add(Compound()); }
+                p.Text = Unlex(t.GetRange(st, i - st));
                 return p;
             }
             NCmd Cmd()
             {
                 var c = new NCmd();
-                while (i < t.Count && (t[i].Op == null || t[i].Op == ">" || t[i].Op == ">>" || t[i].Op == "<" || t[i].Op == "2>" || t[i].Op == "2>>" || t[i].Op == "&>" || t[i].Op == "2>&1"))
+                while (i < t.Count && (t[i].Op == null || IsRedir(t[i].Op)))
                 {
-                    if (t[i].Op == "2>&1") { c.Words.Add(t[i++]); continue; }   // errors already go where the output goes
+                    if (t[i].Op != null && !NeedsTarget(t[i].Op)) { c.Words.Add(t[i++]); continue; }   // 2>&1, >&2
                     if (t[i].Op != null) { var op = t[i++]; if (i >= t.Count || t[i].Op != null) throw new FormatException(op.Op + " needs a file name"); c.Words.Add(op); c.Words.Add(t[i++]); continue; }
                     c.Words.Add(t[i++]);
                 }
@@ -326,33 +436,70 @@ namespace AdeeboMeter
                 return c;
             }
         }
-        int ShRunText(string text, ShCtx c)
+        int ShRunText(string text, ShCtx c) { return ShRunText(text, c, "adeeboshell: "); }
+        int ShRunText(string text, ShCtx c, string who)
         {
             NSeq prog;
-            try { var p = new Parser(Lex(text)); prog = p.List(); }
-            catch (FormatException fe) { Err(c, "adeeboshell: " + fe.Message); return 2; }
-            return Exec(prog, c);
+            try { prog = new Parser(Lex(text.Replace("\r", ""))).List(); }
+            catch (FormatException fe) { Err(c, who + fe.Message); return 2; }
+            try { return Exec(prog, c); }
+            catch (ShFlow fl) { return fl.Kind == "exit" || fl.Kind == "return" ? fl.Code : 0; }
         }
         int Exec(Node n, ShCtx c)
         {
             if (c.Job.Cancel) return 130;
-            var seq = n as NSeq; if (seq != null) { int r = 0; foreach (var it in seq.Items) { if (c.Job.Cancel) return 130; r = Exec(it, c); shLastExit = r; } return r; }
+            var seq = n as NSeq; if (seq != null) { int r = 0; foreach (var it in seq.Items) { if (c.Job.Cancel) return 130; r = Exec(it, c); Env.LastExit = r; } return r; }
             var ao = n as NAndOr;
-            if (ao != null) { int r = Exec(ao.Parts[0], c); for (int k = 0; k < ao.Ops.Count; k++) { if ((ao.Ops[k] == "&&") == (r == 0)) r = Exec(ao.Parts[k + 1], c); shLastExit = r; } return r; }
+            if (ao != null) { int r = Exec(ao.Parts[0], c); Env.LastExit = r; for (int k = 0; k < ao.Ops.Count; k++) { if ((ao.Ops[k] == "&&") == (r == 0)) { r = Exec(ao.Parts[k + 1], c); Env.LastExit = r; } } return r; }   // #7: $? is right inside the chain
             var f = n as NFor;
-            if (f != null) { int r = 0; foreach (var w in Expand(f.In, c)) { if (c.Job.Cancel) return 130; lock (shVars) shVars[f.Var] = w; r = Exec(f.Body, c); } return r; }
+            if (f != null)
+            {
+                List<string> items;
+                if (f.In.Count == 1 && f.In[0].W == "\u0009@") items = c.Args.ToList();
+                else { try { items = Expand(f.In, c).Select(z => z.StartsWith("\u0008", StringComparison.Ordinal) ? z.Substring(1) : z).ToList(); } catch (Exception e) { if (!(e is FormatException || e is DivideByZeroException)) throw; Err(c, "for: " + e.Message); return 1; } }
+                int r = 0; loopDepth++;
+                try
+                {
+                    foreach (var w in items)
+                    {
+                        if (c.Job.Cancel) return 130;
+                        lock (Env.Vars) Env.Vars[f.Var] = w;
+                        try { r = Exec(f.Body, c); }
+                        catch (ShFlow fl) { if (fl.Kind != "break" && fl.Kind != "continue") throw; if (fl.Level > 1) { fl.Level--; throw; } if (fl.Kind == "break") break; }
+                    }
+                }
+                finally { loopDepth--; }
+                return r;
+            }
             var wh = n as NWhile;
-            if (wh != null) { int r = 0, guard = 0; while (!c.Job.Cancel && Exec(wh.Cond, c) == 0) { r = Exec(wh.Body, c); if (++guard > 100000) { Err(c, "while: stopped after 100,000 rounds"); return 1; } } return r; }
+            if (wh != null)
+            {
+                int r = 0, guard = 0; loopDepth++;
+                try
+                {
+                    while (!c.Job.Cancel && ((Exec(wh.Cond, c) == 0) != wh.Until))
+                    {
+                        try { r = Exec(wh.Body, c); }
+                        catch (ShFlow fl) { if (fl.Kind != "break" && fl.Kind != "continue") throw; if (fl.Level > 1) { fl.Level--; throw; } if (fl.Kind == "break") break; }
+                        if (++guard > 100000) { Err(c, (wh.Until ? "until" : "while") + ": stopped after 100,000 rounds"); return 1; }
+                    }
+                }
+                finally { loopDepth--; }
+                return c.Job.Cancel ? 130 : r;
+            }
             var nf = n as NIf;
             if (nf != null) { for (int k = 0; k < nf.Conds.Count; k++) if (Exec(nf.Conds[k], c) == 0) return Exec(nf.Bodies[k], c); return nf.Else != null ? Exec(nf.Else, c) : 0; }
+            var rd = n as NRedir;
+            if (rd != null) { List<string> w; try { w = Expand(rd.Redirs, c); } catch (FormatException e) { Err(c, "adeeboshell: " + e.Message); return 1; } return ApplyRedirs(w, c, cc => Exec(rd.Inner, cc)); }
             var p = n as NPipe; if (p == null) return 0;
             if (p.Bg) return ShBackground(p, c);
             if (p.Cmds.Count == 1) return Stage(p.Cmds[0], c);
+            // a pipeline: every stage in its own copy of the folder and variables (#8); errors skip the data and go on (#2)
             string stdin = c.Stdin; int ex = 0;
             for (int k = 0; k < p.Cmds.Count; k++)
             {
-                bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : new ShOut { Cap = new StringBuilder(), Job = c.Job };
-                ex = Stage(p.Cmds[k], c.With(o, stdin)); if (!last) stdin = o.Cap.ToString();
+                bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : ShCapture(c); var node = p.Cmds[k]; var cc = c.With(o, stdin);
+                ex = InSub(() => Stage(node, cc)); if (!last) stdin = o.Cap.ToString();
                 if (c.Job.Cancel) return 130;
             }
             return ex;
@@ -360,68 +507,150 @@ namespace AdeeboMeter
         int Stage(Node n, ShCtx c) { var cmd = n as NCmd; return cmd != null ? RunCmd(cmd, c) : Exec(n, c); }
         int ShBackground(NPipe p, ShCtx c)
         {
-            var job = new ShJob { Id = Interlocked.Increment(ref shJobN), Bg = true, Cmd = "(job)" }; lock (shJobs) shJobs.Add(job);
-            var fg = new NPipe { Cmds = p.Cmds };
-            OL(c, "[" + job.Id + "] started", ShDim);
+            var job = new ShJob { Id = Interlocked.Increment(ref shJobN), Bg = true, Cmd = p.Text ?? "(job)" }; lock (shJobs) shJobs.Add(job);
+            Node body = p.Cmds.Count == 1 ? p.Cmds[0] : new NPipe { Cmds = p.Cmds, Text = p.Text };
+            var env = Env.Clone(); var args = c.Args; bool yes = c.Yes;
+            OL(c, "[" + job.Id + "] started  " + job.Cmd, ShDim);
             new Thread(() =>
             {
-                int ex = 0; try { ex = Exec(fg, new ShCtx { Job = job, Out = new ShOut { Job = job }, Args = c.Args, Yes = c.Yes, Script = true }); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; lock (job.Saved) job.Saved.Append("error: " + e.Message + "\n"); ex = 2; }
+                tEnv = env; int ex = 0;
+                try { ex = Exec(body, new ShCtx { Job = job, Out = new ShOut { Job = job }, Args = args, Yes = yes, Script = true }); }
+                catch (ShFlow fl) { ex = fl.Code; }
+                catch (OutOfMemoryException) { GC.Collect(); lock (job.Saved) job.Saved.Append("ran out of memory - stopped\n"); ex = 2; }
+                catch (Exception e) { lock (job.Saved) job.Saved.Append("error: " + e.Message + "\n"); ex = 2; }
                 job.Exit = ex; job.Done = true;
+                lock (shJobs) { shJobs.Remove(job); shDone[job.Id] = ex; if (shDone.Count > 64) shDone.Remove(shDone.Keys.Min()); }   // #55: finished jobs leave the list
                 string outp; lock (job.Saved) outp = job.Saved.ToString();
-                Ui(delegate { bool hidden = shFg == null; term.EndLive(); if (!term.AtLineStart) term.Write("\n", ShFg); term.Write("[" + job.Id + "] done (exit " + ex + ")\n", ex == 0 ? ShGreen : ShAmber); if (outp != "") term.Write(outp.EndsWith("\n", StringComparison.Ordinal) ? outp : outp + "\n", ShFg); if (hidden) ShPrompt(); });
+                Ui(delegate { bool hidden = shFg == null; term.EndLive(); if (!term.AtLineStart) term.Write("\n", ShFg); term.Write("[" + job.Id + "] done (exit " + ex + ")  " + job.Cmd + "\n", ex == 0 ? ShGreen : ShAmber); if (outp != "") term.Write(outp.EndsWith("\n", StringComparison.Ordinal) ? outp : outp + "\n", ShFg); if (hidden) ShPrompt(); });
             }) { IsBackground = true, Name = "adeeboshell job" }.Start();
             return 0;
         }
 
-        // words -> the strings a command gets: $VARS, $?, $1, ~, and * globs (not inside quotes)
+        // words -> the strings a command gets: $VARS, ${...}, $(cmd), $((sum)), ~, and * globs (not inside quotes).
+        // An assignment word (NAME=value) comes back as \u0008NAME=value, unsplit and unglobbed (#25); a redirect's target must
+        // expand to exactly one word, else it comes back as \u0004 "ambiguous" (#20).
         List<string> Expand(List<Tok> words, ShCtx c)
         {
-            var r = new List<string>();
+            var r = new List<string>(); bool target = false;
             foreach (var w in words)
             {
-                if (w.Op != null) { r.Add("\u0003" + w.Op); continue; }
-                string s = w.W;
-                bool hadVar = (!w.SQ && s.Contains("$")) || s.IndexOf('\u0005') >= 0 || s.IndexOf('\u0007') >= 0, assign = Regex.IsMatch(s, "^[A-Za-z_][A-Za-z0-9_]*=");
-                s = Subst(s, c, w.SQ);
-                if (hadVar && !w.Q && !assign) { var parts = s.Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries); if (parts.Length != 1) { r.AddRange(parts); continue; } }   // HOSTS="a b c"; for h in $HOSTS - split like bash
-                s = s.Replace('\u0001', '$');
-                if (!w.Q && (s == "~" || s.StartsWith("~/", StringComparison.Ordinal))) s = "/home" + s.Substring(1);
-                if (!w.Q && (s.Contains("*") || s.Contains("?")) && !s.Contains("://")) { var g = Glob(s); if (g.Count > 0) { r.AddRange(g); continue; } }
-                r.Add(s);
+                if (w.Op != null) { r.Add("\u0003" + w.Op); target = NeedsTarget(w.Op); continue; }
+                string raw = w.W; bool hadVar = raw.IndexOf('$') >= 0 || raw.IndexOf('\u0005') >= 0 || raw.IndexOf('\u0007') >= 0;
+                if (target)
+                {
+                    target = false; string v = Tilde(Subst(raw, c), w.Q).Replace('\u0001', '$');
+                    if (v == "" || (hadVar && !w.Q && Regex.IsMatch(v, @"\s"))) { r.Add("\u0004" + Unlex(new[] { w })); continue; }
+                    if (!w.Q && (v.Contains("*") || v.Contains("?"))) { var g = Glob(v); if (g.Count > 1) { r.Add("\u0004" + v); continue; } if (g.Count == 1) v = g[0]; }
+                    r.Add(v); continue;
+                }
+                var am = Regex.Match(raw, "^([A-Za-z_][A-Za-z0-9_]*)=");
+                if (am.Success) { string val = Subst(raw.Substring(am.Length), c); val = Tilde(val, w.Q).Replace('\u0001', '$'); r.Add("\u0008" + am.Groups[1].Value + "=" + val); continue; }
+                string s = Subst(raw, c);
+                if (hadVar && !w.Q)
+                {
+                    var parts = s.Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);   // HOSTS="a b c"; for h in $HOSTS - split like bash
+                    if (parts.Length != 1) { foreach (var pt in parts) AddWord(r, pt.Replace('\u0001', '$'), false); continue; }
+                }
+                AddWord(r, Tilde(s, w.Q).Replace('\u0001', '$'), w.Q);
             }
             return r;
         }
-        static readonly Regex VarRx = new Regex(@"\$(\?|#|@|\d|\{[A-Za-z_][A-Za-z0-9_]*\}|[A-Za-z_][A-Za-z0-9_]*)");
+        void AddWord(List<string> r, string s, bool quoted)
+        {
+            if (!quoted && (s.Contains("*") || s.Contains("?")) && !s.Contains("://")) { var g = Glob(s); if (g.Count > 0) { r.AddRange(g); return; } }
+            r.Add(s);
+        }
+        static string Tilde(string s, bool quoted)
+        {
+            if (quoted) return s;
+            if (s == "~" || s.StartsWith("~/", StringComparison.Ordinal)) return "/home" + s.Substring(1);
+            return Regex.Replace(s, "(^|:)~(?=/|:|$)", "$1/home");   // PATH-style a:~/b
+        }
+        static readonly Regex VarRx = new Regex(@"\$(\{[^}]*\}|\?|#|@|\$|\d|[A-Za-z_][A-Za-z0-9_]*)");
         // $VARS in the plain parts, $(command) run and its output put in (trailing newlines off), $((math)) worked out
-        string Subst(string s, ShCtx c, bool sq)
+        string Subst(string s, ShCtx c)
         {
             var sb = new StringBuilder(); int i = 0;
             while (i < s.Length)
             {
                 int a = s.IndexOfAny(new[] { '\u0005', '\u0007' }, i); string plain = a < 0 ? s.Substring(i) : s.Substring(i, a - i);
-                sb.Append(sq ? plain : VarRx.Replace(plain, m => Var(m.Groups[1].Value.Trim('{', '}'), c)));
+                sb.Append(VarRx.Replace(plain, m => { string g = m.Groups[1].Value; return g.StartsWith("{", StringComparison.Ordinal) ? Param(g.Substring(1, g.Length - 2), c) : Var(g, c); }));
                 if (a < 0) break;
                 int e = s.IndexOf('\u0006', a); if (e < 0) e = s.Length;
                 string inner = s.Substring(a + 1, e - a - 1);
                 if (s[a] == '\u0005')
                 {
-                    var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job };
-                    int ex = ShRunText(inner, new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes, Script = true, Stdin = null }); shLastExit = ex;
-                    sb.Append(cap.Cap.ToString().Replace("\r", "").TrimEnd('\n'));
+                    if (substDepth >= 40) throw new FormatException("$( ) nested more than 40 deep");   // #56
+                    substDepth++; int saveLoop = loopDepth; loopDepth = 0;
+                    try
+                    {
+                        var cap = ShCapture(c); var cc = new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes, Script = true };
+                        int ex = InSub(() => ShRunText(inner, cc)); Env.LastExit = ex; lastSubstExit = ex;
+                        sb.Append(cap.Cap.ToString().Replace("\r", "").TrimEnd('\n'));
+                    }
+                    finally { substDepth--; loopDepth = saveLoop; }
                 }
                 else sb.Append(MathOf(inner, c).ToString(CultureInfo.InvariantCulture));
                 i = e + 1;
             }
             return sb.ToString();
         }
-        // $(( )): whole numbers; + - * / % ** ( ) == != < <= > >= && || ! and names or $names (empty = 0)
+        // ${NAME} ${#NAME} ${NAME:-w} ${NAME:=w} ${NAME:+w} ${NAME:?w} ${NAME#p} ${NAME##p} ${NAME%p} ${NAME%%p} ${NAME/p/r}
+        // ${NAME//p/r} ${NAME:off:len} (#57) - a form it doesn't know is an error, not literal text
+        string Param(string e, ShCtx c)
+        {
+            if (e.Length > 1 && e[0] == '#' && Regex.IsMatch(e.Substring(1), @"^([A-Za-z_][A-Za-z0-9_]*|\d+)$")) return Var(e.Substring(1), c).Length.ToString(CultureInfo.InvariantCulture);
+            var m = Regex.Match(e, @"^([A-Za-z_][A-Za-z0-9_]*|\d+|[?#@$])(.*)$", RegexOptions.Singleline);
+            if (!m.Success) throw new FormatException("${" + e + "}: bad substitution");
+            string name = m.Groups[1].Value, rest = m.Groups[2].Value, val = Var(name, c); bool set; lock (Env.Vars) set = Env.Vars.ContainsKey(name) || val != "";
+            if (rest == "") return val;
+            Func<string, string> word = w => Subst(w, c).Replace('\u0001', '$');
+            var op = Regex.Match(rest, @"^(:?[-=+?])(.*)$", RegexOptions.Singleline);
+            if (op.Success)
+            {
+                bool colon = op.Groups[1].Value.StartsWith(":", StringComparison.Ordinal), empty = colon ? val == "" : !set; string w = op.Groups[2].Value;
+                switch (op.Groups[1].Value.TrimStart(':'))
+                {
+                    case "-": return empty ? word(w) : val;
+                    case "=": if (empty) { string nv = word(w); lock (Env.Vars) Env.Vars[name] = nv; return nv; } return val;
+                    case "+": return empty ? "" : word(w);
+                    case "?": if (empty) throw new FormatException(name + ": " + (w == "" ? "not set" : word(w))); return val;
+                }
+            }
+            var cut = Regex.Match(rest, @"^(##|#|%%|%)(.*)$", RegexOptions.Singleline);
+            if (cut.Success)
+            {
+                var rx = new Regex("^" + GlobRx(word(cut.Groups[2].Value)) + "$", RegexOptions.Singleline, TimeSpan.FromSeconds(2)); string how = cut.Groups[1].Value;
+                if (how == "#") { for (int k = 0; k <= val.Length; k++) if (rx.IsMatch(val.Substring(0, k))) return val.Substring(k); }
+                else if (how == "##") { for (int k = val.Length; k >= 0; k--) if (rx.IsMatch(val.Substring(0, k))) return val.Substring(k); }
+                else if (how == "%") { for (int k = val.Length; k >= 0; k--) if (rx.IsMatch(val.Substring(k))) return val.Substring(0, k); }
+                else { for (int k = 0; k <= val.Length; k++) if (rx.IsMatch(val.Substring(k))) return val.Substring(0, k); }
+                return val;
+            }
+            var rep = Regex.Match(rest, @"^(//?)([^/]*)(?:/(.*))?$", RegexOptions.Singleline);
+            if (rep.Success)
+            {
+                var rx = new Regex(GlobRx(word(rep.Groups[2].Value)), RegexOptions.Singleline, TimeSpan.FromSeconds(2)); string to = word(rep.Groups[3].Value);
+                return rep.Groups[1].Value == "//" ? rx.Replace(val, to.Replace("$", "$$")) : rx.Replace(val, to.Replace("$", "$$"), 1);
+            }
+            var sub = Regex.Match(rest, @"^:\s*(-?\d+)(?::(\d+))?$");
+            if (sub.Success)
+            {
+                int off = int.Parse(sub.Groups[1].Value, CultureInfo.InvariantCulture); if (off < 0) off = Math.Max(0, val.Length + off); off = Math.Min(off, val.Length);
+                int len = sub.Groups[2].Success ? int.Parse(sub.Groups[2].Value, CultureInfo.InvariantCulture) : val.Length - off;
+                return val.Substring(off, Math.Max(0, Math.Min(len, val.Length - off)));
+            }
+            throw new FormatException("${" + e + "}: bad substitution");
+        }
+        static string GlobRx(string p) { return Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", "."); }
+        // $(( )): whole numbers; + - * / % ** ( ) == != < <= > >= && || ! and names or $names (empty = 0). && and || don't work out
+        // the side they don't need (#24): $((x && 10/x)) is safe.
         long MathOf(string e, ShCtx c)
         {
             var toks = Regex.Matches(e, @"\s*(\d+|\$?[A-Za-z_][A-Za-z0-9_]*|\$\d|\*\*|==|!=|<=|>=|&&|\|\||[-+*/%()<>!])").Cast<Match>().Select(m => m.Groups[1].Value).ToList();
             if (string.Join("", toks) != Regex.Replace(e, @"\s+", "")) throw new FormatException("$((" + e + ")): not a sum this shell can do");
-            int k = 0; Func<int, long> bin = null; Func<long> unary = null;
-            Func<string, long> val = w => { string n = w.TrimStart('$'); long v; string sv = Var(n, c); return long.TryParse(sv.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out v) ? v : 0; };
+            int k = 0, skip = 0; Func<int, long> bin = null; Func<long> unary = null;
+            Func<string, long> val = w => { long v; return long.TryParse(Var(w.TrimStart('$'), c).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out v) ? v : 0; };
             unary = () =>
             {
                 if (k >= toks.Count) throw new FormatException("$((" + e + ")): ends too soon");
@@ -438,12 +667,14 @@ namespace AdeeboMeter
                 long l = unary();
                 while (k < toks.Count && prec.ContainsKey(toks[k]) && prec[toks[k]] >= min)
                 {
-                    string op = toks[k++]; long r = bin(op == "**" ? prec[op] : prec[op] + 1);
+                    string op = toks[k++];
+                    if ((op == "&&" && l == 0) || (op == "||" && l != 0)) { skip++; bin(prec[op] + 1); skip--; l = op == "||" ? 1 : 0; continue; }
+                    long r = bin(op == "**" ? prec[op] : prec[op] + 1);
                     switch (op)
                     {
                         case "+": l += r; break; case "-": l -= r; break; case "*": l *= r; break;
-                        case "/": if (r == 0) throw new DivideByZeroException("$((" + e + ")): division by 0"); l /= r; break;
-                        case "%": if (r == 0) throw new DivideByZeroException("$((" + e + ")): division by 0"); l %= r; break;
+                        case "/": if (r == 0) { if (skip > 0) { l = 0; break; } throw new DivideByZeroException("$((" + e + ")): division by 0"); } l /= r; break;
+                        case "%": if (r == 0) { if (skip > 0) { l = 0; break; } throw new DivideByZeroException("$((" + e + ")): division by 0"); } l %= r; break;
                         case "**": { long p0 = 1; for (long q = 0; q < r && q < 64; q++) p0 *= l; l = p0; break; }
                         case "==": l = l == r ? 1 : 0; break; case "!=": l = l != r ? 1 : 0; break;
                         case "<": l = l < r ? 1 : 0; break; case "<=": l = l <= r ? 1 : 0; break; case ">": l = l > r ? 1 : 0; break; case ">=": l = l >= r ? 1 : 0; break;
@@ -456,23 +687,31 @@ namespace AdeeboMeter
             long res = bin(0); if (k != toks.Count) throw new FormatException("$((" + e + ")): unexpected " + toks[k]);
             return res;
         }
+        static readonly Random shRnd = new Random();
         string Var(string n, ShCtx c)
         {
-            if (n == "?") return shLastExit.ToString(CultureInfo.InvariantCulture);
+            if (n == "?") return Env.LastExit.ToString(CultureInfo.InvariantCulture);
             if (n == "#") return c.Args.Count.ToString(CultureInfo.InvariantCulture);
             if (n == "@") return string.Join(" ", c.Args);
+            if (n == "$") { using (var me = System.Diagnostics.Process.GetCurrentProcess()) return me.Id.ToString(CultureInfo.InvariantCulture); }
+            if (n == "0") return "adeeboshell";
             int k; if (int.TryParse(n, out k)) return k >= 1 && k <= c.Args.Count ? c.Args[k - 1] : "";
-            string v; lock (shVars) if (shVars.TryGetValue(n, out v)) return v;
-            switch (n) { case "HOME": return "/home"; case "PWD": return shCwd; case "USER": return ShUser; case "HOSTNAME": return ShHost; case "GATEWAY": lock (M.L) return M.Gateway ?? ""; case "RANDOM": return new Random().Next(32768).ToString(CultureInfo.InvariantCulture); }
+            string v; lock (Env.Vars) if (Env.Vars.TryGetValue(n, out v)) return v;
+            switch (n) { case "HOME": return "/home"; case "PWD": return Env.Cwd; case "OLDPWD": return Env.Prev; case "USER": return ShUser; case "HOSTNAME": return ShHost; case "SHELL": return "/bin/adeeboshell"; case "GATEWAY": lock (M.L) return M.Gateway ?? ""; case "RANDOM": lock (shRnd) return shRnd.Next(32768).ToString(CultureInfo.InvariantCulture); }
             return "";
         }
         List<string> Glob(string pat)
         {
             var r = new List<string>(); string dirV = pat.Contains("/") ? pat.Substring(0, pat.LastIndexOf('/')) : "", name = pat.Substring(pat.LastIndexOf('/') + 1);
             if (dirV.Contains("*") || dirV.Contains("?")) return r;
-            string real = Real(Abs(dirV == "" ? "." : dirV == "" ? "/" : dirV)); if (real == null || !Directory.Exists(real)) return r;
-            var rx = new Regex("^" + Regex.Escape(name).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
-            try { foreach (var e in Directory.EnumerateFileSystemEntries(real).Select(Path.GetFileName).Where(z => rx.IsMatch(z) && (name.StartsWith(".", StringComparison.Ordinal) || !z.StartsWith(".", StringComparison.Ordinal))).OrderBy(z => z, StringComparer.OrdinalIgnoreCase)) r.Add((dirV == "" ? "" : dirV + "/") + e); }
+            string av = Abs(dirV == "" ? (pat.StartsWith("/", StringComparison.Ordinal) ? "/" : ".") : dirV);
+            var rx = new Regex("^" + GlobRx(name) + "$", RegexOptions.IgnoreCase);
+            Func<string, bool> ok = z => rx.IsMatch(z) && (name.StartsWith(".", StringComparison.Ordinal) || !z.StartsWith(".", StringComparison.Ordinal));
+            string pre = dirV == "" ? (pat.StartsWith("/", StringComparison.Ordinal) ? "/" : "") : dirV + "/";
+            string real = Real(av);
+            if (real == null) { bool known; foreach (var e in VirtualList(av, out known).Select(z => z[0]).Where(ok).OrderBy(z => z, StringComparer.OrdinalIgnoreCase)) r.Add(pre + e); return r; }   // #58: /pages/*, /proc/*
+            if (!Directory.Exists(real)) return r;
+            try { foreach (var e in Directory.EnumerateFileSystemEntries(real).Select(Path.GetFileName).Where(ok).OrderBy(z => z, StringComparer.OrdinalIgnoreCase)) r.Add(pre + e); }
             catch (Exception ex) { if (!(ex is IOException || ex is UnauthorizedAccessException)) throw; }
             return r;
         }
@@ -482,15 +721,15 @@ namespace AdeeboMeter
         string Abs(string p)
         {
             p = (p ?? "").Replace('\\', '/');
-            if (p == "" || p == ".") return shCwd;
+            if (p == "" || p == ".") return Env.Cwd;
             if (p == "~" || p.StartsWith("~/", StringComparison.Ordinal)) p = "/home" + p.Substring(1);
             if (Regex.IsMatch(p, "^[A-Za-z]:(/|$)")) p = "/mnt/" + char.ToLowerInvariant(p[0]) + p.Substring(2);   // C:\Users -> /mnt/c/Users
-            var parts = new List<string>(p.StartsWith("/", StringComparison.Ordinal) ? new string[0] : shCwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries));
+            var parts = new List<string>(p.StartsWith("/", StringComparison.Ordinal) ? new string[0] : Env.Cwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries));
             foreach (var seg in p.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)) { if (seg == ".") continue; if (seg == "..") { if (parts.Count > 0) parts.RemoveAt(parts.Count - 1); continue; } parts.Add(seg); }
             return "/" + string.Join("/", parts);
         }
         static string Home { get { return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); } }
-        // the real folder behind a path, or null for the virtual ones (/, /pages, /tools, /mnt)
+        // the real folder behind a path, or null for the virtual ones (/, /pages, /tools, /mnt, /proc)
         string Real(string v)
         {
             var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -538,63 +777,94 @@ namespace AdeeboMeter
             known = false; return r;
         }
         bool IsDir(string v) { string real = Real(v); if (real != null) return Directory.Exists(real); bool k; VirtualList(v, out k); return k; }
+        bool ProcExists(string v) { return v.StartsWith("/proc/", StringComparison.Ordinal) && ProcFiles.Contains(v.Substring(6)); }
 
         // =====================================================================================================================
-        // one command: redirects, assignments, then a built-in or a tool
+        // one command: assignments (alone, or FOO=bar for this command only - #25), redirects, then a built-in or a tool
         int RunCmd(NCmd cmd, ShCtx c)
         {
-            var words = Expand(cmd.Words, c);
-            string outFile = null, inFile = null, errFile = null; bool append = false, errAppend = false, both = false; var args = new List<string>();
+            lastSubstExit = -1;
+            List<string> words;
+            try { words = Expand(cmd.Words, c); }
+            catch (Exception e) { if (!(e is FormatException || e is DivideByZeroException || e is RegexMatchTimeoutException)) throw; Err(c, "adeeboshell: " + e.Message); return 1; }   // #24: an error ends this command, not the script
+            var redirs = new List<string>(); var args = new List<string>(); var assigns = new List<KeyValuePair<string, string>>();
             for (int k = 0; k < words.Count; k++)
             {
-                if (words[k] == "\u0003>" || words[k] == "\u0003>>") { append = words[k] == "\u0003>>"; outFile = words[++k]; continue; }
-                if (words[k] == "\u0003&>") { both = true; append = false; outFile = words[++k]; continue; }
-                if (words[k] == "\u00032>" || words[k] == "\u00032>>") { errAppend = words[k] == "\u00032>>"; errFile = words[++k]; continue; }
-                if (words[k] == "\u00032>&1") continue;
-                if (words[k] == "\u0003<") { inFile = words[++k]; continue; }
-                args.Add(words[k]);
+                string w = words[k];
+                if (w.StartsWith("\u0003", StringComparison.Ordinal)) { redirs.Add(w); if (NeedsTarget(w.Substring(1))) redirs.Add(k + 1 < words.Count ? words[++k] : "\u0004?"); continue; }
+                if (w.StartsWith("\u0008", StringComparison.Ordinal)) { string kv = w.Substring(1); if (args.Count == 0) { int eq = kv.IndexOf('='); assigns.Add(new KeyValuePair<string, string>(kv.Substring(0, eq), kv.Substring(eq + 1))); } else args.Add(kv); continue; }
+                args.Add(w);
             }
-            if (args.Count == 0) return 0;
-            if (args[0] == "\u0002") return 0;
-            // NAME=value (alone): a variable
-            var am = Regex.Match(args[0], "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", RegexOptions.Singleline);
-            if (am.Success && args.Count == 1) { lock (shVars) shVars[am.Groups[1].Value] = am.Groups[2].Value; return 0; }
-            if (inFile == "/dev/null") { c = c.With(c.Out, ""); inFile = null; }
-            // errors: 2>/dev/null drops them, 2> file keeps them there, &> file puts both in one file
-            StringBuilder errCap = null;
-            if (errFile != null || both)
+            if (args.Count == 0)   // only assignments and/or redirects: > file still makes the file, < file still has to exist (#35)
             {
-                var o2 = new ShOut { Cap = c.Out.Cap, Job = c.Job, ErrNull = errFile == "/dev/null" && !both, ErrCap = c.Out.ErrCap };
-                if (errFile != null && errFile != "/dev/null" && !both) { errCap = new StringBuilder(); o2.ErrCap = errCap; }
-                c = c.With(o2, c.Stdin);
+                lock (Env.Vars) foreach (var a in assigns) Env.Vars[a.Key] = a.Value;
+                int st = lastSubstExit >= 0 ? lastSubstExit : 0;
+                return redirs.Count == 0 ? st : ApplyRedirs(redirs, c, cc => st);
             }
-            if (inFile != null) { string ri = Real(Abs(inFile)); if (ri == null || !File.Exists(ri)) { Err(c, "adeeboshell: " + inFile + ": no such file"); return 1; } try { c = c.With(c.Out, File.ReadAllText(ri)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, inFile + ": " + e.Message); return 1; } }
-            if (outFile == "/dev/null") { var sink = new ShOut { Cap = new StringBuilder(), Job = c.Job, ErrNull = both || c.Out.ErrNull, ErrCap = both ? null : c.Out.ErrCap }; if (!both && c.Out.ErrCap == null && !c.Out.ErrNull) sink.ErrScreen = c.Out; int exn = Dispatch(args, c.With(sink, c.Stdin)); return WriteErr(errFile, errCap, errAppend, c, exn); }
-            if (outFile != null)
-            {
-                string ro = Real(Abs(outFile)); if (ro == null) { Err(c, "adeeboshell: " + outFile + ": can't write there (a folder of pages or tools isn't a disk)"); return 1; }
-                var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job, ErrNull = c.Out.ErrNull, ErrCap = c.Out.ErrCap }; if (both) cap.ErrCap = cap.Cap; else if (cap.ErrCap == null && !cap.ErrNull) cap.ErrScreen = c.Out;   // > file: errors still on the screen, like bash
-                int ex = Dispatch(args, c.With(cap, c.Stdin)); ex = WriteErr(errFile, errCap, errAppend, c, ex);
-                try { if (append) File.AppendAllText(ro, cap.Cap.ToString()); else File.WriteAllText(ro, cap.Cap.ToString()); }
-                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, outFile + ": " + e.Message); return 1; }
-                return ex;
-            }
-            return WriteErr(errFile, errCap, errAppend, c, Dispatch(args, c));
+            Dictionary<string, string> old = null;
+            if (assigns.Count > 0) { old = new Dictionary<string, string>(); lock (Env.Vars) foreach (var a in assigns) { string ov; old[a.Key] = Env.Vars.TryGetValue(a.Key, out ov) ? ov : null; Env.Vars[a.Key] = a.Value; } }
+            try { return redirs.Count == 0 ? Dispatch(args, c) : ApplyRedirs(redirs, c, cc => Dispatch(args, cc)); }
+            finally { if (old != null) lock (Env.Vars) foreach (var kv in old) { if (kv.Value == null) Env.Vars.Remove(kv.Key); else Env.Vars[kv.Key] = kv.Value; } }
         }
-        int WriteErr(string errFile, StringBuilder errCap, bool append, ShCtx c, int ex)
+        // > >> < 2> 2>> &> 2>&1 >&2, for a command or a whole loop. Errors keep going where they went unless redirected; 2>&1 sends
+        // them along with the output (into a file or a pipe - #21); > f 2> f is one file, not one overwriting the other (#63).
+        int ApplyRedirs(List<string> r, ShCtx c, Func<ShCtx, int> body)
         {
-            if (errCap == null || errFile == null || errFile == "/dev/null") return ex;
-            string r = Real(Abs(errFile)); if (r == null) { OL(c, "can't write " + errFile, ShRed); return 1; }
-            try { if (append) File.AppendAllText(r, errCap.ToString()); else File.WriteAllText(r, errCap.ToString()); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; OL(c, errFile + ": " + e.Message, ShRed); return 1; }
+            string outFile = null, inFile = null, errFile = null; bool append = false, errAppend = false, both = false, errToOut = false, outToErr = false;
+            for (int k = 0; k < r.Count; k++)
+            {
+                string op = r[k].Substring(1), tg = NeedsTarget(op) && k + 1 < r.Count ? r[++k] : null;
+                if (tg != null && tg.StartsWith("\u0004", StringComparison.Ordinal)) { Err(c, "adeeboshell: " + (tg.Length > 1 ? tg.Substring(1) : "") + ": ambiguous redirect - the name must be one word (quote it)"); return 1; }
+                switch (op)
+                {
+                    case ">": case ">>": outFile = tg; append = op == ">>"; both = false; break;
+                    case "&>": outFile = tg; append = false; both = true; break;
+                    case "2>": case "2>>": errFile = tg; errAppend = op == "2>>"; break;
+                    case "2>&1": errToOut = true; break;
+                    case ">&2": outToErr = true; break;
+                    case "<": inFile = tg; break;
+                }
+            }
+            if (inFile != null)
+            {
+                if (inFile == "/dev/null") c = c.With(c.Out, "");
+                else { string t = ReadAll(inFile, c); if (t == null) return 1; c = c.With(c.Out, t); }   // #10, #73: capped like every read, and /proc too
+            }
+            if (outFile != null && errFile != null && SameFile(outFile, errFile)) { both = true; errFile = null; }
+            if (errToOut && outFile != null) both = true;
+            string ro = null;
+            if (outFile != null && outFile != "/dev/null")
+            {
+                ro = Real(Abs(outFile)); if (ro == null) { Err(c, "adeeboshell: " + outFile + ": can't write there - only folders on a disk (~, /data, /mnt/...)"); return 1; }
+                if (Directory.Exists(ro)) { Err(c, "adeeboshell: " + outFile + ": is a folder"); return 1; }
+            }
+            bool capture = outFile != null || outToErr;
+            var o = capture ? new ShOut { Cap = new StringBuilder(), Job = c.Job } : new ShOut { Cap = c.Out.Cap, Job = c.Job };
+            StringBuilder errCap = null; string re = null;
+            if (both) { if (outFile == "/dev/null") o.ErrNull = true; else o.ErrCap = o.Cap; }
+            else if (errFile == "/dev/null") o.ErrNull = true;
+            else if (errFile != null) { re = Real(Abs(errFile)); if (re == null) { Err(c, "adeeboshell: " + errFile + ": can't write there"); return 1; } errCap = new StringBuilder(); o.ErrCap = errCap; }
+            else if (!errToOut) o.ErrTo = c.Out;   // 2>&1 with no file: errors join the output stream (o itself)
+            int ex = body(c.With(o, c.Stdin));
+            if (c.Job.Abandoned) return ex;
+            if (outToErr && o.Cap.Length > 0) { var eo = new ShOut { Cap = c.Out.Cap, Job = c.Job, ErrNull = o.ErrNull, ErrCap = o.ErrCap == o.Cap ? null : o.ErrCap, ErrTo = o.ErrNull || (o.ErrCap != null && o.ErrCap != o.Cap) ? null : c.Out }; ErrRaw(c.With(eo, c.Stdin), o.Cap.ToString(), ShRed); }
+            try
+            {
+                if (errCap != null) { if (errAppend) File.AppendAllText(re, errCap.ToString()); else File.WriteAllText(re, errCap.ToString()); }
+                if (ro != null && !outToErr) { if (append) File.AppendAllText(ro, o.Cap.ToString()); else File.WriteAllText(ro, o.Cap.ToString()); }
+                else if (ro != null) File.WriteAllText(ro, "");
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "adeeboshell: " + e.Message); return 1; }
             return ex;
         }
+        bool SameFile(string a, string b) { if (a == "/dev/null" || b == "/dev/null") return false; string x = Real(Abs(a)), y = Real(Abs(b)); return x != null && y != null && string.Equals(Path.GetFullPath(x), Path.GetFullPath(y), StringComparison.OrdinalIgnoreCase); }
         int Dispatch(List<string> a, ShCtx c)
         {
             string cmd = a[0], low = cmd.ToLowerInvariant(); var args = a.Skip(1).ToList();
             try
             {
                 if (cmd.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) || cmd.StartsWith("./", StringComparison.Ordinal)) return Source(cmd, args, c);
-                int r = Builtin(low, args, c); if (r != int.MinValue) { if (c.Out.Screen && (low == "status" || low == "debug" || low == "log" || low == "ls" || low == "man" || low == "tools")) { } return r; }
+                int r = Builtin(low, args, c); if (r != int.MinValue) return r;
                 if (low == "iperf3" || (low == "iperf" && args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z != "--yes" && z != "-y"))) return Iperf3(args, c);
                 var t = shTools != null ? shTools.FirstOrDefault(x => string.Equals(x.Id, low, StringComparison.OrdinalIgnoreCase)) : null;
                 if (t != null) return RunTool(t, args, c);
@@ -602,9 +872,9 @@ namespace AdeeboMeter
                 Err(c, "adeeboshell: " + cmd + ": command not found" + (near.Count > 0 ? " - did you mean: " + string.Join(", ", near) + "?" : "  (help lists them)"));
                 return 127;
             }
-            catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException) throw; Err(c, cmd + ": " + e.Message); Program.Log("shell " + cmd + ": " + e); return 2; }
+            catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException || e is ShFlow) throw; Err(c, cmd + ": " + e.Message); if (!(e is ShTooBig)) Program.Log("shell " + cmd + ": " + e); return 2; }
         }
-        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget" };
+        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most" };
 
         int Builtin(string cmd, List<string> args, ShCtx c)
         {
@@ -613,27 +883,54 @@ namespace AdeeboMeter
                 case "help": if (args.Count > 0) return Man(args[0], c); Help(c); return 0;
                 case "man": if (args.Count == 0) { Err(c, "usage: man <tool or command>"); return 1; } return Man(args[0], c);
                 case "tools": ShToolList(args.Count > 0 ? string.Join(" ", args) : "", c); return 0;
-                case "pwd": OL(c, shCwd + (Real(shCwd) != null ? "   (" + Real(shCwd) + ")" : "")); return 0;
+                case "pwd": OL(c, Env.Cwd + (Real(Env.Cwd) != null && !args.Contains("-L") ? "   (" + Real(Env.Cwd) + ")" : "")); return 0;
                 case "cd": return Cd(args.Count == 0 ? "~" : args[0], c);
                 case "ls": case "ll": case "dir": return Ls(args, cmd == "ll", c);
                 case "tree": return Tree(args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? ".", c);
                 case "cat": return Cat(args, c);
                 case "head": case "tail": return HeadTail(cmd == "head", args, c);
-                case "grep": return Grep(args, c);
-                case "sort": { var l = InLines(args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(), c); if (l == null) return 1; bool rev = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("r")), num = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("n")), uq = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("u")); IEnumerable<string> s = num ? l.OrderBy(z => { double d; return double.TryParse(Regex.Match(z, @"-?\d+(\.\d+)?").Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : double.MaxValue; }) : l.OrderBy(z => z, StringComparer.CurrentCultureIgnoreCase); if (rev) s = s.Reverse(); if (uq) s = s.Distinct(); foreach (var x in s) OL(c, x); return 0; }
-                case "uniq": { var l = InLines(args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(), c); if (l == null) return 1; bool cnt = args.Contains("-c"); string prev = null; int n = 0; Action fl = () => { if (prev != null) OL(c, cnt ? n.ToString(CultureInfo.InvariantCulture).PadLeft(7) + " " + prev : prev); }; foreach (var x in l) { if (x == prev) { n++; continue; } fl(); prev = x; n = 1; } fl(); return 0; }
-                case "wc": { var files = args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(); string txt = files.Count > 0 ? ReadAll(files[0], c) : c.Stdin ?? ""; if (txt == null) return 1; int ln = txt.Count(ch => ch == '\n') + (txt.Length > 0 && !txt.EndsWith("\n", StringComparison.Ordinal) ? 1 : 0), wd = Regex.Matches(txt, @"\S+").Count; OL(c, args.Contains("-l") ? ln.ToString(CultureInfo.InvariantCulture) : args.Contains("-w") ? wd.ToString(CultureInfo.InvariantCulture) : args.Contains("-c") ? txt.Length.ToString(CultureInfo.InvariantCulture) : ln + " " + wd + " " + txt.Length + (files.Count > 0 ? " " + files[0] : "")); return 0; }
-                case "tee": { string txt = c.Stdin ?? ""; foreach (var f in args.Where(z => !z.StartsWith("-", StringComparison.Ordinal))) { string r = Real(Abs(f)); if (r == null) { Err(c, f + ": can't write there"); return 1; } if (args.Contains("-a")) File.AppendAllText(r, txt); else File.WriteAllText(r, txt); } O(c, txt, ShFg); return 0; }
-                case "echo": OL(c, args.Count > 0 && args[0] == "-n" ? string.Join(" ", args.Skip(1)) : string.Join(" ", args)); return 0;
-                case "printf": { if (args.Count == 0) return 0; string f = args[0].Replace("\\n", "\n").Replace("\\t", "    "); int k = 1; f = Regex.Replace(f, "%[sd]", m => k < args.Count ? args[k++] : ""); O(c, f, ShFg); return 0; }
+                case "grep": case "egrep": case "fgrep": return Grep(cmd == "egrep" ? new[] { "-E" }.Concat(args).ToList() : cmd == "fgrep" ? new[] { "-F" }.Concat(args).ToList() : args, c);
+                case "sort":
+                    {
+                        var fl = Flags(args); var l = InLines(Files(args), c); if (l == null) return 1;
+                        bool rev = fl.Contains('r'), num = fl.Contains('n'), uq = fl.Contains('u'), ic = fl.Contains('f');
+                        IEnumerable<string> s = num ? l.OrderBy(z => { double d; return double.TryParse(Regex.Match(z, @"-?\d+(\.\d+)?").Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : double.MinValue; }) : l.OrderBy(z => z, ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+                        if (rev) s = s.Reverse(); if (uq) s = s.Distinct(ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal); foreach (var x in s) OL(c, x); return 0;
+                    }
+                case "uniq":   // #72: -c -d -u -i
+                    {
+                        var fl = Flags(args); var l = InLines(Files(args), c); if (l == null) return 1;
+                        bool cnt = fl.Contains('c'), dup = fl.Contains('d'), uniqOnly = fl.Contains('u'); var cmp = fl.Contains('i') ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+                        string prev = null; int n = 0;
+                        Action fl0 = () => { if (prev == null) return; if (dup && n < 2) return; if (uniqOnly && n > 1) return; OL(c, cnt ? n.ToString(CultureInfo.InvariantCulture).PadLeft(7) + " " + prev : prev); };
+                        foreach (var x in l) { if (prev != null && cmp.Equals(x, prev)) { n++; continue; } fl0(); prev = x; n = 1; }
+                        fl0(); return 0;
+                    }
+                case "wc": return Wc(args, c);
+                case "tee": { string txt = c.Stdin ?? ""; foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "tee: " + f + ": can't write there"); return 1; } if (args.Contains("-a")) File.AppendAllText(r, txt); else File.WriteAllText(r, txt); } O(c, txt, ShFg); return 0; }
+                case "echo":   // #31: -n leaves the newline off; -e reads \n \t \\ escapes
+                    {
+                        bool nl = true, esc = false; int k = 0;
+                        while (k < args.Count && Regex.IsMatch(args[k], "^-[neE]+$")) { if (args[k].Contains("n")) nl = false; if (args[k].Contains("e")) esc = true; if (args[k].Contains("E")) esc = false; k++; }
+                        string t = string.Join(" ", args.Skip(k)); if (esc) t = Escapes(t);
+                        O(c, nl ? t + "\n" : t, ShFg); return 0;
+                    }
+                case "printf": return Printf(args, c);
                 case "cp": case "mv": return CpMv(cmd == "mv", args, c);
-                case "mkdir": { foreach (var d in args.Where(z => !z.StartsWith("-", StringComparison.Ordinal))) { string r = Real(Abs(d)); if (r == null) { Err(c, "mkdir: " + d + ": not on a disk"); return 1; } Directory.CreateDirectory(r); } return 0; }
-                case "touch": { foreach (var f in args) { string r = Real(Abs(f)); if (r == null) { Err(c, "touch: " + f + ": not on a disk"); return 1; } if (File.Exists(r)) File.SetLastWriteTime(r, DateTime.Now); else File.WriteAllText(r, ""); } return 0; }
+                case "mkdir": { foreach (var d in Files(args)) { string r = Real(Abs(d)); if (r == null) { Err(c, "mkdir: " + d + ": not on a disk"); return 1; } if (Directory.Exists(r) && !args.Contains("-p")) { Err(c, "mkdir: " + d + ": already exists"); return 1; } Directory.CreateDirectory(r); } return 0; }
+                case "touch":   // #91: flags are flags; -c never creates
+                    {
+                        bool noCreate = Flags(args).Contains('c');
+                        foreach (var f in Files(args)) { string r = Real(Abs(f)); if (r == null) { Err(c, "touch: " + f + ": not on a disk"); return 1; } if (File.Exists(r)) File.SetLastWriteTime(r, DateTime.Now); else if (!noCreate) File.WriteAllText(r, ""); }
+                        return 0;
+                    }
                 case "rm": return Rm(args, c);
+                case "rmdir": { foreach (var d in Files(args)) { string v = Abs(d), r = Real(v); if (r == null || !Directory.Exists(r)) { Err(c, "rmdir: " + d + ": not a folder"); return 1; } if (v.Count(ch => ch == '/') <= 1 || r.TrimEnd('\\').Length <= 3) { Err(c, "rmdir: won't remove " + d); return 1; } if (Directory.EnumerateFileSystemEntries(r).Any()) { Err(c, "rmdir: " + d + ": not empty"); return 1; } Directory.Delete(r); } return 0; }
                 case "find": return Find(args, c);
                 case "stat": return Stat(args, c);
-                case "basename": OL(c, args.Count > 0 ? args[0].TrimEnd('/').Substring(args[0].TrimEnd('/').LastIndexOf('/') + 1) : ""); return 0;
-                case "dirname": OL(c, args.Count > 0 && args[0].Contains("/") ? args[0].Substring(0, Math.Max(1, args[0].TrimEnd('/').LastIndexOf('/'))) : "."); return 0;
+                case "basename": { if (args.Count == 0) return 0; string b = args[0].TrimEnd('/'); b = b.Substring(b.LastIndexOf('/') + 1); if (args.Count > 1 && b.EndsWith(args[1], StringComparison.Ordinal) && b != args[1]) b = b.Substring(0, b.Length - args[1].Length); OL(c, b); return 0; }
+                case "dirname": OL(c, args.Count > 0 && args[0].TrimEnd('/').Contains("/") ? (args[0].TrimEnd('/').LastIndexOf('/') == 0 ? "/" : args[0].TrimEnd('/').Substring(0, args[0].TrimEnd('/').LastIndexOf('/'))) : "."); return 0;
+                case "realpath": case "readlink": foreach (var f in Files(args)) { string v = Abs(f), r = Real(v); OL(c, r != null ? v + "   (" + r + ")" : v); } return 0;
                 case "which": case "type": foreach (var w in args) OL(c, ShCmds.Contains(w) ? w + " is a shell command" : shTools.Any(t => t.Id == w) ? w + " is a tool: /tools/" + ToolDir(shTools.First(t => t.Id == w).Group) + "/" + w : w + ": not found"); return 0;
                 case "open": case "go": return Open(args, c);
                 case "pages": foreach (var id in ShPageIds()) { O(c, "  " + id.PadRight(12), ShCyan); OL(c, NavInfo.ContainsKey(id) ? NavName(id) : id, ShDim); } return 0;
@@ -644,40 +941,173 @@ namespace AdeeboMeter
                 case "clear": case "cls": Ui(delegate { term.Clear(); }); return 0;
                 case "copy": if (shLast == "") { Err(c, "nothing to copy yet - run a tool first (or select text and press Ctrl+C)"); return 1; } Ui(delegate { try { Clipboard.SetText(shLast); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is ThreadStateException)) throw; } }); OL(c, "copied the last result", ShGreen); return 0;
                 case "save": { if (shLast == "") { Err(c, "nothing to save yet - or run it with  > file.txt"); return 1; } string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); File.WriteAllText(f, shLast); OL(c, "saved: " + f, ShGreen); return 0; }
-                case "exit": case "quit": Ui(delegate { tab = "overview"; ShowTab(); SyncNav(); }); return 0;
+                // #6: exit / return stop the script (with their code); typed at the prompt, exit also leaves the shell page
+                case "exit": case "quit": case "logout": case "return":
+                    {
+                        int code = Env.LastExit; if (args.Count > 0 && !int.TryParse(args[0], out code)) { Err(c, cmd + ": " + args[0] + ": a number is needed"); code = 2; }
+                        if (cmd != "return" && !c.Script && !c.Job.Bg) Ui(delegate { tab = "overview"; ShowTab(); SyncNav(); });
+                        throw new ShFlow(cmd == "return" ? "return" : "exit", code & 255, 1);
+                    }
+                case "break": case "continue":   // #23
+                    {
+                        int lv = 1; if (args.Count > 0 && (!int.TryParse(args[0], out lv) || lv < 1)) { Err(c, cmd + ": " + args[0] + ": a loop count is needed"); return 1; }
+                        if (loopDepth == 0) { Err(c, cmd + ": only meaningful in a for, while or until loop"); return 0; }
+                        throw new ShFlow(cmd, 0, Math.Min(lv, loopDepth));
+                    }
                 case "lab": return ShLab(args, c);
                 case "source": case ".": case "sh": case "bash": if (args.Count == 0) { Err(c, "usage: source <file.sh> [args] [--yes]"); return 1; } return Source(args[0], args.Skip(1).ToList(), c);
                 case "alltools": return AllTools(args.Contains("--yes"), c);
                 case "parallel": return Parallel(args, c);
-                case "jobs": lock (shJobs) foreach (var j in shJobs.Where(z => !z.Done)) OL(c, "[" + j.Id + "] running", ShCyan); return 0;
-                case "wait": { var until = DateTime.UtcNow.AddMinutes(60); while (!c.Job.Cancel && DateTime.UtcNow < until) { bool any; lock (shJobs) any = shJobs.Any(z => !z.Done && z != c.Job); if (!any) break; Thread.Sleep(100); } return 0; }
-                case "kill": { foreach (var w in args) { int id; if (!int.TryParse(w.TrimStart('%'), out id)) continue; ShJob j; lock (shJobs) j = shJobs.FirstOrDefault(z => z.Id == id); if (j == null) { Err(c, "kill: no job " + w); continue; } j.Cancel = true; lock (j.Runs) foreach (var r in j.Runs) r.Stop = true; OL(c, "[" + id + "] stopping", ShAmber); } return 0; }
-                case "sleep": { double s; if (!double.TryParse(args.FirstOrDefault() ?? "1", NumberStyles.Float, CultureInfo.InvariantCulture, out s)) s = 1; var until = DateTime.UtcNow.AddSeconds(Math.Min(3600, s)); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50); return c.Job.Cancel ? 130 : 0; }
-                case "seq": { int a0 = 1, b0, st = 1; if (args.Count == 1) int.TryParse(args[0], out b0); else { int.TryParse(args.ElementAtOrDefault(0), out a0); int.TryParse(args.Count > 2 ? args[2] : args.ElementAtOrDefault(1), out b0); if (args.Count > 2) int.TryParse(args[1], out st); } if (st == 0) st = 1; int n = 0; for (int v = a0; st > 0 ? v <= b0 : v >= b0; v += st) { OL(c, v.ToString(CultureInfo.InvariantCulture)); if (++n > 100000) break; } return 0; }
-                case "date": OL(c, DateTime.Now.ToString(args.Count > 0 && args[0].StartsWith("+", StringComparison.Ordinal) ? args[0].Substring(1).Replace("%Y", "yyyy").Replace("%m", "MM").Replace("%d", "dd").Replace("%H", "HH").Replace("%M", "mm").Replace("%S", "ss") : "ddd d MMM yyyy HH:mm:ss", CultureInfo.CurrentCulture)); return 0;
+                case "less": case "more": case "most": return Less(args, c);
+                case "jobs": lock (shJobs) foreach (var j in shJobs.Where(z => !z.Done)) OL(c, "[" + j.Id + "]  Running   " + j.Cmd, ShCyan); return 0;
+                case "wait":   // #55: wait %n waits for that job
+                    {
+                        var ids = args.Select(w => { int id; return int.TryParse(w.TrimStart('%'), out id) ? id : -1; }).Where(z => z > 0).ToList(); int last = 0;
+                        if (args.Count > 0 && ids.Count == 0) { Err(c, "wait: " + args[0] + ": not a job (%1 or 1)"); return 127; }
+                        var until = DateTime.UtcNow.AddMinutes(60);
+                        while (!c.Job.Cancel && DateTime.UtcNow < until)
+                        {
+                            bool any; lock (shJobs) any = shJobs.Any(z => !z.Done && z != c.Job && (ids.Count == 0 || ids.Contains(z.Id)));
+                            if (!any) break; Thread.Sleep(100);
+                        }
+                        lock (shJobs) foreach (var id in ids) { int ex; if (shDone.TryGetValue(id, out ex)) last = ex; else if (!shJobs.Any(z => z.Id == id)) { Err(c, "wait: %" + id + ": no such job"); last = 127; } }
+                        return c.Job.Cancel ? 130 : last;
+                    }
+                case "kill":
+                    {
+                        int ex0 = 0;
+                        foreach (var w in args.Where(z => !Regex.IsMatch(z, "^-[0-9A-Z]+$")))
+                        {
+                            int id; if (!w.StartsWith("%", StringComparison.Ordinal) || !int.TryParse(w.Substring(1), out id)) { Err(c, "kill: " + w + ": only this shell's jobs (%1) - AdeeboShell never stops Windows programs"); ex0 = 1; continue; }
+                            ShJob j; lock (shJobs) j = shJobs.FirstOrDefault(z => z.Id == id);
+                            if (j == null) { bool fin; lock (shJobs) fin = shDone.ContainsKey(id); Err(c, "kill: %" + id + (fin ? ": already finished" : ": no such job")); ex0 = 1; continue; }
+                            j.Cancel = true; j.CancelAt = DateTime.UtcNow; lock (j.Runs) foreach (var r in j.Runs) r.Stop = true; OL(c, "[" + id + "] stopping  " + j.Cmd, ShAmber);
+                        }
+                        return ex0;
+                    }
+                case "sleep": { double s; if (!double.TryParse((args.FirstOrDefault() ?? "1").TrimEnd('s'), NumberStyles.Float, CultureInfo.InvariantCulture, out s)) { Err(c, "sleep: a number of seconds"); return 1; } var until = DateTime.UtcNow.AddSeconds(Math.Min(3600, s)); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50); return c.Job.Cancel ? 130 : 0; }
+                case "seq":
+                    {
+                        var nums = args.Where(z => !z.StartsWith("-", StringComparison.Ordinal) || Regex.IsMatch(z, @"^-\d")).Select(z => { long v; return long.TryParse(z, out v) ? (long?)v : null; }).ToList();
+                        if (nums.Count == 0 || nums.Any(z => z == null)) { Err(c, "usage: seq [first [step]] last"); return 1; }
+                        long a0 = nums.Count > 1 ? nums[0].Value : 1, st = nums.Count > 2 ? nums[1].Value : 1, b0 = nums[nums.Count - 1].Value; if (st == 0) st = 1; int n = 0;
+                        for (long v = a0; st > 0 ? v <= b0 : v >= b0; v += st) { OL(c, v.ToString(CultureInfo.InvariantCulture)); if (++n >= 1000000) { Err(c, "seq: stopped at 1,000,000 numbers"); break; } }
+                        return 0;
+                    }
+                case "date": OL(c, DateTime.Now.ToString(args.Count > 0 && args[0].StartsWith("+", StringComparison.Ordinal) ? args[0].Substring(1).Replace("%Y", "yyyy").Replace("%m", "MM").Replace("%d", "dd").Replace("%H", "HH").Replace("%M", "mm").Replace("%S", "ss").Replace("%F", "yyyy-MM-dd").Replace("%T", "HH:mm:ss") : "ddd d MMM yyyy HH:mm:ss", CultureInfo.CurrentCulture)); return 0;
                 case "whoami": OL(c, ShUser); return 0;
                 case "hostname": OL(c, ShHost); return 0;
-                case "uname": OL(c, "AdeeboShell " + Program.Version + " · " + Environment.OSVersion + " · " + (Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")); return 0;
-                case "env": case "set": lock (shVars) foreach (var kv in shVars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); OL(c, "HOME=/home  PWD=" + shCwd + "  USER=" + ShUser, ShDim); return 0;
-                case "export": foreach (var w in args) { var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$"); if (m.Success) lock (shVars) shVars[m.Groups[1].Value] = m.Groups[2].Value; } return 0;
-                case "unset": lock (shVars) foreach (var w in args) shVars.Remove(w); return 0;
-                case "read": { bool sec = args.Contains("-s"); string ask = ""; int pi = args.IndexOf("-p"); if (pi >= 0 && pi + 1 < args.Count) ask = args[pi + 1]; var names = args.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(pi >= 0 && i == pi + 1)).ToList(); string ans;
-                    if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.Stdin = nl < 0 ? "" : c.Stdin.Substring(nl + 1); lock (shVars) shVars[names.Count > 0 ? names[0] : "REPLY"] = ans; return 0; }   // ... | while read h
-                    if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; lock (shVars) shVars[names.Count > 0 ? names[0] : "REPLY"] = ans; return 0; }
-                case "test": case "[": return Test(cmd == "[" ? args.Take(Math.Max(0, args.Count - 1)).ToList() : args) ? 0 : 1;
-                case "true": return 0;
+                case "uname": OL(c, args.Contains("-a") ? "AdeeboShell " + ShHost + " " + Environment.OSVersion.Version + " " + Program.Version + " " + (Environment.Is64BitOperatingSystem ? "x86_64" : "i686") + " Windows" : "AdeeboShell"); return 0;
+                case "env": case "set": case "printenv": lock (Env.Vars) foreach (var kv in Env.Vars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); OL(c, "HOME=/home  PWD=" + Env.Cwd + "  USER=" + ShUser, ShDim); return 0;
+                case "export": case "declare": case "local": foreach (var w in args) { var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", RegexOptions.Singleline); if (m.Success) lock (Env.Vars) Env.Vars[m.Groups[1].Value] = m.Groups[2].Value; } return 0;
+                case "unset": lock (Env.Vars) foreach (var w in args) Env.Vars.Remove(w); return 0;
+                case "read": return Read(args, c);
+                case "test": case "[":   // #52: [ needs its ]
+                    {
+                        if (cmd == "[") { if (args.Count == 0 || args[args.Count - 1] != "]") { Err(c, "[: missing ]"); return 2; } args = args.Take(args.Count - 1).ToList(); }
+                        try { return Test(args) ? 0 : 1; } catch (FormatException fe) { Err(c, cmd + ": " + fe.Message); return 2; }
+                    }
+                case "true": case ":": return 0;
                 case "false": return 1;
-                case "time": { var sw = System.Diagnostics.Stopwatch.StartNew(); int r = args.Count == 0 ? 0 : Dispatch(args, c); OL(c, "real " + sw.Elapsed.TotalSeconds.ToString("0.000", CultureInfo.InvariantCulture) + " s", ShDim); return r; }
+                case "time":   // #67: the timing goes the errors' way, not into a pipe
+                    {
+                        var sw = System.Diagnostics.Stopwatch.StartNew(); int r = args.Count == 0 ? 0 : Dispatch(args, c);
+                        ErrRaw(c, "real " + sw.Elapsed.TotalSeconds.ToString("0.000", CultureInfo.InvariantCulture) + " s\n", ShDim); return r;
+                    }
                 case "nano": case "vim": case "vi": case "edit": return Edit(cmd == "vim" || cmd == "vi", args, c);
-                case "hash": { if (args.Count == 0) { Err(c, "usage: hash <file> - SHA-256 (the hashf tool does more)"); return 1; } foreach (var f in args) { string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, f + ": no such file"); continue; } using (var sh = System.Security.Cryptography.SHA256.Create()) using (var fs = File.OpenRead(r)) OL(c, BitConverter.ToString(sh.ComputeHash(fs)).Replace("-", "").ToLowerInvariant() + "  " + f); } return 0; }
+                case "hash": { if (args.Count == 0) { Err(c, "usage: hash <file> - SHA-256 (sha256sum and the hashf tool do more)"); return 1; } return HashSum("sha256sum", args, c); }
             }
             return SysCmd(cmd, args, c);   // df free ps top ip ss ... (FullView.ShellSys.cs)
+        }
+        static string Flags(List<string> args) { return string.Concat(args.Where(z => z.Length > 1 && z.StartsWith("-", StringComparison.Ordinal) && !z.StartsWith("--", StringComparison.Ordinal) && !Regex.IsMatch(z, @"^-\d")).Select(z => z.Substring(1))); }
+        static List<string> Files(List<string> args) { return args.Where(z => z == "-" || !z.StartsWith("-", StringComparison.Ordinal)).ToList(); }
+        static string Escapes(string t)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < t.Length; i++)
+            {
+                if (t[i] != '\\' || i + 1 >= t.Length) { sb.Append(t[i]); continue; }
+                char n = t[++i];
+                switch (n) { case 'n': sb.Append('\n'); break; case 't': sb.Append('\t'); break; case '\\': sb.Append('\\'); break; case 'r': sb.Append('\r'); break; case 'a': sb.Append('\a'); break; case 'e': sb.Append('\u001b'); break; case '0': sb.Append('\0'); break; default: sb.Append('\\').Append(n); break; }
+            }
+            return sb.ToString();
+        }
+        // #22: the format is used again until the arguments run out; %s %d %i %f %x %o %c %b %% with flags, width and precision
+        int Printf(List<string> args, ShCtx c)
+        {
+            if (args.Count == 0) { Err(c, "usage: printf FORMAT [arguments...]"); return 2; }
+            string fmt = args[0]; var rest = args.Skip(1).ToList(); int ai = 0, ex = 0; var sb = new StringBuilder();
+            var spec = new Regex(@"%([-+ 0#]*)(\d+|\*)?(?:\.(\d+))?([sdifxXocb%])");
+            do
+            {
+                int start = ai;
+                string outp = spec.Replace(Escapes(fmt.Replace("\\%", "%%")), m =>
+                {
+                    char k = m.Groups[4].Value[0]; if (k == '%') return "%";
+                    string flags = m.Groups[1].Value; int width = 0; if (m.Groups[2].Value == "*") { int.TryParse(ai < rest.Count ? rest[ai++] : "0", out width); } else if (m.Groups[2].Success) int.TryParse(m.Groups[2].Value, out width);
+                    int prec = m.Groups[3].Success ? int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture) : -1;
+                    string a = ai < rest.Count ? rest[ai++] : ""; string v;
+                    switch (k)
+                    {
+                        case 's': v = prec >= 0 && a.Length > prec ? a.Substring(0, prec) : a; break;
+                        case 'b': v = Escapes(a); break;
+                        case 'c': v = a.Length > 0 ? a.Substring(0, 1) : ""; break;
+                        case 'f': { double d; if (!double.TryParse(a == "" ? "0" : a, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) { Err(c, "printf: " + a + ": not a number"); ex = 1; d = 0; } v = d.ToString("F" + (prec >= 0 ? prec : 6), CultureInfo.InvariantCulture); if (flags.Contains("+") && d >= 0) v = "+" + v; break; }
+                        default:
+                            {
+                                long n; if (!long.TryParse(a == "" ? "0" : a, NumberStyles.Integer, CultureInfo.InvariantCulture, out n)) { Err(c, "printf: " + a + ": not a whole number"); ex = 1; n = 0; }
+                                v = k == 'x' ? n.ToString("x", CultureInfo.InvariantCulture) : k == 'X' ? n.ToString("X", CultureInfo.InvariantCulture) : k == 'o' ? Convert.ToString(n, 8) : n.ToString(CultureInfo.InvariantCulture);
+                                if (flags.Contains("+") && n >= 0 && (k == 'd' || k == 'i')) v = "+" + v; break;
+                            }
+                    }
+                    if (v.Length < width) v = flags.Contains("-") ? v.PadRight(width) : flags.Contains("0") && k != 's' ? (v.StartsWith("-", StringComparison.Ordinal) ? "-" + v.Substring(1).PadLeft(width - 1, '0') : v.PadLeft(width, '0')) : v.PadLeft(width);
+                    return v;
+                });
+                sb.Append(outp);
+                if (ai == start) break;   // the format takes no arguments: once
+            } while (ai < rest.Count);
+            O(c, sb.ToString(), ShFg); return ex;
+        }
+        // #61: every file, and a total; -c bytes, -m characters
+        int Wc(List<string> args, ShCtx c)
+        {
+            string fl = Flags(args); var files = Files(args); bool l = fl.Contains('l'), w = fl.Contains('w'), b = fl.Contains('c'), m = fl.Contains('m'); if (!l && !w && !b && !m) { l = w = b = true; }
+            long tl = 0, tw = 0, tb = 0, tm = 0; int ex = 0;
+            Action<long, long, long, long, string> line = (a1, a2, a3, a4, name) => { var p = new List<string>(); if (l) p.Add(a1.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (w) p.Add(a2.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (m) p.Add(a4.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (b) p.Add(a3.ToString(CultureInfo.InvariantCulture).PadLeft(8)); string s0 = string.Join(" ", p).TrimStart(); OL(c, name == null ? s0 : s0 + " " + name); };
+            Action<IEnumerable<string>, string> count = (ls, name) => { long a1 = 0, a2 = 0, a3 = 0, a4 = 0; foreach (var x in ls) { a1++; a2 += Regex.Matches(x, @"\S+").Count; a4 += x.Length + 1; a3 += Encoding.UTF8.GetByteCount(x) + 1; } tl += a1; tw += a2; tb += a3; tm += a4; line(a1, a2, a3, a4, name); };
+            if (files.Count == 0) { string t = c.Stdin ?? ""; long a1 = t.Count(ch => ch == '\n'), a2 = Regex.Matches(t, @"\S+").Count; line(a1, a2, Encoding.UTF8.GetByteCount(t), t.Length, null); return 0; }
+            foreach (var f in files)
+            {
+                var ls = StreamLines(f, c); if (ls == null) { ex = 1; continue; }
+                count(ls, f);
+            }
+            if (files.Count > 1) line(tl, tw, tb, tm, "total");
+            return ex;
+        }
+        // #53: read a b c - one field each, the last takes the rest; from a pipe, or asked at the prompt
+        int Read(List<string> args, ShCtx c)
+        {
+            bool sec = false; string ask = ""; var names = new List<string>();
+            for (int i = 0; i < args.Count; i++) { if (args[i] == "-s") sec = true; else if (args[i] == "-p" && i + 1 < args.Count) ask = args[++i]; else if (args[i] == "-r") { } else if (!args[i].StartsWith("-", StringComparison.Ordinal)) names.Add(args[i]); }
+            if (names.Count == 0) names.Add("REPLY");
+            string ans;
+            if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.Stdin = nl < 0 ? "" : c.Stdin.Substring(nl + 1); }
+            else { if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; }
+            if (names.Count == 1) { lock (Env.Vars) Env.Vars[names[0]] = names[0] == "REPLY" ? ans : ans.Trim(); return 0; }
+            var rest = ans.Trim();
+            lock (Env.Vars)
+                for (int i = 0; i < names.Count; i++)
+                {
+                    if (i == names.Count - 1) { Env.Vars[names[i]] = rest; break; }
+                    var m = Regex.Match(rest, @"^(\S*)\s*(.*)$", RegexOptions.Singleline); Env.Vars[names[i]] = m.Groups[1].Value; rest = m.Groups[2].Value;
+                }
+            return 0;
         }
 
         // ---------- folders and files
         int Cd(string p, ShCtx c)
         {
-            if (p == "-") p = shPrev;
+            if (p == "-") p = Env.Prev;
             string v = Abs(p);
             if (!IsDir(v))
             {
@@ -688,8 +1118,9 @@ namespace AdeeboMeter
                 else if (!p.Contains("/") && shTools != null && shTools.Any(t => ToolDir(t.Group) == bare)) v = "/tools/" + bare;
                 else { Err(c, "cd: " + p + ": no such folder"); return 1; }
             }
-            string real = Real(v); if (real != null) { var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); string disk = Fix(real); if (disk != real) { } v = "/" + string.Join("/", seg.Take(seg[0] == "mnt" ? 2 : 1)) + VirtualTail(real, seg[0] == "mnt" ? char.ToUpperInvariant(seg[1][0]) + ":\\" : seg[0] == "home" ? Home : Program.DataDir); }
-            shPrev = shCwd; shCwd = v; Ui(ShPromptKeepHidden);
+            string real = Real(v); if (real != null) { var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); v = "/" + string.Join("/", seg.Take(seg[0] == "mnt" ? 2 : 1)) + VirtualTail(real, seg[0] == "mnt" ? char.ToUpperInvariant(seg[1][0]) + ":\\" : seg[0] == "home" ? Home : Program.DataDir); }
+            Env.Prev = Env.Cwd; Env.Cwd = v;
+            if (tEnv == null) Ui(ShPromptKeepHidden);   // only the interactive shell's own cd moves the prompt (#8)
             return 0;
         }
         // the part of a real path under its root, with the disk's own capitals
@@ -703,12 +1134,13 @@ namespace AdeeboMeter
         }
         int Ls(List<string> args, bool longForm, ShCtx c)
         {
-            bool all = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("a")); longForm |= args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("l"));
-            var targets = args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(); if (targets.Count == 0) targets.Add(".");
+            string fl = Flags(args); bool all = fl.Contains('a'); longForm |= fl.Contains('l');
+            var targets = Files(args); if (targets.Count == 0) targets.Add(".");
             int ex = 0;
             foreach (var tg in targets)
             {
                 string v = Abs(tg); if (targets.Count > 1) OL(c, v + ":", ShBlue);
+                if (ProcExists(v)) { OL(c, tg); continue; }
                 string real = Real(v);
                 if (real == null)
                 {
@@ -724,12 +1156,12 @@ namespace AdeeboMeter
                 {
                     var di = new DirectoryInfo(real);
                     var ents = di.EnumerateFileSystemInfos().Where(z => all || ((z.Attributes & FileAttributes.Hidden) == 0 && !z.Name.StartsWith(".", StringComparison.Ordinal))).OrderBy(z => !(z is DirectoryInfo)).ThenBy(z => z.Name, StringComparer.OrdinalIgnoreCase).Take(5000).ToList();
-                    if (longForm) { foreach (var e in ents) OL(c, FmtLs(e), e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); OL(c, ents.Count + " entries", ShDim); }
+                    if (longForm) { foreach (var e in ents) OL(c, FmtLs(e), e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); if (c.Out.Screen) OL(c, ents.Count + " entries", ShDim); }
                     else
                     {
-                        // columns, like ls on a terminal
-                        var names = ents.Select(e => e.Name + (e is DirectoryInfo ? "/" : "")).ToList(); int colw = names.Count == 0 ? 0 : Math.Min(40, names.Max(z => z.Length) + 2), per = Math.Max(1, 100 / Math.Max(1, colw));
-                        for (int i = 0; i < names.Count; i++) { var e = ents[i]; string n = names[i].Length > colw - 1 ? names[i].Substring(0, colw - 2) + "…" : names[i]; O(c, c.Out.Screen ? n.PadRight(colw) : n, e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); if (!c.Out.Screen || (i + 1) % per == 0 || i == names.Count - 1) O(c, "\n", ShFg); }
+                        // columns, like ls on a terminal (one name per line into a pipe or a file)
+                        var names = ents.Select(e => e.Name + (e is DirectoryInfo && c.Out.Screen ? "/" : "")).ToList(); int colw = names.Count == 0 ? 0 : Math.Min(40, names.Max(z => z.Length) + 2), per = Math.Max(1, 100 / Math.Max(1, colw));
+                        for (int i = 0; i < names.Count; i++) { var e = ents[i]; string n = c.Out.Screen && names[i].Length > colw - 1 ? names[i].Substring(0, colw - 2) + "…" : names[i]; O(c, c.Out.Screen ? n.PadRight(colw) : n, e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); if (!c.Out.Screen || (i + 1) % per == 0 || i == names.Count - 1) O(c, "\n", ShFg); }
                     }
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "ls: " + tg + ": " + e.Message); ex = 1; }
@@ -742,6 +1174,7 @@ namespace AdeeboMeter
             var fi = e as FileInfo; string size = fi == null ? "-" : fi.Length < 1024 ? fi.Length + " B" : fi.Length < 1048576 ? (fi.Length / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " K" : (fi.Length / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " M";
             return (e is DirectoryInfo ? "d" : "-") + ((e.Attributes & FileAttributes.ReadOnly) != 0 ? "r-" : "rw") + "  " + size.PadLeft(9) + "  " + e.LastWriteTime.ToString("dd MMM HH:mm", CultureInfo.CurrentCulture) + "  " + e.Name + (e is DirectoryInfo ? "/" : "");
         }
+        static bool IsLink(string path) { try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return true; } }
         int Tree(string p, ShCtx c)
         {
             string real = Real(Abs(p)); if (real == null || !Directory.Exists(real)) { Err(c, "tree: " + p + ": not a folder on a disk"); return 1; }
@@ -749,76 +1182,195 @@ namespace AdeeboMeter
             walk = (dir, pre, depth) =>
             {
                 if (depth > 3 || n > 400 || c.Job.Cancel) return; string[] ents; try { ents = Directory.GetFileSystemEntries(dir).Where(z => !Path.GetFileName(z).StartsWith(".", StringComparison.Ordinal)).OrderBy(z => !Directory.Exists(z)).ThenBy(z => z, StringComparer.OrdinalIgnoreCase).ToArray(); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return; }
-                for (int i = 0; i < ents.Length && n <= 400; i++) { bool last = i == ents.Length - 1, d = Directory.Exists(ents[i]); n++; O(c, pre + (last ? "└── " : "├── "), ShDim); OL(c, Path.GetFileName(ents[i]) + (d ? "/" : ""), d ? ShBlue : ShFg); if (d) walk(ents[i], pre + (last ? "    " : "│   "), depth + 1); }
+                for (int i = 0; i < ents.Length && n <= 400; i++) { bool last = i == ents.Length - 1, d = Directory.Exists(ents[i]); n++; O(c, pre + (last ? "└── " : "├── "), ShDim); OL(c, Path.GetFileName(ents[i]) + (d ? "/" : ""), d ? ShBlue : ShFg); if (d && !IsLink(ents[i])) walk(ents[i], pre + (last ? "    " : "│   "), depth + 1); }
             };
             OL(c, ShShort(Abs(p)), ShBlue); walk(real, "", 1); if (n > 400) OL(c, "... (stopped at 400)", ShDim); return 0;
         }
+        const long ShReadCap = 20L * 1048576;
         string ReadAll(string f, ShCtx c)
         {
+            if (f == "-") return c.Stdin ?? "";
             string av = Abs(f); if (av.StartsWith("/proc/", StringComparison.Ordinal)) { var pf = ProcFile(av.Substring(6)); if (pf == null) Err(c, f + ": no such file"); return pf; }
-            string r = Real(Abs(f)); if (r == null || !File.Exists(r)) { Err(c, f + ": no such file"); return null; }
-            var fi = new FileInfo(r); if (fi.Length > 20 * 1048576) { Err(c, f + ": over 20 MB - head or tail it instead"); return null; }
+            string r = Real(av); if (r == null || !File.Exists(r)) { Err(c, f + ": " + (r != null && Directory.Exists(r) ? "is a folder" : "no such file")); return null; }
+            var fi = new FileInfo(r); if (fi.Length > ShReadCap) { Err(c, f + ": over 20 MB (" + (fi.Length / 1048576) + " MB) - head, tail, grep and wc read files of any size; for the rest, narrow it first (grep x " + f + " | sort)"); return null; }
             try { return File.ReadAllText(r); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, f + ": " + e.Message); return null; }
+        }
+        // a file's lines one at a time, any size (#26) - head, tail, grep and wc use it; - is the pipe, /proc works too
+        IEnumerable<string> StreamLines(string f, ShCtx c)
+        {
+            if (f == "-") return SplitLines(c.Stdin ?? "");
+            string av = Abs(f); if (av.StartsWith("/proc/", StringComparison.Ordinal)) { var pf = ProcFile(av.Substring(6)); if (pf == null) { Err(c, f + ": no such file"); return null; } return SplitLines(pf); }
+            string r = Real(av); if (r == null || !File.Exists(r)) { Err(c, f + ": " + (r != null && Directory.Exists(r) ? "is a folder" : "no such file")); return null; }
+            return FileLines(r, c);
+        }
+        static IEnumerable<string> FileLines(string path, ShCtx c)
+        {
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) using (var rd = new StreamReader(fs, Encoding.UTF8, true))
+            {
+                var sb = new StringBuilder(); int ch, n = 0;
+                while ((ch = rd.Read()) >= 0)
+                {
+                    if (ch == '\r') { if (rd.Peek() == '\n') rd.Read(); yield return sb.ToString(); sb.Clear(); if ((++n & 4095) == 0 && c.Job.Cancel) yield break; continue; }
+                    if (ch == '\n') { yield return sb.ToString(); sb.Clear(); if ((++n & 4095) == 0 && c.Job.Cancel) yield break; continue; }
+                    if (sb.Length < 1048576) sb.Append((char)ch);
+                }
+                if (sb.Length > 0) yield return sb.ToString();
+            }
+        }
+        // \r\n, \n and a lone \r all end a line (#69)
+        static List<string> SplitLines(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return new List<string>();
+            var l = t.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').ToList();
+            if (l.Count > 0 && l[l.Count - 1] == "") l.RemoveAt(l.Count - 1);
+            return l;
         }
         List<string> InLines(List<string> files, ShCtx c)
         {
-            if (files.Count == 0) return (c.Stdin ?? "").Replace("\r", "").TrimEnd('\n').Split('\n').Where((z, i) => !(i == 0 && z == "" && (c.Stdin ?? "") == "")).ToList();
-            var l = new List<string>(); foreach (var f in files) { var t = ReadAll(f, c); if (t == null) return null; l.AddRange(t.Replace("\r", "").TrimEnd('\n').Split('\n')); } return l;
+            if (files.Count == 0) return SplitLines(c.Stdin ?? "");
+            var l = new List<string>(); foreach (var f in files) { var t = ReadAll(f, c); if (t == null) return null; l.AddRange(SplitLines(t)); } return l;
         }
         int Cat(List<string> args, ShCtx c)
         {
-            if (args.Count == 0) { O(c, c.Stdin ?? "", ShFg); return 0; }
-            int ex = 0; bool num = args.Contains("-n");
-            foreach (var f in args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)))
+            var files = Files(args); bool num = Flags(args).Contains('n');
+            if (files.Count == 0) files.Add("-");   // #33: no file, or -, is the pipe
+            int ex = 0, n = 0;
+            foreach (var f in files)
             {
-                string r = Real(Abs(f)); if (r != null && Directory.Exists(r)) { Err(c, "cat: " + f + ": is a folder"); ex = 1; continue; }
                 var t = ReadAll(f, c); if (t == null) { ex = 1; continue; }
-                if (t.Take(8000).Count(ch => ch == '\0') > 2) { Err(c, "cat: " + f + ": a binary file (" + new FileInfo(r).Length + " bytes) - hashf or b64 can read it"); ex = 1; continue; }
-                if (num) { int n = 0; foreach (var ln in t.Replace("\r", "").Split('\n')) OL(c, (++n).ToString(CultureInfo.InvariantCulture).PadLeft(6) + "  " + ln); }
-                else { O(c, t, ShFg); if (!t.EndsWith("\n", StringComparison.Ordinal)) O(c, "\n", ShFg); }
+                if (f != "-" && t.Take(8000).Count(ch => ch == '\0') > 2) { Err(c, "cat: " + f + ": a binary file - sha256sum, base64 or the hashf tool can read it"); ex = 1; continue; }
+                if (num) { foreach (var ln in SplitLines(t)) OL(c, (++n).ToString(CultureInfo.InvariantCulture).PadLeft(6) + "  " + ln); }
+                else { O(c, t, ShFg); if (t.Length > 0 && !t.EndsWith("\n", StringComparison.Ordinal) && c.Out.Screen) O(c, "\n", ShFg); }
             }
             return ex;
         }
         int HeadTail(bool head, List<string> args, ShCtx c)
         {
-            int n = 10; var files = new List<string>();
-            for (int k = 0; k < args.Count; k++) { if (args[k] == "-n" && k + 1 < args.Count) { int.TryParse(args[++k], out n); continue; } if (Regex.IsMatch(args[k], @"^-\d+$")) { n = int.Parse(args[k].Substring(1), CultureInfo.InvariantCulture); continue; } files.Add(args[k]); }
-            var l = InLines(files, c); if (l == null) return 1;
-            foreach (var x in head ? l.Take(n) : l.Skip(Math.Max(0, l.Count - n))) OL(c, x);
-            return 0;
+            int n = 10; bool fromStart = false; var files = new List<string>();
+            for (int k = 0; k < args.Count; k++)
+            {
+                string a = args[k]; string v = null;
+                if (a == "-n" && k + 1 < args.Count) v = args[++k]; else if (a.StartsWith("-n", StringComparison.Ordinal) && a.Length > 2) v = a.Substring(2); else if (Regex.IsMatch(a, @"^-\d+$")) v = a.Substring(1);
+                if (v != null) { if (v.StartsWith("+", StringComparison.Ordinal)) { fromStart = true; v = v.Substring(1); } if (!int.TryParse(v, out n)) { Err(c, (head ? "head" : "tail") + ": " + v + ": not a number"); return 1; } continue; }
+                if (a == "-f") { Err(c, "tail -f: use  watch -n 2 tail " + string.Join(" ", args.Where(z => z != "-f")) + "  here"); return 1; }
+                files.Add(a);
+            }
+            if (files.Count == 0) files.Add("-");
+            int ex = 0;
+            foreach (var f in files)
+            {
+                if (files.Count > 1) OL(c, "==> " + f + " <==", ShBlue);
+                var ls = StreamLines(f, c); if (ls == null) { ex = 1; continue; }
+                if (head) foreach (var x in ls.Take(n)) OL(c, x);
+                else if (fromStart) foreach (var x in ls.Skip(Math.Max(0, n - 1))) OL(c, x);
+                else { var q = new Queue<string>(); foreach (var x in ls) { q.Enqueue(x); if (q.Count > n) q.Dequeue(); } foreach (var x in q) OL(c, x); }
+            }
+            return ex;
+        }
+        // GNU's basic regular expressions (grep and sed by default): \| \+ \? \( \) \{ \} are the operators, | + ? ( ) { } plain
+        // characters - so 'loss\|average' and '[0-9]\+' do what they do on Linux (#27). -E switches to extended.
+        static string BreToNet(string p)
+        {
+            var sb = new StringBuilder(); bool inSet = false;
+            for (int i = 0; i < p.Length; i++)
+            {
+                char ch = p[i];
+                if (inSet) { sb.Append(ch); if (ch == ']' && sb.Length > 1 && sb[sb.Length - 2] != '[' && !(sb.Length > 2 && sb[sb.Length - 2] == '^' && sb[sb.Length - 3] == '[')) inSet = false; continue; }
+                if (ch == '[') { inSet = true; sb.Append(ch); if (i + 1 < p.Length && p[i + 1] == '^') { sb.Append('^'); i++; } if (i + 1 < p.Length && p[i + 1] == ']') { sb.Append("\\]"); i++; } continue; }
+                if (ch == '\\' && i + 1 < p.Length) { char n = p[++i]; if ("|+?(){}".IndexOf(n) >= 0) sb.Append(n); else sb.Append('\\').Append(n); continue; }
+                if ("|+?(){}".IndexOf(ch) >= 0) { sb.Append('\\').Append(ch); continue; }
+                sb.Append(ch);
+            }
+            return sb.ToString();
+        }
+        static Regex ShRegex(string pat, bool ere, bool fixedStr, bool ic, bool word)
+        {
+            string p = fixedStr ? Regex.Escape(pat) : ere ? pat : BreToNet(pat);
+            if (word) p = @"(?<![\w])(?:" + p + @")(?![\w])";
+            return new Regex(p, (ic ? RegexOptions.IgnoreCase : RegexOptions.None) | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
         }
         int Grep(List<string> args, ShCtx c)
         {
-            bool ic = false, inv = false, num = false, count = false; string pat = null; var files = new List<string>();
-            foreach (var a in args) { if (a.StartsWith("-", StringComparison.Ordinal) && pat == null && a.Length > 1) { ic |= a.Contains("i"); inv |= a.Contains("v"); num |= a.Contains("n"); count |= a.Contains("c"); continue; } if (pat == null) pat = a; else files.Add(a); }
-            if (pat == null) { Err(c, "usage: grep [-i -v -n -c] pattern [file...]"); return 2; }
-            Regex rx; try { rx = new Regex(pat, ic ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { rx = new Regex(Regex.Escape(pat), ic ? RegexOptions.IgnoreCase : RegexOptions.None); }
-            var l = InLines(files, c); if (l == null) return 2; int hits = 0, i = 0;
-            foreach (var x in l) { i++; if (rx.IsMatch(x) != inv) { hits++; if (!count) OL(c, (num ? i + ":" : "") + x, ShFg); } }
-            if (count) OL(c, hits.ToString(CultureInfo.InvariantCulture));
-            return hits > 0 ? 0 : 1;
+            bool ic = false, inv = false, num = false, count = false, ere = false, fx = false, word = false, only = false, quiet = false, list = false, names = false, noNames = false, recurse = false;
+            string pat = null; var files = new List<string>(); bool opts = true;
+            for (int i = 0; i < args.Count; i++)
+            {
+                string a = args[i];
+                if (opts && a == "--") { opts = false; continue; }
+                if (opts && a == "-e" && i + 1 < args.Count) { pat = args[++i]; continue; }
+                if (opts && a.StartsWith("-", StringComparison.Ordinal) && a.Length > 1 && !(pat == null && Regex.IsMatch(a, @"^-\d"))) { foreach (char f in a.Substring(1)) switch (f) { case 'i': ic = true; break; case 'v': inv = true; break; case 'n': num = true; break; case 'c': count = true; break; case 'E': ere = true; break; case 'F': fx = true; break; case 'w': word = true; break; case 'o': only = true; break; case 'q': quiet = true; break; case 'l': list = true; break; case 'H': names = true; break; case 'h': noNames = true; break; case 'r': case 'R': recurse = true; break; } continue; }
+                if (pat == null) pat = a; else files.Add(a);
+            }
+            if (pat == null) { Err(c, "usage: grep [-i -v -n -c -E -F -w -o -l -q -r] pattern [file...]"); return 2; }
+            Regex rx; try { rx = ShRegex(pat, ere, fx, ic, word); } catch (ArgumentException e) { Err(c, "grep: " + pat + ": not a pattern (" + e.Message.Split('-').Last().Trim() + ")"); return 2; }
+            if (recurse) { var more = new List<string>(); foreach (var f in files.DefaultIfEmpty(".")) { string r = Real(Abs(f)); if (r != null && Directory.Exists(r)) { try { foreach (var x in Directory.EnumerateFiles(r, "*", SearchOption.AllDirectories).Take(20000)) more.Add(f.TrimEnd('/') + "/" + x.Substring(r.TrimEnd('\\').Length + 1).Replace('\\', '/')); } catch (UnauthorizedAccessException) { } } else more.Add(f); } files = more; }
+            if (files.Count == 0) files.Add("-");
+            bool prefix = !noNames && (names || files.Count > 1);   // #62: which file matched
+            int hits = 0, ex = 1;
+            foreach (var f in files)
+            {
+                var ls = StreamLines(f, c); if (ls == null) { ex = 2; continue; }
+                int i = 0, here = 0;
+                try
+                {
+                    foreach (var x in ls)
+                    {
+                        i++;
+                        bool m = rx.IsMatch(x) != inv; if (!m) continue;
+                        here++; hits++; if (quiet) return 0; if (list) break; if (count) continue;
+                        string pre = (prefix ? f + ":" : "") + (num ? i + ":" : "");
+                        if (only && !inv) foreach (Match mm in rx.Matches(x)) OL(c, pre + mm.Value); else OL(c, pre + x);
+                    }
+                }
+                catch (RegexMatchTimeoutException) { Err(c, "grep: the pattern took too long on " + f + " - stopped"); return 2; }
+                if (list && here > 0) OL(c, f);
+                if (count) OL(c, (prefix ? f + ":" : "") + here);
+            }
+            return hits > 0 ? 0 : ex;
         }
         int CpMv(bool move, List<string> args, ShCtx c)
         {
-            bool rec = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("r")); var p = args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList();
+            bool rec = Flags(args).IndexOfAny(new[] { 'r', 'R', 'a' }) >= 0, noClobber = Flags(args).Contains('n'); var p = Files(args);
             if (p.Count < 2) { Err(c, "usage: " + (move ? "mv" : "cp [-r]") + " source... target"); return 1; }
-            string dst = Real(Abs(p[p.Count - 1])); if (dst == null) { Err(c, "can't write to " + p[p.Count - 1]); return 1; }
+            string dst = Real(Abs(p[p.Count - 1])); if (dst == null) { Err(c, "can't write to " + p[p.Count - 1] + " - only folders on a disk"); return 1; }
+            if (p.Count > 2 && !Directory.Exists(dst)) { Err(c, (move ? "mv" : "cp") + ": " + p[p.Count - 1] + " isn't a folder (several sources need one)"); return 1; }
+            int ex = 0;
             foreach (var s in p.Take(p.Count - 1))
             {
-                string src = Real(Abs(s)); if (src == null || (!File.Exists(src) && !Directory.Exists(src))) { Err(c, s + ": no such file"); return 1; }
+                string src = Real(Abs(s)); if (src == null || (!File.Exists(src) && !Directory.Exists(src))) { Err(c, s + ": no such file"); ex = 1; continue; }
                 string to = Directory.Exists(dst) ? Path.Combine(dst, Path.GetFileName(src.TrimEnd('\\'))) : dst;
-                if (File.Exists(src)) { if (move) { if (File.Exists(to)) File.Delete(to); File.Move(src, to); } else File.Copy(src, to, true); }
-                else if (move) Directory.Move(src, to);
-                else if (!rec) { Err(c, "cp: " + s + " is a folder - use cp -r"); return 1; }
-                else CopyDir(src, to, c);
+                if (string.Equals(Path.GetFullPath(src).TrimEnd('\\'), Path.GetFullPath(to).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) { Err(c, s + " and " + p[p.Count - 1] + " are the same file"); ex = 1; continue; }
+                if (noClobber && (File.Exists(to) || Directory.Exists(to))) continue;
+                bool sameVol = string.Equals(Path.GetPathRoot(Path.GetFullPath(src)), Path.GetPathRoot(Path.GetFullPath(to)), StringComparison.OrdinalIgnoreCase);
+                if (File.Exists(src))
+                {
+                    if (!move) { File.Copy(src, to, true); continue; }
+                    // #19: the existing file is replaced only once the new one is in place - never deleted first
+                    if (!sameVol) { string tmp = to + ".adeeboshell-part"; File.Copy(src, tmp, true); if (File.Exists(to)) File.Replace(tmp, to, null); else File.Move(tmp, to); File.Delete(src); }
+                    else if (File.Exists(to)) File.Replace(src, to, null); else File.Move(src, to);
+                    continue;
+                }
+                // a folder: never into itself (#88)
+                string full = Path.GetFullPath(src).TrimEnd('\\') + "\\";
+                if (Path.GetFullPath(to).TrimEnd('\\').StartsWith(full, StringComparison.OrdinalIgnoreCase) || (Path.GetFullPath(to).TrimEnd('\\') + "\\").StartsWith(full, StringComparison.OrdinalIgnoreCase)) { Err(c, (move ? "mv" : "cp") + ": " + s + " can't go inside itself"); ex = 1; continue; }
+                if (!move && !rec) { Err(c, "cp: " + s + " is a folder - use cp -r"); ex = 1; continue; }
+                if (move && sameVol && !Directory.Exists(to)) { Directory.Move(src, to); continue; }
+                if (move && Directory.Exists(to)) { Err(c, "mv: " + p[p.Count - 1] + "/" + Path.GetFileName(src) + " already exists"); ex = 1; continue; }
+                CopyDir(src, to, c); if (c.Job.Cancel) return 130;
+                if (move) Directory.Delete(src, true);
             }
-            return 0;
+            return ex;
         }
-        static void CopyDir(string a, string b, ShCtx c) { Directory.CreateDirectory(b); foreach (var f in Directory.GetFiles(a)) { if (c.Job.Cancel) return; File.Copy(f, Path.Combine(b, Path.GetFileName(f)), true); } foreach (var d in Directory.GetDirectories(a)) CopyDir(d, Path.Combine(b, Path.GetFileName(d)), c); }
+        static void CopyDir(string a, string b, ShCtx c)
+        {
+            Directory.CreateDirectory(b);
+            foreach (var f in Directory.GetFiles(a)) { if (c.Job.Cancel) return; File.Copy(f, Path.Combine(b, Path.GetFileName(f)), true); }
+            foreach (var d in Directory.GetDirectories(a)) { if (IsLink(d)) continue; CopyDir(d, Path.Combine(b, Path.GetFileName(d)), c); }
+        }
         int Rm(List<string> args, ShCtx c)
         {
-            bool rec = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("r")), force = args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z.Contains("f"));
-            var p = args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).ToList(); if (p.Count == 0) { Err(c, "usage: rm [-r] [-f] file..."); return 1; }
+            string fl = Flags(args); bool rec = fl.IndexOfAny(new[] { 'r', 'R' }) >= 0, force = fl.Contains('f');
+            var p = Files(args); if (p.Count == 0) { Err(c, "usage: rm [-r] [-f] file..."); return 1; }
             foreach (var s in p)
             {
                 string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; }
@@ -832,50 +1384,90 @@ namespace AdeeboMeter
         }
         int Find(List<string> args, ShCtx c)
         {
-            string start = args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? "."; int ni = args.IndexOf("-name"); string pat = ni >= 0 && ni + 1 < args.Count ? args[ni + 1] : "*";
+            string start = args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? ".";
+            int ni = args.IndexOf("-name"), ii = args.IndexOf("-iname"), ti = args.IndexOf("-type"), di = args.IndexOf("-maxdepth");
+            string pat = ni >= 0 && ni + 1 < args.Count ? args[ni + 1] : ii >= 0 && ii + 1 < args.Count ? args[ii + 1] : "*", type = ti >= 0 && ti + 1 < args.Count ? args[ti + 1] : ""; int maxDepth = int.MaxValue; if (di >= 0 && di + 1 < args.Count) int.TryParse(args[di + 1], out maxDepth);
             string real = Real(Abs(start)); if (real == null || !Directory.Exists(real)) { Err(c, "find: " + start + ": not a folder on a disk"); return 1; }
-            var rx = new Regex("^" + Regex.Escape(pat).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase); int n = 0;
-            var stack = new Stack<string>(); stack.Push(real); string baseV = Abs(start);
-            while (stack.Count > 0 && n < 2000 && !c.Job.Cancel)
+            var rx = new Regex("^" + GlobRx(pat) + "$", RegexOptions.IgnoreCase); int n = 0, denied = 0;
+            var stack = new Stack<KeyValuePair<string, int>>(); stack.Push(new KeyValuePair<string, int>(real, 0)); string baseV = start.TrimEnd('/');
+            while (stack.Count > 0 && n < 5000 && !c.Job.Cancel)
             {
-                string d = stack.Pop(); string[] fs, ds;
-                try { fs = Directory.GetFiles(d); ds = Directory.GetDirectories(d); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; continue; }
-                foreach (var x in ds.Concat(fs)) if (rx.IsMatch(Path.GetFileName(x))) { n++; OL(c, ShShort(baseV) + x.Substring(real.TrimEnd('\\').Length).Replace('\\', '/'), Directory.Exists(x) ? ShBlue : ShFg); }
-                foreach (var x in ds.Reverse()) stack.Push(x);
+                var d = stack.Pop(); string[] fs, ds;
+                try { fs = Directory.GetFiles(d.Key); ds = Directory.GetDirectories(d.Key); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; denied++; continue; }
+                foreach (var x in ds.Concat(fs))
+                {
+                    bool isD = Directory.Exists(x); if ((type == "f" && isD) || (type == "d" && !isD)) continue;
+                    if (rx.IsMatch(Path.GetFileName(x))) { n++; OL(c, baseV + x.Substring(real.TrimEnd('\\').Length).Replace('\\', '/'), isD ? ShBlue : ShFg); }
+                }
+                if (d.Value + 1 < maxDepth) foreach (var x in ds.Reverse()) if (!IsLink(x)) stack.Push(new KeyValuePair<string, int>(x, d.Value + 1));   // #88: never round a junction
             }
-            if (n >= 2000) OL(c, "... (stopped at 2,000)", ShDim);
-            return n > 0 ? 0 : 1;
+            if (n >= 5000) Err(c, "find: stopped at 5,000 results");
+            if (denied > 0) Err(c, "find: " + denied + " folder" + (denied == 1 ? "" : "s") + " couldn't be read (no permission)");
+            return denied > 0 ? 1 : 0;
         }
         int Stat(List<string> args, ShCtx c)
         {
-            foreach (var f in args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)).DefaultIfEmpty("."))
+            int ex = 0;
+            foreach (var f in Files(args).DefaultIfEmpty("."))
             {
-                string r = Real(Abs(f)); if (r == null) { Err(c, f + ": not on a disk"); continue; }
-                if (File.Exists(r)) { var fi = new FileInfo(r); OL(c, f + "  " + fi.Length.ToString("N0", CultureInfo.CurrentCulture) + " bytes · changed " + fi.LastWriteTime.ToString("g", CultureInfo.CurrentCulture) + " · " + r); }
-                else if (Directory.Exists(r)) { long sum = 0; int n = 0; try { foreach (var x in Directory.EnumerateFiles(r, "*", SearchOption.AllDirectories)) { if (c.Job.Cancel || ++n > 200000) break; try { sum += new FileInfo(x).Length; } catch (IOException) { } } } catch (UnauthorizedAccessException) { } OL(c, (sum / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB in " + n + " files  " + f); }
-                else Err(c, f + ": no such file");
+                string r = Real(Abs(f)); if (r == null) { Err(c, "stat: " + f + ": not on a disk"); ex = 1; continue; }
+                if (File.Exists(r)) { var fi = new FileInfo(r); O(c, "  File: ", ShBlue); OL(c, f); O(c, "  Size: ", ShBlue); OL(c, fi.Length.ToString("N0", CultureInfo.CurrentCulture) + " bytes" + ((fi.Attributes & FileAttributes.ReadOnly) != 0 ? " · read-only" : "")); O(c, "Modify: ", ShBlue); OL(c, fi.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)); O(c, "Create: ", ShBlue); OL(c, fi.CreationTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)); O(c, "  Path: ", ShBlue); OL(c, r); }
+                else if (Directory.Exists(r)) { var di = new DirectoryInfo(r); O(c, "  Folder: ", ShBlue); OL(c, f + (IsLink(r) ? "  (a link/junction)" : "")); O(c, "  Modify: ", ShBlue); OL(c, di.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)); O(c, "  Path: ", ShBlue); OL(c, r); OL(c, "  (du -sh " + f + " adds up its size)", ShDim); }
+                else { Err(c, "stat: " + f + ": no such file"); ex = 1; }
             }
-            return 0;
+            return ex;
         }
+        // test / [ : ! ( ) -a -o, -z -n -f -d -e -s -r -w, = != < > (strings), -eq -ne -lt -le -gt -ge (numbers) - #52
         bool Test(List<string> a)
         {
-            if (a.Count == 0) return false;
-            if (a[0] == "!") return !Test(a.Skip(1).ToList());
-            if (a.Count == 1) return a[0] != "";
-            if (a.Count == 2) { string r = Real(Abs(a[1])); switch (a[0]) { case "-z": return a[1] == ""; case "-n": return a[1] != ""; case "-f": return r != null && File.Exists(r); case "-d": return IsDir(Abs(a[1])); case "-e": return r != null && (File.Exists(r) || Directory.Exists(r)); } }
-            if (a.Count == 3)
+            int i = 0;
+            Func<bool> orE = null, andE = null, notE = null, prim = null;
+            orE = () => { bool v = andE(); while (i < a.Count && a[i] == "-o") { i++; bool r = andE(); v = v || r; } return v; };
+            andE = () => { bool v = notE(); while (i < a.Count && a[i] == "-a") { i++; bool r = notE(); v = v && r; } return v; };
+            notE = () => { if (i < a.Count && a[i] == "!" && i + 1 < a.Count) { i++; return !notE(); } return prim(); };
+            prim = () =>
             {
-                double x, y; bool nums = double.TryParse(a[0], NumberStyles.Float, CultureInfo.InvariantCulture, out x) & double.TryParse(a[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y);
-                switch (a[1]) { case "=": case "==": return a[0] == a[2]; case "!=": return a[0] != a[2]; case "-eq": return nums && x == y; case "-ne": return nums && x != y; case "-lt": return nums && x < y; case "-le": return nums && x <= y; case "-gt": return nums && x > y; case "-ge": return nums && x >= y; }
-            }
-            return false;
+                if (i >= a.Count) throw new FormatException("an argument is missing");
+                if (a[i] == "(") { i++; bool v = orE(); if (i >= a.Count || a[i] != ")") throw new FormatException("a ( isn't closed"); i++; return v; }
+                if (i + 2 < a.Count + 0 && i + 1 < a.Count && Regex.IsMatch(a[i + 1], "^(=|==|!=|<|>|-eq|-ne|-lt|-le|-gt|-ge|-nt|-ot)$") && i + 2 < a.Count)
+                {
+                    string l = a[i], op = a[i + 1], r = a[i + 2]; i += 3;
+                    switch (op)
+                    {
+                        case "=": case "==": return l == r; case "!=": return l != r;
+                        case "<": return string.CompareOrdinal(l, r) < 0; case ">": return string.CompareOrdinal(l, r) > 0;
+                        case "-nt": case "-ot": { string x = Real(Abs(l)), y = Real(Abs(r)); if (x == null || y == null || !File.Exists(x) || !File.Exists(y)) return false; int cmp = File.GetLastWriteTimeUtc(x).CompareTo(File.GetLastWriteTimeUtc(y)); return op == "-nt" ? cmp > 0 : cmp < 0; }
+                    }
+                    long x0, y0; if (!long.TryParse(l.Trim(), out x0) || !long.TryParse(r.Trim(), out y0)) throw new FormatException((long.TryParse(l.Trim(), out x0) ? r : l) + ": a whole number is needed");
+                    switch (op) { case "-eq": return x0 == y0; case "-ne": return x0 != y0; case "-lt": return x0 < y0; case "-le": return x0 <= y0; case "-gt": return x0 > y0; default: return x0 >= y0; }
+                }
+                if (Regex.IsMatch(a[i], "^-[zndefsrwxL]$") && i + 1 < a.Count)
+                {
+                    string op = a[i], v = a[i + 1]; i += 2; string av = Abs(v), r = Real(av);
+                    switch (op)
+                    {
+                        case "-z": return v == ""; case "-n": return v != "";
+                        case "-f": return (r != null && File.Exists(r)) || ProcExists(av);
+                        case "-d": return IsDir(av);
+                        case "-e": case "-r": return (r != null && (File.Exists(r) || Directory.Exists(r))) || ProcExists(av) || IsDir(av);
+                        case "-s": return (r != null && File.Exists(r) && new FileInfo(r).Length > 0) || ProcExists(av);
+                        case "-w": return r != null && ((File.Exists(r) && (File.GetAttributes(r) & FileAttributes.ReadOnly) == 0) || Directory.Exists(r));
+                        case "-x": return r != null && File.Exists(r) && IsScript(r);
+                        case "-L": return r != null && (File.Exists(r) || Directory.Exists(r)) && IsLink(r);
+                    }
+                }
+                return a[i++] != "";
+            };
+            if (a.Count == 0) return false;
+            bool res = orE(); if (i < a.Count) throw new FormatException("too many arguments near '" + a[i] + "'");
+            return res;
         }
 
         // ---------- pages, the lab, the help
         int Open(List<string> args, ShCtx c)
         {
             string p = args.Count == 0 ? "" : args[0].ToLowerInvariant().Trim('/');
-            if (p == "" || p == ".") { var seg = shCwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); if (seg.Length == 2 && seg[0] == "pages") p = seg[1]; else if (seg.Length == 3 && seg[0] == "tools") p = "tool:" + seg[2]; else { Err(c, "open: which page? (cd pages/<name> then open, or open <name>)"); return 1; } }
+            if (p == "" || p == ".") { var seg = Env.Cwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); if (seg.Length == 2 && seg[0] == "pages") p = seg[1]; else if (seg.Length == 3 && seg[0] == "tools") p = "tool:" + seg[2]; else { Err(c, "open: which page? (cd pages/<name> then open, or open <name>)"); return 1; } }
             if (p.StartsWith("pages/", StringComparison.Ordinal)) p = p.Substring(6);
             if (p.StartsWith("tool:", StringComparison.Ordinal) || (shTools.Any(t => t.Id == p) && !ShPageIds().Contains(p))) { string id = p.StartsWith("tool:", StringComparison.Ordinal) ? p.Substring(5) : p; OL(c, "opening " + id + " in the Toolbox", ShGreen); Ui(delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(id); SyncNav(); }); return 0; }
             foreach (var al in new[] { "today=home", "markets=trade", "market=trade", "trading=trade", "streaming=stream", "machine=time", "wifi=link", "running=procs", "connections=conn", "problem=guide", "games=gamer", "game=gamer" }) { var kv = al.Split('='); if (p == kv[0]) p = kv[1]; }
@@ -911,7 +1503,7 @@ namespace AdeeboMeter
             h("cmd | grep x | sort | head", "pipes; > file, >> file, < file, 2>/dev/null, &> file");
             h("x=$(cmd) · $((n * 2)) · cut sed awk tr xargs", "command output and sums in a line; the text tools"); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", "and / or / in the background (jobs, wait, kill %1)");
             h("parallel -j 5 ping {} 4 ::: a b c", "run together, merge as each finishes; cat hosts.txt | parallel ping {} 4"); h("for h in a b c; do ping $h 4; done", "loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep");
-            h("nano file · vim file", "write a script or any text file, right here (^S save ^X exit · :wq)");
+            h("nano file · vim file · less file", "write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time");
             h("source run.sh [args] [--yes] · ./run.sh", "a script; --yes confirms its test-traffic tools for the whole run"); h("alltools [--yes]", "every tool with its example");
             OL(c, "Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes", ShDim);
             OL(c, "Nothing here starts another program: every command is AdeeboMeter's own.", ShDim);
@@ -1060,38 +1652,60 @@ namespace AdeeboMeter
         }
 
         // ---------- scripts, parallel, every tool
+        // Carry-over C1: --yes counts only when you type it yourself - a script can't give itself (or another script, alltools or
+        // parallel) consent to send test traffic. Typed:  ./x.sh --yes · alltools --yes · parallel --yes ...
+        bool YesTyped(List<string> args, ShCtx c, string what)
+        {
+            bool asked = args.Remove("--yes");
+            if (asked && c.Script) { Err(c, what + ": --yes only counts when you type it at the prompt - inside a script the test-traffic tools are skipped"); return false; }
+            return asked;
+        }
         int Source(string file, List<string> args, ShCtx c)
         {
-            bool yes = args.Remove("--yes");
+            bool yes = YesTyped(args, c, "source " + file);
             string r = Real(Abs(file)); if (r == null || !File.Exists(r)) { Err(c, "source: " + file + ": no such file"); return 1; }
             if (new FileInfo(r).Length > 512 * 1024) { Err(c, "source: " + file + " is over 512 KB - that's not a script"); return 1; }
             string text; try { text = File.ReadAllText(r); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, file + ": " + e.Message); return 1; }
-            int depth; lock (shVars) { string d; shVars.TryGetValue("\u0004depth", out d); int.TryParse(d, out depth); if (depth >= 8) { Err(c, "source: scripts nested 8 deep - stopped (does a script run itself?)"); return 1; } shVars["\u0004depth"] = (depth + 1).ToString(CultureInfo.InvariantCulture); }
-            try { return ShRunTextIn(text, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes || yes, Script = true }); }
-            finally { lock (shVars) shVars["\u0004depth"] = depth.ToString(CultureInfo.InvariantCulture); }
+            if (Env.Depth >= 8) { Err(c, "source: scripts nested 8 deep - stopped (does a script run itself?)"); return 1; }
+            Env.Depth++;
+            try { return ShRunText(text, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes || yes, Script = true }, file + ": "); }
+            finally { Env.Depth--; }
         }
-        int ShRunTextIn(string text, ShCtx c) { NSeq prog; try { prog = new Parser(Lex(text.Replace("\r", ""))).List(); } catch (FormatException fe) { Err(c, "script: " + fe.Message); return 2; } return Exec(prog, c); }
+        // a word as the shell reads it back: 'it''s' quoting, so an item with a quote or a $ stays one plain word (#59)
+        static string ShQuote(string s) { return "'" + (s ?? "").Replace("'", "'\\''") + "'"; }
         int Parallel(List<string> args, ShCtx c)
         {
-            int jobs = 4; bool yes = args.Remove("--yes"); int ji = args.IndexOf("-j"); if (ji >= 0 && ji + 1 < args.Count) { int.TryParse(args[ji + 1], out jobs); args.RemoveRange(ji, 2); } jobs = Math.Max(1, Math.Min(16, jobs));
-            int sep = args.IndexOf(":::"); var cmd = sep >= 0 ? args.Take(sep).ToList() : args; var items = sep >= 0 ? args.Skip(sep + 1).ToList() : InLines(new List<string>(), c).Where(z => z.Trim() != "").Select(z => z.Trim()).ToList();
+            bool yes = YesTyped(args, c, "parallel"); int jobs = 4;
+            for (int k = 0; k < args.Count; k++)
+            {
+                if (args[k] == ":::") break;
+                if (args[k] == "-j") { int v; if (k + 1 >= args.Count || !int.TryParse(args[k + 1], out v)) { Err(c, "parallel: -j needs a number (-j 5)"); return 2; } jobs = v; args.RemoveRange(k, 2); k--; continue; }
+                if (Regex.IsMatch(args[k], @"^-j\d+$")) { jobs = int.Parse(args[k].Substring(2), CultureInfo.InvariantCulture); args.RemoveAt(k); k--; continue; }
+                if (args[k].StartsWith("-", StringComparison.Ordinal) && k == 0) { Err(c, "parallel: " + args[k] + ": not an option this parallel knows (-j N, --yes)"); return 2; }
+                break;
+            }
+            jobs = Math.Max(1, Math.Min(16, jobs));
+            int sep = args.IndexOf(":::"); var cmd = sep >= 0 ? args.Take(sep).ToList() : args; var items = sep >= 0 ? args.Skip(sep + 1).ToList() : SplitLines(c.Stdin ?? "").Where(z => z.Trim() != "").Select(z => z.Trim()).ToList();
             if (cmd.Count == 0 || items.Count == 0) { Err(c, "usage: parallel [-j N] [--yes] command {} ::: item item ...   (or: cat list.txt | parallel ping {} 4)"); return 2; }
             if (items.Count > 500) { Err(c, "parallel: " + items.Count + " items - 500 at most"); return 2; }
-            string tmpl = string.Join(" ", cmd.Select(z => z.Contains(" ") ? "\"" + z + "\"" : z)); if (!tmpl.Contains("{}")) tmpl += " {}";
+            if (!cmd.Any(z => z.Contains("{}"))) cmd.Add("{}");
             var sem = new SemaphoreSlim(jobs); int doneN = 0, worst = 0, running = 0; var threads = new List<Thread>(); var outLock = new object();
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var sw = System.Diagnostics.Stopwatch.StartNew(); var env = Env.Clone(); bool ok = c.Yes || yes; var cargs = c.Args;
             foreach (var it in items)
             {
                 if (c.Job.Cancel) break;
                 sem.Wait(); if (c.Job.Cancel) { sem.Release(); break; }
-                string line = tmpl.Replace("{}", it.Contains(" ") ? "\"" + it + "\"" : it); Interlocked.Increment(ref running);
+                var words = cmd.Select(w => w.Replace("{}", it)).ToList();
+                string line = string.Join(" ", words.Select(ShQuote)), shown = string.Join(" ", words.Select(w => w.Contains(" ") ? "\"" + w + "\"" : w));
+                Interlocked.Increment(ref running);
                 var th = new Thread(() =>
                 {
-                    var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job }; int ex = 0;
-                    try { ex = ShRunText(line, new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes || yes, Script = true }); }
-                    catch (Exception e) { if (e is OutOfMemoryException) throw; cap.Cap.Append("error: " + e.Message + "\n"); ex = 2; }
+                    tEnv = env.Clone(); var cap = new ShOut { Cap = new StringBuilder(), Job = c.Job }; cap.ErrCap = cap.Cap; int ex = 0;   // each item's errors stay with its own output
+                    try { ex = ShRunText(line, new ShCtx { Job = c.Job, Out = cap, Args = cargs, Yes = ok, Script = true }); }
+                    catch (OutOfMemoryException) { GC.Collect(); lock (cap.Cap) cap.Cap.Append("ran out of memory - stopped\n"); ex = 2; }
+                    catch (Exception e) { lock (cap.Cap) cap.Cap.Append("error: " + e.Message + "\n"); ex = 2; }
                     finally { Interlocked.Decrement(ref running); sem.Release(); }
-                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); OL(c, "── " + line + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); O(c, cap.Cap.ToString(), ShFg); }
+                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); try { OL(c, "── " + shown + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); O(c, cap.Cap.ToString(), ShFg); } catch (ShTooBig) { } }
                 }) { IsBackground = true, Name = "parallel" };
                 threads.Add(th); th.Start();
                 if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.Live(new List<List<TermView.Seg>> { new List<TermView.Seg> { new TermView.Seg("parallel  ", ShCyan), new TermView.Seg(doneN + " / " + items.Count + " done · " + running + " running · " + sw.Elapsed.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s", ShDim) } }); });
@@ -1103,15 +1717,16 @@ namespace AdeeboMeter
                 if (c.Job.Cancel && (DateTime.UtcNow - c.Job.CancelAt).TotalSeconds > 15) break;
             }
             if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.EndLive(); });
-            OL(c, "parallel: " + doneN + " of " + items.Count + " done in " + sw.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s" + (worst > 0 ? " · some failed" : ""), worst > 0 ? ShAmber : ShGreen);
+            ErrRaw(c, "parallel: " + doneN + " of " + items.Count + " done in " + sw.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s" + (worst > 0 ? " · some failed" : "") + "\n", worst > 0 ? ShAmber : ShGreen);
             return c.Job.Cancel ? 130 : worst;
         }
         // left out of alltools: they need you there (keys, files, screens), act on your phone, write something you keep, or cost a lot
         static readonly HashSet<string> ShSkip = new HashSet<string> { "newkey", "csrmake", "selfsigned", "encrypt", "decrypt", "recipients", "friend", "screentest", "keytest", "soundtest", "remote", "radiuslab", "wol", "keys", "mtu", "speedtest", "beforeafter" };
-        int AllTools(bool yes, ShCtx c)
+        int AllTools(bool asked, ShCtx c)
         {
+            bool yes = asked && !c.Script; if (asked && c.Script) Err(c, "alltools: --yes only counts when you type it at the prompt - the test-traffic tools are left out");   // C1
             string gw; lock (M.L) gw = M.Gateway ?? "";
-            int ran = 0, failed = 0, skipped = 0, pictures = 0; var log = new StringBuilder(); var cap = new ShOut { Cap = log, Job = c.Job };
+            int ran = 0, failed = 0, skipped = 0, pictures = 0; var log = new StringBuilder(); var cap = new ShOut { Cap = log, Job = c.Job }; cap.ErrCap = log;
             foreach (var t in shTools)
             {
                 if (c.Job.Cancel) break;
@@ -1125,20 +1740,42 @@ namespace AdeeboMeter
                 int r = RunTool(t, words, new ShCtx { Job = c.Job, Out = cap, Yes = yes, Script = true }); ran++; if (r == 2) failed++;
                 OL(c, r == 0 ? "   ok" : r == 1 ? "   ok (found problems)" : "   FAILED", r == 2 ? ShRed : ShDim);
             }
-            string tail = (c.Job.Cancel ? "== STOPPED " : "== DONE ") + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · " + ran + " run · " + failed + " failed · " + skipped + " left out" + (yes ? "" : " (test-traffic tools need --yes)") + " · " + pictures + " pictures (Toolbox only)";
+            string tail = (c.Job.Cancel ? "== STOPPED " : "== DONE ") + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · " + ran + " run · " + failed + " failed · " + skipped + " left out" + (yes ? "" : " (test-traffic tools need --yes, typed at the prompt)") + " · " + pictures + " pictures (Toolbox only)";
             log.AppendLine(tail); OL(c, tail, failed > 0 || c.Job.Cancel ? ShAmber : ShGreen);
             string f = Path.Combine(Program.WriteDir, "alltools.out.txt"); try { File.WriteAllText(f, log.ToString()); OL(c, "transcript: " + f, ShDim); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             return failed > 0 ? 1 : 0;
         }
 
-        // the self-test's way in: a line run to the end, its text back (no screen, no questions)
-        internal string TestShell(string text, out int exit)
+        // the self-test's way in: a line run to the end, its text back (no screen, no questions). interactive: as if typed at the
+        // prompt (Script = false) - for the --yes checks
+        internal string TestShell(string text, out int exit) { return TestShell(text, out exit, false); }
+        internal string TestShell(string text, out int exit, bool interactive)
         {
             if (shTools == null) shTools = Tools2();
             var job = new ShJob(); var o = new ShOut { Cap = new StringBuilder(), Job = job };
-            exit = ShRunText(text, new ShCtx { Job = job, Out = o, Script = true }); return o.Cap.ToString().Replace("\r", "");
+            exit = ShRunText(text, new ShCtx { Job = job, Out = o, Script = !interactive, Stdin = interactive ? "" : null }); return o.Cap.ToString().Replace("\r", "");
         }
-        internal void TestShellReset() { shCwd = shPrev = "/home"; lock (shVars) shVars.Clear(); }
+        // masking: a line that hides a tool with a secret box behind ; and NAME=value and time - the secret mustn't show (C2)
+        internal bool TestMaskHides()
+        {
+            if (shTools == null) shTools = Tools2();
+            foreach (var t in shTools)
+            {
+                int box = Array.FindIndex(t.Inputs, SecretInput); if (box < 0) continue;
+                var w = new List<string>(); for (int i = 0; i <= box; i++) w.Add(i == box ? "S3CRETzz" : "v" + i);
+                string line = "echo hi; X=1 time " + t.Id + " " + string.Join(" ", w) + " && echo \"$(" + t.Id + " " + string.Join(" ", w) + ")\"";
+                return !ShMasked(line).Contains("S3CRETzz");
+            }
+            return true;
+        }
+        // an editor save puts the file back exactly: BOM, CRLF, tabs, no final newline (#18)
+        internal bool TestShapeRoundTrip(string path)
+        {
+            var bytes = new UTF8Encoding(true).GetPreamble().Concat(Encoding.UTF8.GetBytes("a\tb\r\nc é\r\nlast")).ToArray(); File.WriteAllBytes(path, bytes);
+            var sh = new TextShape(); string t = ReadShaped(path, sh); var ed = new TermEditor(false, path, "x", t);
+            WriteShaped(path, ed.Body, sh); return File.ReadAllBytes(path).SequenceEqual(bytes);
+        }
+        internal void TestShellReset() { shMain.Cwd = shMain.Prev = "/home"; shMain.LastExit = 0; shMain.Depth = 0; lock (shMain.Vars) shMain.Vars.Clear(); }
 
         // iperf3 the way you'd type it on Linux (Adeeb, 22 Nov: "why can't I do iperf3 from the cli"): -c host, -p port, -R, --bidir,
         // -t, -P, -u, -b, -l, -w, -S, -O, -M, -4, -6 - turned into the iperf tool's boxes. AdeeboMeter's own iperf3 client runs it;
@@ -1174,11 +1811,40 @@ namespace AdeeboMeter
             return RunTool(t, args, c);
         }
 
-        // ---------- nano / vim: our own editor on the shell's screen (TermEditor); the command waits until you leave it
+        // ---------- nano / vim: our own editor on the shell's screen (TermEditor); the command waits until you leave it.
+        // Shell scrutiny #18/#47: a file comes back the way it was - its encoding (UTF-8 with or without BOM, UTF-16, or the
+        // Windows code page), its line endings and its last newline - and is written to a side file first, then swapped in, so a
+        // failed save never leaves half a file. #93: a file with a line too long to edit here is refused, not frozen on.
+        sealed class TextShape { public Encoding Enc = new UTF8Encoding(false); public bool Bom, Crlf, FinalNewline = true; }
+        static string ReadShaped(string path, TextShape sh)
+        {
+            var b = File.ReadAllBytes(path);
+            if (b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) { sh.Enc = new UTF8Encoding(true); sh.Bom = true; return Shape(sh, new UTF8Encoding(false).GetString(b, 3, b.Length - 3)); }
+            if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE) { sh.Enc = new UnicodeEncoding(false, true); sh.Bom = true; return Shape(sh, Encoding.Unicode.GetString(b, 2, b.Length - 2)); }
+            if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF) { sh.Enc = new UnicodeEncoding(true, true); sh.Bom = true; return Shape(sh, Encoding.BigEndianUnicode.GetString(b, 2, b.Length - 2)); }
+            try { return Shape(sh, new UTF8Encoding(false, true).GetString(b)); }
+            catch (DecoderFallbackException) { sh.Enc = Encoding.Default; return Shape(sh, Encoding.Default.GetString(b)); }   // ANSI / Windows-1252: its high letters kept
+        }
+        static string Shape(TextShape sh, string t)
+        {
+            int crlf = 0, lf = 0; for (int i = 0; i < t.Length; i++) if (t[i] == '\n') { if (i > 0 && t[i - 1] == '\r') crlf++; else lf++; }
+            sh.Crlf = crlf > 0 && crlf >= lf; sh.FinalNewline = t.Length == 0 || t.EndsWith("\n", StringComparison.Ordinal);
+            return t;
+        }
+        static void WriteShaped(string path, string body, TextShape sh)
+        {
+            if (!sh.FinalNewline && body.EndsWith("\n", StringComparison.Ordinal)) body = body.Substring(0, body.Length - 1);
+            if (sh.Crlf) body = body.Replace("\n", "\r\n");
+            var pre = sh.Bom ? sh.Enc.GetPreamble() : new byte[0]; var data = sh.Enc.GetBytes(body);
+            string tmp = path + ".adeeboshell-save";
+            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None)) { fs.Write(pre, 0, pre.Length); fs.Write(data, 0, data.Length); fs.Flush(true); }
+            try { if (File.Exists(path)) File.Replace(tmp, path, null, true); else File.Move(tmp, path); }
+            catch (IOException) { File.Copy(tmp, path, true); File.Delete(tmp); }   // a drive that can't swap files (FAT, some shares): copied over, the original was only touched once the copy was whole
+        }
         int Edit(bool vim, List<string> args, ShCtx c)
         {
             if (c.Script || c.Job.Bg || !c.Out.Screen) { Err(c, (vim ? "vim" : "nano") + ": needs you at the keyboard - not inside a script or a pipe"); return 1; }
-            string arg = args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal) && !z.StartsWith("+", StringComparison.Ordinal)), real = null, text = null;
+            string arg = args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal) && !z.StartsWith("+", StringComparison.Ordinal)), real = null, text = null; var shape = new TextShape();
             if (arg != null)
             {
                 real = Real(Abs(arg)); if (real == null) { Err(c, (vim ? "vim" : "nano") + ": " + arg + ": pages and tools aren't files - use a path under ~, /data or /mnt"); return 1; }
@@ -1186,8 +1852,10 @@ namespace AdeeboMeter
                 if (File.Exists(real))
                 {
                     if (new FileInfo(real).Length > 5 * 1048576) { Err(c, arg + ": over 5 MB - too big to edit here"); return 1; }
-                    try { text = File.ReadAllText(real); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, arg + ": " + e.Message); return 1; }
-                    if (text.Take(8000).Count(ch => ch == '\0') > 2) { Err(c, arg + ": a binary file - not editable as text"); return 1; }
+                    try { text = ReadShaped(real, shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, arg + ": " + e.Message); return 1; }
+                    if (!(shape.Enc is UnicodeEncoding) && text.Take(8000).Count(ch => ch == '\0') > 2) { Err(c, arg + ": a binary file - not editable as text"); return 1; }
+                    int longest = 0, run = 0; foreach (char ch in text) { if (ch == '\n') { run = 0; continue; } if (++run > longest) longest = run; }
+                    if (longest > 100000) { Err(c, arg + ": has a line of " + longest.ToString("N0", CultureInfo.CurrentCulture) + " characters (minified?) - too long to edit here; less can show it"); return 1; }
                 }
             }
             var done = new ManualResetEvent(false); string title0 = null;
@@ -1196,11 +1864,24 @@ namespace AdeeboMeter
             ed.Save = (to, body) =>
             {
                 string r = to == real ? real : Real(Abs(to)); if (r == null) return "not a folder on a disk";
-                try { string dir = Path.GetDirectoryName(r); if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) return "no folder " + dir; File.WriteAllText(r, body); real = r; return null; }
+                try { string dir = Path.GetDirectoryName(r); if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) return "no folder " + dir; WriteShaped(r, body, shape); real = r; return null; }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException)) throw; return e.Message; }
             };
             ed.Closed = () => { term.Editor = null; if (title0 != null) term.Title = title0; term.Invalidate(); done.Set(); };
             Ui(delegate { term.EndLive(); title0 = term.Title; term.Title = (vim ? "vim" : "nano") + " — " + (arg ?? "new file") + "  ·  AdeeboShell"; term.Editor = ed; term.Invalidate(); term.Focus(); });
+            done.WaitOne(); using (done) { }
+            return 0;
+        }
+        // less / more: a page at a time (#65); into a pipe or a script it's cat
+        int Less(List<string> args, ShCtx c)
+        {
+            if (c.Script || c.Job.Bg || !c.Out.Screen) return Cat(args, c);
+            var files = Files(args); string name = files.Count == 0 ? "(pipe)" : files[0], text;
+            if (files.Count == 0 || files[0] == "-") text = c.Stdin ?? ""; else { text = ReadAll(files[0], c); if (text == null) return 1; }
+            var done = new ManualResetEvent(false); string title0 = null;
+            var ed = new TermEditor(true, null, name, text) { ReadOnly = true };
+            ed.Closed = () => { term.Editor = null; if (title0 != null) term.Title = title0; term.Invalidate(); done.Set(); };
+            Ui(delegate { term.EndLive(); title0 = term.Title; term.Title = "less — " + name + "  ·  AdeeboShell"; term.Editor = ed; term.Invalidate(); term.Focus(); });
             done.WaitOne(); using (done) { }
             return 0;
         }
@@ -1211,12 +1892,14 @@ namespace AdeeboMeter
             {
                 string d = Path.Combine(Program.DataDir, "scripts"); Directory.CreateDirectory(d);
                 string f1 = Path.Combine(d, "five-at-a-time.sh"), f2 = Path.Combine(d, "every-tool.sh"), f3 = Path.Combine(d, "health-check.sh");
-                try { if (File.Exists(f1) && File.ReadAllText(f1).Contains("loss\\|average")) File.Delete(f1); } catch (IOException) { }   // the first version's grep never matched
-                if (!File.Exists(f1)) File.WriteAllText(f1, "# five-at-a-time.sh - ping five places together and merge the answers into one file\n# run it:  ./five-at-a-time.sh      edit it:  nano five-at-a-time.sh\n\nHOSTS=\"1.1.1.1 8.8.8.8 9.9.9.9 208.67.222.222 $GATEWAY\"\necho \"pinging: $HOSTS\"\nparallel -j 5 ping {} 10 ::: $HOSTS > merged.txt\necho \"merged into $PWD/merged.txt\"\ngrep -i \"loss|average\" merged.txt\n");
-                if (!File.Exists(f3)) File.WriteAllText(f3, "# health-check.sh - the quick look, in order; stops at the first thing that's broken\n# run it:  ./health-check.sh\n\nstatus\nif ping $GATEWAY 4 > /dev/null; then echo \"router: ok\"; else echo \"router: NOT answering - start there\"; exit; fi\nping 1.1.1.1 4 && echo \"internet: ok\" || echo \"internet: NOT answering\"\ndig example.com && echo \"names: ok\" || echo \"names: NOT working\"\n");
+                string five = "# five-at-a-time.sh - ping five places together and merge the answers into one file\n# run it:  ./five-at-a-time.sh      edit it:  nano five-at-a-time.sh\n\nHOSTS=\"1.1.1.1 8.8.8.8 9.9.9.9 208.67.222.222 $GATEWAY\"\necho \"pinging: $HOSTS\"\nparallel -j 5 ping {} 10 ::: $HOSTS > merged.txt\necho \"merged into $PWD/merged.txt\"\ngrep -iE \"loss|average\" merged.txt\n";
+                // #92: an earlier version is replaced only when it's exactly as we wrote it - never one you changed
+                try { if (File.Exists(f1)) { string have = File.ReadAllText(f1), v2 = five.Replace("grep -iE \"loss|average\"", "grep -i \"loss|average\""), v1 = five.Replace("grep -iE \"loss|average\"", "grep -i \"loss\\|average\""); if (have == v1 || have == v2) File.WriteAllText(f1, five); } } catch (IOException) { }
+                if (!File.Exists(f1)) File.WriteAllText(f1, five);
+                if (!File.Exists(f3)) File.WriteAllText(f3, "# health-check.sh - the quick look, in order; stops at the first thing that's broken\n# run it:  ./health-check.sh\n\nstatus\nif ping $GATEWAY 4 > /dev/null; then echo \"router: ok\"; else echo \"router: NOT answering - start there\"; exit 1; fi\nping 1.1.1.1 4 > /dev/null && echo \"internet: ok\" || echo \"internet: NOT answering\"\ndig example.com > /dev/null && echo \"names: ok\" || echo \"names: NOT working\"\n");
                 if (!File.Exists(f2) && shTools != null)
                 {
-                    var sb = new StringBuilder("# every-tool.sh - every AdeeboMeter tool with its example, one after another\n# run it:      ./every-tool.sh > all.txt          (test-traffic tools are skipped)\n#             ./every-tool.sh --yes > all.txt    (your own network: runs those too)\n# change any line, delete what you don't need, add your own addresses.\n\n");
+                    var sb = new StringBuilder("# every-tool.sh - every AdeeboMeter tool with its example, one after another\n# run it:      ./every-tool.sh > all.txt          (test-traffic tools are skipped)\n#             ./every-tool.sh --yes > all.txt    (your own network, typed at the prompt: runs those too)\n# change any line, delete what you don't need, add your own addresses.\n\n");
                     foreach (var g in shTools.GroupBy(t => GroupName(t.Group)))
                     {
                         sb.Append("\n# ---- " + g.Key + "\n");
@@ -1225,7 +1908,7 @@ namespace AdeeboMeter
                             if (ShSkip.Contains(t.Id) || t.Group == "REMOTE" || t.Do == null) continue;
                             var ex = Examples.Get(t.Id); var inp = ex != null ? ex.In : new string[0];
                             if (t.Id == "diskspeed") inp = inp.Select(v => string.Equals(v, "yes", StringComparison.OrdinalIgnoreCase) ? "" : v).ToArray();
-                            var w = inp.Select(v => Regex.Replace(v ?? "", @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", "$$GATEWAY")).Select(v => v == "" ? "-" : v.Contains(" ") || v.Contains("|") || v.Contains(";") || v.Contains(">") ? "\"" + v.Replace("\"", "\\\"") + "\"" : v).ToList();
+                            var w = inp.Select(v => Regex.Replace(v ?? "", @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", "$$GATEWAY")).Select(v => v == "" ? "-" : Regex.IsMatch(v, "[\\s|;&<>\"'`#*?]") ? "\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("`", "\\`") + "\"" : v).ToList();
                             while (w.Count > 0 && w[w.Count - 1] == "-") w.RemoveAt(w.Count - 1);
                             sb.Append("echo \"== " + t.Id + "\"\n" + t.Id + (w.Count > 0 ? " " + string.Join(" ", w) : "") + "\n");
                         }

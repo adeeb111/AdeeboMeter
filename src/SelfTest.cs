@@ -1164,12 +1164,73 @@ namespace AdeeboMeter
                                 new[] { "echo abc | md5sum", "0bee89b07a248e27c83fc3d5951213c1  -" },
                                 new[] { "printf 'x\\ny\\nz\\n' | while read h; do echo got$h; done | tail -n 1", "gotz" },
                                 new[] { "iperf3 -R -t 5; echo $?", "2" },
+                                new[] { "cd /data; mkdir -p selftest-sh2; cd selftest-sh2; echo ok", "ok" },
+                                new[] { "cd /data/selftest-sh2; printf '#!/bin/adeeboshell\\n# header\\necho ran # tail comment\\necho two\\n' > c.sh; ./c.sh", "ran\ntwo" },
+                                new[] { "cd /data/selftest-sh2; cat missing.txt | wc -l", "0" },
+                                new[] { "cd /data/selftest-sh2; x=$(nosuchcmd); echo \"[$x]\"", "[]" },
+                                new[] { "cd /data/selftest-sh2; printf 'echo a\\nexit 3\\necho b\\n' > e.sh; ./e.sh; echo $?", "a\n3" },
+                                new[] { "for i in 1 2 3 4; do if test $i -eq 3; then break; fi; echo $i; done", "1\n2" },
+                                new[] { "for i in 1 2 3 4; do if test $i -eq 3; then continue; fi; echo $i; done", "1\n2\n4" },
+                                new[] { "false; true && echo $?", "0" },
+                                new[] { "x=$(false); echo $?", "1" },
+                                new[] { "cd /data; x=$(cd /home; pwd); pwd | grep -c \"^/data\"", "1" },
+                                new[] { "cd /data; echo hi | cd /home; pwd | grep -c \"^/data\"", "1" },
+                                new[] { "cd /data/selftest-sh2; for i in 1 2; do echo $i; done > loop.txt; cat loop.txt | wc -l", "2" },
+                                new[] { "cd /data/selftest-sh2; while read l; do echo got$l; done < loop.txt | tail -n 1", "got2" },
+                                new[] { "nosuchcmd 2>&1 | grep -c \"not found\"", "1" },
+                                new[] { "echo debug >&2 | wc -l", "0" },
+                                new[] { "cd /data/selftest-sh2; > made.txt; test -f made.txt && echo made", "made" },
+                                new[] { "cd /data/selftest-sh2; < nope.txt; echo $?", "1" },
+                                new[] { "F=\"a b\"; echo hi > $F; echo $?", "1" },
+                                new[] { "cd /data/selftest-sh2; echo hi > h.txt; sha256sum h.txt > sums; sha256sum -c sums", "h.txt: OK" },
+                                new[] { "cd /data/selftest-sh2; echo x >> h.txt; sha256sum -c sums 2>/dev/null; echo $?", "1" },
+                                new[] { "echo ${NOPE:-fallback} ${#HOME}", "fallback 5" },
+                                new[] { "f=report.tar.gz; echo ${f%%.*} ${f#*.}", "report tar.gz" },
+                                new[] { "x=0; echo $((x && 10/x))", "0" },
+                                new[] { "FOO=bar env | grep -c FOO=bar", "1" },
+                                new[] { "A=1 B=2; echo $A$B", "12" },
+                                new[] { "printf 'loss 1\\naverage 2\\nx\\n' | grep -c 'loss\\|average'", "2" },
+                                new[] { "printf 'loss 1\\naverage 2\\nx\\n' | grep -cE 'loss|average'", "2" },
+                                new[] { "echo a12b | sed 's/[0-9]\\+/N/'", "aNb" },
+                                new[] { "printf 'a\\nb\\n' | awk 'BEGIN {print \"start\"}' | wc -l", "1" },
+                                new[] { "printf 'a\\nb\\na\\n' | awk '{n[$1]++} END {print n[\"a\"]}'", "2" },
+                                new[] { "echo 'x y' | awk '{print $1 $2}'", "xy" },
+                                new[] { "printf '1\\n2\\n' | awk '{s += $1 * 2} END {print s}'", "6" },
+                                new[] { "echo 'a  b' | awk -F' ' '{print $2}'", "b" },
+                                new[] { "echo -n abc | md5sum", "900150983cd24fb0d6963f7d28e17f72  -" },
+                                new[] { "printf '%s\\n' a b c | wc -l", "3" },
+                                new[] { "printf '%05.1f|%-3s|' 3.14159 x", "003.1|x  |" },
+                                new[] { "printf 'a\\na\\nb\\n' | uniq -d", "a" },
+                                new[] { "echo a,b,c | cut -d , -f 3,1", "a,c" },
+                                new[] { "echo ab12cd3 | tr -cd 0-9", "123" },
+                                new[] { "cd /data/selftest-sh2; wc -l loop.txt loop.txt | tail -n 1", "4 total" },
+                                new[] { "echo hi | cat -", "hi" },
+                                new[] { "[ -f nope.txt; echo $?", "2" },
+                                new[] { "echo 'x y z' | while read a b; do echo $b; done", "y z" },
+                                new[] { "cd /data/selftest-sh2; echo one > m1; echo two > m2; mv m1 m2; cat m2", "one" },
+                                new[] { "cd /data/selftest-sh2; mkdir -p d1; cp -r d1 d1/inner 2>/dev/null; echo $?", "1" },
+                                new[] { "cd /data/selftest-sh2; touch -c nothere.txt; test -e nothere.txt || test -e ./-c || echo none", "none" },
+                                new[] { "echo /proc/mem*", "/proc/meminfo" },
+                                new[] { "cd /data/selftest-sh2; printf 'sweep 192.0.2.0/30\\n' > g.sh; ./g.sh 2>&1", "~skipped" },
+                                new[] { "cd /data/selftest-sh2; printf 'source g.sh --yes\\n' > g2.sh; ./g2.sh 2>&1", "~only counts when you type it" },
+                                new[] { "cd /data/selftest-sh2; printf 'parallel --yes echo {} ::: a\\n' > g3.sh; ./g3.sh 2>&1", "~only counts when you type it" },
+                                new[] { "cd /data/selftest-sh2; printf './r.sh\\n' > r.sh; ./r.sh 2>&1", "~nested 8 deep" },
+                                new[] { "rm -rf /home 2>&1", "~won't remove" },
+                                new[] { "cd /data/selftest-sh2; echo z > keep.txt; rm keep.txt 2>&1", "~add -f in a script" },
+                                new[] { "host example.com 1.1.1.1 2>&1", "~chosen server" },
+                                new[] { "uptime | grep -c \"load average\"", "1" },
+                                new[] { "id | grep -c \"^uid=[0-9]\"", "1" },
+                                new[] { "lsblk | head -1 | grep -c NAME", "1" },
+                                new[] { "df -h | head -1 | grep -c Size", "1" },
+                                new[] { "cat /proc/loadavg | awk '{print NF}'", "5" },
+                                new[] { "cd /data; rm -rf selftest-sh2; echo cleaned", "cleaned" },
                             };
                             foreach (var cs0 in cases)
                             {
                                 fv.TestShellReset(); int ex; string got;
                                 try { got = fv.TestShell(cs0[0], out ex).Trim(); } catch (Exception e) { bad.Add("shell \"" + cs0[0] + "\" threw " + e.GetType().Name + " " + e.Message); continue; }
-                                if (!got.EndsWith(cs0[1], StringComparison.Ordinal)) bad.Add("shell \"" + cs0[0] + "\" gave \"" + got.Replace("\n", "\\n") + "\", wanted \"" + cs0[1].Replace("\n", "\\n") + "\"");
+                                bool okc = cs0[1].StartsWith("~", StringComparison.Ordinal) ? got.Contains(cs0[1].Substring(1)) : got.EndsWith(cs0[1], StringComparison.Ordinal);
+                                if (!okc) bad.Add("shell \"" + cs0[0] + "\" gave \"" + got.Replace("\n", "\\n") + "\", wanted \"" + cs0[1].Replace("\n", "\\n") + "\"");
                             }
                             fv.TestShellReset();
                             // nano and vim: typing, cut, undo, :wq
@@ -1181,6 +1242,19 @@ namespace AdeeboMeter
                             vim.Char('u'); if (vim.Body != "one\ntwo\nthree\n") bad.Add("vim: u didn't undo the dd");
                             vim.Char('o'); foreach (var ch in "new") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Escape)); foreach (var ch in ":wq") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Enter));
                             if (saved != "one\ntwo\nnew\nthree\n" || !closed) bad.Add("vim: o + :wq saved \"" + (saved ?? "(nothing)").Replace("\n", "\\n") + "\"" + (closed ? "" : " and didn't close"));
+                            // #49: nano ^X on a new file -> Y -> a name -> Enter saves it and leaves
+                            string nsaved = null; bool nclosed = false;
+                            var n2 = new TermEditor(false, null, null, null); n2.Save = (to, b) => { nsaved = to + "|" + b; return null; }; n2.Closed = () => nclosed = true;
+                            foreach (var ch in "hi") n2.Char(ch); n2.Key(new KeyEventArgs(Keys.Control | Keys.X)); n2.Char('y'); foreach (var ch in "f.txt") n2.Char(ch); n2.Key(new KeyEventArgs(Keys.Enter));
+                            if (nsaved != "f.txt|hi\n" || !nclosed) bad.Add("nano: ^X Y name Enter on a new file " + (nsaved == null ? "didn't save" : "saved " + nsaved.Replace("\n", "\\n")) + (nclosed ? "" : " and didn't leave"));
+                            // #90: undoing back to the saved text isn't "modified" - :q leaves
+                            bool qclosed = false; var v2 = new TermEditor(true, "y.sh", "y.sh", "a\n"); v2.Closed = () => qclosed = true;
+                            v2.Char('x'); v2.Char('u'); foreach (var ch in ":q") v2.Char(ch); v2.Key(new KeyEventArgs(Keys.Enter));
+                            if (!qclosed) bad.Add("vim: after x then u, :q still said 'no write since last change'");
+                            // C2 masking, #18 the editor's save keeps the file's shape
+                            if (!fv.TestMaskHides()) bad.Add("shell: a secret after ; / NAME=value / time / inside $( ) is echoed in clear");
+                            string shapeFile = System.IO.Path.Combine(Program.DataDir, "selftest-shape.txt");
+                            try { if (!fv.TestShapeRoundTrip(shapeFile)) bad.Add("editor: saving changed the file's BOM, line endings, tabs or last line"); } finally { try { System.IO.File.Delete(shapeFile); } catch (System.IO.IOException) { } }
                         }
                         var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "sports", "settings", "about", "points", "shell", "lab" };   // bug-hunt R2-020: every page, settings/about/points/shell included
                         foreach (var dark in new[] { false, true })
