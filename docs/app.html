@@ -257,10 +257,10 @@ textarea.in{resize:vertical;min-height:120px}
 .peekbox.big img{width:auto;max-width:none}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <link rel="stylesheet" href="/locale.css">
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
 <div id="splash" aria-hidden="true"><svg class="amlogo" viewBox="0 0 64 64" width="96" height="96" style="--r:-42deg" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"/><circle cx="32" cy="42.6" r="2.3"/><circle cx="45.2" cy="42.6" r="2.3"/></g></svg><b class="amword">Adeebo<span class="m">Meter</span></b></div>
@@ -372,7 +372,7 @@ textarea.in{resize:vertical;min-height:120px}
   // and the QR secret. Same words = your phone, nothing in the middle. Never sent - each side works them out. The list and
   // the recipe match src/Remote/RemoteWords.cs - change both together.
   var WORDS = "acorn amber anchor apple arrow atlas autumn bacon badge bagel ballad bamboo banjo barn basil beach beacon bear beaver bell berry bison blade blanket bloom boat bonfire boot bottle breeze brick bridge brook brush bucket bugle button cabin cactus cake camel camera candle canoe canyon carpet carrot castle cedar cello chalk cherry chess cider circle clock cloud clover coast cobalt cocoa comet compass copper coral cotton cougar crane crayon cricket crown crystal cup daisy delta desert diamond dolphin donkey dragon drum eagle echo elbow ember engine falcon feather fern ferry fiddle field fig flag flame flute forest fossil fox galaxy garden garlic gecko ginger glacier globe goat gold grape gravel guitar hammer harbor harp hazel helmet heron hill honey horse igloo island ivory jacket jaguar jasmine jelly jungle kayak kettle kite koala ladder lagoon lake lamp lantern lemon lily lime lion lizard llama lotus magnet mango maple marble meadow melon mint mirror moon moose mosaic moss museum nectar needle nest noodle oak oasis ocean olive onion orange orbit orchid otter owl paddle panda paper parrot peach peanut pearl pebble pepper piano pickle pigeon pillow pine planet plum pond popcorn potato prism puzzle quartz quill rabbit radar rainbow raven reef ribbon river robin rocket ruby saddle salmon sandal satin scarf shell silver sketch sled snow sofa spark spider spoon squash star stone storm sugar summit sunset swan tablet tango temple thunder tiger timber tomato topaz torch tower tulip tunnel turtle valley velvet violin volcano wagon walnut walrus water whale wheat willow window winter wolf yarn zebra zipper".split(" "), pcWords = "";
-  async function wordsOf(sec, phonePk, pcPk) { var h = new Uint8Array(await subtle.digest("SHA-256", cat2(te.encode("adeebometer words v1"), sec, phonePk, pcPk))); return [h[0], h[1], h[2], h[3]].map(function (i) { return WORDS[i]; }).join(" · "); }
+  async function wordsOf(sec, phonePk, pcPk, v) { var h = new Uint8Array(await subtle.digest("SHA-256", cat2(te.encode(v >= 2 ? "adeebometer words v2" : "adeebometer words v1"), sec, phonePk, pcPk))); return Array.prototype.slice.call(h, 0, v >= 2 ? 6 : 4).map(function (i) { return WORDS[i]; }).join(" · "); }   // v2: six words (48 bits) - a 1.1.6 PC says so in its key message; a 1.1.5 PC stays on four
   function start(rm, sec, quiet) {
     return new Promise(function (done) {
       var settled = false, sock = null, q = Promise.resolve();
@@ -391,7 +391,7 @@ textarea.in{resize:vertical;min-height:120px}
           (async function () {
             if (!quiet) { phase = "asking"; draw(); }
             var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
           })().catch(function () { try { sock.close(); } catch (e) {} });
         };
       sock.onclose = function () {
@@ -407,7 +407,7 @@ textarea.in{resize:vertical;min-height:120px}
           if (m.t === "key" && !keyPk) {   // the PC's key early, so both can show the matching words before you press Allow
             var kp2 = unb64u(m.pk || "");
             if (kp2.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("key"), pk, kp2)))) { why = "This isn't your PC - its key wasn't signed with your code."; sock.close(); return; }
-            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2); draw(); return;
+            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, m.wv === 2 ? 2 : 1); draw(); return;
           }
           if (m.t !== "ok") return;
           if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }
@@ -453,7 +453,9 @@ textarea.in{resize:vertical;min-height:120px}
   }
   // ---- screen peek: a still picture of one AdeeboMeter page on the PC, drawn off-screen there (your PC's window never
   // changes). It arrives in sealed pieces, is put together here and kept only in this page's memory - never saved.
-  var PEEKS = [["overview", "Overview"], ["link", "Link"], ["procs", "Apps"], ["health", "Health"], ["changes", "Changes"], ["travel", "Travel"], ["toolbox", "Toolbox"], ["guide", "Guide"], ["gamer", "Gamer"], ["stream", "Stream"], ["trade", "Trading"], ["security", "Security"]];
+  // 21 Nov: a big icon on each, like the PC's pages
+  var PEEKI = { overview: "home", link: "wifi", procs: "list", health: "cpu", changes: "report", travel: "map", toolbox: "tools", guide: "book", gamer: "game", stream: "play", trade: "chart", security: "lock", replay: "clock", dest: "search", learn: "bulb" };
+  var PEEKS = [["overview", "Home"], ["link", "Link"], ["procs", "Apps"], ["health", "Health"], ["changes", "Changes"], ["travel", "Network story"], ["toolbox", "Toolbox"], ["guide", "Guide"], ["gamer", "Gamer"], ["stream", "Streaming"], ["trade", "Markets"], ["security", "Security"], ["replay", "Time machine"], ["dest", "Check a site"], ["learn", "Learn"]];   // 21 Nov: the PC already allowed Time machine and Check; Learn added on both sides
   var peek = { pg: "overview", rid: "", parts: [], img: "", err: "", at: 0, big: false };
   function peekAsk(pg) { if (phase !== "live") return; peek.pg = pg; peek.rid = rid(); peek.parts = []; peek.err = ""; send({ t: "peek", rid: peek.rid, page: pg }); draw(); }
   function peekGot(c) {
@@ -467,7 +469,7 @@ textarea.in{resize:vertical;min-height:120px}
   function peekHtml() {
     if (phase !== "live") return needPc("Screen peek shows your PC's AdeeboMeter pages while you're connected.");
     var got = 0; peek.parts.forEach(function (x) { if (x) got++; });
-    var a = '<div class="card"><h2>See a page on your PC</h2><div class="mini" style="grid-template-columns:repeat(3,1fr)">' + PEEKS.map(function (p) { return '<button class="' + (peek.pg === p[0] ? 'on' : '') + '" data-peek="' + p[0] + '"' + (peek.rid ? ' disabled' : '') + '>' + p[1] + '</button>'; }).join("") + '</div>' +
+    var a = '<div class="card"><h2>See a page on your PC</h2><div class="mini" style="grid-template-columns:repeat(3,1fr)">' + PEEKS.map(function (p) { return '<button class="' + (peek.pg === p[0] ? 'on' : '') + '" data-peek="' + p[0] + '"' + (peek.rid ? ' disabled' : '') + ' style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px">' + ic(PEEKI[p[0]] || "pc", 26) + '<span>' + p[1] + '</span></button>'; }).join("") + '</div>' +
       '<p style="color:var(--sub);font-size:13px;margin:10px 2px 0">A still picture, drawn out of sight on your PC - the window there doesn\'t move. Only AdeeboMeter, never the rest of your screen.</p></div>';
     if (peek.rid) a += '<div class="card" style="display:flex;gap:10px;align-items:center"><span class="led warn"></span><div style="flex:1;font-weight:600">Drawing ' + esc((PEEKS.filter(function (p) { return p[0] === peek.pg; })[0] || [0, peek.pg])[1]) + ' on your PC' + (got ? ' · ' + got + ' pieces' : '...') + '</div></div>';
     if (peek.err) a += '<div class="card"><b>Couldn\'t show that page</b><p style="margin:6px 0 0;color:var(--sub)">' + esc(peek.err) + '</p></div>';
@@ -640,9 +642,9 @@ textarea.in{resize:vertical;min-height:120px}
       var now = Date.now() / 1000, off = 0;
       try { var t0 = Date.now(), pr = await tfetch(LIVE + "/ping?c" + t0, 4000), pj = pr.ok ? await pr.json() : null; if (pj && pj.now) { off = (pj.now - (t0 + Date.now()) / 2) / 1000; if (Math.abs(off) > 20) now += off; } } catch (e) {}
       var slot = Math.floor(now / 1500), list = [], into = now - slot * 1500;
-      for (var k = 0; k < 5; k++) list.push([slot, k]);
-      if (into < 180) for (k = 0; k < 5; k++) list.push([slot - 1, k]);
-      if (into > 1500 - 180) for (k = 0; k < 5; k++) list.push([slot + 1, k]);
+      for (var k = 0; k < 12; k++) list.push([slot, k]);   // bug-hunt ML-112: the PC tries up to 12 rooms a slot
+      if (into < 180) for (k = 0; k < 12; k++) list.push([slot - 1, k]);
+      if (into > 1500 - 180) for (k = 0; k < 12; k++) list.push([slot + 1, k]);
       for (var i = 0; i < list.length; i++) {
         var rm = b64u(await hmac(P, te.encode("room|" + list[i][0] + "|" + list[i][1]))).slice(0, 22);
         if (await start(rm, P, true)) { reconnecting = false; draw(); return; }
@@ -1117,7 +1119,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.widget = function () {
     var L = live || {}, lv = L.lv >= 0 && L.lv <= 2 ? L.lv : 3, g = L.game, s = Math.max(0, Math.round(L.left || 0)), stale = !isLive();
     document.body.classList.toggle("stale", stale);
-    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale || lv === 2 ? "worried" : lv === 1 ? "thinking" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
+    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
     a += '<div class="wgc"><div class="k">↓ Download</div><div class="v">' + bigv(L.down, "Mb/s") + '</div>' + area(hD, "var(--blue)") + '</div><div class="wgc"><div class="k">↑ Upload</div><div class="v">' + bigv(L.up, "Mb/s") + '</div>' + area(hU, "var(--purple)") + '</div>';
     if (g) a += '<div class="wgc full"><div class="k">🎮 ' + esc(g.name) + ' · ' + esc(g.srv) + ' · ' + esc(g.grade) + '</div><div class="v">' + bigv(g.now, "ms") + '</div>' + area(g.hist || [], "var(--green)") + '</div>';
     else a += '<div class="wgc full"><div class="k">Ping' + (L.gw != null ? ' · router ' + Math.round(L.gw) + ' ms' : '') + (L.loss ? ' · ' + Math.round(L.loss * 10) / 10 + '% lost' : '') + '</div><div class="v" style="color:' + (lvOf(L.ping, 80, 200) === 0 ? "var(--green)" : lvOf(L.ping, 80, 200) === 1 ? "var(--amber)" : "var(--red)") + '">' + bigv(L.ping, "ms") + '</div>' + area(hP, "var(--cyan)") + '</div>';
@@ -2018,7 +2020,8 @@ textarea.in{resize:vertical;min-height:120px}
       else { var was = S.tool; S.tool = k; var got = screenRows(TOOLV[k]()); S.tool = was; head = got.head || (P ? P[2] : k); got.rows.slice(0, 40).forEach(function (x) { flat.push(String(x[0]), String(x[1] || ""), String(x[2] || ""), String(x[3] || "")); }); }
     } catch (e) { head = "The check didn't finish on the phone"; }
     finally { ASKN--; }
-    send({ t: "pres", rid: rid, head: head, r: flat });
+    var upv = k === "isdown" && tst(k).res && tst(k).res.t ? (tst(k).res.t.n > 0 ? "1" : "0") : "";   // bug-hunt ML-119: the verdict itself, not only its sentence
+    send({ t: "pres", rid: rid, head: head, r: flat, up: upv });
   }
   async function answerAsk(c) {
     var k = String(c.k || ""), q = String(c.q || "").slice(0, 200), rid = String(c.rid || "").slice(0, 16), head = "", rows = [];
@@ -2082,11 +2085,11 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.report = function () {
     var r = report, a = hdr("One-tap report", r ? new Date(r.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "", "home");
     if (!r) return a;
-    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("thinking") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? tr("Your PC runs its full checkup (about a minute) while this phone measures its own connection.") : tr("This phone measures its own connection.")) + '</div></div></div>';
+    if (r.state === "running") a += '<div class="card" style="display:flex;gap:12px;align-items:center">' + faceHtml("nervous") + '<div><b>Checking...</b><div style="color:var(--sub);font-size:14px">' + (phase === "live" ? tr("Your PC runs its full checkup (about a minute) while this phone measures its own connection.") : tr("This phone measures its own connection.")) + '</div></div></div>';
     if (r.pc) { a += resultCard(r.pc); }
     else if (phase !== "live" && r.state === "done") a += '<div class="card" style="color:var(--sub)">Your PC isn\'t connected, so this report is from the phone only.</div>';
     if (r.err) a += '<div class="card" style="color:var(--sub)">Your PC: ' + esc(r.err) + '</div>';
-    if (r.phone) a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(r.phone))) + '"><span class="badge">' + where("phone") + '</span><h3>This phone</h3>' + rowsHtml(phoneRows(r.phone, true)) + '</div>';
+    if (r.phone) a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(r.phone))) + '"><span class="badge">' + where("phone") + '</span><h3 style="display:flex;gap:10px;align-items:center">' + (r.state === "done" ? faceHtml([ "happy", "worried", "tears" ][Math.max(0, Math.min(2, worst(phoneRows(r.phone))))]) : "") + 'This phone</h3>' + rowsHtml(phoneRows(r.phone, true)) + '</div>';
     if (r.state === "done" && r.phone) a += '<div class="btns"><button class="btn" data-act="share">' + ic("share", 18) + ' Share</button><button class="btn ghost" data-act="copyrep">Copy</button></div><p class="note">Shared as text, with public addresses masked. A PDF report is in the PC app (Investigate › ISP report).</p>';
     return a;
   };
@@ -2299,7 +2302,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-pct")) { S.pcTab = A("data-pct"); if (S.tab !== "pc") S.tab = "pc"; draw(); return; }
     if (A("data-dv")) { S.devView = A("data-dv"); draw(); return; }
     if (A("data-mode")) { S.mode = A("data-mode"); wr("am-mode", S.mode === "everyday" ? "" : S.mode); draw(); return; }
-    if (A("data-look")) { S.theme = A("data-look"); wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
+    if (A("data-look")) { S.theme = A("data-look"); wr("am-theme", S.theme); draw(); return; }
     if (A("data-tog")) { var k = A("data-tog"); S[k] = !S[k]; if (k === "hc") wr("am-hc", S.hc ? "1" : ""); draw(); return; }
     if (A("data-grp")) { openG[A("data-grp")] = !openG[A("data-grp")]; draw(); return; }
     if (A("data-open")) { open = A("data-open"); S.tab = "pc"; S.pcTab = "checks"; draw(); window.scrollTo(0, 0); return; }
@@ -2356,7 +2359,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (A("data-ftxt")) { var tv = ($("ftxt") || {}).value || txt; if (!tv.trim()) return; txt = ""; send({ t: "text", s: tv.slice(0, 4000) }); draw(); return; }
   });
   document.addEventListener("change", function (e) {
-    var k = e.target.getAttribute && e.target.getAttribute("data-sel"); if (k) { S[k] = e.target.value; if (k === "theme") wr("am-theme", S.theme === "dark" ? "" : S.theme); draw(); return; }
+    var k = e.target.getAttribute && e.target.getAttribute("data-sel"); if (k) { S[k] = e.target.value; if (k === "theme") wr("am-theme", S.theme); draw(); return; }
     if (e.target.id === "fpick" && e.target.files[0]) sendFile(e.target.files[0]);
   });
   var calcT = null;

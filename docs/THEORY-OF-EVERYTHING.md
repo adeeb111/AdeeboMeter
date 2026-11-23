@@ -278,7 +278,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 71 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 93 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations

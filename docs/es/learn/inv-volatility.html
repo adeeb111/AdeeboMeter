@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es" data-language-route="/learn/inv-volatility.html" data-language-variants="en bn fr es ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Volatilidad: cuánto oscila | Aprender | AdeeboMeter</title>
+<meta name="description" content="Dos inversiones pueden acabar en el mismo sitio por caminos muy distintos.">
+<link rel="canonical" href="https://adeebometer.com/es/learn/inv-volatility.html">
+<meta property="og:title" content="Volatilidad: cuánto oscila | Aprender | AdeeboMeter">
+<meta property="og:description" content="Dos inversiones pueden acabar en el mismo sitio por caminos muy distintos.">
+<meta property="og:type" content="article">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
+a{color:var(--blue);overflow-wrap:anywhere}
+.top{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:15px;margin-bottom:18px}
+.top b{margin-right:auto}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}
+h2{font-size:18px;margin:28px 0 8px}
+.tag{font-size:18px;color:var(--sub);margin:0 0 18px}
+.chip{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);background:var(--tint);border-radius:999px;padding:2px 10px;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 10px}
+.card p{margin:0}
+.one{border-left:4px solid var(--green)}
+.warn{border-left:4px solid var(--amber)}
+.ladder{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.lanes{display:flex;justify-content:space-between;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px;gap:12px}
+.lanes span:last-child{text-align:right}
+.ladder ol{list-style:none;margin:0;padding:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.msg{padding:6px 0}
+.msg p{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
+.msg.r p{text-align:right}
+.arrow{height:10px;position:relative}
+.arrow:before{content:"";position:absolute;left:0;right:8px;top:4px;border-top:2px solid var(--blue)}
+.arrow:after{content:"";position:absolute;right:0;top:0;border:5px solid transparent;border-left:9px solid var(--blue);border-right:0}
+.msg.r .arrow:before{left:8px;right:0}
+.msg.r .arrow:after{right:auto;left:0;border-left:0;border-right:9px solid var(--blue)}
+.msg.all .arrow:before{border-top-style:dashed}
+.quiz button{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer;min-height:44px}
+.quiz button.ok{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
+.quiz button.no{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.quiz .say{font-weight:600;min-height:1.6em;margin:6px 0 0}
+.pn{display:flex;justify-content:space-between;gap:12px;margin-top:28px;font-size:15px}
+.pn a{max-width:48%}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:11px 20px;margin:6px 10px 0 0}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+footer{margin-top:40px;color:var(--sub);font-size:14px}
+input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.grid a{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.grid a b{display:block;color:var(--blue);font-size:15px;line-height:1.3}
+.grid a span{display:block;color:var(--sub);font-size:14px;margin-top:3px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+.chips a{white-space:nowrap}
+@media (max-width:560px){.grid{grid-template-columns:1fr}h1{font-size:25px}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Volatilidad: cuánto oscila","description":"Dos inversiones pueden acabar en el mismo sitio por caminos muy distintos.","url":"https://adeebometer.com/es/learn/inv-volatility.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"es","isAccessibleForFree":true,"about":"Mercado e inversión","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/es/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/inv-volatility.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/inv-volatility.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/inv-volatility.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/inv-volatility.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/inv-volatility.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/inv-volatility.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/inv-volatility.html">
+<meta property="og:locale" content="es_ES">
+</head>
+<body data-sec="learn">
+<main><nav class="language-links" aria-label="Idioma"><a href="https://adeebometer.com/learn/inv-volatility.html?lang=en" lang="en">English</a></nav>
+<a class="chip" href="/es/learn/#investing">Mercado e inversión</a>
+<h1>Volatilidad: cuánto oscila</h1>
+<p class="tag">Dos inversiones pueden acabar en el mismo sitio por caminos muy distintos.</p>
+<div class="card one"><p>La volatilidad es cuánto oscila un precio. Una cuenta de ahorro apenas se mueve; un índice amplio oscila algo; una sola empresa pequeña o una criptomoneda puede moverse un 10 % o más en un día. Las ganancias posibles más grandes vienen con caídas posibles más grandes.</p></div>
+<h2>Cómo transcurre la comunicación</h2>
+<div class="ladder"><div class="lanes" aria-hidden="true"><span>Ahorro</span><span>Tú</span></div><ol aria-label="Mensajes entre el ahorro y tú, en orden">
+<li class="msg"><p><span class="sr">El ahorro a ti: </span>+0,01 % hoy</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Índice → Tú: -1,2 % hoy</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Empresa pequeña → Tú: +14 % hoy</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>Cripto → Tú: -9 % durante la noche</p><div class="arrow" aria-hidden="true"></div></li>
+</ol></div>
+<h2>Cuando falla</h2>
+<div class="card warn"><p>El orden de las oscilaciones importa cuando necesitas el dinero: una gran caída justo antes de vender duele más que la misma caída años antes.</p></div>
+<h2>Prueba rápida</h2>
+<div class="quiz" data-id="inv-volatility"><p>Más volatilidad significa...</p>
+<button data-ok>Oscilaciones más grandes y frecuentes, al alza y a la baja</button>
+<button>Rendimientos más altos garantizados</button>
+<button>Que la inversión no puede perder dinero</button>
+<button>Comisiones más bajas</button>
+<p class="say" aria-live="polite"></p></div>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtén AdeeboMeter para Windows</a><a class="cta ghost" href="/games.html">Juega a los juegos</a></p>
+<h2>Más en Mercado</h2>
+<div class="ui-rows"><a class="ui-row" href="/es/learn/inv-stock.html" data-id="inv-stock"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Acciones, índices y ETF</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/es/learn/inv-move.html" data-id="inv-move"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Por qué cambian los precios</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/es/learn/inv-data.html" data-id="inv-data"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Precios de cierre, retrasados y en vivo</b><small>Trading</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/es/learn/inv-fx.html" data-id="inv-fx"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="chart"></span><span class="t"><b>Divisas y tu dinero</b><small>Trading</small></span><span data-ic="chev"></span></a></div>
+<div class="pn"><a href="/es/learn/inv-bonds.html">← Tipos de interés y bonos</a><a href="/es/learn/inv-crypto.html">Lo básico de las criptomonedas →</a></div>
+<footer>Gratis · sin cuenta · las mismas lecciones que en Windows</footer>
+</main>
+<script src="/voice.js"></script>
+<script>
+(function(){var q=document.querySelector('.quiz');if(!q)return;var bs=[].slice.call(q.querySelectorAll('button')),say=q.querySelector('.say'),done=false;
+for(var i=bs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=bs[i];bs[i]=bs[j];bs[j]=t}
+bs.forEach(function(b){q.insertBefore(b,say)});
+bs.forEach(function(b){b.onclick=function(){if(done)return;var ok=b.hasAttribute('data-ok');b.className=ok?'ok':'no';
+var V=window.AMV,locale=window.AdeeboMeterLocale;
+function feedback(key,line){var text=locale?locale.t(key):key;return text!==key?text:(V&&V.line(line))||key}
+if(ok){done=true;say.textContent=feedback('Right.','quiz.right');try{var k='am-learn-done',s=JSON.parse(localStorage.getItem(k)||'[]');if(s.indexOf(q.dataset.id)<0){s.push(q.dataset.id);localStorage.setItem(k,JSON.stringify(s))}}catch(e){}}
+else say.textContent=feedback('Not that one - try again.','quiz.wrong')}})})();
+</script>
+<script>try{var k="am-learn-seen",s=JSON.parse(localStorage.getItem(k)||"[]");if(s.indexOf("inv-volatility")<0)s.push("inv-volatility");localStorage.setItem(k,JSON.stringify(s));localStorage.setItem("am-learn-last","inv-volatility")}catch(e){}</script>
+<script src="/ui.js"></script>
+</body>
+</html>

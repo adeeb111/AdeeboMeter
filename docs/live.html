@@ -79,10 +79,10 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body data-sec="live">
 <main>
@@ -115,7 +115,8 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 <h2 data-ic="chart">Stock movers</h2>
 <div class="pickrow"><label class="dd"><small>Exchange</small><select id="exch" aria-label="Exchange"><option value="us">US · NYSE and Nasdaq</option><option disabled>Toronto (TSX) - not yet</option><option disabled>London (LSE) - not yet</option><option disabled>India (NSE) - not yet</option><option disabled>Dhaka (DSE) - not yet</option></select></label></div>
 <div class="seg3" id="mvseg"><button class="on" data-mv="up">Best</button><button data-mv="dn">Worst</button><button data-mv="act">Most traded</button></div>
-<p class="src" id="mvsrc">End of day · Alpha Vantage</p>
+<p class="src" id="mvsrc">End of day</p>
+<div id="mvevery"></div>
 <div id="mv" class="mut">Loading…</div>
 </section>
 
@@ -174,7 +175,7 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 </div>
 <a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows - free</a>
 <div id="amv-pick-at" style="margin:18px 0 0"></div>
-<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpha Vantage (US stock movers, end of day), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
+<footer>Data: Bank of Canada (a week of rates and the commodity index), <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Rates By Exchange Rate API</a> (every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.</footer>
 </main>
 <script>
 (function(){
@@ -323,40 +324,61 @@ function scores(){["today","yest","table"].forEach(function(i){$(i).innerHTML="<
     return d}).then(function(d){if(!d||want!==sgen())return;SC=d;drawS()}).catch(function(){if(want!==sgen())return;SC=null;["today","yest","table"].forEach(function(i){$(i).innerHTML=off2("s")});$("news").innerHTML="<li>"+off2("s")+"</li>";$("ssum").innerHTML=off2("s")})}
 $("lg").onchange=function(){lg=this.value;wr("am-lv-lg",lg);SC=null;drawS();scores()};
 $("team").onchange=function(){wr("am-lv-team-"+lg,this.value);drawS()};
+// how often, with your own key (Adeeb, 21 Nov: "if they have paid subscription they can do every minute" - and the same for
+// every keyed service). Each service has its own choice, saved on this phone; the free plan's limit is said next to it.
+var EVERY={
+  ap:{d:"day",o:[["day","Once a day",0],["15","Every 15 minutes",900000],["1","Every minute",60000]],n:"Counted on your Alpaca account; how fresh the numbers are depends on your data plan."},
+  av:{d:"day",o:[["day","Once a day",0],["15","Every 15 minutes",900000],["1","Every minute",60000]],n:"Free: 25 calls a day - more often than once an hour needs Alpha Vantage's paid plan."},
+  fd:{d:"1",o:[["5","Every 5 minutes",300000],["1","Every minute",60000],["30s","Every 30 seconds",30000]],n:"Free: 10 calls a minute - every 30 seconds fits; paid plans add competitions."},
+  cd:{d:"3",o:[["10","Every 10 minutes",600000],["3","Every 3 minutes",180000],["1","Every minute",60000]],n:"Free: 100 calls a day - every 3 minutes lasts about 4 hours of play. It stops at 90% of whatever your plan allows."},
+  gn:{d:"visit",o:[["visit","Once per visit",0],["30","Every 30 minutes",1800000],["10","Every 10 minutes",600000]],n:"Free: 100 calls a day, one per league per visit; more often needs GNews's paid plan."}};
+function every(svc){var e=EVERY[svc],v=rd("am-every-"+svc,e.d);return e.o.filter(function(x){return x[0]===v})[0]||e.o.filter(function(x){return x[0]===e.d})[0]}
+function everyRow(svc){var e=EVERY[svc];if(!e||!key(svc))return"";return"<div class='kin'><label class='dd' style='flex:0 0 auto;min-width:200px'><small>Update</small><select data-every='"+svc+"'>"+e.o.map(function(x){return"<option value='"+x[0]+"'"+(every(svc)[0]===x[0]?" selected":"")+">"+x[1]+"</option>"}).join("")+"</select></label></div><div class='mut' style='font-size:12px;margin:4px 0 8px'>"+e.n+"</div>"}
+document.addEventListener("change",function(ev){var t=ev.target;if(!t||!t.getAttribute)return;var svc=t.getAttribute("data-every");if(!svc)return;wr("am-every-"+svc,t.value);
+  document.querySelectorAll("select[data-every='"+svc+"']").forEach(function(o){o.value=t.value});
+  if(svc==="ap"||svc==="av"){mvArm();movers()}else if(svc==="gn"){gnArm();moreNews(1)}else liveTick()});
 // ---- your own keys (Adeeb, 16 Nov: "keep an option for people to add their key ... same for live scores and news")
-var KEYS=[["av","Alpha Vantage","stock movers, when the shared daily copy is used up","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (100 calls a day - stops at 90)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
+var KEYS=[["ap","Alpaca","stock movers from your own account: paste the key ID, a colon, then the secret (ID:SECRET). Free accounts work; you choose how often below","https://app.alpaca.markets/signup"],["av","Alpha Vantage","stock movers, when the shared daily copy is used up (free: 25 calls a day)","https://www.alphavantage.co/support/#api-key"],["fd","football-data.org","live football: Premier League, Champions League and more","https://www.football-data.org/client/register"],["cd","CricketData","live cricket (free: 100 calls a day - stops at 90% of your plan)","https://cricketdata.org/signup.aspx"],["gn","GNews","more headlines for your league","https://gnews.io/register"]];
 function key(k){return rd("am-key-"+k,"")}
 function kreq(svc,q,kk){var k=kk||key(svc);if(!k)return Promise.reject(new Error("no key"));return fetch(API+"/k?svc="+svc+(q||""),{cache:"no-store",headers:{"X-Key":k}}).then(function(r){return r.json()}).then(function(d){if(d.error)throw new Error(d.error);return d})}
-function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div></div>"}).join("")}
+function drawKeys(){$("keyrows").innerHTML="<div class='krow'><div class='kh'><b>ESPN scores</b><span>no key</span></div><span class='mut' style='font-size:13px'>NBA, NFL, soccer, cricket matches, and headlines. This phone asks ESPN itself, so ESPN sees its address. NHL and MLB come from the leagues through our relay either way.</span><div class='kin'><button class='btn"+(espnOn()?"":" go")+"' data-espn='"+(espnOn()?"0":"1")+"'>"+(espnOn()?"Turn off":"Turn on")+"</button></div></div>"+KEYS.map(function(k){var v=key(k[0]);return"<div class='krow'><div class='kh'><b>"+k[1]+"</b><a href='"+k[3]+"' target='_blank' rel='noopener'>Get a free key</a></div><span class='mut' style='font-size:13px'>"+k[2]+"</span><div class='kin'><input type='password' id='key-"+k[0]+"' placeholder='"+(v?"saved on this phone":k[0]==="ap"?"KEY ID:SECRET":"paste the key")+"' autocomplete='off' autocapitalize='off' spellcheck='false'><button class='btn' data-ksave='"+k[0]+"'>"+(v?"Replace":"Save")+"</button>"+(v?"<button class='btn' data-kdel='"+k[0]+"'>Remove</button>":"")+"</div><div class='kst' id='kst-"+k[0]+"'>"+(v?"<span class='up'>✓ Saved on this phone</span>":"")+"</div>"+everyRow(k[0])+"</div>"}).join("")}
 $("keyrows").addEventListener("click",function(e){var b=e.target.closest("[data-ksave],[data-kdel]");if(!b)return;var s=b.getAttribute("data-ksave"),d=b.getAttribute("data-kdel");
-  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}SGEN++;drawKeys();refreshKeyed();return}
-  var v=$("key-"+s).value.trim();if(!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>That doesn't look like a key - letters and numbers, 8 to 80 long.</span>";return}
+  if(d){try{localStorage.removeItem("am-key-"+d)}catch(x){}SGEN++;drawKeys();refreshKeyed();mvArm();return}
+  var v=$("key-"+s).value.trim();if(s==="ap")v=v.replace(/\s*[:\s]\s*/,":");
+  if(s==="ap"?!/^[A-Za-z0-9]{8,40}:[A-Za-z0-9]{8,80}$/.test(v):!/^[A-Za-z0-9_-]{8,80}$/.test(v)){$("kst-"+s).innerHTML="<span class='dn'>"+(s==="ap"?"That doesn't look like an Alpaca key - the key ID, a colon, then the secret.":"That doesn't look like a key - letters and numbers, 8 to 80 long.")+"</span>";return}
   $("kst-"+s).innerHTML="<span class='mut'>Checking…</span>";var had=!!key(s);
   kreq(s,s==="gn"?"&q="+encodeURIComponent(GQ[lg]||"sport"):"",v).then(function(d){wr("am-key-"+s,v);SGEN++;drawKeys();
-    if(s==="av"){MV=d;MV.mine=1;drawMv()}else if(s==="gn"){GN={};GN[lg]=d;gnDraw()}else if(s===liveKind()){liveShow(s,d,sgen());liveArm(s)}},
+    if(s==="av"||s==="ap"){movers();mvArm()}else if(s==="gn"){GN={};GN[lg]=d;gnDraw();gnArm()}else if(s===liveKind()){liveShow(s,d,sgen());liveArm(s)}},
     function(er){$("kst-"+s).innerHTML="<span class='dn'>Not saved - the service said: "+esc(er.message)+"."+(had?" Your earlier key is kept.":"")+"</span>"})});
 drawKeys();
 // stock movers: the relay's shared daily copy, or your own key
 var MV=null,mvk="up";
 function toKeys(){return"<a href='#keys' onclick='document.getElementById(\"keys\").scrollIntoView();return false'>"}
 function drawMv(){if(!MV){return}
-  if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your Alpha Vantage key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
-  var L=MV[mvk]||[];$("mvsrc").textContent="End of day "+(MV.day||"")+" · Alpha Vantage"+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
+  if(MV.error){$("mv").innerHTML=MV.mineErr?"<span class='err'>Your "+(key("ap")?"Alpaca":"Alpha Vantage")+" key didn't work ("+esc(MV.mineErr)+"), and the shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+" either.</span> "+toKeys()+"Replace your key</a>":"<span class='err'>The shared daily copy isn't available"+(MV.why?" ("+esc(MV.why)+")":"")+".</span> "+toKeys()+"Add your own free key</a>";return}
+  var L=MV[mvk]||[];$("mvsrc").textContent=(MV.mine&&mvEvery()[2]?"Updated "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · as of "+(MV.day||""):"End of day "+(MV.day||""))+" · "+(MV.src||"Alpha Vantage")+(MV.mine?" · your key":MV.mineErr?" · shared copy (your key: "+MV.mineErr+")":"")+" · under $1 left out";
   $("mv").innerHTML=L.length?L.map(function(x,i){return"<div class='mrow'><div class='n'><b class='tk'>"+(i+1)+". "+esc(x.t)+"</b><span>US$"+(x.p>=100?x.p.toFixed(0):x.p.toFixed(2))+"</span></div><div class='v'><div style='font-size:15px'>"+chip(x.c)+"</div></div></div>"}).join(""):"<span class='mut'>Nothing listed.</span>"}
 function shared(){return jr("/movers").then(function(d){if(d.error)throw new Error(d.why==="nokey"?"no shared key on the relay":d.why||"");return d})}
-function movers(){var g=SGEN;if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});
+var mvT=0;
+function mvEvery(){var m=mvMine();return m?every(m):["day","Once a day",0]}
+function mvMine(){return key("ap")?"ap":key("av")?"av":""}
+function mvArm(){if(mvT){clearInterval(mvT);mvT=0}var e=mvEvery();if(e[2]&&mvMine())mvT=setInterval(function(){if(!document.hidden)movers()},e[2]);drawEvery()}
+function drawEvery(){var el=$("mvevery");if(!el)return;var m=mvMine();el.innerHTML=m?everyRow(m):""}
+function movers(){var g=SGEN;if(key("ap")){kreq("ap").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});return}
+  if(key("av"))kreq("av").then(function(d){if(g!==SGEN)return;MV=d;MV.mine=1;drawMv()},function(er){var me2=er&&er.message||"failed";shared().then(function(d){if(g!==SGEN)return;MV=d;MV.mineErr=me2;drawMv()},function(e2){if(g!==SGEN)return;MV={error:1,mineErr:me2,why:e2&&e2.message};drawMv()})});
   else shared().then(function(d){if(g!==SGEN)return;MV=d;drawMv()},function(er){if(g!==SGEN)return;MV={error:1,why:er&&er.message};drawMv()})}
 $("mvseg").addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;mvk=b.getAttribute("data-mv");[].forEach.call($("mvseg").children,function(x){x.classList.toggle("on",x===b)});drawMv()});
 // live scores and more headlines with your own key, while this page is open
 var LIVE={t:null};
 function liveKind(){return(lg==="epl"||lg==="ucl")&&key("fd")?"fd":lg==="cri"&&key("cd")?"cd":""}
 function cdHits(n){var k="am-cd-"+new Date().toDateString();if(n!=null)wr(k,String(n));return+rd(k,"0")}
-function liveShow(k,d,g){if(g!==sgen()||k!==liveKind())return;if(k==="cd")cdHits(d.hits||cdHits()+1);var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(x){return!want||want.test(x.lg)});
-  $("c-live").hidden=false;$("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(k==="cd"?" · every 3 min":" · every minute");
+function cdLim(n){if(n)wr("am-cd-lim",String(n));return+rd("am-cd-lim","100")||100}
+function liveShow(k,d,g){if(g!==sgen()||k!==liveKind())return;if(k==="cd"){cdHits(d.hits||cdHits()+1);if(d.lim)cdLim(d.lim)}var want=lg==="epl"?/premier league/i:lg==="ucl"?/champions league/i:null,G=(d.g||[]).filter(function(x){return!want||want.test(x.lg)});
+  $("c-live").hidden=false;$("liveh").lastChild.textContent=k==="cd"?"Live cricket":"Live now";$("lives").textContent=(k==="cd"?"CricketData":"football-data.org")+" · your key · updated "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+" · "+every(k)[1].toLowerCase();
   $("live").innerHTML=G.length?G.map(function(x){return(k==="cd"?"<div class='lgname'>"+esc(x.lg)+"</div>":"")+gameRow(x,"",Date.now())}).join(""):"<span class='mut'>No matches today.</span>"}
-function liveArm(k){clearTimeout(LIVE.t);LIVE.t=setTimeout(function due(){if(document.hidden){LIVE.t=setTimeout(due,15000);return}liveTick()},k==="cd"?180000:60000)}
+function liveArm(k){clearTimeout(LIVE.t);LIVE.t=setTimeout(function due(){if(document.hidden){LIVE.t=setTimeout(due,15000);return}liveTick()},every(k)[2]||60000)}
 function liveTick(){var k=liveKind(),g=sgen();clearTimeout(LIVE.t);if(!k){$("c-live").hidden=true;return}$("c-live").hidden=false;
-  if(k==="cd"&&cdHits()>=90){$("live").innerHTML="<span class='mut'>Today's free CricketData calls are used up (90 of 100) - back tomorrow.</span>";return}
+  var cl=cdLim();if(k==="cd"&&cdHits()>=Math.floor(cl*0.9)){$("live").innerHTML="<span class='mut'>Today's CricketData calls are nearly used up ("+cdHits()+" of "+cl+") - back tomorrow.</span>";return}
   if(document.hidden){liveArm(k);return}
   kreq(k).then(function(d){liveShow(k,d,g)},function(er){if(g===sgen()&&k===liveKind())$("live").innerHTML="<span class='err'>"+esc(er.message)+"</span>"});
   liveArm(k)}
@@ -366,9 +388,10 @@ var GN={};
 function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss").textContent="GNews · your key - opens on each site";
   $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+lnk(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
 function moreNews(force){if(!key("gn"))return;var want=lg,g=sgen();if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){if(g!==sgen()){delete GN[want];return}GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
-function refreshKeyed(){GN={};movers();liveTick();moreNews(1)}
+var gnT=0;function gnArm(){if(gnT){clearInterval(gnT);gnT=0}var e=key("gn")?every("gn"):null;if(e&&e[2])gnT=setInterval(function(){if(!document.hidden){GN={};moreNews(1)}},e[2])}
+function refreshKeyed(){GN={};movers();mvArm();liveTick();moreNews(1);gnArm()}
 var _drawS=drawS;drawS=function(){_drawS();if(SC&&key("gn"))moreNews()};
-drawM();markets();drawS();scores();movers();liveTick();
+drawM();markets();drawS();scores();movers();mvArm();gnArm();liveTick();
 $("lg").addEventListener("change",function(){liveTick()});
 var h0=location.hash.slice(1),tb=document.querySelector(".tabs [data-t='"+h0+"']");if(tb)tb.click();
 // updated once a day on the relay - no live refresh here; the stamp says when
