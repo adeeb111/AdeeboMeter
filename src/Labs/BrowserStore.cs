@@ -134,7 +134,11 @@ namespace AdeeboMeter
             if (d.Length < 48 || BitConverter.ToUInt64(d, d.Length - 8) != 0xdb4775248b80fb57UL) return;
             var ft = new byte[48]; Buffer.BlockCopy(d, d.Length - 48, ft, 0, 48); int j = 0;
             Varint(ft, ref j); Varint(ft, ref j); int io = VarintInt(ft, ref j), isz = VarintInt(ft, ref j);
-            foreach (var h in Entries(Block(d, io, isz)).ToList())
+            // finding 20: an index that breaks part-way still gives the blocks it named before the break
+            var handles = new List<KeyValuePair<byte[], byte[]>>();
+            try { foreach (var h0 in Entries(Block(d, io, isz))) handles.Add(h0); }
+            catch (InvalidDataException) { } catch (IndexOutOfRangeException) { } catch (ArgumentException) { }
+            foreach (var h in handles)
             {
                 try
                 {
@@ -156,8 +160,10 @@ namespace AdeeboMeter
         {
             var rows = new List<Row>();
             string[] files; try { files = Directory.GetFiles(folder); } catch (IOException) { return new Dictionary<string, byte[]>(); } catch (UnauthorizedAccessException) { return new Dictionary<string, byte[]>(); }
+            long total = 0; int nfiles = 0;
             foreach (var f in files)
             {
+                if (total > 4 * FileCap || nfiles >= 200) break;   // finding 26: a whole folder is capped too, not only each file
                 bool log = f.EndsWith(".log", StringComparison.OrdinalIgnoreCase), tbl = f.EndsWith(".ldb", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".sst", StringComparison.OrdinalIgnoreCase);
                 if (!log && !tbl) continue;
                 try
@@ -165,7 +171,7 @@ namespace AdeeboMeter
                     byte[] d;
                     using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))   // Edge may hold it open
                     {
-                        if (fs.Length > FileCap) continue;
+                        if (fs.Length > FileCap) continue; total += fs.Length; nfiles++;
                         d = new byte[fs.Length]; int got = 0; while (got < d.Length) { int r = fs.Read(d, got, d.Length - got); if (r <= 0) break; got += r; }
                         if (got < d.Length) Array.Resize(ref d, got);
                     }

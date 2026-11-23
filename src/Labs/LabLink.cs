@@ -116,7 +116,8 @@ namespace AdeeboMeter
         static string Str(string v)
         {
             var sb = new StringBuilder("\"");
-            foreach (char c in (v ?? "").Length > 80 ? v.Substring(0, 80) : v ?? "")
+            string cut = v ?? ""; if (cut.Length > 80) cut = cut.Substring(0, char.IsHighSurrogate(cut[79]) ? 79 : 80);   // finding 21: never half an emoji
+            foreach (char c in cut)
                 if (c == '"' || c == '\\') sb.Append('\\').Append(c); else if (c < ' ') sb.Append(' '); else sb.Append(c);
             return sb.Append('"').ToString();
         }
@@ -172,7 +173,15 @@ namespace AdeeboMeter
                     if (pids.Contains((int)pid)) { PostMessage(hw, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero); closed++; }
                     return true;
                 }, IntPtr.Zero);
-                if (closed > 0) System.Threading.Thread.Sleep(700);   // its storage is written as it closes
+                // finding 42: wait for the old window's processes to end (its storage is written as it closes) - a fixed sleep could
+                // hand the new launch to a dying Edge, and the window never appeared
+                if (closed > 0)
+                {
+                    var until = DateTime.UtcNow.AddSeconds(4);
+                    foreach (int pid in pids)
+                        try { using (var pr = Process.GetProcessById(pid)) { int left = (int)(until - DateTime.UtcNow).TotalMilliseconds; if (left > 0) pr.WaitForExit(left); } }
+                        catch (ArgumentException) { } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab close: " + e.Message); }
         }
@@ -187,15 +196,28 @@ namespace AdeeboMeter
                 string v; var ls = BrowserStore.LocalStorage(Profile, "adeebometer-lab:"); if (!ls.TryGetValue("adeebometer-lab:files", out v)) return r;
                 var arr = Json.Parse(v) as List<object>; if (arr == null) return r;
                 foreach (var o in arr.Take(40))
+                    try   // finding 12: one bad entry is skipped, not the rest of the list with it
                 {
                     var d = o as Dictionary<string, object>; if (d == null) continue; object id, nm, t;
                     if (!d.TryGetValue("id", out id) || id == null) continue; d.TryGetValue("name", out nm); d.TryGetValue("t", out t);
                     double ms; string when = t != null && double.TryParse(Convert.ToString(t, System.Globalization.CultureInfo.InvariantCulture), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out ms) ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ms).ToLocalTime().ToString("d MMM HH:mm", System.Globalization.CultureInfo.CurrentCulture) : "";
                     r.Add(new[] { Convert.ToString(id, System.Globalization.CultureInfo.InvariantCulture), Convert.ToString(nm ?? "My network", System.Globalization.CultureInfo.InvariantCulture), when });
                 }
+                    catch (ArgumentOutOfRangeException) { }   // a time out of range (a hand-edited or corrupt index)
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab diagrams: " + e.Message); }
             return r;
+        }
+        // finding 10: every kept diagram written to a file (one drawing each, the shape "Open a file..." takes) - -1 if unreadable
+        public static int ExportDiagrams(string file)
+        {
+            string v; if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:files", out v)) return -1;
+            var arr = Json.ParseWhole(v) as List<object>; if (arr == null) return -1;
+            var docs = new List<object>();
+            foreach (var o in arr) { var d = o as Dictionary<string, object>; object doc; if (d != null && d.TryGetValue("doc", out doc) && doc is Dictionary<string, object>) docs.Add(doc); }
+            var all = new Dictionary<string, object> { { "adeebolab", "diagrams" }, { "saved", DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture) }, { "diagrams", docs } };
+            SafeFile.WriteBytes(file, Encoding.UTF8.GetBytes(Json.Write(all)));
+            return docs.Count;
         }
         static string Edge()
         {
@@ -209,15 +231,24 @@ namespace AdeeboMeter
             return null;
         }
         public static string Profile { get { return Path.Combine(Program.DataDir, "lab", "edge-profile"); } }
-        static string lastStamp = ""; static readonly object pickLock = new object();
+        static string lastStamp = "", missStamp = ""; static int missCount; static readonly object pickLock = new object();
         // the faults watched to the end, read from the lab window's own storage: each earns its points once (Points keeps
         // the record, so reading again never pays twice). Cheap when nothing changed: a folder fingerprint first.
         public static int Pickup()
         {
             lock (pickLock)
             {
-                string st = BrowserStore.Stamp(Profile); if (st == "" || st == lastStamp) return 0; lastStamp = st;
-                string v; if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:solved", out v)) return 0;
+                string st = BrowserStore.Stamp(Profile); if (st == "" || st == lastStamp) return 0;
+                // finding 9: the folder's stamp is only used up once the read worked - a read that came back without the list
+                // (Edge mid-write) is tried again on the next look, up to three times for the same stamp
+                string v;
+                if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:solved", out v))
+                {
+                    if (st == missStamp) missCount++; else { missStamp = st; missCount = 1; }
+                    if (missCount >= 3) lastStamp = st;
+                    return 0;
+                }
+                lastStamp = st;
                 int got = 0;
                 foreach (System.Text.RegularExpressions.Match x in System.Text.RegularExpressions.Regex.Matches(v ?? "", "\"([a-z]{2,12})\""))
                     if (KnownFault("nlab." + x.Groups[1].Value)) got += Points.Me.Award("nlab." + x.Groups[1].Value, true, Cfg.Points, DateTime.UtcNow);
@@ -235,11 +266,11 @@ namespace AdeeboMeter
             string page = PagePath(views); if (page == null) return "The lab page couldn't be written to the data folder.";
             var q = new List<string>(); if (breakIt) q.Add("mode=break"); if (!string.IsNullOrEmpty(view) && System.Text.RegularExpressions.Regex.IsMatch(view, "^[a-z]{2,8}$")) q.Add("view=" + view);
             if (!string.IsNullOrEmpty(arg) && System.Text.RegularExpressions.Regex.IsMatch(arg, "^[A-Za-z0-9_-]{1,40}$")) q.Add("arg=" + arg);
-            CloseOpenWindows();
             string url = new Uri(page).AbsoluteUri + (q.Count > 0 ? "?" + string.Join("&", q) : "");
             if (json != null) url += "#path=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-            if (url.Length > 30000) return "This path is too big to hand over.";
+            if (url.Length > 30000) return "This path is too big to hand over.";   // finding 39: checked before the open window is closed
             string edge = Edge(), profile = Profile;
+            if (edge != null) CloseOpenWindows();
             try
             {
                 if (edge != null)
@@ -251,7 +282,8 @@ namespace AdeeboMeter
                     return null;
                 }
                 using (Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })) { }   // no Edge: the default browser, without the path (a file link loses the #)
-                return json != null ? "Edge wasn't found, so the lab opened in your browser without your path." : "Edge wasn't found, so the lab opened in your browser as a page (not its own window).";   // R2-116
+                // finding 40: say what's lost - the chosen drawing, and that what's drawn or solved there stays in that browser
+                return "Edge wasn't found, so the lab opened in your browser as a plain page" + (json != null || !string.IsNullOrEmpty(view) || breakIt ? ", without the drawing you picked" : "") + ". Drawings and faults done there stay in that browser - AdeeboMeter can't list them or give points for them.";   // R2-116
             }
             catch (System.ComponentModel.Win32Exception e) { Program.Log("lab open: " + e.Message); return "The lab couldn't be opened: " + e.Message; }
         }

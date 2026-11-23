@@ -18,7 +18,7 @@ namespace AdeeboMeter
         public Action<string> Out; public Func<bool> Cancelled;
         readonly Dictionary<string, string> vars = new Dictionary<string, string>(StringComparer.Ordinal);
         readonly Dictionary<string, Dictionary<string, string>> arrs = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
-        List<string> f = new List<string> { "" }; long nr; long steps;
+        List<string> f = new List<string> { "" }; long nr, fnr; long steps;
         readonly List<Action> begins = new List<Action>(), ends = new List<Action>(); readonly List<KeyValuePair<Func<bool>, Action>> rules = new List<KeyValuePair<Func<bool>, Action>>();
         sealed class Next : Exception { } sealed class Exit : Exception { public int Code; } sealed class Brk : Exception { } sealed class Cont : Exception { }
         sealed class LV { public Func<string> Get; public Action<string> Set; }
@@ -30,22 +30,30 @@ namespace AdeeboMeter
             toks = Lex(program); Program();
         }
         // runs the program over the lines; the exit code
-        public int Run(IEnumerable<string> lines)
+        public int Run(IEnumerable<string> lines) { return Run(new[] { new KeyValuePair<string, IEnumerable<string>>("", lines) }); }
+        // file by file: FNR starts again and FILENAME is its name; NR runs on (a finding of the shell fix check)
+        public int Run(IEnumerable<KeyValuePair<string, IEnumerable<string>>> inputs)
         {
             try
             {
-                foreach (var b in begins) b();
+                try { foreach (var b in begins) b(); } catch (Next) { throw new FormatException("next can't be used in BEGIN"); }
                 if (rules.Count > 0 || ends.Count > 0)
-                    foreach (var line in lines)
+                    foreach (var inp in inputs)
                     {
-                        nr++; SetRecord(line);
-                        try { foreach (var r in rules) if (r.Key == null || r.Key()) r.Value(); }
-                        catch (Next) { }
+                        vars["FILENAME"] = inp.Key; fnr = 0;
+                        foreach (var line in inp.Value)
+                        {
+                            nr++; fnr++; SetRecord(line);
+                            try { foreach (var r in rules) if (r.Key == null || r.Key()) r.Value(); }
+                            catch (Next) { }
+                        }
                     }
-                foreach (var e in ends) e();
+                try { foreach (var e in ends) e(); } catch (Next) { throw new FormatException("next can't be used in END"); }
                 return 0;
             }
-            catch (Exit x) { try { foreach (var e in ends) e(); } catch (Exit) { } return x.Code; }
+            catch (Exit x) { try { foreach (var e in ends) e(); } catch (Exit) { } catch (Next) { } return x.Code; }
+            catch (Brk) { throw new FormatException("break outside a loop"); }
+            catch (Cont) { throw new FormatException("continue outside a loop"); }
         }
         void Tick() { if (++steps > 20000000) throw new FormatException("stopped after 20 million steps (an endless loop?)"); if ((steps & 0xFFFF) == 0 && Cancelled != null && Cancelled()) throw new Exit { Code = 130 }; }
 
@@ -73,13 +81,14 @@ namespace AdeeboMeter
         }
         string Var(string n)
         {
-            switch (n) { case "NR": case "FNR": return nr.ToString(CultureInfo.InvariantCulture); case "NF": return (f.Count - 1).ToString(CultureInfo.InvariantCulture); }
+            switch (n) { case "NR": return nr.ToString(CultureInfo.InvariantCulture); case "FNR": return fnr.ToString(CultureInfo.InvariantCulture); case "NF": return (f.Count - 1).ToString(CultureInfo.InvariantCulture); }
             string v; return vars.TryGetValue(n, out v) ? v : "";
         }
         void SetVar(string n, string v)
         {
             if (n == "NF") { int k = (int)Num(v); while (f.Count - 1 > k && f.Count > 1) f.RemoveAt(f.Count - 1); while (f.Count - 1 < k) f.Add(""); f[0] = string.Join(Var("OFS"), f.Skip(1)); return; }
-            if (n == "NR" || n == "FNR") { nr = (long)Num(v); return; }
+            if (n == "NR") { nr = (long)Num(v); return; }
+            if (n == "FNR") { fnr = (long)Num(v); return; }
             vars[n] = v;
         }
         Dictionary<string, string> Arr(string n) { Dictionary<string, string> a; if (!arrs.TryGetValue(n, out a)) arrs[n] = a = new Dictionary<string, string>(StringComparer.Ordinal); return a; }
@@ -91,7 +100,7 @@ namespace AdeeboMeter
         static List<Tk> Lex(string s)
         {
             var l = new List<Tk>(); int i = 0;
-            Func<bool> valueBefore = () => { if (l.Count == 0) return false; var t = l[l.Count - 1]; return t.K == K.Num || t.K == K.Str || t.K == K.Id || t.S == ")" || t.S == "]" || t.S == "$" || t.S == "++" || t.S == "--"; };
+            Func<bool> valueBefore = () => { if (l.Count == 0) return false; var t = l[l.Count - 1]; return t.K == K.Num || t.K == K.Str || (t.K == K.Id && !Keywords.Contains(t.S)) || t.S == ")" || t.S == "]" || t.S == "$" || t.S == "++" || t.S == "--"; };
             while (i < s.Length)
             {
                 char ch = s[i];
@@ -236,14 +245,17 @@ namespace AdeeboMeter
         Func<Regex> ReOf(Func<string> e) { var cache = new Dictionary<string, Regex>(); return () => { string s = e(); Regex r; if (!cache.TryGetValue(s, out r)) cache[s] = r = new Regex(s, RegexOptions.None, TimeSpan.FromSeconds(2)); return r; }; }
         Func<string> Cmp(bool gt)
         {
-            var l = Concat(gt);
+            int ls0 = p; var l = Concat(gt); int ls1 = p;
             var t = Peek(); if (t.K == K.Op && (t.S == "<" || t.S == "<=" || t.S == "==" || t.S == "!=" || t.S == ">=" || (t.S == ">" && gt)))
             {
-                string op = t.S; p++; var r = Concat(gt);
+                string op = t.S; p++; int rs0 = p; var r = Concat(gt); int rs1 = p;
+                // POSIX: a "string" written in the program makes it a string comparison ("10" < "9" is true); numbers that
+                // came in as input (fields, variables from them) compare as numbers when both look like one
+                bool strK = toks.Skip(ls0).Take(ls1 - ls0).Any(z => z.K == K.Str) || toks.Skip(rs0).Take(rs1 - rs0).Any(z => z.K == K.Str);
                 return () =>
                 {
                     string a = l(), b = r(); int c;
-                    if (LooksNum(a) && LooksNum(b)) c = Num(a).CompareTo(Num(b)); else c = string.CompareOrdinal(a, b);
+                    if (!strK && LooksNum(a) && LooksNum(b)) c = Num(a).CompareTo(Num(b)); else c = string.CompareOrdinal(a, b);
                     bool ok = op == "<" ? c < 0 : op == "<=" ? c <= 0 : op == "==" ? c == 0 : op == "!=" ? c != 0 : op == ">=" ? c >= 0 : c > 0;
                     return ok ? "1" : "0";
                 };
@@ -297,7 +309,7 @@ namespace AdeeboMeter
         }
         static readonly HashSet<string> Keywords = new HashSet<string> { "BEGIN", "END", "if", "else", "while", "for", "do", "in", "next", "exit", "break", "continue", "delete", "print", "printf", "getline", "function", "return" };
         static readonly HashSet<string> Builtins = new HashSet<string> { "length", "substr", "index", "split", "tolower", "toupper", "sprintf", "int", "sqrt", "log", "exp", "sin", "cos", "atan2", "rand", "srand", "sub", "gsub", "match" };
-        readonly Random rnd = new Random(0);
+        Random rnd = new Random(0); double seed;   // like awk: the same numbers each run until srand() is called
         Func<string> Primary()
         {
             var t = Peek();
@@ -315,7 +327,7 @@ namespace AdeeboMeter
                 Func<int, string> A = i => i < args.Count ? args[i]() : "";
                 switch (fn)
                 {
-                    case "length": { string an = args.Count == 1 && toks[raw[0]].K == K.Id && arrs.ContainsKey(toks[raw[0]].S) ? toks[raw[0]].S : null; return () => an != null && arrs.ContainsKey(an) ? Arr(an).Count.ToString(CultureInfo.InvariantCulture) : A(0).Length.ToString(CultureInfo.InvariantCulture); }
+                    case "length": { string an = args.Count == 1 && toks[raw[0]].K == K.Id && toks[raw[0] + 1].S == ")" ? toks[raw[0]].S : null; return () => an != null && arrs.ContainsKey(an) ? Arr(an).Count.ToString(CultureInfo.InvariantCulture) : A(0).Length.ToString(CultureInfo.InvariantCulture); }   // an array is looked for when it runs, not when it's read
                     case "substr": return () => { string s = A(0); double m = Math.Round(Num(A(1))), n = args.Count > 2 ? Math.Round(Num(A(2))) : double.MaxValue; double start = Math.Max(1, m), end = args.Count > 2 ? Math.Min(s.Length + 1, m + n) : s.Length + 1; return end <= start ? "" : s.Substring((int)start - 1, (int)(end - start)); };
                     case "index": return () => (A(0).IndexOf(A(1), StringComparison.Ordinal) + 1).ToString(CultureInfo.InvariantCulture);
                     case "split": { if (args.Count < 2 || toks[raw[1]].K != K.Id) throw new FormatException("split(s, array[, sep])"); string an = toks[raw[1]].S; return () => { var a = Arr(an); a.Clear(); var parts = Split(A(0), args.Count > 2 ? A(2) : Var("FS")).ToList(); for (int i = 0; i < parts.Count; i++) a[(i + 1).ToString(CultureInfo.InvariantCulture)] = parts[i]; return parts.Count.ToString(CultureInfo.InvariantCulture); }; }
@@ -330,7 +342,7 @@ namespace AdeeboMeter
                     case "cos": return () => Str(Math.Cos(Num(A(0))));
                     case "atan2": return () => Str(Math.Atan2(Num(A(0)), Num(A(1))));
                     case "rand": return () => Str(rnd.NextDouble());
-                    case "srand": return () => "0";
+                    case "srand": return () => { double old = seed; seed = args.Count > 0 ? Num(A(0)) : Math.Floor((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds); rnd = new Random((int)(long)seed); return Str(old); };
                     case "match": return () => { var m = new Regex(A(1), RegexOptions.None, TimeSpan.FromSeconds(2)).Match(A(0)); SetVar("RSTART", (m.Success ? m.Index + 1 : 0).ToString(CultureInfo.InvariantCulture)); SetVar("RLENGTH", (m.Success ? m.Length : -1).ToString(CultureInfo.InvariantCulture)); return m.Success ? (m.Index + 1).ToString(CultureInfo.InvariantCulture) : "0"; };
                     case "sub": case "gsub":
                         {
@@ -390,11 +402,12 @@ namespace AdeeboMeter
             ShellAwk awk;
             try { awk = new ShellAwk(prog, fs, pre); } catch (FormatException e) { Err(c, "awk: " + e.Message); return 2; } catch (ArgumentException e) { Err(c, "awk: a pattern isn't valid - " + e.Message); return 2; }
             var outp = new StringBuilder(); awk.Out = s => { outp.Append(s); if (outp.Length > 65536) { O(c, outp.ToString(), ShFg); outp.Clear(); } }; awk.Cancelled = () => c.Job.Cancel;
-            IEnumerable<string> lines;
-            if (files.Count == 0) lines = SplitLines(c.Stdin ?? "");
-            else { var all = new List<IEnumerable<string>>(); foreach (var f in files) { var ls = StreamLines(f, c); if (ls == null) return 2; all.Add(ls); } lines = all.SelectMany(z => z); }
+            IEnumerable<string> lines = files.Count == 0 ? SplitLines(c.Stdin ?? "") : null;
+            var inputs = new List<KeyValuePair<string, IEnumerable<string>>>();
+            if (files.Count == 0) inputs.Add(new KeyValuePair<string, IEnumerable<string>>("", lines));
+            else foreach (var f in files) { var ls = StreamLines(f, c); if (ls == null) return 2; inputs.Add(new KeyValuePair<string, IEnumerable<string>>(f, ls)); }
             int ex;
-            try { ex = awk.Run(lines); }
+            try { ex = awk.Run(inputs); }
             catch (FormatException e) { O(c, outp.ToString(), ShFg); Err(c, "awk: " + e.Message); return 2; }
             catch (RegexMatchTimeoutException) { O(c, outp.ToString(), ShFg); Err(c, "awk: a pattern took too long - stopped"); return 2; }
             O(c, outp.ToString(), ShFg); return ex;

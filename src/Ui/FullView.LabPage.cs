@@ -38,8 +38,33 @@ namespace AdeeboMeter
             System.Threading.ThreadPool.QueueUserWorkItem(delegate
             {
                 List<string[]> l = null; try { l = LabLink.SavedDiagrams(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab page: " + e.Message); }
-                try { BeginInvoke((Action)delegate { labSaved = l ?? new List<string[]>(); labSavedBusy = false; if (labCanvas != null) labCanvas.Invalidate(); }); } catch (InvalidOperationException) { labSavedBusy = false; }
+                try
+                {
+                    BeginInvoke((Action)delegate
+                    {
+                        // finding 25: an empty read while Edge is mid-write isn't "none yet" - keep what we had and look again soon
+                        if ((l == null || l.Count == 0) && labSaved != null && labSaved.Count > 0) labSavedAt = DateTime.UtcNow.AddSeconds(-4);
+                        else { labSaved = l ?? new List<string[]>(); if (labSaved.Count == 0) labSavedAt = DateTime.UtcNow.AddSeconds(-4); }
+                        labSavedBusy = false; if (labCanvas != null) labCanvas.Invalidate();
+                    });
+                }
+                catch (InvalidOperationException) { labSavedBusy = false; }
             });
+        }
+        void LabExport()
+        {
+            using (var dlg = new SaveFileDialog { Title = L.T("Save a copy of all my diagrams"), Filter = L.T("AdeeboLab drawings") + " (*.json)|*.json", FileName = "AdeeboLab diagrams " + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) + ".json" })
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                string file = dlg.FileName;
+                System.Threading.ThreadPool.QueueUserWorkItem(delegate
+                {
+                    string note;
+                    try { int n = LabLink.ExportDiagrams(file); note = n < 0 ? L.T("Couldn't read your diagrams just now - try again in a moment.") : n + " " + L.T("diagrams saved to") + " " + file; }
+                    catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; note = L.T("Couldn't save:") + " " + e.Message; }
+                    try { BeginInvoke((Action)delegate { labNote = note; if (labCanvas != null) labCanvas.Invalidate(); }); } catch (InvalidOperationException) { }
+                });
+            }
         }
         void LabOpenFile()
         {
@@ -50,8 +75,10 @@ namespace AdeeboMeter
                 {
                     var fi = new FileInfo(dlg.FileName); if (fi.Length > 2000000) { labNote = L.T("That file is over 2 MB - too big for a lab drawing."); labCanvas.Invalidate(); return; }
                     string t = File.ReadAllText(dlg.FileName).Trim();
-                    var d = AdeeboMeter.Json.Parse(t) as Dictionary<string, object>; if (d == null || !d.ContainsKey("nodes")) { labNote = L.T("That file isn't a lab drawing."); labCanvas.Invalidate(); return; }
-                    labNote = null; OpenLab(null, false, "open", false, null, t);
+                    var d = AdeeboMeter.Json.ParseWhole(t) as Dictionary<string, object>; int many = 0;
+                    if (d != null && d.ContainsKey("diagrams") && d["diagrams"] is List<object>) { var all = (List<object>)d["diagrams"]; many = all.Count; d = all.Count > 0 ? all[0] as Dictionary<string, object> : null; }   // a saved copy of all diagrams: the first one
+                    if (d == null || !(d.ContainsKey("nodes") && d["nodes"] is List<object>)) { labNote = L.T("That file isn't a lab drawing."); labCanvas.Invalidate(); return; }
+                    labNote = many > 1 ? L.T("That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.") : null; OpenLab(null, false, "open", false, null, AdeeboMeter.Json.Write(d));   // finding 1: the parsed drawing written back, never the file's own text
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is FormatException || e is InvalidDataException)) throw; labNote = L.T("Couldn't read that file:") + " " + e.Message; labCanvas.Invalidate(); }
             }
@@ -129,7 +156,11 @@ namespace AdeeboMeter
                         g.DrawString(d[2], Draw.fSmall, mut, new RectangleF(r.X + 46 * S, r.Y + 31 * S, r.Width - 54 * S, 18 * S), nf);
                         string id = d[0]; Act(labCanvas, r, delegate { OpenLab(null, false, "file", false, id, null); });
                     }
-                    y += ((Math.Min(24, labSaved.Count) + dc - 1) / dc) * (dh + 10 * S) + 16 * S;
+                    y += ((Math.Min(24, labSaved.Count) + dc - 1) / dc) * (dh + 10 * S) + 6 * S;
+                    // finding 10: a copy of every diagram outside the lab's browser profile - opens again with "Open a file..."
+                    string sv = L.T("Save a copy of all my diagrams") + " ›"; var ssz = g.MeasureString(sv, Draw.fSmall); var sr = new RectangleF(x, y, ssz.Width, ssz.Height);
+                    using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sv, Draw.fSmall, lb, sr.X, sr.Y);
+                    Act(labCanvas, sr, LabExport); y += ssz.Height + 16 * S;
                 }
 
                 // examples

@@ -14,7 +14,8 @@ namespace AdeeboMeter
     {
         LearnGames.Room room; readonly List<string> roomOut = new List<string>(); DateTime roomStart; int roomHints, roomMiss, roomStage; string roomMsg = "";   // stage: 0 looking, 1 fault found, 2 escaped, 3 out of time / wrong
         LearnGames.Case thief; int thiefClues = 1; string thiefPick = "";
-        int detIdx; int detPick = -1;
+        int detIdx; int detPick = -1; string thiefLast; List<int> detOrder;   // finding 34: the detective's puzzles in a new order each time round
+        int DetAt() { if (detOrder == null) detOrder = Enumerable.Range(0, LearnGames.Detective.Length).OrderBy(i => GameRnd.Next()).ToList(); return detOrder[detIdx % LearnGames.Detective.Length]; }
         LearnGames.Quick quick; string quickMsg = "", quickEarn;
         static readonly StringFormat GameNoWrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
         // Review-1: a description gets two lines before it's cut, on a word
@@ -34,7 +35,7 @@ namespace AdeeboMeter
         long quickAway;
         void GameTick(bool on)
         {
-            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; if (away < TimeSpan.Zero) away = TimeSpan.Zero; roomStart += away; outStart += away; if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
+            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; if (away < TimeSpan.Zero) away = TimeSpan.Zero; roomStart += away; outStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
             if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; quickAway = LearnGames.Mono.ElapsedMilliseconds; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
@@ -94,6 +95,7 @@ namespace AdeeboMeter
         void NewRoom()
         {
             var open = LearnGames.Faults.Where(f => !Points.Me.Has("game.room." + f.Id)).ToList(); if (open.Count == 0) open = LearnGames.Faults.ToList();
+            if (room != null && open.Count > 1) open.RemoveAll(f => f.Id == room.F.Id);   // finding 34: never the same room twice in a row
             var f0 = open[GameRnd.Next(open.Count)]; room = LearnGames.NewRoom(GameRnd.Next(), f0.Id);
             roomOut.Clear(); roomOut.Add(L.T("Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.")); roomStart = DateTime.UtcNow; roomHints = 0; roomMiss = 0; roomStage = 0; roomMsg = "";
         }
@@ -149,7 +151,8 @@ namespace AdeeboMeter
         void NewThief()
         {
             var open = LearnGames.ThiefCases.Where(c => !Points.Me.Has("game.thief." + c)).ToList(); if (open.Count == 0) open = LearnGames.ThiefCases.ToList();
-            thief = LearnGames.NewCase(GameRnd.Next(), open[GameRnd.Next(open.Count)]); thiefClues = 1; thiefPick = "";
+            if (thief != null && open.Count > 1) open.RemoveAll(c => c == thiefLast); thiefLast = null;
+            thiefLast = open[GameRnd.Next(open.Count)]; thief = LearnGames.NewCase(GameRnd.Next(), thiefLast); thiefClues = 1; thiefPick = "";
         }
         float PaintThief(Graphics g, float x, float y, float w)
         {
@@ -199,7 +202,7 @@ namespace AdeeboMeter
         // ---------- packet detective
         float PaintDetective(Graphics g, float x, float y, float w)
         {
-            GameTick(false); var p = LearnGames.Detective[detIdx % LearnGames.Detective.Length]; int wrong = int.Parse(p[2], CultureInfo.InvariantCulture);
+            GameTick(false); int pi = DetAt(); var p = LearnGames.Detective[pi]; int wrong = int.Parse(p[2], CultureInfo.InvariantCulture);
             y = Say(g, (detIdx % LearnGames.Detective.Length + 1) + " / " + LearnGames.Detective.Length + "  ·  " + L.T(p[0]), 1, x, y, w);
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("ONE OF THESE PACKETS IS WRONG - CLICK IT"), Draw.fTiny, mb, x, y); y += 22 * S;
             var pk = p[1].Split('~');
@@ -212,14 +215,14 @@ namespace AdeeboMeter
                     g.DrawString(f[0] + " s", Draw.fMono, sub, x + 12 * S, y + 11 * S);
                     g.DrawString(f[1], Draw.fBodyB, ink, x + 90 * S, y + 10 * S);
                     g.DrawString(L.T(f[2]), Draw.fBody, ink, new RectangleF(x + 260 * S, y + 10 * S, w - 270 * S, 22 * S), GameNoWrap);
-                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; string dk = "game.detective." + (detIdx % LearnGames.Detective.Length + 1).ToString(CultureInfo.InvariantCulture); if (ii == wrong) EarnFirst(dk); else Points.Me.MarkTried(dk); learnInfo.Invalidate(); });
+                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; string dk = "game.detective." + (pi + 1).ToString(CultureInfo.InvariantCulture); if (ii == wrong) EarnFirst(dk); else Points.Me.MarkTried(dk); learnInfo.Invalidate(); });
                     y += 48 * S;
                 }
             if (detPick >= 0)
             {
                 y = Say(g, detPick == wrong ? "Spotted." : "Not that one - the green one is wrong.", detPick == wrong ? 0 : 2, x, y + 4 * S, w);
                 y = Lead2(g, L.T(p[3]), x, y, w);
-                Button(learnInfo, g, "Next puzzle", true, delegate { detIdx++; detPick = -1; learnInfo.Invalidate(); }, x, y); y += 46 * S;
+                Button(learnInfo, g, "Next puzzle", true, delegate { detIdx++; detPick = -1; if (detIdx % LearnGames.Detective.Length == 0) detOrder = null; learnInfo.Invalidate(); }, x, y); y += 46 * S;
             }
             return y;
         }
@@ -257,6 +260,7 @@ namespace AdeeboMeter
             return y;
         }
         int heistIdx, heistPick = -1, heistRight; string heistEarn; static readonly string[] HeistOpts = { "It works", "It fails" };
+        List<int> heistOrder; string[] heistOpts = HeistOpts; int heistOptsAt = -1;   // finding 14: the attacks in a new order, the two answers swapped at random
         float PaintHeist(Graphics g, float x, float y, float w)
         {
             GameTick(false);
@@ -272,12 +276,14 @@ namespace AdeeboMeter
                 y = Say(g, (won ? L.T("You know the Adeebo Award inside out") : L.T("Mallory fooled you a few times")) + " - " + heistRight + " / " + LearnGames.Heist.Length + ". " + heistEarn, won ? 0 : 2, x, y, w);
                 y = Lead2(g, L.T("The code stops the easy cheats. The honest limit of an offline app: points live on your own PC, so the Hall of Fame is for bragging rights, not prizes."), x, y, w);
                 if (!won) Points.Me.MarkTried("game.heist");
-                Button(learnInfo, g, "Play again", true, delegate { heistIdx = 0; heistPick = -1; heistRight = 0; heistEarn = null; NewRun("game.heist"); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+                Button(learnInfo, g, "Play again", true, delegate { heistIdx = 0; heistPick = -1; heistRight = 0; heistEarn = null; heistOrder = null; heistOptsAt = -1; NewRun("game.heist"); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
             }
-            var h = LearnGames.Heist[heistIdx]; bool works = h[1] == "1";
+            if (heistOrder == null) heistOrder = Enumerable.Range(0, LearnGames.Heist.Length).OrderBy(i => GameRnd.Next()).ToList();
+            if (heistPick < 0 && heistIdx < heistOrder.Count && heistOptsAt != heistIdx) { heistOpts = GameRnd.Next(2) == 0 ? HeistOpts : HeistOpts.Reverse().ToArray(); heistOptsAt = heistIdx; }
+            var h = LearnGames.Heist[heistOrder[heistIdx]]; bool works = h[1] == "1";
             y = Say(g, (heistIdx + 1) + " / " + LearnGames.Heist.Length + "  ·  " + L.T(h[0]), 1, x, y, w);
             string answer = works ? "It works" : "It fails", picked = heistPick == 0 ? "It works" : "It fails";
-            y = Options(g, HeistOpts, x, y, w, o => heistPick < 0 ? 0 : o == answer ? 1 : o == picked ? 2 : 3,
+            y = Options(g, heistOpts, x, y, w, o => heistPick < 0 ? 0 : o == answer ? 1 : o == picked ? 2 : 3,
                 heistPick >= 0 ? (Action<string>)null : o => { heistPick = o == "It works" ? 0 : 1; if ((heistPick == 0) == works) heistRight++; Revealed("game.heist"); learnInfo.Invalidate(); });
             if (heistPick >= 0)
             {
@@ -290,9 +296,9 @@ namespace AdeeboMeter
         }
 
         // ---------- survive the outage: eight made-up broken networks, fifteen seconds each; right and fast scores more
-        List<int> outOrder; int outAt, outRight, outScore, outPick = -1; DateTime outStart; string outEarn; string[] outOpts; bool outBest;
+        List<int> outOrder; int outAt, outRight, outScore, outPick = -1; long outStartMs;   /* finding 30: the monotonic clock, like quick-fire - changing the PC clock adds no time */ string outEarn; string[] outOpts; bool outBest;
         void NewOutage() { NewRun("game.outage"); outOrder = Enumerable.Range(0, LearnGames.Outage.Length).OrderBy(i => GameRnd.Next()).Take(LearnGames.OutageRounds).ToList(); outAt = 0; outRight = 0; outScore = 0; outPick = -1; outEarn = null; OutRound(); }
-        void OutRound() { if (outAt < outOrder.Count) { var o = LearnGames.Outage[outOrder[outAt]]; outOpts = new[] { o[3], o[4], o[5], o[6] }.OrderBy(z => GameRnd.Next()).ToArray(); } outStart = DateTime.UtcNow; outPick = -1; }
+        void OutRound() { if (outAt < outOrder.Count) { var o = LearnGames.Outage[outOrder[outAt]]; outOpts = new[] { o[3], o[4], o[5], o[6] }.OrderBy(z => GameRnd.Next()).ToArray(); } outStartMs = LearnGames.Mono.ElapsedMilliseconds; outPick = -1; }
         float PaintOutage(Graphics g, float x, float y, float w)
         {
             if (outOrder == null)
@@ -312,7 +318,7 @@ namespace AdeeboMeter
                 Button(learnInfo, g, "Play again", true, delegate { NewOutage(); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
             }
             var o = LearnGames.Outage[outOrder[outAt]];
-            int left = Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds);
+            int left = Math.Max(0, LearnGames.OutageSecs - (int)((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000));
             if (left == 0 && outPick < 0) { outPick = 99; Revealed("game.outage"); }   // out of time: counts as wrong (and the answer shows)
             GameTick(outPick < 0);
             using (var mb = new SolidBrush(left <= 5 && outPick < 0 ? Theme.LvText(2) : Theme.Ink)) g.DrawString((outPick < 0 ? left + " s" : L.T("Done")) + "  ·  " + (outAt + 1) + " / " + outOrder.Count + "  ·  " + outScore, Draw.fHead, mb, x, y);
@@ -323,8 +329,8 @@ namespace AdeeboMeter
             y += 66 * S;
             y = Lead2(g, AdeeboMeter.L.T("• ") + L.T(o[1]) + "\n• " + L.T(o[2]), x, y, w);
             y = Options(g, outOpts, x, y, w, z => outPick < 0 ? 0 : z == o[3] ? 1 : outPick < 4 && outOpts[outPick] == z ? 2 : 3,
-                outPick >= 0 ? (Action<string>)null : z => { if ((DateTime.UtcNow - outStart).TotalSeconds >= LearnGames.OutageSecs) { outPick = 99; Revealed("game.outage"); learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
-                    outPick = Array.IndexOf(outOpts, z); Revealed("game.outage"); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds); } learnInfo.Invalidate(); });
+                outPick >= 0 ? (Action<string>)null : z => { if ((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000.0 >= LearnGames.OutageSecs) { outPick = 99; Revealed("game.outage"); learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
+                    outPick = Array.IndexOf(outOpts, z); Revealed("game.outage"); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000)); } learnInfo.Invalidate(); });
             if (outPick >= 0)
             {
                 bool right = outPick < 4 && outOpts[outPick] == o[3];

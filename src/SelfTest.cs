@@ -1043,6 +1043,17 @@ namespace AdeeboMeter
                 for (int sd = 0; sd < 200; sd++) { var q = LabSim.Subnet(sd); if (q.Options.Length != 4 || q.Options.Count(o => o == q.Answer) != 1 || q.Options.Distinct().Count() != 4) throw new InvalidOperationException("quiz " + sd + ": " + q.Question + " " + string.Join(",", q.Options)); }
                 var qn = LabSim.Subnet(3); if (qn.Question.IndexOf("network address", StringComparison.Ordinal) >= 0) { var part = qn.Question.Split(' ').First(z => z.Contains("/")).TrimEnd('?'); var sub = Toolkit.Subnet(part, ""); if (!sub.Any(r => r[2].StartsWith(qn.Answer + "/", StringComparison.Ordinal))) throw new InvalidOperationException("quiz answer disagrees with the calculator"); }
                 var wnd = LabSim.CwndFromCapture(Journey.Sample(), 0.05); if (wnd == null) throw new InvalidOperationException("cwnd estimate failed");
+                // AdeeboLab deep check (finding 15): the places the sim was wrong are tested now
+                { var c10 = LabSim.Tcp(new LabSim.TcpIn { Algo = "cubic", Mbps = 10, RttMs = 10, BufferBdp = 1, Rounds = 30 }); var l1 = c10.First(z => z.Loss != ""); double g1 = c10[l1.Round + 3].Cwnd - c10[l1.Round + 2].Cwnd; if (Math.Abs(g1 - 0.529) > 0.03) throw new InvalidOperationException("CUBIC's Reno-friendly growth should be 0.529 a round trip (RFC 9438), was " + g1.ToString("0.###", CultureInfo.InvariantCulture)); }
+                { var lossy = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1000, RttMs = 100, BufferBdp = 8, LossPct = 0.01, Rounds = 3000 }); double avg = lossy.Skip(200).Average(z => z.Cwnd); if (avg < 122 * 0.8 || avg > 122 * 1.25) throw new InvalidOperationException("Reno under 0.01% random loss should average near Mathis' 1.22/sqrt(p) = 122 packets, was " + avg.ToString("0", CultureInfo.InvariantCulture)); }
+                { var tiny = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1, RttMs = 5, BufferBdp = 0.1, Rounds = 40 }); var qd = tiny.First(z => z.Queue > 0); if (Math.Abs(qd.QueueMs - qd.Queue * 1460 * 8 / 1e6 * 1000) > 0.01) throw new InvalidOperationException("queue delay isn't the queue's drain time on a tiny link"); if (LabSim.CapPackets(1, 5, 0.1) < 8) throw new InvalidOperationException("the chart's buffer line lost the 8-packet floor"); }
+                { double q94 = LabSim.Bloat(20, 18.8, 500, 20, false).QueueMs, q96 = LabSim.Bloat(20, 19.2, 500, 20, false).QueueMs; if (q96 - q94 > 20 || LabSim.Bloat(20, 20, 500, 20, false).QueueMs < 499) throw new InvalidOperationException("bufferbloat queue has a cliff below the link's rate, or isn't full at it"); }
+                { double gb = LabSim.GameBudget(30, 64, 2, 144, 8).Sum(); if (Math.Abs(gb - 87.48) > 0.05) throw new InvalidOperationException("game budget: " + gb); }
+                if (LabSim.VoiceWaitMs("fair", 10, 50) <= LabSim.VoiceWaitMs("priority", 10, 50) || LabSim.VoiceWaitMs("fair", 10, 50) >= LabSim.VoiceWaitMs("fifo", 10, 50)) throw new InvalidOperationException("fair queuing should sit between priority and one queue");
+                if (wnd.Any(v => !double.IsNaN(v) && v <= 0)) throw new InvalidOperationException("a round trip with no measured flight was drawn as a window of 0");
+                if (LearnGames.Heist.Count(hh => hh[1] == "0") >= LearnGames.HeistWin) throw new InvalidOperationException("Heist: answering 'It fails' every time wins");
+                if (AdeeboMeter.Json.ParseWhole("{\"nodes\": []}};alert(1);//") != null) throw new InvalidOperationException("a lab file with script after the drawing was accepted");
+                if (AdeeboMeter.Json.Write(new Dictionary<string, object> { { "n", "</script><b>\u2028" } }).IndexOfAny(new[] { '<', '>', '\u2028' }) >= 0) throw new InvalidOperationException("Json.Write left < > or U+2028 for a script");
             });
             T("examples: every tool has one, it fits its boxes, it's marked and never copied", () =>
             {
@@ -1232,6 +1243,13 @@ namespace AdeeboMeter
                                 new[] { "a=(1 2); a+=(3); a[5]=6; unset a[0]; echo ${a[@]} ${#a[@]} ${!a[@]} ${a[-1]}", "2 3 6 3 1 2 5 6" },
                                 new[] { "x=1; (x=2; echo $x); echo $x; { echo b; echo a; } | sort", "2\n1\na\nb" },
                                 new[] { "echo (hi) 2>&1", "~unexpected" },
+                                new[] { "(echo out; echo err >&2) 2>&1 >/dev/null", "err" },
+                                new[] { "cd /data/selftest-sh2; (echo o; echo e >&2) > both.txt 2>&1; cat both.txt; echo x > a1.txt; echo y > a1.txt > a2.txt; wc -c < a1.txt", "o\ne\n0" },
+                                new[] { "printf 'a\\nb\\n' | awk 'END{print NR}'; echo x | awk '{print /x/}'; awk 'BEGIN{a[1]=1;a[2]=2; print length(a), (\"10\" < \"9\")}'", "2\n1\n2 1" },
+                                new[] { "awk 'BEGIN{srand(5); x=rand(); srand(5); print (x==rand())}'; awk 'BEGIN{break}' 2>&1", "1\nawk: break outside a loop" },
+                                new[] { "echo \"a b c\" | { read -a arr; echo ${#arr[@]} ${arr[2]}; }; echo q | read -z x 2>&1", "~not a flag" },
+                                new[] { "f() { echo in; exit 3; }; echo a | f; echo \"after $?\"", "in\nafter 3" },
+                                new[] { "cd /data/selftest-sh2; printf 'one two\\r\\nthree' > wc.txt; wc wc.txt", "1       3       14 wc.txt" },
                                 new[] { "cd /data; rm -rf selftest-sh2; echo cleaned", "cleaned" },
                             };
                             foreach (var cs0 in cases)

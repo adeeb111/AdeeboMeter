@@ -5067,3 +5067,17 @@ what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	qué hay aqu
 what's running and what it costs (nothing is stopped from here)	qué se está ejecutando y cuánto cuesta (aquí no se detiene nada)
 where you are, what's below, find by name	dónde estás, qué hay debajo, buscar por nombre
 write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	escribe un script o cualquier archivo de texto, aquí mismo (^S guardar ^X salir · :wq); lee uno largo página a página
+
+The longest one voice packet can wait behind 	Lo máximo que un paquete de voz puede esperar detrás de 
+
+Router 2 ms. Past the router everything loses about 4 of 10 replies - the internet check, other sites and the stream server alike.	Router 2 ms. Más allá del router todo pierde unas 4 de cada 10 respuestas: la prueba de internet, otros sitios y el servidor del stream por igual.
+Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	Tu casa responde al instante; las pérdidas empiezan justo después del router y todos los destinos las comparten: no es un servidor, es el camino hacia todos.
+On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	En una primera concesión el orden es Discover, Offer, Request, Ack, y este PC empezó con Discover, así que pedía una nueva: el Request llegó antes de que nadie ofreciera una dirección. (Un PC que renueva una dirección que ya tenía puede ir directo al Request, pero no después de un Discover.)
+Echo reply to the TTL 2 ping, straight from 1.1.1.1	Respuesta de eco al ping con TTL 2, directamente de 1.1.1.1
+
+Couldn't open the AdeeboLab:	No se pudo abrir AdeeboLab:
+Couldn't read your diagrams just now - try again in a moment.	No se pudieron leer tus diagramas ahora mismo; inténtalo de nuevo en un momento.
+Couldn't save:	No se pudo guardar:
+Save a copy of all my diagrams	Guardar una copia de todos mis diagramas
+That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	Ese archivo contiene varios diagramas: se abre el primero; cada uno que cambies se guarda en Tus diagramas.
+diagrams saved to	diagramas guardados en

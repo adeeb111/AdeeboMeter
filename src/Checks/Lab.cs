@@ -79,7 +79,7 @@ namespace AdeeboMeter
             if (a.AddressFamily == AddressFamily.InterNetworkV6) return a.IsIPv6Multicast ? a + " is a multicast group - many devices at once" : "";
             var b = a.GetAddressBytes(); if (b[0] >= 224 && b[0] <= 239) return a + " is a multicast group - many devices at once";
             if (b[0] == 255 || b[0] == 0) return a + " isn't one device";
-            if (b[3] == 255) return a + " ends in .255 - almost always a whole network's broadcast address (SEC-10: another network's too, which this PC can't see the size of)";
+            bool ownNet = false;
             try
             {
                 foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
@@ -89,9 +89,16 @@ namespace AdeeboMeter
                         var ip = ua.Address.GetAddressBytes(); var mk = ua.IPv4Mask.GetAddressBytes(); bool bc = true;
                         for (int i = 0; i < 4; i++) if ((byte)(ip[i] | ~mk[i]) != b[i]) { bc = false; break; }
                         if (bc && !mk.All(x => x == 255)) return a + " is the broadcast address of your network - every device on it";
+                        bool inside = true; for (int i = 0; i < 4; i++) if ((ip[i] & mk[i]) != (b[i] & mk[i])) { inside = false; break; }
+                        if (inside && !mk.All(x => x == 255)) ownNet = true;
                     }
             }
             catch (System.Net.NetworkInformation.NetworkInformationException) { }
+            // a network this PC is on: its real mask decided above, so 10.0.1.255 in a /16 is an ordinary host (finding 35). Another
+            // network's size can't be seen from here: .255 is refused as almost always a broadcast (SEC-10). A smaller block's
+            // broadcast there (.127 of a /25...) can't be told from a host - routers drop such directed broadcasts by default
+            // (RFC 2644), and each sender sends at most 10 a second, 1,000 in all (C1)
+            if (!ownNet && b[3] == 255) return a + " ends in .255 - almost always a whole network's broadcast address (another network's size can't be seen from this PC)";
             return "";
         }
         public static IPAddress Addr(string h)
@@ -205,7 +212,7 @@ namespace AdeeboMeter
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Target", "couldn't find " + h, "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Target", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
             var data = Payload(payload); if (data == null) { rows.Add(R(2, "Payload", "hex: needs pairs of 0-9 a-f", "e.g. hex:0a0b0c or plain text", "u")); return rows; }
             int n = Count(count, 1); Log("udp " + n + " x " + data.Length + " B to " + a + ":" + port);
-            var answers = new List<string>(); int sent = 0, refused = 0;
+            var answers = new List<string>(); int sent = 0, refused = 0, got = 0;
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = 200; u.Connect(a, port);
@@ -216,14 +223,14 @@ namespace AdeeboMeter
                     var until = DateTime.UtcNow.AddMilliseconds(i == n - 1 ? 1000 : MinGapMs);
                     while (DateTime.UtcNow < until && !run.Stop)
                     {
-                        try { var ep = Toolkit.AnyEp(u); var b = u.Receive(ref ep); if (answers.Count < 20) answers.Add(I(b.Length) + " B: " + Show(b, 200)); }
+                        try { var ep = Toolkit.AnyEp(u); var b = u.Receive(ref ep); got++; if (answers.Count < 20) answers.Add(I(b.Length) + " B: " + Show(b, 200)); }   // finding 38: every answer counted, 20 shown
                         catch (SocketException e) { if (e.SocketErrorCode == SocketError.ConnectionReset) { refused++; break; } }
                     }
                     // the gap always holds: a "port unreachable" reply ends the listening early, never the wait (10 a second at most)
                     var left = until - DateTime.UtcNow; if (left > TimeSpan.Zero && !run.Stop) Thread.Sleep(left);
                 }
             }
-            rows.Add(R(answers.Count > 0 ? 0 : refused > 0 ? 1 : 3, "Sent to " + a + ":" + port + " (UDP)", I(sent) + " × " + I(data.Length) + " bytes · " + (answers.Count > 0 ? I(answers.Count) + " answers" : refused > 0 ? "port closed (the host said so)" : "no answer"),
+            rows.Add(R(answers.Count > 0 ? 0 : refused > 0 ? 1 : 3, "Sent to " + a + ":" + port + " (UDP)", I(sent) + " × " + I(data.Length) + " bytes · " + (got > 0 ? I(got) + " answers" + (got > answers.Count ? " (the first " + answers.Count + " below)" : "") : refused > 0 ? "port closed (the host said so)" : "no answer"),
                 (answers.Count == 0 && refused == 0 ? "UDP has no handshake: silence means delivered and ignored, or dropped on the way - the two look the same. " : "") + Caps, "m"));
             foreach (var s in answers) rows.Add(R(3, "Answer", s, "", "m"));
             return rows;
@@ -261,6 +268,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             IPAddress ip; if (!IPAddress.TryParse((ipIn ?? "").Trim(), out ip) || ip.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "IP", "type an IPv4 address on your own network", "ARP only works on your own subnet; IPv6 uses neighbour discovery instead.", "u")); return rows; }
+            string notOne = NotOne(ip); if (notOne != "") { rows.Add(R(2, "IP", notOne, "Traffic Lab asks one device only - never a whole network.", "")); return rows; }   // finding 36
             Log("arp who-has " + ip);
             var mac = new byte[6]; int len = 6; var sw = Stopwatch.StartNew();
             uint res; try { res = Native.SendARP(BitConverter.ToInt32(ip.GetAddressBytes(), 0), 0, mac, ref len); } catch (EntryPointNotFoundException) { res = 1; }
@@ -364,7 +372,8 @@ namespace AdeeboMeter
             string cm = (community ?? "").Trim(); if (cm == "") cm = "public";
             string text = "AdeeboMeter test trap from " + Environment.MachineName + " at " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             var pkt = TrapPacket(cm, (uint)(Environment.TickCount & 0x7FFFFFFF) / 10, new Random().Next(1, int.MaxValue), text);
-            using (var u = new UdpClient(a.AddressFamily)) u.Send(pkt, pkt.Length, new IPEndPoint(a, port));
+            try { using (var u = new UdpClient(a.AddressFamily)) u.Send(pkt, pkt.Length, new IPEndPoint(a, port)); }
+            catch (SocketException e) { rows.Add(R(2, a + ":" + port, "couldn't send: " + e.Message, "No route to it from this PC, or Windows refused the send.", "m")); return rows; }   // finding 37: a row, like the other senders
             Log("snmp trap to " + a + ":" + port);
             rows.Add(R(0, "Sent to " + a + ":" + port + " (UDP)", "SNMPv2c trap · heartbeat test (1.3.6.1.4.1.8072.2.3.0.1) · \"" + text + "\"", "Traps are never confirmed - look for it on the receiver. Nothing on a device is changed, and AdeeboMeter never listens for traps.", "m"));
             return rows;
@@ -386,10 +395,14 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); if (!Allowed(m, ok, rows)) return rows;
             string h; int port; if (!Split(target, 2055, out h, out port)) { rows.Add(R(2, "Collector", "type the collector - host or host:port (UDP 2055)", "", "u")); return rows; }
             var a = Addr(h); if (a == null || a.AddressFamily != AddressFamily.InterNetwork) { rows.Add(R(2, "Collector", a == null ? "couldn't find " + h : "NetFlow v5 needs an IPv4 collector", "", "m")); return rows; } string notOne = NotOne(a); if (notOne != "") { rows.Add(R(2, "Collector", notOne, "Traffic Lab sends to one device only - never to a whole network.", "")); return rows; }
-            IPAddress me; using (var s = new UdpClient(AddressFamily.InterNetwork)) { s.Connect(a, port); me = ((IPEndPoint)s.Client.LocalEndPoint).Address; }
-            var dst = IPAddress.Parse("192.0.2.10");
-            var pkt = FlowPacket(me, dst, (uint)(Environment.TickCount & 0x7FFFFFFF), 1);
-            using (var u = new UdpClient(AddressFamily.InterNetwork)) u.Send(pkt, pkt.Length, new IPEndPoint(a, port));
+            IPAddress me; var dst = IPAddress.Parse("192.0.2.10");
+            try
+            {
+                using (var s = new UdpClient(AddressFamily.InterNetwork)) { s.Connect(a, port); me = ((IPEndPoint)s.Client.LocalEndPoint).Address; }
+                var pkt = FlowPacket(me, dst, (uint)(Environment.TickCount & 0x7FFFFFFF), 1);
+                using (var u = new UdpClient(AddressFamily.InterNetwork)) u.Send(pkt, pkt.Length, new IPEndPoint(a, port));
+            }
+            catch (SocketException e) { rows.Add(R(2, a + ":" + port, "couldn't send: " + e.Message, "No route to it from this PC, or Windows refused the send.", "m")); return rows; }   // finding 37
             Log("netflow v5 test to " + a + ":" + port);
             rows.Add(R(0, "Sent to " + a + ":" + port + " (UDP)", "NetFlow v5 · 1 flow: " + me + ":50000 -> " + dst + ":9 UDP, 1 packet, 100 bytes", "Look for that flow on the collector. 192.0.2.10 is a documentation address - nothing real is involved. Never confirmed by the collector.", "m"));
             return rows;

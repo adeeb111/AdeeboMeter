@@ -185,7 +185,8 @@ namespace AdeeboMeter
             if (Editor != null) { Invalidate(); return; }
             if (!ShowInput || scroll > 0) return;
             int count = Relayout(), vis = VisibleRows, first = Math.Max(0, count - vis);
-            for (int r = Math.Max(first, count - 3); r < count; r++) if (RowAt(r).IsInput) Invalidate(new Rectangle(0, (int)(TopY + (r - first) * chh) - 2, Width, (int)chh + 4));
+            // RG-9: every row of the input, however many it wraps to (walked back from the end while they're input rows)
+            for (int r = count - 1; r >= first; r--) { if (!RowAt(r).IsInput) { if (r < count - 1) break; continue; } Invalidate(new Rectangle(0, (int)(TopY + (r - first) * chh) - 2, Width, (int)chh + 4)); }
         }
 
         // ---------- scrolling and selection

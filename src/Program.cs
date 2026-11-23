@@ -113,8 +113,8 @@ namespace AdeeboMeter
             try { int n = 0; return Native.GetCurrentPackageFullName(ref n, null) == 122; }   /* 122 = buffer too small: there IS a package; 15700 = none */
             catch (EntryPointNotFoundException) { return false; }
         }
-        public const string Version = "1.1.5";
-        public const string FileVersion = "1.1.5.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
+        public const string Version = "1.1.6";
+        public const string FileVersion = "1.1.6.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "Know what's wrong. Show anyone.";
         public static int ForceTheme = -1;

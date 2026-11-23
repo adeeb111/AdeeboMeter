@@ -42,11 +42,11 @@ namespace AdeeboMeter
         // ================================================================== survive the outage
         // path (PC, LAN, ISP, DNS, Internet - 0 fine, 1 slow, 2 broken, 3 unknown), two clues, the right call, three wrong ones, why
         public static readonly string[][] Outage = {
-            new[] { "0,0,2,2,2", "Router answers in 2 ms", "Internet: no answer for 3 minutes - your phone on mobile data works fine", "Provider outage - wait, or call them", "Restart the PC", "Move closer to the router", "Change the DNS server", "Your side answers instantly; everything past the router is silent. Nothing you own will fix that." },
+            new[] { "0,0,2,3,3", "Router answers in 2 ms", "Internet: no answer for 3 minutes - your phone on mobile data works fine", "Provider outage - wait, or call them", "Restart the PC", "Move closer to the router", "Change the DNS server", "Your side answers instantly; everything past the router is silent. Nothing you own will fix that." },
             new[] { "0,2,3,3,3", "Wi-Fi signal 22%", "Router: 180 ms, 12% of replies lost", "Weak Wi-Fi - move closer, or use a cable", "Provider outage", "DNS is down", "The PC needs more memory", "Trouble starts at the very first hop, with a weak signal. Fix the Wi-Fi and the rest follows." },
             new[] { "0,0,0,2,0", "Pinging 1.1.1.1 works - 14 ms", "Every website says \"server not found\"", "DNS is broken - switch DNS server", "The cable is loose", "Provider outage", "A firewall blocks port 443", "Numbers work, names don't: that's DNS, the internet's phone book." },
             new[] { "2,0,0,0,0", "CPU at 99% - a game is installing", "Router 2 ms, internet 15 ms", "It's the PC - pause the install", "Provider outage", "Weak Wi-Fi", "DNS is slow", "The network is fine end to end. The PC is too busy to keep up." },
-            new[] { "0,2,2,2,2", "\"Network cable unplugged\"", "Address 169.254.x.x - no DHCP answer", "Check the cable and the port", "Change the DNS server", "Call the provider first", "Update the browser", "No link, no address: the problem is the plug, before anything else." },
+            new[] { "0,2,3,3,3", "\"Network cable unplugged\"", "Address 169.254.x.x - no DHCP answer", "Check the cable and the port", "Change the DNS server", "Call the provider first", "Update the browser", "No link, no address: the problem is the plug, before anything else." },
             new[] { "0,0,1,0,1", "Every evening from 20:00: 120 ms and 3% lost", "Your router stays at 2 ms the whole time", "Evening congestion at the provider - report it with numbers", "Your Wi-Fi channel", "Antivirus on the PC", "Change the DNS server", "Your side never changes; the provider's part slows down when everyone's online." },
             new[] { "0,1,1,1,1", "Ping jumps to 400 ms while someone uploads a video", "Idle, everything is 15 ms", "Bufferbloat - turn on SQM/QoS in the router", "Buy a faster PC", "DNS is slow", "Wi-Fi too far away", "A full upload fills the router's queue; every other packet waits behind it." },
             new[] { "0,0,0,0,2", "Only one game's servers don't answer", "Other sites and games are fine; the trace stops inside the game company's network", "The game's servers are down - check their status page", "Your router", "Your provider", "Reinstall Windows", "Everything else works. The broken part belongs to someone else." },
@@ -78,7 +78,7 @@ namespace AdeeboMeter
             new[] { "She types <script>alert(1)</script> as her name, hoping the website runs it.", "0", "Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code." },
             new[] { "She edits the points file on her own PC to 500, then makes a card the normal way.", "1", "This one works - honestly. AdeeboMeter is offline and your points live on your PC, so the code proves the card came out of AdeeboMeter unchanged, not that every point was earned. That's why the Hall of Fame is for fun, not prizes." },
             new[] { "She takes the official AdeeboMeter apart with a decompiler, looking for the key.", "1", "With enough patience, yes: an app that makes codes offline has to carry its key somewhere inside. The code stops the easy cheats - an edited picture, a copied card - not a determined expert with time to spare." } };
-        public const int HeistWin = 8;
+        public const int HeistWin = 9;   // finding 14: "It fails" ten times gets 8 - spotting the two that work is the test
         static string[] Shuffle(Random r, IEnumerable<string> s) { return s.OrderBy(x => r.Next()).ToArray(); }
 
         // ================================================================== escape room
@@ -124,10 +124,10 @@ namespace AdeeboMeter
             string gw = id == "gateway" ? m.Ip(m.Gw == 1 ? 254 : 1) : id == "rogue" ? m.Ip(m.Rogue) : m.Ip(m.Gw);
             string pc = id == "apipa" ? "169.254." + (m.Pc % 200 + 20) + "." + (m.Pc * 7 % 250 + 2) : m.Ip(m.Pc);
             string dns = id == "rogue" ? m.Ip(m.Rogue) : m.Ip(m.Gw);
-            Func<double, double, string> pings = (ms, loss) =>
+            Func<double, double, bool, string> pings = (ms, loss, local) =>
             {
                 var t = new StringBuilder(); int ok = 0;
-                for (int i = 0; i < 4; i++) { if (r.NextDouble() < loss) t.Append("Request timed out.\n"); else { ok++; t.Append("Reply: bytes=32 time=" + Math.Max(1, (int)(ms + r.Next(-2, (int)(ms / 4) + 3))) + "ms TTL=" + (ms < 5 ? 64 : 57) + "\n"); } }
+                for (int i = 0; i < 4; i++) { if (r.NextDouble() < loss) t.Append("Request timed out.\n"); else { ok++; t.Append("Reply: bytes=32 time=" + Math.Max(1, (int)(ms + r.Next(-2, (int)(ms / 4) + 3))) + "ms TTL=" + (local ? 64 : 57) + "\n"); } }
                 t.Append("Packets: Sent = 4, Received = " + ok + ", Lost = " + (4 - ok) + " (" + (4 - ok) * 25 + "% loss)"); return t.ToString();
             };
             Func<string, string> pingTo = target =>
@@ -135,9 +135,9 @@ namespace AdeeboMeter
                 bool lan = target.StartsWith("192.168.", StringComparison.Ordinal);
                 if (id == "apipa") return "PING: transmit failed. General failure.";
                 if (id == "gateway" && !lan) return "Request timed out.\nRequest timed out.\nRequest timed out.\nRequest timed out.\nPackets: Sent = 4, Received = 0, Lost = 4 (100% loss)";
-                if (id == "wifi") return pings(lan ? 40 + r.Next(60) : m.Base + 70 + r.Next(80), 0.3);
-                if (id == "dupip") return pings(lan ? 2 : m.Base, 0.45);
-                return pings(lan ? 1 + r.Next(3) : m.Base, 0);
+                if (id == "wifi") return pings(lan ? 40 + r.Next(60) : m.Base + 70 + r.Next(80), 0.3, lan);   // finding 31: TTL from the hops, not the time
+                if (id == "dupip") return pings(lan ? 2 : m.Base, 0.45, lan);
+                return pings(lan ? 1 + r.Next(3) : m.Base, 0, lan);
             };
             switch (cmd)
             {
@@ -267,10 +267,10 @@ namespace AdeeboMeter
         // each: title, the packets (time | from > to | what), the wrong one (0-based), why
         public static readonly string[][] Detective = {
             new[] { "Opening a web connection", "0.000|PC > Server|SYN - let's talk, my sequence starts at 1000~0.021|Server > PC|ACK 1001 - got it~0.021|Server > PC|SYN-ACK - fine, mine starts at 5000, ack 1001~0.022|PC > Server|ACK 5001", "1", "The server can't acknowledge alone before it says SYN: the second step is one packet, SYN-ACK. Here a lone ACK came first." },
-            new[] { "Getting an address (DHCP)", "0.000|PC > Everyone|DISCOVER - any DHCP server?~0.004|PC > Router|REQUEST - I'll take 192.168.1.37~0.010|Router > PC|OFFER - you can have 192.168.1.37~0.012|Router > PC|ACK - it's yours for 24 h", "1", "The order is Discover, Offer, Request, Ack. The PC asked for an address before anyone offered one." },
+            new[] { "Getting an address (DHCP)", "0.000|PC > Everyone|DISCOVER - any DHCP server?~0.004|PC > Router|REQUEST - I'll take 192.168.1.37~0.010|Router > PC|OFFER - you can have 192.168.1.37~0.012|Router > PC|ACK - it's yours for 24 h", "1", "On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)" },
             new[] { "Finding a name (DNS)", "0.000|PC > 192.168.1.1|Query: where is example.com? (id 0x3a1f)~0.012|8.8.8.8 > PC|Answer: 93.184.215.14 (id 0x3a1f)~0.013|PC > 93.184.215.14|SYN to port 443", "1", "The PC asked the router, but the answer came from 8.8.8.8. A real answer comes from the server you asked - this is how DNS spoofing looks." },
             new[] { "A secure page (TLS)", "0.000|PC > Server|TCP handshake done~0.001|Server > PC|ServerHello - let's use TLS 1.3, here's my key~0.002|PC > Server|ClientHello - I speak TLS 1.3 and 1.2~0.040|Server > PC|Certificate, Finished", "1", "The client always speaks first in TLS: ClientHello, then ServerHello. A server can't answer a question nobody asked." },
-            new[] { "A traceroute", "0.000|PC > 1.1.1.1|ping, TTL 1~0.002|192.168.1.1 > PC|Time exceeded (TTL ran out here)~0.010|PC > 1.1.1.1|ping, TTL 2~0.011|PC > 1.1.1.1|ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64~0.020|100.64.0.1 > PC|Time exceeded", "3", "With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it." },
+            new[] { "A traceroute", "0.000|PC > 1.1.1.1|ping, TTL 1~0.002|192.168.1.1 > PC|Time exceeded (TTL ran out here)~0.010|PC > 1.1.1.1|ping, TTL 2~0.011|1.1.1.1 > PC|Echo reply to the TTL 2 ping, straight from 1.1.1.1~0.020|100.64.0.1 > PC|Time exceeded", "3", "With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it." },
             new[] { "A big packet, don't fragment", "0.000|PC > Server|1500-byte packet, don't fragment~0.010|Router > PC|ICMP: fragmentation needed, next-hop MTU 1600~0.011|PC > Server|1400-byte packet, don't fragment~0.030|Server > PC|ACK", "1", "A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes." },
             new[] { "Who has this address? (ARP)", "0.000|PC > Everyone|ARP: who has 192.168.1.1? Tell 192.168.1.37~0.001|Router > PC|ARP: 192.168.1.1 is at f4:f2:6d:4a:10:01~0.002|Laptop > Everyone|ARP: 192.168.1.1 is at 00:d8:61:aa:bb:cc~0.003|PC > Router|data to f4:f2:6d:4a:10:01", "2", "A second device claims the router's address with its own hardware address, unasked - a gratuitous ARP spoof. The real router already answered." },
             new[] { "Closing a connection", "0.000|PC > Server|FIN - I'm done sending~0.020|Server > PC|ACK~0.021|Server > PC|data: 4 KB~0.022|PC > Server|SYN - start a new connection on the same ports", "3", "After a FIN the PC waits for the server's own FIN (and then TIME_WAIT) before reusing the same ports. A SYN on the same pair mid-close is wrong." },

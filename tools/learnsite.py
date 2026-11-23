@@ -275,7 +275,7 @@ self.addEventListener("fetch", e => {
   if (r.mode === "navigate") {
     e.respondWith(caches.open(V).then(c => new Promise(done => {
       const t = setTimeout(() => { c.match(k).then(h => h && done(h)); }, 4000);
-      fetch(r).then(res => { clearTimeout(t); if (res.ok) c.match(k).then(h => { if (h && same(res, h)) c.put(k, res.clone()); done(res); }); else done(res); })
+      fetch(r).then(res => { clearTimeout(t); if (res.ok) { const copy = res.clone(); e.waitUntil(c.match(k).then(h => { if (h && same(res, h)) return c.put(k, copy); }).catch(() => {})); } done(res); })   // the page goes to the screen first, always; keeping a copy is a side job
         .catch(() => { clearTimeout(t); c.match(k).then(h => done(h || OFF())); });
     })));
     return;

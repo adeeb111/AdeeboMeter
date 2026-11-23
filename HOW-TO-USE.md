@@ -154,7 +154,7 @@ Wi-Fi, your PC, your provider or the game's server.
 
 ## 10. Toolbox
 
-More than 190 tools in four sections - **Network**, **Devices**, **Traffic Lab**, **Windows** - plus **Work it out** (the
+232 tools in six sections - **Network**, **Devices**, **Traffic Lab**, **Engineer**, **Hardware nerds**, **Windows** - plus **Work it out** (the
 calculators). Browse *By question* ("Why can't I reach this site?") or *All tools*.
 
 ```

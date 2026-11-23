@@ -3783,3 +3783,17 @@ what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	ce qu'il y a
 what's running and what it costs (nothing is stopped from here)	ce qui tourne et ce que ça coûte (rien n'est arrêté d'ici)
 where you are, what's below, find by name	où vous êtes, ce qu'il y a en dessous, chercher par nom
 write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	écrire un script ou n'importe quel fichier texte, ici même (^S enregistrer ^X quitter · :wq) ; lire un long fichier page par page
+
+The longest one voice packet can wait behind 	Le plus long qu’un paquet de voix peut attendre derrière 
+
+Router 2 ms. Past the router everything loses about 4 of 10 replies - the internet check, other sites and the stream server alike.	Routeur 2 ms. Au-delà du routeur, tout perd environ 4 réponses sur 10 - la vérification Internet, les autres sites et le serveur de diffusion.
+Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	Votre réseau répond aussitôt; les pertes commencent juste après le routeur et toutes les destinations les subissent - ce n’est donc pas un serveur, c’est la route vers tous.
+On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	Pour un premier bail, l’ordre est Discover, Offer, Request, Ack - et ce PC a commencé par Discover, il demandait donc une nouvelle adresse : le Request est arrivé avant toute offre. (Un PC qui renouvelle une adresse qu’il avait déjà peut passer directement au Request - mais pas après un Discover.)
+Echo reply to the TTL 2 ping, straight from 1.1.1.1	Réponse d’écho au ping TTL 2, directement de 1.1.1.1
+
+Couldn't open the AdeeboLab:	Impossible d’ouvrir AdeeboLab :
+Couldn't read your diagrams just now - try again in a moment.	Impossible de lire vos schémas pour l’instant - réessayez dans un moment.
+Couldn't save:	Impossible d’enregistrer :
+Save a copy of all my diagrams	Enregistrer une copie de tous mes schémas
+That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	Ce fichier contient plusieurs schémas - le premier est ouvert; chacun que vous modifiez est gardé dans Vos schémas.
+diagrams saved to	schémas enregistrés dans

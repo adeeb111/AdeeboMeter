@@ -5067,3 +5067,17 @@ what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	এখান
 what's running and what it costs (nothing is stopped from here)	কী চলছে আর তাতে কত খরচ (এখান থেকে কিছু বন্ধ করা হয় না)
 where you are, what's below, find by name	আপনি কোথায়, নিচে কী আছে, নাম দিয়ে খুঁজুন
 write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	এখানেই স্ক্রিপ্ট বা যেকোনো টেক্সট ফাইল লিখুন (^S সেভ ^X বের হন · :wq); লম্বা ফাইল পাতায় পাতায় পড়ুন
+
+The longest one voice packet can wait behind 	একটি ভয়েস প্যাকেট সর্বোচ্চ যতক্ষণ অপেক্ষা করতে পারে, পেছনে 
+
+Router 2 ms. Past the router everything loses about 4 of 10 replies - the internet check, other sites and the stream server alike.	রাউটার 2 ms। রাউটারের পরে সবকিছুই প্রায় 10টির মধ্যে 4টি উত্তর হারায় - ইন্টারনেট চেক, অন্য সাইট আর স্ট্রিম সার্ভার সবাই।
+Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	আপনার বাড়ির নেটওয়ার্ক সঙ্গে সঙ্গে সাড়া দেয়; লস শুরু হয় রাউটারের ঠিক পরে আর দূরের সব গন্তব্যেই তা দেখা যায় - তাই এটা কোনো একটি সার্ভার নয়, সবার দিকে যাওয়ার রাস্তা।
+On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	প্রথম লিজে ক্রম হলো Discover, Offer, Request, Ack - আর এই পিসি Discover দিয়ে শুরু করেছে, মানে নতুন ঠিকানা চাইছিল: কেউ ঠিকানা অফার করার আগেই Request এসেছে। (যে পিসি আগের ঠিকানা নবায়ন করছে সে সরাসরি Request দিয়ে শুরু করতে পারে - কিন্তু Discover-এর পরে নয়।)
+Echo reply to the TTL 2 ping, straight from 1.1.1.1	TTL 2 পিং-এর ইকো উত্তর, সরাসরি 1.1.1.1 থেকে
+
+Couldn't open the AdeeboLab:	AdeeboLab খোলা গেল না:
+Couldn't read your diagrams just now - try again in a moment.	এই মুহূর্তে আপনার ডায়াগ্রামগুলো পড়া গেল না - একটু পরে আবার চেষ্টা করুন।
+Couldn't save:	সেভ করা গেল না:
+Save a copy of all my diagrams	আমার সব ডায়াগ্রামের একটি কপি সেভ করুন
+That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	এই ফাইলে কয়েকটি ডায়াগ্রাম আছে - প্রথমটি খোলা হয়েছে; যেটিই বদলাবেন সেটি «আপনার ডায়াগ্রাম»-এ রাখা হবে।
+diagrams saved to	টি ডায়াগ্রাম সেভ হয়েছে:

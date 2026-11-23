@@ -5067,3 +5067,17 @@ what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	ما الم�
 what's running and what it costs (nothing is stopped from here)	ما الذي يعمل وكم يكلّف (لا يُوقَف شيء من هنا)
 where you are, what's below, find by name	أين أنت، وما تحتك، والبحث بالاسم
 write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	اكتب سكربتًا أو أي ملف نصي هنا مباشرة (‎^S حفظ ^X خروج · :wq)؛ واقرأ الطويل صفحة صفحة
+
+The longest one voice packet can wait behind 	أطول مدة قد تنتظرها حزمة صوت خلف 
+
+Router 2 ms. Past the router everything loses about 4 of 10 replies - the internet check, other sites and the stream server alike.	الراوتر 2 مللي ثانية. بعد الراوتر يفقد كل شيء نحو 4 من كل 10 ردود - فحص الإنترنت والمواقع الأخرى وخادم البث على حد سواء.
+Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	منزلك يرد فورًا؛ يبدأ الفقد مباشرةً بعد الراوتر وتشترك فيه كل الوجهات - فليست المشكلة في خادم واحد، بل في الطريق إليها جميعًا.
+On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	في أول عقد إيجار يكون الترتيب Discover ثم Offer ثم Request ثم Ack - وهذا الكمبيوتر بدأ بـ Discover، أي أنه يطلب عنوانًا جديدًا: جاء Request قبل أن يعرض أحد عنوانًا. (الكمبيوتر الذي يجدد عنوانًا كان لديه قد يبدأ بـ Request مباشرةً - لكن ليس بعد Discover.)
+Echo reply to the TTL 2 ping, straight from 1.1.1.1	رد صدى على ping بـ TTL 2، مباشرةً من 1.1.1.1
+
+Couldn't open the AdeeboLab:	تعذّر فتح AdeeboLab:
+Couldn't read your diagrams just now - try again in a moment.	تعذّرت قراءة مخططاتك الآن - حاول مرة أخرى بعد قليل.
+Couldn't save:	تعذّر الحفظ:
+Save a copy of all my diagrams	حفظ نسخة من كل مخططاتي
+That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	يحتوي هذا الملف على عدة مخططات - فُتح أولها؛ وكل مخطط تغيّره يُحفظ في «مخططاتك».
+diagrams saved to	مخططات حُفظت في

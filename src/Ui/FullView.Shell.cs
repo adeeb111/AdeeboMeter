@@ -485,13 +485,15 @@ namespace AdeeboMeter
             }
         }
         int ShRunText(string text, ShCtx c) { return ShRunText(text, c, "adeeboshell: "); }
-        int ShRunText(string text, ShCtx c, string who)
+        int ShRunText(string text, ShCtx c, string who) { return ShRunText(text, c, who, false); }
+        // passExit: a sourced script's exit ends the script that sourced it too (RG-4) - return still ends only the file
+        int ShRunText(string text, ShCtx c, string who, bool passExit)
         {
             NSeq prog;
             try { prog = new Parser(Lex(text.Replace("\r", ""))).List(); }
             catch (FormatException fe) { Err(c, who + fe.Message); return 2; }
             try { return Exec(prog, c); }
-            catch (ShFlow fl) { return fl.Kind == "exit" || fl.Kind == "return" ? fl.Code : 0; }
+            catch (ShFlow fl) { if (passExit && fl.Kind == "exit") throw; return fl.Kind == "exit" || fl.Kind == "return" ? fl.Code : 0; }
         }
         int Exec(Node n, ShCtx c)
         {
@@ -557,7 +559,7 @@ namespace AdeeboMeter
             for (int k = 0; k < p.Cmds.Count; k++)
             {
                 bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : ShCapture(c); var node = p.Cmds[k]; var cc = c.With(o, stdin);
-                ex = InSub(() => Stage(node, cc)); if (!last) stdin = o.Cap.ToString();
+                ex = InSub(() => { try { return Stage(node, cc); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } }); if (!last) stdin = o.Cap.ToString();   // RG-4: exit in a stage ends that stage, like bash's subshell
                 if (c.Job.Cancel) return 130;
             }
             return ex;
@@ -736,7 +738,13 @@ namespace AdeeboMeter
             try { return Regex.IsMatch(text, sb.Append('$').ToString(), RegexOptions.Singleline, TimeSpan.FromSeconds(1)); } catch (ArgumentException) { return pat == text; }
         }
         // inside $(( )): $(command), `command` and ${...} worked out first - $(( n * $(fact $((n-1))) ))
+        [ThreadStatic] static int mathPrepDepth;
         string MathPrep(string e, ShCtx c)
+        {
+            if (mathPrepDepth >= 40) throw new FormatException("$(( )) nested more than 40 deep");
+            mathPrepDepth++; try { return MathPrep1(e, c); } finally { mathPrepDepth--; }
+        }
+        string MathPrep1(string e, ShCtx c)
         {
             if (e.IndexOf("$(", StringComparison.Ordinal) < 0 && e.IndexOf("${", StringComparison.Ordinal) < 0 && e.IndexOf('`') < 0) return e;
             var sb = new StringBuilder();
@@ -762,6 +770,7 @@ namespace AdeeboMeter
         {
             var toks = Regex.Matches(e, @"\s*(\d+|\$?[A-Za-z_][A-Za-z0-9_]*|\$\d|\*\*|==|!=|<=|>=|&&|\|\||[-+*/%()<>!])").Cast<Match>().Select(m => m.Groups[1].Value).ToList();
             if (string.Join("", toks) != Regex.Replace(e, @"\s+", "")) throw new FormatException("$((" + e + ")): not a sum this shell can do");
+            { int dp = 0, run = 0; foreach (var t0 in toks) { if (t0 == "(") dp++; else if (t0 == ")") dp--; run = t0 == "-" || t0 == "+" || t0 == "!" || t0 == "(" ? run + 1 : 0; if (dp > 200 || run > 400) throw new FormatException("$(( )): nested more than 200 deep"); } }   // #56: a bounded depth, never a stack overflow
             int k = 0, skip = 0; Func<int, long> bin = null; Func<long> unary = null;
             Func<string, long> val = w => { long v; return long.TryParse(Var(w.TrimStart('$'), c).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out v) ? v : 0; };
             unary = () =>
@@ -952,20 +961,37 @@ namespace AdeeboMeter
         }
         // > >> < 2> 2>> &> 2>&1 >&2, for a command or a whole loop. Errors keep going where they went unless redirected; 2>&1 sends
         // them along with the output (into a file or a pipe - #21); > f 2> f is one file, not one overwriting the other (#63).
+        // RG-3: redirects in the order they're written, like bash - "2>&1 > f" sends errors where the output went BEFORE the
+        // file (the screen), "> f 2>&1" sends both to f, and "> a > b" still creates (empties) a. A destination is the screen's
+        // output, the screen's errors, /dev/null or a file; every file is emptied (>) or created (>>) as its redirect is met.
+        sealed class RTarget { public string Kind, Path, Shown; }   // Kind: out, err, null, file
         int ApplyRedirs(List<string> r, ShCtx c, Func<ShCtx, int> body)
         {
-            string outFile = null, inFile = null, errFile = null; bool append = false, errAppend = false, both = false, errToOut = false, outToErr = false;
+            string inFile = null; var outT = new RTarget { Kind = "out" }; var errT = new RTarget { Kind = "err" };
+            var files = new Dictionary<string, StringBuilder>(StringComparer.OrdinalIgnoreCase);
+            Func<string, bool, RTarget> open = (tg, app) =>
+            {
+                if (tg == "/dev/null") return new RTarget { Kind = "null" };
+                string real = Real(Abs(tg)); if (real == null) { Err(c, "adeeboshell: " + tg + ": can't write there - only folders on a disk (~, /data, /mnt/...)"); return null; }
+                if (Directory.Exists(real)) { Err(c, "adeeboshell: " + tg + ": is a folder"); return null; }
+                string full; try { full = Path.GetFullPath(real); } catch (ArgumentException) { Err(c, "adeeboshell: " + tg + ": not a file name"); return null; } catch (NotSupportedException) { Err(c, "adeeboshell: " + tg + ": not a file name"); return null; }
+                try { if (!app) File.WriteAllText(full, ""); else if (!File.Exists(full)) File.WriteAllText(full, ""); }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "adeeboshell: " + tg + ": " + e.Message); return null; }
+                if (!files.ContainsKey(full)) files[full] = new StringBuilder();
+                return new RTarget { Kind = "file", Path = full, Shown = tg };
+            };
             for (int k = 0; k < r.Count; k++)
             {
                 string op = r[k].Substring(1), tg = NeedsTarget(op) && k + 1 < r.Count ? r[++k] : null;
                 if (tg != null && tg.StartsWith("\u0004", StringComparison.Ordinal)) { Err(c, "adeeboshell: " + (tg.Length > 1 ? tg.Substring(1) : "") + ": ambiguous redirect - the name must be one word (quote it)"); return 1; }
+                RTarget t;
                 switch (op)
                 {
-                    case ">": case ">>": outFile = tg; append = op == ">>"; both = false; break;
-                    case "&>": outFile = tg; append = false; both = true; break;
-                    case "2>": case "2>>": errFile = tg; errAppend = op == "2>>"; break;
-                    case "2>&1": errToOut = true; break;
-                    case ">&2": outToErr = true; break;
+                    case ">": case ">>": t = open(tg, op == ">>"); if (t == null) return 1; outT = t; break;
+                    case "&>": t = open(tg, false); if (t == null) return 1; outT = t; errT = t; break;
+                    case "2>": case "2>>": t = open(tg, op == "2>>"); if (t == null) return 1; errT = t; break;
+                    case "2>&1": errT = outT.Kind == "out" ? new RTarget { Kind = "out" } : outT; break;
+                    case ">&2": outT = errT.Kind == "err" ? new RTarget { Kind = "err" } : errT; break;
                     case "<": inFile = tg; break;
                 }
             }
@@ -974,30 +1000,27 @@ namespace AdeeboMeter
                 if (inFile == "/dev/null") c = c.With(c.Out, "");
                 else { string t = ReadAll(inFile, c); if (t == null) return 1; c = c.With(c.Out, t); }   // #10, #73: capped like every read, and /proc too
             }
-            if (outFile != null && errFile != null && SameFile(outFile, errFile)) { both = true; errFile = null; }
-            if (errToOut && outFile != null) both = true;
-            string ro = null;
-            if (outFile != null && outFile != "/dev/null")
+            var screenOut = new ShOut { Cap = c.Out.Cap, Job = c.Job };   // the output as it was, with nothing about errors
+            StringBuilder toErr = null;
+            var o = new ShOut { Job = c.Job };
+            switch (outT.Kind)
             {
-                ro = Real(Abs(outFile)); if (ro == null) { Err(c, "adeeboshell: " + outFile + ": can't write there - only folders on a disk (~, /data, /mnt/...)"); return 1; }
-                if (Directory.Exists(ro)) { Err(c, "adeeboshell: " + outFile + ": is a folder"); return 1; }
+                case "out": o.Cap = c.Out.Cap; break;
+                case "file": o.Cap = files[outT.Path]; break;
+                case "err": o.Cap = toErr = new StringBuilder(); break;
+                default: o.Cap = new StringBuilder(); break;   // /dev/null: kept, then thrown away
             }
-            bool capture = outFile != null || outToErr;
-            var o = capture ? new ShOut { Cap = new StringBuilder(), Job = c.Job } : new ShOut { Cap = c.Out.Cap, Job = c.Job };
-            StringBuilder errCap = null; string re = null;
-            if (both) { if (outFile == "/dev/null") o.ErrNull = true; else o.ErrCap = o.Cap; }
-            else if (errFile == "/dev/null") o.ErrNull = true;
-            else if (errFile != null) { re = Real(Abs(errFile)); if (re == null) { Err(c, "adeeboshell: " + errFile + ": can't write there"); return 1; } errCap = new StringBuilder(); o.ErrCap = errCap; }
-            else if (!errToOut) o.ErrTo = c.Out;   // 2>&1 with no file: errors join the output stream (o itself)
+            switch (errT.Kind)
+            {
+                case "null": o.ErrNull = true; break;
+                case "file": o.ErrCap = files[errT.Path]; break;
+                case "out": o.ErrTo = screenOut; break;
+                default: o.ErrTo = c.Out; break;
+            }
             int ex = body(c.With(o, c.Stdin));
             if (c.Job.Abandoned) return ex;
-            if (outToErr && o.Cap.Length > 0) { var eo = new ShOut { Cap = c.Out.Cap, Job = c.Job, ErrNull = o.ErrNull, ErrCap = o.ErrCap == o.Cap ? null : o.ErrCap, ErrTo = o.ErrNull || (o.ErrCap != null && o.ErrCap != o.Cap) ? null : c.Out }; ErrRaw(c.With(eo, c.Stdin), o.Cap.ToString(), ShRed); }
-            try
-            {
-                if (errCap != null) { if (errAppend) File.AppendAllText(re, errCap.ToString()); else File.WriteAllText(re, errCap.ToString()); }
-                if (ro != null && !outToErr) { if (append) File.AppendAllText(ro, o.Cap.ToString()); else File.WriteAllText(ro, o.Cap.ToString()); }
-                else if (ro != null) File.WriteAllText(ro, "");
-            }
+            if (toErr != null && toErr.Length > 0) ErrRaw(c, toErr.ToString(), ShRed);
+            try { foreach (var f in files) if (f.Value.Length > 0) File.AppendAllText(f.Key, f.Value.ToString()); }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "adeeboshell: " + e.Message); return 1; }
             return ex;
         }
@@ -1101,7 +1124,7 @@ namespace AdeeboMeter
                         throw new ShFlow(cmd, 0, Math.Min(lv, loopDepth));
                     }
                 case "lab": return ShLab(args, c);
-                case "source": case ".": case "sh": case "bash": if (args.Count == 0) { Err(c, "usage: source <file.sh> [args] [--yes]"); return 1; } return Source(args[0], args.Skip(1).ToList(), c);
+                case "source": case ".": case "sh": case "bash": if (args.Count == 0) { Err(c, "usage: source <file.sh> [args] [--yes]"); return 1; } return Source(args[0], args.Skip(1).ToList(), c, cmd == "source" || cmd == ".");
                 case "alltools": return AllTools(args.Contains("--yes"), c);
                 case "parallel": return Parallel(args, c);
                 case "less": case "more": case "most": return Less(args, c);
@@ -1242,10 +1265,32 @@ namespace AdeeboMeter
             Action<long, long, long, long, string> line = (a1, a2, a3, a4, name) => { var p = new List<string>(); if (l) p.Add(a1.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (w) p.Add(a2.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (m) p.Add(a4.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (b) p.Add(a3.ToString(CultureInfo.InvariantCulture).PadLeft(8)); string s0 = string.Join(" ", p).TrimStart(); OL(c, name == null ? s0 : s0 + " " + name); };
             Action<IEnumerable<string>, string> count = (ls, name) => { long a1 = 0, a2 = 0, a3 = 0, a4 = 0; foreach (var x in ls) { a1++; a2 += Regex.Matches(x, @"\S+").Count; a4 += x.Length + 1; a3 += Encoding.UTF8.GetByteCount(x) + 1; } tl += a1; tw += a2; tb += a3; tm += a4; line(a1, a2, a3, a4, name); };
             if (files.Count == 0) { string t = c.Stdin ?? ""; long a1 = t.Count(ch => ch == '\n'), a2 = Regex.Matches(t, @"\S+").Count; line(a1, a2, Encoding.UTF8.GetByteCount(t), t.Length, null); return 0; }
+            // #61: what GNU wc counts - newline characters, the file's real bytes, characters and words - not rebuilt lines
             foreach (var f in files)
             {
-                var ls = StreamLines(f, c); if (ls == null) { ex = 1; continue; }
-                count(ls, f);
+                string av = f == "-" ? null : Abs(f), rp = av == null || av.StartsWith("/proc/", StringComparison.Ordinal) ? null : Real(av);
+                if (rp == null) { var ls = StreamLines(f, c); if (ls == null) { ex = 1; continue; } string t = string.Join("\n", ls) + (ls.Any() ? "\n" : ""); long w0 = Regex.Matches(t, @"\S+").Count; tl += t.Count(ch => ch == '\n'); tw += w0; tb += Encoding.UTF8.GetByteCount(t); tm += t.Length; line(t.Count(ch => ch == '\n'), w0, Encoding.UTF8.GetByteCount(t), t.Length, f); continue; }
+                if (!File.Exists(rp)) { Err(c, "wc: " + f + ": " + (Directory.Exists(rp) ? "is a folder" : "no such file")); ex = 1; continue; }
+                long a1 = 0, a2 = 0, a3, a4 = 0; bool inW = false;
+                try
+                {
+                    using (var fs = new FileStream(rp, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    {
+                        a3 = fs.Length;
+                        using (var rd = new StreamReader(fs, Encoding.UTF8, true))
+                        {
+                            var buf = new char[65536]; int got;
+                            while ((got = rd.Read(buf, 0, buf.Length)) > 0)
+                            {
+                                if (c.Job.Cancel) return 130;
+                                for (int i = 0; i < got; i++) { char ch = buf[i]; if (ch == '\n') a1++; bool sp = char.IsWhiteSpace(ch); if (!sp && !inW) a2++; inW = !sp; }
+                                a4 += got;
+                            }
+                        }
+                    }
+                }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "wc: " + f + ": " + e.Message); ex = 1; continue; }
+                tl += a1; tw += a2; tb += a3; tm += a4; line(a1, a2, a3, a4, f);
             }
             if (files.Count > 1) line(tl, tw, tb, tm, "total");
             return ex;
@@ -1254,11 +1299,25 @@ namespace AdeeboMeter
         int Read(List<string> args, ShCtx c)
         {
             bool sec = false; string ask = ""; var names = new List<string>();
-            for (int i = 0; i < args.Count; i++) { if (args[i] == "-s") sec = true; else if (args[i] == "-p" && i + 1 < args.Count) ask = args[++i]; else if (args[i] == "-r") { } else if (!args[i].StartsWith("-", StringComparison.Ordinal)) names.Add(args[i]); }
+            string arrName = null;
+            for (int i = 0; i < args.Count; i++)   // RG-8: the flags bash's read has take their value; an unknown one is an error, never a variable name
+            {
+                string x = args[i];
+                if (x == "-s") sec = true; else if (x == "-r") { }
+                else if (x == "-p" || x == "-t" || x == "-n" || x == "-N" || x == "-d" || x == "-a" || x == "-u")
+                {
+                    if (i + 1 >= args.Count) { Err(c, "read: " + x + " needs a value"); return 2; }
+                    string v = args[++i]; if (x == "-p") ask = v; else if (x == "-a") arrName = v;   // -t -n -d -u: accepted; a line is read whole
+                }
+                else if (x.StartsWith("-", StringComparison.Ordinal) && x.Length > 1) { Err(c, "read: " + x + ": not a flag read knows (-r -s -p -a -t -n -d)"); return 2; }
+                else names.Add(x);
+            }
+            if (arrName != null && !Regex.IsMatch(arrName, "^[A-Za-z_][A-Za-z0-9_]*$")) { Err(c, "read: " + arrName + ": not a name"); return 2; }
             if (names.Count == 0) names.Add("REPLY");
             string ans;
             if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.Stdin = nl < 0 ? "" : c.Stdin.Substring(nl + 1); }
             else { if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; }
+            if (arrName != null) { lock (Env.Vars) { Env.Vars.Remove(arrName); Env.Arrs[arrName] = ans.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList(); } return 0; }   // read -a a: one element per word
             if (names.Count == 1) { lock (Env.Vars) Env.Vars[names[0]] = names[0] == "REPLY" ? ans : ans.Trim(); return 0; }
             var rest = ans.Trim();
             lock (Env.Vars)
@@ -1369,16 +1428,18 @@ namespace AdeeboMeter
             string r = Real(av); if (r == null || !File.Exists(r)) { Err(c, f + ": " + (r != null && Directory.Exists(r) ? "is a folder" : "no such file")); return null; }
             return FileLines(r, c);
         }
-        static IEnumerable<string> FileLines(string path, ShCtx c)
+        // RG-6: a line longer than 16 MB is cut - and said so once, never silently
+        IEnumerable<string> FileLines(string path, ShCtx c)
         {
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) using (var rd = new StreamReader(fs, Encoding.UTF8, true))
             {
-                var sb = new StringBuilder(); int ch, n = 0;
+                var sb = new StringBuilder(); int ch, n = 0; bool cut = false;
                 while ((ch = rd.Read()) >= 0)
                 {
+                    if (sb.Length >= 16 << 20 && ch != '\r' && ch != '\n') { if (!cut) { cut = true; Err(c, Path.GetFileName(path) + ": a line over 16 MB - the rest of that line is left out"); } continue; }
                     if (ch == '\r') { if (rd.Peek() == '\n') rd.Read(); yield return sb.ToString(); sb.Clear(); if ((++n & 4095) == 0 && c.Job.Cancel) yield break; continue; }
                     if (ch == '\n') { yield return sb.ToString(); sb.Clear(); if ((++n & 4095) == 0 && c.Job.Cancel) yield break; continue; }
-                    if (sb.Length < 1048576) sb.Append((char)ch);
+                    sb.Append((char)ch);
                 }
                 if (sb.Length > 0) yield return sb.ToString();
             }
@@ -1828,7 +1889,9 @@ namespace AdeeboMeter
             if (asked && c.Script) { Err(c, what + ": --yes only counts when you type it at the prompt - inside a script the test-traffic tools are skipped"); return false; }
             return asked;
         }
-        int Source(string file, List<string> args, ShCtx c)
+        int Source(string file, List<string> args, ShCtx c) { return Source(file, args, c, false); }
+        // sourced: "source x.sh" / ". x.sh" (its exit ends the caller too); "./x.sh", "sh x.sh": a script of its own
+        int Source(string file, List<string> args, ShCtx c, bool sourced)
         {
             bool yes = YesTyped(args, c, "source " + file);
             string r = Real(Abs(file)); if (r == null || !File.Exists(r)) { Err(c, "source: " + file + ": no such file"); return 1; }
@@ -1836,7 +1899,7 @@ namespace AdeeboMeter
             string text; try { text = File.ReadAllText(r); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, file + ": " + e.Message); return 1; }
             if (Env.Depth >= 8) { Err(c, "source: scripts nested 8 deep - stopped (does a script run itself?)"); return 1; }
             Env.Depth++;
-            try { return ShRunText(text, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes || yes, Script = true }, file + ": "); }
+            try { return ShRunText(text, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes || yes, Script = true }, file + ": ", sourced); }
             finally { Env.Depth--; }
         }
         // a word as the shell reads it back: 'it''s' quoting, so an item with a quote or a $ stays one plain word (#59)

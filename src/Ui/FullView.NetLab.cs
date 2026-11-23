@@ -21,8 +21,16 @@ namespace AdeeboMeter
         // arg: a diagram's id or an example's (view "file" / "ex"); openJson: a lab file you picked (view "open")
         void OpenLab(string json, bool breakIt, string view, bool ask, string arg, string openJson)
         {
-            if (json != null) { LabDone(LabLink.Open(json, breakIt)); return; }
-            if (alabBusy) return; alabBusy = true;
+            if (alabBusy) return; alabBusy = true;   // finding 3: one open at a time, and never on the window's thread (it reads files, asks WMI and waits for Edge)
+            if (json != null)
+            {
+                System.Threading.Tasks.Task.Factory.StartNew(() =>
+                {
+                    string n1; try { n1 = LabLink.Open(json, breakIt); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab open: " + e.Message); n1 = L.T("Couldn't open the AdeeboLab:") + " " + e.Message; } finally { alabBusy = false; }
+                    try { BeginInvoke((Action)(() => LabDone(n1))); } catch (InvalidOperationException) { }
+                }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+                return;
+            }
             if (ask) Toast(L.T("Asking the devices on your network who they are (about 8 s)..."));
             System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
@@ -30,14 +38,22 @@ namespace AdeeboMeter
                 try
                 {
                     string views = LabViews.All(M);
-                    if (ask && view == "lan") { try { var lan = LabViews.Lan(M, true); if (lan != null) views = views.Substring(0, views.Length - 1) + ",\"lan\":" + lan + "}"; } catch (Exception le) { if (le is OutOfMemoryException) throw; Program.Log("lab lan ask: " + le.Message); } }   // R2-027: the other views stay
-                    if (openJson != null) views = views.Substring(0, views.Length - 1) + ",\"open\":" + openJson + "}";
+                    if (ask && view == "lan") { try { var lan = LabViews.Lan(M, true); if (lan != null) views = AddView(views, "lan", lan); } catch (Exception le) { if (le is OutOfMemoryException) throw; Program.Log("lab lan ask: " + le.Message); } }   // R2-027: the other views stay
+                    if (openJson != null) views = AddView(views, "open", openJson);
                     note = LabLink.Open(null, breakIt, views, view, arg);
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab views: " + e.Message); note = LabLink.Open(null, breakIt); }
                 finally { alabBusy = false; }
                 try { BeginInvoke((Action)(() => LabDone(note))); } catch (InvalidOperationException) { }
             }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+        }
+        // finding 24: one more view into the views object - checked, not string surgery on an assumed "}"
+        static string AddView(string views, string key, string json)
+        {
+            string v = (views ?? "").TrimEnd();
+            if (!v.StartsWith("{", StringComparison.Ordinal) || !v.EndsWith("}", StringComparison.Ordinal)) throw new FormatException("the lab's views aren't a JSON object");
+            string inner = v.Substring(1, v.Length - 2).Trim();
+            return "{" + inner + (inner.Length > 0 ? "," : "") + "\"" + key + "\":" + json + "}";
         }
         void LabDone(string note)
         {

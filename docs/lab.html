@@ -298,11 +298,12 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
 /* ---------- changes: every change is one undo step and is saved in this browser */
 let saveT = 0;
 function change(fn){ undo.push(JSON.stringify(doc)); if (undo.length > 100) undo.shift(); redo = []; fn(); persist(); draw(); if (mode === "break") fillPick(); }
-function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { if (!doc.fid) doc.fid = uid("f").slice(0, 21); const one = store.set(KEY, JSON.stringify(doc)), lib = one && keepSoon(doc);
-  $("#saved").textContent = !one ? "Not saved - this browser's storage is off or full" : lib === false ? "Saved - but Your diagrams is full (delete some)" : "Saved in this browser"; }, 300); }
+function persist(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
+function saveNow(){ clearTimeout(saveT); saveT = 0; if (!doc.fid) doc.fid = uid("f").slice(0, 21); const one = store.set(KEY, JSON.stringify(doc)), lib = one && keepSoon(doc);
+  $("#saved").textContent = !one ? "Not saved - this browser's storage is off or full" : lib === false ? "Saved - but Your diagrams is full (delete some)" : "Saved in this browser"; }
 let keepT = 0, keepDoc = null;
 function keepSoon(d){ keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
-window.addEventListener("pagehide", () => { if (keepDoc) keep(keepDoc); });
+window.addEventListener("pagehide", () => { if (saveT) saveNow(); if (keepDoc) keep(keepDoc); });   /* the last edit is written even if the window closes within 300 ms */
 /* ---------- your diagrams: every drawing you change is kept here (this browser only), newest first */
 function files(){ try { const l = JSON.parse(store.get(FILES) || "[]"); return Array.isArray(l) ? l.filter(f => f && f.id && f.doc) : []; } catch (e) { return []; } }
 function keep(d){ const l = files().filter(f => f.id !== d.fid); l.unshift({id: d.fid, name: d.name, t: Date.now(), doc: d}); return store.set(FILES, JSON.stringify(l.slice(0, 40))); }
@@ -544,6 +545,7 @@ function renderHome(){ const C = COL();
 function openView(k){ const d = valid(AMV && AMV[k]); if (!d) return; d.measured = true; const v = VIEWS.find(x => x[0] === k); openDoc(d, (v ? v[1] : "Your network") + (AMV.at ? " · " + AMV.at : "") + "."); }
 
 /* ---------- go */
+if (location.protocol === "file:") { const br = document.querySelector("a.brand"); if (br) { br.removeAttribute("href"); br.style.cursor = "default"; } }   /* in the app's window "/" is the drive's root, not the website */
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
 const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qArg = (location.search.match(/[?&]arg=([A-Za-z0-9_-]{1,40})/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);

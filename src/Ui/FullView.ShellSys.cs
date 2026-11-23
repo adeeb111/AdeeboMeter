@@ -123,11 +123,14 @@ namespace AdeeboMeter
         // ---------- the machine's own counters: CPU busy and idle time (GetSystemTimes), a Linux-style load average
         // #4: Windows keeps no load average. This one is CPU demand (busy share × logical CPUs), sampled every 5 s from the first
         // time the shell needs it and averaged with Linux's own 1/5/15-minute decay - three different numbers, honestly made.
-        static readonly object loadLock = new object(); static Timer loadTimer; static double[] loadAvg; static long loadIdle0, loadTotal0;
+        // RG-7: the sampler stops by itself 15 minutes after the shell last asked (it's started again on the next ask) - the app
+        // runs when pressed, not a counter forever
+        static readonly object loadLock = new object(); static Timer loadTimer; static double[] loadAvg; static long loadIdle0, loadTotal0; static DateTime loadAsked;
         static double[] LoadAvg()
         {
             lock (loadLock)
             {
+                loadAsked = DateTime.UtcNow;
                 if (loadTimer == null)
                 {
                     long i0, k0, u0; if (Native.GetSystemTimes(out i0, out k0, out u0)) { loadIdle0 = i0; loadTotal0 = k0 + u0; }
@@ -137,6 +140,7 @@ namespace AdeeboMeter
                         long i1, k1, u1; if (!Native.GetSystemTimes(out i1, out k1, out u1)) return;
                         lock (loadLock)
                         {
+                            if (DateTime.UtcNow - loadAsked > TimeSpan.FromMinutes(15)) { if (loadTimer != null) { loadTimer.Dispose(); loadTimer = null; } return; }
                             long di = i1 - loadIdle0, dt = (k1 + u1) - loadTotal0; loadIdle0 = i1; loadTotal0 = k1 + u1; if (dt <= 0) return;
                             double now = Math.Max(0, 1 - (double)di / dt) * Environment.ProcessorCount; var e = new[] { Math.Exp(-5.0 / 60), Math.Exp(-5.0 / 300), Math.Exp(-5.0 / 900) };
                             for (int k = 0; k < 3; k++) loadAvg[k] = double.IsNaN(loadAvg[k]) ? now : loadAvg[k] * e[k] + now * (1 - e[k]);
@@ -146,12 +150,18 @@ namespace AdeeboMeter
                 return loadAvg.ToArray();
             }
         }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern bool GetVolumeInformationW(string root, IntPtr name, int nameLen, out uint serial, out uint maxLen, out uint flags, IntPtr fs, int fsLen);
+        // SH-S11: a volume Windows marks read-only (FILE_READ_ONLY_VOLUME) - a locked SD card, a write-protected stick, a mounted ISO
+        static bool ReadOnlyVol(string root) { uint sn, ml, fl; try { return GetVolumeInformationW(root, IntPtr.Zero, 0, out sn, out ml, out fl, IntPtr.Zero, 0) && (fl & 0x00080000) != 0; } catch (EntryPointNotFoundException) { return false; } }
         static string LoadText(string sep) { var l = LoadAvg(); return string.Join(sep, l.Select(v => double.IsNaN(v) ? "0.00" : v.ToString("0.00", CultureInfo.InvariantCulture))); }
         static DateTime BootTime() { try { return DateTime.Now - TimeSpan.FromMilliseconds(Native.GetTickCount64()); } catch (EntryPointNotFoundException) { return DateTime.Now; } }
 
         // ---------- sessions (who, w, uptime's user count) - #17: real sessions and real logon times, from Windows' own list
         [DllImport("wtsapi32.dll")] static extern bool WTSEnumerateSessions(IntPtr server, int reserved, int version, out IntPtr info, out int count);
-        [DllImport("wtsapi32.dll")] static extern bool WTSQuerySessionInformation(IntPtr server, int session, int cls, out IntPtr buf, out int bytes);
+        // SH-S8: the Unicode entry point, always - without it .NET binds the ANSI one, whose names are bytes and whose WTSINFOA puts
+        // LogonTime at 160, not 200. WTSINFOW: 8 ints (32) + WinStationName[32] (64) + Domain[17] (34) + UserName[21] (42) = 172,
+        // padded to 176: ConnectTime 176, DisconnectTime 184, LastInputTime 192, LogonTime 200, CurrentTime 208 - 216 bytes
+        [DllImport("wtsapi32.dll", CharSet = CharSet.Unicode, EntryPoint = "WTSQuerySessionInformationW")] static extern bool WTSQuerySessionInformation(IntPtr server, int session, int cls, out IntPtr buf, out int bytes);
         [DllImport("wtsapi32.dll")] static extern void WTSFreeMemory(IntPtr p);
         sealed class Sess { public string User, Station, State; public DateTime Logon; }
         static List<Sess> Sessions()
@@ -566,6 +576,9 @@ namespace AdeeboMeter
                     if (proc) row.Add(pr(nm ?? "", u.Pid)); rows.Add(row.ToArray());
                 }
             Table(c, rows, ShBlue);
+            // SH-S28: GNU's bare ss lists only connected UDP sockets (ESTAB) - Windows doesn't say which UDP sockets are connected,
+            // so none are guessed; where to find them is said instead
+            if (!udp && !tcpF && !netstat) OL(c, "(UDP sockets: ss -ua - Windows doesn't say which ones are connected, so bare ss leaves them out)", ShDim);
             return 0;
         }
 
@@ -598,7 +611,7 @@ namespace AdeeboMeter
                         sb.AppendLine(LoadText(" ") + " " + runnable + "/" + count + " " + newest); break;
                     }
                 case "mounts":
-                    foreach (var d in DriveInfo.GetDrives()) { string fs = "-"; try { if (d.IsReady) fs = d.DriveFormat.ToLowerInvariant(); } catch (IOException) { } sb.AppendLine(d.Name.TrimEnd('\\') + " " + MntOf(d) + " " + fs + " " + (d.DriveType == DriveType.CDRom ? "ro" : "rw") + " 0 0"); }
+                    foreach (var d in DriveInfo.GetDrives()) { string fs = "-"; try { if (d.IsReady) fs = d.DriveFormat.ToLowerInvariant(); } catch (IOException) { } sb.AppendLine(d.Name.TrimEnd('\\') + " " + MntOf(d) + " " + fs + " " + (d.DriveType == DriveType.CDRom || ReadOnlyVol(d.Name) ? "ro" : "rw") + " 0 0"); }
                     break;
                 case "cpuinfo":
                     {
@@ -694,7 +707,14 @@ namespace AdeeboMeter
             if (inPlace && files.Count == 0) { Err(c, "sed -i: which file?"); return 2; }
             foreach (var target in inPlace ? files : new List<string> { null })
             {
-                var l = target != null ? InLines(new List<string> { target }, c) : InLines(files, c); if (l == null) return 1;
+                // RG-1: sed -i reads the file the way it will write it back (its own encoding, BOM, CRLF) - an ANSI é stays é
+                TextShape shape = null; List<string> l;
+                if (target != null)
+                {
+                    string rp = Real(Abs(target)); if (rp == null || !File.Exists(rp)) { Err(c, "sed -i: " + target + ": not a file on a disk"); return 1; }
+                    shape = new TextShape(); try { l = SplitLines(ReadShaped(rp, shape)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
+                }
+                else { l = InLines(files, c); if (l == null) return 1; }
                 var outp = new StringBuilder();
                 try
                 {
@@ -709,7 +729,7 @@ namespace AdeeboMeter
                 }
                 catch (RegexMatchTimeoutException) { Err(c, "sed: the pattern took too long - stopped"); return 2; }
                 if (target == null) { O(c, outp.ToString(), ShFg); continue; }
-                string r = Real(Abs(target)); var shape = new TextShape(); try { ReadShaped(r, shape); WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
+                string r = Real(Abs(target)); try { WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
             }
             return 0;
         }
