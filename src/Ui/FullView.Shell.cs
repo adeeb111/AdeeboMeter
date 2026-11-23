@@ -1968,7 +1968,7 @@ namespace AdeeboMeter
                     catch (OutOfMemoryException) { GC.Collect(); lock (cap.Cap) cap.Cap.Append("ran out of memory - stopped\n"); ex = 2; }
                     catch (Exception e) { lock (cap.Cap) cap.Cap.Append("error: " + e.Message + "\n"); ex = 2; }
                     finally { Interlocked.Decrement(ref running); sem.Release(); }
-                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); try { OL(c, "── " + shown + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); O(c, cap.Cap.ToString(), ShFg); } catch (ShTooBig) { } }
+                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); try { if (c.Out.Screen) OL(c, "── " + shown + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); else if (ex != 0) ErrRaw(c, "parallel: " + shown + " (exit " + ex + ")\n", ShAmber); O(c, cap.Cap.ToString(), ShFg); } catch (ShTooBig) { } }   // 1.1.6 PC test: into a pipe or a file, only the jobs' own output - like GNU parallel
                 }) { IsBackground = true, Name = "parallel" };
                 threads.Add(th); th.Start();
                 if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.Live(new List<List<TermView.Seg>> { new List<TermView.Seg> { new TermView.Seg("parallel  ", ShCyan), new TermView.Seg(doneN + " / " + items.Count + " done · " + running + " running · " + sw.Elapsed.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s", ShDim) } }); });

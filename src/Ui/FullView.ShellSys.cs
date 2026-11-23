@@ -251,6 +251,8 @@ namespace AdeeboMeter
                             ulong sz = 0; try { sz = Convert.ToUInt64(disk["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { }
                             string dn = "disk" + disk["Index"];
                             rows.Add(new[] { dn, Human(sz), "disk", "", "", "", Convert.ToString(disk["Model"], CultureInfo.InvariantCulture).Trim() });
+                            try   // 1.1.6 PC test: one disk WMI can't follow (a card reader, a virtual disk: "Not found") no longer hides the others
+                            {
                             using (var pq = new System.Management.ManagementObjectSearcher("ASSOCIATORS OF {Win32_DiskDrive.DeviceID='" + Convert.ToString(disk["DeviceID"], CultureInfo.InvariantCulture).Replace("\\", "\\\\") + "'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"))
                             {
                                 var parts = pq.Get().Cast<System.Management.ManagementObject>().OrderBy(p => Convert.ToInt32(p["Index"], CultureInfo.InvariantCulture)).ToList();
@@ -265,6 +267,8 @@ namespace AdeeboMeter
                                         rows.Add(new[] { (last ? "└─" : "├─") + dn + "p" + (i + 1), Human(psz), "part", fs, label, letter != "" ? "/mnt/" + letter.Substring(0, 1).ToLowerInvariant() : "", "" });
                                     }
                             }
+                            }
+                            catch (System.Management.ManagementException pe) { wmiErr = dn + ": " + pe.Message; }
                         }
             }
             catch (Exception e) { if (!(e is System.Management.ManagementException || e is UnauthorizedAccessException || e is COMException)) throw; wmiErr = e.Message; }
