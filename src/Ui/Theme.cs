@@ -285,14 +285,19 @@ namespace AdeeboMeter
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
                 // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
                 foreach (var w in new[] { "Inter-Regular", "Inter-Medium", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold", "PlayfairDisplay-Bold", "PlayfairDisplay-Black" })   // Playfair (OFL): the Sports and Markets newspaper mastheads (1.1.6)
-                    using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
+                    // R2-080: each font on its own - a damaged masthead font never takes Inter with it
+                    try
                     {
-                        if (rs == null) { if (w.StartsWith("Inter", StringComparison.Ordinal)) return; continue; }
-                        byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
-                        IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
-                        pfc.AddMemoryFont(mem, data.Length);
-                        uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
+                        using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
+                        {
+                            if (rs == null) { Program.Log("font " + w + ": not in the exe"); continue; }
+                            byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
+                            IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
+                            pfc.AddMemoryFont(mem, data.Length);
+                            uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
+                        }
                     }
+                    catch (Exception fe) { Program.Log("font " + w + ": " + fe.Message); }   // GDI+ reports a bad font file as OutOfMemoryException too
                 inter = pfc;
                 foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter Medium") UiMedium = f.Name; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
                 if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
@@ -328,6 +333,11 @@ namespace AdeeboMeter
         public static void UseLanguageFonts()
         {
             if (!L.IsRtl && L.Code != "bn") return;
+            // R2-079: the zoom cache may hold these very fonts - empty it first (fonts not in use now are let go), so a zoom back
+            // never puts a disposed font in use
+            var live = new HashSet<Font>(Grab().Where(f => f != null));
+            foreach (var set in sets.Values) foreach (var f in set) if (f != null && !live.Contains(f)) f.Dispose();
+            sets.Clear();
             fName = ArabicFont(fName); fHead = ArabicFont(fHead);
             fBody = ArabicFont(fBody); fBodyB = ArabicFont(fBodyB);
             fSmall = ArabicFont(fSmall); fTiny = ArabicFont(fTiny);
@@ -371,7 +381,7 @@ namespace AdeeboMeter
             fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
             fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fInput = Ui(UiFam, 13 * S, FontStyle.Regular);
-            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; measureG.TextContrast = Contrast;
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)
         static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>(); static readonly Queue<string> measuredOrder = new Queue<string>();
@@ -390,7 +400,7 @@ namespace AdeeboMeter
         // the corner widget can be drawn a little bigger (tray menu > Bigger widget): same layout, scaled when drawn, so text stays sharp
         public static float WidgetK { get { return Cfg.BigWidget ? 1.3f : 1f; } }
         static Graphics PrepW(Bitmap b) { var g = Prep(b); g.ScaleTransform(WidgetK, WidgetK); return g; }
-        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; g.Clear(Color.Transparent); return g; }
+        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; g.TextContrast = Contrast; g.Clear(Color.Transparent); return g; }
         public static string Fmt(double v, string f, string unit) { return double.IsNaN(v) ? "-" : v.ToString(f, CultureInfo.CurrentCulture) + unit; }
         public static string Trunc(string s, int n)
         {
@@ -467,6 +477,9 @@ namespace AdeeboMeter
         // smoothing otherwise; the corner widget keeps plain smoothing (it's drawn on see-through pixels)
         // 22 Nov (Adeeb): ClearType grid-fit looked jagged ("writing is not very smooth"); plain anti-aliasing then spaced letters
         // unevenly ("some words look broken"). Grey anti-aliasing with grid fitting: smooth edges, letters on whole pixels, even spacing
+        // web-like text (Adeeb, 22 Nov: "doesn't look web standard yet"): browsers on Windows draw grey anti-aliased text with a
+        // stronger gamma than GDI+'s default (4), so the strokes look fuller and evener. 1 is close to Chrome/Edge at 13-15 px.
+        public const int Contrast = 1;
         public static TextRenderingHint WindowText { get { try { return TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
         // the calm face of a mood (the buddy sheet's chips)
         public static string MoodEmoji(string mood) { switch (mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; case "plain": return "1f610"; default: return "1f60c"; } }
@@ -603,7 +616,7 @@ namespace AdeeboMeter
                         break;
                     default:   // betrayed: wide eyes, a wobbly frown, one tear (a hat, if any, is drawn after the switch)
                         g.FillEllipse(b, cx - ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u); g.FillEllipse(b, cx + ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u);   // big wet eyes: dark, with a shine
-                        using (var hb = new SolidBrush(body)) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
+                        using (var hb = new SolidBrush(Color.FromArgb(235, Theme.Card))) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
                         g.DrawArc(p, cx - 3.5f * u, r.Y + 13.5f * u, 7 * u, 4 * u, 200, 140);
                         using (var tb = new SolidBrush(Color.FromArgb(210, body))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
                         break;

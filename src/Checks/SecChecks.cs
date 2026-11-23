@@ -265,22 +265,22 @@ namespace AdeeboMeter
         }
         static List<string[]> Startup(Monitor m, List<string> s)
         {
-            var items = new List<Tuple<string, string>>();
+            var items = new List<Tuple<string, string>>(); var offSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);   // switched off in Task Manager
             // the 64-bit Run keys, and LM's 32-bit one (WOW6432Node) where 32-bit programs register themselves
             foreach (var hv in new[] { Tuple.Create(CU, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry64), Tuple.Create(LM, RegistryView.Registry32) } /* HKCU isn't split for 32-bit apps: one view, or every entry counts twice */)
-                try { using (var b = RegistryKey.OpenBaseKey(hv.Item1, hv.Item2)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); }
+                try { using (var b = RegistryKey.OpenBaseKey(hv.Item1, hv.Item2)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) foreach (var n in k.GetValueNames()) { items.Add(Tuple.Create(n, Convert.ToString(k.GetValue(n), CultureInfo.InvariantCulture) ?? "")); if (HwSpecs.Disabled(hv.Item1 == CU ? Registry.CurrentUser : Registry.LocalMachine, hv.Item1 == LM && hv.Item2 == RegistryView.Registry32 ? "Run32" : "Run", n)) offSet.Add(n); } }
                 catch (System.Security.SecurityException) { }
             foreach (var d in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })
-                try { if (Directory.Exists(d)) foreach (var f in Directory.GetFiles(d).Where(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase))) items.Add(Tuple.Create(Path.GetFileName(f), f)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                try { if (Directory.Exists(d)) foreach (var f in Directory.GetFiles(d).Where(f => !f.EndsWith(".ini", StringComparison.OrdinalIgnoreCase))) { items.Add(Tuple.Create(Path.GetFileName(f), f)); if (HwSpecs.Disabled(d == Environment.GetFolderPath(Environment.SpecialFolder.Startup) ? Registry.CurrentUser : Registry.LocalMachine, "StartupFolder", Path.GetFileName(f))) offSet.Add(Path.GetFileName(f)); } } catch (IOException) { } catch (UnauthorizedAccessException) { }
             var unsigned = new List<string>(); int winOwn = 0;
-            foreach (var it in items)
+            foreach (var it in items.Where(z => !offSet.Contains(z.Item1)))   // R2-039: only what really starts - the unsigned tally included the switched-off ones
             {
                 string exe = StartExe(it.Item2); if (exe == null) continue;
                 if (string.Equals(Path.GetFileName(exe), "AdeeboMeter.exe", StringComparison.OrdinalIgnoreCase)) continue;   /* this app: unsigned, and you chose to start it */
                 string win = Environment.GetFolderPath(Environment.SpecialFolder.Windows); if (win != "" && exe.StartsWith(win.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase)) { winOwn++; continue; }   /* Windows' own (catalog-signed, which this check can't read) */
                 try { using (X509Certificate.CreateFromSignedFile(exe)) { } } catch (System.Security.Cryptography.CryptographicException) { unsigned.Add(it.Item1 + " (" + Path.GetFileName(exe) + ")"); }
             }
-            int on = HwSpecs.StartupApps().Count, off = Math.Max(0, items.Select(x => x.Item1).Distinct(StringComparer.OrdinalIgnoreCase).Count() - on);   // the tool run, 22 Nov: counted the ones switched off in Task Manager too (13 here, 15 there) - one count everywhere now
+            int off = items.Select(x => x.Item1).Where(offSet.Contains).Distinct(StringComparer.OrdinalIgnoreCase).Count(), on = items.Select(x => x.Item1).Where(n => !offSet.Contains(n)).Distinct(StringComparer.OrdinalIgnoreCase).Count();   // R2-039: both counts from one list   // the tool run, 22 Nov: counted the ones switched off in Task Manager too (13 here, 15 there) - one count everywhere now
             return One(unsigned.Count == 0 ? 0 : 1, "Programs that start with Windows", on + " start automatically" + (off > 0 ? " (" + off + " more switched off in Task Manager)" : "") + (unsigned.Count > 0 ? " · " + unsigned.Count + " without a publisher's signature: " + string.Join(", ", unsigned.Take(5)) : " · the .exe programs outside the Windows folder are signed" + (winOwn > 0 ? " (" + winOwn + " in the Windows folder weren't checked - Windows signs those in a way this check can't read)" : ""))   /* bug-hunt ML-106 */, unsigned.Count > 0 ? "Unsigned isn't proof of harm (small tools often aren't signed), but malware usually isn't signed either. Turn off any you don't recognise in Startup apps." : "", "ms-settings:startupapps");
         }
         // the program a Run / Startup entry starts: "quoted path", C:\Program Files\app.exe unquoted (the longest

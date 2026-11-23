@@ -1,6 +1,6 @@
 # Spanish website/mobile completion — 19 November 2026
 
-This supersedes the website gap recorded in SPANISH-WINDOWS-HANDOVER.md. Both catalogs are now filled: **3,738/3,738 web/mobile keys and 4,197/4,197 Windows keys**. The literal Windows checker covers 2,037/2,037 texts. No missing keys or placeholder, numeric-token or edge-whitespace issues in the shared audit.
+This supersedes the website gap recorded in SPANISH-WINDOWS-HANDOVER.md. Both catalogs are now filled: **3,738/3,738 web/mobile keys and 4,197/4,197 Windows keys *at the time of writing* (the table has grown since - run `python3 tools/langcheck.py es` for today's state)**. The literal Windows checker covers 2,037/2,037 texts. No missing keys or placeholder, numeric-token or edge-whitespace issues in the shared audit.
 
 ## Changes
 

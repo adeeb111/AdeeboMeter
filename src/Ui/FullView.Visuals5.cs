@@ -44,7 +44,7 @@ namespace AdeeboMeter
                         if (trace.Count > 0) foreach (var o in trace.Take(4)) { s.Add(X(1, 2, o[1] + ": " + L.T("ask") + " " + Cut(Regex.Replace(o[2], @"\s*\(.*$", ""), 30), "", double.NaN)); s.Add(Rd(X(2, 1, Cut(Regex.Replace(o[2], @"^[^:]*:\s*", ""), 46), o[2].Contains("says: ask") ? L.T("a referral, not the answer") : L.T("the answer"), msOf(o[2])), Lv(o))); }
                         else { s.Add(X(1, 2, L.T("who knows") + " " + name + "?", L.T("only if not remembered: the root, then") + " " + zone, double.NaN)); s.Add(X(2, 1, L.T("ask its own servers"), L.T("a referral"), double.NaN)); s.Add(X(1, 3, type + " " + name + "?", "", double.NaN)); }
                         if (answers.Count == 0 && trace.Count == 0) { var st0 = RRow("Status"); var an0 = RRow("Answer"); var show = an0 ?? st0 ?? res.FirstOrDefault(); s.Add(Rd(X(1, 0, show != null ? Cut(show[2], 44) : L.T("the answer"), L.T("with how long to keep it (TTL)"), msOf(asked)), show != null ? Lv(show) : -1)); }
-                        foreach (var o in answers.Take(5)) { var z = X(1, 0, o[1] + "  " + Cut(P(o[2], 0), 40), Or(P(o[2], 1), "") + (signed ? " · " + L.T("signature checks out") : ""), s.Count == 1 + (trace.Count > 0 ? trace.Count * 2 : 3) ? msOf(asked) : double.NaN); z.Sealed = signed; s.Add(Rd(z, Lv(o))); }
+                        foreach (var o in answers.Take(5)) { var z = X(1, 0, o[1] + "  " + Cut(P(o[2], 0), 40), Or(P(o[2], 1), "") + (signed ? " · " + L.T("signature checks out") : ""), s.Count == (trace.Count > 0 ? 1 + Math.Min(4, trace.Count) * 2 : 4) ? msOf(asked) : double.NaN);   /* R2-208: the first answer carries the time */ z.Sealed = signed; s.Add(Rd(z, Lv(o))); }
                         cap = L.T("WHO ASKS WHOM -") + " " + name.ToUpperInvariant(); foot = (asked != "" ? Cut(asked, 80) + ". " : "") + L.T("A server that remembers the answer skips the middle steps - repeat lookups take 1-2 ms.");
                     }
                     break;
@@ -57,18 +57,19 @@ namespace AdeeboMeter
                         who = new[] { L.T("This PC"), L.T("Wi-Fi, provider - on the way"), srv };
                         if (on) { s.Add(Lk(X(0, 2, L.T("(sealed question)"), how, double.NaN))); s.Add(Lk(X(2, 0, L.T("(sealed answer)"), L.T("nobody on the way can read or change it"), double.NaN))); }
                         else { s.Add(Rd(X(0, 2, L.T("where is example.com?"), L.T("plain DNS · UDP 53 - readable on the way"), double.NaN), 1)); s.Add(Rd(X(2, 0, L.T("its address"), L.T("readable - and changeable - on the way"), double.NaN), 1)); }
-                        if (br != "") { var b = X(0, 2, L.T("the browser asks too"), Cut(br, 70), double.NaN); b.Sealed = br.IndexOf(" on", StringComparison.OrdinalIgnoreCase) >= 0; s.Add(b); }
+                        if (br != "") { var b = X(0, 2, L.T("the browser asks too"), Cut(br, 70), double.NaN); b.Sealed = br.IndexOf(L.T("works"), StringComparison.OrdinalIgnoreCase) >= 0;   /* R2-209 */ s.Add(b); }
                         cap = on ? L.T("YOUR PC ASKS IN A SEALED ENVELOPE") : L.T("YOUR PC ASKS ON A POSTCARD"); foot = Or(enc, "Plain DNS shows every name you look up to anyone on the way; encrypted DNS (DoH/DoT) seals it.");
                     }
                     break;
                 case "dhcp":
                     {
                         // bug-hunt ML-207: SysTools.Dhcp's rows - "Address" (ip / mask), "DHCP server", "Router (option 3)", "DNS (option 6)", "Obtained", "Expires" (or "never")
-                        string addr = RV("Address"), ip = Or(Regex.Match(addr, @"^[\d.]+").Value, "192.168.1.20"), srv = Or(RV("DHCP server"), L.T("DHCP server (your router)")), gw = RV("Router (option 3)"), dns = RV("DNS (option 6)"), exp = RV("Expires"), got = RV("Obtained");
+                        string addr = RV("Address"), ip = Or(Regex.Match(addr, @"^[\d.]+").Value, ran ? "" : "192.168.1.20"), srv = Or(RV("DHCP server"), L.T("DHCP server (your router)")), gw = RV("Router (option 3)"), dns = RV("DNS (option 6)"), exp = RV("Expires"), got = RV("Obtained");
                         bool stat = RV("IPv4").StartsWith("set by hand", StringComparison.Ordinal), self = ip.StartsWith("169.254", StringComparison.Ordinal);
                         who = new[] { L.T("This PC"), srv };
                         if (stat) { s.Add(X(0, 0, L.T("(no DHCP - the address is set by hand)"), "", double.NaN)); cap = L.T("THIS PC'S ADDRESS IS FIXED"); foot = "A fixed address never asks a DHCP server - nothing to renew."; break; }
                         s.Add(Bc(0, 1, L.T("Discover: can anyone give me an address?"), L.T("broadcast to everyone · UDP 68 → 67")));
+                        if (ran && ip == "") { s.Add(Rd(X(1, 0, L.T("(no Offer)"), Cut(Or(addr, L.T("no address from DHCP")), 60), double.NaN), 2)); cap = L.T("NO ADDRESS FROM DHCP"); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }   // R2-210
                         if (self) { s.Add(Rd(X(1, 0, L.T("(no Offer)"), L.T("no DHCP server answered - Windows made up a 169.254 address"), double.NaN), 2)); cap = L.T("NO ADDRESS FROM DHCP"); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }
                         s.Add(X(1, 0, L.T("Offer") + ": " + ip, Cut(Or((gw != "" ? L.T("gateway") + " " + gw + " · " : "") + (dns != "" ? "DNS " + dns : ""), L.T("with a mask, a gateway and DNS servers")), 70), double.NaN));
                         s.Add(X(0, 1, L.T("Request: yes please,") + " " + ip, L.T("still broadcast - other servers learn it's taken"), double.NaN));
@@ -124,8 +125,9 @@ namespace AdeeboMeter
                         if (none) s.Add(X(0, 0, L.T("nobody else answered for it"), Cut(RV("Address conflicts"), 60), double.NaN));
                         else if (clash)
                         {
-                            if (events.Count == 0) events.Add(new[] { "2", L.T("one day"), "00-00-5E-00-53-12" });
-                            foreach (var e in events) { s.Add(Rd(X(1, 0, L.T("me!") + " " + Regex.Match(e[2], @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, e[1] + " - " + L.T("another device answers for YOUR address"), double.NaN), 2)); }
+                            if (events.Count == 0) events = res.Where(o => Regex.IsMatch(o[1], @"^\d{1,2} \w{3}")).Take(3).ToList();   // R2-211: the real events, even when no MAC was in them - never an invented one
+                            if (events.Count == 0 && !ran) events.Add(new[] { "2", L.T("one day"), "00-00-5E-00-53-12" });
+                            foreach (var e in events) { s.Add(Rd(X(1, 0, L.T("me!") + " " + Or(Regex.Match(e[2], @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, L.T("(a device)")), e[1] + " - " + L.T("another device answers for YOUR address"), double.NaN), 2)); }
                             s.Add(Rd(X(0, 1, L.T("conflict - Windows warns and may stop using it"), Cut(Or(RV("Address conflicts"), ""), 60), double.NaN), RLv("Address conflicts")));
                         }
                         else if (noArp) s.Add(Rd(X(1, 0, L.T("(no answer)"), ans.Length > 3 ? Cut(ans[3], 60) : "", double.NaN), 2));

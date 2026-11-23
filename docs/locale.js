@@ -3,8 +3,8 @@
 
   var languages = {
     en: "English", fr: "Français", es: "Español", ar: "العربية",
-    bn: "বাংলা", zh: "简体中文"
-  };
+    bn: "বাংলা"
+  };   // R2-201: Chinese (73 strings) isn't offered until it's translated - as in the app; a saved "zh" reads as English
   var tags = { fr: "fr-CA", zh: "zh-Hans" };
   var storageKey = "adeebometer-language";
   var root = document.documentElement;
@@ -166,8 +166,9 @@
   });
 }());
 
-// Public-page visitor analytics. The loader checks the hostname, privacy signals
-// and companion-tool exclusions before contacting the analytics provider.
+// Public-page visitor analytics. This loader only adds analytics.js on pages with a canonical link;
+// analytics.js itself checks the hostname, privacy signals and companion-tool exclusions before
+// contacting the analytics provider.
 (function () {
   if (!document.querySelector('link[rel="canonical"]')) return;
   var analytics = document.createElement("script");

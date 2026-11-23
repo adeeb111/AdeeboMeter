@@ -93,7 +93,8 @@ namespace AdeeboMeter
             if (samplerT != null || probeT != null)
             {
                 if (!stop) return;   // already running: never subscribe twice
-                foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(3000);
+                bool ui = System.Windows.Forms.Application.MessageLoop;   // R2-153: on the window's thread, a short look - never a 6 s freeze
+                foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(ui ? 200 : 3000);
                 if ((samplerT != null && samplerT.IsAlive) || (probeT != null && probeT.IsAlive)) { Program.Log("monitor: the last loops haven't finished - not starting twice"); return; }
                 samplerT = null; probeT = null;
             }
@@ -428,8 +429,10 @@ namespace AdeeboMeter
         int IfEvery { get { return Cfg.Preset == "penny" ? 60 : ViewOpen ? 10 : 30; } }   /* adapters, the ARP table and drives: 10 s with the window open, 30 s otherwise */
         void ProbeDns()
         {
-            double ms; int rc = DnsTime("www.microsoft.com", out ms);
-            if (rc == 0 && ms > 30000) return;   // tool-run 22 Nov: "DNS is slow (22116417 ms)" - a lookup that spanned sleep; not a measurement, dropped
+            int r0 = resumes; double ms; int rc = DnsTime("www.microsoft.com", out ms);
+            // tool-run 22 Nov: "DNS is slow (22116417 ms)" - a lookup that spanned sleep is no measurement, answered or failed (R2-038);
+            // a real slow answer stays (only one longer than 2 minutes - Windows gives up long before - is taken as a sleep too)
+            if (resumes != r0 || ms > 120000) return;
             lock (L) { DnsFailedLast = rc != 0 && rc != 9003 && rc != 9501; Dns.Add(DnsFailedLast ? double.NaN : ms); }
         }
         // A real lookup that skips the local cache, so it measures the DNS server itself.
@@ -508,7 +511,8 @@ namespace AdeeboMeter
         // ARP spoofing alarm: the router's hardware address should not change while you stay on the same network.
         string gwMacKey = "", gwMac = ""; readonly Dictionary<string, DateTime> gwMacSeen = new Dictionary<string, DateTime>();
         // after sleep the PC may wake on another network with the same router address: start fresh, as on a network change
-        public void Resumed() { wlanApiOk = true; wlanApiFails = 0; netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
+        volatile int resumes;
+        public void Resumed() { resumes++; wlanApiOk = true; wlanApiFails = 0; netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
         // the wake-up report: seconds from waking until the router, then DNS, answered - logged once per wake as a "wake" event
         DateTime wakeAt = DateTime.MinValue; double wakeGw = double.NaN;
         bool Waking(DateTime t0) { return wakeAt != DateTime.MinValue && (t0 - wakeAt).TotalSeconds < 120; }

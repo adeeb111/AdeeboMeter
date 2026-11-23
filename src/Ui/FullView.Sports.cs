@@ -35,7 +35,7 @@ namespace AdeeboMeter
         {
             bool streamingMine = tab == "stream" && Streams.Active && Sports.Teams().Count > 0;
             if ((tab == "sports" || streamingMine) && Cfg.Sports && Sports.Due) Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (sportsCanvas != null) sportsCanvas.Invalidate(); if (streamCanvas != null) streamCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
-            SpReminder();
+            SpReminder(); CasualTick();
             if (tab != "sports" || sportsCanvas == null) return;
             long v = System.Threading.Interlocked.Read(ref Sports.Ver) * 1000003 + System.Threading.Interlocked.Read(ref LineHours.Ver); if (v != sportsVer || DateTime.Now.Minute != sportsMin || StreamCheck.Running) { sportsVer = v; sportsMin = DateTime.Now.Minute; sportsCanvas.Invalidate(); }   // a running stream test repaints each tick (its progress)
         }
@@ -50,7 +50,7 @@ namespace AdeeboMeter
                 {
                     var cr = new RectangleF(x, y, w, 96 * S); Kit.Box(g, cr, 14 * S);
                     g.DrawString(L.T("Today in sport - scores and headlines"), Draw.fBodyB, ink, cr.X + 20 * S, cr.Y + 16 * S);
-                    g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines, every 5 minutes at most."), Draw.fSmall, sub, new RectangleF(cr.X + 20 * S, cr.Y + 40 * S, cr.Width - 200 * S, 50 * S));
+                    g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most."), Draw.fSmall, sub, new RectangleF(cr.X + 20 * S, cr.Y + 40 * S, cr.Width - 200 * S, 50 * S));
                     if (!Policy.NoOnline)
                     {
                         string bt = L.T("Turn on"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(cr.Right - bs.Width - 44 * S, cr.Y + 32 * S, bs.Width + 24 * S, 32 * S);
@@ -101,6 +101,7 @@ namespace AdeeboMeter
                     if (sp == "football" && Sports.FromEspn && note == null)
                     {   // the free default: ESPN, once a day - and how to get live scores
                         g.DrawString(L.T("From ESPN's free scoreboards, updated once a day."), Draw.fSmall, sub, new RectangleF(cx, cy, colW, 20 * S)); cy += 22 * S;
+                        string em = Sports.EspnMissing; if (em != "") { using (var ab = new SolidBrush(Theme.LvText(1))) g.DrawString(em, Draw.fSmall, ab, new RectangleF(cx, cy, colW, 36 * S)); cy += Draw.Measure(em, Draw.fSmall, (int)colW).Height + 4 * S; }   // R2-045
                         var ekr = MkSpButton(g, L.T("Live scores: add my key..."), cx, cy, false); string spk = sp; Act(sportsCanvas, ekr, delegate { AskSportKey(spk); }); cy += 48 * S;
                     }
                     if (note == "nokey")

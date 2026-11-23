@@ -27,7 +27,7 @@ BGP and who owns the network	BGP y quién es el dueño de la red
 BYTES PER APP (SINCE START)	BYTES POR APP (DESDE EL INICIO)
 Back to corner	Volver a la esquina
 Background checks	Pruebas en segundo plano
-Balanced	Equilibrado
+Balanced	Balanced
 Bigger	Más grande
 Bound / listening	Vinculado / a la escucha
 CALL QUALITY (TEAMS AND OTHER CALLS)	CALIDAD DE LLAMADA (TEAMS Y OTRAS)
@@ -46,7 +46,7 @@ Companion	Compañero
 Computer feels slow	La computadora va lenta
 Connections	Conexiones
 Corner widget size	Tamaño del widget
-Dark	Oscuro
+Dark	Dark
 Delete all saved history now	Borrar todo el historial guardado ahora
 Details	Detalles
 EXPERT INFO (WIRESHARK)	DATOS AVANZADOS (WIRESHARK)
@@ -66,13 +66,13 @@ Follow Windows	Según Windows
 Follow Windows switches light and dark with your Windows setting.	Seguir Windows cambia entre claro y oscuro según los ajustes de Windows.
 GAME	JUEGO
 Game ping in the background	Ping del juego en segundo plano
-Gamer	Juegos
-Gamer Zone	Zona de juegos
+Gamer	Gamer
+Gamer Zone	Gamer Zone
 General	General
 Got it	Entendido
 HOW LONG EACH STEP TAKES	CUÁNTO TARDA CADA PASO
 HOW WOULD YOU LIKE ADEEBOMETER?	¿CÓMO QUIERES USAR ADEEBOMETER?
-Health	Estado
+Health	Salud
 History	Historial
 History & data	Historial y datos
 Home networks only	Solo redes domésticas
@@ -100,7 +100,7 @@ Keep history for	Guardar historial por
 Lag graph for streaming	Gráfico de retrasos del streaming
 Language	Idioma
 Learn	Aprender
-Light	Claro
+Light	Light
 Live	En vivo
 Live capture	Captura en vivo
 Live capture stops after	La captura en vivo se detiene tras
@@ -772,7 +772,7 @@ BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football r
 Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	Antenas, núcleos 4G y 5G (MME, AMF, SMF, UPF), conexión, sesiones, NSA y SA.
 INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	DENTRO DE INTERNET: PROVEEDORES, TV Y STREAMING
 INSIDE THE MOBILE NETWORK - 4G AND 5G	DENTRO DE LA RED MÓVIL: 4G Y 5G
-Penny	Mínimo consumo
+Penny	Penny
 PING MAP	MAPA DE PING
 and	y
 more	Más
@@ -1242,10 +1242,10 @@ Skip	Omitir
 All of this can be changed any time in Settings.	Puedes cambiar todo esto en Ajustes cuando quieras.
 Plain - no jokes	Directo, sin bromas
 checks a minute	comprobaciones por minuto
-Neon	Neón
-Midnight	Medianoche
-Sunset	Atardecer
-Mint	Menta
+Neon	Neon
+Midnight	Midnight
+Sunset	Sunset
+Mint	Mint
 All problems	Todos los problemas
 It's fixed	Ya está arreglado
 Still broken - check again	Sigue fallando: revisar otra vez
@@ -1289,7 +1289,7 @@ Phone	Teléfono
 Search	Buscar
 Streaming	Streaming
 This PC	Este PC
-Trading	Mercado
+Trading	Mercados
 Turn on	Activar
 When	Cuándo
 You	Tú
@@ -1426,7 +1426,7 @@ BY QUESTION	Por pregunta
 Back. That lasted 	Volvió. El corte duró 
 Background checks: 	Comprobaciones en segundo plano: 
 Backup way out:	Salida alternativa:
-Balanced - trouble seen in seconds	Equilibrado: detecta problemas en segundos
+Balanced - trouble seen in seconds	Balanced: detecta problemas en segundos
 Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on.	Medias diarias del Bank of Canada, consultadas una vez al día solo con esta página abierta. Desactivado hasta que lo actives.
 Binding request	Solicitud Binding
 Broker 	Bróker 
@@ -1534,7 +1534,7 @@ Forecast until	Pronóstico hasta
 Futures contract value	Valor de un contrato de futuros
 GAMING	Juegos
 Game server	Servidor de juego
-Gamer - game servers every 	Juegos: servidores cada 
+Gamer - game servers every 	Gamer: servidores cada 
 Gathering the first minute...	Reuniendo el primer minuto...
 Gathering the first seconds...	Reuniendo los primeros segundos...
 Getting today's rates from the Bank of Canada...	Obteniendo los tipos de hoy del Bank of Canada...
@@ -1693,7 +1693,7 @@ Paid from your safe money - nothing sold.	Pagado con tus ahorros seguros, sin ve
 Panic-seller ghost	Rival que vendió por pánico
 Paste your free key from 	Pega tu clave gratuita de 
 Pay yourself first: move the 20% on payday.	Ahórralo primero: aparta el 20% al cobrar.
-Penny - the lightest touch	Mínimo consumo: la opción más ligera
+Penny - the lightest touch	Penny: la opción más ligera
 Phones take files up to 100 MB from here.	Los teléfonos reciben archivos de hasta 100 MB desde aquí.
 Pick a day	Elige un día
 Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings.	Elige todas las opciones que correspondan. Solo verás las páginas que necesitas. Las demás se activan con un interruptor en Ajustes.
@@ -2500,7 +2500,7 @@ yr	año
 Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: 21 name lookups to each server it races (yours, the router, 1.1.1.1, 8.8.8.8, 9.9.9.9 - about 100 in all). Walk test: 20 pings to your router per room. Only when you press them.	Antes de llamar: 20 pings al router y 20 a 1.1.1.1. Velocidad DNS: 21 consultas a cada servidor (el tuyo, router, 1.1.1.1, 8.8.8.8, 9.9.9.9, unas 100 en total). Recorrido: 20 pings al router por habitación. Solo al ejecutarlas.
 Quiet + moments	Callado + momentos
 Follows my view	Según mi vista
-Streaming & trading	Streaming y mercado
+Streaming & trading	Streaming y mercados
 pinned destination every 30 s	destino fijado cada 30 s
 weather every 6 h	tiempo cada 6 h
 weather about every 2 days	tiempo cada 2 días aproximadamente
@@ -2510,12 +2510,12 @@ Right now this PC sends nothing in the background.	Este PC no envía nada en seg
 Right now this PC sends: 	Ahora este PC envía: 
 Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view.	Cada vista conserva tus cambios. Cambia cuando quieras con Vista, arriba. Aprende está en todas.
 English. A change takes full effect after a restart.	Inglés. El cambio se aplica por completo al reiniciar.
-Neon: near-black with electric cyan - accents glow softly.	Neón: casi negro y cian eléctrico, con un brillo suave.
-Midnight: deep navy with aqua - calm for long nights.	Medianoche: azul marino y aguamarina, tranquilo para noches largas.
-Sunset: warm plum with coral.	Atardecer: ciruela cálido y coral.
-Mint: light and fresh, soft green.	Menta: claro y fresco, verde suave.
-Dark: always dark, whatever Windows uses.	Oscuro: siempre oscuro, sin importar el tema de Windows.
-Light: always light, whatever Windows uses.	Claro: siempre claro, sin importar el tema de Windows.
+Neon: near-black with electric cyan - accents glow softly.	Neon: casi negro y cian eléctrico, con un brillo suave.
+Midnight: deep navy with aqua - calm for long nights.	Midnight: azul marino y aguamarina, tranquilo para noches largas.
+Sunset: warm plum with coral.	Sunset: ciruela cálido y coral.
+Mint: light and fresh, soft green.	Mint: claro y fresco, verde suave.
+Dark: always dark, whatever Windows uses.	Dark: siempre oscuro, sin importar el tema de Windows.
+Light: always light, whatever Windows uses.	Light: siempre claro, sin importar el tema de Windows.
 No place yet.	Sin ubicación.
 ) - Remove forgets it and the kept forecast.	). Eliminar olvida el lugar y su pronóstico guardado.
 Accuracy	Precisión
@@ -2562,7 +2562,7 @@ Numbers only.	Solo cifras.
 Downloaded and uploaded since midnight, on the card.	Descargado y subido desde medianoche, en la tarjeta.
 How it behaves	Comportamiento
 Quiet: the corner never changes by itself - no moments, no evening summary, no words from your view. Just like before 1.1.5.	Callado: la esquina no cambia sola. Sin momentos, resumen de tarde ni mensajes de tu vista. Como antes de 1.1.5.
-Follows my view: the Streamer view names what's playing, the Trader view the broker's delay - plus the moments.	Según mi vista: Streaming muestra qué se reproduce y Mercado el retraso del bróker, además de los momentos.
+Follows my view: the Streamer view names what's playing, the Trader view the broker's delay - plus the moments.	Según mi vista: Streaming muestra qué se reproduce y Mercados el retraso del bróker, además de los momentos.
 Quiet + moments: calm all day; the buddy's face changes for a few seconds when something good happens (a clean game session, a stream with no dips, the internet back, a new speed record...). Hover to see why.	Callado + momentos: tranquilo todo el día. La cara cambia unos segundos cuando pasa algo bueno: partida sin problemas, streaming sin caídas, vuelve internet, récord de velocidad... Pon el puntero para saber por qué.
 A little bigger (1.3x) - easier to read at a glance.	Un poco más grande (1.3x), más fácil de leer de un vistazo.
 Small - out of the way.	Pequeño, sin estorbar.
@@ -2623,13 +2623,13 @@ Watching 	Supervisando
 Not watched. Pick your broker and AdeeboMeter checks the line to it in market hours, so you know before you click Buy whether your connection is the problem.	Sin supervisar. Elige tu bróker para comprobar su conexión en horario de mercado y saber si falla tu conexión antes de pulsar Comprar.
 Broker alerts	Alertas del bróker
 On: a Windows notice when the line to your broker turns slow (over 100 ms) or drops - at most every 2 minutes.	Activado: aviso de Windows si la conexión al bróker supera 100 ms o se corta, como máximo cada 2 minutos.
-Off: slow moments are only on the Trading page.	Desactivado: los momentos lentos solo aparecen en Mercado.
+Off: slow moments are only on the Trading page.	Desactivado: los momentos lentos solo aparecen en Mercados.
 Crypto, around the clock	Cripto las 24 horas
 On: your broker is watched 24/7, weekends too - crypto never closes.	Activado: supervisa el bróker 24/7, también fines de semana. Cripto nunca cierra.
 Off: only in stock-market hours.	Desactivado: solo en horario bursátil.
 Day's numbers	Cifras del día
 Off - your IT team turned online lookups off (AdeeboMeter.policy).	Desactivado: TI bloqueó las consultas en línea (AdeeboMeter.policy).
-On: currencies (daily) and commodity prices (weekly) from the Bank of Canada - free, official, no account. Fetched only when the Trading page or the evening summary needs newer numbers.	Activado: divisas diarias y materias primas semanales del Bank of Canada. Gratis, oficial y sin cuenta. Solo se consultan cuando Mercado o el resumen de tarde necesitan datos nuevos.
+On: currencies (daily) and commodity prices (weekly) from the Bank of Canada - free, official, no account. Fetched only when the Trading page or the evening summary needs newer numbers.	Activado: divisas diarias y materias primas semanales del Bank of Canada. Gratis, oficial y sin cuenta. Solo se consultan cuando Mercados o el resumen de tarde necesitan datos nuevos.
 Off: no currencies or commodities.	Desactivado: sin divisas ni materias primas.
 Evening summary in the widget	Resumen de tarde en el widget
 On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	Activado: días laborables 17:30-19:00, la barra plegada muestra el cierre diario (dólar estadounidense y semana de energía) en vez de “Todo tranquilo”. Después vuelve sola. Los problemas tienen prioridad.
@@ -2687,7 +2687,7 @@ Quit completely	Salir por completo
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	Clic derecho en el icono de la bandeja y Salir. No queda nada ejecutándose, ni un ayudante.
 Learn anything	Aprende cualquier cosa
 When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.	Si el puntero se convierte en ?, déjalo un momento y aparece una explicación.
-Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	Ajustes decide cuánto supervisa AdeeboMeter en segundo plano, de Mínimo consumo a Juegos.
+Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	Ajustes decide cuánto supervisa AdeeboMeter en segundo plano, de Penny a Gamer.
 Readable source	Código fuente legible
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	Toda la app es código fuente que puedes leer antes de ejecutarla. Se compila con el compilador incluido en Windows.
 No admin rights	Sin permisos de administrador
@@ -2695,7 +2695,7 @@ Everything it shows comes from what Windows already lets a normal user see. If s
 Secure by default	Seguro desde el principio
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	Usa TLS y la validación de certificados de Windows, que elige TLS 1.2 o 1.3. Nunca omite la verificación. Valida los datos de entrada y no usa un intérprete de comandos.
 Light as a feather	Ligero como una pluma
-Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	Unas 70 pruebas pequeñas por minuto en Equilibrado (unas 8 en Mínimo consumo). Las herramientas pesadas solo funcionan con esta ventana abierta y siempre se detienen solas.
+Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	Unas 70 pruebas pequeñas por minuto en Balanced (unas 8 en Penny). Las herramientas pesadas solo funcionan con esta ventana abierta y siempre se detienen solas.
 Leaves no trace	Sin dejar rastros
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	Ajustes y un pequeño registro junto al exe (en AppData si está instalado). Borra capturas al salir. Nunca registra títulos de ventanas ni contenido del tráfico. Guarda unos días de historial solo en este PC salvo que lo desactives; se borra con un clic.
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	Cada comunicación actual del PC: app, interlocutor, puerto y estado. Las nuevas aparecen y las cerradas se desvanecen. Pon el puntero en un estado para entenderlo; Sniff en una fila graba solo esa comunicación para Wireshark.
@@ -2703,7 +2703,7 @@ Your Wi-Fi / cable	Tu Wi-Fi / cable
 Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	Todo sobre tu enlace: banda, canal, señal en dBm, velocidades, seguridad, vecinos con mapa de canales, direcciones, errores y estado del tramo al router. Pulsa el punto Wi-Fi para llegar aquí.
 Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.	Cada programa de tu PC explicado: qué hace, cómo funciona, por qué está, qué pasa sin él y si es seguro cerrarlo. AdeeboMeter solo explica, nunca cierra programas.
 Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.	Escribe nombre, IP o URL. AdeeboMeter recorre DNS, ruta, ping, TCP, TLS, HTTP, tamaño de paquete y cada router como un ingeniero. Dice en una frase dónde falla. Explica quién transporta el tráfico, dónde se interconectan las redes (ahí decide BGP), NAT, túneles y firewalls. Fija destinos frecuentes para comprobarlos juntos.
-Health check	Comprobación de estado
+Health check	Comprobación de salud
 A one-click check-up of the things that quietly cause trouble: days since restart, pending updates, disk space, adapter errors, crowded Wi-Fi, proxies, VPN, DNS, memory and power.	Revisión con un clic de causas discretas: tiempo sin reiniciar, actualizaciones pendientes, espacio, errores del adaptador, Wi-Fi saturado, proxies, VPN, DNS, memoria y energía.
 The diary. Every roam, drop, DNS change, VPN flap and app hiccup in the last two hours, with the time it happened - so 'it was slow at 2:15' finally has an answer.	El diario: cambios de punto de acceso, cortes, DNS, VPN y fallos de apps de las últimas dos horas con su hora. Así “iba lento a las 2:15” tiene respuesta.
 How it travels	Cómo viaja
@@ -2756,9 +2756,9 @@ Broker watch	Supervisión del bróker
 A timed TCP connection (no data, no sign-in) to 	Una conexión TCP medida (sin datos ni acceso a la cuenta) a 
 , only while the market is open	, solo con el mercado abierto
  - around the clock, as you chose for crypto	 — todo el día, como elegiste para cripto
-Off - until you pick your broker on the Trading page.	Desactivado hasta que elijas bróker en Mercado.
+Off - until you pick your broker on the Trading page.	Desactivado hasta que elijas bróker en Mercados.
 Bank of Canada numbers	Datos del Bank of Canada
-Only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to bankofcanada.ca. No account, nothing about you is sent.	Solo con Mercado abierto o el resumen de tarde activo y cuando deben haber datos nuevos: una consulta a bankofcanada.ca para tipos diarios y aproximadamente semanal para materias primas. Sin cuenta ni datos sobre ti.
+Only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to bankofcanada.ca. No account, nothing about you is sent.	Solo con Mercados abierto o el resumen de tarde activo y cuando deben haber datos nuevos: una consulta a bankofcanada.ca para tipos diarios y aproximadamente semanal para materias primas. Sin cuenta ni datos sobre ti.
 : one request to api.open-meteo.com with only its coordinates, 	: una consulta a api.open-meteo.com solo con sus coordenadas, 
 every 6 hours while the PC is on.	cada 6 horas con el PC encendido.
 about every 2 days (when less than a day of forecast is left).	cada 2 días aproximadamente, cuando queda menos de un día de pronóstico.
@@ -3980,7 +3980,7 @@ Exchange	Bolsa
 order	orden
 filled	ejecutada
 you own a slice	tienes una participación
-Look at today's close in Trading: the S&P and TSX are indexes.	Mira el cierre de hoy en Mercado: S&P y TSX son índices.
+Look at today's close in Trading: the S&P and TSX are indexes.	Mira el cierre de hoy en Mercados: S&P y TSX son índices.
 Why prices move	Por qué cambian los precios
 More buyers than sellers - for whatever reason.	Más compradores que vendedores, sea cual sea el motivo.
 What actually moves a share price during the day?	¿Qué mueve el precio de una acción durante el día?
@@ -4003,14 +4003,14 @@ Delayed by about 15 minutes	Retrasados unos 15 minutos
 Live to the second	En vivo, al segundo
 From yesterday only	Solo los de ayer
 Made up	Inventados
-Check the time stamp on any price you trade on: brokers can take orders while showing delayed quotes, and live data is often a subscription. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.	Comprueba la hora del precio: el bróker puede aceptar órdenes mostrando cotizaciones retrasadas y los datos en vivo suelen requerir suscripción. Las webs gratuitas suelen llevar unos 15 minutos de retraso. El resumen de Mercado usa datos al cierre.
+Check the time stamp on any price you trade on: brokers can take orders while showing delayed quotes, and live data is often a subscription. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.	Comprueba la hora del precio: el bróker puede aceptar órdenes mostrando cotizaciones retrasadas y los datos en vivo suelen requerir suscripción. Las webs gratuitas suelen llevar unos 15 minutos de retraso. El resumen de Mercados usa datos al cierre.
 Comparing a live price with a delayed one makes it look like something jumped - check the time stamp first.	Comparar un precio en vivo con otro retrasado puede parecer un salto. Comprueba primero la hora.
 live price	precio en vivo
 Free website	Web gratuita
 price, 15 min later	precio, 15 min después
 Summary	Resumen
 closing price, after 16:00	precio de cierre, después de 16:00
-Look at the source line under Trading's numbers.	Mira la fuente bajo las cifras de Mercado.
+Look at the source line under Trading's numbers.	Mira la fuente bajo las cifras de Mercados.
 Currencies and your money	Divisas y tu dinero
 A US stock in Canada is two bets: the stock and the dollar.	Una acción estadounidense en Canadá depende de la empresa y del dólar.
 You own a US stock that stays flat, but the US dollar falls against the Canadian dollar. In CAD your holding...	Tu acción estadounidense no cambia, pero el USD baja frente al CAD. En CAD, tu inversión...
@@ -4019,12 +4019,12 @@ Is worth more	Vale más
 Stays exactly the same	Vale exactamente lo mismo
 Doubles	Se duplica
 Anything priced in another currency moves with the exchange rate too. Banks and apps also add a spread - the difference between their rate and the daily rate - which is a fee.	Lo cotizado en otra moneda también varía con el tipo de cambio. Bancos y apps añaden un diferencial entre su tipo y el diario: es una comisión.
-"No-fee" conversions often hide the fee in a worse rate. Compare with the day's rate in Trading.	Las conversiones sin comisión suelen ocultarla en un tipo peor. Compara con el tipo diario de Mercado.
+"No-fee" conversions often hide the fee in a worse rate. Compare with the day's rate in Trading.	Las conversiones sin comisión suelen ocultarla en un tipo peor. Compara con el tipo diario de Mercados.
 Bank	Banco
 change 1,000 CAD to USD	cambiar 1,000 CAD a USD
 at 1.38 (daily rate 1.35)	a 1.38 (tipo diario 1.35)
 the 0.03 per dollar is the fee	los 0.03 por dólar son la comisión
-Check today's currencies in Trading.	Consulta las divisas de hoy en Mercado.
+Check today's currencies in Trading.	Consulta las divisas de hoy en Mercados.
 Spotting investment scams	Reconocer fraudes de inversión
 "Guaranteed", "urgent", "secret" and "send crypto" - walk away.	Garantizado, urgente, secreto y envía cripto: señales de alarma.
 A stranger promises guaranteed returns if you send crypto to their wallet. What is it?	Un desconocido promete rentabilidad garantizada si envías cripto a su cartera. ¿Qué es?
@@ -4052,7 +4052,7 @@ Buy (2 ms)	Comprar (2 ms)
 Buy (15 ms)	Comprar (15 ms)
 Buy (12 ms)	Comprar (12 ms)
 order received	orden recibida
-Turn on the live broker check in Trading.	Activa la prueba en vivo del bróker en Mercado.
+Turn on the live broker check in Trading.	Activa la prueba en vivo del bróker en Mercados.
 Bull and bear markets	Mercados alcistas y bajistas
 Up 20% from a low is a bull; down 20% from a high is a bear.	Subir 20% desde un mínimo es alcista; caer 20% desde un máximo, bajista.
 A bear market means prices have...	Un mercado bajista significa que los precios...
@@ -4141,7 +4141,7 @@ It only holds banks	Solo tiene bancos
 It never falls	Nunca cae
 Holding many companies (an index fund holds hundreds) means one bad company barely dents the whole. Spreading across countries and types of investment smooths things further.	Tener muchas empresas, cientos en un fondo indexado, reduce el efecto de una sola. Repartir entre países y tipos de inversión suaviza más las variaciones.
 Owning five tech companies isn't spread - they tend to fall together.	Cinco tecnológicas no diversifican mucho: tienden a caer juntas.
-Look at the S&P and TSX in Trading - each is hundreds of companies.	Mira S&P y TSX en Mercado: cada índice incluye cientos de empresas.
+Look at the S&P and TSX in Trading - each is hundreds of companies.	Mira S&P y TSX en Mercados: cada índice incluye cientos de empresas.
 Fees and time	Comisiones y tiempo
 A small yearly fee eats a big slice over decades.	Una pequeña comisión anual consume mucho durante décadas.
 Over 30 years, a 2% yearly fee instead of 0.2% leaves you with roughly...	En 30 años, una comisión anual del 2% en vez de 0.2% deja aproximadamente...
@@ -4916,3 +4916,97 @@ Share an idea	Comparte una idea
 Link copied	Enlace copiado
 free: finds out why your internet or PC is slow	gratis: averigua por qué tu internet o tu PC va lento
 Thank you for using it - that already helps more than you think.	Gracias por usarlo: eso ya ayuda más de lo que crees.
+
+DHCP & addressing	DHCP y direcciones
+SNMP & devices	SNMP y dispositivos
+Routing & path	Enrutamiento y ruta
+Ports & reachability	Puertos y alcance
+ICMP & ping	ICMP y ping
+HTTP, TLS & certificates	HTTP, TLS y certificados
+802.1X, RADIUS, TACACS, LDAP	802.1X, RADIUS, TACACS, LDAP
+VPN & privacy	VPN y privacidad
+Time (NTP)	Hora (NTP)
+Speed & quality	Velocidad y calidad
+Calls, games, streams & trading	Llamadas, juegos, streaming y trading
+Packets & captures	Paquetes y capturas
+Keys & encryption	Claves y cifrado
+Hardware nerds	Para expertos en hardware
+Reports & over time	Informes y evolución
+WHAT IT DOES	QUÉ HACE
+WHAT IT IS	QUÉ ES
+WHY YOU NEED IT	POR QUÉ LO NECESITAS
+WHY IT MATTERS	POR QUÉ IMPORTA
+IF IT WEREN'T THERE	SI NO ESTUVIERA
+WHAT TO DO	QUÉ HACER
+WHEN IT LOOKS BAD	CUANDO SE VE MAL
+CAN I CLOSE IT?	¿PUEDO CERRARLO?
+very sure	muy seguro
+fairly sure	bastante seguro
+likely	probable
+a first guess	una primera idea
+The PC	El PC
+updates, sync, indexing	actualizaciones, sincronización, indexado
+Bestie	Mejor amiga
+Bro code	Código de colegas
+Epic fantasy	Fantasía épica
+Space saga	Saga espacial
+Pirate	Pirata
+Noir detective	Detective noir
+Nature documentary	Documental de naturaleza
+Dark Ages	Edad Media
+Industrial	Industrial
+Revolution	Revolución
+Mission control	Control de misión
+Poetic	Poético
+Scientist	Científico
+Coder	Programador
+Gen-Z	Gen Z
+Philosopher: Marcus Aurelius (Stoic)	Filósofo: Marco Aurelio (estoico)
+Philosopher: Aristotle	Filósofo: Aristóteles
+Philosopher: Taoist (Laozi)	Filósofo: taoísta (Laozi)
+Philosopher: Confucius	Filósofo: Confucio
+Common to all	Común a todas
+Marcus Aurelius	Marco Aurelio
+Aristotle	Aristóteles
+Taoism	Taoísmo
+Confucius	Confucio
+Internet speed	Velocidad de internet
+Last test	Última prueba
+Only when you press the button	Solo cuando pulsas el botón
+When busy	Con carga
+lag under load	retraso con la línea ocupada
+this server: download only	este servidor: solo descarga
+n/a	n/d
+Automatic	Automático
+Speed test:	Prueba de velocidad:
+About 20 seconds, up to	Unos 20 segundos, hasta
+Never runs by itself.	Nunca se ejecuta sola.
+UPLOAD	SUBIDA
+DOWNLOAD	BAJADA
+NOT TESTED YET	AÚN SIN PROBAR
+TEST TO	PROBAR CONTRA
+Cloudflare's nearest data centre · download and upload	El centro de datos más cercano de Cloudflare · bajada y subida
+DOWNLOAD ONLY	SOLO BAJADA
+Speed test server	Servidor de la prueba de velocidad
+(name hidden - location is off)	(nombre oculto: la ubicación está desactivada)
+signal	señal
+link	enlace
+VPN on	VPN activa
+The {0} moved {1:0.0}% against the Canadian dollar this week.	El {0} se movió un {1:0.0}% frente al dólar canadiense esta semana.
+no key needed - a key gives more leagues	no hace falta clave: con una ves más ligas
+Football · ESPN's scoreboards (or your own key)	Fútbol · marcadores de ESPN (o tu propia clave)
+(no greeting read)	(no se leyó ningún saludo)
+STARTTLS refused	STARTTLS rechazado
+(no answer - the test couldn't start)	(sin respuesta: la prueba no pudo empezar)
+(no Remote Desktop answer)	(sin respuesta de Escritorio remoto)
+refused, or not Remote Desktop	rechazado, o no es Escritorio remoto
+(not found)	(no encontrado)
+port unreachable - closed	puerto inalcanzable: cerrado
+the host said so (ICMP)	el equipo lo dijo (ICMP)
+no DHCP server to ask	no hay servidor DHCP al que preguntar
+no address from DHCP	ninguna dirección por DHCP
+(a device)	(un dispositivo)
+what's my public address?	¿cuál es mi dirección pública?
+
+Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	Desactivado hasta que lo actives. Con esta página abierta, o mientras ves streaming si sigues a un equipo: resultados NHL, fútbol de los marcadores públicos de ESPN (o football-data.org con tu clave gratuita), críquet con tu clave gratuita y titulares de BBC Sport, como máximo cada 5 minutos.
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	Apagado hasta que lo actives. Luego, mientras esta página está abierta: marcadores de hockey de la NHL, fútbol de los marcadores públicos de ESPN (o football-data.org con tu clave gratuita), críquet con tu clave gratuita y los titulares de BBC Sport, como mucho cada 5 minutos.

@@ -135,7 +135,7 @@ namespace AdeeboMeter
         internal static string Kind(EvLog.Ev e)
         {
             string t = (e.Text ?? "").ToLowerInvariant();
-            if (e.Id == 8003 || e.Id == 15503 && t.Contains("disconnect")) return "disconnected";   // the tool run, 22 Nov: "has successfully disconnected" read as a sign-in that worked
+            if (e.Id == 8003 || (e.Id == 15503 && t.Contains("disconnect"))) return "disconnected";   // R2-142: 8003 is always a disconnect (WLAN AutoConfig); 15503 only when its text says so   // the tool run, 22 Nov: "has successfully disconnected" read as a sign-in that worked
             if (e.Id == 8002 || e.Id == 12013 || e.Id == 15502 || e.Id == 11006 || t.Contains("failed") || t.Contains("failure")) return "failed";
             if (e.Id == 8001 || e.Id == 12012 || e.Id == 15501 || t.Contains("succeeded") || t.Contains("successfully")) return "succeeded";
             return "started";
@@ -358,6 +358,7 @@ namespace AdeeboMeter
             run.Status = "Asking for " + d + "'s mail servers (MX)...";
             var msg = Toolkit.Query(dns, d, 15, true);
             var mx = msg == null ? new List<string[]>() : msg.Rrs.Where(r => r.Type == "MX" && r.Section == 1).Select(r => r.Data.Split(' ')).Where(x => x.Length == 2).OrderBy(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList();
+            if (mx.Count > 0 && mx.Any(x => x[1].Trim('.') == "") && mx.Any(x => x[1].Trim('.') != "")) mx = mx.Where(x => x[1].Trim('.') != "").ToList();   // R2-140: a null MX beside a real one (against RFC 7505) - the real ones are tested
             if (mx.Count > 0 && mx.All(x => x[1].Trim('.') == "")) { rows.Add(R(1, "MX", d + " accepts no mail - it publishes a \"null MX\" (RFC 7505)", "The owner says on purpose that nobody should send mail to this domain - nothing to test.", "m")); return rows; }   // tool-run 22 Nov: example.com showed "MX:  (0)"
             if (mx.Count == 0) { rows.Add(R(2, "MX", msg == null ? "no answer from " + dns : "no MX records - mail to " + d + " goes to the domain itself, or nowhere", "", "m")); return rows; }
             rows.Add(R(0, "MX", string.Join(" · ", mx.Take(5).Select(x => x[1].TrimEnd('.') + " (" + x[0] + ")")), "Senders try the lowest number first.", "m"));

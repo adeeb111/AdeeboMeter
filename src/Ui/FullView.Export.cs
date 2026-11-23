@@ -89,6 +89,7 @@ namespace AdeeboMeter
         // keyboard: the links under a picture (Ctrl+Shift+S save, C copy, Q phone)
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (keyData == (Keys.Control | Keys.Oemtilde)) { OpenNav("shell"); return true; }   // bug-hunt R2-036: Ctrl+` from anywhere, typing in a box included
             if (tbCanvas != null && tbCanvas.Visible && !visRect.IsEmpty && !tbBusy)
             {
                 if (keyData == (Keys.Control | Keys.Shift | Keys.S)) { SaveMenuAt(tbCanvas.PointToScreen(new Point((int)(20 * S), (int)Math.Min(tbCanvas.Height - 40 * S, visRect.Bottom)))); return true; }

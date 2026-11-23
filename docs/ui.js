@@ -34,7 +34,7 @@
     else if (th === 'dark' || th === 'light') html.setAttribute('data-theme', th);   // bug-hunt L-361: the app now writes Dark as 'dark' (it used to write '', which read as no choice)
     else if (th === 'system' || th === '') { if (th === 'system') html.setAttribute('data-theme', matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'); } } catch (e) {}
   if (self !== top) html.classList.add('inapp');
-  var localizedPath = /^\/(fr|bn)\//.exec(location.pathname);
+  var localizedPath = /^\/(fr|bn|es|ar)\//.exec(location.pathname);   // R2-086: Spanish and Arabic pages keep their own language
   var languagePrefix = localizedPath ? "/" + localizedPath[1] : "";
   var learnPath = languagePrefix + "/learn/";
   var S = [['learn', learnPath, 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files']];

@@ -20,7 +20,7 @@ bengali_links = {
     "To capture ping and traceroute results together,": "পিং ও ট্রেসরাউটের ফল একসঙ্গে সংগ্রহ করতে",
     "create a packet loss report for your internet provider": "ইন্টারনেট সেবাদাতার জন্য প্যাকেট লসের রিপোর্ট তৈরি করুন",
     "Compare memory use with CPU and disk activity using": "মেমরির ব্যবহার, CPU ও ডিস্কের কাজকর্ম একসঙ্গে দেখুন",
-    "AdeeboMeter’s Windows PC monitor": "আদীবওমিটারের Windows পিসি পর্যবেক্ষণে",
+    "AdeeboMeter’s Windows PC monitor": "AdeeboMeter-এর Windows পিসি পর্যবেক্ষণে",
     "To see how both change while you work,": "কাজের সময় দুটির পরিবর্তন দেখতে",
     "monitor internet speed on Windows": "Windows-এ ইন্টারনেটের গতি পর্যবেক্ষণ করুন",
     "If the connection keeps dropping, compare Wi-Fi with Ethernet and": "সংযোগ বারবার বিচ্ছিন্ন হলে Wi-Fi ও Ethernet তুলনা করুন এবং",
@@ -62,6 +62,10 @@ localized.update(route[:-10] for route in list(localized) if route.endswith("ind
 localized.update({"/learn/", "/", "/blog/", "/wifi-or-isp.html",
                   "/internet-speed-monitor.html", "/pc-monitoring.html", "/isp-report.html"})
 
+pending = {}
+def stage(path, text): pending[Path(path)] = text
+def staged(path): return pending.get(Path(path)) or Path(path).read_text(encoding="utf-8-sig")
+
 def translate(text):
     key = text.strip()
     translated = messages.get(key)
@@ -71,7 +75,7 @@ def translate(text):
             prefix, title, suffix = match.groups()
             translated_title = messages.get(title, title)
             if suffix == " | Learn | AdeeboMeter":
-                suffix = " | " + messages.get("Learn", "শিখুন") + " | " + ("AdeeboMeter" if LANGUAGE != "bn" else "আদীবওমিটার")
+                suffix = " | " + messages.get("Learn", {"bn": "শিখুন"}.get(LANGUAGE, "Learn")) + " | AdeeboMeter"   # R2-184 / R2-171: never Bengali in another language; the name stays AdeeboMeter
             translated = (prefix or "") + translated_title + (suffix or "")
     return text.replace(key, translated or key, 1) if key else text
 
@@ -88,8 +92,7 @@ def language_links(url):
         links.append(("es", SITE + "es/" + relative))
     if (DOCS / "ar" / file).exists():
         links.append(("ar", SITE + "ar/" + relative))
-    if not relative:
-        links.append(("x-default", SITE))
+    links.append(("x-default", english))   # R2-200: every page says where unmatched languages go - its English page
     return "".join(f'<link rel="alternate" hreflang="{code}" href="{href}">\n'
                    for code, href in links)
 
@@ -186,7 +189,9 @@ for source in files:
     parser.convert_charrefs = True
     parser.feed(content)
     rendered = "".join(parser.output)
-    title = re.search(r"<title>(.*?)</title>", rendered, re.S)[1]
+    mt = re.search(r"<title>(.*?)</title>", rendered, re.S)
+    if not mt: raise SystemExit("no <title> in " + str(source) + " - nothing was written")
+    title = mt[1]
     paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", rendered, re.S)
     paragraph = next((re.sub("<[^>]+>", "", p) for p in paragraphs if (LANGUAGE != "bn" or re.search("[অ-হ]", p))), "")
     description = html.escape(html.unescape(paragraph or title).strip()[:170], quote=True)
@@ -207,8 +212,9 @@ for source in files:
         }
         if LANGUAGE == "es":
             descriptions = spanish["descriptions"]
-        if LANGUAGE == "ar":
-            descriptions = {}   # the English description, translated by the dictionary above where it has it
+        if LANGUAGE == "ar":   # R2-104: the home and privacy pages carry a real sentence, not a stub
+            descriptions = {"index.html": "اعرف لماذا أصبح الإنترنت أو الكمبيوتر بطيئًا. افحص الكمبيوتر وWi-Fi والراوتر وDNS واتصال الإنترنت على Windows. مجاني، بلا إعلانات، ولا يحتاج صلاحيات المسؤول.",
+                            "privacy.html": "كيف يحمي AdeeboMeter بيانات تطبيق Windows، وكيف يقيس الموقع الزيارات عبر Cloudflare Web Analytics."}
         if LANGUAGE == "bn":
             descriptions = {"index.html": "আপনার ইন্টারনেট বা পিসি কেন ধীর, তা জানুন। Windows-এ পিসি, Wi-Fi, রাউটার ও ইন্টারনেট সংযোগ পরীক্ষা করুন। অ্যাডমিন অধিকার লাগে না।"}
         if relative in descriptions:
@@ -216,7 +222,7 @@ for source in files:
             rendered = re.sub(r'(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*',
                               lambda m: m[1] + description, rendered)
         if relative == "index.html":
-            title = {"fr": "AdeeboMeter — dépannage réseau gratuit pour Windows", "es": "AdeeboMeter — monitor de red gratuito para Windows", "bn": "আদীবওমিটার (AdeeboMeter) — Windows-এ ধীর ইন্টারনেট ও পিসি পরীক্ষা", "ar": "AdeeboMeter — أداة مجانية لفحص الشبكة على Windows"}[LANGUAGE]
+            title = {"fr": "AdeeboMeter — dépannage réseau gratuit pour Windows", "es": "AdeeboMeter — monitor de red gratuito para Windows", "bn": "AdeeboMeter — Windows-এ ধীর ইন্টারনেট ও পিসি পরীক্ষা", "ar": "AdeeboMeter — أداة مجانية لفحص الشبكة على Windows"}[LANGUAGE]
             rendered = re.sub(r"<title>.*?</title>", "<title>" + title + "</title>", rendered)
             rendered = re.sub(r'(<meta property="og:title" content=")[^"]*', lambda m: m[1] + title, rendered)
         localized_url = url.replace(SITE, SITE + LANGUAGE + "/")
@@ -249,8 +255,11 @@ for source in files:
                 rendered = re.sub(r"(<main[^>]*>)", lambda m: m[1] + '<nav class="language-links" aria-label="' + {"fr": "Langue", "es": "Idioma", "ar": "اللغة", "bn": "ভাষা"}[LANGUAGE] + '">' + english_link + "</nav>", rendered, count=1)
     target = DOCS / LANGUAGE / relative
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(rendered.rstrip() + "\n", encoding="utf-8", newline="\n")
-    english = source.read_text(encoding="utf-8-sig")
+    lt = json.loads((ROOT / "tools/learn-tags.json").read_text(encoding="utf-8")).get(LANGUAGE, {}).get(Path(relative).stem) if relative.startswith("learn/") else None
+    if lt:   # R2-202 / R2-203: the newest lessons' own one-line summary, translated
+        rendered = re.sub(r'(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*', lambda m: m[1] + html.escape(lt, quote=True), rendered)
+    stage(target, rendered.rstrip() + "\n")
+    english = staged(source)
     english = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|x-default)"[^>]*>\s*', "", english)
     variants = route_languages(url)
     def route_attributes(match):
@@ -258,16 +267,21 @@ for source in files:
         return '<html' + attrs + ' data-language-route="' + urlsplit(url).path + '" data-language-variants="' + variants + '">'
     english = re.sub(r"<html([^>]*)>", route_attributes, english, count=1)
     english = english.replace("</head>", language_links(url.replace(SITE, SITE + LANGUAGE + "/")) + "</head>")
-    source.write_text(english, encoding="utf-8", newline="\n")
+    stage(source, english)
     for other_language in ("bn", "fr", "es", "ar"):
         bengali = DOCS / other_language / relative
         if other_language == LANGUAGE or not bengali.exists():
             continue
-        existing = bengali.read_text(encoding="utf-8-sig")
+        existing = staged(bengali)
         existing = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|x-default)"[^>]*>\s*', "", existing)
         existing = re.sub(r"<html([^>]*)>", route_attributes, existing, count=1)
         existing = existing.replace("</head>", language_links(url) + "</head>")
-        bengali.write_text(existing, encoding="utf-8", newline="\n")
+        stage(bengali, existing)
+
+# R2-185: nothing is written until every page rendered - a failure part-way leaves the site exactly as it was
+for path, text in pending.items():
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 sitemap = DOCS / "sitemap.xml"
 xml = sitemap.read_text(encoding="utf-8")

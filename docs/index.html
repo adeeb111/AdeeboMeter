@@ -656,9 +656,9 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
   <h2 data-i18n="See it in half a minute">See it in half a minute</h2>
   <p class="sub"><span data-i18n="Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.">Recorded on a real Windows laptop. Both videos play from this site, so nothing loads from YouTube unless you click through.</span></p>
   <div class="vids">
-    <figure><video src="media/AdeeboMeter-trailer.mp4" poster="media/trailer-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="AdeeboMeter in half a minute"></video>
+    <figure><video src="media/AdeeboMeter-trailer.mp4" poster="/media/trailer-poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="AdeeboMeter in half a minute"></video>
       <figcaption><b><span data-i18n="AdeeboMeter in half a minute">AdeeboMeter in half a minute</span></b> · <span data-i18n="no sound">no sound</span> · <a href="https://www.youtube.com/watch?v=Toe-VHd6vBM" rel="noopener"><span data-i18n="Watch on YouTube ›">Watch on YouTube ›</span></a></figcaption></figure>
-    <figure><video src="media/AdeeboMeter-tour.mp4" poster="media/tour-poster.jpg" playsinline controls preload="none" aria-label="The full tour, with voice-over"></video>
+    <figure><video src="media/AdeeboMeter-tour.mp4" poster="/media/tour-poster.jpg" playsinline controls preload="none" aria-label="The full tour, with voice-over"></video>
       <figcaption><b><span data-i18n="The full tour">The full tour</span></b> · 1 min 23 s · with sound: monitoring, What's wrong?, 100+ tools, the Traffic Lab, the time machine and the security checkup · <a href="https://www.youtube.com/watch?v=KLuasFOYszs" rel="noopener"><span data-i18n="Watch on YouTube ›">Watch on YouTube ›</span></a></figcaption></figure>
   </div>
 </div></section>
@@ -868,7 +868,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
       <div class="card r"><h3 data-i18n="Security">Security</h3><p>One checkup: 42 defensive checks of this PC, your network and your sites. Reads only; you fix.</p></div>
       <div class="card"><h3 data-i18n="Network story">Network story</h3><p>Follow an app from your PC to the server, box by box, and time each step.</p></div>
       <div class="card"><h3 data-i18n="Time machine">Time machine</h3><p>Replay any minute, the week as a heatmap, data usage, calls, new devices.</p></div>
-      <div class="card"><h3 data-i18n="Learn">Learn</h3><p>90 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
+      <div class="card"><h3 data-i18n="Learn">Learn</h3><p>98 topics, two lines and a picture each — from "the layers" to svchost.</p></div>
       <div class="card b"><h3 data-i18n="Toolbox">Toolbox</h3><p>232 tools in six sections — Network, Devices, Traffic Lab, Engineer, Hardware nerds, Windows — by question or as one list, each with an Example to look at first. Type to find one.</p></div>
       <div class="card g" style="display:none"><h3>Hover the ? cursor</h3><p>300+ terms and 72 programs explained. Ctrl+K jumps to anything.</p></div>
     </div>
@@ -1123,7 +1123,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
   <h2><code style="font-size:.8em">AdeeboMeter.exe --selftest</code></h2>
   <div class="body" style="flex-direction:row;gap:2em;align-items:center">
     <div style="flex:1">
-      <p class="lead">86 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
+      <p class="lead">93 checks on your own PC, written to <code>AdeeboMeter-selftest.txt</code>:</p>
       <ul class="clean" style="margin-top:.8em"><li>Counters, socket tables and DNS reading work</li><li><b>Never listens</b></li><li>Bad destinations are rejected</li><li>The engineer view opens in under 2 seconds</li><li><b>No handle leaks</b> over 30 open/close cycles</li><li>Every label has an explanation</li><li>Parsers give the right answers on known samples: Wi-Fi, LLDP/CDP, event log, RTP, DNS records, SNMP and its v3 keys, MIB files</li><li>Memory stays inside the 80 MB budget</li><li><code>--deeptest</code>: hostile input into every tool, repeats to catch leaks, the UI under stress</li></ul>
     </div>
     <div class="hide-m" style="flex:.9;background:#151B26;border-radius:1em;padding:1.2em 1.4em;font-size:.82em;line-height:1.7;color:#C9D3E1" >

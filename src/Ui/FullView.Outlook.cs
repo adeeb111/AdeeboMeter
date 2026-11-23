@@ -133,12 +133,12 @@ namespace AdeeboMeter
             OlTextR(g, Cfg.History ? days + " " + L.T("days of History on this PC") : L.T("History is off"), Draw.fSmall, Theme.Muted, sr.Right - 20 * S, y + 20 * S);
             if (!Cfg.History) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it."), Draw.fBody, sb, new RectangleF(x + 20 * S, y + 60 * S, lw3 - 40 * S, 60 * S));
             else if (byHour == null) OlText(g, L.T("Reading your history..."), Draw.fBody, Theme.Muted, x + 20 * S, y + 60 * S);
-            else if (days < 2) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Not enough history yet to show a pattern - ask again in a few days."), Draw.fBody, sb, new RectangleF(x + 20 * S, y + 44 * S, lw3 - 40 * S, 24 * S));
+            else if (days < 5) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Not enough history yet to show a pattern - ask again in a few days.") + " (" + days + " / 5)", Draw.fBody, sb, new RectangleF(x + 20 * S, y + 44 * S, lw3 - 40 * S, 24 * S));   // R2-075: the same 5 days the rest of the page waits for
             else
             {
                 string words = LineHours.SlowWords(byHour, days);
-                using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(days < 5 ? L.T("Not enough history yet to show a pattern - ask again in a few days.") : words ?? L.T("No hour stands out: your line is about as quick all day."), Draw.fBody, sb, new RectangleF(x + 20 * S, y + 44 * S, lw3 - 40 * S, 24 * S));
-                var bars = new RectangleF(x + 20 * S, y + 76 * S, lw3 - 40 * S, 100 * S); double mx = byHour.Where(v => !double.IsNaN(v)).DefaultIfEmpty(1).Max(); int worst = Array.IndexOf(byHour, mx);
+                using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(words ?? L.T("No hour stands out: your line is about as quick all day."), Draw.fBody, sb, new RectangleF(x + 20 * S, y + 44 * S, lw3 - 40 * S, 24 * S));
+                var bars = new RectangleF(x + 20 * S, y + 76 * S, lw3 - 40 * S, 100 * S); double mx = byHour.Where(v => !double.IsNaN(v)).DefaultIfEmpty(1).Max();   // R2-176: the unused "worst hour" is gone
                 float bw = bars.Width / 24;
                 for (int i = 0; i < 24; i++) { if (double.IsNaN(byHour[i])) continue; float bh = (float)(byHour[i] / mx) * bars.Height; Theme.Fill(g, new RectangleF(bars.X + i * bw + 1.5f * S, bars.Bottom - bh, bw - 3 * S, bh), 2 * S, byHour[i] >= mx * 0.8 ? Theme.Blue : Kit.Mix(Theme.Card, Theme.Blue, 0.4f)); }
                 for (int i = 0; i <= 24; i += 6) OlText(g, LineHours.Clock(i % 24), Draw.fTiny, Theme.Muted, Math.Min(bars.X + i * bw, bars.Right - 40 * S), bars.Bottom + 6 * S);

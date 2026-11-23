@@ -80,7 +80,7 @@ namespace AdeeboMeter
             pal.StartPosition = FormStartPosition.Manual;
             var wa = Screen.FromControl(this).WorkingArea;   // bug-hunt L-157: kept on the screen, whatever the window's position
             pal.Location = new Point(Math.Max(wa.Left, Math.Min(Left + (Width - pal.Width) / 2, wa.Right - pal.Width)), Math.Max(wa.Top, Math.Min(Top + Sc(90), wa.Bottom - pal.Height)));
-            pal.FormClosed += delegate { openPal = null; var go = pal.Chosen; BeginInvoke((Action)delegate { pal.Dispose(); if (go != null && !IsDisposed) go(); }); };
+            pal.FormClosed += delegate { openPal = null; var go = pal.Chosen; try { if (IsDisposed || Disposing || !IsHandleCreated) { pal.Dispose(); return; } BeginInvoke((Action)delegate { pal.Dispose(); if (go != null && !IsDisposed) go(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; pal.Dispose(); } };   // R2-054: closing with the app
             pal.Show(this);
         }
         Palette openPal;
@@ -180,7 +180,7 @@ namespace AdeeboMeter
         void DrawRow(object s, DrawItemEventArgs e)
         {
             if (e.Index < 0) return; var it = (PalItem)list.Items[e.Index]; var g = e.Graphics; var b0 = e.Bounds;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, b0);
             if (it.Header)
             {

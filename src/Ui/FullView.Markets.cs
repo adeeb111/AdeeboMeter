@@ -88,6 +88,35 @@ namespace AdeeboMeter
             lock (Trading.k) { var r = Trading.Rates.FirstOrDefault(z => z.Code == c); if (r != null && !double.IsNaN(r.Prev)) return MarketData.Pct(r.Cad, r.Prev); }
             var s = MarketData.Get("FX:" + c); return s != null && s.Count > 1 ? MarketData.Pct(s.V[s.Count - 1], s.V[s.Count - 2]) : double.NaN;
         }
+        // Keep It Light (R2-068: the two ticks did nothing): once a minute at most - a Friday-evening note in the corner, and a note
+        // when a currency on your list moved more than 2% in a week (once a week each). From the numbers already kept; a fetch only
+        // when Markets' currency data is turned on.
+        DateTime casualAt = DateTime.MinValue, casualFriDone = DateTime.MinValue; readonly Dictionary<string, DateTime> casualMoved = new Dictionary<string, DateTime>(StringComparer.Ordinal);
+        void CasualTick()
+        {
+            if ((!Cfg.CasualFriday && !Cfg.CasualMoves) || (DateTime.UtcNow - casualAt).TotalSeconds < 60) return; casualAt = DateTime.UtcNow;
+            try
+            {
+                var now = DateTime.Now;
+                if (Cfg.CasualMoves)
+                    foreach (var c in MarketData.MyFx())
+                    {
+                        if (Cfg.TradeFx && !Policy.NoOnline) MarketData.Fetch("FX:" + c, null); else MarketData.Load("FX:" + c);
+                        double ch = FxOver(c, 7); DateTime was;
+                        if (double.IsNaN(ch) || Math.Abs(ch) <= 2 || (casualMoved.TryGetValue(c, out was) && (now - was).TotalDays < 7)) continue;
+                        casualMoved[c] = now;
+                        Alerts.Raise("casualfx", string.Format(CultureInfo.CurrentCulture, L.T("The {0} moved {1:0.0}% against the Canadian dollar this week."), c, ch), 0);
+                    }
+                if (Cfg.CasualFriday && now.DayOfWeek == DayOfWeek.Friday && now.Hour >= 17 && casualFriDone.Date != now.Date)
+                {
+                    foreach (var c in new[] { "USD" }.Concat(MarketData.MyFx())) MarketData.Load("FX:" + c);
+                    var facts = MkWeekFacts(); if (facts.Count == 0) return;
+                    casualFriDone = now;
+                    Alerts.Raise("casualfri", MkHeadline() + " - " + facts[0].Item2, 0);
+                }
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("keep it light: " + e.Message); }
+        }
         static double FxOver(string c, int days) { return MarketData.ChangeOver(MarketData.Get("FX:" + c), TimeSpan.FromDays(days)); }
         void MkText(Graphics g, string t, Font f, Color c, float x, float y) { using (var b = new SolidBrush(c)) g.DrawString(t, f, b, x, y); }
         void MkTextR(Graphics g, string t, Font f, Color c, float right, float y) { var s = g.MeasureString(t, f); using (var b = new SolidBrush(c)) g.DrawString(t, f, b, right - s.Width, y); }
@@ -139,7 +168,10 @@ namespace AdeeboMeter
         {
             string t = Ask(title, now.ToString("0.##", CultureInfo.CurrentCulture)); double v;
             if (t == null) return null;
-            return double.TryParse(t.Replace(",", "").Replace("$", "").Trim(), NumberStyles.Float, CultureInfo.CurrentCulture, out v) && v >= 0 && v < 1e12 ? (double?)v : null;
+            // R2-069: the group separator of this PC's own number format is dropped, never the decimal one ("2,5" stays 2.5 in French)
+            var nf = CultureInfo.CurrentCulture.NumberFormat; t = t.Replace("$", "").Replace("\u00a0", " ").Trim();
+            if (nf.NumberGroupSeparator != nf.NumberDecimalSeparator) t = t.Replace(nf.NumberGroupSeparator, "").Replace(nf.NumberGroupSeparator == "\u00a0" || nf.NumberGroupSeparator == "\u202f" ? " " : nf.NumberGroupSeparator, "");
+            return double.TryParse(t, NumberStyles.Float, CultureInfo.CurrentCulture, out v) && v >= 0 && v < 1e12 ? (double?)v : null;
         }
 
         // ---------- the week in plain words (pure facts from the numbers - never a forecast)
@@ -331,7 +363,7 @@ namespace AdeeboMeter
             string k = Ask(L.T("Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC"), "");
             if (k == null) return; k = k.Trim();
             if (k != "" && (k.Length < 10 || k.Length > 80 || k.Any(c => !char.IsLetterOrDigit(c)))) { AskCard.Show(this, L.T("That doesn't look like a key: letters and digits only."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-            Sports.SetKey("fmp", k); lock (MarketData.k) { MarketData.Quotes.Clear(); MarketData.QuoteNote = ""; } tradeCanvas.Invalidate();
+            Sports.SetKey("fmp", k); MarketData.QuoteKeyChanged(); lock (MarketData.k) { MarketData.Quotes.Clear(); MarketData.QuoteNote = ""; } tradeCanvas.Invalidate();
         }
 
         // ---------- World Markets: the day of every exchange in your time, the indexes by region, how they're linked

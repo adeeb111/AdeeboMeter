@@ -186,7 +186,7 @@ namespace AdeeboMeter
             {
                 Dictionary<string, List<string>> p; if (trPacks.TryGetValue(key, out p)) return p;
                 string raw = Knowledge.RawText("lines-" + key); p = raw == "" ? null : Parse(raw);
-                if (trPacks.Count >= 8) trPacks.Clear();   // the persona, the mood, Chill and Plain in one language
+                if (trPacks.Count >= 8) { var keep = new HashSet<string>(Chain(Persona).Select(x => x + "-" + code), StringComparer.Ordinal); foreach (var old in trPacks.Keys.Where(z => !keep.Contains(z)).ToList()) trPacks.Remove(old); }   // R2-190: the packs in use stay
                 trPacks[key] = p; return p;
             }
         }
@@ -281,10 +281,23 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (mineRead) return mine; mineRead = true;
-                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8)); else if (f.Exists) Program.Log("lines: " + MinePath + " is over 1 MB - your own lines are switched off until it's smaller (Import keeps 600)"); }   // bug-hunt L-318
+                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Clean(Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8))); else if (f.Exists) Program.Log("lines: " + MinePath + " is over 1 MB - your own lines are switched off until it's smaller (Import keeps 600)"); }   // bug-hunt L-318
                 catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
                 return mine;
             }
+        }
+        // R2-081: the same rules on load as on Import - a mine.txt edited or copied in by hand gets no special trust
+        static Dictionary<string, List<string>> Clean(Dictionary<string, List<string>> d)
+        {
+            if (d == null) return null; var o = new Dictionary<string, List<string>>(StringComparer.Ordinal); int dropped = 0;
+            foreach (var kv in d)
+            {
+                var l = new List<string>();
+                foreach (var t0 in kv.Value) { string t = Bidi.Replace(t0 ?? "", "").Trim(); if (t.Length == 0 || t.Length > 200 || Regex.IsMatch(t, @"\{(?!v\}|addr\}|Addr\})[^}]*\}")) { dropped++; continue; } l.Add(t); }
+                if (l.Count > 0) o[kv.Key] = l;
+            }
+            if (dropped > 0) Program.Log("lines: " + dropped + " of your own line(s) in mine.txt skipped (over 200 characters, or an unknown {placeholder})");
+            return o;
         }
         public static int MineCount { get { var m = Mine(); return m == null ? 0 : m.Values.Sum(l => l.Count); } }
         // a line of yours for this key, if you wrote one (picked like the others)

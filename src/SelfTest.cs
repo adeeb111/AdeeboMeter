@@ -74,7 +74,7 @@ namespace AdeeboMeter
                 fv.Close(); fv.Dispose();
             }
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-perf.txt"), sb.ToString());
-            return 0;
+            return sb.ToString().Contains("SLOW FIRST PAINT") ? 1 : 0;   // R2-019 / R2-193: the exit code says so
         }
         // --deeptest [--local] [--minutes N]: the hardening run (see FullView.DeepTest.cs) - written to AdeeboMeter-deeptest.txt
         public static int Deep(bool net, int minutes)
@@ -110,7 +110,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { sb.AppendLine(Directory.Exists(file) ? "FAILED: --mibtest takes one saved Net-SNMP walk file (snmpwalk output), not a folder - your MIB files go in the MIB folder" : "FAILED: " + e); File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString());
-            return 0;
+            return sb.ToString().Split('\n').Length <= 2 ? 1 : 0;   // R2-193: a walk that gave nothing is a failure, for any script that checks
         }
         public static int Run()
         {
@@ -128,8 +128,8 @@ namespace AdeeboMeter
             float sc; using (var g = Graphics.FromHwnd(IntPtr.Zero)) sc = g.DpiX / 96f;
             sb.AppendLine("      display scale " + (sc * 100).ToString("0", CultureInfo.CurrentCulture) + "%");
             T("fonts / drawing init", () => Draw.Init(sc));
-            T("interfaces", () => { M.RefreshInterfaces(); lock (M.L) sb.AppendLine("      adapter=" + M.AdapterKind + " gateway=" + (M.Gateway != "" ? "yes" : "none") + " vpn=" + M.VpnUp + " mtu=" + M.PrimaryMtu); });
-            T("counters x3", () => { for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); } sb.AppendLine("      cpu=" + Draw.Fmt(M.Cpu.Last, "0", "%") + " mem=" + Draw.Fmt(M.Mem.Last, "0", "%") + " disk=" + Draw.Fmt(M.Disk.Last, "0", "%")); });
+            T("interfaces", () => { M.RefreshInterfaces(); lock (M.L) { sb.AppendLine("      adapter=" + M.AdapterKind + " gateway=" + (M.Gateway != "" ? "yes" : "none") + " vpn=" + M.VpnUp + " mtu=" + M.PrimaryMtu); if (M.AdapterKind == null || M.Gateway == null || M.PrimaryMtu < 0 || M.PrimaryMtu > 65535) throw new InvalidOperationException("adapter fields not set"); } });
+            T("counters x3", () => { for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); } sb.AppendLine("      cpu=" + Draw.Fmt(M.Cpu.Last, "0", "%") + " mem=" + Draw.Fmt(M.Mem.Last, "0", "%") + " disk=" + Draw.Fmt(M.Disk.Last, "0", "%")); foreach (var v in new[] { M.Cpu.Last, M.Mem.Last }) if (!double.IsNaN(v) && (v < 0 || v > 100.5)) throw new InvalidOperationException("a percentage out of 0-100: " + v); if (!Program.IsWine && double.IsNaN(M.Mem.Last)) throw new InvalidOperationException("no memory reading after 3 ticks"); });
             T("tcp table (every state known)", () =>
             {
                 var l = Tables.Tcp(true, new Dictionary<int, string>());
@@ -138,7 +138,7 @@ namespace AdeeboMeter
                 foreach (var c in odd.Take(5)) sb.AppendLine("      odd: " + c.State + "  " + c.Proto + " " + c.Local + " -> " + c.Remote + "  pid " + c.Pid);
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
-            T("udp table", () => sb.AppendLine("      " + Tables.Udp().Count + " sockets"));
+            T("udp table", () => { var u = Tables.Udp(); sb.AppendLine("      " + u.Count + " sockets"); if (u == null) throw new InvalidOperationException("no list"); });
             T("dns cache names (offline)", () =>
             {
                 M.RefreshIpNames(); lock (M.L) sb.AppendLine("      " + M.IpNames.Count + " cached addresses");
@@ -330,19 +330,20 @@ namespace AdeeboMeter
                 foreach (var s in good) if (!DestCheck.Parse(s, out h, out p, out t, out e)) throw new InvalidOperationException("rejected good input: " + s);
                 foreach (var s in bad) if (DestCheck.Parse(s, out h, out p, out t, out e)) throw new InvalidOperationException("accepted bad input: " + s);
             });
-            T("gateway ping", () => { string gw; lock (M.L) gw = M.Gateway; sb.AppendLine("      " + Draw.Fmt(Monitor.PingMs(gw), "0", " ms")); });
-            T("health check", () => { var r = HealthCheck.Run(M); sb.AppendLine("      " + r.Count + " checks: " + string.Join(", ", r.Select(x => x[1] + "=" + x[0]))); });
+            T("gateway ping", () => { string gw; lock (M.L) gw = M.Gateway; double pm = Monitor.PingMs(gw); sb.AppendLine("      " + Draw.Fmt(pm, "0", " ms")); if (!double.IsNaN(pm) && (pm < 0 || pm > 5000)) throw new InvalidOperationException("ping time out of range: " + pm); });
+            T("health check", () => { var r = HealthCheck.Run(M); sb.AppendLine("      " + r.Count + " checks: " + string.Join(", ", r.Select(x => x[1] + "=" + x[0]))); if (r.Count == 0 || r.Any(x => x == null || x.Length < 2 || x[1] == "")) throw new InvalidOperationException("an empty or unnamed check"); });
             T("destination check on gateway (local only)", () =>
             {
                 string gw; lock (M.L) gw = M.Gateway; if (gw == "") { sb.AppendLine("      skipped: no gateway"); return; }
                 var r = new DestResult(); DestCheck.Run(gw + ":80", r, delegate { }, M);
                 if (!r.Done) throw new InvalidOperationException("did not finish");
                 sb.AppendLine("      steps=" + string.Join(" ", r.Lv) + "  verdict=" + Draw.Trunc(r.Verdict, 70));
+                if (string.IsNullOrEmpty(r.Verdict)) throw new InvalidOperationException("finished with no verdict");
             });
             T("render chip / card / detail", () =>
             {
                 var snap = new Snap(); snap.Details["x"] = new Detail { Title = "t", Note = "n" }; snap.Details["x"].Lines.Add(new[] { "a", "b", "0" });
-                using (Draw.Chip(snap, 0.5)) { } using (Draw.Card(snap, new Dictionary<string, RectangleF>())) { } using (Draw.DetailCard(snap.Details["x"])) { }
+                using (var c1 = Draw.Chip(snap, 0.5)) using (var c2 = Draw.Card(snap, new Dictionary<string, RectangleF>())) using (var c3 = Draw.DetailCard(snap.Details["x"])) foreach (var b in new[] { c1, c2, c3 }) if (b == null || b.Width < 8 || b.Height < 8) throw new InvalidOperationException("a picture came out empty");
             });
             T("engineer view opens in under 2 s", () =>
             {
@@ -398,6 +399,7 @@ namespace AdeeboMeter
                     GC.Collect(); GC.WaitForPendingFinalizers(); Application.DoEvents();
                     int gdi1 = Native.GetGuiResources(me, 0), usr1 = Native.GetGuiResources(me, 1);
                     sb.AppendLine("      after warm-up: " + before + "   after 30 more: " + res());
+                    if (gdi0 == 0) { if (!Program.IsWine) throw new InvalidOperationException("couldn't read the GDI / USER counts - the leak check would measure nothing"); sb.AppendLine("      GDI / USER not measured (Wine gives no counts) - only memory was checked"); }   // R2-022: said, never a silent pass
                     if (gdi0 > 0 && (gdi1 - gdi0 > 10 || usr1 - usr0 > 10))
                     {
                         // A real leak grows with every open; a one-time allocation (a cache filled on a later open - the
@@ -1106,17 +1108,18 @@ namespace AdeeboMeter
                 Action<int> pump = ms => { var until = DateTime.UtcNow.AddMilliseconds(ms); while (DateTime.UtcNow < until) { Application.DoEvents(); System.Threading.Thread.Sleep(15); } };
                 // the face and the typing (no window needed)
                 Typing.Show("sit", "first line", null); if (Typing.Show("sit", "second line", null) != "second line") bad.Add("typing: a line changing again within 15 s types again (should show whole)");
+                var faceWas = BuddyReact.Save();   // R2-049: the real face state is put back after
                 BuddyReact.Now(0); BuddyReact.Now(2); if (BuddyReact.Now(2) != "shout") bad.Add("face: an outage starting doesn't shout");
                 if (BuddyReact.Now(0) != "love") bad.Add("face: coming back up isn't love");
                 BuddyReact.Set("happy", 0.2); System.Threading.Thread.Sleep(300); if (BuddyReact.Now(0) != null) bad.Add("face: a reaction doesn't settle back");
                 BuddyReact.ToolDone(new List<string[]> { new[] { "0", "a", "b" }, new[] { "2", "c", "d" } }, false); if (BuddyReact.Now(0) != "tears") bad.Add("face: a red result isn't tears");
-                BuddyReact.Set("smug", 0);
+                BuddyReact.Restore(faceWas);
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Size = new Size(1280, 860); fv.Show(); pump(1500);
                     try
                     {
-                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone" };
+                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "sports", "settings", "about", "points", "shell" };   // bug-hunt R2-020: every page, settings/about/points/shell included
                         foreach (var dark in new[] { false, true })
                         {
                             Theme.Apply(dark); fv.Invalidate(true);
@@ -1133,7 +1136,7 @@ namespace AdeeboMeter
                                     {
                                         var sw = System.Diagnostics.Stopwatch.StartNew(); c.Refresh(); sw.Stop();
                                         if (sw.ElapsedMilliseconds > 400) bad.Add(at + ": " + c.Name + " takes " + sw.ElapsedMilliseconds + " ms to draw");
-                                        if (c.AutoScrollMinSize.Width > c.ClientSize.Width + 4) bad.Add(at + ": " + c.Name + " is wider than the window (" + c.AutoScrollMinSize.Width + " > " + c.ClientSize.Width + ")");
+                                        { float wd = fv.TestWidest(c); if (wd > c.ClientSize.Width + 4) bad.Add(at + ": " + c.Name + " runs past the window (something at " + Math.Round(wd) + " > " + c.ClientSize.Width + ")"); }
                                     }
                                     if (sz.Width != 1280 || dark) continue;   // idle redraw: once per page is enough
                                     foreach (var c in cs) { c.Paints = 0; c.PaintArea = 0; }
@@ -1149,28 +1152,30 @@ namespace AdeeboMeter
                         Theme.Apply(false);
                         // the other languages: longer words are where text runs off the page - a new window per language, as after a switch
                         string oldL = L.Code;
-                        foreach (var lc in new[] { "fr", "es", "bn", "ar" })
+                        // R2-195: Arabic (the right-to-left one) also at full HD and in the dark theme
+                        foreach (var lcv in new[] { "fr", "es", "bn", "ar", "ar:1920:dark" })
                         {
+                            var lcp = lcv.Split(':'); string lc = lcp[0]; var lsz = lcp.Length > 1 ? new Size(1920, 1080) : new Size(1024, 700); bool ldark = lcp.Length > 2;
                             try
                             {
-                                L.Use(lc); Draw.UseLanguageFonts();
-                                var lv = new FullView(icon, M); lv.WindowState = FormWindowState.Normal; lv.Opacity = 0; lv.ShowInTaskbar = false; lv.Size = new Size(1024, 700); lv.Show(); pump(800);
+                                L.Use(lc); Draw.UseLanguageFonts(); if (ldark) Theme.Apply(true);
+                                var lv = new FullView(icon, M); lv.WindowState = FormWindowState.Normal; lv.Opacity = 0; lv.ShowInTaskbar = false; lv.Size = lsz; lv.Show(); pump(800);
                                 try
                                 {
                                     foreach (var pg in pages)
                                     {
-                                        try { lv.TestShow(pg); } catch (Exception e) { bad.Add(lc + " " + pg + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
+                                        try { lv.TestShow(pg); } catch (Exception e) { bad.Add(lcv + " " + pg + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
                                         pump(400);
                                         foreach (var c in lv.TestCanvases())
                                         {
-                                            try { c.Refresh(); } catch (Exception e) { bad.Add(lc + " " + pg + ": drawing threw " + e.GetType().Name); }
-                                            if (c.AutoScrollMinSize.Width > c.ClientSize.Width + 4) bad.Add(lc + " " + pg + ": " + c.Name + " is wider than the window");
+                                            try { c.Refresh(); } catch (Exception e) { bad.Add(lcv + " " + pg + ": drawing threw " + e.GetType().Name); }
+                                            if (lv.TestWidest(c) > c.ClientSize.Width + 4) bad.Add(lcv + " " + pg + ": " + c.Name + " runs past the window");
                                         }
                                     }
                                 }
                                 finally { lv.Close(); lv.Dispose(); }
                             }
-                            finally { L.Use(oldL); Draw.UseLanguageFonts(); }
+                            finally { L.Use(oldL); Draw.UseLanguageFonts(); if (ldark) Theme.Apply(false); }
                         }
                         // a real freeze shows the card, and it goes when the window answers
                         fv.TestShow("overview"); pump(500); int shown0 = FreezeCard.Shown;
@@ -1255,9 +1260,21 @@ namespace AdeeboMeter
                         foreach (var id in Lines.Moods.Concat(Lines.Personas.Select(p => p[0])))
                         {
                             string raw = Knowledge.RawText("lines-" + id + "-" + code); if (raw == "") { bad.Add(id + "-" + code + ": no file"); continue; }
-                            bad.AddRange(Lines.Check(id + "-" + code, raw)); n += Lines.Parse(raw).Values.Sum(l => l.Count);
+                            bad.AddRange(Lines.Check(id + "-" + code, raw)); var tp = Lines.Parse(raw); n += tp.Values.Sum(l => l.Count);
+                            // R2-083: measured against the English file - most lines differ from English (Spanish too), a key whose every
+                            // English line has {v} keeps it, and the file isn't much shorter than the English one
+                            var ep = Lines.Parse(Knowledge.RawText("lines-" + id)); int en = ep.Values.Sum(l => l.Count), tn = tp.Values.Sum(l => l.Count), same = 0, all = 0;
+                            foreach (var kv in tp)
+                            {
+                                List<string> el; if (!ep.TryGetValue(kv.Key, out el)) continue;
+                                var es = new HashSet<string>(el, StringComparer.OrdinalIgnoreCase); foreach (var t in kv.Value) { all++; if (es.Contains(t)) same++; }
+                                if (el.Count > 0 && el.All(t => t.Contains("{v}")) && kv.Value.Any(t => !t.Contains("{v}"))) bad.Add(id + "-" + code + "/" + kv.Key + ": a line lost {v}");
+                            }
+                            if (all > 0 && same * 2 > all) bad.Add(id + "-" + code + ": " + same + " of " + all + " lines are still English");
+                            if (en > 0 && tn < en * 0.9) bad.Add(id + "-" + code + ": " + tn + " lines against " + en + " in English");
                         }
                         L.Use(code); if (L.Code != code) { bad.Add(code + ": language didn't load"); continue; }
+                        if (L.Count < 3000) bad.Add(code + ": the app's table has only " + L.Count + " lines");   // R2-177 / R2-182: a gutted table fails here
                         foreach (var p in Lines.Personas.Select(z => z[0]))
                         {
                             Lines.Persona = p;
@@ -1658,15 +1675,21 @@ namespace AdeeboMeter
             });
             T("languages: embedded previews load and English stays the fallback", () =>
             {
-                var fr = L.Parse(Knowledge.RawText("lang-fr"));
-                if (fr.Count < 250) throw new InvalidOperationException("French table has only " + fr.Count + " lines");
-                if (L.LastDupes.Count > 0) throw new InvalidOperationException("French table names a line twice: " + string.Join(" | ", L.LastDupes.Take(3)));
-                foreach (var kv in fr)
+                // R2-102: every table, not only French - no line twice, none empty, no number lost (Bengali and Arabic digits count)
+                foreach (var lc in new[] { "fr", "es", "ar", "bn" })
                 {
-                    if (kv.Value.Trim().Length == 0) throw new InvalidOperationException("empty translation: " + kv.Key);
-                    // numbers and placeholders must survive translation (a "20 pings" that becomes "pings" is a wrong translation)
-                    var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
-                    foreach (var n in nums) if (kv.Value.IndexOf(n, StringComparison.Ordinal) < 0) throw new InvalidOperationException("number " + n + " lost in: " + kv.Value);
+                    var tb = L.Parse(Knowledge.RawText("lang-" + lc));
+                    if (tb.Count < 2000) throw new InvalidOperationException(lc + " table has only " + tb.Count + " lines");
+                    if (L.LastDupes.Count > 0) throw new InvalidOperationException(lc + " table names a line twice: " + string.Join(" | ", L.LastDupes.Take(3)));
+                    if (L.LastBad > 0) throw new InvalidOperationException(lc + " table has " + L.LastBad + " line(s) without a tab");
+                    foreach (var kv in tb)
+                    {
+                        if (kv.Value.Trim().Length == 0) throw new InvalidOperationException(lc + ": empty translation: " + kv.Key);
+                        // numbers must survive translation (a "20 pings" that becomes "pings" is a wrong translation)
+                        var vd = new string(kv.Value.Select(ch => ch >= '\u09e6' && ch <= '\u09ef' ? (char)('0' + ch - '\u09e6') : ch >= '\u0660' && ch <= '\u0669' ? (char)('0' + ch - '\u0660') : ch).ToArray());
+                        var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
+                        foreach (var n in nums) if (vd.IndexOf(n, StringComparison.Ordinal) < 0 && !(lc == "ar" && n == "2")) /* Arabic's dual: "two hours" is one word */ throw new InvalidOperationException(lc + ": number " + n + " lost in: " + kv.Value);
+                    }
                 }
                 var expected = new Dictionary<string, string> {
                     { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }
@@ -1869,7 +1892,7 @@ namespace AdeeboMeter
                     if (all.IndexOf(must, StringComparison.Ordinal) < 0) throw new InvalidOperationException("missing event: " + must);
                 if (h.IndexOf("Wi-Fi signal fell to 40%", StringComparison.Ordinal) < 0) throw new InvalidOperationException("wrong hint: " + h);
             });
-            T("Ctrl+Alt+A shortcut is free", () =>
+            T("Ctrl+Alt+A shortcut (a note about this PC, never a failure)", () =>
             {
                 bool running = Process.GetProcessesByName("AdeeboMeter").Length > 1;
                 if (running) { sb.AppendLine("      skipped: AdeeboMeter is running and holds it"); return; }
@@ -1927,7 +1950,7 @@ namespace AdeeboMeter
             foreach (var c in r.CardsCopy()) { sb.AppendLine("  [" + c.Key + "]"); foreach (var row in c.Value) sb.AppendLine("     " + row[0] + ": " + (row.Length > 1 ? row[1] : "")); }
             AppendStory(sb, r);
             File.AppendAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-check.txt"), sb.ToString() + "\n");
-            return 0;
+            return !r.Done || string.IsNullOrEmpty(r.Verdict) ? 1 : 0;   // R2-193
         }
 
         // Feeds tshark field lines from a file through the live-capture parser and prints what the Live tab would show.
@@ -1943,7 +1966,7 @@ namespace AdeeboMeter
             sb.AppendLine("-- expert");
             foreach (var e in v.Expert) sb.AppendLine(e[1] + " = " + e[2]);
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-parsetest.txt"), sb.ToString());
-            return 0;
+            return n > 0 && lc.Dropped >= n ? 1 : 0;   // R2-193: every line malformed is a failure
         }
     }
 }

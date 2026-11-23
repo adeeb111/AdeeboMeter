@@ -27,7 +27,7 @@ BGP and who owns the network	BGP ومالك الشبكة
 BYTES PER APP (SINCE START)	بايت لكل تطبيق (من البداية)
 Back to corner	العودة إلى الزاوية
 Background checks	فحوصات في الخلفية
-Balanced	متوازن
+Balanced	Balanced
 Bigger	أكبر
 Bound / listening	مقيد / يستمع
 CALL QUALITY (TEAMS AND OTHER CALLS)	جودة المكالمات (الفريقات وغيرها من المكالمة)
@@ -46,7 +46,7 @@ Companion	المساعد
 Computer feels slow	الكمبيوتر يبدو بطيئاً
 Connections	الاتصالات
 Corner widget size	حجم ويدجت الزاوية
-Dark	داكن
+Dark	Dark
 Delete all saved history now	احذف كل السجل المحفوظ
 Details	التفاصيل
 EXPERT INFO (WIRESHARK)	المعلومات الخبيرة (WIRESHARK)
@@ -100,7 +100,7 @@ Keep history for	مدة حفظ السجل
 Lag graph for streaming	الرسم البياني للتدفق
 Language	اللغة
 Learn	تعلّم
-Light	فاتح
+Light	Light
 Live	مباشر
 Live capture	التقاط مباشر
 Live capture stops after	يتوقف الالتقاط المباشر بعد
@@ -178,7 +178,7 @@ TCP / IP HEALTH	TCP / صحة IP
 TERMS USED IN ADEEBOMETER	الشروط المستخدمة في ADEBEOMETER
 THIS PC	هذا الحاسوب
 TODAY	اليوم
-TOP BY CPU	TOP BY CPU
+TOP BY CPU	الأكثر استهلاكًا للمعالج
 TOP BY MEMORY	أعلى في الذاكرة
 Teams call detection	الفريق يطلب الكشف
 Teams, Zoom, WhatsApp cut out	الفريق، زوم، واتس آب قطع
@@ -243,7 +243,7 @@ Find any tool (mtu, dns, wifi, slow...)	إبحث عن أي أداة (مطو، د
 Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot	وصفه - على سبيل المثال يوتيوب يستمر في التوقف، وتدعو التجميد، الكمبيوتر المحمول ساخن
 Check a destination sends only what you ask for, to where you ask, when you press Check.	تحقق وجهة يرسلها فقط ما تطلبينه، إلى المكان الذي تسألينه، عندما تضغط على "تحقق".
 Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.	Ctrl+K يقفز إلى أي شيء. التفاصيل (في الأعلى اليمنى) تظهر القيم الخام ومصادر وأوقات.
-DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	لا يتم حفظ DNS في التاريخ (النقطة الرمادية). كل رقم هو متوسط دقيقة واحدة من AdeeboMeter الخاص من ملف ذلك اليوم على هذا الكمبيوتر.
+DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	DNS لا يُحفظ في السجل (النقطة الرمادية). كل رقم هو متوسط الدقيقة الذي حسبه AdeeboMeter نفسه من ملف ذلك اليوم على هذا الكمبيوتر.
 Each added game's best region, up to this many. Never more than 10 probes a second in total.	كلّ إضافة أفضل منطقة لعبة، حتى هذا العدد. لا أكثر من 10 تُسَمّع ثانية في الإجمال.
 Every night anything older goes (rolling). 90 days is still only about 1.5 MB.	كل ليلة شيء أكبر يذهب (تدوير). أيام 90 لا تزال فقط حول 1.5 MB.
 HOP	(هوب)
@@ -251,7 +251,7 @@ HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE 
 Needs a newer Wireshark (3.0 or later).	يحتاج إلى Wireshark أحدث (3.0 أو لاحقاً).
 No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	لا سحابة، لا حساب، لا قياسات متريّة، لا تحديثات، لا إعلانات، لا تقارير حادث. لا يستمع أبداً إلى المنفذ ويتحقق من ذلك بنفسه كلما بدأ
 Nothing is talking to the internet right now - type a site above.	لا شيء يتحدث إلى الإنترنت الآن - اكتب موقع أعلاه.
-Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	التحقق من قبل الاتصال: 20 يضع على جهاز التوجيه الخاص بك و 20 على 1.1.1.1. اختبار السرعة DNS: حول البحث عن اسم 40 في DNS ، 1.1.1.1 و 8.8.8.8 وال 9.9.9.9. اختبار المشي: 20 يضع جهاز التوجيه الخاص بك في كل غرفة. فقط عندما تضغط عليهم
+Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	فحص ما قبل المكالمة: 20 رسالة ping إلى الراوتر و20 إلى 1.1.1.1. اختبار سرعة DNS: نحو 40 استعلامًا عن أسماء إلى DNS الخاص بك و1.1.1.1 و8.8.8.8 و9.9.9.9. اختبار التجوّل: 20 رسالة ping إلى الراوتر في كل غرفة. فقط عندما تضغط عليها.
 Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent.	يدير نفس التحقق مثل التحقق من وجهة: الاسم، الاتصال، القفل، البايت الأول والطريق إلى هناك. لا شيء آخر يتم إرساله
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	يرسل فقط عناوين IP عامة إلى RIPEstat و PeeringDB، ثم يطفئ نفسه. الإعدادات > البحث على الإنترنت لديه التوقيت.
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	تلك الدقيقة · مقارنة مع متوسط قيمة اليوم
@@ -438,7 +438,7 @@ Certificate commands (certutil, openssl)	أوامر الشهادة (certutil, op
 RADIUS - is the server alive?	RADIUS — هل الخادم يستجيب؟
 TACACS+ - is the server there?	TACACS+ - هل الخادم هناك؟
 Neighbours (ARP table)	الجيران (ميزة ARP)
-Your own router (hairpin)	جهاز التوجيه الخاص بك
+Your own router (hairpin)	الراوتر
 Ping sweep	مسح البينغ
 Wi-Fi roams and drops (24 h)	التنقّل بين نقاط Wi-Fi والانقطاعات (24 h)
 DHCP lease and IPv6 lifetimes	تأجير DHCP ومدة حياة IPv6
@@ -484,7 +484,7 @@ buffer full - packets dropped	عازفة كاملة - تسقط الحزم
 window (packets)	نافذة (حزم)
 round trips	رحلات ذهاب وإياب
 loss	الخسارة
-the queue in your router	الصف في جهاز التوجيه الخاص بك
+the queue in your router	الصف في الراوتر
 of waiting	من الانتظار
 buffer edge - later than this is too late to play	حافة المضخة - بعد ذلك الوقت فات الأوان للعب
 how late each packet arrives	كم تأخر وصول كل حزمة
@@ -506,14 +506,14 @@ Network jitter	صدمة الشبكة
 Jitter buffer	مخزن تعويض التذبذب
 Network delay	تأخير الشبكة
 A far-away old device	جهاز قديم بعيد
-Devices near the router	الأجهزة بالقرب من جهاز التوجيه
+Devices near the router	الأجهزة بالقرب من الراوتر
 Busy neighbours on your channel	جيران مشغولون على قناتك
 Router	الراوتر
 Name	الاسم
 Packet you send	الحزمة التي ترسل
 On the way	في الطريق
 Don't Fragment	لا تقطع
-The tunnel's router	جهاز توجيه النفق
+The tunnel's router	راوتر النفق
 Where to	الوجهة
 Ping	اختبار Ping
 Server tick rate	معدل إيقاع الخادم
@@ -535,7 +535,7 @@ on (TCP, most traffic)	على (TCP، معظم حركة المرور)
 off	إغلاق
 says "too big"	يقول "كبير جداً"
 is blocked from saying it	تم منعها من قولها
-First come, first served (most home routers)	أول من يأتي أولاً، يتم تقديم الخدمة أولاً (معظم جهاز توجيه المواقع)
+First come, first served (most home routers)	أول من يأتي أولاً، يتم تقديم الخدمة أولاً (معظم راوتر المواقع)
 Fair queuing (each flow takes turns)	الصف العادل (كل تدفق يتحول)
 Priority for marked calls (EF)	الأولوية للمكالمات المسجلة (EF)
 Clear my losses	مسح محاولاتي غير الناجحة
@@ -641,7 +641,7 @@ Cause a timeout (set clicks to hard loss, then click the graph) and watch slow s
 Set the round trip to 150 ms or more, then find the loss that still lets one download reach 25 Mbps.	اضبط زمن الذهاب والإياب على 150 ms أو أكثر، ثم حدّد نسبة فقد الحزم التي تسمح بتنزيل واحد بسرعة 25 Mbps.
 Keep the backup sending at 100% or more and get the ping under 40 ms.	أبقِ إرسال النسخ الاحتياطي عند 100% أو أكثر، وخفّض زمن Ping إلى أقل من 40 ms.
 With 30 ms of jitter or more, reach a call score of 4.0 with the smallest buffer that does it.	مع تذبذب يبلغ 30 ms أو أكثر، حقّق تقييم مكالمة 4.0 باستخدام أصغر مخزن يحقّق ذلك.
-Keep a far-away old device on and rescue the near laptops: switch the router to airtime fairness and see how much faster they get.	ابق جهازًا قديمًا بعيدًا مشغولاً و انقاذ أجهزة الكمبيوتر المحمولة القريبة: قم بتغيير جهاز التوجيه إلى نظام العدالة في الوقت الهوائي ومعرفة مدى سرعة تحصل عليه.
+Keep a far-away old device on and rescue the near laptops: switch the router to airtime fairness and see how much faster they get.	أبقِ جهازًا قديمًا بعيدًا متصلًا وأنقذ الحواسيب القريبة: فعّل في الراوتر عدالة وقت البث (airtime fairness) وانظر كم تصبح أسرع.
 Trace a name for real and see every server that answered.	تتبّع اسم نطاق فعليًا وشاهد كل خادم أجاب.
 Find out whether your provider puts you behind a second NAT (CGNAT).	اعرف إن كان مزوّد الخدمة يضع اتصالك خلف طبقة NAT إضافية (CGNAT).
 Make a black hole, then fix it without turning the tunnel off.	تسبّب في إسقاط الحزم، ثم عالج المشكلة دون إيقاف النفق.
@@ -768,11 +768,11 @@ green under 50 ms · amber under 100 · red above · grey: no ping yet · ring =
 Inside the internet	داخل الإنترنت
 Inside the mobile network	داخل الشبكة المحمولة
 HOW IT WORKS	كيف تعمل
-BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football reach you.	BGP، OSPF و IS-IS ، MPLS, L3VPNs، التلفزيون متعدد البرق، كيف تصل Netflix والكرة القدم على الهواء مباشرة لك.
+BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football reach you.	BGP وOSPF وIS-IS وMPLS وشبكات L3VPN، وتلفزيون البث المتعدد (multicast)، وكيف تصلك Netflix ومباريات كرة القدم المباشرة.
 Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	البرج، النواة 4G و 5 G (MME، AMF، SMF، UPF) ، المرفق، جلسات، NSA مقابل SA.
 INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	في الإنترنت - الموردين، التلفزيون والبث
 INSIDE THE MOBILE NETWORK - 4G AND 5G	داخل شبكة المتنقلات - 4G و 5g
-Penny	بيني
+Penny	Penny
 PING MAP	خريطة Ping
 and	و
 more	المزيد
@@ -797,7 +797,7 @@ Lower the MTU (e.g. 1400) or ask the provider - small packets pass, big ones are
 Small things work. Big things hang.	الأشياء الصغيرة تنجح الأشياء الكبيرة ترتبط.
 Try the don't-fragment ping at full size.	جرب النقش لا تقطع في الحجم الكامل.
 A rogue DHCP server handed out the addresses	خادم DHCP المخادع قام بتوزيع العناوين
-Find and unplug the device at that address - a second router or a misconfigured box giving out leases	العثور على جهاز التوصيل في هذا العنوان و فك الاتصال - جهاز توجيه ثان أو صندوق غير مُهيّن يعطي إيجارات
+Find and unplug the device at that address - a second router or a misconfigured box giving out leases	العثور على جهاز التوصيل في هذا العنوان و فك الاتصال - راوتر ثان أو صندوق غير مُهيّن يعطي إيجارات
 Who gave you your router and DNS addresses?	من أعطاكم توجيهك وعناوين DNS؟
 Look at ipconfig's DHCP server, then arp -a.	انظر إلى خادم DHCP من ipconfig، ثم arp -a.
 Another device has the same IP address	جهاز آخر لديه نفس عنوان IP
@@ -805,11 +805,11 @@ Give the other device an address outside the DHCP range (or a reservation) - the
 Something answers some of the time.	شيء يجيب بعض الوقت.
 The event log keeps a note when Windows sees it.	سجل الأحداث يحافظ على ملاحظة عندما يراه Windows.
 The default gateway is set wrong	تم تعيين البوابة الافتراضية خطأ
-Set the gateway to the real router (or switch the adapter back to automatic / DHCP)	حدد البوابة إلى الجهاز التوجيه الحقيقي (أو تبديل المعدل مرة أخرى إلى تلقائي / DHCP)
-The router you're told to use doesn't answer.	جهاز التوجيه الذي قيل لك لا يستجيب
+Set the gateway to the real router (or switch the adapter back to automatic / DHCP)	اضبط البوابة على الراوتر الحقيقي (أو أعد محوّل الشبكة إلى تلقائي / DHCP)
+The router you're told to use doesn't answer.	الراوتر الذي قيل لك لا يستجيب
 Compare ipconfig's gateway with what arp -a sees.	مقارنة بوابة ipconfig مع ما يرى arp -a.
-DHCP failed - no address from the router	فشل DHCP - لا عنوان من جهاز التوجيه
-Restart the router (or check its DHCP server is on), then renew the address	إعادة تشغيل الجهاز التوجيه (أو التحقق من أن خادم DHCP يعمل) ، ثم تجديد العنوان
+DHCP failed - no address from the router	فشل DHCP - لا عنوان من الراوتر
+Restart the router (or check its DHCP server is on), then renew the address	إعادة تشغيل الراوتر (أو التحقق من أن خادم DHCP يعمل) ، ثم تجديد العنوان
 Look at the address itself.	انظر إلى العنوان نفسه.
 169.254 means Windows gave itself one.	يعني 169.254 أن Windows خصّص العنوان لنفسه.
 A sign-in page (captive portal) is in the way	صفحة تسجيل الدخول (بوابة القبض) في الطريق
@@ -822,7 +822,7 @@ Everything answers - except the browser.	كل شيء يجيب - باستثناء
 Look at the proxy settings.	انظري إلى إعدادات الوكالة
 Weak, crowded Wi-Fi	إشارة Wi-Fi ضعيفة وقناة مزدحمة
 Move closer, switch to 5 GHz, or use a cable	اقترب، أو تغير إلى 5 GHz، أو استخدم كابل
-Even the router is slow and drops pings.	حتى جهاز التوجيه بطيء ويقفز
+Even the router is slow and drops pings.	حتى الراوتر بطيء ويُسقط رسائل ping.
 Read the Wi-Fi status.	قراءة حالة Wi-Fi.
 Lower the MTU	انخفاض MTU
 Remove a line from the hosts file	إزالة سطر من ملف المضيف
@@ -840,10 +840,10 @@ Gaming has lagged in the evenings for two weeks. The Wi-Fi password was given to
 Two devices have private (random) hardware addresses. That alone is normal - phones do it.	جهازان لديهما عناوين خاصة (الصدفة) في الأجهزة. هذا وحده طبيعي - الهواتف تفعل ذلك.
 One of them has been here every day for months. The other appeared 6 days ago.	واحد منهم كان هنا كل يوم لشهور والآخر ظهر في 6 قبل أيام.
 The new one joins only between 1 and 5 in the morning - and moves the most data.	والجديد يجمع فقط بين 1 و 5 في الصباح - ويحرك أكثر البيانات.
-Look at which hardware address claims to be the router.	انظروا إلى عنوان الأجهزة التي تدعي أنها جهاز التوجيه.
-The router's real address starts f4:f2:6d (TP-Link).	عنوان الموجّه الحقيقي يبدأ f4:f2:6d (TP-Link).
-One PC on the network now says 'I am the router' - every packet goes through it first.	يكتب أحد أجهزة الكمبيوتر في الشبكة الآن "أنا جهاز التوجيه" - كل حزمة تمر بها أولاً.
-Two DHCP servers answer. Only the router should.	خادمين من DHCP يستجيبون فقط جهاز التوجيه يجب أن يكون كذلك
+Look at which hardware address claims to be the router.	انظر أي عنوان MAC يدّعي أنه الراوتر.
+The router's real address starts f4:f2:6d (TP-Link).	عنوان الراوتر الحقيقي يبدأ f4:f2:6d (TP-Link).
+One PC on the network now says 'I am the router' - every packet goes through it first.	يكتب أحد أجهزة الكمبيوتر في الشبكة الآن "أنا الراوتر" - كل حزمة تمر بها أولاً.
+Two DHCP servers answer. Only the router should.	خادمين من DHCP يستجيبون فقط الراوتر يجب أن يكون كذلك
 Devices that take the second offer get the wrong gateway.	الأجهزة التي تأخذ العرض الثاني تحصل على البوابة الخطأ.
 The second offer comes from a device that arrived yesterday.	العرض الثاني يأتي من جهاز وصل أمس.
 There are two printers. You own one.	هناك طابعات أنت تملك واحدة.
@@ -852,11 +852,11 @@ Its maker (from the hardware address) isn't HP at all.	صانعه (من عنوا
 The family has no Samsung phone.	العائلة ليس لديها هاتف سامسونج.
 It joins at 18:00 every day and leaves before midnight.	يلتحق في 18:00 كل يوم و يغادر قبل منتصف الليل
 It uploads for hours - uploads hurt game ping most.	إنه يُحمل لعدة ساعات - رفعات يؤذي اللعبة أكثر من أي شيء.
-A neighbour has the Wi-Fi password. Random MACs are normal, so the tell was the timing and the data, not the address. Change the Wi-Fi password and turn on WPA3 if the router has it.	جيرانه لديه كلمة مرور Wi-Fi المكالمات العشوائية طبيعية، لذا كان التوقيت والبيانات هو ما يخبرنا، وليس العنوان. تغيير كلمة المرور Wi-Fi وتشغيل WPA3 إذا كان لدى الجهاز التوجيه.
+A neighbour has the Wi-Fi password. Random MACs are normal, so the tell was the timing and the data, not the address. Change the Wi-Fi password and turn on WPA3 if the router has it.	جيرانه لديه كلمة مرور Wi-Fi المكالمات العشوائية طبيعية، لذا كان التوقيت والبيانات هو ما يخبرنا، وليس العنوان. تغيير كلمة المرور Wi-Fi وتشغيل WPA3 إذا كان لدى الراوتر.
 ARP spoofing: a PC answered for the router's address so traffic flows through it (a man in the middle). Usually malware or a 'network tool' left running. Unplug it and scan it.	انتحال ARP: أجاب جهاز بدلًا من الراوتر، فأصبحت البيانات تمرّ عبره كوسيط. غالبًا يكون السبب برنامجًا ضارًا أو أداة شبكة تُركت قيد التشغيل. افصل ذلك الجهاز وافحصه.
-A rogue DHCP server: a Raspberry Pi set up as a router answers before the real one. Turn off its DHCP server. Switches with DHCP snooping stop this at work.	خادم DHCP الخائن: رسببيري بي وضعت كجهاز توجيه يستجيب قبل واحد حقيقي. أطفئ خادم DHCP المفتاحات مع DHCP التجسس توقف هذا في العمل.
-A name is just a label anyone can type. The maker comes from the hardware address, and the data use gave it away. Block it in the router and change the Wi-Fi password.	اسم هو مجرد علامة يمكن لأي شخص أن يكتبها المصنّع يأتي من عنوان الأجهزة، واستخدام البيانات أعطاه بعيدا. قم بحجبها في جهاز التوجيه وتغيير كلمة المرور Wi-Fi.
-A guest who kept the password. Change it, and give visitors the router's guest network next time.	ضيف احتفظ بالكلمة المرور غيره، و أعط الزوار شبكة الضيوف الموجّهة في المرة القادمة.
+A rogue DHCP server: a Raspberry Pi set up as a router answers before the real one. Turn off its DHCP server. Switches with DHCP snooping stop this at work.	خادم DHCP الخائن: رسببيري بي وضعت كراوتر يستجيب قبل واحد حقيقي. أطفئ خادم DHCP المفتاحات مع DHCP التجسس توقف هذا في العمل.
+A name is just a label anyone can type. The maker comes from the hardware address, and the data use gave it away. Block it in the router and change the Wi-Fi password.	اسم هو مجرد علامة يمكن لأي شخص أن يكتبها المصنّع يأتي من عنوان الأجهزة، واستخدام البيانات أعطاه بعيدا. قم بحجبها في الراوتر وتغيير كلمة المرور Wi-Fi.
+A guest who kept the password. Change it, and give visitors the router's guest network next time.	ضيف احتفظ بالكلمة المرور غيره، و أعط الزوار شبكة الضيوف الراوترة في المرة القادمة.
 Opening a web connection	فتح اتصال الويب
 The server can't acknowledge alone before it says SYN: the second step is one packet, SYN-ACK. Here a lone ACK came first.	لا يمكن للخادم الاعتراف بمفرده قبل أن يقول SYN: الخطوة الثانية هي حزمة واحدة، SYN-ACK. هنا كان واحد ACK جاء أولا.
 SYN - let's talk, my sequence starts at 1000	-سين -دعونا نتحدث، تسلسلي يبدأ في 1000
@@ -885,12 +885,12 @@ Time exceeded (TTL ran out here)	لقد تجاوز الوقت (تيتل انته
 ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64	طلب ping، بقيمة TTL 2 — ردّ مباشرة من 1.1.1.1، بقيمة TTL 64
 Time exceeded	تجاوز الوقت المسموح
 A big packet, don't fragment	حزمة كبيرة، لا تقطع
-A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	يقوم جهاز توجيه بإرسال "تجزئة مطلوبة" فقط عندما يكون الرابط التالي أصغر من الحزمة. كان MTU من 1600 قد حملت bytes 1500.
+A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	يقوم راوتر بإرسال "تجزئة مطلوبة" فقط عندما يكون الرابط التالي أصغر من الحزمة. كان MTU من 1600 قد حملت bytes 1500.
 1500-byte packet, don't fragment	حزمة 1500 بايت، لا تتجزأ
 ICMP: fragmentation needed, next-hop MTU 1600	ICMP: مطلوب التجزئة، القفز التالي MTU 1600
 1400-byte packet, don't fragment	حزمة 1400 بايت، لا تتجزأ
 Who has this address? (ARP)	من لديه هذا العنوان؟ (ARP)
-A second device claims the router's address with its own hardware address, unasked - a gratuitous ARP spoof. The real router already answered.	جهاز آخر يطالب بعنوان الجهاز التوجيه مع عنوان أجهزة خاصة به، غير طلب - ARP مزيفة مجانية. الجهاز الحقيقي أجيب بالفعل
+A second device claims the router's address with its own hardware address, unasked - a gratuitous ARP spoof. The real router already answered.	جهاز آخر يطالب بعنوان الراوتر مع عنوان أجهزة خاصة به، غير طلب - ARP مزيفة مجانية. الجهاز الحقيقي أجيب بالفعل
 ARP: who has 192.168.1.1? Tell 192.168.1.37	ARP: من يملك 192.168.1.1؟ أخبر 192.168.1.37
 ARP: 192.168.1.1 is at f4:f2:6d:4a:10:01	ARP: العنوان 192.168.1.1 مرتبط بـ f4:f2:6d:4a:10:01
 ARP: 192.168.1.1 is at 00:d8:61:aa:bb:cc	ARP: العنوان 192.168.1.1 مرتبط بـ 00:d8:61:aa:bb:cc
@@ -952,7 +952,7 @@ Maker	منشئ
 First seen	أول ظهور
 Data	البيانات
 Labs	المختبرات
-ping the router	أجهزة التوجيه
+ping the router	الراوترات
 Wi-Fi status	حالة Wi-Fi
 proxy settings	إعدادات الوكالة
 hosts file	ملف المضيف
@@ -1044,7 +1044,7 @@ Weak Wi-Fi - move closer, or use a cable	ضعيف Wi-Fi - اقترب، أو اس
 DNS is broken - switch DNS server	DNS تعطلت - تبديل خادم DNS
 It's the PC - pause the install	إنّه الكمبيوتر - توقف التثبيت
 Check the cable and the port	افحص الكابل والمنفذ
-Bufferbloat - turn on SQM/QoS in the router	"بفر بلوت" - تشغيل SQM/QoS في جهاز التوجيه
+Bufferbloat - turn on SQM/QoS in the router	"بفر بلوت" - تشغيل SQM/QoS في الراوتر
 DONE	تم
 By question	حسب السؤال
 All tools (list)	جميع الأدوات (القائمة)
@@ -1223,7 +1223,7 @@ How the corner widget looks - pick one. Hover the widget for its card.	كيف ت
 example	مثال
 SPEED	السرعة
 Download	تنزيل
-BUSIEST APPS (CPU)	تطبيقات المواصلات (CPU)
+BUSIEST APPS (CPU)	التطبيقات الأكثر استهلاكًا للمعالج (CPU)
 Nothing busy.	لا شيء مشغول
 All settings	جميع الإعدادات
 FINE-TUNE	ضبط دقيق
@@ -1314,7 +1314,7 @@ reply	رد
  of 	 من 
  slow moments · 	 لحظات بطء · 
  were in your home or PC - Wi-Fi first.	 كانت في شبكتك المنزلية أو جهازك — ابدأ بفحص Wi-Fi.
- were past your router - your provider's or the service's busy hours, not your home.	 كان من قبل جهاز التوجيه الخاص بك - مزودك أو ساعات العمل المزدحمة في الخدمة، وليس منزلك.
+ were past your router - your provider's or the service's busy hours, not your home.	 كان من قبل الراوتر - مزودك أو ساعات العمل المزدحمة في الخدمة، وليس منزلك.
  without a dip	 دون انخفاض
  · market closed - the live check sleeps until 9:30 Eastern	 · السوق مغلقة - التحقق المباشر ينام حتى 9:30 الشرقية
  · starting...	 · جارٍ البدء...
@@ -1336,7 +1336,7 @@ reply	رد
 (no sign-in sent)	(لا تسجيل دخول أرسلت)
 (no snapshot yet)	(لا يوجد صورة حتى الآن)
 (not compared)	(لا مقارنة)
-(nothing - the router won't turn it around)	(لا شيء - لا يمكن للجهاز التوجيه أن يديرها)
+(nothing - the router won't turn it around)	(لا شيء - لا يمكن لللراوتر أن يديرها)
 (run it to compare)	(تجريها للمقارنة)
 (run it to see the race)	(تجريها لرؤية السباق)
 (run it to see them)	(أركبها لرؤيتهم)
@@ -1387,7 +1387,7 @@ AES-256, no seal (standard .p7m)	AES-256، لا يوجد طابع (معياري 
 AGAIN	مجدّدًا
 AGAINST LAST MONTH	ضد الشهر الماضي
 APP	التطبيق
-ARP - finding the router's MAC	ARP - العثور على MAC الجهاز التوجيه
+ARP - finding the router's MAC	ARP - العثور على MAC الراوتر
 ARP · broadcast to every device here	ARP · البث إلى كل جهاز هنا
 ASKING	جارٍ الاستعلام
 ASKING THE NETWORK WHO HAS AN ADDRESS	أسأل الشبكة من لديه عنوان
@@ -1508,7 +1508,7 @@ EACH DIP AND THE EVIDENCE	كل عمق و الدليل
 ENG	ENG
 EVERYTHING AdeeboMeter OBSERVED	كل ما رصده AdeeboMeter
 Each move to a stronger access point lands here as a blue mark; a drop is red.	كلّ خطوة إلى نقطة دخول أقوى تُقع هنا كعلامة زرقاء، قطرة حمراء.
-Each router passes packets up to a certain size. The smallest of those sizes is the path's MTU, and a drop between two routers shows where a tunnel or PPPoE takes up room.	كل جهاز توجيه يمر حزم إلى حجم معين أصغر من هذه الأحجام هو MTU المسار، ويقف بين روترين يظهر أين يتخذ نفق أو PPPoE مساحة.
+Each router passes packets up to a certain size. The smallest of those sizes is the path's MTU, and a drop between two routers shows where a tunnel or PPPoE takes up room.	كل راوتر يمر حزم إلى حجم معين أصغر من هذه الأحجام هو MTU المسار، ويقف بين روترين يظهر أين يتخذ نفق أو PPPoE مساحة.
 Echo reply	ردّ Echo
 Echo request	طلب Echo
 Echo request to	طلب Echo إلى
@@ -1553,7 +1553,7 @@ IN USE	قيد الاستخدام
 IPv4 - into the tunnel	IPv4 - إلى النفق
 IPv6 or DNS outside the tunnel?	IPv6 أو DNS خارج النفق؟
 IPv6's version of ARP	نسخة IPv6 من ARP
-IPv6: Router Solicitation	IPv6: طلب جهاز التوجيه
+IPv6: Router Solicitation	IPv6: طلب الراوتر
 Identity?	الهوية؟
 If even one byte was changed on the way, the seal doesn't match and nothing is opened.	إذا تم تغيير بايت واحد على الطريق، الخاتم لا يطابق ولا شيء يفتح.
 In one line: 	في سطر واحد: 
@@ -1580,7 +1580,7 @@ Last session ended	انتهت الجلسة السابقة
 Learning only - AdeeboMeter never says what to buy or sell.	فقط التعلم - AdeeboMeter لا يقول أبدا ما لشراء أو بيع.
 Learning only - every number is made up, and AdeeboMeter never says what to buy or sell.	تعلم فقط - كل رقم هو مخترع، و AdeeboMeter لا يقول أبدا ما لشراء أو بيع.
 Left on the PC	يسار على الكمبيوتر
-Light in glass does about 100 km a millisecond each way - distance sets the floor, busy links add the rest.	الضوء في الزجاج يصل إلى حوالي 100 كيلومترات في كل ميل ثانية - المسافة تحدد الأرضية، الروابط المزدحمة تضيف الباقي.
+Light in glass does about 100 km a millisecond each way - distance sets the floor, busy links add the rest.	يقطع الضوء في الألياف نحو 100 كم في كل جزء من الألف من الثانية في كل اتجاه - المسافة تحدد الحد الأدنى، والروابط المزدحمة تضيف الباقي.
 Link a phone first - then send it a file, a link or any result.	ربط الهاتف أولاً ثم أرسل له ملف أو رابط أو أي نتيجة
 Link rate	سرعة الربط
 Link your phone	اربط هاتفك
@@ -1589,7 +1589,7 @@ Load	تحميل
 Load on the node or segment I'm on at	الحمل على العقدة أو القطاع أنا على
 Locked	مقفل
 Looking...	جارٍ البحث...
-Loss at a middle router that doesn't carry on to the end isn't real - that router just doesn't bother answering pings. Loss that carries on to the end is.	الخسارة في جهاز توجيه وسط لا يستمر إلى النهاية ليست حقيقية - ذلك الجهاز فقط لا يزعج نفسه بالإجابة على الطلبات. الخسارة التي تستمر حتى النهاية هي.
+Loss at a middle router that doesn't carry on to the end isn't real - that router just doesn't bother answering pings. Loss that carries on to the end is.	الخسارة في راوتر وسط لا يستمر إلى النهاية ليست حقيقية - ذلك الجهاز فقط لا يزعج نفسه بالإجابة على الطلبات. الخسارة التي تستمر حتى النهاية هي.
 Loss starts	الخسارة تبدأ
 MEMORY	الذاكرة
 MOOD - HOW IT FEELS ABOUT THINGS	المزاج - كيف تشعر بشأن الأشياء
@@ -1727,8 +1727,8 @@ Remote Desktop, please	المكتب عن بعد، من فضلك
 Remove 	إزالة 
 Report for my ISP ›	تقرير لـ " ISP "
 Request: yes please,	الطلب: نعم من فضلك
-Router Advertisement	إعلانات الجهاز التوجيه
-Router Solicitation: any routers here?	طلبات الجهاز التوجيه: أي جهاز توجيه هنا؟
+Router Advertisement	إعلانات الراوتر
+Router Solicitation: any routers here?	طلبات الراوتر: أي راوتر هنا؟
 Run it to see how much the battery has worn.	إشغله لمعرفة كم من البطارية قد نفدت
 Run it to see your biggest folders as boxes.	إشغيله لترى أكبر مجلداتك كصناديق
 Run it while the game is open - each leg gets its own ping, jitter and loss.	إشغله بينما تكون اللعبة مفتوحة كل ساق تحصل على صعوبة، وقلق وخسارة خاصة بها
@@ -1894,7 +1894,7 @@ WEB	الويب
 WHAT CHANGED ON	ما الذي تغير
 WHAT FIXES IT	ما الذي يصلح الأمر
 WHAT HAPPENED BEFORE IT BROKE AT	ما حدث قبل أن ينهار
-WHAT THE ROUTER WAS TELLING YOU	ما كان الجهاز التوجيه يخبرك
+WHAT THE ROUTER WAS TELLING YOU	ما كان الراوتر يخبرك
 WHAT TO TRY NEXT	ما الذي يجب محاولة بعد ذلك
 WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS	ما شاهدت · كيبت 90 أيام على هذا الكمبيوتر · انقر على واحد لمعرفة من الذي أدى إلى الغرق
 WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)	ما الذي يحدث؟ · اضغط عليه، أو اكتب في مربع البحث (CTRL+K)
@@ -1967,9 +1967,9 @@ a referral	إحالة
 a referral, not the answer	إحالة وليس إجابة
 a remembered phone - it proved its key	هاتف متذكر - أثبت مفتاحه
 a root your PC trusts	الجذر الذي يثق به جهاز الكمبيوتر
-a router on the way	جهاز توجيه في الطريق
+a router on the way	راوتر في الطريق
 a rule matches	قاعدة تطابق
-a second router!	جهاز توجيه ثاني!
+a second router!	راوتر ثاني!
 a second way out, for IPv6	طريق خروج ثان، لـ IPv6
 a ticket	تذكرة دعم
 a year	سنة
@@ -1979,7 +1979,7 @@ added	إضافة
 addresses	عناوين
 addresses left over	العناوين المتبقية
 after	بعد
-after Wi-Fi's own overhead - close to the router, nobody else busy	بعد تكاليف Wi-Fi الخاصة - بالقرب من جهاز التوجيه، لا أحد آخر مشغول
+after Wi-Fi's own overhead - close to the router, nobody else busy	بعد تكاليف Wi-Fi الخاصة - بالقرب من الراوتر، لا أحد آخر مشغول
 after the server thought about it	بعد أن يفكر الخادم في الأمر
 alerts	تنبيهات
 all of it took	كل هذا استغرق
@@ -1992,7 +1992,7 @@ and wakes the PC	ويستيقظ جهاز الكمبيوتر
 another device	جهاز آخر
 another device answers for YOUR address	جهاز آخر يرد على عنوانك
 answer	الإجابة
-answer, back through the router	الإجابة، مرة أخرى من خلال جهاز التوجيه
+answer, back through the router	الإجابة، مرة أخرى من خلال الراوتر
 answers	الإجابات
 any answer means it's alive - a Reject for a made-up name is right	أي إجابة تعني أنه حي - رفض اسم مخترع صحيح
 anyone who encrypts a file for you	أي شخص يقوم بتشفير ملف من أجلك
@@ -2060,7 +2060,7 @@ destination	الوجهة
 detail rows that were fine or just notes	صفوف مفصلة كانت جيدة أو مجرد ملاحظات
 different	مختلفة
 does NOT match what you pasted	لا يطابق ما قمت بتثبيته
-does the router keep the same outside port?	هل جهاز التوجيه يبقى نفسه خارج المنفذ؟
+does the router keep the same outside port?	هل الراوتر يبقى نفسه خارج المنفذ؟
 doesn't answer ping	لا يستجيب لطلبات Ping
 done - closed politely	تم إغلاقها بأدب
 down	أسفل
@@ -2090,7 +2090,7 @@ file	الملف
 first byte of the page	البايت الأول من الصفحة
 first bytes shown	البايتات الأولى المعروضة
 first check - nothing to compare yet	التحقق الأول - لا شيء مقارنة بعد
-fits the size the router named	يتناسب بحجم جهاز التوجيه المسمى
+fits the size the router named	يتناسب بحجم الراوتر المسمى
 for	لـ
 for a lease time - renewed at half time	لفترة تأجير - يتم تجديدها في نصف الوقت
 for comparison	للمقارنة
@@ -2116,7 +2116,7 @@ hello	مرحباً
 hello (SYN)	مرحباً
 hello back (SYN-ACK)	مرحباً (سين-اك)
 hidden from your provider	مخفية من مقدمك
-home router	جهاز توجيه المنزل
+home router	راوتر المنزل
 hop	الخبز
 hops	الحصص
 host key	مفتاح المضيف
@@ -2240,7 +2240,7 @@ open now	افتح الآن
 open to the network	مفتوحة للشبكة
 opens it in AdeeboMeter	يفتحها في AdeeboMeter
 or 'Time exceeded' if the TTL ran out	أو "تجاوز الزمن" إذا انتهى TTL
-or 'fragmentation needed' from a router	أو "تجزئة مطلوبة" من جهاز توجيه
+or 'fragmentation needed' from a router	أو "تجزئة مطلوبة" من راوتر
 our version + key exchange	إصدارنا + تبادل المفاتيح
 out from the VPN's exit	خارج مخرج VPN
 out:	خارج:
@@ -2290,7 +2290,7 @@ reverse name?	اسم العكس؟
 root	الجذر
 root and	الجذر و
 round trip = (T4-T1) - (T3-T2)	زمن الذهاب والإياب = (T4-T1) - (T3-T2)
-router	الجهاز التوجيه
+router	الراوتر
 safe to share	آمن للمشاركة
 same packet, new return address	نفس الحزمة، عنوان العودة الجديد
 same ping, unmarked	نفس طلب Ping دون علامة
@@ -2386,7 +2386,7 @@ the receiver needs	احتياجات المتلقي
 the receiving server's greeting	تحية الخادم المقبل
 the reflector stamps both - its own delay is taken out	الردع يعطي كلتا - تأخيرها الخاص يتم إزالتها
 the rest	البقية
-the router swaps in its public address and a port	يتبادل الجهاز التوجيه في عنوانه العام ومنفذ
+the router swaps in its public address and a port	يتبادل الراوتر في عنوانه العام ومنفذ
 the same certificate	نفس الشهادة
 the same, 5 s later	نفس الشيء، 5 s لاحقا
 the same, smaller	نفسها، أصغر
@@ -2402,7 +2402,7 @@ the sleeping PC	جهاز الكمبيوتر النائم
 the target	الهدف
 the values, one per object	القيم، واحدة لكل كائن
 the verdict and where the trouble is	الحكم و أين المشكلة
-their first router	جهاز التوجيه الأول
+their first router	الراوتر الأول
 there and back (slowed down 15× here)	هناك وراء (بطء 15× هنا)
 this PC only	هذا الحاسوب فقط
 through the VPN	عبر VPN
@@ -2488,9 +2488,9 @@ your phone	هاتفك
 your provider	مقدمك
 your provider sees it	المزود الخاص بك يرى ذلك
 your result	نتيجتك
-your router	جهاز التوجيه الخاص بك
-your router (NAT)	جهاز التوجيه الخاص بك (NAT)
-your router → the internet	جهاز التوجيه الخاص بك → الإنترنت
+your router	الراوتر
+your router (NAT)	الراوتر (NAT)
+your router → the internet	الراوتر → الإنترنت
 your segment	قطاعك
 your site	موقعك
 your upload	رفعك
@@ -2510,12 +2510,12 @@ Right now this PC sends nothing in the background.	في الوقت الحالي 
 Right now this PC sends: 	في الوقت الحالي هذا الكمبيوتر يرسل: 
 Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view.	كل عرض يحافظ على تغييرات خاصة بك - التبديل في أي وقت من زر عرض في الأعلى. التعلم في كل وجهة نظر
 English. A change takes full effect after a restart.	الإنجليزية. التغيير يتحقق من التنفيذ الكامل بعد إعادة تشغيله.
-Neon: near-black with electric cyan - accents glow softly.	النيون: أسود تقريباً مع لهجات السيان الكهربائية - تتوهج ببطء.
-Midnight: deep navy with aqua - calm for long nights.	منتصف الليل: بحرية عميقة مع الماء - هادئة ليلات طويلة.
-Sunset: warm plum with coral.	غروب الشمس: البراعم الدافئة مع المرجان.
-Mint: light and fresh, soft green.	النعناع: خضراء خفيفة و طازجة
-Dark: always dark, whatever Windows uses.	الظلام: دائماً مظلم، مهما كان Windows يستخدم.
-Light: always light, whatever Windows uses.	الضوء: دائماً ضوئي، مهما كان استخدام Windows.
+Neon: near-black with electric cyan - accents glow softly.	Neon: شبه أسود مع سماوي كهربائي - تتوهج اللمسات بهدوء.
+Midnight: deep navy with aqua - calm for long nights.	Midnight: كحلي داكن مع فيروزي - هادئ لليالي الطويلة.
+Sunset: warm plum with coral.	Sunset: لون البرقوق الدافئ مع المرجاني.
+Mint: light and fresh, soft green.	Mint: فاتح ومنعش، أخضر هادئ.
+Dark: always dark, whatever Windows uses.	Dark: داكن دائمًا، مهما كان مظهر Windows.
+Light: always light, whatever Windows uses.	Light: فاتح دائمًا، مهما كان مظهر Windows.
 No place yet.	لم يُحدّد مكان بعد.
 ) - Remove forgets it and the kept forecast.	) - إزالة تنسى ذلك والتنبؤات المحفوظة.
 Accuracy	الدقة
@@ -2528,7 +2528,7 @@ On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm
 Off: only the buddy's face shows the weather.	خارج: فقط وجه الرفيق يظهر الطقس.
 Off: plain words everywhere, the buddy's face stays.	لا، لا، لا. لا، لا!
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	على: الصديق يتحدث في المزاج والشخصية أدناه. الحقائق والأرقام والتقارير لا تتغير أبداً
-How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.	كيف يشعر الرفيق: التشويق سهل، وترتيبات الحمراء (لا أنت) ، والهايب تشجيع، والدعم لطيف، ويمنح بوسي الأوامر، ويمو هو قابل للتواصل.
+How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.	مزاج الرفيق: هادئ مسترخٍ، وساخر يمازح الأجهزة (لا يمازحك أبدًا)، وحماسي يشجّع، والدعم لطيف، وآمر يعطي الأوامر، وإيمو قريب منك.
 Your name: 	اسمك: 
 (not set)	(لا يُحدد)
  - kept only in the settings file.	 - يحتفظ بها فقط في ملف الإعدادات
@@ -2600,11 +2600,11 @@ Pin a destination on Check a destination first.	قم بتحديد الوجهة �
 One ping to 	طلب Ping واحد إلى 
  every 30 s, graphed on Check a destination.	 كل 30s، رسم على البيانات التحقق من الوجهة.
 Off - pinned destinations are only checked when you press Run all.	يتم التحقق من الوجهات غير المحددة فقط عند الضغط على " إدارة كل "
-Nothing is sent to game servers until you click a game in the Gamer Zone.	لا شيء يتم إرساله إلى خوادم اللعبة حتى نضغط على لعبة في منطقة اللاعبين.
+Nothing is sent to game servers until you click a game in the Gamer Zone.	لا يُرسل شيء إلى خوادم الألعاب حتى تنقر لعبة في Gamer Zone.
 Off: game servers are only checked while a game is open.	التوقف: يتم التحقق من خوادم اللعبة فقط أثناء فتح اللعبة.
 Checks your games' best regions 	تفحص أفضل مناطق ألعابك 
  while AdeeboMeter runs, so the 7-day verdict covers every hour - not only when you play.	 أثناء تشغيل AdeeboMeter، ليشمل تقييم آخر 7 أيام جميع الساعات، لا وقت اللعب فقط.
-Each added game's best region, up to this many. 5 also lets a game you play be watched on up to 16 servers (otherwise 8).	كلّ إضافة أفضل منطقة لعبة، حتى هذا العدد. 5 يسمح أيضًا بمشاهدة اللعبة التي تلعبها على خوادم 16 (إلا 8).
+Each added game's best region, up to this many. 5 also lets a game you play be watched on up to 16 servers (otherwise 8).	أفضل منطقة لكل لعبة مضافة، حتى هذا العدد. والقيمة 5 تتيح أيضًا مراقبة اللعبة التي تلعبها على ما يصل إلى 16 خادمًا (وإلا 8).
 All of that game's servers (up to 	جميع خوادم تلك اللعبة (حتى 
 ), once a second - for spikes and the match report.	() مرة واحدة في الثانية - للاستعمالات والإبلاغ عن المباراة.
 Off: the game's servers stay at the background pace.	التوقف: خوادم اللعبة تبقى في سرعة الخلفية.
@@ -2651,7 +2651,7 @@ Off: nothing is written to disk (the Neighbour wars log is deleted too) - What c
  days at most.	 أيام على الأكثر
 history tidy: 	تنظيف السجل: 
  more min: public IP addresses (never private ones or names you typed) go to RIPEstat and PeeringDB to name each network on the path, its route and RPKI.	 أكثر من: العناوين IP العامة (لا هي أبداً خاصة أو أسماء قمت بتصفيتها) تذهب إلى RIPEstat و PeeringDB لإعطاء كل شبكة اسم على المسار، مسارها و RPKI.
-Off. When on, Toolbox can name every network on your path (AS numbers), where they hand over, the destination's route and RPKI, and how the internet reaches you.	-إذهب عندما تكون تعمل، يمكن لـ Toolbox أن تسمي كل شبكة على طريقك (أرقام AS) ، حيث يتم تسليمها، مسار الوجهة و RPKI، وكيف يصل الإنترنت إليك.
+Off. When on, Toolbox can name every network on your path (AS numbers), where they hand over, the destination's route and RPKI, and how the internet reaches you.	متوقف. عند تشغيله، يستطيع Toolbox تسمية كل شبكة على مسارك (أرقام AS)، وأين تتسلم كل منها من الأخرى، ومسار الوجهة وRPKI، وكيف يصل إليك الإنترنت.
 Only when a check you start fails: one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	فقط عندما تفشل عملية التحقق التي تبدأها: طلب صغير واحد إلى نفس صفحة الاختبار التي تستخدمها Windows ، لالتقاط صفحات تسجيل الدخول في الفنادق والمطار.
 Off: a failed check won't look for a Wi-Fi sign-in page.	لا: الفشل في الشيك لن يبحث عن صفحة تسجيل الدخول Wi-Fi.
 Certificate revocation checks	التحقق من إلغاء الشهادات
@@ -2672,7 +2672,7 @@ Speeds plus the busiest apps.	السرعات بالإضافة إلى أكثر ا
 The verdict, five dots, CPU, memory, speed.	الحكم، خمسة نقاط، CPU، الذاكرة، السرعة.
 Your game's ping, jitter, loss and grade.	لعبتك هي النزاع والقلق والخسارة والدرجة
 Jitter, loss and delay for calls.	التركيز، الخسارة والتأخير في المكالمات.
-Router, internet, DNS, retransmits (Pro).	جهاز توجيه، الإنترنت، DNS، إرسال إعادة الإرسال (Pro).
+Router, internet, DNS, retransmits (Pro).	راوتر، الإنترنت، DNS، إرسال إعادة الإرسال (Pro).
 Follows what you're doing.	يتبع ما تفعله
 Bits (Mb/s)	البيتات (Mb/s)
 Bytes (MB/s)	البايت (MB/s)
@@ -2680,7 +2680,7 @@ Only when you run it: an MTR to the destinations you chose for the minutes you c
 Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails) - or, when an IT policy turns online lookups off, to your own DNS server, the second opinion that spots a filter. An IT policy with online_lookups = off sends it to your own DNS server instead.	لا يرسل «افحص وجهة اتصال» إلا الفحوصات التي تطلبها، إلى الوجهة التي تحدّدها، عند الضغط على «افحص». ويضيف استعلام DNS للاسم نفسه إلى 1.1.1.1، أو 8.8.8.8 عند فشل الأول، كرأي ثانٍ لكشف التصفية. إذا عطّلت سياسة المؤسسة الاستعلامات عبر الإنترنت، بما فيها online_lookups = off، يُرسل هذا الاستعلام إلى خادم DNS لديك بدلًا من ذلك.
 Listens to your own adapter only while you press Start. Nothing is sent; captures are deleted when AdeeboMeter exits.	يستمع إلى جهازك المعدل الخاص فقط أثناء الضغط على البدء. لا يتم إرسال أي شيء، يتم حذف التقاطات عند خروج AdeeboMeter.
 Open this view	افتح هذا العرض
-Click the tray icon, or press Ctrl+Alt+A from anywhere.	انقر على رمز الصفحة أو اضغط على Ctrl+Alt+A من أي مكان
+Click the tray icon, or press Ctrl+Alt+A from anywhere.	انقر أيقونة AdeeboMeter في شريط المهام (بجوار الساعة)، أو اضغط Ctrl+Alt+A من أي مكان.
 Back to the corner	العودة إلى الزاوية
 Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.	Esc، تقليل، الزر X أو الزر للعودة إلى الزاوية - كلّها تفعل الشيء نفسه: هذا المشهد يغلق، يعيد ذاكرة، والوجيط يستمر في المشاهدة.
 Quit completely	خروج نهائي
@@ -2694,13 +2694,13 @@ No admin rights	لا يحتاج إلى صلاحيات مسؤول
 Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show.	كل ما يظهر يأتي من ما يسمح له Windows المستخدم العادي بالفعل أن يراه. إذا كان شيء مغلق، فإنه ببساطة لا تظهر.
 Secure by default	أمن افتراضي
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	تستخدم الفحوصات TLS والتحقّق من الشهادات في Windows نفسه، الذي يختار TLS 1.2 أو 1.3. لا يُتجاوز فحص الشهادة مطلقًا. تُفحص المدخلات، ولا يُستخدم مفسّر أوامر النظام أبدًا.
-Light as a feather	ضوء مثل الريش
+Light as a feather	خفيف كالريشة
 Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	حول 70 التحققات الصغيرة في الدقيقة على متوازن (حوالي 8 على Penny) في الخلفية. الأدوات الثقيلة تعمل فقط عندما تكون هذه النافذة مفتوحة، و دائماً توقف من تلقاء نفسها.
 Leaves no trace	لا يترك أثر
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	الإعدادات و سجل صغير يعيش بجوار exe (نسخة مثبتة تحتفظ بها في مجلد AppData الخاص بك). يتم حذف التقاطات عند الخروج لا يتم تسجيل عناوين النافذة ومحتوى المرور أبداً. التاريخ (بعد بضعة أيام، على هذا الكمبيوتر فقط) يعمل ما لم تطفئها - و تنقر واحدة تحذفها.
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	كل محادثة يقوم بها جهاز الكمبيوتر الخاص بك الآن - أي تطبيق، مع من، على أي منفذ، في أي حالة. الجدد تدخل، والغلق يزول. ضع الحالة لتعلم معناها، اضغط على "سنيف" على صف لتسجيل تلك المحادثة فقط لـ "وايرشارك".
 Your Wi-Fi / cable	اتصال Wi-Fi أو الكابل
-Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	كل شيء عن رابطك: النطاق، القناة، الإشارة في ديبل، السرعات، الأمن، من الذي يشارك الهواء الخاص بك (مع خريطة القناة) ، العناوين، الأخطاء، وكيف الصحة القفز إلى جهاز التوجيه الخاص بك. اضغط على نقطة Wi-Fi للذهاب إلى هنا
+Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	كل شيء عن رابطك: النطاق، القناة، الإشارة في ديبل، السرعات، الأمن، من الذي يشارك الهواء الخاص بك (مع خريطة القناة) ، العناوين، الأخطاء، وكيف الصحة القفز إلى الراوتر. اضغط على نقطة Wi-Fi للذهاب إلى هنا
 Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.	شرح مبسّط لكل برنامج على جهازك: ما الذي يفعله، وكيف يعمل، وسبب وجوده، وما الذي يحدث بدونه، وهل يمكن إغلاقه بأمان. يشرح AdeeboMeter فقط، ولا يُغلق أي برنامج.
 Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.	اكتب اسمًا أو عنوان IP أو URL. يتتبّع AdeeboMeter المسار كاملًا كما يفعل المختص: DNS والمسار وPing وTCP وTLS وHTTP وحجم الحزم وكل راوتر في الطريق، ثم يحدّد موضع العطل بجملة واحدة. ويشرح أيضًا من ينقل بياناتك، وأين تتبادل الشبكات تسليمها ويختار BGP المسار، وطبقات NAT والأنفاق والجدران النارية. ثبّت الوجهات التي تفحصها كثيرًا وشغّل فحوصاتها معًا.
 Health check	فحص الجهاز
@@ -2719,7 +2719,7 @@ everything AdeeboMeter does can be read there	كل ما يفعله AdeeboMeter �
 Copied - paste it into the page that opened	نسخة - ضعه في الصفحة التي فتحت
 Found a bug? Report it	وجدت خللًا؟ أبلغ عنه
 When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	عندما يبدوا الإنترنت بطيئًا، أغلبنا نفتح مدير المهام، ثم عرض إرشادي، ثم النقاش، ثم تخمين. يقوم AdeeboMeter بكل هذا من أجلك - بهدوء، كل ثانية - ويقول لك في جملة واحدة واضحة ما هو الخطأ وما يجب فعله حيال ذلك.
-No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	لا سحابة لا توجد قياسات مترويجية لا يستمع أبداً كل حزمة يرسلها مذكورة أدناه - ويمكنك إيقاف كل واحدة منها.
+No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	لا سحابة. لا جمع بيانات عن بُعد. لا يستمع أبدًا. كل حزمة يرسلها مذكورة أدناه - ويمكنك إيقاف كل واحدة منها.
 The corner widget	أداة الزاوية
 A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	بطاقة صغيرة في الزاوية اليمنى السفلى، تُهلك إلى 30% حتى لا يشتت. يظهر الشيء الوحيد الذي يهم - هو كل شيء OK - بالإضافة إلى CPU، الذاكرة، القرص والشبكة في نظرة واحدة. لا يستغرق النقر أبداً، لذا أيّ شيء من تحتها يظل يعمل عندما تغطي النافذة الزاوية فإنها تطويق إلى رقاقة صغيرة؛ ركز فأرك عليها لمدة نصف ثانية وتفتح.
 Getting around	التنقّل
@@ -2727,7 +2727,7 @@ Is it me or the network?	هل أنا أم الشبكة؟
 The five dots at the top follow your traffic out of the building: your PC, your Wi-Fi or cable to the router, your provider (or VPN), DNS - the internet's phone book - and the internet itself. The first dot that isn't green is where the trouble starts. Everything before it is fine; everything after it is a victim, not a cause. That's the whole trick.	تتتبّع النقاط الخمس في الأعلى بياناتك من جهازك إلى الخارج: جهازك، ثم Wi-Fi أو الكابل إلى الراوتر، ثم مزوّد الخدمة أو VPN، ثم DNS الذي يعمل كدليل عناوين الإنترنت، ثم الإنترنت نفسه. أول نقطة غير خضراء هي موضع بدء المشكلة. ما قبلها سليم، وما بعدها متأثّر بالمشكلة وليس سببها. هذه هي الفكرة كلها.
 What each tab does	ما تفعله كل علامة
 What leaves your PC - and what never does	ما يترك جهاز الكمبيوتر الخاص بك - وما لا يفعل
-A tiny ping to your own router, 	إشارة صغيرة إلى جهاز التوجيه الخاص بك 
+A tiny ping to your own router, 	إشارة صغيرة إلى الراوتر 
  (every 	 (كل 
  s while this window is open). Stays on your local network.	 في حين أن هذه النافذة مفتوحة). يبقى على شبكتك المحلية
 One ping to 1.1.1.1 (or 8.8.8.8) 	واحد من الـ 1.1.1.1 (أو 8.8.8.8) 
@@ -2748,7 +2748,7 @@ Nothing - until you click a game in the Gamer Zone.	لا شيء - حتى تضغ�
 A ping (or a timed TCP connection) to the regions of the games you added: the best ones 	إرسال (أو اتصال TCP) إلى مناطق الألعاب التي أضفتها: أفضل الألعاب 
 , the others 	، والآخرين 
 , every second while a game is open	، كل ثانية أثناء فتح اللعبة
- - plus, while a game runs, a trace to its server and one ping to each router on the way every 15 s (the match path)	 - بالإضافة إلى، بينما تبدأ اللعبة، تتبع إلى خادمها و تبرز واحدة لكل جهاز توجيه في طريق كل 15 (مسار المباراة)
+ - plus, while a game runs, a trace to its server and one ping to each router on the way every 15 s (the match path)	 - بالإضافة إلى، بينما تبدأ اللعبة، تتبع إلى خادمها و تبرز واحدة لكل راوتر في طريق كل 15 (مسار المباراة)
 . Valve's server list is fetched only when you add a Valve game or press Refresh.	. . يتم الحصول على قائمة الخوادم في Valve فقط عندما تضيف لعبة Valve أو اضغط على Refresh.
 Only while something streams: a timed TCP connection (no data) to the stream's own server every 	فقط بينما شيء تدفق: اتصال TCP توقيت (لا بيانات) إلى خادم التيار الخاص كل 
  s, to tell its slowdowns from yours - six tries at most if it never answers. Which service it is comes from Windows' own list of names, read on this PC.	 ليقاسها عن التباطؤ الخاص بك - ستة محاولات على الأكثر إذا لم ترد أبدا. أي خدمة هي تأتي من قائمة أسماء Windows الخاصة، قراءة على هذا الكمبيوتر.
@@ -2758,7 +2758,7 @@ A timed TCP connection (no data, no sign-in) to 	اتصال TCP متوقّع (ل
  - around the clock, as you chose for crypto	 - حول الساعة، كما اخترت للكريبتو
 Off - until you pick your broker on the Trading page.	-إنه خارج -حتى تحصل على وسيطك في صفحة التداول
 Bank of Canada numbers	أرقام بنك كندا
-Only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to bankofcanada.ca. No account, nothing about you is sent.	فقط عندما تكون صفحة التداول مفتوحة (أو خلاصة المساء على) ويجب أن تكون أرقام جديدة خارج: طلب واحد لسعر الصرف اليوم، وأحدى الأسابيع تقريبا، لمؤشر السلع، إلى bankofcanada.ca. لا حساب، لا شيء عنك يتم إرساله.
+Only when the Trading page is open (or the evening summary is on) and newer numbers should be out: one request for the day's exchange rates and, about weekly, one for the commodity index, to bankofcanada.ca. No account, nothing about you is sent.	فقط عندما تكون صفحة Markets مفتوحة (أو ملخص المساء مفعّلًا) وتكون أرقام أحدث قد صدرت: طلب واحد لأسعار صرف اليوم، وطلب أسبوعي تقريبًا لمؤشر السلع، إلى bankofcanada.ca. بلا حساب، ولا يُرسل شيء عنك.
 : one request to api.open-meteo.com with only its coordinates, 	: طلب واحد إلى api.open-meteo.com مع إحداثياتها فقط، 
 every 6 hours while the PC is on.	كل 6 ساعات أثناء تشغيل الجهاز.
 about every 2 days (when less than a day of forecast is left).	حوالي كل يوم من أيام 2 (عندما يبقى أقل من يوم من التوقعات).
@@ -2778,7 +2778,7 @@ Only if a check you started fails: one request to the same test page Windows its
 Built to be trusted	تم بناؤها للاثقة
 AdeeboMeter 	AdeeboMeter 
   ·  made by Adeeb Khan  ·  	  · مصنوع من قبل Adeeb Khan ·  
-THE PATH STORY  ·  WHO CARRIES YOUR TRAFFIC, FROM ROUTER NAMES	قصة الطريق · من يحمل حركة المرور الخاصة بك ، من أسماء الجهاز التوجيهي
+THE PATH STORY  ·  WHO CARRIES YOUR TRAFFIC, FROM ROUTER NAMES	قصة الطريق · من يحمل حركة المرور الخاصة بك ، من أسماء الراوتري
 WHAT WE FOUND	ما وجدنا
 Saved to 	تم الحفظ في 
  - without your weather place, broker, teams, the name you are called and your words of comfort (they stay on this PC).	 - بدون مكان الطقس الخاص بك، وسيط، فرق، الاسم الذي تُدعى و كلمات الراحة الخاصة بك (إنها تبقى على هذا الكمبيوتر).
@@ -2895,12 +2895,12 @@ Open a website you haven't visited today.	افتح موقعًا لم تزره ا
 DHCP - how your PC gets an address	DHCP - كيف يحصل جهاز الكمبيوتر الخاص بك على عنوان
 Four messages, and you're on the network.	أربعة رسائل، وأنت على الشبكة.
 What does DHCP give your PC when it joins a network?	ماذا يعطي DHCP جهاز الكمبيوتر الخاص بك عندما ينضم إلى شبكة؟
-An IP address, the router and DNS servers	عنوان IP، جهاز التوجيه والخوادم DNS
+An IP address, the router and DNS servers	عنوان IP، الراوتر والخوادم DNS
 A Wi-Fi password	كلمة مرور Wi-Fi
 A faster internet plan	خطة إنترنت أسرع
 The website's certificate	شهادة الموقع
-Gives your PC an address, the router's address and DNS servers when you join a network.	يعطي جهاز الكمبيوتر عنوان، عنوان الجهاز التوجيهي و خوادم DNS عندما تنضم لشبكة.
-A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.	عنوان 169.254.x.x يعني أن DHCP فشل - إعادة تشغيل Wi-Fi أو جهاز التوجيه.
+Gives your PC an address, the router's address and DNS servers when you join a network.	يعطي جهاز الكمبيوتر عنوان، عنوان الراوتري و خوادم DNS عندما تنضم لشبكة.
+A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.	عنوان 169.254.x.x يعني أن DHCP فشل - إعادة تشغيل Wi-Fi أو الراوتر.
 Everyone	الجميع
 DISCOVER - any DHCP server here?	DISCOVER — هل يوجد خادم DHCP هنا؟
 REQUEST - I'll take .37	طلب - سأخذ .37
@@ -2913,8 +2913,8 @@ The hardware (MAC) address of a device on your own network	عنوان الأجه
 The country a server is in	البلد الذي يقع فيه الخادم
 The best route across the internet	أفضل طريق عبر الإنترنت
 Which app owns a port	أي تطبيق يستخدم المنفذ؟
-Finds the hardware address of the router next to you, so packets can leave the room.	يجد عنوان جهاز التوجيه بجانبك، حتى تتمكن الحزم من مغادرة الغرفة.
-If the router's hardware address suddenly changes, someone may be in the middle.	إذا تغير عنوان جهاز التوجيه فجأة، قد يكون شخص ما في الوسط.
+Finds the hardware address of the router next to you, so packets can leave the room.	يجد عنوان الراوتر بجانبك، حتى تتمكن الحزم من مغادرة الغرفة.
+If the router's hardware address suddenly changes, someone may be in the middle.	إذا تغير عنوان الراوتر فجأة، قد يكون شخص ما في الوسط.
 Who has 192.168.1.1?	من لديه 192.168.1.1؟
 I do - 3c:84:6a:..	أنا — ‏3c:84:6a:..
 Wait - it happens on its own every few minutes.	انتظر — يحدث ذلك تلقائيًا كل بضع دقائق.
@@ -2940,7 +2940,7 @@ Why do games and calls usually use UDP?	لماذا الألعاب والمكال
 Late data is useless, so speed beats resending	البيانات المتأخرة لا فائدة منها، لذا السرعة تتضرب إعادة الإرسال
 UDP is encrypted and TCP isn't	UDP مشفرة و TCP ليس
 UDP packets can't be lost	لا يمكن فقدان حزمة UDP
-Routers block TCP	الجهاز التوجيهي يمنع TCP
+Routers block TCP	الراوتري يمنع TCP
 Fire and forget: no confirmations, no resends - fast, for calls, games and DNS.	إطلاق النار ونساه: لا تأكيدات، لا تعيد - بسرعة، للاتصالات، والألعاب و DNS.
 A lost UDP packet is just gone - in a call that's a glitch or robot voice.	غادر حزمة UDP المفقودة في مكالمة هي خطأ أو صوت روبوت.
 Join a Teams call or play a video.	انضم إلى مكالمة Teams أو شغّل فيديو.
@@ -2991,7 +2991,7 @@ What does traceroute show?	ما الذي يظهره المسار؟
 The routers that answer along the path your probes took (silent hops show as *)	الموجات التي تستجيب على طول المسار الذي اتخذته صواريخك (التفافات الصامتة تظهر ك *)
 The speed of your Wi-Fi	سرعة Wi-Fi الخاص بك
 Which apps use the internet	أي تطبيقات تستخدم الإنترنت
-The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.	رسائل الشبكة الخاصة: تطلب النقابة "هل أنت هناك؟"، تتطلب "تراسروت" كل جهاز توجيه في الطريق.
+The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.	رسائل الشبكة الخاصة: تطلب النقابة "هل أنت هناك؟"، تتطلب "تراسروت" كل راوتر في الطريق.
 No ping reply doesn't always mean down - many servers ignore ping on purpose.	لا يعني أي رد على النص المطلوب دائماً أن الخوادم تتجاهل النص المطلق عن قصد.
 echo request (TTL 1)	طلب الصوت (TTL 1)
 time exceeded - I'm hop 1	الوقت تجاوز - أنا هوب 1
@@ -3015,11 +3015,11 @@ talks over IPv6	يتواصل عبر IPv6
 NAT - many devices, one public address	NAT - العديد من الأجهزة، عنوان عام واحد
 Why your PC's address isn't the one the internet sees.	لماذا عنوان جهاز الكمبيوتر الخاص بك ليس هو الذي يراه الإنترنت.
 Why does a website see a different address than your PC's own?	لماذا يرى موقع ويب عنوان مختلف عن جهاز الكمبيوتر الخاص بك؟
-Your router swaps your private address for its public one (NAT)	جهاز التوجيه الخاص بك يغير عنوانك الخاص لخاتمه العام (NAT)
+Your router swaps your private address for its public one (NAT)	الراوتر يغير عنوانك الخاص لخاتمه العام (NAT)
 DNS changes it	DNS يغيره
 Your PC lies about it	جهاز الكمبيوتر الخاص بك يكذب حول ذلك
 TLS hides it	يُخفيه TLS
-Your router swaps your private address for its one public address on the way out.	جهاز التوجيه الخاص بك يغير عنوانك الخاص ل عنوانه العام الوحيد في طريق الخروج.
+Your router swaps your private address for its one public address on the way out.	الراوتر يغير عنوانك الخاص ل عنوانه العام الوحيد في طريق الخروج.
 A 100.64.x.x hop means your provider adds a second NAT - some games and calls struggle.	إن إطلاق 100.64.x.x يعني أن مقدمك يضيف NAT الثاني - بعض الألعاب والمكالمات صراع.
 Your PC (192.168.1.37)	جهازك (192.168.1.37)
 to github.com	إلى github.com
@@ -3043,7 +3043,7 @@ Scan, authenticate, associate, then share the air.	فحص، التحقق، ال�
 What does a Wi-Fi device do before it can send data?	ماذا يفعل جهاز Wi-Fi قبل أن يتمكن من إرسال البيانات؟
 Scans, authenticates and associates with an access point	المسحات والتصديقات والارتباطات مع نقطة وصول
 Asks DNS for permission	يسأل DNS للحصول على إذن
-Opens a TCP connection to the router	يفتح اتصال TCP إلى جهاز التوجيه
+Opens a TCP connection to the router	يفتح اتصال TCP إلى الراوتر
 Runs a speed test	يقوم بإجراء اختبار السرعة
 Radio between your PC and the access point - band, channel and signal decide how good it is.	الراديو بين جهاز الكمبيوتر الخاص بك ونقطة الوصول - الفرقة، القناة والإشارة تحدد مدى جودة ذلك.
 Weak signal or a crowded channel: move closer, or use 5 GHz.	إشارة ضعيفة أو قناة مزدحمة: اقترب، أو استخدم 5 GHz.
@@ -3068,11 +3068,11 @@ you're in	أنت في
 QoS and DSCP - priority for calls	القواعد القياسية والمركز المركزي - الأولوية للمكالمات
 A label on each packet that says "me first".	ملصق على كل علبة يقول "أنا أولاً"
 What is a DSCP mark?	ما هي علامة DSCP؟
-A label on a packet asking routers to treat it with priority	علامة على حزمة تطلب من الممرات التعامل معها بأولوية
+A label on a packet asking routers to treat it with priority	علامة على الحزمة تطلب من الراوترات أن تعاملها بأولوية
 A type of cable	نوع من الكابل
 An encryption key	مفتاح تشفير
 A priority label on packets - calls get 'express', downloads get normal.	علامة أولوية على الحزم - المكالمات تحصل على "إكسبريس"، التنزيل أصبح طبيعيا.
-Most home routers and the internet ignore it; it helps mainly inside company networks.	معظم جهاز توجيه المنزلي والإنترنت يتجاهلون ذلك؛ فإنه يساعد بشكل رئيسي داخل شبكات الشركات.
+Most home routers and the internet ignore it; it helps mainly inside company networks.	معظم راوتر المنزلي والإنترنت يتجاهلون ذلك؛ فإنه يساعد بشكل رئيسي داخل شبكات الشركات.
 Join a Teams call.	انضم إلى مكالمة Teams.
 Teams	Teams
 mark audio EF (express)	علامة صوتية EF (عبرة)
@@ -3350,7 +3350,7 @@ Adds more envelopes	إضافة المزيد من الغلافات
 Throws away the outer one only	يرمي بعيدا فقط الخارجي
 Nothing	لا شيء
 Each layer adds an envelope on the way out; the other side opens them in reverse.	كل طبقة تضيف غلافاً في طريق الخروج، والجانب الآخر يفتحها بالعكس.
-The layer that fails tells you who to blame: room, router, firewall, or the website.	الطبقة التي تفشل تخبرك من تلوم: الغرفة، جهاز التوجيه، جدار الحماية، أو الموقع.
+The layer that fails tells you who to blame: room, router, firewall, or the website.	الطبقة التي تفشل تخبرك من تلوم: الغرفة، الراوتر، جدار الحماية، أو الموقع.
 here's my message	هذه رسالتي
 TCP + IP + Wi-Fi envelopes	أغلفة TCP وIP وWi-Fi
 radio waves	موجات لاسلكية
@@ -3464,7 +3464,7 @@ The first link	الرابط الأول
 The fastest link	أسرع وصلة
 The last link	الرابط الأخير
 Ethernet carries 1500 bytes; PPPoE, VPNs and tunnels wrap packets and leave less room.	يحتوي إيثرنت على بايتز 1500؛ PPPoE، VPNs والأنفاق تغلف الحزم وتترك مساحة أقل.
-Too-big packets are dropped - if no router says so, pages half-load and VPNs stall (a black hole).	يتم تسليم الحزم الكبيرة جداً - إذا لم يقل أي جهاز توجيه بذلك، فإن الصفحات تتحمّل نصفها وتتوقف شبكات الويب إن (ثقب أسود).
+Too-big packets are dropped - if no router says so, pages half-load and VPNs stall (a black hole).	يتم تسليم الحزم الكبيرة جداً - إذا لم يقل أي راوتر بذلك، فإن الصفحات تتحمّل نصفها وتتوقف شبكات الويب إن (ثقب أسود).
 1500 bytes, don't fragment	بايتز 1500، لا تقطيع
 Provider (PPPoE)	مزوّد الخدمة (PPPoE)
 Provider	المزود
@@ -3501,11 +3501,11 @@ BGP - how the internet's networks agree on the way	BGP - كيف تتفق شبك�
 Thousands of networks, each telling its neighbours what it can reach.	آلاف الشبكات، كل واحد يخبر جيرانه ما يمكن الوصول إليه.
 What does BGP decide?	ما الذي يقرره BGP؟
 Which network-to-network path traffic takes across the internet	أي طريق للشبكة إلى الشبكة يذهب عبر الإنترنت
-Which Wi-Fi channel your router uses	أي قناة Wi-Fi يستخدم جهاز التوجيه الخاص بك
+Which Wi-Fi channel your router uses	أي قناة Wi-Fi يستخدم الراوتر
 Which IP address your PC gets	أي عنوان IP يحصل على جهاز الكمبيوتر الخاص بك
 How fast a single cable runs	كم السرعة التي تعمل بها كابل واحد
 The internet is about 80,000 networks (autonomous systems, each with an AS number). BGP is how they tell each other "I can reach these addresses, through me".	يتكوّن الإنترنت من نحو 80,000 شبكة مستقلة، لكل منها رقم AS. يتيح BGP لهذه الشبكات أن تخبر بعضها: «يمكن الوصول إلى هذه العناوين من خلالي».
-Each provider runs BGP on its border routers. A route carries the path of AS numbers it went through; routers prefer the shortest AS path unless a business rule says otherwise (a cheaper neighbour, a paying customer first). Inside a provider, the same routes are spread with internal BGP (iBGP, often via route reflectors). Peering at an internet exchange (IXP) is two networks connecting directly for free; transit is paying a bigger network to reach everyone else. That's why one site is fast and another, just as close, is slow: the way there is a business decision. AdeeboMeter's "Who carries my traffic (BGP)" shows the networks your packets cross.	كل مزود يعمل على BGP على توجيهات الحدود الخاصة به. يحتوي الطريق على مسار أرقام AS التي تمر بها؛ يفضل المواصلون أقصر مسار AS ما لم ينص قاعدة عمل على خلاف ذلك (جير أرخص، عميل يدفع أولاً). داخل مزود، يتم توزيع نفس الطرق مع BGP الداخلي (iBGP، غالباً عبر عاكس الطرق). التشغيل في تبادل الإنترنت (IXP) هو شبكتين تتصل مباشرة مجانا؛ النقل يدفع لشبكة أكبر للوصول إلى الجميع. لهذا السبب موقع واحد سريع وآخر، قريب جداً، بطيء: الطريقة التي يتم بها اتخاذ قرارات تجارية. "من يحمل حركة المرور الخاصة بي (BGP) " من AdeeboMeter يظهر الشبكات التي تتقاطعها حزمك.
+Each provider runs BGP on its border routers. A route carries the path of AS numbers it went through; routers prefer the shortest AS path unless a business rule says otherwise (a cheaper neighbour, a paying customer first). Inside a provider, the same routes are spread with internal BGP (iBGP, often via route reflectors). Peering at an internet exchange (IXP) is two networks connecting directly for free; transit is paying a bigger network to reach everyone else. That's why one site is fast and another, just as close, is slow: the way there is a business decision. AdeeboMeter's "Who carries my traffic (BGP)" shows the networks your packets cross.	كل مزوّد يشغّل BGP على راوترات الحدود لديه. يحمل كل مسار سلسلة أرقام AS التي مرّ بها؛ وتفضّل الراوترات أقصر مسار AS ما لم تقل قاعدة تجارية غير ذلك (جار أرخص، أو عميل يدفع أولًا). داخل المزوّد تُنشر المسارات نفسها عبر BGP الداخلي (iBGP، غالبًا عبر عاكسات المسارات). الربط المتبادل في نقطة تبادل الإنترنت (IXP) يعني أن شبكتين تتصلان مباشرة مجانًا؛ والعبور (transit) يعني الدفع لشبكة أكبر للوصول إلى الجميع. لهذا يكون موقع سريعًا وآخر بالقرب نفسه بطيئًا: الطريق إليه قرار تجاري. أداة "من ينقل حركة مروري (BGP)" في AdeeboMeter تُظهر الشبكات التي تعبرها حزمك.
 A wrong announcement (a "route leak" or hijack) can send traffic the wrong way for the whole internet in minutes. A slow site that's slow for everyone on your provider is often a peering choice, not your line.	الإعلان الخاطئ ( " تسرب طريق " أو اختطاف) يمكن أن يبعث حركة المرور في الاتجاه الخاطئ لإنترنت بأكمله في دقائق. موقع بطيء بطيئ للجميع على مزودك هو غالباً خيار التشغيل، وليس خطك.
 Transit network	شبكة العبور
 UPDATE - 198.51.100.0/24 is reachable through AS64500	تحديث - يمكن الوصول إلى 198.51.100.0/24 من خلال AS64500
@@ -3515,15 +3515,15 @@ Content network	شبكة المحتوى
 traffic for 198.51.100.7	بيانات موجّهة إلى 198.51.100.7
 forwarded, following the path it learned	تم إرسالها، تتبع المسار الذي تعلمته
 OSPF and IS-IS - the map inside one network	OSPF و IS-IS - الخريطة داخل شبكة واحدة
-Every router knows the whole map of its own network, and the shortest way across it.	كل جهاز توجيه يعرف خريطة شبكتها بأكملها، وأقصر طريق عبرها.
+Every router knows the whole map of its own network, and the shortest way across it.	كل راوتر يعرف خريطة شبكتها بأكملها، وأقصر طريق عبرها.
 What do OSPF and IS-IS build inside a provider's network?	ما الذي يقوم به OSPF و IS-IS داخل شبكة المزود؟
-A map of every router and link, to work out the shortest paths	خريطة لكل جهاز توجيه وربط، لتحديد أقصر المسارات
+A map of every router and link, to work out the shortest paths	خريطة لكل راوتر وربط، لتحديد أقصر المسارات
 The list of websites customers visit	قائمة المواقع التي يزورها العملاء
 Wi-Fi passwords	كلمات المرور Wi-Fi
 The public routes of other networks	الطرق العامة للشبكات الأخرى
-Inside one provider, routers run a link-state protocol - OSPF or IS-IS - so each one holds the same map of all routers and links, with a cost on each link.	داخل مزود واحد، يقوم الممرات بتشغيل بروتوكول حالة الرابط - OSPF أو IS-IS - بحيث يحمل كل منهما نفس الخريطة لجميع الممرات والروابط، مع تكلفة لكل رابط.
+Inside one provider, routers run a link-state protocol - OSPF or IS-IS - so each one holds the same map of all routers and links, with a cost on each link.	داخل مزوّد واحد تشغّل الراوترات بروتوكول حالة الروابط - OSPF أو IS-IS - فيحمل كل راوتر الخريطة نفسها لكل الراوترات والروابط، مع تكلفة لكل رابط.
 Every router floods small notices about its own links (OSPF's LSAs, IS-IS's LSPs). Each then runs Dijkstra's shortest-path algorithm on the full map. When a fibre is cut, the routers at each end flood the change and every router recomputes - in well-tuned networks, well under a second, and fast-reroute backups are often ready before that. BGP decides which exit to use; OSPF or IS-IS find the way to that exit. Big providers often prefer IS-IS: it runs directly on the link layer, not over IP, and copes well with very large single areas. OSPF splits big networks into areas around a backbone area 0.	ينشر كل راوتر إعلانات صغيرة عن روابطه، مثل LSA في OSPF وLSP في IS-IS. ثم يحسب أقصر المسارات على الخريطة الكاملة بخوارزمية Dijkstra. عند قطع ليف ضوئي، ينشر الراوتران عند طرفيه التغيير، ويُعيد كل راوتر الحساب. يحدث ذلك في أقل من ثانية بكثير على الشبكات المضبوطة جيدًا، وغالبًا تكون مسارات التحويل الاحتياطية السريعة جاهزة مسبقًا. يحدّد BGP منفذ الخروج، بينما يحدّد OSPF أو IS-IS الطريق إليه. غالبًا يفضّل المزوّدون الكبار IS-IS، لأنه يعمل مباشرة على طبقة الربط دون IP، ويتعامل جيدًا مع المناطق الكبيرة جدًا. أما OSPF فيقسّم الشبكات الكبيرة إلى مناطق تتّصل بمنطقة أساسية رقمها 0.
-Two routers that disagree on timers, area or MTU never become neighbours, and part of the map goes missing. A flapping link makes every router recompute again and again - the network "churns".	جهازان توجيه متفقين على توقيتات، منطقة أو MTU لا يصبحون جيران أبداً، ويموت جزء من الخريطة. ربط متضرب يجعل كل جهاز توجيه يعيد الحساب مرارا وتكرارا - الشبكة "تتغير".
+Two routers that disagree on timers, area or MTU never become neighbours, and part of the map goes missing. A flapping link makes every router recompute again and again - the network "churns".	جهازان توجيه متفقين على توقيتات، منطقة أو MTU لا يصبحون جيران أبداً، ويموت جزء من الخريطة. ربط متضرب يجعل كل راوتر يعيد الحساب مرارا وتكرارا - الشبكة "تتغير".
 Router A	الراوتر A
 Router B	الراوتر B
 Hello - I'm A, area 0	مرحبًا — أنا A، في المنطقة 0
@@ -3535,13 +3535,13 @@ Itself	نفسه
 run shortest path again, update the routes	أعد حساب أقصر مسار وحدّث جدول التوجيه
 MPLS - labels for fast lanes through the core	MPLS - علامات للطرق السريعة عبر القاعدة
 A short label on the front of each packet decides where it goes next.	علامة قصيرة على مقدمة كل حزمة تقرر أين تذهب بعد ذلك.
-What does an MPLS router look at to forward a packet?	ما الذي يبحث عنه جهاز توجيه MPLS لإرسال حزمة؟
+What does an MPLS router look at to forward a packet?	ما الذي يبحث عنه راوتر MPLS لإرسال حزمة؟
 A short label added in front of the packet	إضافة ملصق قصير أمام الحزمة
 The website's name	اسم الموقع
 The Wi-Fi signal	إشارة Wi-Fi
 The packet's payload	حمولة الحزمة المفيدة
 At the edge of a provider's network the packet gets a label; core routers just swap labels along a pre-built path (an LSP) without reading the IP address underneath.	في حافة شبكة مزود تحصل الحزمة على علامة؛ توجيهات الأساس فقط تبادل العلامات على طول مسار مبني مسبقًا (LSP) دون قراءة عنوان IP أسفل.
-Labels are handed out by LDP or, more and more, carried in the IGP itself (segment routing). A packet can carry a stack: an outer label for the path across the core and an inner label that says which customer or service it belongs to. That inner label is what makes VPNs, Ethernet services and traffic engineering possible on one shared network. The last-but-one router usually pops the outer label (penultimate hop popping) so the exit router only sees the service label. Traceroute through MPLS often shows hops with labels (ICMP extensions) - or hides them entirely when the provider tunnels them.	يتم توزيع العلامات بواسطة LDP أو، بشكل متزايد، يتم نقلها في IGP نفسها (التوجيه القطاعي). يمكن أن تحمل حزمة: علامة خارجية على المسار عبر النواة وملف داخلي يذكر أي عميل أو خدمة ينتمي إليها. هذا اللقب الداخلي هو ما يجعل شبكات VPN وخدمات Ethernet و هندسة حركة المرور ممكنة على شبكة مشتركة واحدة. يظهر الجهاز التوجيه الأخير ولكن واحد عادةً اللباقة الخارجية (الظهور الخارجي) بحيث يرى جهاز التوجيه الخارجي فقط علامة الخدمة. غالباً ما يظهر المسار عبر MPLS المخططات التي تحمل علامات (موسعات ICMP) - أو يخفيها بالكامل عندما يقوم مقدم الطلب بتنيلها.
+Labels are handed out by LDP or, more and more, carried in the IGP itself (segment routing). A packet can carry a stack: an outer label for the path across the core and an inner label that says which customer or service it belongs to. That inner label is what makes VPNs, Ethernet services and traffic engineering possible on one shared network. The last-but-one router usually pops the outer label (penultimate hop popping) so the exit router only sees the service label. Traceroute through MPLS often shows hops with labels (ICMP extensions) - or hides them entirely when the provider tunnels them.	يتم توزيع العلامات بواسطة LDP أو، بشكل متزايد، يتم نقلها في IGP نفسها (التوجيه القطاعي). يمكن أن تحمل حزمة: علامة خارجية على المسار عبر النواة وملف داخلي يذكر أي عميل أو خدمة ينتمي إليها. هذا اللقب الداخلي هو ما يجعل شبكات VPN وخدمات Ethernet و هندسة حركة المرور ممكنة على شبكة مشتركة واحدة. يظهر الراوتر الأخير ولكن واحد عادةً اللباقة الخارجية (الظهور الخارجي) بحيث يرى الراوتر الخارجي فقط علامة الخدمة. غالباً ما يظهر المسار عبر MPLS المخططات التي تحمل علامات (موسعات ICMP) - أو يخفيها بالكامل عندما يقوم مقدم الطلب بتنيلها.
 Labels add 4 bytes each; if the core's MTU wasn't raised to carry them, big packets get dropped - an MTU black hole inside the provider.	وتضيف العلامات بايتز 4 لكل منها؛ إذا لم يتم رفع MTU للقوى لحملها، فإن الحزم الكبيرة تتساقط - ثقب أسود MTU داخل المقدم.
 Customer router	راوتر العميل
 Provider edge PE1	راوتر حافة المزوّد PE1
@@ -3583,8 +3583,8 @@ Why does IPTV use multicast?	لماذا يستخدم التلفزيون الإي
 The stream is sent once and copied only where viewers are	يتم إرسال التيار مرة واحدة و يتم نسخها فقط حيث المشاهدين
 It encrypts the channel	إنها تشفير القناة
 It makes the picture sharper	يجعل الصورة أكثر وضوحاً
-It avoids needing a router	يتجنب الحاجة إلى جهاز توجيه
-A live channel is one multicast group address. Your set-top box joins the group; routers copy the stream only onto links where somebody is watching.	القناة المباشرة هي عنوان واحد لمجموعة متعددة التذاكر. يضم مربع تحديد الموقع الخاص بك إلى المجموعة؛ يقوم جهاز التوجيه بتنسخ التدفق فقط إلى الروابط التي يشاهدها شخص ما.
+It avoids needing a router	يتجنب الحاجة إلى راوتر
+A live channel is one multicast group address. Your set-top box joins the group; routers copy the stream only onto links where somebody is watching.	القناة المباشرة هي عنوان واحد لمجموعة متعددة التذاكر. يضم مربع تحديد الموقع الخاص بك إلى المجموعة؛ يقوم الراوتر بتنسخ التدفق فقط إلى الروابط التي يشاهدها شخص ما.
 The box sends an IGMP "join" (MLD on IPv6) when you change channel; the access switch or router notes it (IGMP snooping keeps it off ports that didn't ask). Routers build a distribution tree toward the source with PIM - usually source-specific (PIM-SSM: "this channel from that server"). One 8 Mbps channel watched by 50,000 homes costs the core 8 Mbps, not 400 Gbps. Channel change speed depends on how fast the join reaches a router that already has the stream - providers add fast-channel-change servers that blast a short unicast burst while the multicast joins. Ordinary internet streaming (Netflix, YouTube) can't use multicast - every viewer pulls their own copy.	يرسل جهاز الاستقبال طلب انضمام IGMP عند تغيير القناة، أو MLD على IPv6، ويسجّله المبدّل أو الراوتر. تمنع مراقبة IGMP وصول البيانات إلى المنافذ التي لم تطلبها. تبني الراوترات شجرة توزيع باتجاه المصدر باستخدام PIM، وغالبًا PIM-SSM لتحديد قناة من خادم بعينه. قناة بسرعة 8 Mbps يشاهدها 50,000 منزل تستهلك من الشبكة الأساسية 8 Mbps، لا 400 Gbps. تعتمد سرعة تغيير القناة على سرعة وصول طلب الانضمام إلى راوتر يستقبل البث بالفعل. ويضيف المزوّدون خوادم تسرّع التبديل بإرسال دفعة قصيرة مباشرة للمشاهد أثناء اكتمال الانضمام إلى البث المتعدّد. لا يستطيع البث العادي عبر الإنترنت، مثل Netflix وYouTube، استخدام هذه الطريقة؛ إذ ينزّل كل مشاهد نسخته الخاصة.
 IGMP snooping off on a home switch floods the TV stream to every port - Wi-Fi collapses. A join that never reaches the tree gives a black screen while the internet works fine.	إنّ المُدّعيّ التنفيذيّ يُستغلّ جهاز التبويّن المنزليّ، ويتغرق كلّ منفذ تلفزيونيّ - Wi-Fi ينهار. المفصل الذي لا يصل أبداً إلى الشجرة يعطي شاشة سوداء بينما يعمل الإنترنت بشكل جيد.
 Set-top box	جهاز استقبال التلفزيون
@@ -3604,7 +3604,7 @@ A cache server inside or next to your provider's network	خادم التخزين
 Netflix's head office	مقر Netflix
 Your neighbour's PC	كمبيوتر جارك
 A satellite every time	قمر صناعي في كل مرة
-Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.	يضع المواصلات الكبيرة خوادم التخزين (CDN - Netflix's Open Connect) داخل شبكات مقدمي الخدمات. لاعبك يقوم بتنزيل الفيلم في قطع قصيرة على HTTPS، واختيار الجودة لكل قطعة من سرعتك الآن.
+Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.	تضع منصات البث الكبيرة خوادم تخزين مؤقت (شبكة CDN - شبكة Netflix اسمها Open Connect) داخل شبكات المزوّدين. يحمّل المشغّل الفيلم على أجزاء قصيرة عبر HTTPS، ويختار جودة كل جزء حسب سرعتك الآن.
 The video is cut into 2-10 second segments, each encoded at several qualities (a "ladder" from 240p to 4K). The player (DASH or HLS) keeps a buffer of upcoming segments; if downloads slow, it picks a lower rung - that's why quality drops before the video stops. Buffering only happens when the buffer runs dry. Popular titles are pre-loaded onto the caches overnight; a DNS answer or a steering service sends you to the nearest healthy cache. HBO, Disney+ and YouTube work the same way with their own or rented CDNs. 4K needs about 15-25 Mbps steady - the average speed matters less than the dips.	يُقسّم الفيديو إلى مقاطع مدتها 2-10 ثوانٍ، ويُرمّز كل مقطع بجودات متعدّدة تتدرّج من 240p إلى 4K. يحتفظ المشغّل، باستخدام DASH أو HLS، بمخزن مؤقت للمقاطع القادمة. إذا تباطأ التنزيل، يختار جودة أقل؛ لذلك تنخفض الجودة قبل توقّف الفيديو. لا يتوقّف التشغيل للتحميل إلا عندما يفرغ المخزن. تُحمّل الأعمال الشائعة مسبقًا إلى الخوادم المؤقتة ليلًا، ويوجّهك ردّ DNS أو نظام توجيه إلى أقرب خادم سليم. تستخدم HBO وDisney+ وYouTube الطريقة نفسها عبر شبكات CDN تملكها أو تستأجرها. يحتاج 4K إلى سرعة مستقرة بنحو 15-25 Mbps؛ والانخفاضات القصيرة أهم من متوسط السرعة.
 A busy evening Wi-Fi or a provider link to the CDN that's full shows up as quality drops first, buffering second. A VPN can send you to a far-away cache - slower and lower quality.	مساء مزدحم Wi-Fi أو رابط مزود إلى CDN الذي هو كامل يظهر كما ينخفض الجودة أولا، والعازلة الثانية. يمكن أن يرسلك VPN إلى مخزن بعيد - أبطأ وأقل جودة.
 Your TV	تلفزيونك
@@ -3645,7 +3645,7 @@ The SIM, the screen and the battery	السيم والشاشة والبطارية
 DNS, DHCP and NAT	DNS، DHCP و NAT
 The phone (UE) talks by radio to a base station (eNodeB in 4G, gNodeB in 5G). The base stations connect over fibre to the core, which checks your SIM, gives you an IP address and sends your data to the internet.	يتحدث الهاتف (UE) عن طريق الراديو إلى محطة قاعدة (eNodeB في 4G، gNodeB فى 5 G). محطات القاعدة تتصل عبر الألياف إلى النواة، والتي تحقق من بطاقة SIM الخاصة بك، وتعطيك عنوان IP وترسل بياناتك إلى الإنترنت.
 The radio access network (RAN) handles the air: scheduling who transmits when, handovers between cells, signal quality. The core does everything else: authentication (from the SIM's secret key), mobility (which tower you're under), sessions (your IP address and the path for your data), policy and charging. Control (signalling) and user data travel separately: signalling to the core's control functions, your packets through user-plane gateways. "Registered but no data" is a classic case where the control side worked and the data session didn't. A cellular router or a phone hotspot looks like any other router to your PC - AdeeboMeter sees the link to it, DNS and reachability, not the radio or the core.	تدير شبكة النفاذ اللاسلكي RAN الإرسال عبر الهواء: توقيت إرسال كل جهاز، وتسليم الاتصال بين الخلايا، وجودة الإشارة. تتولّى الشبكة الأساسية بقية الأمور: المصادقة بمفتاح SIM السرّي، وتتبّع البرج الذي تتصل به، وجلسات البيانات بعناوين IP ومساراتها، والسياسات والفوترة. تنتقل إشارات التحكّم والبيانات بصورة منفصلة: الأولى إلى وظائف التحكّم، وحزمك عبر بوابات نقل بيانات المستخدم. حالة «مسجّل لكن بلا بيانات» مثال شائع لنجاح التحكّم وفشل جلسة البيانات. يبدو الراوتر الخلوي أو اتصال الهاتف كنقطة وصول لأي جهاز كمبيوتر مثل راوتر عادي؛ يرى AdeeboMeter الرابط إليه وDNS وإمكانية الوصول، لا الشبكة اللاسلكية أو الأساسية داخله.
-Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Slow data with full bars is often a busy cell - many users sharing it.	المقاطع الكاملة و عدم وجود الإنترنت عادة ما تعني فشل جلسة البيانات (APN/DNN) ، وليس الراديو. البيانات البطيئة مع شريط كامل غالباً ما تكون خلية مشغولة - العديد من المستخدمين يشاركونها.
+Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Slow data with full bars is often a busy cell - many users sharing it.	إشارة كاملة الشرطات بلا إنترنت تعني غالبًا أن جلسة البيانات (APN/DNN) فشلت، لا الراديو. وبيانات بطيئة مع إشارة كاملة الشرطات تعني غالبًا خلية مزدحمة - مستخدمون كثيرون يتشاركونها.
 Tower	برج الاتصالات
 radio connection	اتصال راديو
 Core (control)	الشبكة الأساسية (التحكّم)
@@ -3661,7 +3661,7 @@ What is a gNodeB?	ما هو gNodeB؟
 The 5G base station (the "tower" equipment)	محطة قاعدة 5G (معدات "المبراج")
 A type of SIM card	نوع بطاقة SIM
 The 5G core's database	قاعدة بيانات جوهر 5G
-A Wi-Fi router	جهاز توجيه Wi-Fi
+A Wi-Fi router	راوتر Wi-Fi
 eNodeB is the 4G base station, gNodeB the 5G one. They schedule the radio, measure your signal, hand you to a better cell, and connect to the core over S1 (4G) or N2 and N3 (5G).	eNodeB هي المحطة الأساسية في 4G، وgNodeB هي نظيرتها في 5G. تنظّمان الإرسال اللاسلكي، وتقيسان الإشارة، وتنقلان اتصالك إلى خلية أفضل، وتتصلان بالشبكة الأساسية عبر S1 في 4G أو N2 وN3 في 5G.
 Each cell broadcasts its identity; the phone measures signal strength (RSRP) and quality (RSRQ, SINR) and reports them, and the base station decides handovers - directly over the X2/Xn link to the neighbour cell when it can. A 5G gNodeB is often split: a radio unit on the mast, distributed and central units further back (CU/DU split, O-RAN). Early 5G is "non-standalone" (NSA): 5G radio added to a 4G eNodeB, still on the 4G core. "Standalone" (SA) uses the 5G core. RedCap is a lighter 5G for sensors and routers that don't need full speed.	تعلن كل خلية هويتها، ويقيس الهاتف قوة الإشارة RSRP وجودتها RSRQ وSINR ثم يرسل النتائج. تقرّر المحطة الأساسية تسليم الاتصال، مباشرة إلى الخلية المجاورة عبر X2/Xn إن أمكن. غالبًا تُقسّم gNodeB في 5G إلى وحدة راديوية على البرج ووحدات موزّعة ومركزية خلفها، وفق تقسيم CU/DU وO-RAN. أضافت شبكات 5G المبكرة غير المستقلة NSA اتصالًا 5G إلى eNodeB من 4G مع إبقاء الشبكة الأساسية 4G. تستخدم الشبكات المستقلة SA شبكة أساسية 5G. أما RedCap فهي نسخة أخف من 5G للحساسات والراوترات التي لا تحتاج إلى السرعة الكاملة.
 Good RSRP but poor SINR means interference or a busy cell, not distance. Constant handovers at a cell edge show up as short stalls and jitter.	إنّه معدل النتائج الجيدة لكن معدل الناتج السيئ يعني التداخل أو خلية مشغولة، وليس المسافة. التسليمات المستمرة في حافة الخلية تظهر كدفعات قصيرة والقلق.
@@ -3722,7 +3722,7 @@ Wi-Fi must be turned on	يجب تشغيل Wi-Fi
 The phone must restart	يجب أن يعيد تشغيل الهاتف
 Joining has two halves: registration (who you are, proven with the SIM's key) and a data session (an IP address and a path). In 4G the default bearer comes with the attach; in 5G the PDU session is a separate step.	للاتصال جزآن: التسجيل، وفيه تُثبت هويتك بمفتاح SIM، وجلسة بيانات توفّر عنوان IP ومسارًا. في 4G يُنشأ حامل البيانات الافتراضي ضمن الالتحاق بالشبكة، أما في 5G فتُنشأ جلسة PDU في خطوة منفصلة.
 In 4G: attach request → authentication (the network sends a challenge only your SIM can answer) → security mode → the MME asks the gateways for a session → attach accept with your IP → the default bearer is up. In 5G SA: registration request → authentication → security mode → registration accept; then the phone asks for a PDU session for a DNN (5G's name for the APN) → the SMF picks a UPF and an address → PDU session accept. Each step can be rejected with a cause code (for example "DNN not supported", "insufficient resources"). A modem log that ends after "PDU Session Establishment Request" with no accept or reject is a strong clue the problem is the session side, not the radio.	في 4G: طلب التحاق → مصادقة بتحدٍّ لا يستطيع الإجابة عنه إلا مفتاح SIM → وضع الأمان → يطلب MME جلسة من البوابات → قبول الالتحاق مع عنوان IP → يصبح حامل البيانات الافتراضي جاهزًا. في 5G SA: طلب تسجيل → مصادقة → وضع الأمان → قبول التسجيل؛ ثم يطلب الهاتف جلسة PDU لشبكة DNN، وهو اسم APN في 5G → يختار SMF بوابة UPF وعنوانًا → قبول جلسة PDU. قد تُرفض أي خطوة مع رمز سبب، مثل «DNN غير مدعوم» أو «موارد غير كافية». إذا انتهى سجل المودم بعد PDU Session Establishment Request دون قبول أو رفض، فهذا دليل قوي على مشكلة في إنشاء الجلسة، لا في الاتصال اللاسلكي.
-"Registered" on the router's screen only means the first half worked. Look for the session accept and an IP address before blaming anything else.	"مسجل" على شاشة الجهاز التوجيه يعني فقط النصف الأول يعمل. ابحث عن قبول الجلسة وعنوان IP قبل إلقاء اللوم على أي شيء آخر.
+"Registered" on the router's screen only means the first half worked. Look for the session accept and an IP address before blaming anything else.	"مسجل" على شاشة الراوتر يعني فقط النصف الأول يعمل. ابحث عن قبول الجلسة وعنوان IP قبل إلقاء اللوم على أي شيء آخر.
 Registration Request	طلب التسجيل
 Authentication Request (challenge)	طلب التصديق (تحدي)
 Authentication Response	استجابة للتوثيق
@@ -3737,7 +3737,7 @@ The phone's serial number	رقم الهاتف المتسلسل
 The tower's name	اسم البرج
 The APN (4G) or DNN (5G) names the network you want: "internet", a company's private network, IMS for voice calls. The bearer (4G) or PDU session (5G) is the resulting pipe, with its own IP address and QoS.	يحدّد APN في 4G أو DNN في 5G الشبكة المطلوبة: "internet" أو شبكة شركة خاصة أو IMS للمكالمات الصوتية. وينشأ عن ذلك حامل بيانات في 4G أو جلسة PDU في 5G، له عنوان IP وإعدادات QoS خاصة به.
 One device can hold several at once: internet data, IMS for VoLTE calls (with a guaranteed-bit-rate bearer for the voice itself), a private APN for a company's routers. Each gets its own address and can go to a different gateway. QoS is set per flow: a QCI (4G) or 5QI (5G) number says the priority, delay budget and loss target - voice gets a better one than web browsing. A private APN with the wrong name or no subscription in the core is a classic "registered, no data" cause: the core rejects the session with a cause code that's only visible in the modem's log.	يمكن للجهاز امتلاك عدة اتصالات من هذا النوع في الوقت نفسه: بيانات الإنترنت، وIMS لمكالمات VoLTE مع حامل يضمن معدل بت للصوت، وAPN خاص لراوترات شركة. لكل اتصال عنوانه، وقد يمرّ ببوابة مختلفة. تُضبط QoS لكل تدفّق؛ فيحدّد رقم QCI في 4G أو 5QI في 5G الأولوية وحدود التأخير والفقد. تحصل المكالمات على معاملة أفضل من تصفّح الويب. الاسم الخاطئ لشبكة APN خاصة، أو غياب الاشتراك في الشبكة الأساسية، سبب شائع لحالة «مسجّل، لكن بلا بيانات»؛ إذ ترفض الشبكة الجلسة برمز لا يظهر إلا في سجل المودم.
-Typo in the APN on a router: registered, no data. The wrong IP type (IPv4 vs IPv6 vs both) can also be refused.	خطأ في APN على جهاز توجيه: مسجل، لا بيانات. يمكن رفض نوع IP الخطأ (IPv4 مقابل IPv6 ضد كليهما).
+Typo in the APN on a router: registered, no data. The wrong IP type (IPv4 vs IPv6 vs both) can also be refused.	خطأ في APN على راوتر: مسجل، لا بيانات. يمكن رفض نوع IP الخطأ (IPv4 مقابل IPv6 ضد كليهما).
 connect me to APN "acme.corp"	ربطني بـ "APN.acme.corp"
 Subscriber database	قاعدة بيانات المشتركين
 is this SIM allowed on acme.corp?	هل يُسمح لهذه الشريحة SIM بالاتصال بـ acme.corp؟
@@ -3745,13 +3745,13 @@ yes, fixed IP 10.40.0.17	نعم، بعنوان IP ثابت 10.40.0.17
 session up, IP 10.40.0.17, QoS 9	جلسة إضافة IP 10.40.0.17، QoS 9
 Company network	شبكة الشركة
 data through the private APN	بيانات عبر APN الخاص
-5G NSA vs SA, and why your router says 5G but behaves like 4G	5G NSA مقابل SA، ولماذا جهاز التوجيه الخاص بك يقول 5g ولكن يتصرف مثل 4 G
+5G NSA vs SA, and why your router says 5G but behaves like 4G	5G NSA مقابل SA، ولماذا الراوتر يقول 5g ولكن يتصرف مثل 4 G
 Non-standalone borrows the 4G core; standalone is 5G all the way.	غير مستقل يقترض جوهر 4G؛ مستقل هو 5 G طوال الطريق.
 In 5G non-standalone (NSA), which core is used?	في 5G غير مستقل (NSA) ، أي جوهر يستخدم؟
 The 4G core (EPC)	النواة 4G (EPC)
 The 5G core	النواة 5G
 No core at all	لا جوهر على الإطلاق
-The Wi-Fi router	جهاز توجيه Wi-Fi
+The Wi-Fi router	راوتر Wi-Fi
 NSA adds 5G radio to a 4G anchor cell: the phone signals over 4G and gets extra speed on 5G, but the core is still the 4G one. SA uses a 5G core and 5G for everything.	تضيف NSA اتصالًا لاسلكيًا 5G إلى خلية ارتكاز 4G: يرسل الهاتف إشارات التحكّم عبر 4G ويحصل على سرعة إضافية عبر 5G، لكن الشبكة الأساسية تبقى 4G. أما SA فتستخدم شبكة أساسية 5G واتصال 5G لكل شيء.
 NSA (option 3x) gave early 5G its speed without a new core. Features that need the 5G core - network slicing, the lower-latency user plane, RedCap devices, the newer session handling - only come with SA. On NSA, losing the 4G anchor drops the 5G leg too, so a "5G" icon can flicker while data stalls. Routers usually show which one they're on (EN-DC means NSA). Latency on NSA is close to good 4G; on SA with a nearby UPF it can be lower.	أعطت وكالة الأمن القومي (خيار 3x) مبكرة 5G سرعتها دون نواة جديدة. الميزات التي تحتاج إلى جوهر 5G - قطع الشبكة، طائرة مستخدم أقل تأخير، أجهزة RedCap، التعامل الجلسة الحديثة - تأتي فقط مع SA. في وكالة الأمن القومي، فقدان مرساة 4G يسبب انخفاض قدم 5 G أيضاً، لذا يمكن أن يلمع رمز "5g" بينما تتوقف البيانات. الموجات عادة ما تظهر على أي واحد هي (EN-DC يعني NSA). التأخير على NSA قريب من 4G الجيد؛ على SA مع UPF القريبة يمكن أن تكون أقل.
 A device that only supports SA in a place that only has NSA (or the reverse) falls back to 4G - working, slower.	جهاز يدعم فقط SA في مكان لا يوجد فيه سوى NSA (أو العكس) يعود إلى 4G - يعمل ببطء.
@@ -3798,7 +3798,7 @@ Each other's password	كلمة المرور لبعضهم البعض
 A certificate	شهادة
 The website's IP address	عنوان IP للموقع
 Both start with a public colour, add their own secret colour and swap the mixes. Each adds its secret again - both get the same final colour; a listener can't unmix it.	كلاهما يبدأ بألوان عامة، ويقوم بإضافة لونهم السري الخاص وتبادل الخليط. كل واحد يضيف سرّه مرة أخرى - كلاهما يحصل على نفس اللون النهائي؛ المستمع لا يمكن أن يخلطها.
-On its own it doesn't prove who you're talking to - the certificate does that. ECDHE makes a fresh secret every session (forward secrecy).	بمفردها لا يثبت من تتحدث إليه - الشهادة تفعل ذلك. يُجعل ECDHE سرية جديدة في كل جلسة (السرية المقبلة).
+On its own it doesn't prove who you're talking to - the certificate does that. ECDHE makes a fresh secret every session (forward secrecy).	وحده لا يثبت مع من تتحدث - هذا دور الشهادة. ينشئ ECDHE سرًّا جديدًا في كل جلسة (السرية الأمامية).
 public yellow + my secret red = orange	الصفراء العامة + الأحمر السري = البرتقالي
 public yellow + my secret blue = green	الصفراء العامة + الأزرق السري = الأخضر
 green + my red = brown	الأخضر + أحمر = بني
@@ -3903,7 +3903,7 @@ Stops and waits for the speed to return	يتوقف وينتظر سرعة الع�
 Switches to 4K to catch up	أبدل إلى 4K لتحقيق
 Closes the app	إغلاق التطبيق
 Every chunk comes in several qualities. The player measures how fast the last chunks arrived and picks the next one to fit.	كل قطعة تأتي في عدة صفات. يقيّم اللاعب سرعة وصول القطع الأخيرة و يختار القسم التالي ليحقق.
-A line that keeps dipping makes the picture switch between sharp and blurry - a cable or a closer router usually steadies it.	خط يمرّ في الغوص يجعل الصورة تتحول بين حادّة ومُضطربة - كابل أو جهاز توجيه أقرب عادةً ما يُساعد على تحسينها.
+A line that keeps dipping makes the picture switch between sharp and blurry - a cable or a closer router usually steadies it.	خط يمرّ في الغوص يجعل الصورة تتحول بين حادّة ومُضطربة - كابل أو راوتر أقرب عادةً ما يُساعد على تحسينها.
 next chunk in 4K	الجزء التالي في 4K
 (slow - took 6 s for 4 s of video)	(ببطء - أخذ 6 s من أجل 4 من الفيديو)
 next chunk in HD instead	الجزء التالي في HD بدلا من ذلك
@@ -3943,7 +3943,7 @@ Why does live TV stutter more easily than a movie?	لماذا يتخلى الت�
 It keeps only a few seconds of buffer, so short dips show	يحتفظ ببضع ثوانٍ فقط من البفر، لذا فإنّ القذف القصير يظهر
 Live TV is a much bigger file	التلفزيون المباشر هو ملف أكبر بكثير
 Live TV uses a slower kind of cable	التلفزيون المباشر يستخدم نوع أبطأ من الكابل
-Movies are stored on your router	يتم تخزين الأفلام على جهاز التوجيه
+Movies are stored on your router	يتم تخزين الأفلام على الراوتر
 A live channel can't download far ahead - the next minute hasn't happened yet - so it keeps only a few seconds in the buffer.	القناة الحية لا يمكن تحميلها في وقت بعيد - الدقيقة التالية لم تحدث بعد - لذلك فإنها تبقى لبضع ثوان فقط في المضخة.
 Many stutters on a live channel come from the channel's own server; when your router and provider look fine, the record says "the stream's server".	العديد من التخنجات على قناة مباشرة تأتي من خادم القناة نفسه؛ عندما يبدو جهازك الموجيه والمقدم بخير، يقول السجل "خادم التيار".
 Channel server	خادم القناة
@@ -3954,13 +3954,13 @@ next 2 s	القادم 2
 Watch a live channel and open its record in Streaming afterwards.	شاهد قناة مباشرة، ثم افتح سجلها في قسم البث.
 Whose fault is the buffering?	من ذنب البفر؟
 The first broken hop is the culprit.	أول قفزة مكسورة هو المذنب
-Your router answers fast, but the internet check loses replies. Whose fault?	جهاز التوجيه الخاص بك يستجيب بسرعة، ولكن الشيكات الإنترنت تفقد الإجابات. -ذنب من؟
-Your provider's - the trouble is past your router	المورد الخاص بك - المشاكل هي خارج جهاز التوجيه الخاص بك
+Your router answers fast, but the internet check loses replies. Whose fault?	الراوتر يستجيب بسرعة، ولكن الشيكات الإنترنت تفقد الإجابات. -ذنب من؟
+Your provider's - the trouble is past your router	المورد الخاص بك - المشاكل هي خارج الراوتر
 Your Wi-Fi's	شبكة Wi-Fi لديك
 The PC's	جهاز الكمبيوتر
 The video's	الفيديو
 AdeeboMeter checks each hop of the path - PC, Wi-Fi, router, provider, the stream's server. Everything after the first broken hop is a victim, not a cause.	AdeeboMeter يُحقق من كل قفزة من المسار - PC، Wi-Fi، راوتر، مزود، خادم التدفق. كل شيء بعد أول قفزة مكسورة هو ضحية، وليس سبب.
-Evening-only dips with a healthy router usually mean the provider's busy hours - the monthly report gives you the evidence to show them.	الغوص في المساء فقط مع جهاز توجيه صحي عادة ما يعني ساعات المزعج من المزود - تقرير الشهري يعطيك الأدلة لإظهارها.
+Evening-only dips with a healthy router usually mean the provider's busy hours - the monthly report gives you the evidence to show them.	الغوص في المساء فقط مع راوتر صحي عادة ما يعني ساعات المزعج من المزود - تقرير الشهري يعطيك الأدلة لإظهارها.
 2 ms - fine	2 ms - جيد
 3 of 10 lost - broken	فُقدت 3 من 10 — الاتصال متعطّل
 Stream server	خادم البث
@@ -3972,7 +3972,7 @@ A scoreboard that tracks a group of companies	لوحة النتائج التي �
 A single company's share price	سعر أسهم شركة واحدة
 A bank account with interest	حساب مصرفي مع فائدة
 A government bond	سند حكومي
-A share is a small piece of one company. An index tracks a group of companies to show how a market is doing. An ETF is a fund you can buy that holds a whole basket, often following an index.	حصة هي قطعة صغيرة من شركة واحدة. المؤشر يتبع مجموعة من الشركات لإظهار كيفية سلوك السوق. صندوق إيثف هو صندوق يمكنك شراء الذي يحمل سلة كاملة، غالباً ما يتبع مؤشر.
+A share is a small piece of one company. An index tracks a group of companies to show how a market is doing. An ETF is a fund you can buy that holds a whole basket, often following an index.	السهم جزء صغير من شركة واحدة. المؤشر يتتبع مجموعة من الشركات ليبيّن أداء السوق. وصندوق ETF صندوق يمكنك شراؤه يحمل سلة كاملة، وغالبًا ما يتبع مؤشرًا.
 One company can fall a lot on its own news; a basket spreads that out - which is why indexes move less wildly than single stocks.	يمكن لشركة واحدة أن تسقط كثيراً على أخبارها؛ السلة تنتشر ذلك - وهذا هو السبب في أن المؤشرات تتحرك بشكل أقل حيوية من الأسهم الفردية.
 Broker	الوسيط
 buy 1 share of a company	شراء حصة شركة 1
@@ -4046,7 +4046,7 @@ How fast the broker actually fills your order	كم سريع الوسيط يمل�
 Your delay to the broker's server	تأخيرك على خادم الوسيط
 Whether your Wi-Fi is dropping	ما إذا كان Wi-Fi الخاص بك يقع
 Whether your provider is losing packets	ما إذا كان مقدمك يخسر الحزم
-Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every few seconds while the market is open and says whose side a slow moment is on.	أمرك يسافر من جهاز الكمبيوتر الخاص بك عبر Wi-Fi، جهاز التوجيه الخاص بك ومزودك إلى الوسيط. AdeeboMeter ضرب هذا المسار كل بضع ثوان بينما السوق مفتوحة ويقول من الجانب لحظة بطيئة على.
+Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every few seconds while the market is open and says whose side a slow moment is on.	أمرك يسافر من جهاز الكمبيوتر الخاص بك عبر Wi-Fi، الراوتر ومزودك إلى الوسيط. AdeeboMeter ضرب هذا المسار كل بضع ثوان بينما السوق مفتوحة ويقول من الجانب لحظة بطيئة على.
 If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.	إذا كانت شاشة الطلب تتحرك بعد استجابة ضائعة، تحقق من قائمة الطلبات قبل النقر مرة أخرى - النقر الثاني يمكن أن يعني الطلب الثاني.
 Buy (2 ms)	شراء (2 ms)
 Buy (15 ms)	شراء (15 ms)
@@ -4070,7 +4070,7 @@ Two quarters in a row of shrinking GDP	ربعين على التوالي من ت�
 Any day the stock market falls	في أي يوم يقع سوق الأسهم
 Inflation above 2%	التضخم فوق 2%
 Interest rates going up once	أسعار الفائدة ترتفع مرة واحدة
-A recession is a broad fall in economic activity lasting months. A common rule of thumb is two quarters in a row of shrinking GDP (everything a country produces). Jobs get scarcer, people spend less, profits fall.	الركود هو انخفاض واسع في النشاط الاقتصادي لمدة شهور. قاعدة عامة هي أرباعي الناتج المحلي الإجمالي المتراجع (كل ما تنتجه بلد). الوظائف تصبح نادرة، الناس ينفقون أقل، الأرباح تنخفض.
+A recession is a broad fall in economic activity lasting months. A common rule of thumb is two quarters in a row of shrinking GDP (everything a country produces). Jobs get scarcer, people spend less, profits fall.	الركود تراجع واسع في النشاط الاقتصادي يستمر شهورًا. والقاعدة الشائعة: ربعان متتاليان (فترتان من ثلاثة أشهر) ينكمش فيهما الناتج المحلي الإجمالي (كل ما ينتجه البلد). تقل الوظائف، وينفق الناس أقل، وتنخفض الأرباح.
 Shares often fall before a recession is announced and recover before it ends - the news and the prices don't move on the same clock.	غالباً ما تسقط الأسهم قبل الإعلان عن الركود وتستعيد قبل أن تنتهي - الأخبار والأسعار لا تتحرك في نفس الساعة.
 An emergency fund is what carries you through a lost job - see that topic.	يساعدك صندوق الطوارئ على تجاوز فقدان الوظيفة — راجع الدرس المخصّص له.
 Inflation	التضخم
@@ -4139,7 +4139,7 @@ Many companies average each other out	العديد من الشركات تتوس�
 It's guaranteed by the government	هذا مضمون من قبل الحكومة
 It only holds banks	إنه يحتوي فقط على البنوك
 It never falls	لا تسقط أبداً
-Holding many companies (an index fund holds hundreds) means one bad company barely dents the whole. Spreading across countries and types of investment smooths things further.	امتلاك العديد من الشركات (صندوق مؤشر يحتوي على مئات) يعني أن شركة واحدة سيئة بالكاد تدمير الكل. الانتشار في البلدان وأنواع الاستثمارات يسهل الأمور أكثر.
+Holding many companies (an index fund holds hundreds) means one bad company barely dents the whole. Spreading across countries and types of investment smooths things further.	امتلاك شركات كثيرة (صندوق المؤشر يحمل المئات) يعني أن شركة واحدة سيئة بالكاد تؤثر في المجموع. والتوزيع على بلدان وأنواع استثمار مختلفة يزيد الأمور سلاسة.
 Owning five tech companies isn't spread - they tend to fall together.	امتلاك خمس شركات تكنولوجيا ليس متوسعاً - تميلون إلى الانهيار معاً.
 Look at the S&P and TSX in Trading - each is hundreds of companies.	راجع S&P وTSX في قسم التداول — يضم كل منهما مئات الشركات.
 Fees and time	الرسوم والوقت
@@ -4916,3 +4916,97 @@ Share an idea	شارك فكرة
 Link copied	تم نسخ الرابط
 free: finds out why your internet or PC is slow	مجاني: يكتشف سبب بطء الإنترنت أو الحاسوب
 Thank you for using it - that already helps more than you think.	شكرًا لاستخدامه — هذا وحده يساعد أكثر مما تظن.
+
+DHCP & addressing	DHCP والعناوين
+SNMP & devices	SNMP والأجهزة
+Routing & path	التوجيه والمسار
+Ports & reachability	المنافذ وإمكانية الوصول
+ICMP & ping	ICMP وping
+HTTP, TLS & certificates	HTTP وTLS والشهادات
+802.1X, RADIUS, TACACS, LDAP	802.1X وRADIUS وTACACS وLDAP
+VPN & privacy	VPN والخصوصية
+Time (NTP)	الوقت (NTP)
+Speed & quality	السرعة والجودة
+Calls, games, streams & trading	المكالمات والألعاب والبث والتداول
+Packets & captures	الحزم والالتقاط
+Keys & encryption	المفاتيح والتشفير
+Hardware nerds	لعشاق العتاد
+Reports & over time	التقارير وعبر الزمن
+WHAT IT DOES	ماذا يفعل
+WHAT IT IS	ما هو
+WHY YOU NEED IT	لماذا تحتاجه
+WHY IT MATTERS	لماذا يهم
+IF IT WEREN'T THERE	لو لم يكن موجودًا
+WHAT TO DO	ماذا تفعل
+WHEN IT LOOKS BAD	حين يبدو سيئًا
+CAN I CLOSE IT?	هل يمكنني إغلاقه؟
+very sure	متأكد جدًا
+fairly sure	متأكد إلى حد ما
+likely	مرجّح
+a first guess	تخمين أول
+The PC	الكمبيوتر
+updates, sync, indexing	التحديثات والمزامنة والفهرسة
+Bestie	الصديقة المقرّبة
+Bro code	قانون الأصدقاء
+Epic fantasy	فانتازيا ملحمية
+Space saga	ملحمة فضائية
+Pirate	قرصان
+Noir detective	محقق نوار
+Nature documentary	وثائقي الطبيعة
+Dark Ages	العصور المظلمة
+Industrial	صناعي
+Revolution	ثورة
+Mission control	مركز التحكم
+Poetic	شاعري
+Scientist	عالِم
+Coder	مبرمج
+Gen-Z	جيل Z
+Philosopher: Marcus Aurelius (Stoic)	فيلسوف: ماركوس أوريليوس (رواقي)
+Philosopher: Aristotle	فيلسوف: أرسطو
+Philosopher: Taoist (Laozi)	فيلسوف: طاوي (لاوتسي)
+Philosopher: Confucius	فيلسوف: كونفوشيوس
+Common to all	مشترك بين الجميع
+Marcus Aurelius	ماركوس أوريليوس
+Aristotle	أرسطو
+Taoism	الطاوية
+Confucius	كونفوشيوس
+Internet speed	سرعة الإنترنت
+Last test	آخر اختبار
+Only when you press the button	فقط عندما تضغط الزر
+When busy	عند الانشغال
+lag under load	التأخير حين يمتلئ الخط
+this server: download only	هذا الخادم: تنزيل فقط
+n/a	غير متاح
+Automatic	تلقائي
+Speed test:	اختبار السرعة:
+About 20 seconds, up to	نحو 20 ثانية، حتى
+Never runs by itself.	لا يعمل من تلقاء نفسه أبدًا.
+UPLOAD	الرفع
+DOWNLOAD	التنزيل
+NOT TESTED YET	لم يُختبر بعد
+TEST TO	الاختبار إلى
+Cloudflare's nearest data centre · download and upload	أقرب مركز بيانات لـ Cloudflare · تنزيل ورفع
+DOWNLOAD ONLY	تنزيل فقط
+Speed test server	خادم اختبار السرعة
+(name hidden - location is off)	(الاسم مخفي - الموقع متوقف)
+signal	الإشارة
+link	الرابط
+VPN on	VPN يعمل
+The {0} moved {1:0.0}% against the Canadian dollar this week.	تحرّك {0} بنسبة {1:0.0}% مقابل الدولار الكندي هذا الأسبوع.
+no key needed - a key gives more leagues	لا حاجة إلى مفتاح - المفتاح يضيف دوريات أكثر
+Football · ESPN's scoreboards (or your own key)	كرة القدم · نتائج ESPN (أو مفتاحك الخاص)
+(no greeting read)	(لم تُقرأ أي تحية)
+STARTTLS refused	رُفض STARTTLS
+(no answer - the test couldn't start)	(لا رد - لم يبدأ الاختبار)
+(no Remote Desktop answer)	(لا رد من سطح المكتب البعيد)
+refused, or not Remote Desktop	مرفوض، أو ليس سطح مكتب بعيد
+(not found)	(غير موجود)
+port unreachable - closed	المنفذ غير قابل للوصول - مغلق
+the host said so (ICMP)	قالها الجهاز نفسه (ICMP)
+no DHCP server to ask	لا يوجد خادم DHCP لسؤاله
+no address from DHCP	لا عنوان من DHCP
+(a device)	(جهاز)
+what's my public address?	ما عنواني العام؟
+
+Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	معطّل حتى تفعّله. بعد ذلك، وأثناء فتح هذه الصفحة أو تشغيل بث في صفحة البث إذا كنت تتابع فريقًا: نتائج هوكي NHL، وكرة القدم من لوحات نتائج ESPN العامة (أو football-data.org بمفتاحك المجاني)، والكريكيت بمفتاحك المجاني، وأخبار BBC Sport، بمعدل لا يتجاوز مرة كل 5 دقائق.
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	متوقف حتى تشغّله. بعدها، أثناء فتح هذه الصفحة: نتائج الهوكي من NHL، وكرة القدم من لوحات نتائج ESPN العامة (أو football-data.org بمفتاحك المجاني)، والكريكيت بمفتاحك المجاني، وعناوين BBC Sport — كل 5 دقائق على الأكثر.

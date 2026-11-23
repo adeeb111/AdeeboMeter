@@ -15,9 +15,9 @@ Bug hunt (report: 5 High, 31 Medium, 236 Medium-Low, 365 Low = 637), all on dev-
  High + Medium + ML-1..213 ─► fe910e1 and earlier
  ML-214..236               ─► 82c2230
  L-1..365                  ─► c730785
- self-test 86/86 under Wine after each batch
+ self-test 93/93 under Wine after each batch
 ```
-Since the handover commit (31ef361), all on dev-1.1.6, all pushed, self-test 86/86 after each:
+Since the handover commit (31ef361), all on dev-1.1.6, all pushed, self-test 93/93 after each:
 ```
  979f416  55 carry-overs: 44 fixed, 6 already fixed, 5 left/pushed back (section C)
  440897b  language button beside VIEW + language card + Restart; Chinese not offered

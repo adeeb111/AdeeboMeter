@@ -83,7 +83,7 @@ namespace AdeeboMeter
                 var canvas = new Panel { Bounds = new Rectangle(0, 0, f.ClientSize.Width, done.Top - Sc(4)), BackColor = Theme.Bg };
                 canvas.Paint += delegate(object s2, PaintEventArgs e)
                 {
-                    var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+                    var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
                     using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("SCAN TO OPEN"), Draw.fTiny, mb, pad, pad);
                     using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(what, Draw.fHead, ib, new RectangleF(pad, pad + Sc(20), w, hHead + 4));
                     var qr = new RectangleF(pad + (w - qrBox) / 2f, yQr, qrBox, qrBox);

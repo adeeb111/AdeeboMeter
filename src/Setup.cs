@@ -364,7 +364,7 @@ namespace AdeeboMeter
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float W = ClientSize.Width, H = ClientSize.Height;
             hot.Clear();
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, ClientRectangle);

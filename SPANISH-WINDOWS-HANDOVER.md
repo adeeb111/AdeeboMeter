@@ -2,7 +2,7 @@
 
 ## Completion update
 
-The initial-pass figures below are historical. The completed Windows table now has **4,197 English/Spanish pairs**, with **2,037/2,037 literal UI texts covered and zero to do**. Another 2,160 keys are reached through variables or content lookups. Shared Windows inventory coverage is 4,197/4,197. Placeholder, numeric-token, TAB-format and edge-whitespace checks pass. Original 246 keys are retained; 3,965 values were added or changed, zero removed.
+The initial-pass figures below are historical. The completed Windows table now has **4,197 English/Spanish pairs** at the time of writing (more were added later - run `python3 tools/langcheck.py es` for today's state), with **2,037/2,037 literal UI texts covered and zero to do**. Another 2,160 keys are reached through variables or content lookups. Shared Windows inventory coverage is 4,197/4,197. Placeholder, numeric-token, TAB-format and edge-whitespace checks pass. Original 246 keys are retained; 3,965 values were added or changed, zero removed.
 
 All 3,839 initially missing keys have now been translated, plus corrections to reused theme/mode names and terminology (Equilibrado, Mercado, Zona de juegos). Includes settings, result fragments, help, Learn lessons and quizzes, diagram labels, labs, games, tray and widget text represented in the catalog. Native-speaker wording and actual full-screen layout review remain pending.
 

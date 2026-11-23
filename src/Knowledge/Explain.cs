@@ -124,7 +124,7 @@ namespace AdeeboMeter
             if (e.Close >= 0 && e.Close < Explain.CloseText.Length) rows.Add(new[] { "CAN I CLOSE IT?", Explain.CloseText[e.Close], e.Close == 0 ? "0" : e.Close == 2 ? "2" : "1" });
             foreach (var r in rows)
             {
-                using (var mb = new SolidBrush(Theme.Muted)) if (g != null) g.DrawString(r[0], Draw.fTiny, mb, x, y);
+                using (var mb = new SolidBrush(Theme.Muted)) if (g != null) g.DrawString(L.T(r[0]), Draw.fTiny, mb, x, y);   // R2-023
                 y += 16 * S;
                 var font = compact ? Draw.fSmall : Draw.fBody;
                 var h = Draw.Measure(r[1], font, (int)w).Height;

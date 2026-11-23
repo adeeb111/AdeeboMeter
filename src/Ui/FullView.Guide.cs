@@ -53,16 +53,19 @@ namespace AdeeboMeter
             using (var cb = new SolidBrush(Kit.Soft("home"))) g.FillEllipse(cb, cr.X + 16 * S, cr.Y + 19 * S, 38 * S, 38 * S);
             Kit.Icon(g, "check", new RectangleF(cr.X + 25 * S, cr.Y + 28 * S, 20 * S, 20 * S), Kit.Accent("home"));
             float tx = cr.X + 66 * S, bw = 190 * S;
+            // the tick's label measured, so it always ends before the button and the description ends before the tick (Adeeb, 22 Nov: they overlapped)
+            string tlab = L.T("Include a speed test (100-300 MB)"); float tlw = (float)Math.Ceiling(g.MeasureString(tlab, Draw.fSmall).Width), tkw = 22 * S + tlw;
+            float tkx = cr.Right - bw - 16 * S - 18 * S - tkw;
             using (var ink = new SolidBrush(Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
                 g.DrawString(L.T("Full checkup"), Draw.fHead, ink, tx, cr.Y + 14 * S);
-                g.DrawString(running ? L.T("Running") + ": " + r.Status : L.T("This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first."), Draw.fSmall, m, new RectangleF(tx, cr.Y + 38 * S, Math.Max(40 * S, cr.Width - (tx - cr.X) - bw - 262 * S), 18 * S), sf);
+                g.DrawString(running ? L.T("Running") + ": " + r.Status : L.T("This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first."), Draw.fSmall, m, new RectangleF(tx, cr.Y + 38 * S, Math.Max(40 * S, tkx - 16 * S - tx), 18 * S), sf);
             }
             // the speed-test tick (off on a capped or mobile connection) and the button
-            var tk = new RectangleF(cr.Right - bw - 230 * S, cr.Y + 26 * S, 214 * S, 22 * S);   // bug-hunt L-326: ends before the button starts
+            var tk = new RectangleF(tkx, cr.Y + 26 * S, tkw, 22 * S);   // bug-hunt L-326: ends before the button starts
             var box = new RectangleF(tk.X, tk.Y + 3 * S, 16 * S, 16 * S); Theme.Fill(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Card); Theme.Stroke(g, box, 4 * S, checkupSpeed ? Kit.Accent("home") : Theme.Line, 1);
             if (checkupSpeed) Kit.Icon(g, "check", new RectangleF(box.X + 2 * S, box.Y + 2 * S, 12 * S, 12 * S), Color.White);
-            using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Include a speed test (100-300 MB)"), Draw.fSmall, sb2, box.Right + 6 * S, tk.Y + 2 * S);
+            using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(tlab, Draw.fSmall, sb2, box.Right + 6 * S, tk.Y + 2 * S);
             Act(overviewCanvas, tk, delegate { checkupSpeed = !checkupSpeed; overviewCanvas.Invalidate(); });
             var br = new RectangleF(cr.Right - bw - 16 * S, cr.Y + 19 * S, bw, 36 * S);
             Theme.Fill(g, br, 10 * S, running ? Theme.Soft : Kit.Accent("home"));

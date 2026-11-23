@@ -450,7 +450,7 @@ namespace AdeeboMeter
                 case "sports": Sports = v == "1"; break;
                 case "sportteams": SportTeams = v.Length > 300 ? v.Substring(0, 300) : v; break;
                 case "tradeeve": TradeEvening = v == "1"; break;
-                case "fxlist": FxList = v; break;
+                case "fxlist": FxList = v.Length > 200 ? v.Substring(0, 200) : v; break;   // R2-150: capped like its neighbours
                 case "paper": Paper = v == "white" || v == "theme" ? v : "cream"; break;
                 case "kickremind": KickoffRemind = v == "1"; break;
                 case "phonestandby": PhoneStandby = v != "0"; break;
@@ -646,7 +646,8 @@ namespace AdeeboMeter
         // review 22 Nov: output is capped (a runaway helper - tshark on a busy capture - can't fill the 64 MB budget), a timed-out
         // helper is killed and reaped, and the caller can tell "timed out" from "printed nothing"
         public const int MaxOutput = 8 * 1024 * 1024;   // characters kept; the rest is read and dropped so the helper never blocks on a full pipe
-        public static string Run(string exe, string args, int timeoutMs) { bool to; return Run(exe, args, timeoutMs, out to); }
+        public static string Run(string exe, string args, int timeoutMs) { bool to; string o = Run(exe, args, timeoutMs, out to); if (to) { Program.Log("helper timed out after " + timeoutMs + " ms: " + System.IO.Path.GetFileName(exe) + " " + (args ?? "").Split(' ')[0]); LastTimedOut = true; } else LastTimedOut = false; return o; }   // R2-138: said in the log, and readable right after the call
+        [ThreadStatic] public static bool LastTimedOut;
         public static string Run(string exe, string args, int timeoutMs, out bool timedOut)
         {
             timedOut = false;

@@ -67,18 +67,6 @@ namespace AdeeboMeter
             add("vpn", () => Vpn(m));
             return "{\"at\":" + Str(DateTime.Now.ToString("d MMM HH:mm", CultureInfo.CurrentCulture)) + "," + string.Join(",", parts) + "}";
         }
-        public static string One(Monitor m, string which, bool ask)
-        {
-            switch (which)
-            {
-                case "lan": return Lan(m, ask);
-                case "path": return Path(m);
-                case "wifi": return Wifi(m);
-                case "phone": return Phone(m);
-                case "vpn": return Vpn(m);
-            }
-            return null;
-        }
 
         // ================================================================== See my LAN
         static string KindOf(Picks.LanDev d, out string group)
@@ -95,7 +83,8 @@ namespace AdeeboMeter
             if (has("hikvision|dahua|reolink|wyze|ring|arlo|blink|camera|amcrest|eufy")) { group = "home"; return "camera"; }
             if (k.Contains("smart home") || has("espressif|tuya|shelly|sonoff|philips hue|signify|ecobee|nest|tp-link kasa|lifx|wemo|smartthings|meross|govee")) { group = "home"; return "iot"; }
             if (k.Contains("computer") || has("intel|dell|lenovo|hewlett|hp inc|microsoft|asustek|micro-star|gigabyte|realtek|liteon|azurewave")) { group = "pcs"; return "pc"; }
-            if (has("apple|samsung|google|xiaomi|oneplus|huawei|motorola|oppo|vivo|pixel|iphone|ipad|galaxy") || d.Random) { group = "phones"; return "phone"; }
+            if (has("apple|samsung|google|xiaomi|oneplus|huawei|motorola|oppo|vivo|pixel|iphone|ipad|galaxy")) { group = "phones"; return "phone"; }
+            if (d.Random) { group = "phones"; return "laptop"; }   // R2-122: a private (random) address is a phone, tablet or laptop - drawn as a laptop, the group says all three
             group = "other"; return "pc";
         }
         static readonly string[][] Groups = { new[] { "gear", "Network gear" }, new[] { "phones", "Phones, tablets and laptops" }, new[] { "pcs", "Computers" },
@@ -145,13 +134,13 @@ namespace AdeeboMeter
                     d.Nodes.Add(new N { Id = id, K = l[i].Item2, Name = (x.Watch ? "★ " : "") + Short(x.Name, 18), Sub = x.Ip, Ms = x.Here ? Ms(x.Ms) : "not here now", St = !x.Here ? "typ" : x.Watch && double.IsNaN(x.Ms) && asked != DateTime.MinValue ? "warn" : "", X = px, Y = py, Info = Info(x) });
                     d.Links.Add(new Ln { A = hub, B = id, Kind = "cable" });
                 }
-                if (last && more > 0) AddMore(d, more, sx + 15 + cellW / 2 + (l.Count % per) * cellW, sy + 140 + (l.Count / per) * cellH);
+                if (last && more > 0) AddMore(d, more, sx + 15 + cellW / 2 + (l.Count % per) * cellW, sy + 140 + (l.Count / per) * cellH, hub);
                 sx += w + 30; shelfH = Math.Max(shelfH, h);
             }
-            if (more > 0 && !byGroup.ContainsKey("other")) { if (sx > 0 && sx + cellW + 30 > maxRowW) { sx = 0; sy += shelfH + 30; } d.Areas.Add(new Ar { X = sx, Y = sy, W = cellW + 30, H = cellH + 50, T = "Not drawn" }); AddMore(d, more, sx + 15 + cellW / 2, sy + 70); }
+            if (more > 0 && !byGroup.ContainsKey("other")) { if (sx > 0 && sx + cellW + 30 > maxRowW) { sx = 0; sy += shelfH + 30; } d.Areas.Add(new Ar { X = sx, Y = sy, W = cellW + 30, H = cellH + 50, T = "Not drawn" }); AddMore(d, more, sx + 15 + cellW / 2, sy + 70, "gw"); }
             return Json(d);
         }
-        static void AddMore(D d, int more, int x, int y) { d.Nodes.Add(new N { Id = "more", K = "users", Name = "+" + more + " more", Sub = "Devices on this network lists them all", St = "typ", X = x, Y = y, Info = more + " more devices aren't drawn - a drawing stops at " + LanMax + "." }); }
+        static void AddMore(D d, int more, int x, int y, string hub) { d.Links.Add(new Ln { A = hub, B = "more", Kind = "cable" }); d.Nodes.Add(new N { Id = "more", K = "users", Name = "+" + more + " more", Sub = "Devices on this network lists them all", St = "typ", X = x, Y = y, Info = more + " more devices aren't drawn - a drawing stops at " + LanMax + "." }); }
         static string Short(string s, int n) { s = s ?? ""; return s.Length <= n ? s : s.Substring(0, n - 1) + "…"; }
         static string Info(Picks.LanDev x)
         {
@@ -218,7 +207,7 @@ namespace AdeeboMeter
             }
             var mine = list.FirstOrDefault(b => string.Equals(b.Bssid, myB, StringComparison.OrdinalIgnoreCase));
             var aps = list.OrderByDescending(b => b == mine).ThenByDescending(b => b.Rssi).Take(40).OrderBy(b => b.FreqMHz).ToList();
-            d.Note = list.Count + " access points heard" + (list.Count > 40 ? " (the 40 loudest drawn)" : "") + ". Yours is white; amber = a loud neighbour on a channel that overlaps yours. Hover one for details.";
+            int drawn = 0;
             var bands = new[] { new[] { "2.4", "2.4 GHz - only 1, 6 and 11 don't overlap" }, new[] { "5", "5 GHz" }, new[] { "6", "6 GHz" } };
             int y0 = 30, n = 0;
             foreach (var bd in bands)
@@ -231,6 +220,8 @@ namespace AdeeboMeter
                 {
                     var onCh = l.Where(b => b.Channel == chans[c]).OrderByDescending(b => b.Rssi).ToList(); int x = 90 + c * 150;
                     d.Texts.Add(new Tx { X = x - 18, Y = y0 + laneH - 12, T = "ch " + chans[c] + (onCh.Count > 5 ? " (+" + (onCh.Count - 5) + ")" : "") });
+                    if (mine != null && onCh.Contains(mine) && onCh.IndexOf(mine) >= 5) { onCh.Remove(mine); onCh.Insert(0, mine); }   // R2-029: yours is always one of the five drawn
+                    drawn += Math.Min(5, onCh.Count);
                     for (int i = 0; i < onCh.Count && i < 5; i++)
                     {
                         var b = onCh[i]; bool me = b == mine;
@@ -243,6 +234,7 @@ namespace AdeeboMeter
                 }
                 y0 += laneH + 40;
             }
+            d.Note = list.Count + " access points heard" + (drawn < list.Count ? " (" + drawn + " drawn - up to 5 loudest per channel, among the 40 loudest)" : "") + ". " + (mine != null ? "Yours is white; " : "") + "amber = a loud neighbour on a channel that overlaps yours. Hover one for details.";   // R2-107: says what's really drawn
             return Json(d);
         }
         static string BandOf(WlanApi.Bss b) { return b.FreqMHz >= 5925 ? "6" : b.FreqMHz >= 4900 ? "5" : "2.4"; }
@@ -267,6 +259,7 @@ namespace AdeeboMeter
             d.Links.Add(new Ln { A = "gw", B = "isp", Kind = "fibre" }); d.Links.Add(new Ln { A = "isp", B = "net", Kind = "fibre" });
             d.Links.Add(new Ln { A = "ph", B = "tw", Kind = "cell", Label = "phone on 4G / 5G" }); d.Links.Add(new Ln { A = "tw", B = "core", Kind = "fibre" }); d.Links.Add(new Ln { A = "core", B = "net", Kind = "fibre", Label = "GTP tunnel" });
             d.Areas.Add(new Ar { X = 20, Y = 60, W = 420, H = 230, T = "Your home - measured" }); d.Areas.Add(new Ar { X = 20, Y = 300, W = 700, H = 220, T = "Mobile network - usual setup, not measured" });
+            d.Areas.Add(new Ar { X = 520, Y = 90, W = 170, H = 130, T = "Provider - usual setup" });   // R2-121: the grey provider sits in an area that says so
             return Json(d);
         }
 

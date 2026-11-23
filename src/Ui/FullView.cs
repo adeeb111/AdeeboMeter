@@ -344,7 +344,7 @@ namespace AdeeboMeter
                     // typing in any box: Esc clears that box (and stays) - it never throws away a running check or a result
                     var tb = ActiveTextBox(); if (tb != null && tb.Text != "" && !tb.ReadOnly) { e.SuppressKeyPress = true; tb.Text = ""; return; }
                     // a tool still running: a stray Esc doesn't throw it away (the window's X still closes)
-                    if (tbBusy || sniffing) { e.SuppressKeyPress = true; return; }
+                    if (tbBusy || sniffing || shRun != null || shScript) { e.SuppressKeyPress = true; return; }   // R2-127: the shell's runs and scripts too
                     Close();
                 }
                 else if (tab == "toolbox" && tbCanvas != null && e.Control && (e.KeyCode == Keys.PageDown || e.KeyCode == Keys.PageUp) && SnmpView(tbSel))
@@ -417,10 +417,19 @@ namespace AdeeboMeter
         internal void TestSlept() { lastWatch = DateTime.UtcNow.AddSeconds(-60); lastPong = DateTime.UtcNow.AddSeconds(-60); }
         internal string TestOpenedFrom { get { return replayFrom; } }
         internal void TestShow(string page) { tab = page; ShowTab(); }
+        // the sitting test's width check (bug-hunt R2-001: AutoScrollMinSize is always 0 wide, so it measured nothing): the right edge
+        // of the furthest button, link or hint painted on a canvas, in its client coordinates
+        internal float TestWidest(Control c)
+        {
+            float m = 0; List<KeyValuePair<RectangleF, Action>> a; List<KeyValuePair<RectangleF, string>> h;
+            if (acts.TryGetValue(c, out a)) foreach (var kv in a) m = Math.Max(m, kv.Key.Right);
+            if (hints.TryGetValue(c, out h)) foreach (var kv in h) m = Math.Max(m, kv.Key.Right);
+            return m;
+        }
         internal List<DB> TestCanvases() { return Descendants(this).OfType<DB>().Where(c => c.Visible && c.Width > 300 && c.Height > 200 && IsOnScreen(c)).ToList(); }
         bool IsOnScreen(Control c) { for (var p = c; p != null && p != this; p = p.Parent) if (!p.Visible) return false; return true; }
         static System.Collections.Generic.IEnumerable<Control> Descendants(Control r) { foreach (Control c in r.Controls) { yield return c; foreach (var d in Descendants(c)) yield return d; } }
-        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; }
+        static void Prep(Graphics g) { g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast; }
 
         string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
@@ -741,6 +750,8 @@ namespace AdeeboMeter
             if (page == "peek" && sub != null) { var jb = PeekPage(sub); if (jb != null) File.WriteAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peek-test.jpg"), jb); page = sub; }
             // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
             if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
+            var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell" };
+            if (!known.Contains(page)) { Program.Log("--view: no page called \"" + page + "\" - opening Home"); Text = "AdeeboMeter - no page \"" + page + "\""; page = "overview"; }   // R2-196: a typo'd page name says so
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);
             // --view phone:qr shows a code; phone:ask shows the Allow question as a phone would raise it (screenshots of the page)
@@ -806,6 +817,9 @@ namespace AdeeboMeter
             sb.AppendLine("page       first  again  (show+paint)  page-paint  scroll-step  tick   ms");
             var first = new Dictionary<string, long>();
             foreach (var t in pages) { sw.Restart(); tab = t; ShowTab(); Refresh(); Application.DoEvents(); first[t] = sw.ElapsedMilliseconds; for (int i = 0; i < 2; i++) { Thread.Sleep(150); Application.DoEvents(); } }
+            // bug-hunt R2-019: the cold first paint is checked, not only recorded - --perf runs in a fresh process, so this is the
+            // one place a cold Home (250-570 ms when the JIT warm-up went) can be caught. 1.5 s is far over normal.
+            foreach (var kv in first) if (kv.Value > 1500) sb.AppendLine("SLOW FIRST PAINT: " + kv.Key + " " + kv.Value + " ms (over 1500)");
             foreach (var t in pages)
             {
                 tab = "about"; ShowTab(); Refresh(); Application.DoEvents();
@@ -838,7 +852,7 @@ namespace AdeeboMeter
         public int TestWalk()
         {
             int n = 0;
-            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about", "points" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }
+            foreach (var t in new[] { "overview", "conn", "link", "procs", "live", "guide", "dest", "health", "toolbox", "travel", "replay", "changes", "learn", "windows", "settings", "about", "points", "gamer", "stream", "trade", "sports", "phone", "shell", "security", "outlook" }) { tab = t; ShowTab(); Refresh(); Application.DoEvents(); n++; }   // R2-191: every page
             List<AppStat> l; lock (M.L) l = M.Apps;
             if (l.Count > 0) { tab = "procs"; ShowTab(); SelectProc(l[0]); Thread.Sleep(50); Application.DoEvents(); procInfo.Refresh(); }
             SetTipKey("path.DNS"); ShowTip(); Application.DoEvents(); SetTipKey(null);

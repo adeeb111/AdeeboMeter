@@ -18,9 +18,12 @@ namespace AdeeboMeter
 
         public static void Set(string m, double seconds)
         {
-            if (Voice.Serious) return;   // the calm view keeps the plain face
+            if (Voice.Serious) { lock (k) until = DateTime.MinValue; return; }   // the calm view keeps the plain face - and drops one already showing (R2-051)
             lock (k) { mood = m; until = DateTime.UtcNow.AddSeconds(seconds); }
         }
+        // the self-test's own run: everything it touches is put back (R2-049)
+        internal static object[] Save() { lock (k) return new object[] { mood, until, lastLv, redSince, outDay, outsToday }; }
+        internal static void Restore(object[] o) { lock (k) { mood = (string)o[0]; until = (DateTime)o[1]; lastLv = (int)o[2]; redSince = (DateTime)o[3]; outDay = (DateTime)o[4]; outsToday = (int)o[5]; } }
         public static void Clear(string m) { lock (k) if (mood == m) until = DateTime.MinValue; }
 
         // what the face shows right now instead of the network's mood (null: nothing to react to)
@@ -29,7 +32,7 @@ namespace AdeeboMeter
             lock (k)
             {
                 Feed(level);
-                if (DateTime.UtcNow < until) return mood;
+                if (DateTime.UtcNow < until && !Voice.Serious) return mood;
                 if (level == 2 && redSince != DateTime.MinValue && (DateTime.UtcNow - redSince).TotalMinutes >= 10 && !Voice.Serious) return "gloom";   // a long outage
                 return null;
             }
@@ -38,6 +41,7 @@ namespace AdeeboMeter
         static void Feed(int level)
         {
             if (level < 0 || level > 2) return;
+            if (lastLv < 0 && level == 2) redSince = DateTime.UtcNow;   // R2-050: already down when the app started - the gloom clock runs from now (no shout: nothing changed)
             if (lastLv >= 0 && level == 2 && lastLv < 2)
             {
                 redSince = DateTime.UtcNow;

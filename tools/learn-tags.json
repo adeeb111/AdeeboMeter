@@ -1,0 +1,42 @@
+{
+ "es": {
+  "inv-order": "«Compra ya a cualquier precio» o «compra solo a mi precio»: órdenes de mercado y limitadas.",
+  "inv-spread": "Dos precios a la vez: lo que pagan los compradores y lo que aceptan los vendedores.",
+  "inv-hours": "La bolsa cierra; las noticias no.",
+  "inv-dividend": "Una parte del beneficio, pagada a los dueños.",
+  "inv-pe": "Cuántos años del beneficio de hoy paga el precio.",
+  "inv-bonds": "Prestar dinero a cambio de un rendimiento fijo, y por qué los tipos mueven los precios.",
+  "inv-volatility": "Dos inversiones pueden acabar en el mismo sitio por caminos muy distintos.",
+  "inv-crypto": "Fichas digitales que se negocian todo el día, con un riesgo real."
+ },
+ "fr": {
+  "inv-order": "« Acheter tout de suite à n'importe quel prix » ou « seulement à mon prix » : ordres au marché et à cours limité.",
+  "inv-spread": "Deux prix à la fois : ce que paient les acheteurs et ce qu'acceptent les vendeurs.",
+  "inv-hours": "La Bourse ferme; les nouvelles, elles, continuent.",
+  "inv-dividend": "Une part du profit, versée aux propriétaires.",
+  "inv-pe": "Combien d'années du profit d'aujourd'hui le prix représente.",
+  "inv-bonds": "Prêter de l'argent pour un rendement fixe - et pourquoi les taux font bouger les prix.",
+  "inv-volatility": "Deux placements peuvent arriver au même endroit par des chemins très différents.",
+  "inv-crypto": "Des jetons numériques, échangés jour et nuit, avec un vrai risque."
+ },
+ "ar": {
+  "inv-order": "«اشترِ الآن بأي سعر» أو «اشترِ بسعري فقط»: أوامر السوق والأوامر المحددة.",
+  "inv-spread": "سعران في وقت واحد: ما يدفعه المشترون وما يقبله البائعون.",
+  "inv-hours": "تُغلق البورصة، لكن الأخبار لا تتوقف.",
+  "inv-dividend": "جزء من الأرباح يُدفع للمالكين.",
+  "inv-pe": "كم سنة من أرباح اليوم يدفعها السعر.",
+  "inv-bonds": "إقراض المال مقابل عائد ثابت - ولماذا تحرّك أسعار الفائدة الأسعار.",
+  "inv-volatility": "قد ينتهي استثماران إلى المكان نفسه عبر طريقين مختلفين جدًا.",
+  "inv-crypto": "رموز رقمية تُتداول طوال اليوم، بمخاطر حقيقية."
+ },
+ "bn": {
+  "inv-order": "«যেকোনো দামে এখনই কিনুন» নাকি «শুধু আমার দামে কিনুন»: মার্কেট ও লিমিট অর্ডার।",
+  "inv-spread": "একই সময়ে দুটি দাম: ক্রেতারা কত দেয় আর বিক্রেতারা কত নেয়।",
+  "inv-hours": "শেয়ারবাজার বন্ধ হয়, খবর থামে না।",
+  "inv-dividend": "লাভের একটি অংশ, মালিকদের দেওয়া হয়।",
+  "inv-pe": "আজকের লাভের কত বছর সমান দাম দিচ্ছেন।",
+  "inv-bonds": "নির্দিষ্ট লাভে টাকা ধার দেওয়া - আর সুদের হার কেন দাম বদলায়।",
+  "inv-volatility": "দুটি বিনিয়োগ খুব আলাদা পথে একই জায়গায় পৌঁছাতে পারে।",
+  "inv-crypto": "ডিজিটাল টোকেন, সারাদিন কেনাবেচা হয়, সত্যিকারের ঝুঁকি নিয়ে।"
+ }
+}

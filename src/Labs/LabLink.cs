@@ -125,7 +125,13 @@ namespace AdeeboMeter
         public static string PagePath() { return PagePath(null); }
         // views: AdeeboLab's ready-made drawings (LabViews.All) written into the page itself - the page reads no files and
         // no network (its policy forbids both), and the address has a size limit
+        // R2-026: a path open (no views) keeps the start page's last drawings in the file - and the two writers never overlap
+        static string lastViews; static readonly object pageLock = new object();
         public static string PagePath(string views)
+        {
+            lock (pageLock) { if (!string.IsNullOrEmpty(views)) lastViews = views; else views = lastViews; return PagePath1(views); }
+        }
+        static string PagePath1(string views)
         {
             string dir = Path.Combine(Program.DataDir, "lab"), file = Path.Combine(dir, "lab.html");
             try
@@ -193,11 +199,12 @@ namespace AdeeboMeter
                 {
                     var psi = new ProcessStartInfo(edge, "--app=\"" + url + "\" --user-data-dir=\"" + profile + "\" --no-first-run --no-default-browser-check --disable-sync") { UseShellExecute = false };
                     var p = Process.Start(psi);
-                    if (p != null) { p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } finally { p.Dispose(); } }; }   // Edge writes its storage out as the window closes
+                    if (p == null) { Program.Log("lab open: Edge didn't start"); return "Edge didn't start - try again, or open lab.html from the data folder's lab folder."; }   // R2-115: never a silent nothing
+                    p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } finally { p.Dispose(); } };   // Edge writes its storage out as the window closes
                     return null;
                 }
                 using (Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })) { }   // no Edge: the default browser, without the path (a file link loses the #)
-                return "Edge wasn't found, so the lab opened in your browser without your path.";
+                return json != null ? "Edge wasn't found, so the lab opened in your browser without your path." : "Edge wasn't found, so the lab opened in your browser as a page (not its own window).";   // R2-116
             }
             catch (System.ComponentModel.Win32Exception e) { Program.Log("lab open: " + e.Message); return "The lab couldn't be opened: " + e.Message; }
         }

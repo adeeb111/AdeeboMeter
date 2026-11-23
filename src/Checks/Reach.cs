@@ -130,7 +130,8 @@ namespace AdeeboMeter
             if (r == null || r.Length < 20 || r[0] != 1 || r[1] != 1) return null;
             if (r[4] != 0x21 || r[5] != 0x12 || r[6] != 0xA4 || r[7] != 0x42) return null;   /* L-18: the magic cookie, as the other STUN parsers check */
             for (int k = 0; k < 12; k++) if (r[8 + k] != tid[k]) return null;
-            int p = 20, end = Math.Min(r.Length, 20 + (r[2] << 8 | r[3])); IPEndPoint plain = null;
+            int p = 20, end = 20 + (r[2] << 8 | r[3]); IPEndPoint plain = null;
+            if (end > r.Length || (end & 3) != 0) return null;   // R2-145: the same rule as Protocols.StunMapped - a message longer than the datagram, or not in 4-byte steps, isn't STUN
             while (p + 4 <= end)
             {
                 int ty = r[p] << 8 | r[p + 1], len = r[p + 2] << 8 | r[p + 3], v = p + 4; if (v + len > end) break;

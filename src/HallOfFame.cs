@@ -108,7 +108,7 @@ namespace AdeeboMeter
             {
             using (var g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; g.TextContrast = Draw.Contrast;
                 using (var bg = new LinearGradientBrush(new Rectangle(0, 0, W, H), Color.FromArgb(14, 33, 74), Color.FromArgb(31, 111, 235), 35f)) g.FillRectangle(bg, 0, 0, W, H);
                 // a soft gold glow behind the star
                 using (var path = new GraphicsPath()) { path.AddEllipse(820, -120, 520, 520); using (var pg = new PathGradientBrush(path) { CenterColor = Color.FromArgb(90, 242, 204, 96), SurroundColors = new[] { Color.FromArgb(0, 242, 204, 96) } }) g.FillEllipse(pg, 820, -120, 520, 520); }

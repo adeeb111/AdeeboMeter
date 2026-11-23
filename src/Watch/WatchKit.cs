@@ -172,15 +172,16 @@ namespace AdeeboMeter
                     reading = true;
                     new Thread(() =>
                     {
-                        var l = new List<Session>(); var from = DateTime.Now.AddDays(-90);
+                        var l = new List<Session>(); var from = DateTime.Now.AddDays(-90); bool whole = false;
                         try
                         {
                             if (Directory.Exists(History.Dir))
                                 foreach (var f in Directory.GetFiles(History.Dir, "watch-*.log").OrderByDescending(x => x, StringComparer.Ordinal).Take(4))
                                     foreach (var line in File.ReadLines(f).Take(5000)) { var s = Decode(line); if (s != null && s.Start >= from) l.Add(s); }
+                            whole = true;
                         }
                         catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch read: " + e.Message); }
-                        finally { lock (k) { cache = l.OrderByDescending(s => s.Start).ToList(); cacheAt = DateTime.UtcNow; CacheVer++; reading = false; } }
+                        finally { lock (k) { if (whole || cache == null) { cache = l.OrderByDescending(s => s.Start).ToList(); CacheVer++; } cacheAt = whole ? DateTime.UtcNow : DateTime.UtcNow.AddSeconds(-50); reading = false; } }   // R2-148: a read that failed partway keeps the last whole list and tries again in 10 s
                     }) { IsBackground = true, Name = "watch-read" }.Start();
                 }
                 return cache == null ? new List<Session>() : cache.Where(s => mode == null || s.Mode == mode).ToList();

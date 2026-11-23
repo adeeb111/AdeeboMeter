@@ -16,7 +16,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         static readonly string[][] SpTabs = { new[] { "overview", "Overview" }, new[] { "teams", "My Teams" }, new[] { "live", "Live Scores" }, new[] { "fixtures", "Fixtures" }, new[] { "headlines", "Headlines" }, new[] { "stream", "Stream Check", "hl" } };
-        TextBox spLink; string spFilter = "all"; bool spMineOnly; DateTime spReminded = DateTime.MinValue;
+        TextBox spLink; string spFilter = "all"; bool spMineOnly; readonly HashSet<string> spRemindedGames = new HashSet<string>(StringComparer.Ordinal);
 
         void PaintSports(Graphics g)
         {
@@ -49,7 +49,7 @@ namespace AdeeboMeter
             if (Cfg.Sports && !Policy.NoOnline) return true;
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 18 * S, y + 14 * S, "Scores and headlines", null);
-            using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most."), Paper.Body, ib, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
+            using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most."), Paper.Body, ib, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
             if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Green); Act(sportsCanvas, br, delegate { Cfg.Sports = true; Cfg.Save(); sportsCanvas.Invalidate(); }); }
             return false;
         }
@@ -305,7 +305,7 @@ namespace AdeeboMeter
                 var tg = games.Where(z => Sports.TeamIn(t, z)).ToList();
                 var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon").OrderBy(z => z.StartUtc).FirstOrDefault();
                 string a = live != null ? L.T("Live:") + " " + live.Home + " " + live.HomeScore + " - " + live.AwayScore + " " + live.Away : done != null ? L.T("Last:") + " " + done.Home + " " + done.HomeScore + " - " + done.AwayScore + " " + done.Away : L.T("No game in today's feeds");
-                string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + " · " + soon.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) : "";
+                string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + (soon.StartUtc > DateTime.MinValue.AddDays(2) ? " · " + soon.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) : "") : "";   // R2-158: no time is no time, not year 1
                 MkSpText(g, a, Paper.Body, live != null ? Paper.Down : Paper.Ink, x + w * 0.32f, ty + 12 * S); if (b2 != "") MkSpText(g, b2, Paper.Body, Paper.Ink, x + w * 0.32f, ty + 34 * S);
                 var xr = new RectangleF(x + w - 52 * S, ty + 16 * S, 32 * S, 32 * S); Theme.Fill(g, xr, 6 * S, Paper.DeskBg); Theme.Stroke(g, xr, 6 * S, Paper.Line, 1); MkSpText(g, "×", Paper.BodyB, Paper.Muted, xr.X + 11 * S, xr.Y + 6 * S);
                 string tt = t; Act(sportsCanvas, xr, delegate { Cfg.SportTeams = string.Join(", ", Sports.Teams().Where(z => !string.Equals(z, tt, StringComparison.OrdinalIgnoreCase))); Cfg.Save(); sportsCanvas.Invalidate(); });
@@ -315,11 +315,12 @@ namespace AdeeboMeter
             // where the scores come from
             var sr = new RectangleF(x, y, w, 210 * S); Paper.Desk(g, sr);
             float sy = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Where the Scores Come From", L.T("fetched only while a Sports page is open, every 5 minutes at most")) + 8 * S;
-            foreach (var src in new[] { new[] { "hockey", L.T("Hockey · the NHL's public feed") }, new[] { "football", L.T("Football · football-data.org") }, new[] { "cricket", L.T("Cricket · CricketData") }, new[] { "news", L.T("Headlines · BBC Sport") } })
+            foreach (var src in new[] { new[] { "hockey", L.T("Hockey · the NHL's public feed") }, new[] { "football", Sports.HasKey("football") ? L.T("Football · football-data.org") : L.T("Football · ESPN's scoreboards (or your own key)") }, new[] { "cricket", L.T("Cricket · CricketData") }, new[] { "news", L.T("Headlines · BBC Sport") } })
             {
                 MkSpText(g, src[1], Paper.Body, Paper.Ink, x + 16 * S, sy);
                 bool keyed = src[0] == "hockey" || src[0] == "news" || Sports.HasKey(src[0]);
-                string st = src[0] == "hockey" || src[0] == "news" ? L.T("no key needed") : keyed ? L.T("your key is set") : L.T("needs your free key");
+                string st = src[0] == "hockey" || src[0] == "news" ? L.T("no key needed") : keyed ? L.T("your key is set") : src[0] == "football" ? L.T("no key needed - a key gives more leagues") : L.T("needs your free key");   // R2-046: football works without a key (ESPN)
+                if (src[0] == "football" && !keyed) keyed = true;
                 MkSpText(g, st, Paper.BodyB, keyed ? Paper.Up : Paper.Amber, x + w * 0.5f, sy);
                 if (src[0] == "football" || src[0] == "cricket") { var kb = MkSpButton(g, keyed ? L.T("Change key...") : L.T("Add my key..."), x + w - 170 * S, sy - 8 * S, false); string sp = src[0]; Act(sportsCanvas, kb, delegate { AskSportKey(sp); sportsCanvas.Invalidate(); }); }
                 sy += 40 * S;
@@ -490,7 +491,8 @@ namespace AdeeboMeter
             Sports.Game next; lock (Sports.k) next = SpNext(Sports.Games.ToList());
             if (next == null || next.State != "soon") return;
             var mins = (next.StartUtc - DateTime.UtcNow).TotalMinutes;
-            if (mins > 0 && mins <= 15 && (DateTime.UtcNow - spReminded).TotalMinutes > 30) { spReminded = DateTime.UtcNow; Alerts.Raise("kickoff", next.Home + " " + L.T("vs") + " " + next.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0); }
+            string gk = next.Home + "|" + next.Away + "|" + next.StartUtc.Ticks;   // R2-159: once per game, not once per 30 minutes for every team
+            if (mins > 0 && mins <= 15 && !spRemindedGames.Contains(gk)) { spRemindedGames.Add(gk); if (spRemindedGames.Count > 50) spRemindedGames.Clear(); Alerts.Raise("kickoff", next.Home + " " + L.T("vs") + " " + next.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0); }
         }
     }
 }

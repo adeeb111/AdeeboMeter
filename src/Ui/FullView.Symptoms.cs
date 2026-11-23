@@ -68,8 +68,7 @@ namespace AdeeboMeter
             using (var cg = overviewCanvas.CreateGraphics())
             using (var buf = BufferedGraphicsManager.Current.Allocate(cg, area))
             {
-                var g = buf.Graphics; Prep(g);
-                using (var bb = new SolidBrush(Theme.Card)) g.FillRectangle(bb, area);
+                var g = buf.Graphics; g.Clear(Theme.Card); Prep(g);   // Clear, not an anti-aliased fill: the fill left the buffer's black showing through a half-pixel edge (thin dark lines round the tile on hover)
                 g.TranslateTransform(sp.X, sp.Y); DrawSymptom(g, i, br, t);
                 buf.Render(cg);
             }

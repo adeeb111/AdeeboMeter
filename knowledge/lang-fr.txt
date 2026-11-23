@@ -3631,3 +3631,98 @@ Share an idea	Proposez une idée
 Link copied	Lien copié
 free: finds out why your internet or PC is slow	gratuit : trouve pourquoi votre Internet ou votre PC est lent
 Thank you for using it - that already helps more than you think.	Merci de l'utiliser - ça aide déjà plus que vous ne le pensez.
+
+DHCP & addressing	DHCP et adressage
+SNMP & devices	SNMP et appareils
+Routing & path	Routage et chemin
+Ports & reachability	Ports et joignabilité
+ICMP & ping	ICMP et ping
+HTTP, TLS & certificates	HTTP, TLS et certificats
+802.1X, RADIUS, TACACS, LDAP	802.1X, RADIUS, TACACS, LDAP
+VPN & privacy	VPN et vie privée
+Time (NTP)	Heure (NTP)
+Speed & quality	Vitesse et qualité
+Calls, games, streams & trading	Appels, jeux, streaming et trading
+Packets & captures	Paquets et captures
+Keys & encryption	Clés et chiffrement
+Reports & over time	Rapports et historique
+WHAT IT DOES	CE QU'IL FAIT
+WHAT IT IS	CE QUE C'EST
+WHY YOU NEED IT	POURQUOI EN AVOIR BESOIN
+WHY IT MATTERS	POURQUOI C'EST IMPORTANT
+IF IT WEREN'T THERE	S'IL N'ÉTAIT PAS LÀ
+WHAT TO DO	QUE FAIRE
+WHEN IT LOOKS BAD	QUAND ÇA VA MAL
+CAN I CLOSE IT?	PUIS-JE LE FERMER ?
+very sure	très sûr
+fairly sure	assez sûr
+likely	probable
+a first guess	une première idée
+updates, sync, indexing	mises à jour, synchronisation, indexation
+Bestie	Meilleure amie
+Bro code	Code entre potes
+Epic fantasy	Fantasy épique
+Space saga	Saga spatiale
+Pirate	Pirate
+Noir detective	Détective noir
+Nature documentary	Documentaire animalier
+Dark Ages	Moyen Âge
+Industrial	Industriel
+Revolution	Révolution
+Mission control	Contrôle de mission
+Poetic	Poétique
+Scientist	Scientifique
+Coder	Développeur
+Gen-Z	Gen Z
+Philosopher: Marcus Aurelius (Stoic)	Philosophe : Marc Aurèle (stoïcien)
+Philosopher: Aristotle	Philosophe : Aristote
+Philosopher: Taoist (Laozi)	Philosophe : taoïste (Laozi)
+Philosopher: Confucius	Philosophe : Confucius
+Common to all	Commun à toutes
+Marcus Aurelius	Marc Aurèle
+Aristotle	Aristote
+Taoism	Taoïsme
+Confucius	Confucius
+Internet speed	Vitesse Internet
+Last test	Dernier test
+Only when you press the button	Seulement quand vous appuyez sur le bouton
+When busy	En charge
+lag under load	latence quand la ligne est occupée
+this server: download only	ce serveur : téléchargement seulement
+n/a	n/d
+Automatic	Automatique
+Speed test:	Test de vitesse :
+About 20 seconds, up to	Environ 20 secondes, jusqu'à
+Never runs by itself.	Ne se lance jamais tout seul.
+UPLOAD	ENVOI
+DOWNLOAD	RÉCEPTION
+NOT TESTED YET	PAS ENCORE TESTÉ
+TEST TO	TESTER VERS
+Cloudflare's nearest data centre · download and upload	Le centre de données Cloudflare le plus proche · réception et envoi
+DOWNLOAD ONLY	RÉCEPTION SEULEMENT
+Speed test server	Serveur du test de vitesse
+(name hidden - location is off)	(nom masqué - la localisation est désactivée)
+signal	signal
+link	lien
+VPN on	VPN actif
+The {0} moved {1:0.0}% against the Canadian dollar this week.	Le {0} a bougé de {1:0.0} % face au dollar canadien cette semaine.
+no key needed - a key gives more leagues	aucune clé nécessaire - une clé donne plus de ligues
+Football · ESPN's scoreboards (or your own key)	Football · tableaux d'ESPN (ou votre propre clé)
+(no greeting read)	(aucune bannière lue)
+STARTTLS refused	STARTTLS refusé
+(no answer - the test couldn't start)	(pas de réponse - le test n'a pas pu démarrer)
+(no Remote Desktop answer)	(pas de réponse Bureau à distance)
+refused, or not Remote Desktop	refusé, ou pas un Bureau à distance
+(not found)	(introuvable)
+port unreachable - closed	port injoignable - fermé
+the host said so (ICMP)	l'hôte l'a dit (ICMP)
+no DHCP server to ask	aucun serveur DHCP à interroger
+no address from DHCP	aucune adresse par DHCP
+(a device)	(un appareil)
+what's my public address?	quelle est mon adresse publique ?
+WHY DOES IT FAIL?	POURQUOI ÇA ÉCHOUE ?
+Speed	Vitesse
+Email	E-mail
+
+Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	Désactivé au départ. Une fois activé, pendant la consultation ou la vidéo d’une équipe suivie : résultats NHL, soccer depuis les tableaux publics d’ESPN (ou football-data.org avec votre clé gratuite), cricket avec votre clé gratuite, manchettes BBC Sport, au plus toutes les 5 minutes.
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	Désactivé jusqu'à ce que vous l'activiez. Ensuite, pendant que cette page est ouverte : les pointages de hockey de la LNH, le soccer depuis les tableaux publics d’ESPN (ou football-data.org avec votre clé gratuite), le cricket avec votre clé gratuite et les manchettes de BBC Sport, au plus toutes les 5 minutes.

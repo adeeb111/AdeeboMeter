@@ -42,7 +42,7 @@ namespace AdeeboMeter
         static string Prompt() { string u = Environment.UserName.ToLowerInvariant(), h = Environment.MachineName.ToLowerInvariant(); return u + "@" + h + ":adeebo$"; }
 
         // ---------- writing
-        void W(string s, Color c) { if (shOut == null || shOut.IsDisposed) return; shOut.SelectionStart = shOut.TextLength; shOut.SelectionLength = 0; shOut.SelectionColor = c; shOut.AppendText(s); shOut.SelectionColor = ShFg; }
+        void W(string s, Color c) { if (shScriptLog != null) shScriptLog.Append(s); if (shOut == null || shOut.IsDisposed) return; shOut.SelectionStart = shOut.TextLength; shOut.SelectionLength = 0; shOut.SelectionColor = c; shOut.AppendText(s); shOut.SelectionColor = ShFg; }
         void WL(string s, Color c) { W(s + "\n", c); }
         void WL(string s) { WL(s, ShFg); }
         // no drawing while a block of lines goes in (WM_SETREDRAW), one paint after
@@ -64,8 +64,9 @@ namespace AdeeboMeter
         // a result row as the Toolbox's text, coloured by how it went
         void ShRows(List<string[]> rows)
         {
-            foreach (var o in rows.Where(x => !IsSecretRow(x)))
+            foreach (var o0 in rows.Where(x => x != null && x.Length > 0 && !IsSecretRow(x)))
             {
+                var o = o0.Length >= 3 ? o0 : new[] { o0[0], o0.Length > 1 ? o0[1] : "", "" };   // bug-hunt R2-128: a short row prints, it never throws
                 if (o[0] == "6" || o[0] == "7" || o[0] == "8") { WL((o[0] == "7" ? "! " : "  ") + ShareCell(o[2]), o[0] == "7" ? ShAmber : ShFg); continue; }
                 if (o[0] == "-1") { WL(""); WL(ShareCell(o[1]).ToUpperInvariant() + (o[2] != "" ? "  " + ShareCell(o[2]) : ""), ShBlue); continue; }
                 Color c = o[0] == "2" ? ShRed : o[0] == "1" ? ShAmber : o[0] == "0" ? ShGreen : ShDim;
@@ -78,54 +79,109 @@ namespace AdeeboMeter
         // ---------- keys
         void ShKey(object s, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; string line = shIn.Text; shIn.Clear(); ShRunLine(line); return; }
-            if (e.KeyCode == Keys.C && e.Control && shIn.SelectionLength == 0) { e.SuppressKeyPress = true; if (shQueue.Count > 0) { shQueue.Clear(); WL("(script stopped)", ShAmber); } if (shRun != null) { shRun.Stop = true; WL("^C - stopping...", ShAmber); } else WL("^C", ShDim); ShEnd(); return; }
+            if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; string line = shIn.Text; shIn.Clear(); shDraft = null; ShRunLine(line, false); return; }
+            if (e.KeyCode == Keys.C && e.Control && shIn.SelectionLength == 0)
+            {
+                e.SuppressKeyPress = true; shIn.Clear(); shDraft = null; shHi = -1;   // bug-hunt R2-131: like a terminal, the half-typed line goes too
+                if (shScript) { shQueue.Clear(); shAborted = true; WL("(script stopped)", ShAmber); }
+                if (shRun != null)
+                {
+                    if (shRun.Stop && (DateTime.UtcNow - shStopAt).TotalSeconds > 3) { ShLetGo("^C again - let go of it; it ends in the background and its result is dropped"); }   // R2-032: a tool that ignores Stop doesn't hold the shell
+                    else { shRun.Stop = true; shStopAt = DateTime.UtcNow; WL("^C - stopping... (^C again lets go of it)", ShAmber); }
+                }
+                else WL("^C", ShDim);
+                ShEnd(); if (shScript) ShPump(); return;
+            }
             if (e.KeyCode == Keys.L && e.Control) { e.SuppressKeyPress = true; shOut.Clear(); return; }
             if (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down)
             {
                 e.SuppressKeyPress = true; if (shHist.Count == 0) return;
+                if (shHi < 0 && e.KeyCode == Keys.Up) shDraft = shIn.Text;   // bug-hunt R2-130: the line being typed is kept; Down past the newest brings it back
                 shHi = e.KeyCode == Keys.Up ? (shHi < 0 ? shHist.Count - 1 : Math.Max(0, shHi - 1)) : (shHi < 0 ? -1 : shHi + 1);
-                if (shHi >= shHist.Count) { shHi = -1; shIn.Clear(); return; }
+                if (shHi >= shHist.Count || shHi < 0) { shHi = -1; shIn.Text = shDraft ?? ""; shIn.SelectionStart = shIn.TextLength; shDraft = null; return; }
                 if (shHi >= 0) { shIn.Text = shHist[shHi]; shIn.SelectionStart = shIn.TextLength; }
                 return;
             }
             if (e.KeyCode == Keys.Tab) { e.SuppressKeyPress = true; ShComplete(); return; }
             if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; shIn.Clear(); }
         }
-        static readonly string[] ShCmds = { "help", "tools", "man", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab" };
+        static readonly string[] ShCmds = { "help", "tools", "man", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "ls", "cd", "go", "cls", "quit" };   // R2-124: every command and alias completes and is suggested
+        string shDraft; DateTime shStopAt;
         IEnumerable<string> ShWords() { return ShCmds.Concat(Tools2().Select(t => t.Id)); }
         IEnumerable<string> ShPages() { return Secs.Select(z => z[0]).Concat(tabNames.Keys).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct(); }
         void ShComplete()
         {
-            string t = shIn.Text; var parts = t.Split(' '); string last = parts[parts.Length - 1];
-            IEnumerable<string> pool = parts.Length == 1 ? ShWords() : parts[0] == "open" || parts[0] == "cd" ? ShPages() : parts[0] == "man" || parts[0] == "help" ? Tools2().Select(x => x.Id) : Enumerable.Empty<string>();
+            // only the last word is completed; everything before it stays exactly as typed (quotes and spacing kept - R2-126)
+            string t = shIn.Text; int cut = t.LastIndexOf(' ') + 1; string head = t.Substring(0, cut), last = t.Substring(cut);
+            var words = ShSplit(t); string cmd = words.Count > 0 ? words[0].ToLowerInvariant() : ""; bool first = head.Trim() == "";
+            IEnumerable<string> pool = first ? ShWords() : cmd == "open" || cmd == "cd" || cmd == "go" ? ShPages() : cmd == "man" || cmd == "help" ? Tools2().Select(x => x.Id) : cmd == "lab" ? new[] { "lan", "path", "wifi", "phone", "vpn", "--ask" } : cmd == "source" ? ShFiles(last) : Enumerable.Empty<string>();
             var hits = pool.Where(w => w.StartsWith(last, StringComparison.OrdinalIgnoreCase)).Distinct().OrderBy(w => w).ToList();
-            if (hits.Count == 1) { parts[parts.Length - 1] = hits[0]; shIn.Text = string.Join(" ", parts) + " "; shIn.SelectionStart = shIn.TextLength; }
+            if (hits.Count == 1) { shIn.Text = head + hits[0] + (hits[0].EndsWith("\\", StringComparison.Ordinal) ? "" : " "); shIn.SelectionStart = shIn.TextLength; }
             else if (hits.Count > 1)
             {
                 string common = hits[0]; foreach (var h in hits) while (!h.StartsWith(common, StringComparison.OrdinalIgnoreCase)) common = common.Substring(0, common.Length - 1);
-                if (common.Length > last.Length) { parts[parts.Length - 1] = common; shIn.Text = string.Join(" ", parts); shIn.SelectionStart = shIn.TextLength; }
-                else { WL(string.Join("  ", hits.Take(60)), ShDim); ShEnd(); }
+                if (common.Length > last.Length) { shIn.Text = head + common; shIn.SelectionStart = shIn.TextLength; }
+                else { WL(string.Join("  ", hits.Take(60).Select(h => cmd == "source" ? Path.GetFileName(h.TrimEnd('\\')) + (h.EndsWith("\\", StringComparison.Ordinal) ? "\\" : "") : h)), ShDim); ShEnd(); }
             }
+        }
+        // source <Tab>: files and folders, from Documents when the path isn't a full one (R2-137)
+        static IEnumerable<string> ShFiles(string part)
+        {
+            var l = new List<string>();
+            try
+            {
+                string full = ShPath(part == "" ? "." + Path.DirectorySeparatorChar : part), dir = part.EndsWith("\\", StringComparison.Ordinal) || part.EndsWith("/", StringComparison.Ordinal) || part == "" ? full : Path.GetDirectoryName(full);
+                if (dir == null || !Directory.Exists(dir)) return l;
+                string shown = part.Length == 0 ? "" : part.Substring(0, Math.Max(part.LastIndexOf('\\'), part.LastIndexOf('/')) + 1);
+                foreach (var d in Directory.GetDirectories(dir).Take(200)) l.Add(shown + Path.GetFileName(d) + "\\");
+                foreach (var f in Directory.GetFiles(dir).Take(400)) l.Add(shown + Path.GetFileName(f));
+            }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException)) throw; }
+            return l;
+        }
+        // a path as typed: a full one as is, anything else from Documents (the app's working folder is rarely where your file is)
+        static string ShPath(string p)
+        {
+            p = (p ?? "").Trim().Trim('"'); if (Path.IsPathRooted(p)) return p;
+            return Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), p));
         }
         // "quoted words" stay one argument; a lone - is an empty box
         static List<string> ShSplit(string line)
         {
-            var l = new List<string>(); var sb = new StringBuilder(); bool q = false;
-            foreach (char c in line) { if (c == '"') { q = !q; continue; } if (c == ' ' && !q) { if (sb.Length > 0) { l.Add(sb.ToString()); sb.Clear(); } continue; } sb.Append(c); }
-            if (sb.Length > 0) l.Add(sb.ToString());
+            // "" is an empty box, not nothing (R2-125): a closed pair of quotes makes a word even when there was nothing between them
+            var l = new List<string>(); var sb = new StringBuilder(); bool q = false, had = false;
+            foreach (char c in line) { if (c == '"') { q = !q; had = true; continue; } if (c == ' ' && !q) { if (sb.Length > 0 || had) { l.Add(sb.ToString()); sb.Clear(); had = false; } continue; } sb.Append(c); }
+            if (sb.Length > 0 || had) l.Add(sb.ToString());
             return l;
         }
 
         // ---------- commands
-        void ShRunLine(string line)
+        // a line with every secret box (shared secret, community, password, code) shown as **** - for the screen, the history
+        // and the transcript (bug-hunt R2-004: the Toolbox blanks these in everything it keeps; the shell echoed them)
+        string ShMasked(string line)
         {
-            W(Prompt() + " ", ShGreen); WL(line);
-            line = (line ?? "").Trim(); if (line == "") { ShEnd(); return; }
-            shHist.Remove(line); shHist.Add(line); if (shHist.Count > 200) shHist.RemoveAt(0); shHi = -1;
-            var a = ShSplit(line); string cmd = a[0].ToLowerInvariant(); var args = a.Skip(1).ToList();
+            var a = ShSplit(line ?? ""); if (a.Count < 2) return line ?? "";
+            var t = Tools2().FirstOrDefault(x => string.Equals(x.Id, a[0], StringComparison.OrdinalIgnoreCase)); if (t == null) return line;
+            bool any = false; for (int i = 1; i < a.Count && i - 1 < t.Inputs.Length; i++) if (SecretInput(t.Inputs[i - 1]) && a[i] != "" && a[i] != "-") { a[i] = "****"; any = true; }
+            return any ? string.Join(" ", a.Select(w => w == "" ? "\"\"" : w.Contains(" ") ? "\"" + w + "\"" : w)) : line;
+        }
+        void ShRunLine(string line, bool fromScript)
+        {
+            line = (line ?? "").Trim();
+            if (!fromScript && shScript && line != "") { W(Prompt() + " ", ShGreen); WL(ShMasked(line)); WL("a script is running - Ctrl+C stops it first", ShAmber); ShEnd(); return; }   // R2-034: nothing typed by hand lands in a script's transcript
+            string shown = ShMasked(line);
+            W(Prompt() + " ", ShGreen); WL(shown);
+            if (line == "") { ShEnd(); return; }
+            if (!fromScript) { shHist.Remove(shown); shHist.Add(shown); if (shHist.Count > 200) shHist.RemoveAt(0); }   // R2-129: a script's lines never push your own commands out
+            shHi = -1;
+            var a = ShSplit(line); if (a.Count == 0) { ShEnd(); return; } string cmd = a[0].ToLowerInvariant(); var args = a.Skip(1).ToList();
             ShHold(true);
-            bool yes = args.Remove("--yes") | args.Remove("-y");
+            // --yes / -y: only as the last word, only for a tool or a script (R2-136) - and never from inside a script file: a
+            // script's gated tools run only when you typed  source <file> --yes  or  alltools --yes  yourself (R2-003)
+            bool yes = false;
+            if (args.Count > 0 && (args[args.Count - 1] == "--yes" || args[args.Count - 1] == "-y") && cmd != "help" && cmd != "man") { args.RemoveAt(args.Count - 1); yes = !fromScript; if (fromScript) WL("(--yes inside a script is ignored - type  source <file> --yes  to confirm for the whole script)", ShAmber); }
+            if (fromScript) yes = shScriptYes;
+            int from = shOut != null ? shOut.TextLength : 0;
             try
             {
                 switch (cmd)
@@ -143,9 +199,9 @@ namespace AdeeboMeter
                     case "clear": case "cls": shOut.Clear(); return;
                     case "copy": if (shLast == "") WL("nothing to copy yet - run a tool first", ShAmber); else { try { Clipboard.SetText(shLast); WL("copied the last result", ShGreen); } catch (Exception ce) { if (!(ce is System.Runtime.InteropServices.ExternalException || ce is System.Threading.ThreadStateException)) throw; WL("couldn't copy - another app holds the clipboard", ShRed); } } break;
                     case "save": ShSave(); break;
-                    case "exit": case "quit": tab = "overview"; ShowTab(); SyncNav(); break;
-                    case "source": if (args.Count == 0) WL("usage: source <file> - runs its lines one by one, then writes <file>.out.txt", ShAmber); else ShSource(string.Join(" ", args)); break;
-                    case "alltools": ShAllTools(); break;
+                    case "exit": case "quit": if (shScript) { shQueue.Clear(); shAborted = true; WL("(exit - the script stops here)", ShAmber); } tab = "overview"; ShowTab(); SyncNav(); break;   // R2-134
+                    case "source": if (args.Count == 0) WL("usage: source <file> [--yes] - runs its lines one by one, then writes <file>.out.txt", ShAmber); else ShSource(string.Join(" ", args), yes); break;
+                    case "alltools": ShAllTools(yes); break;
                     default:
                         var t = Tools2().FirstOrDefault(x => string.Equals(x.Id, cmd, StringComparison.OrdinalIgnoreCase));
                         if (t != null) ShTool(t, args, yes);
@@ -157,14 +213,17 @@ namespace AdeeboMeter
                         break;
                 }
             }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; WL("error: " + e.Message, ShRed); Program.Log("shell: " + e); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; WL("error: " + e.Message, ShRed); Program.Log("shell: " + e); if (shScript) shFailed++; }
             finally { ShHold(false); }
+            // copy / save work for what these printed too, not only a tool's result (R2-128)
+            if ((cmd == "status" || cmd == "debug" || cmd == "log" || cmd == "man" || cmd == "tools" || cmd == "ls" || cmd == "pages") && shOut != null && shOut.TextLength > from) shLast = shOut.Text.Substring(Math.Min(from, shOut.TextLength));
             ShEnd();
         }
         // AdeeboLab from the shell: the start page, or straight into one of its drawings (lan --ask asks the devices again)
         void ShLab(List<string> args)
         {
             bool ask = args.Remove("--ask"); string v = args.Count > 0 ? args[0].ToLowerInvariant() : "";
+            if (ask && v != "lan") WL("(--ask is for  lab lan  - it asks your devices their names; ignored here)", ShAmber);   // R2-117
             var views = new[] { "lan", "path", "wifi", "phone", "vpn" };
             if (v != "" && !views.Contains(v)) { WL("lab: no view \"" + v + "\" - try " + string.Join(", ", views), ShRed); return; }
             if (v == "path" && LabViews.Path(M) == null) { WL("lab path: run a trace or MTR first (e.g.  mtr 1.1.1.1 1), then  lab path", ShAmber); return; }
@@ -177,6 +236,8 @@ namespace AdeeboMeter
             foreach (var c in new[] {
                 new[] { "<tool> [args...]", "run a Toolbox tool; its boxes are the arguments, in order (\"quote\" spaces, - for an empty box)" },
                 new[] { "<tool> ... --yes", "for tools that send test traffic: you confirm it's your network (the Toolbox's tick box)" },
+                new[] { "source <file> [--yes]", "run a file's commands one by one (a path from Documents); --yes confirms its test-traffic tools" },
+                new[] { "alltools [--yes]", "every tool with its example (test-traffic tools only with --yes); the phone's and the heavy ones left out" },
                 new[] { "tools [word]", "list every tool, or the ones that match (ls works too)" },
                 new[] { "man <tool>", "what a tool does, what you type, how long, what it sends" },
                 new[] { "open <page>", "go to a page: open markets, open sports, open calc (cd works too)" },
@@ -273,68 +334,135 @@ namespace AdeeboMeter
         // gets 30 s (then it's stopped) - and writes everything shown to file.out.txt, ending "== DONE"; "alltools" queues every
         // tool with its example inputs (documentation addresses become your router), the ones that need you left out
         readonly Queue<string> shQueue = new Queue<string>(); string shOutFile; Timer shQTimer; DateTime shStepAt;
-        void ShSource(string file)
+        bool shScript, shScriptYes, shAborted; System.Text.StringBuilder shScriptLog; Toolkit.Run shScriptRun; int shRanN, shFailed, shSkipped, shPictures;
+        const int ShMaxLines = 2000; const long ShMaxBytes = 512 * 1024;
+        void ShBeginScript(string outFile, bool yes)
         {
-            file = file.Trim().Trim('"'); if (!File.Exists(file)) { WL("source: no such file: " + file, ShRed); return; }
-            foreach (var l in File.ReadAllLines(file)) { var t = l.Trim(); if (t != "" && !t.StartsWith("#", StringComparison.Ordinal)) shQueue.Enqueue(t); }
-            shOutFile = file + ".out.txt"; WL("source: " + shQueue.Count + " lines queued", ShCyan); ShPump();
+            shScript = true; shScriptYes = yes; shAborted = false; shScriptLog = new System.Text.StringBuilder(); shOutFile = outFile; shRanN = shFailed = shSkipped = shPictures = 0; shScriptRun = null;
         }
-        static readonly HashSet<string> ShSkip = new HashSet<string> { "newkey", "csrmake", "selfsigned", "encrypt", "decrypt", "recipients", "friend", "screentest", "keytest", "soundtest", "remote", "radiuslab", "wol", "keys", "mtu" };
-        void ShAllTools()
+        void ShSource(string file, bool yes)
         {
+            if (shScript) { WL("source: a script is already running - Ctrl+C stops it first", ShRed); return; }   // R2-005 / R2-132: no nesting, no second script taking over the first one's transcript
+            string full; try { full = ShPath(file); } catch (Exception e) { if (!(e is ArgumentException || e is NotSupportedException || e is PathTooLongException)) throw; WL("source: not a path: " + file, ShRed); return; }
+            if (!File.Exists(full)) { WL("source: no such file: " + full, ShRed); return; }
+            try { if (new FileInfo(full).Length > ShMaxBytes) { WL("source: " + Path.GetFileName(full) + " is over " + (ShMaxBytes / 1024) + " KB - that's not a list of commands", ShRed); return; } }   // R2-135
+            catch (IOException e) { WL("source: " + e.Message, ShRed); return; }
+            var lines = new List<string>();
+            try { foreach (var l in File.ReadLines(full)) { var t = l.Trim(); if (t != "" && !t.StartsWith("#", StringComparison.Ordinal)) lines.Add(t); if (lines.Count > ShMaxLines) break; } }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; WL("source: " + e.Message, ShRed); return; }
+            if (lines.Count > ShMaxLines) { WL("source: more than " + ShMaxLines + " commands - split the file", ShRed); return; }
+            ShBeginScript(full + ".out.txt", yes);
+            foreach (var t in lines) shQueue.Enqueue(t);
+            WL("source: " + shQueue.Count + " lines queued" + (yes ? " - test-traffic tools confirmed (--yes)" : ""), ShCyan); ShPumpSoon();
+        }
+        // left out of alltools: they need you there (keys, files, screens), act on your phone, write something you keep, or cost a lot
+        static readonly HashSet<string> ShSkip = new HashSet<string> { "newkey", "csrmake", "selfsigned", "encrypt", "decrypt", "recipients", "friend", "screentest", "keytest", "soundtest", "remote", "radiuslab", "wol", "keys", "mtu", "speedtest", "beforeafter" };
+        bool ShSkipped(Tool t) { return ShSkip.Contains(t.Id) || t.Group == "REMOTE"; }   // R2-007: the phone's tools act on your phone and its data plan
+        void ShAllTools(bool yes)
+        {
+            if (shScript) { WL("alltools: a script is already running - Ctrl+C stops it first", ShRed); return; }
             string gw; lock (M.L) gw = M.Gateway ?? "";
+            ShBeginScript(Path.Combine(Program.WriteDir, "alltools.out.txt"), yes);
+            int gated = 0, left = 0;
             foreach (var t in Tools2())
             {
-                if (ShSkip.Contains(t.Id)) continue; var ex = Examples.Get(t.Id); var inp = ex != null ? ex.In : new string[0];
+                if (ShSkipped(t)) { left++; continue; }
+                bool gate = LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep";
+                if (gate && !yes) { gated++; continue; }   // R2-003: the consent is yours to give, never filled in
+                if (t.Do == null) { shPictures++; continue; }   // pictures are drawn in the Toolbox, not run here (counted in the summary)
+                var ex = Examples.Get(t.Id); var inp = ex != null ? ex.In : new string[0];
+                if (t.Id == "diskspeed") inp = inp.Select(v => string.Equals(v, "yes", StringComparison.OrdinalIgnoreCase) ? "" : v).ToArray();   // R2-006: the quick test, never the long one (up to 8 GB)
                 var words = inp.Select(v => System.Text.RegularExpressions.Regex.Replace(v ?? "", @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", gw == "" ? "$0" : gw)).Select(v => v == "" ? "-" : "\"" + v.Replace("\"", "") + "\"");
-                shQueue.Enqueue((t.Id + " " + string.Join(" ", words)).Trim() + (LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep" ? " --yes" : ""));
+                shQueue.Enqueue((t.Id + " " + string.Join(" ", words)).Trim());
             }
-            WL("alltools: " + shQueue.Count + " commands queued (Ctrl+C stops the current one)", ShCyan); if (shOutFile == null) shOutFile = Path.Combine(Program.WriteDir, "alltools.out.txt"); ShPump();
+            shSkipped = gated + left;
+            WL("alltools: " + shQueue.Count + " commands queued" + (gated > 0 ? " · " + gated + " that send test traffic left out (alltools --yes runs them on your network)" : "") + " · " + left + " that need you or your phone left out · " + shPictures + " pictures (Toolbox only)", ShCyan);
+            WL("Ctrl+C stops it", ShDim); ShPumpSoon();
         }
+        void ShPumpSoon() { if (shQTimer == null) { shQTimer = new Timer { Interval = 250 }; shQTimer.Tick += delegate { ShPump(); }; } if (!shQTimer.Enabled) shQTimer.Start(); }   // never re-entered from inside a line (R2-005)
         void ShPump()
         {
-            if (shQTimer == null) { shQTimer = new Timer { Interval = 250 }; shQTimer.Tick += delegate { ShPump(); }; }
-            if (shRun != null) { if ((DateTime.UtcNow - shStepAt).TotalSeconds > 30 && !shRun.Stop) { shRun.Stop = true; WL("(30 s - stopped by the script)", ShAmber); } if (!shQTimer.Enabled) shQTimer.Start(); return; }
+            if (!shScript) { if (shQTimer != null) shQTimer.Stop(); return; }   // R2-033: the pump only ever watches the script's own run
+            if (shScriptRun != null && shRun == shScriptRun)
+            {
+                double secs = (DateTime.UtcNow - shStepAt).TotalSeconds;
+                if (secs > 30 && !shScriptRun.Stop) { shScriptRun.Stop = true; WL("(30 s - stopped by the script)", ShAmber); }
+                else if (secs > 45) { shFailed++; ShLetGo("(it didn't stop within 15 s - the script lets go of it and goes on; its result is dropped)"); }   // R2-032
+                else return;
+                if (shRun != null) return;
+            }
+            shScriptRun = null;
             if (shQueue.Count == 0)
             {
-                shQTimer.Stop();
-                if (shOutFile != null) { try { File.WriteAllText(shOutFile, shOut.Text + "\n== DONE " + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "\n"); WL("transcript: " + shOutFile, ShGreen); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; WL("couldn't write the transcript: " + e.Message, ShRed); } shOutFile = null; ShEnd(); }
-                return;
+                shQTimer.Stop(); shScript = false;
+                string tail = (shAborted ? "== STOPPED " : "== DONE ") + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · " + shRanN + " commands run · " + shFailed + " failed (threw or hung)" + (shSkipped > 0 ? " · " + shSkipped + " left out" : "") + (shPictures > 0 ? " · " + shPictures + " pictures not run" : "");
+                WL(tail, shAborted || shFailed > 0 ? ShAmber : ShGreen);   // R2-021 / R2-133: the trailer says how it went
+                var log = shScriptLog; shScriptLog = null;
+                if (shOutFile != null) { try { File.WriteAllText(shOutFile, log.ToString()); WL("transcript: " + shOutFile, ShGreen); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; WL("couldn't write the transcript: " + e.Message, ShRed); } shOutFile = null; }
+                ShEnd(); return;
             }
-            shStepAt = DateTime.UtcNow; ShRunLine(shQueue.Dequeue()); if (!shQTimer.Enabled) shQTimer.Start();
+            if (shRun != null) return;   // a run you started before the script: wait for it
+            shStepAt = DateTime.UtcNow; shRanN++;
+            ShRunLine(shQueue.Dequeue(), true);
+            if (shRun != null) shScriptRun = shRun;
         }
+        // stop waiting for a tool that ignores Stop: the shell is free again; when it does end, its result is dropped
+        void ShLetGo(string why)
+        {
+            var r = shRun; if (r == null) return;
+            r.Stop = true; shRun = null; lock (shAbandoned) shAbandoned.Add(r); WL(why, ShAmber);
+        }
+        readonly HashSet<Toolkit.Run> shAbandoned = new HashSet<Toolkit.Run>();
 
         // ---------- a tool: the same code the Toolbox runs, off the window thread
         void ShTool(Tool t, List<string> args, bool yes)
         {
             if (shRun != null) { WL("a tool is still running - Ctrl+C stops it", ShAmber); return; }
-            if (t.Do == null) { WL(t.Id + " draws its result as a picture - opening it in the Toolbox", ShAmber); tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(t.Id); SyncNav(); return; }
+            if (t.Do == null)
+            {
+                if (shScript) { WL(t.Id + (t.Id == "mtu" ? " runs in the Toolbox" : " draws a picture") + " - not run inside a script", ShAmber); shPictures++; return; }   // R2-134: a script never yanks you to another page
+                if (t.Id == "mtu")   // R2-037: mtu isn't a picture - it runs in the Toolbox, where it draws the path as it goes
+                {
+                    string target = args.Count > 0 && args[0] != "-" ? args[0] : "";
+                    if (target == "") { WL("usage: mtu <address>   e.g.  mtu 1.1.1.1", ShAmber); return; }
+                    tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("mtu"); SyncNav();
+                    if (tbBusy) { WL("mtu: a Toolbox tool is already running - opened it there", ShAmber); return; }
+                    if (tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = target;
+                    WL("mtu runs in the Toolbox (it draws the path as it goes) - started there for " + target, ShGreen); StartMtu(target); return;
+                }
+                WL(t.Id + " draws its result as a picture - opening it in the Toolbox", ShAmber); tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(t.Id); SyncNav(); return;
+            }
             bool needs = t.Inputs.Length > 0 && t.Inputs[0] != "" && t.Inputs[0].IndexOf("optional", StringComparison.OrdinalIgnoreCase) < 0 && t.Inputs[0].IndexOf("empty", StringComparison.OrdinalIgnoreCase) < 0;
             if (needs && args.Count == 0) { WL("usage: " + t.Id + " " + string.Join(" ", t.Inputs.Where(h => h != "").Select(h => "<" + BoxLabel(h).ToLowerInvariant().Replace(' ', '-') + ">")), ShAmber); var ex0 = Examples.Get(t.Id); if (ex0 != null && ex0.In.Any(z => z != "")) WL("e.g.   " + t.Id + " " + string.Join(" ", ex0.In.Select(z => z == "" ? "-" : z.Contains(" ") ? "\"" + z + "\"" : z)), ShDim); WL("man " + t.Id + " says more", ShDim); return; }   // 22 Nov: "ping" alone said "couldn't find  (IPv4)"
             var a = new string[Math.Max(4, t.Inputs.Length)];
             for (int i = 0; i < a.Length; i++) a[i] = i < args.Count && args[i] != "-" ? args[i] : "";
             // more words than boxes: the rest belong to the last box ("dig example.com MX" fits; a sentence for a free-text box too)
             if (t.Inputs.Length > 0 && args.Count > t.Inputs.Length) a[t.Inputs.Length - 1] = string.Join(" ", args.Skip(t.Inputs.Length - 1));
-            if (!UrlTools.Contains(t.Id)) for (int i = 0; i < t.Inputs.Length; i++) if (!SecretInput(t.Inputs[i]) && !PayloadBox(t.Id, i)) a[i] = Toolkit.UrlToTarget(a[i] ?? "", t.Inputs[i].IndexOf(":port", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (!UrlTools.Contains(t.Id)) for (int i = 0; i < t.Inputs.Length; i++) if (!SecretInput(t.Inputs[i]) && !PayloadBox(t.Id, i) && t.Inputs[i].IndexOf("DoH", StringComparison.Ordinal) < 0 && t.Inputs[i].IndexOf("https://", StringComparison.Ordinal) < 0) a[i] = Toolkit.UrlToTarget(a[i] ?? "", t.Inputs[i].IndexOf(":port", StringComparison.OrdinalIgnoreCase) >= 0);   // R2-035: a DoH box keeps its URL, as in the Toolbox
             if (t.Id == "sweep" || LabGate.Contains(t.Id)) a[3] = yes ? "yes" : "";
             string sender = SenderGate.Contains(t.Id) ? (yes ? "yes" : "") : null;
             W("running " + t.Id, ShDim); WL(" ... (Ctrl+C stops)", ShDim); ShEnd();
             var run = new Toolkit.Run(); shRun = run; var sw = System.Diagnostics.Stopwatch.StartNew();
             Task.Factory.StartNew(() =>
             {
-                List<string[]> res;
+                List<string[]> res; bool threw = false;
                 try
                 {
                     if (sender != null) { var gate = new List<string[]>(); res = Lab.Allowed(M, sender, gate) ? gate.Concat(t.Do(a, run) ?? new List<string[]>()).ToList() : gate; }
                     else res = t.Do(a, run) ?? new List<string[]>();
                 }
-                catch (Exception e) { Program.Log("shell tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
+                catch (Exception e) { Program.Log("shell tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; threw = true; }
                 try
                 {
                     BeginInvoke((Action)delegate
                     {
-                        shRun = null; if (shOut == null || shOut.IsDisposed) return;
+                        bool dropped; lock (shAbandoned) dropped = shAbandoned.Remove(run);
+                        if (dropped) { if (shOut != null && !shOut.IsDisposed) { WL("(" + t.Id + " ended after it was let go - result dropped)", ShDim); ShEnd(); } return; }
+                        if (shRun == run) shRun = null; if (shOut == null || shOut.IsDisposed) return;
+                        if (threw && shScript) shFailed++;
                         ShHold(true);
+                        try
+                        {
                         if (t.Id == "mtr" && mtrHops != null)
                         {
                             WL("hop     router                                   loss  sent  avg   best  worst  jitter", ShBlue);
@@ -346,10 +474,13 @@ namespace AdeeboMeter
                         shLast = sb.ToString();
                         WL((run.Stop ? "stopped" : "done") + " in " + sw.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s", ShDim);
                         if ((LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep") && !yes) WL("(it sends test traffic: add --yes if this is your network)", ShAmber);
-                        ShHold(false); ShEnd();
+                        }
+                        catch (Exception pe) { if (pe is OutOfMemoryException) throw; WL("error printing the result: " + pe.Message, ShRed); Program.Log("shell print " + t.Id + ": " + pe); }
+                        finally { ShHold(false); }   // R2-040: the redraw always comes back on
+                        ShEnd(); if (shScript) ShPump();
                     });
                 }
-                catch (InvalidOperationException) { shRun = null; }
+                catch (InvalidOperationException) { if (shRun == run) shRun = null; }
             });
         }
     }

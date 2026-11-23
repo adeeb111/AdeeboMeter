@@ -30,9 +30,10 @@ namespace AdeeboMeter
                     if (!System.Net.IPAddress.TryParse(hn, out ip))
                         try { var a = System.Net.Dns.GetHostAddresses(hn); ip = a.FirstOrDefault(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? a.FirstOrDefault(); }
                         catch (Exception e) { if (!(e is System.Net.Sockets.SocketException || e is ArgumentException)) throw; ip = null; }
-                    for (int i = 0; i < 20 && ip != null; i++)
+                    var end = DateTime.UtcNow.AddSeconds(20);   // R2-147: a 20-second look, even against a host that drops knocks slowly
+                    for (int i = 0; i < 20 && ip != null && DateTime.UtcNow < end; i++)
                     {
-                        var t0 = DateTime.UtcNow; var s = new WatchKit.Sample { T = DateTime.Now, Far = GamePing.TcpMs(ip, port, 1500) }; s.FarLost = double.IsNaN(s.Far); l.Add(s);
+                        var t0 = DateTime.UtcNow; var s = new WatchKit.Sample { T = DateTime.Now, Far = GamePing.TcpMs(ip, port, (int)Math.Max(300, Math.Min(1500, (end - DateTime.UtcNow).TotalMilliseconds))) }; s.FarLost = double.IsNaN(s.Far); l.Add(s);
                         int wait = 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) System.Threading.Thread.Sleep(wait);
                     }
                     if (ip == null) l.Add(new WatchKit.Sample { T = DateTime.Now, NoProbe = true, FarLost = true });
@@ -44,7 +45,13 @@ namespace AdeeboMeter
         public static Result Now(Monitor m)
         {
             var r = new Result();
-            List<WatchKit.Sample> recent; lock (Trading.k) recent = Trading.Samples.Count > 0 ? Trading.Samples.ToList() : (DateTime.Now - ManualAt).TotalMinutes < 30 ? Manual.ToList() : new List<WatchKit.Sample>();
+            // R2-070: the newest readings win - a check you just pressed over an older watch window; nothing older than 30 minutes
+            List<WatchKit.Sample> recent; lock (Trading.k)
+            {
+                var watch = Trading.Samples.Where(z => (DateTime.Now - z.T).TotalMinutes < 30).ToList();
+                bool manualFresh = (DateTime.Now - ManualAt).TotalMinutes < 30 && Manual.Count > 0;
+                recent = manualFresh && (watch.Count == 0 || ManualAt >= watch.Max(z => z.T)) ? Manual.ToList() : watch;
+            }
             var days = WatchKit.Recent("trade").Where(s => s.Start >= DateTime.Now.AddDays(-8)).ToList();
             double cpu = double.NaN, net = double.NaN; bool wifi = false, vpn = false; int sig = -1;
             if (m != null) lock (m.L) { cpu = m.Cpu.Last; net = m.NetPing.Avg(6); wifi = m.HasWifi; sig = m.WifiSignal; vpn = m.VpnUp; }
@@ -54,7 +61,8 @@ namespace AdeeboMeter
         public static Result Decide(Result r, List<WatchKit.Sample> recent, List<WatchKit.Session> days, double cpu, double net, bool wifi, int sig, bool vpn, bool hasBroker)
         {
             var far = recent.Where(s => !double.IsNaN(s.Far)).Select(s => s.Far).ToList();
-            int lost = recent.Count(s => s.FarLost);
+            int lost = recent.Count(s => s.FarLost && !s.NoProbe);   // R2-012: "couldn't look it up" is not a lost knock
+            if (recent.Count > 0 && recent.All(s => s.NoProbe) && hasBroker) { r.Verdict = "Couldn't find your broker"; r.Line = "The broker's server name didn't resolve - check the address, or whether names work (DNS)."; return r; }
             r.FarMs = far.Count == 0 ? double.NaN : far.OrderBy(x => x).ElementAt(far.Count / 2);
             var normals = days.Where(d => !double.IsNaN(d.FarNormal)).Select(d => d.FarNormal).ToList();
             r.Usual = normals.Count == 0 ? double.NaN : normals.OrderBy(x => x).ElementAt(normals.Count / 2);
@@ -68,7 +76,8 @@ namespace AdeeboMeter
             }
             else
             {
-                double ms = double.IsNaN(r.FarMs) ? 999 : r.FarMs, lossPct = recent.Count == 0 ? 0 : 100.0 * lost / recent.Count;
+                int knocked = recent.Count(z => !z.NoProbe);
+                double ms = double.IsNaN(r.FarMs) ? 999 : r.FarMs, lossPct = knocked == 0 ? 0 : 100.0 * lost / knocked;
                 double s = 100;
                 if (ms > 40) s -= Math.Min(40, (ms - 40) / 4);                 // every 4 ms over 40 costs a point, at most 40
                 if (!double.IsNaN(r.Usual) && ms > r.Usual * 1.5) s -= 10;     // slower than this line usually is
@@ -77,7 +86,7 @@ namespace AdeeboMeter
                 if (!double.IsNaN(cpu) && cpu > 85) s -= 8;
                 r.Score = (int)Math.Max(0, Math.Min(100, Math.Round(s)));
                 r.Verdict = r.Score >= 80 ? "Ready to trade" : r.Score >= 55 ? "Ready, with care" : "Not ready";
-                r.Line = "Your broker answers in " + (double.IsNaN(r.FarMs) ? "-" : r.FarMs.ToString("0", CultureInfo.InvariantCulture)) + " ms" + (lost > 0 ? ", " + lost + " of " + recent.Count + " knocks lost" : "") + (r.Days > 0 ? " · " + (r.DaysClean == r.Days ? "no dips in " + r.Days + " market days" : (r.Days - r.DaysClean) + " of " + r.Days + " market days had a dip") : "") + ".";
+                r.Line = "Your broker answers in " + (double.IsNaN(r.FarMs) ? "-" : r.FarMs.ToString("0", CultureInfo.InvariantCulture)) + " ms" + (lost > 0 ? ", " + lost + " of " + knocked + " knocks lost" : "") + (r.Days > 0 ? " · " + (r.DaysClean == r.Days ? "no dips in " + r.Days + " market days" : (r.Days - r.DaysClean) + " of " + r.Days + " market days had a dip") : "") + ".";
             }
             var dips = days.SelectMany(d => d.Dips).ToList();
             var tips = new List<StreamCheck.Tip>();

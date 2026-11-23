@@ -74,7 +74,20 @@ namespace AdeeboMeter
             return l.OrderByDescending(v => v.Bw).ToList();
         }
         static readonly Regex repRx = new Regex("<Representation\\b([^>]*)>", RegexOptions.IgnoreCase);
-        public static List<Variant> ParseDash(string text)
+        // R2-174: one AdaptationSet's ladder - the first set with video in it (a multi-codec manifest has one set per codec, and
+        // no player mixes them)
+        static string VideoSet(string text)
+        {
+            foreach (Match m in Regex.Matches(text ?? "", "<AdaptationSet\\b[\\s\\S]*?</AdaptationSet>", RegexOptions.IgnoreCase))
+            {
+                string set = m.Value, head = Regex.Match(set, "<AdaptationSet\\b[^>]*>", RegexOptions.IgnoreCase).Value;
+                if (head.IndexOf("audio", StringComparison.OrdinalIgnoreCase) >= 0 || head.IndexOf("text", StringComparison.OrdinalIgnoreCase) >= 0 && head.IndexOf("video", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                if (ParseReps(set).Count > 0) return set;
+            }
+            return text ?? "";
+        }
+        public static List<Variant> ParseDash(string text) { return ParseReps(VideoSet(text)); }
+        static List<Variant> ParseReps(string text)
         {
             var l = new List<Variant>();
             foreach (Match m in repRx.Matches(text ?? ""))
@@ -157,7 +170,7 @@ namespace AdeeboMeter
                 {
                     var buf = new byte[2 * 1024 * 1024]; int got = 0, n;
                     while (got < buf.Length && (n = s.Read(buf, got, buf.Length - got)) > 0) got += n;
-                    var t = Encoding.UTF8.GetString(buf, 0, got);
+                    var t = Encoding.UTF8.GetString(buf, 0, got).TrimStart('\uFEFF');   // R2-073: a BOM before #EXTM3U is still a playlist
                     if (timeIt) r.Kind = t.StartsWith("#EXTM3U", StringComparison.Ordinal) ? "HLS" : t.IndexOf("<MPD", StringComparison.OrdinalIgnoreCase) >= 0 ? "DASH" : ct.IndexOf("html", StringComparison.OrdinalIgnoreCase) >= 0 ? "page" : "other";
                     return t;
                 }
@@ -188,40 +201,75 @@ namespace AdeeboMeter
                 segs = DashSegments(body, r.Ladder.Count > 0 ? r.Ladder[0] : null); media = u;
             }
             if (segs == null || segs.Count == 0) { r.Line = "The qualities were read, but its video pieces couldn't be found for a speed test."; return; }
-            // the speed test: the real video, piece after piece, for up to 30 seconds or 150 MB
-            Step = "Downloading the video (30 s)"; long total = 0; var t0 = Stopwatch.StartNew(); double lastMark = 0; long lastBytes = 0; long singleBytes = 0; double singleSecs = 0;
-            var buf2 = new byte[64 * 1024];
-            for (int pass = 0; pass < 20 && t0.Elapsed.TotalSeconds < 30 && total < 150L * 1024 * 1024; pass++)
+            // the speed test: the real video, piece after piece, for up to 30 seconds or 300 MB; a reading every half second, the
+            // first second (connecting, TCP ramping up) left out of the score (R2-074: on a fast line the cap came before any steady reading)
+            Step = "Downloading the video (30 s)"; long total = 0; var t0 = Stopwatch.StartNew(); double lastMark = 0; long lastBytes = 0; const long Cap = 300L * 1024 * 1024;
+            var buf2 = new byte[64 * 1024]; var at = new List<double>(); int fails = 0, inRow = 0; Exception first = null;
+            for (int pass = 0; pass < 20 && t0.Elapsed.TotalSeconds < 30 && total < Cap; pass++)
+            {
                 foreach (var sg in segs)
                 {
-                    if (t0.Elapsed.TotalSeconds >= 30 || total >= 150L * 1024 * 1024) break;
+                    if (t0.Elapsed.TotalSeconds >= 30 || total >= Cap) break;
                     var su = new Uri(media, sg);
-                    using (var resp = Req(su).GetResponse()) using (var s = resp.GetResponseStream())
+                    try
                     {
-                        int n; while ((n = s.Read(buf2, 0, buf2.Length)) > 0)
+                        using (var resp = Req(su).GetResponse()) using (var s = resp.GetResponseStream())
                         {
-                            total += n; singleBytes += n;
-                            double now = t0.Elapsed.TotalSeconds;
-                            if (now - lastMark >= 1) { r.Samples.Add((total - lastBytes) * 8 / 1e6 / (now - lastMark)); lastMark = now; lastBytes = total; Progress = 0.1 + 0.9 * Math.Min(1, now / 30); }
-                            if (now >= 30) break;
+                            int n; while ((n = s.Read(buf2, 0, buf2.Length)) > 0)
+                            {
+                                total += n;
+                                double now = t0.Elapsed.TotalSeconds;
+                                if (now - lastMark >= 0.5) { r.Samples.Add((total - lastBytes) * 8 / 1e6 / (now - lastMark)); at.Add(now); lastMark = now; lastBytes = total; Progress = 0.1 + 0.9 * Math.Min(1, now / 30); }
+                                if (now >= 30 || total >= Cap) break;
+                            }
                         }
+                        inRow = 0;
+                    }
+                    catch (Exception e)   // R2-013: one piece that fails (expired, 404) doesn't throw the whole test away
+                    {
+                        if (!(e is WebException || e is IOException)) throw;
+                        fails++; inRow++; if (first == null) first = e;
+                        if (inRow >= 3) break;
                     }
                 }
-            r.TestSecs = t0.Elapsed.TotalSeconds; singleSecs = r.TestSecs;
-            var steady = r.Samples.Skip(2).ToList(); if (steady.Count == 0) steady = r.Samples.ToList();
+                if (inRow >= 3)
+                {
+                    // live HLS: the pieces moved on - read the playlist again for the newest ones, once in a row
+                    if (r.Kind == "HLS" && media != null && inRow == 3) { try { var fresh = Text(media, r, false).Replace("\r", "").Split('\n').Select(z => z.Trim()).Where(z => z != "" && !z.StartsWith("#", StringComparison.Ordinal)).ToList(); if (fresh.Count > 0) { segs = fresh.Skip(Math.Max(0, fresh.Count - 8)).ToList(); inRow = 0; continue; } } catch (Exception e) { if (!(e is WebException || e is IOException)) throw; } }
+                    break;
+                }
+            }
+            if (total == 0 && first != null) throw first;   // nothing came at all: that's the answer
+            if (fails > 0) r.Line = (r.Line != "" ? r.Line + " " : "") + fails + " video piece" + (fails == 1 ? "" : "s") + " didn't come (the link's pieces may expire) - measured from the rest.";
+            r.TestSecs = t0.Elapsed.TotalSeconds;
+            var steady = r.Samples.Where((v, i) => at[i] >= 1.0).ToList(); if (steady.Count < 2) steady = r.Samples.Skip(r.Samples.Count > 1 ? 1 : 0).ToList();
             r.Mbps = Pctl(steady, 0.5); r.Low = Pctl(steady, 0.2);
-            for (int i = 2; i < r.Samples.Count; i++) if (r.Samples[i] < r.Mbps * 0.5) { r.DipAt = i; break; }
+            for (int i = 0; i < r.Samples.Count; i++) if (at[i] >= 1.0 && r.Samples[i] < r.Mbps * 0.5) { r.DipAt = (int)Math.Round(at[i]); break; }   // seconds into the test
         }
-        // DASH SegmentTemplate with $Number$ (the common live case); $Time$ timelines are left unmeasured
+        // DASH SegmentTemplate with $Number$ (also $Number%05d$); a live MPD starts at its live edge, not its first-ever piece
+        // (R2-071 / R2-072); $Time$ timelines are left unmeasured
         static List<string> DashSegments(string mpd, Variant v)
         {
-            var t = Regex.Match(mpd, "<SegmentTemplate\\b([^>]*)>", RegexOptions.IgnoreCase); if (!t.Success || v == null) return null;
-            string a = t.Groups[1].Value; Func<string, string> at = n => { var x = Regex.Match(a, "\\b" + n + "=\"([^\"]*)\""); return x.Success ? x.Groups[1].Value : ""; };
-            string media = at("media"); if (media == "" || media.Contains("$Time$")) return null;
-            int start; if (!int.TryParse(at("startNumber"), out start)) start = 1;
-            return Enumerable.Range(start, 6).Select(n => media.Replace("$RepresentationID$", v.Uri).Replace("$Bandwidth$", v.Bw.ToString(CultureInfo.InvariantCulture)).Replace("$Number$", n.ToString(CultureInfo.InvariantCulture))).ToList();
+            string set = VideoSet(mpd);
+            var t = Regex.Match(set, "<SegmentTemplate\\b([^>]*)>", RegexOptions.IgnoreCase); if (!t.Success) t = Regex.Match(mpd, "<SegmentTemplate\\b([^>]*)>", RegexOptions.IgnoreCase);
+            if (!t.Success || v == null) return null;
+            string a = t.Groups[1].Value; Func<string, string> attr = n => { var x = Regex.Match(a, "\\b" + n + "=\"([^\"]*)\""); return x.Success ? x.Groups[1].Value : ""; };
+            string media = attr("media"); if (media == "" || media.Contains("$Time$")) return null;
+            int start; if (!int.TryParse(attr("startNumber"), out start)) start = 1;
+            var root = Regex.Match(mpd, "<MPD\\b[^>]*>", RegexOptions.IgnoreCase).Value;
+            if (Regex.IsMatch(root, "type=\"dynamic\"", RegexOptions.IgnoreCase))
+            {
+                var ast = Regex.Match(root, "availabilityStartTime=\"([^\"]+)\""); long dur, ts;
+                DateTime t0; if (!long.TryParse(attr("timescale"), out ts) || ts <= 0) ts = 1;
+                if (ast.Success && long.TryParse(attr("duration"), out dur) && dur > 0 && DateTime.TryParse(ast.Groups[1].Value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out t0))
+                {
+                    double segS = (double)dur / ts, since = (DateTime.UtcNow - t0).TotalSeconds;
+                    if (segS > 0 && since > 0) start += Math.Max(0, (int)(since / segS) - 8);   // a few pieces behind the live edge: they're surely there
+                }
+            }
+            Func<int, string> num = n => Regex.Replace(media, "\\$Number(%0(\\d+)d)?\\$", m => m.Groups[2].Success ? n.ToString("D" + m.Groups[2].Value, CultureInfo.InvariantCulture) : n.ToString(CultureInfo.InvariantCulture));
+            return Enumerable.Range(start, 6).Select(n => num(n).Replace("$RepresentationID$", v.Uri).Replace("$Bandwidth$", v.Bw.ToString(CultureInfo.InvariantCulture))).ToList();
         }
-
         // ---------- the verdict, the way along and the tips (each from a measurement taken now)
         static void Decide(Result r, Monitor m)
         {

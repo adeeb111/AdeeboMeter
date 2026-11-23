@@ -38,7 +38,7 @@ namespace AdeeboMeter
         static string Url(string amt) { return amt == "" ? "https://paypal.me/adeeb1111" : "https://paypal.me/adeeb1111/" + amt + "CAD"; }
 
         float Measure() { using (var bmp = new Bitmap(1, 1)) using (var g = Graphics.FromImage(bmp)) return Lay(g, false); }
-        protected override void OnPaint(PaintEventArgs e) { var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; Lay(g, true); }
+        protected override void OnPaint(PaintEventArgs e) { var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast; Lay(g, true); }
 
         float Lay(Graphics g, bool draw)
         {

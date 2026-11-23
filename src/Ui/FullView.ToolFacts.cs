@@ -24,6 +24,14 @@ namespace AdeeboMeter
                 case "ispreport": return "about a minute";
                 case "laptop": return "a few minutes (it tests the disk and memory)";
                 case "speedtest": return "about 20 seconds";
+                // R2-161: the tools a real run didn't time
+                case "radiuslab": return "until you stop it - it answers your test sign-ins";
+                case "remote": return "as long as the command you run on the server";
+                case "encrypt": case "decrypt": return "a second or two, longer for a big file";
+                case "keys": case "newkey": case "csrmake": case "selfsigned": case "recipients": return "a second or two";
+                case "wol": return "an instant - the PC itself takes a minute to wake";
+                case "soundtest": case "screentest": case "keytest": return "as long as you test";
+                case "friend": return "nothing to wait for";
             }
             string v; int s;
             if (toolTimes.TryGetValue(t.Id, out v) && int.TryParse(v, out s)) return s <= 2 ? "a few seconds" : "about " + s + " s";
@@ -37,11 +45,26 @@ namespace AdeeboMeter
                 case "https": case "certlive": case "certcal": case "mysites": return "one TLS handshake to each site";
                 case "chain": case "certfile": case "pfx": case "csr": case "certconv": case "hashf": case "b64": case "certcmds": case "certmatch": return "nothing - it reads the file or text you give it";
                 case "qr": return "nothing - the result rides in the code";
+                // bug-hunt R2-008: the group switch below missed most groups - these are what each one really sends
+                case "subnet": case "roams": case "dhcp": case "dot1x": case "join": case "hosts": case "arp": case "icmpexplain": case "dhcpreplay": case "rareplay": case "eapreplay": case "twopc": case "samplelab": case "friend": case "overlap": case "route": case "shares": case "certcmp":
+                    return "nothing - it reads this PC, Windows or what you paste";
+                case "beforeafter": return "the same small checks as Home (router, internet, names), to compare";
+                case "sweep": return "one ping to every address in your network (you confirm it's yours)";
+                case "inventory": return "broadcast and multicast name questions on your own network";
+                case "wol": return "one wake-up packet, broadcast on your own network";
+                case "dupip": return "ARP probes for this PC's own address, on your own network";
+                case "discover": case "rlisten": return "nothing - it only listens";
+                case "mtr": case "ret": case "ping6": case "udpmtu": case "mtu": return "pings with rising hop limits to the address you type";
+                case "radiuslab": return "nothing outside this PC - a practice server on this PC";
+                case "smtppath": return "a connection to each mail server of the domain you type";
+                case "hairpin": return "a STUN question to a public server, then a connection to your own public address";
             }
             switch (t.Group)
             {
                 case "CALC": return "nothing - it's maths on this PC";
-                case "THE PC": case "HARDWARE NERDS": case "WINDOWS": case "OVER TIME": case "JUST FOR FUN": case "WATCH": case "KEYS": case "ON YOUR NETWORK": return "nothing - it reads this PC and Windows";
+                case "THE PC": case "HARDWARE NERDS": case "WINDOWS": case "OVER TIME": case "JUST FOR FUN": case "WATCH": case "KEYS": return "nothing - it reads this PC and Windows";
+                case "PATH": return "pings and small probes to the address you type";
+                case "YOUR NETWORK": return "small questions to the device you type, on your own network";
                 case "REMOTE": return t.Id == "remote" ? "an SSH session to the server you type" : "a request to your linked phone";
                 case "SNMP": return "SNMP questions to the device you type (read only)";
                 case "LAB": return "the test packets you set up - nothing else";

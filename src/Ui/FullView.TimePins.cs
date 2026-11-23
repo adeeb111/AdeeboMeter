@@ -1,6 +1,6 @@
 // Pin this moment (1.1.7 idea from PR #29's snapshots, done inside the existing Time machine): pin a minute you want to
 // remember - "before the router swap", "the evening it was bad" - and later compare that pinned minute with now.
-// The minute's numbers already live in history, so a pin is only a time and a short name; nothing else is stored.
+// The minute's numbers already live in history, so a pin is only a time; nothing else is stored.
 using System;
 using System.Collections.Generic;
 using System.Drawing;

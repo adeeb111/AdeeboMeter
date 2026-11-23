@@ -1,4 +1,4 @@
-// The speed rules that fail the build (PLAN 11.8a): every page draws in under 30 ms in both layouts and both themes,
+// The speed rules that fail the build (PLAN 11.8a): every page draws in under 50 ms (x3 on a busy PC) in both layouts and both themes,
 // the window answers within 100 ms while heavy tools start (their work left the window thread), and the freeze card
 // appears when the window is stuck and goes away when it answers.
 using System;
@@ -29,7 +29,8 @@ namespace AdeeboMeter
                             for (int i = 0; i < 3; i++) { var sw = Stopwatch.StartNew(); leftPane.Refresh(); best = Math.Min(best, sw.Elapsed.TotalMilliseconds); }
                             // 22 Nov (Adeeb's PC: security 59 ms once, 24-29 ms in the other three layouts): a short burst elsewhere on the PC
                             // can slow three draws in a row - over the limit, wait half a second and measure again; a slow page is slow both times
-                            if (best > limitMs) { System.Threading.Thread.Sleep(500); Application.DoEvents(); for (int i = 0; i < 3; i++) { var sw = Stopwatch.StartNew(); leftPane.Refresh(); best = Math.Min(best, sw.Elapsed.TotalMilliseconds); } }
+                            // R2-143: the second look is judged on its own typical draw (the median of 5), not the fastest of all six
+                            if (best > limitMs) { System.Threading.Thread.Sleep(500); Application.DoEvents(); var again = new List<double>(); for (int i = 0; i < 5; i++) { var sw = Stopwatch.StartNew(); leftPane.Refresh(); again.Add(sw.Elapsed.TotalMilliseconds); } again.Sort(); best = again[2]; }
                             times.Add(t + " " + best.ToString("0", System.Globalization.CultureInfo.InvariantCulture));
                             if (best > limitMs) bad.Add(lay + "/" + (th == 0 ? "light" : "dark") + "/" + t + " " + best.ToString("0", System.Globalization.CultureInfo.InvariantCulture) + " ms");
                         }

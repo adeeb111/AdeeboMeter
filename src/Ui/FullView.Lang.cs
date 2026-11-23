@@ -105,8 +105,11 @@ namespace AdeeboMeter
                 {
                     int n = L.Languages.Length; if (langKey < 0) langKey = Math.Max(0, Array.FindIndex(L.Languages, l => l[0] == L.Code));
                     bool rtl = L.IsRtl;
-                    if (e.KeyCode == Keys.Right || e.KeyCode == Keys.Down) { langKey = (langKey + (rtl && e.KeyCode == Keys.Right ? n - 1 : 1)) % n; }
-                    else if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Up) { langKey = (langKey + (rtl && e.KeyCode == Keys.Left ? 1 : n - 1)) % n; }
+                    int cols = LangCols(langSheet.Width);   // R2-213: Up / Down move a row, Left / Right a tile
+                    if (e.KeyCode == Keys.Down) { if (langKey + cols < n) langKey += cols; }
+                    else if (e.KeyCode == Keys.Up) { if (langKey - cols >= 0) langKey -= cols; }
+                    else if (e.KeyCode == Keys.Right) { langKey = (langKey + (rtl ? n - 1 : 1)) % n; }
+                    else if (e.KeyCode == Keys.Left) { langKey = (langKey + (rtl ? 1 : n - 1)) % n; }
                     else if (e.KeyCode == Keys.Enter) { string c = L.Languages[langKey][0]; HideLangSheet(); PickLanguage(c); e.Handled = true; return; }
                     else if (e.KeyCode == Keys.Escape) { HideLangSheet(); e.Handled = true; return; }
                     else return;
@@ -129,12 +132,16 @@ namespace AdeeboMeter
             langSheet.Visible = false; langBtn.Selected = false; langHover = null;
             if (langFilter != null) Application.RemoveMessageFilter(langFilter);
         }
-        int LangCols(float w) { int n = L.Languages.Length; return w >= 860 * S ? n : w >= 520 * S ? 3 : 2; }
+        int langColsMin;   // R2-096: on a short window, more columns so every tile fits (no row is cut off)
+        int LangCols(float w) { int n = L.Languages.Length; int c = w >= 860 * S ? n : w >= 520 * S ? 3 : 2; return Math.Min(n, Math.Max(c, langColsMin)); }
         void PlaceLangSheet()
         {
             int n = L.Languages.Length; int w = Math.Min(Sc(1010), ClientSize.Width - Sc(24));
-            int cols = LangCols(w), rows = (n + cols - 1) / cols;
-            int h = (int)((22 + 12 + 34 + 16) * S + rows * (236 * S) + (rows - 1) * 14 * S + (18 + 52 + 12 + 26 + 18) * S);
+            var at0 = PointToClient(langBtn.Parent.PointToScreen(new Point(langBtn.Left + langBtn.Width / 2, langBtn.Bottom))); int room = ClientSize.Height - at0.Y - Sc(10);
+            Func<int, int> hOf = rws => (int)((22 + 12 + 34 + 16) * S + rws * (236 * S) + (rws - 1) * 14 * S + (18 + 52 + 12 + 26 + 18) * S);
+            langColsMin = 0; int cols = LangCols(w), rows = (n + cols - 1) / cols;
+            while (hOf(rows) > room && cols < n) { cols++; rows = (n + cols - 1) / cols; langColsMin = cols; }
+            int h = hOf(rows);
             var at = PointToClient(langBtn.Parent.PointToScreen(new Point(langBtn.Left + langBtn.Width / 2, langBtn.Bottom)));
             int x = Math.Max(Sc(12), Math.Min(at.X - Sc(190), ClientSize.Width - w - Sc(12)));
             langSheet.Bounds = new Rectangle(x, at.Y + Sc(2), w, Math.Min(h, ClientSize.Height - at.Y - Sc(8)));
@@ -344,7 +351,7 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space || e.KeyCode == Keys.Down) { OnClick(EventArgs.Empty); e.Handled = true; } base.OnKeyDown(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float S = Draw.S; var r = new RectangleF(1.5f, 1.5f, Width - 4, Height - 4);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             Color v = ColorTranslator.FromHtml("#7C4DFF"), p = ColorTranslator.FromHtml("#EC4899");

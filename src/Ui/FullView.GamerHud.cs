@@ -18,20 +18,27 @@ namespace AdeeboMeter
         {
             if (tab != "gamer" || gamerCanvas == null) return;
             var s = snap; string bg = HudBackground();
-            string k = Ms(s.Ping) + "|" + Ms(s.Jitter) + "|" + Math.Round(s.LossPct) + "|" + bg + "|" + (s.NetHist.Length > 0 ? s.NetHist[s.NetHist.Length - 1].ToString(CultureInfo.InvariantCulture) : "");
+            string k = Ms(s.Ping) + "|" + Ms(s.Jitter) + "|" + (double.IsNaN(s.LossPct) ? "-" : s.LossPct.ToString("0.#", CultureInfo.InvariantCulture)) /* R2-154: the tenth the panel shows */ + "|" + bg + "|" + (s.NetHist.Length > 0 ? s.NetHist[s.NetHist.Length - 1].ToString(CultureInfo.InvariantCulture) : "");
             if (k != hudKey) { hudKey = k; if (!RedrawSpots(gamerCanvas, "gm.hud")) gamerCanvas.Invalidate(); }
         }
-        static DateTime hudBgAt; static string hudBg = "";
+        static DateTime hudBgAt; static volatile string hudBg = ""; static int hudBgBusy;
+        // R2-047: the process list is read on a pool thread every 10 s - the paint and the tick only read the last answer
+        // R2-048: a process that won't give its name (protected, elevated) is skipped, never the whole list
         static string HudBackground()
         {
-            if ((DateTime.UtcNow - hudBgAt).TotalSeconds < 10) return hudBg; hudBgAt = DateTime.UtcNow;
-            try
+            if ((DateTime.UtcNow - hudBgAt).TotalSeconds < 10 || System.Threading.Interlocked.CompareExchange(ref hudBgBusy, 1, 0) != 0) return hudBg;
+            hudBgAt = DateTime.UtcNow;
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate
             {
-                var names = System.Diagnostics.Process.GetProcesses().Select(p => { try { return p.ProcessName; } catch (InvalidOperationException) { return ""; } finally { p.Dispose(); } }).ToList();
-                var hit = GamerTools.Updaters.FirstOrDefault(u => names.Any(n => string.Equals(n, u[0], StringComparison.OrdinalIgnoreCase)));
-                hudBg = hit != null ? hit[1] : "";
-            }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; hudBg = ""; }
+                try
+                {
+                    var names = System.Diagnostics.Process.GetProcesses().Select(p => { try { return p.ProcessName; } catch (Exception e) { if (e is OutOfMemoryException) throw; return ""; } finally { p.Dispose(); } }).ToList();
+                    var hit = GamerTools.Updaters.FirstOrDefault(u => names.Any(n => string.Equals(n, u[0], StringComparison.OrdinalIgnoreCase)));
+                    hudBg = hit != null ? hit[1] : "";
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; hudBg = ""; }
+                finally { System.Threading.Interlocked.Exchange(ref hudBgBusy, 0); }
+            });
             return hudBg;
         }
         float PaintGamerHud(System.Drawing.Graphics g, float x, float y, float w)
@@ -71,8 +78,8 @@ namespace AdeeboMeter
             string bg = HudBackground(); bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5;
             var stats = new[] {
                 new object[] { "JITTER", double.IsNaN(s.Jitter) ? "-" : Ms(s.Jitter) + " ms", double.IsNaN(s.Jitter) ? HudDim : s.Jitter > 20 ? HudRed : s.Jitter > 8 ? HudAmber : HudGreen },
-                new object[] { "LOSS", double.IsNaN(s.LossPct) ? "-" : s.LossPct.ToString("0.#", CultureInfo.InvariantCulture) + "%", s.LossPct > 2 ? HudRed : s.LossPct > 0 ? HudAmber : HudGreen },
-                new object[] { "LINK", kind == "Wi-Fi" ? "Wi-Fi " + (sig >= 0 ? sig + "%" : "") : kind == "LAN" ? "Cable" : kind, kind == "Wi-Fi" && sig >= 0 && sig < 60 ? HudAmber : HudGreen },
+                new object[] { "LOSS", double.IsNaN(s.LossPct) ? "-" : s.LossPct.ToString("0.#", CultureInfo.InvariantCulture) + "%", double.IsNaN(s.LossPct) ? HudDim : s.LossPct > 2 ? HudRed : s.LossPct > 0 ? HudAmber : HudGreen },   /* R2-155: unknown is grey */
+                new object[] { "LINK", kind == "Wi-Fi" ? "Wi-Fi " + (sig >= 0 ? sig + "%" : "") : kind == "LAN" ? "Cable" : kind, string.IsNullOrEmpty(kind) ? HudDim : kind == "Wi-Fi" && sig >= 0 && sig < 60 ? HudAmber : HudGreen },
                 new object[] { "BACKGROUND", bg != "" ? "updating" : busy ? "busy line" : "quiet", bg != "" || busy ? HudAmber : HudGreen } };
             float sx = lx + lw + 26 * S, sw = x + w - 20 * S - sx, sh = 30 * S;
             if (sw > 120 * S)
@@ -88,7 +95,7 @@ namespace AdeeboMeter
             // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
             string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? L.T("WAIT - ") + verdict.Substring(7)
                 : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? L.T("EXPECT LAG - ") + L.T(verdict.Substring(13)) : L.T(verdict);
-            using (var vb = new SolidBrush(vc)) g.DrawString("▶ " + shown, Draw.fBodyB, vb, lx, ly + lh + 16 * S);
+            using (var vb = new SolidBrush(vc)) using (var ef = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString("▶ " + shown, Draw.fBodyB, vb, new RectangleF(lx, ly + lh + 16 * S, x + w - 20 * S - lx, 24 * S), ef);   // R2-156: kept inside the panel
             LiveSpot(gamerCanvas, "gm.hud", r);
             return y + h + 16 * S;
         }

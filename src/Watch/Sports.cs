@@ -36,7 +36,18 @@ namespace AdeeboMeter
         // bug-hunt L-68: a saved key that can't be read (damaged, or from another Windows user) says so - it isn't "no key"
         internal static readonly HashSet<string> KeyBad = new HashSet<string>();
         static string NoKey(string sport) { lock (KeyBad) return KeyBad.Contains(sport) ? "Your saved key couldn't be read (the file is damaged or from another Windows account) - type it again." : "nokey"; }
+        // R2-077: read and decrypted once per change of the file, not on every paint
+        static string keySig = ""; static readonly Dictionary<string, string> keyCache = new Dictionary<string, string>(StringComparer.Ordinal);
         internal static string Key(string sport)
+        {
+            string sig = "";
+            try { var fi = new FileInfo(KeyFile); sig = fi.Exists ? fi.Length + "|" + fi.LastWriteTimeUtc.Ticks : "none"; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
+            lock (keyCache) { string v; if (sig != "" && sig == keySig && keyCache.TryGetValue(sport, out v)) return v; if (sig != keySig) { keyCache.Clear(); keySig = sig; } }
+            string got = Key1(sport);
+            lock (keyCache) if (sig == keySig) keyCache[sport] = got;
+            return got;
+        }
+        static string Key1(string sport)
         {
             lock (KeyBad) KeyBad.Remove(sport);
             try
@@ -54,6 +65,7 @@ namespace AdeeboMeter
         // AM-CG-280: says whether the key was saved; a fetch already running with the old key throws its answer away
         internal static bool SetKey(string sport, string key)
         {
+            lock (keyCache) { keyCache.Clear(); keySig = ""; }
             key = (key ?? "").Trim(); bool ok = false;
             try
             {
@@ -90,9 +102,10 @@ namespace AdeeboMeter
             }
         }
         // one followed team in one game (My Teams' rows)
+        static readonly Dictionary<string, Regex> teamRx = new Dictionary<string, Regex>(StringComparer.OrdinalIgnoreCase);   // R2-053: one per team, kept
         internal static bool TeamIn(string team, Game g)
         {
-            var rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(team) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            Regex rx; lock (teamRx) if (!teamRx.TryGetValue(team ?? "", out rx)) { if (teamRx.Count > 64) teamRx.Clear(); teamRx[team ?? ""] = rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(team ?? "") + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant); }
             return rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso);
         }
         internal static Game LiveMine() { lock (k) return Games.FirstOrDefault(g => g.State == "live" && Mine(g)); }
@@ -128,7 +141,7 @@ namespace AdeeboMeter
                 {
                     sport("hockey", Hockey);
                     // no key of your own: ESPN's free scoreboards (no key, read once a day - the page says so); your own key turns ESPN off
-                    if (Key("football") == "") { if (!sport("football", EspnFootball)) publish("football", new List<Game>(), null, NoKey("football")); } else { FromEspn = false; sport("football", () => Football(Key("football"))); }
+                    if (Key("football") == "") sport("football", EspnFootball);   // bug-hunt R2-010: a failure keeps what was on screen, with the real reason else { FromEspn = false; sport("football", () => Football(Key("football"))); }
                     if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
                     else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
@@ -171,23 +184,32 @@ namespace AdeeboMeter
         }
         // ESPN's public scoreboards (unofficial, no key, may change): the big leagues, each read at most once a day and kept in the
         // data folder (ESPN sees one request a day from this PC, not one every 5 minutes)
-        internal static bool FromEspn;
+        internal static bool FromEspn; internal static volatile string EspnMissing = "";
         static readonly string[][] EspnLeagues = { new[] { "eng.1", "Premier League" }, new[] { "esp.1", "LaLiga" }, new[] { "ger.1", "Bundesliga" }, new[] { "ita.1", "Serie A" }, new[] { "uefa.champions", "Champions League" }, new[] { "usa.1", "MLS" } };
         internal static List<Game> EspnFootball()
         {
-            var r = new List<Game>(); string dir = Path.Combine(Program.WriteDir, "espn"); Directory.CreateDirectory(dir); int ok = 0;
+            var r = new List<Game>(); string dir = Path.Combine(Program.WriteDir, "espn"); Directory.CreateDirectory(dir); int ok = 0; var missing = new List<string>();
             foreach (var lg in EspnLeagues)
             {
                 string f = Path.Combine(dir, lg[0] + ".json"), json = null;
                 try
                 {
-                    if (File.Exists(f) && (DateTime.UtcNow - File.GetLastWriteTimeUtc(f)).TotalHours < 24) json = File.ReadAllText(f);
-                    else { json = Get("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg[0] + "/scoreboard", null, null); File.WriteAllText(f, json); }
-                    r.AddRange(EspnFrom(json, lg[1])); ok++;
+                    // once a calendar day (R2-011): a file from yesterday is refetched in the morning, not 24 hours later
+                    bool fresh = File.Exists(f) && File.GetLastWriteTime(f).Date == DateTime.Now.Date;
+                    List<Game> got = null;
+                    if (fresh) { try { got = EspnFrom(File.ReadAllText(f), lg[1]); } catch (InvalidDataException) { got = null; } catch (FormatException) { got = null; } catch (ArgumentException) { got = null; } }   // R2-044: a bad cached file is fetched again, not kept for a day
+                    if (got == null)
+                    {
+                        json = Get("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg[0] + "/scoreboard", null, null);
+                        got = EspnFrom(json, lg[1]);   // parsed before it's kept: an error page never poisons the cache
+                        string tmp = f + ".tmp"; File.WriteAllText(tmp, json); if (File.Exists(f)) File.Replace(tmp, f, null); else File.Move(tmp, f);   // whole or not at all
+                    }
+                    r.AddRange(got); ok++;
                 }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("espn " + lg[0] + ": " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("espn " + lg[0] + ": " + e.Message); missing.Add(lg[1]); }
             }
             if (ok == 0) throw new InvalidDataException("ESPN's scoreboards couldn't be read");
+            EspnMissing = missing.Count > 0 ? "Not read this time: " + string.Join(", ", missing) + "." : "";   // R2-045: say which leagues are missing
             FromEspn = true; return r;
         }
         internal static List<Game> EspnFrom(string json, string league)

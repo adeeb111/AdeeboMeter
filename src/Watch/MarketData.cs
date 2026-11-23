@@ -144,10 +144,18 @@ namespace AdeeboMeter
             while (want.DayOfWeek == DayOfWeek.Saturday || want.DayOfWeek == DayOfWeek.Sunday) want = want.AddDays(-1);
             return s.LastDay < want.AddDays(-3);   // a Bank holiday or two is not "stale"; anything older is
         }
+        static readonly HashSet<string> emptyRead = new HashSet<string>(StringComparer.Ordinal);
         public static void Load(string what)
         {
             lock (k) if (hist.Count > 0 && (what == "BCPI" ? hist.ContainsKey("ENER") : what == "CANADA" ? hist.ContainsKey("V39079") : hist.ContainsKey(what))) return;
-            try { var f = HistFile(what.Replace(":", "-")); if (File.Exists(f) && new FileInfo(f).Length < 4 * 1024 * 1024) Take(what, ParseValet(File.ReadAllText(f))); }
+            try
+            {
+                var f = HistFile(what.Replace(":", "-")); if (!File.Exists(f)) return;
+                var fi = new FileInfo(f); string sig = f + "|" + fi.Length + "|" + fi.LastWriteTimeUtc.Ticks;
+                lock (k) if (emptyRead.Contains(sig)) return;   // R2-043: a kept file that held no series is read once, not on every paint
+                if (fi.Length < 4 * 1024 * 1024) Take(what, ParseValet(File.ReadAllText(f)));
+                lock (k) if (!(what == "BCPI" ? hist.ContainsKey("ENER") : what == "CANADA" ? hist.ContainsKey("V39079") : hist.ContainsKey(what))) emptyRead.Add(sig);
+            }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
         }
         // fetch in the background when stale; done() runs on that thread (callers marshal to the UI, guarded - see Done())
@@ -286,7 +294,8 @@ namespace AdeeboMeter
             new[] { "CLUSD", "WTI crude oil", "USD per barrel" }, new[] { "BZUSD", "Brent crude oil", "USD per barrel" }, new[] { "NGUSD", "Natural gas", "USD per MMBtu" },
             new[] { "GCUSD", "Gold", "USD per ounce" }, new[] { "SIUSD", "Silver", "USD per ounce" }, new[] { "HGUSD", "Copper", "USD per pound" } };
         public static Dictionary<string, Quote> Quotes = new Dictionary<string, Quote>(); public static string QuoteNote = "";
-        static volatile bool qBusy; static DateTime qTried = DateTime.MinValue;
+        static volatile bool qBusy; static readonly DateTime[] qTried = { DateTime.MinValue, DateTime.MinValue };   // R2-066: the indexes and the futures each keep their own clock
+        public static void QuoteKeyChanged() { qTried[0] = qTried[1] = DateTime.MinValue; }   // R2-067: a new key is tried at once
         public static bool HasQuoteKey() { return Sports.Key("fmp") != ""; }
         // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
         public static int EveryMin { get { int m; return int.TryParse(Cfg.FmpEvery, out m) && m >= 1 ? m : 15; } }
@@ -301,31 +310,32 @@ namespace AdeeboMeter
         static void Call() { try { File.WriteAllText(CallsFile, DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
         public static void FetchQuotes(bool futures, Action done)
         {
-            if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried).TotalMinutes < EveryMin) return;
+            int qi = futures ? 1 : 0;
+            if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried[qi]).TotalMinutes < EveryMin) return;
             string key = Sports.Key("fmp"); if (key == "") return;
-            qBusy = true; qTried = DateTime.UtcNow;
+            qBusy = true; qTried[qi] = DateTime.UtcNow;
             var list = futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList();
             new Thread(() =>
             {
-                int got = 0;
+                int got = 0; bool capped = false;
                 try
                 {
                     foreach (var sym in list)
                     {
-                        if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; break; }
+                        if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
                         Call();
                         string body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64);
                         var q = ParseFmp(body, sym); if (q == null) continue;
                         lock (k) { Quotes[sym] = q; Ver++; } got++;
                     }
-                    if (got > 0) lock (k) QuoteNote = "";
+                    if (got > 0 && !capped) lock (k) QuoteNote = "";   // R2-065: the cap note stays when the cap is why the rest are old
                 }
                 catch (Exception e)
                 {
                     if (e is OutOfMemoryException) throw;
                     // never repeat the provider's error text: it can carry the key (the Live worker leaked one that way)
                     lock (k) QuoteNote = e is System.Net.WebException && ((System.Net.WebException)e).Response is System.Net.HttpWebResponse && (int)((System.Net.HttpWebResponse)((System.Net.WebException)e).Response).StatusCode == 401
-                        ? "The quote service didn't accept the key. Check it in Settings › Markets." : "Couldn't reach the quote service just now - it tries again in 15 minutes.";
+                        ? "The quote service didn't accept the key. Check it in Settings › Markets." : "Couldn't reach the quote service just now - it tries again in " + EveryMin + " minutes.";   // R2-172
                     Program.Log("quotes: " + e.GetType().Name);
                 }
                 finally { qBusy = false; Done(done); }

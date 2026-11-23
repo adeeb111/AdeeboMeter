@@ -27,7 +27,7 @@ namespace AdeeboMeter
                 try
                 {
                     string views = LabViews.All(M);
-                    if (ask && view == "lan") { var lan = LabViews.Lan(M, true); views = views.Substring(0, views.Length - 1) + ",\"lan\":" + lan + "}"; }
+                    if (ask && view == "lan") { try { var lan = LabViews.Lan(M, true); if (lan != null) views = views.Substring(0, views.Length - 1) + ",\"lan\":" + lan + "}"; } catch (Exception le) { if (le is OutOfMemoryException) throw; Program.Log("lab lan ask: " + le.Message); } }   // R2-027: the other views stay
                     note = LabLink.Open(null, breakIt, views, view);
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab views: " + e.Message); note = LabLink.Open(null, breakIt); }

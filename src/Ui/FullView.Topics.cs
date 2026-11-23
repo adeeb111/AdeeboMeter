@@ -83,6 +83,8 @@ namespace AdeeboMeter
             { "winupdate", "windows" }, { "wol", "lab" } };
         static bool ByTopic { get { return Cfg.TbView == "topic"; } }
         string tbTopic = "dns";   // the topic open on the right
+        Dictionary<string, int> topicCounts;   // R2-212: counted once, not per tile per paint
+        int TopicCount(string topic) { if (topicCounts == null) { topicCounts = new Dictionary<string, int>(StringComparer.Ordinal); foreach (var tp in Topics) topicCounts[tp[0]] = TopicTools(tp[0]).Count; } int n; return topicCounts.TryGetValue(topic, out n) ? n : TopicTools(topic).Count; }
         List<Tool> TopicTools(string topic) { return Tools2().Where(t => { string v; return ToolTopics.TryGetValue(t.Id, out v) && (" " + v + " ").Contains(" " + topic + " "); }).ToList(); }
         // tools with no topic, topics with no tool, icons that don't exist - empty when all is well (self-test)
         internal string TopicCheck()
@@ -115,7 +117,7 @@ namespace AdeeboMeter
                         Theme.Stroke(g, r, 14 * S, on ? Theme.Blue : Theme.Line, on ? 2 * S : 1);
                         Glyphs.Draw(g, tp[2], new RectangleF(r.X + (r.Width - 36 * S) / 2, r.Y + 12 * S, 36 * S, 36 * S), col, 1.7f);
                         g.DrawString(L.T(tp[1]), Draw.fPill, ink, new RectangleF(r.X + 4 * S, r.Y + 54 * S, r.Width - 8 * S, 32 * S), center);
-                        g.DrawString(TopicTools(tp[0]).Count + " " + L.T("tools"), Draw.fTiny, muted, new RectangleF(r.X, r.Y + 84 * S, r.Width, 16 * S), center);
+                        g.DrawString(TopicCount(tp[0]) + " " + L.T("tools"), Draw.fTiny, muted, new RectangleF(r.X, r.Y + 84 * S, r.Width, 16 * S), center);
                     }
                     string id = tp[0]; Act(tbCanvas, r, delegate { tbTopic = id; tbCanvas.Invalidate(); });
                 }

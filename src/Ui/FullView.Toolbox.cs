@@ -899,7 +899,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
-                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); BuddyReact.ToolDone(res, run.Stop); if (tbAward != "") BuddyReact.Set("sparkle", 6); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); BuddyReact.ToolDone(res, run.Stop); if (tbAward != "" && !res.Any(z => z != null && z.Length > 0 && z[0] == "2")) BuddyReact.Set("sparkle", 6);   /* R2-157: a red result keeps its tears, points or not */ PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
             }, TaskCreationOptions.LongRunning);
         }
 
@@ -1035,7 +1035,7 @@ namespace AdeeboMeter
                     var te = Explain.Term("tb." + t.Id); string tag = te != null ? te.Tag : ""; float rh = tag != "" ? 44 * S : 28 * S;
                     bool snmpRow = !searching && t.Id == "snmp", on = !tbHome && (t.Id == tbSel || snmpRow && SnmpView(tbSel));
                     string title = L.T(snmpRow ? "SNMP - ask a switch or router" : t.Title); if (snmpRow) tag = "Ports, traffic, CPU, neighbours, sensors, any OID.";
-                    if (searching && SectionOf(t) != tbSection) tag = SectionName(SectionOf(t)) + " · " + tag;   // a result from another section says where it lives
+                    if (searching && SectionOf(t) != tbSection) tag = L.T(SectionName(SectionOf(t))) + " · " + tag;   // R2-024   // a result from another section says where it lives
                     var rr = new RectangleF(0, y, tbList.ClientSize.Width, rh);
                     if (on) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
                     if (on && tbList.Focused) using (var fp = new Pen(Theme.Blue, Math.Max(1, 2 * S))) g.DrawRectangle(fp, 1 * S, y + 1 * S, tbList.ClientSize.Width - 3 * S, rh - 2 * S);   // where the keyboard is
@@ -1084,51 +1084,6 @@ namespace AdeeboMeter
             if (!secGroups.TryGetValue(sec, out l)) secGroups[sec] = l = Tools2().Where(t => SectionOf(t) == sec && (!SnmpView(t.Id) || t.Id == "snmp")).GroupBy(t => t.Group).ToList();
             return l;
         }
-        // a section's home page: what it's for, your recent tools, and a card per group with its first tools
-        void PaintHome(Graphics g, float x, float y, float w)
-        {
-            var sec = Sections.First(z => z[0] == tbSection);
-            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
-            {
-                y += 6 * S; g.DrawString(sec[1], Draw.fHead, ink, x, y); y += 30 * S;
-                g.DrawString(sec[2] + "  Pick a tool, or type what you need in Find any tool.", Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += Draw.Measure(sec[2] + "  Pick a tool, or type what you need in Find any tool.", Draw.fBody, (int)w).Height + 14 * S;
-                var recent = tbRecent.Select(id => Tools2().FirstOrDefault(z => z.Id == id)).Where(t => t != null).ToList();
-                if (recent.Count > 0)
-                {
-                    g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y + 3 * S); float rx = x + g.MeasureString("RECENT", Draw.fTiny).Width + 12 * S;
-                    foreach (var t in recent)
-                    {
-                        string tt = L.T(t.Title); var ts = g.MeasureString(tt, Draw.fSmall); if (rx + ts.Width > x + w) break;
-                        g.DrawString(tt, Draw.fSmall, lb, rx, y); string id = t.Id; Act(tbCanvas, new RectangleF(rx, y, ts.Width, ts.Height), delegate { OpenTool(id); }); rx += ts.Width + 18 * S;
-                    }
-                    y += 30 * S;
-                }
-                int cols = w > 900 * S ? 3 : w > 520 * S ? 2 : 1; float gap = 14 * S, cw = (w - gap * (cols - 1)) / cols, rowY = y, rowH = 0; int col = 0;
-                foreach (var grp in Tools2().Where(t => SectionOf(t) == tbSection).GroupBy(t => t.Group))
-                {
-                    bool snmp = grp.Any(t => t.Id == "snmp");
-                    var items = snmp ? SnmpTabs.Take(5).Select(z => new[] { z[0], z[1] }).ToList() : grp.Take(4).Select(t => new[] { t.Id, t.Title }).ToList();
-                    float cx = x + col * (cw + gap), ch = 46 * S + items.Count * 26 * S + 28 * S;
-                    var r = new RectangleF(cx, rowY, cw, ch);
-                    Theme.Fill(g, r, 16 * S, Theme.Card); Kit.Frame(g, r);
-                    g.DrawString(grp.Key, Draw.fTiny, muted, cx + 14 * S, rowY + 14 * S);
-                    float iy = rowY + 38 * S;
-                    foreach (var it in items)
-                    {
-                        using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                            g.DrawString(it[1], Draw.fBody, ink, new RectangleF(cx + 14 * S, iy, cw - 28 * S, 22 * S), nf);
-                        string id = it[0]; var ir = new RectangleF(cx, iy - 2 * S, cw, 24 * S); Act(tbCanvas, ir, delegate { SelectTool(id); }); Hint(tbCanvas, ir, "tb." + id);
-                        iy += 26 * S;
-                    }
-                    int n = snmp ? SnmpTabs.Length : grp.Count(); string more = (snmp ? "All " + n + " views" : "All " + n + " tools") + "  ›";
-                    var ms = g.MeasureString(more, Draw.fSmall); g.DrawString(more, Draw.fSmall, lb, cx + 14 * S, iy + 4 * S);
-                    string first = grp.First().Id, gk = grp.Key; Act(tbCanvas, new RectangleF(cx + 14 * S, iy + 4 * S, ms.Width, ms.Height), delegate { tbOpen.Add(gk); tbList.Refresh(); float gy; if (tbRowY.TryGetValue(first, out gy)) tbList.AutoScrollPosition = new Point(0, Math.Max(0, (int)gy - Sc(40))); tbList.Focus(); tbList.Invalidate(); });   // opens the group in the list
-                    rowH = Math.Max(rowH, ch);
-                    if (++col == cols) { col = 0; rowY += rowH + gap; rowH = 0; }
-                }
-                Need(tbCanvas, rowY + rowH + 20 * S);
-            }
-        }
         // the result at a glance (PLAN 11.6): three number cards - fine, to watch, problems - when there are enough rows to count
         float PaintTbSummary(Graphics g, float x, float y, float w)
         {
@@ -1162,9 +1117,9 @@ namespace AdeeboMeter
                     if (ByQuestion) { }   // by question: the way back and the tool's name are in the header above the boxes (tbHead)
                     else
                     {
-                        string back = "‹  " + SectionName(tbSection); var bs = g.MeasureString(back, Draw.fSmall);
+                        string back = "‹  " + L.T(SectionName(tbSection)); var bs = g.MeasureString(back, Draw.fSmall);
                         g.DrawString(back, Draw.fSmall, lb, x, y); Act(tbCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { ShowSection(tbSection); });
-                        g.DrawString("·  " + cur.Group, Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
+                        g.DrawString("·  " + L.T(GroupName(cur.Group)).ToUpper(System.Globalization.CultureInfo.CurrentCulture), Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
                         y += 26 * S;
                     }
                     if (SnmpView(tbSel))

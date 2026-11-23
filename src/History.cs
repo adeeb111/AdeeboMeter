@@ -69,7 +69,15 @@ namespace AdeeboMeter
                         string n = Path.GetFileName(f); DateTime d;
                         if (n.Length < 10 || !DateTime.TryParseExact(n.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) continue;
                         if (d < cut) { File.Delete(f); continue; }
-                        if (n.EndsWith(".packing", StringComparison.OrdinalIgnoreCase)) { File.Delete(f); continue; }   // left by a tidy that couldn't finish deleting it - already in the .gz
+                        if (n.EndsWith(".packing", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // R2-041: left by a tidy that stopped. In the .gz only if the .gz was written after it (a .gz older than the day's
+                            // lines means the merge never finished - the lines go back to the .csv, and are merged on this pass or the next)
+                            string csv = f.Substring(0, f.Length - ".packing".Length), gz0 = csv + ".gz";
+                            if (File.Exists(gz0) && File.GetLastWriteTimeUtc(gz0) > File.GetLastWriteTimeUtc(f)) File.Delete(f);
+                            else if (!File.Exists(csv)) File.Move(f, csv);
+                            continue;
+                        }
                         if (d < DateTime.Today && n.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                         {
                             // a day already compressed can still get a late .csv (clock or time-zone change): add to it, never replace it

@@ -32,6 +32,8 @@ namespace AdeeboMeter
 
         // ---------- the path, as big icons: this PC · Wi-Fi or cable · your router · the internet · name lookups
         static int LvMs(double v, double amber, double red) { return double.IsNaN(v) ? 2 : v > red ? 2 : v > amber ? 1 : 0; }
+        // R2-076: nothing measured yet is grey, not red - only pings that went out and came back with nothing are "no answer"
+        static int LvMs(Ring r, double v, double amber, double red) { return r.Values(6).Length == 0 ? 3 : LvMs(v, amber, red); }
         float PathStrip(Graphics g, float x, float y, float w)
         {
             string kind, link; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; link = M.LinkSpeed ?? ""; }
@@ -40,8 +42,8 @@ namespace AdeeboMeter
             var stops = new[] {
                 new object[] { "pc", L.T("This PC"), 0 },
                 new object[] { wifi ? "wifi" : cell ? "tower" : "switch", wifi ? (sig >= 0 ? sig + "%" : "Wi-Fi") : cell ? "4G/5G" : L.T("Cable"), wifi && sig >= 0 && sig < 40 ? 1 : 0 },
-                new object[] { "cpe", L.T("Router"), LvMs(gw, 15, 50) },
-                new object[] { "internet", L.T("Internet"), LvMs(net, 80, 150) },
+                new object[] { "cpe", L.T("Router"), LvMs(M.GwPing, gw, 15, 50) },
+                new object[] { "internet", L.T("Internet"), LvMs(M.NetPing, net, 80, 150) },
                 new object[] { "dns", L.T("Names"), double.IsNaN(dns) ? 3 : dns > 300 ? 1 : 0 } };
             Func<double, string> msT = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             double cpu = snap.Cpu;
@@ -183,8 +185,8 @@ namespace AdeeboMeter
             double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), cpu = M.Cpu.Avg(3);
             Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             var items = new List<object[]> {
-                new object[] { "cpe", L.T("Router") + " " + ms(gw), LvMs(gw, 15, 50) },
-                new object[] { "internet", L.T("Internet") + " " + ms(net), LvMs(net, 80, 150) } };
+                new object[] { "cpe", L.T("Router") + " " + ms(gw), LvMs(M.GwPing, gw, 15, 50) },
+                new object[] { "internet", L.T("Internet") + " " + ms(net), LvMs(M.NetPing, net, 80, 150) } };
             if (kind == "Wi-Fi") items.Add(new object[] { "wifi", "Wi-Fi " + (sig >= 0 ? sig + "%" : L.T("on")), sig >= 0 && sig < 40 ? 1 : 0 });
             else items.Add(new object[] { "switch", L.T("Cable"), 0 });
             items.Add(new object[] { "pc", L.T("PC busy") + " " + (double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%"), double.IsNaN(cpu) ? 3 : cpu > 90 ? 2 : cpu > 75 ? 1 : 0 });

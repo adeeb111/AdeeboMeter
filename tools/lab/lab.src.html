@@ -208,7 +208,7 @@ const CHAIN = ["ont", "spl", "olt", "agg", "bng"];
 const hasChain = d => CHAIN.every(id => d.nodes.some(n => n.id === id && n.st === "typ"));
 function applyAccess(d, kind){ const a = ACCESS[kind] || ACCESS.fibre; if (!hasChain(d)) return;
   CHAIN.forEach((id, i) => { const n = d.nodes.find(x => x.id === id); n.k = a[i][0]; n.name = a[i][1]; n.sub = a[i][2]; });
-  const l = d.links.find(x => (x.a === "ont" && x.b === "spl") || (x.a === "spl" && x.b === "ont")); if (l) l.label = a[5]; d.access = kind; }
+  const l = d.links.find(x => (x.a === "ont" && x.b === "spl") || (x.a === "spl" && x.b === "ont")); if (l) { l.label = a[5]; l.kind = kind === "fibre" ? "fibre" : "cable"; } d.access = kind; }
 const EXNAMES = [["gamer", "Gamer"], ["cell", "On 4G / 5G"], ["trader", "Trader"], ["streamer", "Streamer"], ["iptv", "IPTV viewer"], ["server", "Server owner"]];
 function fromExample(k){
   const e = EX[k], d = blank();
@@ -218,10 +218,14 @@ function fromExample(k){
 }
 
 /* ---------- loading: the app hands a measured path over in the address (#path=...), nothing else is read */
+function pairs(a){ const o = []; for (let i = 0; i + 1 < a.length; i += 2) { const x = +a[i], y = +a[i + 1]; if (isFinite(x) && isFinite(y)) o.push(x, y); } return o; }   /* a bad point drops as a pair - the stroke never shifts */
+const tctx = document.createElement("canvas").getContext("2d");
+function textW(t, px){ tctx.font = px + "px Inter, system-ui, sans-serif"; return tctx.measureText(t || "").width; }   /* measured, so wide scripts (CJK) fit their box */
 function valid(d){
   if (!d || typeof d !== "object" || !Array.isArray(d.nodes)) return null;
   const o = blank(); o.name = clean(d.name) || "My network"; o.measured = !!d.measured; o.note = String(d.note || "").replace(/[\u0000-\u001f]/g, " ").slice(0, 600); if (typeof d.fid === "string" && /^f[a-z0-9]{4,20}$/.test(d.fid)) o.fid = d.fid; o.access = ACCESS[d.access] ? d.access : "";
   const ids = new Set();
+  o.cut = Math.max(0, (d.nodes || []).length - 300) + Math.max(0, (d.links || []).length - 600) + Math.max(0, (d.areas || []).length - 60) + Math.max(0, (d.texts || []).length - 200) + Math.max(0, (d.ink || []).length - 200);
   d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
     o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
                   info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0}); });
@@ -229,7 +233,7 @@ function valid(d){
     kind: LINKS[l.kind] ? l.kind : "cable", label: clean(l.label)}); });
   (d.areas || []).slice(0, 60).forEach(a => { if (a) o.areas.push({id: clean(a.id) || uid("a"), x: +a.x || 0, y: +a.y || 0, w: Math.max(40, +a.w || 0), h: Math.max(40, +a.h || 0), t: clean(a.t)}); });
   (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t)}); });
-  (d.ink || []).slice(0, 200).forEach(s => { if (s && Array.isArray(s.p)) o.ink.push({id: clean(s.id) || uid("i"), p: s.p.slice(0, 2000).map(Number).filter(isFinite)}); });
+  (d.ink || []).slice(0, 200).forEach(s => { if (s && Array.isArray(s.p)) o.ink.push({id: clean(s.id) || uid("i"), p: pairs(s.p.slice(0, 2000))}); });
   return o;
 }
 function start(){
@@ -270,7 +274,7 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
     if (l.label) g.appendChild(txt((a.x + b.x) / 2, (a.y + b.y) / 2 + 4, l.label, {fill: k === "bad" ? C.red : C.sub, "font-size": 11, "font-weight": 600, stroke: C.page, "stroke-width": 4, "paint-order": "stroke", "pointer-events": "none"})); });
   doc.nodes.forEach(n => { const c = nodeColor(n, C), s = sel && sel.t === "node" && sel.id === n.id, dash = n.st === "typ" || n.st === "you" ? "2 2" : null;
     const kids = [];
-    if (n.k === "router") { const w = Math.max(104, Math.min(170, 8 * Math.max(n.name.length, (n.sub || "").length * .8) + 22));
+    if (n.k === "router") { const w = Math.max(104, Math.min(240, Math.max(textW(n.name, 12.5), textW(n.sub || "", 10.5)) + 22));
       kids.push(el("rect", {x: n.x - w / 2, y: n.y - 20, width: w, height: n.sub ? 40 : 30, rx: 10, fill: C.card, stroke: s ? C.blue : c, "stroke-width": s ? 2.5 : 1.5, "stroke-dasharray": dash}));
       kids.push(txt(n.x, n.y - 3, n.name, {fill: c, "font-size": 12.5, "font-weight": 700}));
       if (n.sub) kids.push(txt(n.x, n.y + 12, n.sub, {fill: C.sub, "font-size": 10.5}));
@@ -294,8 +298,11 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
 /* ---------- changes: every change is one undo step and is saved in this browser */
 let saveT = 0;
 function change(fn){ undo.push(JSON.stringify(doc)); if (undo.length > 100) undo.shift(); redo = []; fn(); persist(); draw(); if (mode === "break") fillPick(); }
-function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { if (!doc.fid) doc.fid = uid("f").slice(0, 21); const ok = store.set(KEY, JSON.stringify(doc)) && keep(doc);
-  $("#saved").textContent = ok ? "Saved in this browser" : "Not saved (browser storage off)"; }, 300); }
+function persist(){ clearTimeout(saveT); saveT = setTimeout(() => { if (!doc.fid) doc.fid = uid("f").slice(0, 21); const one = store.set(KEY, JSON.stringify(doc)), lib = one && keepSoon(doc);
+  $("#saved").textContent = !one ? "Not saved - this browser's storage is off or full" : lib === false ? "Saved - but Your diagrams is full (delete some)" : "Saved in this browser"; }, 300); }
+let keepT = 0, keepDoc = null;
+function keepSoon(d){ keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
+window.addEventListener("pagehide", () => { if (keepDoc) keep(keepDoc); });
 /* ---------- your diagrams: every drawing you change is kept here (this browser only), newest first */
 function files(){ try { const l = JSON.parse(store.get(FILES) || "[]"); return Array.isArray(l) ? l.filter(f => f && f.id && f.doc) : []; } catch (e) { return []; } }
 function keep(d){ const l = files().filter(f => f.id !== d.fid); l.unshift({id: d.fid, name: d.name, t: Date.now(), doc: d}); return store.set(FILES, JSON.stringify(l.slice(0, 40))); }
@@ -351,6 +358,7 @@ stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
     Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); drawSoon(); } });
 stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.move && !drag.moved) undo.pop();
+  if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();   /* a click on the handle isn't an undo step */
   if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
   if (drag.ink && drag.ink.p.length < 6) { doc.ink.pop(); undo.pop(); }
   if (!drag.pan) { persist(); draw(); } drag = null; });
@@ -386,7 +394,7 @@ document.addEventListener("keydown", e => { if (e.target.closest && e.target.clo
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); persist(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && sel && mode === "draw") { e.preventDefault(); const h = sel; change(() => remove(h)); }
   else if (e.key === "Escape") { linkFrom = null; sel = null; draw(); }
-  else if (mode === "break" && e.key === " ") { e.preventDefault(); toggle(); } });
+  else if (mode === "break" && e.key === " " && !(e.target.closest && e.target.closest("button,a,[tabindex]"))) { e.preventDefault(); toggle(); } });   /* a focused button keeps its Space */
 
 /* ---------- menus */
 function menu(btn, box){ btn.onclick = e => { e.stopPropagation(); const open = box.hidden; document.querySelectorAll(".menu>div").forEach(m => m.hidden = true);
@@ -396,8 +404,8 @@ menu($("#exBtn"), $("#exMenu")); menu($("#fileBtn"), $("#fileMenu"));
 EXNAMES.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.onclick = () => { change(() => { doc = fromExample(k); applyAccess(doc, store.get("adeebometer-lab:access") || "fibre"); }); $("#name").value = doc.name; accessUi(); fit(); if (mode === "break") fillPick(); }; $("#exMenu").appendChild(b); });
 function download(name, blob){ const a = document.createElement("a"), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
 const fname = ext => (doc.name || "network").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) + ext;
-function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y, z: view.z}, s0 = sel; sel = null; view = {x: -b.x, y: -b.y, z: 1}; draw();
-  const s = $("#svg").cloneNode(true); view = keep; sel = s0; draw();
+function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y, z: view.z}, s0 = sel, d0 = pk.dot; sel = null; pk.dot = null; view = {x: -b.x, y: -b.y, z: 1}; draw();
+  const s = $("#svg").cloneNode(true); view = keep; sel = s0; pk.dot = d0; draw();   /* the picture, not the animation frame */
   s.setAttribute("width", Math.ceil(b.w)); s.setAttribute("height", Math.ceil(b.h)); s.setAttribute("viewBox", `0 0 ${Math.ceil(b.w)} ${Math.ceil(b.h)}`);
   s.insertBefore(el("rect", {width: "100%", height: "100%", fill: C.page}), s.firstChild);
   s.setAttribute("font-family", "Segoe UI, Inter, Arial, sans-serif"); return {t: new XMLSerializer().serializeToString(s), w: Math.ceil(b.w), h: Math.ceil(b.h)}; }
@@ -409,8 +417,9 @@ $("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute(
   else if (f === "png") { const s = svgText(), img = new Image(), u = URL.createObjectURL(new Blob([s.t], {type: "image/svg+xml"}));
     img.onload = () => { const c = document.createElement("canvas"), k = 2; c.width = s.w * k; c.height = s.h * k; const x = c.getContext("2d"); x.scale(k, k); x.drawImage(img, 0, 0);
       URL.revokeObjectURL(u); c.toBlob(b => b && download(fname(".png"), b)); }; img.src = u; } });
-$("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f || f.size > 2e6) return; f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
-  if (d) { document.body.classList.remove("home"); change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
+$("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f) return; if (f.size > 2e6) { $("#saved").textContent = "That file is over 2 MB - too big for a lab drawing"; $("#openFile").value = ""; return; } f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
+  if (d && d.cut) { d.fid = uid("f").slice(0, 21); say("Opened part of it.", ` ${d.cut} item(s) over the lab's limits were left out - the file itself is unchanged; this copy is saved separately.`, true); }   /* never overwrite the full one in Your diagrams */
+  if (d) { delete d.cut; document.body.classList.remove("home"); change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
 $("#theme").onclick = () => { const r = document.documentElement, l = r.getAttribute("data-theme") !== "light"; r.setAttribute("data-theme", l ? "light" : "dark"); store.set("am-theme", l ? "light" : "dark"); draw(); };
 
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
@@ -443,7 +452,8 @@ function plan(){ stop(); const p = path(pick.from, pick.to); pk = {steps: [], i:
   const go = (a, b, t, o) => pk.steps.push(Object.assign({a, b, t}, o || {}));
   const walk = (from, to, t, o) => { for (let i = from; i < to; i++) go(i, i + 1, i === from ? t : "", o); };
   const nm = i => N[i].name || "the next box";
-  if (fault === "gateway") { go(0, 0, `${nm(0)} sends to its gateway 192.168.0.1 - but ${nm(1)} is 192.168.1.1.`); go(0, .45, "Nobody answers the ARP question “who has 192.168.0.1?”");
+  if (fault === "gateway") { const ip = v => /^\d{1,3}(\.\d{1,3}){3}$/.test(v || "") ? v : null, real = ip(N[1].sub) || "192.168.1.1", q = real.split("."); q[2] = String((+q[2] + 1) % 255); const wrong = q.join(".");   /* the drawing's own router address, and one that isn't it */
+    go(0, 0, `Say ${nm(0)}’s gateway setting were ${wrong} - but ${nm(1)} is ${real}.`); go(0, .45, `Nobody answers the ARP question “who has ${wrong}?”`);
     go(.45, .45, "", {x: true, why: "The packet never leaves the PC: the gateway in its settings doesn’t exist on this network.", fix: "Fix: set the gateway back to automatic (DHCP), or to your router’s address."}); }
   else if (fault === "dns") { const r = Math.min(last, idx(n => n.st === "typ" || (n.k === "router" && n.id !== N[home].id)));
     walk(0, r, `${nm(0)} asks for the server’s address by name (DNS, UDP port 53).`); go(r, r, `The question reaches ${nm(r)} - and waits.`, {}); go(r, r, "", {x: true, why: "No answer within 2 seconds, three times. Without an address the game never starts - yet every box on the path is fine.", fix: "Fix: try another DNS server (Settings › DNS in AdeeboMeter compares them), or restart the router."}); }
@@ -514,9 +524,10 @@ function tile(box, o){ const b = document.createElement("button"); b.className =
   else { const ic = document.createElement("div"); ic.className = "ic"; if (o.big) ic.textContent = "+"; else { ic.style.background = "color-mix(in srgb," + (o.col || "var(--blue)") + " 16%,transparent)"; ic.appendChild(icon(o.icon, o.col)); } b.appendChild(ic); }
   const t = document.createElement("b"); t.textContent = o.title; b.appendChild(t); const sp = document.createElement("span"); sp.textContent = o.sub; b.appendChild(sp);
   if (o.del) { const x = document.createElement("span"); x.className = "x"; x.title = "Delete this diagram"; x.textContent = "×"; x.setAttribute("role", "button");
-    x.onclick = e => { e.stopPropagation(); if (confirmDel === o.id) { forget(o.id); confirmDel = null; renderHome(); } else { confirmDel = o.id; x.textContent = "Sure?"; x.style.width = "auto"; x.style.padding = "0 8px"; x.style.display = "grid"; } }; b.appendChild(x); }
+    x.onclick = e => { e.stopPropagation(); if (confirmDel === o.id) { forget(o.id); confirmDel = null; renderHome(); } else { confirmDel = o.id; clearTimeout(confirmT); confirmT = setTimeout(() => { if (confirmDel === o.id) { confirmDel = null; renderHome(); } }, 4000); x.textContent = "Sure?"; x.style.width = "auto"; x.style.padding = "0 8px"; x.style.display = "grid"; } }; b.appendChild(x); }
   b.onclick = () => { if (!o.off) o.go(); }; box.appendChild(b); }
-let confirmDel = null;
+let confirmDel = null, confirmT = 0;
+document.addEventListener("click", () => { if (confirmDel) { confirmDel = null; renderHome(); } });   /* "Sure?" disarms on any other click */
 function renderHome(){ const C = COL();
   const st = $("#hStart"); st.textContent = "";
   tile(st, {big: true, title: "New diagram", sub: "An empty page - pick devices on the left and click to place them", go: () => openDoc(blank())});

@@ -151,7 +151,7 @@ namespace AdeeboMeter
             if (d.Bus == "USB") { why = "USB disk - up to ≈ 40 MB/s on a USB 2 port, ≈ 400 MB/s on USB 3" + (d.Media == "HDD" || d.Rpm > 0 ? " (a spinning disk ≈ 110 at most)" : "") + "; Windows doesn't say which port"; return double.NaN; }
             if (d.Media == "HDD" || d.Rpm > 0) { int r = d.Rpm > 0 ? d.Rpm : 5400; double c = r >= 10000 ? 220 : r >= 7200 ? 160 : 110; why = "hard disk" + (d.Rpm > 0 ? " at " + d.Rpm + " rpm" : "") + " ≈ " + Fmt(c) + " MB/s at best (outer edge)"; return c; }
             // tool-run 22 Nov: an NVMe drive behind Intel RST ("RAID" mode) was judged on a SATA ceiling and read 238% of it
-            if (d.Bus == "RAID" && Regex.IsMatch(d.Name ?? "", @"NVMe|MZV[LPK]|SSDPE|PC ?SN\d|SN[5-8]\d0|KXG|KBG|BG[4-6]|PM9\d\d|\b9[6-9]0 (PRO|EVO)|P[1-5] |P5 Plus|CT\d+P\d", RegexOptions.IgnoreCase)) { why = "NVMe behind Intel RST (RAID mode) - link not readable, assuming PCIe 3.0 x4 ≈ 3,500 MB/s"; return 3500; }
+            if (d.Bus == "RAID" && Regex.IsMatch(d.Name ?? "", @"NVMe|MZV[LPK]|SSDPE|PC ?SN\d|SN\d{3}|KXG|KBG|BG[4-6]|PM9\d\d|\b9[6-9]0\b|\b990\b|P[1-5](\d|\b| Plus)|Gold P\d|Platinum P\d|KC[23]000|NV[1-3]\b|Micron (2[2-4]|3[45])\d\d|\b(2[2-4]|3[45])00 NVMe|CT\d+P\d|SSD 9[6-9]0", RegexOptions.IgnoreCase)) { why = "NVMe behind Intel RST (RAID mode) - link not readable, assuming PCIe 3.0 x4 ≈ 3,500 MB/s"; return 3500; }
             if (d.Bus == "SATA" || d.Bus == "ATA" || d.Bus == "RAID") { why = "SATA III link (600 MB/s) ≈ 550 MB/s usable"; return 550; }
             if (d.Bus == "MMC" || d.Bus == "SD") { why = "eMMC / SD storage ≈ 250 MB/s at best"; return 250; }
             if (d.Bus == "UFS") { why = "UFS storage ≈ 1,000 MB/s"; return 1000; }
@@ -274,7 +274,7 @@ namespace AdeeboMeter
             return r.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
         // Task Manager's "Disabled": the first byte of StartupApproved is odd
-        static bool Disabled(RegistryKey root, string list, string name)
+        internal static bool Disabled(RegistryKey root, string list, string name)
         {
             try { using (var kk = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\" + list)) { var b = kk == null ? null : kk.GetValue(name) as byte[]; return b != null && b.Length > 0 && (b[0] & 1) == 1; } }
             catch (System.Security.SecurityException) { return false; } catch (UnauthorizedAccessException) { return false; } catch (IOException) { return false; }

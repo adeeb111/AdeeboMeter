@@ -36,6 +36,12 @@ namespace AdeeboMeter
         public sealed class Result { public DateTime T; public string Server = "", Where = ""; public double Down = double.NaN, Up = double.NaN, Idle = double.NaN, LoadDown = double.NaN, LoadUp = double.NaN, MB; public bool NoUpload; public string UpWhy = ""; public string Grade = "", Error = ""; }
         public static Result Last;   // shown on the home page until the app closes (and kept in the day's events)
         public static volatile bool Busy;
+        // what the home page's gauge shows while a test runs: the stage (1 ping, 2 download, 3 upload; 0 none), the rate over the
+        // last second, and the result so far (its download once that part is done)
+        public static volatile int Stage; public static volatile Result Now;
+        static long liveBits = BitConverter.DoubleToInt64Bits(double.NaN);
+        public static double LiveMbps { get { return BitConverter.Int64BitsToDouble(Interlocked.Read(ref liveBits)); } }
+        static void SetLive(double v) { Interlocked.Exchange(ref liveBits, BitConverter.DoubleToInt64Bits(v)); }
 
         // ---------- the list. Cloudflare first (it picks its nearest data centre itself), then cities, nearest-to-Canada first
         // within each provider. Each file is a public test file the provider publishes for exactly this. Every one answered from
@@ -190,6 +196,7 @@ IPAddress[] found;
                 var badV4 = found.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork && !Reachable(a)); if (badV4 != null) ip = badV4;
                 if (!Reachable(ip)) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
                 if (run != null) run.Status = "Ping to " + srv.Label + "...";
+                Now = res; Stage = 1;
                 res.Idle = Ping(ip, 10, () => run != null && run.Stop);
                 // some providers' test-file servers have no HTTPS: then the file comes over plain HTTP (it's only test data, and
                 // nothing is sent) - the result says so
@@ -197,6 +204,7 @@ IPAddress[] found;
                 if (downUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) && !Head(downUrl) && Head("http://" + downUrl.Substring(8))) { downUrl = "http://" + downUrl.Substring(8); res.Where = "over plain HTTP (this server has no HTTPS)"; }
                 long down = 0, up = 0; var pd = new List<double>(); string colo = "";
                 if (run != null) run.Status = "Downloading from " + srv.Label + " for " + Seconds + " s...";
+                Stage = 2; SetLive(double.NaN);
                 res.Down = Phase(downUrl, true, ip, run, pd, ref down, ref colo); res.LoadDown = Median(pd);
                 if (srv.Provider == "Cloudflare" && colo != "") res.Where = "data centre " + colo + Colo(colo);
                 if (run != null && run.Stop) { res.Error = "stopped"; return res; }
@@ -211,6 +219,7 @@ IPAddress[] found;
                     else
                     {
                         if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
+                        Stage = 3; SetLive(double.NaN);
                         var pu = new List<double>(); string c2 = "";
                         res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
                         if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
@@ -225,7 +234,7 @@ IPAddress[] found;
                 Program.Log("speed test " + srv.Id + " " + Mbps(res.Down) + "/" + Mbps(res.Up) + " Mbps, " + Math.Round(res.MB) + " MB");
                 return res;
             }
-            finally { Busy = false; System.Threading.Interlocked.Exchange(ref busyN, 0); }
+            finally { Busy = false; Stage = 0; Now = null; SetLive(double.NaN); System.Threading.Interlocked.Exchange(ref busyN, 0); }
         }
         static int busyN;
         // a few Cloudflare data-centre codes people would recognise; others show the code alone
@@ -292,7 +301,15 @@ IPAddress[] found;
             }
             // a ping lost under load counts as the full second it waited - a queue so bad that nothing comes back is the worst
             // case, not a missing one (the grade is blank anyway when the server never answered pings at idle)
-            while (!done()) { double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v); Thread.Sleep(250); }
+            long lastB = 0; double lastT = 0, shown = double.NaN;
+            while (!done())
+            {
+                double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v);
+                Thread.Sleep(250);
+                // the gauge: the rate since the last look, smoothed a little so the needle doesn't jitter
+                long nb = Interlocked.Read(ref bytes); double nt = sw.Elapsed.TotalSeconds;
+                if (nt - lastT > 0.1) { double r = (nb - lastB) * 8 / 1e6 / (nt - lastT); shown = double.IsNaN(shown) ? r : shown * 0.6 + r * 0.4; SetLive(shown); lastB = nb; lastT = nt; }
+            }
             double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
             foreach (var t in th) t.Join(3000);

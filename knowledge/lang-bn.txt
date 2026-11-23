@@ -27,7 +27,7 @@ BGP and who owns the network	BGP ও নেটওয়ার্কের মা
 BYTES PER APP (SINCE START)	প্রতি অ্যাপের ডেটা ব্যবহার (চালুর পর থেকে)
 Back to corner	কোণায় ফিরে যান
 Background checks	ব্যাকগ্রাউন্ড চেক
-Balanced	ব্যালান্সড
+Balanced	Balanced
 Bigger	আরও বড়
 Bound / listening	বাঁধা / সংযোগের অপেক্ষায়
 CALL QUALITY (TEAMS AND OTHER CALLS)	কলের মান (TEAMS ও অন্য কল)
@@ -46,7 +46,7 @@ Companion	বন্ধু
 Computer feels slow	কম্পিউটার ধীর লাগছে
 Connections	কানেকশনস
 Corner widget size	কোণার উইজেটের সাইজ
-Dark	ডার্ক
+Dark	Dark
 Delete all saved history now	সব সংরক্ষিত ইতিহাস মুছুন
 Details	বিস্তারিত
 EXPERT INFO (WIRESHARK)	বিশেষজ্ঞের তথ্য (WIRESHARK)
@@ -66,7 +66,7 @@ Follow Windows	Windows অনুযায়ী
 Follow Windows switches light and dark with your Windows setting.	Windows-এর সেটিং অনুযায়ী হালকা ও গাঢ় থিম বদলাবে।
 GAME	গেম
 Game ping in the background	ব্যাকগ্রাউন্ড গেম পিং
-Gamer	গেমার
+Gamer	Gamer
 Gamer Zone	গেমিং জোন
 General	সাধারণ
 Got it	বুঝেছি
@@ -100,7 +100,7 @@ Keep history for	ইতিহাস রাখা হবে
 Lag graph for streaming	স্ট্রিমিংয়ের ল্যাগ গ্রাফ
 Language	ভাষা
 Learn	শিখুন
-Light	লাইট
+Light	Light
 Live	লাইভ
 Live capture	লাইভ ক্যাপচার
 Live capture stops after	লাইভ ক্যাপচার চলবে
@@ -772,7 +772,7 @@ BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football r
 Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	টাওয়ার, 4G ও 5G কোর (MME, AMF, SMF, UPF), যুক্ত হওয়া, সেশন, NSA ও SA-এর তুলনা।
 INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	ইন্টারনেটের ভেতরে—সেবাদাতা, টিভি ও স্ট্রিমিং
 INSIDE THE MOBILE NETWORK - 4G AND 5G	মোবাইল নেটওয়ার্কের ভেতরে—4G ও 5G
-Penny	অতি হালকা
+Penny	Penny
 PING MAP	পিং মানচিত্র
 and	ও
 more	আরও
@@ -1242,10 +1242,10 @@ Skip	এড়িয়ে যান
 All of this can be changed any time in Settings.	সেটিংস থেকে যেকোনো সময় সব বদলাতে পারবেন।
 Plain - no jokes	সোজাসাপটা—রসিকতা ছাড়া
 checks a minute	প্রতি মিনিটে পরীক্ষা
-Neon	নিয়ন
-Midnight	মিডনাইট
-Sunset	সানসেট
-Mint	মিন্ট
+Neon	Neon
+Midnight	Midnight
+Sunset	Sunset
+Mint	Mint
 All problems	সব সমস্যা
 It's fixed	ঠিক হয়ে গেছে
 Still broken - check again	এখনো সমস্যা—আবার পরীক্ষা করুন
@@ -1426,7 +1426,7 @@ BY QUESTION	প্রশ্ন অনুযায়ী
 Back. That lasted 	ফিরেছে। বিচ্ছিন্ন ছিল 
 Background checks: 	ব্যাকগ্রাউন্ড পরীক্ষা: 
 Backup way out:	ফিরে আসার বিকল্প পথ:
-Balanced - trouble seen in seconds	ভারসাম্যপূর্ণ—কয়েক সেকেন্ডেই সমস্যা ধরা পড়ে
+Balanced - trouble seen in seconds	Balanced—কয়েক সেকেন্ডেই সমস্যা ধরা পড়ে
 Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on.	Bank of Canada-এর দৈনিক গড়। এই পাতা খোলা থাকলে দিনে একবার আনা হয়। আপনি চালু না করলে বন্ধ থাকে।
 Binding request	বাইন্ডিং অনুরোধ
 Broker 	ব্রোকার 
@@ -1534,7 +1534,7 @@ Forecast until	যতক্ষণ পর্যন্ত পূর্বাভা
 Futures contract value	ফিউচারস চুক্তির মূল্য
 GAMING	গেমিং
 Game server	গেম সার্ভার
-Gamer - game servers every 	গেমার—গেম সার্ভার পরীক্ষা প্রতি 
+Gamer - game servers every 	Gamer—গেম সার্ভার পরীক্ষা প্রতি 
 Gathering the first minute...	প্রথম মিনিটের তথ্য নেওয়া হচ্ছে...
 Gathering the first seconds...	প্রথম কয়েক সেকেন্ডের তথ্য নেওয়া হচ্ছে...
 Getting today's rates from the Bank of Canada...	Bank of Canada থেকে আজকের দর আনা হচ্ছে...
@@ -1693,7 +1693,7 @@ Paid from your safe money - nothing sold.	জমিয়ে রাখা নি
 Panic-seller ghost	আতঙ্কে বিক্রি করা প্রতিদ্বন্দ্বী
 Paste your free key from 	ফ্রি চাবি এখানে থেকে নিয়ে পেস্ট করুন 
 Pay yourself first: move the 20% on payday.	আগে নিজের জন্য রাখুন: বেতন পেলেই 20% সরিয়ে রাখুন।
-Penny - the lightest touch	অতি হালকা—সবচেয়ে কম কাজ
+Penny - the lightest touch	Penny—সবচেয়ে কম কাজ
 Phones take files up to 100 MB from here.	এখান থেকে ফোনে সর্বোচ্চ 100 MB ফাইল নেওয়া যায়।
 Pick a day	দিন বাছুন
 Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings.	যা মানায় সব বাছুন। শুধু দরকারি পাতা দেখবেন; বাকিগুলো সেটিংসে এক সুইচেই পাবেন।
@@ -2510,12 +2510,12 @@ Right now this PC sends nothing in the background.	এখন এই পিসি
 Right now this PC sends: 	এখন এই পিসি পাঠাচ্ছে: 
 Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view.	প্রতিটি ভিউতে আপনার পরিবর্তন আলাদাভাবে থাকে। ওপরের ভিউ বোতাম থেকে যেকোনো সময় বদলান। সব ভিউতেই শেখার অংশ আছে।
 English. A change takes full effect after a restart.	ইংরেজি। ভাষা বদলানোর পুরো প্রভাব দেখতে অ্যাপ আবার চালু করুন।
-Neon: near-black with electric cyan - accents glow softly.	নিয়ন: প্রায় কালো ব্যাকগ্রাউন্ডে উজ্জ্বল সায়ান, হালকা আভা ছড়ায়।
-Midnight: deep navy with aqua - calm for long nights.	মিডনাইট: গাঢ় নীলের সঙ্গে অ্যাকোয়া, দীর্ঘ রাতে চোখের আরাম।
-Sunset: warm plum with coral.	সানসেট: উষ্ণ বেগুনি ও কোরাল।
-Mint: light and fresh, soft green.	মিন্ট: হালকা, সতেজ সবুজ।
-Dark: always dark, whatever Windows uses.	ডার্ক: Windows-এর থিম যাই হোক, সবসময় গাঢ়।
-Light: always light, whatever Windows uses.	লাইট: Windows-এর থিম যাই হোক, সবসময় হালকা।
+Neon: near-black with electric cyan - accents glow softly.	Neon: প্রায় কালো ব্যাকগ্রাউন্ডে উজ্জ্বল সায়ান, হালকা আভা ছড়ায়।
+Midnight: deep navy with aqua - calm for long nights.	Midnight: গাঢ় নীলের সঙ্গে অ্যাকোয়া, দীর্ঘ রাতে চোখের আরাম।
+Sunset: warm plum with coral.	Sunset: উষ্ণ বেগুনি ও কোরাল।
+Mint: light and fresh, soft green.	Mint: হালকা, সতেজ সবুজ।
+Dark: always dark, whatever Windows uses.	Dark: Windows-এর থিম যাই হোক, সবসময় গাঢ়।
+Light: always light, whatever Windows uses.	Light: Windows-এর থিম যাই হোক, সবসময় হালকা।
 No place yet.	এখনও কোনো জায়গা ঠিক করা হয়নি।
 ) - Remove forgets it and the kept forecast.	)। সরিয়ে দিলে জায়গাটি ও সেভ করা পূর্বাভাস মুছে যাবে।
 Accuracy	নির্ভুলতা
@@ -2687,7 +2687,7 @@ Quit completely	পুরোপুরি বন্ধ করুন
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	ট্রে আইকনে ডান ক্লিক করে বেরিয়ে যান বাছুন। কোনো সহায়ক প্রোগ্রামও চালু থাকে না।
 Learn anything	যেকোনো কিছু শিখুন
 When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.	মাউসের কার্সর ? হলে একটু থামুন, ব্যাখ্যা দেখাবে।
-Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	AdeeboMeter ব্যাকগ্রাউন্ডে কতটা নজর রাখবে তা সেটিংসে ঠিক করুন, অতি হালকা থেকে গেমার পর্যন্ত।
+Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	AdeeboMeter ব্যাকগ্রাউন্ডে কতটা নজর রাখবে তা সেটিংসে ঠিক করুন, Penny থেকে Gamer পর্যন্ত।
 Readable source	পড়া যায় এমন সোর্স কোড
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	পুরো অ্যাপের সোর্স কোড চালানোর আগেই পড়তে পারেন। Windows-এর সঙ্গে থাকা কম্পাইলার দিয়েই এটি তৈরি।
 No admin rights	অ্যাডমিন অধিকার লাগে না
@@ -2695,7 +2695,7 @@ Everything it shows comes from what Windows already lets a normal user see. If s
 Secure by default	শুরু থেকেই নিরাপদ
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	চেকের সময় Windows-এর নিজস্ব সার্টিফিকেট যাচাইসহ TLS ব্যবহার করে (Windows TLS 1.2 বা 1.3 বেছে নেয়)। সার্টিফিকেট যাচাই কখনো বাদ দেয় না। ইনপুট যাচাই করে, শেল ব্যবহার করে না।
 Light as a feather	খুবই হালকা
-Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	ভারসাম্যপূর্ণ মোডে ব্যাকগ্রাউন্ডে মিনিটে প্রায় 70টি ছোট চেক (অতি হালকা মোডে প্রায় 8টি)। ভারী টুল শুধু এই উইন্ডো খোলা থাকলে চলে, নিজে থেকেই থামে।
+Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	ভারসাম্যপূর্ণ মোডে ব্যাকগ্রাউন্ডে মিনিটে প্রায় 70টি ছোট চেক (Penny মোডে প্রায় 8টি)। ভারী টুল শুধু এই উইন্ডো খোলা থাকলে চলে, নিজে থেকেই থামে।
 Leaves no trace	চিহ্ন ফেলে রাখে না
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	সেটিংস ও ছোট লগ exe-এর পাশে থাকে (ইনস্টল করা কপিতে AppData ফোল্ডারে)। বন্ধ হলে ক্যাপচার মুছে যায়। উইন্ডোর নাম বা ট্রাফিকের ভেতরের তথ্য লগ করে না। বন্ধ না করলে কয়েক দিনের ইতিহাস শুধু এই পিসিতে রাখে, এক ক্লিকেই মুছতে পারেন।
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	পিসির চলমান সব যোগাযোগ: কোন অ্যাপ, কার সঙ্গে, কোন পোর্টে, কী অবস্থায়। নতুন সংযোগ ভেসে ওঠে, বন্ধগুলো মিলিয়ে যায়। অবস্থার মানে জানতে মাউস রাখুন। কোনো লাইনে Sniff চাপলে শুধু সেই যোগাযোগ Wireshark-এর জন্য রেকর্ড হয়।
@@ -4916,3 +4916,97 @@ Share an idea	একটা আইডিয়া দিন
 Link copied	লিংক কপি হয়েছে
 free: finds out why your internet or PC is slow	ফ্রি: আপনার ইন্টারনেট বা পিসি কেন ধীর তা খুঁজে বের করে
 Thank you for using it - that already helps more than you think.	ব্যবহার করার জন্য ধন্যবাদ—এটাই আপনার ধারণার চেয়ে বেশি সাহায্য করে।
+
+DHCP & addressing	DHCP ও ঠিকানা
+SNMP & devices	SNMP ও ডিভাইস
+Routing & path	রাউটিং ও পথ
+Ports & reachability	পোর্ট ও পৌঁছানো
+ICMP & ping	ICMP ও পিং
+HTTP, TLS & certificates	HTTP, TLS ও সার্টিফিকেট
+802.1X, RADIUS, TACACS, LDAP	802.1X, RADIUS, TACACS, LDAP
+VPN & privacy	VPN ও গোপনীয়তা
+Time (NTP)	সময় (NTP)
+Speed & quality	গতি ও মান
+Calls, games, streams & trading	কল, গেম, স্ট্রিম ও ট্রেডিং
+Packets & captures	প্যাকেট ও ক্যাপচার
+Keys & encryption	কী ও এনক্রিপশন
+Hardware nerds	হার্ডওয়্যার-প্রেমীদের জন্য
+Reports & over time	রিপোর্ট ও সময়ের সঙ্গে
+WHAT IT DOES	এটি কী করে
+WHAT IT IS	এটি কী
+WHY YOU NEED IT	কেন দরকার
+WHY IT MATTERS	কেন জরুরি
+IF IT WEREN'T THERE	এটি না থাকলে
+WHAT TO DO	কী করবেন
+WHEN IT LOOKS BAD	খারাপ দেখালে
+CAN I CLOSE IT?	এটি বন্ধ করা যাবে?
+very sure	খুব নিশ্চিত
+fairly sure	বেশ নিশ্চিত
+likely	সম্ভবত
+a first guess	প্রথম অনুমান
+The PC	পিসি
+updates, sync, indexing	আপডেট, সিঙ্ক, ইনডেক্সিং
+Bestie	প্রিয় বন্ধু
+Bro code	বন্ধুদের নিয়ম
+Epic fantasy	মহাকাব্যিক ফ্যান্টাসি
+Space saga	মহাকাশ গাথা
+Pirate	জলদস্যু
+Noir detective	নোয়ার গোয়েন্দা
+Nature documentary	প্রকৃতির ডকুমেন্টারি
+Dark Ages	অন্ধকার যুগ
+Industrial	শিল্প যুগ
+Revolution	বিপ্লব
+Mission control	মিশন কন্ট্রোল
+Poetic	কাব্যিক
+Scientist	বিজ্ঞানী
+Coder	কোডার
+Gen-Z	জেন-জি
+Philosopher: Marcus Aurelius (Stoic)	দার্শনিক: মার্কাস অরেলিয়াস (স্টোয়িক)
+Philosopher: Aristotle	দার্শনিক: অ্যারিস্টটল
+Philosopher: Taoist (Laozi)	দার্শনিক: তাও (লাওজি)
+Philosopher: Confucius	দার্শনিক: কনফুসিয়াস
+Common to all	সবার জন্য এক
+Marcus Aurelius	মার্কাস অরেলিয়াস
+Aristotle	অ্যারিস্টটল
+Taoism	তাওবাদ
+Confucius	কনফুসিয়াস
+Internet speed	ইন্টারনেটের গতি
+Last test	শেষ পরীক্ষা
+Only when you press the button	শুধু বোতাম চাপলে
+When busy	ব্যস্ত অবস্থায়
+lag under load	লাইন ব্যস্ত থাকলে দেরি
+this server: download only	এই সার্ভার: শুধু ডাউনলোড
+n/a	প্রযোজ্য নয়
+Automatic	স্বয়ংক্রিয়
+Speed test:	গতি পরীক্ষা:
+About 20 seconds, up to	প্রায় ২০ সেকেন্ড, সর্বোচ্চ
+Never runs by itself.	নিজে থেকে কখনো চলে না।
+UPLOAD	আপলোড
+DOWNLOAD	ডাউনলোড
+NOT TESTED YET	এখনো পরীক্ষা হয়নি
+TEST TO	কোথায় পরীক্ষা
+Cloudflare's nearest data centre · download and upload	Cloudflare-এর সবচেয়ে কাছের ডেটা সেন্টার · ডাউনলোড ও আপলোড
+DOWNLOAD ONLY	শুধু ডাউনলোড
+Speed test server	গতি পরীক্ষার সার্ভার
+(name hidden - location is off)	(নাম লুকানো - লোকেশন বন্ধ)
+signal	সিগন্যাল
+link	লিংক
+VPN on	VPN চালু
+The {0} moved {1:0.0}% against the Canadian dollar this week.	এই সপ্তাহে কানাডিয়ান ডলারের বিপরীতে {0} {1:0.0}% বদলেছে।
+no key needed - a key gives more leagues	কী লাগবে না - কী দিলে আরও লিগ
+Football · ESPN's scoreboards (or your own key)	ফুটবল · ESPN-এর স্কোরবোর্ড (অথবা আপনার নিজের কী)
+(no greeting read)	(কোনো শুভেচ্ছা পড়া যায়নি)
+STARTTLS refused	STARTTLS প্রত্যাখ্যাত
+(no answer - the test couldn't start)	(উত্তর নেই - পরীক্ষা শুরু হয়নি)
+(no Remote Desktop answer)	(রিমোট ডেস্কটপের উত্তর নেই)
+refused, or not Remote Desktop	প্রত্যাখ্যাত, অথবা রিমোট ডেস্কটপ নয়
+(not found)	(পাওয়া যায়নি)
+port unreachable - closed	পোর্টে পৌঁছানো যায় না - বন্ধ
+the host said so (ICMP)	হোস্ট নিজেই জানিয়েছে (ICMP)
+no DHCP server to ask	জিজ্ঞেস করার মতো DHCP সার্ভার নেই
+no address from DHCP	DHCP থেকে কোনো ঠিকানা নেই
+(a device)	(একটি ডিভাইস)
+what's my public address?	আমার পাবলিক ঠিকানা কী?
+
+Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	আপনি চালু না করলে বন্ধ। চালু হলে এই পাতা খোলা থাকা অবস্থায়, বা দল অনুসরণ করলে স্ট্রিমিং পাতায় দেখার সময়: NHL হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর খবর। সর্বোচ্চ প্রতি 5 মিনিটে একবার।
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	আপনি চালু না করা পর্যন্ত বন্ধ। তারপর এই পেজ খোলা থাকলে: NHL থেকে হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর শিরোনাম—বড়জোর প্রতি 5 মিনিটে।

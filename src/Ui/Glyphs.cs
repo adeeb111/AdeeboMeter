@@ -135,7 +135,7 @@ namespace AdeeboMeter
                     case 'T': { float qx = "QT".IndexOf(char.ToUpperInvariant(last)) >= 0 ? 2 * x - cx : x, qy = "QT".IndexOf(char.ToUpperInvariant(last)) >= 0 ? 2 * y - cy : y;
                                 float nx = ox + N(), ny = oy + N(); Quad(gp, x, y, qx, qy, nx, ny); cx = qx; cy = qy; x = nx; y = ny; break; }
                     case 'A': { float rx = N(), ry = N(), rot = N(); bool large = N() != 0, sweep = N() != 0; float nx = ox + N(), ny = oy + N(); Arc(gp, x, y, rx, ry, rot, large, sweep, nx, ny); x = nx; y = ny; break; }
-                    case 'Z': { if (open) { gp.CloseFigure(); open = false; } x = sx; y = sy; break; }
+                    case 'Z': { if (open) { gp.CloseFigure(); open = false; } x = sx; y = sy; if (i < toks.Count && !(toks[i] is char)) throw new FormatException("a number right after Z"); break; }   // R2-214: never a loop
                     default: throw new FormatException("command " + cmd);
                 }
                 last = cmd;

@@ -29,7 +29,7 @@ namespace AdeeboMeter
             var answers = b == MessageBoxButtons.YesNo ? new[] { DialogResult.Yes, DialogResult.No } : b == MessageBoxButtons.YesNoCancel ? new[] { DialogResult.Yes, DialogResult.No, DialogResult.Cancel }
                         : b == MessageBoxButtons.OKCancel ? new[] { DialogResult.OK, DialogResult.Cancel } : b == MessageBoxButtons.RetryCancel ? new[] { DialogResult.Retry, DialogResult.Cancel }
                         : b == MessageBoxButtons.AbortRetryIgnore ? new[] { DialogResult.Abort, DialogResult.Retry, DialogResult.Ignore } : new[] { DialogResult.OK };
-            esc = answers.Length == 1 ? answers[0] : Array.IndexOf(answers, DialogResult.Cancel) >= 0 ? DialogResult.Cancel : answers[answers.Length - 1];
+            esc = answers.Length == 1 ? answers[0] : Array.IndexOf(answers, DialogResult.Cancel) >= 0 ? DialogResult.Cancel : Array.IndexOf(answers, DialogResult.Abort) >= 0 ? DialogResult.Abort : answers[answers.Length - 1];   // R2-160: Esc is the safe answer - Abort, never Ignore
             int def = d == MessageBoxDefaultButton.Button2 ? 1 : d == MessageBoxDefaultButton.Button3 ? 2 : 0; if (def >= answers.Length) def = 0;
             for (int k = 0; k < answers.Length; k++)
             {
@@ -37,7 +37,7 @@ namespace AdeeboMeter
                 pb.Click += delegate { DialogResult = r; Close(); }; pb.Tag = r; btns.Add(pb); Controls.Add(pb);
             }
             // size: the message wraps at about 440 px; the card fits it
-            int w = (int)(520 * S); float tw = w - 96 * S;
+            int w = (int)(520 * S); float tw = w - 104 * S;   // R2-052: the width OnPaint draws at (82 left, 22 right)
             float th = Draw.Measure(msg, Draw.fBody, (int)tw).Height, ch = cap == "" ? 0 : Draw.Measure(cap, Draw.fHead, (int)tw).Height + 6 * S;
             int bh = btns.Count > 0 ? btns[0].PreferredSize.Height : (int)(36 * S);
             int h = (int)(28 * S + ch + Math.Max(th, 44 * S) + 26 * S + bh + 22 * S);
@@ -59,7 +59,7 @@ namespace AdeeboMeter
         protected override void OnMouseDown(MouseEventArgs e) { if (e.Button == MouseButtons.Left) { Native.ReleaseCapture(); Native.SendMessage(Handle, 0xA1, (IntPtr)2, IntPtr.Zero); } base.OnMouseDown(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             var all = new RectangleF(0.5f, 0.5f, ClientSize.Width - 1, ClientSize.Height - 1);
             Theme.Stroke(g, all, 16 * S, Theme.Dark ? Theme.Line : Theme.Line2, 1);
             Color c = icon == MessageBoxIcon.Warning ? Theme.Amber : icon == MessageBoxIcon.Error ? Theme.Red : Theme.Blue;
