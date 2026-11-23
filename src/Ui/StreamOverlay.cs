@@ -74,7 +74,7 @@ namespace AdeeboMeter
         protected override void OnPaint(PaintEventArgs e) { Paint1(e.Graphics, ClientSize); }
         void Paint1(Graphics g, Size sz)
         {
-            g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; g.TextContrast = Draw.Contrast;
+            g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.ImageText; g.TextContrast = Draw.Contrast;
             string title; double[] v; int step; Series(out title, out v, out step);
             g.Clear(green ? Color.FromArgb(0, 255, 0) : Color.FromArgb(20, 24, 31));
             var box = new RectangleF(4, 4, sz.Width - 8, sz.Height - 8);

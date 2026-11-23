@@ -323,7 +323,7 @@ Donate	দান করুন
 Other amount	অন্য পরিমাণ
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal-এ কানাডীয় ডলারে। AdeeboMeter আপনার কোনো তথ্য পাঠায় না।
 Delete all saved history?	সব সংরক্ষিত ইতিহাস মুছবেন?
-days of history are deleted for good - this can't be undone.	দিনের সংরক্ষিত ইতিহাস চিরতরে মুছে যাবে। আর ফেরানো যাবে না।
+days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too.	দিনের সংরক্ষিত ইতিহাস চিরতরে মুছে যাবে। আর ফেরানো যাবে না। Neighbour wars লগ আর সংরক্ষিত রিপ্লেও মুছে যাবে।
  tool matches	 টুল মিলেছে
  tools match	 টুল মিলেছে
 All	সব
@@ -669,7 +669,7 @@ Crowding on your channel	আপনার চ্যানেলে ভিড়
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	ভরা বৃত্ত = সেদিন আপনার চ্যানেলে সবচেয়ে জোরালো · বলয় = আপনার চ্যানেলে · বিন্দু = এখানে পাওয়া গেছে
 Journey	যাত্রা
 What did Windows Update break?	Windows Update কী বদলে সমস্যা করেছে?
-Every check close, plus up to 16 game servers and your best regions every 10 s.	ঘন ঘন সব পরীক্ষা, সঙ্গে সর্বোচ্চ 16টি গেম সার্ভার এবং প্রতি 10 s-এ সেরা অঞ্চল।
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন পরীক্ষা। পেছনে, আপনার গেমগুলোর সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময়, প্রতি সেকেন্ডে 16টি পর্যন্ত সার্ভার।
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	সবচেয়ে হালকা। রাউটার প্রতি 30 s, ইন্টারনেট প্রতি 5 min, Wi-Fi প্রতি 2 min; কল নজরদারি বন্ধ।
 By goal	লক্ষ্য অনুযায়ী
 Everything	সবকিছু
@@ -1210,7 +1210,7 @@ Find what's wrong	সমস্যার কারণ খুঁজুন
 Type what you notice, or press Find what's wrong.	কী লক্ষ করছেন লিখুন, অথবা «সমস্যা খুঁজুন» চাপুন।
 Full checkup	পুরো পরীক্ষা
 Run full checkup	পুরো পরীক্ষা চালান
-Include a speed test (100-300 MB)	গতি পরীক্ষাও করুন (100-300 MB)
+Include a speed test (up to 500 MB)	গতি পরীক্ষাও করুন (500 MB পর্যন্ত)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	এই পিসি, ডিস্ক ও অ্যাপ, আপনার Wi-Fi, রাউটার, ইন্টারনেট ও DNS—এক রিপোর্টে, বড় সমস্যা আগে।
 See it  ›	দেখুন  ›
 Speed only	শুধু গতি
@@ -1815,7 +1815,7 @@ Ten years of money	টাকা নিয়ে দশ বছর
 Text files	টেক্সট ফাইল
 That didn't switch cleanly - your previous view is back, nothing lost.	ঠিকভাবে বদলায়নি—আগের ভিউ ফিরিয়ে আনা হয়েছে, কিছু হারায়নি।
 That file isn't there any more.	ফাইলটি আর নেই।
-The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে প্রায় 100-300 MB ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
+The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে 500 MB পর্যন্ত ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
 The app's own connection:	অ্যাপের নিজস্ব সংযোগ:
 The biggest share is	সবচেয়ে বড় অংশ
 The busy number is the one games feel when someone else is downloading.	অন্য কেউ ডাউনলোড করার সময় গেমে যে দেরি বোঝা যায়, সেটিই ব্যস্ত সময়ের সংখ্যা।
@@ -2519,7 +2519,7 @@ Light: always light, whatever Windows uses.	Light: Windows-এর থিম য�
 No place yet.	এখনও কোনো জায়গা ঠিক করা হয়নি।
 ) - Remove forgets it and the kept forecast.	)। সরিয়ে দিলে জায়গাটি ও সেভ করা পূর্বাভাস মুছে যাবে।
 Accuracy	নির্ভুলতা
-Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.	আরও ভালো: পিসি চালু থাকলে প্রতি 6 ঘণ্টায় আপডেট হয়। বাদ পড়া আপডেট পরে চালায় না। দিনে সর্বোচ্চ 4টি ছোট অনুরোধ।
+Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).	আরও ভালো: পিসি চালু থাকলে প্রতি 6 ঘণ্টায় আপডেট হয়। বাদ পড়া আপডেট পরে চালায় না। দিনে সর্বোচ্চ 4টি ছোট অনুরোধ। আবহাওয়া সার্ভিসে পৌঁছানো না গেলে, উত্তর না পাওয়া পর্যন্ত প্রতি 30 মিনিটে আবার চেষ্টা করে।
 Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off.	স্বাভাবিক: আজ ও পরের 2 দিনের জন্য একবার অনুরোধ করে। পূর্বাভাস এক দিনের কম বাকি থাকলে আবার করে, প্রায় প্রতি 2 দিনে একবার। 2-3 দিন পরের বৃষ্টির সময় এদিক-ওদিক হতে পারে।
 Temperature in	তাপমাত্রার একক
 How temperatures show in the widget and here.	উইজেট ও এখানে তাপমাত্রা যেভাবে দেখাবে।
@@ -2587,7 +2587,7 @@ Pings your router 	আপনার রাউটারে পিং করে
  - tells Wi-Fi trouble apart from internet trouble.	 — Wi-Fi ও ইন্টারনেটের সমস্যা আলাদা করে বোঝায়।
 Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.	বন্ধ: ইন্টারনেট বন্ধ হওয়ার সতর্কতা দেয় না। ইন্টারনেট ও DNS ডট ধূসর হয়।
 One tiny ping to a public server 	পাবলিক সার্ভারে একটি ছোট পিং 
-, and one name lookup at most once a minute.	ও সর্বোচ্চ মিনিটে একবার নাম খোঁজে।
+, and one name lookup at most once a minute (every 15 s with this window open).	ও সর্বোচ্চ মিনিটে একবার নাম খোঁজে (এই উইন্ডো খোলা থাকলে প্রতি 15 সেকেন্ডে)।
 Off: no roam, signal or channel alerts.	বন্ধ: অ্যাক্সেস পয়েন্ট বদল, সিগন্যাল বা চ্যানেলের সতর্কতা দেয় না।
 Asks Windows for signal, channel and access point 	সিগন্যাল, চ্যানেল ও অ্যাক্সেস পয়েন্ট জানতে Windows-কে জিজ্ঞেস করে 
  (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.	 (এই উইন্ডো খোলা থাকলে প্রতি 10 s)। সরাসরি Windows-এর Wi-Fi সেবা ব্যবহার করে, খুব কম রিসোর্স লাগে। সেবা উত্তর না দিলেই শুধু ছোট Windows টুল netsh চালায়।
@@ -5087,3 +5087,6 @@ Postponed	স্থগিত
 Cancelled	বাতিল
 Suspended	মুলতুবি
 Abandoned	পরিত্যক্ত
+of them inside SNMP	টি SNMP-এর ভেতরে
+Not fetched yet	এখনও আনা হয়নি
+Toronto keeps the same hours	টরন্টোর সময়ও একই

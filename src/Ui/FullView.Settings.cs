@@ -31,7 +31,7 @@ namespace AdeeboMeter
         static string[] Row(params string[] a) { return a; }
         // ---------- Settings
         static readonly string[] SetS0 = { "balanced", "Balanced", "The default - every check close. Router every 2 s, internet every 15 s: notices trouble within seconds." };
-        static readonly string[] SetSG = { "gamer", "Gamer", "Every check close, plus up to 16 game servers and your best regions every 10 s." };
+        static readonly string[] SetSG = { "gamer", "Gamer", "Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second." };
         static readonly string[] SetMode = { "Simple", "Pro" };
         static bool PolicyLocks(string label)
         {
@@ -87,6 +87,7 @@ namespace AdeeboMeter
             if (Games.Monitored().Count > 0 && Cfg.GameBgSec > 0) l.Add("game ping " + Every(Cfg.GameBgSec));
             if (Cfg.TradeLive && Cfg.TradeHost != "" && !Cfg.Off("trade")) l.Add("broker check " + Every(Trading.Sec) + (Cfg.TradeCrypto ? "" : " in market hours"));
             if (Weather.Active) l.Add(Cfg.WeatherAcc == "better" ? AdeeboMeter.L.T("weather every 6 h") : AdeeboMeter.L.T("weather about every 2 days"));
+            { int ph = 0; try { if (Cfg.PhoneStandby) ph = RemotePhones.All().Count; } catch (Exception e) { if (e is OutOfMemoryException) throw; } if (ph > 0) l.Add(AdeeboMeter.L.T("a waiting room for your phone, and a clock check once an hour")); }   // round 6 TA6-1
             if (Online.On) l.Add(AdeeboMeter.L.T("online lookups (") + Math.Ceiling(Online.Left.TotalMinutes) + AdeeboMeter.L.T(" min left)"));
             return l.Count == 0 ? AdeeboMeter.L.T("Right now this PC sends nothing in the background.") : AdeeboMeter.L.T("Right now this PC sends: ") + string.Join(" · ", l) + ".";
         }
@@ -113,7 +114,7 @@ namespace AdeeboMeter
             // Weather (Adeeb, 14 Nov): off until turned on; the place is typed, never located (Weather.cs)
             add("Weather", "Weather", TagOnline, WeatherHelp, SetOnOff, () => Cfg.WeatherOn && Weather.Current != null ? 0 : 1, i => SetWeather(i == 0), null, "weather forecast rain snow hot cold temperature city");
             add("Weather", "Weather for", TagOnline, () => { var p = Weather.Current; return p == null ? "No place yet." : p.Name + "  (" + p.Lat.ToString("0.00", System.Globalization.CultureInfo.CurrentCulture) + ", " + p.Lon.ToString("0.00", System.Globalization.CultureInfo.CurrentCulture) + AdeeboMeter.L.T(") - Remove forgets it and the kept forecast."); }, SetWeatherFor, () => -1, ChangePlace, () => Cfg.WeatherOn && !Policy.NoOnline, "weather city place country location");
-            add("Weather", "Accuracy", TagOnline, () => Cfg.WeatherAcc == "better" ? AdeeboMeter.L.T("Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.") : AdeeboMeter.L.T("Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off."), SetWeatherAcc, () => Cfg.WeatherAcc == "better" ? 1 : 0, i => { Cfg.WeatherAcc = i == 1 ? "better" : "normal"; Cfg.Save(); Invalidate(true); }, () => Cfg.WeatherOn && !Policy.NoOnline, "weather accuracy refresh");
+            add("Weather", "Accuracy", TagOnline, () => Cfg.WeatherAcc == "better" ? AdeeboMeter.L.T("Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).") : AdeeboMeter.L.T("Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off."), SetWeatherAcc, () => Cfg.WeatherAcc == "better" ? 1 : 0, i => { Cfg.WeatherAcc = i == 1 ? "better" : "normal"; Cfg.Save(); Invalidate(true); }, () => Cfg.WeatherOn && !Policy.NoOnline, "weather accuracy refresh");
             add("Weather", "Temperature in", TagPc, () => "How temperatures show in the widget and here.", SetWeatherUnit, () => Cfg.WeatherF ? 1 : 0, i => { Cfg.WeatherF = i == 1; Cfg.Save(); Invalidate(true); }, () => Cfg.WeatherOn, "celsius fahrenheit weather");
             add("Weather", "Weather in the widget", TagPc, () => Cfg.WWeather ? AdeeboMeter.L.T("On: the temperature on the folded strip, and a line like \"4°C · rain from 3 pm\" on the card.") : "Off: only the buddy's face shows the weather.", SetOnOff, () => Cfg.WWeather ? 0 : 1, i => { Cfg.WWeather = i == 0; Cfg.Save(); Invalidate(true); }, () => Cfg.WeatherOn, "weather widget strip card");
             // Companion (PLAN 11.7c): words only - data, reports and anything copied stay Plain
@@ -147,7 +148,7 @@ namespace AdeeboMeter
             add("Widget", "Hover wait on the folded chip", TagPc, () => AdeeboMeter.L.T("How long to rest the mouse on the folded chip before the card opens - only when a window covers the corner (with nothing over it, the card opens as soon as you point at it)."), SetS16, () => Array.IndexOf(SetN17, Cfg.DwellMs), i => { Cfg.DwellMs = SetN17[i]; Cfg.Save(); }, null, "chip delay mouse");
             // Background checks
             add("Background checks", "Router ping", TagLan, () => Cfg.GwSec == 0 ? AdeeboMeter.L.T("Off: the LAN / Wi-Fi dot goes grey and slow-router alerts stop.") : AdeeboMeter.L.T("Pings your router ") + Every(Cfg.GwSec) + AdeeboMeter.L.T(" - tells Wi-Fi trouble apart from internet trouble."), SetS2, () => Array.IndexOf(SetN3, Cfg.GwSec), i => { Cfg.GwSec = SetN3[i]; Custom(); }, null, "ping gateway lan wifi");
-            add("Background checks", "Internet and DNS check", TagNet, () => Cfg.NetSec == 0 ? AdeeboMeter.L.T("Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.") : AdeeboMeter.L.T("One tiny ping to a public server ") + Every(Cfg.NetSec) + AdeeboMeter.L.T(", and one name lookup at most once a minute."), SetS4, () => Array.IndexOf(SetN5, Cfg.NetSec), i => { Cfg.NetSec = SetN5[i]; Custom(); }, null, "ping internet dns 1.1.1.1 8.8.8.8");
+            add("Background checks", "Internet and DNS check", TagNet, () => Cfg.NetSec == 0 ? AdeeboMeter.L.T("Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.") : AdeeboMeter.L.T("One tiny ping to a public server ") + Every(Cfg.NetSec) + AdeeboMeter.L.T(", and one name lookup at most once a minute (every 15 s with this window open)."), SetS4, () => Array.IndexOf(SetN5, Cfg.NetSec), i => { Cfg.NetSec = SetN5[i]; Custom(); }, null, "ping internet dns 1.1.1.1 8.8.8.8");
             add("Background checks", "Wi-Fi watch", TagPc, () => Cfg.WifiSec == 0 ? "Off: no roam, signal or channel alerts." : AdeeboMeter.L.T("Asks Windows for signal, channel and access point ") + Every(Cfg.WifiSec) + AdeeboMeter.L.T(" (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead."), SetS6, () => Array.IndexOf(SetN7, Cfg.WifiSec), i => { Cfg.WifiSec = SetN7[i]; Custom(); }, null, "wifi signal roam");
             add("Background checks", "App and connection watch", TagPc, () => Cfg.AppsSec == 0 ? AdeeboMeter.L.T("Off: the verdict can't name the app to close, and connection bursts go unnoticed.") : AdeeboMeter.L.T("Reads the process list and connection table ") + Every(Cfg.AppsSec) + AdeeboMeter.L.T(" - powers 'top apps', connection bursts and stuck-connection alerts."), SetS8, () => Array.IndexOf(SetN9, Cfg.AppsSec), i => { Cfg.AppsSec = SetN9[i]; Custom(); }, null, "apps processes connections");
             add("Background checks", "Teams call detection", TagPc, () => Cfg.Call ? AdeeboMeter.L.T("Notices when a Teams call starts and watches the network more closely during it.") : "Off: calls get no extra attention.", SetS10, () => Cfg.Call ? 0 : 1, i => { Cfg.Call = i == 0; Custom(); }, null, "teams call meeting");
@@ -297,7 +298,7 @@ namespace AdeeboMeter
                         Act(settingsCanvas, clr, delegate
                         {
                             int nd = History.Days().Count;
-                            if (AskCard.Show(this, L.T("Delete all saved history?") + "\n\n" + nd + " " + L.T("days of history are deleted for good - this can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                            if (AskCard.Show(this, L.T("Delete all saved history?") + "\n\n" + nd + " " + L.T("days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                             History.Clear(); AirLog.Clear(); histDay = null; histData = null; histDays = null; histStatAt = DateTime.MinValue; ReplayForget(); settingsCanvas.Invalidate();
                         });
                         y += 30 * S;
@@ -313,7 +314,6 @@ namespace AdeeboMeter
         static readonly string[] SetUnits = { "Bits (Mb/s)", "Bytes (MB/s)" }, SetDir = { "Both", "Download", "Upload" };
         static readonly string[] GzBg = { "10 s", "30 s", "60 s", "Off" }, GzSrv = { "1", "3", "5" }, GzDays = { "7 days", "14 days", "30 days" };
         static readonly int[] GzBgN = { 10, 30, 60, 0 }, GzSrvN = { 1, 3, 5 }, GzDaysN = { 7, 14, 30 };
-        static readonly string[] DevAlertNames = { "Off", "Home networks only" };
         // the history folder is read at most every 10 s, not on every repaint (a slow or scanned disk)
         long histBytes; int histDayCount; DateTime histStatAt = DateTime.MinValue;
         void HistStat() { if ((DateTime.UtcNow - histStatAt).TotalSeconds < 10) return; histStatAt = DateTime.UtcNow; histBytes = History.Bytes(); histDayCount = History.Days().Count; }
@@ -491,6 +491,7 @@ namespace AdeeboMeter
                     new[] { "Wi-Fi watch", Cfg.WifiSec > 0 ? AdeeboMeter.L.T("Asks Windows about your Wi-Fi, ") + every(Cfg.WifiSec) + AdeeboMeter.L.T(". Nothing is sent anywhere.") : "Off.", "-1" },
                     LeaveChecks,
                     LeaveTools,
+                    new[] { "Phone waiting room", Cfg.PhoneStandby ? AdeeboMeter.L.T("Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.") : "Off.", "-1" },   // round 6 TA6-1
                     new[] { "Pinned destination watch", Cfg.PinWatch && Cfg.Pins.Count > 0 ? AdeeboMeter.L.T("One ping to ") + Cfg.Pins[0] + AdeeboMeter.L.T(" every 30 s (you switched it on).") : "Off.", Cfg.PinWatch ? "1" : "-1" },
                     new[] { "Certificate revocation", CertCfg.Revocation ? AdeeboMeter.L.T("When you run Chain check or HTTPS check: one question to the certificate issuer's revocation list (CRL) or OCSP address, 10 s at most.") : "Off (Settings › Privacy & online lookups).", CertCfg.Revocation ? "1" : "-1" },
                     new[] { "Gamer Zone", Games.Monitored().Count == 0 ? AdeeboMeter.L.T("Nothing - until you click a game in the Gamer Zone.") : AdeeboMeter.L.T("A ping (or a timed TCP connection) to the regions of the games you added: the best ones ") + every(Cfg.GameBgSec) + AdeeboMeter.L.T(", the others ") + every(GamePing.SurveySec) + AdeeboMeter.L.T(", every second while a game is open") + (Cfg.GameBgSec < 60 ? AdeeboMeter.L.T(" - plus, while a game runs, a trace to its server and one ping to each router on the way every 15 s (the match path)") : "") + AdeeboMeter.L.T(". Valve's server list is fetched only when you add a Valve game or press Refresh."), Games.Monitored().Count == 0 ? "-1" : "1" },
@@ -691,6 +692,7 @@ namespace AdeeboMeter
                         if (filePins.Count > 0 && !(filePins.Count == mine.Count && filePins.All(p => mine.Contains(p, StringComparer.OrdinalIgnoreCase))))
                             asks.Add(new[] { "pin", AdeeboMeter.L.T("replace your pinned addresses with: ") + string.Join(", ", filePins.Take(5).Select(p => Program.Plain(p.Length > 40 ? p.Substring(0, 40) + "..." : p))) });
                     }
+                    string viewBefore = Cfg.View;   // round 6: a view in the file is switched to, like picking it
                     kv.RemoveAll(x => x.Key == "histdays" && !asks.Any(o => o[0] == "histdays"));   // L-162: a value that isn't a choice never lands either
                     if (asks.Count > 0)
                     {
@@ -710,6 +712,7 @@ namespace AdeeboMeter
                         n++;
                     }
                     Policy.Apply();   // an IT policy still wins over an imported file
+                    { string vNew = Cfg.View; if (vNew != viewBefore && vNew != "") { Cfg.View = viewBefore; try { SwitchView(vNew); } catch (Exception e) { if (e is OutOfMemoryException) throw; Cfg.View = vNew; Program.Log("import view: " + e.Message); } } }
                     Cfg.Save(); M.Nudge(); BuildPinBar();
                     // the open window takes them up at once: the tabs (Simple / Pro), the Adeebo button, the language
                     L.Use(Cfg.Lang); ApplyMode(); SyncPointsBtn(); SyncLangBtn(); SyncRestart(); PlaceTop(); Invalidate(true);   /* hunt-5: the language button and the Restart pill follow an import too */

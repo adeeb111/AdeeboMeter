@@ -15,18 +15,21 @@ namespace AdeeboMeter
     // by whoever shows it (AppCtx). Never information for its own sake.
     static class Alerts
     {
-        public static Action<string, string> Show = delegate { };     // (title, text) - set by AppCtx
+        public static Action<string, string> Show = delegate { }; public static Func<bool> CanShow;     // (title, text) - set by AppCtx
         static readonly Dictionary<string, DateTime> last = new Dictionary<string, DateTime>();
-        public static void Raise(string kind, string text, int cooldownMin)
+        static bool inetDownSaid;
+        public static bool Raise(string kind, string text, int cooldownMin)
         {
-            if (!Cfg.Alerts) return;
+            if (!Cfg.Alerts) return false;
+            if (CanShow != null && !CanShow()) return false;   // round 6: a balloon that can't be shown now (quiet hours, muted, full screen) doesn't use up its cooldown
             lock (last)
             {
-                DateTime t; if (last.TryGetValue(kind, out t) && (DateTime.UtcNow - t).TotalMinutes < cooldownMin) return;
+                DateTime t; if (last.TryGetValue(kind, out t) && (DateTime.UtcNow - t).TotalMinutes < cooldownMin) return false;
                 last[kind] = DateTime.UtcNow;
                 if (last.Count > 200) foreach (var old in last.Where(kv => (DateTime.UtcNow - kv.Value).TotalDays > 1).Select(kv => kv.Key).ToList()) last.Remove(old);   // bug-hunt L-55: a day-old cooldown is over anyway
             }
             try { Show("AdeeboMeter", text); } catch { }
+            return true;
         }
         // Windows drops in a row, internet gone, router hardware changed: learned from the timeline as it happens
         static readonly List<DateTime> drops = new List<DateTime>();
@@ -37,8 +40,8 @@ namespace AdeeboMeter
                 lock (drops) { drops.Add(e.T); drops.RemoveAll(t => (e.T - t).TotalMinutes > 10); if (drops.Count >= 3) Raise("drops", "Wi-Fi dropped " + drops.Count + " times in 10 minutes. Move closer to the router, or switch to 5 GHz if it's offered.", 30); }
             }
             else if (e.Kind == "net" && e.Lv == 2 && (e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0 || e.Text.IndexOf("ARP spoofing", StringComparison.OrdinalIgnoreCase) >= 0)) /* both voices: the serious text is worded differently */ Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
-            else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
-            else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1);
+            else if (e.Kind == "inet" && e.Lv == 2) inetDownSaid |= Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
+            else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) { if (inetDownSaid) { inetDownSaid = false; Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1); } }   // round 6: "back" only follows a "went quiet" that was shown
         }
     }
 

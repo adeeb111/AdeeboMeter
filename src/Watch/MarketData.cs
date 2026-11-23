@@ -325,12 +325,12 @@ namespace AdeeboMeter
                     foreach (var sym in list)
                     {
                         if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
-                        Call();
+                        // round 6: a call is counted when the service answered (even with an error) - never for a request that didn't leave
                         // hunt-5: one symbol that fails doesn't cost the rest - the next is still asked; a wrong key (401) or two
                         // failures in a row (offline) stop the round, so no calls are spent on a line that isn't there
                         string body;
-                        try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; }
-                        catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
+                        try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; Call(); }
+                        catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null) Call(); if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
                         var q = ParseFmp(body, sym); if (q == null) continue;
                         lock (k) { Quotes[sym] = q; Ver++; } got++;
                     }

@@ -38,7 +38,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
@@ -130,20 +130,24 @@ namespace AdeeboMeter
             tray.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) OpenFull(); };
             tray.Visible = true;
             // Alerts: only when there's something to do; never at night (Settings) or while you present / play full screen.
+            Alerts.CanShow = delegate { int hr = DateTime.Now.Hour; return !(Cfg.Quiet && (hr >= 22 || hr < 7)) && DateTime.UtcNow >= Remote.MuteUntil && Native.CanNotify(); };
             Alerts.Show = delegate(string title, string text)
             {
                 int hour = DateTime.Now.Hour;
                 if (Cfg.Quiet && (hour >= 22 || hour < 7)) return;
                 if (DateTime.UtcNow < Remote.MuteUntil) return;   // muted from the phone
                 if (!Native.CanNotify()) return;
-                try { marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
+                try { marshal.BeginInvoke((Action)delegate { if (quitting) return; BalloonIs(null, null); tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
             };
+            // round 6 ML-1: a click acts on the balloon that was clicked - each balloon sets its own action, and one that closes
+            // unclicked takes its action with it (a crash note no longer hijacks the next alert's click)
+            tray.BalloonTipClosed += delegate { BalloonIs(null, null); };
             tray.BalloonTipClicked += delegate
             {
                 // a crash note: the report box, with the note in it - the person reads it and presses Send
                 if (crashNote != null) { string n = crashNote; crashNote = null; OpenFull(); if (full != null && !full.IsDisposed) full.ReportDialog("bug", "It closed unexpectedly. I was doing: \n\n---\nCrash note (no user names or folders):\n" + n); return; }
                 if (balloonTool != null) { string t = balloonTool; balloonTool = null; OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool(t, true); return; }
-                if (balloonUrl != null) { Crash.OpenUrl(balloonUrl); balloonUrl = null; } else OpenFull();
+                OpenFull();
             };
             Relay.Flush();   // reports written while offline go now
             Task.Factory.StartNew(() => History.Tidy());
@@ -155,7 +159,7 @@ namespace AdeeboMeter
                 {
                     string note; using (var cr = new StreamReader(Crash.FilePath)) { var cb = new char[6000]; int cn = cr.ReadBlock(cb, 0, cb.Length); note = new string(cb, 0, cn); }   /* L-48: only what's shown is read */ File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
                     var once = new System.Windows.Forms.Timer { Interval = 4000 };
-                    once.Tick += delegate { once.Stop(); once.Dispose(); crashNote = note.Length > 6000 ? note.Substring(0, 6000) : note; tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
+                    once.Tick += delegate { once.Stop(); once.Dispose(); BalloonIs(note.Length > 6000 ? note.Substring(0, 6000) : note, null); tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
                     once.Start();
                 }
             }
@@ -361,6 +365,7 @@ namespace AdeeboMeter
             if (now != null && now.Known != null && now.St == Remote.State.Paired) return;                                       // a remembered phone is connected
             List<RemotePhones.P> phones; try { phones = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phones: " + e.Message); return; }
             foreach (var id in standby.Keys.Where(k => phones.All(p => p.Id != k)).ToList()) { standby[id].End("forgotten"); standby.Remove(id); }
+            if (phones.Count == 0) return;   // round 6 TA6-1: no remembered phone, no waiting room - and no hourly clock check either
             long slot = RemotePhones.Slot;
             foreach (var p in phones)
             {
@@ -382,7 +387,7 @@ namespace AdeeboMeter
             Remote.Now = r;
             foreach (var s in standby.Values) if (s != r && s.St != Remote.State.Ended) s.End("another phone connected");
             PhoneHub.Fire();   // the link button turns green with the phone's name; Your phone has End
-            try { tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
+            try { BalloonIs(null, null); tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
         }
         // a locked file double-clicked while AdeeboMeter already ran: the new copy left its path here and asked us to open
         void OpenHandedFile()
@@ -497,13 +502,14 @@ namespace AdeeboMeter
             return p.Width > 1 && p.Height > 1 ? Rectangle.Union(z, p) : z;
         }
 
+        void BalloonIs(string crash, string tool) { crashNote = crash; balloonTool = tool; }
         void OnUi()
         {
             StandbyTick();
             try
             {
                 uiTick++;
-                if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
+                if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); try { Sports.ReminderTick(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("kickoff: " + e.Message); } }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
                 var wscr = WidgetScreen();   // bug-hunt L-49: asked once per tick - a screen unplugged between two calls can't null the second
                 if (wscr == null) { hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
@@ -629,7 +635,7 @@ namespace AdeeboMeter
                         // the view already open, or Windows won't show a note (notifications off, Focus assist): the answer opens right away
                         bool open = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized;
                         if (open || !Native.CanNotify()) { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("feltslow", true); return; }
-                        balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : c.Who == "notpc" ? "Not this PC" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
+                        BalloonIs(null, "feltslow"); tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : c.Who == "notpc" ? "Not this PC" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
                     });
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("felt slow: " + e.Message); }

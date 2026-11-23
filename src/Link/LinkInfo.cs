@@ -745,7 +745,7 @@ namespace AdeeboMeter
                 s.Radio.Add(new[] { "Driver", drv[0] + (drv[1] != "" ? " · " + drv[1] : "") + (age >= 0 ? " (" + (age < 1 ? "this year" : age.ToString("0", CultureInfo.CurrentCulture) + (age < 1.5 ? " year old" : " years old")) + ")" : ""), age >= 3 ? "1" : "0" });
                 // Review-1: advice, not a measured problem - the banner turns amber but the PC's level stays as measured
                 if (age >= 3) s.Advice = true;
-                if (age >= 3) notes.Add("Driver update suggested: " + Voice.P("Your " + (s.Wifi ? "Wi-Fi" : "network") + " driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old. Old drivers are a top cause of random drops - worth an update from the laptop maker.", "Network driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old."));
+                if (age >= 3) notes.Add("Driver update suggested: " + Voice.P("Your " + (s.Wifi ? "Wi-Fi" : "network") + " driver is " + age.ToString("0", CultureInfo.CurrentCulture) + (Math.Round(age) == 1 ? " year old" : " years old") + ". Old drivers are a top cause of random drops - worth an update from the laptop maker.", "Network driver is " + age.ToString("0", CultureInfo.CurrentCulture) + (Math.Round(age) == 1 ? " year old." : " years old.")));
             }
             // ---- Windows' own diary: drops and DHCP trouble in the last 24 h
             string de;

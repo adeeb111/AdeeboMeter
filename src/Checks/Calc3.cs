@@ -11,9 +11,25 @@ namespace AdeeboMeter
     // the numbers give, never what to do. Currency uses the Bank of Canada rates the Trading page already keeps.
     static partial class Calc
     {
-        static double P(string t) { var m = Regex.Match((t ?? "").Replace(",", ""), @"-?[0-9]+(?:\.[0-9]+)?"); double v; return m.Success && double.TryParse(m.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }
+        // round 6 CN-1: one number as people type it - 1,234.5 and 1.234,5 and 1 234,5 are all the same; a lone comma with one or two
+        // digits after it (1,5 · 10,25 · 0,99) is a decimal comma, never a thousands mark (it used to make 1,5 into 15)
+        internal static double P(string t)
+        {
+            var m = Regex.Match(t ?? "", @"-?[0-9][0-9.,\u00A0\u202F ]*[0-9]|-?[0-9]"); if (!m.Success) return double.NaN;
+            string x = Regex.Replace(m.Value, @"[\u00A0\u202F ]", ""); int lc = x.LastIndexOf(','), ld = x.LastIndexOf('.');
+            if (lc >= 0 && ld >= 0) x = lc > ld ? x.Replace(".", "").Replace(',', '.') : x.Replace(",", "");
+            else if (lc >= 0) x = Regex.IsMatch(x, @"^-?\d{1,3}(,\d{3})+$") ? x.Replace(",", "") : x.IndexOf(',') == lc ? x.Replace(',', '.') : x.Replace(",", "");
+            else if (ld >= 0 && x.IndexOf('.') != ld) x = x.Replace(".", "");   // 1.000.000
+            double v; return double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
+        }
         // bug-hunt ML-65: "1,000" is one thousand (a comma between a digit and exactly three more), "50, 45" two prices
-        static List<double> Ps(string t) { return Regex.Matches(Regex.Replace((t ?? "").Replace(", ", " "), @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => double.Parse(m.Value, CultureInfo.InvariantCulture)).ToList(); }
+        // a list: spaces, ';' or ', ' between the numbers; with those, a comma inside a number is its decimal comma (1,5; 2,25)
+        static List<double> Ps(string t)
+        {
+            t = t ?? ""; bool spaced = Regex.IsMatch(t, @"\d\s*;\s*\d|\d\s+\d|\d,\s+\d");
+            if (spaced) return Regex.Split(t.Replace(", ", " "), @"[\s;]+").Where(z => z.Trim() != "").Select(P).Where(z => !double.IsNaN(z)).ToList();
+            return Regex.Matches(Regex.Replace(t, @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => double.Parse(m.Value, CultureInfo.InvariantCulture)).ToList();
+        }
         static string M(double v) { return (v < 0 ? "-$" : "$") + Math.Abs(v).ToString(Math.Abs(v) >= 1000 ? "N0" : "N2", CultureInfo.CurrentCulture); }
         static string Pc(double v) { return (v > 0 ? "+" : "") + v.ToString("0.##", CultureInfo.CurrentCulture) + "%"; }
         const string Edu = "The numbers only - not advice.";
@@ -45,8 +61,8 @@ namespace AdeeboMeter
         public static List<string[]> Pnl(string buyText, string sellText, string sharesText, string feesText)
         {
             double buy = P(buyText), sell = P(sellText), n = P(sharesText); if (double.IsNaN(buy) || double.IsNaN(n) || n <= 0 || buy <= 0) return Need("Buy price and shares", "type e.g. 150 and 20 - both above 0");   // FRESH-077
-            var fxm = Regex.Match(feesText ?? "", @"(-?[0-9.]+)\s*%"); double fx = fxm.Success ? P(fxm.Groups[1].Value) / 100 : 0;
-            var fs = Ps(Regex.Replace(feesText ?? "", @"-?[0-9.]+\s*%", " ")); double comm = fs.Count > 0 ? fs[0] : 0;   // FRESH-029: "2%" is a percentage, not also $2
+            var fxm = Regex.Match(feesText ?? "", @"(-?[0-9][0-9.,]*)\s*%"); double fx = fxm.Success ? P(fxm.Groups[1].Value) / 100 : 0;
+            var fs = Ps(Regex.Replace(feesText ?? "", @"-?[0-9][0-9.,]*\s*%", " ")); double comm = fs.Count > 0 ? fs[0] : 0;   // FRESH-029: "2%" is a percentage, not also $2
             if (fx < 0 || comm < 0) return Need("Fees", "can't be negative - e.g. 9.99 or 0.5%");
             if (fx >= 1) return Need("Fees", "a percentage fee has to be under 100%");   // FRESH-030
             if (fs.Count > 1) return Need("Fees", "one flat fee and/or one percentage - e.g. 9.99, 0.5%, or 9.99 + 0.5%");   // bug-hunt L-134: a second number isn't ignored

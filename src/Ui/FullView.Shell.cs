@@ -74,7 +74,7 @@ namespace AdeeboMeter
             var mono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : IsFont("Consolas") ? "Consolas" : FontFamily.GenericMonospace.Name, 10.5f);
             term = new TermView(mono) { Dock = DockStyle.Fill, Bg = ShBg, Fg = ShFg };
             term.TermKey += ShKey; term.TermChar += ShChar; term.Paste = ShPaste;
-            term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(t.Replace("\n", "\r\n")); term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
+            term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(ShScrub(t).Replace("\n", "\r\n"));   /* round 6: Copy hides secrets too, like history and Save-log */ term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
             term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Path.Combine(Path.GetDirectoryName(f), Path.GetFileNameWithoutExtension(f).Split(new[] { " (" }, StringSplitOptions.None)[0] + " (" + k + ").txt");   /* review UI-5: never over an earlier save */ File.WriteAllText(f, ShScrub(t).Replace("\n", "\r\n"));   /* L-1: output lines too (env, echo $TOKEN) */ term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
             shellPage.Controls.Add(term);
             shellPage.VisibleChanged += delegate { if (shellPage.Visible) { if (shTools == null) { shTools = Tools2(); ThreadPool.QueueUserWorkItem(delegate { ShStarterScripts(); }); } if (term.AllText().Trim() == "") ShWelcome(); ShPrompt(); BeginInvoke((Action)delegate { term.Focus(); }); } };
@@ -318,7 +318,7 @@ namespace AdeeboMeter
             return string.Join(" ", a.Select(z =>
             {
                 if (z.Op != null) return z.Op == ";" ? ";" : z.Op;
-                string w = Regex.Replace(z.W, "\u0005([^\u0006]*)\u0006", "$$($1)"); w = Regex.Replace(w, "\u0007([^\u0006]*)\u0006", "$$(($1))"); w = w.Replace('\u0001', '$');
+                string w = Regex.Replace(z.W, "\u0005([^\u0006]*)\u0006", "$$($1)"); w = Regex.Replace(w, "\u0007([^\u0006]*)\u0006", "$$(($1))"); w = w.Replace('\u0001', '$').Replace("\u0010", "");
                 return z.Q || w.Contains(" ") || w == "" ? "\"" + w.Replace("\"", "\\\"") + "\"" : w;
             }));
         }
@@ -332,6 +332,9 @@ namespace AdeeboMeter
             var l = new List<Tok>(); var sb = new StringBuilder(); var pm = new StringBuilder(); bool had = false, q = false, lit = false; char quote = '\0';
             Action pad = () => { while (pm.Length < sb.Length) pm.Append(lit ? '1' : '0'); };
             Action flush = () => { pad(); if (sb.Length > 0 || had) l.Add(new Tok { W = sb.ToString(), Q = q, M = pm.ToString() }); sb.Clear(); pm.Clear(); had = false; q = false; };
+            // round 6 M-3: where quoting starts or stops right after a $name, a mark ends the name there ("$f"bak is $f then bak,
+            // not $fbak) - Subst takes the mark out again
+            Action edge = () => { if (sb.Length > 1 && System.Text.RegularExpressions.Regex.IsMatch(sb.ToString(), @"\$[A-Za-z_][A-Za-z0-9_]*$")) sb.Append('\u0010'); };
             for (int i = 0; i < s.Length; i++)
             {
                 pad(); lit = quote != '\0';   // what this round appends is quoted if it's inside quotes
@@ -345,16 +348,22 @@ namespace AdeeboMeter
                     if ((end = ParenEnd(s, i + 2)) < 0) throw new FormatException("a $( isn't closed");
                     sb.Append('\u0005').Append(s, i + 2, end - i - 2).Append('\u0006'); i = end; had = true; continue;
                 }
+                // round 6 D2-4: ${...} is one piece, spaces and nested ${} included (${x:-hello world}, ${x:-${y}})
+                if (quote == '\0' && ch == '$' && i + 1 < s.Length && s[i + 1] == '{')
+                {
+                    int depth = 0, j = i + 1; for (; j < s.Length; j++) { if (s[j] == '{') depth++; else if (s[j] == '}' && --depth == 0) break; }
+                    if (j < s.Length) { sb.Append(s, i, j - i + 1); i = j; had = true; continue; }
+                }
                 if (quote != '\0')
                 {
-                    if (ch == quote) { quote = '\0'; continue; }
+                    if (ch == quote) { quote = '\0'; pad(); edge(); continue; }
                     if (quote == '"' && ch == '\\' && i + 1 < s.Length && "\"\\$`".IndexOf(s[i + 1]) >= 0) { char n2 = s[++i]; sb.Append(n2 == '$' ? '\u0001' : n2); continue; }
                     if (quote == '"' && ch == '\\' && i + 1 < s.Length && s[i + 1] == '\n') { i++; continue; }
                     if (quote == '\'' && ch == '$') { sb.Append('\u0001'); continue; }
                     sb.Append(ch); continue;
                 }
-                if (ch == '"' || ch == '\'') { quote = ch; had = true; q = true; continue; }
-                if (ch == '\\' && i + 1 < s.Length) { char n2 = s[++i]; if (n2 == '\n') continue; lit = true; sb.Append(n2 == '$' ? '\u0001' : n2); had = true; q = true; continue; }
+                if (ch == '"' || ch == '\'') { edge(); quote = ch; had = true; q = true; continue; }
+                if (ch == '\\' && i + 1 < s.Length) { char n2 = s[++i]; if (n2 == '\n') continue; edge(); pad(); lit = true; sb.Append(n2 == '$' ? '\u0001' : n2); had = true; q = true; continue; }
                 if (ch == '#' && sb.Length == 0 && !had) { while (i + 1 < s.Length && s[i + 1] != '\n') i++; continue; }   // a comment: to the end of its line only (#1)
                 if (ch == ' ' || ch == '\t') { flush(); continue; }
                 if (ch == '\n') { flush(); l.Add(new Tok { Op = ";" }); continue; }
@@ -554,6 +563,7 @@ namespace AdeeboMeter
             var f = n as NFor;
             if (f != null)
             {
+                if (Env.RO.Contains(f.Var)) { Err(c, "adeeboshell: " + f.Var + ": readonly variable"); return 1; }   // round 6 D2-6
                 List<string> items;
                 if (f.In.Count == 1 && f.In[0].W == "\u0009@") items = c.Args.ToList();
                 else { try { items = Expand(f.In, c).Select(z => z.StartsWith("\u0008", StringComparison.Ordinal) ? z.Substring(1) : z).ToList(); } catch (Exception e) { if (!(e is FormatException || e is DivideByZeroException)) throw; Err(c, "for: " + e.Message); return 1; } }
@@ -664,6 +674,15 @@ namespace AdeeboMeter
                 if (all.Success) { List<string> arr; lock (Env.Vars) Env.Arrs.TryGetValue(all.Groups[1].Value, out arr); if (arr != null) { foreach (var el in arr.Where(z => z != null).ToList()) if (w.Q) r.Add(el); else foreach (var pt in el.Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries)) AddWord(r, pt, false); continue; } }
                 var am = Regex.Match(raw, @"^([A-Za-z_][A-Za-z0-9_]*\+?)=");
                 if (am.Success) { string val = Subst(raw.Substring(am.Length), c); val = Tilde(val, w.Q).Replace('\u0001', '$'); r.Add("\u0008" + am.Groups[1].Value + "=" + val); continue; }
+                if (w.Q && (raw == "$@" || raw == "${@}")) { foreach (var arg in c.Args) r.Add(arg); continue; }   // round 6 D2-3: "$@" is one word per argument
+                // round 6 D2-2: a word with quoted and plain parts ("$d"/*.txt) still globs its plain part; a quoted * stays a *
+                bool part = w.Q && w.M != null && w.M.IndexOf('0') >= 0 && w.M.Length == raw.Length;
+                if (part)
+                {
+                    var mk = new StringBuilder(raw.Length); bool anyGlob = false;
+                    for (int k = 0; k < raw.Length; k++) { char ch = raw[k]; bool qd = w.M[k] == '1'; if (qd && ch == '*') ch = '\u0011'; else if (qd && ch == '?') ch = '\u0012'; else if (qd && ch == '[') ch = '\u0013'; else if (!qd && (ch == '*' || ch == '?' || ch == '[')) anyGlob = true; mk.Append(ch); }
+                    if (anyGlob) { AddWord(r, Tilde(Subst(mk.ToString(), c), true).Replace('\u0001', '$'), false); continue; }
+                }
                 string s = Subst(raw, c);
                 if (hadVar && !w.Q)
                 {
@@ -676,8 +695,8 @@ namespace AdeeboMeter
         }
         void AddWord(List<string> r, string s, bool quoted)
         {
-            if (!quoted && (s.Contains("*") || s.Contains("?")) && !s.Contains("://")) { var g = Glob(s); if (g.Count > 0) { r.AddRange(g); return; } }
-            r.Add(s);
+            if (!quoted && HasGlob(s) && !s.Contains("://")) { var g = Glob(s); if (g.Count > 0) { r.AddRange(g); return; } }
+            r.Add(Unmark(s));
         }
         static string Tilde(string s, bool quoted)
         {
@@ -685,7 +704,7 @@ namespace AdeeboMeter
             if (s == "~" || s.StartsWith("~/", StringComparison.Ordinal)) return "/home" + s.Substring(1);
             return Regex.Replace(s, "(^|:)~(?=/|:|$)", "$1/home");   // PATH-style a:~/b
         }
-        static readonly Regex VarRx = new Regex(@"\$(\{[^}]*\}|\?|#|@|\$|\d|[A-Za-z_][A-Za-z0-9_]*)");
+        static readonly Regex VarRx = new Regex(@"\$(\{(?:[^{}]|\{[^{}]*\})*\}|\?|#|@|\*|\$|\d|[A-Za-z_][A-Za-z0-9_]*)");   // round 6 D2-4: ${x:-${y}} - one level of nesting
         // $VARS in the plain parts, $(command) run and its output put in (trailing newlines off), $((math)) worked out
         string Subst(string s, ShCtx c)
         {
@@ -712,7 +731,7 @@ namespace AdeeboMeter
                 else sb.Append(MathOf(MathPrep(inner, c), c).ToString(CultureInfo.InvariantCulture));
                 i = e + 1;
             }
-            return sb.ToString();
+            return sb.ToString().Replace("\u0010", "");
         }
         // ${NAME} ${#NAME} ${NAME:-w} ${NAME:=w} ${NAME:+w} ${NAME:?w} ${NAME#p} ${NAME##p} ${NAME%p} ${NAME%%p} ${NAME/p/r}
         // ${NAME//p/r} ${NAME:off:len} (#57) - a form it doesn't know is an error, not literal text
@@ -742,7 +761,7 @@ namespace AdeeboMeter
                 switch (op.Groups[1].Value.TrimStart(':'))
                 {
                     case "-": return empty ? word(w) : val;
-                    case "=": if (empty) { string nv = word(w); lock (Env.Vars) Env.Vars[name] = nv; return nv; } return val;
+                    case "=": if (empty) { if (Env.RO.Contains(name)) throw new FormatException(name + ": readonly variable"); string nv = word(w); lock (Env.Vars) Env.Vars[name] = nv; return nv; } return val;
                     case "+": return empty ? "" : word(w);
                     case "?": if (empty) throw new FormatException(name + ": " + (w == "" ? "not set" : word(w))); return val;
                 }
@@ -772,7 +791,30 @@ namespace AdeeboMeter
             }
             throw new FormatException("${" + e + "}: bad substitution");
         }
-        static string GlobRx(string p) { return Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", "."); }
+        // round 6 D2-5: * ? and [abc] [a-z] [!x] classes, the same in file names, find -name, case and ${v#pat}; \u0011 \u0012 \u0013
+        // are a * ? [ that was quoted - a plain character, never a wildcard (D2-2)
+        static string GlobRx(string p)
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < p.Length; i++)
+            {
+                char ch = p[i];
+                if (ch == '*') sb.Append(".*"); else if (ch == '?') sb.Append('.');
+                else if (ch == '\u0011') sb.Append("\\*"); else if (ch == '\u0012') sb.Append("\\?"); else if (ch == '\u0013') sb.Append("\\[");
+                else if (ch == '[')
+                {
+                    int j = i + 1; if (j < p.Length && (p[j] == '!' || p[j] == '^')) j++; if (j < p.Length && p[j] == ']') j++;
+                    while (j < p.Length && p[j] != ']') j++;
+                    if (j >= p.Length) { sb.Append("\\["); continue; }
+                    string body = p.Substring(i + 1, j - i - 1); bool neg = body.StartsWith("!", StringComparison.Ordinal) || body.StartsWith("^", StringComparison.Ordinal); if (neg) body = body.Substring(1);
+                    sb.Append('[').Append(neg ? "^" : "").Append(body.Replace("\\", "\\\\").Replace("[", "\\[").Replace("]", "\\]")).Append(']'); i = j;
+                }
+                else sb.Append(Regex.Escape(ch.ToString()));
+            }
+            return sb.ToString();
+        }
+        static bool HasGlob(string s) { return s.IndexOf('*') >= 0 || s.IndexOf('?') >= 0 || (s.IndexOf('[') >= 0 && s.IndexOf(']', s.IndexOf('[') + 1) > 0); }
+        static string Unmark(string s) { return s.Replace('\u0011', '*').Replace('\u0012', '?').Replace('\u0013', '['); }
         // a case pattern as written: the quoted parts (and what their $vars hold) match literally, the rest is a glob - so
         // *"$x"* means "contains x", like bash
         string CasePattern(Tok pat, ShCtx c)
@@ -882,7 +924,7 @@ namespace AdeeboMeter
         {
             if (n == "?") return Env.LastExit.ToString(CultureInfo.InvariantCulture);
             if (n == "#") return c.Args.Count.ToString(CultureInfo.InvariantCulture);
-            if (n == "@") return string.Join(" ", c.Args);
+            if (n == "@" || n == "*") return string.Join(" ", c.Args);   // round 6 D2-3: $* too
             if (n == "$") { using (var me = System.Diagnostics.Process.GetCurrentProcess()) return me.Id.ToString(CultureInfo.InvariantCulture); }
             if (n == "0") return "adeeboshell";
             int k; if (int.TryParse(n, out k)) return k >= 1 && k <= c.Args.Count ? c.Args[k - 1] : "";
@@ -1017,6 +1059,7 @@ namespace AdeeboMeter
                 if (w.StartsWith("\u000E", StringComparison.Ordinal) || w.StartsWith("\u000F", StringComparison.Ordinal))
                 {
                     if (args.Count > 0 && !new[] { "local", "declare", "typeset", "export", "readonly" }.Contains(args[0])) { Err(c, "adeeboshell: an array assignment (a=(...)) only works at the start of a line or after local / declare - not as an argument of " + args[0]); return 2; }   // review NH-1
+                    { string an = w.Substring(1).Split('\u0000')[0].TrimEnd('+'); if (Env.RO.Contains(an)) { Err(c, "adeeboshell: " + an + ": readonly variable"); return 1; } }   // round 6 D2-6
                     ArrayAssign(w, c, args.Count > 0 && args[0] == "local"); continue;
                 }
                 if (w.StartsWith("\u0008", StringComparison.Ordinal)) { string kv = w.Substring(1); if (args.Count == 0) { int eq = kv.IndexOf('='); assigns.Add(new KeyValuePair<string, string>(kv.Substring(0, eq), kv.Substring(eq + 1))); } else args.Add(kv); continue; }
@@ -1449,6 +1492,7 @@ namespace AdeeboMeter
             }
             if (arrName != null && !Regex.IsMatch(arrName, "^[A-Za-z_][A-Za-z0-9_]*$")) { Err(c, "read: " + arrName + ": not a name"); return 2; }
             if (names.Count == 0) names.Add("REPLY");
+            { var ro = names.Concat(arrName != null ? new[] { arrName } : new string[0]).FirstOrDefault(z => Env.RO.Contains(z)); if (ro != null) { Err(c, "read: " + ro + ": readonly variable"); return 1; } }   // round 6 D2-6
             string ans;
             if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.In.Rest = nl < 0 ? "" : c.Stdin.Substring(nl + 1); }
             else { if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; }

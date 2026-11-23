@@ -58,6 +58,8 @@ namespace AdeeboMeter
         }
         static Color Hex(string h) { try { return Theme.C(h); } catch (Exception e) { if (!(e is ArgumentException || e is FormatException)) throw; return Theme.Grey; } }
         static string Ms(double v) { return double.IsNaN(v) ? "-" : v < 10 ? v.ToString("0.0", CultureInfo.InvariantCulture) : Math.Round(v).ToString(CultureInfo.InvariantCulture); }
+        // round 6 ML-3: text in a grade colour uses the theme's readable level text (4.5:1 on every palette); the raw colour is for lines and fills
+        static Color GradeText(string grade) { return grade == "Competitive" ? Theme.LvText(0) : grade == "Casual" ? Theme.LvText(1) : grade == "Laggy" ? Theme.LvText(2) : Theme.Muted; }
         static Color GradeColor(string grade) { return grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey; }
 
         void PaintGamer(Graphics g)
@@ -327,7 +329,7 @@ namespace AdeeboMeter
                     string how = (s.Where ?? "") + " · " + (s.Kind == "valve" ? "Valve server" : s.Kind == "exact" ? "exact" : "region estimate") + " · " + (st.Used != "" ? st.Used : s.Method);
                     g.DrawString(how, Draw.fSmall, muted, new RectangleF(cx, cy + 17 * S, 220 * S, 16 * S), nowrap);
                     double ageS = st.LastAt == DateTime.MinValue ? 0 : (DateTime.Now - st.LastAt).TotalSeconds;   // a slow-paced server: say how old "now" is
-                    using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
+                    using (var pb = new SolidBrush(GradeText(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
                     g.DrawString(AdeeboMeter.L.T("avg ") + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
                     // bug-hunt ML-79: a column that would run into the grade pill is left out on a narrow card
                     float pillAt = x + w - pad - 110 * S;
@@ -344,7 +346,7 @@ namespace AdeeboMeter
                     }
                     var gr = new RectangleF(x + w - pad - 100 * S, cy + 5 * S, 100 * S, 20 * S);
                     Theme.Fill(g, gr, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 36, GradeColor(grade)));
-                    using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : GradeColor(grade))) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(grade, Draw.fSmall, gb, gr, c);
+                    using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : GradeText(grade))) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(grade, Draw.fSmall, gb, gr, c);
                     cy += rowH;
                 }
                 foreach (var s in unwatched) { g.DrawString(s.Name + " · " + L.T("not watched - only the best") + " " + GamePing.MaxServers + " " + L.T("servers are checked"), Draw.fSmall, muted, new RectangleF(cx, cy + 2 * S, cw, 16 * S), nowrap); cy += 20 * S; }

@@ -18,7 +18,7 @@ namespace AdeeboMeter
         static double First(string t) { var m = AnyNum.Match(t ?? ""); double v; return m.Success && double.TryParse(m.Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }
         static double[] Nums(string t) { return AnyNum.Matches(t ?? "").Cast<Match>().Select(m => { double v; return double.TryParse(m.Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }).Where(v => !double.IsNaN(v)).ToArray(); }
         static List<string[]> Need(string box, string what) { return new List<string[]> { R(2, box, what, "", "u") }; }
-        static string Pct(double v) { return F(v, v < 1 ? "0.###" : "0.##") + "%"; }
+        static string Pct(double v) { string s = F(v, v < 1 ? "0.###" : "0.##"); if (v < 100 && s == "100") s = F(v, "0.#####"); return s + "%"; }   // round 6: 99.999% never reads as 100%
 
         // ---------- wildcard mask: mask <-> prefix <-> wildcard, and what an ACL line with it matches
         public static List<string[]> Wildcard(string text)

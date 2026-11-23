@@ -58,6 +58,8 @@ WifiRate	4	80	2
 LinkBudget	20 dBm	23 and 23 dBi	5 km at 5.8 GHz	-80 dBm
 LinkBudget	100 mW	2	200 m at 2.4 GHz	
 LinkBudget	1 W	30	10 mi at 900 MHz	-90
+LinkBudget	100mW	2	200 m at 2.4 GHz	
+LinkBudget	1W	30	10 mi at 900 MHz	-90
 Raid	5	6	4 TB
 Raid	10	6	8
 Raid	6	3	4 TB
@@ -72,6 +74,8 @@ Ups	216 Wh	50 W	90%
 Ups	1500 VA	300 W	
 Sla	99.9%
 Sla	99.999%
+Sla	50
+Sla	99.9 percent
 Sla	4 h a year
 Sla	30 min a month
 Sla	99.95

@@ -910,7 +910,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
 </div></section></div>
 <div class="frame"><section class="slide"><div class="in">
   <div class="kicker">صندوق الأدوات</div>
-  <h2><span data-i18n="100+ tools. Type what you need.">أدوات 100+ اكتب ما تحتاجه</span></h2>
+  <h2><span data-i18n="232 tools. Type what you need.">232 أداة. اكتب ما تحتاجه.</span></h2>
   <div class="body">
     <div class="grid g4">
       <div class="card b"><h3>المسار و التوجيه</h3><p>MTU لكل قفزة، MTR، الطريق للعودة، أي طريق، بوابة الخاص بك (VRRP / HSRP) ، بروتوكولات التوجيه على قطاعك، IPv6.</p></div>
@@ -1363,10 +1363,11 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
       .then(function (r) { return r.json().catch(function () { return { ok: false, why: 'no answer' }; }); })
       .then(function (j) {
         if (j.ok) { note.textContent = feedbackText('Sent — thank you! Adeeb reads every one.'); title.value = ''; body.value = ''; env.value = ''; }
-        else { note.textContent = feedbackText('Couldn’t send: ') + (j.why || feedbackText('try again in a minute')) + '.'; send.disabled = false; }
-        human = ''; try { turnstile.reset(); } catch (e) {}
+        else note.textContent = feedbackText('Couldn’t send: ') + (j.why || feedbackText('try again in a minute')) + '.';
+        fresh();   // round 6: every try uses a new human check - Send waits for it
       })
-      .catch(function () { note.textContent = feedbackText('Couldn’t reach the server — check your connection and try again.'); send.disabled = false; });
+      .catch(function () { note.textContent = feedbackText('Couldn’t reach the server — check your connection and try again.'); fresh(); });
+  function fresh() { human = ''; send.disabled = true; try { turnstile.reset(); } catch (e) {} if (typeof ready === 'function') ready(); }
   });
 
   // the download button always points at the newest release (falls back to the link built into the page)
