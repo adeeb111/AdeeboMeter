@@ -141,7 +141,10 @@ namespace AdeeboMeter
             using (var tb = new SolidBrush(Color.FromArgb(139, 148, 158))) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(Title, Draw.fSmall, tb, new RectangleF(0, 0, Width, 30 * S), cf);
             if (Editor != null) { Editor.Bg = Bg; Editor.Fg = Fg; Editor.Paint(g, mono, cw, chh, Pad, TopY, ClientSize, caretOn, Focused); return; }
 
-            int count = Relayout(), vis = VisibleRows; int maxScroll = Math.Max(0, count - vis); if (scroll > maxScroll) scroll = maxScroll;
+            int count = Relayout(), vis = VisibleRows;
+            // scrolled up: new output must not drag what you're reading away (1.1.6 test - alltools' stream made scrolling back impossible)
+            if (scroll > 0 && lastCount >= 0 && count > lastCount) scroll += count - lastCount; lastCount = count;
+            int maxScroll = Math.Max(0, count - vis); if (scroll > maxScroll) scroll = maxScroll;
             int first = Math.Max(0, count - vis - scroll), cols = Cols;
             float y = TopY; var sel = SelRange();
             for (int r = first; r < count && r < first + vis; r++, y += chh)
@@ -172,6 +175,8 @@ namespace AdeeboMeter
                     }
                 }
             }
+            var th = Thumb(count, vis);
+            if (th.Height > 0) { using (var tb = new SolidBrush(Color.FromArgb(28, 255, 255, 255))) g.FillRectangle(tb, Track()); using (var tb = new SolidBrush(Color.FromArgb(dragging || scroll > 0 ? 150 : 90, 139, 148, 158))) g.FillRectangle(tb, th); }
             if (scroll > 0)
             {
                 string s = "↓ " + scroll + " more - scroll down or type";
@@ -193,6 +198,22 @@ namespace AdeeboMeter
         protected override void OnMouseWheel(MouseEventArgs e) { if (Editor != null) { Editor.Wheel(e.Delta > 0 ? -3 : 3); Invalidate(); return; } int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + (e.Delta > 0 ? 3 : -3))); Invalidate(); }
         public void ScrollPage(int dir) { int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + dir * (VisibleRows - 2))); Invalidate(); }
         public void Follow() { scroll = 0; }
+        // ---------- a scroll bar on the right: drag it, or click above/below the thumb to page
+        int lastCount = -1; bool dragging; float dragOff;
+        RectangleF Track() { float S = Draw.S; return new RectangleF(ClientSize.Width - 9 * S, TopY, 6 * S, Math.Max(1, ClientSize.Height - TopY - 8 * Draw.S)); }
+        RectangleF Thumb(int count, int vis)
+        {
+            if (count <= vis) return RectangleF.Empty;
+            var t = Track(); float h = Math.Max(28 * Draw.S, t.Height * vis / count), top = count - vis - scroll;
+            return new RectangleF(t.X, t.Y + (t.Height - h) * top / (count - vis), t.Width, h);
+        }
+        void DragTo(float y)
+        {
+            int count = Relayout(), vis = VisibleRows; if (count <= vis) return; var t = Track(); var th = Thumb(count, vis);
+            float span = Math.Max(1, t.Height - th.Height), top = Math.Max(0, Math.Min(span, y - dragOff - t.Y)) / span * (count - vis);
+            scroll = Math.Max(0, Math.Min(count - vis, count - vis - (int)Math.Round(top))); Invalidate();
+        }
+        bool OnBar(Point p) { return Editor == null && p.X >= ClientSize.Width - 16 * Draw.S && p.Y >= TopY; }
         Point CellAt(Point p)
         {
             int count = Relayout(), vis = VisibleRows; int first = Math.Max(0, count - vis - scroll);
@@ -204,10 +225,17 @@ namespace AdeeboMeter
         {
             Focus(); if (Editor != null) return;
             if (e.Button == MouseButtons.Right) { if (SelectedText() != "") { Copy(); } else if (Paste != null) Paste(); return; }
+            if (e.Button == MouseButtons.Left && OnBar(e.Location))
+            {
+                int count = Relayout(), vis = VisibleRows; var th = Thumb(count, vis); if (th.Height <= 0) return;
+                if (e.Y >= th.Top && e.Y <= th.Bottom) { dragging = true; dragOff = e.Y - th.Top; Capture = true; Invalidate(); }
+                else ScrollPage(e.Y < th.Top ? 1 : -1);
+                return;
+            }
             if (e.Button == MouseButtons.Left) { selA = selB = CellAt(e.Location); selecting = true; Capture = true; Invalidate(); }
         }
-        protected override void OnMouseMove(MouseEventArgs e) { if (selecting) { selB = CellAt(e.Location); Invalidate(); } }
-        protected override void OnMouseUp(MouseEventArgs e) { if (selecting) { selecting = false; Capture = false; if (selA == selB) ClearSel(); Invalidate(); } }
+        protected override void OnMouseMove(MouseEventArgs e) { if (dragging) { DragTo(e.Y); return; } Cursor = OnBar(e.Location) ? Cursors.Default : Cursors.IBeam; if (selecting) { selB = CellAt(e.Location); Invalidate(); } }
+        protected override void OnMouseUp(MouseEventArgs e) { if (dragging) { dragging = false; Capture = false; Invalidate(); return; } if (selecting) { selecting = false; Capture = false; if (selA == selB) ClearSel(); Invalidate(); } }
         public Action Paste;
         public void ClearSel() { selA = selB = new Point(-1, -1); }
         Point[] SelRange()
