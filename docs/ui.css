@@ -1,3 +1,4 @@
+@import url("/base.css");
 /* Shared look for Learn, Games, Live and Files (with ui.js). Flat: solid surfaces, 1-px lines, blue for actions and the open
    section, soft section colours on icons only. Uses each page's own colour tokens (--page, --card, --line, --ink, --sub, --blue). */
 :root{--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0;--ui-blue:#1F6FEB}
@@ -72,3 +73,11 @@ body[data-sec="files"] .btn{width:100%}
 :root[data-pal] body{background:var(--page)}
 :root[data-pal] .tabs button[aria-selected=true],:root[data-pal] .ui-seg button[aria-selected="true"],:root[data-pal] .ui-seg button.on,:root[data-pal] .ui-sbar a.on,:root[data-pal] .ui-hero,:root[data-pal] .ui-hero .tag,:root[data-pal] .cta,:root[data-pal] .btn.go,:root[data-pal] .chips button.on,:root[data-pal] .ui-pills button.on,:root[data-pal] .sum,:root[data-pal] .sum .btn,:root[data-pal] .sum .err{color:var(--onblue,#fff)}
 :root[data-pal] .sum small span{color:var(--onblue,#fff)!important}
+
+/* ---- brand layer (23 Nov): one blue for every section, no side bars, sentence-case labels */
+:root{--c-learn:var(--blue);--c-games:var(--blue);--c-live:var(--blue);--c-files:var(--blue);--ui-blue:var(--face)}
+.one,.warn,[style*="border-left:4px"]{border-left:1px solid var(--line)!important}
+.one{background:color-mix(in srgb,var(--green) 9%,var(--card))}
+.warn{background:color-mix(in srgb,var(--amber) 11%,var(--card))}
+.lgname,.dd small,.dd label,.dd>span:first-child{text-transform:none!important;letter-spacing:0!important}
+.ui-row:active,.ui-hero:active{transform:scale(.98)}
