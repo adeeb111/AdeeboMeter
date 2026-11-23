@@ -82,19 +82,23 @@ namespace AdeeboMeter
             var card = new System.Collections.Generic.Dictionary<string, string> { { "name", awardName }, { "points", awardTotal.ToString(System.Globalization.CultureInfo.InvariantCulture) }, { "date", awardDate }, { "code", awardCode } };
             pointsFlash = L.T("Sending your card..."); pointsFlashUntil = DateTime.Now.AddSeconds(30); SyncPointsBtn(); pointsCanvas.Invalidate();
             cardSending = true;
-            Relay.Send(Relay.Json("hof", "", "", card), r =>
+            try
             {
-                try
+                Relay.Send(Relay.Json("hof", "", "", card), r =>
                 {
-                    BeginInvoke((Action)delegate
+                    try
                     {
-                        cardSending = false;
-                        pointsFlash = r.Ok ? L.T("Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.") : r.Queued ? L.T("No internet - the card goes the next time AdeeboMeter starts online.") : L.T("Couldn't send the card: ") + r.Why;
-                        pointsFlashUntil = DateTime.Now.AddSeconds(10); SyncPointsBtn(); pointsCanvas.Invalidate();
-                    });
-                }
-                catch (InvalidOperationException) { cardSending = false; }
-            });
+                        BeginInvoke((Action)delegate
+                        {
+                            cardSending = false;
+                            pointsFlash = r.Ok ? L.T("Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.") : r.Queued ? L.T("No internet - the card goes the next time AdeeboMeter starts online.") : L.T("Couldn't send the card: ") + r.Why;
+                            pointsFlashUntil = DateTime.Now.AddSeconds(10); SyncPointsBtn(); pointsCanvas.Invalidate();
+                        });
+                    }
+                    catch (InvalidOperationException) { cardSending = false; }
+                });
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; cardSending = false; pointsFlash = L.T("Couldn't send the card: ") + e.Message; pointsFlashUntil = DateTime.Now.AddSeconds(10); pointsCanvas.Invalidate(); }   // round 6: a send that throws never leaves "Sending..." stuck
         }
     }
 }

@@ -153,13 +153,20 @@ namespace AdeeboMeter
             var l = new List<Timeline.Ev>();
             try
             {
-                foreach (var line in Lines(FileFor(d, "ev"), 2000))
+                foreach (var line in Lines(FileFor(d, "ev"), 20000))   // round 6 ML-2: the whole day (bounded), then trimmed below
                 {
                     var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
                     l.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
                 }
             }
             catch (Exception e) { Program.Log("history events: " + e.Message); }
+            // more than 2,000: every problem (level 2) is kept, then the newest of the rest - never the morning at the cost of the evening
+            if (l.Count > 2000)
+            {
+                var keep = new HashSet<Timeline.Ev>(l.Where(z => z.Lv >= 2).Reverse().Take(2000));
+                foreach (var z in Enumerable.Reverse(l)) { if (keep.Count >= 2000) break; keep.Add(z); }
+                l = l.Where(keep.Contains).OrderBy(z => z.T).ToList();
+            }
             return l;
         }
         public static Day Load(DateTime d)

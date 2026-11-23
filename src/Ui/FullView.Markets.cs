@@ -338,7 +338,7 @@ namespace AdeeboMeter
                 ty += 34 * S;
             }
             var nx = MarketData.NextSession(MarketData.Exchanges.First(e => e.Name == "New York"), DateTime.UtcNow);
-            if (nx != null && nx.Item1 > DateTime.Now) { var span = nx.Item1 - DateTime.Now; MkText(g, L.T("Next open:") + " " + nx.Item1.ToString("dddd t", CultureInfo.CurrentCulture) + " · " + L.T("in") + " " + (span.Days > 0 ? span.Days + " " + L.T("d") + " " : "") + span.Hours + " " + L.T("h") + " " + span.Minutes + " " + L.T("min"), Paper.Small, Paper.Muted, x + 16 * S, ty + 4 * S); }
+            if (nx != null && nx.Item1 > DateTime.Now) { var span = nx.Item1 - DateTime.Now; MkText(g, L.T("Next open:") + " " + L.T("New York") + " " + nx.Item1.ToString("dddd t", CultureInfo.CurrentCulture) + " · " + L.T("in") + " " + (span.Days > 0 ? span.Days + " " + L.T("d") + " " : "") + span.Hours + " " + L.T("h") + " " + span.Minutes + " " + L.T("min"), Paper.Small, Paper.Muted, x + 16 * S, ty + 4 * S); }
             return r.Bottom + 16 * S;
         }
         float MkWatchDesk(Graphics g, float x, float y, float w)

@@ -60,7 +60,9 @@ jobs:
           if (-not $p.WaitForExit(55 * 60 * 1000)) { $p.Kill(); throw "deep test still running after 55 minutes" }
           $t = if (Test-Path AdeeboMeter-deeptest.txt) { Get-Content AdeeboMeter-deeptest.txt -Raw } else { "" }
           $t
+          if ($t -eq "") { throw "deep test wrote no report (exit $($p.ExitCode)) - it may have crashed" }
           if ($t -match ' FAILED') { throw "deep test failed" }
+          if ($p.ExitCode -ne 0 -and $t -notmatch 'INCOMPLETE') { throw "deep test exited $($p.ExitCode)" }
           if ($t -notmatch 'ALL PASSED') { Write-Output "::warning::deep test didn't finish inside its cap - see the report above" }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
         with:

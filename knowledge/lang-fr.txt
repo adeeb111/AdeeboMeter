@@ -323,7 +323,7 @@ Donate	Faire un don
 Other amount	Autre montant
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal, en dollars canadiens. AdeeboMeter n'envoie rien sur vous.
 Delete all saved history?	Supprimer tout l'historique enregistré ?
-days of history are deleted for good - this can't be undone.	jours d'historique sont supprimés définitivement - impossible d'annuler.
+days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too.	jours d'historique sont supprimés définitivement - impossible d'annuler. Le journal Neighbour wars et les relectures enregistrées partent aussi.
  tool matches	 outil correspond
  tools match	 outils correspondent
 All	Tout
@@ -669,7 +669,7 @@ Crowding on your channel	Encombrement de votre canal
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	plein = le plus fort sur votre canal ce jour-là · anneau = sur votre canal · point = entendu ici
 Journey	Trajet
 What did Windows Update break?	Qu'est-ce que Windows Update a cassé ?
-Every check close, plus up to 16 game servers and your best regions every 10 s.	Chaque contrôle de près, plus jusqu'à 16 serveurs de jeu et vos meilleures régions toutes les 10 s.
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	Contrôles rapprochés. En arrière-plan, les meilleures régions de vos jeux toutes les 10 s (5 serveurs) ; pendant que vous jouez, jusqu'à 16 serveurs chaque seconde.
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	La touche la plus légère. Routeur toutes les 30 s, internet toutes les 5 min, Wi-Fi toutes les 2 min, pas de suivi des appels.
 By goal	Par objectif
 Everything	Tout
@@ -1214,7 +1214,7 @@ Find what's wrong	Trouver le problème
 Type what you notice, or press Find what's wrong.	Écrivez ce que vous remarquez, ou appuyez sur Trouver le problème.
 Full checkup	Bilan complet
 Run full checkup	Lancer le bilan complet
-Include a speed test (100-300 MB)	Inclure un test de vitesse (100-300 Mo)
+Include a speed test (up to 500 MB)	Inclure un test de vitesse (jusqu'à 500 Mo)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	Ce PC, ses disques et applis, votre Wi-Fi, routeur, internet et noms - un rapport, le plus gros problème d'abord.
 See it  ›	Voir  ›
 Speed only	Vitesse seulement
@@ -1824,7 +1824,7 @@ Ten years of money	Dix années d’argent
 Text files	Fichiers texte
 That didn't switch cleanly - your previous view is back, nothing lost.	Changement incomplet; l’ancienne vue est rétablie.
 That file isn't there any more.	Ce fichier n’existe plus.
-The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	Le test 4K transfère environ 100-300 Mo pendant 20-30 secondes et ralentit les autres usages. Démarrer?
+The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	Le test 4K transfère jusqu'à 500 Mo pendant 20-30 secondes et ralentit les autres usages. Démarrer?
 The app's own connection:	Connexion de l’application :
 The biggest share is	La plus grande part :
 The busy number is the one games feel when someone else is downloading.	La valeur sous charge reflète le délai ressenti quand quelqu’un télécharge.
@@ -2530,7 +2530,7 @@ Light: always light, whatever Windows uses.	Light : toujours clair.
 No place yet.	Aucun lieu choisi.
 ) - Remove forgets it and the kept forecast.	) : Retirer efface le lieu et les prévisions.
 Accuracy	Précision
-Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.	Améliorée : actualisation toutes les 6 heures quand le PC fonctionne, sans rattrapage. Au plus 4 petites requêtes par jour.
+Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).	Améliorée : actualisation toutes les 6 heures quand le PC fonctionne, sans rattrapage. Au plus 4 petites requêtes par jour. Si le service météo ne répond pas, il réessaie toutes les 30 minutes jusqu'à obtenir une réponse.
 Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off.	Normale : prévisions pour aujourd’hui et 2 jours, actualisées quand il reste moins d’un jour, environ tous les 2 jours. La pluie à 2-3 jours peut varier.
 Temperature in	Température en
 How temperatures show in the widget and here.	Unités de température ici et dans le widget.
@@ -2598,7 +2598,7 @@ Pings your router 	Ping du routeur
  - tells Wi-Fi trouble apart from internet trouble.	 pour distinguer problèmes Wi-Fi et Internet.
 Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.	Désactivé : aucune alerte de coupure Internet; points Internet et DNS gris.
 One tiny ping to a public server 	Un petit ping au serveur public 
-, and one name lookup at most once a minute.	et au plus une recherche DNS par minute.
+, and one name lookup at most once a minute (every 15 s with this window open).	et au plus une recherche DNS par minute (toutes les 15 s quand cette fenêtre est ouverte).
 Off: no roam, signal or channel alerts.	Désactivé : aucune alerte de signal, canal ou itinérance.
 Asks Windows for signal, channel and access point 	Interroge Windows sur signal, canal et point d’accès 
  (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.	 (toutes les 10 s dans cette fenêtre). Utilise d’abord le service Wi-Fi Windows; netsh seulement en secours.
@@ -3804,3 +3804,6 @@ Postponed	Reporté
 Cancelled	Annulé
 Suspended	Suspendu
 Abandoned	Abandonné
+of them inside SNMP	dans SNMP
+Not fetched yet	Pas encore récupéré
+Toronto keeps the same hours	Toronto a les mêmes heures

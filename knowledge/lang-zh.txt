@@ -249,3 +249,4 @@ Postponed	延期
 Cancelled	取消
 Suspended	暂停
 Abandoned	中止
+of them inside SNMP	在 SNMP 中

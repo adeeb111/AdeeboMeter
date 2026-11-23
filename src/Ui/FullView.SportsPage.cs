@@ -16,7 +16,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         static readonly string[][] SpTabs = { new[] { "overview", "Overview" }, new[] { "teams", "My Teams" }, new[] { "live", "Live Scores" }, new[] { "fixtures", "Fixtures" }, new[] { "headlines", "Headlines" }, new[] { "stream", "Stream Check", "hl" } };
-        TextBox spLink; string spFilter = "all"; bool spMineOnly; readonly HashSet<string> spRemindedGames = new HashSet<string>(StringComparer.Ordinal);
+        TextBox spLink; string spFilter = "all"; bool spMineOnly;
 
         void PaintSports(Graphics g)
         {
@@ -303,7 +303,7 @@ namespace AdeeboMeter
                 var bc = new RectangleF(x + 18 * S, ty + 10 * S, 44 * S, 44 * S); using (var b = new SolidBrush(TeamColor(t))) g.FillEllipse(b, bc); var cs = g.MeasureString(Code(t), Draw.fTiny); MkSpText(g, Code(t), Draw.fTiny, Color.White, bc.X + (bc.Width - cs.Width) / 2, bc.Y + (bc.Height - cs.Height) / 2);
                 MkSpText(g, t, Paper.Head3, Paper.Head, x + 76 * S, ty + 20 * S);
                 var tg = games.Where(z => Sports.TeamIn(t, z)).ToList();
-                var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon").OrderBy(z => z.StartUtc).FirstOrDefault(); var offg = tg.FirstOrDefault(z => z.State == "off");
+                var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon" && (z.StartUtc == DateTime.MinValue || z.StartUtc > DateTime.UtcNow.AddHours(-3))).OrderBy(z => z.StartUtc).FirstOrDefault();   /* round 6: a game from hours ago is not "next" */ var offg = tg.FirstOrDefault(z => z.State == "off");
                 string a = live != null ? L.T("Live:") + " " + live.Home + " " + live.HomeScore + " - " + live.AwayScore + " " + live.Away : offg != null ? OffWord(offg) + ": " + offg.Home + " " + L.T("vs") + " " + offg.Away : done != null ? L.T("Last:") + " " + done.Home + " " + done.HomeScore + " - " + done.AwayScore + " " + done.Away : L.T("No game in today's feeds");
                 string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + (soon.StartUtc > DateTime.MinValue.AddDays(2) ? " · " + soon.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) : "") : "";   // R2-158: no time is no time, not year 1
                 MkSpText(g, a, Paper.Body, live != null ? Paper.Down : Paper.Ink, x + w * 0.32f, ty + 12 * S); if (b2 != "") MkSpText(g, b2, Paper.Body, Paper.Ink, x + w * 0.32f, ty + 34 * S);
@@ -487,14 +487,6 @@ namespace AdeeboMeter
         }
 
         // the kick-off reminder (only when ticked): once, 15 minutes before a followed team's game
-        void SpReminder()
-        {
-            if (!Cfg.KickoffRemind || !Cfg.Sports) return;
-            Sports.Game next; lock (Sports.k) next = SpNext(Sports.Games.ToList());
-            if (next == null || next.State != "soon") return;
-            var mins = (next.StartUtc - DateTime.UtcNow).TotalMinutes;
-            string gk = next.Home + "|" + next.Away + "|" + next.StartUtc.Ticks;   // R2-159: once per game, not once per 30 minutes for every team
-            if (mins > 0 && mins <= 15 && !spRemindedGames.Contains(gk)) { spRemindedGames.Add(gk); if (spRemindedGames.Count > 50) spRemindedGames.Clear(); Alerts.Raise("kickoff", next.Home + " " + L.T("vs") + " " + next.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0); }
-        }
+        void SpReminder() { Sports.ReminderTick(); }   // round 6 M-1: the work is in Sports, run by the corner too
     }
 }

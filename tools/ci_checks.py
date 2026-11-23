@@ -31,7 +31,7 @@ for f in glob.glob('src/**/*.cs', recursive=True):
     for n, l in enumerate(open(f, encoding='utf-8', errors='replace'), 1):
         code, com = comment_of(l.rstrip('\n'))
         if com is None or not code.strip(): continue
-        if stmt.search(com) and not re.match(r'\s*(e\.g\.|eg|i\.e\.|like|as in|was|old|before|then|so|see)\b', com):
+        if stmt.search(com):   # round 6: no word in front of the code excuses it
             bad.append('%s:%d: code after // looks swallowed: %s' % (f, n, com.strip()[:120]))
 
 # 2 ---------------------------------------------------------------------------------------------------------------
@@ -59,6 +59,7 @@ m = re.search(r'WORDS\s*=\s*"([^"]+)"\.split\(" "\)', app) or re.search(r'WORDS\
 phone_words = (m.group(1).split(' ') if m and not m.group(1).startswith('[') else json.loads(m.group(1).replace("'", '"'))) if m else None
 if not phone_words or phone_words != pc_words: bad.append('docs/app.html: the matching-word list differs from src/Remote/RemoteWords.cs')
 rem = open('src/Remote/Remote.cs', encoding='utf-8').read()
+if 'm.wv !== 2' not in app: bad.append('docs/app.html: the phone no longer refuses fewer matching words than it asked for (R-1)')
 for label in ['"hi2|', '"key2|']:
     if label not in rem or label.replace('"', '"') not in app: bad.append('pairing: %s is signed on one side only (Remote.cs vs app.html)' % label)
 

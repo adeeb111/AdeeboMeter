@@ -52,7 +52,7 @@ namespace AdeeboMeter
             float top = y + 6 * S; railEnd = 0;
             // ---- the questions: a rail, or a chip row on a narrow window
             if (!idxSeen) { idxSeen = true; if (tbQ == "") tbQ = "*"; }   // the first look is every tool (22 Nov)
-            int every = Tools2().Count(t => !SnmpView(t.Id) || t.Id == "snmp");
+            int every = Tools2().Count;   // Adeeb, 23 Nov: the same number as the docs and the site (232) - SNMP's views count, though they live in one card
             var items = new List<string[]> { new[] { "*", L.T("All tools"), every.ToString(CultureInfo.CurrentCulture) }, new[] { "", "★ " + L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
             foreach (var qd in Questions) items.Add(new[] { qd[0], L.T(qd[1]), ToolsOf(qd[0]).Count(t => !SnmpView(t.Id) || t.Id == "snmp").ToString(CultureInfo.CurrentCulture) });
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
@@ -102,7 +102,7 @@ namespace AdeeboMeter
                 else if (tbQ == "*")
                 {
                     rows = Tools2().Where(t => !SnmpView(t.Id) || t.Id == "snmp").ToList();
-                    title = L.T("All tools"); count = rows.Count + " " + L.T("tools") + " · " + L.T("hover one for what it does");
+                    title = L.T("All tools"); int snmpIn = Tools2().Count(t => SnmpView(t.Id) && t.Id != "snmp"); count = Tools2().Count + " " + L.T("tools") + (snmpIn > 0 ? " · " + snmpIn + " " + L.T("of them inside SNMP") : "") + " · " + L.T("hover one for what it does");
                 }
                 else if (tbQ == "" || Questions.All(z => z[0] != tbQ))
                 {

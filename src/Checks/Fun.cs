@@ -220,7 +220,7 @@ namespace AdeeboMeter
                 using (var bmp = new Bitmap(Z, Z, PixelFormat.Format32bppArgb))
                 using (var gr = Graphics.FromImage(bmp))
                 {
-                    gr.SmoothingMode = SmoothingMode.AntiAlias; gr.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; gr.TextContrast = Draw.Contrast;
+                    gr.SmoothingMode = SmoothingMode.AntiAlias; gr.TextRenderingHint = Draw.ImageText; gr.TextContrast = Draw.Contrast;
                     using (var bg = new LinearGradientBrush(new Rectangle(0, 0, Z, Z), Color.FromArgb(24, 20, 48), Color.FromArgb(90, 24, 70), 45f)) gr.FillRectangle(bg, 0, 0, Z, Z);
                     Color gc = g.StartsWith("A", StringComparison.Ordinal) ? Color.FromArgb(70, 220, 120) : g == "B" || g == "C" ? Color.FromArgb(255, 196, 60) : Color.FromArgb(255, 90, 90);
                     using (var f1 = new Font("Segoe UI", 54, FontStyle.Bold, GraphicsUnit.Pixel)) using (var wb = new SolidBrush(Color.White)) gr.DrawString("my network got roasted", f1, wb, 72, 70);

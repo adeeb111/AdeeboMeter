@@ -204,7 +204,7 @@
   }
   function First(t) { var a = anyNums(t); return a.length ? a[0] : NaN; }
   function Need(box, what) { return [R(2, box, what, "")]; }
-  function Pct(v) { return F(v, v < 1 ? "0.###" : "0.##") + "%"; }
+  function Pct(v) { var s = F(v, v < 1 ? "0.###" : "0.##"); if (v < 100 && s === "100") s = F(v, "0.#####"); return s + "%"; }   // as the app
   function Dotted(v) { return U(v); }
   function Wildcard(text) {
     var t = String(text || "").trim(); if (t === "") return Need("Mask", "type a mask (255.255.252.0), a prefix (/22) or a wildcard (0.0.3.255)");
@@ -220,6 +220,7 @@
     var rows = [R(0, "Mask", Dotted(mask), ""), R(0, "Prefix", "/" + prefix, ""), R(0, "Wildcard", Dotted(wild), "What an ACL or OSPF network line wants: the mask turned inside out."),
       R(3, "Addresses", I(Math.pow(2, 32 - prefix)) + " in the block · " + I(hosts) + " usable" + (prefix === 31 ? " (point-to-point, RFC 3021)" : ""), ""),
       R(3, "In an ACL", "permit ip " + Dotted(ex) + " " + Dotted(wild) + " any  - matches " + Dotted(ex) + "/" + prefix, "Swap " + Dotted(ex) + " for your block's first address.")];   // FRESH-002
+    if (!zero && /^255\.255\.255\.255$/.test(t)) rows.unshift(R(1, "Read as", "the /32 mask - one address. As an ACL wildcard, 255.255.255.255 means every address (/0): type /0 for that", ""));   // as the app (bug-hunt ML-105)
     if (zero) rows.unshift(R(1, "Read as", "the /0 mask - every address. As an ACL wildcard, 0.0.0.0 means one exact address (/32): type /32 for that", ""));   // FRESH-001
     return rows;
   }
@@ -319,7 +320,7 @@
   }
   function LinkBudget(txText, gainText, distText, sensText) {
     var tx = First(txText); if (isNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
-    if (/\bm?W\b/i.test(txText || "") && !/dbm/i.test(txText)) { if (tx <= 0) return Need("Transmit power", "has to be more than 0 W"); tx = 10 * Math.log10(tx * (/\bmw\b/i.test(txText) ? 1 : 1000)); }   // FRESH-012/013
+    if (/(^|[^a-z])m?w\b/i.test(txText || "") && !/dbm/i.test(txText)) { if (tx <= 0) return Need("Transmit power", "has to be more than 0 W"); tx = 10 * Math.log10(tx * (/(^|[^a-z])mw\b/i.test(txText) ? 1 : 1000)); }   // round 6 S-3: "100mW" and "1W" with no space, as the app   // FRESH-012/013
     var gains = anyNums(gainText), gt = gains.length > 0 ? gains[0] : 0, gr = gains.length > 1 ? gains[1] : gt;
     var dt = String(distText || "").toLowerCase(), dm = /(-?[0-9.,]+)\s*(km|m|mi)\b/.exec(dt), fm = /(-?[0-9.,]+)\s*(ghz|mhz)/.exec(dt);   // FRESH-014
     if (!dm || !fm) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");
@@ -378,9 +379,9 @@
       R(3, "On paper", Dur(hours * 3600) + " from " + F(wh, "0") + " Wh at " + Pct(eff * 100) + " efficiency", ""), R(3, "Rule of thumb", "batteries lose a lot of runtime after 3-5 years - test it once a year", "")];
   }
   function Sla(text) {
-    var t = String(text || "").trim().toLowerCase(), up, n = First(t), Year = 365.25 * 86400;
+    var t = String(text || "").trim().toLowerCase().replace(/\s*(per\s*cent|percent|pct)\b/g, "%"), up, n = First(t), Year = 365.25 * 86400;
     if (isNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
-    if (t.indexOf("%") >= 0 || (n > 90 && n < 100 && !/[a-z]/.test(t))) up = n / 100;
+    if (t.indexOf("%") >= 0 || (n > 0 && n <= 100 && !/[a-z]/.test(t))) up = n / 100;   // round 6 S-2: a bare number is a percentage, as the app
     else { var secs = Time(t.replace(/\s*(a|per|\/)\s*(year|quarter|month|week|day).*$/, "").trim()); if (isNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year"); var per = t.indexOf("quarter") >= 0 ? Year / 4 : t.indexOf("month") >= 0 ? Year / 12 : t.indexOf("week") >= 0 ? 7 * 86400 : t.indexOf("day") >= 0 ? 86400 : Year; up = 1 - secs / per; }
     if (up <= 0 || up > 1) return Need("Uptime", "has to be between 0 and 100%");
     var down = 1 - up, D = function (s2) { return down === 0 ? "none" : Dur(s2); };   // FRESH-020

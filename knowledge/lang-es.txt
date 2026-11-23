@@ -323,7 +323,7 @@ Donate	Donar
 Other amount	Otra cantidad
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal, en dólares canadienses. AdeeboMeter no envía datos sobre ti.
 Delete all saved history?	¿Borrar todo el historial guardado?
-days of history are deleted for good - this can't be undone.	días de historial se borrarán para siempre. No se puede deshacer.
+days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too.	días de historial se borrarán para siempre. No se puede deshacer. También se borran el registro de Neighbour wars y las repeticiones guardadas.
  tool matches	 herramienta coincide
  tools match	 herramientas coinciden
 All	Todos
@@ -669,7 +669,7 @@ Crowding on your channel	Saturación de tu canal
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	relleno = señal más fuerte ese día · aro = en tu canal · punto = detectado aquí
 Journey	Recorrido
 What did Windows Update break?	¿Qué rompió Windows Update?
-Every check close, plus up to 16 game servers and your best regions every 10 s.	Comprobaciones frecuentes, hasta 16 servidores de juegos y tus mejores regiones cada 10 s.
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	Comprobaciones seguidas. En segundo plano, las mejores regiones de tus juegos cada 10 s (5 servidores); mientras juegas, hasta 16 servidores cada segundo.
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	El mínimo consumo. Router cada 30 s, internet cada 5 min, Wi-Fi cada 2 min, sin supervisar llamadas.
 By goal	Por objetivo
 Everything	Todo
@@ -1210,7 +1210,7 @@ Find what's wrong	Encontrar el problema
 Type what you notice, or press Find what's wrong.	Escribe qué notas o pulsa Encontrar el problema.
 Full checkup	Revisión completa
 Run full checkup	Ejecutar revisión completa
-Include a speed test (100-300 MB)	Incluir prueba de velocidad (100-300 MB)
+Include a speed test (up to 500 MB)	Incluir prueba de velocidad (hasta 500 MB)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	Este PC, discos, apps, Wi-Fi, router, internet y nombres. Un informe con el problema principal primero.
 See it  ›	Verlo  ›
 Speed only	Solo velocidad
@@ -1815,7 +1815,7 @@ Ten years of money	Diez años de dinero
 Text files	Archivos de texto
 That didn't switch cleanly - your previous view is back, nothing lost.	No se pudo cambiar correctamente. Volviste a la vista anterior sin perder nada.
 That file isn't there any more.	Ese archivo ya no está.
-The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	La prueba 4K descarga y sube unos 100-300 MB durante 20-30 segundos. Las demás actividades de tu conexión irán más lentas mientras tanto. ¿Iniciar?
+The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	La prueba 4K descarga y sube hasta 500 MB durante 20-30 segundos. Las demás actividades de tu conexión irán más lentas mientras tanto. ¿Iniciar?
 The app's own connection:	Conexión de la propia app:
 The biggest share is	La mayor parte es
 The busy number is the one games feel when someone else is downloading.	El valor con carga es el que sienten los juegos cuando alguien descarga.
@@ -2519,7 +2519,7 @@ Light: always light, whatever Windows uses.	Light: siempre claro, sin importar e
 No place yet.	Sin ubicación.
 ) - Remove forgets it and the kept forecast.	). Eliminar olvida el lugar y su pronóstico guardado.
 Accuracy	Precisión
-Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.	Mejor: actualiza cada 6 horas con el PC encendido, sin recuperar actualizaciones omitidas. Como máximo 4 consultas pequeñas al día.
+Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).	Mejor: actualiza cada 6 horas con el PC encendido, sin recuperar actualizaciones omitidas. Como máximo 4 consultas pequeñas al día. Si el servicio del tiempo no responde, lo intenta de nuevo cada 30 minutos hasta que conteste.
 Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off.	Normal: consulta hoy y los próximos 2 días. Espera hasta que quede menos de un día, aproximadamente una consulta cada 2 días. La hora de lluvia a 2-3 días puede variar.
 Temperature in	Temperatura en
 How temperatures show in the widget and here.	Cómo aparece la temperatura en el widget y aquí.
@@ -2587,7 +2587,7 @@ Pings your router 	Hace ping al router
  - tells Wi-Fi trouble apart from internet trouble.	 para distinguir problemas de Wi-Fi e internet.
 Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.	Desactivado: sin avisos de corte de internet; los puntos Internet y DNS quedan grises.
 One tiny ping to a public server 	Un ping pequeño a un servidor público 
-, and one name lookup at most once a minute.	y una consulta de nombre como máximo por minuto.
+, and one name lookup at most once a minute (every 15 s with this window open).	y una consulta de nombre como máximo por minuto (cada 15 s con esta ventana abierta).
 Off: no roam, signal or channel alerts.	Desactivado: sin avisos de cambio de acceso, señal o canal.
 Asks Windows for signal, channel and access point 	Consulta a Windows la señal, canal y punto de acceso 
  (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.	 (cada 10 s con esta ventana abierta). Consulta directamente al servicio Wi-Fi de Windows, con poco consumo. Solo si no responde ejecuta la pequeña herramienta netsh.
@@ -5087,3 +5087,6 @@ Postponed	Aplazado
 Cancelled	Cancelado
 Suspended	Suspendido
 Abandoned	Abandonado
+of them inside SNMP	de ellas dentro de SNMP
+Not fetched yet	Aún sin datos
+Toronto keeps the same hours	Toronto tiene el mismo horario

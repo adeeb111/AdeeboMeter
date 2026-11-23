@@ -627,7 +627,7 @@ namespace AdeeboMeter
             int n, m;
             switch (id)
             {
-                case "mtu": return "a few seconds to trace, then about 8 small pings per hop you measure";
+                case "mtu": return "a few seconds to trace, then about 12 small pings per hop you measure";
                 case "dnsrace": return "10-20 seconds for five servers (21 lookups each); longer if a server is slow";
                 case "hotel": return "about 10 seconds, up to 20 on a slow network";
                 case "whats": return "10-20 seconds - it re-tests what's out of date";
@@ -1142,7 +1142,7 @@ namespace AdeeboMeter
                 if (tbAward != "" && tbRows != null && !tbBusy)
                 {
                     float hw = g.MeasureString(L.T(tbTitle).ToUpperInvariant() + "  ·  " + L.T("DONE") + " 00:00", Draw.fTiny).Width;   // the title as drawn (French too)
-                    using (var gb = new SolidBrush(Theme.Green)) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
+                    using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
                 }
                 bool isEx = Examples.IsExample(tbRows);   // an example is never saved, copied or compared
                 PrevRun prev = null; bool canCompare = !tbBusy && !isEx && tbRows != null && tbPrev.TryGetValue(tbSel, out prev) && prev.Inputs == tbRowsKey && prev.Rows != tbRows;

@@ -152,7 +152,7 @@ namespace AdeeboMeter
             var rainAt = hours.Take(24).FirstOrDefault(h => h.Pop >= 50);
             var items = new List<string[]>();
             if (next != null) items.Add(new[] { next.Home + " " + L.T("vs") + " " + next.Away, next.State == "live" ? L.T("playing now") : next.StartUtc.ToLocalTime().ToString("dddd h:mm tt", CultureInfo.CurrentCulture) + " · " + L.T("a team you follow"), "sports" });
-            if (ses != null) items.Add(new[] { nst == "open" ? L.T("Markets are open") : L.T("Markets open") + " " + ses.Item1.ToString("dddd h:mm tt", CultureInfo.CurrentCulture), L.T("New York and Toronto"), "trade" });
+            if (ses != null) items.Add(new[] { nst == "open" ? L.T("Markets are open") : L.T("Markets open") + " " + ses.Item1.ToString("dddd h:mm tt", CultureInfo.CurrentCulture), L.T("New York") + " · " + L.T("Toronto keeps the same hours"), "trade" });   /* round 6: the times are New York's */
             if (rainAt != null) items.Add(new[] { L.T("Rain from about") + " " + rainAt.Utc.ToLocalTime().ToString("h tt", CultureInfo.CurrentCulture), rainAt.Pop + "% " + L.T("chance"), "" });
             if (items.Count == 0) OlText(g, L.T("Nothing planned - follow a team or turn on the markets numbers."), Draw.fSmall, Theme.Muted, ux + 20 * S, uy);
             foreach (var it in items.Take(3))

@@ -323,7 +323,7 @@ Donate	تبرّع
 Other amount	مبلغ آخر
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	(بايبال) بالدولار الكندي لا شيء عنك أرسلت من قبل AdeeboMeter.
 Delete all saved history?	هل تريد حذف كل السجل المحفوظ؟
-days of history are deleted for good - this can't be undone.	أيام من السجل ستُحذف نهائيًا. لا يمكن التراجع.
+days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too.	أيام من السجل ستُحذف نهائيًا. لا يمكن التراجع. ويُحذف أيضًا سجل Neighbour wars والإعادات المحفوظة.
  tool matches	 أدوات تطابق
  tools match	 أدوات مطابقة
 All	الكل
@@ -501,7 +501,7 @@ Your upload	سرعة الرفع لديك
 A backup sends	إرسال دعم
 Router buffer holds	يستوعب مخزن الراوتر المؤقت
 Queue	قائمة الانتظار
-Network jitter	صدمة الشبكة
+Network jitter	تذبذب الشبكة
 Jitter buffer	مخزن تعويض التذبذب
 Network delay	تأخير الشبكة
 A far-away old device	جهاز قديم بعيد
@@ -669,7 +669,7 @@ Crowding on your channel	حشود على قناة
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	الملي = أقوى على قناة اليوم · الحلقة = على قناتك · نقطة = سمعت هنا
 Journey	رحلة
 What did Windows Update break?	ما الذي كسر تحديث Windows؟
-Every check close, plus up to 16 game servers and your best regions every 10 s.	كل شيك يغلق، بالإضافة إلى خوادم اللعبة 16 وأفضل مناطقك كل 10 s.
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	فحوص متقاربة. في الخلفية، أفضل مناطق ألعابك كل 10 ثوانٍ (5 خوادم)؛ وأثناء اللعب، حتى 16 خادمًا كل ثانية.
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	أخف إعداد: فحص الراوتر كل 30 s، والإنترنت كل 5 min، وWi-Fi كل 2 min، دون مراقبة المكالمات.
 By goal	حسب الهدف
 Everything	كل شيء
@@ -1210,7 +1210,7 @@ Find what's wrong	إكتشف ما الخطأ
 Type what you notice, or press Find what's wrong.	اكتب ما لاحظتيه أو اضغط على "البحث عن الخطأ"
 Full checkup	فحص كامل
 Run full checkup	تشغيل فحص شامل
-Include a speed test (100-300 MB)	إضافة اختبار السرعة (100-300 MB)
+Include a speed test (up to 500 MB)	إضافة اختبار السرعة (حتى 500 MB)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	هذا الكمبيوتر، أقراصه وتطبيقاتها، Wi-Fi الخاص بك، راوتر، الإنترنت والأسماء - تقرير واحد، أكبر مشكلة أولا.
 See it  ›	انظروا إليها
 Speed only	السرعة فقط
@@ -1815,7 +1815,7 @@ Ten years of money	عشر سنوات من المال
 Text files	ملفات نصية
 That didn't switch cleanly - your previous view is back, nothing lost.	لم يتغير ذلك بشكل واضح - نظرتك السابقة عادت، لا شيء ضائع.
 That file isn't there any more.	هذا الملف لم يعد موجوداً
-The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	يشغّل فحص 4K اختبار سرعة ينزّل ويرفع نحو 100-300 MB خلال 20-30 ثانية. ستتباطأ الأنشطة الأخرى على اتصالك أثناء الاختبار. هل تريد البدء؟
+The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	يشغّل فحص 4K اختبار سرعة ينزّل ويرفع حتى 500 MB خلال 20-30 ثانية. ستتباطأ الأنشطة الأخرى على اتصالك أثناء الاختبار. هل تريد البدء؟
 The app's own connection:	اتصال التطبيق نفسه:
 The biggest share is	الجزء الأكبر هو
 The busy number is the one games feel when someone else is downloading.	الرقم المزدحم هو واحد الألعاب تشعر عندما شخص آخر تنزيل.
@@ -2519,7 +2519,7 @@ Light: always light, whatever Windows uses.	Light: فاتح دائمًا، مه�
 No place yet.	لم يُحدّد مكان بعد.
 ) - Remove forgets it and the kept forecast.	) - إزالة تنسى ذلك والتنبؤات المحفوظة.
 Accuracy	الدقة
-Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.	أفضل: يتم تحديث كل ساعات 6 بينما يعمل الكمبيوتر (لا يتم التقاط تلك التي تفتقد) - في الغالب 4 طلبات صغيرة يوميا.
+Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).	أفضل: يتم تحديث كل ساعات 6 بينما يعمل الكمبيوتر (لا يتم التقاط تلك التي تفتقد) - في الغالب 4 طلبات صغيرة يوميا. إن تعذّر الوصول إلى خدمة الطقس، يعيد المحاولة كل 30 دقيقة حتى تستجيب.
 Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off.	عادي: طلب واحد لتوقّعات اليوم واليومين التاليين (2)، ثم لا استعلامات حتى يتبقّى أقل من يوم — أي طلب كل 2 يوم تقريبًا. قد لا تكون مواعيد المطر بعد 2-3 أيام دقيقة.
 Temperature in	وحدة الحرارة
 How temperatures show in the widget and here.	كيف تظهر درجات الحرارة في الويجيت وهنا.
@@ -2587,7 +2587,7 @@ Pings your router 	يرسل طلبات Ping إلى الراوتر
  - tells Wi-Fi trouble apart from internet trouble.	 - يخبر Wi-Fi مشكلة إضافة إلى مشكلة الإنترنت.
 Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.	لا توجد تحذيرات "إنترنت صامت" إنترنت وقطرات DNS تصبح رمدية
 One tiny ping to a public server 	طلب Ping صغير واحد إلى خادم عام 
-, and one name lookup at most once a minute.	وبحث اسم واحد على الأكثر مرة في الدقيقة
+, and one name lookup at most once a minute (every 15 s with this window open).	وبحث اسم واحد على الأكثر مرة في الدقيقة (كل 15 ثانية مع فتح هذه النافذة).
 Off: no roam, signal or channel alerts.	لا توجد إشعارات التجوال أو الإشارة أو القناة
 Asks Windows for signal, channel and access point 	يطلب من Windows إشارة، قناة ونقطة وصول 
  (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.	 (كل 10s بينما هذه النافذة مفتوحة). يطلب خدمة Windows' Wi-Fi مباشرة - رخيصة. فقط إذا لم ترد هذه الخدمة فإنها تبدأ أداة صغيرة Windows (netsh) بدلا من ذلك.
@@ -5087,3 +5087,6 @@ Postponed	مؤجلة
 Cancelled	ملغاة
 Suspended	معلّقة
 Abandoned	أُوقفت
+of them inside SNMP	منها داخل SNMP
+Not fetched yet	لم يُجلب بعد
+Toronto keeps the same hours	تورونتو بالمواعيد نفسها

@@ -724,7 +724,7 @@ namespace AdeeboMeter
             {
                 char ch = prog[i];
                 if (ch == ';' || ch == '\n') { yield return sb.ToString(); sb.Clear(); i++; continue; }
-                if (ch == 's' && sb.ToString().Trim() == "" && i + 1 < prog.Length) { char d = prog[i + 1]; sb.Append(ch).Append(d); i += 2; delimited(d); delimited(d); continue; }
+                if (ch == 's' && Regex.IsMatch(sb.ToString().Trim(), @"^((\d+|\$)(,(\d+|\$))?|/(?:[^/\\]|\\.)*/)?$") && i + 1 < prog.Length) { char d = prog[i + 1]; sb.Append(ch).Append(d); i += 2; delimited(d); delimited(d); continue; }
                 if (ch == '/' && sb.ToString().Trim() == "") { sb.Append(ch); i++; delimited('/'); continue; }
                 sb.Append(ch); i++;
             }
@@ -736,8 +736,14 @@ namespace AdeeboMeter
             for (int i = 0; i < a.Count; i++) { string w = a[i]; if (w == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (Regex.IsMatch(w, "^-[nEri]+$")) { quiet |= w.Contains("n"); ere |= w.Contains("E") || w.Contains("r"); inPlace |= w.Contains("i"); continue; } if (progs.Count == 0) progs.Add(w); else files.Add(w); }
             if (progs.Count == 0) { Err(c, "usage: sed 's/old/new/g' [file]   ·   sed -n '2,5p'   ·   sed '/re/d'   ·   sed -i 's/a/b/' file"); return 2; }
             var steps = new List<Func<string, int, int, string>>();   // (line, number, total) -> the line, null = deleted, "\u0000p" in front = print it too
-            foreach (var pr in progs.SelectMany(z => SedSplit(z)).Select(z => z.Trim()).Where(z => z != ""))
+            foreach (var pr0 in progs.SelectMany(z => SedSplit(z)).Select(z => z.Trim()).Where(z => z != ""))
             {
+                string pr = pr0;
+                // round 6: an address in front of s - N, N,M, $ or /re/ - limits it to those lines (2s/a;b/c/)
+                Func<string, int, int, bool> inAddr = (x, n, tot) => true;
+                var am = Regex.Match(pr, @"^(\d+|\$)(?:,(\d+|\$))?(?=s)");
+                if (am.Success) { string f0 = am.Groups[1].Value, t0 = am.Groups[2].Success ? am.Groups[2].Value : f0; pr = pr.Substring(am.Length); inAddr = (x, n, tot) => { int from = f0 == "$" ? tot : int.Parse(f0, CultureInfo.InvariantCulture), to = t0 == "$" ? tot : int.Parse(t0, CultureInfo.InvariantCulture); return n >= from && n <= to; }; }
+                else { var ra = Regex.Match(pr, @"^/((?:[^/\\]|\\.)*)/(?=s)"); if (ra.Success) { Regex arx; try { arx = new Regex(ere ? ra.Groups[1].Value : BreToNet(ra.Groups[1].Value), RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + ra.Groups[1].Value + ": not a pattern"); return 2; } pr = pr.Substring(ra.Length); inAddr = (x, n, tot) => arx.IsMatch(x); } }
                 var sm = Regex.Match(pr, @"^s(.)(.*?)(?<!\\)\1(.*?)(?<!\\)\1([gipI0-9]*)$");
                 if (sm.Success)
                 {
@@ -745,7 +751,7 @@ namespace AdeeboMeter
                     Regex rx; try { rx = new Regex(ere ? pat : BreToNet(pat), flags.IndexOf('i') >= 0 || flags.IndexOf('I') >= 0 ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + pat + ": not a pattern"); return 2; }
                     string rep = Regex.Replace(sm.Groups[3].Value.Replace("\\" + sep, sep).Replace("$", "$$"), @"\\(\d)", "$${$1}").Replace("\\&", "\u0002").Replace("&", "$0").Replace("\u0002", "&").Replace("\\n", "\n").Replace("\\t", "\t");
                     bool g = flags.Contains("g"), p = flags.Contains("p"); int nth; int.TryParse(Regex.Match(flags, @"\d+").Value, out nth);
-                    steps.Add((x, n, tot) => { string y; if (g) y = rx.Replace(x, rep); else if (nth > 1) { int k = 0; y = rx.Replace(x, m => ++k == nth ? m.Result(rep) : m.Value); } else y = rx.Replace(x, rep, 1); return p && y != x ? "\u0000p" + y : y; });
+                    var only = inAddr; steps.Add((x, n, tot) => { if (!only(x, n, tot)) return x; string y; if (g) y = rx.Replace(x, rep); else if (nth > 1) { int k = 0; y = rx.Replace(x, m => ++k == nth ? m.Result(rep) : m.Value); } else y = rx.Replace(x, rep, 1); return p && y != x ? "\u0000p" + y : y; });
                     continue;
                 }
                 var dm = Regex.Match(pr, @"^/(.*)/(I?)([dp])$");

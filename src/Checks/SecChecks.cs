@@ -136,7 +136,7 @@ namespace AdeeboMeter
             bool pending = KeyExists(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") || KeyExists(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending");
             int days = last == DateTime.MinValue ? -1 : (int)(DateTime.Now - last).TotalDays;
             int lv = days < 0 ? 3 : days > 60 ? 2 : days > 35 ? 1 : 0; if (pending && lv == 0) lv = 1;
-            return One(lv, "Windows Update", (days < 0 ? "last update unknown" : "last update installed " + days + " days ago (" + last.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")") + (pending ? " · RESTART NEEDED to finish updating" : ""), lv >= 1 ? "Security fixes come every month; a restart is what actually installs them." : "", "ms-settings:windowsupdate");
+            return One(lv, "Windows Update", (days < 0 ? "last update unknown" : "last update installed " + days + (days == 1 ? " day ago (" : " days ago (") + last.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")") + (pending ? " · RESTART NEEDED to finish updating" : ""), lv >= 1 ? "Security fixes come every month; a restart is what actually installs them." : "", "ms-settings:windowsupdate");
         }
         // end of security fixes, from Microsoft's lifecycle pages as of this release: build -> { name, Home/Pro end, Enterprise/Education end }
         static readonly string[][] Life = {
@@ -553,7 +553,7 @@ namespace AdeeboMeter
             {
                 string err; var c = SiteCert(h, SslProtocols.Tls12 | (SslProtocols)12288, out err);
                 if (c == null) return R(3, "Certificate · " + h, "couldn't check - " + Draw.Trunc(err, 60), "", null);
-                using (c) { int d = DateTime.Now > c.NotAfter ? -1 : (int)(c.NotAfter - DateTime.Now).TotalDays; /* expired is expired, even 12 hours ago */ return R(d < 0 ? 2 : d < 14 ? 2 : d < 30 ? 1 : 0, "Certificate · " + h, d < 0 ? "EXPIRED " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : d + " days left (" + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")", d < 30 ? "Renew it before visitors get a warning." : "", null); }
+                using (c) { int d = DateTime.Now > c.NotAfter ? -1 : (int)(c.NotAfter - DateTime.Now).TotalDays; /* expired is expired, even 12 hours ago */ return R(d < 0 ? 2 : d < 14 ? 2 : d < 30 ? 1 : 0, "Certificate · " + h, d < 0 ? "EXPIRED " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : d + (d == 1 ? " day left (" : " days left (") + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")", d < 30 ? "Renew it before visitors get a warning." : "", null); }
             });
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5397", Justification = "asking whether a site still accepts old TLS is the point of the check")]

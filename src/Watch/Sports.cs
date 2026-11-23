@@ -118,6 +118,23 @@ namespace AdeeboMeter
 
         // ---------- fetching: one background pass for every sport and the headlines, at most every 5 minutes
         public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= 5; } }
+        // round 6 M-1: the kick-off reminder runs whether the window is open or not (AppCtx calls this once a minute or so), and
+        // looks at every followed game - a live one no longer hides the next kick-off. With the window closed the feed is
+        // refreshed every 30 minutes, and only while a reminder is on and a team is followed.
+        static readonly HashSet<string> reminded = new HashSet<string>(); static DateTime lastBgFetch = DateTime.MinValue;
+        public static void ReminderTick()
+        {
+            if (!Cfg.KickoffRemind || !Cfg.Sports || Teams().Count == 0) return;
+            if ((DateTime.UtcNow - FetchedAt).TotalMinutes >= 30 && (DateTime.UtcNow - lastBgFetch).TotalMinutes >= 30) { lastBgFetch = DateTime.UtcNow; Fetch(null); }
+            List<Game> due; lock (k) due = Games.Where(g => g.State == "soon" && Mine(g)).ToList();
+            foreach (var g in due)
+            {
+                double mins = (g.StartUtc - DateTime.UtcNow).TotalMinutes; string gk = g.Home + "|" + g.Away + "|" + g.StartUtc.Ticks;
+                if (mins <= 0 || mins > 15) continue;
+                lock (reminded) { if (reminded.Contains(gk)) continue; reminded.Add(gk); if (reminded.Count > 200) reminded.Clear(); }
+                Alerts.Raise("kickoff|" + gk, g.Home + " " + L.T("vs") + " " + g.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0);
+            }
+        }
         public static void Fetch(Action done)
         {
             if (!Cfg.Sports || Policy.NoOnline || !Due || Interlocked.CompareExchange(ref busy, 1, 0) != 0) return;

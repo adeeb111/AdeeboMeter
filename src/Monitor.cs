@@ -600,12 +600,17 @@ namespace AdeeboMeter
             }
             else if (mac != gwMac)
             {
-                gwMacSeen[gwMac] = Clock.Mono;
-                Events.Add(2, "net", Voice.P("Your router's hardware address keeps flipping (" + gwMac + " → " + mac + ") on the same network. If nobody swapped the router, someone may be pretending to be it (ARP spoofing). Use the VPN until you know.",
+                gwMacSeen[gwMac] = Clock.Mono; gwFlips++;
+                // round 6 M-2: said once, then at most every 30 minutes with a count - a failover pair (or a real spoof) flipping every
+                // 10 s must not flood the timeline and the day's log that should prove it
+                if ((Clock.Mono - gwFlipSaid).TotalMinutes < 30) { gwMac = mac; return; }
+                int flips = gwFlips; gwFlips = 0; gwFlipSaid = Clock.Mono;
+                Events.Add(2, "net", (flips > 1 ? "[" + flips + " flips since the last note] " : "") + Voice.P("Your router's hardware address keeps flipping (" + gwMac + " → " + mac + ") on the same network. If nobody swapped the router, someone may be pretending to be it (ARP spoofing). Use the VPN until you know.",
                                              "Gateway hardware address (MAC) flips " + gwMac + " → " + mac + " on the same network - possible ARP spoofing."));
                 gwMac = mac;
             }
         }
+        int gwFlips; DateTime gwFlipSaid = DateTime.MinValue;
         // After a drop, ask Windows' own log why (a few seconds later, so the event is written).
         void ExplainWifiDrop()
         {

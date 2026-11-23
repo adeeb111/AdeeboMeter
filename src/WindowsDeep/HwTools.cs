@@ -331,7 +331,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); var s = HwSpecs.Get();
             double days = (DateTime.Now - s.Boot).TotalDays;
-            rows.Add(R(days > 14 ? 1 : 0, "Last restart", days < 1 ? "today" : F(Math.Floor(days)) + " days ago", days > 14 ? "Windows collects leaks and half-done updates over weeks. A real restart (not shut down - Fast Startup keeps the old state) clears them." : "", "w"));
+            rows.Add(R(days > 14 ? 1 : 0, "Last restart", days < 1 ? "today" : F(Math.Floor(days)) + (Math.Floor(days) == 1 ? " day ago" : " days ago"), days > 14 ? "Windows collects leaks and half-done updates over weeks. A real restart (not shut down - Fast Startup keeps the old state) clears them." : "", "w"));
             if (s.RestartPending) rows.Add(R(1, "Restart waiting", "an update is waiting for a restart", "Until then the update stays half done, and Windows keeps working on it in the background.", "w"));
             rows.Add(R(s.Startup.Count > 12 ? 1 : 0, "Start with Windows", s.Startup.Count + " programs" + (s.Startup.Count > 0 ? ": " + string.Join(", ", s.Startup.Take(6).ToArray()) + (s.Startup.Count > 6 ? " …" : "") : ""), s.Startup.Count > 12 ? "Each one slows the start and sits in memory. Task Manager > Startup apps turns them off (they still work when you open them)." : "", "w"));
             // browsers: dozens of processes, one bill
@@ -490,7 +490,7 @@ namespace AdeeboMeter
             var errs = Errors(30); var de = errs.Where(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0).ToList();
             if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), "A failing disk or cable - back up now.", "w"));
             var pw = errs.FirstOrDefault(e => e.Item1 == "power"); if (pw != null && pw.Item3 > 0) rows.Add(R(1, "Sudden power-offs (30 days)", pw.Item3.ToString(CultureInfo.CurrentCulture), "Crashes, overheating or a weak battery / charger.", "w"));
-            double days = (DateTime.Now - s.Boot).TotalDays; if (days > 14) rows.Add(R(1, "Last restart", F(Math.Floor(days)) + " days ago", "A real restart clears weeks of leaks and half-done updates.", "w"));
+            double days = (DateTime.Now - s.Boot).TotalDays; if (days > 14) rows.Add(R(1, "Last restart", F(Math.Floor(days)) + (Math.Floor(days) == 1 ? " day ago" : " days ago"), "A real restart clears weeks of leaks and half-done updates.", "w"));
             if (s.RestartPending) rows.Add(R(1, "Restart waiting", "an update is waiting for a restart", "", "w"));
             var link = NetLinkIssue(m, s); if (link != null) rows.Add(link);
             return rows;

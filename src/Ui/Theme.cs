@@ -385,7 +385,7 @@ namespace AdeeboMeter
             fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
             fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fInput = Ui(UiFam, 13 * S, FontStyle.Regular);
-            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; measureG.TextContrast = Contrast;
+            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; measureG.TextContrast = Contrast;   /* measured as the windows draw */
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)
         static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>(); static readonly Queue<string> measuredOrder = new Queue<string>();
@@ -404,7 +404,7 @@ namespace AdeeboMeter
         // the corner widget can be drawn a little bigger (tray menu > Bigger widget): same layout, scaled when drawn, so text stays sharp
         public static float WidgetK { get { return Cfg.BigWidget ? 1.3f : 1f; } }
         static Graphics PrepW(Bitmap b) { var g = Prep(b); g.ScaleTransform(WidgetK, WidgetK); return g; }
-        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; g.TextContrast = Contrast; g.Clear(Color.Transparent); return g; }
+        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = ImageText; g.TextContrast = Contrast; g.Clear(Color.Transparent); return g; }
         public static string Fmt(double v, string f, string unit) { return double.IsNaN(v) ? "-" : v.ToString(f, CultureInfo.CurrentCulture) + unit; }
         public static string Trunc(string s, int n)
         {
@@ -483,8 +483,13 @@ namespace AdeeboMeter
         // unevenly ("some words look broken"). Grey anti-aliasing with grid fitting: smooth edges, letters on whole pixels, even spacing
         // web-like text (Adeeb, 22 Nov: "doesn't look web standard yet"): browsers on Windows draw grey anti-aliased text with a
         // stronger gamma than GDI+'s default (4), so the strokes look fuller and evener. 1 is close to Chrome/Edge at 13-15 px.
-        public const int Contrast = 1;
-        public static TextRenderingHint WindowText { get { try { return TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
+        // 23 Nov (Adeeb, textlab on his PC): contrast 1 with grid-fitting is what made the letters jagged - every row drawn that
+        // way looked broken, while contrast 4 looked right. Windows (opaque): ClearType + grid-fit at 4 (his pick D, closest to
+        // Windows' own text). Anything drawn on see-through pixels or saved as a picture - the corner widget, cards, exports -
+        // can't use ClearType: plain grey smoothing at 4 (his pick C) - see Draw.ImageText.
+        public const int Contrast = 4;
+        public static TextRenderingHint WindowText { get { return TextRenderingHint.ClearTypeGridFit; } }
+        public static TextRenderingHint ImageText { get { return TextRenderingHint.AntiAlias; } }
         // the calm face of a mood (the buddy sheet's chips)
         public static string MoodEmoji(string mood) { switch (mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; case "plain": return "1f610"; default: return "1f60c"; } }
         // the face for a state; the calm face follows the mood
@@ -790,7 +795,7 @@ namespace AdeeboMeter
                     g.DrawString(unit, fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
                 float pw = Measure(grade, fTiny, 0).Width + 12 * S; var gp = new RectangleF(W - pad - pw, y + 12 * S, pw, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.LvText(lv))) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 var v = series ?? Array.Empty<double>(); double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;

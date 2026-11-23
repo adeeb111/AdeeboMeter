@@ -186,6 +186,22 @@ namespace AdeeboMeter
                 // the TSX stays open on Sep 30 (a banking holiday only - TMX notices 2021-2026)
                 if (Markets.Holiday(new DateTime(2026, 9, 30), "ca") != null) throw new InvalidOperationException("Sep 30 is a TSX trading day");
             });
+
+            T("money calculators: decimal commas, and junk never throws (round 6 CN-1/CN-2)", () =>
+            {
+                foreach (var c in new[] { new object[] { "1,5", 1.5 }, new object[] { "10,25", 10.25 }, new object[] { "0,99", 0.99 }, new object[] { "1,234.5", 1234.5 }, new object[] { "1.234,5", 1234.5 }, new object[] { "1,000", 1000.0 }, new object[] { "1 000,5", 1000.5 }, new object[] { "$12.40", 12.4 }, new object[] { "1.000.000", 1000000.0 }, new object[] { "-3,5", -3.5 } })
+                { double v = Calc.P((string)c[0]); if (Math.Abs(v - (double)c[1]) > 1e-9) throw new InvalidOperationException((string)c[0] + " read as " + v); }
+                string a = string.Join("|", Calc.Pnl("10,5", "12", "100", "0,5%").Select(r => r[2])), b = string.Join("|", Calc.Pnl("10.5", "12", "100", "0.5%").Select(r => r[2]));
+                if (a != b) throw new InvalidOperationException("Pnl with commas differs: " + a + " vs " + b);
+                // every money tool takes junk without throwing (each answers with a "Need" row instead)
+                foreach (var m in typeof(Calc).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static).Where(z => z.ReturnType == typeof(List<string[]>) && z.GetParameters().All(p => p.ParameterType == typeof(string))))
+                    foreach (var junk in new[] { "", "abc", "-1", "1e400", "0", ",,,", "99999999999999999999" })
+                    {
+                        var rows = (List<string[]>)m.Invoke(null, m.GetParameters().Select(p => (object)junk).ToArray());
+                        if (rows == null || rows.Count == 0) throw new InvalidOperationException(m.Name + "('" + junk + "') answered nothing");
+                        if (rows.Any(r => r.Any(x => x != null && (x.Contains("NaN") || x.Contains("Infinity") || x.Contains("∞"))))) throw new InvalidOperationException(m.Name + "('" + junk + "') printed NaN/Infinity");
+                    }
+            });
             T("udp table", () => { var u = Tables.Udp(); sb.AppendLine("      " + u.Count + " sockets"); if (u == null) throw new InvalidOperationException("no list"); });
             T("dns cache names (offline)", () =>
             {
@@ -1243,6 +1259,14 @@ namespace AdeeboMeter
                                 new[] { "cd /data/selftest-sh2; echo z > z.txt; cp z.txt ~/adeeboshell-cp-check.txt 2>&1 | grep -c read-only", "1" },   // hunt-5: the fence, for cp and mv too
                                 new[] { "cd /data/selftest-sh2; mv z.txt ~/adeeboshell-mv-check.txt 2>&1 | grep -c read-only; test -f z.txt && echo kept", "1\nkept" },
                                 new[] { "echo hello | sed 's/l/L/g; s/o/0/'", "heLL0" },   // hunt-5: sed's ';'
+                                new[] { "f=report.txt; echo \"$f\"bak", "report.txtbak" },   // round 6 M-3: a quote ends the name
+                                new[] { "x=ab; echo a\"$x\"b $x\\y", "aabb aby" },
+                                new[] { "printf 'a;b\\na;b\\n' | sed '2s/a;b/c/'", "a;b\nc" },   // round 6: an address in front of s
+                                new[] { "d=/pages; echo \"$d\"/sh*", "/pages/shell" },   // round 6 D2-2
+                                new[] { "echo /pages/[s]hell", "/pages/shell" },   // round 6 D2-5
+                                new[] { "f() { for a in \"$@\"; do echo \"[$a]\"; done; }; f \"x y\" z", "[x y]\n[z]" },   // round 6 D2-3
+                                new[] { "echo ${nope:-hello world}; y=ok; echo ${nope:-${y}}", "hello world\nok" },   // round 6 D2-4
+                                new[] { "readonly RR=1; for RR in 2; do echo in; done 2>&1 | grep -c readonly", "1" },   // round 6 D2-6
                                 new[] { "echo 'a;b' | sed 's/;/-/'", "a-b" },
                                 new[] { "f() { read x; echo got$x; }; printf '1\\n2\\n' | { f; f; }", "got1\ngot2" },   // hunt-5: one input stream
                                 new[] { "grep -A 2 x nofile 2>&1 | grep -c \"isn't in this grep\"", "1" },   // hunt-5: never misread
@@ -1789,6 +1813,8 @@ namespace AdeeboMeter
                         if (cr(Theme.Ink, Theme.Bg) < 7) bad.Add(n + ": text on the page");
                         if (cr(Theme.Muted, Theme.Card) < 4.5) bad.Add(n + ": grey text " + cr(Theme.Muted, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));
                         for (int l = 0; l < 3; l++) if (cr(Theme.LvText(l), Theme.LvSoft(l)) < 4.5) bad.Add(n + ": level " + l + " text " + cr(Theme.LvText(l), Theme.LvSoft(l)).ToString("0.0", CultureInfo.InvariantCulture));
+                        // round 6 ML-3: the grade pills - level text over the level colour at 40/255 on a card (light palettes)
+                        if (!Theme.Dark) { var lvc = new[] { Theme.Green, Theme.Amber, Theme.Red }; for (int l = 0; l < 3; l++) { var bg = Color.FromArgb((Theme.Card.R * 215 + lvc[l].R * 40) / 255, (Theme.Card.G * 215 + lvc[l].G * 40) / 255, (Theme.Card.B * 215 + lvc[l].B * 40) / 255); if (cr(Theme.LvText(l), bg) < 4.5) bad.Add(n + ": grade pill " + l + " " + cr(Theme.LvText(l), bg).ToString("0.0", CultureInfo.InvariantCulture)); } }
                         var gr = Theme.LvText(0); var rd = Theme.LvText(2); if (!(gr.G > gr.R && rd.R > rd.G)) bad.Add(n + ": green or red changed meaning");
                         if (cr(Theme.OnBlue, Theme.Blue) < 2.5) bad.Add(n + ": button text " + cr(Theme.OnBlue, Theme.Blue).ToString("0.0", CultureInfo.InvariantCulture));
                     }
