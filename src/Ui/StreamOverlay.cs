@@ -31,7 +31,7 @@ namespace AdeeboMeter
         }
         StreamOverlay(Monitor m)
         {
-            M = m; FormBorderStyle = FormBorderStyle.None; TopMost = true; ShowInTaskbar = true; Text = AdeeboMeter.L.T("AdeeboMeter - lag graph");
+            M = m; FormBorderStyle = FormBorderStyle.None; TopMost = true; ShowInTaskbar = true; Text = AdeeboMeter.L.T("AdeeboMeter - lag graph"); Icon = Theme.AppIcon;
             StartPosition = FormStartPosition.Manual; Size = new Size(Sc(320), Sc(110));
             var wa = Screen.PrimaryScreen.WorkingArea; Location = new Point(wa.Left + Sc(24), wa.Top + Sc(24));
             // back where it was left - if that spot is still on a screen (a monitor unplugged since: the primary's corner)

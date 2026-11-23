@@ -155,6 +155,8 @@ namespace AdeeboMeter
                 for (int i = 0; i < 3; i++) { float gl = glow != null && i < glow.Length ? Math.Max(0, Math.Min(1, glow[i])) : 0, dd = d * (1 + 0.35f * gl); g.FillEllipse(gl > 0.5f ? hb : db, X(xs[i] - dd), Y(42.6f - dd), 2 * dd * k, 2 * dd * k); }
             }
         }
+        // one copy of the logo for every window that can show in the taskbar - a window without it showed Windows' plain default icon (1.1.6 test)
+        static Icon appIcon; public static Icon AppIcon { get { if (appIcon == null) appIcon = MakeIcon(32); return appIcon; } }
         public static Icon MakeIcon(int size)
         {
             using (var bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb))

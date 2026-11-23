@@ -58,7 +58,8 @@ namespace AdeeboMeter
         // where output goes: the screen (coloured), or text for the next command in a pipe / a file. Errors have their own way
         // (shell scrutiny #2): dropped (2>/dev/null), kept for a file (2> f), or passed on to where they went before (ErrTo) -
         // never into the data a pipe hands on.
-        sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull; public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
+        sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull, Tee; public long LastTee;   // Tee: captured AND shown as it comes (alltools)
+        public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
         sealed class ShCtx { public ShJob Job; public ShOut Out; public string Stdin; public List<string> Args = new List<string>(); public bool Yes, Script; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, Stdin = stdin, Args = Args, Yes = Yes, Script = Script, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
@@ -117,7 +118,7 @@ namespace AdeeboMeter
         {
             if (c.Job != null && c.Job.Abandoned) return;   // let go of with ^C^C: nothing more from it (#34)
             if (c.Out.Screen) { if (c.Job != null && c.Job.Bg) { lock (c.Job.Saved) if (c.Job.Saved.Length < 4 * 1024 * 1024) c.Job.Saved.Append(s); } else SW(s, col); }
-            else lock (c.Out.Cap) { if (c.Out.Cap.Length + s.Length > ShMaxCap) throw new ShTooBig(); c.Out.Cap.Append(s); }
+            else { lock (c.Out.Cap) { if (c.Out.Cap.Length + s.Length > ShMaxCap) throw new ShTooBig(); c.Out.Cap.Append(s); } if (c.Out.Tee) { c.Out.LastTee = DateTime.UtcNow.Ticks; SW(s, col); } }
         }
         void OL(ShCtx c, string s, Color col) { O(c, s + "\n", col); }
         void OL(ShCtx c, string s) { OL(c, s, ShFg); }
@@ -125,7 +126,7 @@ namespace AdeeboMeter
         void ErrRaw(ShCtx c, string s, Color col)
         {
             var o = c.Out;
-            for (int guard = 0; guard < 64; guard++) { if (o.ErrNull) return; if (o.ErrCap != null) { lock (o.ErrCap) o.ErrCap.Append(s); return; } if (o.ErrTo == null) break; o = o.ErrTo; }
+            for (int guard = 0; guard < 64; guard++) { if (o.ErrNull) return; if (o.ErrCap != null) { lock (o.ErrCap) o.ErrCap.Append(s); if (o.Tee) { o.LastTee = DateTime.UtcNow.Ticks; SW(s, col); } return; } if (o.ErrTo == null) break; o = o.ErrTo; }
             O(c.With(o, c.Stdin), s, col);
         }
         ShOut ShCapture(ShCtx c) { return new ShOut { Cap = new StringBuilder(), Job = c.Job, ErrTo = c.Out }; }
@@ -1989,19 +1990,29 @@ namespace AdeeboMeter
         {
             bool yes = asked && !c.Script; if (asked && c.Script) Err(c, "alltools: --yes only counts when you type it at the prompt - the test-traffic tools are left out");   // C1
             string gw; lock (M.L) gw = M.Gateway ?? "";
-            int ran = 0, failed = 0, skipped = 0, pictures = 0; var log = new StringBuilder(); var cap = new ShOut { Cap = log, Job = c.Job }; cap.ErrCap = log;
+            int ran = 0, failed = 0, skipped = 0, pictures = 0; var log = new StringBuilder(); var cap = new ShOut { Cap = log, Job = c.Job, Tee = c.Out.Screen && !c.Job.Bg }; cap.ErrCap = log;
+            // 1.1.6 test day: it showed only "── mtr ..." and then nothing for minutes - now every tool's output streams as it comes,
+            // with [n/N] and the time it took, and a "still running" line when a tool is quiet for 10 s
+            Func<Tool, bool> runs = t => !(ShSkip.Contains(t.Id) || t.Group == "REMOTE") && (yes || !(LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep")) && t.Do != null;
+            int total = shTools.Count(runs), n = 0; var all0 = DateTime.UtcNow;
+            OL(c, "alltools: " + total + " tools to run, one after another - each one's output shows below as it comes. Ctrl+C stops.", ShGreen);
             foreach (var t in shTools)
             {
                 if (c.Job.Cancel) break;
                 if (ShSkip.Contains(t.Id) || t.Group == "REMOTE") { skipped++; continue; }
                 bool gate = LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep"; if (gate && !yes) { skipped++; continue; }
                 if (t.Do == null) { pictures++; continue; }
+                n++;
                 var ex = Examples.Get(t.Id); var inp = ex != null ? ex.In : new string[0];
                 if (t.Id == "diskspeed") inp = inp.Select(v => string.Equals(v, "yes", StringComparison.OrdinalIgnoreCase) ? "" : v).ToArray();
                 var words = inp.Select(v => Regex.Replace(v ?? "", @"\b(192\.0\.2|198\.51\.100|203\.0\.113)\.\d{1,3}\b", gw == "" ? "$0" : gw)).Select(v => v == "" ? "-" : v).ToList();
-                OL(c, "── " + t.Id + " " + string.Join(" ", words), ShCyan); log.AppendLine("── " + t.Id + " " + string.Join(" ", words));
-                int r = RunTool(t, words, new ShCtx { Job = c.Job, Out = cap, Yes = yes, Script = true }); ran++; if (r == 2) failed++;
-                OL(c, r == 0 ? "   ok" : r == 1 ? "   ok (found problems)" : "   FAILED", r == 2 ? ShRed : ShDim);
+                string head = "── [" + n + "/" + total + "] " + t.Id + " " + string.Join(" ", words) + "  ·  " + L.T(t.Title);
+                OL(c, head, ShCyan); log.AppendLine(head);
+                var t0 = DateTime.UtcNow; cap.LastTee = t0.Ticks; string tid = t.Id;
+                using (var beat = cap.Tee ? new System.Threading.Timer(delegate { if (new TimeSpan(DateTime.UtcNow.Ticks - cap.LastTee).TotalSeconds >= 10) { cap.LastTee = DateTime.UtcNow.Ticks; SW("   … " + tid + " still running (" + (int)(DateTime.UtcNow - t0).TotalSeconds + " s)\n", ShDim); } }, null, 2000, 2000) : null)
+                { int r = RunTool(t, words, new ShCtx { Job = c.Job, Out = cap, Yes = yes, Script = true }); ran++; if (r == 2) failed++;
+                  string done = (r == 0 ? "   ok" : r == 1 ? "   ok (found problems)" : "   FAILED") + "  ·  " + (DateTime.UtcNow - t0).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s  ·  " + n + " of " + total + " done, " + (int)(DateTime.UtcNow - all0).TotalMinutes + " min so far";
+                  OL(c, done, r == 2 ? ShRed : ShDim); log.AppendLine(done); }
             }
             string tail = (c.Job.Cancel ? "== STOPPED " : "== DONE ") + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · " + ran + " run · " + failed + " failed · " + skipped + " left out" + (yes ? "" : " (test-traffic tools need --yes, typed at the prompt)") + " · " + pictures + " pictures (Toolbox only)";
             log.AppendLine(tail); OL(c, tail, failed > 0 || c.Job.Cancel ? ShAmber : ShGreen);

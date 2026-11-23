@@ -403,7 +403,7 @@ namespace AdeeboMeter
         sealed class KeyForm : Form
         {
             public readonly HashSet<string> Hit = new HashSet<string>(); public int Presses;
-            public KeyForm() { KeyPreview = true; DoubleBuffered = true; }
+            public KeyForm() { KeyPreview = true; DoubleBuffered = true; Icon = Theme.AppIcon; }
             [DllImport("user32.dll")] static extern short GetKeyState(int k);
             protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
             {
