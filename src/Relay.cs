@@ -58,17 +58,19 @@ namespace AdeeboMeter
                 q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = HttpSmall.Proxy();
                 var b = Encoding.UTF8.GetBytes(json); q.ContentLength = b.Length;
                 using (var s = q.GetRequestStream()) s.Write(b, 0, b.Length);
-                string body; using (var rs = (HttpWebResponse)q.GetResponse()) using (var rd = new StreamReader(rs.GetResponseStream())) body = rd.ReadToEnd();
+                string body; using (var rs = (HttpWebResponse)q.GetResponse()) using (var rd = new StreamReader(rs.GetResponseStream())) body = Head(rd);
                 return Parse(body);
             }
             catch (WebException e)
             {
                 var hr = e.Response as HttpWebResponse;
                 if (hr == null) return new Result { Why = "offline" };   // no answer at all: try again later
-                string body = ""; try { using (var rd = new StreamReader(hr.GetResponseStream())) body = rd.ReadToEnd(); } catch (IOException) { }
+                string body = ""; try { using (var rd = new StreamReader(hr.GetResponseStream())) body = Head(rd); } catch (IOException) { }
                 var r = Parse(body); if (r.Why == "") r.Why = "the relay said " + (int)hr.StatusCode; return r;
             }
         }
+        // security recheck SECN-3: the relay's answer is a few dozen characters - read 16 KB at most, so a broken or hostile relay can't fill memory
+        static string Head(StreamReader rd) { var cb = new char[16384]; int n = 0, got; while (n < cb.Length && (got = rd.Read(cb, n, cb.Length - n)) > 0) n += got; return new string(cb, 0, n); }
         // {"ok":true,"number":42} or {"ok":false,"why":"..."}
         internal static Result Parse(string body)
         {

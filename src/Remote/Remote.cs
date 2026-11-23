@@ -137,6 +137,8 @@ namespace AdeeboMeter
             {
                 byte[] pk, mac; try { pk = RemoteCrypto.Unb64u(j.S("pk")); mac = RemoteCrypto.Unb64u(j.S("mac")); } catch (FormatException) { return; }
                 if (pk.Length != 65 || !RemoteCrypto.Same(mac, RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("hi"), pk))) return;   // didn't scan this QR
+                // security recheck R-1/R-3: a page that signs its flags and name too (mac2) has them checked - a relay can't strip w2 to get four words, or rename the phone
+                if (j.S("mac2") != null) { byte[] mac2; try { mac2 = RemoteCrypto.Unb64u(j.S("mac2")); } catch (FormatException) { return; } if (!RemoteCrypto.Same(mac2, RemoteCrypto.Hmac(auth, Encoding.UTF8.GetBytes("hi2|" + (j.S("w") ?? "") + "|" + (j.S("w2") ?? "") + "|" + (j.S("dev") ?? "")), pk))) return; }
                 var me = new ECDiffieHellmanCng(256); mine = me; var myPk = RemoteCrypto.Raw(me); phonePk = pk;
                 // a phone that can show the matching words gets this PC's key now, before the question (RemoteWords.cs)
                 Words = "";
@@ -146,7 +148,7 @@ namespace AdeeboMeter
                 {
                     int wv = j.S("w2") == "1" ? 2 : 1;   // bug-hunt H-1: six words when the phone page knows them
                     Words = RemoteWords.Of(secret, pk, myPk, wv);
-                    Send("{\"t\":\"key\",\"wv\":" + wv + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\"}");
+                    Send("{\"t\":\"key\",\"wv\":" + wv + ",\"pk\":\"" + RemoteCrypto.B64u(myPk) + "\",\"mac\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key"), pk, myPk)) + "\",\"mac2\":\"" + RemoteCrypto.B64u(RemoteCrypto.Hmac(auth, Encoding.ASCII.GetBytes("key2|" + wv), pk, myPk)) + "\"}");   /* R-1: mac2 covers the word count too */
                 }
                 St = State.Asking; if (Known == null) PhoneName = Clip(j.S("dev"), 40); else { string dv = Clip(j.S("dev") ?? "", 40).Trim(); if (dv != "" && dv != PhoneName) { PhoneName = dv; RemotePhones.Rename(Known.Id, dv); } }   /* L-240: a remembered phone's new name is kept */ Note();
                 // bug-hunt L-235 (by design): what the phone sends while the question is open waits behind it and runs only after Allow -

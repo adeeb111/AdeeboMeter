@@ -74,7 +74,7 @@ namespace AdeeboMeter
             term = new TermView(mono) { Dock = DockStyle.Fill, Bg = ShBg, Fg = ShFg };
             term.TermKey += ShKey; term.TermChar += ShChar; term.Paste = ShPaste;
             term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(t.Replace("\n", "\r\n")); term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
-            term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Path.Combine(Path.GetDirectoryName(f), Path.GetFileNameWithoutExtension(f).Split(new[] { " (" }, StringSplitOptions.None)[0] + " (" + k + ").txt");   /* review UI-5: never over an earlier save */ File.WriteAllText(f, t.Replace("\n", "\r\n")); term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
+            term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Path.Combine(Path.GetDirectoryName(f), Path.GetFileNameWithoutExtension(f).Split(new[] { " (" }, StringSplitOptions.None)[0] + " (" + k + ").txt");   /* review UI-5: never over an earlier save */ File.WriteAllText(f, ShScrub(t).Replace("\n", "\r\n"));   /* L-1: output lines too (env, echo $TOKEN) */ term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
             shellPage.Controls.Add(term);
             shellPage.VisibleChanged += delegate { if (shellPage.Visible) { if (shTools == null) { shTools = Tools2(); ThreadPool.QueueUserWorkItem(delegate { ShStarterScripts(); }); } if (term.AllText().Trim() == "") ShWelcome(); ShPrompt(); BeginInvoke((Action)delegate { term.Focus(); }); } };
             return shellPage;
@@ -280,8 +280,8 @@ namespace AdeeboMeter
         // start - after ; | && || &, after time / then / do / else / !, after NAME=value, and inside $( ) - not only the first word.
         string ShMasked(string line)
         {
-            if (shTools == null || string.IsNullOrEmpty(line)) return line ?? "";
-            List<Tok> a; try { a = Lex(line); } catch (FormatException) { return line; }
+            if (shTools == null || string.IsNullOrEmpty(line)) return ShScrub(line);
+            List<Tok> a; try { a = Lex(line); } catch (FormatException) { return ShScrub(line); }
             bool any = false, cmdPos = true;
             for (int i = 0; i < a.Count; i++)
             {
@@ -295,7 +295,22 @@ namespace AdeeboMeter
                 int box = 0;
                 for (int j = i + 1; j < a.Count && a[j].Op == null; j++) { if (a[j].W == "--yes" || a[j].W == "-y") continue; if (box < t.Inputs.Length && SecretInput(t.Inputs[box]) && a[j].W != "" && a[j].W != "-") { a[j].W = "****"; a[j].Q = false; any = true; } box++; }
             }
-            return any ? Unlex(a) : line;
+            return ShScrub(any ? Unlex(a) : line);
+        }
+        // security recheck L-1: secrets typed for other programs never reach the screen, history, Copy or Save-log -
+        // an Authorization / Bearer value, NAME=value for token-, key-, secret- and password-like names, --token value, and user:password@ in an address
+        static readonly Regex ScrubAuth = new Regex(@"(?i)\b(authorization\s*:\s*(?:bearer|basic|token|digest|negotiate)?\s*|bearer\s+|x-api-key\s*:\s*|api-key\s*:\s*)([^\s""'\\;|&]{4,})", RegexOptions.Compiled);
+        static readonly Regex ScrubVar = new Regex(@"(?i)\b([A-Za-z0-9_]*(?:token|secret|passw(?:or)?d|pwd|api_?key|apikey|access_?key|private_?key|auth_?token|authorization|credentials?)[A-Za-z0-9_]*=)(""[^""]*""|'[^']*'|[^\s;|&]+)", RegexOptions.Compiled);
+        static readonly Regex ScrubFlag = new Regex(@"(?i)(--?(?:token|password|passwd|pass|secret|api-?key|auth|access-key|client-secret)(?:=|\s+))(""[^""]*""|'[^']*'|[^\s;|&-][^\s;|&]*)", RegexOptions.Compiled);
+        static readonly Regex ScrubUrl = new Regex(@"(?i)(\b[a-z][a-z0-9+.-]*://[^\s/:@]+:)([^\s/@]+)(@)", RegexOptions.Compiled);
+        internal static string ShScrub(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            s = ScrubAuth.Replace(s, m => m.Groups[1].Value + "****");
+            s = ScrubVar.Replace(s, m => m.Groups[2].Value == "****" ? m.Value : m.Groups[1].Value + "****");
+            s = ScrubFlag.Replace(s, m => m.Groups[1].Value + "****");
+            s = ScrubUrl.Replace(s, m => m.Groups[1].Value + "****" + m.Groups[3].Value);
+            return s;
         }
         static string Unlex(IEnumerable<Tok> a)
         {

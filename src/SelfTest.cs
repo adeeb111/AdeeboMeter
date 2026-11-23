@@ -139,6 +139,7 @@ namespace AdeeboMeter
                 foreach (var c in odd.Take(5)) sb.AppendLine("      odd: " + c.State + "  " + c.Proto + " " + c.Local + " -> " + c.Remote + "  pid " + c.Pid);
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
+            T("shell masks secrets for other programs (security recheck L-1)", () => { foreach (var c in new[] { new[] { "curl -H \"Authorization: Bearer abcdef123\" https://x", "curl -H \"Authorization: Bearer ****\" https://x" }, new[] { "export GITHUB_TOKEN=abc123", "export GITHUB_TOKEN=****" }, new[] { "mytool --password hunter22", "mytool --password ****" }, new[] { "curl https://bob:s3cret@host/p", "curl https://bob:****@host/p" }, new[] { "AUTHOR=adeeb", "AUTHOR=adeeb" } }) { string got = FullView.ShScrub(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
             T("udp table", () => { var u = Tables.Udp(); sb.AppendLine("      " + u.Count + " sockets"); if (u == null) throw new InvalidOperationException("no list"); });
             T("dns cache names (offline)", () =>
             {

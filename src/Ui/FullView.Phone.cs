@@ -320,7 +320,8 @@ namespace AdeeboMeter
                 else
                 {
                     lnk(L.T("Copy"), delegate { try { Clipboard.SetText(item.Text); } catch (System.Runtime.InteropServices.ExternalException) { } });
-                    string u = item.Text.Trim(); if (Regex.IsMatch(u, @"^https?://\S+$")) lnk(L.T("Open link"), delegate { try { System.Diagnostics.Process.Start(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; } });
+                    string u = item.Text.Trim(); if (Regex.IsMatch(u, @"^https?://\S+$")) { Uri pu; if (Uri.TryCreate(u, UriKind.Absolute, out pu) && (pu.Scheme == "https" || pu.Scheme == "http") && pu.UserInfo == "") { string safe = pu.AbsoluteUri;   /* security recheck SECN-4: only a real http(s) address, re-written by Uri, goes to the browser - never handed to the shell as typed */
+                        lnk(L.T("Open link"), delegate { try { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(safe) { UseShellExecute = true })) { } } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("open link: " + e.Message); } }); } }
                 }
                 cy += 26 * S;
             }
