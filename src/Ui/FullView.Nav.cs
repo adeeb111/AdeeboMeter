@@ -176,6 +176,7 @@ namespace AdeeboMeter
                 // the heart beside Settings (Adeeb, 22 Nov): community and support - small, always there, never in the way
                 {
                     var hr = new RectangleF(x + w - 42 * S, srr.Y + 2 * S, 34 * S, 34 * S);
+                    heartRect = hr; HeartGlow(g, hr);
                     SupportCard.Heart(g, new RectangleF(hr.X + 8 * S, hr.Y + 9 * S, 18 * S, 16 * S), hc ? SystemColors.WindowText : Color.FromArgb(0xE6, 0x49, 0x80));
                     Act(sideNav, hr, OpenSupport); sideNav.Acc.Add(Tuple.Create(L.T("Community and support"), Rectangle.Round(hr), (Action)OpenSupport));
                 }
@@ -215,7 +216,36 @@ namespace AdeeboMeter
         }
 
         // the heart's card: community and support (SupportCard.cs); its "share an idea" / "report a bug" open the app's own boxes
-        void OpenSupport() { SupportCard.Open(this, k => ReportDialog(k, "")); }
+        void OpenSupport() { heartSeen = true; SupportCard.Open(this, k => ReportDialog(k, "")); }
+
+        // the heart glows once (Adeeb, 22 Nov): after about 35 minutes with the window open - three soft pulses, then never again
+        // this run; missing it is fine. Nothing glows if the heart was already opened.
+        RectangleF heartRect; double heartOpenSec; bool heartSeen; DateTime heartGlowAt = DateTime.MinValue; System.Windows.Forms.Timer heartTimer;
+        const double HeartAfterSec = 35 * 60, HeartGlowSec = 3.6;
+        void HeartTick()
+        {
+            if (heartSeen || heartGlowAt != DateTime.MinValue || sideNav == null || !sideNav.Visible || WindowState == FormWindowState.Minimized || !Visible) return;
+            heartOpenSec += 0.5; if (heartOpenSec < HeartAfterSec) return;
+            heartGlowAt = DateTime.Now;
+            heartTimer = new System.Windows.Forms.Timer { Interval = 33 };
+            heartTimer.Tick += delegate
+            {
+                bool done = (DateTime.Now - heartGlowAt).TotalSeconds > HeartGlowSec;
+                if (sideNav != null && heartRect.Width > 0) sideNav.Invalidate(Rectangle.Round(RectangleF.Inflate(heartRect, 14 * S, 14 * S)));
+                if (done) { heartTimer.Stop(); heartTimer.Dispose(); heartTimer = null; heartSeen = true; }
+            };
+            heartTimer.Start();
+        }
+        void HeartGlow(Graphics g, RectangleF hr)
+        {
+            if (heartGlowAt == DateTime.MinValue || heartSeen || Theme.HighContrast) return;
+            double t = (DateTime.Now - heartGlowAt).TotalSeconds / HeartGlowSec; if (t < 0 || t > 1) return;
+            float ph = (float)((t * 3) % 1.0);   // three pulses
+            float k = 1 + ph * 0.55f; int a = (int)(150 * (1 - ph) * (t > 0.9 ? (1 - t) * 10 : 1));
+            var c = new RectangleF(hr.X + hr.Width / 2 - hr.Width * k / 2, hr.Y + hr.Height / 2 - hr.Height * k / 2, hr.Width * k, hr.Height * k);
+            using (var b = new SolidBrush(Color.FromArgb(Math.Max(0, Math.Min(255, a / 3)), 0xE6, 0x49, 0x80))) g.FillEllipse(b, c);
+            using (var p = new Pen(Color.FromArgb(Math.Max(0, Math.Min(255, a)), 0xE6, 0x49, 0x80), 2 * S)) g.DrawEllipse(p, c);
+        }
 
         // ---------- applying a layout: which frame shows, how wide the right-hand panel is
         TableLayoutPanel bodyGrid;

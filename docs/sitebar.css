@@ -1,0 +1,12 @@
+/* The one site bar for the pages that aren't the home page (blog, games, live, files, Hall of Fame) - same brand, same few
+   links and the same Download pill as the home page, so every page feels like the same site. */
+nav.sitebar{display:flex;align-items:center;gap:22px;max-width:1120px;margin:0 auto;padding:16px 20px;font:14px/1.4 Inter,"Segoe UI",system-ui,sans-serif}
+nav.sitebar .sb-brand{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:17px;text-decoration:none;color:var(--ink,#E6EAF0);margin-right:auto;white-space:nowrap}
+nav.sitebar .sb-brand b{color:var(--blue,#58A6FF)}
+nav.sitebar .sb-brand img{display:block}
+nav.sitebar .sb-links{display:flex;align-items:center;gap:22px}
+nav.sitebar .sb-links a{text-decoration:none;color:var(--sub,#93A6C6);white-space:nowrap}
+nav.sitebar .sb-links a:hover,nav.sitebar .sb-links a[aria-current]{color:var(--ink,#E6EAF0)}
+nav.sitebar .sb-heart{color:#F06292!important;font-size:18px;line-height:1}
+nav.sitebar .sb-dl{background:var(--blue,#1F6FEB);color:#fff!important;font-weight:600;border-radius:99px;padding:7px 16px}
+@media (max-width:700px){nav.sitebar .sb-links a:not(.sb-dl):not(.sb-heart){display:none}nav.sitebar{gap:12px;padding:12px 14px}}

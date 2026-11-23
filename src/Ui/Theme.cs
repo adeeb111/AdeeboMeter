@@ -465,10 +465,9 @@ namespace AdeeboMeter
         }
         // the window's text: ClearType when Windows uses it (sharp on an LCD, on the window's solid backgrounds), plain
         // smoothing otherwise; the corner widget keeps plain smoothing (it's drawn on see-through pixels)
-        // 22 Nov (Adeeb: "writing is not very smooth"): GDI+ ClearType with grid fitting pushes Inter's curves onto the pixel grid -
-        // uneven stems, jagged bowls. Plain anti-aliasing keeps the real letter shapes (how a browser draws Inter); only with
-        // Windows' font smoothing switched off does text go back to the hard grid-fit look
-        public static TextRenderingHint WindowText { get { try { return SystemInformation.IsFontSmoothingEnabled ? TextRenderingHint.AntiAlias : TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
+        // 22 Nov (Adeeb): ClearType grid-fit looked jagged ("writing is not very smooth"); plain anti-aliasing then spaced letters
+        // unevenly ("some words look broken"). Grey anti-aliasing with grid fitting: smooth edges, letters on whole pixels, even spacing
+        public static TextRenderingHint WindowText { get { try { return TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
         // the calm face of a mood (the buddy sheet's chips)
         public static string MoodEmoji(string mood) { switch (mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; case "plain": return "1f610"; default: return "1f60c"; } }
         // the face for a state; the calm face follows the mood
