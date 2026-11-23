@@ -119,10 +119,16 @@ namespace AdeeboMeter
         protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; bool arrow = c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || (ArrowStep != null && arrow) || base.IsInputKey(k); }
         // arrow keys move between the painted tiles and links (Adeeb, 22 Nov: "the keyboard doesn't move between them")
         public Func<Keys, bool> ArrowStep;
+        public static Func<Control, Keys, bool> Hop;   // FullView's spatial move between controls (1.1.6 test day: "can't go side to side")
         protected override void OnKeyDown(KeyEventArgs e)
         {
             var c = e.KeyCode;
-            if (!keyNav && ArrowStep != null && e.Modifiers == Keys.None && (c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right) && ArrowStep(c)) { e.Handled = true; return; }
+            if (!keyNav && ArrowStep != null && e.Modifiers == Keys.None && (c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right))
+            {
+                // nothing further that way on this page: the arrow carries on to the control beside it (the sidebar, the tabs above, the header)
+                if (ArrowStep(c) || (Hop != null && Hop(this, c))) { e.Handled = true; return; }
+                e.Handled = true; return;
+            }
             base.OnKeyDown(e);
         }
         protected override void OnMouseDown(MouseEventArgs e) { if ((keyNav || ArrowStep != null) && !Focused) Focus(); base.OnMouseDown(e); }   // a click on a page lets the arrow keys work there next

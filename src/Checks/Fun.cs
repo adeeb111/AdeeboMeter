@@ -165,7 +165,7 @@ namespace AdeeboMeter
             if (Cfg.History)
             {
                 var p = OverTime.Sum(m, DateTime.Today.AddDays(-(days - 1)), DateTime.Today, run, false);
-                if (p.Minutes >= 60)
+                if (p.Minutes >= 24 * 60)   // 1.1.6 test day: two hours graded the line F and the letter claimed "134 h of trouble a month" - a day at least before judging
                 {
                     w.History = true; w.Days = p.Days; w.Smooth = 100.0 * (p.Minutes - p.BadMinutes) / p.Minutes; w.Gw = p.GwAvg; w.Net = p.NetAvg; w.Loss = p.LossAvg; w.Outages = p.OutageCount; w.OutMin = p.OutageMin; w.Speeds = p.Speeds;
                     if (!double.IsNaN(p.WorstScore)) w.WorstDay = p.WorstDay.ToString("dddd d MMMM", CultureInfo.CurrentCulture);
@@ -211,7 +211,7 @@ namespace AdeeboMeter
         {
             run.Status = "Collecting receipts...";
             var w = Measure(m, 7, run); string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
-            var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + " days" : " · the last few minutes (turn on History for a week)"), "", "m") };
+            var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + (w.Days == 1 ? " day" : " days") : " · the last few minutes (turn on History for a week)"), "", "m") };
             foreach (var b in burns) rows.Add(R(3, "", b, "", "m"));
             string file = null;
             try
@@ -231,7 +231,7 @@ namespace AdeeboMeter
                     using (var f3 = new Font("Segoe UI", 38, FontStyle.Regular, GraphicsUnit.Pixel)) using (var tb = new SolidBrush(Color.FromArgb(240, 240, 250)))
                         foreach (var b in burns) { var sz = gr.MeasureString(b, f3, Z - 144); if (y + sz.Height > Z - 110) break; gr.DrawString(b, f3, tb, new RectangleF(72, y, Z - 144, sz.Height + 4)); y += sz.Height + 22; }
                     using (var f4 = new Font("Segoe UI", 26, FontStyle.Regular, GraphicsUnit.Pixel)) using (var mb = new SolidBrush(Color.FromArgb(170, 170, 200)))
-                        gr.DrawString("AdeeboMeter · measured on my PC, " + (w.History ? "last " + w.Days + " days" : "just now") + " · no data left my PC to make this", f4, mb, 72, Z - 80);
+                        gr.DrawString("AdeeboMeter · measured on my PC, " + (w.History ? "last " + w.Days + (w.Days == 1 ? " day" : " days") : "just now") + " · no data left my PC to make this", f4, mb, 72, Z - 80);
                     string f = Path.Combine(Dir(), "Roast-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png");
                     bmp.Save(f, ImageFormat.Png); file = f;
                 }
@@ -248,14 +248,14 @@ namespace AdeeboMeter
             int days; if (!int.TryParse((daysText ?? "").Trim(), out days)) days = 30; days = Math.Max(1, Math.Min(180, days));
             run.Status = "Reading " + days + " days of measurements...";
             var w = Measure(m, days, run);
-            if (!w.History) return new List<string[]> { R(1, "Not enough history", "the letter needs at least an hour of measurements", (Cfg.History ? "History is on - give it a day or two of normal use, then come back." : "Turn on History in Settings, use the PC for a day or two, then come back.") + " A letter without numbers is just a complaint.", "i") };
+            if (!w.History) return new List<string[]> { R(1, "Not enough history", "the letter needs at least a day of measurements", (Cfg.History ? "History is on - give it a day or two of normal use, then come back." : "Turn on History in Settings, use the PC for a day or two, then come back.") + " A letter without numbers is just a complaint.", "i") };
             string isp = string.IsNullOrEmpty(m.Isp) ? "" : m.Isp, c = isp == "" ? "Hello," : "Hello " + isp + " team,";
             double lostH = w.OutMin / 60.0, roughMonth = (100 - w.Smooth) / 100 * 24 * 30;
             bool home = !double.IsNaN(w.Gw) && w.Gw > 15;   // our own network was slow too: say so - the letter never lies
             var sb = new StringBuilder();
             sb.Append("Subject: My connection over the last " + days + " days, measured\n\n" + c + "\n\n");
             sb.Append(Voice.P("I really like the internet. I'd like to use it more often. ", ""));
-            sb.Append("I've been measuring my connection from my PC for the last " + w.Days + " days. ");
+            sb.Append("I've been measuring my connection from my PC for the last " + w.Days + (w.Days == 1 ? " day. " : " days. "));
             if (w.Outages > 0) sb.Append("In that time it dropped completely " + w.Outages + (w.Outages == 1 ? " time" : " times") + ", for " + Len(w.OutMin) + " in total" + Voice.P(lostH >= 2 ? " - about " + Math.Round(lostH / 2) + " feature-length film" + (Math.Round(lostH / 2) == 1 ? "" : "s") + " of nothing" : "", "") + ". ");
             sb.Append("It was smooth " + N1(w.Smooth) + "% of the time. " + (w.Smooth < 99.5 ? Voice.P("That sounds high until you work it out: it's roughly " + Len(roughMonth * 60) + " of trouble a month. ", "That is roughly " + Len(roughMonth * 60) + " of trouble a month. ") : ""));
             if (!double.IsNaN(w.Loss) && w.Loss >= 0.5) sb.Append("Packet loss averaged " + N1(w.Loss) + "%. ");

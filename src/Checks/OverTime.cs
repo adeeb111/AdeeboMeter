@@ -137,7 +137,7 @@ namespace AdeeboMeter
             var days = History.Days(); var from = days.Min(); var to = DateTime.Today; if ((to - from).TotalDays > 183) from = to.AddDays(-182);
             var p = Sum(m, from, to, run, true, true);
             rows.Add(R(-1, "SIX MONTHS ON YOUR NETWORK", from.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - " + to.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m"));
-            if ((to - from).TotalDays < 150) rows.Add(R(3, "So far", p.Days + " days recorded - a full review needs about six months. Keep history for 180 days (Settings) to get there.", "", "i"));
+            if ((to - from).TotalDays < 150) rows.Add(R(3, "So far", p.Days + (p.Days == 1 ? " day" : " days") + " recorded - a full review needs about six months. Keep history for 180 days (Settings) to get there.", "", "i"));
             PeriodRows(p, rows);
             // month by month: one line each
             rows.Add(R(-1, "MONTH BY MONTH", "", "", "m"));

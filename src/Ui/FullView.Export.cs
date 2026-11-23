@@ -86,6 +86,47 @@ namespace AdeeboMeter
             return y + 30 * S;
         }
 
+        // ---------- the arrow keys between controls (1.1.6 test day: "keyboard doesn't work well... I can't go side to side. We should
+        // be able to control everything without a mouse"): from the sidebar Right goes into the page, from a page's left edge Left goes
+        // back to the sidebar, and Left / Right walk the header buttons and the page's tab row. Boxes and the shell keep their own arrows.
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            var k = keyData & Keys.KeyCode;
+            if ((keyData & Keys.Modifiers) == Keys.None && (k == Keys.Left || k == Keys.Right || k == Keys.Up || k == Keys.Down))
+            {
+                Control a = this; while (a is ContainerControl && ((ContainerControl)a).ActiveControl != null) a = ((ContainerControl)a).ActiveControl;
+                if (a != null && a != this && !(a is TextBoxBase) && !(a is TermView) && !(a is ComboBox) && !(a is ListBox) && SpatialMove(a, k)) return true;
+            }
+            return base.ProcessDialogKey(keyData);
+        }
+        static IEnumerable<Control> AllUnder(Control c) { foreach (Control x in c.Controls) { yield return x; foreach (var y in AllUnder(x)) yield return y; } }
+        static bool ShownAll(Control c) { for (var x = c; x != null; x = x.Parent) if (!x.Visible) return false; return true; }
+        static int Gap(int a0, int a1, int b0, int b1) { return a1 < b0 ? b0 - a1 : b1 < a0 ? a0 - b1 : 0; }
+        internal bool SpatialMove(Control from, Keys key)
+        {
+            if (from == null || from.IsDisposed) return false;
+            Rectangle cur = from.RectangleToScreen(from.ClientRectangle);
+            var fdb = from as DB; if (fdb != null && fdb.Mark != null) { var m = fdb.Mark(); if (m.Width > 0) cur = fdb.RectangleToScreen(Rectangle.Round(m)); }
+            var win = RectangleToScreen(ClientRectangle); Control best = null; double bs = double.MaxValue;
+            foreach (var c in AllUnder(this))
+            {
+                if (c == from || !c.TabStop || !c.Enabled || !c.CanSelect || !ShownAll(c) || c.Contains(from) || from.Contains(c)) continue;
+                var r = c.RectangleToScreen(c.ClientRectangle); if (r.Width < 4 || r.Height < 4 || !r.IntersectsWith(win)) continue;
+                double along, across;
+                if (key == Keys.Right) { if (r.Left < cur.Right - 4) continue; along = r.Left - cur.Right; across = Gap(r.Top, r.Bottom, cur.Top, cur.Bottom); }
+                else if (key == Keys.Left) { if (r.Right > cur.Left + 4) continue; along = cur.Left - r.Right; across = Gap(r.Top, r.Bottom, cur.Top, cur.Bottom); }
+                else if (key == Keys.Down) { if (r.Top < cur.Bottom - 4) continue; along = r.Top - cur.Bottom; across = Gap(r.Left, r.Right, cur.Left, cur.Right); }
+                else { if (r.Bottom > cur.Top + 4) continue; along = cur.Top - r.Bottom; across = Gap(r.Left, r.Right, cur.Left, cur.Right); }
+                // a tie on the edges goes to the one nearest the middle of where you are
+                double mid = key == Keys.Left || key == Keys.Right ? Math.Abs((r.Top + r.Bottom) / 2.0 - (cur.Top + cur.Bottom) / 2.0) : Math.Abs((r.Left + r.Right) / 2.0 - (cur.Left + cur.Right) / 2.0);
+                double sc = along + across * 3 + mid * 0.05; if (sc < bs) { bs = sc; best = c; }
+            }
+            if (best == null) return false;
+            best.Focus();
+            var tdb = best as DB; if (tdb != null && !tdb.KeyNav && tdb.ArrowStep != null) tdb.ArrowStep(key);   // into a page: its first tile on screen gets the mark
+            return true;
+        }
+
         // keyboard: the links under a picture (Ctrl+Shift+S save, C copy, Q phone)
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

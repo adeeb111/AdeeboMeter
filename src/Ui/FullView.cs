@@ -932,6 +932,7 @@ namespace AdeeboMeter
         }
         void WireKeys(DB db)
         {
+            if (DB.Hop == null) DB.Hop = (c, k) => { var f = c.FindForm() as FullView; return f != null && !f.IsDisposed && f.SpatialMove(c, k); };   // the window the page is in - never an old, closed one
             if (db.KeyNav) return;   // lists with their own arrow keys
             Func<RectangleF> mark = () => { int i; var l = ActsInOrder(db); return actFocus.TryGetValue(db, out i) && i >= 0 && i < l.Count ? l[i].Key : RectangleF.Empty; };
             db.Mark = mark;
@@ -969,7 +970,7 @@ namespace AdeeboMeter
                         else { if (r.Bottom > cur.Top + 2) continue; along = -dy; across = Math.Abs(dx); }
                         float score = along + across * 2.5f; if (score < bestScore) { bestScore = score; best = k; }
                     }
-                    if (best < 0) return true;   // nothing further that way: stay put
+                    if (best < 0) return false;   // nothing further that way on the page: DB.Hop moves to the control beside it
                 }
                 actFocus[db] = best; var br = l[best].Key;
                 if (db.AutoScroll && (br.Top < 0 || br.Bottom > db.ClientSize.Height)) { var sp = db.AutoScrollPosition; db.AutoScrollPosition = new Point(-sp.X, Math.Max(0, (int)(-sp.Y + br.Top - db.ClientSize.Height / 3))); }
