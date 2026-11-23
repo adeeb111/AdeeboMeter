@@ -4,6 +4,9 @@ const V = "am-c71c82382063", CORE = ["/locale-surfaces.js", "/locale.js", "/loca
 self.addEventListener("install", e => e.waitUntil(caches.open(V).then(c => c.addAll(CORE).then(() =>
   Promise.all(EXTRA.map(u => c.add(u).catch(() => {}))))).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x.startsWith("am-") && x !== V).map(x => caches.delete(x)))).then(() => self.clients.claim())));
+// SEC-05 (security hunt): a fresh copy replaces the kept one only if it really is that page - not redirected, from this
+// site, and the same kind of file (a captive portal's own 200 page must never take a kept page's place)
+function same(res, h) { const t = x => (x.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase(); return !res.redirected && res.type === "basic" && new URL(res.url).origin === location.origin && t(res) === t(h); }
 function key(u) { let p = u.pathname; if (p.endsWith("/")) p += "index.html"; else if (!/\.[a-z0-9]+$/i.test(p)) p += ".html"; return p; }
 const OFF = () => new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title><body style="font:17px system-ui;background:#0B1426;color:#EAF1FF;display:grid;place-items:center;min-height:90vh;text-align:center;padding:20px"><div><img src="/img/logo.svg" width="72" height="72" alt=""><h1>You’re offline</h1><p>This page isn’t kept on this phone. <a style="color:#7FB0FF" href="/app.html">Open the app</a> or <a style="color:#7FB0FF" href="/learn/">Learn</a> - they work offline.</p></div>', { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
 self.addEventListener("fetch", e => {
@@ -15,13 +18,13 @@ self.addEventListener("fetch", e => {
   if (r.mode === "navigate") {
     e.respondWith(caches.open(V).then(c => new Promise(done => {
       const t = setTimeout(() => { c.match(k).then(h => h && done(h)); }, 4000);
-      fetch(r).then(res => { clearTimeout(t); if (res.ok) c.match(k).then(h => { if (h) c.put(k, res.clone()); done(res); }); else done(res); })
+      fetch(r).then(res => { clearTimeout(t); if (res.ok) c.match(k).then(h => { if (h && same(res, h)) c.put(k, res.clone()); done(res); }); else done(res); })
         .catch(() => { clearTimeout(t); c.match(k).then(h => done(h || OFF())); });
     })));
     return;
   }
   e.respondWith(caches.open(V).then(c => c.match(k).then(hit => {
-    const net = fetch(r).then(res => { if (res.ok && hit) c.put(k, res.clone()); return res; });   // refresh what we keep, quietly
+    const net = fetch(r).then(res => { if (res.ok && hit && same(res, hit)) c.put(k, res.clone()); return res; });   // refresh what we keep, quietly
     if (hit) { e.waitUntil(net.catch(() => {})); return hit; }
     return net.catch(() => Response.error());
   })));
