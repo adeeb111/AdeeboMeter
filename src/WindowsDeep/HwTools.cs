@@ -243,7 +243,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); var s = HwSpecs.Get(); var sd = HwSpecs.SystemDisk(s);
             var v = PcHealth.Sample(); Thread.Sleep(900); v = PcHealth.Sample();
             Func<string, double> c = k => { double x; return v.TryGetValue(k, out x) ? x : double.NaN; };
-            double cpu = m.Cpu.Avg(10), mem = m.Mem.Last, faults = c("faults"), commit = c("commit"), limit = c("limit"), dms = c("diskms"), q = c("queue"), perf = c("perf"), dpc = c("dpc") + c("intr"), busy = 100 - c("idle");
+            double cpu = m.Cpu.Avg(10), mem = m.Mem.Last, faults = c("faults"), commit = c("commit"), limit = c("limit"), dms = c("diskms"), q = c("queue"), perf = c("perf"), dpc = c("dpc") + c("intr"), busy = Math.Max(0, Math.Min(100, 100 - c("idle")));
             if (double.IsNaN(cpu)) cpu = m.Cpu.Last;
             List<AppStat> apps; lock (m.L) apps = m.Apps.Where(a => a.Name != "Idle" && a.Name != "_Total").ToList();
             Func<AppStat, string> who = a => { var e = global::AdeeboMeter.Explain.Find(a.Name); string nm = e != null && !string.IsNullOrEmpty(e.Friendly) ? e.Friendly : a.Name; return nm + (a.Count > 1 ? " (" + a.Count + " processes" + (e != null && (e.Tag ?? "").IndexOf("tab", StringComparison.OrdinalIgnoreCase) >= 0 ? "; one per tab" : "") + ")" : ""); };
@@ -348,12 +348,13 @@ namespace AdeeboMeter
             try { var di = new DriveInfo(HwSpecs.SystemLetter()); double fr = (double)di.AvailableFreeSpace / di.TotalSize; rows.Add(R(fr < 0.1 ? 2 : fr < 0.15 ? 1 : 0, "Free space on " + di.Name.TrimEnd('\\'), (fr * 100).ToString("0", CultureInfo.CurrentCulture) + "% free", fr < 0.15 ? "An SSD slows down when nearly full, and Windows can't update. Toolbox > Where did my space go?" : "", "w")); } catch (IOException) { } catch (ArgumentException) { }
             rows.Add(R(s.RamGb < 8 ? 1 : 0, "Memory", Gb(s.RamGb) + " · " + HwSpecs.ChText(s), s.RamGb < 8 ? "8 GB is the comfortable minimum for Windows and a browser." : "", "w"));
             var errs = Errors(30); int bad = errs.Sum(e => e.Item3);
-            rows.Add(R(errs.Any(e => e.Item1 == "disk" && e.Item3 > 0) ? 2 : bad > 0 ? 1 : 0, "Hardware errors (30 days)", bad == 0 ? "none" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + e.Item2).ToArray()), bad > 0 ? "Disk errors mean a failing disk or cable - back up now. Sudden power-offs mean a crash, overheating or a weak battery / charger." : "", "w"));
+            rows.Add(R(errs.Any(e => e.Item1 == "disk" && e.Item3 > 0) ? 2 : bad > 0 ? 1 : 0, "Hardware errors (30 days)", bad == 0 ? "none" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), bad > 0 ? "Disk errors mean a failing disk or cable - back up now. Sudden power-offs mean a crash, overheating or a weak battery / charger." : "", "w"));
             string pat = PcRecord.Pattern(); if (pat != "") rows.Add(R(3, "When it felt slow", pat, "", "m"));
             var top = rows.Where(x => x[0] == "2").Concat(rows.Where(x => x[0] == "1")).FirstOrDefault();
             rows.Insert(0, R(top == null ? 0 : int.Parse(top[0], CultureInfo.InvariantCulture), "Verdict", top == null ? "None of the usual hidden causes: restarted recently, few startup apps, an SSD with room, no hardware errors." : "The likeliest hidden cause: " + top[1].ToLowerInvariant() + " - " + top[2] + ". " + top[3], "", "i"));
             return rows;
         }
+        static string Singular(string w) { return w.EndsWith("errors", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w.EndsWith("power-offs", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w.EndsWith("resets", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w; }   // "1 sudden power-off", not "1 sudden power-offs"
         // (key, words, count): disk errors, controller resets, hardware errors (WHEA), sudden power-offs - the System log, no admin
         internal static List<Tuple<string, string, int>> Errors(int days)
         {
@@ -437,7 +438,7 @@ namespace AdeeboMeter
             sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); take(Gpu(), "Graphics"); take(Cpu(run), "Processor");
             sec("HIDDEN TROUBLE");
             var errs = Errors(30); int nbad = errs.Sum(e => e.Item3);
-            rows.Add(R(errs.Any(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0) ? 2 : nbad > 0 ? 1 : 0, "Errors in 30 days", nbad == 0 ? "none - no disk, hardware or power-off errors" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + e.Item2).ToArray()), nbad > 0 ? "Ask the seller about these. Disk errors = a failing disk; sudden power-offs = crashes, heat or the battery." : "", "w"));
+            rows.Add(R(errs.Any(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0) ? 2 : nbad > 0 ? 1 : 0, "Errors in 30 days", nbad == 0 ? "none - no disk, hardware or power-off errors" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), nbad > 0 ? "Ask the seller about these. Disk errors = a failing disk; sudden power-offs = crashes, heat or the battery." : "", "w"));
             if (nbad > 0) bad.Add("errors in the event log");
             rows.Add(R(3, "Hands-on", "test the screen, every key, the speakers and the mic with the buttons under this result - a camera test opens Windows' Camera app", "", "i"));
             int worst = rows.Where(x => x[0] != "3" && x[0] != "-1").Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).DefaultIfEmpty(0).Max();
@@ -487,7 +488,7 @@ namespace AdeeboMeter
             if (s.Channels == 1 && s.RamSticks > 0) rows.Add(R(1, "Memory channels", "single channel (" + Gb(s.RamGb) + ")", s.Soldered ? "Half the memory speed (soldered - can't be changed)." : "Half the memory speed: a second matching stick doubles it.", "w"));
             if (s.RamGb > 0 && s.RamGb < 8) rows.Add(R(1, "Memory size", Gb(s.RamGb), "Tight for Windows and a browser.", "w"));
             var errs = Errors(30); var de = errs.Where(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0).ToList();
-            if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + e.Item2).ToArray()), "A failing disk or cable - back up now.", "w"));
+            if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), "A failing disk or cable - back up now.", "w"));
             var pw = errs.FirstOrDefault(e => e.Item1 == "power"); if (pw != null && pw.Item3 > 0) rows.Add(R(1, "Sudden power-offs (30 days)", pw.Item3.ToString(CultureInfo.CurrentCulture), "Crashes, overheating or a weak battery / charger.", "w"));
             double days = (DateTime.Now - s.Boot).TotalDays; if (days > 14) rows.Add(R(1, "Last restart", F(Math.Floor(days)) + " days ago", "A real restart clears weeks of leaks and half-done updates.", "w"));
             if (s.RestartPending) rows.Add(R(1, "Restart waiting", "an update is waiting for a restart", "", "w"));

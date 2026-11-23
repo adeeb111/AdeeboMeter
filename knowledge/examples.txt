@@ -188,6 +188,7 @@ in: example.com|A|
 3|Browser|Edge: secure DNS on, with your current provider||w
 
 == dnscmp
+in: example.com|1.1.1.1
 0|Same answer|203.0.113.10 from both||m
 3|Your DNS (192.168.1.1)|203.0.113.10 · 3 ms||m
 3|1.1.1.1|203.0.113.10 · 12 ms||m
@@ -213,6 +214,7 @@ in: https://example.com/api/health|GET|
 3|Body|{"status":"ok","version":"2.4.1"}||m
 
 == ntp
+in: time.windows.com
 0|Time server|answered in 21 ms · stratum 2||m
 0|Your clock|0.04 s fast - fine||m
 
@@ -846,6 +848,7 @@ in: C:\Results\laptop.txt|C:\Results\desktop.txt
 3|3. Apex Legends|NA West · 68 ms · jitter 9 ms||m
 
 == console
+in: 192.0.2.20||10
 2|Console verdict|the console's own link: the router answers this PC quickly, the console doesn't - move it closer, use 5 GHz, or a cable||i
 -1|THE FOUR LEGS|30 seconds||m
 1|PC → console|38 ms · jitter 21 ms · loss 7%|Your home network to the console - includes the console's Wi-Fi.|m

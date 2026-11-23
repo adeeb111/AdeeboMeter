@@ -72,6 +72,8 @@ namespace AdeeboMeter
             var mono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : IsFont("Consolas") ? "Consolas" : FontFamily.GenericMonospace.Name, 10.5f);
             term = new TermView(mono) { Dock = DockStyle.Fill, Bg = ShBg, Fg = ShFg };
             term.TermKey += ShKey; term.TermChar += ShChar; term.Paste = ShPaste;
+            term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(t.Replace("\n", "\r\n")); term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
+            term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); File.WriteAllText(f, t.Replace("\n", "\r\n")); term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
             shellPage.Controls.Add(term);
             shellPage.VisibleChanged += delegate { if (shellPage.Visible) { if (shTools == null) { shTools = Tools2(); ThreadPool.QueueUserWorkItem(delegate { ShStarterScripts(); }); } if (term.AllText().Trim() == "") ShWelcome(); ShPrompt(); BeginInvoke((Action)delegate { term.Focus(); }); } };
             return shellPage;
@@ -1917,7 +1919,7 @@ namespace AdeeboMeter
             foreach (var o0 in rows.Where(x => x != null && x.Length > 0 && !IsSecretRow(x)))
             {
                 var o = o0.Length >= 3 ? o0 : new[] { o0[0], o0.Length > 1 ? o0[1] : "", "" };
-                if (!c.Out.Screen) { OL(c, (o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : o[0] == "-1" ? "" : "     ") + (o[1] == "" ? "" : ShareCell(o[1]) + (o[0] == "-1" ? "" : ": ")) + ShareCell(o[2])); continue; }
+                if (!c.Out.Screen) { OL(c, (o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : o[0] == "-1" ? "" : "     ") + (o[1] == "" ? "" : ShareCell(o[1]) + (o[0] == "-1" ? (o[2] != "" ? "  ·  " : "") : ": ")) + ShareCell(o[2])); continue; }   // a heading and its note: "HOP BY HOP  ·  loss at one hop..." (they ran together in a pipe or a file)
                 if (o[0] == "6" || o[0] == "7" || o[0] == "8") { OL(c, (o[0] == "7" ? "! " : "  ") + ShareCell(o[2]), o[0] == "7" ? ShAmber : ShFg); continue; }
                 if (o[0] == "-1") { OL(c, ""); OL(c, ShareCell(o[1]).ToUpperInvariant() + (o[2] != "" ? "  " + ShareCell(o[2]) : ""), ShBlue); continue; }
                 Color col = o[0] == "2" ? ShRed : o[0] == "1" ? ShAmber : o[0] == "0" ? ShGreen : ShDim;

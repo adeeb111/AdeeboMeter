@@ -149,6 +149,7 @@ namespace AdeeboMeter
             var dots = new[] { Color.FromArgb(255, 95, 86), Color.FromArgb(255, 189, 46), Color.FromArgb(39, 201, 63) };
             for (int i = 0; i < 3; i++) using (var b = new SolidBrush(dots[i])) g.FillEllipse(b, 14 * S + i * 18 * S, 10 * S, 11 * S, 11 * S);
             using (var tb = new SolidBrush(Color.FromArgb(139, 148, 158))) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(Title, Draw.fSmall, tb, new RectangleF(0, 0, Width, 30 * S), cf);
+            PaintBarButtons(g);
             if (Editor != null) { Editor.Bg = Bg; Editor.Fg = Fg; Editor.Paint(g, mono, cw, chh, Pad, TopY, ClientSize, caretOn, Focused); return; }
 
             int count = Relayout(), vis = VisibleRows;
@@ -208,6 +209,24 @@ namespace AdeeboMeter
         protected override void OnMouseWheel(MouseEventArgs e) { if (Editor != null) { Editor.Wheel(e.Delta > 0 ? -3 : 3); Invalidate(); return; } int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + (e.Delta > 0 ? 3 : -3))); Invalidate(); }
         public void ScrollPage(int dir) { int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + dir * (VisibleRows - 2))); Invalidate(); }
         public void Follow() { scroll = 0; }
+        // ---------- two buttons in the window bar: Copy (the whole session, or the selection) and Save log (Adeeb, 1.1.6 test day)
+        public Action CopyAll, SaveLog; string barFlash = ""; DateTime barFlashAt;
+        readonly RectangleF[] barBtns = new RectangleF[2];
+        public void Flash(string s) { barFlash = s ?? ""; barFlashAt = DateTime.UtcNow; Invalidate(new Rectangle(0, 0, Width, (int)(31 * Draw.S))); var t = new Timer { Interval = 2600 }; t.Tick += delegate { t.Stop(); t.Dispose(); if (!IsDisposed) Invalidate(new Rectangle(0, 0, Width, (int)(31 * Draw.S))); }; t.Start(); }
+        void PaintBarButtons(Graphics g)
+        {
+            float S = Draw.S, x = ClientSize.Width - 14 * S; var labels = new[] { SelectedText() != "" ? "Copy selection" : "Copy all", "Save log" };
+            for (int i = labels.Length - 1; i >= 0; i--)
+            {
+                var sz = g.MeasureString(labels[i], Draw.fSmall); var r = new RectangleF(x - sz.Width - 16 * S, 5 * S, sz.Width + 16 * S, 20 * S); x = r.X - 8 * S; barBtns[i] = r;
+                using (var b = new SolidBrush(Color.FromArgb(33, 40, 50))) g.FillRectangle(b, r);
+                using (var pn = new Pen(Color.FromArgb(55, 65, 78))) g.DrawRectangle(pn, r.X, r.Y, r.Width, r.Height);
+                using (var tb = new SolidBrush(Color.FromArgb(201, 209, 217))) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(labels[i], Draw.fSmall, tb, r, cf);
+            }
+            if (barFlash != "" && (DateTime.UtcNow - barFlashAt).TotalSeconds < 2.5)
+                using (var fb = new SolidBrush(Color.FromArgb(63, 185, 80))) using (var cf = new StringFormat { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap })
+                    g.DrawString(barFlash, Draw.fSmall, fb, new RectangleF(70 * S, 0, Math.Max(1, x - 70 * S), 30 * S), cf);
+        }
         // ---------- a scroll bar on the right: drag it, or click above/below the thumb to page
         int lastCount = -1; bool dragging; float dragOff;
         RectangleF Track() { float S = Draw.S; return new RectangleF(ClientSize.Width - 9 * S, TopY, 6 * S, Math.Max(1, ClientSize.Height - TopY - 8 * Draw.S)); }
@@ -234,6 +253,7 @@ namespace AdeeboMeter
         protected override void OnMouseDown(MouseEventArgs e)
         {
             Focus(); if (Editor != null) return;
+            if (e.Button == MouseButtons.Left && e.Y < 30 * Draw.S) { if (barBtns[0].Contains(e.Location) && CopyAll != null) CopyAll(); else if (barBtns[1].Contains(e.Location) && SaveLog != null) SaveLog(); return; }
             if (e.Button == MouseButtons.Right) { if (SelectedText() != "") { Copy(); } else if (Paste != null) Paste(); return; }
             if (e.Button == MouseButtons.Left && OnBar(e.Location))
             {
