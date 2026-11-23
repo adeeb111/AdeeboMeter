@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="bn" data-language-route="/isp-report.html" data-language-variants="en bn fr es">
+<html lang="bn" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>প্যাকেট লস কোথায় শুরু হয়, সেবাদাতাকে কীভাবে দেখাবেন | AdeeboMeter</title>
-<meta name="description" content="See how ping and traceroute work ও Microsoft’s explanation of intermediate-hop response loss.">
+<meta name="description" content="রাউটার ও গন্তব্যের ফল তুলনা করুন। ভালো ও খারাপ সময়ের রিপোর্ট রাখুন।">
 <link rel="canonical" href="https://adeebometer.com/bn/isp-report.html">
 <meta property="og:title" content="প্যাকেট লস কোথায় শুরু হয়, সেবাদাতাকে কীভাবে দেখাবেন">
-<meta property="og:description" content="See how ping and traceroute work ও Microsoft’s explanation of intermediate-hop response loss.">
+<meta property="og:description" content="রাউটার ও গন্তব্যের ফল তুলনা করুন। ভালো ও খারাপ সময়ের রিপোর্ট রাখুন।">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/bn/isp-report.html">
 <meta property="og:image" content="https://adeebometer.com/img/isp-report-example.png">
@@ -53,36 +53,38 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/isp-report.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
 </head>
 <body>
 <main>
-<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">Troubleshooting Blog</a> · <a href="/bn/isp-report.html" lang="bn">বাংলা</a></nav>
+<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a> · <a href="/bn/isp-report.html" lang="bn">বাংলা</a></nav>
 <h1>প্যাকেট লস কোথায় শুরু হয়, সেবাদাতাকে কীভাবে দেখাবেন</h1>
 <figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Check whether the loss carries through.</h2><p>Compare the router and destination. Send the results from a bad period and a good one.</p></div>
-<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📋</span><strong>ISP report</strong></div><div class="plot-label"><span>Packet loss</span><span>উদাহরণ</span></div><div class="hopline"><span><i></i>রাউটার<small>Steady</small></span><span><i></i>Later hop<small>Loss starts</small></span><span><i></i>Destination<small>Loss continues</small></span></div></div>
-<figcaption>Illustrative path. The router is steady and loss appears later, including at the destination.</figcaption>
+<div class="visual-copy"><h2 id="quick-title">গন্তব্যেও প্যাকেট হারাচ্ছে কি না দেখুন।</h2><p>রাউটার ও গন্তব্যের ফল তুলনা করুন। ভালো ও খারাপ সময়ের রিপোর্ট রাখুন।</p></div>
+<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📋</span><strong>সেবাদাতার জন্য রিপোর্ট</strong></div><div class="plot-label"><span>প্যাকেট লস</span><span>উদাহরণ</span></div><div class="hopline"><span><i></i>রাউটার<small>স্থিতিশীল</small></span><span><i></i>পরের হপ<small>প্যাকেট হারানো শুরু</small></span><span><i></i>গন্তব্য<small>প্যাকেট হারানো চলছে</small></span></div></div>
+<figcaption>বোঝানোর জন্য উদাহরণ পথ। রাউটার স্থিতিশীল; প্যাকেট হারানো শুরু হয় পরের দিকে, গন্তব্যেও তা দেখা যায়।</figcaption>
 </figure>
 
-<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>App-generated example with simulated measurements and addresses. In a real report, start with the router and destination rows.</figcaption></figure>
-<h2 id="checks">Run the checks</h2>
-<ol><li>In Windows AdeeboMeter, open <strong>টুলবক্স</strong> এবং খুঁজুন <strong>আমার ইন্টারনেট সেবাদাতার জন্য রিপোর্ট</strong>.</li><li>Enter the hostname or IP for the affected service, or select a game you’ve added. Choose a 1-, 2-, or 5-minute run during the slowdown.</li><li>Repeat on Ethernet if possible. Save a good-period comparison. Review the report before attaching it to your support ticket or sending a screenshot.</li></ol>
-<h2 id="readings">What to check next</h2>
+<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>অ্যাপে তৈরি উদাহরণ, মাপ ও ঠিকানাগুলো বানানো। আসল রিপোর্টে আগে রাউটার ও গন্তব্যের সারি দেখুন।</figcaption></figure>
+<h2 id="checks">যেভাবে পরীক্ষা করবেন</h2>
+<ol><li>Windows-এ AdeeboMeterে খুলুন: <strong>টুলবক্স</strong> এবং খুঁজুন <strong>আমার ইন্টারনেট সেবাদাতার জন্য রিপোর্ট</strong>.</li><li>রাউটার থেকে গন্তব্য পর্যন্ত কোথায় প্যাকেট হারাচ্ছে দেখুন।</li><li>ভালো সময়ে আবার চালিয়ে দুটি রিপোর্ট তুলনা করুন।</li></ol>
+<h2 id="readings">এরপর কী দেখবেন</h2>
 <ul class="next-checks">
-  <li><strong>One hop misses replies</strong><span>Check whether loss reaches the destination.</span></li>
-  <li><strong>Loss starts near home</strong><span>Compare Wi-Fi and Ethernet.</span></li>
-  <li><strong>Router is steady, destination loses packets</strong><span>Repeat the test and share both results.</span></li>
-  <li><strong>One destination is affected</strong><span>Compare an unrelated service.</span></li>
+  <li><strong>একটি হপ উত্তর দিচ্ছে না</strong><span>গন্তব্যেও প্যাকেট লস হচ্ছে কি না দেখুন।</span></li>
+  <li><strong>বাড়ির কাছেই লস</strong><span>Wi-Fi ও Ethernet তুলনা করুন।</span></li>
+  <li><strong>রাউটার ঠিক, গন্তব্যে লস</strong><span>আবার পরীক্ষা করে দুটি ফল পাঠান।</span></li>
+  <li><strong>একটি গন্তব্যেই সমস্যা</strong><span>অন্য সেবা দিয়ে তুলনা করুন।</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>In the example report above, the wired PC and router are steady. Loss appears farther along and is also visible at the destination. Send that pattern with the time of the run and the service affected. A second run helps show whether the pattern recurs.</p></aside>
-<details class="guide-detail"><summary>Why it works</summary>
-<p>Traceroute and packet loss reports are observations from one machine to one destination at a particular time. Routers can rate-limit the replies they send to probes. Paths and return routes can also vary, so a hop number is a lead for support to investigate.</p><p>See <a href="/bn/learn/icmp.html">how ping and traceroute work</a> ও <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft’s explanation of intermediate-hop response loss</a>.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">বাস্তব উদাহরণ</h2><p>তারযুক্ত পিসি ও রাউটার ঠিক আছে। পরের দিকে প্যাকেট হারাচ্ছে এবং গন্তব্যেও দেখা যাচ্ছে। সময় ও ক্ষতিগ্রস্ত সেবার নামসহ দুটি পরীক্ষার ফল পাঠান।</p></aside>
+<details class="guide-detail"><summary>এই পরীক্ষা কাজে দেয় কেন</summary>
+<p>একটি পরীক্ষা এক সময়ে এক পিসি থেকে এক গন্তব্যের তথ্য দেয়। রাউটার পরীক্ষার উত্তরের হার সীমিত করতে পারে। যাওয়া ও ফেরার পথ বদলাতেও পারে। একটি হপ উত্তর না দিলেই সেখানে ব্যবহারকারীর ডেটা হারাচ্ছে বলা যায় না।</p><p>আরও দেখুন: <a href="/bn/learn/icmp.html">পিং ও ট্রেসরাউট কীভাবে কাজ করে</a> ও <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">মাঝের হপ উত্তর না দেওয়া নিয়ে Microsoft-এর ব্যাখ্যা</a>.</p>
 </details>
-<h2>Use AdeeboMeter on Windows</h2>
-<p>Use the generated summary to identify the measurements worth sharing. If you’re still deciding whether to involve your provider, start with the <a href="/bn/wifi-or-isp.html">Wi-Fi and Ethernet comparison</a>.</p>
+<h2>Windows-এ AdeeboMeter ব্যবহার করুন</h2>
+<p>তৈরি হওয়া সারাংশ দেখে ঠিক করুন কোন মাপগুলো পাঠানো দরকার। সেবাদাতাকে জানাবেন কি না এখনও ঠিক না করলে, শুরু করুন <a href="/bn/wifi-or-isp.html">Wi-Fi ও Ethernet তুলনা দিয়ে</a>.</p>
 
 <p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>A useful ticket includes the time and time zone, connection type, affected destination, how often it happens, and a report from both a bad and a good period.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">কোন তথ্য রাখবেন</h2><p>সময় ও টাইম জোন, Wi-Fi বা Ethernet, গন্তব্য, সমস্যার পুনরাবৃত্তি এবং দুটি রিপোর্ট দিন।</p></aside>
 </main>
 </body>
 </html>

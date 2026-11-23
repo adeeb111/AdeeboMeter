@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bn" data-language-route="/privacy.html" data-language-variants="en fr es">
+<html lang="bn" data-language-route="/privacy.html" data-language-variants="en bn fr es ar">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,9 +31,12 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/privacy.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/privacy.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/privacy.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/privacy.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/privacy.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/privacy.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/privacy.html">
 </head>
 <body>
 <main>
@@ -57,7 +60,13 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>স্ট্রিম ও ব্রোকারের রেকর্ড</b> (History-তে 90 দিন থাকে): স্ট্রিমের সেবার নাম, যা সার্ভারের নাম থেকে জানা যায়, আপনার ট্যাব বা শিরোনাম থেকে নয়। স্ট্রিমের সময় ও গতি কমার ঘটনাও থাকে। ব্রোকারের ক্ষেত্রে প্রতি লেনদেন দিনের ধীর সময়গুলো থাকে। আপনার অ্যাকাউন্ট বা সেবায় কী দেখেন, তা দেখা হয় না।</li>
   <li><b>আবহাওয়া</b> (<code>weather.txt</code>, শুধু আবহাওয়া চালু করলে): বেছে নেওয়া এলাকার ঘণ্টাভিত্তিক পূর্বাভাস, আগের দিন ও সামনের দিনগুলোর জন্য, প্রায় 2 KB। ইতিহাস নেই। সরিয়ে দিলে বা আবহাওয়া বন্ধ করলে মুছে যায়।</li>
   <li><b>দিনের বাজারদর</b> (<code>fx.txt</code>, <code>bcpi.txt</code>): Bank of Canada-এর শেষ বিনিময়হার ও পণ্যমূল্য সূচক, যাতে Trading পেজ খুলতে আবার অনুরোধ পাঠাতে না হয়।</li>
+  <li><b>Outage log</b> (in History): when your internet went quiet and when it came back, so the Outages list and the Report for my ISP can show them. Times only - nothing about what you were doing. It goes with History: turning History off stops it, and old days roll off with the rest.</li>
   <li><b>স্লিপ থেকে ফেরার হিসাব</b> (History-তে): পিসি জেগে ওঠার কত সেকেন্ড পর রাউটার ও DNS সাড়া দিয়েছিল।</li>
+  <li><b>Devices on your networks</b> (<code>devices.txt</code>, <code>device-nets.txt</code>, only while History is on): the hardware addresses already seen on each network and when the network was first met, so a new device can be listed. At most 40 networks; turning History off deletes both.</li>
+  <li><b>Walk test</b> (<code>walk.txt</code>): the room names you typed and what each spot measured. Remove a room on the page to delete it.</li>
+  <li><b>Programs seen</b> (<code>seen-apps.txt</code>): the names of programs that use the network and when each was first seen, so a newcomer can be pointed out.</li>
+  <li><b>Remembered phones</b> (<code>phones.txt</code>, only if you said yes to "Remember this phone"): each phone's name and its own key, locked to your Windows account. Forget my phones empties it.</li>
+  <li><b>Your games</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): the games and servers you added in the Gamer Zone, and Valve's public server list when you refresh it - and, while History is on, a line a minute for each server you watch.</li>
   <li><b>ক্যাপচার</b> ও <b>সেভ করা ফলাফল</b>, তবে শুধু যেগুলো তৈরি বা সেভ করতে বলেছেন।</li>
 </ul>
 <p>টুলে লেখা পাসওয়ার্ড ও গোপন তথ্য, যেমন SNMP community, RADIUS secret বা সার্টিফিকেট পাসওয়ার্ড, শুধু ওই কাজেই লাগে। সেভ, লগ বা কপি করা হয় না।</p>
@@ -98,7 +107,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <h2>এই ওয়েবসাইট</h2>
 <p>Public website pages use Cloudflare Web Analytics to measure page views, visits, referring websites and page performance. These totals help us understand which guides people find and improve the website. Cloudflare Web Analytics uses no analytics cookies or browser fingerprinting. A visit count is an estimate based on page requests and referrals.</p>
 <p>The analytics script loads from <code>static.cloudflareinsights.com</code> and sends measurements to Cloudflare. Cloudflare receives the network request as the service provider. Read <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">Cloudflare's data collection documentation</a>. The website respects Do Not Track and Global Privacy Control by skipping analytics when either signal is enabled.</p>
-<p>The website also uses two other external services: the home page asks <code>api.github.com</code> -এ, আর মতামত ও স্বীকৃতি ফর্মে Cloudflare Turnstile লোড হয় (<code>challenges.cloudflare.com</code>)। এটি বিনামূল্যে যাচাই করে প্রেরক মানুষ কি না। ধাঁধা বা ট্র্যাকিং কুকি নেই। আপনি অন্য সাইটে গেলে যেমন হয়, ওই সাইটগুলোও আপনার IP ঠিকানা দেখে। বার্তা পাঠালে ওপরের বর্ণনা অনুযায়ী AdeeboMeter-এর রিলে দিয়ে যায়।</p>
+<p>The website also uses these other external services: the home page asks <code>api.github.com</code> for the latest version number and shows the Microsoft Store badge from <code>get.microsoft.com</code>; the feedback and Hall of Fame forms load Cloudflare Turnstile (<code>challenges.cloudflare.com</code>) - a free check that a person, not a robot, is sending, with no puzzle and no tracking cookies; the Live page and the phone app ask AdeeboMeter's own Live service (<code>adeebometer-live.orkoadeeb.workers.dev</code>) for weather, scores and site checks; and the phone app's checks, when you run them, contact the sites they test (for example Google, Cloudflare, Microsoft and Apple test pages, the streaming and call services you pick, public DNS resolvers, <code>rdap.org</code> for who owns an address, and Cloudflare's speed test). Those sites see your IP address the way any website you visit does. A message you send goes through AdeeboMeter's relay, as described above.</p>
 
 <h2>শিশু</h2>
 <p>AdeeboMeter শিশু বা অন্য কারও ব্যক্তিগত তথ্য সংগ্রহ করে না।</p>

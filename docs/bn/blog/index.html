@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="bn" data-language-route="/blog/" data-language-variants="en bn fr es">
+<html lang="bn" data-language-route="/blog/" data-language-variants="en bn fr es ar">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Troubleshooting Blog | AdeeboMeter</title>
-<meta name="description" content="Troubleshooting Blog | AdeeboMeter">
+<title>সমস্যা সমাধানের ব্লগ | AdeeboMeter</title>
+<meta name="description" content="সমস্যা সমাধানের ব্লগ">
 <link rel="canonical" href="https://adeebometer.com/bn/blog/">
-<meta property="og:title" content="Troubleshooting Blog | AdeeboMeter">
-<meta property="og:description" content="Troubleshooting Blog | AdeeboMeter">
+<meta property="og:title" content="সমস্যা সমাধানের ব্লগ | AdeeboMeter">
+<meta property="og:description" content="সমস্যা সমাধানের ব্লগ">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/bn/blog/">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
@@ -48,24 +48,27 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/blog/">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/blog/">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/blog/">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/blog/">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/blog/">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/blog/">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/blog/">
 </head>
 <body>
 <main class="troubleshooting">
-<nav class="guide-home" aria-label="সাইট"><a href="/bn/"><img src="/favicon.svg" width="26" height="26" alt="">AdeeboMeter</a><a href="/bn/learn/">শিখুন</a></nav>
+<nav class="top sitebar" aria-label="সাইট"><a class="sb-brand" href="/bn/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a><div class="sb-links"><a data-i18n="Learn" href="/bn/learn/">শিখুন</a><a data-i18n="Blog" href="/bn/blog/" aria-current="page">ব্লগ</a><a data-i18n="Games" href="/games.html">গেম</a><a data-i18n="Live" href="/live.html">লাইভ</a><a class="sb-heart" href="/bn/#donate" title="দান করুন" aria-label="দান করুন" data-i18n-label="Donate">♥</a><a class="sb-dl" data-i18n="Download" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">ডাউনলোড</a></div></nav>
 <header class="story-hero">
-  <div><p class="story-kicker">Troubleshooting Blog</p><h1>What slowed down?</h1><p>Pick what you’re seeing. Run one check. Know where to look next.</p></div>
+  <div><p class="story-kicker">সমস্যা সমাধানের ব্লগ</p><h1>কী ধীর হয়ে গেছে?</h1><p>যে সমস্যাটি দেখছেন, সেটি বেছে নিন। একটি পরীক্ষা চালালেই বুঝবেন এরপর কোথায় দেখতে হবে।</p></div>
   <div class="hero-route" aria-hidden="true"><span>পিসি</span><span>Wi-Fi</span><span>রাউটার</span><span>ইন্টারনেট</span></div>
 </header>
 <div class="guide-cards">
-<a class="scenario-card" href="/bn/wifi-or-isp.html"><div aria-hidden="true"><div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📶</span><strong>Wi-Fi check</strong></div><div class="route"><span>পিসি</span><b>→</b><span>রাউটার</span><b>→</b><span>ইন্টারনেট</span></div><div class="art-note"><span><i></i> Wi-Fi · stalls</span><span><i></i> Ethernet · smooth</span></div></div></div><div class="scenario-copy"><h2>Is it my Wi-Fi or my ISP?</h2><p>Try the same task over Wi-Fi and Ethernet.</p><span aria-hidden="true">→</span></div></a>
-<a class="scenario-card" href="/bn/internet-speed-monitor.html"><div aria-hidden="true"><div class="scenario-art art-speed"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">⏱️</span><strong>Latency check</strong></div><div class="plot-label"><span>Connection delay</span><span>Illustration</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>Idle</span><span>Upload starts</span><span>Upload paused</span></div></div></div><div class="scenario-copy"><h2>Why does my internet slow down?</h2><p>See what happens to delay when traffic rises.</p><span aria-hidden="true">→</span></div></a>
-<a class="scenario-card" href="/bn/pc-monitoring.html"><div aria-hidden="true"><div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>PC check</strong></div><div class="plot-label"><span>PC activity</span><span>উদাহরণ</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>মেমরি<i style="--h:64%"></i></span><span>Disk<i style="--h:94%"></i></span></div></div></div><div class="scenario-copy"><h2>Why is my PC slow?</h2><p>Spot what stays busy while your PC stalls.</p><span aria-hidden="true">→</span></div></a>
-<a class="scenario-card" href="/bn/isp-report.html"><div aria-hidden="true"><div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📋</span><strong>ISP report</strong></div><div class="plot-label"><span>Packet loss</span><span>উদাহরণ</span></div><div class="hopline"><span><i></i>রাউটার<small>Steady</small></span><span><i></i>Later hop<small>Loss starts</small></span><span><i></i>Destination<small>Loss continues</small></span></div></div></div><div class="scenario-copy"><h2>What can I show my ISP?</h2><p>Turn recurring packet loss into a report.</p><span aria-hidden="true">→</span></div></a>
+<a class="scenario-card" href="/bn/wifi-or-isp.html"><div aria-hidden="true"><div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📶</span><strong>Wi-Fi পরীক্ষা</strong></div><div class="route"><span>পিসি</span><b>→</b><span>রাউটার</span><b>→</b><span>ইন্টারনেট</span></div><div class="art-note"><span><i></i> Wi-Fi · আটকে যায়</span><span><i></i> Ethernet · ঠিকমতো চলে</span></div></div></div><div class="scenario-copy"><h2>সমস্যা Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে?</h2><p>Wi-Fi আর Ethernet দিয়ে একই কাজ করে দেখুন।</p><span aria-hidden="true">→</span></div></a>
+<a class="scenario-card" href="/bn/internet-speed-monitor.html"><div aria-hidden="true"><div class="scenario-art art-speed"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">⏱️</span><strong>দেরি পরীক্ষা</strong></div><div class="plot-label"><span>সংযোগে দেরি</span><span>চিত্র</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>অতিরিক্ত ট্রাফিক নেই</span><span>আপলোড শুরু</span><span>আপলোড থামানো হয়েছে</span></div></div></div><div class="scenario-copy"><h2>ইন্টারনেট কেন ধীর হয়ে যায়?</h2><p>ট্রাফিক বাড়লে সংযোগে দেরি কীভাবে বদলায় দেখুন।</p><span aria-hidden="true">→</span></div></a>
+<a class="scenario-card" href="/bn/pc-monitoring.html"><div aria-hidden="true"><div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">💻</span><strong>পিসি পরীক্ষা</strong></div><div class="plot-label"><span>পিসির কাজকর্ম</span><span>উদাহরণ</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>মেমরি<i style="--h:64%"></i></span><span>ডিস্ক<i style="--h:94%"></i></span></div></div></div><div class="scenario-copy"><h2>আমার পিসি ধীর কেন?</h2><p>পিসি আটকে গেলে কোন অংশটি ব্যস্ত থাকে, দেখুন।</p><span aria-hidden="true">→</span></div></a>
+<a class="scenario-card" href="/bn/isp-report.html"><div aria-hidden="true"><div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📋</span><strong>সেবাদাতার জন্য রিপোর্ট</strong></div><div class="plot-label"><span>প্যাকেট লস</span><span>উদাহরণ</span></div><div class="hopline"><span><i></i>রাউটার<small>স্থিতিশীল</small></span><span><i></i>পরের হপ<small>প্যাকেট হারানো শুরু</small></span><span><i></i>গন্তব্য<small>প্যাকেট হারানো চলছে</small></span></div></div></div><div class="scenario-copy"><h2>ইন্টারনেট সেবাদাতাকে কী দেখাব?</h2><p>বারবার প্যাকেট হারালে তা নিয়ে একটি রিপোর্ট তৈরি করুন।</p><span aria-hidden="true">→</span></div></a>
 </div>
 </main>
 </body>

@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="bn" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es">
+<html lang="bn" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Is it your Wi-Fi or your internet provider? | AdeeboMeter</title>
-<meta name="description" content="চালান ipconfig and find Default Gateway under the active adapter. Ping that address during a good period and again during a slowdown. Compare with an internet destination">
+<title>সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে? | AdeeboMeter</title>
+<meta name="description" content="একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।">
 <link rel="canonical" href="https://adeebometer.com/bn/wifi-or-isp.html">
-<meta property="og:title" content="Is it your Wi-Fi or your internet provider? | AdeeboMeter">
-<meta property="og:description" content="চালান ipconfig and find Default Gateway under the active adapter. Ping that address during a good period and again during a slowdown. Compare with an internet destination">
+<meta property="og:title" content="সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে? | AdeeboMeter">
+<meta property="og:description" content="একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/bn/wifi-or-isp.html">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
@@ -53,36 +53,38 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/wifi-or-isp.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/wifi-or-isp.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/wifi-or-isp.html">
 </head>
 <body>
 <main>
-<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">Troubleshooting Blog</a></nav>
-<h1>Is it your Wi-Fi or your internet provider?</h1>
+<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a></nav>
+<h1>সমস্যা আপনার Wi-Fi-তে, নাকি ইন্টারনেট সেবাদাতার সংযোগে?</h1>
 <figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Try Ethernet first.</h2><p>If the same task works on Ethernet but stumbles on Wi-Fi, start with wireless coverage.</p></div>
-<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📶</span><strong>Wi-Fi check</strong></div><div class="route"><span>পিসি</span><b>→</b><span>রাউটার</span><b>→</b><span>ইন্টারনেট</span></div><div class="art-note"><span><i></i> Wi-Fi · stalls</span><span><i></i> Ethernet · smooth</span></div></div>
-<figcaption>Test from the PC outward to narrow down the problem.</figcaption>
+<div class="visual-copy"><h2 id="quick-title">আগে Ethernet দিয়ে দেখুন</h2><p>একই কাজ Ethernet-এ ঠিকমতো চলে, কিন্তু Wi-Fi-তে আটকে যায়? তাহলে আগে Wi-Fi কভারেজ দেখুন।</p></div>
+<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">📶</span><strong>Wi-Fi পরীক্ষা</strong></div><div class="route"><span>পিসি</span><b>→</b><span>রাউটার</span><b>→</b><span>ইন্টারনেট</span></div><div class="art-note"><span><i></i> Wi-Fi · আটকে যায়</span><span><i></i> Ethernet · ঠিকমতো চলে</span></div></div>
+<figcaption>পিসি থেকে শুরু করে সংযোগের প্রতিটি ধাপ পরীক্ষা করুন। এতে বোঝা যাবে সমস্যাটি কোথায়।</figcaption>
 </figure>
 
 
-<h2 id="checks">Run the checks</h2>
-<ol><li>Write down the time and reproduce the issue with the same site, call, or download.</li><li>Try the same task on a second device connected to the same Wi-Fi. On a phone, make sure it is using Wi-Fi during the comparison.</li><li>Connect the PC directly to your router by Ethernet, turn off Wi-Fi on that PC, then repeat the same task while the slowdown is happening.</li></ol>
-<h2 id="readings">What to check next</h2>
+<h2 id="checks">যেভাবে পরীক্ষা করবেন</h2>
+<ol><li>সময়টা লিখে রাখুন। একই সাইট খুলে, একই কল করে বা একই ফাইল ডাউনলোড করে সমস্যাটি আবার হয় কি না দেখুন।</li><li>একই Wi-Fi-তে যুক্ত আরেকটি ডিভাইসে কাজটা করে দেখুন। ফোনে পরীক্ষা করলে নিশ্চিত করুন, সেটি Wi-Fi ব্যবহার করছে।</li><li>পিসিটি Ethernet কেবল দিয়ে সরাসরি রাউটারে লাগান। পিসির Wi-Fi বন্ধ করে, সংযোগ ধীর থাকা অবস্থায় একই কাজ আবার করুন।</li></ol>
+<h2 id="readings">এরপর কী দেখবেন</h2>
 <ul class="next-checks">
-  <li><strong>Ethernet works</strong><span>Check Wi-Fi coverage.</span></li>
-  <li><strong>One device struggles</strong><span>Check downloads and VPN on that device.</span></li>
-  <li><strong>Both connections struggle</strong><span>Check the router and ISP outage status.</span></li>
-  <li><strong>One site struggles</strong><span>Try another service.</span></li>
+  <li><strong>Ethernet-এ ঠিকমতো চলে</strong><span>Wi-Fi কভারেজ দেখুন।</span></li>
+  <li><strong>শুধু একটি ডিভাইসে সমস্যা</strong><span>ডিভাইসটিতে ডাউনলোড চলছে কি না এবং VPN চালু আছে কি না দেখুন।</span></li>
+  <li><strong>দুই সংযোগেই সমস্যা</strong><span>রাউটার দেখুন এবং ইন্টারনেট সেবাদাতার কোনো বিভ্রাট চলছে কি না খোঁজ নিন।</span></li>
+  <li><strong>শুধু একটি সাইটে সমস্যা</strong><span>অন্য একটি সেবা ব্যবহার করে দেখুন।</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>An evening video call freezes upstairs. The same laptop runs the call smoothly on Ethernet, and the call also improves when the laptop moves closer to the router on Wi-Fi. Start with wireless coverage. If the call also freezes on Ethernet and another device, check the router and the wider connection instead.</p></aside>
-<details class="guide-detail"><summary>Why it works</summary>
-<p>চালান <code>ipconfig</code> and find <strong>Default Gateway</strong> under the active adapter. Ping that address during a good period and again during a slowdown. Compare with an internet destination that normally answers ping. Repeat the comparison when possible. A router can de-prioritize ping replies, so weigh the replies alongside the Ethernet comparison and what the affected service is doing.</p><p>Steady replies from your router with trouble beyond it on multiple devices gives support a more useful starting point. The test can still leave the modem, provider, and farther network path in contention.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">বাস্তব উদাহরণ</h2><p>সন্ধ্যায় ওপরতলায় ভিডিও কল আটকে যাচ্ছে। একই ল্যাপটপে Ethernet দিয়ে কল ঠিকমতো চলে। Wi-Fi ব্যবহার করেও রাউটারের কাছে গেলে কলের মান ভালো হয়। এ ক্ষেত্রে আগে Wi-Fi কভারেজ দেখুন। Ethernet-এ এবং অন্য ডিভাইসেও কল আটকে গেলে রাউটার ও তার বাইরের সংযোগ পরীক্ষা করুন।</p></aside>
+<details class="guide-detail"><summary>এই পরীক্ষা কাজে দেয় কেন</summary>
+<p>চালান <code>ipconfig</code> চালিয়ে সক্রিয় নেটওয়ার্ক অ্যাডাপ্টারের <strong>Default Gateway</strong> ঠিকানা খুঁজুন। সংযোগ ভালো থাকতে ওই ঠিকানায় পিং করুন, ধীর হলে আবার করুন। ইন্টারনেটে এমন একটি ঠিকানায়ও পিং করুন, যেটি সাধারণত সাড়া দেয়। সম্ভব হলে তুলনাটি আবার করুন। রাউটার পিংয়ের উত্তরকে কম গুরুত্ব দিতে পারে। তাই Ethernet-এ কী হয়েছে আর সমস্যায় পড়া সেবাটি কেমন চলছে, সেগুলোও বিবেচনা করুন।</p><p>রাউটার নিয়মিত সাড়া দিলেও একাধিক ডিভাইসে রাউটারের বাইরে সমস্যা হলে, সাপোর্ট টিম কোথা থেকে দেখা শুরু করবে তা বুঝতে পারে। সমস্যাটি মডেমে, সেবাদাতার সংযোগে, নাকি নেটওয়ার্কের আরও দূরে, তা জানতে আরও পরীক্ষা লাগতে পারে।</p>
 </details>
-<h2>Use AdeeboMeter on Windows</h2>
-<p>খুলুন <strong>Investigate → The internet is slow</strong>. Check the PC, Wi-Fi, router, DNS, and internet results from the same period. For recurring trouble, <a href="/bn/internet-speed-monitor.html">monitor internet speed over time</a> ও <a href="/bn/isp-report.html">make a report for your provider</a>.</p>
+<h2>Windows-এ AdeeboMeter ব্যবহার করুন</h2>
+<p>খুলুন <strong>Investigate → The internet is slow</strong>খুলুন। একই সময়ে পিসি, Wi-Fi, রাউটার, DNS ও ইন্টারনেটের পরীক্ষার ফল দেখুন। সমস্যা বারবার হলে, <a href="/bn/internet-speed-monitor.html">সময়ের সঙ্গে ইন্টারনেটের গতি মেপে রাখুন</a> ও <a href="/bn/isp-report.html">সেবাদাতার জন্য রিপোর্ট তৈরি করুন</a>.</p>
 
 <p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>Keep one comparison from a good period and one from the slowdown. Record the connection type and affected services so you can repeat the test.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">কোন তথ্য রাখবেন</h2><p>সংযোগ ভালো থাকা অবস্থার একটি তুলনা আর ধীর থাকা অবস্থার একটি তুলনা রাখুন। সংযোগের ধরন ও কোন সেবায় সমস্যা হয়েছে তা লিখে রাখুন, যাতে পরে একই পরীক্ষা আবার করতে পারেন।</p></aside>
 </main>
 </body>
 </html>

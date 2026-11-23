@@ -121,10 +121,10 @@ footer a{color:inherit}
   <table>
     <thead><tr><th>Do this</th><th>Points</th><th>Where</th></tr></thead>
     <tbody>
-      <tr><td>Open a tool's <b>Example</b>, then run the tool for real and get a result</td><td class="pts">+2</td><td>Toolbox - 158 tools</td></tr>
+      <tr><td>Open a tool's <b>Example</b>, then run the tool for real and get a result</td><td class="pts">+2</td><td>Toolbox - 232 tools</td></tr>
       <tr><td>…the longer tests (MTR, speed test, iperf3, bufferbloat, ISP report, game compare, MTU per hop)</td><td class="pts">+4</td><td>Toolbox</td></tr>
       <tr><td>Run a tool marked <b>replay</b> again, 10 minutes or more after the first run - to compare</td><td class="pts">+3</td><td>Toolbox (ISP report, game compare, before/after, certificate compare, MTR)</td></tr>
-      <tr><td>Read a <b>Learn</b> topic to the end</td><td class="pts">+2</td><td>Learn - 59 topics</td></tr>
+      <tr><td>Read a <b>Learn</b> topic to the end</td><td class="pts">+2</td><td>Learn - 98 topics</td></tr>
       <tr><td>Answer the topic's <b>Check yourself</b> question right the first time</td><td class="pts">+2</td><td>End of each Learn topic</td></tr>
       <tr><td>Meet a <b>lab challenge</b></td><td class="pts">+4</td><td>Learn › Labs - 11 challenges</td></tr>
       <tr><td>Subnetting practice: <b>5 right in a row</b>, then <b>10 in a row</b></td><td class="pts">+3, +5</td><td>Learn › Labs › Subnetting practice</td></tr>
@@ -133,7 +133,7 @@ footer a{color:inherit}
       <tr><td>Finish a <b>learning path</b></td><td class="pts">+10</td><td>Adeebo › Learning paths</td></tr>
     </tbody>
   </table>
-  <p class="sub" style="margin-top:10px">About 750 points in all - tools, Learn topics and questions, Labs and Games - so 500 means you've done two thirds of everything. Tools that send test traffic or scan a network (Traffic Lab senders, ping sweep, finding devices) never pay points - nobody should do that just for points.</p>
+  <p class="sub" style="margin-top:10px">About 1,000 points in all - tools, Learn topics and questions, Labs and Games - so 500 means you've done half of everything. Tools that send test traffic or scan a network (Traffic Lab senders, ping sweep, finding devices) never pay points - nobody should do that just for points.</p>
 
   <h3>The ranks</h3>
   <div class="ranks">
@@ -209,7 +209,7 @@ footer a{color:inherit}
   <h3>Questions</h3>
   <details><summary>Does AdeeboMeter send my points anywhere?</summary><p>No. AdeeboMeter never sends anything about your points. It only saves a picture, and you decide whether to share it.</p></details>
   <details><summary>What goes on this page?</summary><p>Your name - and a link to your GitHub, LinkedIn, X, Instagram or Bluesky profile if you gave a handle. Nothing else is shown. The points, date and claim code are kept in the list behind the page (hall-of-fame.json) so a card can be checked again; nothing else about you is kept.</p></details>
-  <details><summary>Can I be taken off?</summary><p>Yes. Open an issue or send an email and you'll be removed.</p></details>
+  <details><summary>Can I be taken off?</summary><p>Yes. Open an issue on <a href="https://github.com/adeeb111/AdeeboMeter/issues">GitHub</a><span id="rm-mail"> or send an email</span> and you'll be removed.</p></details>
   <details><summary>My code doesn't match.</summary><p>Type the name, points and date exactly as they are on the card, or paste the text AdeeboMeter copied. If you've earned more points since, make the card again and send the new one.</p></details>
   <details><summary>I'm under 500 - where am I?</summary><p>Press the Adeebo button in AdeeboMeter. The bar shows how far you are from the next rank, and each learning path shows what's left.</p></details>
 </div></section>
@@ -238,7 +238,7 @@ footer a{color:inherit}
   var MAIL = 'HALL-OF-FAME-EMAIL';
   var m = document.getElementById('mail');
   if (MAIL.indexOf('@') > 0) m.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Adeebo Award - Hall of Fame');
-  else m.style.display = 'none';
+  else { m.style.display = 'none'; var rm = document.getElementById('rm-mail'); if (rm) rm.style.display = 'none'; }   // bug-hunt L-115: no address, no promise of one
 
   var SITES = {
     github: { name: 'GitHub', url: 'https://github.com/', rx: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/ },
