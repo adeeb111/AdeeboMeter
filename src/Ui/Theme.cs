@@ -251,7 +251,8 @@ namespace AdeeboMeter
             if (Math.Abs(s - S) < 0.0005f) return;
             if (!sets.ContainsKey(K(S))) sets[K(S)] = Grab();
             Font[] f; if (sets.TryGetValue(K(s), out f)) { Put(f); S = s; return; }
-            if (sets.Count >= 3) foreach (var key in sets.Keys.Where(z => z != K(Base) && z != K(S)).ToList()) { foreach (var x in sets[key]) x.Dispose(); sets.Remove(key); }   // an old zoom: let it go
+            // 1.1.6 PC test: an old zoom's fonts are kept, never disposed - a button made at that zoom still holds one, and a
+            // disposed font throws "Parameter is not valid" on its next paint. Zoom is 80-175 % in steps, so the sets stay few.
             fName = null; Init(s); sets[K(s)] = Grab();
         }
         public static float ViewScale { get { return Base * Math.Max(80, Math.Min(175, Cfg.Zoom)) / 100f; } }
