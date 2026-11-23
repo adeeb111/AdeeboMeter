@@ -264,7 +264,7 @@ Windows didn't list any neighbouring networks this time - it refreshes its scan 
 YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY	الموقع الخاص بك · LLDP / CDP ، سمع للخاطئ
 Search settings - e.g. ping, history, widget	إعدادات البحث - مثل النقاش والتاريخ والوجيت
 ON THIS PC	على هذا الحاسوب
-BACKGROUND · GAME SERVERS	الخلفية · خادمات اللعبة
+BACKGROUND · GAME SERVERS	الخلفية · خوادم اللعبة
 BACKGROUND · YOUR NETWORK	الخلفية · شبكة الإنترنت
 BACKGROUND · INTERNET	الخلفية · الإنترنت
 ONLINE LOOKUP	البحث على الإنترنت
@@ -398,7 +398,7 @@ SSH, SCP and remote commands	SSH، SCP وأوامر عن بعد
 Many ports for one service	منافذ متعدّدة لخدمة واحدة
 Every IP behind a name	كل عنوان IP وراء اسم
 Remote Desktop reachable?	هل يمكن الوصول إلى سطح المكتب عن بعد؟
-Active Directory / LDAP reachable?	هل يمكن الوصول إلى Directory Active / LDAP؟
+Active Directory / LDAP reachable?	هل يمكن الوصول إلى Active Directory / LDAP؟
 DNS answer compare	DNS إجابة مقارنة
 Before / after snapshot	قبل / بعد اللقطة
 Compare two saved results (two PCs)	مقارنة النتائج المحفوظتين (حاسوبين)
@@ -507,7 +507,7 @@ Jitter buffer	مخزن تعويض التذبذب
 Network delay	تأخير الشبكة
 A far-away old device	جهاز قديم بعيد
 Devices near the router	الأجهزة بالقرب من جهاز التوجيه
-Busy neighbours on your channel	جيران مشغولون على قناةك
+Busy neighbours on your channel	جيران مشغولون على قناتك
 Router	الراوتر
 Name	الاسم
 Packet you send	الحزمة التي ترسل
@@ -670,7 +670,7 @@ Crowding on your channel	حشود على قناة
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	الملي = أقوى على قناة اليوم · الحلقة = على قناتك · نقطة = سمعت هنا
 Journey	رحلة
 What did Windows Update break?	ما الذي كسر تحديث Windows؟
-Every check close, plus up to 16 game servers and your best regions every 10 s.	كل شيك يغلق، بالإضافة إلى خادمات اللعبة 16 وأفضل مناطقك كل 10 s.
+Every check close, plus up to 16 game servers and your best regions every 10 s.	كل شيك يغلق، بالإضافة إلى خوادم اللعبة 16 وأفضل مناطقك كل 10 s.
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	أخف إعداد: فحص الراوتر كل 30 s، والإنترنت كل 5 min، وWi-Fi كل 2 min، دون مراقبة المكالمات.
 By goal	حسب الهدف
 Everything	كل شيء
@@ -1109,7 +1109,7 @@ Make a report	إنشاء تقرير
 ↑↓ move · Enter open · Ctrl+P pin to your tab · Esc close	↑↓ للتنقّل · Enter للفتح · Ctrl+P للتثبيت في علامتك · Esc للإغلاق
 Nothing here by that name. Fewer words usually find it.	لا شيء هنا بهذا الاسم كلمات أقل عادة ما تجدها
 Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	جاء فارغ جرب الشيء، وليس الأعراض: "DNS"، "ويفي"، "بورت".
-Not a thing I have. Yet. Try another word?	لا شيء لدي ومع ذلك. هل يمكنكِ تجربة كلمة أخرى؟
+Not a thing I have. Yet. Try another word?	لا أجد شيئًا بعد. جرّب كلمة أخرى؟
 Searched every drawer. Try a shorter word.	بحثت في كل درج جرب كلمة أقصر
 Pick a question - the right tool comes up.	اختر سؤال - الأداة المناسبة تأتي.
 Navigation	التنقّل
@@ -1358,7 +1358,7 @@ reply	رد
 2-min lesson: 	درس 2-min: 
 2. Allow it here when it asks.	2. امنحه الإذن هنا عندما يطلبه.
 2. Sign-in	2. تسجيل الدخول
-3-6 months of costs	3-6 شهور التكاليف
+3-6 months of costs	تكاليف 3-6 أشهر
 3. Address	3. العنوان
 3389 open	3389 مفتوح
 4 weeks 	4 أسابيع 
@@ -1490,7 +1490,7 @@ Daily avg	المتوسط اليومي
 Data (CSV) - opens in Excel	البيانات (CSV) - تفتح في Excel
 Data (JSON) - for scripts and other tools	البيانات (JSON) - للخطوط والأدوات الأخرى
 Dates, times and the evidence for each one - ready to paste into a chat or an email to your provider.	التواريخ والأوقات والدليل لكل منها - جاهز للاضطرب في دردشة أو بريد إلكتروني لمقدمك.
-Delete the waiting report(s)? They won't be sent.	إزالة تقرير الانتظار لن يتم إرسالهم
+Delete the waiting report(s)? They won't be sent.	حذف التقارير المنتظرة؟ لن تُرسل.
 Deleted - nothing is waiting.	تم حذفها - لا شيء ينتظر.
 Destination	الوجهة
 Devices on this network	الأجهزة على هذه الشبكة
@@ -1534,7 +1534,7 @@ Forecast until	توقّعات حتى
 Futures contract value	قيمة عقود المستقبل
 GAMING	الألعاب
 Game server	خادم اللعبة
-Gamer - game servers every 	خادمات اللعبة كل 
+Gamer - game servers every 	خوادم اللعبة كل 
 Gathering the first minute...	التجمع في اللحظة الأولى...
 Gathering the first seconds...	تجميع الثواني الأولى...
 Getting today's rates from the Bank of Canada...	الحصول على أسعار اليوم من بنك كندا...
@@ -1754,7 +1754,7 @@ Search anything	ابحث عن أي شيء
 Search tools, pages, problems	ابحث عن أدوات أو صفحات أو مشكلات
 See this PC and run its checks from your phone - on mobile data or any Wi-Fi. No account. One phone at a time, 30 minutes, and nothing happens until you press Allow here.	انظر لهذا الكمبيوتر و إشغلي فحصاته من هاتفك على بيانات الهاتف المحمول أو أي Wi-Fi لا حساب هاتف واحد في كل مرة، دقيقة 30، ولا يحدث شيء حتى تضغط على السماح هنا.
 Send a file to the phone (up to 100 MB)	أرسل ملفاً إلى الهاتف (حتى 100 MB)
-Send it to the Hall of Fame: the claim code is checked and you're added automatically - no account needed.	أرسلها إلى قاعة المشاهير: يتم التحقق من رمز المطالبة ويتم إضافةك تلقائيًا - لا حاجة للحساب.
+Send it to the Hall of Fame: the claim code is checked and you're added automatically - no account needed.	أرسلها إلى قاعة المشاهير: يتم التحقق من رمز المطالبة ويتم إضافتك تلقائيًا - لا حاجة للحساب.
 Send it?	هل تريد إرساله؟
 Send to my provider · Share · Save as PDF	إرسال لمزوّد الخدمة · مشاركة · حفظ بصيغة PDF
 Sending your card...	إرسال بطاقتك
@@ -2361,7 +2361,7 @@ the difference is the speed	الفرق هو السرعة
 the directory is reachable	السجل متاح
 the engineer's card	بطاقة المهندس
 the everyday card	البطاقة اليومية
-the far end	نهاية أبعد
+the far end	الطرف البعيد
 the game	اللعبة
 the internet	الإنترنت
 the internet sees you as	إن الإنترنت يرىك
@@ -2379,7 +2379,7 @@ the path	الطريق
 the port is open	المنفذ مفتوح
 the port opens	يفتح المنفذ
 the port stays shut	يبقى المنفذ مغلقًا
-the proxy connects for you	الوكيل يتواصل معك
+the proxy connects for you	الوكيل يتصل نيابةً عنك
 the proxy sees the name, not the page	الوكيل يرى الاسم ، وليس الصفحة
 the reason it's full: the apps, too little memory, a leak, heat	السبب هو أنه مليء: التطبيقات، القليل جدا من الذاكرة، تسرب، الحرارة
 the receiver needs	احتياجات المتلقي
@@ -2604,10 +2604,10 @@ Nothing is sent to game servers until you click a game in the Gamer Zone.	لا �
 Off: game servers are only checked while a game is open.	التوقف: يتم التحقق من خوادم اللعبة فقط أثناء فتح اللعبة.
 Checks your games' best regions 	تفحص أفضل مناطق ألعابك 
  while AdeeboMeter runs, so the 7-day verdict covers every hour - not only when you play.	 أثناء تشغيل AdeeboMeter، ليشمل تقييم آخر 7 أيام جميع الساعات، لا وقت اللعب فقط.
-Each added game's best region, up to this many. 5 also lets a game you play be watched on up to 16 servers (otherwise 8).	كلّ إضافة أفضل منطقة لعبة، حتى هذا العدد. 5 يسمح أيضًا بمشاهدة اللعبة التي تلعبها على خادمات 16 (إلا 8).
+Each added game's best region, up to this many. 5 also lets a game you play be watched on up to 16 servers (otherwise 8).	كلّ إضافة أفضل منطقة لعبة، حتى هذا العدد. 5 يسمح أيضًا بمشاهدة اللعبة التي تلعبها على خوادم 16 (إلا 8).
 All of that game's servers (up to 	جميع خوادم تلك اللعبة (حتى 
 ), once a second - for spikes and the match report.	() مرة واحدة في الثانية - للاستعمالات والإبلاغ عن المباراة.
-Off: the game's servers stay at the background pace.	التوقف: خادمات اللعبة تبقى في سرعة الخلفية.
+Off: the game's servers stay at the background pace.	التوقف: خوادم اللعبة تبقى في سرعة الخلفية.
 Notices when a game you added starts (by its program name) and switches to watching it closely.	إشعارات عندما تبدأ اللعبة التي أضفتها (باسم البرنامج) وتتحول إلى مشاهدتها عن كثب.
 Off: games are only watched at the background pace.	لا تُشاهد الألعاب إلا في سرعة الخلفية
 Notice streams	اكتشاف البث
@@ -2749,7 +2749,7 @@ A ping (or a timed TCP connection) to the regions of the games you added: the be
 , the others 	، والآخرين 
 , every second while a game is open	، كل ثانية أثناء فتح اللعبة
  - plus, while a game runs, a trace to its server and one ping to each router on the way every 15 s (the match path)	 - بالإضافة إلى، بينما تبدأ اللعبة، تتبع إلى خادمها و تبرز واحدة لكل جهاز توجيه في طريق كل 15 (مسار المباراة)
-. Valve's server list is fetched only when you add a Valve game or press Refresh.	. . يتم الحصول على قائمة الخادمات في Valve فقط عندما تضيف لعبة Valve أو اضغط على Refresh.
+. Valve's server list is fetched only when you add a Valve game or press Refresh.	. . يتم الحصول على قائمة الخوادم في Valve فقط عندما تضيف لعبة Valve أو اضغط على Refresh.
 Only while something streams: a timed TCP connection (no data) to the stream's own server every 	فقط بينما شيء تدفق: اتصال TCP توقيت (لا بيانات) إلى خادم التيار الخاص كل 
  s, to tell its slowdowns from yours - six tries at most if it never answers. Which service it is comes from Windows' own list of names, read on this PC.	 ليقاسها عن التباطؤ الخاص بك - ستة محاولات على الأكثر إذا لم ترد أبدا. أي خدمة هي تأتي من قائمة أسماء Windows الخاصة، قراءة على هذا الكمبيوتر.
 Broker watch	مراقبة الوسيط
@@ -2895,11 +2895,11 @@ Open a website you haven't visited today.	افتح موقعًا لم تزره ا
 DHCP - how your PC gets an address	DHCP - كيف يحصل جهاز الكمبيوتر الخاص بك على عنوان
 Four messages, and you're on the network.	أربعة رسائل، وأنت على الشبكة.
 What does DHCP give your PC when it joins a network?	ماذا يعطي DHCP جهاز الكمبيوتر الخاص بك عندما ينضم إلى شبكة؟
-An IP address, the router and DNS servers	عنوان IP، جهاز التوجيه والخادمات DNS
+An IP address, the router and DNS servers	عنوان IP، جهاز التوجيه والخوادم DNS
 A Wi-Fi password	كلمة مرور Wi-Fi
 A faster internet plan	خطة إنترنت أسرع
 The website's certificate	شهادة الموقع
-Gives your PC an address, the router's address and DNS servers when you join a network.	يعطي جهاز الكمبيوتر عنوان، عنوان الجهاز التوجيهي و خادمات DNS عندما تنضم لشبكة.
+Gives your PC an address, the router's address and DNS servers when you join a network.	يعطي جهاز الكمبيوتر عنوان، عنوان الجهاز التوجيهي و خوادم DNS عندما تنضم لشبكة.
 A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.	عنوان 169.254.x.x يعني أن DHCP فشل - إعادة تشغيل Wi-Fi أو جهاز التوجيه.
 Everyone	الجميع
 DISCOVER - any DHCP server here?	DISCOVER — هل يوجد خادم DHCP هنا؟
@@ -2992,7 +2992,7 @@ The routers that answer along the path your probes took (silent hops show as *)	
 The speed of your Wi-Fi	سرعة Wi-Fi الخاص بك
 Which apps use the internet	أي تطبيقات تستخدم الإنترنت
 The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.	رسائل الشبكة الخاصة: تطلب النقابة "هل أنت هناك؟"، تتطلب "تراسروت" كل جهاز توجيه في الطريق.
-No ping reply doesn't always mean down - many servers ignore ping on purpose.	لا يعني أي رد على النص المطلوب دائماً أن الخادمات تتجاهل النص المطلق عن قصد.
+No ping reply doesn't always mean down - many servers ignore ping on purpose.	لا يعني أي رد على النص المطلوب دائماً أن الخوادم تتجاهل النص المطلق عن قصد.
 echo request (TTL 1)	طلب الصوت (TTL 1)
 time exceeded - I'm hop 1	الوقت تجاوز - أنا هوب 1
 echo request	طلب Echo
@@ -3604,7 +3604,7 @@ A cache server inside or next to your provider's network	خادم التخزين
 Netflix's head office	مقر Netflix
 Your neighbour's PC	كمبيوتر جارك
 A satellite every time	قمر صناعي في كل مرة
-Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.	يضع المواصلات الكبيرة خادمات التخزين (CDN - Netflix's Open Connect) داخل شبكات مقدمي الخدمات. لاعبك يقوم بتنزيل الفيلم في قطع قصيرة على HTTPS، واختيار الجودة لكل قطعة من سرعتك الآن.
+Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.	يضع المواصلات الكبيرة خوادم التخزين (CDN - Netflix's Open Connect) داخل شبكات مقدمي الخدمات. لاعبك يقوم بتنزيل الفيلم في قطع قصيرة على HTTPS، واختيار الجودة لكل قطعة من سرعتك الآن.
 The video is cut into 2-10 second segments, each encoded at several qualities (a "ladder" from 240p to 4K). The player (DASH or HLS) keeps a buffer of upcoming segments; if downloads slow, it picks a lower rung - that's why quality drops before the video stops. Buffering only happens when the buffer runs dry. Popular titles are pre-loaded onto the caches overnight; a DNS answer or a steering service sends you to the nearest healthy cache. HBO, Disney+ and YouTube work the same way with their own or rented CDNs. 4K needs about 15-25 Mbps steady - the average speed matters less than the dips.	يُقسّم الفيديو إلى مقاطع مدتها 2-10 ثوانٍ، ويُرمّز كل مقطع بجودات متعدّدة تتدرّج من 240p إلى 4K. يحتفظ المشغّل، باستخدام DASH أو HLS، بمخزن مؤقت للمقاطع القادمة. إذا تباطأ التنزيل، يختار جودة أقل؛ لذلك تنخفض الجودة قبل توقّف الفيديو. لا يتوقّف التشغيل للتحميل إلا عندما يفرغ المخزن. تُحمّل الأعمال الشائعة مسبقًا إلى الخوادم المؤقتة ليلًا، ويوجّهك ردّ DNS أو نظام توجيه إلى أقرب خادم سليم. تستخدم HBO وDisney+ وYouTube الطريقة نفسها عبر شبكات CDN تملكها أو تستأجرها. يحتاج 4K إلى سرعة مستقرة بنحو 15-25 Mbps؛ والانخفاضات القصيرة أهم من متوسط السرعة.
 A busy evening Wi-Fi or a provider link to the CDN that's full shows up as quality drops first, buffering second. A VPN can send you to a far-away cache - slower and lower quality.	مساء مزدحم Wi-Fi أو رابط مزود إلى CDN الذي هو كامل يظهر كما ينخفض الجودة أولا، والعازلة الثانية. يمكن أن يرسلك VPN إلى مخزن بعيد - أبطأ وأقل جودة.
 Your TV	تلفزيونك
@@ -3875,7 +3875,7 @@ Every certificate looks "not yet valid"	كل شهادة تبدو "غير صال�
 Pages load faster	الصفحات تحميل أسرع
 Nothing - the clock doesn't matter	لا شيء - الساعة ليست مهمة
 Only video breaks	فقط فترات الفيديو
-Certificates have a start and an end date. Your PC checks them against its own clock - so a clock that's far off fails every site at once.	الشهادات لها تاريخ بداية وتاريخ انتهاء. جهاز الكمبيوتر الخاص بك يفتشونها مع ساعةها الخاصة - لذا الساعة التي هي بعيدة تفشل في كل موقع في وقت واحد.
+Certificates have a start and an end date. Your PC checks them against its own clock - so a clock that's far off fails every site at once.	الشهادات لها تاريخ بداية وتاريخ انتهاء. جهاز الكمبيوتر الخاص بك يفتشونها مع ساعتها الخاصة - لذا الساعة التي هي بعيدة تفشل في كل موقع في وقت واحد.
 All sites showing certificate errors at the same time? Check the clock first (Toolbox › Clock check).	جميع المواقع التي تظهر أخطاء شهادة في نفس الوقت؟ تحقق من الساعة أولاً (صندوق الأدوات › التحقق من الساعة).
 my certificate, valid Nov 2026 - Nov 2027	شهادتي، سارية من نوفمبر 2026 إلى نوفمبر 2027
 my clock says 2000 - not valid yet	ساعتي تقول 2000 - غير صالحة بعد
