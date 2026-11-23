@@ -479,6 +479,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/">
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/brand.css">
 </head>
 <body>
 
@@ -525,19 +526,12 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
    <p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>Some content is still in English.</p>
   </div>
   <div class="v4stage">
-   <div class="v4card v4res" role="img" aria-label="Example result: your PC is fine, names aren't answering. This PC fine, router 2 ms, DNS timed out, internet not checked. Next: try the lookup again; Save picture or Send to my ISP.">
-    <div aria-hidden="true">
-    <span class="v4tag" data-i18n="DNS ISSUE">DNS ISSUE</span>
-    <h3 data-i18n="Your PC is fine. Names aren&#x27;t answering.">Your PC is fine. Names aren't answering.</h3>
-    <p data-i18n="The router answered in 2 ms. The DNS request timed out.">The router answered in 2 ms. The DNS request timed out.</p>
-    <div class="v4path">
-     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-win"/></svg></i><b><span data-i18n="This PC">This PC</span></b><small class="ok"><span data-i18n="✓ fine">✓ fine</span></small></div><span class="ln"></span>
-     <div class="n"><i><svg class="i" viewBox="0 0 24 24"><use href="#v3-router"/></svg></i><b><span data-i18n="Router">Router</span></b><small class="ok">✓ 2 ms</small></div><span class="ln"></span>
-     <div class="n"><i class="w"><svg class="i" viewBox="0 0 24 24"><use href="#v3-dns"/></svg></i><b>DNS</b><small class="wa"><span data-i18n="! timed out">! timed out</span></small></div><span class="ln d"></span>
-     <div class="n"><i class="o"><svg class="i" viewBox="0 0 24 24"><use href="#v3-globe"/></svg></i><b><span data-i18n="Internet">Internet</span></b><small><span data-i18n="not checked">not checked</span></small></div>
-    </div>
-    <div class="v4share"><small><span data-i18n="Next: try the lookup again">Next: try the lookup again</span></small><span class="v4btn sm line"><span data-i18n="Save picture">Save picture</span></span><span class="v4btn sm"><span data-i18n="Send to my ISP">Send to my ISP</span></span></div>
-    </div>
+   <div class="meter" role="img" aria-label="Example result: names aren't answering. This PC fine, router 2 ms, DNS timed out, internet not checked.">
+    <svg class="dial" viewBox="0 0 400 210" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="376.0" y2="190.0"/><line class="tick" x1="359.5" y1="161.9" x2="367.4" y2="160.5"/><line class="tick" x1="352.2" y1="134.6" x2="359.7" y2="131.9"/><line class="tick" x1="340.3" y1="109.0" x2="352.4" y2="102.0"/><line class="tick" x1="324.1" y1="85.9" x2="330.2" y2="80.7"/><line class="tick" x1="304.1" y1="65.9" x2="309.3" y2="59.8"/><line class="tick" x1="281.0" y1="49.7" x2="288.0" y2="37.6"/><line class="tick" x1="255.4" y1="37.8" x2="258.1" y2="30.3"/><line class="tick" x1="228.1" y1="30.5" x2="229.5" y2="22.6"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="14.0"/><line class="tick" x1="171.9" y1="30.5" x2="170.5" y2="22.6"/><line class="tick" x1="144.6" y1="37.8" x2="141.9" y2="30.3"/><line class="tick" x1="119.0" y1="49.7" x2="112.0" y2="37.6"/><line class="tick" x1="95.9" y1="65.9" x2="90.7" y2="59.8"/><line class="tick" x1="75.9" y1="85.9" x2="69.8" y2="80.7"/><line class="tick" x1="59.7" y1="109.0" x2="47.6" y2="102.0"/><line class="tick" x1="47.8" y1="134.6" x2="40.3" y2="131.9"/><line class="tick" x1="40.5" y1="161.9" x2="32.6" y2="160.5"/><line class="tick" x1="38.0" y1="190.0" x2="24.0" y2="190.0"/><g fill="none" stroke-width="18" stroke-linecap="round"><path d="M61.4 170.5A140 140 0 0 1 113.8 79.7" stroke="#5EF2B0"/><path d="M147.6 60.2A140 140 0 0 1 252.4 60.2" stroke="#FCD34D"/><path d="M286.2 79.7A140 140 0 0 1 338.6 170.5" stroke="#FF7A6B"/></g><g class="needle"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g><circle cx="200" cy="190" r="11" fill="#fff"/></svg>
+    <p class="say" data-i18n="Your PC is fine. Names aren&#x27;t answering.">Your PC is fine. Names aren't answering.</p>
+    <p class="why" data-i18n="The router answered in 2 ms. The DNS request timed out.">The router answered in 2 ms. The DNS request timed out.</p>
+    <ol class="chain" aria-hidden="true"><li class="ok"><b data-i18n="This PC">This PC</b><span data-i18n="✓ fine">✓ fine</span></li><li class="ok"><b data-i18n="Router">Router</b><span>✓ 2 ms</span></li><li class="wa"><b>DNS</b><span data-i18n="! timed out">! timed out</span></li><li class="no"><b data-i18n="Internet">Internet</b><span data-i18n="not checked">not checked</span></li></ol>
+    <div class="acts" aria-hidden="true"><span data-i18n="Save picture">Save picture</span><span class="pri" data-i18n="Send to my ISP">Send to my ISP</span></div>
    </div>
    <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em lang="en">river · tiger · lamp · orbit</em><small><span data-i18n="Same words on both = your phone">Same words on both = your phone</span></small></div>
    <div class="v4card v4sig"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg><div><b><span data-i18n="Signed: Open Source Developer">Signed: Open Source Developer</span></b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>

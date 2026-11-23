@@ -1,0 +1,35 @@
+/* AdeeboMeter brand layer (prototype, 23 Nov): the instrument.
+   One family (Barlow; its semi-condensed cut for headings and readouts), the logo's own colours:
+   faceplate blue #1155E0 and the gauge's three arcs - mint #5EF2B0, amber #FCD34D, coral #FF7A6B. */
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+
+:root{
+  --face:#1155E0; --face-hi:#2A6BF0; --face-ink:#FFFFFF; --face-sub:#CFE0FF;
+  --ok:#1F9E6B; --warn:#B7791F; --bad:#D9473A;            /* light mode: the arc colours, darkened to read on paper */
+  --ink:#16191E; --sub:#4B5360; --muted:#6B7380; --line:#DDE1E7; --card:#FFFFFF; --page:#F1F3F6; --soft:#E8EBF0;
+  --blue:#1155E0; --blue-d:#0D47BD; --green:#1F9E6B;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ok:#5EF2B0; --warn:#FCD34D; --bad:#FF7A6B;
+  --ink:#EEF1F5; --sub:#A9B1BD; --muted:#7E8794; --line:#262A31; --card:#181B20; --page:#111316; --soft:#1D2127;
+  --nav:rgba(17,19,22,.92); --blue:#3B7BF5; --blue-d:#5B91F7; --green:#5EF2B0;
+}}
+:root[data-theme="dark"]{
+  --ok:#5EF2B0; --warn:#FCD34D; --bad:#FF7A6B;
+  --ink:#EEF1F5; --sub:#A9B1BD; --muted:#7E8794; --line:#262A31; --card:#181B20; --page:#111316; --soft:#1D2127;
+  --nav:rgba(17,19,22,.92); --blue:#3B7BF5; --blue-d:#5B91F7; --green:#5EF2B0;
+}
+
+body{font-family:"Barlow","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;font-weight:500}
+h1,h2,h3{font-family:"Barlow SC","Barlow","Segoe UI",system-ui,sans-serif}
+:root{--amber:#B7791F;--red:#D9473A;--green:#1F9E6B;--c-learn:var(--blue);--c-games:var(--blue);--c-live:var(--blue);--c-files:var(--blue);--ui-blue:var(--face)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}}
+:root[data-theme="dark"]{--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}
+::selection{background:rgba(17,85,224,.35)}
+html{scrollbar-color:var(--line) var(--page);caret-color:var(--blue)}
+a{text-underline-offset:.18em}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
