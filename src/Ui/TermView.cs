@@ -152,11 +152,19 @@ namespace AdeeboMeter
             PaintBarButtons(g);
             if (Editor != null) { Editor.Bg = Bg; Editor.Fg = Fg; Editor.Paint(g, mono, cw, chh, Pad, TopY, ClientSize, caretOn, Focused); return; }
 
+            bool rewrap = scroll > 0 && anchorLine >= 0 && Cols != cacheCols && cacheCols > 0;
             int count = Relayout(), vis = VisibleRows;
+            if (rewrap)
+            {   // review UI-2: a narrower or wider window rewraps every line - keep the same line at the top instead of a row count
+                int idx = -1; for (int r = 0; r < count; r++) { var rw = RowAt(r); if (rw.Line > anchorLine || (rw.Line == anchorLine && rw.From > anchorFrom)) break; if (rw.Line == anchorLine) idx = r; }
+                if (idx >= 0) scroll = Math.Max(0, count - vis - idx); lastCount = count;
+            }
+            if (dragging) lastCount = count;   // review UI-7: while the thumb is held, the mouse decides where you are
             // scrolled up: new output must not drag what you're reading away (1.1.6 test - alltools' stream made scrolling back impossible)
             if (scroll > 0 && lastCount >= 0 && count != lastCount) scroll = Math.Max(0, scroll + count - lastCount); lastCount = count;   // grows or shrinks (a status line or live table going away): the same rows stay on screen
             int maxScroll = Math.Max(0, count - vis); if (scroll > maxScroll) scroll = maxScroll;
             int first = Math.Max(0, count - vis - scroll), cols = Cols;
+            if (scroll > 0 && first < count) { var ar = RowAt(first); anchorLine = ar.Line; anchorFrom = ar.From; } else anchorLine = -1;
             float y = TopY; var sel = SelRange();
             for (int r = first; r < count && r < first + vis; r++, y += chh)
             {
@@ -228,12 +236,12 @@ namespace AdeeboMeter
                     g.DrawString(barFlash, Draw.fSmall, fb, new RectangleF(70 * S, 0, Math.Max(1, x - 70 * S), 30 * S), cf);
         }
         // ---------- a scroll bar on the right: drag it, or click above/below the thumb to page
-        int lastCount = -1; bool dragging; float dragOff;
+        int lastCount = -1, anchorLine = -1, anchorFrom; bool dragging; float dragOff;
         RectangleF Track() { float S = Draw.S; return new RectangleF(ClientSize.Width - 9 * S, TopY, 6 * S, Math.Max(1, ClientSize.Height - TopY - 8 * Draw.S)); }
         RectangleF Thumb(int count, int vis)
         {
             if (count <= vis) return RectangleF.Empty;
-            var t = Track(); float h = Math.Max(28 * Draw.S, t.Height * vis / count), top = count - vis - scroll;
+            var t = Track(); float h = Math.Min(t.Height, Math.Max(28 * Draw.S, t.Height * vis / count)), top = count - vis - scroll;   // review UI-11: never taller than its track
             return new RectangleF(t.X, t.Y + (t.Height - h) * top / (count - vis), t.Width, h);
         }
         void DragTo(float y)
@@ -252,8 +260,9 @@ namespace AdeeboMeter
         }
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            Focus(); if (Editor != null) return;
-            if (e.Button == MouseButtons.Left && e.Y < 30 * Draw.S) { if (barBtns[0].Contains(e.Location) && CopyAll != null) CopyAll(); else if (barBtns[1].Contains(e.Location) && SaveLog != null) SaveLog(); return; }
+            Focus();
+            if (e.Button == MouseButtons.Left && e.Y < 30 * Draw.S) { if (barBtns[0].Contains(e.Location) && CopyAll != null) CopyAll(); else if (barBtns[1].Contains(e.Location) && SaveLog != null) SaveLog(); return; }   // review UI-4: the buttons work while nano / vim / less own the screen too
+            if (Editor != null) return;
             if (e.Button == MouseButtons.Right) { if (SelectedText() != "") { Copy(); } else if (Paste != null) Paste(); return; }
             if (e.Button == MouseButtons.Left && OnBar(e.Location))
             {
@@ -264,7 +273,7 @@ namespace AdeeboMeter
             }
             if (e.Button == MouseButtons.Left) { selA = selB = CellAt(e.Location); selecting = true; Capture = true; Invalidate(); }
         }
-        protected override void OnMouseMove(MouseEventArgs e) { if (dragging) { DragTo(e.Y); return; } Cursor = OnBar(e.Location) ? Cursors.Default : Cursors.IBeam; if (selecting) { selB = CellAt(e.Location); Invalidate(); } }
+        protected override void OnMouseMove(MouseEventArgs e) { if (dragging) { DragTo(e.Y); return; } Cursor = OnBar(e.Location) ? Cursors.Default : Cursors.IBeam; if (selecting) { int rows0 = Relayout(), vis0 = VisibleRows; if (e.Y < TopY && scroll < rows0 - vis0) scroll++; else if (e.Y > ClientSize.Height - 4 && scroll > 0) scroll--; selB = CellAt(e.Location); Invalidate(); } }   // review UI-9: dragging past the edge scrolls, so more than a screenful can be selected
         protected override void OnMouseUp(MouseEventArgs e) { if (dragging) { dragging = false; Capture = false; Invalidate(); return; } if (selecting) { selecting = false; Capture = false; if (selA == selB) ClearSel(); Invalidate(); } }
         public Action Paste;
         public void ClearSel() { selA = selB = new Point(-1, -1); }

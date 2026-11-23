@@ -107,13 +107,14 @@ namespace AdeeboMeter
                     new object[] { "database", L.T("Open a file..."), L.T("A lab drawing someone sent you (.json)"), (Action)LabOpenFile },
                     new object[] { "tool", L.T("Break it"), L.T("Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies"), (Action)delegate { OpenLab(null, true); } } };
                 int sc = w > 760 * S ? 3 : 1; float sw = (w - (sc - 1) * 14 * S) / sc, sh = 86 * S;
+                foreach (var st in starts) sh = Math.Max(sh, 42 * S + g.MeasureString((string)st[2], Draw.fSmall, (int)Math.Max(1, sw - 84 * S)).Height + 10 * S);
                 for (int i = 0; i < starts.Length; i++)
                 {
                     var r = new RectangleF(x + (i % sc) * (sw + 14 * S), y + (i / sc) * (sh + 12 * S), sw, sh);
                     bool big = i == 0; Theme.Fill(g, r, Kit.CardRad, big ? Kit.Soft("learn") : Theme.Card); Theme.Stroke(g, Kit.Edge(r), Kit.CardRad, big ? acc : Theme.Line, big ? 1.5f : 1);
                     Glyphs.Tile(g, (string)starts[i][0], new RectangleF(r.X + 16 * S, r.Y + 22 * S, 42 * S, 42 * S), acc, 12 * S);
                     g.DrawString((string)starts[i][1], Draw.fName, ink, new RectangleF(r.X + 72 * S, r.Y + 16 * S, r.Width - 84 * S, 24 * S), nf);
-                    g.DrawString((string)starts[i][2], Draw.fSmall, mut, new RectangleF(r.X + 72 * S, r.Y + 42 * S, r.Width - 84 * S, 38 * S));
+                    g.DrawString((string)starts[i][2], Draw.fSmall, mut, new RectangleF(r.X + 72 * S, r.Y + 42 * S, r.Width - 84 * S, r.Bottom - (r.Y + 42 * S) - 4 * S));
                     Act(labCanvas, r, (Action)starts[i][3]);
                 }
                 y += ((starts.Length + sc - 1) / sc) * (sh + 12 * S) + 16 * S;
@@ -122,6 +123,8 @@ namespace AdeeboMeter
                 g.DrawString(L.T("YOUR NETWORK, AS ADEEBOMETER SEES IT"), Draw.fTiny, mut, x, y); y += 22 * S;
                 bool hasPath = LabViews.Path(M) != null;
                 int vc = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float vw = (w - (vc - 1) * 12 * S) / vc, vh = 118 * S;
+                // 1.1.6 test day: the descriptions were cut off mid-word ("how fast each an") - the tiles grow to fit the longest one
+                foreach (var t0 in LabViewTiles) vh = Math.Max(vh, 82 * S + g.MeasureString(L.T(t0[2]), Draw.fSmall, (int)Math.Max(1, vw - 22 * S)).Height + 12 * S);
                 for (int i = 0; i < LabViewTiles.Length; i++)
                 {
                     var t = LabViewTiles[i]; var r = new RectangleF(x + (i % vc) * (vw + 12 * S), y + (i / vc) * (vh + 12 * S), vw, vh);
@@ -129,7 +132,7 @@ namespace AdeeboMeter
                     Kit.Box(g, r, Kit.CardRad);
                     Glyphs.Tile(g, t[3], new RectangleF(r.X + 14 * S, r.Y + 14 * S, 38 * S, 38 * S), off ? Theme.Muted : acc, 10 * S);
                     using (var tb = new SolidBrush(off ? Theme.Muted : Theme.Ink)) g.DrawString(L.T(t[1]), Draw.fBodyB, tb, new RectangleF(r.X + 14 * S, r.Y + 60 * S, r.Width - 22 * S, 20 * S), nf);
-                    g.DrawString(off ? L.T("Run a trace or MTR first") : L.T(t[2]), Draw.fSmall, mut, new RectangleF(r.X + 14 * S, r.Y + 82 * S, r.Width - 22 * S, 34 * S));
+                    g.DrawString(off ? L.T("Run a trace or MTR first") : L.T(t[2]), Draw.fSmall, mut, new RectangleF(r.X + 14 * S, r.Y + 82 * S, r.Width - 22 * S, r.Bottom - (r.Y + 82 * S) - 6 * S));
                     string v = t[0]; if (!off) Act(labCanvas, r, delegate { OpenLab(null, false, v, false); });
                     if (v == "lan")   // ask the devices their names first (about 8 s)
                     {

@@ -251,6 +251,7 @@ namespace AdeeboMeter
                             ulong sz = 0; try { sz = Convert.ToUInt64(disk["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { }
                             string dn = "disk" + disk["Index"];
                             rows.Add(new[] { dn, Human(sz), "disk", "", "", "", Convert.ToString(disk["Model"], CultureInfo.InvariantCulture).Trim() });
+                            int rows0 = rows.Count; var placed0 = new HashSet<string>(placed, StringComparer.OrdinalIgnoreCase);   // review F2: a half-listed disk is undone before the fallback lists it
                             try   // 1.1.6 PC test: one disk WMI can't follow (a card reader, a virtual disk: "Not found") no longer hides the others
                             {
                             using (var pq = new System.Management.ManagementObjectSearcher("ASSOCIATORS OF {Win32_DiskDrive.DeviceID='" + Convert.ToString(disk["DeviceID"], CultureInfo.InvariantCulture).Replace("\\", "\\\\") + "'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"))
@@ -271,6 +272,7 @@ namespace AdeeboMeter
                             catch (System.Management.ManagementException pe)
                             {
                                 // 1.1.6 test (Intel RST RAID): the old Win32 links answer "Not found" - Windows' Storage view still knows the partitions
+                                rows.RemoveRange(rows0, rows.Count - rows0); placed.Clear(); placed.UnionWith(placed0);
                                 int n = 0; try { n = Convert.ToInt32(disk["Index"], CultureInfo.InvariantCulture); } catch (FormatException) { }
                                 var sp = new List<string[]>();
                                 try
@@ -285,7 +287,7 @@ namespace AdeeboMeter
                                         }
                                 }
                                 catch (Exception se) { if (!(se is System.Management.ManagementException || se is UnauthorizedAccessException || se is COMException)) throw; sp.Clear(); }
-                                if (sp.Count == 0) wmiErr = dn + ": " + pe.Message;
+                                if (sp.Count == 0) wmiErr = (wmiErr == null ? "" : wmiErr + "; ") + dn + ": " + pe.Message;
                                 sp = sp.OrderBy(z => { int k; int.TryParse(z[0], out k); return k; }).ToList();
                                 for (int i = 0; i < sp.Count; i++) rows.Add(new[] { (i == sp.Count - 1 ? "└─" : "├─") + dn + "p" + sp[i][0], sp[i][1], "part", sp[i][2], sp[i][3], sp[i][4], "" });
                             }
@@ -368,7 +370,7 @@ namespace AdeeboMeter
             foreach (var p in paths)
             {
                 string r = Real(Abs(p)); if (r == null || (!Directory.Exists(r) && !File.Exists(r))) { Err(c, "du: " + p + ": not a folder or file on a disk"); ex1 = true; continue; }
-                if (File.Exists(r)) { OL(c, unit(fileSize(r)).PadRight(8) + p); continue; }
+                if (File.Exists(r)) { OL(c, unit(once(r)).PadRight(8) + p); continue; }   // review NH-6: a file named twice (or a hard link of one) counts once, like the walk
                 long total = walk(r, p, 0);
                 if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.EndLive(); });
                 OL(c, unit(total).PadRight(8) + p, ShCyan);

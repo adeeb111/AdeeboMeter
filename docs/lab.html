@@ -228,11 +228,11 @@ function valid(d){
   o.cut = Math.max(0, (d.nodes || []).length - 300) + Math.max(0, (d.links || []).length - 600) + Math.max(0, (d.areas || []).length - 60) + Math.max(0, (d.texts || []).length - 200) + Math.max(0, (d.ink || []).length - 200);
   d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
     o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
-                  info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0}); });
+                  info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0, sc: Math.max(.5, Math.min(3, +n.sc || 1))}); });
   (d.links || []).slice(0, 600).forEach(l => { if (l && ids.has(String(l.a)) && ids.has(String(l.b))) o.links.push({id: clean(l.id) || uid("l"), a: String(l.a), b: String(l.b),
     kind: LINKS[l.kind] ? l.kind : "cable", label: clean(l.label)}); });
   (d.areas || []).slice(0, 60).forEach(a => { if (a) o.areas.push({id: clean(a.id) || uid("a"), x: +a.x || 0, y: +a.y || 0, w: Math.max(40, +a.w || 0), h: Math.max(40, +a.h || 0), t: clean(a.t)}); });
-  (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t)}); });
+  (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t), fs: Math.max(9, Math.min(72, +t.fs || 14))}); });
   (d.ink || []).slice(0, 200).forEach(s => { if (s && Array.isArray(s.p)) o.ink.push({id: clean(s.id) || uid("i"), p: pairs(s.p.slice(0, 2000))}); });
   return o;
 }
@@ -288,9 +288,13 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
       kids.push(txt(n.x, y, n.ms, {fill: n.st === "bad" ? C.red : n.st === "warn" ? C.amber : C.sub, "font-size": 11.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"})); }
     if (linkFrom === n.id) kids.push(el("circle", {cx: n.x, cy: n.y, r: 34, fill: "none", stroke: C.blue, "stroke-width": 2, "stroke-dasharray": "4 4"}));
     if (n.info) { const t = el("title"); t.textContent = n.info; kids.unshift(t); }
-    g.appendChild(el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, kids)); });
-  doc.texts.forEach(t => { const s = sel && sel.id === t.id;
-    g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": 14, "data-t": "text", "data-id": t.id, style: "cursor:move"})); });
+    const sc = n.sc || 1, ng = el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, [el("g", {transform: sc === 1 ? null : `translate(${n.x} ${n.y}) scale(${sc}) translate(${-n.x} ${-n.y})`}, kids)]);
+    if (s && mode === "draw") { const hx = n.k === "router" ? n.x + sc * Math.max(104, Math.min(240, Math.max(textW(n.name, 12.5), textW(n.sub || "", 10.5)) + 22)) / 2 : n.x + 26 * sc, hy = n.y + (n.k === "router" ? (n.sub ? 20 : 10) : 20) * sc;
+      ng.appendChild(el("rect", {x: hx - 6, y: hy - 6, width: 12, height: 12, rx: 3, fill: C.blue, "data-t": "nresize", "data-id": n.id, style: "cursor:nwse-resize"})); }   /* 1.1.6: drag the corner to make a device bigger or smaller, like TopoDraw */
+    g.appendChild(ng); });
+  doc.texts.forEach(t => { const s = sel && sel.id === t.id, fs = t.fs || 14;
+    g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": fs, "data-t": "text", "data-id": t.id, style: "cursor:move"}));
+    if (s && mode === "draw") g.appendChild(el("rect", {x: t.x + textW(t.t, fs) + 4, y: t.y - 4, width: 12, height: 12, rx: 3, fill: C.blue, "data-t": "tresize", "data-id": t.id, style: "cursor:ew-resize"})); });   /* drag it to make the text bigger or smaller */
   if (pk.dot) g.appendChild(pk.dot(C));
   $("#undo").disabled = !undo.length; $("#redo").disabled = !redo.length;
 }
@@ -323,7 +327,7 @@ function buildTools(){
     b.appendChild(s); b.appendChild(document.createTextNode(x[1]));
     b.onclick = () => { tool = x[0]; linkFrom = null; buildTools(); hint(); draw(); }; t.appendChild(b); });
 }
-function hint(){ const h = {select: "Drag to move · double-click to rename · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
+function hint(){ const h = {select: "Drag to move · double-click (or F2) to rename · drag the blue corner to resize · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
   pen: "Drag to draw", delete: "Click anything to remove it"}[tool] || (tool.startsWith("l:") ? (linkFrom ? "Now click the second box" : "Click the first box, then the second") : "Click to place it - double-click to rename");
   $("#hint").textContent = h; }
 
@@ -335,8 +339,13 @@ let drag = null;
 stage.addEventListener("pointerdown", e => {
   if (e.button > 0 || e.target.closest("#zoom,#play,#say,#edit")) return;
   hideEdit(); const p = pt(e), h = hit(e); stage.setPointerCapture(e.pointerId);
+  /* 1.1.6 test day: double-click to rename never fired - the pointer capture above makes the browser aim the dblclick at the stage,
+     and the redraw between the clicks replaces the element. Two quick presses on the same thing are the double-click instead. */
+  const dk = h ? h.t + ":" + h.id : "", now = Date.now();
+  if (mode === "draw" && tool === "select" && h && dk === lastDown.k && now - lastDown.t < 450) { lastDown = {k: "", t: 0}; renameHit(h); return; }
+  lastDown = {k: dk, t: now};
   if (mode === "break") { drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; return; }
-  if (tool === "delete") { if (h && h.t !== "resize") change(() => remove(h)); return; }
+  if (tool === "delete") { if (h && !h.t.endsWith("resize")) change(() => remove(h)); return; }
   if (tool.startsWith("l:")) { if (h && h.t === "node") { if (!linkFrom) { linkFrom = h.id; draw(); } else if (linkFrom !== h.id) { const a = linkFrom; linkFrom = null;
       change(() => doc.links.push({id: uid("l"), a, b: h.id, kind: tool.slice(2), label: ""})); } } hint(); return; }
   if (tool === "text") { const t = {id: uid("t"), x: p.x, y: p.y, t: "Text"}; change(() => doc.texts.push(t)); sel = {t: "text", id: t.id}; editAt(t, "t"); return; }
@@ -344,6 +353,8 @@ stage.addEventListener("pointerdown", e => {
   if (tool === "pen") { undo.push(JSON.stringify(doc)); redo = []; const s = {id: uid("i"), p: [Math.round(p.x), Math.round(p.y)]}; doc.ink.push(s); drag = {ink: s}; return; }
   if (tool !== "select" && (!h || h.t === "area")) { const n = {id: uid("n"), k: tool, name: (TOOLS.find(x => x && x[0] === tool) || [0, "Device"])[1], sub: "", st: doc.measured ? "you" : "", x: Math.round(p.x / 10) * 10, y: Math.round(p.y / 10) * 10};
     change(() => doc.nodes.push(n)); sel = {t: "node", id: n.id}; tool = "select"; buildTools(); hint(); draw(); return; }
+  if (h && h.t === "nresize") { const n = node(h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {nres: n, d0: Math.max(8, Math.hypot(p.x - n.x, p.y - n.y)), s0: n.sc || 1}; return; }
+  if (h && h.t === "tresize") { const t = doc.texts.find(x => x.id === h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {tres: t, x0: t.x, f0: t.fs || 14, w0: Math.max(10, textW(t.t, t.fs || 14))}; return; }
   if (h && h.t === "resize") { const a = doc.areas.find(x => x.id === h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {resize: a, sx: p.x, sy: p.y, w: a.w, h: a.h}; return; }
   if (h && (h.t === "node" || h.t === "text" || h.t === "area")) { sel = h; const o = h.t === "node" ? node(h.id) : h.t === "text" ? doc.texts.find(x => x.id === h.id) : doc.areas.find(x => x.id === h.id);
     undo.push(JSON.stringify(doc)); redo = []; drag = {move: o, sx: p.x, sy: p.y, ox: o.x, oy: o.y, moved: false}; draw(); return; }
@@ -353,19 +364,26 @@ stage.addEventListener("pointerdown", e => {
 stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
   if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; drawSoon(); }
   else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; drawSoon(); }
+  else if (drag.nres) { drag.nres.sc = Math.round(Math.max(.5, Math.min(3, drag.s0 * Math.hypot(p.x - drag.nres.x, p.y - drag.nres.y) / drag.d0)) * 20) / 20; drawSoon(); }
+  else if (drag.tres) { drag.tres.fs = Math.round(Math.max(9, Math.min(72, drag.f0 * Math.max(10, p.x - drag.x0) / drag.w0))); drawSoon(); }
   else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); drawSoon(); }
   else if (drag.ink) { drag.ink.p.push(Math.round(p.x), Math.round(p.y)); if (drag.ink.p.length > 4000) drag.ink.p.length = 4000; drawSoon(); }
   else if (drag.area) { if (!drag.a) { undo.push(JSON.stringify(doc)); redo = []; drag.a = {id: uid("a"), x: 0, y: 0, w: 0, h: 0, t: "Area"}; doc.areas.push(drag.a); }
     Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); drawSoon(); } });
 stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.move && !drag.moved) undo.pop();
-  if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();   /* a click on the handle isn't an undo step */
+  if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();
+  if (drag.nres && (drag.nres.sc || 1) === drag.s0) undo.pop(); if (drag.tres && (drag.tres.fs || 14) === drag.f0) undo.pop();   /* a click on the handle isn't an undo step */
   if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
   if (drag.ink && drag.ink.p.length < 6) { doc.ink.pop(); undo.pop(); }
   if (!drag.pan) { persist(); draw(); } drag = null; });
-stage.addEventListener("dblclick", e => { if (mode !== "draw") return; const h = hit(e); if (!h) return;
+let lastDown = {k: "", t: 0};
+function renameHit(h){ sel = h; draw();
   if (h.t === "node") editAt(node(h.id), "name"); else if (h.t === "text") editAt(doc.texts.find(x => x.id === h.id), "t");
-  else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); });
+  else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); }
+stage.addEventListener("dblclick", e => { if (mode !== "draw" || editing) return; const h = hit(e); if (h) renameHit(h); });   /* a real dblclick still works where the browser delivers one */
+/* F2 renames what's selected, from the keyboard */
+document.addEventListener("keydown", e => { if (e.key === "F2" && sel && mode === "draw" && !(e.target.closest && e.target.closest("input,select"))) { e.preventDefault(); renameHit(sel); } });
 stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z = Math.min(3, Math.max(.25, view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
   view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }, {passive: false});
 function zoomBy(f){ const r = stage.getBoundingClientRect(), mx = r.width / 2, my = r.height / 2, z = Math.min(3, Math.max(.25, view.z * f)); view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }
