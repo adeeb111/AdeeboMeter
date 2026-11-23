@@ -159,7 +159,18 @@ namespace AdeeboMeter
         }
 
         // ---------- Group Policy (what applied to you)
+        // deep test (23 Nov): gpresult can take 10-30 s, twice - the answer is kept 5 minutes, so asking again (or another
+        // tool that needs it) is instant; policy doesn't change that fast (gpupdate is every 90 minutes)
+        static List<string[]> gpLast; static DateTime gpAt = DateTime.MinValue; static readonly object gpLock = new object();
         public static List<string[]> GroupPolicy()
+        {
+            lock (gpLock)
+            {
+                if (gpLast != null && (DateTime.UtcNow - gpAt).TotalMinutes < 5) return gpLast.Select(z => (string[])z.Clone()).ToList();
+                var fresh = GroupPolicyNow(); gpLast = fresh.Select(z => (string[])z.Clone()).ToList(); gpAt = DateTime.UtcNow; return fresh;
+            }
+        }
+        static List<string[]> GroupPolicyNow()
         {
             var rows = new List<string[]>();
             // the XML report first - its element names are the same in every language (the /r text isn't). Read as plain

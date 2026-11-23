@@ -414,6 +414,9 @@ namespace AdeeboMeter
         internal static List<string[]> Laptop(Monitor m, string seller, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var s = HwSpecs.Get(); var bad = new List<string>();
+            // deep test (23 Nov): it ignored Stop for over a minute - each step now checks it, and a stopped check says so
+            Func<bool> stopped = () => run != null && run.Stop;
+            Func<List<string[]>> halt = () => { rows.Insert(0, R(3, "Stopped", "the check was stopped before it finished - the rows below are what it had", "", "i")); return rows; };
             Action<string> sec = t => rows.Add(R(-1, t, "", "", ""));
             Action<List<string[]>, string> take = (src, title) => { var v = src.FirstOrDefault(x => x[1] == "Verdict"); if (v != null) { rows.Add(R(int.Parse(v[0], CultureInfo.InvariantCulture), title, v[2], v[3], v[4])); if (v[0] == "2" || v[0] == "1") bad.Add(title.ToLowerInvariant() + ": " + Cutl(v[2], 90)); } foreach (var x in src.Where(x => x[1] != "Verdict" && x[0] != "3" && x[0] != "-1").Take(4)) rows.Add(x); };
             sec("WHAT'S INSIDE");
@@ -423,6 +426,7 @@ namespace AdeeboMeter
             foreach (var d in s.Disks.Where(d => d.Bus != "USB" && d.Bus != "Virtual").Take(2)) rows.Add(R(d.Health == 0 ? 3 : d.Health == 1 ? 1 : d.Health == 2 ? 2 : 3, "Disk", d.Name + " · " + F(d.Gb) + " GB " + d.Media + " " + d.Bus + (d.Health == 1 ? " · Windows: WARNING" : d.Health == 2 ? " · Windows: UNHEALTHY" : ""), "", "w"));
             foreach (var g in s.Gpus.Where(g => !g.Software)) rows.Add(R(3, g.Integrated ? "Built-in graphics" : "Graphics card", g.Name + (g.Integrated ? "" : " · " + Gb(g.DedicatedMb / 1024)), "", "w"));
             if (!string.IsNullOrWhiteSpace(seller)) foreach (var x in Seller(seller, s)) { rows.Add(x); if (x[0] == "2") bad.Add(x[1] + ": " + x[2]); }
+            if (stopped()) return halt();
             sec("BATTERY");
             double de, fu; int cy; HwSpecs.Battery(out de, out fu, out cy);
             if (double.IsNaN(de) || double.IsNaN(fu) || de <= 0) rows.Add(R(3, "Battery health", System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus == System.Windows.Forms.BatteryChargeStatus.NoSystemBattery ? "no battery" : "Windows didn't report it - run 'powercfg /batteryreport' in a terminal", "", "u"));
@@ -431,11 +435,15 @@ namespace AdeeboMeter
                 double h = 100 * fu / de; rows.Add(R(h < 60 ? 2 : h < 80 ? 1 : 0, "Battery health", F(h) + "% of new (" + F(fu / 1000) + " of " + F(de / 1000) + " Wh)" + (cy > 0 ? " · " + cy + " charge cycles" : ""), h < 80 ? "Below 80% the battery runs noticeably shorter; a replacement costs real money - count it in the price." : "", "w"));
                 if (h < 80) bad.Add("battery at " + F(h) + "% of new");
             }
+            if (stopped()) return halt();
             sec("DISK"); take(DiskSpeed("", true, run), "Disk speed");
+            if (stopped()) return halt();
             var wsd = HwSpecs.SystemDisk(HwSpecs.Get()); var wear = HwSpecs.Wear(wsd != null && wsd.DeviceId != "" ? wsd.DeviceId : null);
             if (wear != null) rows.Add(R(wear[0] > 50 || wear[3] > 0 ? 2 : wear[0] > 20 ? 1 : 0, "Disk wear" + (wsd != null && wsd.DeviceId != "" ? " (" + wsd.Name + ", Windows' disk)" : ""), F(wear[0]) + "% worn · " + F(wear[1]) + " hours used" + (wear[2] > 0 ? " · " + F(wear[2]) + " °C" : "") + (wear[3] > 0 ? " · " + F(wear[3]) + " read errors" : "") + (wear[0] > 0 && wear[1] > 0 ? " · at this pace ≈ " + F((100 - wear[0]) / wear[0] * wear[1] / 2000) + " more years (2,000 h a year)" : ""), "", "w"));
             else rows.Add(R(3, "Disk wear", "needs admin - right-click AdeeboMeter > Run as administrator to see wear %, hours used and temperature", "", "u"));
-            sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); take(Gpu(), "Graphics"); take(Cpu(run), "Processor");
+            if (stopped()) return halt();
+            sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); if (stopped()) return halt(); take(Gpu(), "Graphics"); if (stopped()) return halt(); take(Cpu(run), "Processor");
+            if (stopped()) return halt();
             sec("HIDDEN TROUBLE");
             var errs = Errors(30); int nbad = errs.Sum(e => e.Item3);
             rows.Add(R(errs.Any(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0) ? 2 : nbad > 0 ? 1 : 0, "Errors in 30 days", nbad == 0 ? "none - no disk, hardware or power-off errors" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), nbad > 0 ? "Ask the seller about these. Disk errors = a failing disk; sudden power-offs = crashes, heat or the battery." : "", "w"));

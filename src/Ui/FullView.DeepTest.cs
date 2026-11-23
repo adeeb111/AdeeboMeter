@@ -128,9 +128,18 @@ namespace AdeeboMeter
             Action<string, Action, long> ui = (w, act, limit) =>
             {
                 var p = new Probe(); var sw = Stopwatch.StartNew();
-                try { act(); } catch (Exception e) { p.Status = "THREW " + e.GetType().Name + ": " + Draw.Trunc(e.Message, 80) + " at " + Draw.Trunc((e.StackTrace ?? "").Trim().Split('\n')[0].Trim(), 120); }
+                try { act(); } catch (Exception e) { var frames = (e.StackTrace ?? "").Split('\n').Select(z => z.Trim()).Where(z => z != "").ToList(); string mine = frames.FirstOrDefault(z => z.Contains("AdeeboMeter.")) ?? frames.FirstOrDefault() ?? ""; p.Status = "THREW " + e.GetType().Name + ": " + Draw.Trunc(e.Message, 80) + " at " + Draw.Trunc(mine, 160); }   /* 23 Nov: the app's own frame, not WinForms' */
                 p.Ms = sw.ElapsedMilliseconds; if (p.Status == "OK" && p.Ms > limit) p.Status = "SLOW (over " + limit + " ms)"; rec(w, p);
             };
+            // 23 Nov (Adeeb's PC): the window had been sent to the corner during the 20 minutes of tool runs, so the UI checks met
+            // a hidden page ("box isn't the one on screen", "no window handle"). They run on a shown Toolbox - and say if it was hidden.
+            Action onScreen = () =>
+            {
+                if (IsDisposed) throw new ObjectDisposedException("FullView", "the window was closed during the run (Esc or Back to corner?) - leave it open while --deeptest runs");
+                if (!Visible || WindowState == FormWindowState.Minimized) { sb.AppendLine("      (the window was hidden or minimised - shown again for the UI checks)"); Show(); WindowState = FormWindowState.Normal; }
+                tab = "toolbox"; ShowTab(); EnsureToolbox(); CreateControl(); Application.DoEvents();
+            };
+            try { onScreen(); } catch (ObjectDisposedException e) { fails++; sb.AppendLine("FAIL  the window was closed during the run - the UI checks couldn't run (" + e.Message + ")"); return sb.ToString(); }
             int gdiBefore = Native.GetGuiResources(Native.GetCurrentProcess(), 0), userBefore = Native.GetGuiResources(Native.GetCurrentProcess(), 1);
             ui("open every tool (" + Tools2().Count + ") - its boxes are the ones on screen", () =>
             {
@@ -184,7 +193,7 @@ namespace AdeeboMeter
                 tbSel = "subnet"; var r1 = new List<string[]> { new[] { "3", "A", "one", "", "m" } }; var r2 = new List<string[]> { new[] { "3", "A", "two", "", "m" }, new[] { "1", "B", "new", "", "m" } };
                 tbPrev["subnet"] = new PrevRun { Inputs = "k", At = DateTime.Now.AddMinutes(-5), Rows = r1 }; tbRows = r2; tbRowsKey = "k"; tbCompare = true; tbCanvas.Refresh(); tbCompare = false; tbPrev.Remove("subnet"); tbRows = null;
             }, 2000);
-            ui("every section 3 times", () => { for (int i = 0; i < 3; i++) foreach (var sc in Secs) { tab = sc[2]; ShowTab(); Refresh(); Application.DoEvents(); } tab = "toolbox"; ShowTab(); }, 3 * Secs.Length * 400);
+            onScreen(); ui("every section 3 times", () => { for (int i = 0; i < 3; i++) foreach (var sc in Secs) { tab = sc[2]; ShowTab(); Refresh(); Application.DoEvents(); } tab = "toolbox"; ShowTab(); }, 3 * Secs.Length * 400);
 
             // penny rule (PLAN 11.8a): 60 s sitting on the busiest page - own CPU over 1% of the PC, or memory over 80 MB, fails
             if (!skipped)

@@ -839,6 +839,8 @@ namespace AdeeboMeter
                 Func<long, string> P = v => (v < 0 ? "-" : v.ToString(CultureInfo.InvariantCulture)).PadLeft(5);
                 sb.AppendLine(t.PadRight(10) + P(first[t]) + "  " + P(again) + "  (" + P(show) + ")      " + P(pp) + "       " + P(scr) + "     " + P(tick));
             }
+            // 23 Nov (Adeeb's PC): the window was closed during the run and this crashed on a disposed canvas - now it says so
+            if (IsDisposed || overviewCanvas == null || overviewCanvas.IsDisposed) { sb.AppendLine("STOPPED: the window was closed during the run (Esc or Back to corner?) - the text timing was skipped. Leave the window alone while --perf runs."); return sb.ToString(); }
             // text: GDI+ (what the pages use now) vs GDI (TextRenderer), 300 lines each, on the real screen buffer
             using (var cg = overviewCanvas.CreateGraphics())
             using (var bg = BufferedGraphicsManager.Current.Allocate(cg, new Rectangle(0, 0, 900, 700)))
