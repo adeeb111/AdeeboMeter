@@ -388,7 +388,7 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = true; OnClick(EventArgs.Empty); } base.OnKeyDown(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             Color acc = state == "on" ? Theme.Green : state == "ask" ? Theme.Amber : state == "wait" ? Theme.Blue : Theme.Line;

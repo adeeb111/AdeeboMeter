@@ -146,7 +146,7 @@ namespace AdeeboMeter
         void ToolTile(Graphics g, Tool t, RectangleF r, bool hot)
         {
             string q = QuestionOf(t), acc = QAccent(q), gk; Color c = Kit.Accent(acc);
-            Kit.Card(g, r, null, hot); if (hot) Theme.Stroke(g, r, 16 * S, c, 1.5f * S);
+            Kit.Card(g, r, null, hot); if (hot) Theme.Stroke(g, Kit.Edge(r), Kit.CardRad, c, 1.5f * S);
             float ic = 40 * S; var ir = new RectangleF(r.X + 14 * S, r.Y + (r.Height - ic) / 2, ic, ic);
             if (BigGlyph.TryGetValue("q:" + q, out gk) && Glyphs.Has(gk)) Glyphs.Tile(g, gk, ir, c, 10 * S); else Kit.Icon(g, "tool", ir, c);
             // the name only, up to two lines - what it does is in the card on hover (no wall of text)

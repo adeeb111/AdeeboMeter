@@ -136,13 +136,18 @@ namespace AdeeboMeter
         }
         // off screen (scrolled away): nothing to draw
         public static bool Off(Graphics g, RectangleF r) { var c = g.ClipBounds; return r.Bottom + 8 * S < c.Top || r.Top - 8 * S > c.Bottom || r.Right + 8 * S < c.Left || r.Left - 8 * S > c.Right; }
+        // 22 Nov (Adeeb: "can it be more sharper"): cards sit on whole pixels, a tighter corner, a hairline edge on the half pixel and a
+        // short crisp lift instead of the soft blurred shadow - the soft halo made every tile look out of focus
+        public static float CardRad { get { return 12 * S; } }
+        public static RectangleF Crisp(RectangleF r) { return new RectangleF((float)Math.Round(r.X), (float)Math.Round(r.Y), (float)Math.Round(r.Width), (float)Math.Round(r.Height)); }
+        public static RectangleF Edge(RectangleF r) { r = Crisp(r); return new RectangleF(r.X + 0.5f, r.Y + 0.5f, r.Width - 1, r.Height - 1); }
         public static void Card(Graphics g, RectangleF r, string accent, bool hot)
         {
             if (Off(g, r)) return;
-            float rad = 16 * S;
-            Shadow(g, r, rad);
+            float rad = CardRad; r = Crisp(r);
+            if (!Theme.HighContrast) Theme.Fill(g, new RectangleF(r.X, r.Y + 2 * S, r.Width, r.Height), rad, Color.FromArgb(Theme.Dark ? 90 : 20, 0, 0, 0));   // the lift: a crisp step under the card
             Theme.Fill(g, r, rad, Theme.Card);
-            Theme.Stroke(g, r, rad, hot && accent != null ? Accent(accent) : Theme.Dark ? Theme.Line : Theme.Line2, hot ? 1.5f * S : 1);
+            Theme.Stroke(g, Edge(r), rad, hot && accent != null ? Accent(accent) : Theme.Dark ? Theme.Line : Theme.Line2, hot ? 1.5f * S : 1);
             if (accent != null && Theme.Palette == "neon" && !Theme.HighContrast)   // Neon: the accent edge glows a little - two faint strokes, drawn once
             {
                 using (var p = Theme.Round(new RectangleF(r.X - 1.5f * S, r.Y - 1.5f * S, r.Width + 3 * S, r.Height + 3 * S), rad + 1.5f * S)) using (var pen = new Pen(Color.FromArgb(40, Accent(accent)), 3 * S)) g.DrawPath(pen, p);
@@ -178,7 +183,7 @@ namespace AdeeboMeter
         {
             if (Off(g, r)) return;
             Card(g, r, null, hot);
-            if (hot) Theme.Stroke(g, r, 16 * S, Accent(accent), 1.5f * S);
+            if (hot) Theme.Stroke(g, Edge(r), CardRad, Accent(accent), 1.5f * S);
             float d = Math.Min(38 * S, r.Height - 20 * S), cx = L.IsRtl ? r.Right - 14 * S - d : r.X + 14 * S, cy = r.Y + (r.Height - d) / 2;
             Color ring = level >= 0 && level <= 2 ? Theme.LvSoft(level) : Soft(accent), ic = level >= 0 && level <= 2 ? Theme.Lv(level) : Accent(accent);
             using (var b = new SolidBrush(ring)) g.FillEllipse(b, cx, cy, d, d);
