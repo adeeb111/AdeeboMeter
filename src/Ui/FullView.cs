@@ -611,6 +611,7 @@ namespace AdeeboMeter
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "shell") ShStatusTick();
+            { int bzMore; bool bzOn = Busy.Oldest(out bzMore) != null; if (bzOn || footBusy) footer.Invalidate(); footBusy = bzOn; }   // the footer's "waiting on" note ticks, then clears
             if (tab == "link") { RefreshLink(false); if (switchBusy || (linkSnap == null && linkBusy)) linkCanvas.Invalidate(); }   // the first read ticks its seconds
             if (tab == "changes") changesSeen = DateTime.Now;
             UpdateBadges();
@@ -672,6 +673,7 @@ namespace AdeeboMeter
             }
         }
 
+        bool footBusy;
         void RefreshConns(bool force)
         {
             if (refreshing || IsDisposed) return;
@@ -679,11 +681,11 @@ namespace AdeeboMeter
             bool names = force || (DateTime.UtcNow - lastNames).TotalSeconds > (tab == "conn" || tab == "travel" || tab == "procs" ? 15 : 60);   // every 15 s where names are shown, every minute for the rest (Calls, Connections() users)
             if (names) lastNames = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Listing connections"); try { 
                 List<Conn> l = null;
                 try { if (names && Cfg.IpNames) M.RefreshIpNames(); l = M.Connections(true); } catch (Exception e) { Program.Log("conns: " + e.Message); }
                 try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") { int hs = 0; foreach (var z in l) hs = unchecked(hs + (z.Key + z.State + z.Host).GetHashCode()); string tvk = l.Count + "|" + hs;   /* bug-hunt ML-139: an order-free sum - no join or sort of every connection */ if (tvk != travelKey) { travelKey = tvk; travelCanvas.Invalidate(); } } } }); else refreshing = false; } catch { refreshing = false; }
-            });
+            } finally { __bz.End(); } });
         }
 
         void UpdateConnStatus()
@@ -1126,7 +1128,7 @@ namespace AdeeboMeter
             dest = new DestResult(); pinResults = null; destRunning = true; checkBtn.Enabled = false; destCanvas.Invalidate();
             var r = dest;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Checking the destination"); try { 
                 try { DestCheck.Run(input, r, delegate { }, M); }
                 catch (Exception e) { r.Verdict = "Check failed: " + e.Message; r.Level = 1; r.Done = true; Program.Log("dest: " + e); }
                 finally
@@ -1134,7 +1136,7 @@ namespace AdeeboMeter
                     destRunning = false;
                     try { if (!IsDisposed) BeginInvoke((Action)delegate { checkBtn.Enabled = true; destCanvas.Invalidate(); }); } catch { }
                 }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         void StartHealth()
@@ -1142,11 +1144,11 @@ namespace AdeeboMeter
             if (healthRunning) return;
             healthRunning = true; health = null; healthBtn.Enabled = false; healthCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Running the health check"); try { 
                 List<string[]> res = null;
                 try { res = HealthCheck.Run(M); } catch (Exception e) { Program.Log("health: " + e); }
                 try { if (!IsDisposed) BeginInvoke((Action)delegate { health = res ?? new List<string[]>(); healthAt = DateTime.Now; healthRunning = false; healthBtn.Enabled = true; healthBtn.Text = AdeeboMeter.L.T("Run again"); healthCanvas.Invalidate(); }); } catch { }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         void Sniff(Conn c)

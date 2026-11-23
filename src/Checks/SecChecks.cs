@@ -43,7 +43,9 @@ namespace AdeeboMeter
             var l = new List<Dictionary<string, object>>();
             try
             {
+                var bz = Busy.Begin("Asking Windows (WMI): " + (query.Length > 60 ? query.Substring(0, 59) + "…" : query)); try {
                 using (var s = new System.Management.ManagementObjectSearcher(scope, query)) { s.Options.Timeout = TimeSpan.FromSeconds(10); foreach (System.Management.ManagementBaseObject o in s.Get()) using (o) { var d = new Dictionary<string, object>(); foreach (var p in o.Properties) d[p.Name] = p.Value; l.Add(d); } }
+                } finally { bz.End(); }
             }
             catch (System.Management.ManagementException) { return null; } catch (UnauthorizedAccessException) { return null; } catch (System.Runtime.InteropServices.COMException) { return null; }
             return l;

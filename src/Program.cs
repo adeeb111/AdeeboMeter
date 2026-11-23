@@ -657,6 +657,8 @@ namespace AdeeboMeter
             if (Path.GetFileName(exe).Equals("tshark.exe", StringComparison.OrdinalIgnoreCase)) { psi.StandardOutputEncoding = System.Text.Encoding.UTF8; psi.StandardErrorEncoding = System.Text.Encoding.UTF8; }   // tshark writes UTF-8 (→, names); Windows' own tools write the console code page
             else if (Path.GetFileName(exe).Equals("netsh.exe", StringComparison.OrdinalIgnoreCase))
                 try { psi.StandardOutputEncoding = System.Text.Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage); } catch (ArgumentException) { } catch (NotSupportedException) { }   // netsh: the OEM page (a Wi-Fi name with é), not ANSI
+            var bz = Busy.Begin(Busy.Label(exe, args));
+            try {
             using (var p = Process.Start(psi))
             {
                 Add(p);
@@ -672,6 +674,38 @@ namespace AdeeboMeter
                 p.WaitForExit();   // the redirected streams reach their end
                 bool done = t.Wait(10000); et.Wait(1000);   // L-72: a long output gets time to finish, not 1 s
                 return done ? t.Result : "";
+            }
+            } finally { bz.End(); }
+        }
+    }
+
+    // What AdeeboMeter is waiting on right now. Anything that has taken 5 s or more shows in the footer of the full view with a
+    // spinner and its seconds, then disappears when it ends (Adeeb, 1.1.6 test day: "anything that takes more than 5-10 seconds should
+    // show a message and disappear" - quiet work looked stuck). English on purpose: it names programs and commands.
+    static class Busy
+    {
+        public sealed class Item { public string What; public DateTime At = DateTime.UtcNow; public void End() { lock (all) all.Remove(this); } }
+        static readonly List<Item> all = new List<Item>();
+        public static Item Begin(string what) { var i = new Item { What = what ?? "" }; lock (all) all.Add(i); return i; }
+        public const int ShowAfterSec = 5;
+        // the longest-waiting item past the threshold, and how many others are past it too
+        public static Item Oldest(out int others)
+        {
+            others = 0; Item o = null; var cut = DateTime.UtcNow.AddSeconds(-ShowAfterSec);
+            lock (all) foreach (var i in all) if (i.At <= cut) { if (o == null || i.At < o.At) o = i; others++; }
+            if (o != null) others--; return o;
+        }
+        public static string Label(string exe, string args)
+        {
+            string n = Path.GetFileNameWithoutExtension(exe ?? "").ToLowerInvariant(), a = (args ?? "").Trim(); if (a.Length > 60) a = a.Substring(0, 59) + "…";
+            switch (n)
+            {
+                case "netsh": return "Waiting on Windows' network settings (netsh " + a + ")";
+                case "tshark": case "dumpcap": return "Waiting on Wireshark (" + n + ")";
+                case "wevtutil": return "Reading the Windows event log";
+                case "powershell": case "pwsh": return "Waiting on Windows PowerShell";
+                case "ping": case "tracert": case "pathping": return "Waiting on " + n + " " + a;
+                default: return "Waiting on Windows (" + n + (a == "" ? "" : " " + a) + ")";
             }
         }
     }

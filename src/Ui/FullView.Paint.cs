@@ -117,6 +117,17 @@ namespace AdeeboMeter
                 // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
                 float left = x + g.MeasureString(st, Draw.fMono).Width + 24 * S;
+                // anything AdeeboMeter has waited on for 5 s or more: named here with its seconds, gone when it ends (1.1.6 test day)
+                int more; var bz = Busy.Oldest(out more);
+                if (bz != null)
+                {
+                    int secs = (int)(DateTime.UtcNow - bz.At).TotalSeconds; string spin = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".Substring((int)(DateTime.UtcNow.Ticks / 1000000 % 10), 1);
+                    string note = spin + "  " + bz.What + "  ·  " + secs + " s" + (more > 0 ? "  ·  +" + more + " more" : "");
+                    using (var ab = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                    using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter, Alignment = StringAlignment.Far })
+                        g.DrawString(note, Draw.fSmall, ab, new RectangleF(left, y, Math.Max(1, r.Width - 20 * S - left), 20 * S), sf);
+                    return;
+                }
                 foreach (var right in new[] { Program.Version + " · no cloud · no telemetry · never listens · hover the ? cursor to learn · Esc = back to the corner",
                                               Program.Version + " · no cloud · no telemetry · never listens", Program.Version + " · no cloud · no telemetry", Program.Version })
                 {

@@ -45,7 +45,7 @@ namespace AdeeboMeter
             if (only == null) { lock (secRes) secRes.Clear(); Program.Log("security checkup started"); }
             secCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Running the security checkup"); try { 
                 foreach (var c in list)
                 {
                     if (secStop) break; secNow = c.Title;
@@ -54,7 +54,7 @@ namespace AdeeboMeter
                 }
                 secNow = ""; secAt = DateTime.Now;
                 try { BeginInvoke((Action)delegate { secBusy = false; secRun.Text = AdeeboMeter.L.T("Run security checkup"); secCanvas.Invalidate(); }); } catch (InvalidOperationException) { secBusy = false; }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
         static int SecLevel(List<string[]> r) { var l = r.Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList(); return l.Contains(2) ? 2 : l.Contains(1) ? 1 : l.Contains(0) ? 0 : 3; }
         static readonly HashSet<string> SecTools = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "UserAccountControlSettings.exe", "SystemPropertiesRemote.exe", "optionalfeatures.exe", "ncpa.cpl", "certmgr.msc", "certlm.msc", "taskschd.msc", "netplwiz.exe", "taskmgr.exe" };

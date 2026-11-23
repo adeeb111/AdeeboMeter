@@ -39,8 +39,10 @@ namespace AdeeboMeter
         {
             try
             {
+                var bz = Busy.Begin("Asking Windows (WMI): " + (q.Length > 60 ? q.Substring(0, 59) + "…" : q)); try {
                 using (var s = new ManagementObjectSearcher(new ManagementScope(scope), new ObjectQuery(q), new EnumerationOptions { Timeout = TimeSpan.FromSeconds(8), ReturnImmediately = true, Rewindable = false }))
                     foreach (ManagementBaseObject o in s.Get()) using (o) each(o);
+                } finally { bz.End(); }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("hw " + q.Split(' ').Skip(3).FirstOrDefault() + ": " + e.Message); }
         }

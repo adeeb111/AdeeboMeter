@@ -35,13 +35,13 @@ namespace AdeeboMeter
             if (linkBusy || (!now && (DateTime.UtcNow - lastLink).TotalSeconds < 10)) return;
             linkBusy = true; lastLink = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Reading your Wi-Fi from Windows"); try { 
                 if (IsDisposed) { linkBusy = false; return; }
                 LinkSnap ls = null; WifiAdvisor.Extra ex = null;
                 string err = null; try { ls = LinkInfo.Collect(M); } catch (Exception e) { err = e.Message; Program.Log("link: " + e.Message); } if (ls != null) try { ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link advisor: " + e.Message); }
                 if (IsDisposed || !IsHandleCreated) { linkBusy = false; return; }
                 try { BeginInvoke((Action)delegate { linkBusy = false; if (IsDisposed) return; linkErr = ls == null ? (err ?? "no answer") : null; if (ls != null) { linkSnap = ls; linkExtra = ex; } else lastLink = DateTime.UtcNow.AddSeconds(-5); linkCanvas.Invalidate(); }); } catch { linkBusy = false; }   // 1.1.6 walk: a failed read left "Asking Windows..." up for good
-            });
+            } finally { __bz.End(); } });
         }
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
         {

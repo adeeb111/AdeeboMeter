@@ -41,11 +41,11 @@ namespace AdeeboMeter
             if (todo.Count == 0 || whereBusy) return;
             whereBusy = true;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Looking up where programs live"); try { 
                 var res = new Dictionary<string, string>();
                 foreach (var t in todo) { string path = ""; try { path = Native.ExePath(t.Value); } catch { } res[t.Key] = path == "" ? "" : Explain.Where(path); }
                 try { BeginInvoke((Action)delegate { foreach (var kv in res) procWhere[kv.Key] = kv.Value; whereBusy = false; procList.Invalidate(); }); } catch { whereBusy = false; }
-            });
+            } finally { __bz.End(); } });
         }
         string CatOf(AppStat a)
         {
@@ -63,10 +63,10 @@ namespace AdeeboMeter
             var snap = connSnap; if (snap != null && (DateTime.UtcNow - lastConns).TotalSeconds < 10) { procConns = snap.Where(c => c.Proc == name).ToList(); procInfo.Invalidate(); return; }
             procConnBusy = true;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Listing this program's connections"); try { 
                 List<Conn> l = null; try { l = M.Connections(true).Where(c => c.Proc == name).ToList(); } catch (Exception e) { Program.Log("app connections: " + e.Message); }
                 try { BeginInvoke((Action)delegate { procConnBusy = false; if (procSel == name) { procConns = l; procInfo.Invalidate(); } }); } catch (InvalidOperationException) { procConnBusy = false; }
-            });
+            } finally { __bz.End(); } });
         }
         static readonly string[] ConnReading = { "Connections", "reading..." }, ConnNone = { "Connections", "none right now - it isn't using the network" }, ConnMore = { "", "... and more - Monitor › Connections shows them all" };
         static List<string[]> ConnRows(List<Conn> l)
@@ -91,11 +91,11 @@ namespace AdeeboMeter
             procSel = a.Name; procFacts = null; procPathSel = ""; procConns = null; LoadProcConns(a.Name); procInfo.AutoScrollPosition = Point.Empty; procList.Invalidate(); procInfo.Invalidate();
             string name = a.Name; int pid = a.Pid;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Reading this program's details"); try { 
                 string path = ""; try { path = Native.ExePath(pid); } catch { }
                 var f = Explain.FileFacts(path);
                 try { BeginInvoke((Action)delegate { if (procSel == name) { procFacts = f; procPathSel = path; procInfo.Invalidate(); } }); } catch { }
-            });
+            } finally { __bz.End(); } });
         }
         sealed class ProcRow { public AppStat A; public Explain.Entry E; public string C; }
         List<AppStat> procRowsFor; string procRowsKey = ""; int procRowsCount; readonly Dictionary<string, List<ProcRow>> procRowsByCat = new Dictionary<string, List<ProcRow>>();

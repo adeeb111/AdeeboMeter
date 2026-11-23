@@ -890,7 +890,7 @@ namespace AdeeboMeter
             if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
             string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; BuddyReact.Set("sweaty", 3600);   /* the face is nervous while a tool runs */ tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Running " + L.T(t.Title)); try { 
                 List<string[]> res;
                 try
                 {
@@ -900,7 +900,7 @@ namespace AdeeboMeter
                 catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
                 try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); BuddyReact.ToolDone(res, run.Stop); if (tbAward != "" && !res.Any(z => z != null && z.Length > 0 && z[0] == "2")) BuddyReact.Set("sparkle", 6);   /* R2-157: a red result keeps its tears, points or not */ PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         // ---------- MTU per hop: trace, then measure hop by hop (Next hop / a row / all)
@@ -909,11 +909,11 @@ namespace AdeeboMeter
             tbShown = new[] { target, "", "", "" };
             if (mtuBusy) return; mtuBusy = true; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbRows = null; mtuHops = null; var run = new Toolkit.Run(); tbRun0 = run; run.Status = "Tracing to " + target + "..."; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Finding the MTU per hop"); try { 
                 var dst = Icmp.Resolve4(target); List<PathTools.Hop> hops = null;
                 if (dst != null) hops = PathTools.Trace(dst, 30, () => run.Stop); LabViews.Remember(target, hops);
                 try { BeginInvoke((Action)delegate { tbAt = DateTime.Now; mtuDst = dst; mtuHops = hops; mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (dst == null) tbRows = Bad("couldn't find " + target + " (IPv4)"); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
         void MeasureHops(List<PathTools.Hop> which)
         {
@@ -921,7 +921,7 @@ namespace AdeeboMeter
             mtuBusy = true; var run = new Toolkit.Run(); tbRun0 = run; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
             var hops = mtuHops; var dst = mtuDst;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Finding the MTU per hop"); try { 
                 foreach (var h in which)
                 {
                     if (run.Stop) break;
@@ -933,7 +933,7 @@ namespace AdeeboMeter
                 }
                 bool measured = !run.Stop && hops.Any(x => x.Mtu > 0);
                 try { BeginInvoke((Action)delegate { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); Earn("mtu", measured); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         // ---------- painting
