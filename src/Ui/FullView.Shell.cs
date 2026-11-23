@@ -281,13 +281,15 @@ namespace AdeeboMeter
         // =====================================================================================================================
         // the language: words, operators, and the structures scripts use (for / while / if)
         // In a word: \u0001 is a literal $ ('...' or \$), \u0005...\u0006 a $(command), \u0007...\u0006 a $((sum)).
-        sealed class Tok { public string W, Op; public bool Q; public List<Tok> Arr; }   // Arr: the words of a=( ... )
+        sealed class Tok { public string W, Op, M; public bool Q; public List<Tok> Arr; }   // M: per character of W, '1' where it was quoted (case patterns)   // Arr: the words of a=( ... )
         static List<Tok> Lex(string s)
         {
-            var l = new List<Tok>(); var sb = new StringBuilder(); bool had = false, q = false; char quote = '\0';
-            Action flush = () => { if (sb.Length > 0 || had) l.Add(new Tok { W = sb.ToString(), Q = q }); sb.Clear(); had = false; q = false; };
+            var l = new List<Tok>(); var sb = new StringBuilder(); var pm = new StringBuilder(); bool had = false, q = false, lit = false; char quote = '\0';
+            Action pad = () => { while (pm.Length < sb.Length) pm.Append(lit ? '1' : '0'); };
+            Action flush = () => { pad(); if (sb.Length > 0 || had) l.Add(new Tok { W = sb.ToString(), Q = q, M = pm.ToString() }); sb.Clear(); pm.Clear(); had = false; q = false; };
             for (int i = 0; i < s.Length; i++)
             {
+                pad(); lit = quote != '\0';   // what this round appends is quoted if it's inside quotes
                 char ch = s[i];
                 // $(command), `command`, $((math)): kept whole for Expand
                 if (quote != '\'' && ((ch == '$' && i + 1 < s.Length && s[i + 1] == '(') || ch == '`'))
@@ -307,7 +309,7 @@ namespace AdeeboMeter
                     sb.Append(ch); continue;
                 }
                 if (ch == '"' || ch == '\'') { quote = ch; had = true; q = true; continue; }
-                if (ch == '\\' && i + 1 < s.Length) { char n2 = s[++i]; if (n2 == '\n') continue; sb.Append(n2 == '$' ? '\u0001' : n2); had = true; q = true; continue; }
+                if (ch == '\\' && i + 1 < s.Length) { char n2 = s[++i]; if (n2 == '\n') continue; lit = true; sb.Append(n2 == '$' ? '\u0001' : n2); had = true; q = true; continue; }
                 if (ch == '#' && sb.Length == 0 && !had) { while (i + 1 < s.Length && s[i + 1] != '\n') i++; continue; }   // a comment: to the end of its line only (#1)
                 if (ch == ' ' || ch == '\t') { flush(); continue; }
                 if (ch == '\n') { flush(); l.Add(new Tok { Op = ";" }); continue; }
@@ -388,8 +390,11 @@ namespace AdeeboMeter
                         var p = stmt as NPipe; if (p == null || p.Cmds.Count == 0) p = new NPipe { Cmds = { stmt } };
                         p.Bg = true; p.Text = Unlex(t.GetRange(st, i - st)); s.Items.Add(p); i++;
                     }
-                    else s.Items.Add(stmt);
-                    if (i < t.Count && !Sep() && !Kw(stop) && !(t[i].Op != null && stop.Contains(t[i].Op))) throw new FormatException("unexpected '" + (t[i].Op ?? t[i].W) + "'");   // echo (hi), done foo
+                    else
+                    {
+                        s.Items.Add(stmt);
+                        if (i < t.Count && !Sep() && !Kw(stop) && !(t[i].Op != null && stop.Contains(t[i].Op))) throw new FormatException("unexpected '" + (t[i].Op ?? t[i].W) + "'");   // echo (hi), done foo - but "cmd & next" is fine
+                    }
                 }
             }
             Node Statement()
@@ -543,7 +548,7 @@ namespace AdeeboMeter
             if (cs != null)
             {
                 string w; try { w = Tilde(Subst(cs.Word.W, c), cs.Word.Q).Replace('\u0001', '$'); } catch (FormatException e) { Err(c, "case: " + e.Message); return 1; }
-                foreach (var arm in cs.Arms) foreach (var pat in arm.Key) { string pp = Subst(pat.W, c).Replace('\u0001', '$'); if (pat.Q ? pp == w : PatternMatch(pp, w)) return Exec(arm.Value, c); }
+                foreach (var arm in cs.Arms) foreach (var pat in arm.Key) if (PatternMatch(CasePattern(pat, c), w)) return Exec(arm.Value, c);
                 return 0;
             }
             var fn = n as NFunc; if (fn != null) { lock (Env.Vars) Env.Funcs[fn.Name] = fn.Body; return 0; }
@@ -723,7 +728,21 @@ namespace AdeeboMeter
             throw new FormatException("${" + e + "}: bad substitution");
         }
         static string GlobRx(string p) { return Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", "."); }
-        // a case pattern: * ? and [abc] / [!a-z] / [^0-9]
+        // a case pattern as written: the quoted parts (and what their $vars hold) match literally, the rest is a glob - so
+        // *"$x"* means "contains x", like bash
+        string CasePattern(Tok pat, ShCtx c)
+        {
+            string w = pat.W, m = pat.M ?? new string(pat.Q ? '1' : '0', w.Length); var sb = new StringBuilder(); int i = 0;
+            while (i < w.Length)
+            {
+                char kind = i < m.Length ? m[i] : '0'; int j = i; while (j < w.Length && (j < m.Length ? m[j] : '0') == kind) j++;
+                string part = Subst(w.Substring(i, j - i), c).Replace('\u0001', '$');
+                if (kind == '1') foreach (char ch in part) { if ("*?[]\\".IndexOf(ch) >= 0) sb.Append('\\'); sb.Append(ch); } else sb.Append(part);
+                i = j;
+            }
+            return sb.ToString();
+        }
+        // a case pattern: * ? and [abc] / [!a-z] (^ is an ordinary member, as in bash)
         static bool PatternMatch(string pat, string text)
         {
             var sb = new StringBuilder("^");
@@ -731,7 +750,7 @@ namespace AdeeboMeter
             {
                 char ch = pat[i];
                 if (ch == '*') sb.Append(".*"); else if (ch == '?') sb.Append('.');
-                else if (ch == '[' && pat.IndexOf(']', i + 2) > 0) { int e = pat.IndexOf(']', i + 2); string set = pat.Substring(i + 1, e - i - 1); if (set.StartsWith("!", StringComparison.Ordinal)) set = "^" + set.Substring(1); sb.Append('[').Append(set.Replace("\\", "\\\\")).Append(']'); i = e; }
+                else if (ch == '[' && pat.IndexOf(']', i + 2) > 0) { int e = pat.IndexOf(']', i + 2); string set = pat.Substring(i + 1, e - i - 1); bool neg = set.StartsWith("!", StringComparison.Ordinal); if (neg) set = set.Substring(1); set = set.Replace("\\", "\\\\").Replace("^", "\\^"); sb.Append('[').Append(neg ? "^" : "").Append(set).Append(']'); i = e; }
                 else if (ch == '\\' && i + 1 < pat.Length) sb.Append(Regex.Escape(pat[++i].ToString()));
                 else sb.Append(Regex.Escape(ch.ToString()));
             }
@@ -1061,9 +1080,21 @@ namespace AdeeboMeter
                 case "grep": case "egrep": case "fgrep": return Grep(cmd == "egrep" ? new[] { "-E" }.Concat(args).ToList() : cmd == "fgrep" ? new[] { "-F" }.Concat(args).ToList() : args, c);
                 case "sort":
                     {
-                        var fl = Flags(args); var l = InLines(Files(args), c); if (l == null) return 1;
+                        // sort -k N (a field, blank-separated or -t's), -t sep: the key is that field onwards, as GNU's -kN
+                        int key = 0; string sep = null; var rest = new List<string>();
+                        for (int k = 0; k < args.Count; k++)
+                        {
+                            string w = args[k]; Match km;
+                            if ((km = Regex.Match(w, @"^-k(\d+)(?:,\d+)?$")).Success) { key = int.Parse(km.Groups[1].Value, CultureInfo.InvariantCulture); continue; }
+                            if (w == "-k" && k + 1 < args.Count) { var km2 = Regex.Match(args[++k], @"^(\d+)"); if (km2.Success) key = int.Parse(km2.Value, CultureInfo.InvariantCulture); continue; }
+                            if (w.StartsWith("-t", StringComparison.Ordinal) && w.Length > 2) { sep = w.Substring(2); continue; }
+                            if (w == "-t" && k + 1 < args.Count) { sep = args[++k]; continue; }
+                            rest.Add(w);
+                        }
+                        var fl = Flags(rest); var l = InLines(Files(rest), c); if (l == null) return 1;
+                        Func<string, string> kf = z => { if (key <= 1) return z; var parts = sep != null ? z.Split(new[] { sep }, StringSplitOptions.None) : Regex.Split(z.Trim(), @"\s+"); return key - 1 < parts.Length ? string.Join(sep ?? " ", parts.Skip(key - 1)) : ""; };
                         bool rev = fl.Contains('r'), num = fl.Contains('n'), uq = fl.Contains('u'), ic = fl.Contains('f');
-                        IEnumerable<string> s = num ? l.OrderBy(z => { double d; return double.TryParse(Regex.Match(z, @"-?\d+(\.\d+)?").Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : double.MinValue; }) : l.OrderBy(z => z, ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+                        IEnumerable<string> s = num ? l.OrderBy(z0 => { string z = kf(z0); double d; return double.TryParse(Regex.Match(z, @"-?\d+(\.\d+)?").Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : double.MinValue; }) : l.OrderBy(z => kf(z), ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
                         if (rev) s = s.Reverse(); if (uq) s = s.Distinct(ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal); foreach (var x in s) OL(c, x); return 0;
                     }
                 case "uniq":   // #72: -c -d -u -i
@@ -1167,7 +1198,8 @@ namespace AdeeboMeter
                 case "whoami": OL(c, ShUser); return 0;
                 case "hostname": OL(c, ShHost); return 0;
                 case "uname": OL(c, args.Contains("-a") ? "AdeeboShell " + ShHost + " " + Environment.OSVersion.Version + " " + Program.Version + " " + (Environment.Is64BitOperatingSystem ? "x86_64" : "i686") + " Windows" : "AdeeboShell"); return 0;
-                case "env": case "set": case "printenv": lock (Env.Vars) { foreach (var kv in Env.Vars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); foreach (var kv in Env.Arrs.OrderBy(z => z.Key)) OL(c, kv.Key + "=(" + string.Join(" ", kv.Value.Where(z => z != null).Select(ShQuote)) + ")"); if (cmd == "set") foreach (var kv in Env.Funcs.OrderBy(z => z.Key)) OL(c, kv.Key + " () { ... }"); } OL(c, "HOME=/home  PWD=" + Env.Cwd + "  USER=" + ShUser, ShDim); return 0;
+                case "env": case "set": case "printenv": if (cmd == "printenv" && args.Count > 0) { int miss = 0; foreach (var nm in args) { string pv = Var(nm, c); lock (Env.Vars) { if (!Env.Vars.ContainsKey(nm) && !Env.Arrs.ContainsKey(nm) && pv == "") { miss = 1; continue; } } OL(c, pv); } return miss; }   // printenv NAME: just its value
+                    lock (Env.Vars) { foreach (var kv in Env.Vars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); foreach (var kv in Env.Arrs.OrderBy(z => z.Key)) OL(c, kv.Key + "=(" + string.Join(" ", kv.Value.Where(z => z != null).Select(ShQuote)) + ")"); if (cmd == "set") foreach (var kv in Env.Funcs.OrderBy(z => z.Key)) OL(c, kv.Key + " () { ... }"); } OL(c, "HOME=/home  PWD=" + Env.Cwd + "  USER=" + ShUser, ShDim); return 0;
                 case "local":
                     {
                         if (c.Frame == null) { Err(c, "local: only inside a function"); return 1; }

@@ -387,8 +387,13 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("interfaces: " + e.Message); }
         }
 
+        // D1-A1: at logon Windows may still be joining the network when AdeeboMeter starts - no "offline" verdict and no
+        // "No network connection" event in the first 45 s; if it's still offline after that, both come as before
+        readonly DateTime bornMono = Clock.Mono; const int JoinGraceSec = 45;
+        bool InJoinGrace { get { return (Clock.Mono - bornMono).TotalSeconds < JoinGraceSec; } }
         void IfEvents(string adapter, string kind, string gw, string dns, bool vpn, string vpnName, string ip)
         {
+            if (pAdapter == null && adapter == "" && InJoinGrace) return;   // not decided yet: the first event waits for the network or the grace's end
             if (pAdapter == null)
             {
                 Events.Add(adapter == "" ? 2 : 3, "net", adapter == "" ? "No network connection" : "On " + kind + " (" + adapter + ")" + (gw != "" ? ", gateway " + gw : "") + (vpn ? ", VPN up" : ""));
@@ -822,6 +827,8 @@ namespace AdeeboMeter
             if (!double.IsNaN(gw)) link = Math.Max(link == 3 ? 0 : link, gw > 50 ? 2 : gw > 15 ? 1 : 0);
             else if (!hasWifi) link = gwEver && double.IsNaN(net) ? 2 : 3;   // the router went quiet but the internet still answers: it just ignores ping now - not a dragging link
             bool offline = gwAddr == "" && !vpn;   // no way out at all: Wi-Fi off, cable out, airplane mode
+            bool joining = offline && InJoinGrace && pAdapter == null;   // D1-A1: just started, never been online yet - give Windows a moment
+            if (joining) offline = false;
             if (offline) link = 2;
             int isp = 3;
             if (!double.IsNaN(net) && !double.IsNaN(gw)) { double d = net - gw; isp = d > 100 ? 2 : d > 40 ? 1 : 0; }
@@ -832,13 +839,15 @@ namespace AdeeboMeter
             bool netStale; lock (L) netStale = Cfg.NetSec == 0 || (Clock.Mono - netAt).TotalSeconds > 3 * Math.Max(Cfg.NetSec, 15) + 10;
             if (netStale) { isp = 3; inet = 3; }
             if (link == 2) { isp = 3; dn = 3; inet = 3; }
+            if (joining) { link = 3; isp = 3; dn = 3; inet = 3; }   // nothing judged until the network is up
             path = new[] { pc, link, isp, dn, inet };
 
             var top = TopApps(false, 2, true); var topC = TopApps(true, 1, true);
             string t1 = top.Count > 0 ? top[0].Name + " (" + Draw.MemStr(top[0].Mem) + ")" : "your apps", t2 = top.Count > 1 ? top[1].Name : "";
             string hogs = t1 + (t2 != "" ? " and " + t2 : "");
             string linkName = hasWifi ? "Wi-Fi" : "local network";
-            if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
+            if (joining) Set(0, Voice.P("Just woke up - waiting for Windows to join the network.", "Starting - waiting for Windows to join the network."));
+            else if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
             else if (link == 2 && hasWifi && sig >= 0 && sig < 30) Set(2, Voice.Red("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", "Wi-Fi signal is weak (" + sig + "%). Move closer to the access point or use a cable."));
             else if (link == 2) Set(2, Voice.Red("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", "The " + linkName + " is slow (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is not the cause."));
             else if (pc == 2 && (mem > 90 || com > 92)) Set(2, Voice.Red("Your PC is cooked, boss - memory is full (" + mem.ToString("0", CultureInfo.CurrentCulture) + "%), so Windows keeps swapping programs to the disk. " + hogs + " are the hungry ones.", "Memory is almost full (" + mem.ToString("0", CultureInfo.CurrentCulture) + "%), so Windows keeps swapping programs to the disk - that's the slowness. " + hogs + " use the most."));

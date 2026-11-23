@@ -21,6 +21,7 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 ### Fixed
 - Bug hunt round 2 (216 findings), the security hunt (SEC-01..14), the 1.1.6 bug hunt carry-overs and the shell review (94 findings and both carry-overs).
 - AdeeboLab deep check (42 findings): a lab file can no longer carry script into the lab window (the drawing is read whole and written back, never pasted in); Show my path no longer freezes the app; the CGNAT check says "can't tell" when only your router answers; CUBIC follows RFC 9438 (Reno-friendly growth, fast convergence) and random loss isn't capped; the buffer line, queue delay and your real download are drawn to the same scale as the simulation; bufferbloat rises smoothly; "Save a copy of all my diagrams"; the last edit is kept when the lab window closes; games shuffle and the Heist can't be won by one button.
+- At logon, the first 45 seconds while Windows joins the network no longer show "Not connected" or log a false "No network connection".
 - Smoother pages: narrower redraws, gliding scroll, no blinking on Every tool, a faster first paint, no freeze card after sleep or while dragging.
 - Toolbox pictures play once, then rest for 50 s.
 

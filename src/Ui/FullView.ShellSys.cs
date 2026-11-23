@@ -302,6 +302,10 @@ namespace AdeeboMeter
         // a file with more than one name (a hard link): its volume and file number, so du counts it once like GNU du; null for an ordinary file
         static string LinkId(string f)
         {
+            try { return LinkId1(f); } catch (DllNotFoundException) { return null; } catch (EntryPointNotFoundException) { return null; }
+        }
+        static string LinkId1(string f)
+        {
             using (var hd = CreateFileW(f, 0x80 /* read attributes */, 7, IntPtr.Zero, 3 /* existing */, 0x02000000 | 0x00200000 /* backup semantics, the link itself */, IntPtr.Zero))
             {
                 ByHandleInfo bi; if (hd.IsInvalid || !GetFileInformationByHandle(hd, out bi) || bi.Links < 2) return null;
