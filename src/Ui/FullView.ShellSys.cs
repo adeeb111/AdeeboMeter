@@ -687,7 +687,7 @@ namespace AdeeboMeter
         }
         static string TrSet(string s)
         {
-            s = s.Replace("[:upper:]", "A-Z").Replace("[:lower:]", "a-z").Replace("[:digit:]", "0-9").Replace("[:alpha:]", "A-Za-z").Replace("[:alnum:]", "A-Za-z0-9").Replace("[:space:]", " \t\n\r\f\v").Replace("[:punct:]", "!-/:-@[-`{-~");
+            s = s.Replace("[:upper:]", "A-Z").Replace("[:lower:]", "a-z").Replace("[:digit:]", "0-9").Replace("[:alpha:]", "A-Za-z").Replace("[:alnum:]", "A-Za-z0-9").Replace("[:space:]", " \t\n\r\f\v").Replace("[:punct:]", "!-/:-@[-`{-~").Replace("[:blank:]", " \t").Replace("[:xdigit:]", "0-9A-Fa-f").Replace("[:graph:]", "!-~").Replace("[:print:]", " -~").Replace("[:cntrl:]", "\u0000-\u001F\u007F");   // round 6 D2-20: all of POSIX's classes
             s = s.Replace("\\n", "\n").Replace("\\t", "\t").Replace("\\r", "\r").Replace("\\\\", "\\");
             var sb = new StringBuilder(); for (int i = 0; i < s.Length; i++) { if (i + 2 < s.Length && s[i + 1] == '-' && s[i] <= s[i + 2]) { for (char x = s[i]; x <= s[i + 2]; x++) sb.Append(x); i += 2; } else sb.Append(s[i]); }
             return sb.ToString();
@@ -792,12 +792,22 @@ namespace AdeeboMeter
         int Xargs(List<string> a, ShCtx c)
         {
             int per = 0, ni = a.IndexOf("-n"); if (ni >= 0 && ni + 1 < a.Count) { if (!int.TryParse(a[ni + 1], out per)) { Err(c, "xargs: -n needs a number"); return 2; } a.RemoveRange(ni, 2); }
-            var items = Regex.Matches(c.Stdin ?? "", @"\S+").Cast<Match>().Select(m => m.Value).ToList(); if (items.Count == 0) return 0;
+            // round 6 D2-21: GNU's input rules - "a b" and 'a b' are one item, \ escapes the next character
+            var items = new List<string>(); { var cur = new StringBuilder(); bool have = false; char q = '\0'; string inp = c.Stdin ?? "";
+              for (int i = 0; i < inp.Length; i++) { char ch = inp[i];
+                if (q != '\0') { if (ch == q) q = '\0'; else cur.Append(ch); continue; }
+                if (ch == '"' || ch == '\'') { q = ch; have = true; continue; }
+                if (ch == '\\' && i + 1 < inp.Length) { cur.Append(inp[++i]); have = true; continue; }
+                if (char.IsWhiteSpace(ch)) { if (have) { items.Add(cur.ToString()); cur.Clear(); have = false; } continue; }
+                cur.Append(ch); have = true; }
+              if (q != '\0') { Err(c, "xargs: unmatched " + (q == '"' ? "double" : "single") + " quote"); return 1; }
+              if (have) items.Add(cur.ToString()); }
+            if (items.Count == 0) return 0;
             var cmd = a.Count == 0 ? new List<string> { "echo" } : a; int worst = 0;
             foreach (var chunk in per > 0 ? items.Select((v, i) => new { v, i }).GroupBy(z => z.i / per).Select(g => g.Select(z => z.v).ToList()) : new[] { items })
             {
                 if (c.Job.Cancel) return 130;
-                var line = string.Join(" ", cmd.Concat(chunk).Select(ShQuote)); worst = Math.Max(worst, InSub(() => { try { return ShRunText(line, new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script, Sub = true }); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } }));   /* hunt-5: the command runs in its own copy - echo /data | xargs cd moves nothing */
+                var line = string.Join(" ", cmd.Concat(chunk).Select(ShQuote)); int rc = (InSub(() => { try { return ShRunText(line, new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script, Sub = true }); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } })); worst = rc == 0 ? worst : rc == 255 ? 124 : rc >= 126 ? Math.Max(worst, rc) : Math.Max(worst, 123);   /* round 6: GNU's 123 for a failed command; hunt-5: the command runs in its own copy - echo /data | xargs cd moves nothing */
             }
             return worst;
         }

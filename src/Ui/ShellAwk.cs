@@ -20,7 +20,7 @@ namespace AdeeboMeter
         readonly Dictionary<string, Dictionary<string, string>> arrs = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
         List<string> f = new List<string> { "" }; long nr, fnr; long steps;
         readonly List<Action> begins = new List<Action>(), ends = new List<Action>(); readonly List<KeyValuePair<Func<bool>, Action>> rules = new List<KeyValuePair<Func<bool>, Action>>();
-        sealed class Next : Exception { } sealed class Exit : Exception { public int Code; } sealed class Brk : Exception { } sealed class Cont : Exception { }
+        sealed class Next : Exception { } sealed class NextFile : Exception { } sealed class Exit : Exception { public int Code; } sealed class Brk : Exception { } sealed class Cont : Exception { }
         sealed class LV { public Func<string> Get; public Action<string> Set; }
 
         public ShellAwk(string program, string fs, IEnumerable<KeyValuePair<string, string>> pre)
@@ -37,20 +37,24 @@ namespace AdeeboMeter
         {
             try
             {
-                try { foreach (var b in begins) b(); } catch (Next) { throw new FormatException("next can't be used in BEGIN"); }
+                try { foreach (var b in begins) b(); } catch (Next) { throw new FormatException("next can't be used in BEGIN"); } catch (NextFile) { throw new FormatException("nextfile can't be used in BEGIN"); }
                 if (rules.Count > 0 || ends.Count > 0)
                     foreach (var inp in inputs)
                     {
                         vars["FILENAME"] = inp.Key; fnr = 0;
-                        foreach (var line in inp.Value)
+                        try
                         {
-                            nr++; fnr++; SetRecord(line);
-                            try { foreach (var r in rules) if (r.Key == null || r.Key()) r.Value(); }
-                            catch (Next) { }
+                            foreach (var line in inp.Value)
+                            {
+                                nr++; fnr++; SetRecord(line);
+                                try { foreach (var r in rules) if (r.Key == null || r.Key()) r.Value(); }
+                                catch (Next) { }
+                            }
                         }
+                        catch (NextFile) { }
                     }
                 inEnd = true;
-                try { foreach (var e in ends) e(); } catch (Next) { throw new FormatException("next can't be used in END"); }
+                try { foreach (var e in ends) e(); } catch (Next) { throw new FormatException("next can't be used in END"); } catch (NextFile) { throw new FormatException("nextfile can't be used in END"); }
                 return 0;
             }
             // exit in BEGIN or a rule runs END once; exit inside END stops there (hunt-5: END used to run a second time)
@@ -190,6 +194,7 @@ namespace AdeeboMeter
                 Func<string> init = Is(";") ? null : Expr(true); Expect(";"); Func<string> cond = Is(";") ? null : Expr(true); Expect(";"); Func<string> step = Is(")") ? null : Expr(true); Expect(")"); Nls(); var b2 = Stmt();
                 return () => { if (init != null) init(); while (cond == null || True(cond())) { Tick(); try { b2(); } catch (Brk) { break; } catch (Cont) { } if (step != null) step(); } };
             }
+            if (Is("nextfile")) { p++; return Simple(() => { throw new NextFile(); }); }   // round 6 D2-23
             if (Is("next")) { p++; return Simple(() => { throw new Next(); }); }
             if (Is("exit")) { p++; var e = Peek().K == K.Sep || Is("}") || Peek().K == K.End ? null : Expr(true); return Simple(() => { throw new Exit { Code = e == null ? 0 : (int)Num(e()) }; }); }
             if (Is("break")) { p++; return Simple(() => { throw new Brk(); }); }
@@ -310,7 +315,7 @@ namespace AdeeboMeter
             }
             p = save; return null;
         }
-        static readonly HashSet<string> Keywords = new HashSet<string> { "BEGIN", "END", "if", "else", "while", "for", "do", "in", "next", "exit", "break", "continue", "delete", "print", "printf", "getline", "function", "return" };
+        static readonly HashSet<string> Keywords = new HashSet<string> { "BEGIN", "END", "if", "else", "while", "for", "do", "in", "next", "nextfile", "exit", "break", "continue", "delete", "print", "printf", "getline", "function", "return" };
         static readonly HashSet<string> Builtins = new HashSet<string> { "length", "substr", "index", "split", "tolower", "toupper", "sprintf", "int", "sqrt", "log", "exp", "sin", "cos", "atan2", "rand", "srand", "sub", "gsub", "match" };
         Random rnd = new Random(0); double seed;   // like awk: the same numbers each run until srand() is called
         Func<string> Primary()

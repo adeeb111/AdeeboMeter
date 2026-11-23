@@ -326,7 +326,7 @@ namespace AdeeboMeter
                             if (Cfg.History)   // the dip's minute in the Time machine (FullView.Gateway.cs)
                             {
                                 var dt = d.T; string what = s.What; var tr0 = new RectangleF(x + w - 150 * S, y + 9 * S, 64 * S, 20 * S);
-                                using (var bl = new SolidBrush(Theme.Blue)) g.DrawString(L.T("Replay") + " ›", Draw.fSmall, bl, tr0.X, tr0.Y + 2 * S);
+                                using (var bl = new SolidBrush(Theme.BlueText)) g.DrawString(L.T("Replay") + " ›", Draw.fSmall, bl, tr0.X, tr0.Y + 2 * S);
                                 Act(streamCanvas, tr0, delegate { OpenTimeAt(dt, L.T("Streaming") + " - " + what + " " + L.T("dip")); });
                             }
                             using (var bb = new SolidBrush(Theme.LvText(d.Blame == "provider" ? 2 : 1))) g.DrawString(WatchKit.BlameName(d.Blame, farName), Draw.fBodyB, bb, x + 80 * S, y + 9 * S);

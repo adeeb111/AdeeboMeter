@@ -470,7 +470,7 @@ namespace AdeeboMeter
                 quitWait.Start(); return;
             }
             // a dialog that refused to close in 3 s: quitting now would dispose the view under it - give up this quit instead
-            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle)) { quitTries = 0; Program.Log("quit: a dialog is still open - quit abandoned"); return; }
+            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle)) { quitTries = 0; Program.Log("quit: a dialog is still open - quit abandoned"); try { System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "quit-busy.txt"), DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture)); } catch (Exception e) { if (e is OutOfMemoryException) throw; } try { full.Activate(); } catch (InvalidOperationException) { } return; }   /* round 6 H6-L12: the copy waiting to take over is told why */
             if (quitWait != null) { quitWait.Stop(); quitWait.Dispose(); quitWait = null; }
             Microsoft.Win32.SystemEvents.SessionEnding -= OnSessionEnding;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go

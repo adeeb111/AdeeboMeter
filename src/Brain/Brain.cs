@@ -17,17 +17,23 @@ namespace AdeeboMeter
     {
         // ---------- the network we're on (told apart by the router's hardware address - works with location off)
         public static volatile string NetKey = "", NetLabel = "";
-        static DateTime lastKey = DateTime.MinValue; static readonly Dictionary<string, string> gwMacs = new Dictionary<string, string>();
+        static DateTime lastKey = DateTime.MinValue; static readonly Dictionary<string, string> gwMacs = new Dictionary<string, string>(); static string lastGw = "", lastSsid = "";
         static void LearnNetwork(Monitor m)
         {
-            if ((Clock.Mono - lastKey).TotalSeconds < 60 && NetKey != "") return;
-            lastKey = Clock.Mono;
             string gw, ssid, kind; lock (m.L) { gw = m.Gateway; ssid = m.Ssid; kind = m.AdapterKind; }
+            // round 6 H6-L3: a new gateway or Wi-Fi name is looked at now (the first minute after a roam belongs to the new network)
+            if ((Clock.Mono - lastKey).TotalSeconds < 60 && NetKey != "" && gw == lastGw && ssid == lastSsid) return;
+            lastKey = Clock.Mono; lastGw = gw; lastSsid = ssid;
             if (gw == "") { NetKey = "offline"; NetLabel = "Offline"; return; }
             string mac = ""; try { mac = Arp.MacOf(gw); } catch { }
             // one missed ARP read must not split a network into two rows: remember the router's MAC per gateway address
             if (mac != "") gwMacs[gw] = mac; else gwMacs.TryGetValue(gw, out mac);
-            NetKey = (!string.IsNullOrEmpty(mac) ? mac : gw).Replace(':', '-');
+            // without the router's hardware address, the address alone would merge every 192.168.1.1 network: the Wi-Fi name goes with it.
+            // When the hardware address turns up later, what was learned under the stand-in key moves to it instead of starting over.
+            string fallback = (gw + (ssid != "" ? "@" + ssid : "")).Replace(':', '-');
+            string key = !string.IsNullOrEmpty(mac) ? mac.Replace(':', '-') : fallback;
+            if (!string.IsNullOrEmpty(mac) && NetKey == fallback) Baseline.Rename(fallback, key);
+            NetKey = key;
             NetLabel = ssid != "" ? ssid : (kind == "Wi-Fi" ? "Wi-Fi" : kind) + " via " + gw;
         }
 
@@ -214,6 +220,10 @@ namespace AdeeboMeter
     {
         sealed class B { public string Key, Label; public double Gw = double.NaN, Net = double.NaN, Loss = double.NaN; public int N; }   // NaN: never measured here (a router that never answers stays "unknown", never "0 ms")
         static List<B> list; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow, warned = DateTime.MinValue;
+        public static void Rename(string from, string to)
+        {
+            lock (k) { Load(); var f = list.FirstOrDefault(x => x.Key == from); if (f == null || list.Any(x => x.Key == to)) return; f.Key = to; saved = DateTime.MinValue; }
+        }
         static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>(); static string recentKey = "";
         static void Load() { if (list == null) list = Store.Read("baselines.txt").Where(r => r.Length >= 6).Select(r => new B { Key = r[0], Label = r[1], Gw = Store.D(r[2]), Net = Store.D(r[3]), Loss = Store.D(r[4]), N = (int)Store.D(r[5]) }).ToList(); }
         public static void Minute(Monitor m, string key, string label, double gw, double net, double loss)
@@ -239,8 +249,13 @@ namespace AdeeboMeter
                 }
                 // learn: a slow average over roughly the last day of use
                 double a = 1.0 / Math.Min(b.N + 1, 1440);
-                if (!double.IsNaN(gw)) b.Gw = double.IsNaN(b.Gw) ? gw : b.Gw + (gw - b.Gw) * a;
-                if (!double.IsNaN(net)) b.Net = double.IsNaN(b.Net) ? net : b.Net + (net - b.Net) * a;
+                // round 6 H6-L1: a minute that is itself "slower than usual" teaches at a tenth of the pace - hours of trouble no longer
+                // become the new normal (and silence the alert); a lasting change (a new provider) is still learned, over days
+                bool learnt = b.N >= 120;
+                double ag = learnt && !double.IsNaN(b.Gw) && !double.IsNaN(gw) && gw > Math.Max(b.Gw * 2.5, b.Gw + 15) ? a * 0.1 : a;
+                double an = learnt && !double.IsNaN(b.Net) && !double.IsNaN(net) && net > Math.Max(b.Net * 2.5, b.Net + 40) ? a * 0.1 : a;
+                if (!double.IsNaN(gw)) b.Gw = double.IsNaN(b.Gw) ? gw : b.Gw + (gw - b.Gw) * ag;
+                if (!double.IsNaN(net)) b.Net = double.IsNaN(b.Net) ? net : b.Net + (net - b.Net) * an;
                 if (!double.IsNaN(loss)) b.Loss = double.IsNaN(b.Loss) ? loss : b.Loss + (loss - b.Loss) * a;
                 if (!double.IsNaN(gw) || !double.IsNaN(net)) b.N++;   // only minutes that measured something teach "normal"
                 if ((DateTime.UtcNow - saved).TotalMinutes >= 10) { saved = DateTime.UtcNow; Store.Write("baselines.txt", list.Select(x => new[] { x.Key, x.Label, Store.S(x.Gw), Store.S(x.Net), Store.S(x.Loss), x.N.ToString(CultureInfo.InvariantCulture) }).ToList()); }

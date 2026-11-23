@@ -64,6 +64,10 @@ namespace AdeeboMeter
         // text on the main accent: white on deep blues, near-black on Neon's cyan and Midnight's aqua
         public static Color OnBlue { get { return OnColor(Blue); } }
         // AM-CG-198: Mint's white-on-green was 3.47:1 - choose the foreground by computed contrast
+        // round 6 H6-ML3: the accent used as text - itself where it reads at 4.5:1 on a card, otherwise moved toward the text colour
+        // step by step until it does (Mint's green and the dark theme's blue were 3.5-3.7:1)
+        public static double Ratio(Color a, Color b) { Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); }; Func<Color, double> L = x => 0.2126 * lin(x.R) + 0.7152 * lin(x.G) + 0.0722 * lin(x.B); double la = L(a), lb = L(b); return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05); }
+        public static Color BlueText { get { var c = Blue; for (int i = 1; i <= 10 && Ratio(c, Card) < 4.5; i++) c = Kit.Mix(Blue, Ink, i * 0.1f); return c; } }
         public static Color OnColor(Color bg)
         {
             Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); };
@@ -869,7 +873,7 @@ namespace AdeeboMeter
                 Bar(g, "disk", "Disk", s.Disk, Fmt(s.Disk, "0", "%"), 60, 90, pad, ref y, inner, hits);
                 y += 6 * S;
                 hits["net"] = new RectangleF(pad - 4 * S, y - 3 * S, inner + 8 * S, 56 * S);
-                using (var b = new SolidBrush(Theme.Blue)) g.DrawString("↓ " + Rate(s.Down, true), fMono, b, pad, y);
+                using (var b = new SolidBrush(Theme.BlueText)) g.DrawString("↓ " + Rate(s.Down, true), fMono, b, pad, y);
                 string up = "↑ " + Rate(s.Up, true); var us = Measure(up, fMono, 0);
                 using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fMono, b, W - pad - us.Width, y);
                 y += 17 * S;
