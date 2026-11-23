@@ -37,7 +37,7 @@ namespace AdeeboMeter
         // (shell scrutiny #8). A sourced script shares it, as in bash.
         sealed class ShEnv
         {
-            public string Cwd = "/home", Prev = "/home"; public int LastExit, Depth;
+            public string Cwd = "/", Prev = "/"; public int LastExit, Depth;   // 1.1.6 test day: start in AdeeboMeter's own folders (pages, tools, data), not the Windows home folder
             public readonly Dictionary<string, string> Vars = new Dictionary<string, string>(StringComparer.Ordinal);
             public readonly Dictionary<string, List<string>> Arrs = new Dictionary<string, List<string>>(StringComparer.Ordinal);   // a=(x y z)
             public readonly Dictionary<string, Node> Funcs = new Dictionary<string, Node>(StringComparer.Ordinal);        // name() { ...; }
@@ -94,6 +94,7 @@ namespace AdeeboMeter
             term.Write("  █▀█ █▀▄ █▀▀ █▀▀ █▄▄ █▀█   " + "AdeeboShell · AdeeboMeter " + Program.Version + "\n", ShCyan);
             term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + L.T("every tool is a command, every page is a folder") + "\n", ShCyan);
             term.Write("\n", ShFg);
+            term.Write("  " + "You're in AdeeboMeter's own folders: pages/  tools/  data/   ·   ~ and /mnt/c are your PC's files - to read, never to run" + "\n", ShDim);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
         }
@@ -912,7 +913,7 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
             return real;
         }
-        static readonly string[][] ShRoots = { new[] { "home", "your folder (" + Environment.UserName + ")" }, new[] { "data", "AdeeboMeter's own folder - history, reports, recordings" }, new[] { "mnt", "your drives" }, new[] { "pages", "every page - cd into one, then open" }, new[] { "tools", "every tool by group - each one is a command" }, new[] { "proc", "this PC as files - cpuinfo, meminfo, uptime, mounts" } };
+        static readonly string[][] ShRoots = { new[] { "pages", "AdeeboMeter - every page: cd into one, then  open" }, new[] { "tools", "AdeeboMeter - every tool by group: each one is a command" }, new[] { "data", "AdeeboMeter's own files - history, reports, recordings" }, new[] { "home", "your Windows folder (" + Environment.UserName + ") - files to read and write; nothing here runs a program" }, new[] { "mnt", "your drives (C: is /mnt/c) - files only" }, new[] { "proc", "this PC as files - cpuinfo, meminfo, uptime, mounts" } };
         string ToolDir(string g) { return Regex.Replace(GroupName(g).ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-'); }
         List<string> ShPageIds() { return Secs.Select(z => z[0]).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct().ToList(); }
         // what's in a virtual folder: (name, is a folder, a word about it)
@@ -1074,7 +1075,7 @@ namespace AdeeboMeter
                 var t = shTools != null ? shTools.FirstOrDefault(x => string.Equals(x.Id, low, StringComparison.OrdinalIgnoreCase)) : null;
                 if (t != null) return RunTool(t, args, c);
                 var near = (shTools ?? new List<Tool>()).Select(x => x.Id).Concat(ShCmds).Where(w => w.StartsWith(low.Substring(0, Math.Min(2, low.Length)), StringComparison.OrdinalIgnoreCase)).Distinct().Take(6).ToList();
-                Err(c, "adeeboshell: " + cmd + ": command not found" + (near.Count > 0 ? " - did you mean: " + string.Join(", ", near) + "?" : "  (help lists them)"));
+                Err(c, "adeeboshell: " + cmd + ": command not found - AdeeboShell runs AdeeboMeter's tools and its own commands, never other programs (no cmd, PowerShell or .exe)" + (near.Count > 0 ? " - did you mean: " + string.Join(", ", near) + "?" : "  (help lists them)"));
                 return 127;
             }
             catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException || e is ShFlow) throw; Err(c, cmd + ": " + e.Message); if (!(e is ShTooBig)) Program.Log("shell " + cmd + ": " + e); return 2; }
@@ -1390,7 +1391,7 @@ namespace AdeeboMeter
                 if (!p.Contains("/") && ShRoots.Any(z => z[0] == bare)) v = "/" + bare;
                 else if (!p.Contains("/") && ShPageIds().Contains(bare)) v = "/pages/" + bare;
                 else if (!p.Contains("/") && shTools != null && shTools.Any(t => ToolDir(t.Group) == bare)) v = "/tools/" + bare;
-                else { Err(c, "cd: " + p + ": no such folder"); return 1; }
+                else { Err(c, "cd: " + p + ": no such folder" + (Env.Cwd == "/home" || Env.Cwd.StartsWith("/home/", StringComparison.Ordinal) ? "  (AdeeboMeter's own folders are at /  -  cd /  then  ls)" : "")); return 1; }
             }
             string real = Real(v); if (real != null) { var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); v = "/" + string.Join("/", seg.Take(seg[0] == "mnt" ? 2 : 1)) + VirtualTail(real, seg[0] == "mnt" ? char.ToUpperInvariant(seg[1][0]) + ":\\" : seg[0] == "home" ? Home : Program.DataDir); }
             Env.Prev = Env.Cwd; Env.Cwd = v;
