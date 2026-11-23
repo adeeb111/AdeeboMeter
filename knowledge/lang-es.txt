@@ -5010,3 +5010,7 @@ what's my public address?	¿cuál es mi dirección pública?
 
 Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	Desactivado hasta que lo actives. Con esta página abierta, o mientras ves streaming si sigues a un equipo: resultados NHL, fútbol de los marcadores públicos de ESPN (o football-data.org con tu clave gratuita), críquet con tu clave gratuita y titulares de BBC Sport, como máximo cada 5 minutos.
 Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	Apagado hasta que lo actives. Luego, mientras esta página está abierta: marcadores de hockey de la NHL, fútbol de los marcadores públicos de ESPN (o football-data.org con tu clave gratuita), críquet con tu clave gratuita y los titulares de BBC Sport, como mucho cada 5 minutos.
+
+ping your pinned addresses in the background	hacer ping a tus direcciones fijadas en segundo plano
+check these games' servers in the background: 	comprobar los servidores de estos juegos en segundo plano: 
+replace your pinned addresses with: 	reemplazar tus direcciones fijadas por: 

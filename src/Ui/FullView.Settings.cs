@@ -675,13 +675,21 @@ namespace AdeeboMeter
                     {
                         string cur; now.TryGetValue(x.Key, out cur);
                         if (x.Key == "autostart") { if ((x.Value == "1") != Cfg.GetAutoStart()) asks.Add(new[] { x.Key, x.Value == "1" ? AdeeboMeter.L.T("start AdeeboMeter with Windows") : AdeeboMeter.L.T("stop starting with Windows") }); continue; }
+                        if (x.Key == "pin") continue;   // asked below, all together
                         if (cur == x.Value) continue;
+                        if (x.Key == "pinwatch" && x.Value == "1") { asks.Add(new[] { x.Key, AdeeboMeter.L.T("ping your pinned addresses in the background") }); continue; }   // SEC-03 (security hunt): background traffic is asked first
+                        if (x.Key == "gmon" && x.Value.Trim() != "") { asks.Add(new[] { x.Key, AdeeboMeter.L.T("check these games' servers in the background: ") + (x.Value.Length > 60 ? x.Value.Substring(0, 60) + "..." : x.Value) }); continue; }
                         var ob = OutboundKeys.FirstOrDefault(o => o[0] == x.Key);
                         if (ob != null) { if (x.Value == "1") asks.Add(new[] { x.Key, ob[1] + AdeeboMeter.L.T(" (contacts a server on its own)") }); }
                         else if (x.Key == "tradehost") asks.Add(new[] { x.Key, AdeeboMeter.L.T("watch a different broker address: ") + (x.Value.Length > 60 ? x.Value.Substring(0, 60) + "..." : x.Value) });
                         else if (x.Key == "history2") asks.Add(new[] { x.Key, x.Value == "1" ? "keep a history of your connection" : "stop keeping history" });
                         else if (x.Key == "histdays") { int hd; if (int.TryParse(x.Value, NumberStyles.None, CultureInfo.InvariantCulture, out hd) && Cfg.HistDayChoices.Contains(hd)) asks.Add(new[] { x.Key, "keep history for " + hd + " days" }); }   // bug-hunt L-162: only a real choice is shown (a bad one is ignored when loaded)
                         else if (x.Key == "wplace") asks.Add(new[] { x.Key, "change the weather place" });
+                    }
+                    {   // SEC-03: the file's pinned addresses replace yours and get pinged - say which, ask first
+                        var filePins = kv.Where(x => x.Key == "pin").Select(x => x.Value.Trim()).Where(v => v != "").ToList(); List<string> mine; lock (Cfg.Pins) mine = Cfg.Pins.ToList();
+                        if (filePins.Count > 0 && !(filePins.Count == mine.Count && filePins.All(p => mine.Contains(p, StringComparer.OrdinalIgnoreCase))))
+                            asks.Add(new[] { "pin", AdeeboMeter.L.T("replace your pinned addresses with: ") + string.Join(", ", filePins.Take(5).Select(p => Program.Plain(p.Length > 40 ? p.Substring(0, 40) + "..." : p))) });
                     }
                     kv.RemoveAll(x => x.Key == "histdays" && !asks.Any(o => o[0] == "histdays"));   // L-162: a value that isn't a choice never lands either
                     if (asks.Count > 0)

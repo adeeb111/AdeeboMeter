@@ -36,10 +36,9 @@ namespace AdeeboMeter
             lock (k) { object c; if (cache.TryGetValue(url, out c)) return c; }
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
-                using (var resp = req.GetResponse()) using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
+                using (var resp = HttpSmall.SameSite(new Uri(url), x => { var req = (HttpWebRequest)WebRequest.Create(x); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); return req; }))   // SEC-06: other sites are never asked
+                using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
                 {
-                    if (!string.Equals(resp.ResponseUri.Host, req.RequestUri.Host, StringComparison.OrdinalIgnoreCase) || resp.ResponseUri.Scheme != req.RequestUri.Scheme) return null;   // bug-hunt L-39: not the site asked
                     var sb = new StringBuilder(); var buf = new char[16384]; int n;   // read at most 4 MB, in small pieces - never the whole thing first
                     while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 4000000) return null; }
                     var text = sb.ToString();

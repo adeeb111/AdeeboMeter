@@ -646,7 +646,19 @@ namespace AdeeboMeter
         static IEnumerable<string> GzLines(string gz)
         {
             using (var s = File.OpenRead(gz)) using (var z = new System.IO.Compression.GZipStream(s, System.IO.Compression.CompressionMode.Decompress)) using (var rd = new StreamReader(z))
-            { string l; int n = 0; while ((l = rd.ReadLine()) != null && n++ < 60000) yield return l; }
+            {
+                // SEC-13 (security hunt): like History's reader - a line is at most 4 KB (the rest is skipped, never held), and the
+                // whole day at most 64 MB unpacked, so one planted endless line can't run the PC out of memory
+                var sb = new StringBuilder(); long total = 0; int n = 0, c; bool any = false;
+                while (n < 60000 && (c = rd.Read()) >= 0)
+                {
+                    if (++total > 64L * 1024 * 1024) yield break;
+                    any = true;
+                    if (c == '\n') { yield return sb.ToString(); sb.Clear(); any = false; n++; continue; }
+                    if (c != '\r' && sb.Length < 4096) sb.Append((char)c);
+                }
+                if (any && n < 60000) yield return sb.ToString();
+            }
         }
         static DateTime tidied;
         // from History's own roll-off and once at start: game days past "Keep game history for" go even with History off or no game watched

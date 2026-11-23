@@ -35,6 +35,9 @@ namespace AdeeboMeter
         {
             get { try { using (var k = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384)) return k != null; } catch (Exception e) { if (!(e is CryptographicException || e is PlatformNotSupportedException || e is NotImplementedException || e is TypeLoadException || e is EntryPointNotFoundException || e is DllNotFoundException)) throw; return false; } }
         }
+        // SEC-12 (security hunt): the only Windows key names AdeeboMeter makes (Create below) - a planted index line naming another
+        // program's key is skipped, so it's never used to decrypt, put in a backup, or deleted
+        public static bool OwnKeyName(string n) { return n != null && System.Text.RegularExpressions.Regex.IsMatch(n, "^AdeeboMeter-[0-9a-f]{12}$"); }
         public const int MaxKeys = 100;   // AM-CG-236: the index holds this many - Create refuses the next one instead of losing it
         public static List<Key> All()
         {
@@ -48,6 +51,7 @@ namespace AdeeboMeter
                         // a damaged line is skipped: the public key must be a whole P-384 key (104 bytes of valid base64)
                         byte[] pub; try { pub = Convert.FromBase64String(p[3]); } catch (FormatException) { continue; }
                         if (pub.Length != 104 || p[1].Trim() == "" || p[2].Trim() == "") continue;
+                        if (!OwnKeyName(p[2])) continue;   // SEC-12: only our own key store names - never another program's key
                         l.Add(new Key { Name = p[1], KeyName = p[2], Pub = p[3], Made = t });
                     }
             }
@@ -100,7 +104,7 @@ namespace AdeeboMeter
         }
         public static bool Delete(Key key)
         {
-            try { if (CngKey.Exists(key.KeyName)) using (var k = CngKey.Open(key.KeyName)) k.Delete(); } catch (CryptographicException) { }
+            try { if (OwnKeyName(key.KeyName) && CngKey.Exists(key.KeyName)) using (var k = CngKey.Open(key.KeyName)) k.Delete(); } catch (CryptographicException) { }
             var l = All(); int n = l.RemoveAll(x => x.KeyName == key.KeyName); Save(l); return n > 0;
         }
         public static string PublicFile(Key k)

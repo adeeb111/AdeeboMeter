@@ -503,14 +503,14 @@ namespace AdeeboMeter
                 case "navsports": NavSports = v == "1"; break;
                 case "layout": Layout = v == "sidebar" ? "sidebar" : "classic"; break;
                 case "sideopen": SideOpen = v != "0"; break;
-                case "mytabs": MyTabs = v.Length > 2000 ? "" : v; break;
+                case "mytabs": MyTabs = v.Length > 2000 ? "" : Program.Plain(v); break;   // SEC-14: no bidi/format characters in tab names
                 case "sbtried": SidebarTried = v == "1"; break;
                 case "searches": Searches = v.Length > 400 ? "" : v; break;
                 // the companion (1.1.5): mood, who talks, how to address you, how chatty - each checked against its list
                 case "mood2": if (Array.IndexOf(AdeeboMeter.Lines.Moods, v) >= 0) { AdeeboMeter.Lines.Mood = v; mood2Seen = true; } break;
                 case "persona": if (AdeeboMeter.Lines.PersonaKnown(v)) AdeeboMeter.Lines.Persona = v; break;
                 case "addr": if (Array.IndexOf(AdeeboMeter.Lines.Addrs, v) >= 0) AdeeboMeter.Lines.Addr = v; break;
-                case "addrname": AdeeboMeter.Lines.Name = new string(v.Where(c => !char.IsControl(c) && c != '\u202E' && c != '\u202D').Take(24).ToArray()).Trim(); break;
+                case "addrname": AdeeboMeter.Lines.Name = new string(Program.Plain(v).Take(24).ToArray()).Trim(); break;   // SEC-14: every bidi control, isolates too
                 case "chatty": if (Array.IndexOf(AdeeboMeter.Lines.Chatty, v) >= 0) AdeeboMeter.Lines.Chat = v; break;
                 case "fmpevery": FmpEvery = v == "60" || v == "5" || v == "1" ? v : "15"; break;
                 case "wunits": WUnits = v == "bytes" ? "bytes" : "bits"; break;

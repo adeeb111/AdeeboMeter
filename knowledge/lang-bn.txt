@@ -5010,3 +5010,7 @@ what's my public address?	আমার পাবলিক ঠিকানা ক
 
 Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	আপনি চালু না করলে বন্ধ। চালু হলে এই পাতা খোলা থাকা অবস্থায়, বা দল অনুসরণ করলে স্ট্রিমিং পাতায় দেখার সময়: NHL হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর খবর। সর্বোচ্চ প্রতি 5 মিনিটে একবার।
 Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	আপনি চালু না করা পর্যন্ত বন্ধ। তারপর এই পেজ খোলা থাকলে: NHL থেকে হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর শিরোনাম—বড়জোর প্রতি 5 মিনিটে।
+
+ping your pinned addresses in the background	পিন করা ঠিকানাগুলোতে ব্যাকগ্রাউন্ডে পিং করা
+check these games' servers in the background: 	ব্যাকগ্রাউন্ডে এই গেমগুলোর সার্ভার পরীক্ষা করা: 
+replace your pinned addresses with: 	আপনার পিন করা ঠিকানাগুলোর বদলে: 

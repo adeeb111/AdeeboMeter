@@ -3726,3 +3726,7 @@ Email	E-mail
 
 Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	Désactivé au départ. Une fois activé, pendant la consultation ou la vidéo d’une équipe suivie : résultats NHL, soccer depuis les tableaux publics d’ESPN (ou football-data.org avec votre clé gratuite), cricket avec votre clé gratuite, manchettes BBC Sport, au plus toutes les 5 minutes.
 Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	Désactivé jusqu'à ce que vous l'activiez. Ensuite, pendant que cette page est ouverte : les pointages de hockey de la LNH, le soccer depuis les tableaux publics d’ESPN (ou football-data.org avec votre clé gratuite), le cricket avec votre clé gratuite et les manchettes de BBC Sport, au plus toutes les 5 minutes.
+
+ping your pinned addresses in the background	pinguer vos adresses épinglées en arrière-plan
+check these games' servers in the background: 	vérifier les serveurs de ces jeux en arrière-plan : 
+replace your pinned addresses with: 	remplacer vos adresses épinglées par : 

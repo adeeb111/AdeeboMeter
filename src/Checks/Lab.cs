@@ -79,6 +79,7 @@ namespace AdeeboMeter
             if (a.AddressFamily == AddressFamily.InterNetworkV6) return a.IsIPv6Multicast ? a + " is a multicast group - many devices at once" : "";
             var b = a.GetAddressBytes(); if (b[0] >= 224 && b[0] <= 239) return a + " is a multicast group - many devices at once";
             if (b[0] == 255 || b[0] == 0) return a + " isn't one device";
+            if (b[3] == 255) return a + " ends in .255 - almost always a whole network's broadcast address (SEC-10: another network's too, which this PC can't see the size of)";
             try
             {
                 foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())

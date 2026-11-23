@@ -278,13 +278,20 @@ namespace AdeeboMeter
 
         // ---------- motion: only the picture's rectangle, only while you can see it
         RectangleF visRect;   // where the picture was drawn (page coordinates)
-        static double AnimT { get { return (Environment.TickCount & int.MaxValue) / 1000.0; } }
+        // Adeeb, 22 Nov: "play once, then pause at least 45 s - it's distracting". The pictures' clock runs for AnimPlay seconds
+        // after a tool opens, then holds still for AnimHold, then plays again. While it holds, nothing repaints.
+        const double AnimPlay = 8, AnimHold = 50;
+        static int animStart = Environment.TickCount;
+        static double AnimSince { get { return (double)unchecked(Environment.TickCount - animStart) / 1000.0; } }
+        static double AnimT { get { double e = Math.Max(0, AnimSince), p = e % (AnimPlay + AnimHold); return Math.Floor(e / (AnimPlay + AnimHold)) * AnimPlay + Math.Min(p, AnimPlay); } }
+        static bool AnimHolding { get { return Math.Max(0, AnimSince) % (AnimPlay + AnimHold) > AnimPlay + 0.3; } }   // the last frame drawn, then still
+        static void AnimRestart() { animStart = Environment.TickCount; }
         static readonly HashSet<string> Animated = new HashSet<string> { "cellular", "wifirate", "tdm", "plan", "bandwidth", "backup", "bdp", "jitterbuf", "ups", "tradelat", "tickrate" };
         static bool WindowsAnimates() { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }
         void AnimTick()
         {
             bool on = tab == "toolbox" && Visible && WindowState != FormWindowState.Minimized && Form.ActiveForm == this && (Animated.Contains(tbSel) || Animates3(tbSel)) && !tbHome && !tbBusy && visRect.Height > 0 && WindowsAnimates();
-            if (!on) return;
+            if (!on || AnimHolding) return;
             var r = new Rectangle((int)visRect.X + tbCanvas.AutoScrollPosition.X, (int)visRect.Y + tbCanvas.AutoScrollPosition.Y, (int)visRect.Width + 1, (int)visRect.Height + 1);
             if (r.Bottom < 0 || r.Top > tbCanvas.ClientSize.Height) return;   // scrolled away
             tbCanvas.Invalidate(r);

@@ -11,16 +11,31 @@ namespace AdeeboMeter
     // and the whole answer has a total deadline.
     static class HttpSmall
     {
+        // SEC-06 (security hunt): redirects are followed by hand, and only on the same site and never from https down to http -
+        // so no request (and no key header) ever goes to a host that wasn't asked for, instead of refusing the data afterwards
+        public static HttpWebResponse SameSite(Uri u, Func<Uri, HttpWebRequest> make)
+        {
+            string host = u.Host; bool secure = u.Scheme == "https";
+            for (int hop = 0; hop <= 3; hop++)
+            {
+                var q = make(u); q.AllowAutoRedirect = false; HttpWebResponse r;
+                try { r = (HttpWebResponse)q.GetResponse(); }
+                catch (WebException we) { var er = we.Response as HttpWebResponse; if (er == null || (int)er.StatusCode < 300 || (int)er.StatusCode >= 400) throw; r = er; }
+                int code = (int)r.StatusCode; string loc = r.Headers["Location"];
+                if (code < 300 || code >= 400 || loc == null) return r;
+                r.Close(); Uri next;
+                if (!Uri.TryCreate(u, loc, out next) || !string.Equals(next.Host, host, StringComparison.OrdinalIgnoreCase) || (secure && next.Scheme != "https") || (next.Scheme != "https" && next.Scheme != "http"))
+                    throw new InvalidDataException("the site redirected somewhere else (" + (next != null ? next.Host : "?") + ") - not followed");   // bug-hunt L-39, before the request now
+                u = next;
+            }
+            throw new InvalidDataException("too many redirects");
+        }
         public static string Get(string url, int maxKb, string header, string value)
         {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy();
-            q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            if (header != null) q.Headers[header] = value;
             var deadline = DateTime.UtcNow.AddSeconds(20);
-            using (var r = q.GetResponse()) using (var s = r.GetResponseStream())
+            using (var r = SameSite(new Uri(url), x => { var q = (HttpWebRequest)WebRequest.Create(x); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; if (header != null) q.Headers[header] = value; return q; }))
+            using (var s = r.GetResponseStream())
             {
-                // bug-hunt L-39: an answer from another site (or over plain http) after a redirect isn't the one asked for
-                if (!string.Equals(r.ResponseUri.Host, q.RequestUri.Host, StringComparison.OrdinalIgnoreCase) || (q.RequestUri.Scheme == "https" && r.ResponseUri.Scheme != "https")) throw new InvalidDataException("the site sent this to " + r.ResponseUri.Host + " instead");
                 var buf = new byte[maxKb * 1024]; int got = 0, n;
                 while (got < buf.Length && (n = s.Read(buf, got, buf.Length - got)) > 0) { got += n; if (DateTime.UtcNow > deadline) throw new InvalidDataException("answer too slow"); }
                 if (got == buf.Length && s.ReadByte() >= 0) throw new InvalidDataException("answer too large");

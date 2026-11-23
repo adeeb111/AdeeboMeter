@@ -214,7 +214,7 @@ namespace AdeeboMeter
         }
         abstract class Node { }
         sealed class NCmd : Node { public List<Tok> Words = new List<Tok>(); }
-        sealed class NPipe : Node { public List<NCmd> Cmds = new List<NCmd>(); public bool Bg; }
+        sealed class NPipe : Node { public List<Node> Cmds = new List<Node>(); public bool Bg; }   // a stage: a command, or a whole for/while/if (for ... done | sort)
         sealed class NAndOr : Node { public List<Node> Parts = new List<Node>(); public List<string> Ops = new List<string>(); }
         sealed class NSeq : Node { public List<Node> Items = new List<Node>(); }
         sealed class NFor : Node { public string Var; public List<Tok> In = new List<Tok>(); public NSeq Body; }
@@ -240,6 +240,12 @@ namespace AdeeboMeter
             }
             Node Statement()
             {
+                var ao = new NAndOr(); ao.Parts.Add(Pipe());
+                while (i < t.Count && (t[i].Op == "&&" || t[i].Op == "||")) { ao.Ops.Add(t[i++].Op); while (Sep()) i++; ao.Parts.Add(Pipe()); }
+                return ao.Parts.Count == 1 ? ao.Parts[0] : ao;
+            }
+            Node Compound()
+            {
                 if (Kw("for"))
                 {
                     i++; var f = new NFor(); if (i >= t.Count || t[i].Op != null) throw new FormatException("for needs a name"); f.Var = t[i++].W;
@@ -254,14 +260,12 @@ namespace AdeeboMeter
                     if (Kw("else")) { i++; n.Else = List("fi"); }
                     Expect("fi"); return n;
                 }
-                var ao = new NAndOr(); ao.Parts.Add(Pipe());
-                while (i < t.Count && (t[i].Op == "&&" || t[i].Op == "||")) { ao.Ops.Add(t[i++].Op); while (Sep()) i++; ao.Parts.Add(Pipe()); }
-                return ao.Parts.Count == 1 ? ao.Parts[0] : ao;
+                return Cmd();
             }
             NPipe Pipe()
             {
-                var p = new NPipe(); p.Cmds.Add(Cmd());
-                while (i < t.Count && t[i].Op == "|") { i++; p.Cmds.Add(Cmd()); }
+                var p = new NPipe(); p.Cmds.Add(Compound());
+                while (i < t.Count && t[i].Op == "|") { i++; while (Sep()) i++; p.Cmds.Add(Compound()); }
                 return p;
             }
             NCmd Cmd()
@@ -297,16 +301,17 @@ namespace AdeeboMeter
             if (nf != null) { for (int k = 0; k < nf.Conds.Count; k++) if (Exec(nf.Conds[k], c) == 0) return Exec(nf.Bodies[k], c); return nf.Else != null ? Exec(nf.Else, c) : 0; }
             var p = n as NPipe; if (p == null) return 0;
             if (p.Bg) return ShBackground(p, c);
-            if (p.Cmds.Count == 1) return RunCmd(p.Cmds[0], c);
+            if (p.Cmds.Count == 1) return Stage(p.Cmds[0], c);
             string stdin = c.Stdin; int ex = 0;
             for (int k = 0; k < p.Cmds.Count; k++)
             {
                 bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : new ShOut { Cap = new StringBuilder(), Job = c.Job };
-                ex = RunCmd(p.Cmds[k], c.With(o, stdin)); if (!last) stdin = o.Cap.ToString();
+                ex = Stage(p.Cmds[k], c.With(o, stdin)); if (!last) stdin = o.Cap.ToString();
                 if (c.Job.Cancel) return 130;
             }
             return ex;
         }
+        int Stage(Node n, ShCtx c) { var cmd = n as NCmd; return cmd != null ? RunCmd(cmd, c) : Exec(n, c); }
         int ShBackground(NPipe p, ShCtx c)
         {
             var job = new ShJob { Id = Interlocked.Increment(ref shJobN), Bg = true, Cmd = "(job)" }; lock (shJobs) shJobs.Add(job);
@@ -458,6 +463,7 @@ namespace AdeeboMeter
             {
                 if (cmd.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) || cmd.StartsWith("./", StringComparison.Ordinal)) return Source(cmd, args, c);
                 int r = Builtin(low, args, c); if (r != int.MinValue) { if (c.Out.Screen && (low == "status" || low == "debug" || low == "log" || low == "ls" || low == "man" || low == "tools")) { } return r; }
+                if (low == "iperf3" || (low == "iperf" && args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z != "--yes" && z != "-y"))) return Iperf3(args, c);
                 var t = shTools != null ? shTools.FirstOrDefault(x => string.Equals(x.Id, low, StringComparison.OrdinalIgnoreCase)) : null;
                 if (t != null) return RunTool(t, args, c);
                 var near = (shTools ?? new List<Tool>()).Select(x => x.Id).Concat(ShCmds).Where(w => w.StartsWith(low.Substring(0, Math.Min(2, low.Length)), StringComparison.OrdinalIgnoreCase)).Distinct().Take(6).ToList();
@@ -466,7 +472,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException) throw; Err(c, cmd + ": " + e.Message); Program.Log("shell " + cmd + ": " + e); return 2; }
         }
-        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi" };
+        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3" };
 
         int Builtin(string cmd, List<string> args, ShCtx c)
         {
@@ -523,7 +529,9 @@ namespace AdeeboMeter
                 case "env": case "set": lock (shVars) foreach (var kv in shVars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); OL(c, "HOME=/home  PWD=" + shCwd + "  USER=" + ShUser, ShDim); return 0;
                 case "export": foreach (var w in args) { var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$"); if (m.Success) lock (shVars) shVars[m.Groups[1].Value] = m.Groups[2].Value; } return 0;
                 case "unset": lock (shVars) foreach (var w in args) shVars.Remove(w); return 0;
-                case "read": { bool sec = args.Contains("-s"); string ask = ""; int pi = args.IndexOf("-p"); if (pi >= 0 && pi + 1 < args.Count) ask = args[pi + 1]; var names = args.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(pi >= 0 && i == pi + 1)).ToList(); if (c.Job.Bg) { Err(c, "read: a background job can't ask"); return 1; } string ans = ShAsk(ask, sec); if (ans == null) return 130; lock (shVars) shVars[names.Count > 0 ? names[0] : "REPLY"] = ans; return 0; }
+                case "read": { bool sec = args.Contains("-s"); string ask = ""; int pi = args.IndexOf("-p"); if (pi >= 0 && pi + 1 < args.Count) ask = args[pi + 1]; var names = args.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(pi >= 0 && i == pi + 1)).ToList(); string ans;
+                    if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.Stdin = nl < 0 ? "" : c.Stdin.Substring(nl + 1); lock (shVars) shVars[names.Count > 0 ? names[0] : "REPLY"] = ans; return 0; }   // ... | while read h
+                    if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; lock (shVars) shVars[names.Count > 0 ? names[0] : "REPLY"] = ans; return 0; }
                 case "test": case "[": return Test(cmd == "[" ? args.Take(Math.Max(0, args.Count - 1)).ToList() : args) ? 0 : 1;
                 case "true": return 0;
                 case "false": return 1;
@@ -761,7 +769,8 @@ namespace AdeeboMeter
             h("ls [-l -a] [folder]", "what's here (ll = ls -l) · cd /data/scripts for ready-made scripts"); h("cd <folder> · cd ~ · cd - · cd ..", "home = your folder, data, mnt/c, pages, tools"); h("pwd · tree · find . -name '*.csv'", "where you are, what's below, find by name");
             h("cat · head -n 20 · tail · grep -i x", "read files or what a pipe sends"); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", "files - rm asks first"); h("du · stat · hash <file>", "sizes, details, SHA-256");
             OL(c, "TOOLS AND PAGES", ShBlue);
-            h("<tool> [args]", "every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX"); h("tools [word] · man <tool>", "list them, or what one does"); h("open <page> · cd pages/markets; open", "go to a page"); h("lab [lan|path|wifi|phone|vpn|new]", "AdeeboLab"); h("status · debug · log [n]", "the NOW line · raw values · the app's log");
+            h("<tool> [args]", "every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX");
+            h("iperf3 -c 10.0.0.5 -R -t 10 -P 4", "iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client"); h("tools [word] · man <tool>", "list them, or what one does"); h("open <page> · cd pages/markets; open", "go to a page"); h("lab [lan|path|wifi|phone|vpn|new]", "AdeeboLab"); h("status · debug · log [n]", "the NOW line · raw values · the app's log");
             OL(c, "POWER", ShBlue);
             h("cmd | grep x | sort | head", "pipes; > file, >> file, < file"); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", "and / or / in the background (jobs, wait, kill %1)");
             h("parallel -j 5 ping {} 4 ::: a b c", "run together, merge as each finishes; cat hosts.txt | parallel ping {} 4"); h("for h in a b c; do ping $h 4; done", "loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep");
@@ -993,6 +1002,40 @@ namespace AdeeboMeter
             exit = ShRunText(text, new ShCtx { Job = job, Out = o, Script = true }); return o.Cap.ToString().Replace("\r", "");
         }
         internal void TestShellReset() { shCwd = shPrev = "/home"; lock (shVars) shVars.Clear(); }
+
+        // iperf3 the way you'd type it on Linux (Adeeb, 22 Nov: "why can't I do iperf3 from the cli"): -c host, -p port, -R, --bidir,
+        // -t, -P, -u, -b, -l, -w, -S, -O, -M, -4, -6 - turned into the iperf tool's boxes. AdeeboMeter's own iperf3 client runs it;
+        // it is only ever the client, so -s says where the server goes instead.
+        int Iperf3(List<string> a, ShCtx c)
+        {
+            if (a.Count == 0 || a.Contains("-h") || a.Contains("--help")) { OL(c, "usage: iperf3 -c <server> [-p port] [-R | --bidir] [-t secs] [-P streams] [-u -b 50M] [-l len] [-w win] [-S tos] [-O secs] [-M mss] [-4|-6]", ShFg); OL(c, "AdeeboMeter is the client only - on the other machine run:  iperf3 -s", ShDim); return a.Count == 0 ? 2 : 0; }
+            if (a.Contains("-s") || a.Contains("--server")) { Err(c, "iperf3: AdeeboMeter is only the client - it never listens. Run  iperf3 -s  on the other machine, then  iperf3 -c <its address>  here."); return 2; }
+            string host = null, port = null, dir = "upload", secs = ""; var adv = new List<string>(); var keep = new List<string>();
+            for (int i = 0; i < a.Count; i++)
+            {
+                string w = a[i]; Func<string> val = () => i + 1 < a.Count ? a[++i] : "";
+                switch (w)
+                {
+                    case "-c": case "--client": host = val(); break;
+                    case "-p": case "--port": port = val(); break;
+                    case "-R": case "--reverse": dir = "download"; break;
+                    case "--bidir": case "--both": dir = "both"; break;
+                    case "-t": case "--time": secs = val(); break;
+                    case "--yes": case "-y": keep.Add(w); break;
+                    case "-P": case "-b": case "-l": case "-w": case "-S": case "-O": case "-M": case "--parallel": case "--bitrate": case "--length": case "--window": case "--tos": case "--omit": case "--set-mss": adv.Add(w); adv.Add(val()); break;
+                    default:
+                        if (w.StartsWith("-t", StringComparison.Ordinal) && w.Length > 2 && char.IsDigit(w[2])) { secs = w.Substring(2); break; }
+                        if (!w.StartsWith("-", StringComparison.Ordinal) && host == null) { host = w; break; }   // iperf3 10.0.0.5 works too
+                        adv.Add(w); break;   // -u -4 -6 and anything else: the tool says what it didn't understand
+                }
+            }
+            if (string.IsNullOrEmpty(host)) { Err(c, "iperf3: which server? -c <address>   (on that machine: iperf3 -s)"); return 2; }
+            if (!string.IsNullOrEmpty(port)) host = host.Contains(":") && !host.StartsWith("[", StringComparison.Ordinal) ? "[" + host + "]:" + port : host + ":" + port;
+            var t = shTools.FirstOrDefault(x => x.Id == "iperf"); if (t == null) { Err(c, "iperf3: the iperf tool isn't in this build"); return 2; }
+            var args = new List<string> { host, dir, secs == "" ? "-" : secs, adv.Count == 0 ? "-" : string.Join(" ", adv) }; args.AddRange(keep);
+            O(c, "iperf3 → " + host + " · " + dir + (secs != "" ? " · " + secs + " s" : "") + (adv.Count > 0 ? " · " + string.Join(" ", adv) : "") + "\n", ShDim);
+            return RunTool(t, args, c);
+        }
 
         // ---------- nano / vim: our own editor on the shell's screen (TermEditor); the command waits until you leave it
         int Edit(bool vim, List<string> args, ShCtx c)

@@ -181,7 +181,8 @@ footer{margin-top:36px;color:var(--sub);font-size:14px}
 (function(){
 "use strict";
 var API="https://adeebometer-live.orkoadeeb.workers.dev",$=function(i){return document.getElementById(i)};
-function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})}   // SEC-07: ' too - feed links sit in href='...'
+function lnk(u){return /^https:\/\//i.test(String(u||""))?esc(u):"#"}   // only https links - never javascript: or data:
 function j(p){return fetch(API+p,{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()})}
 function off(){return"<span class='err'>Not available right now.</span>"}
 // tabs
@@ -291,7 +292,7 @@ function drawS(){
       $("ssum").innerHTML="<div class='tagl'>★ "+esc(my.n.toUpperCase())+" · "+esc(nm)+"</div><div class='bigl'>"+(res||"No result in the last day")+"</div><p>"+(nxt?esc(liveText("Next: {time} vs {team}",{time:when(nxt.d),team:(nxt.a.id===me?nxt.h:nxt.a).n})):"No game in the next week")+(pos>=0?" · "+esc(liveText("{place} in {group}",{place:liveLocale()==="en"?(pos+1)+(["st","nd","rd"][pos]||"th"):pos+1,group:grp.n})):"")+"</p>"}
     else $("ssum").innerHTML="<div class='tagl'>"+esc(nm.toUpperCase())+"</div><div class='bigl'>"+(up.length?esc(up.length===1?liveText("1 game today"):liveText("{count} games today",{count:up.length})):nx.length?"Next games in the coming week":"No games today")+"</div><p>"+(fin.length?esc(fin.length===1?liveText("1 final score since yesterday ·"):liveText("{count} final scores since yesterday ·",{count:fin.length}))+" ":"")+"Pick your team to see it first.</p>"}
   var n=d.news||{};if(!hd&&!n.items){n={items:null}}$("newss").textContent=liveText("{source} - opens on their site",{source:hd?"BBC Sport":"ESPN"});if(d.src&&d.src!=="ESPN")$("todays").textContent=($("todays").textContent||"")+" · from the "+d.src;if(!hd&&d.today&&d.today.at)$("todays").textContent=($("todays").textContent?$("todays").textContent+" · ":"")+liveText("updated {time}",{time:new Date(d.today.at).toLocaleTimeString(liveLocale(),{hour:"numeric",minute:"2-digit"})});
-  $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):!hd&&!espnOn()?"<li class='mut'>Headlines come from ESPN. <button class='btn sm' data-espn='1'>Turn on</button></li>":"<li>"+off2("s")+"</li>";
+  $("news").innerHTML=n.items&&n.items.length?n.items.map(function(i){return"<li><a href='"+lnk(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a></li>"}).join(""):!hd&&!espnOn()?"<li class='mut'>Headlines come from ESPN. <button class='btn sm' data-espn='1'>Turn on</button></li>":"<li>"+off2("s")+"</li>";
 }
 // ---- ESPN, asked by this phone itself (ESPN refuses our relay): only when the person turns it on - ESPN then sees this
 // phone's address, as on espn.com. Kept on the phone for 3 hours, so it's a few requests a day.
@@ -385,7 +386,7 @@ var GQ={nhl:"NHL",nba:"NBA",nfl:"NFL",mlb:"MLB baseball",epl:"Premier League",uc
 // one GNews call per league per visit (the free key has 100 a day); drawn again from memory after that
 var GN={};
 function gnDraw(){var d=GN[lg];if(!d||!d.items||!d.items.length)return;$("newss").textContent="GNews · your key - opens on each site";
-  $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+esc(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
+  $("news").innerHTML=d.items.map(function(i){return"<li><a href='"+lnk(i.l)+"' target='_blank' rel='noopener'>"+esc(i.t)+"</a>"+(i.s?" <span class='mut' style='font-size:13px'>· "+esc(i.s)+"</span>":"")+"</li>"}).join("")}
 function moreNews(force){if(!key("gn"))return;var want=lg,g=sgen();if(GN[want]&&!force){gnDraw();return}GN[want]={};kreq("gn","&q="+encodeURIComponent(GQ[want]||"sport")).then(function(d){if(g!==sgen()){delete GN[want];return}GN[want]=d;if(want===lg)gnDraw()},function(){delete GN[want]})}
 var gnT=0;function gnArm(){if(gnT){clearInterval(gnT);gnT=0}var e=key("gn")?every("gn"):null;if(e&&e[2])gnT=setInterval(function(){if(!document.hidden){GN={};moreNews(1)}},e[2])}
 function refreshKeyed(){GN={};movers();mvArm();liveTick();moreNews(1);gnArm()}

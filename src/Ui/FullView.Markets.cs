@@ -360,7 +360,7 @@ namespace AdeeboMeter
         }
         void AskQuoteKey()
         {
-            string k = Ask(L.T("Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC"), "");
+            string k = Ask(L.T("Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC"), "", true, 200);   // longer than a key can be, so the check below says so instead of a silent cut
             if (k == null) return; k = k.Trim();
             if (k != "" && (k.Length < 10 || k.Length > 80 || k.Any(c => !char.IsLetterOrDigit(c)))) { AskCard.Show(this, L.T("That doesn't look like a key: letters and digits only."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
             Sports.SetKey("fmp", k); MarketData.QuoteKeyChanged(); lock (MarketData.k) { MarketData.Quotes.Clear(); MarketData.QuoteNote = ""; } tradeCanvas.Invalidate();

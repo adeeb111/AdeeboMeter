@@ -29,7 +29,7 @@ namespace AdeeboMeter
         public sealed class Tip { public int Rank; public string Title = "", Body = "", Seen = ""; }
         public sealed class Result
         {
-            public string Host = "", Kind = "", Error = ""; public bool Secure, CertOk, IsPage;
+            public string Host = "", Kind = "", Error = ""; public bool Secure, CertOk, IsPage, Downgraded;   // Secure: the connection really used was https (SEC-02)
             public double DnsMs = double.NaN, ServerMs = double.NaN, Mbps = double.NaN, Low = double.NaN, TestSecs;
             public List<double> Samples = new List<double>(); public int DipAt = -1;
             public List<Variant> Ladder = new List<Variant>(); public Variant Best;   // Best: the top quality that plays smoothly
@@ -132,7 +132,7 @@ namespace AdeeboMeter
             Running = true; Step = "Finding the server"; Progress = 0;
             new Thread(() =>
             {
-                var r = new Result { Host = u.Host, Secure = u.Scheme == "https" };
+                var r = new Result { Host = u.Host, Secure = u.Scheme == "https" }; origin = u.Host;
                 try { Run(u, r, m); }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; r.Error = Friendly(e); Program.Log("stream check " + u.Host + ": " + e.GetType().Name); }
                 finally
@@ -153,18 +153,49 @@ namespace AdeeboMeter
             if (e is SocketException) return "The server couldn't be reached.";
             return "The check stopped: " + e.GetType().Name + ".";
         }
-        static HttpWebRequest Req(Uri u)
+        // SEC-01 (security hunt, 22 Nov): the link you paste may go where you choose (a home IPTV box is fine), but everything the
+        // stream itself points to afterwards - other playlists, its pieces, redirects - must stay on that host or be a public
+        // internet address. Otherwise a playlist from a forum could make this PC fetch from the router, the LAN or a cloud
+        // metadata address. Redirects are followed by hand so each hop is checked; a foreign host's address is checked again at
+        // connect time (a name that resolves to a private address is refused, as in the speed test).
+        [ThreadStatic] static string origin;
+        static bool Allowed(Uri x)
         {
-            var q = (HttpWebRequest)WebRequest.Create(u); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AdeeboMeter/" + Program.Version;
-            q.AllowAutoRedirect = true; q.MaximumAutomaticRedirections = 5; q.Proxy = HttpSmall.Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            return q;
+            if (x == null || (x.Scheme != "http" && x.Scheme != "https") || x.UserInfo != "") return false;
+            return string.Equals(x.Host, origin, StringComparison.OrdinalIgnoreCase) || SpeedTest.SafeUrl(x.AbsoluteUri);
+        }
+        static HttpWebResponse Get(Uri u, Result r)
+        {
+            for (int hop = 0; hop <= 5; hop++)
+            {
+                if (!Allowed(u)) throw new WebException("the stream pointed to " + u.Host + " - a private or local address the link didn't name; not fetched", WebExceptionStatus.TrustFailure);
+                var q = (HttpWebRequest)WebRequest.Create(u); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AdeeboMeter/" + Program.Version;
+                q.AllowAutoRedirect = false; q.Proxy = HttpSmall.Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                bool foreign = !string.Equals(u.Host, origin, StringComparison.OrdinalIgnoreCase); Uri via = null; try { via = q.Proxy != null ? q.Proxy.GetProxy(u) : null; } catch (Exception e) { if (!(e is WebException || e is InvalidOperationException)) throw; }
+                bool direct = via == null || via == u;
+                if (foreign && direct) { string host = u.Host; q.ServicePoint.BindIPEndPointDelegate = (sp, remote, retry) => { if (remote != null && !SpeedTest.Reachable(remote.Address)) throw new WebException(host + " points to a private address - refused"); return null; }; }
+                else if (!foreign) q.ServicePoint.BindIPEndPointDelegate = null;
+                HttpWebResponse resp;
+                try { resp = (HttpWebResponse)q.GetResponse(); }
+                catch (WebException we) { var er = we.Response as HttpWebResponse; if (er == null || (int)er.StatusCode < 300 || (int)er.StatusCode >= 400) throw; resp = er; }
+                int code = (int)resp.StatusCode;
+                if (code >= 300 && code < 400 && resp.Headers["Location"] != null)
+                {
+                    Uri next; string loc = resp.Headers["Location"]; resp.Close();
+                    if (!Uri.TryCreate(u, loc, out next)) throw new WebException("the server redirected to an address that isn't one", WebExceptionStatus.ProtocolError);
+                    if (u.Scheme == "https" && next.Scheme == "http" && r != null) { r.Downgraded = true; r.Secure = false; }   // SEC-02: secure no more
+                    u = next; continue;
+                }
+                return resp;
+            }
+            throw new WebException("more than 5 redirects", WebExceptionStatus.ProtocolError);
         }
         static string Text(Uri u, Result r, bool timeIt)
         {
             var sw = Stopwatch.StartNew();
-            using (var resp = (HttpWebResponse)Req(u).GetResponse())
+            using (var resp = Get(u, r))
             {
-                if (timeIt) { r.ServerMs = sw.Elapsed.TotalMilliseconds; r.CertOk = r.Secure; }
+                if (timeIt) { r.ServerMs = sw.Elapsed.TotalMilliseconds; r.CertOk = r.Secure && !r.Downgraded && resp.ResponseUri.Scheme == "https"; }   // SEC-02: the connection actually used
                 string ct = resp.ContentType ?? "";
                 using (var s = resp.GetResponseStream())
                 {
@@ -213,7 +244,7 @@ namespace AdeeboMeter
                     var su = new Uri(media, sg);
                     try
                     {
-                        using (var resp = Req(su).GetResponse()) using (var s = resp.GetResponseStream())
+                        using (var resp = Get(su, r)) using (var s = resp.GetResponseStream())
                         {
                             int n; while ((n = s.Read(buf2, 0, buf2.Length)) > 0)
                             {

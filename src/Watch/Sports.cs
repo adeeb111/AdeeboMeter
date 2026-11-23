@@ -287,14 +287,38 @@ namespace AdeeboMeter
         internal static List<Story> Rss(string xml, string sport)
         {
             var r = new List<Story>();
-            foreach (Match it in Regex.Matches(xml ?? "", @"<item\b[^>]*>((?:<!\[CDATA\[.*?\]\]>|.)*?)</item>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
+            foreach (var item in Elems(xml ?? "", "item"))
             {
-                Func<string, string> tag = t => { var m = Regex.Match(it.Groups[1].Value, "<" + t + @"\b[^>]*>((?:<!\[CDATA\[.*?\]\]>|.)*?)</" + t + ">"   /* bug-hunt L-69: a closing tag inside CDATA is text, not the end */, RegexOptions.Singleline | RegexOptions.IgnoreCase); return m.Success ? Clean(m.Groups[1].Value) : ""; };
+                Func<string, string> tag = t => { var v = Elems(item, t).FirstOrDefault(); return v == null ? "" : Clean(v); };
                 var s = new Story { Sport = sport, Title = tag("title"), Summary = tag("description"), Link = tag("link") };
                 DateTime w; if (DateTime.TryParse(tag("pubDate"), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out w)) s.When = w;
                 if (s.Title != "" && (s.Link.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || s.Link.StartsWith("http://", StringComparison.OrdinalIgnoreCase))) r.Add(s);
+                if (r.Count >= 200) break;
             }
             return r;
+        }
+        // the text inside each <t ...>...</t>, in one pass: a CDATA section is jumped over whole (L-69: a closing tag inside it is
+        // text), and an unterminated one ends the reading. SEC-08: the old pattern backtracked without end on such a feed.
+        static IEnumerable<string> Elems(string s, string t)
+        {
+            int i = 0; string close = "</" + t + ">";
+            while (i < s.Length)
+            {
+                int open = s.IndexOf("<" + t, i, StringComparison.OrdinalIgnoreCase); if (open < 0) yield break;
+                int after = open + 1 + t.Length; if (after >= s.Length) yield break;
+                char nc = s[after]; if (nc != '>' && nc != '/' && !char.IsWhiteSpace(nc)) { i = after; continue; }   // <items> isn't <item>
+                int gt = s.IndexOf('>', after); if (gt < 0) yield break;
+                if (s[gt - 1] == '/') { i = gt + 1; continue; }   // <link/>
+                int j = gt + 1; bool found = false;
+                while (j < s.Length)
+                {
+                    int lt = s.IndexOf('<', j); if (lt < 0) yield break;
+                    if (string.CompareOrdinal(s, lt, "<![CDATA[", 0, 9) == 0) { int end = s.IndexOf("]]>", lt + 9, StringComparison.Ordinal); if (end < 0) yield break; j = end + 3; continue; }
+                    if (string.Compare(s, lt, close, 0, close.Length, StringComparison.OrdinalIgnoreCase) == 0) { yield return s.Substring(gt + 1, lt - gt - 1); i = lt + close.Length; found = true; break; }
+                    j = lt + 1;
+                }
+                if (!found) yield break;
+            }
         }
         static string Clean(string s)
         {

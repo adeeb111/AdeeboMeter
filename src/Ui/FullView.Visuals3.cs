@@ -58,7 +58,7 @@ namespace AdeeboMeter
             }
             // where we are in the loop
             bool live = WindowsAnimates() && Animates3(tbSel);
-            var dur = steps.Select(s => 0.8 + Math.Min(1.2, double.IsNaN(s.Ms) ? 0.3 : s.Ms / 150.0)).ToList(); double total = dur.Sum() + 1.6, t = live ? AnimT % total : total;
+            var dur = steps.Select(s => 0.8 + Math.Min(1.2, double.IsNaN(s.Ms) ? 0.3 : s.Ms / 150.0)).ToList(); double total = dur.Sum() + 1.6, t = live && !AnimHolding ? AnimT % total : total;   // resting: the finished picture
             int cur = steps.Count; double into = 0; { double acc = 0; for (int i = 0; i < steps.Count; i++) { if (t < acc + dur[i]) { cur = i; into = (t - acc) / dur[i]; break; } acc += dur[i]; } }
             var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
             for (int i = 0; i < steps.Count; i++)

@@ -5010,3 +5010,7 @@ what's my public address?	ما عنواني العام؟
 
 Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	معطّل حتى تفعّله. بعد ذلك، وأثناء فتح هذه الصفحة أو تشغيل بث في صفحة البث إذا كنت تتابع فريقًا: نتائج هوكي NHL، وكرة القدم من لوحات نتائج ESPN العامة (أو football-data.org بمفتاحك المجاني)، والكريكيت بمفتاحك المجاني، وأخبار BBC Sport، بمعدل لا يتجاوز مرة كل 5 دقائق.
 Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	متوقف حتى تشغّله. بعدها، أثناء فتح هذه الصفحة: نتائج الهوكي من NHL، وكرة القدم من لوحات نتائج ESPN العامة (أو football-data.org بمفتاحك المجاني)، والكريكيت بمفتاحك المجاني، وعناوين BBC Sport — كل 5 دقائق على الأكثر.
+
+ping your pinned addresses in the background	إرسال ping إلى عناوينك المثبّتة في الخلفية
+check these games' servers in the background: 	فحص خوادم هذه الألعاب في الخلفية: 
+replace your pinned addresses with: 	استبدال عناوينك المثبّتة بـ: 

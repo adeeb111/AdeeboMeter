@@ -225,6 +225,12 @@ namespace AdeeboMeter
                     if (ck.Count != 1 || ck[0].State != "live" || ck[0].AwayScore != "250/8 (50)" || ck[0].HomeScore != "206/3 (38.2)") throw new InvalidOperationException("cricket scores read wrong: " + (ck.Count > 0 ? ck[0].HomeScore + " | " + ck[0].AwayScore : "none"));
                     var rs = Sports.Rss("<rss><channel><item><title><![CDATA[Big win &amp; more]]></title><description>A <b>great</b> day</description><link>https://www.bbc.co.uk/sport/x</link></item><item><title>No link</title><link>javascript:bad()</link></item></channel></rss>", "top");
                     if (rs.Count != 1 || rs[0].Title != "Big win & more" || rs[0].Summary != "A great day") throw new InvalidOperationException("sports headlines read wrong");
+                    {   // SEC-08: a 600 KB feed with an unterminated CDATA must not pin a thread; L-69: </title> inside CDATA is text
+                        var swr = System.Diagnostics.Stopwatch.StartNew(); var bad0 = Sports.Rss("<rss><item><title><![CDATA[" + new string('x', 600000) + "</title></item></rss>", "top");
+                        if (swr.ElapsedMilliseconds > 1500 || bad0.Count != 0) throw new InvalidOperationException("a hostile sports feed took " + swr.ElapsedMilliseconds + " ms");
+                        var cd = Sports.Rss("<item><title><![CDATA[a</title>b]]></title><link>https://www.bbc.co.uk/sport/y</link></item>", "top");
+                        if (cd.Count != 1 || !cd[0].Title.StartsWith("a", StringComparison.Ordinal) || !cd[0].Title.EndsWith("b", StringComparison.Ordinal)) throw new InvalidOperationException("CDATA with a closing tag inside read wrong");
+                    }
                     // AM-CG-276: a changed feed is an error, not "no games"; AM-CG-275: whole-word team matching; AM-CG-271: BBC Sport opens
                     bool threw = false; try { Sports.HockeyFrom("{\"gamesX\":[]}"); } catch (InvalidDataException) { threw = true; } if (!threw) throw new InvalidOperationException("a wrong-shaped hockey feed read as no games");
                     string teams0 = Cfg.SportTeams; Cfg.SportTeams = "In,TOR";
@@ -726,7 +732,7 @@ namespace AdeeboMeter
                     if (Toolkit.HostOnly(c[0]) != c[1]) bad.Add("HostOnly(" + c[0] + ") = " + Toolkit.HostOnly(c[0]));
                 if (Toolkit.UrlToTarget("https://example.com/x", true) != "example.com:443" || Toolkit.UrlToTarget("http://example.com", true) != "example.com:80" || Toolkit.UrlToTarget("https://example.com:8443", false) != "example.com") bad.Add("UrlToTarget");
                 var r4 = Icmp.Resolve4("https://127.0.0.1/status"); if (r4 == null || r4.ToString() != "127.0.0.1") bad.Add("Resolve4 of a URL gave " + r4);
-                foreach (var no in new[] { "255.255.255.255", "224.0.0.1", "239.255.255.250", "0.0.0.0", "ff02::1", "::" }) if (Lab.NotOne(IPAddress.Parse(no)) == "") bad.Add("Traffic Lab would send to " + no);
+                foreach (var no in new[] { "255.255.255.255", "224.0.0.1", "239.255.255.250", "0.0.0.0", "ff02::1", "::", "10.99.7.255" }) if (Lab.NotOne(IPAddress.Parse(no)) == "") bad.Add("Traffic Lab would send to " + no);
                 if (Lab.NotOne(IPAddress.Parse("192.0.2.10")) != "") bad.Add("one device refused");
                 var o = Toolkit.ParseOpts("-u -l 4"); if (Toolkit.BlockLen(o) < 16) bad.Add("UDP block " + Toolkit.BlockLen(o));
                 if (Toolkit.BlockLen(Toolkit.ParseOpts("-l 4")) != 4 || Toolkit.BlockLen(Toolkit.ParseOpts("-u")) != 1400) bad.Add("block sizes");
@@ -1137,6 +1143,9 @@ namespace AdeeboMeter
                                 new[] { "ls /tools | wc -l | grep -c \"^[1-9]\"", "1" },
                                 new[] { "cd /data; rm -rf selftest-shell; test -d selftest-shell || echo gone", "gone" },
                                 new[] { "nosuchcommand; echo $?", "127" },
+                                new[] { "iperf3 -s; echo $?", "2" },
+                                new[] { "printf 'x\\ny\\nz\\n' | while read h; do echo got$h; done | tail -n 1", "gotz" },
+                                new[] { "iperf3 -R -t 5; echo $?", "2" },
                             };
                             foreach (var cs0 in cases)
                             {
@@ -1628,6 +1637,11 @@ namespace AdeeboMeter
                 foreach (int n in new[] { 100, 572, 1200, 1472 }) { var d = UdpMtu.DnsPad(n); if (d.Length != n) throw new InvalidOperationException("DNS pad " + n + " -> " + d.Length); if (!UdpMtu.IsDns(new byte[] { d[0], d[1], 0x81, 0x80, 0, 1, 0, 0, 0, 0, 0, 0 }, d)) throw new InvalidOperationException("DNS reply match"); }
                 var q = UdpMtu.Quic(1200); if (q.Length != 1200 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
                 if (!UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }) || UdpMtu.IsVn(q)) throw new InvalidOperationException("version negotiation check");
+                {   // SEC-09: a reply that echoes our ids (swapped) passes; one with the right first bytes but other ids doesn't
+                    var vn = new byte[27]; vn[0] = 0x80; vn[5] = 8; vn[14] = 8; for (int i = 0; i < 8; i++) { vn[6 + i] = q[15 + i]; vn[15 + i] = q[6 + i]; }
+                    var fake = (byte[])vn.Clone(); fake[9] ^= 0xFF;
+                    if (!UdpMtu.IsVn(vn, q) || UdpMtu.IsVn(fake, q) || UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }, q)) throw new InvalidOperationException("QUIC version negotiation ids not checked");
+                }
                 if (!Reach.SameNet("192.168.1.20", "192.168.1.5") || Reach.SameNet("192.168.1.255", "192.168.1.5") || Reach.SameNet("192.168.2.20", "192.168.1.5") || Reach.SameNet("192.168.1.5", "192.168.1.5")) throw new InvalidOperationException("same network");
                 if (SpeedTest.Pick("auto").Id != "cloudflare" || SpeedTest.Pick("vultr toronto").Id != "vultr-tor-ca" || SpeedTest.Pick("ovh-ca") == null || SpeedTest.Pick("ovh montreal").Id != "ovh-ca" || SpeedTest.Pick("nowhere at all") != null) throw new InvalidOperationException("speed server pick");
                 if (!SpeedTest.SafeUrl("https://example.com/100MB.bin") || SpeedTest.SafeUrl("https://user:pw@example.com/x") || SpeedTest.SafeUrl("file:///c:/x") || SpeedTest.SafeUrl("ftp://example.com/x")) throw new InvalidOperationException("speed URL check");
