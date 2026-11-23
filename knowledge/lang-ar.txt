@@ -5014,3 +5014,56 @@ Off until you turn it on. Then, while this page is open: hockey scores from the 
 ping your pinned addresses in the background	إرسال ping إلى عناوينك المثبّتة في الخلفية
 check these games' servers in the background: 	فحص خوادم هذه الألعاب في الخلفية: 
 replace your pinned addresses with: 	استبدال عناوينك المثبّتة بـ: 
+
+A lab drawing someone sent you (.json)	رسم مختبر أرسله لك أحدهم (.json)
+AdeeboLab drawings	رسوم AdeeboLab
+An empty page - pick devices and click to place them	صفحة فارغة - اختر الأجهزة وانقر لوضعها
+Couldn't read that file:	تعذّرت قراءة هذا الملف:
+Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	ارسم شبكتك، وشاهد المسار الذي تسلكه الحزمة، ثم اكسر شيئًا واحدًا وشاهد أين يفشل. يُفتح الرسم في نافذته الخاصة؛ ويبقى كل شيء على هذا الجهاز.
+EXAMPLES - A TYPICAL HOME, READY TO BREAK	أمثلة - منزل نموذجي، جاهز للكسر
+New diagram	رسم جديد
+None yet - every drawing you change in the lab is kept here (on this PC).	لا شيء بعد - كل رسم تغيّره في المختبر يُحفظ هنا (على هذا الجهاز).
+Open a file...	فتح ملف...
+Open a lab drawing	فتح رسم مختبر
+Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies	اختر عطلًا - DNS أو MTU أو فقدان أو بوابة خاطئة - وشاهد أين تموت الحزمة
+Run a trace or MTR first	شغّل trace أو MTR أولًا
+That file is over 2 MB - too big for a lab drawing.	هذا الملف أكبر من 2 ميغابايت - كبير جدًا لرسم مختبر.
+That file isn't a lab drawing.	هذا الملف ليس رسم مختبر.
+The lab window needs Microsoft Edge (it's in Windows). One lab window at a time: opening another closes the last, and keeps what you drew.	تحتاج نافذة المختبر إلى Microsoft Edge (موجود في Windows). نافذة مختبر واحدة في كل مرة: فتح أخرى يغلق السابقة ويحتفظ بما رسمته.
+YOUR DIAGRAMS	رسومك
+YOUR NETWORK, AS ADEEBOMETER SEES IT	شبكتك كما يراها AdeeboMeter
+ask them	اسألها
+
+/proc as files; re-run anything every few seconds	‏/proc كملفات؛ أعِد تشغيل أي شيء كل بضع ثوانٍ
+FOLDERS	المجلدات
+Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes	المفاتيح: Tab يُكمل (مرتين يعرض القائمة) · أعلى/أسفل السجل · Ctrl+C يوقف (أو ينسخ التحديد) · Ctrl+L يمسح · Ctrl+U/K/W للتحرير · النقر الأيمن يلصق
+Nothing here starts another program: every command is AdeeboMeter's own.	لا شيء هنا يشغّل برنامجًا آخر: كل أمر هو من AdeeboMeter نفسه.
+POWER	متقدم
+THIS PC (read only)	هذا الحاسوب (للقراءة فقط)
+TOOLS AND PAGES	الأدوات والصفحات
+a script; --yes confirms its test-traffic tools for the whole run	سكربت؛ ‎--yes يؤكد أدوات حركة الاختبار فيه طوال التشغيل
+addresses, routes, connections and listeners	العناوين والمسارات والاتصالات والمنافذ المستمعة
+and / or / in the background (jobs, wait, kill %1)	و / أو / في الخلفية (jobs, wait, kill %1)
+choose by pattern (* ? [abc])	الاختيار حسب النمط (* ? [abc])
+command output and sums in a line; the text tools	مخرجات الأوامر والحسابات داخل السطر؛ أدوات النصوص
+disks, folder sizes, drives, memory	الأقراص وأحجام المجلدات والمحركات والذاكرة
+every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	كل أداة في صندوق الأدوات أمر: ping 1.1.1.1 20 · dig example.com MX
+every tool is a command, every page is a folder	كل أداة أمر، وكل صفحة مجلد
+every tool with its example	كل أداة مع مثالها
+files - rm asks first	الملفات - rm يسأل أولًا
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	دوال مع local و return؛ مصفوفات: ${a[1]} "${a[@]}" ${#a[@]}
+go to a page	الانتقال إلى صفحة
+help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help لكل شيء · Tab يُكمل · Ctrl+C يوقف · لا شيء هنا يشغّل برنامجًا آخر
+home = your folder, data, mnt/c, pages, tools	home = مجلدك، data، mnt/c، pages، tools
+iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client	iperf3 بخياراته الحقيقية (‎-p -u -b --bidir أيضًا)؛ AdeeboMeter هو العميل
+list them, or what one does	اعرضها، أو ما تفعله إحداها
+loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep	الحلقات، while، if/then/else/fi، NAME=value، $1 $? read test seq sleep
+pipes; > file, >> file, < file, 2>/dev/null, &> file	الأنابيب؛ ‎> ملف، >> ملف، < ملف، 2>/dev/null، &> ملف
+read files or what a pipe sends	قراءة الملفات أو ما يرسله الأنبوب
+run together, merge as each finishes; cat hosts.txt | parallel ping {} 4	التشغيل معًا والدمج عند انتهاء كل منها؛ cat hosts.txt | parallel ping {} 4
+sizes, details, SHA-256	الأحجام والتفاصيل و SHA-256
+the NOW line · raw values · the app's log	سطر الآن · القيم الخام · سجل التطبيق
+what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	ما الموجود هنا (ll = ls -l) · cd /data/scripts لسكربتات جاهزة
+what's running and what it costs (nothing is stopped from here)	ما الذي يعمل وكم يكلّف (لا يُوقَف شيء من هنا)
+where you are, what's below, find by name	أين أنت، وما تحتك، والبحث بالاسم
+write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	اكتب سكربتًا أو أي ملف نصي هنا مباشرة (‎^S حفظ ^X خروج · :wq)؛ واقرأ الطويل صفحة صفحة

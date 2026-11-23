@@ -270,24 +270,55 @@ namespace AdeeboMeter
             return 0;
         }
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern uint GetCompressedFileSizeW(string name, out uint high);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern Microsoft.Win32.SafeHandles.SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr sec, uint disp, uint flags, IntPtr tmpl);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle h, out ByHandleInfo info);
+        [StructLayout(LayoutKind.Sequential)] struct ByHandleInfo { public uint Attrs, CLo, CHi, ALo, AHi, WLo, WHi, Volume, SizeHi, SizeLo, Links, IdxHi, IdxLo; }
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool CreateHardLinkW(string link, string target, IntPtr sec);
+        // the self-test: one 64 KB file with two names is 64 for du, 128 for du -l (null = right)
+        internal string TestDuLinks()
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "am-du-" + Guid.NewGuid().ToString("N").Substring(0, 8)); Directory.CreateDirectory(dir);
+            try
+            {
+                File.WriteAllBytes(Path.Combine(dir, "a.bin"), new byte[65536]);
+                if (!CreateHardLinkW(Path.Combine(dir, "b.bin"), Path.Combine(dir, "a.bin"), IntPtr.Zero)) return null;   // a disk without hard links: nothing to check
+                var o = new ShOut { Cap = new StringBuilder(), Job = new ShJob() }; var c = new ShCtx { Job = o.Job, Out = o, Script = true };
+                Du(new List<string> { "-s", "--apparent-size", dir }, c); string one = o.Cap.ToString().Trim(); o.Cap.Clear();
+                Du(new List<string> { "-sl", "--apparent-size", dir }, c); string both = o.Cap.ToString().Trim();
+                return one.StartsWith("64 ", StringComparison.Ordinal) && both.StartsWith("128 ", StringComparison.Ordinal) ? null : "a hard-linked 64 KB file gave '" + one + "' and with -l '" + both + "'";
+            }
+            finally { try { Directory.Delete(dir, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        }
+        // a file with more than one name (a hard link): its volume and file number, so du counts it once like GNU du; null for an ordinary file
+        static string LinkId(string f)
+        {
+            using (var hd = CreateFileW(f, 0x80 /* read attributes */, 7, IntPtr.Zero, 3 /* existing */, 0x02000000 | 0x00200000 /* backup semantics, the link itself */, IntPtr.Zero))
+            {
+                ByHandleInfo bi; if (hd.IsInvalid || !GetFileInformationByHandle(hd, out bi) || bi.Links < 2) return null;
+                return bi.Volume.ToString("x8", CultureInfo.InvariantCulture) + ":" + bi.IdxHi.ToString("x8", CultureInfo.InvariantCulture) + bi.IdxLo.ToString("x8", CultureInfo.InvariantCulture);
+            }
+        }
         // #16/#75/#77/#78: GNU-style - 1K blocks unless -h (or -m), space actually taken on disk (compressed and sparse files count
-        // what they use; --apparent-size gives the lengths), junctions never followed, and every folder it couldn't read named
+        // what they use; --apparent-size gives the lengths), junctions never followed, and every folder it couldn't read named.
+        // A hard-linked file counts once, wherever its first name is (-l / --count-links: every name)
         int Du(List<string> a, ShCtx c)
         {
-            string fl = Flags(a); bool sum = fl.Contains('s'), h = fl.Contains('h'), mb = fl.Contains('m'), apparent = a.Contains("--apparent-size") || fl.Contains('b'); int depth = sum ? 0 : int.MaxValue;
+            string fl = Flags(a); bool sum = fl.Contains('s'), h = fl.Contains('h'), mb = fl.Contains('m'), apparent = a.Contains("--apparent-size") || fl.Contains('b'), allLinks = fl.Contains('l') || a.Contains("--count-links"); int depth = sum ? 0 : int.MaxValue;
             foreach (var x in a) { var m = Regex.Match(x, @"^(?:--max-depth=|-d)(\d+)$"); if (m.Success) depth = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); }
             int di = a.IndexOf("-d"); if (di >= 0 && di + 1 < a.Count) int.TryParse(a[di + 1], out depth);
             var paths = a.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(i > 0 && a[i - 1] == "-d")).DefaultIfEmpty(".").ToList();
             int files = 0, denied = 0; var sw = Stopwatch.StartNew(); bool ex1 = false;
             Func<long, string> unit = v => h ? Human(v) : mb ? ((v + 1048575) / 1048576).ToString(CultureInfo.InvariantCulture) : ((v + 1023) / 1024).ToString(CultureInfo.InvariantCulture);
             Func<string, long> fileSize = f => { if (!apparent) { uint hi; uint lo = GetCompressedFileSizeW(f, out hi); if (!(lo == 0xFFFFFFFF && Marshal.GetLastWin32Error() != 0)) return ((long)hi << 32) | lo; } try { return new FileInfo(f).Length; } catch (IOException) { return 0; } };
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            Func<string, long> once = f => { if (!allLinks) { string id = LinkId(f); if (id != null && !seen.Add(id)) return 0; } return fileSize(f); };
             Func<string, string, int, long> walk = null;
             walk = (dir, shown, level) =>
             {
                 long t = 0; if (c.Job.Cancel || files > 1000000) return 0;
                 try
                 {
-                    foreach (var f in Directory.EnumerateFiles(dir)) { files++; t += fileSize(f); }
+                    foreach (var f in Directory.EnumerateFiles(dir)) { files++; t += once(f); }
                     foreach (var d in Directory.EnumerateDirectories(dir)) { if (IsLink(d)) continue; t += walk(d, shown.TrimEnd('/') + "/" + Path.GetFileName(d), level + 1); }
                 }
                 catch (UnauthorizedAccessException) { denied++; if (denied <= 5) Err(c, "du: cannot read '" + shown + "': permission denied"); ex1 = true; }

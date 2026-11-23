@@ -5014,3 +5014,56 @@ Off until you turn it on. Then, while this page is open: hockey scores from the 
 ping your pinned addresses in the background	পিন করা ঠিকানাগুলোতে ব্যাকগ্রাউন্ডে পিং করা
 check these games' servers in the background: 	ব্যাকগ্রাউন্ডে এই গেমগুলোর সার্ভার পরীক্ষা করা: 
 replace your pinned addresses with: 	আপনার পিন করা ঠিকানাগুলোর বদলে: 
+
+A lab drawing someone sent you (.json)	কেউ আপনাকে পাঠানো একটি ল্যাব ড্রয়িং (.json)
+AdeeboLab drawings	AdeeboLab ড্রয়িং
+An empty page - pick devices and click to place them	একটি খালি পাতা - ডিভাইস বেছে নিন এবং ক্লিক করে বসান
+Couldn't read that file:	ফাইলটি পড়া গেল না:
+Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	আপনার নেটওয়ার্ক আঁকুন, একটি প্যাকেট কোন পথে যায় দেখুন, তারপর একটি জিনিস ভেঙে দেখুন কোথায় আটকে যায়। ড্রয়িং নিজের জানালায় খোলে; সবকিছু এই পিসিতেই থাকে।
+EXAMPLES - A TYPICAL HOME, READY TO BREAK	উদাহরণ - একটি সাধারণ বাসা, ভাঙার জন্য তৈরি
+New diagram	নতুন ডায়াগ্রাম
+None yet - every drawing you change in the lab is kept here (on this PC).	এখনো কিছু নেই - ল্যাবে যে ড্রয়িং বদলাবেন তা এখানে থাকবে (এই পিসিতে)।
+Open a file...	একটি ফাইল খুলুন...
+Open a lab drawing	একটি ল্যাব ড্রয়িং খুলুন
+Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies	একটি সমস্যা বেছে নিন - DNS, MTU, লস, ভুল গেটওয়ে - আর দেখুন প্যাকেট কোথায় থেমে যায়
+Run a trace or MTR first	আগে একটি trace বা MTR চালান
+That file is over 2 MB - too big for a lab drawing.	ফাইলটি ২ MB-এর বেশি - ল্যাব ড্রয়িংয়ের জন্য খুব বড়।
+That file isn't a lab drawing.	এটি কোনো ল্যাব ড্রয়িং নয়।
+The lab window needs Microsoft Edge (it's in Windows). One lab window at a time: opening another closes the last, and keeps what you drew.	ল্যাব জানালার জন্য Microsoft Edge লাগে (এটি Windows-এ আছে)। এক সময়ে একটি ল্যাব জানালা: আরেকটি খুললে আগেরটি বন্ধ হয়, আর আপনার আঁকা থেকে যায়।
+YOUR DIAGRAMS	আপনার ডায়াগ্রাম
+YOUR NETWORK, AS ADEEBOMETER SEES IT	AdeeboMeter যেভাবে আপনার নেটওয়ার্ক দেখে
+ask them	তাদের জিজ্ঞেস করুন
+
+/proc as files; re-run anything every few seconds	/proc ফাইল হিসেবে; যেকোনো কিছু কয়েক সেকেন্ড পরপর আবার চালান
+FOLDERS	ফোল্ডার
+Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes	কী: Tab পূরণ করে (দুবার চাপলে তালিকা) · উপর/নিচ ইতিহাস · Ctrl+C থামায় (বা নির্বাচিত অংশ কপি করে) · Ctrl+L মুছে দেয় · Ctrl+U/K/W সম্পাদনা · রাইট-ক্লিকে পেস্ট
+Nothing here starts another program: every command is AdeeboMeter's own.	এখান থেকে অন্য কোনো প্রোগ্রাম চালু হয় না: প্রতিটি কমান্ড AdeeboMeter-এর নিজের।
+POWER	উন্নত
+THIS PC (read only)	এই পিসি (শুধু পড়া যায়)
+TOOLS AND PAGES	টুল ও পেজ
+a script; --yes confirms its test-traffic tools for the whole run	একটি স্ক্রিপ্ট; --yes পুরো রানের জন্য এর টেস্ট-ট্রাফিক টুলগুলো নিশ্চিত করে
+addresses, routes, connections and listeners	ঠিকানা, রুট, সংযোগ ও লিসেনার
+and / or / in the background (jobs, wait, kill %1)	এবং / অথবা / ব্যাকগ্রাউন্ডে (jobs, wait, kill %1)
+choose by pattern (* ? [abc])	প্যাটার্ন দিয়ে বেছে নিন (* ? [abc])
+command output and sums in a line; the text tools	লাইনের ভেতরে কমান্ডের আউটপুট ও হিসাব; টেক্সট টুলগুলো
+disks, folder sizes, drives, memory	ডিস্ক, ফোল্ডারের আকার, ড্রাইভ, মেমরি
+every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	টুলবক্সের প্রতিটি টুল একটি কমান্ড: ping 1.1.1.1 20 · dig example.com MX
+every tool is a command, every page is a folder	প্রতিটি টুল একটি কমান্ড, প্রতিটি পেজ একটি ফোল্ডার
+every tool with its example	প্রতিটি টুল তার উদাহরণসহ
+files - rm asks first	ফাইল - rm আগে জিজ্ঞেস করে
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	local ও return সহ ফাংশন; অ্যারে: ${a[1]} "${a[@]}" ${#a[@]}
+go to a page	একটি পেজে যান
+help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help-এ সবকিছু · Tab পূরণ করে · Ctrl+C থামায় · এখান থেকে অন্য কোনো প্রোগ্রাম চালু হয় না
+home = your folder, data, mnt/c, pages, tools	home = আপনার ফোল্ডার, data, mnt/c, pages, tools
+iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client	iperf3 তার আসল ফ্ল্যাগসহ (-p -u -b --bidir-ও); AdeeboMeter হলো ক্লায়েন্ট
+list them, or what one does	তালিকা দেখুন, বা একটি কী করে
+loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep	লুপ, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep
+pipes; > file, >> file, < file, 2>/dev/null, &> file	পাইপ; > ফাইল, >> ফাইল, < ফাইল, 2>/dev/null, &> ফাইল
+read files or what a pipe sends	ফাইল পড়ুন বা পাইপ যা পাঠায়
+run together, merge as each finishes; cat hosts.txt | parallel ping {} 4	একসাথে চালান, প্রতিটি শেষ হলে মিলিয়ে দেখান; cat hosts.txt | parallel ping {} 4
+sizes, details, SHA-256	আকার, বিস্তারিত, SHA-256
+the NOW line · raw values · the app's log	এখন-লাইন · কাঁচা মান · অ্যাপের লগ
+what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	এখানে কী আছে (ll = ls -l) · তৈরি স্ক্রিপ্টের জন্য cd /data/scripts
+what's running and what it costs (nothing is stopped from here)	কী চলছে আর তাতে কত খরচ (এখান থেকে কিছু বন্ধ করা হয় না)
+where you are, what's below, find by name	আপনি কোথায়, নিচে কী আছে, নাম দিয়ে খুঁজুন
+write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	এখানেই স্ক্রিপ্ট বা যেকোনো টেক্সট ফাইল লিখুন (^S সেভ ^X বের হন · :wq); লম্বা ফাইল পাতায় পাতায় পড়ুন

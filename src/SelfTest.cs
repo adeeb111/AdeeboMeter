@@ -1223,6 +1223,15 @@ namespace AdeeboMeter
                                 new[] { "lsblk | head -1 | grep -c NAME", "1" },
                                 new[] { "df -h | head -1 | grep -c Size", "1" },
                                 new[] { "cat /proc/loadavg | awk '{print NF}'", "5" },
+                                new[] { "x=b; case $x in a) echo A;; b|c) echo BC;; *) echo other;; esac", "BC" },
+                                new[] { "case z in [!a-y]) echo noty;; esac; case hello in \"h*\") echo lit;; h*) echo glob;; esac", "noty\nglob" },
+                                new[] { "n=1; f() { local n=5; echo \"$n $1 $#\"; return 3; }; f a b; echo $? $n", "5 a 2\n3 1" },
+                                new[] { "fact() { if [ $1 -le 1 ]; then echo 1; else echo $(( $1 * $(fact $(( $1 - 1 ))) )); fi; }; fact 5", "120" },
+                                new[] { "loop() { loop; }; loop 2>&1", "~100 deep" },
+                                new[] { "a=(x \"y z\" w); echo ${a[1]} ${#a[@]}; for i in \"${a[@]}\"; do echo \"[$i]\"; done", "y z 3\n[x]\n[y z]\n[w]" },
+                                new[] { "a=(1 2); a+=(3); a[5]=6; unset a[0]; echo ${a[@]} ${#a[@]} ${!a[@]} ${a[-1]}", "2 3 6 3 1 2 5 6" },
+                                new[] { "x=1; (x=2; echo $x); echo $x; { echo b; echo a; } | sort", "2\n1\na\nb" },
+                                new[] { "echo (hi) 2>&1", "~unexpected" },
                                 new[] { "cd /data; rm -rf selftest-sh2; echo cleaned", "cleaned" },
                             };
                             foreach (var cs0 in cases)
@@ -1233,6 +1242,7 @@ namespace AdeeboMeter
                                 if (!okc) bad.Add("shell \"" + cs0[0] + "\" gave \"" + got.Replace("\n", "\\n") + "\", wanted \"" + cs0[1].Replace("\n", "\\n") + "\"");
                             }
                             fv.TestShellReset();
+                            { string dl = fv.TestDuLinks(); if (dl != null) bad.Add("du: " + dl); }
                             // nano and vim: typing, cut, undo, :wq
                             var nano = new TermEditor(false, null, null, null); foreach (var ch in "echo hi") nano.Char(ch); nano.Key(new KeyEventArgs(Keys.Enter)); foreach (var ch in "ls") nano.Char(ch);
                             if (nano.Body != "echo hi\nls\n") bad.Add("nano: typed text came out as \"" + nano.Body.Replace("\n", "\\n") + "\"");

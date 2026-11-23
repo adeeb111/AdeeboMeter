@@ -39,11 +39,18 @@ namespace AdeeboMeter
         {
             public string Cwd = "/home", Prev = "/home"; public int LastExit, Depth;
             public readonly Dictionary<string, string> Vars = new Dictionary<string, string>(StringComparer.Ordinal);
-            public ShEnv Clone() { var e = new ShEnv { Cwd = Cwd, Prev = Prev, LastExit = LastExit, Depth = Depth }; lock (Vars) foreach (var kv in Vars) e.Vars[kv.Key] = kv.Value; return e; }
+            public readonly Dictionary<string, List<string>> Arrs = new Dictionary<string, List<string>>(StringComparer.Ordinal);   // a=(x y z)
+            public readonly Dictionary<string, Node> Funcs = new Dictionary<string, Node>(StringComparer.Ordinal);        // name() { ...; }
+            public ShEnv Clone()
+            {
+                var e = new ShEnv { Cwd = Cwd, Prev = Prev, LastExit = LastExit, Depth = Depth };
+                lock (Vars) { foreach (var kv in Vars) e.Vars[kv.Key] = kv.Value; foreach (var kv in Arrs) e.Arrs[kv.Key] = kv.Value.ToList(); foreach (var kv in Funcs) e.Funcs[kv.Key] = kv.Value; }
+                return e;
+            }
         }
         readonly ShEnv shMain = new ShEnv();
         [ThreadStatic] static ShEnv tEnv;
-        [ThreadStatic] static int loopDepth, substDepth, lastSubstExit;
+        [ThreadStatic] static int loopDepth, substDepth, lastSubstExit, funcDepth;
         ShEnv Env { get { return tEnv ?? shMain; } }
         T InSub<T>(Func<T> f) { var saved = tEnv; tEnv = Env.Clone(); try { return f(); } finally { tEnv = saved; } }
 
@@ -52,7 +59,7 @@ namespace AdeeboMeter
         // (shell scrutiny #2): dropped (2>/dev/null), kept for a file (2> f), or passed on to where they went before (ErrTo) -
         // never into the data a pipe hands on.
         sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull; public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
-        sealed class ShCtx { public ShJob Job; public ShOut Out; public string Stdin; public List<string> Args = new List<string>(); public bool Yes, Script; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, Stdin = stdin, Args = Args, Yes = Yes, Script = Script }; } }
+        sealed class ShCtx { public ShJob Job; public ShOut Out; public string Stdin; public List<string> Args = new List<string>(); public bool Yes, Script; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, Stdin = stdin, Args = Args, Yes = Yes, Script = Script, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
         sealed class ShTooBig : Exception { public ShTooBig() : base("more than 64 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
@@ -82,10 +89,10 @@ namespace AdeeboMeter
         void ShWelcome()
         {
             term.Write("  █▀█ █▀▄ █▀▀ █▀▀ █▄▄ █▀█   " + "AdeeboShell · AdeeboMeter " + Program.Version + "\n", ShCyan);
-            term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + "every tool is a command, every page is a folder\n", ShCyan);
+            term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + L.T("every tool is a command, every page is a folder") + "\n", ShCyan);
             term.Write("\n", ShFg);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
-            term.Write("  help for everything · Tab completes · Ctrl+C stops · nothing here starts another program\n\n", ShDim);
+            term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
         }
 
         // ---------- the screen, from any thread. Writes are batched (one UI call per burst, not per line - #3), and a batch is
@@ -274,7 +281,7 @@ namespace AdeeboMeter
         // =====================================================================================================================
         // the language: words, operators, and the structures scripts use (for / while / if)
         // In a word: \u0001 is a literal $ ('...' or \$), \u0005...\u0006 a $(command), \u0007...\u0006 a $((sum)).
-        sealed class Tok { public string W, Op; public bool Q; }
+        sealed class Tok { public string W, Op; public bool Q; public List<Tok> Arr; }   // Arr: the words of a=( ... )
         static List<Tok> Lex(string s)
         {
             var l = new List<Tok>(); var sb = new StringBuilder(); bool had = false, q = false; char quote = '\0';
@@ -317,7 +324,8 @@ namespace AdeeboMeter
                 if (two == ">&" && i + 2 < s.Length && s[i + 2] == '2') { flush(); l.Add(new Tok { Op = ">&2" }); i += 2; continue; }   // #21: this output goes the errors' way
                 if (two == ">&" && i + 2 < s.Length && s[i + 2] == '1') { flush(); i += 2; continue; }
                 if (two == "&&" || two == "||" || two == ">>") { flush(); l.Add(new Tok { Op = two }); i++; continue; }
-                if (ch == '|' || ch == ';' || ch == '&' || ch == '>' || ch == '<') { flush(); l.Add(new Tok { Op = ch.ToString() }); continue; }
+                if (two == ";;") { flush(); l.Add(new Tok { Op = ";;" }); i++; continue; }   // the end of a case arm
+                if (ch == '|' || ch == ';' || ch == '&' || ch == '>' || ch == '<' || ch == '(' || ch == ')') { flush(); l.Add(new Tok { Op = ch.ToString() }); continue; }
                 sb.Append(ch);
             }
             if (quote != '\0') throw new FormatException("a " + quote + " isn't closed");   // #51: a syntax error, not plausible output
@@ -352,6 +360,10 @@ namespace AdeeboMeter
         sealed class NFor : Node { public string Var; public List<Tok> In = new List<Tok>(); public NSeq Body; }
         sealed class NWhile : Node { public NSeq Cond, Body; public bool Until; }
         sealed class NIf : Node { public List<NSeq> Conds = new List<NSeq>(), Bodies = new List<NSeq>(); public NSeq Else; }
+        sealed class NCase : Node { public Tok Word; public List<KeyValuePair<List<Tok>, NSeq>> Arms = new List<KeyValuePair<List<Tok>, NSeq>>(); }
+        sealed class NFunc : Node { public string Name; public Node Body; }
+        sealed class NGroup : Node { public NSeq Body; }       // { ...; } - in this shell
+        sealed class NSubshell : Node { public NSeq Body; }    // ( ... ) - in a copy of it
         sealed class NRedir : Node { public Node Inner; public List<Tok> Redirs = new List<Tok>(); }   // for ... done > file (#9)
         static bool NeedsTarget(string op) { return op == ">" || op == ">>" || op == "<" || op == "2>" || op == "2>>" || op == "&>"; }
         static bool IsRedir(string op) { return op != null && (NeedsTarget(op) || op == "2>&1" || op == ">&2"); }
@@ -369,7 +381,7 @@ namespace AdeeboMeter
                 while (true)
                 {
                     while (Sep()) i++;
-                    if (i >= t.Count || Kw(stop)) return s;
+                    if (i >= t.Count || Kw(stop) || (t[i].Op != null && stop.Contains(t[i].Op))) return s;
                     int st = i; var stmt = Statement();
                     if (i < t.Count && t[i].Op == "&")   // #32: anything can go to the background - a loop too
                     {
@@ -377,6 +389,7 @@ namespace AdeeboMeter
                         p.Bg = true; p.Text = Unlex(t.GetRange(st, i - st)); s.Items.Add(p); i++;
                     }
                     else s.Items.Add(stmt);
+                    if (i < t.Count && !Sep() && !Kw(stop) && !(t[i].Op != null && stop.Contains(t[i].Op))) throw new FormatException("unexpected '" + (t[i].Op ?? t[i].W) + "'");   // echo (hi), done foo
                 }
             }
             Node Statement()
@@ -406,6 +419,35 @@ namespace AdeeboMeter
                     if (Kw("else")) { i++; f.Else = List("fi"); }
                     Expect("fi"); n = f;
                 }
+                else if (Kw("case"))
+                {
+                    i++; if (i >= t.Count || t[i].Op != null) throw new FormatException("case needs a word"); var cs = new NCase { Word = t[i++] };
+                    while (Sep()) i++; Expect("in");
+                    while (true)
+                    {
+                        while (Sep()) i++;
+                        if (Kw("esac")) { i++; break; }
+                        if (i >= t.Count) throw new FormatException("case without esac");
+                        if (t[i].Op == "(") i++;
+                        var pats = new List<Tok>();
+                        while (true) { if (i >= t.Count || t[i].Op != null) throw new FormatException("case: a pattern is missing"); pats.Add(t[i++]); if (i < t.Count && t[i].Op == "|") { i++; continue; } break; }
+                        if (i >= t.Count || t[i].Op != ")") throw new FormatException("case: expected ) after the pattern");
+                        i++; var body = List(";;", "esac"); cs.Arms.Add(new KeyValuePair<List<Tok>, NSeq>(pats, body));
+                        if (i < t.Count && t[i].Op == ";;") i++;
+                    }
+                    n = cs;
+                }
+                else if (Kw("function") || (i + 2 < t.Count && t[i].Op == null && !t[i].Q && Regex.IsMatch(t[i].W, "^[A-Za-z_][A-Za-z0-9_.-]*$") && t[i + 1].Op == "(" && t[i + 2].Op == ")"))
+                {
+                    if (Kw("function")) i++;
+                    if (i >= t.Count || t[i].Op != null) throw new FormatException("function needs a name");
+                    string name = t[i++].W; if (i + 1 < t.Count && t[i].Op == "(" && t[i + 1].Op == ")") i += 2;
+                    while (Sep()) i++;
+                    if (!Kw("{") && !(i < t.Count && t[i].Op == "(")) throw new FormatException(name + "(): the body goes in { }");
+                    return new NFunc { Name = name, Body = Compound() };
+                }
+                else if (Kw("{")) { i++; var g = List("}"); Expect("}"); n = new NGroup { Body = g }; }
+                else if (i < t.Count && t[i].Op == "(") { i++; var g = List(")"); if (i >= t.Count || t[i].Op != ")") throw new FormatException("a ( isn't closed"); i++; n = new NSubshell { Body = g }; }
                 else return Cmd();
                 // redirects after done / fi belong to the whole loop or if (#9)
                 if (i < t.Count && IsRedir(t[i].Op))
@@ -430,6 +472,12 @@ namespace AdeeboMeter
                 {
                     if (t[i].Op != null && !NeedsTarget(t[i].Op)) { c.Words.Add(t[i++]); continue; }   // 2>&1, >&2
                     if (t[i].Op != null) { var op = t[i++]; if (i >= t.Count || t[i].Op != null) throw new FormatException(op.Op + " needs a file name"); c.Words.Add(op); c.Words.Add(t[i++]); continue; }
+                    if (!t[i].Q && Regex.IsMatch(t[i].W, @"^[A-Za-z_][A-Za-z0-9_]*\+?=$") && i + 1 < t.Count && t[i + 1].Op == "(")   // a=( x y z )
+                    {
+                        var arr = new Tok { W = t[i].W, Arr = new List<Tok>() }; i += 2;
+                        while (i < t.Count && t[i].Op != ")") { if (t[i].Op == ";") { i++; continue; } if (t[i].Op != null) throw new FormatException("an array: unexpected '" + t[i].Op + "'"); arr.Arr.Add(t[i++]); }
+                        if (i >= t.Count) throw new FormatException("an array's ( isn't closed"); i++; c.Words.Add(arr); continue;
+                    }
                     c.Words.Add(t[i++]);
                 }
                 if (c.Words.Count == 0) throw new FormatException("a command is missing" + (i < t.Count ? " before '" + (t[i].Op ?? t[i].W) + "'" : ""));
@@ -489,6 +537,16 @@ namespace AdeeboMeter
             }
             var nf = n as NIf;
             if (nf != null) { for (int k = 0; k < nf.Conds.Count; k++) if (Exec(nf.Conds[k], c) == 0) return Exec(nf.Bodies[k], c); return nf.Else != null ? Exec(nf.Else, c) : 0; }
+            var cs = n as NCase;
+            if (cs != null)
+            {
+                string w; try { w = Tilde(Subst(cs.Word.W, c), cs.Word.Q).Replace('\u0001', '$'); } catch (FormatException e) { Err(c, "case: " + e.Message); return 1; }
+                foreach (var arm in cs.Arms) foreach (var pat in arm.Key) { string pp = Subst(pat.W, c).Replace('\u0001', '$'); if (pat.Q ? pp == w : PatternMatch(pp, w)) return Exec(arm.Value, c); }
+                return 0;
+            }
+            var fn = n as NFunc; if (fn != null) { lock (Env.Vars) Env.Funcs[fn.Name] = fn.Body; return 0; }
+            var gr = n as NGroup; if (gr != null) return Exec(gr.Body, c);
+            var sh = n as NSubshell; if (sh != null) return InSub(() => { try { return Exec(sh.Body, c); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } });
             var rd = n as NRedir;
             if (rd != null) { List<string> w; try { w = Expand(rd.Redirs, c); } catch (FormatException e) { Err(c, "adeeboshell: " + e.Message); return 1; } return ApplyRedirs(w, c, cc => Exec(rd.Inner, cc)); }
             var p = n as NPipe; if (p == null) return 0;
@@ -543,7 +601,16 @@ namespace AdeeboMeter
                     if (!w.Q && (v.Contains("*") || v.Contains("?"))) { var g = Glob(v); if (g.Count > 1) { r.Add("\u0004" + v); continue; } if (g.Count == 1) v = g[0]; }
                     r.Add(v); continue;
                 }
-                var am = Regex.Match(raw, "^([A-Za-z_][A-Za-z0-9_]*)=");
+                if (w.Arr != null)   // a=( ... ): \u000E name(+) \0 the words
+                {
+                    var items = Expand(w.Arr, c).Select(z => z.StartsWith("\u0008", StringComparison.Ordinal) ? z.Substring(1) : z);
+                    r.Add("\u000E" + raw.TrimEnd('=') + "\u0000" + string.Join("\u001F", items)); continue;
+                }
+                var em = Regex.Match(raw, @"^([A-Za-z_][A-Za-z0-9_]*)\[([^\]]*)\]=(.*)$", RegexOptions.Singleline);   // a[i]=value
+                if (em.Success) { r.Add("\u000F" + em.Groups[1].Value + "\u0000" + MathOf(Subst(em.Groups[2].Value, c), c).ToString(CultureInfo.InvariantCulture) + "\u0000" + Tilde(Subst(em.Groups[3].Value, c), w.Q).Replace('\u0001', '$')); continue; }
+                var all = Regex.Match(raw, @"^\$\{([A-Za-z_][A-Za-z0-9_]*)\[[@*]\]\}$");   // "${a[@]}": one word per element
+                if (all.Success) { List<string> arr; lock (Env.Vars) Env.Arrs.TryGetValue(all.Groups[1].Value, out arr); if (arr != null) { foreach (var el in arr.Where(z => z != null).ToList()) if (w.Q) r.Add(el); else foreach (var pt in el.Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries)) AddWord(r, pt, false); continue; } }
+                var am = Regex.Match(raw, @"^([A-Za-z_][A-Za-z0-9_]*\+?)=");
                 if (am.Success) { string val = Subst(raw.Substring(am.Length), c); val = Tilde(val, w.Q).Replace('\u0001', '$'); r.Add("\u0008" + am.Groups[1].Value + "=" + val); continue; }
                 string s = Subst(raw, c);
                 if (hadVar && !w.Q)
@@ -590,7 +657,7 @@ namespace AdeeboMeter
                     }
                     finally { substDepth--; loopDepth = saveLoop; }
                 }
-                else sb.Append(MathOf(inner, c).ToString(CultureInfo.InvariantCulture));
+                else sb.Append(MathOf(MathPrep(inner, c), c).ToString(CultureInfo.InvariantCulture));
                 i = e + 1;
             }
             return sb.ToString();
@@ -599,6 +666,17 @@ namespace AdeeboMeter
         // ${NAME//p/r} ${NAME:off:len} (#57) - a form it doesn't know is an error, not literal text
         string Param(string e, ShCtx c)
         {
+            var ar = Regex.Match(e, @"^([#!])?([A-Za-z_][A-Za-z0-9_]*)\[([^\]]+)\]$");   // ${a[1]} ${a[@]} ${#a[@]} ${!a[@]} ${#a[2]}
+            if (ar.Success)
+            {
+                List<string> arr; string nm = ar.Groups[2].Value, idx = ar.Groups[3].Value, pre = ar.Groups[1].Value;
+                lock (Env.Vars) { Env.Arrs.TryGetValue(nm, out arr); arr = arr != null ? arr.ToList() : null; }
+                if (arr == null) { string v0 = Var(nm, c); arr = v0 == "" ? new List<string>() : new List<string> { v0 }; }
+                if (idx == "@" || idx == "*") return pre == "#" ? arr.Count(z => z != null).ToString(CultureInfo.InvariantCulture) : pre == "!" ? string.Join(" ", Enumerable.Range(0, arr.Count).Where(z => arr[z] != null)) : string.Join(" ", arr.Where(z => z != null));
+                long k = MathOf(MathPrep(idx, c), c); if (k < 0) k += arr.Count;
+                string el = (k >= 0 && k < arr.Count ? arr[(int)k] : null) ?? "";
+                return pre == "#" ? el.Length.ToString(CultureInfo.InvariantCulture) : el;
+            }
             if (e.Length > 1 && e[0] == '#' && Regex.IsMatch(e.Substring(1), @"^([A-Za-z_][A-Za-z0-9_]*|\d+)$")) return Var(e.Substring(1), c).Length.ToString(CultureInfo.InvariantCulture);
             var m = Regex.Match(e, @"^([A-Za-z_][A-Za-z0-9_]*|\d+|[?#@$])(.*)$", RegexOptions.Singleline);
             if (!m.Success) throw new FormatException("${" + e + "}: bad substitution");
@@ -643,6 +721,41 @@ namespace AdeeboMeter
             throw new FormatException("${" + e + "}: bad substitution");
         }
         static string GlobRx(string p) { return Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", "."); }
+        // a case pattern: * ? and [abc] / [!a-z] / [^0-9]
+        static bool PatternMatch(string pat, string text)
+        {
+            var sb = new StringBuilder("^");
+            for (int i = 0; i < pat.Length; i++)
+            {
+                char ch = pat[i];
+                if (ch == '*') sb.Append(".*"); else if (ch == '?') sb.Append('.');
+                else if (ch == '[' && pat.IndexOf(']', i + 2) > 0) { int e = pat.IndexOf(']', i + 2); string set = pat.Substring(i + 1, e - i - 1); if (set.StartsWith("!", StringComparison.Ordinal)) set = "^" + set.Substring(1); sb.Append('[').Append(set.Replace("\\", "\\\\")).Append(']'); i = e; }
+                else if (ch == '\\' && i + 1 < pat.Length) sb.Append(Regex.Escape(pat[++i].ToString()));
+                else sb.Append(Regex.Escape(ch.ToString()));
+            }
+            try { return Regex.IsMatch(text, sb.Append('$').ToString(), RegexOptions.Singleline, TimeSpan.FromSeconds(1)); } catch (ArgumentException) { return pat == text; }
+        }
+        // inside $(( )): $(command), `command` and ${...} worked out first - $(( n * $(fact $((n-1))) ))
+        string MathPrep(string e, ShCtx c)
+        {
+            if (e.IndexOf("$(", StringComparison.Ordinal) < 0 && e.IndexOf("${", StringComparison.Ordinal) < 0 && e.IndexOf('`') < 0) return e;
+            var sb = new StringBuilder();
+            for (int i = 0; i < e.Length; i++)
+            {
+                bool dollar = e[i] == '$' && i + 1 < e.Length && (e[i + 1] == '(' || e[i + 1] == '{');
+                if (!dollar && e[i] != '`') { sb.Append(e[i]); continue; }
+                if (e[i] == '`') { int q = e.IndexOf('`', i + 1); if (q < 0) throw new FormatException("a ` isn't closed"); sb.Append(Subst("\u0005" + e.Substring(i + 1, q - i - 1) + "\u0006", c)); i = q; continue; }
+                char open = e[i + 1], close = open == '(' ? ')' : '}'; int d = 0, j = i + 1;
+                for (; j < e.Length; j++) { if (e[j] == open) d++; else if (e[j] == close && --d == 0) break; }
+                if (j >= e.Length) throw new FormatException("a $" + open + " isn't closed");
+                string body = e.Substring(i + 2, j - i - 2);
+                if (open == '{') sb.Append(Param(body, c));
+                else if (body.StartsWith("(", StringComparison.Ordinal) && body.EndsWith(")", StringComparison.Ordinal)) sb.Append(MathOf(MathPrep(body.Substring(1, body.Length - 2), c), c).ToString(CultureInfo.InvariantCulture));
+                else sb.Append(Subst("\u0005" + body + "\u0006", c).Trim());
+                i = j;
+            }
+            return sb.ToString();
+        }
         // $(( )): whole numbers; + - * / % ** ( ) == != < <= > >= && || ! and names or $names (empty = 0). && and || don't work out
         // the side they don't need (#24): $((x && 10/x)) is safe.
         long MathOf(string e, ShCtx c)
@@ -696,7 +809,7 @@ namespace AdeeboMeter
             if (n == "$") { using (var me = System.Diagnostics.Process.GetCurrentProcess()) return me.Id.ToString(CultureInfo.InvariantCulture); }
             if (n == "0") return "adeeboshell";
             int k; if (int.TryParse(n, out k)) return k >= 1 && k <= c.Args.Count ? c.Args[k - 1] : "";
-            string v; lock (Env.Vars) if (Env.Vars.TryGetValue(n, out v)) return v;
+            string v; List<string> av; lock (Env.Vars) { if (Env.Vars.TryGetValue(n, out v)) return v; if (Env.Arrs.TryGetValue(n, out av)) return av.Count > 0 ? av[0] ?? "" : ""; }   // $a: the first element
             switch (n) { case "HOME": return "/home"; case "PWD": return Env.Cwd; case "OLDPWD": return Env.Prev; case "USER": return ShUser; case "HOSTNAME": return ShHost; case "SHELL": return "/bin/adeeboshell"; case "GATEWAY": lock (M.L) return M.Gateway ?? ""; case "RANDOM": lock (shRnd) return shRnd.Next(32768).ToString(CultureInfo.InvariantCulture); }
             return "";
         }
@@ -792,12 +905,13 @@ namespace AdeeboMeter
             {
                 string w = words[k];
                 if (w.StartsWith("\u0003", StringComparison.Ordinal)) { redirs.Add(w); if (NeedsTarget(w.Substring(1))) redirs.Add(k + 1 < words.Count ? words[++k] : "\u0004?"); continue; }
+                if (w.StartsWith("\u000E", StringComparison.Ordinal) || w.StartsWith("\u000F", StringComparison.Ordinal)) { ArrayAssign(w, c, args.Count > 0 && args[0] == "local"); continue; }
                 if (w.StartsWith("\u0008", StringComparison.Ordinal)) { string kv = w.Substring(1); if (args.Count == 0) { int eq = kv.IndexOf('='); assigns.Add(new KeyValuePair<string, string>(kv.Substring(0, eq), kv.Substring(eq + 1))); } else args.Add(kv); continue; }
                 args.Add(w);
             }
             if (args.Count == 0)   // only assignments and/or redirects: > file still makes the file, < file still has to exist (#35)
             {
-                lock (Env.Vars) foreach (var a in assigns) Env.Vars[a.Key] = a.Value;
+                lock (Env.Vars) foreach (var a in assigns) { if (a.Key.EndsWith("+", StringComparison.Ordinal)) { string k = a.Key.TrimEnd('+'), ov; Env.Vars.TryGetValue(k, out ov); if (ov == null) { List<string> av; if (Env.Arrs.TryGetValue(k, out av) && av.Count > 0) ov = av[0]; } Env.Vars[k] = (ov ?? "") + a.Value; } else Env.Vars[a.Key] = a.Value; }   // x+=more
                 int st = lastSubstExit >= 0 ? lastSubstExit : 0;
                 return redirs.Count == 0 ? st : ApplyRedirs(redirs, c, cc => st);
             }
@@ -805,6 +919,36 @@ namespace AdeeboMeter
             if (assigns.Count > 0) { old = new Dictionary<string, string>(); lock (Env.Vars) foreach (var a in assigns) { string ov; old[a.Key] = Env.Vars.TryGetValue(a.Key, out ov) ? ov : null; Env.Vars[a.Key] = a.Value; } }
             try { return redirs.Count == 0 ? Dispatch(args, c) : ApplyRedirs(redirs, c, cc => Dispatch(args, cc)); }
             finally { if (old != null) lock (Env.Vars) foreach (var kv in old) { if (kv.Value == null) Env.Vars.Remove(kv.Key); else Env.Vars[kv.Key] = kv.Value; } }
+        }
+        // a=( ... ) / a+=( ... ) / a[i]=value
+        void ArrayAssign(string w, ShCtx c, bool local)
+        {
+            var parts = w.Substring(1).Split('\u0000'); string name = parts[0].TrimEnd('+'); bool append = parts[0].EndsWith("+", StringComparison.Ordinal);
+            lock (Env.Vars)
+            {
+                if (local && c.Frame != null && !c.Frame.ContainsKey("\u000E" + name)) { List<string> o0; c.Frame["\u000E" + name] = Env.Arrs.TryGetValue(name, out o0) ? string.Join("\u001F", o0) : null; }
+                List<string> arr; if (!Env.Arrs.TryGetValue(name, out arr)) { arr = new List<string>(); string sv; if (Env.Vars.TryGetValue(name, out sv)) { arr.Add(sv); Env.Vars.Remove(name); } Env.Arrs[name] = arr; }
+                if (w[0] == '\u000E') { var items = parts[1] == "" ? new string[0] : parts[1].Split('\u001F'); if (!append) arr.Clear(); arr.AddRange(items); }
+                else { long k; long.TryParse(parts[1], out k); if (k < 0) k += arr.Count; if (k < 0 || k > 100000) return; while (arr.Count <= k) arr.Add(null); arr[(int)k] = parts[2]; }   // null: a gap - a[5]=x after 3 items (bash's arrays are sparse)
+                Env.Vars.Remove(name);
+            }
+        }
+        // a function: its own $1 $2 $#, local variables put back after, return N
+        int CallFunc(string name, Node body, List<string> args, ShCtx c)
+        {
+            if (funcDepth >= 100) { Err(c, name + ": functions called 100 deep - stopped (does it call itself forever?)"); return 1; }
+            var frame = new Dictionary<string, string>(StringComparer.Ordinal); funcDepth++;
+            try { return Exec(body, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes, Script = c.Script, Frame = frame }); }
+            catch (ShFlow fl) { if (fl.Kind == "return") return fl.Code; throw; }
+            finally
+            {
+                funcDepth--;
+                lock (Env.Vars) foreach (var kv in frame)
+                    {
+                        if (kv.Key.StartsWith("\u000E", StringComparison.Ordinal)) { string an = kv.Key.Substring(1); if (kv.Value == null) Env.Arrs.Remove(an); else Env.Arrs[an] = kv.Value.Split('\u001F').ToList(); }
+                        else if (kv.Value == null) Env.Vars.Remove(kv.Key); else Env.Vars[kv.Key] = kv.Value;
+                    }
+            }
         }
         // > >> < 2> 2>> &> 2>&1 >&2, for a command or a whole loop. Errors keep going where they went unless redirected; 2>&1 sends
         // them along with the output (into a file or a pipe - #21); > f 2> f is one file, not one overwriting the other (#63).
@@ -863,6 +1007,8 @@ namespace AdeeboMeter
             string cmd = a[0], low = cmd.ToLowerInvariant(); var args = a.Skip(1).ToList();
             try
             {
+                Node fb; lock (Env.Vars) Env.Funcs.TryGetValue(cmd, out fb);
+                if (fb != null) return CallFunc(cmd, fb, args, c);
                 if (cmd.EndsWith(".sh", StringComparison.OrdinalIgnoreCase) || cmd.StartsWith("./", StringComparison.Ordinal)) return Source(cmd, args, c);
                 int r = Builtin(low, args, c); if (r != int.MinValue) return r;
                 if (low == "iperf3" || (low == "iperf" && args.Any(z => z.StartsWith("-", StringComparison.Ordinal) && z != "--yes" && z != "-y"))) return Iperf3(args, c);
@@ -874,7 +1020,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException || e is ShFlow) throw; Err(c, cmd + ": " + e.Message); if (!(e is ShTooBig)) Program.Log("shell " + cmd + ": " + e); return 2; }
         }
-        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most" };
+        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most", "local", "typeset", "readonly" };
 
         int Builtin(string cmd, List<string> args, ShCtx c)
         {
@@ -998,9 +1144,29 @@ namespace AdeeboMeter
                 case "whoami": OL(c, ShUser); return 0;
                 case "hostname": OL(c, ShHost); return 0;
                 case "uname": OL(c, args.Contains("-a") ? "AdeeboShell " + ShHost + " " + Environment.OSVersion.Version + " " + Program.Version + " " + (Environment.Is64BitOperatingSystem ? "x86_64" : "i686") + " Windows" : "AdeeboShell"); return 0;
-                case "env": case "set": case "printenv": lock (Env.Vars) foreach (var kv in Env.Vars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); OL(c, "HOME=/home  PWD=" + Env.Cwd + "  USER=" + ShUser, ShDim); return 0;
-                case "export": case "declare": case "local": foreach (var w in args) { var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", RegexOptions.Singleline); if (m.Success) lock (Env.Vars) Env.Vars[m.Groups[1].Value] = m.Groups[2].Value; } return 0;
-                case "unset": lock (Env.Vars) foreach (var w in args) Env.Vars.Remove(w); return 0;
+                case "env": case "set": case "printenv": lock (Env.Vars) { foreach (var kv in Env.Vars.OrderBy(z => z.Key)) OL(c, kv.Key + "=" + kv.Value); foreach (var kv in Env.Arrs.OrderBy(z => z.Key)) OL(c, kv.Key + "=(" + string.Join(" ", kv.Value.Where(z => z != null).Select(ShQuote)) + ")"); if (cmd == "set") foreach (var kv in Env.Funcs.OrderBy(z => z.Key)) OL(c, kv.Key + " () { ... }"); } OL(c, "HOME=/home  PWD=" + Env.Cwd + "  USER=" + ShUser, ShDim); return 0;
+                case "local":
+                    {
+                        if (c.Frame == null) { Err(c, "local: only inside a function"); return 1; }
+                        foreach (var w in args.Where(z => !z.StartsWith("-", StringComparison.Ordinal)))
+                        {
+                            var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)(?:=(.*))?$", RegexOptions.Singleline); if (!m.Success) { Err(c, "local: " + w + ": not a name"); continue; }
+                            string nm = m.Groups[1].Value, ov;
+                            lock (Env.Vars) { if (!c.Frame.ContainsKey(nm)) c.Frame[nm] = Env.Vars.TryGetValue(nm, out ov) ? ov : null; Env.Vars[nm] = m.Groups[2].Success ? m.Groups[2].Value : ""; }
+                        }
+                        return 0;
+                    }
+                case "export": case "declare": case "typeset": case "readonly": foreach (var w in args) { var m = Regex.Match(w, "^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", RegexOptions.Singleline); if (m.Success) lock (Env.Vars) Env.Vars[m.Groups[1].Value] = m.Groups[2].Value; } return 0;
+                case "unset":
+                    lock (Env.Vars)
+                        foreach (var w in args)
+                        {
+                            if (w == "-f" || w == "-v") continue;
+                            var em = Regex.Match(w, @"^([A-Za-z_][A-Za-z0-9_]*)\[(\d+)\]$"); List<string> arr;
+                            if (em.Success) { if (Env.Arrs.TryGetValue(em.Groups[1].Value, out arr)) { int k = int.Parse(em.Groups[2].Value, CultureInfo.InvariantCulture); if (k < arr.Count) arr[k] = null; } continue; }
+                            if (args.Contains("-f")) Env.Funcs.Remove(w); else { Env.Vars.Remove(w); Env.Arrs.Remove(w); if (!args.Contains("-v")) Env.Funcs.Remove(w); }
+                        }
+                    return 0;
                 case "read": return Read(args, c);
                 case "test": case "[":   // #52: [ needs its ]
                     {
@@ -1490,23 +1656,25 @@ namespace AdeeboMeter
         void Help(ShCtx c)
         {
             Action<string, string> h = (a, b) => { O(c, "  " + a.PadRight(34), ShCyan); OL(c, b, ShDim); };
-            OL(c, "FOLDERS", ShBlue);
-            h("ls [-l -a] [folder]", "what's here (ll = ls -l) · cd /data/scripts for ready-made scripts"); h("cd <folder> · cd ~ · cd - · cd ..", "home = your folder, data, mnt/c, pages, tools"); h("pwd · tree · find . -name '*.csv'", "where you are, what's below, find by name");
-            h("cat · head -n 20 · tail · grep -i x", "read files or what a pipe sends"); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", "files - rm asks first"); h("du · stat · hash <file>", "sizes, details, SHA-256");
-            OL(c, "THIS PC (read only)", ShBlue);
-            h("df -h · du -sh * · lsblk · free -h", "disks, folder sizes, drives, memory"); h("ps --sort=cpu · top · uptime · lscpu", "what's running and what it costs (nothing is stopped from here)");
-            h("ip a · ip route · ss -tlp · ifconfig", "addresses, routes, connections and listeners"); h("cat /proc/meminfo · watch -n 2 df -h", "/proc as files; re-run anything every few seconds");
-            OL(c, "TOOLS AND PAGES", ShBlue);
-            h("<tool> [args]", "every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX");
-            h("iperf3 -c 10.0.0.5 -R -t 10 -P 4", "iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client"); h("tools [word] · man <tool>", "list them, or what one does"); h("open <page> · cd pages/markets; open", "go to a page"); h("lab [lan|path|wifi|phone|vpn|new]", "AdeeboLab"); h("status · debug · log [n]", "the NOW line · raw values · the app's log");
-            OL(c, "POWER", ShBlue);
-            h("cmd | grep x | sort | head", "pipes; > file, >> file, < file, 2>/dev/null, &> file");
-            h("x=$(cmd) · $((n * 2)) · cut sed awk tr xargs", "command output and sums in a line; the text tools"); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", "and / or / in the background (jobs, wait, kill %1)");
-            h("parallel -j 5 ping {} 4 ::: a b c", "run together, merge as each finishes; cat hosts.txt | parallel ping {} 4"); h("for h in a b c; do ping $h 4; done", "loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep");
-            h("nano file · vim file · less file", "write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time");
-            h("source run.sh [args] [--yes] · ./run.sh", "a script; --yes confirms its test-traffic tools for the whole run"); h("alltools [--yes]", "every tool with its example");
-            OL(c, "Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes", ShDim);
-            OL(c, "Nothing here starts another program: every command is AdeeboMeter's own.", ShDim);
+            OL(c, L.T("FOLDERS"), ShBlue);
+            h("ls [-l -a] [folder]", L.T("what's here (ll = ls -l) · cd /data/scripts for ready-made scripts")); h("cd <folder> · cd ~ · cd - · cd ..", L.T("home = your folder, data, mnt/c, pages, tools")); h("pwd · tree · find . -name '*.csv'", L.T("where you are, what's below, find by name"));
+            h("cat · head -n 20 · tail · grep -i x", L.T("read files or what a pipe sends")); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", L.T("files - rm asks first")); h("du · stat · hash <file>", L.T("sizes, details, SHA-256"));
+            OL(c, L.T("THIS PC (read only)"), ShBlue);
+            h("df -h · du -sh * · lsblk · free -h", L.T("disks, folder sizes, drives, memory")); h("ps --sort=cpu · top · uptime · lscpu", L.T("what's running and what it costs (nothing is stopped from here)"));
+            h("ip a · ip route · ss -tlp · ifconfig", L.T("addresses, routes, connections and listeners")); h("cat /proc/meminfo · watch -n 2 df -h", L.T("/proc as files; re-run anything every few seconds"));
+            OL(c, L.T("TOOLS AND PAGES"), ShBlue);
+            h("<tool> [args]", L.T("every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX"));
+            h("iperf3 -c 10.0.0.5 -R -t 10 -P 4", L.T("iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client")); h("tools [word] · man <tool>", L.T("list them, or what one does")); h("open <page> · cd pages/markets; open", L.T("go to a page")); h("lab [lan|path|wifi|phone|vpn|new]", L.T("AdeeboLab")); h("status · debug · log [n]", L.T("the NOW line · raw values · the app's log"));
+            OL(c, L.T("POWER"), ShBlue);
+            h("cmd | grep x | sort | head", L.T("pipes; > file, >> file, < file, 2>/dev/null, &> file"));
+            h("x=$(cmd) · $((n * 2)) · cut sed awk tr xargs", L.T("command output and sums in a line; the text tools")); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", L.T("and / or / in the background (jobs, wait, kill %1)"));
+            h("parallel -j 5 ping {} 4 ::: a b c", L.T("run together, merge as each finishes; cat hosts.txt | parallel ping {} 4")); h("case $x in a|b) ... ;; *) ... ;; esac", L.T("choose by pattern (* ? [abc])"));
+            h("f() { local n=$1; echo $n; } · a=(x y z)", L.T("functions with local and return; arrays: ${a[1]} \"${a[@]}\" ${#a[@]}"));
+            h("for h in a b c; do ping $h 4; done", L.T("loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep"));
+            h("nano file · vim file · less file", L.T("write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time"));
+            h("source run.sh [args] [--yes] · ./run.sh", L.T("a script; --yes confirms its test-traffic tools for the whole run")); h("alltools [--yes]", L.T("every tool with its example"));
+            OL(c, L.T("Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes"), ShDim);
+            OL(c, L.T("Nothing here starts another program: every command is AdeeboMeter's own."), ShDim);
         }
         void ShToolList(string word, ShCtx c)
         {
@@ -1775,7 +1943,7 @@ namespace AdeeboMeter
             var sh = new TextShape(); string t = ReadShaped(path, sh); var ed = new TermEditor(false, path, "x", t);
             WriteShaped(path, ed.Body, sh); return File.ReadAllBytes(path).SequenceEqual(bytes);
         }
-        internal void TestShellReset() { shMain.Cwd = shMain.Prev = "/home"; shMain.LastExit = 0; shMain.Depth = 0; lock (shMain.Vars) shMain.Vars.Clear(); }
+        internal void TestShellReset() { shMain.Cwd = shMain.Prev = "/home"; shMain.LastExit = 0; shMain.Depth = 0; lock (shMain.Vars) { shMain.Vars.Clear(); shMain.Arrs.Clear(); shMain.Funcs.Clear(); } }
 
         // iperf3 the way you'd type it on Linux (Adeeb, 22 Nov: "why can't I do iperf3 from the cli"): -c host, -p port, -R, --bidir,
         // -t, -P, -u, -b, -l, -w, -S, -O, -M, -4, -6 - turned into the iperf tool's boxes. AdeeboMeter's own iperf3 client runs it;

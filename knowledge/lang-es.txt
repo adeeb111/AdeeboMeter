@@ -5014,3 +5014,56 @@ Off until you turn it on. Then, while this page is open: hockey scores from the 
 ping your pinned addresses in the background	hacer ping a tus direcciones fijadas en segundo plano
 check these games' servers in the background: 	comprobar los servidores de estos juegos en segundo plano: 
 replace your pinned addresses with: 	reemplazar tus direcciones fijadas por: 
+
+A lab drawing someone sent you (.json)	Un diagrama del laboratorio que alguien te envió (.json)
+AdeeboLab drawings	Diagramas de AdeeboLab
+An empty page - pick devices and click to place them	Una página vacía: elige dispositivos y haz clic para colocarlos
+Couldn't read that file:	No se pudo leer ese archivo:
+Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	Dibuja tu red, mira el camino que sigue un paquete y luego rompe una cosa y observa dónde falla. Un diagrama se abre en su propia ventana; todo se queda en este PC.
+EXAMPLES - A TYPICAL HOME, READY TO BREAK	EJEMPLOS: UN HOGAR TÍPICO, LISTO PARA ROMPER
+New diagram	Nuevo diagrama
+None yet - every drawing you change in the lab is kept here (on this PC).	Ninguno todavía: cada diagrama que cambies en el laboratorio se guarda aquí (en este PC).
+Open a file...	Abrir un archivo...
+Open a lab drawing	Abrir un diagrama del laboratorio
+Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies	Elige una falla (DNS, MTU, pérdida, una puerta de enlace equivocada) y mira dónde muere el paquete
+Run a trace or MTR first	Primero ejecuta un trace o un MTR
+That file is over 2 MB - too big for a lab drawing.	Ese archivo pasa de 2 MB: demasiado grande para un diagrama del laboratorio.
+That file isn't a lab drawing.	Ese archivo no es un diagrama del laboratorio.
+The lab window needs Microsoft Edge (it's in Windows). One lab window at a time: opening another closes the last, and keeps what you drew.	La ventana del laboratorio necesita Microsoft Edge (viene con Windows). Una ventana de laboratorio a la vez: abrir otra cierra la anterior y conserva lo que dibujaste.
+YOUR DIAGRAMS	TUS DIAGRAMAS
+YOUR NETWORK, AS ADEEBOMETER SEES IT	TU RED, COMO LA VE ADEEBOMETER
+ask them	preguntarles
+
+/proc as files; re-run anything every few seconds	/proc como archivos; repite cualquier cosa cada pocos segundos
+FOLDERS	CARPETAS
+Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes	Teclas: Tab completa (dos veces lista) · Arriba/Abajo historial · Ctrl+C detiene (o copia una selección) · Ctrl+L limpia · Ctrl+U/K/W edición · clic derecho pega
+Nothing here starts another program: every command is AdeeboMeter's own.	Nada aquí inicia otro programa: cada comando es de AdeeboMeter.
+POWER	AVANZADO
+THIS PC (read only)	ESTE PC (solo lectura)
+TOOLS AND PAGES	HERRAMIENTAS Y PÁGINAS
+a script; --yes confirms its test-traffic tools for the whole run	un script; --yes confirma sus herramientas de tráfico de prueba para toda la ejecución
+addresses, routes, connections and listeners	direcciones, rutas, conexiones y puertos a la escucha
+and / or / in the background (jobs, wait, kill %1)	y / o / en segundo plano (jobs, wait, kill %1)
+choose by pattern (* ? [abc])	elegir por patrón (* ? [abc])
+command output and sums in a line; the text tools	salida de un comando y cálculos en una línea; las herramientas de texto
+disks, folder sizes, drives, memory	discos, tamaño de carpetas, unidades, memoria
+every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	cada herramienta de la Caja de herramientas es un comando: ping 1.1.1.1 20 · dig example.com MX
+every tool is a command, every page is a folder	cada herramienta es un comando, cada página es una carpeta
+every tool with its example	cada herramienta con su ejemplo
+files - rm asks first	archivos - rm pregunta primero
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	funciones con local y return; arreglos: ${a[1]} "${a[@]}" ${#a[@]}
+go to a page	ir a una página
+help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help para todo · Tab completa · Ctrl+C detiene · nada aquí inicia otro programa
+home = your folder, data, mnt/c, pages, tools	home = tu carpeta, data, mnt/c, pages, tools
+iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client	iperf3 con sus opciones reales (-p -u -b --bidir también); AdeeboMeter es el cliente
+list them, or what one does	listarlas, o qué hace una
+loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep	bucles, while, if/then/else/fi, NOMBRE=valor, $1 $? read test seq sleep
+pipes; > file, >> file, < file, 2>/dev/null, &> file	tuberías; > archivo, >> archivo, < archivo, 2>/dev/null, &> archivo
+read files or what a pipe sends	leer archivos o lo que envía una tubería
+run together, merge as each finishes; cat hosts.txt | parallel ping {} 4	ejecutar a la vez, combinar a medida que terminan; cat hosts.txt | parallel ping {} 4
+sizes, details, SHA-256	tamaños, detalles, SHA-256
+the NOW line · raw values · the app's log	la línea AHORA · valores en bruto · el registro de la app
+what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	qué hay aquí (ll = ls -l) · cd /data/scripts para scripts listos
+what's running and what it costs (nothing is stopped from here)	qué se está ejecutando y cuánto cuesta (aquí no se detiene nada)
+where you are, what's below, find by name	dónde estás, qué hay debajo, buscar por nombre
+write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	escribe un script o cualquier archivo de texto, aquí mismo (^S guardar ^X salir · :wq); lee uno largo página a página
