@@ -268,7 +268,27 @@ namespace AdeeboMeter
                                     }
                             }
                             }
-                            catch (System.Management.ManagementException pe) { wmiErr = dn + ": " + pe.Message; }
+                            catch (System.Management.ManagementException pe)
+                            {
+                                // 1.1.6 test (Intel RST RAID): the old Win32 links answer "Not found" - Windows' Storage view still knows the partitions
+                                int n = 0; try { n = Convert.ToInt32(disk["Index"], CultureInfo.InvariantCulture); } catch (FormatException) { }
+                                var sp = new List<string[]>();
+                                try
+                                {
+                                    using (var sq = new System.Management.ManagementObjectSearcher(@"\\.\root\Microsoft\Windows\Storage", "SELECT PartitionNumber, Size, DriveLetter FROM MSFT_Partition WHERE DiskNumber = " + n))
+                                        foreach (System.Management.ManagementObject o in sq.Get()) using (o)
+                                        {
+                                            ulong psz = 0; try { psz = Convert.ToUInt64(o["Size"] ?? 0UL, CultureInfo.InvariantCulture); } catch (FormatException) { }
+                                            string dl = Convert.ToString(o["DriveLetter"], CultureInfo.InvariantCulture).Trim('\0', ' '), fs = "", lab = "";
+                                            if (dl != "") { placed.Add(dl + ":"); try { var di = new DriveInfo(dl); if (di.IsReady) { fs = di.DriveFormat.ToLowerInvariant(); lab = di.VolumeLabel; } } catch (IOException) { } catch (ArgumentException) { } }
+                                            sp.Add(new[] { Convert.ToString(o["PartitionNumber"], CultureInfo.InvariantCulture), Human(psz), fs, lab, dl == "" ? "" : "/mnt/" + dl.ToLowerInvariant() });
+                                        }
+                                }
+                                catch (Exception se) { if (!(se is System.Management.ManagementException || se is UnauthorizedAccessException || se is COMException)) throw; sp.Clear(); }
+                                if (sp.Count == 0) wmiErr = dn + ": " + pe.Message;
+                                sp = sp.OrderBy(z => { int k; int.TryParse(z[0], out k); return k; }).ToList();
+                                for (int i = 0; i < sp.Count; i++) rows.Add(new[] { (i == sp.Count - 1 ? "└─" : "├─") + dn + "p" + sp[i][0], sp[i][1], "part", sp[i][2], sp[i][3], sp[i][4], "" });
+                            }
                         }
             }
             catch (Exception e) { if (!(e is System.Management.ManagementException || e is UnauthorizedAccessException || e is COMException)) throw; wmiErr = e.Message; }
