@@ -173,6 +173,17 @@ namespace AdeeboMeter
                 y += 6 * S;
             }
 
+            // Evidence workbench: measured steps, timestamp, source and limitations.
+            {
+                string ev = "Inspect journey evidence + timestamps  >";
+                var es = g.MeasureString(ev, Draw.fBodyB);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                    g.DrawString(ev, Draw.fBodyB, lb, x, y);
+                Act(travelCanvas, new RectangleF(x, y, Math.Min(w, es.Width), es.Height),
+                    delegate { ShowStoryEvidence(); });
+                y += es.Height + 14 * S;
+            }
+
             // the timed handshake
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOW LONG EACH STEP TAKES"), Draw.fTiny, mb, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "travel.LADDER");
             y += 22 * S;
