@@ -1228,7 +1228,7 @@ namespace AdeeboMeter
                                 new[] { "cd /data/selftest-sh2; printf 'source g.sh --yes\\n' > g2.sh; ./g2.sh 2>&1", "~only counts when you type it" },
                                 new[] { "cd /data/selftest-sh2; printf 'parallel --yes echo {} ::: a\\n' > g3.sh; ./g3.sh 2>&1", "~only counts when you type it" },
                                 new[] { "cd /data/selftest-sh2; printf './r.sh\\n' > r.sh; ./r.sh 2>&1", "~nested 8 deep" },
-                                new[] { "rm -rf /home 2>&1", "~won't remove" },
+                                new[] { "rm -rf /home 2>&1", "~read-only" },
                                 new[] { "cd /data/selftest-sh2; echo z > keep.txt; rm keep.txt 2>&1", "~add -f in a script" },
                                 new[] { "host example.com 1.1.1.1 2>&1", "~chosen server" },
                                 new[] { "uptime | grep -c \"load average\"", "1" },
