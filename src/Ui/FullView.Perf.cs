@@ -21,6 +21,10 @@ namespace AdeeboMeter
                     foreach (var th in new[] { 0, 1 })
                     {
                         Cfg.Layout = lay; ApplyLayout(); Cfg.SetTheme(th); Application.DoEvents();
+                        // 23 Nov (Adeeb's PC): the self-test's own earlier work - garbage from 200 tests, tools finishing in the
+                        // background - made the same page 37 ms in one run and 127 in the next, while --perf on the same PC drew every
+                        // page in 25 ms or less. Each round starts after a collection, so the page is measured, not the test's leftovers.
+                        GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect(); Application.DoEvents();
                         var times = new List<string>();
                         foreach (var t in tabNames.Keys.ToList())
                         {
@@ -30,7 +34,7 @@ namespace AdeeboMeter
                             // 22 Nov (Adeeb's PC: security 59 ms once, 24-29 ms in the other three layouts): a short burst elsewhere on the PC
                             // can slow three draws in a row - over the limit, wait half a second and measure again; a slow page is slow both times
                             // R2-143: the second look is judged on its own typical draw (the median of 5), not the fastest of all six
-                            if (best > limitMs) { System.Threading.Thread.Sleep(500); Application.DoEvents(); var again = new List<double>(); for (int i = 0; i < 5; i++) { var sw = Stopwatch.StartNew(); leftPane.Refresh(); again.Add(sw.Elapsed.TotalMilliseconds); } again.Sort(); best = again[2]; }
+                            if (best > limitMs) { GC.Collect(); GC.WaitForPendingFinalizers(); System.Threading.Thread.Sleep(1500); Application.DoEvents(); var again = new List<double>(); for (int i = 0; i < 5; i++) { var sw = Stopwatch.StartNew(); leftPane.Refresh(); again.Add(sw.Elapsed.TotalMilliseconds); } again.Sort(); best = again[2]; }
                             times.Add(t + " " + best.ToString("0", System.Globalization.CultureInfo.InvariantCulture));
                             if (best > limitMs) bad.Add(lay + "/" + (th == 0 ? "light" : "dark") + "/" + t + " " + best.ToString("0", System.Globalization.CultureInfo.InvariantCulture) + " ms");
                         }
