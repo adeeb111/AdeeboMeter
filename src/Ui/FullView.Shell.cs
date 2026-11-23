@@ -105,7 +105,7 @@ namespace AdeeboMeter
             foreach (var r in ShReadyScripts) { term.Write("    " + r[0].PadRight(24), ShGreen); term.Write(r[1] + "\n", ShDim); }
             term.Write("    " + "health-check.sh".PadRight(24), ShGreen); term.Write("the 10-second look: router, internet, names - stops at the first broken one\n", ShDim);
             term.Write("    " + "five-at-a-time.sh".PadRight(24), ShGreen); term.Write("five pings at once, merged into one file\n", ShDim);
-            term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  nano my-check.sh  · keep any output with  > file.txt\n\n", ShDim);
+            term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  cd /data  then  nano my-check.sh  · keep any output with  > file.txt  (inside /data)\n\n", ShDim);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
         }
@@ -895,6 +895,7 @@ namespace AdeeboMeter
             if (Regex.IsMatch(p, "^[A-Za-z]:(/|$)")) p = "/mnt/" + char.ToLowerInvariant(p[0]) + p.Substring(2);   // C:\Users -> /mnt/c/Users
             var parts = new List<string>(p.StartsWith("/", StringComparison.Ordinal) ? new string[0] : Env.Cwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries));
             foreach (var seg in p.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)) { if (seg == ".") continue; if (seg == "..") { if (parts.Count > 0) parts.RemoveAt(parts.Count - 1); continue; } parts.Add(seg); }
+            if (parts.Count > 0) { var root = ShRoots.FirstOrDefault(z => string.Equals(z[0], parts[0], StringComparison.OrdinalIgnoreCase)); if (root != null) parts[0] = root[0]; }   // review F3/F4: /DATA, /Home, /MNT are the same folders
             return "/" + string.Join("/", parts);
         }
         static string Home { get { return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); } }
@@ -903,10 +904,30 @@ namespace AdeeboMeter
         internal static bool InData(string real)
         {
             if (string.IsNullOrEmpty(real)) return false;
-            try { string d = Path.GetFullPath(Program.DataDir).TrimEnd('\\') + "\\", f = Path.GetFullPath(real).TrimEnd('\\') + "\\"; return f.StartsWith(d, StringComparison.OrdinalIgnoreCase); }
+            try
+            {
+                string d = Path.GetFullPath(Program.DataDir).TrimEnd('\\') + "\\", f = Path.GetFullPath(real).TrimEnd('\\') + "\\";
+                if (!f.StartsWith(d, StringComparison.OrdinalIgnoreCase)) return false;
+                // review round 3, A1: Windows drops a name's trailing dots and spaces when it opens it, so ".. " would walk out of /data
+                // A2: a junction or symlink inside /data would carry the write anywhere - every part of the way is checked, not just the spelling
+                string walk = d.TrimEnd('\\');
+                foreach (var part in f.Substring(d.Length).Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (part.EndsWith(".", StringComparison.Ordinal) || part.EndsWith(" ", StringComparison.Ordinal)) return false;
+                    walk = Path.Combine(walk, part);
+                    if ((File.Exists(walk) || Directory.Exists(walk)) && IsLink(walk)) return false;
+                }
+                return true;
+            }
             catch (ArgumentException) { return false; } catch (NotSupportedException) { return false; } catch (PathTooLongException) { return false; }
         }
-        const string ReadOnlyNote = ": read-only - AdeeboShell changes files only inside /data (AdeeboMeter's own folder); your PC's files can be read and copied into /data, never changed";
+        const string ReadOnlyNote = ": read-only - AdeeboShell changes files only inside /data (AdeeboMeter's own folder), never through a link out of it and never names ending in a dot or space; your PC's files can be read and copied into /data, never changed";
+        // rm -r and mv of a folder: never into a link inside it (it would empty the folder the link points to)
+        static bool HasLinkInside(string dir)
+        {
+            try { var st = new Stack<string>(); st.Push(dir); int n = 0; while (st.Count > 0 && n++ < 200000) { var d0 = st.Pop(); foreach (var e in Directory.EnumerateFileSystemEntries(d0)) { if (IsLink(e)) return true; if (Directory.Exists(e)) st.Push(e); } } return false; }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return true; }
+        }
         bool Writable(string real, string shown, string cmd, ShCtx c) { if (InData(real)) return true; Err(c, cmd + ": " + shown + ReadOnlyNote); return false; }
         // the real folder behind a path, or null for the virtual ones (/, /pages, /tools, /mnt, /proc)
         string Real(string v)
@@ -1487,7 +1508,7 @@ namespace AdeeboMeter
         static string FmtLs(FileSystemInfo e)
         {
             var fi = e as FileInfo; string size = fi == null ? "-" : fi.Length < 1024 ? fi.Length + " B" : fi.Length < 1048576 ? (fi.Length / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " K" : (fi.Length / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " M";
-            return (e is DirectoryInfo ? "d" : "-") + ((e.Attributes & FileAttributes.ReadOnly) != 0 ? "r-" : "rw") + "  " + size.PadLeft(9) + "  " + e.LastWriteTime.ToString("dd MMM HH:mm", CultureInfo.CurrentCulture) + "  " + e.Name + (e is DirectoryInfo ? "/" : "");
+            return (e is DirectoryInfo ? "d" : "-") + ((e.Attributes & FileAttributes.ReadOnly) != 0 || !InData(e.FullName) ? "r-" : "rw") + "  " + size.PadLeft(9) + "  " + e.LastWriteTime.ToString("dd MMM HH:mm", CultureInfo.CurrentCulture) + "  " + e.Name + (e is DirectoryInfo ? "/" : "");
         }
         static bool IsLink(string path) { try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return true; } }
         int Tree(string p, ShCtx c)
@@ -1674,6 +1695,7 @@ namespace AdeeboMeter
                 if (move && sameVol && !Directory.Exists(to)) { Directory.Move(src, to); continue; }
                 if (move && Directory.Exists(to)) { Err(c, "mv: " + p[p.Count - 1] + "/" + Path.GetFileName(src) + " already exists"); ex = 1; continue; }
                 CopyDir(src, to, c); if (c.Job.Cancel) return 130;
+                if (move && HasLinkInside(src)) { Err(c, "mv: " + s + " has a link (junction or symlink) inside - copied, but the original is kept"); ex = 1; continue; }
                 if (move) Directory.Delete(src, true);
             }
             return ex;
@@ -1695,6 +1717,7 @@ namespace AdeeboMeter
                 bool dir = Directory.Exists(r); if (!dir && !File.Exists(r)) { if (!force) Err(c, "rm: " + s + ": no such file"); continue; }
                 if (dir && !rec) { Err(c, "rm: " + s + " is a folder - rm -r"); return 1; }
                 if (!force) { if (c.Job.Bg || c.Script) { Err(c, "rm: " + s + " - add -f in a script (it can't ask you)"); return 1; } string ans = ShAsk("remove " + (dir ? "the folder " : "") + s + (dir ? " and everything in it" : "") + "? [y/N] ", false); if (ans == null || !ans.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase)) { OL(c, "kept", ShDim); continue; } }
+                if (dir && HasLinkInside(r)) { Err(c, "rm: " + s + " has a link (junction or symlink) inside - remove that link in File Explorer first, so nothing it points to is touched"); return 1; }
                 if (dir) Directory.Delete(r, true); else File.Delete(r);
             }
             return 0;
@@ -1768,7 +1791,7 @@ namespace AdeeboMeter
                         case "-d": return IsDir(av);
                         case "-e": case "-r": return (r != null && (File.Exists(r) || Directory.Exists(r))) || ProcExists(av) || IsDir(av);
                         case "-s": return (r != null && File.Exists(r) && new FileInfo(r).Length > 0) || ProcExists(av);
-                        case "-w": return r != null && ((File.Exists(r) && (File.GetAttributes(r) & FileAttributes.ReadOnly) == 0) || Directory.Exists(r));
+                        case "-w": return r != null && InData(r) && (!File.Exists(r) || (File.GetAttributes(r) & FileAttributes.ReadOnly) == 0);   // the shell's own rule: only inside /data
                         case "-x": return r != null && File.Exists(r) && IsScript(r);
                         case "-L": return r != null && (File.Exists(r) || Directory.Exists(r)) && IsLink(r);
                     }
@@ -1784,6 +1807,7 @@ namespace AdeeboMeter
         int Open(List<string> args, ShCtx c)
         {
             string p = args.Count == 0 ? "" : args[0].ToLowerInvariant().Trim('/');
+            if ((p == "" || p == ".") && Env.Cwd.StartsWith("/data", StringComparison.OrdinalIgnoreCase)) { args = new List<string> { "." }; p = "\u0001"; }   // open . inside /data: File Explorer (below)
             if (p == "" || p == ".") { var seg = Env.Cwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); if (seg.Length == 2 && seg[0] == "pages") p = seg[1]; else if (seg.Length == 3 && seg[0] == "tools") p = "tool:" + seg[2]; else { Err(c, "open: which page? (cd pages/<name> then open, or open <name>)"); return 1; } }
             if (p.StartsWith("pages/", StringComparison.Ordinal)) p = p.Substring(6);
             if (p.StartsWith("tool:", StringComparison.Ordinal) || (shTools.Any(t => t.Id == p) && !ShPageIds().Contains(p))) { string id = p.StartsWith("tool:", StringComparison.Ordinal) ? p.Substring(5) : p; OL(c, "opening " + id + " in the Toolbox", ShGreen); Ui(delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(id); SyncNav(); }); return 0; }
@@ -2227,7 +2251,7 @@ namespace AdeeboMeter
                 "echo \"== how this PC joined the network\"\njoin\ndhcp\n" +
                 "echo \"== the router ($GATEWAY)\"\nping $GATEWAY 20\n" +
                 "echo \"== the internet\"\nping 1.1.1.1 20\nip46 example.com\n" +
-                "echo \"== names (DNS)\"\ndig example.com A\ndnsrace\n" +
+                "echo \"== names (DNS)\"\ndig example.com A\ndig example.com AAAA\n" +
                 "echo \"== Wi-Fi drops and roams\"\nroams\n" +
                 "echo \"== the path, hop by hop (1 minute)\"\nmtr 1.1.1.1 1\n" +
                 "echo \"== done\"\nstatus\n" },

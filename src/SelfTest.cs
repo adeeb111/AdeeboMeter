@@ -1190,6 +1190,7 @@ namespace AdeeboMeter
                                 new[] { "cd /data/selftest-sh2; for i in 1 2; do echo $i; done > loop.txt; cat loop.txt | wc -l", "2" },
                                 new[] { "cd /data/selftest-sh2; while read l; do echo got$l; done < loop.txt | tail -n 1", "got2" },
                                 new[] { "nosuchcmd 2>&1 | grep -c \"not found\"", "1" },
+                                new[] { "echo x > \"/data/.. /adeeboshell-escape.txt\" 2>&1 | grep -c read-only", "1" },   // review A1: a trailing space never walks out of /data
                                 new[] { "touch ~/adeeboshell-ro-check.txt 2>&1 | grep -c read-only; test -f ~/adeeboshell-ro-check.txt && echo wrote || echo kept", "1\nkept" },   // 1.1.6: your own files are read-only here
                                 new[] { "echo debug >&2 | wc -l", "0" },
                                 new[] { "cd /data/selftest-sh2; > made.txt; test -f made.txt && echo made", "made" },

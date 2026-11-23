@@ -91,7 +91,7 @@ namespace AdeeboMeter
             if (lines.Count <= MaxLines + 500) return;   // in batches, so the cache isn't thrown away on every line
             int n = lines.Count - MaxLines; lines.RemoveRange(0, n);
             var note = new Line(); note.Add(new Seg("… older lines dropped - the last " + MaxLines.ToString("N0") + " are kept here (> file keeps everything)", Color.FromArgb(125, 133, 144))); lines.Insert(0, note);
-            if (liveAt >= 0) liveAt = Math.Max(1, liveAt - n + 1); ClearSel(); ResetCache();
+            if (liveAt >= 0) liveAt = Math.Max(1, liveAt - n + 1); ClearSel(); ResetCache(); lastCount = -1;   // rows dropped at the top: the bottom-anchored scroll is already right
         }
         void Changed() { Invalidate(); }
         public string AllText() { return string.Join("\n", lines.Select(l => l.Text)); }
@@ -154,7 +154,7 @@ namespace AdeeboMeter
 
             int count = Relayout(), vis = VisibleRows;
             // scrolled up: new output must not drag what you're reading away (1.1.6 test - alltools' stream made scrolling back impossible)
-            if (scroll > 0 && lastCount >= 0 && count > lastCount) scroll += count - lastCount; lastCount = count;
+            if (scroll > 0 && lastCount >= 0 && count != lastCount) scroll = Math.Max(0, scroll + count - lastCount); lastCount = count;   // grows or shrinks (a status line or live table going away): the same rows stay on screen
             int maxScroll = Math.Max(0, count - vis); if (scroll > maxScroll) scroll = maxScroll;
             int first = Math.Max(0, count - vis - scroll), cols = Cols;
             float y = TopY; var sel = SelRange();
@@ -215,7 +215,7 @@ namespace AdeeboMeter
         public void Flash(string s) { barFlash = s ?? ""; barFlashAt = DateTime.UtcNow; Invalidate(new Rectangle(0, 0, Width, (int)(31 * Draw.S))); var t = new Timer { Interval = 2600 }; t.Tick += delegate { t.Stop(); t.Dispose(); if (!IsDisposed) Invalidate(new Rectangle(0, 0, Width, (int)(31 * Draw.S))); }; t.Start(); }
         void PaintBarButtons(Graphics g)
         {
-            float S = Draw.S, x = ClientSize.Width - 14 * S; var labels = new[] { SelectedText() != "" ? "Copy selection" : "Copy all", "Save log" };
+            float S = Draw.S, x = ClientSize.Width - 14 * S; var labels = new[] { SelRange() != null ? "Copy selection" : "Copy all", "Save log" };   // review UI-3: no selection-sized string on every blink
             for (int i = labels.Length - 1; i >= 0; i--)
             {
                 var sz = g.MeasureString(labels[i], Draw.fSmall); var r = new RectangleF(x - sz.Width - 16 * S, 5 * S, sz.Width + 16 * S, 20 * S); x = r.X - 8 * S; barBtns[i] = r;
