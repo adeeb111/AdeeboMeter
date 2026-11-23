@@ -39,7 +39,9 @@ namespace AdeeboMeter
         }
         bool? checkupTick;
         // Review-2: the checkup's speed test is opt-in on a metered line and on Penny (low-data views)
-        bool checkupSpeed { get { if (checkupTick == null) checkupTick = !CheckupMetered() && Cfg.Preset != "penny"; return checkupTick.Value; } set { checkupTick = value; } }
+        string checkupTickFor;
+        // hunt-5 M-2: decided again whenever what it reads changes (a cap set, Penny picked, a phone hotspot) - your own tick lasts until then
+        bool checkupSpeed { get { bool metered = CheckupMetered(); string k = metered + "|" + Cfg.Preset; if (checkupTick == null || checkupTickFor != k) { checkupTick = !metered && Cfg.Preset != "penny"; checkupTickFor = k; } return checkupTick.Value; } set { checkupTick = value; checkupTickFor = CheckupMetered() + "|" + Cfg.Preset; } }
         bool CheckupMetered()
         {
             if (Cfg.CapGB > 0) return true;   // a monthly cap set in Alerts: don't spend it without asking

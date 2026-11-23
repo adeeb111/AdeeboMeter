@@ -72,7 +72,6 @@ General	عام
 Got it	فهمت
 HOW LONG EACH STEP TAKES	كم تستغرق كل خطوة
 HOW WOULD YOU LIKE ADEEBOMETER?	كيف تحبين "إدبوبوميتير"؟
-Health	حالة الجهاز
 History	السجل
 History & data	السجل والبيانات
 Home networks only	الشبكات المنزلية فقط
@@ -939,7 +938,8 @@ What kind of address is	أي نوع من العنوان
 10 scenarios	سيناريوهات 10
 5 cases	قضايا 5
 10 puzzles	لغزات 10
-8 right to win	8 حق الفوز
+8 right to win	8 إجابات صحيحة للفوز
+9 right to win	9 إجابات صحيحة للفوز
 Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	لا يمكن أن يصل جهاز الكمبيوتر الخاص بك إلى example.com. كل شيء أدناه هو محاكاة - تشغيل الأوامر ومعرفة السبب.
 hint used	تم استخدام تلميح
 wrong guess	تخمين غير صحيح
@@ -1015,7 +1015,7 @@ Party hat	قبعة احتفال
 Crown	التاج
 Survive the outage	نجا من انقطاع الطاقة
 Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.	ثمانية شبكات مكسورة، خمسة عشر ثانية كل واحدة. اقرأ النقاط، اتصل بالسبب. أسرع تسجل أكثر.
-6 right to win	6 حق الفوز
+6 right to win	6 إجابات صحيحة للفوز
 The packet dungeon	سجن الحزمة
 Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.	ثمانية غرف من الكابل إلى القبو ثلاثة قلوب كل غرفة تنظفها تترك مدرج
 reach the treasure	إصل إلى الكنز
@@ -5083,3 +5083,7 @@ That file holds several diagrams - the first one is opened; each one you change 
 diagrams saved to	مخططات حُفظت في
 Windows didn't answer about your connection - asking again in a few seconds.	لم يُجب Windows عن اتصالك - سأسأل مجددًا بعد بضع ثوانٍ.
 Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	قد يستغرق تقرير Wi-Fi الخاص بـ Windows (netsh wlan) من 10 إلى 15 ثانية - المحوّل، ثم الشبكات من حولك، ثم النطاق والقناة.
+Postponed	مؤجلة
+Cancelled	ملغاة
+Suspended	معلّقة
+Abandoned	أُوقفت

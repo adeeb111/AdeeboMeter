@@ -143,7 +143,7 @@ namespace AdeeboMeter
         {
             bool on = Lines.Faith != "off"; Color warm = Color.FromArgb(Theme.Dark ? 0x3A : 0xFF, Theme.Dark ? 0x30 : 0xF6, Theme.Dark ? 0x1C : 0xE0);
             int chipRows = 1; { float mx = x + 14 * S + g.MeasureString(L.T("WORDS OF COMFORT"), Draw.fTiny).Width + 60 * S; for (int i = 1; i < Lines.Faiths.Length; i++) { float cw0 = g.MeasureString(L.T(Lines.FaithNames[i]), Draw.fSmall).Width + 24 * S; if (mx + cw0 > x + w - 10 * S) { chipRows++; mx = x + 14 * S; } mx += cw0; } }
-            var bar = new RectangleF(x, y, w, 88 * S + chipRows * 30 * S); Theme.Fill(g, bar, 14 * S, on ? warm : Theme.Soft);   // AM-CG-179: as tall as its chips need if (on) Theme.Stroke(g, bar, 14 * S, Theme.Amber, 1);   // room for two rows of faiths
+            var bar = new RectangleF(x, y, w, 88 * S + chipRows * 30 * S); Theme.Fill(g, bar, 14 * S, on ? warm : Theme.Soft);   /* AM-CG-179: as tall as its chips need */ if (on) Theme.Stroke(g, bar, 14 * S, Theme.Amber, 1);   // room for two rows of faiths
             float bx = bar.X + 14 * S, by = bar.Y + 10 * S;
             using (var hb = new SolidBrush(on ? (Theme.Dark ? Color.FromArgb(0xF2, 0xC9, 0x6B) : Color.FromArgb(0x8A, 0x5A, 0x00)) : Theme.Muted)) g.DrawString(L.T("WORDS OF COMFORT"), Draw.fTiny, hb, bx, by + 3 * S);
             // the switch: on picks the last faith chosen (what they share, if none)

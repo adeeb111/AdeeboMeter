@@ -287,7 +287,7 @@ namespace AdeeboMeter
             switch (id)
             {
                 case 1: case 3: case 6: case 42: case 44: case 54: case 150: return string.Join(", ", Enumerable.Range(0, d.Length / 4).Select(k => ip(k * 4)));
-                case 51: { if (d.Length < 4) return "?"; long s = (long)d[0] << 24 | (long)d[1] << 16 | (long)d[2] << 8 | d[3]; return TimeSpan.FromSeconds(s).TotalHours >= 1 ? (s / 3600.0).ToString("0.#", CultureInfo.InvariantCulture) + " h" : I(s) + " s"; }
+                case 51: { if (d.Length < 4) return "?"; long s = (long)d[0] << 24 | (long)d[1] << 16 | (long)d[2] << 8 | d[3]; if (s == 0xFFFFFFFFL) return "infinite (never expires)";   /* hunt-5: not 1193046.5 h */ return TimeSpan.FromSeconds(s).TotalHours >= 1 ? (s / 3600.0).ToString("0.#", CultureInfo.InvariantCulture) + " h" : I(s) + " s"; }
                 case 15: case 66: case 67: case 252: return Encoding.ASCII.GetString(d).TrimEnd('\0');
                 case 119:   // RFC 3397: a list of names; a name may end in a pointer to labels earlier in the option
                     {

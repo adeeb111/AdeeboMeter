@@ -119,7 +119,7 @@ namespace AdeeboMeter
             lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Remove(ifSnaps.OrderBy(z => z.Value.At).First().Key);   /* L-37: the oldest goes, not all 20 */ ifSnaps[key] = now; }
             if (old != null) Changes(rows, old, now);
             Missing(rows);
-            Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1000000000UL) + "G" : (v / 1000000UL) + "M";
+            Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1e9).ToString("0.#", CultureInfo.InvariantCulture) + "G" : (v / 1000000UL) + "M";   /* hunt-5: 2.5G, not 2G */
             Table(rows, new[] { "Interface", "Admin", "Oper", "Speed", "In err", "Out err", "CRC", "In disc", "Out disc", "Description" },
                 list.Take(400).Select(r => new[] { r.Name, r.a, r.o, sps(r.sp), Nc(r.e1), Nc(r.e2), Nc(r.cr), Nc(r.d1), Nc(r.d2), r.Alias }).ToList(),
                 list.Take(400).Select(r => r.down || r.errs).ToList());

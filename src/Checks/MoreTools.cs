@@ -220,7 +220,7 @@ namespace AdeeboMeter
                 X509Days(h, out ms);
                 int days = double.IsNaN(ms) ? -1 : (int)ms;
                 bool expired = !double.IsNaN(ms) && ms < 0;
-                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a0 + (expired ? " · certificate EXPIRED " + (ms > -1 ? Math.Max(1, (int)Math.Ceiling(-ms * 24)) + " h ago" : (int)(-ms) + " days ago") : !double.IsNaN(ms) ? " · certificate " + (ms < 1 ? Math.Max(1, (int)Math.Ceiling(ms * 24)) + " h left" : days + " days left") : " · certificate not read")   /* L-205: under a day in hours */, expired ? "Visitors get a security warning - renew it." : "", "m"));
+                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a0 + (expired ? " · certificate EXPIRED " + (ms > -1 ? Math.Max(1, (int)Math.Ceiling(-ms * 24)) + " h ago" : (int)(-ms) + ((int)(-ms) == 1 ? " day ago" : " days ago")) : !double.IsNaN(ms) ? " · certificate " + (ms < 1 ? Math.Max(1, (int)Math.Ceiling(ms * 24)) + " h left" : days + " days left") : " · certificate not read")   /* L-205: under a day in hours */, expired ? "Visitors get a security warning - renew it." : "", "m"));
             }
             return rows;
         }

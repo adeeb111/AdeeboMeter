@@ -57,7 +57,8 @@ namespace AdeeboMeter
             var ps = g.MeasureString(place, Draw.fBtn); var pr = new RectangleF(x + w - ps.Width - 40 * S - 120 * S, y + 8 * S, ps.Width + 40 * S, 40 * S); Kit.Box(g, pr, 10 * S);
             Kit.Icon(g, "dest", new RectangleF(pr.X + 10 * S, pr.Y + 11 * S, 18 * S, 18 * S), Theme.Blue); OlText(g, place, Draw.fBtn, Theme.Ink, pr.X + 32 * S, pr.Y + (pr.Height - ps.Height) / 2);
             Act(oc, pr, delegate { var p = PickPlace(); if (p != null) { Cfg.WeatherPlace = Weather.Line(p); Cfg.WeatherOn = true; Cfg.Save(); oc.Invalidate(); } });
-            OlText(g, L.T("Updated") + " " + DateTime.Now.ToString("t", CultureInfo.CurrentCulture), Draw.fSmall, Theme.Muted, pr.Right + 12 * S, pr.Y + 12 * S);
+            DateTime fw = Weather.Active ? Weather.Fetched : DateTime.MinValue;   // hunt-5: when the forecast was fetched, not when this was painted
+            OlText(g, fw > DateTime.MinValue ? L.T("Updated") + " " + fw.ToLocalTime().ToString(fw.ToLocalTime().Date == DateTime.Today ? "t" : "ddd t", CultureInfo.CurrentCulture) : L.T("Not fetched yet"), Draw.fSmall, Theme.Muted, pr.Right + 12 * S, pr.Y + 12 * S);
             y += 86 * S;
 
             // row 1: weather now | your network | this PC

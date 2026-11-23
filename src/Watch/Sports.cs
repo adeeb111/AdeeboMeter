@@ -141,7 +141,7 @@ namespace AdeeboMeter
                 {
                     sport("hockey", Hockey);
                     // no key of your own: ESPN's free scoreboards (no key, read once a day - the page says so); your own key turns ESPN off
-                    if (Key("football") == "") sport("football", EspnFootball);   // bug-hunt R2-010: a failure keeps what was on screen, with the real reason else { FromEspn = false; sport("football", () => Football(Key("football"))); }
+                    if (Key("football") == "") sport("football", EspnFootball); else { FromEspn = false; sport("football", () => Football(Key("football"))); }   /* bug-hunt R2-010: a failure keeps what was on screen, with the real reason; hunt-5 H-1: the else was inside the comment - a key turned football off */
                     if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
                     else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
@@ -224,8 +224,8 @@ namespace AdeeboMeter
                 if (h == null || a == null) continue;
                 var ht = D(V(h, "team")); var at = D(V(a, "team")); var st = D(V(D(V(ev, "status")), "type")); string state = Sv(st, "state");
                 var x = new Game { Sport = "football", League = league, Home = Or(Sv(ht, "shortDisplayName"), Sv(ht, "displayName")), Away = Or(Sv(at, "shortDisplayName"), Sv(at, "displayName")), HomeAlso = Sv(ht, "displayName") + " " + Sv(ht, "abbreviation"), AwayAlso = Sv(at, "displayName") + " " + Sv(at, "abbreviation") };
-                x.State = state == "in" ? "live" : state == "post" ? "done" : "soon";
-                if (x.State != "soon") { x.HomeScore = Sv(h, "score"); x.AwayScore = Sv(a, "score"); }
+                string sn = Sv(st, "name"); x.State = state == "in" ? "live" : sn.Contains("POSTPONED") || sn.Contains("CANCELED") || sn.Contains("CANCELLED") || sn.Contains("SUSPENDED") || sn.Contains("ABANDONED") ? "off" : state == "post" ? "done" : "soon";   /* hunt-5: ESPN's postponed games say so */
+                if (x.State == "live" || x.State == "done") { x.HomeScore = Sv(h, "score"); x.AwayScore = Sv(a, "score"); }
                 x.Detail = Sv(st, "shortDetail"); x.StartUtc = Utc(Sv(ev, "date"));
                 if (x.Home != "" && x.Away != "") r.Add(x);
             }
@@ -253,6 +253,8 @@ namespace AdeeboMeter
         {
             int total; var r = CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key)), out total);
             if (total > r.Count && r.Count > 0 && HitsToday() < 89) { int t2; r.AddRange(CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key)), out t2)); }
+            // hunt-5: page two starts after the rows page one sent, which can be more than were kept - the same match is listed once
+            r = r.GroupBy(z => z.Home + "|" + z.Away + "|" + z.StartUtc.Ticks + "|" + z.League).Select(z => z.First()).ToList();
             return r;
         }
         // bug-hunt ML-40: a call counts against the day only when it reached CricketData - no connection, no count

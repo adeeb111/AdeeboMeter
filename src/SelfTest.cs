@@ -140,6 +140,52 @@ namespace AdeeboMeter
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
             T("shell masks secrets for other programs (security recheck L-1)", () => { foreach (var c in new[] { new[] { "curl -H \"Authorization: Bearer abcdef123\" https://x", "curl -H \"Authorization: Bearer ****\" https://x" }, new[] { "export GITHUB_TOKEN=abc123", "export GITHUB_TOKEN=****" }, new[] { "mytool --password hunter22", "mytool --password ****" }, new[] { "curl https://bob:s3cret@host/p", "curl https://bob:****@host/p" }, new[] { "AUTHOR=adeeb", "AUTHOR=adeeb" } }) { string got = FullView.ShScrub(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
+
+            // hunt-5 coverage: the feeds and verdicts that had no fixture
+            T("stream check: HLS and DASH ladders, plays and score", () =>
+            {
+                var h = StreamCheck.ParseHls("#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"a\",URI=\"audio.m3u8\"\n#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720\n720.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=6000000,RESOLUTION=1920x1080,FRAME-RATE=60.000\nhd/1080.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=6000000,RESOLUTION=1920x1080\ndup.m3u8\n");
+                if (h.Count != 2 || h[0].Bw != 6000000 || h[0].H != 1080 || h[0].Fps != 60 || h[0].Uri != "hd/1080.m3u8" || h[1].H != 720) throw new InvalidOperationException("HLS ladder: " + h.Count);
+                var d = StreamCheck.ParseDash("<MPD><Period><AdaptationSet mimeType=\"audio/mp4\"><Representation id=\"a1\" bandwidth=\"128000\"/></AdaptationSet><AdaptationSet mimeType=\"video/mp4\"><Representation id=\"v1\" bandwidth=\"2500000\" width=\"1280\" height=\"720\" frameRate=\"30000/1001\"/><Representation id=\"v2\" bandwidth=\"5000000\" width=\"1920\" height=\"1080\" frameRate=\"30\"/></AdaptationSet></Period></MPD>");
+                if (d.Count != 2 || d[0].Uri != "v2" || d[0].H != 1080 || Math.Abs(d[1].Fps - 29.97) > 0.01) throw new InvalidOperationException("DASH ladder: " + d.Count);
+                if (StreamCheck.Plays(h[0], 20, 10) != 0 || StreamCheck.Plays(h[0], 7, 4) != 1 || StreamCheck.Plays(h[0], 4, 2) != 2) throw new InvalidOperationException("plays");
+                if (StreamCheck.Score(h, 20, 10, 50, false) != 100 || StreamCheck.Score(h, double.NaN, double.NaN, 0, false) != -1 || StreamCheck.Score(h, 1, 1, 50, false) >= 60) throw new InvalidOperationException("score");
+                // SEC-01: the host you pasted may be local; what it points to afterwards must be public or that same host
+                if (!StreamCheck.AllowedFor("192.168.1.50", new Uri("http://192.168.1.50/live/a.ts")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("http://192.168.1.1/admin")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("http://169.254.169.254/latest/meta-data")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("file:///c:/windows/win.ini")) || !StreamCheck.AllowedFor("cdn.example.com", new Uri("https://other.example.org/seg.ts"))) throw new InvalidOperationException("Allowed()");
+            });
+            T("line check: the broker verdict", () =>
+            {
+                Func<double, bool, WatchKit.Sample> smp = (far, lost) => new WatchKit.Sample { T = DateTime.Now, Far = lost ? double.NaN : far, FarLost = lost };
+                var good = Enumerable.Range(0, 10).Select(i => smp(20, false)).ToList();
+                var r = LineCheck.Decide(new LineCheck.Result(), good, new List<WatchKit.Session>(), 10, 15, false, -1, false, true);
+                if (r.Verdict != "Ready to trade" || r.Score != 100) throw new InvalidOperationException("good line: " + r.Verdict + " " + r.Score);
+                var bad = Enumerable.Range(0, 10).Select(i => smp(200, i % 2 == 0)).ToList();
+                r = LineCheck.Decide(new LineCheck.Result(), bad, new List<WatchKit.Session>(), 10, 15, false, -1, false, true);
+                if (r.Verdict != "Not ready") throw new InvalidOperationException("bad line: " + r.Verdict + " " + r.Score);
+                if (LineCheck.Decide(new LineCheck.Result(), good, new List<WatchKit.Session>(), 10, 15, false, -1, false, false).Verdict != "Pick your broker") throw new InvalidOperationException("no broker");
+                var nores = Enumerable.Range(0, 4).Select(i => new WatchKit.Sample { T = DateTime.Now, NoProbe = true }).ToList();
+                if (LineCheck.Decide(new LineCheck.Result(), nores, new List<WatchKit.Session>(), 10, 15, false, -1, false, true).Verdict != "Couldn't find your broker") throw new InvalidOperationException("no name");
+            });
+            T("ESPN football feed (the default for keyless users)", () =>
+            {
+                string j = "{\"events\":[{\"date\":\"2026-11-23T20:00Z\",\"status\":{\"type\":{\"state\":\"post\",\"name\":\"STATUS_FULL_TIME\",\"shortDetail\":\"FT\"}},\"competitions\":[{\"competitors\":[{\"homeAway\":\"home\",\"score\":\"2\",\"team\":{\"shortDisplayName\":\"Arsenal\",\"displayName\":\"Arsenal\",\"abbreviation\":\"ARS\"}},{\"homeAway\":\"away\",\"score\":\"1\",\"team\":{\"shortDisplayName\":\"Chelsea\",\"displayName\":\"Chelsea\",\"abbreviation\":\"CHE\"}}]}]},"
+                         + "{\"date\":\"2026-11-24T15:00Z\",\"status\":{\"type\":{\"state\":\"pre\",\"name\":\"STATUS_POSTPONED\",\"shortDetail\":\"Postponed\"}},\"competitions\":[{\"competitors\":[{\"homeAway\":\"home\",\"score\":\"0\",\"team\":{\"shortDisplayName\":\"Leeds\",\"displayName\":\"Leeds United\",\"abbreviation\":\"LEE\"}},{\"homeAway\":\"away\",\"score\":\"0\",\"team\":{\"shortDisplayName\":\"Spurs\",\"displayName\":\"Tottenham\",\"abbreviation\":\"TOT\"}}]}]}]}";
+                var g = Sports.EspnFrom(j, "Premier League");
+                if (g.Count != 2 || g[0].State != "done" || g[0].Home != "Arsenal" || g[0].HomeScore != "2" || g[0].AwayScore != "1") throw new InvalidOperationException("ESPN finished game");
+                if (g[1].State != "off" || g[1].HomeScore != "") throw new InvalidOperationException("ESPN postponed game: " + g[1].State);
+                bool threw = false; try { Sports.EspnFrom("{\"x\":1}", "x"); } catch (System.IO.InvalidDataException) { threw = true; } if (!threw) throw new InvalidOperationException("ESPN without events");
+            });
+            T("Bank of Canada (Valet) and FMP quote parsers", () =>
+            {
+                var v = MarketData.ParseValet("{\"observations\":[{\"d\":\"2026-11-21\",\"FXUSDCAD\":{\"v\":\"1.4010\"}},{\"d\":\"2026-11-20\",\"FXUSDCAD\":{\"v\":\"1.3950\"},\"FXEURCAD\":{\"v\":\"1.6100\"}},{\"d\":\"2026-11-21\",\"FXUSDCAD\":{\"v\":\"9.9\"}}]}");
+                MarketData.Series us; if (!v.TryGetValue("FXUSDCAD", out us) || us.Count != 2 || us.V[0] != 1.395 || us.V[1] != 1.401 || !v.ContainsKey("FXEURCAD")) throw new InvalidOperationException("Valet");
+                string sym = MarketData.IndexList[0][0];
+                var q = MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"name\":\"x\",\"price\":6812.4,\"changePercentage\":0.42,\"timestamp\":1763740800}]", sym);
+                if (q == null || q.Price != 6812.4 || q.Pct != 0.42 || q.When.Year != 2025) throw new InvalidOperationException("FMP quote");
+                if (MarketData.ParseFmp("[{\"symbol\":\"OTHER\",\"price\":1}]", sym) != null || MarketData.ParseFmp("{\"Error Message\":\"Invalid API KEY\"}", sym) != null || MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"price\":-5}]", sym) != null) throw new InvalidOperationException("FMP bad answers");
+                // the TSX stays open on Sep 30 (a banking holiday only - TMX notices 2021-2026)
+                if (Markets.Holiday(new DateTime(2026, 9, 30), "ca") != null) throw new InvalidOperationException("Sep 30 is a TSX trading day");
+            });
             T("udp table", () => { var u = Tables.Udp(); sb.AppendLine("      " + u.Count + " sockets"); if (u == null) throw new InvalidOperationException("no list"); });
             T("dns cache names (offline)", () =>
             {
@@ -323,6 +369,8 @@ namespace AdeeboMeter
                 // the matching words: same recipe and list as the phone page (vector made with WebCrypto and Python)
                 if (RemoteWords.List.Length != 256 || RemoteWords.List.Distinct().Count() != 256) throw new InvalidOperationException("the word list isn't 256 different words");
                 if (RemoteWords.Of(Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(1, 64).Select(i => (byte)i)).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(100, 64).Select(i => (byte)i)).ToArray()) != "wagon · bucket · brook · quartz") throw new InvalidOperationException("matching words differ from the phone's");
+                // hunt-5: and v2's six words (the phone page asks for these; vector made with Python's hashlib)
+                if (RemoteWords.Of(Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(1, 64).Select(i => (byte)i)).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(100, 64).Select(i => (byte)i)).ToArray(), 2) != "lantern · bagel · fox · bear · pebble · needle") throw new InvalidOperationException("six matching words differ from the phone's");
                 var lane = new RemoteCrypto.Lane(secret, z, 1); const string fr = "AAAAAAAAAAHIx8bFxMPCwcC_vr28u7q5HhaFBDnjOMAo4LDWK4DgqbwpaUmVUNdbx3P_dm87XXJ4JeujuUjZ2Cl9tr8x-2hiamubuNxZtgu67gmrfoekcw";
                 if (lane.Open(fr) != "{\"t\":\"live\",\"ping\":12.5}") throw new InvalidOperationException("frame didn't open");
                 if (lane.Open(fr) != null) throw new InvalidOperationException("a replayed frame opened");
@@ -1191,7 +1239,17 @@ namespace AdeeboMeter
                                 new[] { "cd /data/selftest-sh2; for i in 1 2; do echo $i; done > loop.txt; cat loop.txt | wc -l", "2" },
                                 new[] { "cd /data/selftest-sh2; while read l; do echo got$l; done < loop.txt | tail -n 1", "got2" },
                                 new[] { "nosuchcmd 2>&1 | grep -c \"not found\"", "1" },
-                                new[] { "echo x > \"/data/.. /adeeboshell-escape.txt\"", "~read-only" },   // review A1: a trailing space never walks out of /data
+                                new[] { "echo x > \"/data/.. /adeeboshell-escape.txt\"", "~read-only" },
+                                new[] { "cd /data/selftest-sh2; echo z > z.txt; cp z.txt ~/adeeboshell-cp-check.txt 2>&1 | grep -c read-only", "1" },   // hunt-5: the fence, for cp and mv too
+                                new[] { "cd /data/selftest-sh2; mv z.txt ~/adeeboshell-mv-check.txt 2>&1 | grep -c read-only; test -f z.txt && echo kept", "1\nkept" },
+                                new[] { "echo hello | sed 's/l/L/g; s/o/0/'", "heLL0" },   // hunt-5: sed's ';'
+                                new[] { "echo 'a;b' | sed 's/;/-/'", "a-b" },
+                                new[] { "f() { read x; echo got$x; }; printf '1\\n2\\n' | { f; f; }", "got1\ngot2" },   // hunt-5: one input stream
+                                new[] { "grep -A 2 x nofile 2>&1 | grep -c \"isn't in this grep\"", "1" },   // hunt-5: never misread
+                                new[] { "seq 1 8 | head -n -5", "1\n2\n3" },
+                                new[] { "rm /data/selftest-sh2/no-such-file 2>/dev/null; echo $?", "1" },
+                                new[] { "printf 'x 10\\n2 y\\n1\\n' | sort -n | head -n 1", "x 10" },
+                                new[] { "printf 'a\\n' | awk 'END {print \"e\"; exit}'", "e" },   // review A1: a trailing space never walks out of /data
                                 new[] { "touch ~/adeeboshell-ro-check.txt 2>&1 | grep -c read-only; test -f ~/adeeboshell-ro-check.txt && echo wrote || echo kept", "1\nkept" },   // 1.1.6: your own files are read-only here
                                 new[] { "echo debug >&2 | wc -l", "0" },
                                 new[] { "cd /data/selftest-sh2; > made.txt; test -f made.txt && echo made", "made" },

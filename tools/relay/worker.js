@@ -59,7 +59,7 @@ export default {
     const hourKey = "h:" + h + ":" + Math.floor(Date.now() / 3600000), dayKey = "d:" + h + ":" + Math.floor(Date.now() / 86400000);
     const [hn, dn] = await Promise.all([env.RL.get(hourKey), env.RL.get(dayKey)]);
     if ((+hn || 0) >= 5 || (+dn || 0) >= 20) return out(429, { ok: false, why: "a lot sent already - try again later" });
-    await Promise.all([env.RL.put(hourKey, String((+hn || 0) + 1), { expirationTtl: 3700 }), env.RL.put(dayKey, String((+dn || 0) + 1), { expirationTtl: 90000 })]);
+    // hunt-5: the count goes up only for a send that was filed (below) - a GitHub hiccup doesn't spend your five
 
     const clean = s => String(s || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
       .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "<email>")
@@ -90,6 +90,7 @@ export default {
       body: JSON.stringify({ title, body, labels: [KINDS[kind], "from-" + from] })
     }); } catch (e) { return out(503, { ok: false, why: "couldn't reach GitHub just now - it will try again" }); }
     if (!gh.ok) return out(502, { ok: false, why: "couldn't file it just now - please send it again in a few minutes" });
+    await Promise.all([env.RL.put(hourKey, String((+hn || 0) + 1), { expirationTtl: 3700 }), env.RL.put(dayKey, String((+dn || 0) + 1), { expirationTtl: 90000 })]);
     const made = await gh.json();
     return out(200, { ok: true, number: made.number });
   }

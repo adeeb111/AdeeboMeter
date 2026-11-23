@@ -61,7 +61,8 @@ namespace AdeeboMeter
         // never into the data a pipe hands on.
         sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull, Tee; public long LastTee;   // Tee: captured AND shown as it comes (alltools)
         public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
-        sealed class ShCtx { public ShJob Job; public ShOut Out; public string Stdin; public List<string> Args = new List<string>(); public bool Yes, Script; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, Stdin = stdin, Args = Args, Yes = Yes, Script = Script, Frame = Frame }; } }   // Frame: a function's local variables
+        sealed class ShIn { public string Rest; }   // hunt-5: one input stream, shared by a function, its caller and $( ) - read takes a line from it for all of them
+        sealed class ShCtx { public ShJob Job; public ShOut Out; public ShIn In; public string Stdin { get { return In == null ? null : In.Rest; } set { In = value == null ? null : new ShIn { Rest = value }; } } public List<string> Args = new List<string>(); public bool Yes, Script, Sub; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, In = ReferenceEquals(stdin, Stdin) ? In : stdin == null ? null : new ShIn { Rest = stdin }, Args = Args, Yes = Yes, Script = Script, Sub = Sub, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
         sealed class ShTooBig : Exception { public ShTooBig() : base("more than 64 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
@@ -607,7 +608,7 @@ namespace AdeeboMeter
             string stdin = c.Stdin; int ex = 0;
             for (int k = 0; k < p.Cmds.Count; k++)
             {
-                bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : ShCapture(c); var node = p.Cmds[k]; var cc = c.With(o, stdin);
+                bool last = k == p.Cmds.Count - 1; var o = last ? c.Out : ShCapture(c); var node = p.Cmds[k]; var cc = c.With(o, stdin); cc.Sub = true;   /* hunt-5: an exit in a stage ends the stage, never switches the page */
                 ex = InSub(() => { try { return Stage(node, cc); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } }); if (!last) stdin = o.Cap.ToString();   // RG-4: exit in a stage ends that stage, like bash's subshell
                 if (c.Job.Cancel) return 130;
             }
@@ -702,7 +703,7 @@ namespace AdeeboMeter
                     substDepth++; int saveLoop = loopDepth; loopDepth = 0;
                     try
                     {
-                        var cap = ShCapture(c); var cc = new ShCtx { Job = c.Job, Out = cap, Args = c.Args, Yes = c.Yes, Script = true, Frame = c.Frame != null ? new Dictionary<string, string>(c.Frame, StringComparer.Ordinal) : null };   // review NH-4: local works inside $( ) in a function
+                        var cap = ShCapture(c); var cc = new ShCtx { Job = c.Job, Out = cap, In = c.In, Sub = true, Args = c.Args, Yes = c.Yes, Script = true, Frame = c.Frame != null ? new Dictionary<string, string>(c.Frame, StringComparer.Ordinal) : null };   // review NH-4: local works inside $( ) in a function
                         int ex = InSub(() => ShRunText(inner, cc)); Env.LastExit = ex; lastSubstExit = ex;
                         sb.Append(cap.Cap.ToString().Replace("\r", "").TrimEnd('\n'));
                     }
@@ -1054,7 +1055,7 @@ namespace AdeeboMeter
         {
             if (funcDepth >= 100) { Err(c, name + ": functions called 100 deep - stopped (does it call itself forever?)"); return 1; }
             var frame = new Dictionary<string, string>(StringComparer.Ordinal); funcDepth++;
-            try { return Exec(body, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes, Script = c.Script, Frame = frame }); }
+            try { return Exec(body, new ShCtx { Job = c.Job, Out = c.Out, In = c.In, Args = args, Yes = c.Yes, Script = c.Script, Frame = frame }); }
             catch (ShFlow fl) { if (fl.Kind == "return") return fl.Code; throw; }
             finally
             {
@@ -1185,7 +1186,7 @@ namespace AdeeboMeter
                         var fl = Flags(rest); var l = InLines(Files(rest), c); if (l == null) return 1;
                         Func<string, string> kf = z => { if (key <= 1) return z; var parts = sep != null ? z.Split(new[] { sep }, StringSplitOptions.None) : Regex.Split(z.Trim(), @"\s+"); return key - 1 < parts.Length ? string.Join(sep ?? " ", parts.Skip(key - 1)) : ""; };
                         bool rev = fl.Contains('r'), num = fl.Contains('n'), uq = fl.Contains('u'), ic = fl.Contains('f');
-                        IEnumerable<string> s = num ? l.OrderBy(z0 => { string z = kf(z0); double d; return double.TryParse(Regex.Match(z, @"-?\d+(\.\d+)?").Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : double.MinValue; }) : l.OrderBy(z => kf(z), ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+                        IEnumerable<string> s = num ? l.OrderBy(z0 => { string z = kf(z0); double d; return double.TryParse(Regex.Match(z, @"^\s*-?(\d+(\.\d*)?|\.\d+)").Value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : 0;   /* hunt-5: the number at the start, as GNU - no number counts as 0 */ }) : l.OrderBy(z => kf(z), ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
                         if (rev) s = s.Reverse(); if (uq) s = s.Distinct(ic ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal); foreach (var x in s) OL(c, x); return 0;
                     }
                 case "uniq":   // #72: -c -d -u -i
@@ -1236,7 +1237,7 @@ namespace AdeeboMeter
                 case "exit": case "quit": case "logout": case "return":
                     {
                         int code = Env.LastExit; if (args.Count > 0 && !int.TryParse(args[0], out code)) { Err(c, cmd + ": " + args[0] + ": a number is needed"); code = 2; }
-                        if (cmd != "return" && !c.Script && !c.Job.Bg) Ui(delegate { tab = "overview"; ShowTab(); SyncNav(); });
+                        if (cmd != "return" && !c.Script && !c.Job.Bg && !c.Sub) Ui(delegate { tab = "overview"; ShowTab(); SyncNav(); });
                         throw new ShFlow(cmd == "return" ? "return" : "exit", code & 255, 1);
                     }
                 case "break": case "continue":   // #23
@@ -1449,7 +1450,7 @@ namespace AdeeboMeter
             if (arrName != null && !Regex.IsMatch(arrName, "^[A-Za-z_][A-Za-z0-9_]*$")) { Err(c, "read: " + arrName + ": not a name"); return 2; }
             if (names.Count == 0) names.Add("REPLY");
             string ans;
-            if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.Stdin = nl < 0 ? "" : c.Stdin.Substring(nl + 1); }
+            if (c.Stdin != null) { if (c.Stdin == "") return 1; int nl = c.Stdin.IndexOf('\n'); ans = (nl < 0 ? c.Stdin : c.Stdin.Substring(0, nl)).TrimEnd('\r'); c.In.Rest = nl < 0 ? "" : c.Stdin.Substring(nl + 1); }
             else { if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; }
             if (arrName != null) { lock (Env.Vars) { Env.Vars.Remove(arrName); Env.Arrs[arrName] = ans.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList(); } return 0; }   // read -a a: one element per word
             if (names.Count == 1) { lock (Env.Vars) Env.Vars[names[0]] = names[0] == "REPLY" ? ans : ans.Trim(); return 0; }
@@ -1649,9 +1650,11 @@ namespace AdeeboMeter
             {
                 if (files.Count > 1) OL(c, "==> " + f + " <==", ShBlue);
                 var ls = StreamLines(f, c); if (ls == null) { ex = 1; continue; }
-                if (head) foreach (var x in ls.Take(n)) OL(c, x);
+                // hunt-5: head -n -5 = all but the last 5 (GNU); tail -n -5 = the last 5
+                if (head && n < 0) { var q0 = new Queue<string>(); foreach (var x in ls) { q0.Enqueue(x); if (q0.Count > -n) OL(c, q0.Dequeue()); } }
+                else if (head) foreach (var x in ls.Take(n)) OL(c, x);
                 else if (fromStart) foreach (var x in ls.Skip(Math.Max(0, n - 1))) OL(c, x);
-                else { var q = new Queue<string>(); foreach (var x in ls) { q.Enqueue(x); if (q.Count > n) q.Dequeue(); } foreach (var x in q) OL(c, x); }
+                else { int keep = Math.Abs(n); var q = new Queue<string>(); foreach (var x in ls) { q.Enqueue(x); if (q.Count > keep) q.Dequeue(); } foreach (var x in q) OL(c, x); }
             }
             return ex;
         }
@@ -1680,18 +1683,35 @@ namespace AdeeboMeter
         int Grep(List<string> args, ShCtx c)
         {
             bool ic = false, inv = false, num = false, count = false, ere = false, fx = false, word = false, only = false, quiet = false, list = false, names = false, noNames = false, recurse = false;
-            string pat = null; var files = new List<string>(); bool opts = true;
+            string pat = null; var files = new List<string>(); bool opts = true; var incl = new List<string>(); var excl = new List<string>();
             for (int i = 0; i < args.Count; i++)
             {
                 string a = args[i];
                 if (opts && a == "--") { opts = false; continue; }
                 if (opts && a == "-e" && i + 1 < args.Count) { pat = args[++i]; continue; }
-                if (opts && a.StartsWith("-", StringComparison.Ordinal) && a.Length > 1 && !(pat == null && Regex.IsMatch(a, @"^-\d"))) { foreach (char f in a.Substring(1)) switch (f) { case 'i': ic = true; break; case 'v': inv = true; break; case 'n': num = true; break; case 'c': count = true; break; case 'E': ere = true; break; case 'F': fx = true; break; case 'w': word = true; break; case 'o': only = true; break; case 'q': quiet = true; break; case 'l': list = true; break; case 'H': names = true; break; case 'h': noNames = true; break; case 'r': case 'R': recurse = true; break; } continue; }
+                // hunt-5: long options read, and an option grep here doesn't know is an error - never quietly turned into other flags
+                if (opts && a.StartsWith("--", StringComparison.Ordinal) && a.Length > 2)
+                {
+                    string ln = a.Substring(2), lv = null; int eq = ln.IndexOf('='); if (eq >= 0) { lv = ln.Substring(eq + 1); ln = ln.Substring(0, eq); }
+                    switch (ln)
+                    {
+                        case "ignore-case": ic = true; continue; case "invert-match": inv = true; continue; case "line-number": num = true; continue; case "count": count = true; continue;
+                        case "extended-regexp": ere = true; continue; case "fixed-strings": fx = true; continue; case "word-regexp": word = true; continue; case "only-matching": only = true; continue;
+                        case "quiet": case "silent": quiet = true; continue; case "files-with-matches": list = true; continue; case "recursive": recurse = true; continue;
+                        case "with-filename": names = true; continue; case "no-filename": noNames = true; continue; case "color": case "colour": continue;
+                        case "regexp": if (lv == null) { if (i + 1 >= args.Count) { Err(c, "grep: --regexp needs a pattern"); return 2; } lv = args[++i]; } pat = lv; continue;
+                        case "include": case "exclude": if (lv == null) { if (i + 1 >= args.Count) { Err(c, "grep: --" + ln + " needs a pattern like *.txt"); return 2; } lv = args[++i]; } (ln == "include" ? incl : excl).Add(lv); continue;
+                    }
+                    Err(c, "grep: " + a + ": not an option grep here knows (-i -v -n -c -E -F -w -o -l -q -r -H -h, --include=, --exclude=)"); return 2;
+                }
+                if (opts && Regex.IsMatch(a, "^-[ABCm]")) { Err(c, "grep: " + a.Substring(0, 2) + " (lines around a match / a match limit) isn't in this grep - try grep -n pattern file, then sed -n 'N,Mp' file"); return 2; }
+                if (opts && a.StartsWith("-", StringComparison.Ordinal) && a.Length > 1 && !(pat == null && Regex.IsMatch(a, @"^-\d"))) { foreach (char f in a.Substring(1)) switch (f) { case 'i': ic = true; break; case 'v': inv = true; break; case 'n': num = true; break; case 'c': count = true; break; case 'E': ere = true; break; case 'F': fx = true; break; case 'w': word = true; break; case 'o': only = true; break; case 'q': quiet = true; break; case 'l': list = true; break; case 'H': names = true; break; case 'h': noNames = true; break; case 'r': case 'R': recurse = true; break; case 's': break; default: Err(c, "grep: -" + f + ": not an option grep here knows (-i -v -n -c -E -F -w -o -l -q -r -H -h)"); return 2; } continue; }
                 if (pat == null) pat = a; else files.Add(a);
             }
             if (pat == null) { Err(c, "usage: grep [-i -v -n -c -E -F -w -o -l -q -r] pattern [file...]"); return 2; }
             Regex rx; try { rx = ShRegex(pat, ere, fx, ic, word); } catch (ArgumentException e) { Err(c, "grep: " + pat + ": not a pattern (" + e.Message.Split('-').Last().Trim() + ")"); return 2; }
             if (recurse) { var more = new List<string>(); foreach (var f in files.DefaultIfEmpty(".")) { string r = Real(Abs(f)); if (r != null && Directory.Exists(r)) { try { foreach (var x in Directory.EnumerateFiles(r, "*", SearchOption.AllDirectories).Take(20000)) more.Add(f.TrimEnd('/') + "/" + x.Substring(r.TrimEnd('\\').Length + 1).Replace('\\', '/')); } catch (UnauthorizedAccessException) { } } else more.Add(f); } files = more; }
+            if ((incl.Count > 0 || excl.Count > 0) && files.Count > 0) { Func<string, List<string>, bool> any = (f, gl) => { string nm = f.Substring(f.LastIndexOf('/') + 1); return gl.Any(g => Regex.IsMatch(nm, "^" + GlobRx(g) + "$", RegexOptions.IgnoreCase)); }; files = files.Where(f => (incl.Count == 0 || any(f, incl)) && !any(f, excl)).ToList(); if (files.Count == 0) return 1; }   // --include / --exclude: by file name
             if (files.Count == 0) files.Add("-");
             bool prefix = !noNames && (names || files.Count > 1);   // #62: which file matched
             int hits = 0, ex = 1;
@@ -1760,17 +1780,18 @@ namespace AdeeboMeter
         {
             string fl = Flags(args); bool rec = fl.IndexOfAny(new[] { 'r', 'R' }) >= 0, force = fl.Contains('f');
             var p = Files(args); if (p.Count == 0) { Err(c, "usage: rm [-r] [-f] file..."); return 1; }
+            bool bad = false;
             foreach (var s in p)
             {
                 string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; } if (!Writable(r, s, "rm", c)) return 1;
                 if (v.Count(ch => ch == '/') <= 1 || string.Equals(r.TrimEnd('\\'), Home.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase) || r.TrimEnd('\\').Length <= 3) { Err(c, "rm: won't remove " + s + " - a top folder or a whole drive"); return 1; }
-                bool dir = Directory.Exists(r); if (!dir && !File.Exists(r)) { if (!force) Err(c, "rm: " + s + ": no such file"); continue; }
+                bool dir = Directory.Exists(r); if (!dir && !File.Exists(r)) { if (!force) { Err(c, "rm: " + s + ": no such file"); bad = true; } continue; }   /* hunt-5: a missing file is exit 1 (rm -f stays quiet and 0) */
                 if (dir && !rec) { Err(c, "rm: " + s + " is a folder - rm -r"); return 1; }
                 if (!force) { if (c.Job.Bg || c.Script) { Err(c, "rm: " + s + " - add -f in a script (it can't ask you)"); return 1; } string ans = ShAsk("remove " + (dir ? "the folder " : "") + s + (dir ? " and everything in it" : "") + "? [y/N] ", false); if (ans == null || !ans.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase)) { OL(c, "kept", ShDim); continue; } }
                 if (dir && HasLinkInside(r)) { Err(c, "rm: " + s + " has a link (junction or symlink) inside - remove that link in File Explorer first, so nothing it points to is touched"); return 1; }
                 if (dir) Directory.Delete(r, true); else File.Delete(r);
             }
-            return 0;
+            return bad ? 1 : 0;
         }
         int Find(List<string> args, ShCtx c)
         {
@@ -1778,7 +1799,7 @@ namespace AdeeboMeter
             int ni = args.IndexOf("-name"), ii = args.IndexOf("-iname"), ti = args.IndexOf("-type"), di = args.IndexOf("-maxdepth");
             string pat = ni >= 0 && ni + 1 < args.Count ? args[ni + 1] : ii >= 0 && ii + 1 < args.Count ? args[ii + 1] : "*", type = ti >= 0 && ti + 1 < args.Count ? args[ti + 1] : ""; int maxDepth = int.MaxValue; if (di >= 0 && di + 1 < args.Count) int.TryParse(args[di + 1], out maxDepth);
             string real = Real(Abs(start)); if (real == null || !Directory.Exists(real)) { Err(c, "find: " + start + ": not a folder on a disk"); return 1; }
-            var rx = new Regex("^" + GlobRx(pat) + "$", RegexOptions.IgnoreCase); int n = 0, denied = 0;
+            var rx = new Regex("^" + GlobRx(pat) + "$", ni >= 0 ? RegexOptions.None : RegexOptions.IgnoreCase); int n = 0, denied = 0;   /* hunt-5: -name is exact case, -iname isn't */
             var stack = new Stack<KeyValuePair<string, int>>(); stack.Push(new KeyValuePair<string, int>(real, 0)); string baseV = start.TrimEnd('/');
             while (stack.Count > 0 && n < 5000 && !c.Job.Cancel)
             {
@@ -2065,7 +2086,7 @@ namespace AdeeboMeter
             string text; try { text = File.ReadAllText(r); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, file + ": " + e.Message); return 1; }
             if (Env.Depth >= 8) { Err(c, "source: scripts nested 8 deep - stopped (does a script run itself?)"); return 1; }
             Env.Depth++;
-            try { return ShRunText(text, new ShCtx { Job = c.Job, Out = c.Out, Stdin = c.Stdin, Args = args, Yes = c.Yes || yes, Script = true }, file + ": ", sourced); }
+            try { return ShRunText(text, new ShCtx { Job = c.Job, Out = c.Out, In = c.In, Args = args, Yes = c.Yes || yes, Script = true }, file + ": ", sourced); }
             finally { Env.Depth--; }
         }
         // a word as the shell reads it back: 'it''s' quoting, so an item with a quote or a $ stays one plain word (#59)

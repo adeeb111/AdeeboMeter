@@ -18,7 +18,7 @@ namespace AdeeboMeter
             new[] { "detective", "Packet detective", "One packet in the conversation is wrong. Spot it.", "10 puzzles" },
             new[] { "ports", "Port quick-fire", "Ten questions, sixty seconds: which port does it use?", "8 right to win" },
             new[] { "addr", "Address quick-fire", "Private, public, loopback, CGNAT? Ten addresses, sixty seconds.", "8 right to win" },
-            new[] { "heist", "Break the Adeebo Award", "Mallory the hacker tries ten ways to fake an award card. Will each one work?", "8 right to win" },
+            new[] { "heist", "Break the Adeebo Award", "Mallory the hacker tries ten ways to fake an award card. Will each one work?", "9 right to win" },   // hunt-5: the rule is HeistWin (9)
             new[] { "outage", "Survive the outage", "Eight broken networks, fifteen seconds each. Read the dots, call the cause. Faster scores more.", "6 right to win" },
             new[] { "years", "Ten years of money", "Ten made-up years: crashes, a recession, inflation, surprise bills. Where does your money go each year?", "finish all ten" },
             new[] { "dungeon", "The packet dungeon", "Eight rooms, from the cable to the vault. Three hearts. Each room you clear leaves a scroll.", "reach the treasure" } };

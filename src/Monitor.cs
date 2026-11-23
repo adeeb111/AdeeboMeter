@@ -46,7 +46,7 @@ namespace AdeeboMeter
         public string Adapter = "", AdapterKind = "LAN", LinkSpeed = "", Gateway = "", DnsServer = "", IfaceId = "", Gateway6 = "";   // Gateway6: an IPv6-only network's router (no IPv4 gateway at all)
         public bool VpnUp; public string VpnName = ""; public int VpnMtu, PrimaryMtu;
         public bool HasWifi; public int WifiSignal = -1; public string Ssid = "", WifiChannel = "";
-        public bool GwEverReplied, NetEverReplied, DnsFailedLast;
+        public bool GwEverReplied, NetEverReplied, DnsFailedLast; public string Apipa = "";   // an adapter that is up with only a 169.254 address: no answer from DHCP
         // networks that block ping (many company and hotel networks): the internet check falls back to timing a TCP connection
         // to port 443 of the same address - opened and closed at once, nothing is sent over it
         public bool NetIcmpEver, NetViaTcp;
@@ -357,8 +357,18 @@ namespace AdeeboMeter
                         bool global = ip6.UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !u.Address.IsIPv6SiteLocal && !IPAddress.IsLoopback(u.Address));
                         if (g6 != null && global) { best = n; gw6 = g6.ToString(); break; }
                     }
+                // carry-over D1-A3: plugged in / joined, but the router never gave an address - Windows makes one up (169.254.x.x)
+                string apipa = "";
+                if (best == null)
+                    foreach (var n in all)
+                    {
+                        if (n.OperationalStatus != OperationalStatus.Up || (n.NetworkInterfaceType != NetworkInterfaceType.Ethernet && n.NetworkInterfaceType != NetworkInterfaceType.Wireless80211 && n.NetworkInterfaceType != NetworkInterfaceType.GigabitEthernet) || IsVpn(n)) continue;
+                        IPInterfaceProperties ipa; try { ipa = n.GetIPProperties(); } catch (NetworkInformationException) { continue; }
+                        if (ipa.UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetwork && u.Address.GetAddressBytes()[0] == 169 && u.Address.GetAddressBytes()[1] == 254)) { apipa = n.Name; break; }
+                    }
                 lock (L)
                 {
+                    Apipa = apipa;
                     if (best == null || Primary == null || best.Id != Primary.Id) pRx = -1;
                     Primary = best;
                     if (best != null)
@@ -438,7 +448,11 @@ namespace AdeeboMeter
             // tool-run 22 Nov: "DNS is slow (22116417 ms)" - a lookup that spanned sleep is no measurement, answered or failed (R2-038);
             // a real slow answer stays (only one longer than 2 minutes - Windows gives up long before - is taken as a sleep too)
             if (resumes != r0 || ms > 120000) return;
-            lock (L) { DnsFailedLast = rc != 0 && rc != 9003 && rc != 9501; Dns.Add(DnsFailedLast ? double.NaN : ms); }
+            bool failed = rc != 0 && rc != 9003 && rc != 9501;
+            // carry-over D1-A2: one failure is asked again (another name, 2 s later) before the headline turns red - a single lost
+            // UDP packet isn't "DNS lost the phone book"
+            if (failed) { System.Threading.Thread.Sleep(2000); double ms2; int rc2 = DnsTime("www.cloudflare.com", out ms2); if (resumes != r0) return; if (!(rc2 != 0 && rc2 != 9003 && rc2 != 9501)) { failed = false; ms = ms2; } }
+            lock (L) { DnsFailedLast = failed; Dns.Add(failed ? double.NaN : ms); }
         }
         // A real lookup that skips the local cache, so it measures the DNS server itself.
         public static int DnsTime(string name, out double ms)
@@ -814,12 +828,12 @@ namespace AdeeboMeter
         void Judge()
         {
             double cpu = Cpu.Avg(10), mem = Mem.Avg(10), com = Commit.Avg(10);
-            double gw, net, dns, loss, jit; bool hasWifi, vpn, netEver, gwEver, call, dnsFail; int sig; string gwAddr;
+            double gw, net, dns, loss, jit; bool hasWifi, vpn, netEver, gwEver, call, dnsFail; int sig; string gwAddr; string apipaNow;
             lock (L)
             {
                 gwAddr = Gateway != "" ? Gateway : Gateway6;
                 gw = GwPing.Avg(5); net = NetPing.Avg(3); dns = Dns.Last; loss = NetEverReplied ? Loss.Avg(10) * 100 : double.NaN; jit = NetPing.Jitter(10);
-                hasWifi = HasWifi; sig = WifiSignal; vpn = VpnUp; netEver = NetEverReplied; gwEver = GwEverReplied; call = CallLikely; dnsFail = DnsFailedLast;
+                hasWifi = HasWifi; sig = WifiSignal; vpn = VpnUp; netEver = NetEverReplied; gwEver = GwEverReplied; call = CallLikely; dnsFail = DnsFailedLast; apipaNow = Apipa;
             }
             int pc = (cpu > 88 || mem > 90 || com > 92) ? 2 : (cpu > 60 || mem > 80) ? 1 : 0;
             int link = 3;
@@ -847,6 +861,7 @@ namespace AdeeboMeter
             string hogs = t1 + (t2 != "" ? " and " + t2 : "");
             string linkName = hasWifi ? "Wi-Fi" : "local network";
             if (joining) Set(0, Voice.P("Just woke up - waiting for Windows to join the network.", "Starting - waiting for Windows to join the network."));
+            else if (offline && apipaNow != "") Set(2, Voice.Red(apipaNow + " is connected, but the router never gave it an address (it has a 169.254 one) - restart the router, or unplug and replug.", apipaNow + " is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect."));
             else if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
             else if (link == 2 && hasWifi && sig >= 0 && sig < 30) Set(2, Voice.Red("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", "Wi-Fi signal is weak (" + sig + "%). Move closer to the access point or use a cable."));
             else if (link == 2) Set(2, Voice.Red("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", "The " + linkName + " is slow (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is not the cause."));

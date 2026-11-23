@@ -113,8 +113,8 @@ var of=null;
 $("of").onchange=function(){of=this.files[0]||null;$("ofn").textContent=of?of.name:"Choose the .adeebo file";$("ob").disabled=!of;say("os","")};
 $("oc").oninput=function(){var v=clean(this.value);if(v.length>24)v=v.slice(0,24);var g=v.match(/.{1,4}/g);this.value=g?g.join("-"):""};
 $("ob").onclick=async function(){
-  if(!of)return;var file=of;if(file.size>MAXOPEN)return say("os","That file is too big to open on this device ("+Math.round(MAX/1048576)+" MB at most) - open it on your PC.",false);$("of").disabled=true;
-  if(clean($("oc").value).length<8)return say("os","Type the code that came with the file.",false);
+  if(!of)return;var file=of;if(file.size>MAXOPEN)return say("os","That file is too big to open on this device ("+Math.round(MAXOPEN/1048576)+" MB at most) - open it on your PC.",false);$("of").disabled=true;
+  if(clean($("oc").value).length<8){$("of").disabled=false;return say("os","Type the code that came with the file.",false)}
   $("ob").disabled=true;say("os","Checking…");
   try{
     var b=new Uint8Array(await file.arrayBuffer());

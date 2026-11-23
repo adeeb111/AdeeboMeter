@@ -58,7 +58,7 @@ namespace AdeeboMeter
             rows.Add(R(3, "Subject", c.Subject, "Who it is for.", "m"));
             bool self = c.Subject == c.Issuer;
             rows.Add(R(3, "Issued by", c.Issuer + (self ? " (itself - self-signed)" : ""), self ? "Who vouches for it - here, nobody but itself: apps trust it only if it's added to their trust list (normal for devices and private CAs)." : "Who vouches for it.", "m"));
-            rows.Add(R(expired || early || days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + Math.Max(1, -days) + " days ago" : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
+            rows.Add(R(expired || early || days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + CertChain.ExpiredAgo(c.NotAfter, now).Substring(8) : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
                 early ? "Its start date is still ahead - or this PC's clock is behind." : "Outside these dates every app refuses it.", "m"));
             string ka = KeyName(c); int bits = KeyBits(c);
             rows.Add(R(ka == "RSA" && bits > 0 && bits < 2048 ? 1 : 3, "Key", ka + (bits > 0 ? (ka == "ECDSA" ? " P-" + bits : " " + bits) : ""), ka == "RSA" && bits > 0 && bits < 2048 ? "Under 2048 bits is weak; most systems refuse it now." : "The public half of the key pair - the server proves it holds the private half.", "m"));
@@ -83,7 +83,7 @@ namespace AdeeboMeter
         public static string Verdict(X509Certificate2 c)
         {
             var now = DateTime.Now; int days = (int)Math.Floor((c.NotAfter - now).TotalDays);
-            if (now > c.NotAfter) return Voice.P("expired " + Math.Max(1, -days) + " days ago. This pumpkin used to be a carriage.", "expired " + Math.Max(1, -days) + " days ago.");
+            if (now > c.NotAfter) { string ago = CertChain.ExpiredAgo(c.NotAfter, now); return Voice.P(ago + ". This pumpkin used to be a carriage.", ago + "."); }
             if (now < c.NotBefore) return Voice.P("not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ". It's from the future - or your clock is from the past.", "not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ".");
             if (days < 7) return Voice.P("expires in " + days + " day" + (days == 1 ? "" : "s") + ". This one is about to turn into a pumpkin.", "expires in " + days + " day" + (days == 1 ? "" : "s") + " - renew it now.");
             if (days < 30) return Voice.P("expires in " + days + " days. Time to book the renewal.", "expires in " + days + " days - renew it soon.");

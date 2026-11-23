@@ -203,7 +203,13 @@ namespace AdeeboMeter
                     if ((c[1] != "" && !double.TryParse(c[1], NumberStyles.Float, CultureInfo.InvariantCulture, out t)) | (c[2] != "" && !double.TryParse(c[2], NumberStyles.Float, CultureInfo.InvariantCulture, out fe))
                         | (c[3] != "" && !int.TryParse(c[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out co)) | (c[4] != "" && !int.TryParse(c[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out po))) continue;   // AM-CG-162
                     if (c[3] != "" && !KnownCodes.Contains(co)) co = -1; if (c[4] != "" && (po < 0 || po > 100)) po = -1;
-                    l.Add(new Hour { Utc = DateTime.SpecifyKind(u, DateTimeKind.Utc), Temp = c[1] == "" ? double.NaN : t, Feels = c[2] == "" ? double.NaN : fe, Code = c[3] == "" ? -1 : co, Pop = c[4] == "" ? -1 : po });
+                    var hr = new Hour { Utc = DateTime.SpecifyKind(u, DateTimeKind.Utc), Temp = c[1] == "" ? double.NaN : t, Feels = c[2] == "" ? double.NaN : fe, Code = c[3] == "" ? -1 : co, Pop = c[4] == "" ? -1 : po };
+                    // hunt-5: humidity, wind and its direction (older files have five fields - those stay blank)
+                    int hu; double wi; int wf;
+                    if (c.Length > 5 && int.TryParse(c[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out hu) && hu >= 0 && hu <= 100) hr.Hum = hu;
+                    if (c.Length > 6 && double.TryParse(c[6], NumberStyles.Float, CultureInfo.InvariantCulture, out wi) && wi >= 0 && wi < 500) hr.Wind = wi;
+                    if (c.Length > 7 && int.TryParse(c[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out wf) && wf >= 0 && wf <= 360) hr.WindFrom = wf % 360;
+                    l.Add(hr);
                 }
                 lock (k) { hours = Trim(l, DateTime.UtcNow); fetchedUtc = f; forPlace = place; }
             }
@@ -214,7 +220,7 @@ namespace AdeeboMeter
             try
             {
                 var lines = new List<string>(); lock (k) { lines.Add("place=" + forPlace); lines.Add("fetched=" + fetchedUtc.ToString("o", CultureInfo.InvariantCulture));
-                    foreach (var h in hours) lines.Add(h.Utc.ToString("yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture) + "|" + N(h.Temp) + "|" + N(h.Feels) + "|" + (h.Code < 0 ? "" : h.Code.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Pop < 0 ? "" : h.Pop.ToString(CultureInfo.InvariantCulture))); }
+                    foreach (var h in hours) lines.Add(h.Utc.ToString("yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture) + "|" + N(h.Temp) + "|" + N(h.Feels) + "|" + (h.Code < 0 ? "" : h.Code.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Pop < 0 ? "" : h.Pop.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Hum < 0 ? "" : h.Hum.ToString(CultureInfo.InvariantCulture)) + "|" + N(h.Wind) + "|" + (h.WindFrom < 0 ? "" : h.WindFrom.ToString(CultureInfo.InvariantCulture))); }   /* hunt-5: humidity and wind kept too */
                 SafeFile.WriteText(File0, string.Join("\r\n", lines) + "\r\n");   // bug-hunt L-320: temp file, then replace
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }

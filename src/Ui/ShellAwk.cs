@@ -32,6 +32,7 @@ namespace AdeeboMeter
         // runs the program over the lines; the exit code
         public int Run(IEnumerable<string> lines) { return Run(new[] { new KeyValuePair<string, IEnumerable<string>>("", lines) }); }
         // file by file: FNR starts again and FILENAME is its name; NR runs on (a finding of the shell fix check)
+        bool inEnd;
         public int Run(IEnumerable<KeyValuePair<string, IEnumerable<string>>> inputs)
         {
             try
@@ -48,10 +49,12 @@ namespace AdeeboMeter
                             catch (Next) { }
                         }
                     }
+                inEnd = true;
                 try { foreach (var e in ends) e(); } catch (Next) { throw new FormatException("next can't be used in END"); }
                 return 0;
             }
-            catch (Exit x) { try { foreach (var e in ends) e(); } catch (Exit) { } catch (Next) { } return x.Code; }
+            // exit in BEGIN or a rule runs END once; exit inside END stops there (hunt-5: END used to run a second time)
+            catch (Exit x) { if (!inEnd && x.Code != 130) { inEnd = true; try { foreach (var e in ends) e(); } catch (Exit x2) { return x2.Code; } catch (Next) { } } return x.Code; }
             catch (Brk) { throw new FormatException("break outside a loop"); }
             catch (Cont) { throw new FormatException("continue outside a loop"); }
         }

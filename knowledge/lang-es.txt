@@ -72,7 +72,6 @@ General	General
 Got it	Entendido
 HOW LONG EACH STEP TAKES	CUÁNTO TARDA CADA PASO
 HOW WOULD YOU LIKE ADEEBOMETER?	¿CÓMO QUIERES USAR ADEEBOMETER?
-Health	Salud
 History	Historial
 History & data	Historial y datos
 Home networks only	Solo redes domésticas
@@ -940,6 +939,7 @@ What kind of address is	Qué tipo de dirección es
 5 cases	5 casos
 10 puzzles	10 acertijos
 8 right to win	8 aciertos para ganar
+9 right to win	9 aciertos para ganar
 Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	Tu PC no llega a example.com. Todo es una simulación: ejecuta los comandos y descubre por qué.
 hint used	pista usada
 wrong guess	intento fallido
@@ -5083,3 +5083,7 @@ That file holds several diagrams - the first one is opened; each one you change 
 diagrams saved to	diagramas guardados en
 Windows didn't answer about your connection - asking again in a few seconds.	Windows no respondió sobre tu conexión - lo intento de nuevo en unos segundos.
 Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	El informe de Wi-Fi de Windows (netsh wlan) puede tardar de 10 a 15 segundos: el adaptador, las redes cercanas y luego la banda y el canal.
+Postponed	Aplazado
+Cancelled	Cancelado
+Suspended	Suspendido
+Abandoned	Abandonado

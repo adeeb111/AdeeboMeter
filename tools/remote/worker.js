@@ -10,7 +10,7 @@
 //  - A room holds exactly one PC and one phone. A second phone is refused. Rooms close after 30 minutes, after 2 minutes
 //    with no phone, or as soon as either side leaves.
 //  - Limits: 64 KB per message, 40 messages a second per side, room names must be 22 random characters. From one
-//    address, at most 6 rooms opened a minute (60 an hour) (Adeeb, 17 Nov: "shouldn't open more than 5-6") and 20 tries to join
+//    address, at most 6 rooms opened a minute (60 an hour) (Adeeb, 17 Nov: "shouldn't open more than 5-6") and 30 tries to join
 //    one - a remembered phone looks through up to 10 rooms to find where its PC is waiting, so joining needs more.
 //
 // Hibernation (Adeeb, 17 Nov: "go with 3rd"): sockets are held by Cloudflare, not by this code, so a room with nobody
@@ -27,7 +27,7 @@
 const ROOM = /^[A-Za-z0-9_-]{22}$/;
 const MAX_MSG = 64 * 1024, MAX_RATE = 40, LIFE_MS = 30 * 60 * 1000, WAIT_MS = 2 * 60 * 1000, LONG_WAIT_MS = 25 * 60 * 1000;   // long: a remembered phone's room
 const ORIGINS = ["https://adeebometer.com", "https://www.adeebometer.com"];
-const PER_MIN = { pc: 6, phone: 20 };   // a minute from one address (best effort: counted per Cloudflare location, in memory)
+const PER_MIN = { pc: 6, phone: 30 };   // hunt-5: a reconnect sweep near a slot edge tries 24 rooms - 20 cut off the neighbouring slot   // a minute from one address (best effort: counted per Cloudflare location, in memory)
 const PER_HOUR = { pc: 60, phone: 240 };  // bug-hunt L-242: and an hour - a steady 6 a minute all day isn't a person
 const recent = new Map();
 

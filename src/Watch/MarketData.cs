@@ -178,7 +178,9 @@ namespace AdeeboMeter
                     Take(what, got); lock (k) Note = "";
                     try { File.WriteAllText(HistFile(what.Replace(":", "-")), body); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
                 }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; lock (k) Note = "Couldn't reach the Bank of Canada just now - showing what was kept. It tries again in 30 minutes."; Program.Log("markets " + what + ": " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; bool kept = false; try { kept = File.Exists(HistFile(what.Replace(":", "-"))); } catch (Exception e2) { if (!(e2 is IOException || e2 is UnauthorizedAccessException)) throw; }
+                    // carry-over: a first fetch that fails has nothing kept to show - it says so, and tries again in 5 minutes, not 30
+                    lock (k) { Note = kept ? "Couldn't reach the Bank of Canada just now - showing what was kept. It tries again in 30 minutes." : "Couldn't reach the Bank of Canada yet - nothing to show until it answers. It tries again in 5 minutes."; if (!kept) tried[what] = DateTime.UtcNow.AddMinutes(-25); } Program.Log("markets " + what + ": " + e.Message); }
                 finally { lock (k) busy.Remove(what); Done(done); }
             }) { IsBackground = true, Name = "markets" }.Start();
         }
@@ -317,14 +319,18 @@ namespace AdeeboMeter
             var list = futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList();
             new Thread(() =>
             {
-                int got = 0; bool capped = false;
+                int got = 0, fails = 0; bool capped = false;
                 try
                 {
                     foreach (var sym in list)
                     {
                         if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
                         Call();
-                        string body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64);
+                        // hunt-5: one symbol that fails doesn't cost the rest - the next is still asked; a wrong key (401) or two
+                        // failures in a row (offline) stop the round, so no calls are spent on a line that isn't there
+                        string body;
+                        try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; }
+                        catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
                         var q = ParseFmp(body, sym); if (q == null) continue;
                         lock (k) { Quotes[sym] = q; Ver++; } got++;
                     }
