@@ -27,6 +27,18 @@ using Microsoft.Win32;
 namespace AdeeboMeter
 {
     // A window drawn with per-pixel alpha that never takes the mouse (clicks go to whatever is below).
+    // one line, full width, "…" only at the real end - WinForms' AutoEllipsis cut the Connections footer to "36 sho…" (1.1.6 walk, twice)
+    sealed class OneLineLabel : Label
+    {
+        public OneLineLabel() { DoubleBuffered = true; }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            using (var b = new SolidBrush(BackColor)) e.Graphics.FillRectangle(b, ClientRectangle);
+            var r = new Rectangle(Padding.Left, 0, Math.Max(1, Width - Padding.Horizontal), Height);
+            TextRenderer.DrawText(e.Graphics, Text, Font, r, ForeColor, TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+        }
+        protected override void OnResize(EventArgs e) { base.OnResize(e); Invalidate(); }
+    }
     sealed class LayeredForm : Form
     {
         public LayeredForm() { FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual; TopMost = true; }

@@ -5082,3 +5082,4 @@ Save a copy of all my diagrams	আমার সব ডায়াগ্রা�
 That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	এই ফাইলে কয়েকটি ডায়াগ্রাম আছে - প্রথমটি খোলা হয়েছে; যেটিই বদলাবেন সেটি «আপনার ডায়াগ্রাম»-এ রাখা হবে।
 diagrams saved to	টি ডায়াগ্রাম সেভ হয়েছে:
 Windows didn't answer about your connection - asking again in a few seconds.	Windows আপনার সংযোগ নিয়ে উত্তর দেয়নি - কয়েক সেকেন্ড পরে আবার জিজ্ঞেস করছি।
+Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	Windows-এর নিজস্ব Wi-Fi রিপোর্ট (netsh wlan) পেতে ১০ থেকে ১৫ সেকেন্ড লাগতে পারে - অ্যাডাপ্টার, আশেপাশের নেটওয়ার্ক, তারপর ব্যান্ড ও চ্যানেল।

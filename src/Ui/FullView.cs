@@ -196,10 +196,9 @@ namespace AdeeboMeter
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
             list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
-            connStatus = new Label { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
+            connStatus = new OneLineLabel { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips);
-            connStatus.SizeChanged += delegate { var t = connStatus.Text; connStatus.Text = ""; connStatus.Text = t; };   // 1.1.6 walk: text set while the tab was still narrow stayed cut to "42 sho…"
             StyleChips();
 
             // Destination page
@@ -611,7 +610,7 @@ namespace AdeeboMeter
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gv = System.Threading.Interlocked.Read(ref GamePing.Ver).ToString(CultureInfo.InvariantCulture); string gk = GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerVer = gv; gamerCanvas.Invalidate(); } else if (gv != gamerVer) { gamerVer = gv; if (!RedrawSpots(gamerCanvas, "gm.live")) gamerCanvas.Invalidate(); } }   /* a new sample only: just the cards and the map */   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
-            if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); }
+            if (tab == "link") { RefreshLink(false); if (switchBusy || (linkSnap == null && linkBusy)) linkCanvas.Invalidate(); }   // the first read ticks its seconds
             if (tab == "changes") changesSeen = DateTime.Now;
             UpdateBadges();
             if (live.Running && ++liveTick % 2 == 0)

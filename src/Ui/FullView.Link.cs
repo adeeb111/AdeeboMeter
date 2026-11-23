@@ -67,7 +67,8 @@ namespace AdeeboMeter
             Begin(linkCanvas);
             float x = 14 * S, y = 6 * S, w = linkCanvas.ClientSize.Width - 28 * S;
             var ls = linkSnap;
-            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading..."), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 60 * S)); return; }
+            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) { int secs = (int)(DateTime.UtcNow - lastLink).TotalSeconds; g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading...") + (secs >= 2 ? "  " + secs + " s" : ""), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 30 * S));
+                  if (linkErr == null && secs >= 2) using (var db = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel."), Draw.fSmall, db, new RectangleF(x, y + 40 * S, w, 40 * S)); } return; }   // 1.1.6 test: a still line read as stuck
             string title = (ls.Wifi ? "YOUR WI-FI" : "YOUR CABLE") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  UPDATED " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
             var vb = new RectangleF(x, y, w, vh + 44 * S);

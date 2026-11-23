@@ -5082,3 +5082,4 @@ Save a copy of all my diagrams	حفظ نسخة من كل مخططاتي
 That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	يحتوي هذا الملف على عدة مخططات - فُتح أولها؛ وكل مخطط تغيّره يُحفظ في «مخططاتك».
 diagrams saved to	مخططات حُفظت في
 Windows didn't answer about your connection - asking again in a few seconds.	لم يُجب Windows عن اتصالك - سأسأل مجددًا بعد بضع ثوانٍ.
+Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	قد يستغرق تقرير Wi-Fi الخاص بـ Windows (netsh wlan) من 10 إلى 15 ثانية - المحوّل، ثم الشبكات من حولك، ثم النطاق والقناة.

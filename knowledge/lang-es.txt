@@ -5082,3 +5082,4 @@ Save a copy of all my diagrams	Guardar una copia de todos mis diagramas
 That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	Ese archivo contiene varios diagramas: se abre el primero; cada uno que cambies se guarda en Tus diagramas.
 diagrams saved to	diagramas guardados en
 Windows didn't answer about your connection - asking again in a few seconds.	Windows no respondió sobre tu conexión - lo intento de nuevo en unos segundos.
+Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	El informe de Wi-Fi de Windows (netsh wlan) puede tardar de 10 a 15 segundos: el adaptador, las redes cercanas y luego la banda y el canal.
