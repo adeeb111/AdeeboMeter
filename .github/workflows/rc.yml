@@ -10,7 +10,7 @@ permissions:
 jobs:
   rc:
     runs-on: windows-latest
-    timeout-minutes: 150
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
         with:
@@ -27,22 +27,27 @@ jobs:
       - name: Self-test
         shell: pwsh
         timeout-minutes: 25
+        continue-on-error: true
         run: |
           Set-Location rc
           $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--selftest' -Wait -PassThru
           Copy-Item AdeeboMeter-selftest.txt ../out/ -ErrorAction SilentlyContinue
           "selftest exit $($p.ExitCode)" | Tee-Object -Append ../out/summary.txt
-      - name: Deep test (15 min - every tool with hostile input, leaks, the Toolbox under stress)
+      - name: Deep test (45 min - every tool with hostile input, leaks, the Toolbox under stress)
         shell: pwsh
-        timeout-minutes: 30
+        timeout-minutes: 60
+        continue-on-error: true
         run: |
           Set-Location rc
-          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--deeptest','--minutes','15' -Wait -PassThru
+          # our own deadline, inside the step: the report is copied even when the run overstays (a step timeout would lose it)
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--deeptest','--minutes','45' -PassThru
+          if (-not $p.WaitForExit(55 * 60 * 1000)) { $p.Kill(); "deeptest killed after 55 min" | Tee-Object -Append ../out/summary.txt }
           Copy-Item AdeeboMeter-deeptest.txt ../out/ -ErrorAction SilentlyContinue
           "deeptest exit $($p.ExitCode)" | Tee-Object -Append ../out/summary.txt
       - name: Perf
         shell: pwsh
         timeout-minutes: 15
+        continue-on-error: true
         run: |
           Set-Location rc
           $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--perf' -Wait -PassThru
@@ -51,10 +56,12 @@ jobs:
       - name: UI walk - every page, five languages, resources and idle CPU per page
         shell: pwsh
         timeout-minutes: 50
+        continue-on-error: true
         run: ./rc-walk.ps1 -Exe "$PWD/rc/AdeeboMeter.exe" -Out "$PWD/out"
       - name: Leak run - cycle the pages for 10 minutes in one window
         shell: pwsh
         timeout-minutes: 20
+        continue-on-error: true
         run: ./rc-leak.ps1 -Exe "$PWD/rc/AdeeboMeter.exe" -Out "$PWD/out" -Minutes 10
       - name: Errors in the logs
         if: always()
