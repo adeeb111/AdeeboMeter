@@ -3,17 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Windows-এ ইন্টারনেটের গতি পর্যবেক্ষণ | আদীবওমিটার (AdeeboMeter)</title>
-<meta name="description" content="আপলোড, ডাউনলোড ও সংযোগের বিলম্ব একসঙ্গে দেখুন। ইন্টারনেট ধীর হলে কোন পরীক্ষা করবেন, জানুন।">
+<title>Free internet speed monitor for Windows | AdeeboMeter</title>
+<meta name="description" content="Windows-এর জন্য AdeeboMeter নিন">
 <link rel="canonical" href="https://adeebometer.com/bn/internet-speed-monitor.html">
-<meta property="og:title" content="Windows-এ ইন্টারনেটের গতি পর্যবেক্ষণ | আদীবওমিটার">
-<meta property="og:description" content="আপলোড, ডাউনলোড ও সংযোগের বিলম্ব একসঙ্গে দেখুন। ইন্টারনেট ধীর হলে কোন পরীক্ষা করবেন, জানুন।">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
 <meta property="og:url" content="https://adeebometer.com/bn/internet-speed-monitor.html">
-<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
-<meta property="og:image:width" content="2200">
-<meta property="og:image:height" content="1240">
-<meta property="og:image:alt" content="পিসি, Wi-Fi, রাউটার ও ইন্টারনেটের পরীক্ষার ফল দেখাচ্ছে AdeeboMeter">
+<meta property="og:title" content="Free internet speed monitor for Windows | AdeeboMeter">
+<meta property="og:description" content="Windows-এর জন্য AdeeboMeter নিন">
+<meta property="og:image" content="https://adeebometer.com/media/trailer-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="AdeeboMeter&#x27;s Windows overview with PC and network readings">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
 /* Like the app and the main page: nothing loaded from anywhere else. */
@@ -42,15 +44,47 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 .more{display:inline-block;margin-top:24px}
 .others{margin-top:40px;color:var(--sub)}
 @media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
-figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
 </style>
 <link rel="stylesheet" href="/guide.css">
-<style>html[lang="bn"] h1,html[lang="bn"] h2{line-height:1.35;letter-spacing:normal}</style>
+<script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/internet-speed-monitor.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/internet-speed-monitor.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/internet-speed-monitor.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/internet-speed-monitor.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/internet-speed-monitor.html">
 </head>
-<body><main><nav aria-label="সাইট"><a href="/bn/">আদীবওমিটার (AdeeboMeter)</a> · <a href="/bn/blog/">সমস্যা সমাধানের ব্লগ</a> · <a href="/internet-speed-monitor.html" lang="en">English</a></nav><h1>Windows-এ ইন্টারনেটের গতি পর্যবেক্ষণ</h1><figure class="guide-visual"><div class="visual-copy"><h2>গতি আর দেরি একসঙ্গে দেখুন।</h2><p>কল আটকে গেলে একই সময়ের আপলোড, ডাউনলোড ও সংযোগের বিলম্ব তুলনা করুন।</p></div><div class="scenario-art art-speed"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">⏱️</span><strong>দেরি পরীক্ষা</strong></div><div class="plot-label"><span>সংযোগে দেরি</span><span>চিত্র</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>অতিরিক্ত ট্রাফিক নেই</span><span>আপলোড শুরু</span><span>আপলোড থামানো হয়েছে</span></div></div><figcaption>বোঝানোর জন্য উদাহরণ। আপনার সংযোগ বা পিসির আসল ফল নয়।</figcaption></figure><h2>পরীক্ষা চালান</h2><ol><li>কাজ শুরুর আগে ইন্টারনেটের ব্যবহার ও বিলম্ব দেখুন।</li><li>সমস্যাটি আবার ঘটান। সময় লিখে রাউটার ও ইন্টারনেটের বিলম্ব দেখুন।</li><li>বড় আপলোড বা ডাউনলোড থামিয়ে একই কাজ আবার করুন।</li></ol><h2>এরপর কী দেখবেন</h2><ul class="next-checks"><li><strong>কাজ না থাকলে 0 Mb/s</strong><span>স্বাভাবিক। যে কাজটি মাপতে চান সেটি শুরু করুন।</span></li><li><strong>আপলোডে দেরি বাড়ে</strong><span>আপলোড থামিয়ে আবার পরীক্ষা করুন।</span></li><li><strong>ট্রাফিক কম, তবু দেরি</strong><span>রাউটার ও ইন্টারনেটের বিলম্ব তুলনা করুন।</span></li><li><strong>একটি ডাউনলোড ধীর</strong><span>অন্য সেবা থেকে ডাউনলোড করে দেখুন।</span></li></ul><aside class="example"><h2>একটি উদাহরণ</h2><p>বড় ব্যাকআপ আপলোডের সময় কল ভেঙে যাচ্ছে। আপলোড থামালে কল ঠিক হয় এবং বিলম্ব কমে। একই পরীক্ষা আবার করে দেখুন।</p></aside><details class="guide-detail"><summary>কেন কাজ করে</summary><p>লাইভ রেট হলো এখন কত ডেটা যাচ্ছে। স্পিড টেস্ট নির্দিষ্ট সার্ভার পর্যন্ত ক্ষমতা মাপে। ডেটার ব্যবহার হলো সময়ের সঙ্গে মোট পরিমাণ। ব্যস্ত সংযোগে ডেটা অপেক্ষা করলে বিলম্ব বাড়তে পারে।</p><p><a href="/bn/learn/speed-vs-delay.html">আরও জানুন</a></p></details><h2>Windows-এ আদীবওমিটার ব্যবহার করুন</h2><p>সমস্যার সময় পিসি ও নেটওয়ার্কের ফল একসঙ্গে দেখুন। হিস্ট্রি চালু থাকলে Time Machine দিয়ে আগের সময়ের ফল দেখুন।</p><p><a href="/bn/wifi-or-isp.html">Wi-Fi ও Ethernet তুলনা করুন</a></p><p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য বিনামূল্যে ডাউনলোড</a></p><aside class="summary"><h2>যা লিখে রাখবেন</h2><p>সময়, চলমান ট্রাফিক ও কোন অংশের বিলম্ব বদলেছে, লিখে রাখুন।</p></aside></main></body></html>
+<body>
+<main>
+<nav aria-label="সাইট"><a href="/bn/">AdeeboMeter</a> · <a href="/bn/blog/">Troubleshooting Blog</a> · <a href="/bn/internet-speed-monitor.html" lang="bn">বাংলা</a></nav>
+<h1>Free internet speed monitor for Windows</h1>
+<figure class="guide-visual" aria-labelledby="quick-title">
+<div class="visual-copy"><h2 id="quick-title">Watch what changes together.</h2><p>When a call stutters, compare upload and download rates with latency from the same moment.</p></div>
+<div class="scenario-art art-speed"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true">⏱️</span><strong>Latency check</strong></div><div class="plot-label"><span>Connection delay</span><span>Illustration</span></div><span class="plot-bars" aria-hidden="true"><i style="--h:18%"></i><i style="--h:20%"></i><i style="--h:17%"></i><i style="--h:21%"></i><i style="--h:24%"></i><i style="--h:42%"></i><i style="--h:72%"></i><i style="--h:89%"></i><i style="--h:83%"></i><i style="--h:86%"></i><i style="--h:48%"></i><i style="--h:25%"></i><i style="--h:20%"></i><i style="--h:19%"></i></span><div class="plot-axis"><span>Idle</span><span>Upload starts</span><span>Upload paused</span></div></div>
+<figcaption>Illustrative pattern. Delay rises during an upload and returns to baseline when it pauses.</figcaption>
+</figure>
+
+
+<h2 id="checks">Run the checks</h2>
+<ol><li>Watch your live rates before starting the task so you know what the connection looks like at idle.</li><li>Reproduce the issue and note the time. Check both upload and download rates alongside router and internet latency.</li><li>Repeat the task after pausing other large transfers, if you can do so safely. Compare the two runs.</li></ol>
+<h2 id="readings">What to check next</h2>
+<ul class="next-checks">
+  <li><strong>0 Mb/s while idle</strong><span>Normal. Start the task you want to measure.</span></li>
+  <li><strong>Delay rises during upload</strong><span>Pause the upload and repeat.</span></li>
+  <li><strong>Delay rises with little traffic</strong><span>Compare router and internet latency.</span></li>
+  <li><strong>One download is slow</strong><span>Try another destination.</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>A call sounds broken whenever a large backup uploads. You note the time, pause that upload, and repeat the call. If delay returns to normal and the pattern repeats, you have a stronger lead than the speed reading alone.</p></aside>
+<details class="guide-detail"><summary>Why it works</summary>
+<ul><li><strong>Live rate:</strong> traffic moving now (Mb/s).</li><li><strong>গতির পরীক্ষা:</strong> capacity to a test server (Mb/s).</li><li><strong>Data usage:</strong> traffic added up over time (MB or GB).</li></ul><p>Latency can rise when traffic waits in a queue. That is one reason a call may feel laggy even though the connection still moves plenty of data. See <a href="/bn/learn/speed-vs-delay.html">speed versus delay</a> for the mechanics.</p>
+</details>
+<h2>Use AdeeboMeter on Windows</h2>
+<p>Open AdeeboMeter to see current traffic and connection readings together. Use <strong>Time Machine</strong> to review the period if history was enabled. If several services stall, use the <a href="/bn/wifi-or-isp.html">Wi-Fi vs. ISP checks</a> to narrow down the path.</p>
+
+<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a></p>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>Write down the time, what was transferring, and whether router or internet latency changed. Use those observations to choose your next test.</p></aside>
+</main>
+</body>
+</html>
