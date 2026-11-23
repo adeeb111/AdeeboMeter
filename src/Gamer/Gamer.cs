@@ -345,6 +345,7 @@ namespace AdeeboMeter
         readonly Dictionary<string, GameStat> stats = new Dictionary<string, GameStat>();
         public readonly List<Spike> Spikes = new List<Spike>();
         readonly object k = new object();
+        string pendingGame; DateTime pendingSince = DateTime.MinValue;   // round 6 H6-L10
         public volatile string Playing;            // id of the monitored game running now (null = none)
         public DateTime PlayingSince;
         public volatile GameSession Session, LastSession;   // the open session (or null) and the one before
@@ -466,8 +467,14 @@ namespace AdeeboMeter
                     {
                         lastRun = Clock.Mono;
                         var g = GameFinder.Running(games, mon2); string id = g == null ? null : g.Id;
+                        // round 6 H6-L10: from one game to another (two open, alt-tabbing) only after a minute in front - a quick look at
+                        // the other one doesn't chop both sessions; a game that closed (or the first one) still counts at once
+                        bool swap = id != Playing && id != null && Playing != null;
+                        if (swap) { if (pendingGame != id) { pendingGame = id; pendingSince = Clock.Mono; } if ((Clock.Mono - pendingSince).TotalSeconds < 60) id = Playing; }
+                        else pendingGame = null;
                         if (id != Playing)
                         {
+                            pendingGame = null;
                             Playing = id; PlayingSince = DateTime.Now;
                             var cur = Session;
                             if (g != null && Cfg.GameAuto && (cur == null || !cur.Manual)) StartSession(g, false);
@@ -684,7 +691,7 @@ namespace AdeeboMeter
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             }
         }
-        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit, Gw = double.NaN; }   // Gw: the router's ping that minute (older files: none)
+        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit, Gw = double.NaN, Samples = 1; }   /* round 6 H6-L7: Samples - how many probes the minute rests on */   // Gw: the router's ping that minute (older files: none)
         // one day's rows for one game, or for every game (game == null: one read of the file for all of them)
         public static List<Row> Read(DateTime day, string game)
         {
@@ -699,7 +706,7 @@ namespace AdeeboMeter
                 foreach (var line in lines.Take(60000))
                 {
                     var c = line.Split(','); TimeSpan t; if (c.Length < 8 || (game != null && c[1] != game) || !TimeSpan.TryParse(c[0], CultureInfo.InvariantCulture, out t)) continue;
-                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]), Gw = c.Length > 8 ? P(c[8]) : double.NaN });
+                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]), Gw = c.Length > 8 ? P(c[8]) : double.NaN, Samples = Math.Max(1, double.IsNaN(P(c[7])) ? 1 : P(c[7])) });
                 }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is InvalidDataException)) throw; }   // a damaged day: skipped
@@ -732,10 +739,12 @@ namespace AdeeboMeter
                 foreach (var grp in rows.GroupBy(x => x.Server))
                 {
                     var days = grp.GroupBy(x => x.T.Date).ToList();
-                    double avg = GameStat.Avg(grp.Select(x => x.Avg).ToArray());   // carry-over (100-bug #22): the same average the screen shows - no-reply minutes are left out, not counted as 0 ms
+                    // round 6 H6-L7: each minute counts by the probes behind it - a played minute (60) outweighs a one-probe survey minute
+                    Func<Func<Row, double>, double> wavg = sel => { double sw = 0, sv = 0; foreach (var x in grp) { double v = sel(x); if (double.IsNaN(v)) continue; sw += x.Samples; sv += v * x.Samples; } return sw > 0 ? sv / sw : double.NaN; };
+                    double avg = wavg(x => x.Avg);   // carry-over (100-bug #22): the same average the screen shows - no-reply minutes are left out, not counted as 0 ms
                     double lim = 2 * Math.Max(1, double.IsNaN(avg) ? 0 : avg);
                     int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > lim));
-                    w[grp.Key] = new[] { avg, GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
+                    w[grp.Key] = new[] { avg, wavg(x => x.Loss), wavg(x => x.Jit), bad, days.Count };
                 }
                 lock (k) { if (weekCache.Count > 50) weekCache.Clear(); weekCache[game] = Tuple.Create(DateTime.UtcNow, w); } return w;
             }

@@ -248,7 +248,7 @@ namespace AdeeboMeter
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
                 // at most 40 networks (the ones met longest ago go) and 1,000 addresses each (private, random addresses go first)
                 foreach (var old in netSince.OrderByDescending(kv => kv.Value).Skip(40).Select(kv => kv.Key).Where(z => z != key).ToList()) { netSince.Remove(old); known.Remove(old); changed = true; }
-                if (set.Count > 1000) { set.RemoveWhere(Arp.Randomised); if (set.Count > 1000) set.Clear(); changed = true; }
+                if (set.Count > 1000) { set.RemoveWhere(Arp.Randomised); if (set.Count > 1000) { var live = new HashSet<string>(table.Select(x => x.Mac)); set.RemoveWhere(x => !live.Contains(x)); } changed = true; }   /* round 6 H6-L9: over 1,000 - the devices here now stay known; never "the whole LAN is new" */
                 if (changed) Store.Write("device-nets.txt", netSince.Select(kv => new[] { kv.Key, kv.Value.ToString("o", CultureInfo.InvariantCulture) }).ToList());
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
             }

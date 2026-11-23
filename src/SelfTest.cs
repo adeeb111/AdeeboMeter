@@ -1267,6 +1267,20 @@ namespace AdeeboMeter
                                 new[] { "f() { for a in \"$@\"; do echo \"[$a]\"; done; }; f \"x y\" z", "[x y]\n[z]" },   // round 6 D2-3
                                 new[] { "echo ${nope:-hello world}; y=ok; echo ${nope:-${y}}", "hello world\nok" },   // round 6 D2-4
                                 new[] { "readonly RR=1; for RR in 2; do echo in; done 2>&1 | grep -c readonly", "1" },   // round 6 D2-6
+                                new[] { "echo $((010)) $((0x10)) $((2#101)) $((5 & 3)) $((1 << 4)) $((3 > 2 ? 10 : 20))", "8 16 5 1 16 10" },   // hunt-6 D2-9/D2-10
+                                new[] { "x=5; echo $((x++)) $x $((x += 4))", "5 6 10" },
+                                new[] { "which nosuchthing >/dev/null; echo $?", "1" },   // hunt-6 D2-11
+                                new[] { "printf 'hello\\n' | head -c 3", "hel" },   // hunt-6 D2-14
+                                new[] { "printf 'x a\\ny a\\nz b\\n' | uniq -f 1", "x a\nz b" },   // hunt-6 D2-15
+                                new[] { "printf 'a\\\\b\\n' | { read x; echo $x; }", "ab" },   // hunt-6 D2-16
+                                new[] { "printf 'abc' | { read v; echo $?; }", "1" },
+                                new[] { "y=world; echo ${y/o/[&]}; x=a/b/c; echo ${x//\\//_}", "w[o]rld\na_b_c" },   // hunt-6 D2-18
+                                new[] { "echo /pag*/shell", "/pages/shell" },   // hunt-6 D2-19
+                                new[] { "echo aF9 | tr '[:xdigit:]' '#'", "###" },   // hunt-6 D2-20
+                                new[] { "printf '\"a b\" c\\n' | xargs -n 1 echo", "a b\nc" },   // hunt-6 D2-21
+                                new[] { "seq -w 8 10 | tr '\\n' ' '; seq 0 0.5 1 | tr '\\n' ' '", "08 09 10 0.0 0.5 1.0" },   // hunt-6 D2-22
+                                new[] { "printf '%e %u %.*s\\n' 1.5 42 2 hello", "1.500000e+00 42 he" },   // hunt-6 D2-24
+                                new[] { "printf 'a 2 x\\nb 2 a\\n' | sort -k2,2 | head -n 1; printf 'b2\\na10\\n' | sort -n | head -n 1", "a 2 x\na10" },   // hunt-6 D2-25 + last resort
                                 new[] { "echo 'a;b' | sed 's/;/-/'", "a-b" },
                                 new[] { "f() { read x; echo got$x; }; printf '1\\n2\\n' | { f; f; }", "got1\ngot2" },   // hunt-5: one input stream
                                 new[] { "grep -A 2 x nofile 2>&1 | grep -c \"isn't in this grep\"", "1" },   // hunt-5: never misread
@@ -1813,6 +1827,7 @@ namespace AdeeboMeter
                         if (cr(Theme.Ink, Theme.Bg) < 7) bad.Add(n + ": text on the page");
                         if (cr(Theme.Muted, Theme.Card) < 4.5) bad.Add(n + ": grey text " + cr(Theme.Muted, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));
                         for (int l = 0; l < 3; l++) if (cr(Theme.LvText(l), Theme.LvSoft(l)) < 4.5) bad.Add(n + ": level " + l + " text " + cr(Theme.LvText(l), Theme.LvSoft(l)).ToString("0.0", CultureInfo.InvariantCulture));
+                        if (cr(Theme.BlueText, Theme.Card) < 4.5) bad.Add(n + ": blue text " + cr(Theme.BlueText, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));   // round 6 H6-ML3
                         // round 6 ML-3: the grade pills - level text over the level colour at 40/255 on a card (light palettes)
                         if (!Theme.Dark) { var lvc = new[] { Theme.Green, Theme.Amber, Theme.Red }; for (int l = 0; l < 3; l++) { var bg = Color.FromArgb((Theme.Card.R * 215 + lvc[l].R * 40) / 255, (Theme.Card.G * 215 + lvc[l].G * 40) / 255, (Theme.Card.B * 215 + lvc[l].B * 40) / 255); if (cr(Theme.LvText(l), bg) < 4.5) bad.Add(n + ": grade pill " + l + " " + cr(Theme.LvText(l), bg).ToString("0.0", CultureInfo.InvariantCulture)); } }
                         var gr = Theme.LvText(0); var rd = Theme.LvText(2); if (!(gr.G > gr.R && rd.R > rd.G)) bad.Add(n + ": green or red changed meaning");

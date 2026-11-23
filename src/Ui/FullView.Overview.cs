@@ -310,7 +310,7 @@ namespace AdeeboMeter
                         {
                             var ev = e; string tl = L.T("See") + " " + e.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
                             var tlr = new RectangleF(x + w - tsz.Width, y + 4 * S, tsz.Width, 20 * S);
-                            using (var bl = new SolidBrush(Theme.Blue)) g.DrawString(tl, Draw.fSmall, bl, tlr.X, tlr.Y);
+                            using (var bl = new SolidBrush(Theme.BlueText)) g.DrawString(tl, Draw.fSmall, bl, tlr.X, tlr.Y);
                             Act(overviewCanvas, tlr, delegate { OpenTimeAt(ev.T, L.T("Home") + " - " + ev.Text); });
                         }
                         var er = new RectangleF(x, y, w - tmw, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
@@ -319,7 +319,7 @@ namespace AdeeboMeter
                 if (attAll.Count > att.Count)   // bug-hunt L-169: the rest are counted, one click away
                 {
                     string more = L.T("and") + " " + (attAll.Count - att.Count) + " " + L.T("more in What changed");
-                    using (var lb = new SolidBrush(Theme.Blue)) g.DrawString(more, Draw.fSmall, lb, x, y + 6 * S);
+                    using (var lb = new SolidBrush(Theme.BlueText)) g.DrawString(more, Draw.fSmall, lb, x, y + 6 * S);
                     var mr2 = new RectangleF(x, y + 2 * S, g.MeasureString(more, Draw.fSmall).Width, 22 * S); Act(overviewCanvas, mr2, delegate { tab = "changes"; ShowTab(); }); y += 26 * S;
                 }
                 y += 14 * S;

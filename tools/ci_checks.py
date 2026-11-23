@@ -10,7 +10,7 @@ os.chdir(root)
 bad = []
 
 # 1 ---------------------------------------------------------------------------------------------------------------
-stmt = re.compile(r'(\belse\b\s*\{|\bif\s*\(.*\)\s*\{?.*;|\w+\s*\(.*\)\s*;\s*\}|=\s*new\s+\w+.*;|\breturn\b[^.]*;\s*\}|^\s*\w[\w.]*\s*\(.*\)\s*;)')
+stmt = re.compile(r'(\b(?:public|private|internal|static|readonly|protected)\b[^;]*[=;]|\belse\b\s*\{|\bif\s*\(.*\)\s*\{?.*;|\w+\s*\(.*\)\s*;\s*\}|=\s*new\s+\w+.*;|\breturn\b[^.]*;\s*\}|^\s*\w[\w.]*\s*\(.*\)\s*;)')
 def comment_of(line):
     i, ins, verb = 0, None, False
     while i < len(line):

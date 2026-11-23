@@ -206,6 +206,14 @@ namespace AdeeboMeter
             {
                 if (StartFile != null) try { File.WriteAllText(Path.Combine(DataDir, "open-file.txt"), StartFile); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }   // the running copy picks it up when asked to open
                 if (Single.AskRunningToOpen()) return 0;
+                // round 6 H6-L12: the running copy gave up stepping aside because a dialog of yours is open - it isn't stuck
+                try
+                {
+                    string qb = Path.Combine(DataDir, "quit-busy.txt"); DateTime at;
+                    if (File.Exists(qb) && DateTime.TryParse(File.ReadAllText(qb), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out at) && (DateTime.UtcNow - at.ToUniversalTime()).TotalSeconds < 30)
+                    { File.Delete(qb); MessageBox.Show("The AdeeboMeter that's running has a window open that's waiting for you (a dialog), so it didn't step aside.\n\nClose that window, then open this copy again.", "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return 0; }
+                }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
                 var r = MessageBox.Show("AdeeboMeter is already running but isn't answering.\n\nClose the stuck one and start fresh?",
                     "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (r != DialogResult.Yes) return 0;
