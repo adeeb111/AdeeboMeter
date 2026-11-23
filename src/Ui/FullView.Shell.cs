@@ -2242,6 +2242,31 @@ namespace AdeeboMeter
                 "# destinations-check.sh - the places you rely on: is each one reachable, how fast, is its padlock good\n# run it:  ./destinations-check.sh        keep it:  ./destinations-check.sh > destinations.txt\n# put your own sites in the line below (space between them)\n\n" +
                 "SITES=\"example.com github.com outlook.office.com\"\n\n" +
                 "for s in $SITES; do\n  echo \"== $s\"\n  allips $s:443\n  tcpping $s:443 5\n  httptime $s 3\n  https $s\ndone\n" },
+            new[] { "wifi-check.sh", "your Wi-Fi: is it safe, drops and roams, address conflicts, who else is on it (about 30 s)",
+                "# wifi-check.sh - your Wi-Fi: safe to use, drops and roams, address clashes, who else is on it (about 30 seconds)\n# run it:  ./wifi-check.sh        keep it:  ./wifi-check.sh > wifi.txt\n\n" +
+                "echo \"== is this Wi-Fi OK to use?\"\nhotel\n" +
+                "echo \"== drops and roams (24 h)\"\nroams\n" +
+                "echo \"== your address and lease\"\ndhcp\ndupip\n" +
+                "echo \"== the router, steady?\"\nping $GATEWAY 30\n" +
+                "echo \"== who else is here\"\ninventory\narp\n" },
+            new[] { "call-check.sh", "before a Teams or Zoom call: UDP, nearest cloud, VPN and proxy, steady ping (about 1 min)",
+                "# call-check.sh - before an important call: will Teams / Zoom / Meet be smooth? (about 1 minute)\n# run it:  ./call-check.sh\n\n" +
+                "echo \"== calls need UDP\"\nteams\n" +
+                "echo \"== how far the call servers are\"\ncloud\n" +
+                "echo \"== VPN or company proxy in the way?\"\nvpn\nproxy https://teams.microsoft.com\n" +
+                "echo \"== steady? (jitter matters more than speed)\"\nping $GATEWAY 30\nping 1.1.1.1 30\n" },
+            new[] { "isp-evidence.sh", "proof for your provider: a 1-minute path report saved as HTML, the rush hour, the line right now",
+                "# isp-evidence.sh - what to send your provider: a report they can't argue with (about 1.5 minutes)\n# run it:  ./isp-evidence.sh        the report is saved as an HTML file you can attach\n\n" +
+                "echo \"== the line right now\"\nstatus\njoin\n" +
+                "echo \"== when it's worst\"\nrushhour\n" +
+                "echo \"== the report (1 minute of probes, saved as HTML and CSV)\"\nispreport 1.1.1.1 1\n" },
+            new[] { "security-check.sh", "this PC's doors and locks: what listens, certificates, DNS rules, hosts file, failed services",
+                "# security-check.sh - this PC's doors and locks (about 10 seconds; it only looks, it changes nothing)\n# run it:  ./security-check.sh        the full checkup is on the Security page:  open security\n\n" +
+                "echo \"== what listens for connections\"\nlisten\n" +
+                "echo \"== certificates that expire soon\"\ncerts\n" +
+                "echo \"== DNS: hijacked? VPN name rules?\"\ndnsrules\n" +
+                "echo \"== the hosts file\"\nhosts example.com | head -n 6\n" +
+                "echo \"== services that failed (7 days)\"\nsvcfail\n" },
             new[] { "all-tools.sh", "every tool with its example, one after another, with a transcript (about 12 min)",
                 "# all-tools.sh - every tool with its example, one after another (about 12 minutes); the transcript is saved as alltools.out.txt\n# run it:  ./all-tools.sh\n# the test-traffic tools only run when you type  alltools --yes  yourself at the prompt (your own network only)\n# every-tool.sh is the same list one line per tool - copy it and keep only what you need\n\nalltools\n" },
         };
