@@ -610,6 +610,7 @@ namespace AdeeboMeter
             if (tab == "gamer" && footTick % 2 == 0 && (GamePing.Me.Playing != null || Games.Monitored().Count > 0)) { int sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Count; var ss = GamePing.Me.Session; string gv = System.Threading.Interlocked.Read(ref GamePing.Ver).ToString(CultureInfo.InvariantCulture); string gk = GamePing.Me.Playing + "|" + sp + "|" + (ss != null && ss.Open ? ss.Rows.Count / 5 : -1) + "|" + DateTime.Now.Minute; if (gk != gamerKey) { gamerKey = gk; gamerVer = gv; gamerCanvas.Invalidate(); } else if (gv != gamerVer) { gamerVer = gv; if (!RedrawSpots(gamerCanvas, "gm.live")) gamerCanvas.Invalidate(); } }   /* a new sample only: just the cards and the map */   /* only when a new sample, a spike or the session moved (and once a minute for the "ago" times) */
             Online.Tick(); if (onlineChip != null) SyncOnlineChip();
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
+            if (tab == "shell") ShStatusTick();
             if (tab == "link") { RefreshLink(false); if (switchBusy || (linkSnap == null && linkBusy)) linkCanvas.Invalidate(); }   // the first read ticks its seconds
             if (tab == "changes") changesSeen = DateTime.Now;
             UpdateBadges();

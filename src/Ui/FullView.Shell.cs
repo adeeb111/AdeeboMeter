@@ -54,7 +54,7 @@ namespace AdeeboMeter
         ShEnv Env { get { return tEnv ?? shMain; } }
         T InSub<T>(Func<T> f) { var saved = tEnv; tEnv = Env.Clone(); try { return f(); } finally { tEnv = saved; } }
 
-        sealed class ShJob { public int Id; public string Cmd = ""; public volatile bool Cancel, Done, Abandoned; public bool Bg; public int Exit; public readonly List<Toolkit.Run> Runs = new List<Toolkit.Run>(); public readonly StringBuilder Saved = new StringBuilder(); public DateTime CancelAt = DateTime.MinValue; }
+        sealed class ShJob { public int Id; public string Cmd = ""; public DateTime Started = DateTime.UtcNow; public volatile bool Cancel, Done, Abandoned; public bool Bg; public int Exit; public readonly List<Toolkit.Run> Runs = new List<Toolkit.Run>(); public readonly StringBuilder Saved = new StringBuilder(); public DateTime CancelAt = DateTime.MinValue; }
         // where output goes: the screen (coloured), or text for the next command in a pipe / a file. Errors have their own way
         // (shell scrutiny #2): dropped (2>/dev/null), kept for a file (2> f), or passed on to where they went before (ErrTo) -
         // never into the data a pipe hands on.
@@ -220,7 +220,7 @@ namespace AdeeboMeter
             if (line == "") { ShPrompt(); return; }
             string hist = shown.Replace("\n", " ; ").Replace("do ;", "do").Replace("then ;", "then").Replace("else ;", "else");   // history keeps it on one line
             shHist.Remove(hist); shHist.Add(hist); if (shHist.Count > 500) shHist.RemoveAt(0);
-            var job = new ShJob { Id = 0, Cmd = hist }; shFg = job; term.ShowInput = false; term.Invalidate();
+            var job = new ShJob { Id = 0, Cmd = hist, Started = DateTime.UtcNow }; shNow = null; shNowAt = DateTime.UtcNow; shFg = job; term.ShowInput = false; term.Invalidate();
             var t = new Thread(() =>
             {
                 int ex = 0;
@@ -230,6 +230,19 @@ namespace AdeeboMeter
                 Ui(delegate { if (shFg == job) ShFinishFg(job, ex); });
             }, 16 * 1024 * 1024) { IsBackground = true, Name = "adeeboshell" };   // a deep script has room; nesting is still capped (#56)
             t.Start();
+        }
+        // what the foreground line is doing right now - the status line under a quiet command reads these
+        volatile string shNow; DateTime shNowAt; int shSpin;
+        void ShStatusTick()
+        {
+            var fg = shFg; if (fg == null || fg.Abandoned || term == null) { if (term != null) term.ClearStatus(); return; }
+            if (term.StatusOn == false && (DateTime.UtcNow - term.LastWrite).TotalSeconds < 1.5) return;   // output is flowing: no need
+            if (!term.CanStatus) return;
+            string now = shNow ?? fg.Cmd; int all = (int)(DateTime.UtcNow - fg.Started).TotalSeconds, step = (int)(DateTime.UtcNow - shNowAt).TotalSeconds;
+            string spin = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".Substring(shSpin++ % 10, 1);
+            var row = new List<TermView.Seg> { new TermView.Seg(spin + " ", ShCyan), new TermView.Seg("running: ", ShDim), new TermView.Seg(now, ShFg),
+                new TermView.Seg("  ·  " + step + " s" + (all - step > 1 ? "  ·  " + all + " s in all" : "") + "  ·  Ctrl+C stops", ShDim) };
+            term.Status(row);
         }
         void ShFinishFg(ShJob job, int ex)
         {
@@ -1048,6 +1061,7 @@ namespace AdeeboMeter
         int Dispatch(List<string> a, ShCtx c)
         {
             string cmd = a[0], low = cmd.ToLowerInvariant(); var args = a.Skip(1).ToList();
+            if (c.Job != null && c.Job == shFg) { string w = ShMasked(string.Join(" ", a)); shNow = w.Length > 90 ? w.Substring(0, 89) + "…" : w; shNowAt = DateTime.UtcNow; }
             try
             {
                 Node fb; lock (Env.Vars) Env.Funcs.TryGetValue(cmd, out fb);
@@ -1992,7 +2006,7 @@ namespace AdeeboMeter
             string gw; lock (M.L) gw = M.Gateway ?? "";
             int ran = 0, failed = 0, skipped = 0, pictures = 0; var log = new StringBuilder(); var cap = new ShOut { Cap = log, Job = c.Job, Tee = c.Out.Screen && !c.Job.Bg }; cap.ErrCap = log;
             // 1.1.6 test day: it showed only "── mtr ..." and then nothing for minutes - now every tool's output streams as it comes,
-            // with [n/N] and the time it took, and a "still running" line when a tool is quiet for 10 s
+            // with [n/N] and the time it took; while a tool is quiet the passing status line says which one and for how long
             Func<Tool, bool> runs = t => !(ShSkip.Contains(t.Id) || t.Group == "REMOTE") && (yes || !(LabGate.Contains(t.Id) || SenderGate.Contains(t.Id) || t.Id == "sweep")) && t.Do != null;
             int total = shTools.Count(runs), n = 0; var all0 = DateTime.UtcNow;
             OL(c, "alltools: " + total + " tools to run, one after another - each one's output shows below as it comes. Ctrl+C stops.", ShGreen);
@@ -2009,7 +2023,7 @@ namespace AdeeboMeter
                 string head = "── [" + n + "/" + total + "] " + t.Id + " " + string.Join(" ", words) + "  ·  " + L.T(t.Title);
                 OL(c, head, ShCyan); log.AppendLine(head);
                 var t0 = DateTime.UtcNow; cap.LastTee = t0.Ticks; string tid = t.Id;
-                using (var beat = cap.Tee ? new System.Threading.Timer(delegate { if (new TimeSpan(DateTime.UtcNow.Ticks - cap.LastTee).TotalSeconds >= 10) { cap.LastTee = DateTime.UtcNow.Ticks; SW("   … " + tid + " still running (" + (int)(DateTime.UtcNow - t0).TotalSeconds + " s)\n", ShDim); } }, null, 2000, 2000) : null)
+                if (c.Job == shFg) { shNow = "alltools [" + n + "/" + total + "] " + tid + " " + string.Join(" ", words); shNowAt = t0; }   // the passing status line names the tool while it is quiet
                 { int r = RunTool(t, words, new ShCtx { Job = c.Job, Out = cap, Yes = yes, Script = true }); ran++; if (r == 2) failed++;
                   string done = (r == 0 ? "   ok" : r == 1 ? "   ok (found problems)" : "   FAILED") + "  ·  " + (DateTime.UtcNow - t0).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture) + " s  ·  " + n + " of " + total + " done, " + (int)(DateTime.UtcNow - all0).TotalMinutes + " min so far";
                   OL(c, done, r == 2 ? ShRed : ShDim); log.AppendLine(done); }

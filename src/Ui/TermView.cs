@@ -52,6 +52,8 @@ namespace AdeeboMeter
         public void Write(string s, Color c)
         {
             if (string.IsNullOrEmpty(s)) return;
+            if (statusOn) EndLive();   // the passing "what I'm doing" line steps aside for real output
+            LastWrite = DateTime.UtcNow;
             var parts = s.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             for (int i = 0; i < parts.Length; i++)
             {
@@ -66,15 +68,23 @@ namespace AdeeboMeter
         }
         public void Clear() { lines.Clear(); lines.Add(new Line()); liveAt = -1; scroll = 0; ClearSel(); ResetCache(); Changed(); }
         // a live region: these lines replace the last live ones (a status line, a hop table) until EndLive
+        // a passing status line ("running: ping 1.1.1.1 · 12 s"): shown only while nothing else is live and the line is empty,
+        // gone the moment real output or a tool's own live table comes (1.1.6 test: a script into a file looked stuck)
+        public DateTime LastWrite = DateTime.UtcNow;
+        bool statusOn; public bool StatusOn { get { return statusOn; } }
+        public bool CanStatus { get { return statusOn || (liveAt < 0 && AtLineStart && Editor == null); } }
+        public void Status(List<Seg> row) { if (!CanStatus) return; Live(new List<List<Seg>> { row }); statusOn = true; }
+        public void ClearStatus() { if (statusOn) EndLive(); }
         public void Live(List<List<Seg>> rows)
         {
+            statusOn = false;
             if (liveAt < 0) { if (lines[lines.Count - 1].Len > 0) lines.Add(new Line()); liveAt = lines.Count - 1; }
             DirtyFrom(liveAt); lines.RemoveRange(liveAt, lines.Count - liveAt);
             if (rows.Count == 0) lines.Add(new Line());
             foreach (var r in rows) { var l = new Line(); foreach (var sg in r) l.Add(sg); lines.Add(l); }
             Changed();
         }
-        public void EndLive() { if (liveAt < 0) return; DirtyFrom(liveAt); lines.RemoveRange(liveAt, lines.Count - liveAt); lines.Add(new Line()); liveAt = -1; Changed(); }
+        public void EndLive() { statusOn = false; if (liveAt < 0) return; DirtyFrom(liveAt); lines.RemoveRange(liveAt, lines.Count - liveAt); lines.Add(new Line()); liveAt = -1; Changed(); }
         public bool AtLineStart { get { return lines[lines.Count - 1].Len == 0; } }
         void Trim()
         {
