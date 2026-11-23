@@ -56,11 +56,12 @@ namespace AdeeboMeter
             return l;
         }
         public static string FilePath { get { return Path.Combine(Program.DataDir, "speedservers.txt"); } }
-        static List<Server> all;
+        static List<Server> all; static DateTime allStamp;
+        static DateTime Stamp() { try { return File.Exists(FilePath) ? File.GetLastWriteTimeUtc(FilePath) : DateTime.MinValue; } catch (Exception e) { if (e is IOException || e is UnauthorizedAccessException) return DateTime.MinValue; throw; } }
         // built-in + your own lines from speedservers.txt:  server|id|provider|where|download URL|upload URL (optional)
         public static List<Server> All()
         {
-            var a = all; if (a != null) return a;
+            var a = all; DateTime st = Stamp(); if (a != null && st == allStamp) return a;   /* hunt-5: an edit to speedservers.txt counts at once - no restart */ allStamp = st;
             var l = BuiltIn();
             try
             {
@@ -261,7 +262,9 @@ IPAddress[] found;
         static double Phase(string url, bool download, IPAddress ip, Toolkit.Run run, List<double> pings, ref long total, ref string colo)
         {
             long bytes = 0, counted = 0; var sw = System.Diagnostics.Stopwatch.StartNew(); long cap = (download ? MaxDownMB : MaxUpMB) * 1000000L;
-            Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref bytes) >= cap || (run != null && run.Stop);
+            // hunt-5: the cap counts the measured bytes (after the warm-up second), with a hard ceiling at twice the cap - a line
+            // over 850 Mb/s used to reach the cap inside the warm-up, measure nothing, and say the upload didn't take
+            Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref counted) >= cap || Interlocked.Read(ref bytes) >= 2 * cap || (run != null && run.Stop);
             int streams = download ? 4 : 3; var th = new List<Thread>(); int fails = 0; string seenColo = "";
             var live = new HttpWebRequest[streams];   // carry-over (round-2 L52): each stream's request in flight, so the end of the test can abort a stalled one
             // .NET allows 2 connections per server by default - the other streams would just queue
@@ -310,12 +313,13 @@ IPAddress[] found;
                 long nb = Interlocked.Read(ref bytes); double nt = sw.Elapsed.TotalSeconds;
                 if (nt - lastT > 0.1) { double r = (nb - lastB) * 8 / 1e6 / (nt - lastT); shown = double.IsNaN(shown) ? r : shown * 0.6 + r * 0.4; SetLive(shown); lastB = nb; lastT = nt; }
             }
-            double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
+            double el = sw.Elapsed.TotalSeconds, secs = el - 1;   /* hunt-5: the real window - no 0.5 s floor skewing a short fast one */   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
             foreach (var t in th) t.Join(3000);
             lock (live) foreach (var rq in live) if (rq != null) try { rq.Abort(); } catch (Exception) { }   // a stream stalled in a read ends now, not 8+ s later
             foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
-            return c <= 0 ? double.NaN : c * 8 / 1e6 / secs;
+            if (c > 0 && secs >= 0.05) return c * 8 / 1e6 / secs;
+            long all = total; return all > 0 && el >= 0.2 ? all * 8 / 1e6 / el : double.NaN;   /* finished inside the warm-up: the whole run, ramp-up and all (a little low, never zero) */
         }
     }
 }

@@ -115,8 +115,14 @@ namespace AdeeboMeter
                         if ((DateTime.UtcNow - f.LastWriteTimeUtc).TotalDays > 7) { f.Delete(); continue; }
                         var r = Post(File.ReadAllText(f.FullName));
                         if (r.Why == "offline" || Retryable(r.Why)) return;   // still no internet, or the relay busy for a moment (bug-hunt M-24): next time
-                        f.Delete();                          // sent, or refused for good (a refusal won't change by retrying)
-                        Program.Log("outbox: " + (r.Ok ? "sent #" + r.Number : "dropped (" + r.Why + ")"));
+                        if (r.Ok) { f.Delete(); Program.Log("outbox: sent #" + r.Number); continue; }
+                        // hunt-5: refused for good - kept in outbox\not-sent (with the reason) and said once, not deleted in silence:
+                        // a Hall of Fame card's claim lives only in this file
+                        string keep = Path.Combine(Box, "not-sent"); Directory.CreateDirectory(keep);
+                        string to = Path.Combine(keep, f.Name); if (File.Exists(to)) File.Delete(to); f.MoveTo(to);
+                        File.WriteAllText(Path.ChangeExtension(to, ".why.txt"), r.Why ?? "");
+                        Program.Log("outbox: not sent (" + r.Why + ") - kept in " + keep);
+                        Alerts.Raise("outbox", "A report you sent earlier wasn't accepted (" + r.Why + "). It's kept in the outbox\\not-sent folder in AdeeboMeter's data folder.", 60 * 24);
                     }
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("outbox: " + e.Message); }

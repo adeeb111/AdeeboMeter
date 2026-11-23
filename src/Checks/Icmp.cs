@@ -88,8 +88,8 @@ namespace AdeeboMeter
                 int size2 = 36 + data.Length + 8 + 64 + 256; buf = Marshal.AllocHGlobal(size2);
                 int n = Icmp6SendEcho2(h, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, src, dst, data, (ushort)data.Length, ref o, buf, size2, timeoutMs);
                 if (n == 0) { int e = Marshal.GetLastWin32Error(); r.Status = e >= 11000 && e < 11100 ? e : TimedOut; return r; }   // no reply in the buffer to read
-                var a = new byte[16]; Marshal.Copy(buf + 6, a, 0, 16); r.From = new IPAddress(a).ToString();
-                if (n != 0) r.Status = Marshal.ReadInt32(buf, 28); r.Rtt = (uint)Marshal.ReadInt32(buf, 32);
+                var a = new byte[16]; Marshal.Copy(buf + 8, a, 0, 16);   /* hunt-5 M-1: SOCKADDR_IN6 - family 2, port 2, flowinfo 4, then the address at 8 */ r.From = new IPAddress(a).ToString();
+                r.Status = Marshal.ReadInt32(buf, 28); r.Rtt = (uint)Marshal.ReadInt32(buf, 32);
                 return r;
             }
             catch (Exception e) { Program.Log("icmp6: " + e.Message); return r; }

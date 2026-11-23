@@ -12,7 +12,7 @@ namespace AdeeboMeter
     // the real network. A one-second timer runs only while a timed game is on screen.
     sealed partial class FullView
     {
-        LearnGames.Room room; readonly List<string> roomOut = new List<string>(); DateTime roomStart; int roomHints, roomMiss, roomStage; string roomMsg = "";   // stage: 0 looking, 1 fault found, 2 escaped, 3 out of time / wrong
+        LearnGames.Room room; readonly List<string> roomOut = new List<string>(); long roomStartMs; int roomHints, roomMiss, roomStage; string roomMsg = "";   // stage: 0 looking, 1 fault found, 2 escaped, 3 out of time / wrong
         LearnGames.Case thief; int thiefClues = 1; string thiefPick = "";
         int detIdx; int detPick = -1; string thiefLast; List<int> detOrder;   // finding 34: the detective's puzzles in a new order each time round
         int DetAt() { if (detOrder == null) detOrder = Enumerable.Range(0, LearnGames.Detective.Length).OrderBy(i => GameRnd.Next()).ToList(); return detOrder[detIdx % LearnGames.Detective.Length]; }
@@ -35,7 +35,7 @@ namespace AdeeboMeter
         long quickAway;
         void GameTick(bool on)
         {
-            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; if (away < TimeSpan.Zero) away = TimeSpan.Zero; roomStart += away; outStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
+            if (on && gameAway != DateTime.MinValue) { roomStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway);   /* hunt-5: the escape room on the monotonic clock too */ outStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
             if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; quickAway = LearnGames.Mono.ElapsedMilliseconds; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
@@ -97,9 +97,9 @@ namespace AdeeboMeter
             var open = LearnGames.Faults.Where(f => !Points.Me.Has("game.room." + f.Id)).ToList(); if (open.Count == 0) open = LearnGames.Faults.ToList();
             if (room != null && open.Count > 1) open.RemoveAll(f => f.Id == room.F.Id);   // finding 34: never the same room twice in a row
             var f0 = open[GameRnd.Next(open.Count)]; room = LearnGames.NewRoom(GameRnd.Next(), f0.Id);
-            roomOut.Clear(); roomOut.Add(L.T("Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.")); roomStart = DateTime.UtcNow; roomHints = 0; roomMiss = 0; roomStage = 0; roomMsg = "";
+            roomOut.Clear(); roomOut.Add(L.T("Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.")); roomStartMs = LearnGames.Mono.ElapsedMilliseconds; roomHints = 0; roomMiss = 0; roomStage = 0; roomMsg = "";
         }
-        int RoomLeft() { return Math.Max(0, 600 - (roomHints + roomMiss) * 60 - (int)(DateTime.UtcNow - roomStart).TotalSeconds); }
+        int RoomLeft() { return Math.Max(0, 600 - (roomHints + roomMiss) * 60 - (int)((LearnGames.Mono.ElapsedMilliseconds - roomStartMs) / 1000)); }
         float PaintRoom(Graphics g, float x, float y, float w)
         {
             if (room == null) NewRoom();
@@ -137,7 +137,7 @@ namespace AdeeboMeter
                 using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THE FIX?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FixChoices, x, y, w, o => 0, o =>
                 {
-                    if (o == room.F.Fix) { roomStage = 2; if (roomMiss >= 3) Points.Me.MarkTried("game.room." + room.F.Id); string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)(DateTime.UtcNow - roomStart).TotalSeconds) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
+                    if (o == room.F.Fix) { roomStage = 2; if (roomMiss >= 3) Points.Me.MarkTried("game.room." + room.F.Id); string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)((LearnGames.Mono.ElapsedMilliseconds - roomStartMs) / 1000)) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
                     else { roomMiss++; roomMsg = L.T("That wouldn't fix it - another minute gone."); }
                     learnInfo.Invalidate();
                 });

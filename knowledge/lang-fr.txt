@@ -940,6 +940,7 @@ What kind of address is	Quel type d'adresse est
 5 cases	5 enquêtes
 10 puzzles	10 énigmes
 8 right to win	8 bonnes réponses pour gagner
+9 right to win	9 bonnes réponses pour gagner
 Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	Votre PC n'arrive pas à joindre example.com. Tout ce qui suit est une simulation - lancez les commandes et trouvez pourquoi.
 hint used	indice utilisé
 wrong guess	mauvaise réponse
@@ -3799,3 +3800,7 @@ That file holds several diagrams - the first one is opened; each one you change 
 diagrams saved to	schémas enregistrés dans
 Windows didn't answer about your connection - asking again in a few seconds.	Windows n'a pas répondu au sujet de votre connexion - nouvel essai dans quelques secondes.
 Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	Le rapport Wi-Fi de Windows (netsh wlan) peut prendre 10 à 15 secondes - l'adaptateur, les réseaux autour de vous, puis la bande et le canal.
+Postponed	Reporté
+Cancelled	Annulé
+Suspended	Suspendu
+Abandoned	Abandonné

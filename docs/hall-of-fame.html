@@ -223,14 +223,16 @@ footer a{color:inherit}
   var human = '', f = function (id) { return document.getElementById(id); }, send = f('h-send'), note = f('h-note');
   function ready() { send.disabled = !(f('h-name').value.trim() && f('h-points').value.trim() && f('h-date').value.trim() && f('h-code').value.trim() && human); }
   window.hofHuman = function (t) { human = t; ready(); };
+  // hunt-5: every try uses a new human check - one used (or lost with the network) can't be sent again; Send waits for the new one
+  function fresh() { human = ''; try { turnstile.reset(); } catch (e) {} ready(); }
   ['h-name', 'h-points', 'h-date', 'h-code'].forEach(function (id) { f(id).addEventListener('input', ready); });
   send.addEventListener('click', function () {
     send.disabled = true; note.textContent = 'Sending…';
     var card = { name: f('h-name').value, points: f('h-points').value, date: f('h-date').value, code: f('h-code').value, where: f('h-where').value, handle: f('h-handle').value };
     fetch('https://adeebometer-relay.orkoadeeb.workers.dev/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'hof', from: 'site', card: card, turnstile: human }) })
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
-      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; if (!j.ok) send.disabled = false; human = ''; try { turnstile.reset(); } catch (e) {} })
-      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again.'; send.disabled = false; });
+      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; fresh(); })
+      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again in a moment.'; fresh(); });
   });
 })();
 (function () {
@@ -251,10 +253,10 @@ footer a{color:inherit}
   var grid = document.getElementById('grid'), count = document.getElementById('count');
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   fetch('hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
-    var list = (d && d.entries) || [];
+    var all = (d && d.entries) || [], list = all.filter(function (w) { return !w.disputed; }), held = all.length - list.length;   // hunt-5: a disputed claim waits for review - not shown as a winner
     list = list.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
     if (!list.length) { count.textContent = ''; grid.appendChild(el('p', 'empty', 'No one yet - the first Adeebo Award is still out there. Will it be you?')); return; }
-    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.';
+    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.' + (held ? ' (' + held + ' more ' + (held === 1 ? 'claim is' : 'claims are') + ' being reviewed.)' : '');
     list.forEach(function (w) {
       var c = el('div', 'winner');
       c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));

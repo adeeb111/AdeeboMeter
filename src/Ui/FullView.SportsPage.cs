@@ -303,8 +303,8 @@ namespace AdeeboMeter
                 var bc = new RectangleF(x + 18 * S, ty + 10 * S, 44 * S, 44 * S); using (var b = new SolidBrush(TeamColor(t))) g.FillEllipse(b, bc); var cs = g.MeasureString(Code(t), Draw.fTiny); MkSpText(g, Code(t), Draw.fTiny, Color.White, bc.X + (bc.Width - cs.Width) / 2, bc.Y + (bc.Height - cs.Height) / 2);
                 MkSpText(g, t, Paper.Head3, Paper.Head, x + 76 * S, ty + 20 * S);
                 var tg = games.Where(z => Sports.TeamIn(t, z)).ToList();
-                var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon").OrderBy(z => z.StartUtc).FirstOrDefault();
-                string a = live != null ? L.T("Live:") + " " + live.Home + " " + live.HomeScore + " - " + live.AwayScore + " " + live.Away : done != null ? L.T("Last:") + " " + done.Home + " " + done.HomeScore + " - " + done.AwayScore + " " + done.Away : L.T("No game in today's feeds");
+                var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon").OrderBy(z => z.StartUtc).FirstOrDefault(); var offg = tg.FirstOrDefault(z => z.State == "off");
+                string a = live != null ? L.T("Live:") + " " + live.Home + " " + live.HomeScore + " - " + live.AwayScore + " " + live.Away : offg != null ? OffWord(offg) + ": " + offg.Home + " " + L.T("vs") + " " + offg.Away : done != null ? L.T("Last:") + " " + done.Home + " " + done.HomeScore + " - " + done.AwayScore + " " + done.Away : L.T("No game in today's feeds");
                 string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + (soon.StartUtc > DateTime.MinValue.AddDays(2) ? " · " + soon.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) : "") : "";   // R2-158: no time is no time, not year 1
                 MkSpText(g, a, Paper.Body, live != null ? Paper.Down : Paper.Ink, x + w * 0.32f, ty + 12 * S); if (b2 != "") MkSpText(g, b2, Paper.Body, Paper.Ink, x + w * 0.32f, ty + 34 * S);
                 var xr = new RectangleF(x + w - 52 * S, ty + 16 * S, 32 * S, 32 * S); Theme.Fill(g, xr, 6 * S, Paper.DeskBg); Theme.Stroke(g, xr, 6 * S, Paper.Line, 1); MkSpText(g, "×", Paper.BodyB, Paper.Muted, xr.X + 11 * S, xr.Y + 6 * S);
@@ -368,14 +368,14 @@ namespace AdeeboMeter
                 foreach (var m in done) { MkSpText(g, m.Home + "  " + m.HomeScore + "  ·  " + m.Away + "  " + m.AwayScore, Paper.Body, Paper.Ink, x + 16 * S, dy); var lg = m.League != "" ? m.League : L.T(Sports.Name(m.Sport)); var ls = g.MeasureString(lg, Paper.Small); MkSpText(g, lg, Paper.Small, Paper.Muted, x + w - ls.Width - 16 * S, dy + 2 * S); dy += 32 * S; }
                 return dr.Bottom + 16 * S;
             }
-            var soon = pick.Where(z => z.State == "soon").OrderBy(z => z.StartUtc).Take(20).ToList();
+            var soon = pick.Where(z => z.State == "soon" || z.State == "off").OrderBy(z => z.StartUtc).Take(20).ToList();   /* hunt-5: postponed / cancelled games listed, with that word */
             var fr = new RectangleF(x, y, w, 70 * S + Math.Max(1, soon.Count) * 36 * S); Paper.Desk(g, fr);
             float fy = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Fixtures", L.T("in your time")) + 6 * S;
             if (soon.Count == 0) MkSpText(g, L.T("No upcoming games in today's feeds."), Paper.Body, Paper.Ink, x + 16 * S, fy);
             foreach (var m in soon)
             {
                 bool mine = Sports.Mine(m); if (mine) using (var mp = new Pen(Color.FromArgb(31, 111, 235), 4 * S)) g.DrawLine(mp, x + 10 * S, fy, x + 10 * S, fy + 26 * S);
-                MkSpText(g, m.StartUtc == DateTime.MinValue ? "-" : m.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, x + 20 * S, fy);
+                MkSpText(g, m.State == "off" ? OffWord(m) : m.StartUtc == DateTime.MinValue ? "-" : m.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture), Paper.BodyB, m.State == "off" ? Paper.Muted : Paper.Head, x + 20 * S, fy);
                 MkSpText(g, m.Home + " " + L.T("vs") + " " + m.Away + (mine ? "  · " + L.T("your team") : ""), mine ? Paper.BodyB : Paper.Body, Paper.Ink, x + w * 0.22f, fy);
                 var lg = m.League != "" ? m.League : L.T(Sports.Name(m.Sport)); var ls = g.MeasureString(lg, Paper.Small); MkSpText(g, lg, Paper.Small, Paper.Muted, x + w - ls.Width - 16 * S, fy + 2 * S);
                 fy += 36 * S;
@@ -384,6 +384,8 @@ namespace AdeeboMeter
         }
 
         // ---------- Stream Check: the link, the verdict and score, which quality will play, the test, the way along, tips
+        // a game that won't be played as planned: postponed, cancelled, suspended (from the feed's own word)
+        static string OffWord(Sports.Game m) { string d = (m.Detail ?? "").ToLowerInvariant(); return L.T(d.Contains("cancel") ? "Cancelled" : d.Contains("suspend") ? "Suspended" : d.Contains("abandon") ? "Abandoned" : "Postponed"); }
         float SpStream(Graphics g, float x, float y, float w)
         {
             var ir = new RectangleF(x, y, w, 150 * S); Paper.Desk(g, ir);

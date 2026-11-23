@@ -225,8 +225,13 @@ namespace AdeeboMeter
             string fl = Flags(a); bool h = fl.Contains('h'), m = fl.Contains('m'), typ = fl.Contains('T');
             string unitHead = h ? "Size" : m ? "1M-blocks" : "1K-blocks";
             var rows = new List<string[]> { typ ? new[] { "Filesystem", "Type", unitHead, "Used", "Avail", "Use%", "Mounted on" } : new[] { "Filesystem", unitHead, "Used", "Avail", "Use%", "Mounted on" } };
+            // hunt-5: df path... shows only the drives those paths are on
+            HashSet<string> only = null; int ex = 0;
+            foreach (var pth in Files(a)) { string r = Real(Abs(pth)); if (r == null || (!File.Exists(r) && !Directory.Exists(r))) { Err(c, "df: " + pth + ": no such file or folder on a disk"); ex = 1; continue; } if (only == null) only = new HashSet<string>(StringComparer.OrdinalIgnoreCase); only.Add(Path.GetPathRoot(r).TrimEnd('\\')); }
+            if (only == null && ex != 0) return ex;
             foreach (var d in DriveInfo.GetDrives())
             {
+                if (only != null && !only.Contains(d.Name.TrimEnd('\\'))) continue;
                 long tot, avail, free; string fs;
                 try { if (!d.IsReady) continue; tot = d.TotalSize; avail = d.AvailableFreeSpace; free = d.TotalFreeSpace; fs = d.DriveFormat; } catch (IOException) { continue; } catch (UnauthorizedAccessException) { continue; }
                 long used = tot - free; Func<long, string> f = v => h ? Human(v) : m ? (v / 1048576).ToString(CultureInfo.InvariantCulture) : (v / 1024).ToString(CultureInfo.InvariantCulture);
@@ -235,7 +240,7 @@ namespace AdeeboMeter
                 rows.Add(typ ? new[] { name, fs.ToLowerInvariant(), f(tot), f(used), f(avail), pct, MntOf(d) } : new[] { name, f(tot), f(used), f(avail), pct, MntOf(d) });
             }
             Table(c, rows, ShBlue, false, typ, true, true, true, true);
-            return 0;
+            return ex;
         }
         // #13/#14/#83/#84: disks, then their own partitions under them (Windows' disk → partition → drive-letter links); drives that
         // aren't on a fixed disk (DVD, card reader, network) listed by themselves; a missing physical-disk half says so
@@ -710,13 +715,28 @@ namespace AdeeboMeter
         }
         // #27 #66: each expression compiled once; basic regular expressions unless -E; addresses timed out like the rest; -i edits
         // the file itself (its encoding and line endings kept, written whole, then swapped in)
+        // hunt-5: commands split on ';' and new lines the way sed does - never inside s/../../ or /re/ (a ';' there is text)
+        static IEnumerable<string> SedSplit(string prog)
+        {
+            var sb = new StringBuilder(); int i = 0;
+            Func<char, bool> delimited = d => { while (i < prog.Length) { char ch = prog[i]; sb.Append(ch); i++; if (ch == '\\' && i < prog.Length) { sb.Append(prog[i]); i++; continue; } if (ch == d) return true; } return false; };
+            while (i < prog.Length)
+            {
+                char ch = prog[i];
+                if (ch == ';' || ch == '\n') { yield return sb.ToString(); sb.Clear(); i++; continue; }
+                if (ch == 's' && sb.ToString().Trim() == "" && i + 1 < prog.Length) { char d = prog[i + 1]; sb.Append(ch).Append(d); i += 2; delimited(d); delimited(d); continue; }
+                if (ch == '/' && sb.ToString().Trim() == "") { sb.Append(ch); i++; delimited('/'); continue; }
+                sb.Append(ch); i++;
+            }
+            if (sb.Length > 0) yield return sb.ToString();
+        }
         int Sed(List<string> a, ShCtx c)
         {
             var progs = new List<string>(); var files = new List<string>(); bool quiet = false, ere = false, inPlace = false;
             for (int i = 0; i < a.Count; i++) { string w = a[i]; if (w == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (Regex.IsMatch(w, "^-[nEri]+$")) { quiet |= w.Contains("n"); ere |= w.Contains("E") || w.Contains("r"); inPlace |= w.Contains("i"); continue; } if (progs.Count == 0) progs.Add(w); else files.Add(w); }
             if (progs.Count == 0) { Err(c, "usage: sed 's/old/new/g' [file]   ·   sed -n '2,5p'   ·   sed '/re/d'   ·   sed -i 's/a/b/' file"); return 2; }
             var steps = new List<Func<string, int, int, string>>();   // (line, number, total) -> the line, null = deleted, "\u0000p" in front = print it too
-            foreach (var pr in progs.SelectMany(z => z.Split('\n')).Select(z => z.Trim()).Where(z => z != ""))
+            foreach (var pr in progs.SelectMany(z => SedSplit(z)).Select(z => z.Trim()).Where(z => z != ""))
             {
                 var sm = Regex.Match(pr, @"^s(.)(.*?)(?<!\\)\1(.*?)(?<!\\)\1([gipI0-9]*)$");
                 if (sm.Success)
@@ -771,7 +791,7 @@ namespace AdeeboMeter
             foreach (var chunk in per > 0 ? items.Select((v, i) => new { v, i }).GroupBy(z => z.i / per).Select(g => g.Select(z => z.v).ToList()) : new[] { items })
             {
                 if (c.Job.Cancel) return 130;
-                worst = Math.Max(worst, ShRunText(string.Join(" ", cmd.Concat(chunk).Select(ShQuote)), new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script }));
+                var line = string.Join(" ", cmd.Concat(chunk).Select(ShQuote)); worst = Math.Max(worst, InSub(() => { try { return ShRunText(line, new ShCtx { Job = c.Job, Out = c.Out, Args = c.Args, Yes = c.Yes, Script = c.Script, Sub = true }); } catch (ShFlow fl) { if (fl.Kind == "exit") return fl.Code; throw; } }));   /* hunt-5: the command runs in its own copy - echo /data | xargs cd moves nothing */
             }
             return worst;
         }

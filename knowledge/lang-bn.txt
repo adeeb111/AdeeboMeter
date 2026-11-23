@@ -72,7 +72,6 @@ General	সাধারণ
 Got it	বুঝেছি
 HOW LONG EACH STEP TAKES	কোন ধাপে কত সময় লাগে
 HOW WOULD YOU LIKE ADEEBOMETER?	ADEEBOMETER কীভাবে ব্যবহার করতে চান?
-Health	স্বাস্থ্য
 History	ইতিহাস
 History & data	ইতিহাস ও ডেটা
 Home networks only	শুধু বাড়ির নেটওয়ার্কে
@@ -940,6 +939,7 @@ What kind of address is	এই ঠিকানার ধরন কী
 5 cases	5টি ঘটনা
 10 puzzles	10টি ধাঁধা
 8 right to win	জিততে 8টি সঠিক
+9 right to win	জিততে 9টি সঠিক
 Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	আপনার পিসি example.com-এ পৌঁছাতে পারছে না। নিচের সবকিছু সিমুলেশন—কমান্ড চালিয়ে কারণ খুঁজুন।
 hint used	ইঙ্গিত নেওয়া হয়েছে
 wrong guess	ভুল অনুমান
@@ -5083,3 +5083,7 @@ That file holds several diagrams - the first one is opened; each one you change 
 diagrams saved to	টি ডায়াগ্রাম সেভ হয়েছে:
 Windows didn't answer about your connection - asking again in a few seconds.	Windows আপনার সংযোগ নিয়ে উত্তর দেয়নি - কয়েক সেকেন্ড পরে আবার জিজ্ঞেস করছি।
 Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	Windows-এর নিজস্ব Wi-Fi রিপোর্ট (netsh wlan) পেতে ১০ থেকে ১৫ সেকেন্ড লাগতে পারে - অ্যাডাপ্টার, আশেপাশের নেটওয়ার্ক, তারপর ব্যান্ড ও চ্যানেল।
+Postponed	স্থগিত
+Cancelled	বাতিল
+Suspended	মুলতুবি
+Abandoned	পরিত্যক্ত

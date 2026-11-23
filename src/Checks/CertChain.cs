@@ -26,6 +26,8 @@ namespace AdeeboMeter
     [SuppressMessage("Performance", "CA1861", Justification = "result rows, built once per run")]
     static class CertChain
     {
+        // hunt-5: one wording for every certificate display - hours under a day, "1 day", then days
+        internal static string ExpiredAgo(DateTime notAfter, DateTime now) { var ago = now - notAfter; if (ago.TotalHours < 24) return "expired " + Math.Max(1, (int)ago.TotalHours) + " h ago"; int d = (int)ago.TotalDays; return "expired " + d + (d == 1 ? " day ago" : " days ago"); }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
         [DllImport("crypt32.dll", SetLastError = true)]
@@ -421,7 +423,7 @@ namespace AdeeboMeter
             {
                 int days = (int)Math.Floor((cert.NotAfter - now).TotalDays);
                 rows.Add(R(nameBad ? 2 : 0, "Name matches", nameBad ? "no - it's for " + Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 50) : "yes - valid for " + host, "", "m"));
-                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? ((now - cert.NotAfter).TotalHours < 24 ? "expired " + Math.Max(1, (int)(now - cert.NotAfter).TotalHours) + " h ago" : "expired " + (int)(now - cert.NotAfter).TotalDays + " days ago") : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + Until(cert.NotAfter - now) + " (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
+                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? (ExpiredAgo(cert.NotAfter, now)) : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + Until(cert.NotAfter - now) + " (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
                 string insp = !chainBad ? Inspection.InspectedBy(cert) : "";
                 // a private root can be a company proxy inspecting HTTPS - or simply an intranet / home-lab CA that signs this site itself.
                 // Only a public website signed that way points at inspection (Security checkup tests that with www.microsoft.com).

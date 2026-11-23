@@ -159,6 +159,7 @@ namespace AdeeboMeter
         // metadata address. Redirects are followed by hand so each hop is checked; a foreign host's address is checked again at
         // connect time (a name that resolves to a private address is refused, as in the speed test).
         [ThreadStatic] static string origin;
+        internal static bool AllowedFor(string originHost, Uri x) { string keep = origin; origin = originHost; try { return Allowed(x); } finally { origin = keep; } }   // for the self-test
         static bool Allowed(Uri x)
         {
             if (x == null || (x.Scheme != "http" && x.Scheme != "https") || x.UserInfo != "") return false;
@@ -220,7 +221,14 @@ namespace AdeeboMeter
             if (r.Kind == "HLS")
             {
                 r.Ladder = ParseHls(body);
-                if (r.Ladder.Count > 0) { media = new Uri(u, r.Ladder[0].Uri); body = Text(media, r, false); } else media = u;
+                if (r.Ladder.Count > 0)
+                {
+                    // hunt-5: the top quality's playlist missing (404, expired) falls to the next one down, as a player does
+                    media = null; Exception miss = null;
+                    foreach (var v in r.Ladder.Take(4)) { try { var mu = new Uri(u, v.Uri); body = Text(mu, r, false); media = mu; break; } catch (WebException we) { miss = miss ?? we; } }
+                    if (media == null) throw miss ?? new WebException("no quality's playlist could be read");
+                }
+                else media = u;
                 segs = body.Replace("\r", "").Split('\n').Select(z => z.Trim()).Where(z => z != "" && !z.StartsWith("#", StringComparison.Ordinal)).ToList();
                 if (segs.Count > 0 && segs[0].EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)) { media = new Uri(media, segs[0]); body = Text(media, r, false); segs = body.Replace("\r", "").Split('\n').Select(z => z.Trim()).Where(z => z != "" && !z.StartsWith("#", StringComparison.Ordinal)).ToList(); }
                 if (r.Ladder.Count == 0) { var dur = Regex.Matches(body, "#EXTINF:([0-9.]+)").Cast<Match>().Select(x => { double d; return double.TryParse(x.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out d) ? d : 0; }).ToList(); if (dur.Count > 0) r.Line = "A single-quality stream: what it needs is measured from its own pieces."; }

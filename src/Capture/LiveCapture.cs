@@ -187,7 +187,7 @@ namespace AdeeboMeter
 
         void Parse(string line)
         {
-            var f = line.Split('\t'); if (f.Length < 16) return;
+            if (string.IsNullOrWhiteSpace(line)) return; var f = line.Split('\t'); if (f.Length < 16) { lock (k) bad++; return; }   /* hunt-5: a short line is a bad line too - counted, not silently skipped */
             long len; if (!long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out len)) len = -1;   /* garbage in the length: a bad line (dropped below), never a 0-byte packet */
             string src = First(f[2]), dst = First(f[3]); if (src == "") { src = First(f[4]); dst = First(f[5]); }
             int et = f[1].IndexOf("ethertype:", StringComparison.Ordinal);

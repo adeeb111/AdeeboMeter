@@ -121,7 +121,7 @@ namespace AdeeboMeter
                             g.DrawString(m.Away, Draw.fBodyB, ink, new RectangleF(cx + 14 * S, cy, colW * 0.62f, 18 * S), nf); g.DrawString(m.Home, Draw.fBodyB, ink, new RectangleF(cx + 14 * S, cy + 18 * S, colW * 0.62f, 18 * S), nf);
                             using (var sb = new SolidBrush(live ? Theme.LvText(2) : Theme.Ink)) { g.DrawString(Or(m.AwayScore, "-"), Draw.fBodyB, sb, new RectangleF(cx + colW * 0.64f, cy, colW * 0.36f, 18 * S), nf); g.DrawString(Or(m.HomeScore, "-"), Draw.fBodyB, sb, new RectangleF(cx + colW * 0.64f, cy + 18 * S, colW * 0.36f, 18 * S), nf); }
                         }
-                        string st = live ? L.T("LIVE") + (m.Detail != "" ? " · " + Cut(m.Detail, 50) : "") : m.State == "soon" ? m.StartUtc == DateTime.MinValue ? "" : m.StartUtc.ToLocalTime().ToString("ddd t", CultureInfo.CurrentCulture) : Cut(m.Detail, 60);
+                        string st = live ? L.T("LIVE") + (m.Detail != "" ? " · " + Cut(m.Detail, 50) : "") : m.State == "off" ? OffWord(m) : m.State == "soon" ? m.StartUtc == DateTime.MinValue ? "" : m.StartUtc.ToLocalTime().ToString("ddd t", CultureInfo.CurrentCulture) : Cut(m.Detail, 60);
                         if (m.League != "") st = m.League + (st != "" ? " · " + st : "");
                         using (var sb = new SolidBrush(live ? Theme.LvText(2) : Theme.Muted)) g.DrawString(Cut(st, 70), Draw.fTiny, sb, cx + 14 * S, cy + 37 * S);
                         cy += 58 * S;

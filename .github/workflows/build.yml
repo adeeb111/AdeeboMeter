@@ -32,6 +32,9 @@ jobs:
           persist-credentials: false
           # a manual release run builds the tag it publishes - never whatever branch the run was started from
           ref: ${{ github.event.release.tag_name || github.event.inputs.tag || github.ref }}
+      - name: Source checks (swallowed code, site scripts parse, phone and PC agree)
+        shell: pwsh
+        run: python tools/ci_checks.py
       - name: Build and package (release.ps1)
         shell: pwsh
         # the one secret the build sees: the Hall of Fame key, so official award cards carry a claim code (see src/HallOfFame.cs).
@@ -46,6 +49,19 @@ jobs:
           $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--selftest' -Wait -PassThru
           if (Test-Path AdeeboMeter-selftest.txt) { Get-Content AdeeboMeter-selftest.txt }
           if ($p.ExitCode -ne 0) { throw "self-test failed (exit $($p.ExitCode))" }
+      # hunt-5: a release also gets the deep test (every tool with hostile input, leaks, the penny rule) - a failure stops it;
+      # a run the time cap cuts short is reported as a warning, not a pass
+      - name: Deep test (releases only)
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')
+        shell: pwsh
+        timeout-minutes: 60
+        run: |
+          $p = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList '--deeptest','--minutes','45' -PassThru
+          if (-not $p.WaitForExit(55 * 60 * 1000)) { $p.Kill(); throw "deep test still running after 55 minutes" }
+          $t = if (Test-Path AdeeboMeter-deeptest.txt) { Get-Content AdeeboMeter-deeptest.txt -Raw } else { "" }
+          $t
+          if ($t -match ' FAILED') { throw "deep test failed" }
+          if ($t -notmatch 'ALL PASSED') { Write-Output "::warning::deep test didn't finish inside its cap - see the report above" }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02   # v4.6.2
         with:
           name: AdeeboMeter

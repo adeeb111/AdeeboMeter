@@ -245,3 +245,7 @@ Your phone	你的手机
 days of history are deleted for good - this can't be undone.	天的历史记录将被永久删除，无法撤销。
 dig - any DNS record	dig - 任意 DNS 记录
 iperf3 to your server	iperf3 到你的服务器
+Postponed	延期
+Cancelled	取消
+Suspended	暂停
+Abandoned	中止

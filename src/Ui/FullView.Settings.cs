@@ -712,7 +712,7 @@ namespace AdeeboMeter
                     Policy.Apply();   // an IT policy still wins over an imported file
                     Cfg.Save(); M.Nudge(); BuildPinBar();
                     // the open window takes them up at once: the tabs (Simple / Pro), the Adeebo button, the language
-                    L.Use(Cfg.Lang); ApplyMode(); SyncPointsBtn(); Invalidate(true);
+                    L.Use(Cfg.Lang); ApplyMode(); SyncPointsBtn(); SyncLangBtn(); SyncRestart(); PlaceTop(); Invalidate(true);   /* hunt-5: the language button and the Restart pill follow an import too */
                     settingsNote = "Loaded " + n + AdeeboMeter.L.T(" settings.") + (kv.Any(x => x.Key == "lang") ? AdeeboMeter.L.T(" Some captions switch language at the next start.") : "");
                 }
                 catch (Exception e) { settingsNote = AdeeboMeter.L.T("Couldn't read it: ") + e.Message; }

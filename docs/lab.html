@@ -308,8 +308,9 @@ function persist(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 function saveNow(){ clearTimeout(saveT); saveT = 0; if (!doc.fid) doc.fid = uid("f").slice(0, 21); const one = store.set(KEY, JSON.stringify(doc)), lib = one && keepSoon(doc);
   $("#saved").textContent = !one ? "Not saved - this browser's storage is off or full" : lib === false ? "Saved - but Your diagrams is full (delete some)" : "Saved in this browser"; }
 let keepT = 0, keepDoc = null;
-function keepSoon(d){ keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
-window.addEventListener("pagehide", () => { if (saveT) saveNow(); if (keepDoc) keep(keepDoc); });   /* the last edit is written even if the window closes within 300 ms */
+function keepSoon(d){ if (keepDoc && keepDoc !== d && keepDoc.fid !== d.fid) keep(keepDoc); keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
+function flushSaves(){ if (saveT) saveNow(); if (keepDoc) { clearTimeout(keepT); keep(keepDoc); keepDoc = null; } }   /* hunt-5: an edit made just before switching drawings is written first, not lost */
+window.addEventListener("pagehide", flushSaves);   /* the last edit is written even if the window closes within 300 ms */
 /* ---------- your diagrams: every drawing you change is kept here (this browser only), newest first */
 function files(){ try { const l = JSON.parse(store.get(FILES) || "[]"); return Array.isArray(l) ? l.filter(f => f && f.id && f.doc) : []; } catch (e) { return []; } }
 function keep(d){ const l = files().filter(f => f.id !== d.fid); l.unshift({id: d.fid, name: d.name, t: Date.now(), doc: d}); return store.set(FILES, JSON.stringify(l.slice(0, 40))); }
@@ -525,10 +526,10 @@ function setMode(m){ mode = m; document.body.classList.toggle("break", m === "br
 $("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
 
 /* ---------- the start page: new, open, AdeeboMeter's own drawings of your network, your diagrams, examples */
-function openDoc(d, title){ document.body.classList.remove("home"); if (mode === "break") setMode("draw");
+function openDoc(d, title){ flushSaves(); document.body.classList.remove("home"); if (mode === "break") setMode("draw");
   sel = null; linkFrom = null; undo = []; redo = []; doc = d; $("#name").value = doc.name; accessUi(); buildTools(); hint(); $("#say").className = ""; draw(); setTimeout(fit, 0);
   if (title && doc.note) say(title, " " + doc.note, false); $("#saved").textContent = doc.fid ? "Saved in this browser" : ""; }
-function showHome(){ if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
+function showHome(){ flushSaves(); if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
 $("#homeBtn").onclick = showHome;
 const VIEWS = [["lan", "See my LAN", "cpe", "Every device on your network - address, MAC and maker (up to 50 drawn)"],
   ["path", "Path to anywhere", "internet", "Your last trace or MTR, hop by hop, red where loss is real"],
