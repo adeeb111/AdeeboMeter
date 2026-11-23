@@ -4886,3 +4886,33 @@ THE LINE IS SLOW RIGHT NOW	লাইন এখন ধীর
 READY TO QUEUE · GG	কিউ-এর জন্য তৈরি · GG
 YOU TYPE	আপনি লিখবেন
 SENDS	পাঠায়
+Keep AdeeboMeter free	AdeeboMeter ফ্রি রাখুন
+One person builds it, in his own time. No ads, no tracking, no account, no paywall - and it stays that way. If it ever saved you an hour or a phone call to your provider, you can help keep it going.	একজন মানুষ নিজের সময়ে এটি বানান। কোনো বিজ্ঞাপন নেই, ট্র্যাকিং নেই, অ্যাকাউন্ট নেই, টাকা দিয়ে খোলার কিছু নেই—আর এমনই থাকবে। এটা যদি কখনো আপনার এক ঘণ্টা বা প্রোভাইডারকে একটা ফোন বাঁচিয়ে থাকে, চালিয়ে যেতে সাহায্য করতে পারেন।
+No ads	বিজ্ঞাপন নেই
+No tracking	ট্র্যাকিং নেই
+No account	অ্যাকাউন্ট নেই
+Free, for everyone	সবার জন্য ফ্রি
+WHAT YOUR SUPPORT PAYS FOR	আপনার সহায়তা যা চালায়
+Code signing	কোড সাইনিং
+so Windows trusts the download instead of warning you	যাতে Windows সতর্ক না করে ডাউনলোডটিকে বিশ্বাস করে
+Microsoft Store	Microsoft Store
+one-click installs and updates	এক ক্লিকে ইনস্টল ও আপডেট
+The website	ওয়েবসাইট
+the guides, Learn and the phone app	গাইড, শিখুন আর ফোন অ্যাপ
+CHIP IN - ONCE, ANY AMOUNT	একবার দিন, যত খুশি
+A coffee	এক কাপ কফি
+A thank-you	একটা ধন্যবাদ
+Fuel a feature	একটা ফিচারের জ্বালানি
+Champion	চ্যাম্পিয়ন
+Other	অন্য
+you choose	আপনি ঠিক করুন
+Donate with PayPal	PayPal দিয়ে দান করুন
+with PayPal	PayPal দিয়ে
+PayPal, in Canadian dollars - it opens in your browser. AdeeboMeter itself sends nothing.	PayPal, কানাডীয় ডলারে—আপনার ব্রাউজারে খোলে। AdeeboMeter নিজে কিছুই পাঠায় না।
+OR HELP FOR FREE	বা বিনামূল্যে সাহায্য করুন
+Star it on GitHub	GitHub-এ স্টার দিন
+Tell a friend	বন্ধুকে জানান
+Share an idea	একটা আইডিয়া দিন
+Link copied	লিংক কপি হয়েছে
+free: finds out why your internet or PC is slow	ফ্রি: আপনার ইন্টারনেট বা পিসি কেন ধীর তা খুঁজে বের করে
+Thank you for using it - that already helps more than you think.	ব্যবহার করার জন্য ধন্যবাদ—এটাই আপনার ধারণার চেয়ে বেশি সাহায্য করে।

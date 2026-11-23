@@ -172,7 +172,13 @@ namespace AdeeboMeter
             float mh = 96 * S; bool meter = r.Height - 12 * S - mh - 46 * S - 40 * S > y + 8 * S;
             float my = r.Height - mh - 12 * S;
             {
-                var srr = new RectangleF(x, Math.Max(y + 40 * S, (meter ? my : r.Height - 4 * S) - 44 * S), w, 38 * S); bool ssel = tab == "settings";
+                var srr = new RectangleF(x, Math.Max(y + 40 * S, (meter ? my : r.Height - 4 * S) - 44 * S), w - 44 * S, 38 * S); bool ssel = tab == "settings";
+                // the heart beside Settings (Adeeb, 22 Nov): community and support - small, always there, never in the way
+                {
+                    var hr = new RectangleF(x + w - 42 * S, srr.Y + 2 * S, 34 * S, 34 * S);
+                    SupportCard.Heart(g, new RectangleF(hr.X + 8 * S, hr.Y + 9 * S, 18 * S, 16 * S), hc ? SystemColors.WindowText : Color.FromArgb(0xE6, 0x49, 0x80));
+                    Act(sideNav, hr, OpenSupport); sideNav.Acc.Add(Tuple.Create(L.T("Community and support"), Rectangle.Round(hr), (Action)OpenSupport));
+                }
                 // Your phone, the second way in (Adeeb, 16 Nov: "connect option should also be in the left bar") - its state on the right
                 {
                     var prr = new RectangleF(x, srr.Y - 40 * S, w, 38 * S); bool psel = tab == "phone"; string plb; string pst = PhoneHub.StateOf(out plb);
@@ -207,6 +213,9 @@ namespace AdeeboMeter
                 Act(sideNav, mr, delegate { tab = "procs"; ShowTab(); SyncNav(); });
             }
         }
+
+        // the heart's card: community and support (SupportCard.cs); its "share an idea" / "report a bug" open the app's own boxes
+        void OpenSupport() { SupportCard.Open(this, k => ReportDialog(k, "")); }
 
         // ---------- applying a layout: which frame shows, how wide the right-hand panel is
         TableLayoutPanel bodyGrid;

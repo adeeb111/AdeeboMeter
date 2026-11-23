@@ -4886,3 +4886,33 @@ THE LINE IS SLOW RIGHT NOW	الخط بطيء الآن
 READY TO QUEUE · GG	جاهز للعب · GG
 YOU TYPE	تكتب
 SENDS	يرسل
+Keep AdeeboMeter free	أبقِ AdeeboMeter مجانيًا
+One person builds it, in his own time. No ads, no tracking, no account, no paywall - and it stays that way. If it ever saved you an hour or a phone call to your provider, you can help keep it going.	يبنيه شخص واحد في وقت فراغه. بلا إعلانات، بلا تتبّع، بلا حساب، بلا اشتراك مدفوع — وسيبقى كذلك. إن وفّر عليك يومًا ساعة أو مكالمة مع مزودك، يمكنك المساعدة في استمراره.
+No ads	بلا إعلانات
+No tracking	بلا تتبّع
+No account	بلا حساب
+Free, for everyone	مجاني للجميع
+WHAT YOUR SUPPORT PAYS FOR	ما يغطيه دعمك
+Code signing	توقيع الشيفرة
+so Windows trusts the download instead of warning you	كي يثق Windows بالتنزيل بدل أن يحذّرك
+Microsoft Store	Microsoft Store
+one-click installs and updates	تثبيت وتحديثات بنقرة واحدة
+The website	الموقع
+the guides, Learn and the phone app	الأدلة وقسم التعلّم وتطبيق الهاتف
+CHIP IN - ONCE, ANY AMOUNT	ساهم — مرة واحدة، بأي مبلغ
+A coffee	فنجان قهوة
+A thank-you	شكرًا
+Fuel a feature	ادعم ميزة
+Champion	بطل
+Other	آخر
+you choose	أنت تختار
+Donate with PayPal	تبرّع عبر PayPal
+with PayPal	عبر PayPal
+PayPal, in Canadian dollars - it opens in your browser. AdeeboMeter itself sends nothing.	PayPal، بالدولار الكندي — يُفتح في متصفحك. AdeeboMeter نفسه لا يرسل شيئًا.
+OR HELP FOR FREE	أو ساعد مجانًا
+Star it on GitHub	ضع نجمة على GitHub
+Tell a friend	أخبر صديقًا
+Share an idea	شارك فكرة
+Link copied	تم نسخ الرابط
+free: finds out why your internet or PC is slow	مجاني: يكتشف سبب بطء الإنترنت أو الحاسوب
+Thank you for using it - that already helps more than you think.	شكرًا لاستخدامه — هذا وحده يساعد أكثر مما تظن.

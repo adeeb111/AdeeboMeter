@@ -4886,3 +4886,33 @@ THE LINE IS SLOW RIGHT NOW	LA LÍNEA VA LENTA AHORA
 READY TO QUEUE · GG	LISTO PARA JUGAR · GG
 YOU TYPE	ESCRIBES
 SENDS	ENVÍA
+Keep AdeeboMeter free	Mantén AdeeboMeter gratis
+One person builds it, in his own time. No ads, no tracking, no account, no paywall - and it stays that way. If it ever saved you an hour or a phone call to your provider, you can help keep it going.	Lo hace una sola persona, en su tiempo libre. Sin anuncios, sin rastreo, sin cuenta, sin muro de pago, y así seguirá. Si alguna vez te ahorró una hora o una llamada a tu proveedor, puedes ayudar a que siga adelante.
+No ads	Sin anuncios
+No tracking	Sin rastreo
+No account	Sin cuenta
+Free, for everyone	Gratis, para todos
+WHAT YOUR SUPPORT PAYS FOR	LO QUE PAGA TU APOYO
+Code signing	Firma de código
+so Windows trusts the download instead of warning you	para que Windows confíe en la descarga en vez de advertirte
+Microsoft Store	Microsoft Store
+one-click installs and updates	instalación y actualizaciones con un clic
+The website	El sitio web
+the guides, Learn and the phone app	las guías, Aprender y la app del teléfono
+CHIP IN - ONCE, ANY AMOUNT	APORTA: UNA VEZ, LO QUE QUIERAS
+A coffee	Un café
+A thank-you	Un gracias
+Fuel a feature	Impulsa una función
+Champion	Campeón
+Other	Otro
+you choose	tú eliges
+Donate with PayPal	Donar con PayPal
+with PayPal	con PayPal
+PayPal, in Canadian dollars - it opens in your browser. AdeeboMeter itself sends nothing.	PayPal, en dólares canadienses: se abre en tu navegador. AdeeboMeter no envía nada.
+OR HELP FOR FREE	O AYUDA GRATIS
+Star it on GitHub	Dale una estrella en GitHub
+Tell a friend	Cuéntaselo a alguien
+Share an idea	Comparte una idea
+Link copied	Enlace copiado
+free: finds out why your internet or PC is slow	gratis: averigua por qué tu internet o tu PC va lento
+Thank you for using it - that already helps more than you think.	Gracias por usarlo: eso ya ayuda más de lo que crees.

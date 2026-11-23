@@ -3601,3 +3601,33 @@ THE LINE IS SLOW RIGHT NOW	LA LIGNE EST LENTE EN CE MOMENT
 READY TO QUEUE · GG	PRÊT À JOUER · GG
 YOU TYPE	VOUS TAPEZ
 SENDS	ENVOIE
+Keep AdeeboMeter free	Gardez AdeeboMeter gratuit
+One person builds it, in his own time. No ads, no tracking, no account, no paywall - and it stays that way. If it ever saved you an hour or a phone call to your provider, you can help keep it going.	Une seule personne le fait, sur son temps libre. Pas de pub, pas de pistage, pas de compte, pas de mur payant - et ça va rester comme ça. S'il vous a déjà épargné une heure ou un appel à votre fournisseur, vous pouvez l'aider à continuer.
+No ads	Pas de pub
+No tracking	Pas de pistage
+No account	Pas de compte
+Free, for everyone	Gratuit, pour tout le monde
+WHAT YOUR SUPPORT PAYS FOR	CE QUE VOTRE SOUTIEN PAIE
+Code signing	Signature du code
+so Windows trusts the download instead of warning you	pour que Windows fasse confiance au téléchargement au lieu de vous avertir
+Microsoft Store	Microsoft Store
+one-click installs and updates	installation et mises à jour en un clic
+The website	Le site Web
+the guides, Learn and the phone app	les guides, Apprendre et l'appli mobile
+CHIP IN - ONCE, ANY AMOUNT	DONNEZ - UNE FOIS, LE MONTANT DE VOTRE CHOIX
+A coffee	Un café
+A thank-you	Un merci
+Fuel a feature	Une nouvelle fonction
+Champion	Champion
+Other	Autre
+you choose	à vous de choisir
+Donate with PayPal	Donner avec PayPal
+with PayPal	avec PayPal
+PayPal, in Canadian dollars - it opens in your browser. AdeeboMeter itself sends nothing.	PayPal, en dollars canadiens : s'ouvre dans votre navigateur. AdeeboMeter n'envoie rien lui-même.
+OR HELP FOR FREE	OU AIDEZ GRATUITEMENT
+Star it on GitHub	Une étoile sur GitHub
+Tell a friend	Parlez-en
+Share an idea	Proposez une idée
+Link copied	Lien copié
+free: finds out why your internet or PC is slow	gratuit : trouve pourquoi votre Internet ou votre PC est lent
+Thank you for using it - that already helps more than you think.	Merci de l'utiliser - ça aide déjà plus que vous ne le pensez.
