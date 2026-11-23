@@ -254,9 +254,9 @@ namespace AdeeboMeter
         {
             var groups = PtAll().Where(i => i.Group != "").GroupBy(i => i.Group).ToList(); if (groups.Count == 0) return y;
             using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("BADGES"), Draw.fTiny, muted, x, y); y += 22 * S;
-            float bw = 104 * S, bh = 112 * S; int per = Math.Max(1, (int)((w + 10 * S) / (bw + 10 * S))); int k = 0;
+            float bw = 104 * S, bh = 128 * S; int per = Math.Max(1, (int)((w + 10 * S) / (bw + 10 * S))); int k = 0;   // two lines for a name: "Hardware nerds" was cut to "Hardware ner…" (1.1.6 walk)
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
-            using (var center = new StringFormat { Alignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+            using (var center = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord })
                 foreach (var gr in groups)
                 {
                     int all = gr.Count(), done = gr.Count(i => Points.Me.Has(i.Key)); bool full = done == all && all > 0, some = done > 0;
@@ -267,8 +267,8 @@ namespace AdeeboMeter
                     if (some && !full) using (var ap = new Pen(Kit.Accent("learn"), 3 * S)) g.DrawArc(ap, c, -90, 360f * done / all);
                     string icon; if (!BadgeIcons.TryGetValue(gr.Key, out icon)) icon = "star";
                     Kit.Icon(g, icon, new RectangleF(c.X + 16 * S, c.Y + 16 * S, 24 * S, 24 * S), full ? Theme.Amber : some ? Kit.Accent("learn") : Theme.Muted);
-                    g.DrawString(L.T(gr.Key), Draw.fSmall, some ? ink : muted, new RectangleF(r.X, c.Bottom + 6 * S, bw, 18 * S), center);
-                    g.DrawString(done + " / " + all, Draw.fTiny, muted, new RectangleF(r.X, c.Bottom + 24 * S, bw, 16 * S), center);
+                    g.DrawString(L.T(gr.Key), Draw.fSmall, some ? ink : muted, new RectangleF(r.X, c.Bottom + 6 * S, bw, 36 * S), center);
+                    g.DrawString(done + " / " + all, Draw.fTiny, muted, new RectangleF(r.X, c.Bottom + 44 * S, bw, 16 * S), center);
                     k++;
                 }
             return y + ((k + per - 1) / per) * (bh + 10 * S) + 12 * S;

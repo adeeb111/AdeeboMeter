@@ -5081,3 +5081,4 @@ Couldn't save:	تعذّر الحفظ:
 Save a copy of all my diagrams	حفظ نسخة من كل مخططاتي
 That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	يحتوي هذا الملف على عدة مخططات - فُتح أولها؛ وكل مخطط تغيّره يُحفظ في «مخططاتك».
 diagrams saved to	مخططات حُفظت في
+Windows didn't answer about your connection - asking again in a few seconds.	لم يُجب Windows عن اتصالك - سأسأل مجددًا بعد بضع ثوانٍ.

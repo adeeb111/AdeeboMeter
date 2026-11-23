@@ -29,6 +29,7 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         // ---------- Your connection
+        string linkErr;   // why the last read failed - shown instead of a "still asking" that never ends
         void RefreshLink(bool now)
         {
             if (linkBusy || (!now && (DateTime.UtcNow - lastLink).TotalSeconds < 10)) return;
@@ -37,9 +38,9 @@ namespace AdeeboMeter
             {
                 if (IsDisposed) { linkBusy = false; return; }
                 LinkSnap ls = null; WifiAdvisor.Extra ex = null;
-                try { ls = LinkInfo.Collect(M); ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link: " + e.Message); }
+                string err = null; try { ls = LinkInfo.Collect(M); } catch (Exception e) { err = e.Message; Program.Log("link: " + e.Message); } if (ls != null) try { ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link advisor: " + e.Message); }
                 if (IsDisposed || !IsHandleCreated) { linkBusy = false; return; }
-                try { BeginInvoke((Action)delegate { linkBusy = false; if (ls != null && !IsDisposed) { linkSnap = ls; linkExtra = ex; linkCanvas.Invalidate(); } }); } catch { linkBusy = false; }
+                try { BeginInvoke((Action)delegate { linkBusy = false; if (IsDisposed) return; linkErr = ls == null ? (err ?? "no answer") : null; if (ls != null) { linkSnap = ls; linkExtra = ex; } else lastLink = DateTime.UtcNow.AddSeconds(-5); linkCanvas.Invalidate(); }); } catch { linkBusy = false; }   // 1.1.6 walk: a failed read left "Asking Windows..." up for good
             });
         }
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
@@ -66,7 +67,7 @@ namespace AdeeboMeter
             Begin(linkCanvas);
             float x = 14 * S, y = 6 * S, w = linkCanvas.ClientSize.Width - 28 * S;
             var ls = linkSnap;
-            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Voice.P("Asking Windows about your connection...", "Reading..."), Draw.fBody, mb, x, y + 10 * S); return; }
+            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading..."), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 60 * S)); return; }
             string title = (ls.Wifi ? "YOUR WI-FI" : "YOUR CABLE") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  UPDATED " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
             var vb = new RectangleF(x, y, w, vh + 44 * S);

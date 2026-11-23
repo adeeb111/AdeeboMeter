@@ -199,6 +199,7 @@ namespace AdeeboMeter
             connStatus = new Label { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips);
+            connStatus.SizeChanged += delegate { var t = connStatus.Text; connStatus.Text = ""; connStatus.Text = t; };   // 1.1.6 walk: text set while the tab was still narrow stayed cut to "42 sho…"
             StyleChips();
 
             // Destination page

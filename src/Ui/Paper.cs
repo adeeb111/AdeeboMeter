@@ -85,7 +85,13 @@ namespace AdeeboMeter
                     return y + h + 4 * S;
                 }
                 float lw = 44 * S, cx = x + w / 2, tx = cx - ms.Width / 2;
-                bool room = w > ms.Width + 2 * lw + 520 * S;   // the side blocks only when they fit beside the name
+                // the side blocks only when they fit between the page edge and the laurels (1.1.6 walk: "Your Markets" ran into the left laurel)
+                float gapL = tx - lw - 10 * S - 14 * S - (x + 46 * S), rightW = 0;
+                foreach (var ln in new[] { DateTime.Now.ToString("ddd, MMM d, yyyy", CultureInfo.CurrentCulture), Edition() }) rightW = Math.Max(rightW, g.MeasureString(ln, Body).Width);
+                float gapR = (x + w) - (tx + ms.Width + 10 * S + lw) - 14 * S;
+                string side = left1; float sideW = Math.Max(g.MeasureString("AdeeboMeter", Head2).Width, Math.Max(g.MeasureString(left1, Small).Width, g.MeasureString(left2, Small).Width));
+                if (sideW > gapL) { int cut = left1.LastIndexOf(" · ", StringComparison.Ordinal); side = cut > 0 ? left1.Substring(0, cut) + "\n" + left1.Substring(cut + 3) : left1; sideW = g.MeasureString("AdeeboMeter", Head2).Width; foreach (var part in (side + "\n" + left2).Split('\n')) sideW = Math.Max(sideW, g.MeasureString(part, Small).Width); }   // the last item on its own line before giving up (three lines still sit inside the masthead)
+                bool room = sideW <= gapL && rightW <= gapR;
                 Laurel(g, new RectangleF(tx - lw - 10 * S, y + 2 * S, lw, h + 30 * S), false); Laurel(g, new RectangleF(tx + ms.Width + 10 * S, y + 2 * S, lw, h + 30 * S), true);
                 g.DrawString(title, mf, head, tx, y);
                 var es = g.MeasureString(edition, Head2); g.DrawString(edition, Head2, head, cx - es.Width / 2, y + h - 6 * S);
@@ -93,7 +99,7 @@ namespace AdeeboMeter
                 {
                     Theme.Logo(g, new RectangleF(x, y + 6 * S, 38 * S, 38 * S), false);
                     g.DrawString("AdeeboMeter", Head2, head, x + 46 * S, y + 4 * S);
-                    g.DrawString(left1 + "\n" + left2, Small, ink, x + 46 * S, y + 32 * S);
+                    g.DrawString(side + "\n" + left2, Small, ink, x + 46 * S, y + 32 * S);
                     float ry = y + 8 * S;
                     foreach (var ln in new[] { DateTime.Now.ToString("ddd, MMM d, yyyy", CultureInfo.CurrentCulture), Edition() })
                     { if (ln == null) continue; var lz = g.MeasureString(ln, Body); g.DrawString(ln, Body, ink, x + w - lz.Width, ry); ry += lz.Height; }

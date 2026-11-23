@@ -5081,3 +5081,4 @@ Couldn't save:	No se pudo guardar:
 Save a copy of all my diagrams	Guardar una copia de todos mis diagramas
 That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	Ese archivo contiene varios diagramas: se abre el primero; cada uno que cambies se guarda en Tus diagramas.
 diagrams saved to	diagramas guardados en
+Windows didn't answer about your connection - asking again in a few seconds.	Windows no respondió sobre tu conexión - lo intento de nuevo en unos segundos.
