@@ -256,10 +256,12 @@ const node = id => doc.nodes.find(n => n.id === id);
 function nodeColor(n, C){ return n.st === "bad" ? C.red : n.st === "warn" ? C.amber : n.st === "typ" ? C.mute : n.st === "you" ? C.purple : C.ink; }
 // dragging fires pointermove 100+ times a second: draw at most once per screen frame (the TopoDraw lesson, 21 Nov)
 let drawQ = 0;
+function placeWorld(){ const w = $("#world"); if (w) w.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.z})`); gridAt(); }
+function gridAt(){ const st = $("#stage"), z = Math.max(.25, view.z); if (!st) return; st.style.backgroundSize = (20 * z) + "px " + (20 * z) + "px"; st.style.backgroundPosition = view.x + "px " + view.y + "px"; }
 function drawSoon(){ if (drawQ) return; drawQ = requestAnimationFrame(() => { drawQ = 0; draw(); }); }
 function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
   const C = COL(), svg = $("#svg"); svg.textContent = "";
-  const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g);
+  const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g); gridAt();
   doc.areas.forEach(a => { const s = sel && sel.t === "area" && sel.id === a.id;
     g.appendChild(el("g", {"data-t": "area", "data-id": a.id}, [el("rect", {x: a.x, y: a.y, width: a.w, height: a.h, rx: 14, fill: "transparent", stroke: s ? C.blue : C.mute, "stroke-width": s ? 2 : 1.4, "stroke-dasharray": "6 5"}),
       txt(a.x + 12, a.y + 20, a.t, {"text-anchor": "start", fill: C.sub, "font-size": 12.5, "font-weight": 600}),
@@ -362,8 +364,10 @@ stage.addEventListener("pointerdown", e => {
   sel = null; drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; draw();
 });
 stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
-  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; drawSoon(); }
-  else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; drawSoon(); }
+  /* 1.1.6 test day: "doesn't follow my mouse well" - a pan now only moves the picture (no redraw), the dot grid moves with it,
+     and a dragged thing sits exactly under the pointer; it snaps to the 10 px grid when you let go (hold Shift to place it freely) */
+  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; placeWorld(); }
+  else if (drag.move) { drag.move.x = drag.ox + p.x - drag.sx; drag.move.y = drag.oy + p.y - drag.sy; drag.moved = true; drag.shift = e.shiftKey; drawSoon(); }
   else if (drag.nres) { drag.nres.sc = Math.round(Math.max(.5, Math.min(3, drag.s0 * Math.hypot(p.x - drag.nres.x, p.y - drag.nres.y) / drag.d0)) * 20) / 20; drawSoon(); }
   else if (drag.tres) { drag.tres.fs = Math.round(Math.max(9, Math.min(72, drag.f0 * Math.max(10, p.x - drag.x0) / drag.w0))); drawSoon(); }
   else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); drawSoon(); }
@@ -372,6 +376,8 @@ stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
     Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); drawSoon(); } });
 stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.move && !drag.moved) undo.pop();
+  if (drag.move && drag.moved && !drag.shift) { drag.move.x = Math.round(drag.move.x / 10) * 10; drag.move.y = Math.round(drag.move.y / 10) * 10; }
+  if (drag.move && drag.moved && drag.shift) { drag.move.x = Math.round(drag.move.x); drag.move.y = Math.round(drag.move.y); }
   if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();
   if (drag.nres && (drag.nres.sc || 1) === drag.s0) undo.pop(); if (drag.tres && (drag.tres.fs || 14) === drag.f0) undo.pop();   /* a click on the handle isn't an undo step */
   if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
@@ -385,7 +391,7 @@ stage.addEventListener("dblclick", e => { if (mode !== "draw" || editing) return
 /* F2 renames what's selected, from the keyboard */
 document.addEventListener("keydown", e => { if (e.key === "F2" && sel && mode === "draw" && !(e.target.closest && e.target.closest("input,select"))) { e.preventDefault(); renameHit(sel); } });
 stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z = Math.min(3, Math.max(.25, view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
-  view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }, {passive: false});
+  view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; placeWorld(); }, {passive: false});   /* the wheel only rescales the picture - smooth under the pointer */
 function zoomBy(f){ const r = stage.getBoundingClientRect(), mx = r.width / 2, my = r.height / 2, z = Math.min(3, Math.max(.25, view.z * f)); view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }
 $("#zIn").onclick = () => zoomBy(1.2); $("#zOut").onclick = () => zoomBy(1 / 1.2); $("#zFit").onclick = () => fit();
 function bounds(){ let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
