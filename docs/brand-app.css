@@ -37,7 +37,7 @@ header .amlogo{width:30px!important;height:30px!important}
 .card.face>div[style*="color:var(--sub)"],.card.face .fine{color:#CFE0FF!important}
 .card.face .big3>div{background:rgba(255,255,255,.1);border:0}
 .card.face .big3 small,.card.face .big3 b small{color:#CFE0FF}
-.card.face .btn{margin:16px 0 0;background:#fff;color:var(--face);border-radius:14px}
+.card.face .btn{margin:16px 0 0;background:#fff!important;color:var(--face)!important;border-radius:14px}
 :root[data-theme="light"] .card.face{color:#fff}
 
 /* quick actions: plain icons on the page, no box around them and no tinted chips */
@@ -50,8 +50,9 @@ header .amlogo{width:30px!important;height:30px!important}
 .pcrow2{border:0;box-shadow:0 0 0 1px var(--edge);background:var(--card)}
 
 /* tabs: the active one in the logo blue */
-nav.tabs button.on{background:var(--face);color:#fff}
-.btn{background:var(--face)}
+/* the colour themes (Neon, Midnight, Sunset, Mint) keep their own accent for tabs and buttons; the meter stays the logo's blue */
+:root:not([data-pal]) nav.tabs button.on{background:var(--face);color:#fff}
+:root:not([data-pal]) .btn:not(.ghost){background:var(--face)}
 .tile:active,.btn:active,.act:active i{transform:scale(.97)}
 .card.face .dial{width:62%}
 header .amword{font-size:24px}
@@ -71,7 +72,7 @@ select{background:var(--card);font-family:inherit;font-weight:500}
 .card.face .big3{margin:12px 0 0}
 .card.face .big3>div{border-radius:14px;padding:10px 6px}
 .card.face .big3 b{color:#fff;font-family:"Barlow SC","Barlow",sans-serif;font-size:24px}
-.card.face .btn:disabled{opacity:1;background:rgba(255,255,255,.16);color:#CFE0FF}
+.card.face .btn:disabled{opacity:1;background:rgba(255,255,255,.16)!important;color:#CFE0FF!important}
 .card.face .btn svg{vertical-align:-3px}
 /* browser surfaces in the palette */
 ::selection{background:rgba(17,85,224,.35);color:inherit}

@@ -478,7 +478,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/">
-<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/brand.css">
+<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/brand.css"><script src="/sample.js" defer></script>
 </head>
 <body>
 
@@ -525,12 +525,38 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
    <p class="locale-preview" data-i18n-preview data-i18n="Some content is still in English." hidden>بعض المحتوى لا يزال بالإنجليزية.</p>
   </div>
   <div class="v4stage">
-   <div class="meter" role="img" aria-label="النتيجة المثالية: جهاز الكمبيوتر الخاص بك بخير، الأسماء لا تجيب. هذا الكمبيوتر جيد، جهاز التوجيه 2 ms، DNS توقيت، الإنترنت غير معتدلة. التالي: حاول البحث مرة أخرى، حفظ الصورة أو إرسالها إلى ISP.">
+   <div class="meter">
     <svg class="dial" viewBox="0 0 400 210" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="376.0" y2="190.0"/><line class="tick" x1="359.5" y1="161.9" x2="367.4" y2="160.5"/><line class="tick" x1="352.2" y1="134.6" x2="359.7" y2="131.9"/><line class="tick" x1="340.3" y1="109.0" x2="352.4" y2="102.0"/><line class="tick" x1="324.1" y1="85.9" x2="330.2" y2="80.7"/><line class="tick" x1="304.1" y1="65.9" x2="309.3" y2="59.8"/><line class="tick" x1="281.0" y1="49.7" x2="288.0" y2="37.6"/><line class="tick" x1="255.4" y1="37.8" x2="258.1" y2="30.3"/><line class="tick" x1="228.1" y1="30.5" x2="229.5" y2="22.6"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="14.0"/><line class="tick" x1="171.9" y1="30.5" x2="170.5" y2="22.6"/><line class="tick" x1="144.6" y1="37.8" x2="141.9" y2="30.3"/><line class="tick" x1="119.0" y1="49.7" x2="112.0" y2="37.6"/><line class="tick" x1="95.9" y1="65.9" x2="90.7" y2="59.8"/><line class="tick" x1="75.9" y1="85.9" x2="69.8" y2="80.7"/><line class="tick" x1="59.7" y1="109.0" x2="47.6" y2="102.0"/><line class="tick" x1="47.8" y1="134.6" x2="40.3" y2="131.9"/><line class="tick" x1="40.5" y1="161.9" x2="32.6" y2="160.5"/><line class="tick" x1="38.0" y1="190.0" x2="24.0" y2="190.0"/><g fill="none" stroke-width="18" stroke-linecap="round"><path d="M61.4 170.5A140 140 0 0 1 113.8 79.7" stroke="#5EF2B0"/><path d="M147.6 60.2A140 140 0 0 1 252.4 60.2" stroke="#FCD34D"/><path d="M286.2 79.7A140 140 0 0 1 338.6 170.5" stroke="#FF7A6B"/></g><g class="needle"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g><circle cx="200" cy="190" r="11" fill="#fff"/></svg>
     <p class="say" data-i18n="Your PC is fine. Names aren&#x27;t answering.">جهازك سليم. خوادم DNS لا تستجيب.</p>
     <p class="why" data-i18n="The router answered in 2 ms. The DNS request timed out.">استجاب الراوتر خلال 2 ms. وانتهت مهلة طلب DNS.</p>
-    <ol class="chain" aria-hidden="true"><li class="ok"><b data-i18n="This PC">هذا الجهاز</b><span data-i18n="✓ fine">✓ جيد</span></li><li class="ok"><b data-i18n="Router">الراوتر</b><span>✓ 2 ms</span></li><li class="wa"><b>DNS</b><span data-i18n="! timed out">! انتهت المهلة</span></li><li class="no"><b data-i18n="Internet">الإنترنت</b><span data-i18n="not checked">لم يُفحص</span></li></ol>
-    <div class="acts" aria-hidden="true"><span data-i18n="Save picture">حفظ الصورة</span><span class="pri" data-i18n="Send to my ISP">إرسال لمزوّد الإنترنت</span></div>
+    <ol class="chain"><li class="ok"><b data-i18n="This PC">هذا الجهاز</b><span data-i18n="✓ fine">✓ جيد</span></li><li class="ok"><b data-i18n="Router">الراوتر</b><span>✓ 2 ms</span></li><li class="wa"><b>DNS</b><span data-i18n="! timed out">! انتهت المهلة</span></li><li class="no"><b data-i18n="Internet">الإنترنت</b><span data-i18n="not checked">لم يُفحص</span></li></ol>
+    <div class="acts"><button type="button" data-sample="pic" aria-controls="am-sample" aria-expanded="false"><span data-i18n="Save picture">حفظ الصورة</span></button><button type="button" class="pri" data-sample="isp" aria-controls="am-sample" aria-expanded="false"><span data-i18n="Send to my ISP">إرسال لمزوّد الإنترنت</span></button></div>
+    <div class="sample" id="am-sample" role="dialog" aria-labelledby="am-sample-t" hidden>
+     <div class="stop"><p class="st" id="am-sample-t"><span data-k="pic"><span data-i18n="This is the picture it saves.">هذه هي الصورة التي يحفظها.</span></span><span data-k="isp" hidden><span data-i18n="This is what it sends to your ISP.">هذا ما يرسله إلى مزوّد الخدمة.</span></span></p><button type="button" class="sx" aria-label="إغلاق" data-i18n-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+     <div class="sbody" data-k="pic">
+      <div class="spic">
+       <div class="sh1"><svg class="sl" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg><b>AdeeboMeter</b></div>
+       <p class="sv"><span data-i18n="Your PC is fine. Names aren&#x27;t answering.">جهازك سليم. خوادم DNS لا تستجيب.</span></p>
+       <p class="sw"><span data-i18n="The router answered in 2 ms. The DNS request timed out.">استجاب الراوتر خلال 2 ms. وانتهت مهلة طلب DNS.</span></p>
+       <ol class="schain"><li class="ok"><b><span data-i18n="This PC">هذا الجهاز</span></b><span data-i18n="✓ fine">✓ جيد</span></li><li class="ok"><b><span data-i18n="Router">الراوتر</span></b>✓ 2 ms</li><li class="wa"><b>DNS</b><span data-i18n="! timed out">! انتهت المهلة</span></li><li class="no"><b><span data-i18n="Internet">الإنترنت</span></b><span data-i18n="not checked">لم يُفحص</span></li></ol>
+       <p class="sm"><span data-i18n="Made with AdeeboMeter">صُنع باستخدام AdeeboMeter</span></p>
+      </div>
+     </div>
+     <div class="sbody" data-k="isp" hidden>
+      <div class="sisp">
+       <p class="sk"><span data-i18n="Connection quality report">تقرير جودة الاتصال</span></p>
+       <p class="sk2"><span data-i18n="The answer">الإجابة</span></p>
+       <p class="sa"><span data-i18n="Name lookups time out. The line and the router are fine.">تنتهي مهلة البحث عن الأسماء. الخط والراوتر سليمان.</span></p>
+       <div class="stiles"><div class="ok"><small><span data-i18n="Router">الراوتر</span></small><b>2 ms</b></div><div class="wa"><small>DNS</small><b><span data-i18n="timed out">انتهت المهلة</span></b></div></div>
+       <p class="sk2"><span data-i18n="Already ruled out">تم استبعاده</span></p>
+       <p class="sr">✓ <span data-i18n="this PC and the router - it answered in 2 ms">هذا الجهاز والراوتر - أجاب خلال 2 ms</span></p>
+       <p class="sk2"><span data-i18n="What we ask you to check">ما نطلب منكم التحقق منه</span></p>
+       <p class="sr">1. <span data-i18n="That the DNS servers you give out answer lookups.">أن خوادم DNS التي تقدمونها تجيب على طلبات البحث.</span></p>
+      </div>
+     </div>
+     <p class="sn"><span data-i18n="An example. In the app these buttons use your own result.">مثال فقط. في التطبيق تستخدم هذه الأزرار نتيجتك أنت.</span></p>
+     <span class="sbar" aria-hidden="true"><i></i></span>
+    </div>
    </div>
    <div class="v4card v4phone" aria-hidden="true"><span class="nt"></span><span class="qr"></span><em lang="en">river · tiger · lamp · orbit</em><small><span data-i18n="Same words on both = your phone">تطابق الكلمات على الجهازين يعني أنه هاتفك</span></small></div>
    <div class="v4card v4sig"><svg class="i" viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg><div><b><span data-i18n="Signed: Open Source Developer">موقّع: مطوّر برمجيات مفتوحة المصدر</span></b><small>MdAhasanul Adeeb Khan · Certum</small></div></div>
