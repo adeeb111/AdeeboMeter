@@ -95,6 +95,17 @@ namespace AdeeboMeter
             term.Write("  █▀█ █▄▀ ██▄ ██▄ █▄█ █▄█   " + L.T("every tool is a command, every page is a folder") + "\n", ShCyan);
             term.Write("\n", ShFg);
             term.Write("  " + "You're in AdeeboMeter's own folders: pages/  tools/  data/   ·   ~ and /mnt/c are your PC's files - read-only, never run" + "\n", ShDim);
+            try
+            {
+                var sn = snap; Func<double, string> ms = v => double.IsNaN(v) ? "-" : v.ToString("0", CultureInfo.InvariantCulture) + " ms";
+                if (sn != null) { term.Write("  Right now  ", ShBlue); term.Write(sn.Headline, sn.Level == 2 ? ShRed : sn.Level == 1 ? ShAmber : ShGreen); term.Write("  ·  router " + ms(M.GwPing.Avg(6)) + " · internet " + ms(M.NetPing.Avg(6)) + " · names " + ms(M.Dns.Avg(6)) + "   (status for more)\n", ShDim); }
+            }
+            catch (Exception e) { if (!(e is InvalidOperationException || e is NullReferenceException)) throw; }   // a reading not there yet - the welcome still shows
+            term.Write("\n  Ready-made scripts in /data/scripts  -  run one:  cd /data/scripts  then  ./network-check.sh\n", ShBlue);
+            foreach (var r in ShReadyScripts) { term.Write("    " + r[0].PadRight(24), ShGreen); term.Write(r[1] + "\n", ShDim); }
+            term.Write("    " + "health-check.sh".PadRight(24), ShGreen); term.Write("the 10-second look: router, internet, names - stops at the first broken one\n", ShDim);
+            term.Write("    " + "five-at-a-time.sh".PadRight(24), ShGreen); term.Write("five pings at once, merged into one file\n", ShDim);
+            term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  nano my-check.sh  · keep any output with  > file.txt\n\n", ShDim);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
         }
@@ -2208,6 +2219,32 @@ namespace AdeeboMeter
             return 0;
         }
         // ready-made scripts in /data/scripts, written once (yours to change - deleted ones come back on the next start)
+        // name, what it does (the welcome screen lists these), the script
+        static readonly string[][] ShReadyScripts =
+        {
+            new[] { "network-check.sh", "your connection, step by step: join, router, internet, names, IPv6, Wi-Fi, the path (about 2 min)",
+                "# network-check.sh - your connection, step by step (about 2 minutes)\n# run it:  ./network-check.sh        keep it:  ./network-check.sh > network.txt\n\n" +
+                "echo \"== how this PC joined the network\"\njoin\ndhcp\n" +
+                "echo \"== the router ($GATEWAY)\"\nping $GATEWAY 20\n" +
+                "echo \"== the internet\"\nping 1.1.1.1 20\nip46 example.com\n" +
+                "echo \"== names (DNS)\"\ndig example.com A\ndnsrace\n" +
+                "echo \"== Wi-Fi drops and roams\"\nroams\n" +
+                "echo \"== the path, hop by hop (1 minute)\"\nmtr 1.1.1.1 1\n" +
+                "echo \"== done\"\nstatus\n" },
+            new[] { "system-check.sh", "this PC: what's struggling, hidden reasons, disk, space, crashes, services, battery (about 1 min)",
+                "# system-check.sh - this PC, from the quick look to the hidden reasons (about 1 minute)\n# run it:  ./system-check.sh        keep it:  ./system-check.sh > system.txt\n\n" +
+                "echo \"== right now\"\nuptime\nfree -h\ndf -h\nps --sort=cpu | head -n 8\n" +
+                "echo \"== is it struggling?\"\npcwhy\npressure\nhidden\n" +
+                "echo \"== disk and space\"\ndisk\nspace\n" +
+                "echo \"== what went wrong this week\"\ncrash\nsvcfail\nchanged | head -n 15\n" +
+                "echo \"== power\"\nbattery\n" },
+            new[] { "destinations-check.sh", "the sites you rely on: every address, connect time, HTTPS and certificate - edit the list at the top",
+                "# destinations-check.sh - the places you rely on: is each one reachable, how fast, is its padlock good\n# run it:  ./destinations-check.sh        keep it:  ./destinations-check.sh > destinations.txt\n# put your own sites in the line below (space between them)\n\n" +
+                "SITES=\"example.com github.com outlook.office.com\"\n\n" +
+                "for s in $SITES; do\n  echo \"== $s\"\n  allips $s:443\n  tcpping $s:443 5\n  httptime $s 3\n  https $s\ndone\n" },
+            new[] { "all-tools.sh", "every tool with its example, one after another, with a transcript (about 12 min)",
+                "# all-tools.sh - every tool with its example, one after another (about 12 minutes); the transcript is saved as alltools.out.txt\n# run it:  ./all-tools.sh\n# the test-traffic tools only run when you type  alltools --yes  yourself at the prompt (your own network only)\n# every-tool.sh is the same list one line per tool - copy it and keep only what you need\n\nalltools\n" },
+        };
         void ShStarterScripts()
         {
             try
@@ -2219,6 +2256,8 @@ namespace AdeeboMeter
                 try { if (File.Exists(f1)) { string have = File.ReadAllText(f1), v2 = five.Replace("grep -iE \"loss|average\"", "grep -i \"loss|average\""), v1 = five.Replace("grep -iE \"loss|average\"", "grep -i \"loss\\|average\""); if (have == v1 || have == v2) File.WriteAllText(f1, five); } } catch (IOException) { }
                 if (!File.Exists(f1)) File.WriteAllText(f1, five);
                 if (!File.Exists(f3)) File.WriteAllText(f3, "# health-check.sh - the quick look, in order; stops at the first thing that's broken\n# run it:  ./health-check.sh\n\nstatus\nif ping $GATEWAY 4 > /dev/null; then echo \"router: ok\"; else echo \"router: NOT answering - start there\"; exit 1; fi\nping 1.1.1.1 4 > /dev/null && echo \"internet: ok\" || echo \"internet: NOT answering\"\ndig example.com > /dev/null && echo \"names: ok\" || echo \"names: NOT working\"\n");
+                // 1.1.6: ready-made checks for power users - each one is plain AdeeboShell, so they can be read, copied and changed
+                foreach (var kv in ShReadyScripts) { string f = Path.Combine(d, kv[0]); if (!File.Exists(f)) File.WriteAllText(f, kv[2]); }
                 if (!File.Exists(f2) && shTools != null)
                 {
                     var sb = new StringBuilder("# every-tool.sh - every AdeeboMeter tool with its example, one after another\n# run it:      ./every-tool.sh > all.txt          (test-traffic tools are skipped)\n#             ./every-tool.sh --yes > all.txt    (your own network, typed at the prompt: runs those too)\n# change any line, delete what you don't need, add your own addresses.\n\n");
