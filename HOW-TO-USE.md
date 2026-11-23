@@ -1,6 +1,6 @@
 # AdeeboMeter — How to Use It
 
-*Every section, what it's for and how to use it, in plain words. Version 1.1.5.*
+*Every section, what it's for and how to use it, in plain words. Version 1.1.6.*
 
 ---
 
@@ -57,31 +57,61 @@ fault it is and what to do. When you want more, one click opens everything behin
 ## 4. The engineer view - finding your way
 
 ```
- ┌ logo ─ [VIEW ▾] ─ [ Search… Ctrl K ] ─ ☀/☾ ─ (•‿•) ─ ⚙ ─ ⋯ ─ [Back to corner] ┐
- │ ● PC ● LAN ● Internet      the verdict, in one sentence, and the buddy's line  │
- ├────────────────────────────────────────────────────────────────────────────────┤
- │ Home · Outlook · Streaming · Markets · Toolbox · Time machine · Learn · More ▾  │
- │                                                                                │
- │                        the page                              │  side panel     │
- └────────────────────────────────────────────────────────────────────────────────┘
+ ┌ logo ─ [VIEW ▾] ─ [🌐 English ▾] ─ [ Search… Ctrl K ] ─ ☀/☾ ─ 🔗 ─ (•‿•) ─ ⚙ ─ ⋯ ─ [Back to corner] ┐
+ │ quick tip line (Got it hides it)                                                                    │
+ ├──────────────┬──────────────────────────────────────────────────────────────────────────────────────┤
+ │ Search…      │ ● PC ● Wi-Fi ● Internet    the verdict, in one sentence                              │
+ │ Home         │                                                                                      │
+ │ Toolbox      │                              the page                                                │
+ │ Streaming    │                                                                                      │
+ │ Sports       │                                                                                      │
+ │ Markets      │                                                                                      │
+ │ Gamer        │                                                                                      │
+ │ Time machine │                                                                                      │
+ │ Learn        │                                                                                      │
+ │ MORE         │                                                                                      │
+ │ Network story · Security · Check a destination · Calculators · AdeeboLab · AdeeboShell · Your phone │
+ │ Settings  ♥  │                                                                                      │
+ ├──────────────┴──────────────────────────────────────────────────────────────────────────────────────┤
+ │ AdeeboMeter itself  CPU · memory of its 80 MB budget          version · promises  (or: ⠹ waiting on …) │
+ └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The bar shows the sections you keep there (these are the default, as a side bar or a tab row). *More ▾* is not a section -
-it's the menu with the rest: **Gamer**, **Network story**, **Security**, **Check a destination**, **Calculators** and
-**Reports**. Search and Home's *Where everything lives* reach them too.
+The sidebar shows the sections your view keeps in front; **MORE** holds the rest. The heart beside Settings is the
+Community card - who makes AdeeboMeter, its promises and the ways to help.
 
 | Control | What it does |
 |---|---|
 | **View** | switches the whole app to fit what you're doing (see 5) |
-| **Search** (Ctrl+K) | jumps to any page, tool, setting, program or term - it forgives typos |
+| **🌐 Language** | English, Français (Canada), Español, العربية, বাংলা - see 17 |
+| **Search** (Ctrl+K or /) | jumps to any page, tool, setting, program or term - it forgives typos |
 | **☀ / ☾** | light or dark (Settings has four more themes) |
 | **The face** | the buddy sheet: mood, voice, fun lines, words of comfort |
 | **⚙** | Settings |
 | **⋯** | Details (raw values and sources), sidebar layout, Adeebo Points, About, report a bug |
 | **Back to corner** (Esc) | closes the view; the widget keeps watching |
 
-**Mouse and keyboard:** wherever the cursor becomes a **?**, hovering explains it (F1 too). **Right-click** anywhere for
-zoom, copy and save a picture of the window. **Ctrl + / Ctrl -** (or Ctrl + wheel) zoom from 80% to 175%.
+**The bottom line** shows what AdeeboMeter itself costs (CPU and memory against its 80 MB budget). When something takes a
+while - a Toolbox tool, the health check, Windows' own Wi-Fi report - it says what it's waiting on, with the seconds and a
+small spinner, once it has taken 5 seconds; the note goes away by itself when the work is done.
+
+**Mouse:** wherever the cursor becomes a **?**, hovering explains it (F1 too). **Right-click** anywhere for zoom, copy and
+save a picture of the window. **Ctrl + / Ctrl -** (or Ctrl + wheel) zoom from 80% to 175%; **Ctrl 0** goes back to 100%.
+
+**Keyboard - everything works without a mouse:**
+
+| Keys | What they do |
+|---|---|
+| **Tab / Shift+Tab** | step through the buttons, tiles and links of the page, then on to the next part of the window |
+| **Arrow keys** | move between tiles on a page; **Right** from the sidebar goes into the page, **Left** from a page's edge goes back to the sidebar; **Left / Right** walk the header buttons and a page's tab row |
+| **Enter / Space** | press what's marked |
+| **Ctrl+1 … Ctrl+7** | the first seven sections of the sidebar |
+| **Ctrl+K** or **/** | search anything |
+| **Ctrl+`** | AdeeboShell, from anywhere |
+| **F1** | the explanation for the tool you're in, or what's under the mouse |
+| **Esc** | clears a box first, closes a sheet, then goes back to the corner |
+| **Ctrl+Alt+A** | open the engineer view from anywhere in Windows |
+| **Ctrl+Alt+S** | "it feels slow right now" - AdeeboMeter records the moment and says whose fault it was |
 
 ---
 
@@ -155,7 +185,9 @@ Wi-Fi, your PC, your provider or the game's server.
 ## 10. Toolbox
 
 232 tools in six sections - **Network**, **Devices**, **Traffic Lab**, **Engineer**, **Hardware nerds**, **Windows** - plus **Work it out** (the
-calculators). Browse *By question* ("Why can't I reach this site?") or *All tools*.
+calculators). Three ways in, at the top of the page: **All tools** (every tool, grouped by the question it answers, with a
+count beside each question), **By question** ("Why can't I reach this site?" - the questions first, the tools under them)
+and **By topic** (SNMP, DNS, DHCP...). The box at the top finds a tool by any word - *ping*, *certificate*, *Wi-Fi*.
 
 ```
    pick a tool ──▶ fill the boxes ──▶ Run ──▶ result rows + a picture
@@ -166,6 +198,8 @@ calculators). Browse *By question* ("Why can't I reach this site?") or *All tool
 - **Example** shows what a result looks like; click its banner to fill the boxes with the example's inputs.
 - **Copy as text**, **Save**, and **Compare with the earlier run** sit above every result.
 - **Pins** - pin the tools you use most; they show first.
+- **Every tool is also a command** in AdeeboShell (see 14): the same checks and the same answers, so a set of tools can run
+  as a script.
 
 ### 10.1 Work it out - the calculators
 
@@ -215,7 +249,128 @@ of Fame.
 
 ---
 
-## 14. Settings
+## 14. AdeeboShell
+
+The whole app from the keyboard, Linux style (sidebar > MORE > **AdeeboShell**, or **Ctrl+`** from anywhere).
+
+```
+ ● ● ●                    ahasa@pc: / — AdeeboShell                [Copy all] [Save log]
+  AdeeboShell · AdeeboMeter 1.1.6
+  Right now  All quiet · router 4 ms · internet 17 ms · names 23 ms   (status for more)
+
+  Ready-made scripts in /data/scripts  -  run one:  cd /data/scripts  then  ./network-check.sh
+    network-check.sh   ...   system-check.sh   ...   wifi-check.sh   ...
+ ahasa@pc:/$ _
+```
+
+**Where things are**
+
+| Folder | What's in it | Can you change it? |
+|---|---|---|
+| `/` | where you start: AdeeboMeter's own folders | - |
+| `/pages` | every page - `cd pages/markets` then `open`, or `open markets` | - |
+| `/tools` | every tool by group - each one is a command | - |
+| `/data` | AdeeboMeter's own folder: history, reports, recordings, **your scripts** (`/data/scripts`) | **yes - the only place** |
+| `~` (`/home`) | your Windows folder | read-only: look, and copy into /data |
+| `/mnt/c`, `/mnt/d` | your drives | read-only |
+| `/proc` | this PC as files - cpuinfo, meminfo, uptime | - |
+
+AdeeboShell **never starts another program** (no cmd, PowerShell or .exe) and **changes files only inside /data**. Your own
+files can be read (`ls`, `cat`, `grep`) and copied in (`cp ~/Downloads/my-check.sh /data/scripts/`), never changed or
+deleted from here. `open /data` shows AdeeboMeter's folder in File Explorer, so you can paste scripts and files into it.
+
+**Getting around**
+
+- After every `cd` a dim line says where you are and what to type next.
+- `home` goes back to AdeeboMeter's folders from anywhere (`cd ~` is your Windows folder).
+- `help` lists every command with an example; `man ping` explains a tool; `tools dns` finds tools by a word.
+- **Tab** completes commands, files, pages and tools; **↑ / ↓** bring back earlier lines; **Ctrl+C** stops a command;
+  **Ctrl+L** clears the screen.
+- When a command is quiet for a moment, a passing line shows what's running and for how long; it goes away when output comes.
+- Scroll back with the wheel, **PageUp / PageDown** or the bar on the right - new output never pulls you away while you read.
+- **Copy all** (or **Copy selection** when you've marked text) and **Save log** (to Documents) are in the window bar.
+
+**What it can do**
+
+- Every Toolbox tool: `ping 1.1.1.1 20`, `dig example.com MX`, `mtr 1.1.1.1 1`, `https example.com`...
+- Files and text: `ls cd cat head tail grep sed awk cut tr sort uniq wc xargs find tree du df`; pipes `|` and `> file` (inside /data).
+- Scripts: variables, `$( )`, `$(( ))`, `if / for / while / case`, functions with `local`, arrays; run with `./name.sh`.
+- `parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9` - several at once; `jobs`, `&` for the background.
+- `nano` and `vim` to write scripts; `iperf3` with its real flags; `ps`, `top`, `free`, `lsblk`, `ip a`, `ss`.
+- `alltools` runs every tool with its example, one after another, showing each one's output as it comes and saving a
+  transcript (`alltools --yes`, typed at the prompt yourself, also runs the test-traffic tools - your own network only).
+
+**Ready-made scripts** in `/data/scripts` (read them, copy them, change them; one you delete stays deleted):
+
+| Script | What it checks |
+|---|---|
+| `network-check.sh` | how the PC joined, the router, the internet, names, IPv6, Wi-Fi drops, the path (about 2 min) |
+| `system-check.sh` | this PC: what's struggling, hidden reasons, disk, space, crashes, failed services, battery |
+| `destinations-check.sh` | the sites you rely on - every address, connect time, HTTPS and certificate (edit the list at the top) |
+| `wifi-check.sh` | is the Wi-Fi safe, drops and roams, address clashes, who else is on it |
+| `call-check.sh` | before a Teams or Zoom call: UDP, nearest cloud, VPN and proxy, steady ping |
+| `isp-evidence.sh` | proof for your provider: a 1-minute path report saved as HTML, the rush hour, the line now |
+| `security-check.sh` | what listens, certificates, DNS rules, the hosts file, failed services - it only looks |
+| `health-check.sh` | the 10-second look: router, internet, names - stops at the first broken one |
+| `five-at-a-time.sh` | five pings at once, merged into one file |
+| `all-tools.sh` / `every-tool.sh` | every tool with its example (one command / one line per tool to edit) |
+
+Keep any output with `> file.txt` (inside /data), for example `./network-check.sh > network.txt`.
+
+---
+
+## 15. AdeeboLab
+
+Draw your network, see the path a packet takes, then break one thing and watch where it fails (sidebar > MORE > **AdeeboLab**).
+A drawing opens in its own window (Microsoft Edge, which is part of Windows); everything stays on this PC.
+
+- **Start:** *New diagram* (an empty page), *Open a file* (a lab drawing someone sent you, .json), *Break it* (pick a fault -
+  DNS, MTU, loss, a wrong gateway), or an **example** - Gamer, On 4G / 5G, Trader, Streamer, IPTV viewer, Server owner.
+- **Your network, as AdeeboMeter sees it:** *See my LAN*, *My path* (your last trace or MTR), *Wi-Fi around you*, *Your phone
+  vs this PC*, *VPN split* - AdeeboMeter draws these from what it measured.
+- **Drawing:** pick a device on the left and click to place it; pick a link type (cable, Wi-Fi, 4G/5G, fibre) and click two
+  devices; *Text* and *Area* label and group things.
+
+| To... | Do this |
+|---|---|
+| move something | drag it - it follows the pointer and snaps to the grid when you let go (hold **Shift** to place it freely) |
+| rename | **double-click** it, or select it and press **F2**; Enter keeps, Esc cancels |
+| resize a device, text or area | select it, then drag the small **blue corner** |
+| pan / zoom | drag empty space / mouse wheel, or the + − ⤢ buttons |
+| delete | select and press **Delete** |
+| undo / redo | Ctrl+Z / Ctrl+Y (Ctrl+S saves) |
+
+**Break it** switches to the fault mode: pick a fault, press play, and watch the packet stop where that fault would stop
+it. Your diagrams are kept on this PC (*Your diagrams* on the AdeeboLab page) and *Save a copy of all my diagrams* writes them
+to a file.
+
+---
+
+## 16. Your phone
+
+See this PC and run its checks from your phone - on mobile data or any Wi-Fi. No account; one phone at a time; the link
+lasts 30 minutes and nothing happens until you press **Allow** on the PC. Messages are sealed end to end: the relay
+passes on what it can't read.
+
+1. Sidebar > MORE > **Your phone** > *Show the QR code*.
+2. Point the phone's camera at the code - it opens adeebometer.com/app - and allow it on the PC when it asks.
+3. Then: send a file, a link or any result to the phone; files from the phone land in *Downloads\AdeeboMeter* after you
+   accept them; and the checks that need both - *This PC vs my phone*, *Is it down - from this PC and my phone*, *My phone's week*.
+
+A phone can ask to be remembered (Face ID or a fingerprint) and come back without a code.
+
+---
+
+## 17. Languages
+
+The globe button beside **VIEW** opens a card with each language - English, Français (Canada), Español, العربية (Arabic,
+right to left: the whole window turns around) and বাংলা (Bangla). Point at a card to preview it; nothing changes until you
+click one. AdeeboMeter switches right away, and a restart finishes the last few screens. Arrow keys move between the cards,
+Enter picks, Esc closes.
+
+---
+
+## 18. Settings
 
 Open with **⚙**. Settings start as questions ("How should the corner widget look?"); *Fine-tune* shows every switch. Each
 setting says what it touches - *on this PC*, *your network*, *the internet* or *online lookup* - and **Right now this PC
@@ -227,21 +382,21 @@ every 2 days, Better every 6 hours. Your PC's location is never used.
 
 ---
 
-## 15. Telling Adeeb something
+## 19. Telling Adeeb something
 
 ⋯ > **Report a bug**, or the website's feedback form. You see exactly what is sent - user and PC names, folders and
 addresses are removed - and nobody needs an account. After a crash, the balloon offers the same box with the crash note.
 
 ---
 
-## 16. What stays private
+## 20. What stays private
 
 Everything stays on your PC unless you start it. Nothing is sent in the background except the small checks you can see and
 switch off in Settings, all listed in *About > What leaves your PC*. No cloud, no account, no telemetry, never listens.
 
 ---
 
-## 17. Quick answers
+## 21. Quick answers
 
 | You want to... | Do this |
 |---|---|
@@ -252,6 +407,11 @@ switch off in Settings, all listed in *About > What leaves your PC*. No cloud, n
 | stop the corner from changing | Settings > Widget > How it behaves > Quiet |
 | see what a tool does before using it | open it and press Example |
 | learn the basics | Learn > Start here |
+| check everything about the connection in one go | AdeeboShell: `cd /data/scripts` then `./network-check.sh` |
+| run a script someone gave you | `open /data` and paste it into *scripts*, then `./its-name.sh` in AdeeboShell |
+| use the app without a mouse | Tab, the arrow keys and Enter; Ctrl+K to jump anywhere (see 4) |
+| draw your network and break it | sidebar > MORE > AdeeboLab |
+| switch language | the globe button beside VIEW |
 
 ---
 

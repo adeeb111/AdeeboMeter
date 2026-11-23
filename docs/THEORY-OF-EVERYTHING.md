@@ -1,6 +1,6 @@
 # AdeeboMeter — The Theory of Everything
 
-*How every part of AdeeboMeter works, in plain words. Version 1.1.5.*
+*How every part of AdeeboMeter works, in plain words. Version 1.1.6.*
 
 ---
 
@@ -324,7 +324,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 
 ## 7. Security, in short
 
-- **No shell, ever.** Tools are started by full System32 path with fixed arguments; user input is validated before it reaches anything.
+- **No system shell, ever.** Tools are started by full System32 path with fixed arguments; user input is validated before it reaches anything. AdeeboShell (13.2) is AdeeboMeter's own interpreter: it never starts cmd, PowerShell or any other program (the one exception is File Explorer on AdeeboMeter's own folder, `open /data`), and it changes files only inside `/data`.
 - **Paths are fenced.** Capture files can only be written inside AdeeboMeter's own folder.
 - **No risky parsing.** No binary serializers, no XML parser (event data is read with simple patterns), no secrets in the code, no home-made crypto.
 - **TLS done right.** Only TLS 1.2/1.3; Windows validates certificates; nothing is sent over an untrusted connection.
@@ -374,6 +374,10 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 | `fx.txt`, `bcpi.txt` | `%LOCALAPPDATA%\AdeeboMeter` | the last Bank of Canada rates and commodity index, so Trading opens without asking again |
 | `weather.txt` | `%LOCALAPPDATA%\AdeeboMeter` | only with weather on: the last day and the coming ones, about 2 KB - Remove deletes it |
 | `moments.txt`, `points.txt` | `%LOCALAPPDATA%\AdeeboMeter` | your best speed (for the "new record" moment) and your Adeebo Points |
+| `scripts\` | `%LOCALAPPDATA%\AdeeboMeter` (AdeeboShell's `/data/scripts`) | the ready-made scripts (written once - `.written` remembers them, so one you delete stays deleted) and your own |
+| `alltools.out.txt` | next to the exe | only after `alltools` in AdeeboShell: the whole transcript |
+| `AdeeboShell-session-<time>.txt` | Documents | only when you press *Save log* (or type `save`) in AdeeboShell; never over an earlier one |
+| `ISP-report-*.html/.csv`, `Letter-*.txt`, `Roast-*.png`, `Six-months-*.html` | `%LOCALAPPDATA%\AdeeboMeter` | only when you make that report |
 
 ---
 
@@ -466,3 +470,114 @@ from your faith, or *Common to all* when none is chosen.
 ---
 
 *Created by Adeeb Khan. AdeeboMeter — is it me or the network?*
+
+---
+
+## 13. What 1.1.6 added, part by part
+
+```
+   ┌ header: VIEW · 🌐 language · search · theme · phone · buddy · ⚙ · ⋯ ┐
+   │ sidebar ── Home · Toolbox · Streaming · Sports · Markets · Gamer · Time machine · Learn
+   │            MORE: Network story · Security · Check a destination · Calculators · AdeeboLab · AdeeboShell · Your phone
+   │ footer  ── AdeeboMeter's own CPU and memory · or "⠹ waiting on …" (Busy)
+   └ every page reachable by keyboard: Tab, arrows (SpatialMove / DB.Hop), Enter
+```
+
+### 13.1 Five languages (`L`, `knowledge/lang-xx.txt`, `FullView.Lang`)
+Every text the app shows goes through `L.T("English")`. Each language is a plain table in `knowledge/lang-fr.txt` (`-es`,
+`-ar`, `-bn`): the English, a TAB, the translation; a missing line stays in English. `tools/langcheck.py fr` lists what a
+table still needs and writes the `#coverage` line shown on the language card (100% for all four in 1.1.6). Arabic turns
+the whole window right to left. The switch happens at once; a restart finishes the screens that were already built.
+Engineering text that names commands and programs (AdeeboShell's hints, the "waiting on" note) stays English on purpose.
+
+### 13.2 AdeeboShell (`FullView.Shell`, `FullView.ShellSys`, `ShellAwk`, `TermView`, `TermEditor`)
+A Linux-style shell written inside AdeeboMeter - not a wrapper round cmd or PowerShell.
+
+```
+ TermView (draws the text, scrollback, selection, Copy/Save buttons, scroll bar, the passing status line)
+     │ keys
+     ▼
+ ShSubmit ─▶ parser (words, quotes, $( ), $(( )), pipes, redirects, if/for/while/case, functions, arrays)
+     │
+     ▼
+ Dispatch ─▶ functions · builtins (ls cd cat grep sed awk sort … df du ps lsblk) · scripts (./x.sh) · every Toolbox tool (RunTool)
+     │                                    │
+     ▼                                    ▼
+ virtual folders: / pages tools data home mnt proc          writes: only if InData(real path)
+```
+
+- **The folders are a map, not the disk.** `Real()` turns `/data` into AdeeboMeter's data folder, `/home` into your Windows
+  folder, `/mnt/c` into `C:\`; `/pages`, `/tools` and `/proc` exist only in the app. Root names match in any case (`/DATA`).
+  The shell starts at `/`, AdeeboMeter's own folders.
+- **The /data fence (`InData`).** Every command that changes a file - `>` and `>>`, `tee`, `touch`, `mkdir`, `rmdir`, `rm`,
+  `cp`/`mv` (both ends for `mv`), `sed -i`, the editor's save - asks `InData` first. It passes only when the real full path
+  is inside the data folder **and** no part of the way ends in a dot or a space (Windows drops those when it opens a name, so
+  `".. "` could otherwise climb out), no part of the way is a junction or symlink, and the file isn't a hard link (writing
+  one changes the same file under its other name). `rm -r` and `mv` of a folder refuse when a link is inside it. `ls -l`
+  and `test -w` give the same answer as the fence.
+- **Nothing else starts.** There is no command that runs a program; `open` goes to pages and, for `/data` only, opens File
+  Explorer on that folder.
+- **Consent can't be scripted.** The test-traffic tools need `--yes` typed at the prompt (`YesTyped`); a script, a pipe or
+  `alltools` from a script never counts as typed.
+- **Scripts.** `/data/scripts` gets ready-made checks on first run (network, system, destinations, Wi-Fi, a call, ISP
+  evidence, security, health, every tool); each is written once and remembered in `.written`, so a deleted one stays
+  deleted. Scripts run with `./name.sh` or `source`, with `$1…`, functions with `local` (arrays too, gaps kept), `readonly`
+  enforced, `$(( ))` capped at 400 levels, `$( )` at 40, functions at 100 deep, 64 MB of output per command.
+- **Seeing what's happening.** A command that goes quiet for 1.5 s gets a passing status line (what runs, seconds, Ctrl+C
+  stops) that disappears when output comes; `alltools` shows `[n/N]`, each tool's output as it comes, and the time per
+  tool. After a `cd` typed at the prompt, one dim line says where you are and what to type next.
+- **Scrollback.** 8,000 lines kept; a scroll bar; while you're scrolled up, new output, a shrinking live table or a
+  resize keeps the same line in view (`anchorLine`), and the view only follows again when you type or scroll to the end.
+
+### 13.3 AdeeboLab (`docs/lab.html`, `LabLink`, `LabViews`, `BrowserStore`, `FullView.LabPage`)
+The lab is one HTML page (`tools/lab/lab.src.html` + `glyphs.json`, built by `tools/lab/build.py` into `docs/lab.html`; the
+app ships the same file and the website serves it). `LabLink` opens it in its own Microsoft Edge window; `LabViews` hands
+over what AdeeboMeter measured (your LAN, your path, Wi-Fi around you, phone vs PC, VPN split) as a drawing.
+
+- **A drawing is data, never code.** Every drawing that arrives (a file, a link, the browser's own storage) goes through
+  `valid()`: known fields only, lengths and counts capped (300 devices, 600 links), text cleaned - nothing in a file can
+  run in the lab window.
+- **Editing.** Drag to move (the device follows the pointer exactly and snaps to a 10 px grid on release; Shift places it
+  freely). Panning and the wheel move only the picture's transform (no full redraw) and the dot grid moves with it.
+  Rename is two quick presses on the same thing (the page holds the pointer during a drag, so the browser's own dblclick
+  can't be relied on) or F2. Devices carry a size (`sc`, 0.5–3×), text a font size (`fs`, 9–72) and areas a width and
+  height, each changed with the blue corner handle; all are kept in the file.
+- **Break it** replays the packet against one chosen fault and shows where it stops.
+
+### 13.4 Your phone (`Relay`, `FullView.Phone`)
+A phone links by QR code to adeebometer.com/app for 30 minutes; nothing happens until you press Allow on the PC. Messages
+are sealed end to end between the PC and the phone; the relay only passes on what it can't read. One phone at a time;
+a remembered phone comes back with Face ID or a fingerprint instead of a code.
+
+### 13.5 Newspaper pages, the Gamer HUD and Home (`Paper`, `FullView.Markets`, `FullView.SportsPage`, `FullView.Gamer`)
+Markets, Sports and Outlook are drawn as newspaper pages by `Paper` (masthead, laurels, columns). The masthead's side
+blocks appear only when they fit between the page edge and the laurels, the last item moving to its own line before
+giving up. The Gamer HUD shows ping as a gauge with its grade and the last minute with spikes and losses. Home is one
+verdict with the path, four live numbers and big tiles; a NOW line (router, internet, Wi-Fi, PC load) sits on Gamer,
+Streaming and Markets.
+
+### 13.6 Saying what it's waiting on (`Busy` in `Program.cs`)
+`Busy.Begin("what")` marks work in progress and `End()` removes it. Every Windows program AdeeboMeter starts (`Job.Run`:
+netsh, Wireshark, the event log, PowerShell, ping, tracert), the WMI queries and the long page jobs (a Toolbox tool, the
+health check, the security checkup, routes, connections, Wi-Fi) are marked. The footer shows the oldest one that has
+taken 5 seconds or more, with a spinner, the seconds and "+N more", and goes back to normal when it ends.
+
+### 13.7 Keyboard everywhere (`FullView.WireKeys`, `DB.ArrowStep`, `DB.Hop`, `FullView.SpatialMove`)
+Every painted page registers its buttons and tiles (`Act`); Tab walks them in reading order, the arrow keys move to the
+nearest one in that direction, Enter or Space presses. When a page has nothing further that way, `DB.Hop` hands the arrow to
+`SpatialMove`, which picks the nearest focusable control on that side of the window - the sidebar, the tab row, the header -
+by edge distance first and the middle of where you are second. Text boxes and the shell keep their own arrows.
+
+### 13.8 Smaller things
+- **At logon** the first 45 seconds while Windows joins the network show "waiting for Windows to join" in grey instead of
+  "Not connected", and no false outage is logged.
+- **Judging needs data.** The roast, the letter to your provider and the six-month review wait for a day of history.
+- **Windows' evidence** reads the DHCP lease's real end time from the registry, like the DHCP tool.
+- **lsblk** reads partitions from Windows' Storage view when the older disk links fail (Intel RST RAID).
+- **Every window** that can reach the taskbar carries the AdeeboMeter icon.
+
+### 13.9 Testing 1.1.6
+`--selftest` (the CI gate; now also the /data fence and the shell's dot-and-space case),
+`--deeptest`, `--perf`, and the RC check (`rc-walk.ps1`, `rc-leak.ps1`, `rc-local.ps1` in the test kit; `.github/workflows/rc.yml`
+on the `rc-check` branch): every page in five languages with memory, handles, GDI objects and idle CPU per page, and a
+10-minute page-cycling run to catch leaks.
