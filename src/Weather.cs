@@ -91,7 +91,7 @@ namespace AdeeboMeter
             {
                 List<Place> r = null;
                 try { r = ParsePlaces(Get(SearchUrl(typed)), typed); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach Open-Meteo just now - try again in a minute."; Program.Log("weather find: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach Open-Meteo: " + HttpSmall.Why(e) + "."; Program.Log("weather find: " + e.Message); }
                 done(r);
             }) { IsBackground = true, Name = "weather find" }.Start();
         }

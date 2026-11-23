@@ -573,7 +573,7 @@ namespace AdeeboMeter
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create(url); req.Method = "POST"; req.ContentType = "application/dns-message"; req.Accept = "application/dns-message";
-                req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.AllowAutoRedirect = false; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.ContentLength = q.Length;
+                req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.AllowAutoRedirect = false; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); req.ContentLength = q.Length;
                 using (var rs = req.GetRequestStream()) rs.Write(q, 0, q.Length);
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var st = resp.GetResponseStream())
                 {
@@ -682,7 +682,7 @@ namespace AdeeboMeter
                 followed = false;
                 try
                 {
-                    var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                    var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
                     if (sni != "" && u.Host == first) req.Host = sni + (u.IsDefaultPort ? "" : ":" + u.Port.ToString(CultureInfo.InvariantCulture));
                     // asking by address for another name: the certificate is for the name, so only that mismatch is let through (the
                     // chain must still be trusted) - the TLS rows below check the certificate against the name you gave

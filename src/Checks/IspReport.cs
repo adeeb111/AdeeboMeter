@@ -369,7 +369,7 @@ namespace AdeeboMeter
         {
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create("https://www.cloudflare.com/cdn-cgi/trace"); req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                var req = (HttpWebRequest)WebRequest.Create("https://www.cloudflare.com/cdn-cgi/trace"); req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
                 using (var resp = req.GetResponse()) using (var rd = new StreamReader(resp.GetResponseStream()))
                 {
                     var buf = new char[4096]; int n = rd.Read(buf, 0, buf.Length);

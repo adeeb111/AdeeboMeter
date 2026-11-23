@@ -138,7 +138,7 @@ namespace AdeeboMeter
             add("security", "shield", "security", "Security", "This PC's locks, your network and sites.", delegate { OpenNav("security"); });
             add("story", "route", "story", "Network story", "Your traffic layer by layer, real packets.", delegate { OpenNav("story"); });
             add("learn", "book", "learn", "Learn", "Protocols, Windows inside, every term.", delegate { OpenNav("learn"); });
-            add("netlab", "lab", "learn", "AdeeboLab", "Draw a network, break one thing. " + done + " of " + LabLink.Faults.Length + " faults seen.", delegate { OpenLab(null, false); });
+            add("netlab", "lab", "learn", "AdeeboLab", "Draw a network, break one thing. " + done + " of " + LabLink.Faults.Length + " faults seen.", delegate { OpenNav("lab"); });
             add("gamer", "game", "gamer", "Gamer", "Game servers live, lag spikes and whose fault.", delegate { OpenNav("gamer"); });
             add("stream", "play", "stream", "Streaming", "Is the stream ready - and why it stalled.", delegate { OpenNav("stream"); });
             add("trade", "chart", "trade", "Markets", "Your broker's connection, the day's numbers.", delegate { OpenNav("trade"); });

@@ -156,7 +156,7 @@ namespace AdeeboMeter
         static HttpWebRequest Req(Uri u)
         {
             var q = (HttpWebRequest)WebRequest.Create(u); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AdeeboMeter/" + Program.Version;
-            q.AllowAutoRedirect = true; q.MaximumAutomaticRedirections = 5; q.Proxy = WebRequest.GetSystemWebProxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            q.AllowAutoRedirect = true; q.MaximumAutomaticRedirections = 5; q.Proxy = HttpSmall.Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             return q;
         }
         static string Text(Uri u, Result r, bool timeIt)

@@ -1119,7 +1119,43 @@ namespace AdeeboMeter
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Size = new Size(1280, 860); fv.Show(); pump(1500);
                     try
                     {
-                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "sports", "settings", "about", "points", "shell" };   // bug-hunt R2-020: every page, settings/about/points/shell included
+                        // AdeeboShell (22 Nov rewrite): folders, pipes, redirects, loops, $VAR splitting, && ||, parallel, a script with $1
+                        {
+                            string tdir = System.IO.Path.Combine(Program.DataDir, "selftest-shell");
+                            try { if (System.IO.Directory.Exists(tdir)) System.IO.Directory.Delete(tdir, true); } catch (System.IO.IOException) { }
+                            var cases = new[] {
+                                new[] { "cd /data; mkdir -p selftest-shell; cd selftest-shell; echo hello > a.txt; echo world >> a.txt; cat a.txt | grep -c o", "2" },
+                                new[] { "cd /data/selftest-shell; for h in a b c; do echo $h; done | sort -r | head -1", "c" },
+                                new[] { "X=\"1 2 3\"; for i in $X; do echo n$i; done | wc -l", "3" },
+                                new[] { "if test 3 -gt 2; then echo yes; else echo no; fi", "yes" },
+                                new[] { "false || echo ok && echo two", "ok\ntwo" },
+                                new[] { "parallel -j 3 echo {} ::: a b c | grep -c \"^[abc]$\"", "3" },
+                                new[] { "cd /data/selftest-shell; printf 'echo arg=$1\\n' > s.sh; ./s.sh zz", "arg=zz" },
+                                new[] { "cd /data/selftest-shell; cat < a.txt | tail -n 1", "world" },
+                                new[] { "cd home; pwd | grep -c \"^/home\"", "1" },
+                                new[] { "cd pages; ls | grep -c \"^shell\"", "1" },
+                                new[] { "ls /tools | wc -l | grep -c \"^[1-9]\"", "1" },
+                                new[] { "cd /data; rm -rf selftest-shell; test -d selftest-shell || echo gone", "gone" },
+                                new[] { "nosuchcommand; echo $?", "127" },
+                            };
+                            foreach (var cs0 in cases)
+                            {
+                                fv.TestShellReset(); int ex; string got;
+                                try { got = fv.TestShell(cs0[0], out ex).Trim(); } catch (Exception e) { bad.Add("shell \"" + cs0[0] + "\" threw " + e.GetType().Name + " " + e.Message); continue; }
+                                if (!got.EndsWith(cs0[1], StringComparison.Ordinal)) bad.Add("shell \"" + cs0[0] + "\" gave \"" + got.Replace("\n", "\\n") + "\", wanted \"" + cs0[1].Replace("\n", "\\n") + "\"");
+                            }
+                            fv.TestShellReset();
+                            // nano and vim: typing, cut, undo, :wq
+                            var nano = new TermEditor(false, null, null, null); foreach (var ch in "echo hi") nano.Char(ch); nano.Key(new KeyEventArgs(Keys.Enter)); foreach (var ch in "ls") nano.Char(ch);
+                            if (nano.Body != "echo hi\nls\n") bad.Add("nano: typed text came out as \"" + nano.Body.Replace("\n", "\\n") + "\"");
+                            string saved = null; bool closed = false;
+                            var vim = new TermEditor(true, "x.sh", "x.sh", "one\ntwo\nthree\n"); vim.Save = (to, b) => { saved = b; return null; }; vim.Closed = () => closed = true;
+                            vim.Char('j'); vim.Char('d'); vim.Char('d'); if (vim.Body != "one\nthree\n") bad.Add("vim: jdd left \"" + vim.Body.Replace("\n", "\\n") + "\"");
+                            vim.Char('u'); if (vim.Body != "one\ntwo\nthree\n") bad.Add("vim: u didn't undo the dd");
+                            vim.Char('o'); foreach (var ch in "new") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Escape)); foreach (var ch in ":wq") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Enter));
+                            if (saved != "one\ntwo\nnew\nthree\n" || !closed) bad.Add("vim: o + :wq saved \"" + (saved ?? "(nothing)").Replace("\n", "\\n") + "\"" + (closed ? "" : " and didn't close"));
+                        }
+                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "sports", "settings", "about", "points", "shell", "lab" };   // bug-hunt R2-020: every page, settings/about/points/shell included
                         foreach (var dark in new[] { false, true })
                         {
                             Theme.Apply(dark); fv.Invalidate(true);

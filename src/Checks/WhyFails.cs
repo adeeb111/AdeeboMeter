@@ -32,7 +32,7 @@ namespace AdeeboMeter
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             try
             {
-                var p = WebRequest.GetSystemWebProxy(); var via = p.GetProxy(u); bool direct = p.IsBypassed(u) || via == u;
+                var p = HttpSmall.Proxy(); var via = p.GetProxy(u); bool direct = p.IsBypassed(u) || via == u;
                 rows.Add(R(direct ? 0 : 3, "This URL goes", direct ? "direct - no proxy" : "through the proxy " + via.Authority, direct ? "" : "Browsers and most apps send this site to the proxy first. If the site fails only here, the proxy is the suspect.", "w"));
             }
             catch (Exception e) { rows.Add(R(1, "This URL goes", "couldn't ask Windows: " + e.Message, "", "u")); }
@@ -221,7 +221,7 @@ namespace AdeeboMeter
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt");
-                req.Method = "HEAD"; req.Timeout = 5000; req.UserAgent = "AdeeboMeter"; req.Proxy = WebRequest.GetSystemWebProxy();
+                req.Method = "HEAD"; req.Timeout = 5000; req.UserAgent = "AdeeboMeter"; req.Proxy = HttpSmall.Proxy();
                 var sw = Stopwatch.StartNew();
                 using (var resp = (HttpWebResponse)req.GetResponse())
                 {

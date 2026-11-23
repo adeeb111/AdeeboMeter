@@ -546,13 +546,17 @@ function openView(k){ const d = valid(AMV && AMV[k]); if (!d) return; d.measured
 /* ---------- go */
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
-const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);
+const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qArg = (location.search.match(/[?&]arg=([A-Za-z0-9_-]{1,40})/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);
 doc = start(); if (doc.measured && !doc.access) applyAccess(doc, store.get("adeebometer-lab:access") || "fibre");
 $("#name").value = doc.name; buildTools(); hint(); accessUi();
 if (qPath && doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
 setTimeout(fit, 0); addEventListener("resize", () => fit());
 if (qBreak) setMode("break");
 else if (qView && AMV && AMV[qView]) openView(qView);
+else if (qView === "new") openDoc(blank());   /* the app's AdeeboLab page chose these (1.1.6, 22 Nov): new, one of your diagrams, an example, a file */
+else if (qView === "file" && qArg) { const f = files().find(x => x.id === qArg); const d = f && valid(f.doc); if (d) { d.fid = f.id; openDoc(d); } else showHome(); }
+else if (qView === "ex" && qArg && EX[qArg]) { const d = fromExample(qArg); applyAccess(d, store.get("adeebometer-lab:access") || "fibre"); openDoc(d); }
+else if (qView === "open" && AMV && AMV.open) { const d = valid(AMV.open); if (d) { d.fid = uid("f").slice(0, 21); openDoc(d, "Opened from AdeeboMeter."); } else showHome(); }
 else if (!qPath) showHome();
 })();
 </script>

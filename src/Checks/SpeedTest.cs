@@ -169,7 +169,7 @@ namespace AdeeboMeter
         static HttpWebRequest Req(string url)
         {
             var req = (HttpWebRequest)WebRequest.Create(url);
-            req.Timeout = 6000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.AllowAutoRedirect = false;
+            req.Timeout = 6000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); req.AllowAutoRedirect = false;
             // the address Windows really connects to is checked at connect time (a name can answer public first, private next): without
             // a proxy in the way, never this PC or the LAN
             var u = req.RequestUri; bool direct; try { direct = req.Proxy == null || req.Proxy.IsBypassed(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; direct = true; }

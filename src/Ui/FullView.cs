@@ -310,7 +310,7 @@ namespace AdeeboMeter
             aboutPage.Controls.Add(aboutCanvas);
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
-            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage()); left.Controls.Add(BuildShellPage());
+            left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage()); left.Controls.Add(BuildShellPage()); left.Controls.Add(BuildLabPage());
             left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
@@ -332,6 +332,7 @@ namespace AdeeboMeter
                 if (e.Control && (e.KeyCode == Keys.Oemplus || e.KeyCode == Keys.Add)) { e.SuppressKeyPress = true; ZoomBy(1); return; }
                 if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract)) { e.SuppressKeyPress = true; ZoomBy(-1); return; }
                 if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
+                if (term != null && term.Focused) return;   // AdeeboShell (and its nano/vim) owns every key: / ^K ^1-7 Esc are its own there
                 if (e.KeyCode == Keys.Escape)
                 {
                     if (langSheet != null && langSheet.Visible) { e.SuppressKeyPress = true; HideLangSheet(); return; }
@@ -344,7 +345,8 @@ namespace AdeeboMeter
                     // typing in any box: Esc clears that box (and stays) - it never throws away a running check or a result
                     var tb = ActiveTextBox(); if (tb != null && tb.Text != "" && !tb.ReadOnly) { e.SuppressKeyPress = true; tb.Text = ""; return; }
                     // a tool still running: a stray Esc doesn't throw it away (the window's X still closes)
-                    if (tbBusy || sniffing || shRun != null || shScript) { e.SuppressKeyPress = true; return; }   // R2-127: the shell's runs and scripts too
+                    if (term != null && term.Focused) return;   // the shell's own Esc (clear the line, vim's normal mode) - never closes the window
+                    if (tbBusy || sniffing || ShBusy) { e.SuppressKeyPress = true; return; }   // R2-127: the shell's runs and scripts too
                     Close();
                 }
                 else if (tab == "toolbox" && tbCanvas != null && e.Control && (e.KeyCode == Keys.PageDown || e.KeyCode == Keys.PageUp) && SnmpView(tbSel))
@@ -475,7 +477,7 @@ namespace AdeeboMeter
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
             bool enterGuide = tab == "guide" && !guidePage.Visible;
-            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook"; shellPage.Visible = tab == "shell";
+            overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook"; shellPage.Visible = tab == "shell"; labPage.Visible = tab == "lab"; if (tab == "lab") LabPageShown();
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
             SyncPointsBtn(); WatchUse(tab);
@@ -499,6 +501,7 @@ namespace AdeeboMeter
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "outlook", "Outlook", "outlook" },
             new[] { "shell", "AdeeboShell", "shell" },
+            new[] { "lab", "AdeeboLab", "lab" },
             new[] { "stream", "Streaming", "stream" },
             new[] { "sports", "Sports", "sports" },
             new[] { "trade", "Markets", "trade" },
@@ -750,7 +753,7 @@ namespace AdeeboMeter
             if (page == "peek" && sub != null) { var jb = PeekPage(sub); if (jb != null) File.WriteAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peek-test.jpg"), jb); page = sub; }
             // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
             if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
-            var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell" };
+            var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell", "lab" };
             if (!known.Contains(page)) { Program.Log("--view: no page called \"" + page + "\" - opening Home"); Text = "AdeeboMeter - no page \"" + page + "\""; page = "overview"; }   // R2-196: a typo'd page name says so
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);

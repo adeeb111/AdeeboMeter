@@ -155,6 +155,48 @@ namespace AdeeboMeter
             catch (IOException e) { Program.Log("lab page: " + e.Message); return null; }
             catch (UnauthorizedAccessException e) { Program.Log("lab page: " + e.Message); return null; }
         }
+        // the lab's own Edge windows (its own profile folder): asked to close, as the window's X would
+        static void CloseOpenWindows()
+        {
+            try
+            {
+                var pids = new HashSet<int>(); string prof = Profile;
+                using (var mos = new System.Management.ManagementObjectSearcher("SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'msedge.exe'"))
+                    foreach (System.Management.ManagementObject mo in mos.Get())
+                        using (mo) { var cl = mo["CommandLine"] as string; if (cl != null && cl.IndexOf(prof, StringComparison.OrdinalIgnoreCase) >= 0) pids.Add(Convert.ToInt32(mo["ProcessId"], System.Globalization.CultureInfo.InvariantCulture)); }
+                if (pids.Count == 0) return;
+                int closed = 0;
+                Native.EnumWindows(delegate(IntPtr hw, IntPtr l)
+                {
+                    if (!Native.IsWindowVisible(hw)) return true; uint pid; GetWindowThreadProcessId(hw, out pid);
+                    if (pids.Contains((int)pid)) { PostMessage(hw, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero); closed++; }
+                    return true;
+                }, IntPtr.Zero);
+                if (closed > 0) System.Threading.Thread.Sleep(700);   // its storage is written as it closes
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab close: " + e.Message); }
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
+        // your diagrams, as the lab page keeps them in its own Edge profile: (id, name, when) - read on a background thread
+        public static List<string[]> SavedDiagrams()
+        {
+            var r = new List<string[]>();
+            try
+            {
+                string v; var ls = BrowserStore.LocalStorage(Profile, "adeebometer-lab:"); if (!ls.TryGetValue("adeebometer-lab:files", out v)) return r;
+                var arr = Json.Parse(v) as List<object>; if (arr == null) return r;
+                foreach (var o in arr.Take(40))
+                {
+                    var d = o as Dictionary<string, object>; if (d == null) continue; object id, nm, t;
+                    if (!d.TryGetValue("id", out id) || id == null) continue; d.TryGetValue("name", out nm); d.TryGetValue("t", out t);
+                    double ms; string when = t != null && double.TryParse(Convert.ToString(t, System.Globalization.CultureInfo.InvariantCulture), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out ms) ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ms).ToLocalTime().ToString("d MMM HH:mm", System.Globalization.CultureInfo.CurrentCulture) : "";
+                    r.Add(new[] { Convert.ToString(id, System.Globalization.CultureInfo.InvariantCulture), Convert.ToString(nm ?? "My network", System.Globalization.CultureInfo.InvariantCulture), when });
+                }
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab diagrams: " + e.Message); }
+            return r;
+        }
         static string Edge()
         {
             foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
@@ -185,10 +227,15 @@ namespace AdeeboMeter
         // json: a path to start from (or null for the lab as it was); returns what went wrong, or null
         public static string Open(string json, bool breakIt) { return Open(json, breakIt, null, null); }
         // views: LabViews.All (the start page's own drawings); view: open straight into one of them ("lan", "path" ...)
-        public static string Open(string json, bool breakIt, string views, string view)
+        public static string Open(string json, bool breakIt, string views, string view) { return Open(json, breakIt, views, view, null); }
+        // arg: which diagram or example (view=file / view=ex); one lab window at a time - the last one is closed first, which
+        // lets the page save what it has (Adeeb, 22 Nov: "every click opens a new window")
+        public static string Open(string json, bool breakIt, string views, string view, string arg)
         {
             string page = PagePath(views); if (page == null) return "The lab page couldn't be written to the data folder.";
             var q = new List<string>(); if (breakIt) q.Add("mode=break"); if (!string.IsNullOrEmpty(view) && System.Text.RegularExpressions.Regex.IsMatch(view, "^[a-z]{2,8}$")) q.Add("view=" + view);
+            if (!string.IsNullOrEmpty(arg) && System.Text.RegularExpressions.Regex.IsMatch(arg, "^[A-Za-z0-9_-]{1,40}$")) q.Add("arg=" + arg);
+            CloseOpenWindows();
             string url = new Uri(page).AbsoluteUri + (q.Count > 0 ? "?" + string.Join("&", q) : "");
             if (json != null) url += "#path=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
             if (url.Length > 30000) return "This path is too big to hand over.";

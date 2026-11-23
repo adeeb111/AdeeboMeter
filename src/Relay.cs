@@ -55,7 +55,7 @@ namespace AdeeboMeter
             try
             {
                 var q = (HttpWebRequest)WebRequest.Create(Url); q.Method = "POST"; q.ContentType = "application/json"; q.Timeout = 15000; q.ReadWriteTimeout = 15000;
-                q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
+                q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = HttpSmall.Proxy();
                 var b = Encoding.UTF8.GetBytes(json); q.ContentLength = b.Length;
                 using (var s = q.GetRequestStream()) s.Write(b, 0, b.Length);
                 string body; using (var rs = (HttpWebResponse)q.GetResponse()) using (var rd = new StreamReader(rs.GetResponseStream())) body = rd.ReadToEnd();

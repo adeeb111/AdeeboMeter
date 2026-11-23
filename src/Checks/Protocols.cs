@@ -116,7 +116,7 @@ namespace AdeeboMeter
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    var req = (HttpWebRequest)WebRequest.Create(doh); req.Accept = "application/dns-json"; req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter"; req.Proxy = WebRequest.GetSystemWebProxy();
+                    var req = (HttpWebRequest)WebRequest.Create(doh); req.Accept = "application/dns-json"; req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter"; req.Proxy = HttpSmall.Proxy();
                     using (var resp = req.GetResponse()) using (var rs = resp.GetResponseStream())
                     {
                         // 16 KB and 8 s at most: an intercepting proxy can't feed it a huge or endless page

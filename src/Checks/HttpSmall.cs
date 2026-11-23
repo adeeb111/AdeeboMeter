@@ -13,7 +13,7 @@ namespace AdeeboMeter
     {
         public static string Get(string url, int maxKb, string header, string value)
         {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
+            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy();
             q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             if (header != null) q.Headers[header] = value;
             var deadline = DateTime.UtcNow.AddSeconds(20);
@@ -28,5 +28,23 @@ namespace AdeeboMeter
             }
         }
         public static string Get(string url, int maxKb) { return Get(url, maxKb, null, null); }
+        // Windows' proxy, signed in as you: a company proxy that asks who you are (407) gets your Windows sign-in, as Edge does
+        public static IWebProxy Proxy() { var p = WebRequest.GetSystemWebProxy(); if (p != null) p.Credentials = CredentialCache.DefaultCredentials; return p; }
+        // why a request failed, in words (the weather place search said only "couldn't reach")
+        public static string Why(Exception e)
+        {
+            var we = e as WebException; var hr = we != null ? we.Response as HttpWebResponse : null;
+            if (hr != null) return (int)hr.StatusCode == 407 ? "a proxy asked for a sign-in (407)" : "it answered " + (int)hr.StatusCode;
+            if (we != null) switch (we.Status)
+                {
+                    case WebExceptionStatus.NameResolutionFailure: return "its name didn't resolve - DNS, or blocked on this network";
+                    case WebExceptionStatus.ProxyNameResolutionFailure: return "the proxy's name didn't resolve";
+                    case WebExceptionStatus.Timeout: return "no answer in 10 s";
+                    case WebExceptionStatus.TrustFailure: case WebExceptionStatus.SecureChannelFailure: return "the secure connection failed - something on this network checks HTTPS (a company filter?)";
+                    case WebExceptionStatus.ConnectFailure: return "the connection was refused or blocked";
+                    default: return we.Status.ToString();
+                }
+            return e.GetType().Name;
+        }
     }
 }

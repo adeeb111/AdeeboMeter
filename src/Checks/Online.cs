@@ -36,7 +36,7 @@ namespace AdeeboMeter
             lock (k) { object c; if (cache.TryGetValue(url, out c)) return c; }
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
                 using (var resp = req.GetResponse()) using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
                 {
                     if (!string.Equals(resp.ResponseUri.Host, req.RequestUri.Host, StringComparison.OrdinalIgnoreCase) || resp.ResponseUri.Scheme != req.RequestUri.Scheme) return null;   // bug-hunt L-39: not the site asked
