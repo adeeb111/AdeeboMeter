@@ -1091,7 +1091,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException || e is ShFlow) throw; Err(c, cmd + ": " + e.Message); if (!(e is ShTooBig)) Program.Log("shell " + cmd + ": " + e); return 2; }
         }
-        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most", "local", "typeset", "readonly" };
+        static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "home", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most", "local", "typeset", "readonly" };
 
         int Builtin(string cmd, List<string> args, ShCtx c)
         {
@@ -1102,6 +1102,7 @@ namespace AdeeboMeter
                 case "tools": ShToolList(args.Count > 0 ? string.Join(" ", args) : "", c); return 0;
                 case "pwd": OL(c, Env.Cwd + (Real(Env.Cwd) != null && !args.Contains("-L") ? "   (" + Real(Env.Cwd) + ")" : "")); return 0;
                 case "cd": return Cd(args.Count == 0 ? "~" : args[0], c);
+                case "home": return Cd("/", c);   // back to AdeeboMeter's own folders from anywhere (cd ~ is still your Windows folder)
                 case "ls": case "ll": case "dir": return Ls(args, cmd == "ll", c);
                 case "tree": return Tree(args.FirstOrDefault(z => !z.StartsWith("-", StringComparison.Ordinal)) ?? ".", c);
                 case "cat": return Cat(args, c);
@@ -1391,6 +1392,22 @@ namespace AdeeboMeter
         }
 
         // ---------- folders and files
+        // where you are and what to type next - one dim line after a cd typed at the prompt (Adeeb, 1.1.6 test day: people wander
+        // into their own files and don't know how to get back or what this folder is for). English on purpose: it's commands.
+        void ShHint(string v, ShCtx c)
+        {
+            var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); string top = seg.Length > 0 ? seg[0] : "", here, next;
+            switch (top)
+            {
+                case "": here = "AdeeboMeter's own folders"; next = "cd pages · cd tools · cd data · help"; break;
+                case "pages": here = seg.Length == 1 ? "every page of AdeeboMeter" : "the " + seg[1] + " page"; next = seg.Length == 1 ? "ls · cd <page> · open <page>" : "open  (go to this page) · cd .. · home"; break;
+                case "tools": here = seg.Length == 1 ? "every tool, by group" : "the " + seg[1] + " tools"; next = seg.Length == 1 ? "ls · cd <group> · tools <word>" : "ls · man <tool> · <tool> <args> · home"; break;
+                case "data": here = "AdeeboMeter's own folder - you can make, change and delete files here"; next = seg.Length > 1 && seg[1] == "scripts" ? "ls · ./health-check.sh · nano my-script.sh · open /data  (File Explorer)" : "ls · cd scripts · cp ~/Downloads/<file> . · open /data  (File Explorer)"; break;
+                case "proc": here = "this PC as files"; next = "cat cpuinfo · cat meminfo · cat uptime · home"; break;
+                default: here = "your PC's files - read-only here"; next = "ls · cat <file> · cp <file> /data/ · home  (back to AdeeboMeter)"; break;
+            }
+            O(c, "  " + here + "  →  ", ShDim); OL(c, next, Color.FromArgb(110, 150, 190));
+        }
         int Cd(string p, ShCtx c)
         {
             if (p == "-") p = Env.Prev;
@@ -1407,6 +1424,7 @@ namespace AdeeboMeter
             string real = Real(v); if (real != null) { var seg = v.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); v = "/" + string.Join("/", seg.Take(seg[0] == "mnt" ? 2 : 1)) + VirtualTail(real, seg[0] == "mnt" ? char.ToUpperInvariant(seg[1][0]) + ":\\" : seg[0] == "home" ? Home : Program.DataDir); }
             Env.Prev = Env.Cwd; Env.Cwd = v;
             if (tEnv == null) Ui(ShPromptKeepHidden);   // only the interactive shell's own cd moves the prompt (#8)
+            if (tEnv == null && !c.Script && c.Out.Screen && c.Job == shFg) ShHint(v, c);
             return 0;
         }
         // the part of a real path under its root, with the disk's own capitals
@@ -1760,7 +1778,9 @@ namespace AdeeboMeter
             if (p.StartsWith("tool:", StringComparison.Ordinal) || (shTools.Any(t => t.Id == p) && !ShPageIds().Contains(p))) { string id = p.StartsWith("tool:", StringComparison.Ordinal) ? p.Substring(5) : p; OL(c, "opening " + id + " in the Toolbox", ShGreen); Ui(delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(id); SyncNav(); }); return 0; }
             foreach (var al in new[] { "today=home", "markets=trade", "market=trade", "trading=trade", "streaming=stream", "machine=time", "wifi=link", "running=procs", "connections=conn", "problem=guide", "games=gamer", "game=gamer" }) { var kv = al.Split('='); if (p == kv[0]) p = kv[1]; }
             var r = Real(Abs(args.Count > 0 ? args[0] : "."));
-            if (r != null && (File.Exists(r) || Directory.Exists(r))) { Err(c, "open: AdeeboShell doesn't start other programs - cat shows a file here, cd goes into a folder"); return 1; }
+            // the one exception: AdeeboMeter's own folder opens in File Explorer, so scripts and files can be pasted in (1.1.6)
+            if (r != null && Directory.Exists(r) && InData(r)) { OL(c, "opening " + Abs(args.Count > 0 ? args[0] : ".") + " in File Explorer - paste scripts and files here", ShGreen); try { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), "\"" + r + "\"") { UseShellExecute = false })) { } } catch (Exception e) { if (!(e is System.ComponentModel.Win32Exception || e is IOException)) throw; Err(c, "open: " + e.Message); return 1; } return 0; }
+            if (r != null && (File.Exists(r) || Directory.Exists(r))) { Err(c, "open: AdeeboShell doesn't start other programs - cat shows a file here, cd goes into a folder (open /data shows AdeeboMeter's own folder in File Explorer)"); return 1; }
             if (NavInfo.ContainsKey(p) || Secs.Any(z => z[0] == p)) { OL(c, "opening " + NavName(p), ShGreen); Ui(delegate { OpenNav(p); }); return 0; }
             if (tabNames.ContainsKey(p) || p == "about" || p == "settings") { OL(c, "opening " + p, ShGreen); Ui(delegate { tab = p; ShowTab(); SyncNav(); }); return 0; }
             Err(c, "open: no page called " + p + " (ls /pages lists them)"); return 1;
@@ -1780,7 +1800,7 @@ namespace AdeeboMeter
             Action<string, string> h = (a, b) => { O(c, "  " + a.PadRight(34), ShCyan); OL(c, b, ShDim); };
             OL(c, L.T("FOLDERS"), ShBlue);
             h("ls [-l -a] [folder]", L.T("what's here (ll = ls -l) · cd /data/scripts for ready-made scripts")); h("cd <folder> · cd ~ · cd - · cd ..", L.T("home = your folder, data, mnt/c, pages, tools")); h("pwd · tree · find . -name '*.csv'", L.T("where you are, what's below, find by name"));
-            h("cat · head -n 20 · tail · grep -i x", L.T("read files or what a pipe sends")); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", L.T("files - rm asks first")); h("du · stat · hash <file>", L.T("sizes, details, SHA-256"));
+            h("cat · head -n 20 · tail · grep -i x", L.T("read files or what a pipe sends")); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", L.T("files - rm asks first") + " · only inside /data"); h("home · open /data", "back to AdeeboMeter's folders · AdeeboMeter's folder in File Explorer"); h("du · stat · hash <file>", L.T("sizes, details, SHA-256"));
             OL(c, L.T("THIS PC (read only)"), ShBlue);
             h("df -h · du -sh * · lsblk · free -h", L.T("disks, folder sizes, drives, memory")); h("ps --sort=cpu · top · uptime · lscpu", L.T("what's running and what it costs (nothing is stopped from here)"));
             h("ip a · ip route · ss -tlp · ifconfig", L.T("addresses, routes, connections and listeners")); h("cat /proc/meminfo · watch -n 2 df -h", L.T("/proc as files; re-run anything every few seconds"));
