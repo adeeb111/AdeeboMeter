@@ -188,7 +188,7 @@ in: example.com|A|
 3|Browser|Edge: secure DNS on, with your current provider||w
 
 == dnscmp
-in: example.com|1.1.1.1
+in: example.com|192.0.2.1
 0|Same answer|203.0.113.10 from both||m
 3|Your DNS (192.168.1.1)|203.0.113.10 · 3 ms||m
 3|1.1.1.1|203.0.113.10 · 12 ms||m
@@ -214,7 +214,7 @@ in: https://example.com/api/health|GET|
 3|Body|{"status":"ok","version":"2.4.1"}||m
 
 == ntp
-in: time.windows.com
+in: 192.0.2.1
 0|Time server|answered in 21 ms · stratum 2||m
 0|Your clock|0.04 s fast - fine||m
 
