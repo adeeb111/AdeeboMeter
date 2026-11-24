@@ -853,12 +853,15 @@ namespace AdeeboMeter
             if (lay == "engineer") return EngineerCard(s, hits);
             hits.Clear();
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(s.Headline, fHead, (int)inner).Height;
+            // one line, not two (Adeeb, 24 Nov): with Fun lines on, the mood's line (or the season's) says the verdict in its own
+            // words, in the verdict's place and colour; Fun lines off, or nothing to say, it's the plain verdict ("All quiet")
+            bool replay = ReferenceEquals(s, AppCtx.Rewind);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */
+            string quip = replay ? "" : Mood.Quip(s), season = replay ? "" : Mood.SeasonLine(s);
+            string head = quip != "" ? quip : season != "" ? season : s.Headline;
+            float headH = Measure(head, fHead, (int)inner).Height;
             float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure(L.T("Why: ") + s.Hint, fSmall, (int)inner).Height + 4 * S;
-            string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
-            float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();
-            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
+            float h = pad + 24 * S + headH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
@@ -878,9 +881,8 @@ namespace AdeeboMeter
                 y += 24 * S;
                 using (var rsf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0))   /* review 1.1.6 U4 #8: Arabic paragraphs read right to left */
                 {
-                    using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
+                    using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
                     y += headH;
-                    if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH), rsf); y += quipH; }   // the mood's line and the season's - personality, after the facts
                     if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH), rsf); y += hintH; }
                 }
                 y += 10 * S;
