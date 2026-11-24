@@ -43,7 +43,8 @@
   bar.innerHTML = '<a class="ui-back" href="' + (lesson ? learnPath : '/app.html') + '" aria-label="' + (lesson ? 'Back to Learn' : 'Back to the app') + '">' + ic('back', 26) + '</a>' +
     '<a class="ui-brand" href="' + languagePrefix + '/"><img src="/img/logo.svg" width="30" height="30" alt="">AdeeboMeter</a>' +
     '<nav class="ui-links">' + S.map(function (s) { return '<a href="' + s[1] + '"' + (s[0] === sec ? ' aria-current="page"' : '') + '>' + s[3] + '</a>'; }).join('') + '<a href="/app.html">Phone app</a></nav>';
-  body.insertBefore(bar, body.firstChild);
+  // 24 Nov: on the website the shared site bar (site.js) is the header; this bar stays for the phone app, where that one hides
+  if (!document.getElementById('sitebar')) body.insertBefore(bar, body.firstChild);
   var nav = document.createElement('nav'); nav.className = 'ui-sbar'; nav.setAttribute('aria-label', 'Sections');
   nav.innerHTML = S.map(function (s) { return '<a href="' + s[1] + '"' + (s[0] === sec ? ' class="on" aria-current="page"' : '') + '>' + ic(s[2], 24) + '<span>' + s[3] + '</span></a>'; }).join('');
   body.appendChild(nav);
