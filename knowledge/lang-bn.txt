@@ -5149,3 +5149,5 @@ to fix	ঠিক করতে হবে
 What to do	কী করবেন
 What I couldn't tell	যা বোঝা যায়নি
 Extra numbers for engineers	প্রকৌশলীদের জন্য বাড়তি সংখ্যা
+an example	একটি উদাহরণ
+done at	শেষ হয়েছে

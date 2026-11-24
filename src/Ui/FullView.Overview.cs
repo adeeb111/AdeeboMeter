@@ -339,7 +339,7 @@ namespace AdeeboMeter
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in att)
                     {
-                        g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
+                        g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fSmall, muted, x, y + 4 * S);
                         Draw.LvDot(g, e.Lv, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
                         float tmw = Cfg.History ? 150 * S : 0;   // "See 14:05 ›" on every event: the Time machine at that minute
                         g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S - tmw, 20 * S), nowrap);

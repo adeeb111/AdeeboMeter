@@ -82,7 +82,7 @@ namespace AdeeboMeter
             for (int i = 0; i < have.Count; i++)
             {
                 var t = have[i]; var b = new RectangleF(r.X + 18 * S + i * (bw + 26 * S), r.Y + 44 * S, bw, bh);
-                Theme.Fill(g, b, 10 * S, Theme.Soft); Theme.Fill(g, new RectangleF(b.X, b.Y, 4 * S, b.Height), 2 * S, t.Item3);
+                Theme.Fill(g, b, 10 * S, Theme.Soft);   // no bar down the side - the heading carries the colour (24 Nov)
                 VText(g, Kit.Sent(L.T(t.Item2)), Draw.fTiny, t.Item3, b.X + 12 * S, b.Y + 8 * S);
                 string txt = idle ? (i == 0 ? L.T("what is full or busy - memory, processor, disk, drivers") : i == 1 ? L.T("what that does to every click") : i == 2 ? L.T("the numbers behind the feeling") : L.T("the reason it's full: the apps, too little memory, a leak, heat")) : RV(t.Item1);
                 using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(Cut(txt, 260), Draw.fSmall, sb, new RectangleF(b.X + 12 * S, b.Y + 26 * S, b.Width - 20 * S, b.Height - 30 * S));

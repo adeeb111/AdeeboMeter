@@ -133,8 +133,8 @@ namespace AdeeboMeter
                         g.DrawString(title + (i.E != null && !string.Equals(i.E.Friendly, a.Name, StringComparison.OrdinalIgnoreCase) ? "  (" + a.Name + ")" : ""), Draw.fBodyB, ink, new RectangleF(tx, y + 4 * S, tw, 18 * S), nowrap);
                         g.DrawString(subl, Draw.fSmall, muted, new RectangleF(tx, y + 22 * S, tw, 16 * S), nowrap);
                         string mem = Draw.MemStr(a.Mem), cpu = a.Cpu.ToString("0.0", CultureInfo.CurrentCulture) + "%";
-                        var ms = g.MeasureString(mem, Draw.fMono); g.DrawString(mem, Draw.fMono, ink, x + w - 64 * S - ms.Width, y + 12 * S);
-                        var cs = g.MeasureString(cpu, Draw.fMono); g.DrawString(cpu, Draw.fMono, sub, x + w - cs.Width, y + 12 * S);
+                        var ms = g.MeasureString(mem, Draw.fBodyB); g.DrawString(mem, Draw.fBodyB, ink, x + w - 64 * S - ms.Width, y + 12 * S);
+                        var cs = g.MeasureString(cpu, Draw.fBodyB); g.DrawString(cpu, Draw.fBodyB, sub, x + w - cs.Width, y + 12 * S);
                         g.DrawLine(line, x, y + rh - 1, x + w, y + rh - 1);
                         var captured = a; Act(procList, rr, delegate { SelectProc(captured); });
                         y += rh;

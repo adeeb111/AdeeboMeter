@@ -261,10 +261,10 @@ namespace AdeeboMeter
             }
             else
             {
-                if (sel) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, acSoft);
-                else if (hot) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, Theme.Soft);
-                fg = sel ? acInk : Theme.Sub;
-                if (sel) Theme.Fill(g, new RectangleF(10 * S, Height - 4 * S, Width - 20 * S, 3 * S), 1.5f * S, ac);
+                // 24 Nov (mockups): a page tab is its words and a line under the open one - no pill, no fill
+                if (hot && !sel) Theme.Fill(g, new RectangleF(2, 6 * S, Width - 4, Height - 14 * S), 8 * S, Theme.Soft);
+                fg = sel ? Theme.Ink : Theme.Sub;
+                if (sel) Theme.Fill(g, new RectangleF(8 * S, Height - 3 * S, Width - 16 * S, 2.5f * S), 1.25f * S, accent == null ? Theme.Blue : ac);
             }
             int bw = BadgeW;
             using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, HotkeyPrefix = System.Drawing.Text.HotkeyPrefix.None, FormatFlags = StringFormatFlags.NoWrap | (L.RunsRtl(Text) ? StringFormatFlags.DirectionRightToLeft : 0) })

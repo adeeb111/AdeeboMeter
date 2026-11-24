@@ -1090,15 +1090,16 @@ namespace AdeeboMeter
             int[] n = new int[3]; int lv;
             foreach (var o in tbRows) if (o.Length > 2 && int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv) && lv >= 0 && lv <= 2) n[lv]++;
             if (n[0] + n[1] + n[2] < 3) return y;
-            string[] names = { "fine", "to watch", "problems" }; float cw = Math.Min(170 * S, (w - 20 * S) / 3), ch = 64 * S;
-            for (int i = 0; i < 3; i++)
+            // 24 Nov: one quiet line of counts on a card (the three tinted tiles read as three more results)
+            string[] names = { "fine", "to watch", "problems" }; float h = 46 * S; Kit.Box(g, new RectangleF(x, y, w, h), 12 * S); float cx = x + 18 * S;
+            foreach (int i in new[] { 2, 1, 0 })
             {
-                var r = new RectangleF(x + i * (cw + 10 * S), y, cw, ch); bool on = n[i] > 0;
-                Theme.Fill(g, r, 12 * S, on ? Theme.LvSoft(i) : Theme.Soft);
-                using (var b = new SolidBrush(on ? Theme.LvText(i) : Theme.Muted)) g.DrawString(n[i].ToString(CultureInfo.CurrentCulture), Draw.fCardNum, b, r.X + 14 * S, r.Y + 6 * S);
-                using (var b = new SolidBrush(on ? Theme.LvText(i) : Theme.Muted)) g.DrawString(L.T(names[i]), Draw.fSmall, b, r.X + 15 * S, r.Bottom - 22 * S);
+                Draw.LvDot(g, n[i] > 0 ? i : 3, cx, y + h / 2 - 4 * S, 8 * S, 8 * S); cx += 14 * S;
+                string v = n[i].ToString(CultureInfo.CurrentCulture); var vs = g.MeasureString(v, Draw.fHead);
+                using (var b = new SolidBrush(n[i] > 0 && i > 0 ? Theme.LvText(i) : Theme.Ink)) g.DrawString(v, Draw.fHead, b, cx, y + (h - vs.Height) / 2); cx += vs.Width;
+                var ls = g.MeasureString(L.T(names[i]), Draw.fSmall); using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T(names[i]), Draw.fSmall, b, cx, y + (h - ls.Height) / 2); cx += ls.Width + 22 * S;
             }
-            return y + ch + 14 * S;
+            return y + h + 14 * S;
         }
         void PaintTb(Graphics g)
         {
@@ -1119,7 +1120,7 @@ namespace AdeeboMeter
                     {
                         string back = "‹  " + L.T(SectionName(tbSection)); var bs = g.MeasureString(back, Draw.fSmall);
                         g.DrawString(back, Draw.fSmall, lb, x, y); Act(tbCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { ShowSection(tbSection); });
-                        g.DrawString("·  " + L.T(GroupName(cur.Group)).ToUpper(System.Globalization.CultureInfo.CurrentCulture), Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
+                        g.DrawString("·  " + L.T(GroupName(cur.Group)), Draw.fSmall, muted, x + bs.Width + 6 * S, y);
                         y += 26 * S;
                     }
                     if (SnmpView(tbSel))
@@ -1138,10 +1139,11 @@ namespace AdeeboMeter
                         y += 46 * S; g.DrawLine(line, x, y - 6 * S, x + w, y - 6 * S);
                     }
                 }
-                g.DrawString(L.T(tbTitle) + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + Kit.Sent(L.T("EXAMPLE")) : "  ·  " + Kit.Sent(L.T("DONE")) + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
+                // 24 Nov (tool page mockup): what state the run is in, in plain words at a readable size
+                g.DrawString(L.T(tbTitle) + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("an example") : "  ·  " + L.T("done at") + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fSmall, sub, x, y);
                 if (tbAward != "" && tbRows != null && !tbBusy)
                 {
-                    float hw = g.MeasureString(L.T(tbTitle) + "  ·  " + Kit.Sent(L.T("DONE")) + " 00:00", Draw.fTiny).Width;   // the title as drawn (French too)
+                    float hw = g.MeasureString(L.T(tbTitle) + "  ·  " + L.T("done at") + " 00:00", Draw.fSmall).Width;   // the title as drawn (French too)
                     using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
                 }
                 bool isEx = Examples.IsExample(tbRows);   // an example is never saved, copied or compared
@@ -1204,7 +1206,22 @@ namespace AdeeboMeter
                 }
                 if (tbRows != null)
                 {
+                    // 24 Nov (tool page mockup): the result rows sit on one card, a line between rows, no tinted bands
+                    float ox = x, ow = w; x += 16 * S; w -= 32 * S;
                     float nameW = Math.Min(260 * S, w * 0.32f), pillW = Cfg.Details ? 170 * S : 120 * S;
+                    {
+                        float tot = 8 * S;
+                        foreach (var o0 in tbRows)
+                        {
+                            int l0; int.TryParse(o0.Length > 0 ? o0[0] : "", NumberStyles.Integer, CultureInfo.InvariantCulture, out l0); if (l0 == 8) continue; if (l0 == 6 || l0 == 7) { tot += 19 * S; continue; }
+                            string n1 = o0.Length > 1 ? (o0[1] ?? "") : "", v2 = o0.Length > 2 ? (o0[2] ?? "") : "", a3 = o0.Length > 3 ? (o0[3] ?? "") : "";
+                            if (n1.Length > 400) n1 = n1.Substring(0, 400); if (v2.Length > 400) v2 = v2.Substring(0, 400); if (a3.Length > 400) a3 = a3.Substring(0, 400);
+                            float tw0 = w - nameW - pillW - 10 * S, vh0 = Draw.Measure(v2, Draw.fBody, (int)tw0).Height, ah0 = a3 == "" ? 0 : Draw.Measure(a3, Draw.fSmall, (int)tw0).Height + 4 * S;
+                            tot += Math.Max(Math.Max(30 * S, vh0 + ah0 + 12 * S), Draw.Measure(n1, Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
+                        }
+                        if (tbRows.Count > 0) Kit.Box(g, new RectangleF(ox, y, ow, tot + 8 * S), 14 * S);
+                        y += 8 * S;
+                    }
                     // deep test 23 Nov: a 5000-letter answer with no spaces froze the window for 16 s - GDI+ wraps it letter by letter.
                     // A row shows its first 400 characters (Copy as text keeps all of it), and rows off screen are measured, not drawn.
                     Func<string, string> cap = z => z != null && z.Length > 400 ? z.Substring(0, 400) + "…" : z ?? "";
@@ -1229,7 +1246,7 @@ namespace AdeeboMeter
                         if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
                         float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
                         if (y > clip.Bottom || y + rh < clip.Top) { if (o.Length > 5 && o[5] != "") { var act0 = o[5]; Act(tbCanvas, new RectangleF(x, y, w, rh), delegate { RowAction(act0); }); } y += rh; continue; }
-                        if (lv == 4) Theme.Fill(g, new RectangleF(x - 4 * S, y, w + 8 * S, rh), 10 * S, Theme.BlueSoft); else if (lv == 1 || lv == 2) Theme.Fill(g, new RectangleF(x - 6 * S, y, w + 12 * S, rh), 10 * S, Theme.LvSoft(lv));   // problem rows stand out, rounded
+                        // the level is the dot and the value's colour - no tinted band behind the row
                         Draw.LvDot(g, lv == 4 ? 3 : lv, x, y + 9 * S, 10 * S, 10 * S);
                         g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
                         using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, tw, vh + 4));
@@ -1238,6 +1255,7 @@ namespace AdeeboMeter
                         if (o.Length > 5 && o[5] != "") { var act = o[5]; Act(tbCanvas, new RectangleF(x, y, w, rh), delegate { RowAction(act); }); }
                         y += rh; g.DrawLine(line, x, y, x + w, y);
                     }
+                    x = ox; w = ow; y += 16 * S;
                 }
             }
             Need(tbCanvas, y + 20 * S);

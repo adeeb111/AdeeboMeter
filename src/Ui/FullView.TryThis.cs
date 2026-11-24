@@ -30,7 +30,7 @@ namespace AdeeboMeter
             float h = 48 * S; var r = new RectangleF(x, y, w, h);
             Color acc = paper ? Paper.Navy : Kit.Accent(page == "trade" ? "trade" : page);
             if (paper) { Theme.Fill(g, r, 6 * S, Paper.DeskBg); Theme.Stroke(g, r, 6 * S, Paper.Line, 1); }
-            else { Theme.Fill(g, r, 12 * S, Theme.Card); Theme.Fill(g, r, 12 * S, Color.FromArgb(Theme.Dark ? 26 : 16, acc)); Theme.Stroke(g, r, 12 * S, Color.FromArgb(120, acc), 1); }
+            else { Theme.Fill(g, r, 12 * S, Theme.Card); Theme.Stroke(g, r, 12 * S, Theme.Line, 1); }   // a plain card; the icon carries the colour (24 Nov)
             var ir = new RectangleF(x + 14 * S, y + (h - 26 * S) / 2, 26 * S, 26 * S);
             using (var ib = new SolidBrush(Color.FromArgb(Theme.Dark && !paper ? 50 : 30, acc))) g.FillEllipse(ib, ir);
             Kit.Icon(g, "question", new RectangleF(ir.X + 5 * S, ir.Y + 5 * S, 16 * S, 16 * S), acc);

@@ -339,7 +339,7 @@ namespace AdeeboMeter
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in near)
                     {
-                        g.DrawString(e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
+                        g.DrawString(e.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture), Draw.fSmall, muted, x, y + 4 * S);
                         Draw.LvDot(g, e.Lv, x + 76 * S, y + 7 * S, 10 * S, 10 * S);
                         g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 96 * S, y + 2 * S, w - 96 * S, 20 * S), nowrap);
                         Hint(replayCanvas, new RectangleF(x + 76 * S, y, w - 76 * S, 26 * S), "kind." + e.Kind);

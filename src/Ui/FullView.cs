@@ -159,7 +159,7 @@ namespace AdeeboMeter
             tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(48), BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(4), 0, 0), WrapContents = false };
             // six sections, each with its own pages underneath (room to grow without the tab row falling off the edge)
             // the bar (five sections + More, the user's order) is built by BuildNavBar (FullView.Nav) once the pages exist
-            subTabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(44), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(6), 0, 0), WrapContents = false, Visible = false };
+            subTabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(48), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(5), 0, 0), WrapContents = false, Visible = false };
             var tabLine = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Theme.Track, Tag = "line" };
             // Small screens / high scaling: switch to short tab names instead of letting tabs fall off the edge.
             subTabs.Resize += delegate { FitTabs(); };
@@ -545,7 +545,7 @@ namespace AdeeboMeter
                 if (def != null && def.Length > 3)
                     for (int i = 2; i < def.Length; i++)
                     {
-                        var b = new PillButton(tabNames[def[i]][shortTabs ? 1 : 0], PillButton.K.Chip) { Tag = def[i], Margin = new Padding(0, 0, Sc(6), 0) };
+                        var b = new PillButton(tabNames[def[i]][shortTabs ? 1 : 0], PillButton.K.Tab) { Tag = def[i], Margin = new Padding(0, 0, Sc(4), 0) };   // underlined tabs, as the mockups
                         b.Click += delegate(object s, EventArgs e) { tab = (string)((Control)s).Tag; ShowTab(); };
                         btns.Add(b);
                     }

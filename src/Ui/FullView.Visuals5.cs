@@ -408,7 +408,7 @@ namespace AdeeboMeter
                 {
                     int lv; if (!int.TryParse(t[2], out lv)) lv = -1; Color c = lv == 2 ? Theme.Red : lv == 1 ? Theme.Orange : lv == 0 ? Theme.Green : VSlate;
                     var tr = new RectangleF(r.X + 18 * S + (i % cols) * (tw + 10 * S), ty + (i / cols) * 62 * S, tw, 54 * S);
-                    Theme.Fill(g, tr, 8 * S, Color.FromArgb(28, c)); Theme.Fill(g, new RectangleF(tr.X, tr.Y, 4 * S, tr.Height), 2 * S, c);
+                    Theme.Fill(g, tr, 8 * S, Color.FromArgb(22, c)); Draw.LvDot(g, lv < 0 ? 3 : lv, tr.X + 8 * S, tr.Y + 8 * S, 7 * S, 7 * S);   /* a dot, not a bar down the side (24 Nov) */
                     using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(t[0], Draw.fBodyB, b, new RectangleF(tr.X + 12 * S, tr.Y + 7 * S, tr.Width - 18 * S, 20 * S), sf);
                     using (var b = new SolidBrush(lv == 2 ? Theme.Red : Theme.Sub)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(t[1], Draw.fSmall, b, new RectangleF(tr.X + 12 * S, tr.Y + 27 * S, tr.Width - 18 * S, 26 * S), sf);
                     i++;

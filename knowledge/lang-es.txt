@@ -5149,3 +5149,5 @@ to fix	por arreglar
 What to do	Qué hacer
 What I couldn't tell	Lo que no pude saber
 Extra numbers for engineers	Números extra para ingenieros
+an example	un ejemplo
+done at	hecho a las

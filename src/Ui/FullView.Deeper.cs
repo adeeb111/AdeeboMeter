@@ -41,7 +41,7 @@ namespace AdeeboMeter
         {
             var d = Deeper[i]; Color c = Hex(d[4]);
             Theme.Fill(g, r, 14 * S, Theme.Card);
-            Theme.Fill(g, r, 14 * S, Color.FromArgb(hot ? (Theme.Dark ? 30 : 22) : (Theme.Dark ? 14 : 10), c));
+            if (hot) Theme.Fill(g, r, 14 * S, Color.FromArgb(Theme.Dark ? 22 : 14, c));   // white at rest, a faint tint under the mouse (24 Nov)
             Theme.Stroke(g, r, 14 * S, hot ? c : (Theme.Dark ? Theme.Line : Theme.Line2), 1);
             float ic = 34 * S; var ir = new RectangleF(r.X + 12 * S, r.Y + (r.Height - ic) / 2, ic, ic);
             Glyphs.Tile(g, d[3], ir, c, 9 * S);

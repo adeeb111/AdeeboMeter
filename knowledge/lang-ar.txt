@@ -5149,3 +5149,5 @@ to fix	للإصلاح
 What to do	ما العمل
 What I couldn't tell	ما لم أستطع تحديده
 Extra numbers for engineers	أرقام إضافية للمهندسين
+an example	مثال
+done at	انتهى عند
