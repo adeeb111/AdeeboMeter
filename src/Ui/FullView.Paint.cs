@@ -112,7 +112,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
-                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
+                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + string.Format(L.T("{0} MB of 80 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) + (live.Running && liveView != null ? "    + tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB) : "");
                 using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
                 // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit

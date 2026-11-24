@@ -53,9 +53,9 @@ namespace AdeeboMeter
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 foreach (var row in rows)
                 {
-                    g.DrawString(row[0], Draw.fBody, muted, new RectangleF(cr.X + 14 * S, ry, lw, 20 * S), nowrap);
+                    g.DrawString(L.T(row[0]), Draw.fBody, muted, new RectangleF(cr.X + 14 * S, ry, lw, 20 * S), nowrap);
                     using (var vb = new SolidBrush(row.Length > 2 && row[2] != "0" ? Theme.LvText(int.Parse(row[2], CultureInfo.InvariantCulture)) : Theme.Ink))
-                        g.DrawString(row[1], Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
+                        g.DrawString(L.T(row[1]), Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
                     Hint(linkCanvas, new RectangleF(cr.X, ry - 2 * S, cr.Width, 22 * S), "link." + row[0]);
                     ry += 22 * S;
                 }
@@ -113,13 +113,13 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (rows.Count == 0) g.DrawString(empty, Draw.fBody, muted, new RectangleF(x + 18 * S, ry, w - 36 * S, 22 * S), nowrap);
+                if (rows.Count == 0) g.DrawString(L.T(empty), Draw.fBody, muted, new RectangleF(x + 18 * S, ry, w - 36 * S, 22 * S), nowrap);
                 foreach (var r in rows)
                 {
                     int lv = r.Length > 2 ? int.Parse(r[2], CultureInfo.InvariantCulture) : 0;
                     using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 18 * S, ry + 7 * S, 8 * S, 8 * S);
-                    g.DrawString(r[0], Draw.fBodyB, ink, new RectangleF(x + 34 * S, ry, w * 0.30f, 22 * S), nowrap);
-                    g.DrawString(r[1], Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
+                    g.DrawString(L.T(r[0]), Draw.fBodyB, ink, new RectangleF(x + 34 * S, ry, w * 0.30f, 22 * S), nowrap);
+                    g.DrawString(L.T(r[1]), Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
                     ry += rh;
                 }
             }

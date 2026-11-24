@@ -31,6 +31,7 @@ namespace AdeeboMeter
         public static string Sent(string t)
         {
             if (string.IsNullOrEmpty(t)) return t;
+            t = L.T(t);   /* 24 Nov: every title painted through here is in your language (a translated one comes back unchanged) */
             string done; if (sent.TryGetValue(t, out done)) return done;
             if (sent.Count > 4000) sent.Clear();
             return sent[t] = Sent1(t);

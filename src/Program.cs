@@ -224,6 +224,7 @@ namespace AdeeboMeter
             // release check 24 Nov: the first paint of Home took 250-750 ms cold and 20-40 ms warm - .NET compiling the drawing code
             // on first use. Multicore JIT remembers what start-up compiles and does it ahead on a spare core next time (a few KB
             // file beside the settings; method names only)
+            System.Threading.ThreadPool.QueueUserWorkItem(_ => { try { TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); } catch (Exception) { } });   // read once off the window's thread (Home's market hours)
             try { System.Runtime.ProfileOptimization.SetProfileRoot(WriteDir); System.Runtime.ProfileOptimization.StartProfile("AdeeboMeter-start.jit"); } catch (Exception e) { Log("jit profile: " + e.Message); }
             TouchPan.Install();   // a finger drag scrolls the pages (Touch.cs)
             Application.Run(new AppCtx());
@@ -735,13 +736,13 @@ namespace AdeeboMeter
     static class Voice
     {
         public static volatile bool Serious;
-        public static string P(string fun, string plain) { return Serious ? plain : fun; }
-        public static string Red(string fun, string plain) { return plain; }
-        public static string ByLevel(int level, string fun, string plain) { return level >= 2 ? plain : P(fun, plain); }   // a real problem is never a joke - the plain words, whatever the voice
+        public static string P(string fun, string plain) { return L.T(Serious ? plain : fun); }   // 24 Nov: in your language (the English when a line has no translation yet)
+        public static string Red(string fun, string plain) { return L.T(plain); }
+        public static string ByLevel(int level, string fun, string plain) { return level >= 2 ? L.T(plain) : P(fun, plain); }   // a real problem is never a joke - the plain words, whatever the voice
         public static string Greet()
         {
             int h = DateTime.Now.Hour;
-            return h < 5 ? "Still up, boss?" : h < 12 ? "Good morning, boss." : h < 17 ? "Good afternoon, boss." : "Good evening, boss.";
+            return L.T(h < 5 ? "Still up, boss?" : h < 12 ? "Good morning, boss." : h < 17 ? "Good afternoon, boss." : "Good evening, boss.");
         }
     }
 }

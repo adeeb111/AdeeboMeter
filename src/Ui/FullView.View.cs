@@ -246,21 +246,20 @@ namespace AdeeboMeter
             var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
-            // a soft wash from the first colour to the second, a coloured edge
-            using (var path = Theme.Round(r, r.Height / 2))
-            using (var lg = new System.Drawing.Drawing2D.LinearGradientBrush(r, Kit.Mix(Theme.Card, Kit.Accent(a1), hot || sel ? 0.20f : 0.12f), Kit.Mix(Theme.Card, Kit.Accent(a2), hot || sel ? 0.20f : 0.12f), 0f))
-                g.FillPath(lg, path);
-            Theme.Stroke(g, r, r.Height / 2, Kit.Mix(Kit.Accent(a1), Theme.Card, sel ? 0f : 0.45f), sel ? 2 * S : 1);
+            // 24 Nov (Adeeb: "the View is all pink - shouldn't it follow our theme?"): the theme's own blue, the same in every view -
+            // not the current view's section colour
+            Theme.Fill(g, r, r.Height / 2, hot || sel ? Kit.Mix(Theme.BlueSoft, Theme.Blue, 0.10f) : Theme.BlueSoft);
+            Theme.Stroke(g, r, r.Height / 2, sel ? Theme.Blue : Kit.Mix(Theme.BlueSoft, Theme.Blue, 0.25f), sel ? 2 * S : 1);
             // the icon in a filled circle
             var ic = new RectangleF(6 * S, (Height - 26 * S) / 2, 26 * S, 26 * S);
-            using (var cb = new SolidBrush(Kit.Accent(a1))) g.FillEllipse(cb, ic);
+            using (var cb = new SolidBrush(Theme.Blue)) g.FillEllipse(cb, ic);
             Kit.Icon(g, icon, new RectangleF(ic.X + 6 * S, ic.Y + 6 * S, 14 * S, 14 * S), Theme.OnBlue);
             float tx = ic.Right + 8 * S;
-            using (var mb = new SolidBrush(Kit.Ink(a1))) g.DrawString(Kit.Sent(L.T("VIEW")), Draw.fTiny, mb, tx, 3 * S);
+            using (var mb = new SolidBrush(Theme.BlueText)) g.DrawString(Kit.Sent(L.T("VIEW")), Draw.fTiny, mb, tx, 3 * S);
             using (var nb = new SolidBrush(Theme.Ink)) g.DrawString(name, Draw.fBodyB, nb, tx - 1 * S, 14 * S);
             // the chevron, drawn (no font glyph needed)
             float cx = Width - 18 * S, cy = Height / 2f + (sel ? -1 : 1) * 1.5f * S, d = 4 * S;
-            using (var p = new Pen(Kit.Ink(a1), 1.8f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            using (var p = new Pen(Theme.Sub, 1.8f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
                 g.DrawLines(p, sel ? new[] { new PointF(cx - d, cy + d / 2), new PointF(cx, cy - d / 2), new PointF(cx + d, cy + d / 2) } : new[] { new PointF(cx - d, cy - d / 2), new PointF(cx, cy + d / 2), new PointF(cx + d, cy - d / 2) });
             if (Focused && ShowFocusCues) Theme.Stroke(g, new RectangleF(1.5f, 1.5f, Width - 3, Height - 3), (Height - 3) / 2f, Theme.BlueDark, 2);
         }
