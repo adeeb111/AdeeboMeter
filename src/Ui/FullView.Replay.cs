@@ -65,6 +65,9 @@ namespace AdeeboMeter
             };
             replayCanvas.MouseDown += seek; replayCanvas.MouseMove += seek;
             replayCanvas.MouseUp += delegate { replayDrag = false; };
+            /* a finger on the slider drags it; anywhere else it scrolls the page (Touch.cs) */
+            replayCanvas.TouchGrab = pt => { var sp = replayCanvas.AutoScrollPosition; var hit = replayTrack; hit.Inflate(0, 14 * S); return replayTrack.Width > 0 && hit.Contains(pt.X - sp.X, pt.Y - sp.Y); };
+            replayCanvas.TouchDrag = pt => { var sp = replayCanvas.AutoScrollPosition; if (replayTrack.Width > 0) ReplayAt(Math.Max(0, Math.Min(1, (pt.X - sp.X - replayTrack.X) / replayTrack.Width))); };
             replayPage.Controls.Add(replayCanvas);
             return replayPage;
         }

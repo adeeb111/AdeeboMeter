@@ -74,9 +74,13 @@ namespace AdeeboMeter
     // ================================================================== own controls (no stock Windows look - the topogram lesson)
     // what the window was doing last - read by the freeze watchdog so "it hangs" comes with a cause in the log
     static class UiActivity { public static volatile string Doing = ""; public static volatile bool ToolRunning; }
-    sealed class DB : Panel
+    sealed class DB : Panel, ITouchDrag
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
+        // touch (Touch.cs): a page that has something to drag says where - the rest of the page scrolls with the finger
+        public Func<Point, bool> TouchGrab; public Action<Point> TouchDrag;
+        bool ITouchDrag.Grab(Point screen) { return TouchGrab != null && TouchGrab(PointToClient(screen)); }
+        void ITouchDrag.DragTo(Point screen) { if (TouchDrag != null) TouchDrag(PointToClient(screen)); }
         // the self-test's paint counter (21 Nov sitting test): how often and how much of this canvas was redrawn
         public int Paints; public long PaintArea;
         public long LastFullPaintMs;   // how long the last paint of (nearly) the whole panel took - decides whether a wheel notch glides
@@ -384,7 +388,7 @@ namespace AdeeboMeter
     }
 
     // ================================================================== connection list (owner-drawn, only visible rows painted)
-    sealed class ConnList : Control
+    sealed class ConnList : Control, ITouchPan
     {
         sealed class Row { public Conn C; public DateTime First, Gone = DateTime.MinValue; public bool Initial; }
         readonly Dictionary<string, Row> rows = new Dictionary<string, Row>();
@@ -620,6 +624,11 @@ namespace AdeeboMeter
             Invalidate();
         }
         int wheelRest;
+        public bool PanBy(int dx, int dy)   /* a finger drag moves the list with the finger, pixel for pixel (Touch.cs) */
+        {
+            if (!sb.Visible || dy == 0) return false; int max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);
+            sb.Value = Math.Max(0, Math.Min(max, sb.Value + dy)); Invalidate(); return true;
+        }
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             int max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);

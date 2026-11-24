@@ -221,6 +221,7 @@ namespace AdeeboMeter
                 try { if (!mtx.WaitOne(5000)) return 0; } catch (AbandonedMutexException) { }
             }
             Log("Start " + Version);
+            TouchPan.Install();   // a finger drag scrolls the pages (Touch.cs)
             Application.Run(new AppCtx());
             Log("Exit");
             GC.KeepAlive(mtx);

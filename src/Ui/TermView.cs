@@ -17,7 +17,7 @@ namespace AdeeboMeter
     // twice a second) costs the visible rows, not the whole scrollback. One line is kept to MaxLine characters on screen (a 20 MB
     // base64 line can't freeze the window; > file still gets all of it). #64: tabs go to the next 8-column stop. #65: trimming the
     // oldest lines leaves a marker saying so.
-    sealed class TermView : Control
+    sealed class TermView : Control, ITouchPan
     {
         public struct Seg { public string T; public Color C; public Seg(string t, Color c) { T = t; C = c; } }
         sealed class Line { public readonly List<Seg> S = new List<Seg>(); public int Len; public string Text { get { var sb = new StringBuilder(); foreach (var s in S) sb.Append(s.T); return sb.ToString(); } } public void Add(Seg s) { S.Add(s); Len += s.T.Length; } }
@@ -214,6 +214,13 @@ namespace AdeeboMeter
         }
 
         // ---------- scrolling and selection
+        int panRest;
+        public bool PanBy(int dx, int dy)   /* a finger drag scrolls the output, a row at a time (Touch.cs) */
+        {
+            if (dy == 0 || chh <= 0) return false; panRest += dy; int r = (int)(panRest / chh); if (r == 0) return true; panRest -= (int)(r * chh);
+            if (Editor != null) { Editor.Wheel(r); Invalidate(); return true; }
+            int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll - r)); Invalidate(); return true;
+        }
         protected override void OnMouseWheel(MouseEventArgs e) { if (Editor != null) { Editor.Wheel(e.Delta > 0 ? -3 : 3); Invalidate(); return; } int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + (e.Delta > 0 ? 3 : -3))); Invalidate(); }
         public void ScrollPage(int dir) { int rows = Relayout(); scroll = Math.Max(0, Math.Min(Math.Max(0, rows - VisibleRows), scroll + dir * (VisibleRows - 2))); Invalidate(); }
         public void Follow() { scroll = 0; }

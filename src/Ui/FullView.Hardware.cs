@@ -441,7 +441,19 @@ namespace AdeeboMeter
                         foreach (var k in row.Split(' '))
                         {
                             float kw = (k.Length > 2 ? 56 : k == "Space" ? 200 : 40) * S; if (k == "Space") kw = 220 * S; var b = new RectangleF(xx, yy, kw, 40 * S);
-                            bool on = f.Hit.Contains(k); Theme.Fill(g, b, 6 * S, on ? Theme.Green : Theme.Soft); VTextC(g, k, Draw.fSmall, on ? Color.White : Theme.Ink, b.X + b.Width / 2, b.Y + 11 * S, b.Width); xx += kw + 6 * S;
+                            bool on = f.Hit.Contains(k); Theme.Fill(g, b, 6 * S, on ? Theme.Green : Theme.Soft); Color kc = on ? Theme.OnColor(Theme.Green) : Theme.Ink;
+                            int ai = Array.IndexOf(new[] { "←", "↑", "↓", "→" }, k);
+                            if (ai >= 0)
+                            {
+                                /* 24 Nov (Adeeb: the arrow keys disappeared): the app's own font has no arrows and GDI+ draws nothing in their
+                                   place, so the four arrows are drawn as shapes */
+                                float cx = b.X + b.Width / 2, cy = b.Y + b.Height / 2, r = 8 * S; var st = new[] { new PointF(-r, 0), new PointF(r, 0), new PointF(r * 0.2f, -r * 0.7f), new PointF(r * 0.2f, r * 0.7f) };
+                                double ang = ai == 0 ? Math.PI : ai == 1 ? -Math.PI / 2 : ai == 2 ? Math.PI / 2 : 0; float ca = (float)Math.Cos(ang), sa = (float)Math.Sin(ang);
+                                var p = st.Select(q => new PointF(cx + q.X * ca - q.Y * sa, cy + q.X * sa + q.Y * ca)).ToArray();
+                                using (var pen = new Pen(kc, 2 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round }) { g.DrawLine(pen, p[0], p[1]); g.DrawLines(pen, new[] { p[2], p[1], p[3] }); }
+                            }
+                            else VTextC(g, k, Draw.fSmall, kc, b.X + b.Width / 2, b.Y + 11 * S, b.Width);
+                            xx += kw + 6 * S;
                         }
                         yy += 48 * S;
                     }

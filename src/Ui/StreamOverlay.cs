@@ -15,8 +15,11 @@ namespace AdeeboMeter
     // when it happens. For OBS: capture this window (Window Capture) - on a green background for a Chroma Key filter - or tick
     // "Write a PNG for OBS" and add  overlay.png  in AdeeboMeter's data folder as an Image source (it's rewritten every second).
     // Drag to move; right-click for options. It shows only what AdeeboMeter already measures - it sends nothing of its own.
-    sealed class StreamOverlay : Form
+    sealed class StreamOverlay : Form, ITouchDrag
     {
+        Point touchAt;
+        bool ITouchDrag.Grab(Point screen) { touchAt = screen; return true; }
+        void ITouchDrag.DragTo(Point screen) { Location = new Point(Location.X + screen.X - touchAt.X, Location.Y + screen.Y - touchAt.Y); touchAt = screen; }
         static StreamOverlay open;
         readonly Monitor M; readonly Timer tick = new Timer { Interval = 1000 };
         bool green, png; Point down; byte[] lastPng; string lastKey = "";
@@ -39,6 +42,7 @@ namespace AdeeboMeter
             if (at.Length == 2 && int.TryParse(at[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out ox) && int.TryParse(at[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out oy) && Screen.AllScreens.Any(sc => sc.WorkingArea.Contains(new Point(ox + Sc(20), oy + Sc(20))))) Location = new Point(ox, oy);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) down = e.Location; };
+            /* a finger moves it too (Touch.cs) */
             MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) Location = new Point(Location.X + e.X - down.X, Location.Y + e.Y - down.Y); };
             var menu = Menus.Make(); menu.ShowImageMargin = false;
             var g = new ToolStripMenuItem("Green background (for OBS Chroma Key)") { CheckOnClick = true }; g.CheckedChanged += delegate { green = g.Checked; Invalidate(); };
