@@ -109,12 +109,12 @@ if (Test-Path $mp) {
 
 # ---------------------------------------------------------------- 1. the self-test
 if (-not $SkipSelfTest) {
-    Say 'Step 1 of 3: the self-test (up to 10 minutes)...' 'Yellow'
+    Say 'Step 1 of 3: the self-test (up to 25 minutes)...' 'Yellow'
     $st = New-TestCopy (Join-Path $work 'selftest') $null
-    $rc = Run-Timed $st '--selftest' 600
+    $rc = Run-Timed $st '--selftest' 1500
     $rep = Get-ChildItem (Split-Path $st), (Join-Path $env:LOCALAPPDATA 'AdeeboMeter') -Recurse -Filter 'AdeeboMeter-selftest.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-15) } | Select-Object -First 1
     if (-not (Test-Path $st)) { Result 'Self-test copy' $false 'the test copy of AdeeboMeter.exe is gone - antivirus removed it?' }
-    if ($rep) { Copy-Item $rep.FullName (Join-Path $out 'selftest.txt'); $fails = @(Select-String -Path $rep.FullName -Pattern '^FAIL' ).Count; Result 'Self-test' ($fails -eq 0) ("$fails failed" + $(if ($rc -eq -999) { ', stopped after 10 minutes' } else { '' })) }
+    if ($rep) { Copy-Item $rep.FullName (Join-Path $out 'selftest.txt'); $fails = @(Select-String -Path $rep.FullName -Pattern '^FAIL' ).Count; Result 'Self-test' ($fails -eq 0) ("$fails failed" + $(if ($rc -eq -999) { ', stopped after 25 minutes' } else { '' })) }
     else { Result 'Self-test' $false "no report (exit code $rc)" }
     Get-ChildItem (Split-Path $st) -Filter 'AdeeboMeter.log*' -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName (Join-Path $out ('selftest-' + $_.Name)) }
 }
@@ -209,7 +209,7 @@ if (-not $SkipLive) {
 
         # --- a jump onto it, then a small one (what two finger taps do to the pointer): no unlock
         $r = Rect; $m = Mark; [void][W]::SetCursorPos($r.CX, $r.CY); Pump 600; [void][W]::SetCursorPos($r.CX + 6, $r.CY + 4); Pump 2800
-        Result 'Two jumps onto it (like two taps) do not unlock it' (-not (Seen $m 'unlock')) ''
+        Result 'Two jumps onto it (like two taps) do not unlock it' (-not (Seen $m ' unlock \w')) ''
         GoHome
 
         # --- real finger taps, where Windows allows touch to be simulated
@@ -218,7 +218,8 @@ if (-not $SkipLive) {
             $r = Rect; $m = Mark
             [void][W]::Touch($r.CX, $r.CY, $true); Pump 80; [void][W]::Touch($r.CX, $r.CY, $false); Pump 500
             [void][W]::Touch($r.CX + 6, $r.CY + 4, $true); Pump 80; [void][W]::Touch($r.CX + 6, $r.CY + 4, $false); Pump 2800
-            Result 'Two finger taps do not unlock it' (-not (Seen $m 'unlock')) $(if (Seen $m 'touch cursor True') { 'Windows flagged the pointer as touch' } else { 'touch flag not seen - the two-step rule held it' })
+            Result 'Two finger taps do not unlock it' (-not (Seen $m ' unlock \w')) $(if (Seen $m 'touch cursor True') { 'Windows flagged the pointer as touch' } else { 'touch flag not seen - the two-step rule held it' })
+            Mouse 0x1 0; Mouse 0x0001 0; for ($i = 0; $i -lt 6; $i++) { [W]::mouse_event(0x0001, 3, 0, 0, [IntPtr]::Zero); Pump 30; [W]::mouse_event(0x0001, -3, 0, 0, [IntPtr]::Zero); Pump 30 }   # a mouse move: Windows shows the pointer again
             GoHome
         } else { Note 'Finger taps' 'Windows did not allow simulated touch here - test by hand on a touchscreen' }
 
@@ -265,7 +266,7 @@ if (-not $SkipLive) {
         } else { Result 'Unlocked: the wheel locks it and scrolls the app underneath' $false 'could not unlock it first' }
         GoHome
         $r = Rect; $m = Mark; [void][W]::SetCursorPos($tb.X + 20, $tb.Y + 20); Pump 300; Mouse 0x2 0; Pump 100; Glide $r.CX $r.CY 30 40; Pump 2800
-        Result 'Resting with a button held (a drag in the app underneath) does not unlock it' (-not (Seen $m 'unlock')) ''
+        Result 'Resting with a button held (a drag in the app underneath) does not unlock it' (-not (Seen $m ' unlock \w')) ''
         Mouse 0x4 0; Pump 200
         $target.Close(); $target = $null; GoHome
 

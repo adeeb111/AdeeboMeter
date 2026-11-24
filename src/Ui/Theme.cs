@@ -756,7 +756,7 @@ namespace AdeeboMeter
             string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 12 * S + pad);   // bug-hunt L-147: the path strip is 12 high
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + PathStripH + pad);   // test4 pictures: the strip's names under the dots were cut off
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -823,7 +823,7 @@ namespace AdeeboMeter
             Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 12 * S + pad);   // L-147
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + PathStripH + pad);   // L-147; test4: room for the names under the dots
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -913,7 +913,7 @@ namespace AdeeboMeter
                     bool memHot = !double.IsNaN(s.Mem) && s.Mem >= 85 && (double.IsNaN(s.Cpu) || s.Mem - 85 >= s.Cpu - 85);
                     int pcLv = s.Path.Length > 0 ? s.Path[0] : 3, gwLv = s.Path.Length > 1 ? s.Path[1] : 3, netLv = s.Path.Length > 4 ? s.Path[4] : 3;
                     var rows = new[] {
-                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : Fmt(s.Cpu, "0", "% ") + Kit.Sent("CPU"), pcLv),
+                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : double.IsNaN(s.Cpu) ? "-" : Fmt(s.Cpu, "0", "% ") + Kit.Sent("CPU"), pcLv),   /* test4 pictures: "-CPU" while checking */
                         Tuple.Create("path", L.T("Router"), Fmt(s.GwMs, "0", " ms"), gwLv),
                         Tuple.Create("inet", L.T("Internet"), Fmt(s.Ping, "0", " ms"), netLv),
                         Tuple.Create("net", L.T("Traffic"), "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true), 3) };
@@ -950,9 +950,11 @@ namespace AdeeboMeter
                 var du = Usage.TodayDU();
                 using (var tb = new SolidBrush(Theme.Sub))   /* hunters13 display L-4: on the graph's panel, muted grey was 4.3:1 in dark */
                 {
-                    g.DrawString(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
-                    string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
-                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
+                    // test4 pictures: the lines ran through these words - each sits on a patch of the graph's own colour
+                    Action<string, float, float> lab = (txt, x, yy) => { var sz = Measure(txt, fTiny, 0); Theme.Fill(g, new RectangleF(x - 2 * S, yy, sz.Width + 4 * S, sz.Height), 4 * S, Color.FromArgb(235, Theme.Soft)); g.DrawString(txt, fTiny, tb, x, yy); };
+                    lab(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), gr.X + 4 * S, gr.Y + 2 * S);
+                    string ut = "↑ " + Usage.Mb(du[1]); lab(ut, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
+                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; lab(ct, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
                 }
                 if (wtx != null) WeatherCardDraw(g, pad, gr.Bottom + 8 * S, inner, wtx);
             }
@@ -974,6 +976,8 @@ namespace AdeeboMeter
             y += 20 * S;
         }
 
+        // the small strip's height: the dots and the names under them (PC, LAN, ISP, DNS, Internet)
+        static float PathStripH { get { return 12 * S + 3 * S + Measure("PC", fSmall, 0).Height; } }
         public static void PathStrip(Graphics g, Snap s, RectangleF r, bool big)
         {
             int n = 5; float slot = r.Width / n, dot = (big ? 18 : 12) * S; Font lf = big ? fName : fSmall;

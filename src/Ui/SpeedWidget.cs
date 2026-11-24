@@ -116,7 +116,7 @@ namespace AdeeboMeter
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             var top = (s.TopCpu ?? new List<AppStat>()).Where(a => a != null && a.Name != "AdeeboMeter").Take(3).ToList();
             float headH = status ? Measure(s.Headline, fSmall, (int)inner).Height + 6 * S : 0, wh = HintLineH(inner);   // hunters12 M-1: the blue line on the speed cards too
-            string wtx = WeatherCardText(); float h = pad + 24 * S + headH + wh + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 16 * S + pad;   // bug-hunt L-147: 4 of space and the 12-high path strip
+            string wtx = WeatherCardText(); float h = pad + 24 * S + headH + wh + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 4 * S + PathStripH + pad;   // bug-hunt L-147: 4 of space and the 12-high path strip
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
