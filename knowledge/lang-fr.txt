@@ -4180,3 +4180,18 @@ Only inside a check you start (What's wrong? and the full checkup): one tiny req
 Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	Seulement pendant une vérification que vous lancez (Qu'est-ce qui ne va pas ? et le bilan complet) : une requête à la page de test qu'utilise Windows lui-même (msftconnecttest.com).
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	Les vérifications utilisent TLS avec la validation de certificats de Windows (Windows choisit TLS 1.2 ou 1.3). Une exception : quand vous demandez un autre nom à l'inspecteur TLS, il accepte un certificat émis pour un autre nom et l'indique sur sa page. Les saisies sont validées ; aucun shell n'est jamais utilisé.
 and {0} more - Open a file... in the lab lists them all	et {0} de plus - Ouvrir un fichier... dans le lab les liste tous
+Move widget	Déplacer le widget
+Reset widget position	Réinitialiser la position du widget
+Move the widget	Déplacer le widget
+Drag to move · click opens AdeeboMeter	Faites glisser pour déplacer · un clic ouvre AdeeboMeter
+Widget position	Position du widget
+Fade fully when the mouse comes near	Disparaître quand la souris approche
+Bottom right	En bas à droite
+Bottom left	En bas à gauche
+Top right	En haut à droite
+Top left	En haut à gauche
+Reset	Réinitialiser
+Bottom right, the default. To move it, rest the mouse on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	En bas à droite, par défaut. Pour le déplacer, posez la souris dessus un instant ou maintenez Ctrl au-dessus, puis faites-le glisser. Un clic ouvre AdeeboMeter.
+Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	Déplacé par vous. Choisissez un coin, ou Réinitialiser pour le remettre en bas à droite de l'écran principal.
+On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	Activé : le widget disparaît quand la souris approche, il ne cache donc jamais ce que vous pointez. Pour le déplacer, maintenez Ctrl au-dessus de son emplacement, ou passez par la zone de notification : Widget d'angle > Déplacer le widget.
+Off: it brightens when you point at it.	Désactivé : il s'éclaircit quand vous le pointez.

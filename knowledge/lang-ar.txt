@@ -5455,3 +5455,18 @@ Only inside a check you start (What's wrong? and the full checkup): one tiny req
 Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	فقط ضمن فحص تبدؤه أنت (ما المشكلة؟ والفحص الكامل): طلب واحد إلى صفحة الاختبار نفسها التي يستخدمها Windows ‏(msftconnecttest.com).
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	تستخدم الفحوص TLS مع تحقق Windows من الشهادات (يختار Windows ‏TLS 1.2 أو 1.3). استثناء واحد: عندما تطلب من فاحص TLS اسمًا مختلفًا، يقبل شهادة لاسم آخر ويذكر ذلك في صفحته. المدخلات يُتحقق منها؛ ولا يُستخدم أي shell أبدًا.
 and {0} more - Open a file... in the lab lists them all	و{0} أخرى - فتح ملف... في المختبر يعرضها كلها
+Move widget	نقل الأداة
+Reset widget position	إعادة موضع الأداة
+Move the widget	نقل الأداة
+Drag to move · click opens AdeeboMeter	اسحب للنقل · النقر يفتح AdeeboMeter
+Widget position	موضع الأداة
+Fade fully when the mouse comes near	الاختفاء التام عند اقتراب الفأرة
+Bottom right	أسفل اليمين
+Bottom left	أسفل اليسار
+Top right	أعلى اليمين
+Top left	أعلى اليسار
+Reset	إعادة الضبط
+Bottom right, the default. To move it, rest the mouse on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	أسفل اليمين، وهو الافتراضي. لنقلها، أبقِ الفأرة فوقها لحظة أو اضغط Ctrl مع وضع الفأرة فوقها، ثم اسحبها. النقر يفتح AdeeboMeter.
+Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	نقلتَها بنفسك. اختر زاوية، أو إعادة الضبط لإرجاعها إلى الزاوية السفلية اليمنى من الشاشة الرئيسية.
+On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	مفعّل: تختفي الأداة عند اقتراب الفأرة، فلا تغطي أبدًا ما تشير إليه. لنقلها، اضغط Ctrl مع وضع الفأرة فوق مكانها، أو استخدم أيقونة شريط المهام: أداة الزاوية > نقل الأداة.
+Off: it brightens when you point at it.	معطّل: تزداد وضوحًا عندما تشير إليها.

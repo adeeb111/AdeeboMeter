@@ -80,6 +80,7 @@ namespace AdeeboMeter
         [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
         [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
         [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int idx);
+        [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr h, int idx, int v);   // the widget takes clicks only while unlocked to move
         [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, [Out] char[] s, int n);
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);

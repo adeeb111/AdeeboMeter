@@ -5455,3 +5455,18 @@ Only inside a check you start (What's wrong? and the full checkup): one tiny req
 Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	শুধু আপনার শুরু করা যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা): Windows নিজে যে পরীক্ষার পেজ ব্যবহার করে সেখানে একটি অনুরোধ (msftconnecttest.com)।
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	যাচাইগুলো Windows-এর নিজস্ব সার্টিফিকেট যাচাইসহ TLS ব্যবহার করে (Windows TLS 1.2 বা 1.3 বেছে নেয়)। একটি ব্যতিক্রম: TLS ইন্সপেক্টরে অন্য নাম চাইলে সেটি অন্য নামের সার্টিফিকেট গ্রহণ করে এবং তার পেজে তা জানায়। ইনপুট যাচাই করা হয়; কখনো কোনো শেল ব্যবহার হয় না।
 and {0} more - Open a file... in the lab lists them all	আরও {0}টি - ল্যাবে Open a file... সবগুলো দেখায়
+Move widget	উইজেট সরান
+Reset widget position	উইজেটের জায়গা আগের মতো করুন
+Move the widget	উইজেট সরান
+Drag to move · click opens AdeeboMeter	সরাতে টেনে আনুন · ক্লিক করলে AdeeboMeter খোলে
+Widget position	উইজেটের জায়গা
+Fade fully when the mouse comes near	মাউস কাছে এলে পুরো মিলিয়ে যাবে
+Bottom right	নিচে ডানে
+Bottom left	নিচে বাঁয়ে
+Top right	উপরে ডানে
+Top left	উপরে বাঁয়ে
+Reset	আগের মতো করুন
+Bottom right, the default. To move it, rest the mouse on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	নিচে ডানে, এটাই ডিফল্ট। সরাতে মাউস কিছুক্ষণ এর ওপর রাখুন বা ওপরে রেখে Ctrl চেপে ধরুন, তারপর টেনে আনুন। ক্লিক করলে AdeeboMeter খোলে।
+Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	আপনি সরিয়েছেন। একটা কোণ বেছে নিন, বা আগের মতো করুন বেছে মূল স্ক্রিনের নিচে ডান কোণে ফিরিয়ে দিন।
+On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে পয়েন্ট করছেন তা কখনো ঢাকে না। সরাতে এর জায়গার ওপর মাউস রেখে Ctrl চেপে ধরুন, বা ট্রে থেকে: কোণের উইজেট > উইজেট সরান।
+Off: it brightens when you point at it.	বন্ধ: পয়েন্ট করলে উজ্জ্বল হয়।

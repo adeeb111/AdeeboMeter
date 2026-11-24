@@ -842,6 +842,26 @@ namespace AdeeboMeter
                 if (!Program.CanWrite(Path.GetTempPath())) bad.Add("temp not writable?");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("Widget position: corners, snapping, the default and a gone screen", () =>
+            {
+                var bad = new List<string>(); string keepPos = Cfg.WPos, keepScr = Cfg.WidgetScreen;
+                try
+                {
+                    var wa = new Rectangle(0, 0, 1920, 1040); Cfg.WidgetScreen = "";
+                    Cfg.WPos = ""; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(1710, 980)) bad.Add("default not bottom right: " + WidgetPos.At(wa, 200, 50, 1f));
+                    Cfg.WPos = "tl|0|0"; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(10, 10)) bad.Add("top left: " + WidgetPos.At(wa, 200, 50, 1f));
+                    Cfg.WPos = "tr|0|0"; if (WidgetPos.At(wa, 200, 300, 1f) != new Point(1710, 10)) bad.Add("a taller card at top right does not open downward");
+                    if (WidgetPos.From(new Rectangle(15, 990, 200, 40), wa, 1f) != "bl|0|0") bad.Add("near bottom left did not snap: " + WidgetPos.From(new Rectangle(15, 990, 200, 40), wa, 1f));
+                    if (WidgetPos.From(new Rectangle(1000, 500, 200, 40), wa, 1f) != "br|710|490") bad.Add("middle: " + WidgetPos.From(new Rectangle(1000, 500, 200, 40), wa, 1f));
+                    if (WidgetPos.From(new Rectangle(1700, 990, 200, 40), wa, 1f) != "") bad.Add("bottom right is not the default");
+                    Cfg.WPos = "br|99999|99999"; if (!wa.Contains(new Rectangle(WidgetPos.At(wa, 200, 50, 1f), new Size(200, 50)))) bad.Add("off screen");
+                    Cfg.WPos = "tl|5|5"; Cfg.WidgetScreen = @"\\.\DISPLAY99"; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(1710, 980)) bad.Add("a gone screen kept its place instead of the default");
+                    foreach (var junk in new[] { "xx|1|1", "br|-5|0", "tl|1", "tl|a|b" }) if (WidgetPos.Clean(junk) != "") bad.Add("kept " + junk);
+                    if (!Cfg.Known.Contains("wpos") || !Cfg.Known.Contains("whidenear")) bad.Add("settings not known");
+                }
+                finally { Cfg.WPos = keepPos; Cfg.WidgetScreen = keepScr; }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("About links: only AdeeboMeter's pages and its PayPal donation link open", () =>
             {
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);

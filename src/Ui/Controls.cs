@@ -69,6 +69,22 @@ namespace AdeeboMeter
         // claim the top layer back without drawing again (Windows can drop a small top-most window after sleep or unlock)
         public void ClaimTop() { if (Placed.Width > 1 && !HoldTop) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040); }
         public void Vanish() { using (var b = new Bitmap(1, 1, PixelFormat.Format32bppArgb)) Present(b, 0, -10, -10); Placed = Rectangle.Empty; }
+        // move mode (24 Nov): click-through is lifted only while the widget is unlocked; everything else stays as it was
+        public bool TakesClicks { get; private set; }
+        public void SetClickThrough(bool through)
+        {
+            if (!IsHandleCreated || TakesClicks == !through) return;
+            int ex = Native.GetWindowLong(Handle, -20);
+            Native.SetWindowLong(Handle, -20, through ? ex | 0x20 : ex & ~0x20);
+            TakesClicks = !through;
+        }
+        // a drag: move the window without drawing it again
+        public void MoveTo(int x, int y)
+        {
+            if (Placed.Width <= 1) return;
+            Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, 0x0001 | 0x0004 | 0x0010);   /* NOSIZE NOZORDER NOACTIVATE */
+            Placed = new Rectangle(x, y, Placed.Width, Placed.Height);
+        }
     }
 
     // ================================================================== own controls (no stock Windows look - the topogram lesson)
