@@ -169,13 +169,18 @@ namespace AdeeboMeter
         }
         void AskTeams()
         {
-            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter - ") + L.T("teams you follow"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(150)), BackColor = Theme.Card, Font = Draw.fBody, ShowInTaskbar = false, Icon = Theme.AppIcon })
+            AskTeams(!Cfg.Sports);
+        }
+        // B2 (review 1.1.6): when scores are off, the box says what turning them on sends, and only Save turns them on - Cancel leaves them off
+        void AskTeams(bool turnOn)
+        {
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter - ") + L.T("teams you follow"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(Sc(460), Sc(turnOn ? 214 : 150)), BackColor = Theme.Card, Font = Draw.fBody, ShowInTaskbar = false, Icon = Theme.AppIcon })
             {
-                var lb = new Label { Text = L.T("Names or short codes, separated by commas - e.g. TOR, MTL, Arsenal, India"), Location = new Point(Sc(14), Sc(12)), Size = new Size(Sc(430), Sc(44)), ForeColor = Theme.Sub };
-                var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), Text = Cfg.SportTeams ?? "" };
-                var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(104)), Size = new Size(Sc(80), Sc(30)) };
+                var lb = new Label { Text = L.T("Names or short codes, separated by commas - e.g. TOR, MTL, Arsenal, India") + (turnOn ? "\n\n" + L.T("Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.") : ""), Location = new Point(Sc(14), Sc(12)), Size = new Size(Sc(430), Sc(turnOn ? 108 : 44)), ForeColor = Theme.Sub };
+                var tb = new TextBox { Location = new Point(Sc(14), Sc(turnOn ? 126 : 62)), Width = Sc(430), Text = Cfg.SportTeams ?? "" };
+                var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(turnOn ? 168 : 104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(turnOn ? 168 : 104)), Size = new Size(Sc(80), Sc(30)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, cancel }); f.AcceptButton = ok; f.CancelButton = cancel;
-                if (f.ShowDialog(this) == DialogResult.OK) { Cfg.SportTeams = string.Join(", ", tb.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length >= 2 && t.Length <= 40).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToArray()); Cfg.Save(); sportsCanvas.Invalidate(); }
+                if (f.ShowDialog(this) == DialogResult.OK) { if (turnOn && !Policy.NoOnline) Cfg.Sports = true; Cfg.SportTeams = string.Join(", ", tb.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length >= 2 && t.Length <= 40).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToArray()); Cfg.Save(); sportsCanvas.Invalidate(); }
             }
         }
     }

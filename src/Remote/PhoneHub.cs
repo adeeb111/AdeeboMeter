@@ -23,7 +23,8 @@ namespace AdeeboMeter
 
         // ---- a question from the phone
         public sealed class Q { public string Kind = "", Phone = "", Text = "", Words = ""; public bool Answer; public readonly ManualResetEvent Done = new ManualResetEvent(false); public DateTime At = DateTime.UtcNow; }
-        static Q pending;
+        static Q pending; static bool rememberAsked;
+        public static void NewSession() { lock (k) rememberAsked = false; }
         public static Q Pending { get { lock (k) return pending; } }
         public const int AskSeconds = 90;
         // called on the relay's thread - it waits for the answer on the page
@@ -31,14 +32,28 @@ namespace AdeeboMeter
         public static bool Ask(string kind, string phone, string text, string words)
         {
             var q = new Q { Kind = kind, Phone = phone ?? "", Text = text ?? "", Words = words ?? "" };
-            lock (k) { if (pending != null) { pending.Answer = false; pending.Done.Set(); } pending = q; }
+            // review 1.1.6: one "remember" question per session, and no new question while one is still open - the first stays, the new one is a no
+            lock (k)
+            {
+                if (pending != null) return false;
+                if (kind == "remember") { if (rememberAsked) return false; rememberAsked = true; }
+                pending = q;
+            }
             Fire(); var s = Show; if (s != null) try { s(kind); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phone show: " + e.Message); }
             bool got = q.Done.WaitOne(TimeSpan.FromSeconds(AskSeconds));
             lock (k) if (pending == q) pending = null;
             Fire();
             return got && q.Answer;
         }
-        public static void Answer(bool yes) { Q q; lock (k) { q = pending; pending = null; } if (q == null) return; q.Answer = yes; q.Done.Set(); Fire(); }
+        public static void Answer(bool yes) { Q q; lock (k) q = pending; Answer(q, yes); }
+        // review 1.1.6 (security #6): a button answers the question it was drawn for - never one that replaced it under the click -
+        // and only once it has been on screen a second, so a fast swap can't catch a click meant for the one before
+        public static void Answer(Q q, bool yes)
+        {
+            if (q == null) return;
+            lock (k) { if (pending != q) return; if (yes && (DateTime.UtcNow - q.At).TotalSeconds < 1) return; pending = null; }
+            q.Answer = yes; q.Done.Set(); Fire();
+        }
 
         // ---- what came from the phone (this run only - nothing kept on disk but the files you accepted)
         public sealed class Got { public DateTime T = DateTime.Now; public string Text = "", File = ""; }

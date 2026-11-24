@@ -68,7 +68,7 @@ namespace AdeeboMeter
             var t = Knowledge.Learn();
             switch (card)
             {
-                case "labs": all = Labs.Length; return Labs.Count(l => l[0] == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + l[0]));   // the same tick as the Labs page
+                case "labs": all = Labs.Length + 1; return (LabLink.Faults.All(f => Points.Me.Has("nlab." + f[0])) ? 1 : 0) + Labs.Count(   /* review 1.1.6 U2 #10: AdeeboLab counts too */l => l[0] == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + l[0]));   // the same tick as the Labs page
                 case "games": { var k = LearnGames.Keys().ToList(); all = k.Count; return k.Count(Points.Me.Has); }
                 case "check": { var c = t.Where(x => x["check"] != "").ToList(); all = c.Count; return c.Count(x => Points.Me.Has("check." + x.Id)); }
                 case "paths": all = Paths.Length; return Paths.Count(p => Points.Me.Has("path." + p.Id));

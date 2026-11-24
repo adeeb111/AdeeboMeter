@@ -73,10 +73,11 @@ namespace AdeeboMeter
             if (av == null) return One(3, "Antivirus", "Windows doesn't say here (Security Center isn't on servers)", "", "windowsdefender:");
             if (av.Count == 0) return One(2, "Antivirus", "none registered", "Turn on Microsoft Defender Antivirus in Windows Security.", "windowsdefender:");
             var rows = new List<string[]>();
+            bool anyOn = av.Any(a => ((Convert.ToInt64(a["productState"] ?? 0, CultureInfo.InvariantCulture) >> 12) & 0xF) == 1);   /* review 1.1.6 P3 #14 */
             foreach (var a in av)
             {
                 long st = Convert.ToInt64(a["productState"] ?? 0, CultureInfo.InvariantCulture); bool on = ((st >> 12) & 0xF) == 1, fresh = ((st >> 4) & 0xF) == 0;
-                rows.Add(R(!on ? (av.Count > 1 ? 3 : 2) : !fresh ? 1 : 0, "Antivirus", a["displayName"] + (on ? " · on" : " · off") + (fresh ? " · up to date" : " · OUT OF DATE"), !on && av.Count > 1 ? "Off because another antivirus is on - that's normal." : !fresh ? "Update it in Windows Security (or your antivirus)." : "", "windowsdefender:"));
+                rows.Add(R(!on ? (anyOn ? 3 : 2) : !fresh ? 1 : 0, "Antivirus", a["displayName"] + (on ? " · on" : " · off") + (fresh ? " · up to date" : " · OUT OF DATE"), !on && anyOn ? "Off because another antivirus is on - that's normal." : !on ? "Nothing is protecting this PC - turn on real-time protection in Windows Security." : !fresh ? "Update it in Windows Security (or your antivirus)." : "", "windowsdefender:"));
             }
             return rows;
         }
@@ -405,13 +406,13 @@ namespace AdeeboMeter
         static List<string[]> TlsIntercept(Monitor m, List<string> s)
         {
             if (!Online.On) return One(3, "Encrypted traffic inspected?", "not checked - online lookups are off", "Turn on online lookups (Settings) to check whether something on the way decrypts your https traffic.", null);
-            string root = null; byte[] leafRaw = null;
+            string root = null; byte[] leafRaw = null; var tlsErr = System.Net.Security.SslPolicyErrors.None;
             try
             {
                 using (var c = new TcpClient())
                 {
                     if (!c.ConnectAsync("www.microsoft.com", 443).Wait(5000)) return One(3, "Encrypted traffic inspected?", "couldn't reach www.microsoft.com", "", null);
-                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) leafRaw = cert.GetRawCertData(); if (ch != null && ch.ChainElements.Count > 0) root = ch.ChainElements[ch.ChainElements.Count - 1].Certificate.Subject; return true; }))
+                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { tlsErr = e; if (cert != null) leafRaw = cert.GetRawCertData(); if (ch != null && ch.ChainElements.Count > 0) root = ch.ChainElements[ch.ChainElements.Count - 1].Certificate.Subject; return true; }))
                     {
                         var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient("www.microsoft.com"));
                         if (!hs.Wait(8000)) { c.Close(); try { hs.Wait(1000); } catch (AggregateException) { } return One(3, "Encrypted traffic inspected?", "no TLS answer in 8 s", "", null); }
@@ -420,6 +421,9 @@ namespace AdeeboMeter
             }
             catch (AggregateException) { return One(3, "Encrypted traffic inspected?", "couldn't check", "", null); }
             catch (SocketException) { return One(3, "Encrypted traffic inspected?", "couldn't reach www.microsoft.com", "", null); }
+            // review 1.1.6 P3 #2: a certificate Windows doesn't trust (or for another name) is the worst case - something answered for
+            // www.microsoft.com with its own key - never a green "public authority"
+            if (tlsErr != System.Net.Security.SslPolicyErrors.None) return One(2, "Encrypted traffic inspected?", "YES - something on the way answered for www.microsoft.com with a certificate Windows doesn't trust (" + tlsErr + ")", "Treat this network as unsafe: don't sign in to anything until you're on another one (or on your VPN).", null);
             if (root == null) return One(3, "Encrypted traffic inspected?", "couldn't see the chain", "", null);
             // the same thumbprint test as everywhere else - a name like "DigiCert Inc" can be borrowed by any root (round-2 hunt M9)
             string by = ""; if (leafRaw != null) using (var leaf = new System.Security.Cryptography.X509Certificates.X509Certificate2(leafRaw)) by = Inspection.InspectedBy(leaf);
@@ -528,15 +532,16 @@ namespace AdeeboMeter
         }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5359", Justification = "reads the certificate to report on it - nothing is sent")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5397", Justification = "asking whether a site still accepts old TLS is the point of the check")]
-        static X509Certificate2 SiteCert(string host, SslProtocols proto, out string err)
+        static X509Certificate2 SiteCert(string host, SslProtocols proto, out string err) { System.Net.Security.SslPolicyErrors pe; return SiteCert(host, proto, out err, out pe); }
+        static X509Certificate2 SiteCert(string host, SslProtocols proto, out string err, out System.Net.Security.SslPolicyErrors trust)
         {
-            err = ""; X509Certificate2 got = null;
+            err = ""; X509Certificate2 got = null; var pe0 = System.Net.Security.SslPolicyErrors.None; trust = pe0;
             try
             {
                 using (var c = new TcpClient())
                 {
                     if (!c.ConnectAsync(host, 443).Wait(5000)) { err = "no answer on 443"; return null; }
-                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new X509Certificate2(cert); return true; }))
+                    using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { pe0 = e; if (cert != null) got = new X509Certificate2(cert); return true; }))
                     {
                         var t = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host, null, proto, false));
                         if (!t.Wait(8000)) { c.Close(); try { t.Wait(1000); } catch (AggregateException) { } err = "no TLS answer"; if (got != null) got.Dispose(); return null; }   /* bug-hunt ML-32 */   // close first: the stuck handshake ends before the stream is disposed
@@ -545,14 +550,15 @@ namespace AdeeboMeter
             }
             catch (AggregateException e) { err = e.InnerException != null ? e.InnerException.Message : e.Message; if (got != null) got.Dispose(); return null; }
             catch (SocketException e) { err = e.Message; if (got != null) got.Dispose(); return null; }
-            return got;
+            trust = pe0; return got;
         }
         static List<string[]> CertExpiry(Monitor m, List<string> sites)
         {
             return PerSite(sites, "Certificate", h =>
             {
-                string err; var c = SiteCert(h, SslProtocols.Tls12 | (SslProtocols)12288, out err);
+                string err; System.Net.Security.SslPolicyErrors trust; var c = SiteCert(h, SslProtocols.Tls12 | (SslProtocols)12288, out err, out trust);
                 if (c == null) return R(3, "Certificate · " + h, "couldn't check - " + Draw.Trunc(err, 60), "", null);
+                if (trust != System.Net.Security.SslPolicyErrors.None) { using (c) return R(2, "Certificate · " + h, (trust.HasFlag(System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch) ? "for another name (" + Regex.Match(c.Subject, "CN=([^,]+)").Groups[1].Value + ")" : "not trusted by Windows") + " - visitors get a warning", "Fix the certificate on the server (the right name, and the whole chain).", null); }   // review 1.1.6 P3 #9
                 using (c) { int d = DateTime.Now > c.NotAfter ? -1 : (int)(c.NotAfter - DateTime.Now).TotalDays; /* expired is expired, even 12 hours ago */ return R(d < 0 ? 2 : d < 14 ? 2 : d < 30 ? 1 : 0, "Certificate · " + h, d < 0 ? "EXPIRED " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : d + (d == 1 ? " day left (" : " days left (") + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ")", d < 30 ? "Renew it before visitors get a warning." : "", null); }
             });
         }

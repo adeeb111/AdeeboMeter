@@ -183,11 +183,7 @@ namespace AdeeboMeter
                     day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : ""); day.Pc.Add(new[] { f.Length > Cols + 1 ? P(f[Cols + 1]) : double.NaN, f.Length > Cols + 2 ? P(f[Cols + 2]) : double.NaN });
                     int off; day.Off.Add(f.Length > Cols + 3 && int.TryParse(f[Cols + 3], NumberStyles.Integer, CultureInfo.InvariantCulture, out off) && off > -900 && off < 900 ? off : int.MinValue);
                 }
-                foreach (var line in Lines(FileFor(d, "ev"), 2000))
-                {
-                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
-                    day.E.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
-                }
+                day.E.AddRange(EventsOf(d));   // review 1.1.6 P1 #12: the whole day, trimmed to the problems and the newest - never just the morning
             }
             catch (Exception e) { Program.Log("history load: " + e.Message); }
             day.E.Reverse();

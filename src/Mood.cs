@@ -46,7 +46,7 @@ namespace AdeeboMeter
             int lv, at = Worst(s, out lv);
             bool down = at >= 2 && lv == 2 && downSince != DateTime.MinValue;
             string mo = Moments.FaceFor(s) != null ? Moments.Line : null; if (mo != null) return mo;   // a moment says why the face changed (even in serious mode: it's a fact)
-            if (Voice.Serious) return "";
+            if (Voice.Serious || s.Waiting) return "";   // review 1.1.6 D1 #10: no "everything's fine" quip before anything was measured
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) { if (!Lines.Speaks("problem")) return ""; return Lines.Who() == Lines.Mood ? Excuse((DateTime.Now - downSince).TotalMinutes, isp) : Lines.Steady("isp.down", null); }   // AM-CG-188
             // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
@@ -60,7 +60,7 @@ namespace AdeeboMeter
             {
                 kind = lv >= 2 ? "problem" : "state";
                 if (at == 0) { key = "pc.busy"; if (!double.IsNaN(s.Cpu)) v = s.Cpu.ToString("0", CultureInfo.CurrentCulture) + "%"; }
-                else if (at == 1) key = s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
+                else if (at == 1) key = s.Offline || s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
                 else if (at == 3) { key = "dns.slow"; if (s.DnsMs > 0) v = s.DnsMs.ToString("0", CultureInfo.CurrentCulture) + " ms"; }
                 else key = at == 4 ? "inet.slow" : lv >= 2 ? "isp.down" : "inet.slow";   // bug-hunt L-299: the far end (the site's side) is never the provider's fault in words
             }

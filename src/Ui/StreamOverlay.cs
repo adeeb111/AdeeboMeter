@@ -45,10 +45,10 @@ namespace AdeeboMeter
             /* a finger moves it too (Touch.cs) */
             MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) Location = new Point(Location.X + e.X - down.X, Location.Y + e.Y - down.Y); };
             var menu = Menus.Make(); menu.ShowImageMargin = false;
-            var g = new ToolStripMenuItem("Green background (for OBS Chroma Key)") { CheckOnClick = true }; g.CheckedChanged += delegate { green = g.Checked; Invalidate(); };
-            var p = new ToolStripMenuItem("Write a PNG for OBS (overlay.png)") { CheckOnClick = true }; p.CheckedChanged += delegate { png = p.Checked; lastKey = ""; if (png) Program.Log("lag graph png: " + PngPath); };
-            var f = new ToolStripMenuItem("Show the PNG in its folder"); f.Click += delegate { if (File.Exists(PngPath)) try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + PngPath + "\""); } catch (System.ComponentModel.Win32Exception) { } };
-            var c = new ToolStripMenuItem("Close"); c.Click += delegate { Close(); };
+            var g = new ToolStripMenuItem(L.T("Green background (for OBS Chroma Key)")) { CheckOnClick = true }; g.CheckedChanged += delegate { green = g.Checked; Invalidate(); };
+            var p = new ToolStripMenuItem(L.T("Write a PNG for OBS (overlay.png)")) { CheckOnClick = true }; p.CheckedChanged += delegate { png = p.Checked; lastKey = ""; if (png) Program.Log("lag graph png: " + PngPath); };
+            var f = new ToolStripMenuItem(L.T("Show the PNG in its folder")); f.Click += delegate { if (File.Exists(PngPath)) try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + PngPath + "\""); } catch (System.ComponentModel.Win32Exception) { } };
+            var c = new ToolStripMenuItem(L.T("Close")); c.Click += delegate { Close(); };
             menu.Items.AddRange(new ToolStripItem[] { g, p, f, new ToolStripSeparator(), c });
             ContextMenuStrip = menu;
             // hunters10: a finger has no right-click to rely on - a tap opens the same menu; Esc closes it from the keyboard
@@ -74,7 +74,7 @@ namespace AdeeboMeter
                 var best = gp.Best(game) ?? (game.Servers.Count > 0 ? game.Servers[0] : null);
                 if (best != null) { step = Cfg.GameFast ? 1 : Math.Max(1, Cfg.GameBgSec); title = game.Name + " · " + best.Name; v = gp.Stat(game.Id, best).Recent(Math.Max(2, 60 / step)); return; }
             }
-            step = Math.Max(1, M.NetSecNow); title = "Internet ping"; v = M.NetPing.Values(Math.Max(2, 60 / step));
+            step = Math.Max(1, M.NetSecNow); title = L.T("Internet ping"); v = M.NetPing.Values(Math.Max(2, 60 / step));
         }
         // spikes in the open game session - so viewers see whether it was "his Wi-Fi" or not
         static int Spikes() { var gp = GamePing.Me; var ss = gp.Session; if (ss == null || !ss.Open) return -1; lock (gp.Spikes) return gp.Spikes.Count(z => z.Game == ss.GameId && z.T >= ss.Start); }
@@ -89,13 +89,13 @@ namespace AdeeboMeter
             double now = v.Length > 0 ? v[v.Length - 1] : double.NaN;
             var ok = v.Where(x => !double.IsNaN(x)).ToArray();
             double loss = v.Length == 0 ? double.NaN : 100.0 * v.Count(double.IsNaN) / v.Length;
-            Color c = double.IsNaN(now) ? Color.FromArgb(240, 80, 80) : now > 100 ? Color.FromArgb(240, 80, 80) : now > 60 ? Color.FromArgb(240, 180, 60) : Color.FromArgb(80, 210, 120);
+            Color c = v.Length == 0 ? Color.FromArgb(150, 160, 170) : double.IsNaN(now) ? Color.FromArgb(240, 80, 80) : now > 100 ? Color.FromArgb(240, 80, 80) : now > 60 ? Color.FromArgb(240, 180, 60) : Color.FromArgb(80, 210, 120);
             using (var w = new SolidBrush(Color.FromArgb(200, 210, 220))) using (var cb = new SolidBrush(c))
             {
                 g.DrawString(title, f1, w, box.X + 10, box.Y + 6);
-                string big = double.IsNaN(now) ? "no reply" : Math.Round(now).ToString(CultureInfo.InvariantCulture) + " ms";
+                string big = v.Length == 0 ? L.T("waiting") : double.IsNaN(now) ? L.T("no reply") :   /* review 1.1.6 U4 #2: nothing measured yet is not "no reply" */ Math.Round(now).ToString(CultureInfo.InvariantCulture) + " ms";
                 g.DrawString(big, f2, cb, box.X + 8, box.Y + 22);
-                int sp = Spikes(); string sub = (sp >= 0 ? sp + " spikes · " : "") + (ok.Length > 1 ? "jitter " + Math.Round(GameStat.Jitter(v)).ToString(CultureInfo.InvariantCulture) + " ms" : "") + (double.IsNaN(loss) ? "" : " · loss " + Math.Round(loss).ToString(CultureInfo.InvariantCulture) + "%");
+                int sp = Spikes(); string sub = (sp >= 0 ? sp + " " + L.T("spikes") + " · " : "") + (ok.Length > 1 ? L.T("jitter") + " " + Math.Round(GameStat.Jitter(v)).ToString(CultureInfo.InvariantCulture) + " ms" : "") + (double.IsNaN(loss) ? "" : " · " + L.T("loss") + " " + Math.Round(loss).ToString(CultureInfo.InvariantCulture) + "%");
                 g.DrawString(sub.Trim(' ', '·'), f1, w, box.X + 10, box.Bottom - 22);
             }
             // the graph: last 60 s, red marks where a reply was missing

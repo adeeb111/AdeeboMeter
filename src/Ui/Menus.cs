@@ -89,6 +89,24 @@ namespace AdeeboMeter
                 bool hcSel = Theme.HighContrast && e.Item.Selected && e.Item.Enabled;
                 Color ink = hcSel ? SystemColors.HighlightText : !e.Item.Enabled && row == null ? Theme.Muted : red ? Theme.LvText(2) : Theme.Ink;
                 float x = e.TextRectangle.X;
+                /* review 1.1.6 U4 #8: in a mirrored (Arabic) menu the text starts at the icon side, right to left */
+                bool rtl = e.Item.RightToLeft == RightToLeft.Yes || (e.Item.Owner != null && e.Item.Owner.RightToLeft == RightToLeft.Yes);
+                if (rtl)
+                {
+                    float right = e.TextRectangle.Right, left = 10 * Draw.S;
+                    using (var sf = new StringFormat(StringFormatFlags.DirectionRightToLeft) { Trimming = StringTrimming.EllipsisWord })
+                    {
+                        if (row != null && row.Sub != "")
+                        {
+                            using (var b = new SolidBrush(ink)) g.DrawString(e.Text, Draw.fBodyB, b, new RectangleF(left, 7 * Draw.S, right - left, Draw.fBodyB.GetHeight(g) + 2), sf);
+                            using (var b = new SolidBrush(hcSel ? SystemColors.HighlightText : Theme.Muted)) g.DrawString(row.Sub, Draw.fSmall, b, new RectangleF(left, 26 * Draw.S, right - left, Draw.fSmall.GetHeight(g) * row.SubLines + 2), sf);
+                            return;
+                        }
+                        var f0 = e.Item.Font ?? Draw.fBody;
+                        using (var b = new SolidBrush(ink)) g.DrawString(e.Text, f0, b, new RectangleF(left, (e.Item.Height - f0.GetHeight(g)) / 2, right - left, f0.GetHeight(g) + 2), sf);
+                        return;
+                    }
+                }
                 if (row != null && row.Sub != "")
                 {
                     using (var b = new SolidBrush(ink)) g.DrawString(e.Text, Draw.fBodyB, b, x, 7 * Draw.S);
@@ -110,7 +128,8 @@ namespace AdeeboMeter
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 var r = e.ArrowRectangle; float cx = r.X + r.Width / 2f, cy = r.Y + r.Height / 2f, k = 3.5f * Draw.S;
-                using (var p = new Pen(Theme.Muted, 1.6f * Draw.S)) e.Graphics.DrawLines(p, new[] { new PointF(cx - k / 2, cy - k), new PointF(cx + k / 2, cy), new PointF(cx - k / 2, cy + k) });
+                float dir = e.Item != null && (e.Item.RightToLeft == RightToLeft.Yes || (e.Item.Owner != null && e.Item.Owner.RightToLeft == RightToLeft.Yes)) ? -1 : 1;   /* U4 #8: points at its submenu */
+                using (var p = new Pen(Theme.Muted, 1.6f * Draw.S)) e.Graphics.DrawLines(p, new[] { new PointF(cx - dir * k / 2, cy - k), new PointF(cx + dir * k / 2, cy), new PointF(cx - dir * k / 2, cy + k) });
             }
             protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
             {

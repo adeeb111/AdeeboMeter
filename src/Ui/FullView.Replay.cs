@@ -274,7 +274,7 @@ namespace AdeeboMeter
                 if (replayIdx != sparkIdx)
                 {
                     bool first = sparkIdx < 0; sparkIdx = replayIdx;
-                    var hit = data.E.FirstOrDefault(e => Math.Abs((e.T - at).TotalSeconds) <= 60 && ((e.Kind == "lan" && e.Text.StartsWith("New on", StringComparison.Ordinal)) || (e.Kind == "wifi" && e.Text.IndexOf("access point", StringComparison.Ordinal) >= 0)));
+                    var hit = data.E.FirstOrDefault(e => Math.Abs((e.T - at).TotalSeconds) <= 60 && ((e.Kind == "lan" && e.Text.StartsWith("New on", StringComparison.Ordinal)) || (e.Kind == "wifi" && Monitor.IsRoamText(e.Text))));
                     if (hit != null && !first) Spark(knobAt, hit.Kind == "lan" ? Voice.P("✨ New device!", "New device") : Voice.P("🦘 Wi-Fi hop!", "Wi-Fi roamed"));
                 }
                 // in plain words

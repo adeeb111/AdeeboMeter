@@ -28,7 +28,9 @@ namespace AdeeboMeter
             this.feedback = feedback;
             FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.CenterParent; KeyPreview = true;
             BackColor = Theme.Card; Font = Draw.fBody; Text = L.T("Community and support"); DoubleBuffered = true;
-            ClientSize = new Size((int)(640 * S), (int)(Measure() + 0.5f)); Draw.FitOnShow(this, false);   // on screen, so its close button is reachable
+            /* review 1.1.6 U4 #5: never taller than the screen - the rest scrolls with the wheel */
+            float full = Measure(); int capH = (int)(Screen.FromPoint(Cursor.Position).WorkingArea.Height - 24 * S);
+            ClientSize = new Size((int)(640 * S), (int)Math.Min(full + 0.5f, capH)); maxScroll = Math.Max(0, full - ClientSize.Height); Draw.FitOnShow(this, false);   // on screen, so its close button is reachable
             using (var p = Theme.Round(new RectangleF(0, 0, ClientSize.Width, ClientSize.Height), 18 * S)) Region = new Region(p);
         }
         protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ClassStyle |= 0x00020000; return cp; } }   // CS_DROPSHADOW
@@ -38,7 +40,15 @@ namespace AdeeboMeter
         static string Url(string amt) { return amt == "" ? "https://paypal.me/adeeb1111" : "https://paypal.me/adeeb1111/" + amt + "CAD"; }
 
         float Measure() { using (var bmp = new Bitmap(1, 1)) using (var g = Graphics.FromImage(bmp)) return Lay(g, false); }
-        protected override void OnPaint(PaintEventArgs e) { var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast; Lay(g, true); }
+        float scrollY, maxScroll;
+        Point At(Point p) { return new Point(p.X, p.Y + (int)scrollY); }
+        protected override void OnMouseWheel(MouseEventArgs e) { if (maxScroll > 0) { scrollY = Math.Max(0, Math.Min(maxScroll, scrollY - e.Delta / 120f * 48 * S)); Invalidate(); } base.OnMouseWheel(e); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
+            g.TranslateTransform(0, -scrollY); Lay(g, true); g.ResetTransform();
+            if (maxScroll > 0) using (var sb = new SolidBrush(Color.FromArgb(90, Theme.Muted))) { float th = ClientSize.Height * ClientSize.Height / (ClientSize.Height + maxScroll); g.FillRectangle(sb, ClientSize.Width - 5 * S, (ClientSize.Height - th) * scrollY / maxScroll, 3 * S, th); }
+        }
 
         float Lay(Graphics g, bool draw)
         {
@@ -193,14 +203,14 @@ namespace AdeeboMeter
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            var h = hits.Find(z => z.R.Contains(e.Location)); string k = h != null ? h.Key : "";
+            var h = hits.Find(z => z.R.Contains(At(e.Location))); string k = h != null ? h.Key : "";
             if (k != hot) { hot = k; Cursor = h != null ? Cursors.Hand : Cursors.Default; Invalidate(); }
             base.OnMouseMove(e);
         }
         protected override void OnMouseLeave(EventArgs e) { if (hot != "") { hot = ""; Invalidate(); } base.OnMouseLeave(e); }
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            var h = hits.Find(z => z.R.Contains(e.Location));
+            var h = hits.Find(z => z.R.Contains(At(e.Location)));
             if (h != null) { h.Go(); return; }
             if (e.Button == MouseButtons.Left) { Native.ReleaseCapture(); Native.SendMessage(Handle, 0xA1, (IntPtr)2, IntPtr.Zero); }   // drag it by the card
             base.OnMouseDown(e);

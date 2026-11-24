@@ -200,7 +200,7 @@ namespace AdeeboMeter
             {
                 string l2; var more = CertTools.LoadCerts(part, rows, out l2); if (more != null) given.AddRange(more);
             }
-            rows.Add(R(3, label, given.Count == 0 ? "1 certificate - the rest of its chain comes from Windows' own stores" : "1 certificate + " + given.Count + " to build its chain from (then Windows' own stores)", "Checked on this PC: nothing is fetched from the internet.", "m"));
+            rows.Add(R(3, label, given.Count == 0 ? "1 certificate - the rest of its chain comes from Windows' own stores" : "1 certificate + " + given.Count + " to build its chain from (then Windows' own stores)", CertCfg.Revocation && !Policy.NoOnline ? "Checked on this PC - plus one question to the issuer's revocation list (Settings › Certificate revocation)." : "Checked on this PC: nothing is fetched from the internet.", "m"));
             Ladder(rows, leafC, given, false);
             if (CertCfg.Revocation && !Policy.NoOnline) Revocation(rows, leafC, given);
             foreach (var c in certs.Concat(given)) c.Dispose();

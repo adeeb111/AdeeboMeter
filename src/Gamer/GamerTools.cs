@@ -105,9 +105,11 @@ namespace AdeeboMeter
             double gw = m.GwPing.Avg(10), net = m.NetPing.Avg(10);
             bool gwSlow = !double.IsNaN(gw) && gw > 15; if (gwSlow) warn++;
             rows.Add(R(double.IsNaN(gw) ? 3 : gwSlow ? 1 : 0, "Router right now", Ms(gw), double.IsNaN(gw) ? "Not measured yet (or the router doesn't answer pings) - give it a minute." : gwSlow ? "Slow for a home network - something on it is busy, or the Wi-Fi is." : "", "m"));   /* bug-hunt ML-51: never green for "-" */
-            rows.Add(R(double.IsNaN(net) ? 1 : net > 80 ? 1 : 3, "Internet right now", Ms(net), double.IsNaN(net) ? "Not measured yet (or no answer) - give it a minute." : net > 80 ? "Slow right now - expect lag." : "", "m"));
+            bool netSlow = !double.IsNaN(net) && net > 80; if (netSlow) warn++;   /* review 1.1.6 P5 #5 */
+            rows.Add(R(double.IsNaN(net) ? 3 : netSlow ? 1 : 0, "Internet right now", Ms(net), double.IsNaN(net) ? "Not measured yet (or no answer) - give it a minute." : net > 80 ? "Slow right now - expect lag." : "", "m"));
             bool busyNet = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5; if (busyNet) warn++;
-            rows.Add(R(busyNet ? 1 : 0, "This PC's traffic", Pc0(s.Down) + " down · " + Pc0(s.Up) + " up (Mbps)", busyNet ? "Something is downloading or uploading - an upload hurts game ping most." : "Quiet.", "w"));
+            bool noTraffic = double.IsNaN(s.Down) && double.IsNaN(s.Up);
+            rows.Add(R(noTraffic ? 3 : busyNet ? 1 : 0, "This PC's traffic", Pc0(s.Down) + " down · " + Pc0(s.Up) + " up (Mbps)", busyNet ? "Something is downloading or uploading - an upload hurts game ping most." : noTraffic ? "Not measured yet." : "Quiet.", "w"));
             run.Status = "Looking for updaters and sync apps...";
             foreach (var u in Updaters)
             {
@@ -119,7 +121,8 @@ namespace AdeeboMeter
             if (!double.IsNaN(s.Mem) && s.Mem > 85) { warn++; var top = s.TopMem.FirstOrDefault(); rows.Add(R(1, "Memory", Math.Round(s.Mem) + "% used" + (top != null ? " - most: " + top.Name : ""), "Close a browser with many tabs before you play.", "w")); }
             string e; var g = Pick("", out e);
             if (g != null) { var b = Best(g); if (b != null) { var v = GamePing.Me.Stat(g.Id, b).Recent(30); rows.Add(R(3, "Best server now", g.Name + " · " + b.Name + " · " + Ms(GameStat.Avg(v)) + (GameStat.Loss(v) > 0 ? " · loss " + Pc(GameStat.Loss(v)) : ""), b.Kind == "estimate" ? "A region estimate - the game picks the real server." : "", "m")); } }
-            rows.Insert(0, R(warn == 0 ? 0 : 1, "Ready to play?", warn == 0 ? "yes - nothing in the way" : warn + " thing" + (warn == 1 ? "" : "s") + " could spoil the match", "AdeeboMeter only suggests - it never closes a program for you.", "i"));
+            bool unknown = double.IsNaN(net);
+            rows.Insert(0, R(warn == 0 ? (unknown ? 3 : 0) : 1, "Ready to play?", warn == 0 ? (unknown ? "not checked yet - the internet check has no reading" : "yes - nothing in the way") : warn + " thing" + (warn == 1 ? "" : "s") + " could spoil the match", "AdeeboMeter only suggests - it never closes a program for you.", "i"));
             return rows;
         }
         static string Pc0(double v) { return double.IsNaN(v) ? "-" : v.ToString("0.#", CultureInfo.CurrentCulture); }

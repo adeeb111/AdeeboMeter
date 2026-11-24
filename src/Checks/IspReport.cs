@@ -67,6 +67,8 @@ namespace AdeeboMeter
             if (routes.Count > 0 && routes[0].Ip == null && routes[0].V6Only) { rows.Add(R(3, "Target", routes[0].Host + " has only IPv6 addresses - this report measures the IPv4 path only", "", "u")); return rows; }
             foreach (var r in routes.Skip(1).Where(r => r.Ip == null && r.V6Only)) rows.Add(R(3, r.Label, r.Host + " has only IPv6 addresses - left out (this report measures the IPv4 path)", "", "m"));   // bug-hunt ML-107: said, not silently dropped
             routes.RemoveAll(r => r.Ip == null);
+            // review 1.1.6 P2 #2: one device only - never minutes of probes to a broadcast or multicast address
+            foreach (var r in routes.ToList()) { string why = Lab.NotOne(r.Ip); if (why != "") { rows.Add(R(2, r.Label, why, "", "u")); routes.Remove(r); } }
             if (routes.Count == 0) { rows.Add(R(2, "Target", "the name doesn't resolve - check the spelling, or DNS is down (try What's wrong?)", "", "m")); return rows; }
 
             // 1. trace, then MTR on every route at the same time
@@ -108,8 +110,9 @@ namespace AdeeboMeter
             else if (start >= 0 && vpnOn && gwIdx < 0) finding = "Loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + ") - inside the VPN tunnel or at its server. Try once with the VPN off: if the loss goes away, it's the VPN's side.";
             else if (start >= 0) finding = "Loss starts at hop " + main.Hops[start].N + " - before the provider (" + (wifi ? "Wi-Fi or the router" : "the home network") + "). Fix the home side first.";
             else if (end != null && Loss(end) >= 1 && !silentEnd) finding = "Only the destination drops some probes - it rate-limits pings; the path itself is clean.";
+            else if (silentEnd && end != null && Loss(end) >= 3) finding = "Can't tell: the last router that answers (hop " + end.N + ") loses " + Loss(end).ToString("0", CultureInfo.CurrentCulture) + "% and nothing past it answers pings.";   /* review 1.1.6 P3 #11 */
             else finding = (silentEnd && end != null ? "The destination doesn't answer pings, so this is judged up to the last router that does (hop " + end.N + "). " : "") + "No real loss on the path during the " + min + "-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.";
-            rows.Add(R(start >= 0 ? 2 : 0, "Finding", finding, verdict, "m"));
+            rows.Add(R(start >= 0 ? 2 : finding.StartsWith("Can't tell", StringComparison.Ordinal) ? 3 : 0, "Finding", finding, verdict, "m"));
 
             // each part of the path
             rows.Add(R(-1, "EACH PART OF THE PATH", main.Label + " · " + main.Hops.Sum(h => h.Sent) + " probes", "", "m"));
@@ -174,7 +177,8 @@ namespace AdeeboMeter
             var spd = SpeedTest.Last;
             if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + (double.IsNaN(spd.LoadDown) && double.IsNaN(spd.LoadUp) ? "-" : F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms")) + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
             else rows.Add(R(3, "Speed and queueing", "not measured today - press Test my speed on the home page, then make the report again", "", "u"));
-            if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) && Policy.NoOnline) rows.Add(R(3, "Public IP", "not asked - online lookups are turned off by your IT team", "", "u"));   // review 1.1.6 P2 #10
+            else if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
             {
                 run.Status = "Asking Cloudflare for your public address (you said yes)...";
                 string pub = PublicIp(); rows.Add(R(3, "Your public address", pub != "" ? pub : "couldn't get it", "Your provider can find your line by it. Leave it out if you'll post the report publicly.", "m"));

@@ -460,13 +460,14 @@ namespace AdeeboMeter
             // bug-hunt ML-157: memory needs its word (16GB RAM, 16 GB DDR4) - or a bare size small enough to only be memory (8GB, 16GB, up to 64)
             var ram = Regex.Match(said, @"(\d{1,3})\s*GB?\s*(?:RAM|DDR\d?|LPDDR\d?x?|memory)\b", RegexOptions.IgnoreCase);
             if (!ram.Success) { var bare = Regex.Match(said, @"\b(\d{1,2})\s*GB\b(?!\s*(?:SSD|HDD|NVMe|M\.2|storage|disk|drive|hard|flash|eMMC))", RegexOptions.IgnoreCase); if (bare.Success && int.Parse(bare.Groups[1].Value, CultureInfo.InvariantCulture) <= 64) ram = bare; }
-            var disk = Regex.Match(said, @"(\d(?:\.\d)?\s*TB|\d{3,4}\s*GB?)\s*(?:SSD|HDD|NVMe|storage|disk)", RegexOptions.IgnoreCase);
+            var disk = Regex.Match(said, @"(?<![0-9.,])([0-9](?:[.,][0-9])?\s*T[BO]|[0-9]{3,4}\s*G[BO]?)\s*(?:SSD|HDD|NVMe|storage|disk|disque|disco)", RegexOptions.IgnoreCase);
             var cpu = Regex.Match(said, @"\b(i[3579]|ryzen\s*[3579]|core\s*ultra\s*[3579]|celeron|pentium|m[1-4])\b", RegexOptions.IgnoreCase);
             var gpu = Regex.Match(said, @"\b(rtx|gtx|rx)\s*\d{3,4}\w*", RegexOptions.IgnoreCase);
             if (ram.Success) { double want = double.Parse(ram.Groups[1].Value, CultureInfo.InvariantCulture); bool ok = Math.Abs(s.RamGb - want) <= Math.Max(1, want * 0.1); r.Add(R(ok ? 0 : 2, "Seller said: " + want + " GB memory", ok ? "matches (" + Gb(s.RamGb) + ")" : "this PC has " + Gb(s.RamGb), "", "w")); }
             if (disk.Success)
             {
-                string t = disk.Groups[1].Value.ToUpperInvariant().Replace(" ", ""); double want = t.EndsWith("TB", StringComparison.Ordinal) ? double.Parse(t.Replace("TB", ""), CultureInfo.InvariantCulture) * 1000 : double.Parse(Regex.Replace(t, "[^0-9]", ""), CultureInfo.InvariantCulture);
+                string t = disk.Groups[1].Value.ToUpperInvariant().Replace(" ", ""); t = t.Replace(',', '.').Replace("TO", "TB").Replace("GO", "GB");   /* review 1.1.6 P4 #9: "1,5 TB" / "1,5 To" */
+                double want = t.EndsWith("TB", StringComparison.Ordinal) ? double.Parse(t.Replace("TB", ""), CultureInfo.InvariantCulture) * 1000 : double.Parse(Regex.Replace(t, "[^0-9]", ""), CultureInfo.InvariantCulture);
                 // bug-hunt ML-158: the disk that matches the size is the one checked for SSD too (a big data HDD beside a 512 GB system SSD is fine)
                 var cands = s.Disks.Where(d => d.Bus != "USB").ToList(); var md = cands.Where(d => d.Gb >= want * 0.9 && d.Gb <= want * 1.15).OrderBy(d => Math.Abs(d.Gb - want)).FirstOrDefault();
                 double have = md != null ? md.Gb : cands.Select(d => d.Gb).DefaultIfEmpty(0).Max(); bool ok = md != null;

@@ -774,7 +774,7 @@ namespace AdeeboMeter
         static List<string[]> Tls(string host, int port, string sni)
         {
             host = (host ?? "").Trim('[', ']'); sni = (sni ?? "").Trim('[', ']');
-            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None; List<string[]> chainRows = null;
+            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None, trustBad = SslPolicyErrors.None; List<string[]> chainRows = null;
             foreach (var proto in new[] { Tuple.Create("TLS 1.3", (SslProtocols)12288), Tuple.Create("TLS 1.2", SslProtocols.Tls12) })
             {
                 // Windows 10 can't speak TLS 1.3 as a client: that's this PC, not the site
@@ -788,13 +788,13 @@ namespace AdeeboMeter
                         { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
-                catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
+                catch (Exception e) { if (errs != SslPolicyErrors.None) trustBad = errs; rows.Add(R(errs != SslPolicyErrors.None ? 2 : 3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
             }
             if (cert != null)
                 using (cert)
                 {
                     double days = (cert.NotAfter - DateTime.Now).TotalDays;
-                    rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 0 ? " (EXPIRED)" : " (" + days.ToString("0", CultureInfo.CurrentCulture) + " days)"), errs != SslPolicyErrors.None ? "Windows doesn't trust it: " + errs + "." : "", "m"));
+                    rows.Add(R(days < 0 || trustBad != SslPolicyErrors.None ? 2 : days < 14 ? 1 : 0, "Certificate",   /* review 1.1.6 P3 #8: an untrusted certificate is red, whatever its date */ cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 0 ? " (EXPIRED)" : " (" + days.ToString("0", CultureInfo.CurrentCulture) + " days)"), errs != SslPolicyErrors.None ? "Windows doesn't trust it: " + errs + "." : "", "m"));
                     var san = cert.Extensions.Cast<X509Extension>().FirstOrDefault(x => x.Oid != null && x.Oid.Value == "2.5.29.17");
                     if (san != null) rows.Add(R(3, "Names it covers", Draw.Trunc(san.Format(false).Replace("DNS Name=", ""), 200), "", "m"));
                     string ins = ""; try { ins = Inspection.InspectedBy(cert); } catch (Exception e) { Program.Log("inspect: " + e.Message); }
@@ -959,7 +959,7 @@ namespace AdeeboMeter
                 else { prefix = MaskBits(mk.GetAddressBytes()); var mb = mk.GetAddressBytes(); var want = new byte[mb.Length]; for (int i = 0; i < Math.Max(0, prefix); i++) want[i / 8] |= (byte)(0x80 >> (i % 8)); if (prefix < 0 || !mb.SequenceEqual(want)) bad = sp[1] + " isn't a contiguous mask"; }
             }
             else if (sp.Length > 2) bad = "too many parts - one address and a prefix or mask";
-            if (bad == null && Regex.IsMatch(ipPart, @"^[0-9.]+$") && !Regex.IsMatch(ipPart, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$")) bad = "write the address as four plain numbers, no leading zeros (Windows reads 010 as 8)";
+            if (bad == null && Icmp.OddV4(ipPart)) bad = "write the address as four plain numbers, no leading zeros (Windows reads 010 as 8)";
             IPAddress ip; if (bad != null || !IPAddress.TryParse(ipPart, out ip) || (ip.AddressFamily == AddressFamily.InterNetwork && ipPart.Count(ch => ch == '.') != 3)) { rows.Add(R(2, "Input", (bad != null ? bad + " - " : "") + "type e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64", "", "u")); return rows; }
             int bits = ip.AddressFamily == AddressFamily.InterNetwork ? 32 : 128; if (prefix < 0) prefix = bits;
             if (sp.Length == 2 && slash < 0 && IPAddress.Parse(sp[1]).AddressFamily != ip.AddressFamily) { rows.Add(R(2, "Mask", "an IPv" + (bits == 32 ? "6" : "4") + " mask on an IPv" + (bits == 32 ? "4" : "6") + " address", "", "u")); return rows; } if (prefix > bits) { rows.Add(R(2, "Prefix", "/" + prefix + " is too long", "", "u")); return rows; }
@@ -984,7 +984,7 @@ namespace AdeeboMeter
             IPAddress q;
             if (!string.IsNullOrWhiteSpace(inside))
             {
-                if (Regex.IsMatch(inside.Trim(), @"^[0-9.]+$") && !Regex.IsMatch(inside.Trim(), @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$")) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" - write it as four plain numbers, no leading zeros (Windows reads 010 as 8)", "", "u"));   // FRESH-039: the same rule as the address
+                if (Icmp.OddV4(inside.Trim())) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" - write it as four plain numbers, no leading zeros (Windows reads 010 as 8)", "", "u"));   // FRESH-039: the same rule as the address
                 else if (!IPAddress.TryParse(inside.Trim(), out q)) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" isn't an IP address - type one like " + (ip.AddressFamily == AddressFamily.InterNetwork ? "10.1.2.50" : "2001:db8::50"), "", "u"));
                 else if (q.AddressFamily != ip.AddressFamily) rows.Add(R(1, q + " inside?", "can't be - it's IPv" + (q.AddressFamily == AddressFamily.InterNetwork ? "4" : "6") + " and this network is IPv" + (ip.AddressFamily == AddressFamily.InterNetwork ? "4" : "6"), "", "i"));
                 else { var qb = q.GetAddressBytes(); bool inNet = qb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net); rows.Add(R(inNet ? 0 : 1, q + " inside?", inNet ? "yes" : "no", "", "i")); }

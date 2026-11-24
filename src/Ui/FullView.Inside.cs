@@ -90,9 +90,17 @@ namespace AdeeboMeter
             return r;
         }
         static readonly string[] BootOrder = { "System", "smss", "csrss", "wininit", "services", "lsass", "svchost", "winlogon", "LogonUI", "fontdrvhost", "dwm", "userinit", "explorer", "sihost", "ctfmon" };
+        object bootFor; readonly Dictionary<string, string> bootCache = new Dictionary<string, string>();
+        /* review 1.1.6 U1 #14: worked out once per process list, not on every paint (each was an OpenProcess) */
         string BootWhen(string n)
         {
             if (treeRows == null) return "";
+            if (!ReferenceEquals(bootFor, treeRows)) { bootCache.Clear(); bootFor = treeRows; }
+            string c; if (bootCache.TryGetValue(n, out c)) return c;
+            c = BootWhen0(n); bootCache[n] = c; return c;
+        }
+        string BootWhen0(string n)
+        {
             var p = treeRows.Select(kv => kv.Key).Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Name), n, StringComparison.OrdinalIgnoreCase) || (n == "System" && x.Pid == 4)).ToList();
             if (p.Count == 0) return n == "userinit" ? "already finished - it starts Explorer, then exits" : "not running";
             string when = "";

@@ -64,13 +64,39 @@ namespace AdeeboMeter
         // a Run value that starts some AdeeboMeter*.exe (installed, downloaded or renamed)
         public static bool OurRunValue(string v) { try { string f = Path.GetFileName((v ?? "").Trim().Trim('"')); return f.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase) && f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase); } catch (ArgumentException) { return false; } }
 
+        // the settings file of the copy that's installed now: the folder the Run key starts, else the newest version folder
+        public static string InstalledSettings()
+        {
+            string from = null;
+            try
+            {
+                using (var k = Registry.CurrentUser.OpenSubKey(RunKey))
+                {
+                    var v = k == null ? null : k.GetValue("AdeeboMeter") as string;
+                    if (v != null) { string d = Path.GetDirectoryName(v.Trim('"')); if (File.Exists(Path.Combine(d, "AdeeboMeter.settings"))) from = Path.Combine(d, "AdeeboMeter.settings"); }
+                }
+            }
+            catch { }
+            if (from == null && Directory.Exists(Base))
+                // bug-hunt L-309: the settings of the newest VERSION folder (by its exe's version), not whichever file was touched last
+                from = Directory.GetDirectories(Base).Where(d => File.Exists(Path.Combine(d, "AdeeboMeter.settings")))
+                    .OrderByDescending(d => { var exe0 = Path.Combine(d, "AdeeboMeter.exe"); Version pv; string v0 = File.Exists(exe0) ? FileVersionInfo.GetVersionInfo(exe0).ProductVersion ?? "" : ""; return Version.TryParse(Regex.Match(v0, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); })
+                    .ThenByDescending(d => File.GetLastWriteTimeUtc(Path.Combine(d, "AdeeboMeter.settings"))).Select(d => Path.Combine(d, "AdeeboMeter.settings")).FirstOrDefault();
+            return from;
+        }
         // Offer to install only on a first start of a copy that isn't installed and was never used from where it is.
         public static bool ShouldOffer()
         {
             if (Program.Packaged || RunningInstalled) return false;
             if (Program.Portable) return false;   // 1.1.6 PC test: a copy with AdeeboMeter.portable beside it is meant to run where it is, with its own data - it was offering to install itself
             // a settings file beside an exe in Downloads isn't trusted (it may have come with the download): only the real one counts
-            if (Program.InDownloads) return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"));
+            if (Program.InDownloads)
+            {
+                if (!File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"))) return true;
+                // review 1.1.6 P1 #8: a newer download than the one last run from here offers again
+                try { Version ran, me; string f = Path.Combine(Program.WriteDir, "ranfrom.txt"); return File.Exists(f) && Version.TryParse(File.ReadAllText(f).Trim(), out ran) && Version.TryParse(Program.Version, out me) && me > ran; }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }
+            }
             return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
         }
 
@@ -161,21 +187,9 @@ namespace AdeeboMeter
             string settings = Path.Combine(dst, "AdeeboMeter.settings");
             if (!File.Exists(settings))
             {
-                string from = null;
-                try
-                {
-                    using (var k = Registry.CurrentUser.OpenSubKey(RunKey))
-                    {
-                        var v = k == null ? null : k.GetValue("AdeeboMeter") as string;
-                        if (v != null) { string d = Path.GetDirectoryName(v.Trim('"')); if (File.Exists(Path.Combine(d, "AdeeboMeter.settings"))) from = Path.Combine(d, "AdeeboMeter.settings"); }
-                    }
-                }
-                catch { }
-                if (from == null && Directory.Exists(Base))
-                    // bug-hunt L-309: the settings of the newest VERSION folder (by its exe's version), not whichever file was touched last
-                    from = Directory.GetDirectories(Base).Where(d => File.Exists(Path.Combine(d, "AdeeboMeter.settings")))
-                        .OrderByDescending(d => { var exe0 = Path.Combine(d, "AdeeboMeter.exe"); Version pv; string v0 = File.Exists(exe0) ? FileVersionInfo.GetVersionInfo(exe0).ProductVersion ?? "" : ""; return Version.TryParse(Regex.Match(v0, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); })
-                        .ThenByDescending(d => File.GetLastWriteTimeUtc(Path.Combine(d, "AdeeboMeter.settings"))).Select(d => Path.Combine(d, "AdeeboMeter.settings")).FirstOrDefault();
+                // review 1.1.6 P1 #8: also the settings a "run from here" copy kept (they live in %LOCALAPPDATA%\AdeeboMeter)
+                string from = InstalledSettings(); string local = Path.Combine(Program.LocalDir, "AdeeboMeter.settings");
+                if (from == null && File.Exists(local) && !string.Equals(Path.GetFullPath(local), Path.GetFullPath(settings), StringComparison.OrdinalIgnoreCase)) from = local;
                 if (from != null) File.Copy(from, settings, false);
             }
             SetLine(settings, "autostart", autoStart ? "1" : "0");
@@ -242,7 +256,7 @@ namespace AdeeboMeter
                 string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
                 if (Directory.Exists(data))
                 {
-                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs" };
+                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs", "points.txt", "lines" };   // review 1.1.6 P1 #14: your Adeebo Points and your own buddy lines stay too
                     foreach (var f in Directory.GetFiles(data)) if (!keep.Contains(Path.GetFileName(f))) try { File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     foreach (var d in Directory.GetDirectories(data)) if (!keep.Contains(Path.GetFileName(d))) try { Directory.Delete(d, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 }
@@ -296,7 +310,7 @@ namespace AdeeboMeter
         readonly Font fTitle, fTag, fBody, fBtn, fSmall;
         readonly Dictionary<string, RectangleF> hot = new Dictionary<string, RectangleF>();
         string hover = "";
-        string focus; bool kbd;   // hunters10 M-1: Tab/arrows move a focus ring over the painted buttons, Enter/Space press it
+        string focus; bool kbd, autoTouched;   // hunters10 M-1: Tab/arrows move a focus ring over the painted buttons, Enter/Space press it
         public bool RunHere { get { return startHere; } }
 
         public SetupWindow(bool remove)
@@ -457,7 +471,7 @@ namespace AdeeboMeter
             else if (st == St.AskRemove)
             {
                 Center(g, "Remove AdeeboMeter?", fTag, Theme.Ink, y, W); y += fTag.Height + 16 * S;
-                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too.", fBody, Theme.Sub, y, W);
+                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too -\nyour keys, Adeebo Points and own buddy lines stay.", fBody, Theme.Sub, y, W);
                 Btn(g, "main", new RectangleF(58 * S, H - 104 * S, W - 116 * S, 46 * S), "Remove", Theme.Red, Color.White, true);
                 Btn(g, "close2", new RectangleF(58 * S, H - 52 * S, W - 116 * S, 32 * S), "Keep it", Theme.Card, Theme.Muted, false);
             }
@@ -493,12 +507,18 @@ namespace AdeeboMeter
         {
             if (st == St.Working) return;
             if (key == "close" || key == "close2") { Close(); return; }
-            if (key == "auto" && st == St.Offer) { autoStart = !autoStart; Invalidate(); return; }
+            if (key == "auto" && st == St.Offer) { autoStart = !autoStart; autoTouched = true; Invalidate(); return; }
             if (key == "here" && st == St.Offer)
             {
                 if (Same) { Run(false); return; }
                 // the Start with Windows switch counts here too: written next to this copy before it starts
-                try { Setup.SetLine(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"), "autostart", autoStart ? "1" : "0"); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("run here: " + e.Message); }
+                // review 1.1.6 D1 #5/#8, P1 #7/#8: a copy run from Downloads starts with Windows only if you turned the switch on yourself;
+                // with an installed copy it takes that copy's settings along (not a blank first start), and it notes its version so a
+                // newer download offers to install again
+                string here = Path.Combine(Program.WriteDir, "AdeeboMeter.settings");
+                try { string inst = Setup.InstalledSettings(); if (inst != null && (!File.Exists(here) || File.ReadAllLines(here).Count(l => l.Contains("=")) <= 1) && !string.Equals(Path.GetFullPath(inst), Path.GetFullPath(here), StringComparison.OrdinalIgnoreCase)) File.Copy(inst, here, true); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("here: " + e.Message); }
+                try { File.WriteAllText(Path.Combine(Program.WriteDir, "ranfrom.txt"), Program.Version); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+                try { Setup.SetLine(here, "autostart", autoStart && autoTouched ? "1" : "0"); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("run here: " + e.Message); }
                 startHere = true; Close(); return;
             }
             if (key != "main") return;

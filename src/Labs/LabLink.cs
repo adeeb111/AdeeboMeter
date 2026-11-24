@@ -278,7 +278,7 @@ namespace AdeeboMeter
                     var psi = new ProcessStartInfo(edge, "--app=\"" + url + "\" --user-data-dir=\"" + profile + "\" --no-first-run --no-default-browser-check --disable-sync") { UseShellExecute = false };
                     var p = Process.Start(psi);
                     if (p == null) { Program.Log("lab open: Edge didn't start"); return "Edge didn't start - try again, or open lab.html from the data folder's lab folder."; }   // R2-115: never a silent nothing
-                    p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } finally { p.Dispose(); } };   // Edge writes its storage out as the window closes
+                    p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.GetType().Name + " " + e.Message); } finally { p.Dispose(); } };   /* review 1.1.6 P5 #8: nothing from a damaged profile ends the app */   // Edge writes its storage out as the window closes
                     return null;
                 }
                 using (Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })) { }   // no Edge: the default browser, without the path (a file link loses the #)

@@ -72,7 +72,7 @@ namespace AdeeboMeter
         static readonly Regex HostRx = new Regex(@"^(?=.{1,253}$)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$", RegexOptions.CultureInvariant);
         public static bool ValidHost(string h)
         {
-            if (string.IsNullOrEmpty(h) || h.Length > 253) return false;
+            if (string.IsNullOrEmpty(h) || h.Length > 253 || Icmp.OddV4(h)) return false;
             IPAddress ip; if (IPAddress.TryParse(h, out ip)) return h.IndexOf('%') < 0;
             return HostRx.IsMatch(h);
         }
@@ -160,15 +160,31 @@ namespace AdeeboMeter
     // ================================================================== which games are installed (read-only, nothing sent)
     static class GameFinder
     {
-        static HashSet<string> found; static DateTime at;
-        public static HashSet<string> Installed(List<Game> games)
+        static volatile HashSet<string> found; static DateTime at; static volatile bool scanning;
+        /* review 1.1.6 U1 #12: the disk scan (an unplugged Steam library, an offline share) runs on a pool thread, never in paint -
+           this returns what's known now and calls done when a fresh answer is in */
+        public static HashSet<string> Installed(List<Game> games, Action done)
         {
-            if (found != null && (DateTime.UtcNow - at).TotalMinutes < 2) return found;
+            var f = found;
+            if ((f == null || (DateTime.UtcNow - at).TotalMinutes >= 2) && !scanning)
+            {
+                scanning = true; at = DateTime.UtcNow; var gl = games.ToList();
+                System.Threading.ThreadPool.QueueUserWorkItem(delegate
+                {
+                    try { found = Scan(gl); at = DateTime.UtcNow; if (done != null) done(); }
+                    catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("games installed: " + e.Message); }
+                    finally { scanning = false; }
+                });
+            }
+            return f ?? new HashSet<string>();
+        }
+        static HashSet<string> Scan(List<Game> games)
+        {
             var r = new HashSet<string>();
             var steam = SteamApps(); var epic = EpicApps(); var riot = RiotProducts();
             foreach (var g in games)
                 if (g.SteamIds.Any(steam.Contains) || g.EpicNames.Any(n => epic.Contains(n)) || (g.RiotId != null && riot.Contains(g.RiotId))) r.Add(g.Id);
-            found = r; at = DateTime.UtcNow; return r;
+            return r;
         }
         static string ReadSmall(string f, int max) { var fi = new FileInfo(f); return fi.Exists && fi.Length <= max ? File.ReadAllText(f) : ""; }
         // Steam: its folder from the user's registry, libraryfolders.vdf for the other libraries, appmanifest_<id>.acf per game

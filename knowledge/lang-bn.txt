@@ -544,8 +544,8 @@ Full screen	পুরো স্ক্রিনে দেখুন
 Play	খেলুন
 Show all	সব দেখান
 Run it for real:	এবার আসল পরীক্ষা চালান:
-Replay bonus · +3	আবার চালানোর বোনাস · +3
-Replay bonus · +3 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +3 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
+Replay bonus · +2	আবার চালানোর বোনাস · +2
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +2 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
 replay bonus	আবার চালানোর বোনাস
 path finished	পথ শেষ হয়েছে
 You got the Adeebo Award!	আপনি Adeebo Award পেয়েছেন!
@@ -553,7 +553,6 @@ You got the Adeebo Award	আপনি Adeebo Award পেয়েছেন
 Adeebo Award	Adeebo Award
 Network detective	নেটওয়ার্ক গোয়েন্দা
 Packet whisperer	প্যাকেট বিশেষজ্ঞ
-Nearly everything AdeeboMeter can teach, tried and understood. Well done.	AdeeboMeter থেকে শেখার প্রায় সবকিছুই চেষ্টা করেছেন ও বুঝেছেন। চমৎকার।
 +2, or +4 for the longer tests	+2, লম্বা পরীক্ষায় +4
 +3, once	+3, একবার
 +2	+2
@@ -1144,7 +1143,7 @@ Credits	কৃতজ্ঞতা
 Try it	চেষ্টা করুন
 Full checkup	পুরো পরীক্ষা
 Run full checkup	পুরো পরীক্ষা চালান
-Include a speed test (up to 500 MB)	গতি পরীক্ষাও করুন (500 MB পর্যন্ত)
+Include a speed test (up to 1 GB)	গতি পরীক্ষাও করুন (1 GB পর্যন্ত)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	এই পিসি, ডিস্ক ও অ্যাপ, আপনার Wi-Fi, রাউটার, ইন্টারনেট ও DNS—এক রিপোর্টে, বড় সমস্যা আগে।
 See it  ›	দেখুন  ›
 Speed only	শুধু গতি
@@ -1715,7 +1714,7 @@ Ten years of money	টাকা নিয়ে দশ বছর
 Text files	টেক্সট ফাইল
 That didn't switch cleanly - your previous view is back, nothing lost.	ঠিকভাবে বদলায়নি—আগের ভিউ ফিরিয়ে আনা হয়েছে, কিছু হারায়নি।
 That file isn't there any more.	ফাইলটি আর নেই।
-The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে 500 MB পর্যন্ত ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
+The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে 1 GB পর্যন্ত ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
 The app's own connection:	অ্যাপের নিজস্ব সংযোগ:
 The biggest share is	সবচেয়ে বড় অংশ
 The busy number is the one games feel when someone else is downloading.	অন্য কেউ ডাউনলোড করার সময় গেমে যে দেরি বোঝা যায়, সেটিই ব্যস্ত সময়ের সংখ্যা।
@@ -4675,7 +4674,6 @@ about a second per 10 packets	প্রতি 10টি প্যাকেটে 
 a few seconds - or keeps watching, if you give it minutes	কয়েক সেকেন্ড—বা মিনিট দিলে নজর রাখতে থাকে
 a few minutes (it tests the disk and memory)	কয়েক মিনিট (ডিস্ক ও মেমরি পরীক্ষা করে)
 a few seconds	কয়েক সেকেন্ড
-100-500 MB to Cloudflare's speed server	Cloudflare-এর স্পিড সার্ভারে 100-500 MB
 one TLS handshake to each site	প্রতিটি সাইটে একটি TLS হ্যান্ডশেক
 nothing - it reads the file or text you give it	কিছুই না—আপনার দেওয়া ফাইল বা লেখা পড়ে
 nothing - it's maths on this PC	কিছুই না—এই পিসিতে শুধু হিসাব
@@ -5165,7 +5163,7 @@ Your Line at Kick-off Time	কিক-অফের সময় আপনার �
 Your phone vs this PC	আপনার ফোন বনাম এই পিসি
 local network	লোকাল নেটওয়ার্ক
 {0} MB (live capture on)	{0} MB (লাইভ ক্যাপচার চালু)
-{0} MB of 80 MB budget	80 MB বাজেটের {0} MB
+{0} MB of 99 MB budget	99 MB বাজেটের {0} MB
 {0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} সংযুক্ত, কিন্তু রাউটার থেকে কোনো ঠিকানা পায়নি (169.254.x.x - DHCP সাড়া দেয়নি)। রাউটার রিস্টার্ট করুন বা আবার সংযোগ করুন।
 Every network connection just dropped.	সব নেটওয়ার্ক সংযোগ এইমাত্র চলে গেল।
 All network connections dropped.	সব নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।
@@ -5390,3 +5388,63 @@ To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	বেরোত
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows কীবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন বা Alt+Tab দিয়ে ফিরে আসুন।
 no server answered - is the internet down?	কোনো সার্ভার সাড়া দেয়নি - ইন্টারনেট কি বন্ধ?
 run a test to see	দেখতে একটি টেস্ট চালান
+ With the kick-off reminder on: your teams' fixtures every 30 min while the PC is on.	 কিক-অফ রিমাইন্ডার চালু থাকলে: পিসি চালু থাকা অবস্থায় প্রতি 30 মিনিটে আপনার দলগুলোর খেলার সূচি।
+ is laggy.	 ল্যাগ করছে।
+ is playable.	 খেলার উপযোগী।
+ is steady.	 স্থির।
+A TCP handshake (no data) to each host on your board every {0} min while AdeeboMeter runs, even from the tray.	AdeeboMeter চলার সময় প্রতি {0} মিনিটে আপনার বোর্ডের প্রতিটি হোস্টে একটি TCP হ্যান্ডশেক (কোনো ডেটা নয়), ট্রে থেকেও।
+A ping a minute to each device you watch on your network ({0} now). Stays on your local network.	আপনার নেটওয়ার্কে নজর রাখা প্রতিটি ডিভাইসে প্রতি মিনিটে একটি পিং (এখন {0}টি)। আপনার লোকাল নেটওয়ার্কেই থাকে।
+Add a game	একটি গেম যোগ করুন
+An Example is made-up data - run the tool to save or share your own result.	উদাহরণ মানে বানানো ডেটা - নিজের ফল সেভ বা শেয়ার করতে টুলটি চালান।
+Checking your connection...	আপনার সংযোগ পরীক্ষা করা হচ্ছে...
+Couldn't read Windows' connection list just now - trying again.	এই মুহূর্তে Windows-এর সংযোগ তালিকা পড়া যায়নি - আবার চেষ্টা করা হচ্ছে।
+Edit	সম্পাদনা
+Give the game a name.	গেমটির একটি নাম দিন।
+Green background (for OBS Chroma Key)	সবুজ ব্যাকগ্রাউন্ড (OBS ক্রোমা কি-এর জন্য)
+Internet ping	ইন্টারনেট পিং
+Line	লাইন
+Listening...	শুনছে...
+Market quotes	বাজারদর
+Nothing measured - the router and internet checks are off in Settings.	কিছুই মাপা হয়নি - সেটিংসে রাউটার ও ইন্টারনেট পরীক্ষা বন্ধ।
+Nothing measured yet - pick your broker and press Check my line.	এখনো কিছু মাপা হয়নি - আপনার ব্রোকার বেছে নিয়ে 'আমার লাইন পরীক্ষা করুন' চাপুন।
+Off - it needs your own key.	বন্ধ - আপনার নিজের কী লাগবে।
+Off - nothing is asked until you turn scores on.	বন্ধ - স্কোর চালু না করা পর্যন্ত কিছুই চাওয়া হয় না।
+Off - your IT team turned the phone link off.	বন্ধ - আপনার আইটি টিম ফোন লিংক বন্ধ করেছে।
+Only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from bankofcanada.ca. No account, nothing about you is sent.	শুধু যখন মার্কেটস খোলা (বা সন্ধ্যার সারাংশ চালু) এবং নতুন সংখ্যা আসার কথা: আপনার তালিকার প্রতিটি মুদ্রার জন্য একটি অনুরোধ (প্রথমবার 2017 থেকে ইতিহাস) এবং প্রায় সাপ্তাহিক পণ্যসূচক, নীতি সুদহার ও মূল্যস্ফীতি, bankofcanada.ca থেকে। কোনো অ্যাকাউন্ট নেই, আপনার সম্পর্কে কিছু পাঠানো হয় না।
+Only when you press Show the QR code, or a remembered phone connects: a sealed connection through AdeeboMeter's relay (adeebometer-remote.orkoadeeb.workers.dev). The relay passes messages along and can't read them.	শুধু যখন আপনি 'QR কোড দেখান' চাপেন, বা মনে রাখা কোনো ফোন যুক্ত হয়: AdeeboMeter-এর রিলে (adeebometer-remote.orkoadeeb.workers.dev) দিয়ে একটি সিল করা সংযোগ। রিলে বার্তা পৌঁছে দেয়, পড়তে পারে না।
+Only when you press Test my stream: the playlist of the link you gave, and up to 30 s of its video, from that link's own server.	শুধু যখন 'আমার স্ট্রিম পরীক্ষা করুন' চাপেন: আপনার দেওয়া লিংকের প্লেলিস্ট এবং তার ভিডিওর সর্বোচ্চ 30 সেকেন্ড, সেই লিংকের নিজের সার্ভার থেকে।
+Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes. A typed host also gets 1.1.1.1 traced next to it, for comparison.	শুধু চালালে: আপনার বেছে নেওয়া গন্তব্যে বেছে নেওয়া মিনিট ধরে একটি MTR; পথের প্রতিটি রাউটারের জন্য একটি রিভার্স নাম খোঁজ (আপনার নিজের DNS সার্ভারে); 192.168.100.1-এর কেবল মডেম থেকে সর্বোচ্চ 4টি পেজ পড়া (সিগন্যাল পেজ); আপনার পাবলিক IP (www.cloudflare.com/cdn-cgi/trace-এ একটি অনুরোধ) শুধু আপনি হ্যাঁ লিখলে। লেখা হোস্টের পাশে তুলনার জন্য 1.1.1.1-ও ট্রেস করা হয়।
+Phone link	ফোন লিংক
+Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.	সেভ করলে স্কোর চালু হয়: তখন স্পোর্টস পেজ খোলা থাকা অবস্থায় প্রায় প্রতি 5 মিনিটে AdeeboMeter NHL, ESPN ও BBC Sport-এর কাছে দিনের খেলার সূচি চায়। আপনার সম্পর্কে কিছু পাঠানো হয় না।
+Service board watch	সার্ভিস বোর্ড নজরদারি
+Show the PNG in its folder	PNG ফাইলটি তার ফোল্ডারে দেখান
+Spike	স্পাইক
+Sports scores	খেলার স্কোর
+The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.	সর্বোচ্চ র‍্যাংক - AdeeboMeter যা শেখাতে পারে তার প্রায় অর্ধেক, চেষ্টা করে বোঝা হয়েছে। দারুণ।
+This is an Example (made-up data) - run the tool to save or share your own result.	এটি একটি উদাহরণ (বানানো ডেটা) - নিজের ফল সেভ বা শেয়ার করতে টুলটি চালান।
+Toronto opens	টরন্টো খোলে
+Turned off by your IT team	আপনার আইটি টিম বন্ধ করেছে
+Two servers have the same name - give each one its own.	দুটি সার্ভারের একই নাম - প্রতিটিকে আলাদা নাম দিন।
+Watched devices	নজরে রাখা ডিভাইস
+While the Sports page is open (about every 5 min), or a stream plays while a team you follow is live: the day's fixtures and scores from api-web.nhle.com (NHL), site.api.espn.com (football) and feeds.bbci.co.uk (headlines), plus api.football-data.org and api.cricapi.com when you added your own key.	স্পোর্টস পেজ খোলা থাকা অবস্থায় (প্রায় প্রতি 5 মিনিটে), বা আপনার অনুসরণ করা দল লাইভ থাকার সময় স্ট্রিম চললে: api-web.nhle.com (NHL), site.api.espn.com (ফুটবল) ও feeds.bbci.co.uk (শিরোনাম) থেকে দিনের খেলা ও স্কোর, আর নিজের কী যোগ করলে api.football-data.org ও api.cricapi.com।
+With your own key, while Markets is open: index and futures quotes from financialmodelingprep.com, as often as you set (1-60 min).	নিজের কী দিয়ে, মার্কেটস খোলা থাকা অবস্থায়: financialmodelingprep.com থেকে সূচক ও ফিউচার্সের দর, আপনার ঠিক করা ব্যবধানে (1-60 মিনিট)।
+Write a PNG for OBS (overlay.png)	OBS-এর জন্য একটি PNG লিখুন (overlay.png)
+ask msftconnecttest.com when a check fails (sign-in page check)	কোনো পরীক্ষা ব্যর্থ হলে msftconnecttest.com-কে জিজ্ঞেস করা (সাইন-ইন পেজ পরীক্ষা)
+delay	বিলম্ব
+isn't a host name or IP - letters, digits, dots and dashes only.	হোস্ট নাম বা IP নয় - শুধু অক্ষর, সংখ্যা, বিন্দু ও ড্যাশ।
+jitter	জিটার
+keep a waiting room for remembered phones at AdeeboMeter's relay	AdeeboMeter-এর রিলেতে মনে রাখা ফোনগুলোর জন্য একটি অপেক্ষাঘর রাখা
+send your weather place to a different server: 	আপনার আবহাওয়ার জায়গা অন্য সার্ভারে পাঠানো: 
+spikes	স্পাইক
+the TCP port must be 1 - 65535.	TCP পোর্ট 1 থেকে 65535 হতে হবে।
+the scores couldn't be reached - it tries again in 5 minutes	স্কোর পাওয়া যায়নি - 5 মিনিট পরে আবার চেষ্টা করবে
+turn the internet check on (a ping to 1.1.1.1 in the background)	ইন্টারনেট পরীক্ষা চালু করা (পটভূমিতে 1.1.1.1-এ পিং)
+waiting	অপেক্ষায়
+Market closed - the watch starts at 9:30 ET	বাজার বন্ধ - নজরদারি শুরু হবে 9:30 ET-এ
+Live watch is off	লাইভ নজরদারি বন্ধ
+region estimate	অঞ্চলের আনুমানিক
+Valve server	Valve সার্ভার
+exact	নির্ভুল
+Not measured yet.	এখনো মাপা হয়নি।
+up to 1 GB to the speed server you picked	আপনার বেছে নেওয়া স্পিড সার্ভারে সর্বোচ্চ 1 GB
+Same network twice	একই নেটওয়ার্ক দুবার

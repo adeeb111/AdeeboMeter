@@ -80,7 +80,7 @@ namespace AdeeboMeter
         static void Step(Monitor m)
         {
             string host = Cfg.TradeHost, hn; int port; if (!Lab.Split(host, 443, out hn, out port)) { hn = host; port = 443; }   // the port you typed is the one tried
-            if (hostIp == null || resolvedFor != host || (DateTime.UtcNow - resolvedAt).TotalMinutes > 10)
+            if (resolvedFor != host || (DateTime.UtcNow - resolvedAt).TotalMinutes > (hostIp == null ? 1 : 10))   /* review 1.1.6 P4 #10: a failed or refused name is asked again after a minute, not every round */
             {
                 resolvedFor = host; resolvedAt = DateTime.UtcNow; IPAddress ip;
                 if (IPAddress.TryParse(hn, out ip)) hostIp = ip;
@@ -136,7 +136,7 @@ namespace AdeeboMeter
             lock (k)
             {
                 var last = Samples.LastOrDefault(); lv = 3;
-                if (last == null) return Status != "" ? Status : "Starting...";
+                if (last == null) return Status != "" ? Status : !Watching ? (Cfg.TradeLive ? "Market closed - the watch starts at 9:30 ET" : "Live watch is off") : "Starting...";   /* review 1.1.6 P4 #11 */
                 // AM-CG-106: a reading older than three rounds of the watch is no verdict at all
                 double age = (DateTime.Now - last.T).TotalSeconds; if (age > Math.Max(15, Sec * 3)) return "No new reading for " + (age < 120 ? Math.Round(age) + " s" : Math.Round(age / 60) + " min") + " - the watch isn't updating";
                 if (last.NoProbe) return Status != "" ? Status : "Can't reach the broker's name - no reading";

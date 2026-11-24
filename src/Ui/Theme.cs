@@ -256,6 +256,14 @@ namespace AdeeboMeter
     // All fonts made once; nothing is created per paint (a lesson from topogram).
     static partial class Draw
     {
+        // review 1.1.6 P4 #7: "h tt" on a Windows format with no AM/PM (French, German, Arabic) loses morning vs evening -
+        // there, use the 24-hour clock instead
+        public static string Tt(string f)
+        {
+            var d = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat;
+            if (!string.IsNullOrEmpty(d.AMDesignator) && !string.IsNullOrEmpty(d.PMDesignator)) return f;
+            return f.Replace("h:mm tt", "H:mm").Replace("h tt", "H':00'").Replace(" tt", "").Replace("tt", "");
+        }
         // a status dot that doesn't rely on colour alone: a problem carries a bar across it, a "worth a look" a short upright
         // stroke - red / amber / green still tell apart for colour-blind eyes and in high contrast
         public static void LvDot(Graphics g, int lv, float x, float y, float w, float h)
@@ -356,6 +364,7 @@ namespace AdeeboMeter
             return new FontFamily(name);
         }
         static string bengaliFontFamily;
+        public static string LangFamily { get { return L.Code == "bn" ? BengaliFontFamily : "Segoe UI"; } }   /* review 1.1.6 U1 #16: report and freeze card */
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
         // 24 Nov (Adeeb: "very small fonts still have the pixelated issue"): ClearType grid-fitting snaps each letter to whole
         // pixels, and a size like 11.5 or 13.75 px (half sizes times 125%) leaves the strokes landing between pixels - the small
@@ -677,7 +686,7 @@ namespace AdeeboMeter
             if (SpeedStyle) return SpeedChip(s, dwell);
             var ts = Measure(s.Chip, fSmall, 0);
             float ww = Layout(s.Call) == "everyday" ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -728,11 +737,12 @@ namespace AdeeboMeter
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;
             Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.FirstOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);
-            string head = last != null ? "Spike " + Math.Round(last.Ms) + " ms: " + last.Blame + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? " is steady." : grade == "Casual" ? " is playable." : grade == "Laggy" ? " is laggy." : "...");
+            string head = last != null ? L.T("Spike") + " " + Math.Round(last.Ms) + " ms: " + L.T(last.Blame) + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? L.T(" is steady.") : grade == "Casual" ? L.T(" is playable.") : grade == "Laggy" ? L.T(" is laggy.") : "...");
+            string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height;
             int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 12 * S + pad);   // bug-hunt L-147: the path strip is 12 high
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -752,17 +762,17 @@ namespace AdeeboMeter
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
-                var gp = new RectangleF(W - pad - Measure(grade, fTiny, 0).Width - 12 * S, y + 12 * S, Measure(grade, fTiny, 0).Width + 12 * S, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                var gp = new RectangleF(W - pad - Measure(gradeW, fTiny, 0).Width - 12 * S, y + 12 * S, Measure(gradeW, fTiny, 0).Width + 12 * S, 17 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(gradeW, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
                 Theme.Spark(g, v, sr, gc, cap * 1.15, false);
                 y += 30 * S;
-                string row = "jitter " + Fmt(jit, "0.0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   " + Pair(s.Down, s.Up);
+                string row = L.T("jitter") + " " + Fmt(jit, "0.0", " ms") + "   " + L.T("loss") + " " + Fmt(loss, "0.#", "%") + "   " + Pair(s.Down, s.Up);
                 g.DrawString(row, fSmall, muted, pad, y); y += 20 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 30 * S);
-                g.DrawString(t.Item2.Where + " · " + (t.Item2.Kind == "estimate" ? "region estimate" : t.Item2.Kind == "valve" ? "Valve server" : "exact"), fTiny, muted, pad, y); y += 14 * S;
+                g.DrawString(t.Item2.Where + " · " + L.T(t.Item2.Kind == "estimate" ? "region estimate" : t.Item2.Kind == "valve" ? "Valve server" : "exact"), fTiny, muted, pad, y); y += 14 * S;
                 PathStrip(g, s, new RectangleF(pad, y, inner, 12 * S), false);
             }
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
@@ -776,9 +786,9 @@ namespace AdeeboMeter
             int lv = double.IsNaN(ping) ? 3 : (jit > 30 || loss > 3 || ping > 250) ? 2 : (jit > 15 || loss > 1 || ping > 150) ? 1 : partial ? 3 : 0;   // AM-CG-208: missing jitter or loss is never "clear"
             string grade = lv == 0 ? "LINE OK" : lv == 1 ? "SOME BREAKUP" : lv == 2 ? "CHOPPY" : "WAITING";
             string head = s.Call ? (lv == 0 ? "Your connection looks fine for calls (an estimate from the line - your call app's own numbers can differ)." : lv == 1 ? "Your connection may make calls break up now and then." : lv == 2 ? "Your connection will likely make calls choppy." : partial && !double.IsNaN(ping) ? "Not enough measured yet to judge calls (jitter or loss still missing)." : "Measuring your connection...") : "No call right now - this is how the line looks for one.";
-            string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? "through the VPN · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
+            string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? L.T("through the VPN") + " · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
             return MetricCard(s, hits, "CALL", head, lv, double.IsNaN(jit) ? "-" : Math.Round(jit).ToString(CultureInfo.InvariantCulture), "ms jitter", grade,
-                s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑ " + Rate(s.Up, true), vpnLine });
+                s.NetHist, new[] { L.T("delay") + " " + Fmt(ping, "0", " ms") + "   " + L.T("loss") + " " + Fmt(loss, "0.#", "%") + "   ↑ " + Rate(s.Up, true), vpnLine });
         }
         // Engineer: the raw numbers - router and internet delay, DNS, TCP retransmits / resets, throughput
         public static Bitmap EngineerCard(Snap s, Dictionary<string, RectangleF> hits)
@@ -786,19 +796,20 @@ namespace AdeeboMeter
             string h1 = s.Health != null && s.Health.Count > 0 ? s.Health[0][0] + " " + s.Health[0][1] : "", h2 = s.Health != null && s.Health.Count > 1 ? s.Health[1][0] + " " + s.Health[1][1] : "";
             double gw = s.GwMs;
             return MetricCard(s, hits, "ENG", s.Headline, s.Level, Fmt(s.Ping, "0", ""), "ms internet", s.Level == 0 ? "OK" : s.Level == 1 ? "SLOW" : s.Level == 2 ? "PROBLEM" : "WAITING",
-                s.NetHist, new[] { "router " + Fmt(gw, "0", " ms") + "   DNS " + Fmt(s.DnsMs, "0", " ms") + "   jitter " + Fmt(s.Jitter, "0.0", " ms") + "   loss " + Fmt(s.LossPct, "0.#", "%"), (h1 + (h2 != "" ? "   " + h2 : "")).Trim(), "↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s") + "   CPU " + Fmt(s.Cpu, "0", "%") + "   RAM " + Fmt(s.Mem, "0", "%") });
+                s.NetHist, new[] { L.T("router") + " " + Fmt(gw, "0", " ms") + "   DNS " + Fmt(s.DnsMs, "0", " ms") + "   " + L.T("jitter") + " " + Fmt(s.Jitter, "0.0", " ms") + "   " + L.T("loss") + " " + Fmt(s.LossPct, "0.#", "%"), (h1 + (h2 != "" ? "   " + h2 : "")).Trim(), "↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s") + "   CPU " + Fmt(s.Cpu, "0", "%") + "   RAM " + Fmt(s.Mem, "0", "%") });
         }
         // the shared shape: tag, headline, one big number with its level colour and a grade pill, a 60-sample sparkline,
         // a few small rows, then the five-dot path strip
         static Bitmap MetricCard(Snap s, Dictionary<string, RectangleF> hits, string tagText, string head, int lv, string big, string unit, string grade, double[] series, string[] rows)
         {
             hits.Clear();
+            head = L.T(head); unit = L.T(unit); grade = L.T(grade); tagText = L.T(tagText);   /* review 1.1.6 U4 #3: the widget card speaks the app's language */
             var lines = rows.Where(r => !string.IsNullOrEmpty(r)).ToArray();
             Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(head, fHead, (int)inner).Height;
             int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 12 * S + pad);   // L-147
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -843,13 +854,13 @@ namespace AdeeboMeter
             hits.Clear();
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             float headH = Measure(s.Headline, fHead, (int)inner).Height;
-            float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure("Why: " + s.Hint, fSmall, (int)inner).Height + 4 * S;
+            float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure(L.T("Why: ") + s.Hint, fSmall, (int)inner).Height + 4 * S;
             string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
             float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();
             float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             using (var ink = new SolidBrush(Theme.Ink))
             using (var muted = new SolidBrush(Theme.Muted))
@@ -861,14 +872,17 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
-                Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
+                Theme.Pill(g, s.Waiting ? L.T("Checking") : L.T(Word(s.Level)), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Waiting ? 3 : s.Level, S);   // review 1.1.6 U4 #3, D1 #10
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 24 * S, y, 24 * S, 24 * S), s, false);   // the buddy, awake, in the corner of the card
                 else if (CardHovered) { string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0); g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S); }   // the countdown only while you look: unhovered, the card isn't redrawn each second
                 y += 24 * S;
-                using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2));
-                y += headH;
-                if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH)); y += quipH; }   // the mood's line and the season's - personality, after the facts
-                if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
+                using (var rsf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0))   /* review 1.1.6 U4 #8: Arabic paragraphs read right to left */
+                {
+                    using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
+                    y += headH;
+                    if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH), rsf); y += quipH; }   // the mood's line and the season's - personality, after the facts
+                    if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH), rsf); y += hintH; }
+                }
                 y += 10 * S;
                 // 24 Nov (widget mockup): the same four readings as Home, in the same order - this PC, the router, the internet,
                 // your traffic - a dot in each one's level, the number on the right
@@ -899,7 +913,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
                         g.DrawString(Kit.Sent(L.T("MEETING MODE · TEAMS CALL")), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
-                        g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
+                        g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   " + AdeeboMeter.L.T("jitter") + " " + Fmt(s.Jitter, "0", " ms") + "   " + AdeeboMeter.L.T("loss") + " " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;
                 }

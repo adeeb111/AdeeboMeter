@@ -31,7 +31,14 @@ namespace AdeeboMeter
         }
         static Specs last; static readonly object k = new object();
         static DateTime nicAt;
-        public static Specs Get() { lock (k) { if (last == null || (DateTime.Now - last.At).TotalMinutes > 10) { last = Read(); nicAt = DateTime.Now; } else if ((DateTime.Now - nicAt).TotalSeconds > 20) { ReadNic(last); nicAt = DateTime.Now; } return last; } }   // PC-036: Wi-Fi to cable shows at once
+        public static Specs Get()
+        {
+            /* review 1.1.6 P4 #4: a stuck WMI service must not queue every later caller for ever */
+            if (!System.Threading.Monitor.TryEnter(k, TimeSpan.FromSeconds(30))) { var c = last; if (c != null) return c; throw new TimeoutException("Windows' hardware service (WMI) isn't answering - try again in a minute, or restart the PC"); }
+            try { GetLocked(); } finally { System.Threading.Monitor.Exit(k); }
+            return last;
+        }
+        static void GetLocked() { { if (last == null || (DateTime.Now - last.At).TotalMinutes > 10) { last = Read(); nicAt = DateTime.Now; } else if ((DateTime.Now - nicAt).TotalSeconds > 20) { ReadNic(last); nicAt = DateTime.Now; } } }   // PC-036: Wi-Fi to cable shows at once
 
         static string S(object o) { return Convert.ToString(o, CultureInfo.InvariantCulture) ?? ""; }
         static double D(object o) { try { return o == null ? 0 : Convert.ToDouble(o, CultureInfo.InvariantCulture); } catch (FormatException) { return 0; } catch (InvalidCastException) { return 0; } catch (OverflowException) { return 0; } }
@@ -40,7 +47,7 @@ namespace AdeeboMeter
             try
             {
                 var bz = Busy.Begin("Asking Windows (WMI): " + (q.Length > 60 ? q.Substring(0, 59) + "…" : q)); try {
-                using (var s = new ManagementObjectSearcher(new ManagementScope(scope), new ObjectQuery(q), new EnumerationOptions { Timeout = TimeSpan.FromSeconds(8), ReturnImmediately = true, Rewindable = false }))
+                using (var s = new ManagementObjectSearcher(new ManagementScope(scope, new ConnectionOptions { Timeout = TimeSpan.FromSeconds(8) }), new ObjectQuery(q), new EnumerationOptions { Timeout = TimeSpan.FromSeconds(8), ReturnImmediately = true, Rewindable = false }))
                     foreach (ManagementBaseObject o in s.Get()) using (o) each(o);
                 } finally { bz.End(); }
             }

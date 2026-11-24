@@ -13,7 +13,7 @@ namespace AdeeboMeter
         static string ToolTakes(Tool t)
         {
             if (toolTimes == null) toolTimes = ToolTimes.Split(',').Select(p => p.Split('=')).Where(p => p.Length == 2).ToDictionary(p => p[0], p => p[1]);
-            if (t.Group == "CALC") return "nothing to wait for - it answers as you type";
+            if ((t.Kind ?? t.Group) == "CALC") return "nothing to wait for - it answers as you type";
             switch (t.Id)
             {
                 case "mtr": return "as many minutes as you choose";
@@ -25,7 +25,7 @@ namespace AdeeboMeter
                 case "laptop": return "a few minutes (it tests the disk and memory)";
                 case "speedtest": return "about 20 seconds";
                 // R2-161: the tools a real run didn't time
-                case "radiuslab": return "until you stop it - it answers your test sign-ins";
+                case "radiuslab": return "up to 4 seconds - one Access-Request";
                 case "remote": return "as long as the command you run on the server";
                 case "encrypt": case "decrypt": return "a second or two, longer for a big file";
                 case "keys": case "newkey": case "csrmake": case "selfsigned": case "recipients": return "a second or two";
@@ -41,7 +41,7 @@ namespace AdeeboMeter
         {
             switch (t.Id)
             {
-                case "speedtest": return "100-500 MB to Cloudflare's speed server";
+                case "speedtest": return "up to 1 GB to the speed server you picked";
                 case "https": case "certlive": case "certcal": case "mysites": return "one TLS handshake to each site";
                 case "chain": case "certfile": case "pfx": case "csr": case "certconv": case "hashf": case "b64": case "certcmds": case "certmatch": return "nothing - it reads the file or text you give it";
                 case "qr": return "nothing - the result rides in the code";
@@ -55,11 +55,15 @@ namespace AdeeboMeter
                 case "dupip": return "ARP probes for this PC's own address, on your own network";
                 case "discover": case "rlisten": return "nothing - it only listens";
                 case "mtr": case "ret": case "ping6": case "udpmtu": case "mtu": return "pings with rising hop limits to the address you type";
-                case "radiuslab": return "nothing outside this PC - a practice server on this PC";
+                case "radiuslab": return "one sign-in request (Access-Request) with the test account to the RADIUS server you type";
+                case "icmpb": case "udpsend": return "the packets you set up (up to 1,000) to the address you type";
+                case "iperf": return "an iperf3 test stream to your iperf3 server";
+                case "phonevs": return "a request to your linked phone";
+                case "timeline": return "nothing - it reads this PC's History";
                 case "smtppath": return "a connection to each mail server of the domain you type";
                 case "hairpin": return "a STUN question to a public server, then a connection to your own public address";
             }
-            switch (t.Group)
+            switch (t.Kind ?? t.Group)   /* review 1.1.6 U3 #6: the tool's own group, not the question it is listed under */
             {
                 case "CALC": return "nothing - it's maths on this PC";
                 case "THE PC": case "HARDWARE NERDS": case "WINDOWS": case "OVER TIME": case "JUST FOR FUN": case "WATCH": case "KEYS": return "nothing - it reads this PC and Windows";

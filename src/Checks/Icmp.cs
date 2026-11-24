@@ -100,12 +100,19 @@ namespace AdeeboMeter
         [ThreadStatic] static string why;
         public static string LastWhy { get { return why ?? ""; } }
         public static string Why(string target, string fallback) { return LastWhy != "" ? LastWhy : fallback; }
+        // round-4 #55 / review 1.1.6 P2 #1: an IPv4 address written any way but four plain numbers - leading zeros (octal), hex,
+        // fewer parts, one big number - is read by Windows as a different address. Every place that takes a typed address asks this.
+        public static bool OddV4(string h)
+        {
+            h = h ?? "";
+            return System.Text.RegularExpressions.Regex.IsMatch(h, @"^(0x[0-9a-fA-F]+|[0-9.]+|[0-9a-fA-Fx.]*0x[0-9a-fA-Fx.]*)$") && !System.Text.RegularExpressions.Regex.IsMatch(h, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$");
+        }
         public static IPAddress Resolve4(string host)
         {
             why = "";
             IPAddress a; string h = Toolkit.HostOnly(host);   // a URL first, then name:port - "https://x" must not become "https"
             // numbers only (or 0x...): four plain numbers, no leading zeros - "010.0.0.1" is 8.0.0.1 to Windows, "4294967295" is 255.255.255.255
-            if (System.Text.RegularExpressions.Regex.IsMatch(h ?? "", @"^(0x[0-9a-fA-F]+|[0-9.]+|[0-9a-fA-Fx.]*0x[0-9a-fA-Fx.]*)$") && !System.Text.RegularExpressions.Regex.IsMatch(h, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$"))
+            if (OddV4(h))
             { why = h + " isn't four plain numbers (like 192.168.1.10) - leading zeros, hex or short forms are read as a different address"; return null; }
             IPAddress got = null;
             if (IPAddress.TryParse(h, out a)) got = a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? a : null;

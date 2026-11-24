@@ -55,7 +55,7 @@ namespace AdeeboMeter
             int a = worst, b = worst; while (a > 0 && !double.IsNaN(h[a - 1]) && h[a - 1] >= h[worst] * 0.8) a--; while (b < 23 && !double.IsNaN(h[b + 1]) && h[b + 1] >= h[worst] * 0.8) b++;
             return Clock(a) + "-" + Clock(b + 1) + " " + L.T("runs about") + " " + (h[worst] / best).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + "x " + L.T("slower than the quietest hours");
         }
-        public static string Clock(int hour) { return new DateTime(2000, 1, 1, hour % 24, 0, 0).ToString("h tt", System.Globalization.CultureInfo.CurrentCulture); }
+        public static string Clock(int hour) { return new DateTime(2000, 1, 1, hour % 24, 0, 0).ToString(AdeeboMeter.Draw.Tt("h tt"), System.Globalization.CultureInfo.CurrentCulture); }
         // the same weekday and hours as 'at' (a kick-off), over the last 6 weeks: one slot per week (null until read)
         public static List<Slot> SameSlot(DateTime at, int hours)
         {

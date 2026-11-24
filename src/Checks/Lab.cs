@@ -103,6 +103,7 @@ namespace AdeeboMeter
         }
         public static IPAddress Addr(string h)
         {
+            if (AdeeboMeter.Icmp.OddV4(h)) return null;   // review 1.1.6 P2 #1: "010.000.000.005" is 8.0.0.5 to Windows - never sent there
             IPAddress a; if (IPAddress.TryParse(h, out a)) return a;
             try { return Dns.GetHostAddresses(h).OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).FirstOrDefault(); } catch (SocketException) { return null; } catch (ArgumentException) { return null; }
         }

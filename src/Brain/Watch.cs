@@ -79,7 +79,7 @@ namespace AdeeboMeter
             var worst = rows.Where(r => !double.IsNaN(r.Gw)).OrderByDescending(r => r.Gw).FirstOrDefault();
             string when = started.ToString("HH:mm", CultureInfo.CurrentCulture);
             string s; int lv = 0;
-            var roam = evs.FirstOrDefault(e => e.Text.IndexOf("roam", StringComparison.OrdinalIgnoreCase) >= 0 || e.Text.IndexOf("hopped", StringComparison.OrdinalIgnoreCase) >= 0);
+            var roam = evs.FirstOrDefault(e => Monitor.IsRoamText(e.Text));
             var drop = evs.FirstOrDefault(e => e.Lv == 2);
             double upBusy = rows.Count(r => r.Up > 3) * 100.0 / rows.Count;
             if (drop != null) { lv = 2; s = "Your " + mins + "-minute call at " + when + " broke at " + drop.T.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + drop.Text; }
@@ -218,7 +218,7 @@ namespace AdeeboMeter
         public static void Check(Monitor m)
         {
             // bug-hunt ML-83: the device lists are history too - History off deletes them (like air.txt), and they never grow without end
-            if (!Cfg.History) { lock (k) { known = null; netSince = null; try { foreach (var f in new[] { "devices.txt", "device-nets.txt" }) if (System.IO.File.Exists(Store.PathOf(f))) System.IO.File.Delete(Store.PathOf(f)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory clear: " + e.Message); } } return; }
+            if (!Cfg.History) { Picks.TidyInventory(true); lock (k) { known = null; netSince = null; try { foreach (var f in new[] { "devices.txt", "device-nets.txt" }) if (System.IO.File.Exists(Store.PathOf(f))) System.IO.File.Delete(Store.PathOf(f)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory clear: " + e.Message); } } return; }
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
             string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }

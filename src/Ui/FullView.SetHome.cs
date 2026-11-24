@@ -181,7 +181,7 @@ namespace AdeeboMeter
             using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), 1), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
-            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; /* review 1.1.6 U2 #8 */ Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });
             y += 22 * S;
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("What do you use your internet for?"), Draw.fTitle, ink, x + 18 * S, y); y += 34 * S;
             using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings."), Draw.fBody, m, x + 18 * S, y); y += 30 * S;

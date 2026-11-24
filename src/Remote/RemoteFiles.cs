@@ -155,7 +155,10 @@ namespace AdeeboMeter
         }
         static string SafeName(string n)
         {
-            n = Path.GetFileName((n ?? "").Replace('/', '\\')) ?? "";
+            // review 1.1.6 (security #11): the last part is taken by hand (GetFileName throws on " < > | on .NET Framework, which ended the
+            // session), and bidi / format characters (U+202E and friends) go, so "photo\u202Egpj.exe" can't pose as a .jpg
+            n = n ?? ""; int cut = Math.Max(n.LastIndexOf('/'), n.LastIndexOf('\\')); if (cut >= 0) n = n.Substring(cut + 1);
+            var sb = new System.Text.StringBuilder(n.Length); foreach (char ch in n) { var cat = char.GetUnicodeCategory(ch); if (cat == System.Globalization.UnicodeCategory.Format || cat == System.Globalization.UnicodeCategory.Control) continue; sb.Append(ch); } n = sb.ToString();
             foreach (char ch in Path.GetInvalidFileNameChars()) n = n.Replace(ch, '_');
             n = n.Trim().TrimEnd('.', ' '); if (n == "" || n.StartsWith(".", StringComparison.Ordinal)) n = "from-phone" + n;
             if (System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileNameWithoutExtension(n), @"^(CON|PRN|AUX|NUL|COM\d|LPT\d)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) n = "_" + n;

@@ -26,7 +26,7 @@ namespace AdeeboMeter
         public GameEditor(Game game, bool asNew)
         {
             g = game; isNew = asNew;
-            Text = asNew ? "Add a game" : "Edit " + game.Name; FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false; ShowInTaskbar = false;
+            Text = asNew ? AdeeboMeter.L.T("Add a game") : AdeeboMeter.L.T("Edit") + " " + game.Name; FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false; ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent; BackColor = Theme.Card; ForeColor = Theme.Ink; Font = Draw.fBody; KeyPreview = true;
             ClientSize = new Size(Sc(980), Sc(640)); Padding = new Padding(Sc(18)); Draw.FitOnShow(this, true);
 
@@ -66,7 +66,7 @@ namespace AdeeboMeter
             l.Where = new RoundBox(Sc(150), Draw.fBody, "location") { Location = new Point(Sc(158), Sc(4)) }; l.Where.Box.Text = s.Where ?? ""; l.Where.Box.MaxLength = 40;
             l.Host = new RoundBox(Sc(260), Draw.fMonoS, "host name or IP") { Location = new Point(Sc(316), Sc(4)) }; l.Host.Box.Text = s.Host ?? ""; l.Host.Box.MaxLength = 253;
             l.How = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Font = Draw.fSmall, Width = Sc(160), Location = new Point(Sc(584), Sc(10)), FlatStyle = FlatStyle.Flat, BackColor = Theme.Card, ForeColor = Theme.Ink };
-            l.How.Items.AddRange(HowNames); l.How.SelectedIndex = s.Port > 0 ? 2 : s.Port < 0 ? 1 : 0;
+            l.How.Items.AddRange(HowNames.Select(h => (object)AdeeboMeter.L.T(h)).ToArray()); l.How.SelectedIndex = s.Port > 0 ? 2 : s.Port < 0 ? 1 : 0;
             l.Port = new RoundBox(Sc(70), Draw.fBody, "port") { Location = new Point(Sc(752), Sc(4)), Visible = s.Port > 0 }; l.Port.Box.Text = s.Port > 0 ? s.Port.ToString(CultureInfo.InvariantCulture) : ""; l.Port.Box.MaxLength = 5;
             l.How.SelectedIndexChanged += delegate { l.Port.Visible = l.How.SelectedIndex == 2; if (l.Port.Visible && l.Port.Box.Text == "") l.Port.Box.Text = "443"; };
             l.Result = new Label { Location = new Point(Sc(828), Sc(14)), AutoSize = true, Font = Draw.fSmall, ForeColor = Theme.Muted, BackColor = Theme.Card };
@@ -85,22 +85,22 @@ namespace AdeeboMeter
             {
                 n++; string host = l.Host.Box.Text.Trim(), nm = l.Name.Box.Text.Trim();
                 if (host == "" && nm == "") continue;
-                if (!Games.ValidHost(host)) { problem = "Line " + n + ": \"" + (host.Length > 40 ? host.Substring(0, 40) + "..." : host) + "\" isn't a host name or IP - letters, digits, dots and dashes only."; return null; }
+                if (!Games.ValidHost(host)) { problem = AdeeboMeter.L.T("Line") + " " + n + ": \"" + (host.Length > 40 ? host.Substring(0, 40) + "..." : host) + "\" " + AdeeboMeter.L.T("isn't a host name or IP - letters, digits, dots and dashes only."); return null; }
                 int port = l.How.SelectedIndex == 1 ? -1 : 0;
-                if (l.How.SelectedIndex == 2 && (!int.TryParse(l.Port.Box.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out port) || port < 1 || port > 65535)) { problem = "Line " + n + ": the TCP port must be 1 - 65535."; return null; }
+                if (l.How.SelectedIndex == 2 && (!int.TryParse(l.Port.Box.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out port) || port < 1 || port > 65535)) { problem = AdeeboMeter.L.T("Line") + " " + n + ": " + AdeeboMeter.L.T("the TCP port must be 1 - 65535."); return null; }
                 // bug-hunt M-6: a Valve or estimated server whose address you changed is your own server now ("exact") - kept on reload
                 string tag = l.Host.Tag as string ?? ""; int bar = tag.IndexOf('|'); string kind = bar >= 0 ? tag.Substring(0, bar) : tag, was = bar >= 0 ? tag.Substring(bar + 1) : "";
                 if ((kind != "valve" && kind != "estimate") || !string.Equals(was, host, StringComparison.OrdinalIgnoreCase)) kind = "exact";
                 r.Add(new GameServer { Name = nm == "" ? host : nm, Where = l.Where.Box.Text.Trim(), Host = host, Port = port, Kind = kind });
             }
-            if (r.Select(z => z.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != r.Count) { problem = "Two servers have the same name - give each one its own."; return null; }
+            if (r.Select(z => z.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != r.Count) { problem = AdeeboMeter.L.T("Two servers have the same name - give each one its own."); return null; }
             return r;
         }
         void Save()
         {
             string problem; var servers = Read(out problem);
-            string nm = name.Box.Text.Trim();
-            if (problem == null && nm == "") problem = "Give the game a name.";
+            string nm = name.Box.Text.Trim(); if (nm.Length > 40) nm = nm.Substring(0, 40).Trim();   /* review 1.1.6 U4 #13: the same 40 the save keeps, before the same-name check */
+            if (problem == null && nm == "") problem = AdeeboMeter.L.T("Give the game a name.");
             var exes = exe.Box.Text.Split(';', ',').Select(ExeName).Where(z => z.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Take(4).ToArray();
             if (problem != null) { err.Text = problem; return; }
             if (!isNew && Games.All.Any(x => x.Id != g.Id && string.Equals(x.Name, nm, StringComparison.OrdinalIgnoreCase))) { err.Text = AdeeboMeter.L.T("You already have a game called ") + nm + " - pick another name, or edit that one."; return; }   // bug-hunt ML-71: a rename can't take another game's name
@@ -137,7 +137,7 @@ namespace AdeeboMeter
                 Task.Factory.StartNew(() =>
                 {
                     string used; double v = GamePing.Probe(s, out used);
-                    string t = double.IsNaN(v) ? "no reply" : Math.Round(v) + " ms";
+                    string t = double.IsNaN(v) ? AdeeboMeter.L.T("no reply") : Math.Round(v) + " ms";
                     try { BeginInvoke((Action)delegate { if (!l.Result.IsDisposed) l.Result.Text = t; }); } catch (InvalidOperationException) { }
                 });
             }
@@ -187,7 +187,7 @@ namespace AdeeboMeter
                     foreach (var raw in File.ReadLines(d.FileName).Take(200))
                     {
                         var f = raw.Split('|');
-                        if (f[0] == "game" && f.Length >= 4 && name.Box.Text.Trim() == "") name.Box.Text = f[2].Trim();
+                        if (f[0] == "game" && f.Length >= 4 && name.Box.Text.Trim() == "") { string gn = f[2].Trim(); name.Box.Text = gn.Length > 40 ? gn.Substring(0, 40) : gn; }
                         if (f[0] == "game" && f.Length >= 4 && exe.Box.Text.Trim() == "") exe.Box.Text = string.Join("; ", f[3].Split(';').Select(ExeName).Where(z => z.Length > 0).Take(4));   // bug-hunt ML-72: the programs come along too
                         if (f[0] != "server" || f.Length < 7) continue;
                         int port; string host = f[4].Trim();

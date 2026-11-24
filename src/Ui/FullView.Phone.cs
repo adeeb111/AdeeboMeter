@@ -103,7 +103,7 @@ namespace AdeeboMeter
             PhoneHub.Watch(phoneWatch); Disposed += delegate { PhoneHub.Unwatch(phoneWatch); if (phoneQr != null) phoneQr.Dispose(); };
             // countdowns (time left, a question's 90 s) and the button's minutes
             string phoneKey = "";
-            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) { var rn = Remote.Now; string pk = (PhoneHub.Pending != null ? "ask" + DateTime.UtcNow.Second : "") + "|" + (rn == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(rn)) + "|" + DateTime.Now.Minute + "|" + (phoneCopied > DateTime.Now.AddSeconds(-3)); if (pk != phoneKey) { phoneKey = pk; phoneCanvas.Invalidate(); } } };   /* 21 Nov sitting test: every second only while a question counts down - not always */ phoneTick.Start();
+            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) { var rn = Remote.Now; string pk = (PhoneHub.Pending != null ? "ask" + DateTime.UtcNow.Second : "") + "|" + (rn == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(rn)) + "|" + DateTime.Now.Minute + (rn != null && (rn.St == Remote.State.Waiting || rn.St == Remote.State.Paired) ? ":" + DateTime.Now.Second : "") + "|" + (rn == null ? "" : rn.St.ToString()) + "|" + (phoneCopied > DateTime.Now.AddSeconds(-3)); if (pk != phoneKey) { phoneKey = pk; phoneCanvas.Invalidate(); } } };   /* 21 Nov sitting test: every second only while a question counts down - not always */ phoneTick.Start();
             Disposed += delegate { phoneTick.Stop(); phoneTick.Dispose(); };
             return phonePage;
         }
@@ -111,9 +111,8 @@ namespace AdeeboMeter
         static bool PhoneOn() { var r = Remote.Now; return r != null && r.St == Remote.State.Paired; }
         void LinkClicked()
         {
-            var r = Remote.Now; var st = PhoneHub.Pending;
-            // not linked and no code showing: one click shows the code; otherwise just the page
-            if ((r == null || r.St == Remote.State.Ended) && st == null && PhoneHub.Start != null) PhoneHub.Start(); else ShowPage("phone");
+            // review 1.1.6 D1 #4: opening the page only shows it - nothing reaches the relay until you press Show the QR code there
+            ShowPage("phone");
         }
 
         // ---- painting helpers: a button, a card title
@@ -175,8 +174,8 @@ namespace AdeeboMeter
                     cy = PhText(g, wAfter, Draw.fBody, Theme.Sub, x + 20 * S, cy, w - 40 * S);
                 }
                 using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("No answer in") + " " + left + " s " + L.T("means no."), Draw.fSmall, m, x + 20 * S, cy); cy += 26 * S;
-                var yes = PhBtn(g, x + 20 * S, cy, q.Kind == "file" ? L.T("Accept") : q.Kind == "remember" ? L.T("Remember it") : L.T("Allow"), 1, delegate { PhoneHub.Answer(true); });
-                PhBtn(g, yes.Right + 10 * S, cy, q.Kind == "file" ? L.T("Don't accept") : q.Kind == "remember" ? L.T("Not now") : L.T("Don't allow"), 0, delegate { PhoneHub.Answer(false); });
+                var yes = PhBtn(g, x + 20 * S, cy, q.Kind == "file" ? L.T("Accept") : q.Kind == "remember" ? L.T("Remember it") : L.T("Allow"), 1, delegate { PhoneHub.Answer(q, true); });
+                PhBtn(g, yes.Right + 10 * S, cy, q.Kind == "file" ? L.T("Don't accept") : q.Kind == "remember" ? L.T("Not now") : L.T("Don't allow"), 0, delegate { PhoneHub.Answer(q, false); });
                 y = card.Bottom + 16 * S;
             }
             // the link
@@ -201,7 +200,7 @@ namespace AdeeboMeter
                     ly = PhText(g, L.T("1. Point your phone's camera at the code - it opens adeebometer.com/app.") + "\n" + L.T("2. Allow it here when it asks."), Draw.fBody, Theme.Ink, ix, ly, iw);
                     using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("This code works for") + " " + Mmss(r.Left), Draw.fSmall, m, ix, ly); ly += 26 * S;
                     var nb = PhBtn(g, ix, ly, L.T("New code"), 0, delegate { var rr = Remote.Now; if (rr != null) rr.End("a new code"); if (PhoneHub.Start != null) PhoneHub.Start(); });
-                    string link = r.Link; var cb = PhBtn(g, nb.Right + 10 * S, ly, phoneCopied > DateTime.Now.AddSeconds(-3) ? L.T("Copied ✓") : L.T("Copy link"), 0, delegate { try { Clipboard.SetText(link); phoneCopied = DateTime.Now; } catch (System.Runtime.InteropServices.ExternalException) { } phoneCanvas.Invalidate(); });
+                    string link = r.Link; var cb = PhBtn(g, nb.Right + 10 * S, ly, phoneCopied > DateTime.Now.AddSeconds(-3) ? L.T("Copied ✓") : L.T("Copy link"), 0, delegate { try { Program.CopySecret(link); phoneCopied = DateTime.Now; } catch (System.Runtime.InteropServices.ExternalException) { } phoneCanvas.Invalidate(); });
                     PhBtn(g, cb.Right + 10 * S, ly, L.T("Cancel"), 0, delegate { var rr = Remote.Now; if (rr != null) rr.End("cancelled"); PhoneHub.Fire(); }); ly += 40 * S;
                 }
                 else
@@ -214,7 +213,8 @@ namespace AdeeboMeter
             {
                 using (var b = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Link your phone"), Draw.fHead, b, ix, ly); ly += 32 * S;
                 ly = PhText(g, L.T("See this PC and run its checks from your phone - on mobile data or any Wi-Fi. No account. One phone at a time, 30 minutes, and nothing happens until you press Allow here."), Draw.fBody, Theme.Sub, ix, ly, iw);
-                if (r != null && r.Why != "" && r.Why != "you ended it on this PC") ly = PhText(g, L.T("Last session ended") + ": " + L.T(r.Why), Draw.fSmall, Theme.Muted, ix, ly, iw);
+                string lastWhy = r != null ? r.Why : Remote.LastWhy;
+                if (lastWhy != "" && lastWhy != "you ended it on this PC") ly = PhText(g, L.T("Last session ended") + ": " + L.T(lastWhy), Draw.fSmall, lastWhy.StartsWith("couldn't", StringComparison.Ordinal) || lastWhy.StartsWith("Your IT", StringComparison.Ordinal) ? Theme.LvText(1) : Theme.Muted, ix, ly, iw);
                 ly += 4 * S; var sb = PhBtn(g, ix, ly, L.T("Show the QR code"), 1, delegate { if (PhoneHub.Start != null) PhoneHub.Start(); }); ly = sb.Bottom;
             }
             lc.Height = ly + 20 * S - y;

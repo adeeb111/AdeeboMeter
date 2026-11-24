@@ -290,7 +290,8 @@ namespace AdeeboMeter
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
-        static readonly HashSet<string> RunsWhenOpened = new HashSet<string> { ".exe", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jse", ".wsf", ".msi", ".lnk", ".hta", ".cpl", ".dll", ".reg", ".pif", ".url" };
+        static readonly HashSet<string> RunsWhenOpened = new HashSet<string> { ".exe", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jse", ".wsf", ".msi", ".lnk", ".hta", ".cpl", ".dll", ".reg", ".pif", ".url",
+            /* review 1.1.6 P2 #15: more that run (or run macros) when opened */ ".appref-ms", ".application", ".appx", ".appxbundle", ".msix", ".msixbundle", ".iso", ".img", ".vhd", ".vhdx", ".jar", ".chm", ".msc", ".scf", ".settingcontent-ms", ".library-ms", ".psm1", ".ps1xml", ".psd1", ".wsh", ".vbe", ".docm", ".dotm", ".xlsm", ".xltm", ".xlam", ".pptm", ".potm", ".ppam", ".xll", ".gadget", ".msp", ".mst", ".inf", ".sys", ".cab" };
         static bool Risky(string name) { return RunsWhenOpened.Contains(Path.GetExtension(name ?? "").ToLowerInvariant()); }
 
         sealed class LimitStream : Stream
@@ -335,6 +336,7 @@ namespace AdeeboMeter
         public static List<string[]> Encrypt(string fileIn, string to, string alsoMe, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string file = FileArg(fileIn);
+            if (file != "" && NetPath.Is(file)) { rows.Add(R(2, "File", "network paths (\\\\server\\share) aren't read - copy the file to this PC first", "", "")); return rows; }
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the file to encrypt" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); if (fi.Length > MaxBytes) { rows.Add(R(2, "File", "bigger than 4 GB", "", "")); return rows; }
             string t = (to ?? "").Trim();
@@ -405,6 +407,7 @@ namespace AdeeboMeter
         public static List<string[]> Decrypt(string fileIn, string code, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string file = FileArg(fileIn);
+            if (file != "" && NetPath.Is(file)) { rows.Add(R(2, "File", "network paths (\\\\server\\share) aren't read - copy the file to this PC first", "", "")); return rows; }
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the .adeebo or .p7m file" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); string tmp = null; int kind = 0;   // 1 code, 2 P-384 recipients, 3 key backup, 0 anything else (a .p7m)
             if (fi.Length > MaxBytes + 1024 * 1024) { rows.Add(R(2, "File", "bigger than any file AdeeboMeter makes (4 GB) - not opened", "", "")); return rows; }

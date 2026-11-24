@@ -74,8 +74,10 @@ namespace AdeeboMeter
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(tag, Draw.fTiny, mb, bx + 14 * S, y + 9 * S);
             using (var ib = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.NoWrap }) { string ty = Typing.Show("sheet", line, buddySheet); g.DrawString("“" + ty + (ty == line ? "”" : ""), Draw.fBody, ib, new RectangleF(bx + 14 * S, y + 28 * S, bw - 24 * S, 24 * S), sf); }
             // Fun lines switch
-            var fr = new RectangleF(x + w - 108 * S, y + 18 * S, 108 * S, 24 * S);
-            using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Fun lines"), Draw.fSmall, sb, fr.X, fr.Y + 3 * S);
+            /* review 1.1.6 U1 #10: measured, so "Répliques amusantes" stays clear of the switch */
+            string flw = L.T("Fun lines"); float flm = (float)Math.Ceiling(g.MeasureString(flw, Draw.fSmall).Width), frw = Math.Min(flm + 48 * S, w * 0.6f);
+            var fr = new RectangleF(x + w - frw, y + 18 * S, frw, 24 * S);
+            using (var sb = new SolidBrush(Theme.Sub)) using (var tf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(flw, Draw.fSmall, sb, new RectangleF(fr.X, fr.Y + 3 * S, fr.Width - 44 * S, 20 * S), tf);
             var k = new RectangleF(fr.Right - 38 * S, fr.Y + 1 * S, 38 * S, 22 * S); Theme.Fill(g, k, 11 * S, plain ? Theme.Track : Theme.Blue);
             using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, plain ? k.X + 2 * S : k.Right - 20 * S, k.Y + 2 * S, 18 * S, 18 * S);
             Act(buddySheet, fr, delegate { Voice.Serious = !Voice.Serious; Cfg.Save(); Invalidate(true); buddySheet.Invalidate(); });

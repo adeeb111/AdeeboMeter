@@ -161,7 +161,7 @@ namespace AdeeboMeter
         public static List<string[]> IcmpExplain(string input)
         {
             var rows = new List<string[]>(); string s = (input ?? "").Trim(); bool v6 = s.StartsWith("v6", StringComparison.OrdinalIgnoreCase); if (v6) s = s.Substring(2).Trim();
-            var m = System.Text.RegularExpressions.Regex.Match(s, @"^(\d{1,3})\s*[/ ]\s*(\d{1,3})$");
+            var m = System.Text.RegularExpressions.Regex.Match(s, @"^([0-9]{1,3})\s*[/ ]\s*([0-9]{1,3})$");
             if (m.Success) { int ty = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), co = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); rows.Add(R(3, (v6 ? "ICMPv6 " : "ICMP ") + ty + "/" + co, Explain(v6, ty, co), "", "")); return rows; }
             var l = Load(input, rows); if (l == null) return rows;
             var errs = l.Where(k => (k.Proto == 1 && k.Payload.Length >= 8 && (k.Payload[0] == 3 || k.Payload[0] == 5 || k.Payload[0] == 11 || k.Payload[0] == 12)) || (k.Proto == 58 && k.Payload.Length >= 8 && k.Payload[0] >= 1 && k.Payload[0] <= 4)).ToList();

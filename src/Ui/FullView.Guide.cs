@@ -56,7 +56,7 @@ namespace AdeeboMeter
             Kit.Icon(g, "check", new RectangleF(cr.X + 25 * S, cr.Y + 28 * S, 20 * S, 20 * S), Theme.Sub);
             float tx = cr.X + 66 * S, bw = 190 * S;
             // the tick's label measured, so it always ends before the button and the description ends before the tick (Adeeb, 22 Nov: they overlapped)
-            string tlab = L.T("Include a speed test (up to 500 MB)"); float tlw = (float)Math.Ceiling(g.MeasureString(tlab, Draw.fSmall).Width), tkw = 22 * S + tlw;
+            string tlab = L.T("Include a speed test (up to 1 GB)"); float tlw = (float)Math.Ceiling(g.MeasureString(tlab, Draw.fSmall).Width), tkw = 22 * S + tlw;
             float tkx = cr.Right - bw - 16 * S - 18 * S - tkw;
             using (var ink = new SolidBrush(Theme.Ink)) using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
@@ -238,7 +238,7 @@ namespace AdeeboMeter
                         // for everyone: did it help, try again, or hand it to someone who can help
                         float lx = x; var r2 = r;
                         using (var lb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark))
-                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? L.T("Report saved - show it") : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", L.T("Still broken - check again"), L.T("Open as script") }).Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in AdeeboLab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for someone who can help") }))
+                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? "Report saved - show it" : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", "Still broken - check again", "Open as script" })   /* review 1.1.6 U1 #1: English keys, translated when drawn */.Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in AdeeboLab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for someone who can help") }))
                             {
                                 var asz = g.MeasureString(L.T(a), Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width + 28 * S, 34 * S);
                                 if (ar.Right > x + w && lx > x) { lx = x; y += 44 * S; ar = new RectangleF(lx, y, ar.Width, ar.Height); }

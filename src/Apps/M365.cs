@@ -111,7 +111,7 @@ namespace AdeeboMeter
         {
             var r = new List<string[]>(); List<AppStat> apps; lock (m.L) apps = m.Apps.ToList();
             var o = apps.FirstOrDefault(a => a.Name == "Outlook");
-            if (o == null) { r.Add(NotRunning); return r; }
+            if (o == null) { r.Add((string[])NotRunning.Clone()); return r; }
             r.Add(new[] { o.Cpu > 25 ? "1" : "0", "Outlook itself", o.Cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU · " + (o.Mem / 1048576) + " MB", o.Cpu > 25 ? "Busy on your PC: indexing, a big mailbox, or an add-in. File → Options → Add-ins → disable the ones you don't use." : "" });
             long ost = 0; try { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Outlook"); if (Directory.Exists(d)) ost = Directory.GetFiles(d, "*.ost").Sum(f => new FileInfo(f).Length); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; ost = -1; }   /* L-305: "couldn't measure" isn't "none" */
             if (ost < 0) r.Add(new[] { "3", "Mailbox kept on this PC (cached mode)", "couldn't measure it - Outlook's folder couldn't be read", "" });
@@ -119,7 +119,7 @@ namespace AdeeboMeter
             int mail = conns.Count(c => c.App == "Outlook" && c.Role.StartsWith("Mail", StringComparison.Ordinal));
             r.Add(new[] { mail > 0 ? "0" : "1", "Connected to Exchange Online", mail > 0 ? mail + " connections" : "none right now", mail > 0 ? "" : "Outlook isn't talking to the mail server - check the status bar for 'Disconnected' / 'Needs password'." });
             double net = m.NetPing.Avg(10);
-            r.Add(new[] { !double.IsNaN(net) && net > 150 ? "1" : "0", "The internet", double.IsNaN(net) ? "-" : net.ToString("0", CultureInfo.CurrentCulture) + " ms", !double.IsNaN(net) && net > 150 ? "Slow path to the internet - Outlook waits on every click in online mode." : "" });
+            r.Add(new[] { double.IsNaN(net) ? "3" : net > 150 ? "1" : "0", "The internet", double.IsNaN(net) ? "not checked yet" : net.ToString("0", CultureInfo.CurrentCulture) + " ms", !double.IsNaN(net) && net > 150 ? "Slow path to the internet - Outlook waits on every click in online mode." : "" });
             bool od = apps.Any(a => a.Name == "OneDrive" && a.Cpu > 5) && m.Up.Last > 2;
             r.Add(new[] { od ? "1" : "0", "OneDrive competing for upload", od ? "yes - " + m.Up.Last.ToString("0.#", CultureInfo.CurrentCulture) + " Mb/s up" : "no", od ? "Pause OneDrive syncing for a while (tray icon → Pause)." : "" });
             return r;

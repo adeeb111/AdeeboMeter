@@ -44,7 +44,10 @@ namespace AdeeboMeter
                     using (var z = new GZipStream(s, CompressionMode.Decompress))
                     using (var r = new StreamReader(z, Encoding.UTF8)) return r.ReadToEnd();
             }
-            // a developer build without the packed resources: read the text files next to the exe or in the source tree
+            // a developer build without the packed resources: read the text files next to the exe or in the source tree.
+            // review 1.1.6 P1 #15: only when this build has no packs at all - a release (which has them) never reads a "knowledge"
+            // folder that happens to sit next to a downloaded exe
+            if (asm.GetManifestResourceNames().Any(n => n.StartsWith("AdeeboMeter.knowledge.", StringComparison.Ordinal))) return "";
             foreach (var dir in new[] { Path.Combine(Program.Dir ?? "", "knowledge"), Path.Combine(Program.Dir ?? "", "..", "knowledge") })
             {
                 string f = Path.Combine(dir, pack + ".txt");

@@ -437,6 +437,7 @@ namespace AdeeboMeter
         string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
         {
+            if (tab == "toolbox" && animTimer != null && !animTimer.Enabled) animTimer.Start();   /* review 1.1.6 U1 #13: the picture animation stopped itself off the Toolbox */
             UiActivity.Doing = "switching to " + tab; idxListKey = null; if (tab != "replay") replayFrom = ""; if (tab != "about") bugPage = tab;   // leaving the Time machine ends an "Opened from" visit (review 21 Nov)
             if (tab == "points" || tab == "learn") System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { LabLink.Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.Message); } });   // Network Lab faults watched since (a folder check when nothing changed)
             SetTipKey(null); tipClosed.Clear();   // the old page's help card goes with it; closed cards may come back on the next page
@@ -695,7 +696,7 @@ namespace AdeeboMeter
             Task.Factory.StartNew(() =>
             { var __bz = Busy.Begin("Listing connections"); try { 
                 List<Conn> l = null;
-                try { if (names && Cfg.IpNames) M.RefreshIpNames(); l = M.Connections(true); } catch (Exception e) { Program.Log("conns: " + e.Message); }
+                try { if (names && Cfg.IpNames) M.RefreshIpNames(); l = M.Connections(true); list.ReadFailed = false; } catch (Exception e) { list.ReadFailed = true; Program.Log("conns: " + e.Message); }
                 try { if (!IsDisposed) BeginInvoke((Action)delegate { refreshing = false; if (l != null && !IsDisposed) { list.Merge(l); connSnap = l; if (tab == "travel" && storyTarget == "") { int hs = 0; foreach (var z in l) hs = unchecked(hs + (z.Key + z.State + z.Host).GetHashCode()); string tvk = l.Count + "|" + hs;   /* bug-hunt ML-139: an order-free sum - no join or sort of every connection */ if (tvk != travelKey) { travelKey = tvk; travelCanvas.Invalidate(); } } } }); else refreshing = false; } catch { refreshing = false; }
             } finally { __bz.End(); } });
         }
@@ -1337,6 +1338,7 @@ namespace AdeeboMeter
                             }
                             else { string e2; lock (err) e2 = err.ToString().Trim(); sniffStatus = "Capture failed: " + Draw.Trunc(e2.Replace(Environment.NewLine, " "), 120); Program.Log("dumpcap: " + e2); }
                             UpdateConnStatus();
+                            try { p.Dispose(); } catch (Exception de) { if (de is OutOfMemoryException) throw; }   /* review 1.1.6 U4 #12: the handle goes with the run */
                         });
                     }
                     catch { }

@@ -135,6 +135,7 @@ namespace AdeeboMeter
             }
             if (d.Inspected != "") r.Obs("i", 1, "Certificate re-signed by", d.Inspected);
             string hostOnly = d.Target != "" ? d.Target : input;
+            { string hh; int pp; if (Lab.Split(hostOnly, 443, out hh, out pp) && hh != "") hostOnly = hh; }   // review 1.1.6 P2 #4: "example.com:443" -> the bare name the hosts file pins
             var pin = WhyFails.Hosts(hostOnly).FirstOrDefault(x => x[1] == "Pins your site"); if (pin != null) r.Obs("w", 2, "Hosts file", pin[2]);
             var px = WhyFails.Proxy(hostOnly).FirstOrDefault(); if (px != null) r.Obs("w", 3, "Proxy", px[2]);
             var clk = first == 4 ? WhyFails.Clock().FirstOrDefault() : null; /* only when the lock (TLS) failed - the one case it explains */ if (clk != null && clk[0] != "0") r.Obs(clk[4], int.Parse(clk[0], CultureInfo.InvariantCulture), "Your clock", clk[2]);

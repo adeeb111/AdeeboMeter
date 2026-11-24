@@ -63,5 +63,15 @@ if 'm.wv !== 2' not in app: bad.append('docs/app.html: the phone no longer refus
 for label in ['"hi2|', '"key2|']:
     if label not in rem or label.replace('"', '"') not in app: bad.append('pairing: %s is signed on one side only (Remote.cs vs app.html)' % label)
 
+# 4 ---------------------------------------------------------------------------------------------------------------
+# rule 8: no vendor or employer names anywhere in what ships (the source zip is `git archive HEAD`). The words are kept
+# rot13 here so this file doesn't name them itself.
+import codecs, subprocess
+words = [codecs.decode(w, 'rot13') for w in ('abxvn', 'fe[ -]?bf', 'gvzbf')]
+try:
+    out = subprocess.run(['git', 'grep', '-n', '-i', '-I', '-E', r'\b(' + '|'.join(words) + r')\b', '--', '.', ':!review*'], capture_output=True, text=True).stdout
+    for line in out.splitlines()[:10]: bad.append('rule 8: ' + line[:160])
+except FileNotFoundError: pass
+
 print('\n'.join(bad) if bad else 'ci checks: all clean (%d scripts parsed, %d matching words agree)' % (checked[0], len(pc_words)))
 sys.exit(1 if bad else 0)

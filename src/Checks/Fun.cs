@@ -210,7 +210,10 @@ namespace AdeeboMeter
         public static List<string[]> Roast(Monitor m, Toolkit.Run run)
         {
             run.Status = "Collecting receipts...";
-            var w = Measure(m, 7, run); string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
+            var w = Measure(m, 7, run);
+            // review 1.1.6 P2 #5: no grade from one moment - a roast needs a day of History, like the letter
+            if (!w.History) return new List<string[]> { R(3, "Not enough to roast yet", "a roast needs at least a day of measurements", Cfg.History ? "History is on - come back after a day of normal use." : "Turn on History in Settings, then come back after a day.", "u") };
+            string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
             var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + (w.Days == 1 ? " day" : " days") : " · the last few minutes (turn on History for a week)"), "", "m") };
             foreach (var b in burns) rows.Add(R(3, "", b, "", "m"));
             string file = null;

@@ -371,6 +371,7 @@ namespace AdeeboMeter
         {
             err = ""; Guid g;
             if (!Guid.TryParse((ifaceGuid ?? "").Trim('{', '}'), out g)) { err = "No active adapter."; return null; }
+            if (Policy.NoCapture) { err = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; return null; }   // review 1.1.6 U2 #1
             if (!Available) { err = "Needs Wireshark (tshark) and Npcap."; return null; }
             string ifc = "\\Device\\NPF_{" + g.ToString().ToUpperInvariant() + "}";
             // promiscuous on purpose: some network cards hide these link-local multicasts otherwise

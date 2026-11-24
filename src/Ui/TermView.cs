@@ -39,7 +39,7 @@ namespace AdeeboMeter
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
             mono = f; TabStop = true; Cursor = Cursors.IBeam;
             using (var g = CreateGraphics()) { var a = TextRenderer.MeasureText(g, new string('M', 40), mono, Size.Empty, TextFormatFlags.NoPadding); cw = a.Width / 40f; chh = (float)Math.Ceiling(mono.GetHeight(g) * 1.18f); }
-            blink = new Timer { Interval = 530 }; blink.Tick += delegate { if (!Visible) return; caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
+            blink = new Timer { Interval = 530 }; blink.Tick += delegate { if (!Visible || !Focused) return;   /* review 1.1.6 U4 #6: unfocused, the caret is a still outline - nothing to repaint */ caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
         }
         protected override void Dispose(bool disposing) { if (disposing) blink.Dispose(); base.Dispose(disposing); }
         protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return (b == Keys.Tab && (k & Keys.Control) == 0) || b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }

@@ -29,7 +29,7 @@ namespace AdeeboMeter
             if (s.Contains("-----BEGIN") || (s.Length > 40 && Regex.IsMatch(s, @"^[A-Za-z0-9+/=\s]+$"))) { label = "pasted text"; return Encoding.ASCII.GetBytes(s); }
             try
             {
-                if (s.StartsWith(@"\\", StringComparison.Ordinal) || s.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(s)) { rows.Add(R(2, "File", "type the file's full path, e.g. C:\\certs\\server.cer", "Network paths (\\\\server\\share) aren't read - copy the file here first.", "u")); return null; }
+                if (NetPath.Is(s) || s.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(s)) { rows.Add(R(2, "File", "type the file's full path, e.g. C:\\certs\\server.cer", "Network paths (\\\\server\\share) aren't read - copy the file here first.", "u")); return null; }
                 var fi = new FileInfo(s); if (!fi.Exists) { rows.Add(R(2, "File", "not found: " + Draw.Trunc(s, 80), "", "u")); return null; }
                 if (fi.Length > MaxFile) { rows.Add(R(2, "File", "bigger than 1 MB - not a certificate", "", "u")); return null; }
                 label = fi.Name; return File.ReadAllBytes(fi.FullName);
@@ -165,7 +165,7 @@ namespace AdeeboMeter
         public static List<string[]> Hash(string path, string expected, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string p = (path ?? "").Trim().Trim('"');
-            if (p == "" || p.StartsWith(@"\\", StringComparison.Ordinal) || p.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(p)) { rows.Add(R(2, "File", "type the file's full path - e.g. C:\\Downloads\\setup.exe", "Shift + right-click the file in Explorer › Copy as path.", "u")); return rows; }
+            if (p == "" || NetPath.Is(p) || p.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(p)) { rows.Add(R(2, "File", "type the file's full path - e.g. C:\\Downloads\\setup.exe", "Shift + right-click the file in Explorer › Copy as path.", "u")); return rows; }
             FileInfo fi; try { fi = new FileInfo(p); if (!fi.Exists) { rows.Add(R(2, "File", "not found", "", "u")); return rows; } } catch (Exception e) { if (!(e is ArgumentException || e is NotSupportedException || e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "File", Draw.Trunc(e.Message, 90), "", "u")); return rows; }
             // SHA-384 and SHA-512 too, when the pasted hash is that long (96 or 128 hex digits) - on request, not every time
             string ex = Regex.Replace(expected ?? "", @"(?<=\b[0-9a-fA-F]{2}) (?=[0-9a-fA-F]{2}\b)", "");

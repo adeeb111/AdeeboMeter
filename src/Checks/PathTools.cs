@@ -130,7 +130,7 @@ namespace AdeeboMeter
             return DestDark(hops);
         }
         // the destination answered the trace, then lost every ping of the run: it (or the way to it) went down meanwhile
-        static bool DestDark(List<Hop> hops) { var d = hops.LastOrDefault(x => x.Reached); return d != null && d.Sent > 0 && d.Lost >= d.Sent; }
+        static bool DestDark(List<Hop> hops) { var d = hops.LastOrDefault(x => x.Reached); return d != null && d.Sent > 0 && d.Lost * 100 >= d.Sent * 95; }   /* review 1.1.6 P3 #12: 119 of 120 lost is down, not rate limiting */
         static double LossOf(Hop h) { return 100.0 * h.Lost / h.Sent; }
         public static int LossStart(List<Hop> hops)
         {
@@ -145,23 +145,30 @@ namespace AdeeboMeter
             }
             return -1;
         }
-        public static string MtrVerdict(List<Hop> hops)
+        public static string MtrVerdict(List<Hop> hops) { int lv; return MtrVerdict(hops, out lv); }
+        // lv: 0 clean, 1 a little, 2 real loss or an outage, 3 can't tell
+        public static string MtrVerdict(List<Hop> hops, out int lv)
         {
-            var last = hops.LastOrDefault(Answers); if (last == null) return "No hop answered - probes are blocked on the way out (a firewall or VPN).";
+            lv = 2;
+            var last = hops.LastOrDefault(Answers);
+            if (last == null && hops.Any(h => h.Ip != "" && h.Sent > 0)) return "Every hop answered the trace, then stopped answering during the run - from your own router on, the whole path went dark. Your Wi-Fi or internet connection dropped.";   /* review 1.1.6 P3 #10 */
+            if (last == null) { lv = 3; return "No hop answered - probes are blocked on the way out (a firewall or VPN)."; }
             bool dark = DestDark(hops), silentEnd = !dark && !hops.Any(h => h.Reached && Answers(h));
             string tail = dark ? " The destination answered the trace, then stopped answering during the run - it (or the way to it) went down." : silentEnd ? " The destination doesn't answer pings at all, so this is judged by the last router that does (hop " + last.N + ")." : "";
             int i = LossStart(hops);
             if (i >= 0) { var h = hops[i]; return "Real loss starts at hop " + h.N + " (" + h.Ip + ") and carries on to the end - " + LossOf(h).ToString("0", CultureInfo.CurrentCulture) + "% lost from there." + tail; }
-            if (dark) { var d = hops.Last(x => x.Reached); return "The destination stopped answering during the run (all " + d.Sent + " pings lost after it answered the trace) - the server or the way to it went down." + (hops.Any(x => x.N < d.N && Answers(x) && x.Lost < x.Sent) ? " The routers before it still answer." : ""); }
+            if (dark) { var d = hops.Last(x => x.Reached); return "The destination stopped answering during the run (" + d.Lost + " of " + d.Sent + " pings lost after it answered the trace) - the server or the way to it went down." + (hops.Any(x => x.N < d.N && Answers(x) && x.Lost < x.Sent) ? " The routers before it still answer." : ""); }
             double endLoss = LossOf(last);
             // a little loss (1-3%) that every answering hop from some point on keeps: too little to locate for sure, but it isn't the
             // destination's doing - and it's the kind that makes calls sound robotic
             var ans = hops.Where(Answers).ToList();
             for (int k = 0; k + 1 < ans.Count; k++)
                 if (ans.Skip(k).All(x => LossOf(x) >= 1) && LossOf(ans[k]) < 3)
-                    return "A little loss (about " + LossOf(ans[k]).ToString("0.#", CultureInfo.CurrentCulture) + "%) from hop " + ans[k].N + " (" + ans[k].Ip + ") to the end - too little to pin down for sure with this many pings, but it carries on, so it isn't one router ignoring pings. Enough to make calls sound robotic; a longer run shows it better." + tail;
+                { lv = 1; return "A little loss (about " + LossOf(ans[k]).ToString("0.#", CultureInfo.CurrentCulture) + "%) from hop " + ans[k].N + " (" + ans[k].Ip + ") to the end - too little to pin down for sure with this many pings, but it carries on, so it isn't one router ignoring pings. Enough to make calls sound robotic; a longer run shows it better." + tail; }
+            if (silentEnd && endLoss >= 3) { lv = 3; return "Can't tell: the last router that answers (hop " + last.N + ") loses " + endLoss.ToString("0", CultureInfo.CurrentCulture) + "%, and nothing past it answers pings, so there's no way to see whether the loss carries on." + (last == hops.FirstOrDefault(Answers) ? " It's the first router - your own - so the Wi-Fi or cable is the likely cause." : ""); }   /* review 1.1.6 P3 #11 */
+            lv = 0;
             if (endLoss < 1 || silentEnd) return "No real loss: any loss at a middle hop doesn't carry on - that router just ignores some pings (normal)." + tail;
-            return "Loss at the destination only (" + endLoss.ToString("0", CultureInfo.CurrentCulture) + "%) - the server itself drops or rate-limits pings.";
+            lv = 1; return "Loss at the destination only (" + endLoss.ToString("0", CultureInfo.CurrentCulture) + "%) - the server itself drops or rate-limits pings.";
         }
 
         // What routing does that a PC can still see: several routers taking turns at one hop (ECMP / load sharing),
@@ -172,7 +179,7 @@ namespace AdeeboMeter
             foreach (var h in hops.Where(x => x.Seen.Count > 1))
             {
                 if (h.Switches >= 3) rows.Add(Row("3", "Hop " + h.N + ": load sharing", h.Seen.Count + " routers take turns (" + string.Join(", ", h.Seen.Take(4)) + ")", "Equal-cost paths (ECMP) or a bundle: each flow is hashed onto one link. Normal - but an app on a bad link while others are fine can be one of these.", "m"));
-                else rows.Add(Row("1", "Hop " + h.N + ": the path changed", "at " + h.SwitchedAt.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + " from " + h.Seen[0] + " to " + h.Cur, "A reroute: the network moved your traffic (a link or router went down or came back). Loss in the seconds around it is the convergence time.", "m"));
+                else rows.Add(Row("1", "Hop " + h.N + ": the path changed", "at " + h.SwitchedAt.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + (h.Seen[0] == h.Cur ? " through " + h.Seen.FirstOrDefault(x => x != h.Cur) + " and back to " + h.Cur : " from " + h.Seen[0] + " to " + h.Cur), "A reroute: the network moved your traffic (a link or router went down or came back). Loss in the seconds around it is the convergence time.", "m"));
             }
             var end = hops.LastOrDefault(x => x.Reached);
             if (end != null && end.ReplyTtl > 0)
@@ -227,7 +234,9 @@ namespace AdeeboMeter
                 {
                     uint m = Math.Min(nets[i].Item3, nets[j].Item3);   // the wider mask
                     if (nets[i].Item1 == nets[j].Item1) continue;   // two addresses on one adapter aren't an overlap
-                    if ((nets[i].Item2 & m) == (nets[j].Item2 & m))
+                    if ((nets[i].Item2 & m) == (nets[j].Item2 & m) && !nets[i].Item4 && !nets[j].Item4)   /* review 1.1.6 P3 #13: two LAN adapters on one router is normal */
+                        rows.Insert(0, new[] { "3", "Same network twice", nets[i].Item1 + " and " + nets[j].Item1 + " are both on " + Routes.Ip(nets[i].Item2) + " - normal when a laptop has Wi-Fi and a cable to the same router", "Windows sends traffic over the faster one.", "i" });
+                    else if ((nets[i].Item2 & m) == (nets[j].Item2 & m))
                     { found = true; rows.Insert(0, new[] { "2", "Overlap", nets[i].Item1 + " and " + nets[j].Item1 + " use the same addresses (" + Routes.Ip(nets[i].Item2) + ")", "Anything in that range can only be reached on one of them - usually the company servers on the VPN become unreachable from home. The fix is on the home router (change its network, e.g. to 192.168.77.x).", "i" }); }
                 }
             try

@@ -135,10 +135,11 @@ namespace AdeeboMeter
     {
         public string Hint = "";
         public List<Timeline.Ev> Recent = new List<Timeline.Ev>();
-        public int Level; public string Headline = "Waking up... give me ten seconds, boss.", Chip = "All quiet", Flow = ""; public int Countdown;
+        // review 1.1.6 D1 #1/#10: a snapshot starts as "checking" - no green verdict, no 0 ms, until something was measured
+        public int Level; public string Headline = AdeeboMeter.L.T("Checking your connection..."), Chip = "Checking", Flow = ""; public int Countdown; public bool Waiting = true, Offline;   // Offline: no network at all (review 1.1.6 P1 #2 - the buddy reads this, not the translated headline)
         public int[] Path = { 3, 3, 3, 3, 3 };
         public string[] PathLabel = { "PC", "LAN", "ISP", "DNS", "Internet" }, PathMain = new string[5], PathSub = new string[5];
-        public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping, Jitter, LossPct, DnsMs;
+        public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping = double.NaN, Jitter = double.NaN, LossPct = double.NaN, DnsMs = double.NaN;
         public double[] DownHist = Array.Empty<double>(), UpHist = Array.Empty<double>(), NetHist = Array.Empty<double>();   // NetHist: the internet check, last 60
         public double GwMs = double.NaN;
         public bool Call; public double TodayDown, TodayUp;   // bytes since midnight (while AdeeboMeter ran)

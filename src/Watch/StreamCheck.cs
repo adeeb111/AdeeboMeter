@@ -312,12 +312,15 @@ namespace AdeeboMeter
         // ---------- the verdict, the way along and the tips (each from a measurement taken now)
         static void Decide(Result r, Monitor m)
         {
-            double cpu = double.NaN, gw = double.NaN, net = double.NaN, loss = double.NaN; bool wifi = false, vpn = false; int sig = -1; string ch = "";
-            if (m != null) lock (m.L) { cpu = m.Cpu.Last; gw = m.GwPing.Avg(6); net = m.NetPing.Avg(6); loss = m.Loss.Avg(20) * 100; wifi = m.HasWifi; sig = m.WifiSignal; ch = m.WifiChannel ?? ""; vpn = m.VpnUp; }
-            int chn; bool fiveG = int.TryParse(ch, out chn) && chn > 14;
+            double cpu = double.NaN, gw = double.NaN, net = double.NaN, loss = double.NaN; bool wifi = false, vpn = false; int sig = -1; string ch = "", myBssid = "";
+            if (m != null) lock (m.L) { cpu = m.Cpu.Last; gw = m.GwPing.Avg(6); net = m.NetPing.Avg(6); loss = m.Loss.Avg(20) * 100; wifi = m.HasWifi; sig = m.WifiSignal; ch = m.WifiChannel ?? ""; vpn = m.VpnUp; myBssid = m.Bssid ?? ""; }
+            /* review 1.1.6 P4 #6: Wi-Fi 6E channels 1-14 aren't 2.4 GHz - ask the BSS list (no new scan) for this BSSID's band */
+            string band = "";
+            if (wifi && myBssid != "") try { string werr; var me = WlanApi.List(false, out werr).FirstOrDefault(b => string.Equals(b.Bssid.Replace('-', ':'), myBssid.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (me != null) band = me.Band ?? ""; } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            int chn; bool fiveG = band != "" ? band != "2.4 GHz" : int.TryParse(ch, out chn) && chn > 14;
             r.Hops[0] = "This PC"; r.HopLv[0] = double.IsNaN(cpu) ? 3 : cpu > 85 ? 1 : 0; r.HopNote[0] = double.IsNaN(cpu) ? "-" : "CPU " + cpu.ToString("0", CultureInfo.InvariantCulture) + "%";
             r.Hops[1] = wifi ? "Wi-Fi" : "Cable"; r.HopLv[1] = wifi ? (sig >= 0 && sig < 50 ? 2 : sig >= 0 && (sig < 70 || !fiveG) ? 1 : 0) : 0;
-            r.HopNote[1] = wifi ? (sig >= 0 ? (sig >= 70 ? "signal good" : sig >= 50 ? "signal fair" : "signal weak") + (ch != "" ? (fiveG ? " · 5 GHz" : " · 2.4 GHz") : "") : "signal unknown") : "wired";
+            r.HopNote[1] = wifi ? (sig >= 0 ? (sig >= 70 ? "signal good" : sig >= 50 ? "signal fair" : "signal weak") + (band != "" ? " · " + band : ch != "" ? (fiveG ? " · 5 GHz" : " · 2.4 GHz") : "") : "signal unknown") : "wired";
             r.Hops[2] = "Router"; r.HopLv[2] = double.IsNaN(gw) ? 3 : gw > 20 ? 1 : 0; r.HopNote[2] = double.IsNaN(gw) ? "-" : gw.ToString("0", CultureInfo.InvariantCulture) + " ms";
             r.Hops[3] = "Your provider"; r.HopLv[3] = double.IsNaN(net) ? 3 : (!double.IsNaN(loss) && loss >= 2) || net > 80 ? 1 : 0; r.HopNote[3] = double.IsNaN(net) ? "-" : net.ToString("0", CultureInfo.InvariantCulture) + " ms" + (!double.IsNaN(loss) && loss >= 1 ? " · " + loss.ToString("0", CultureInfo.InvariantCulture) + "% loss" : " · no loss");
             r.Hops[4] = "Stream server"; r.HopLv[4] = r.Error != "" ? 2 : double.IsNaN(r.ServerMs) ? 3 : r.ServerMs > 400 ? 1 : 0; r.HopNote[4] = r.Error != "" ? "not reached" : double.IsNaN(r.ServerMs) ? "-" : r.ServerMs.ToString("0", CultureInfo.InvariantCulture) + " ms" + (r.Secure ? " · secure" : " · not encrypted");
@@ -361,13 +364,26 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
         }
+        /* review 1.1.6 U3 #9: the page repaints every tick during a check - keep both lists until the file changes (a stat, not a read + DPAPI) */
+        static List<string[]> earlierC, linksC; static DateTime earlierAt, linksAt;
+        static DateTime Stamp(string f) { try { return File.Exists(f) ? File.GetLastWriteTimeUtc(f) : DateTime.MinValue; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return DateTime.MinValue; } }
         public static List<string[]> Earlier()
+        {
+            var st = Stamp(HistFile); var c = earlierC; if (c != null && st == earlierAt) return c;
+            c = Earlier0(); earlierC = c; earlierAt = st; return c;
+        }
+        public static List<string[]> Links()
+        {
+            var st = Stamp(LinksFile); var c = linksC; if (c != null && st == linksAt) return c;
+            c = Links0(); linksC = c; linksAt = st; return c;
+        }
+        static List<string[]> Earlier0()
         {
             try { return File.Exists(HistFile) ? File.ReadLines(HistFile).Take(50).Select(l => l.Split('\t')).Where(p => p.Length == 5).ToList() : new List<string[]>(); }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return new List<string[]>(); }
         }
         // saved links: label TAB url, one per line, the whole file DPAPI-protected (a link can hold a personal token)
-        public static List<string[]> Links()
+        static List<string[]> Links0()
         {
             try
             {
@@ -379,7 +395,7 @@ namespace AdeeboMeter
         }
         public static void SaveLink(string label, string url)
         {
-            var l = Links().Where(p => p[1] != url).ToList(); l.Insert(0, new[] { (label ?? "").Replace("\t", " ").Replace("\n", " "), url.Replace("\t", "").Replace("\n", "") });
+            var l = Links0().Where(p => p[1] != url).ToList(); linksC = null; l.Insert(0, new[] { (label ?? "").Replace("\t", " ").Replace("\n", " "), url.Replace("\t", "").Replace("\n", "") });
             try { File.WriteAllBytes(LinksFile, ProtectedData.Protect(Encoding.UTF8.GetBytes(string.Join("\n", l.Take(12).Select(p => p[0] + "\t" + p[1]))), null, DataProtectionScope.CurrentUser)); }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; }
         }

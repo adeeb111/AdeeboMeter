@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -41,6 +42,19 @@ namespace AdeeboMeter
             float th = Draw.Measure(msg, Draw.fBody, (int)tw).Height, ch = cap == "" ? 0 : Draw.Measure(cap, Draw.fHead, (int)tw).Height + 6 * S;
             int bh = btns.Count > 0 ? btns[0].PreferredSize.Height : (int)(36 * S);
             int h = (int)(28 * S + ch + Math.Max(th, 44 * S) + 26 * S + bh + 22 * S);
+            /* review 1.1.6 U1 #5: never taller than the screen - a long message is cut with a note, so OK / Cancel stay on screen */
+            int maxH = (int)(Screen.FromPoint(Cursor.Position).WorkingArea.Height * 0.85);
+            if (h > maxH)
+            {
+                var lines = msg.Replace("\r\n", "\n").Split('\n').ToList(); int cut = 0;
+                while (lines.Count > 3 && h > maxH)
+                {
+                    lines.RemoveAt(lines.Count - 1); cut++;
+                    msg = string.Join("\n", lines) + "\n… (" + cut + " " + L.T("more lines") + ")";
+                    th = Draw.Measure(msg, Draw.fBody, (int)tw).Height; h = (int)(28 * S + ch + Math.Max(th, 44 * S) + 26 * S + bh + 22 * S);
+                }
+                h = Math.Min(h, maxH);
+            }
             ClientSize = new Size(w, h);
             int bx = w - (int)(22 * S);
             for (int k = btns.Count - 1; k >= 0; k--) { var pb = btns[k]; var ps = pb.PreferredSize; bx -= Math.Max(ps.Width, (int)(92 * S)); pb.Bounds = new Rectangle(bx, h - (int)(20 * S) - bh, Math.Max(ps.Width, (int)(92 * S)), bh); bx -= (int)(10 * S); }
@@ -68,9 +82,11 @@ namespace AdeeboMeter
             using (var sb = new SolidBrush(Color.FromArgb(Theme.Dark ? 50 : 32, c))) g.FillEllipse(sb, cr);
             Kit.Icon(g, ic, new RectangleF(cr.X + 11 * S, cr.Y + 11 * S, 22 * S, 22 * S), c);
             float tx = 82 * S, tw = ClientSize.Width - tx - 22 * S, y = 26 * S;
-            if (cap != "") using (var ib = new SolidBrush(Theme.Ink)) { var hs = Draw.Measure(cap, Draw.fHead, (int)tw); g.DrawString(cap, Draw.fHead, ib, new RectangleF(tx, y, tw, hs.Height + 2)); y += hs.Height + 6 * S; }
+            if (cap != "") using (var ib = new SolidBrush(Theme.Ink)) using (var cf = new StringFormat(L.RunsRtl(cap) ? StringFormatFlags.DirectionRightToLeft : 0)) { var hs = Draw.Measure(cap, Draw.fHead, (int)tw); g.DrawString(cap, Draw.fHead, ib, new RectangleF(tx, y, tw, hs.Height + 2), cf); y += hs.Height + 6 * S; }
             var ms = Draw.Measure(msg, Draw.fBody, (int)tw);
-            using (var sb = new SolidBrush(cap == "" ? Theme.Ink : Theme.Sub)) g.DrawString(msg, Draw.fBody, sb, new RectangleF(tx, y + (cap == "" ? 2 * S : 0), tw, ms.Height + 4));
+            /* review 1.1.6 U1 #17: Arabic reads right to left */
+            using (var sf = new StringFormat(L.RunsRtl(msg) ? StringFormatFlags.DirectionRightToLeft : 0))
+            using (var sb = new SolidBrush(cap == "" ? Theme.Ink : Theme.Sub)) g.DrawString(msg, Draw.fBody, sb, new RectangleF(tx, y + (cap == "" ? 2 * S : 0), tw, Math.Min(ms.Height + 4, ClientSize.Height - y - 70 * S)), sf);
         }
     }
 }

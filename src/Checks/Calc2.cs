@@ -171,8 +171,9 @@ namespace AdeeboMeter
             double gt = gains.Length > 0 ? gains[0] : 0, gr = gains.Length > 1 ? gains[1] : gt;
             string dt = (distText ?? "").ToLowerInvariant(); var dm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(km|m|mi)\b"); var fm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(ghz|mhz)");   // FRESH-014: keep the minus, so -1 km is refused
             if (!dm.Success || !fm.Success) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");
-            double d = double.Parse(dm.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture) * (dm.Groups[2].Value == "km" ? 1 : dm.Groups[2].Value == "mi" ? 1.609 : 0.001);
-            double fmhz = double.Parse(fm.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture) * (fm.Groups[2].Value == "ghz" ? 1000 : 1);
+            double d0, f0; if (!double.TryParse(dm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out d0) || !double.TryParse(fm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out f0)) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");   // review 1.1.6 P2 #6
+            double d = d0 * (dm.Groups[2].Value == "km" ? 1 : dm.Groups[2].Value == "mi" ? 1.609 : 0.001);
+            double fmhz = f0 * (fm.Groups[2].Value == "ghz" ? 1000 : 1);
             if (d <= 0 || fmhz <= 0) return Need("Distance and frequency", "both have to be more than 0");
             double fspl = 20 * Math.Log10(d) + 20 * Math.Log10(fmhz) + 32.44, rx = tx + gt + gr - fspl;
             var rows = new List<string[]> { R(0, "Received", F(rx, "0.#") + " dBm", "Transmit + gains − free-space loss. Real links lose another 5-20 dB to walls, rain, trees and cables.", "i"),
@@ -238,7 +239,7 @@ namespace AdeeboMeter
             string b = (battText ?? "").ToLowerInvariant(); double wh;
             // FRESH-017/072: kWh, and a minus is kept
             var whm = Regex.Match(b, @"(-?[0-9.,]+)\s*(k?)wh"); var ahm = Regex.Match(b, @"(-?[0-9.,]+)\s*ah"); var vm = Regex.Match(b, @"(-?[0-9.,]+)\s*v\b"); var xm = Regex.Match(b, @"\b(\d{1,3})\s*[x×]");
-            Func<Match, double> v = m => double.Parse(m.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            Func<Match, double> v = m => { double x; return double.TryParse(m.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out x) ? x : double.NaN; };   // review 1.1.6 P2 #6: "1.2.3 kWh" is refused, not a crash
             if (whm.Success) wh = v(whm) * (whm.Groups[2].Value == "k" ? 1000 : 1);
             else if (ahm.Success && vm.Success) wh = v(ahm) * v(vm) * (xm.Success ? int.Parse(xm.Groups[1].Value, CultureInfo.InvariantCulture) : 1);
             else return Need("Battery", "type the energy (216 Wh) or volts and amp-hours (2 x 12 V 9 Ah) - a VA rating alone doesn't say how long it lasts");
@@ -397,7 +398,7 @@ namespace AdeeboMeter
                 double bytes = Size(t); if (double.IsNaN(bytes)) { double mult = u.StartsWith("T", StringComparison.OrdinalIgnoreCase) ? 1e12 : u.StartsWith("G", StringComparison.OrdinalIgnoreCase) ? 1e9 : u.StartsWith("M", StringComparison.OrdinalIgnoreCase) ? 1e6 : u.StartsWith("K", StringComparison.OrdinalIgnoreCase) ? 1e3 : 1; bytes = v * mult / 8; }
                 rows.Add(R(0, "Decimal", ByteSize(bytes) + " (what drive makers and networks use)", "", "i"));
                 rows.Add(R(0, "Binary", BinSize(bytes) + " (what Windows shows, though it writes GB)", "", "i"));
-                rows.Add(R(3, "Bits", Bits(bytes * 8).Replace("ps", "") + " · " + I((long)Math.Min(bytes * 8, long.MaxValue)) + " bits", "", "i"));
+                rows.Add(R(3, "Bits", Bits(bytes * 8).Replace("ps", "") + " · " + (bytes * 8 < 9.2e18 ? I((long)(bytes * 8)) : (bytes * 8).ToString("0.###e0", CultureInfo.InvariantCulture)) + " bits", "", "i"));
             }
             else
             {

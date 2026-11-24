@@ -191,7 +191,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(bps) && bps > 0)
             {
                 rows.Add(R(3, "Same speed", Bits(bps) + " = " + ByteRate(bps) + " = " + ByteSize(bps / 8 * 3600) + " an hour", "Network speeds are in bits; file sizes in bytes (8 bits). Sizes here are decimal (1 MB = 1,000,000 bytes), like ISPs and Windows' network pages.", "i"));
-                double pps = bps / 8 / 1538; rows.Add(R(3, "Full-size packets", (pps >= 10 ? I((long)pps) : F(pps, "0.###")) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
+                double pps = bps / 8 / 1538; rows.Add(R(3, "Full-size packets", (pps >= 9.2e18 ? F(pps, "0.###e0") : pps >= 10 ? I((long)pps) : F(pps, "0.###")) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
             }
             return rows;
         }

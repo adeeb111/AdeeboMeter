@@ -142,7 +142,7 @@ namespace AdeeboMeter
             if (what == "BCPI") return s.LastDay < DateTime.Today.AddDays(-12);
             var et = Trading.EasternNow(); var want = et.TimeOfDay >= new TimeSpan(16, 45, 0) ? et.Date : et.Date.AddDays(-1);
             while (want.DayOfWeek == DayOfWeek.Saturday || want.DayOfWeek == DayOfWeek.Sunday) want = want.AddDays(-1);
-            return s.LastDay < want.AddDays(-3);   // a Bank holiday or two is not "stale"; anything older is
+            return s.LastDay < (what.StartsWith("FX", StringComparison.Ordinal) ? want : want.AddDays(-3));   /* review 1.1.6 P4 #3: a rate is stale once it is older than the last business day (the tried clock limits holiday refetches) */ // a Bank holiday or two is not "stale"; anything older is
         }
         static readonly HashSet<string> emptyRead = new HashSet<string>(StringComparer.Ordinal);
         public static void Load(string what)

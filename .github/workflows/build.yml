@@ -117,9 +117,8 @@ jobs:
           # code signing (from 1.1.5): the files are built here into a draft release, the author signs the exe on his PC
           # (the key is unlocked from his phone, so it can't happen here) and puts the signed files on the draft, then
           # publishes it. Publishing runs this workflow again - it must not put the unsigned files back over the signed ones.
-          if ($env:GITHUB_EVENT_NAME -eq "release") {
-            $have = gh release view $tag --json assets --jq '.assets[].name'
-            if ($have -contains "AdeeboMeter.exe") { Write-Host "The release already has its files (signed by hand) - leaving them as they are."; exit 0 }
-          }
+          # review 1.1.6 P5 #2: a by-hand run (workflow_dispatch) is held to the same rule - files already on the release stay
+          $have = gh release view $tag --json assets --jq '.assets[].name'
+          if ($have -contains "AdeeboMeter.exe") { Write-Host "The release already has its files (signed by hand) - leaving them as they are."; exit 0 }
           gh release upload $tag (Get-ChildItem dist -File | Where-Object Name -notlike "RELEASE-NOTES-*").FullName --clobber
           gh release edit $tag --title "AdeeboMeter $ver" --notes-file "dist/RELEASE-NOTES-$ver.md"

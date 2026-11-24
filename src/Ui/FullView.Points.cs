@@ -192,7 +192,7 @@ namespace AdeeboMeter
             return PtAll().Where(i => words.All(wd => (i.Title + " " + L.T(i.Title) + " " + i.Tag + " " + i.Group + " " + L.T(i.Group) + " " + i.Key).IndexOf(wd, StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
-        // award once, flash it on the header button; returns the line to show ("+2 Adeebo Points", "+3 replay bonus" or "")
+        // award once, flash it on the header button; returns the line to show ("+2 Adeebo Points", "+2 replay bonus" or "")
         string EarnPts(string id, bool opened, bool completed)
         {
             if (!Cfg.Points || !completed) return "";
@@ -305,7 +305,7 @@ namespace AdeeboMeter
                         float bw = Math.Min(360 * S, w - 36 * S), frac = next == "" ? 1f : 1f - (float)left / Math.Max(1, left + total - RankFloor(total));
                         var bar = new RectangleF(x + 18 * S, y + 54 * S, bw, 10 * S); Theme.Fill(g, bar, 5 * S, Theme.Track);
                         if (frac > 0) Theme.Fill(g, new RectangleF(bar.X, bar.Y, Math.Max(10 * S, bw * Math.Min(1f, frac)), bar.Height), 5 * S, Theme.Blue);
-                        g.DrawString(next == "" ? L.T("Nearly everything AdeeboMeter can teach, tried and understood. Well done.") : left + " " + L.T("to") + " " + L.T(next), Draw.fSmall, sub, bar.Right + 12 * S, y + 50 * S);
+                        g.DrawString(next == "" ? L.T("The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.") : left + " " + L.T("to") + " " + L.T(next), Draw.fSmall, sub, bar.Right + 12 * S, y + 50 * S);
                     }
                     y += card.Height + 18 * S;
                     if (award && awardFile != "") y = PaintAwardSent(g, x, y, w, ink, sub, blue);

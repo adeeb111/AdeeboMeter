@@ -65,7 +65,7 @@ namespace AdeeboMeter
                 var ts = g.MeasureString("AdeeboMeter", Draw.fBig); var tf = StringFormat.GenericTypographic;
                 float aw = g.MeasureString("Adeebo", Draw.fBig, PointF.Empty, tf).Width;
                 float ty = cy - ts.Height / 2, tx = x + (ts.Width - g.MeasureString("AdeeboMeter", Draw.fBig, PointF.Empty, tf).Width) / 2;
-                g.DrawString(AdeeboMeter.L.T("Adeebo"), Draw.fBig, b, tx, ty, tf); g.DrawString(AdeeboMeter.L.T("Meter"), Draw.fBig, mb, tx + aw, ty, tf);
+                g.DrawString("Adeebo", Draw.fBig, b, tx, ty, tf); g.DrawString("Meter", Draw.fBig, mb, tx + aw, ty, tf);   // review 1.1.6 D1 #12: the product name is never translated
             }
             // 23 Nov: the companion's face moved into the ⋯ menu - the top line keeps the logo and the controls
         }
@@ -112,9 +112,9 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
-                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + string.Format(L.T("{0} MB of 80 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) + (live.Running && liveView != null ? "    + tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB) : "");
+                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + string.Format(L.T("{0} MB of 99 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) + (live.Running && liveView != null ? "    + tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB) : "");
                 using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
-                // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
+                // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 99 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
                 float left = x + g.MeasureString(st, Draw.fSmall).Width + 24 * S;
                 // anything AdeeboMeter has waited on for 5 s or more: named here with its seconds, gone when it ends (1.1.6 test day)

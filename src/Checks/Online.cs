@@ -40,9 +40,9 @@ namespace AdeeboMeter
                 using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
                 {
                     var sb = new StringBuilder(); var buf = new char[16384]; int n;   // read at most 4 MB, in small pieces - never the whole thing first
-                    while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 4000000) return null; }
+                    while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 1500000) return null; }   // review 1.1.6 P2 #11: 1.5 M characters at most (an answer that big parses to ~10 MB)
                     var text = sb.ToString();
-                    var o = Json.Parse(text); lock (k) cache[url] = o; return o;
+                    var o = Json.Parse(text); if (text.Length <= 300000) lock (k) { if (cache.Count >= 40) cache.Clear(); cache[url] = o; } return o;   // big answers aren't kept; at most 40 small ones
                 }
             }
             catch (Exception e) { Program.Log("online: " + Draw.Trunc(e.Message, 80)); return null; }

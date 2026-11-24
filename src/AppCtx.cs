@@ -38,7 +38,7 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; bool openFirst; string crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
@@ -204,7 +204,13 @@ namespace AdeeboMeter
             }
             catch (Exception e) { Program.Log("single: " + e.Message); }
 
-            if (Program.Restarted && Program.StartView == null)
+            if (openFirst && !Program.Restarted && Program.StartView == null && Program.StartFile == null)
+            {
+                var hello = new System.Windows.Forms.Timer { Interval = 1500 };
+                hello.Tick += delegate { hello.Stop(); hello.Dispose(); OpenFull(); };
+                hello.Start();
+            }
+            else if (Program.Restarted && Program.StartView == null)
             {
                 var again = new System.Windows.Forms.Timer { Interval = 800 };
                 again.Tick += delegate { again.Stop(); again.Dispose(); OpenFull(); };
@@ -256,16 +262,23 @@ namespace AdeeboMeter
             try { if (!first && (unreadable || (parsed == 0 && new FileInfo(settingsPath).Length > 0))) { File.Copy(settingsPath, settingsPath + ".damaged", true); Program.Log("settings file damaged - kept a copy as " + Path.GetFileName(settingsPath) + ".damaged, starting from defaults"); } }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             // 22 Nov: Sports became its own page - once, it joins a saved bar right after Streaming
-            if (!first && !Cfg.NavSports) { var l = Cfg.Nav.Split(',').ToList(); if (l.Remove("toolbox")) l.Insert(Math.Min(1, l.Count), "toolbox"); int si = l.IndexOf("stream"); if (si >= 0 && !l.Contains("sports") && l.Count(z => z.Trim() != "") < 8) l.Insert(si + 1, "sports"); else if (si >= 0 && !l.Contains("sports")) Program.Log("nav: Sports not added - the bar is full (it's in More)");   /* R2-042: a full bar keeps every tab you chose */ Cfg.Nav = Cfg.NavClean(string.Join(",", l)); }   // and Toolbox right after Home (Adeeb, 22 Nov) - once; Settings › Navigation can move it again
+            Func<string, string> sportsNav = nav0 => { var l = nav0.Split(',').ToList(); if (l.Remove("toolbox")) l.Insert(Math.Min(1, l.Count), "toolbox"); int si = l.IndexOf("stream"); if (si >= 0 && !l.Contains("sports") && l.Count(z => z.Trim() != "") < 8) l.Insert(si + 1, "sports"); else if (si >= 0 && !l.Contains("sports")) Program.Log("nav: Sports not added - the bar is full (it's in More)");   /* R2-042: a full bar keeps every tab you chose */ return Cfg.NavClean(string.Join(",", l)); };
+            if (!first && !Cfg.NavSports) { Cfg.Nav = sportsNav(Cfg.Nav); Views.MigrateNav(sportsNav); }   // review 1.1.6 P1 #16: kept views too   // and Toolbox right after Home (Adeeb, 22 Nov) - once; Settings › Navigation can move it again
             Cfg.NavSports = true;
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
-            if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
+            // review 1.1.6 P1 #1: a file that says setupdone=0 is a fresh install whose questions are still open - not an upgrade
+            bool pendingSetup = !first && !Cfg.SetupDone;
+            // review 1.1.6 D1 #9 (and Adeeb: "it should open on that language"): a first start speaks the Windows display language
+            // when AdeeboMeter has it; the language button at the top switches back in one click
+            if (first) { string ui = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; if (L.Languages.Any(z => z[0] == ui)) Cfg.Lang = ui; }
+            if (!first && !pendingSetup && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") is kept; a named preset sets the game timings too.
             if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { Cfg.SetupDone = false; ApplyAutoStart(); SaveSettings(); }
-            else { Views.EnsureStarted(); }   // 1.1.5 views: an upgrade keeps exactly what it had, as "My setup"   // a fresh install gets the 3-question setup on Home; an upgrade never does
+            else if (!pendingSetup) { Views.EnsureStarted(); }
+            if (first) openFirst = true;   // review 1.1.6 D1 #15: the first start shows the window once, so the setup questions are seen   // 1.1.5 views: an upgrade keeps exactly what it had, as "My setup"   // a fresh install gets the 3-question setup on Home; an upgrade never does
             System.Threading.ThreadPool.QueueUserWorkItem(delegate { GameHistory.TidyNow(); });   // old game days go even when nothing writes new ones
         }
         void SaveSettings()
@@ -326,7 +339,7 @@ namespace AdeeboMeter
         void Wire(Remote r)
         {
                 r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes."), r.Words);
-                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
+                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.St != Remote.State.Waiting && r.St != Remote.State.Connecting && !string.IsNullOrEmpty(r.Link)) try { if (Clipboard.ContainsText() && Clipboard.GetText() == r.Link) Clipboard.Clear(); } catch (System.Runtime.InteropServices.ExternalException) { }   /* review 1.1.6: a copied pairing link doesn't outlive its code */ if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
                 r.FeltSlow = () => FeltSlow();
                 // a file from the phone: asked on the page first, No by default
                 r.AskFile = (phone, name, size) => PhoneHub.Ask("file", phone, L.T("wants to send a file:") + " " + name + " (" + SizeText(size) + "). " + L.T("It will be saved in Downloads\\AdeeboMeter."));
@@ -355,7 +368,7 @@ namespace AdeeboMeter
         {
             if (quitting || Remote.Relay == "" || (DateTime.UtcNow - standbyAt).TotalSeconds < 15) return;
             standbyAt = DateTime.UtcNow;
-            if (!Cfg.PhoneStandby) { if (standby.Count > 0) StopStandby(); return; }   // bug-hunt ML-111: your switch on the Phone page
+            if (!Cfg.PhoneStandby || Policy.NoRemote) { if (standby.Count > 0) StopStandby(); if (Policy.NoRemote && Remote.Now != null && Remote.Now.St != Remote.State.Ended) Remote.Now.End("turned off by your IT team"); return; }   // review 1.1.6: phone_remote = off (or online_lookups = off) ends it all   // bug-hunt ML-111: your switch on the Phone page
             var now = Remote.Now; if (now != null && now.St != Remote.State.Ended && now.Known == null) { StopStandby(); return; }   // a code session is open
             if (now != null && now.Known != null && now.St == Remote.State.Paired) return;                                       // a remembered phone is connected
             List<RemotePhones.P> phones; try { phones = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phones: " + e.Message); return; }

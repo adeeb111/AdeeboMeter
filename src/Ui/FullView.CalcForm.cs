@@ -291,14 +291,16 @@ namespace AdeeboMeter
         void AnimTick()
         {
             bool on = tab == "toolbox" && Visible && WindowState != FormWindowState.Minimized && Form.ActiveForm == this && (Animated.Contains(tbSel) || Animates3(tbSel)) && !tbHome && !tbBusy && visRect.Height > 0 && WindowsAnimates();
-            if (!on || AnimHolding) return;
+            if (!on) { animTimer.Stop(); return; }   /* review 1.1.6 U1 #13: no 20 ticks a second on pages with nothing moving - EnsureAnim starts it again */
+            if (AnimHolding) return;
             var r = new Rectangle((int)visRect.X + tbCanvas.AutoScrollPosition.X, (int)visRect.Y + tbCanvas.AutoScrollPosition.Y, (int)visRect.Width + 1, (int)visRect.Height + 1);
             if (r.Bottom < 0 || r.Top > tbCanvas.ClientSize.Height) return;   // scrolled away
             tbCanvas.Invalidate(r);
         }
         void EnsureAnim()
         {
-            if (animTimer != null) return;
+            if (animTimer != null) { if (!animTimer.Enabled) animTimer.Start(); return; }
+            Activated += delegate { if (animTimer != null && tab == "toolbox") animTimer.Start(); };
             animTimer = new Timer { Interval = 50 }; animTimer.Tick += delegate { try { AnimTick(); } catch (Exception e) { Program.Log("anim: " + e.Message); animTimer.Stop(); } }; animTimer.Start();
         }
     }

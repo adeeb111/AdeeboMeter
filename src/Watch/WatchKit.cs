@@ -215,7 +215,7 @@ namespace AdeeboMeter
             double hours = ss.Sum(s => s.Length.TotalHours); var dips = ss.SelectMany(s => s.Dips).ToList();
             int past = dips.Count(d => d.Blame == "provider" || d.Blame == "far");
             var sb = new StringBuilder();
-            sb.AppendLine(month.ToString("MMMM yyyy", CultureInfo.CurrentCulture) + " - " + mode + " report from AdeeboMeter (measured on my PC)");
+            sb.AppendLine(month.ToString("MMMM yyyy", CultureInfo.InvariantCulture) + " - " + mode + " report from AdeeboMeter (measured on my PC)");
             sb.AppendLine(hours.ToString("0.#", CultureInfo.CurrentCulture) + " h watched, " + dips.Count + " dips, " + dips.Count(d => d.Blame == "provider") + " beyond my router (router replies normal, internet check failing), " + dips.Count(d => d.Blame == "far") + " at the service's own servers, " + dips.Count(d => d.Blame == "wifi" || d.Blame == "home" || d.Blame == "pc") + " in my home or PC.");
             if (dips.Count > 0)
             {

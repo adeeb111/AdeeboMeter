@@ -645,7 +645,7 @@ namespace AdeeboMeter
                 iface = ActiveBlock(iface);   // two Wi-Fi adapters: the connected one's lines only, never a mix of both
                 var f = Fields(iface); string v; int ch = -1, sig = -1;
                 if (f.TryGetValue("Channel", out v)) int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch);
-                if (f.TryGetValue("Signal", out v)) int.TryParse(v.TrimEnd('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig);
+                if (f.TryGetValue("Signal", out v) && !int.TryParse(v.Trim('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig)) sig = -1;   /* review 1.1.6 R5 N1: Turkish writes "%88"; a failed parse stays unknown so the fallback reads it */
                 // Windows in another language: the same reading the corner widget uses (it finds the % and the channel by shape)
                 int psig, prate; string pssid, pch, pbssid, pstate; Monitor.ParseWifi(iface, out psig, out pssid, out pch, out pbssid, out pstate, out prate);
                 if (sig < 0) sig = psig; if (ch < 0) int.TryParse(pch, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch); if (ch == 0) ch = -1;
@@ -667,7 +667,10 @@ namespace AdeeboMeter
                 s.Radio.Add(new[] { "Signal", sig >= 0 ? sig + "%  ·  " + rssi : "-", sig < 0 ? "0" : sig < 40 ? "2" : sig < 60 ? "1" : "0" });
                 s.Radio.Add(new[] { "Receive rate", F("Receive rate (Mbps)") == "-" ? "-" : F("Receive rate (Mbps)") + " Mb/s" });
                 s.Radio.Add(new[] { "Transmit rate", F("Transmit rate (Mbps)") == "-" ? "-" : F("Transmit rate (Mbps)") + " Mb/s" });
-                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication") == "-" || F("Authentication") == "" ? "3" : F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Cipher").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Authentication") == "Open" ? "2" : "0" });   /* L-284: unreadable is unknown, not green */
+                /* review 1.1.6 R5 37b: "Open" is English-only in netsh - the Wi-Fi API's BSS list says it in any language */
+                string apiSec = ""; if (bssid != "") { string werr2; var meS = WlanApi.List(false, out werr2).FirstOrDefault(b => string.Equals(b.Bssid, bssid.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (meS != null) apiSec = meS.Sec ?? ""; }
+                bool openNet = apiSec == "Open" || Regex.IsMatch(F("Authentication"), @"^(Open|Ouvert[e]?|Offen|Abierta|Aberta|Aperta|Open\w*|مفتوح|খোলা)$", RegexOptions.IgnoreCase);
+                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication") == "-" || F("Authentication") == "" ? "3" : F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Cipher").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || openNet ? "2" : "0" });   /* L-284: unreadable is unknown, not green */
                 if (sig >= 0 && sig < 40) { lv = 2; notes.Add(Voice.P("Your Wi-Fi signal is weak (" + sig + "%). Walls are winning - move closer to the access point or plug in a cable.", "Weak Wi-Fi signal (" + sig + "%).")); }
                 else if (sig >= 0 && sig < 60) { lv = Math.Max(lv, 1); notes.Add("Signal is so-so (" + sig + "%). Fine for browsing; calls may stutter."); }
 

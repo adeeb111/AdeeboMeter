@@ -239,7 +239,7 @@ namespace AdeeboMeter
         // Segoe UI on every Windows; the system sans-serif anywhere it's missing
         static Font RFont(float size, FontStyle st)
         {
-            try { return new Font("Segoe UI", size, st, GraphicsUnit.World); }
+            try { return new Font(Draw.LangFamily, size, st, GraphicsUnit.World); }
             catch (ArgumentException) { return new Font(FontFamily.GenericSansSerif, size, st, GraphicsUnit.World); }
         }
         static Dictionary<string, Font> ReportFonts()

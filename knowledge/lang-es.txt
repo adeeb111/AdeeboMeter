@@ -544,8 +544,8 @@ Full screen	Pantalla completa
 Play	Jugar
 Show all	Mostrar todo
 Run it for real:	Pruébalo de verdad:
-Replay bonus · +3	Bonificación por repetir · +3
-Replay bonus · +3 - run it again at least 10 minutes after your first run.	Bonificación por repetir · +3: repite al menos 10 minutos después de la primera vez.
+Replay bonus · +2	Bonificación por repetir · +2
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	Bonificación por repetir · +2: repite al menos 10 minutos después de la primera vez.
 replay bonus	bonificación por repetir
 path finished	ruta completada
 You got the Adeebo Award!	¡Conseguiste el Adeebo Award!
@@ -553,7 +553,6 @@ You got the Adeebo Award	Conseguiste el Adeebo Award
 Adeebo Award	Adeebo Award
 Network detective	Detective de redes
 Packet whisperer	Experto en paquetes
-Nearly everything AdeeboMeter can teach, tried and understood. Well done.	Has probado y entendido casi todo lo que enseña AdeeboMeter. Bien hecho.
 +2, or +4 for the longer tests	+2, o +4 en pruebas más largas
 +3, once	+3, una vez
 +2	+2
@@ -1144,7 +1143,7 @@ Credits	Créditos
 Try it	Probarlo
 Full checkup	Revisión completa
 Run full checkup	Ejecutar revisión completa
-Include a speed test (up to 500 MB)	Incluir prueba de velocidad (hasta 500 MB)
+Include a speed test (up to 1 GB)	Incluir prueba de velocidad (hasta 1 GB)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	Este PC, discos, apps, Wi-Fi, router, internet y nombres. Un informe con el problema principal primero.
 See it  ›	Verlo  ›
 Speed only	Solo velocidad
@@ -1715,7 +1714,7 @@ Ten years of money	Diez años de dinero
 Text files	Archivos de texto
 That didn't switch cleanly - your previous view is back, nothing lost.	No se pudo cambiar correctamente. Volviste a la vista anterior sin perder nada.
 That file isn't there any more.	Ese archivo ya no está.
-The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	La prueba 4K descarga y sube hasta 500 MB durante 20-30 segundos. Las demás actividades de tu conexión irán más lentas mientras tanto. ¿Iniciar?
+The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	La prueba 4K descarga y sube hasta 1 GB durante 20-30 segundos. Las demás actividades de tu conexión irán más lentas mientras tanto. ¿Iniciar?
 The app's own connection:	Conexión de la propia app:
 The biggest share is	La mayor parte es
 The busy number is the one games feel when someone else is downloading.	El valor con carga es el que sienten los juegos cuando alguien descarga.
@@ -4675,7 +4674,6 @@ about a second per 10 packets	alrededor de un segundo por cada 10 paquetes
 a few seconds - or keeps watching, if you give it minutes	unos segundos, o sigue vigilando si le das minutos
 a few minutes (it tests the disk and memory)	unos minutos (prueba el disco y la memoria)
 a few seconds	unos segundos
-100-500 MB to Cloudflare's speed server	100-500 MB al servidor de velocidad de Cloudflare
 one TLS handshake to each site	un handshake TLS con cada sitio
 nothing - it reads the file or text you give it	nada: lee el archivo o texto que le das
 nothing - it's maths on this PC	nada: son cálculos en este PC
@@ -5165,7 +5163,7 @@ Your Line at Kick-off Time	Tu línea a la hora del saque inicial
 Your phone vs this PC	Tu teléfono frente a este PC
 local network	red local
 {0} MB (live capture on)	{0} MB (captura en directo activada)
-{0} MB of 80 MB budget	{0} MB de un presupuesto de 80 MB
+{0} MB of 99 MB budget	{0} MB de un presupuesto de 99 MB
 {0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} está conectado pero el router no le dio dirección (169.254.x.x: el DHCP no respondió). Reinicia el router o vuelve a conectar.
 Every network connection just dropped.	Todas las conexiones de red acaban de caerse.
 All network connections dropped.	Se cayeron todas las conexiones de red.
@@ -5390,3 +5388,63 @@ To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	Para salir: Esc
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows se llevó el teclado (Win, Alt+Tab o una notificación): haz clic aquí o vuelve con Alt+Tab para seguir.
 no server answered - is the internet down?	ningún servidor respondió: ¿se cayó internet?
 run a test to see	haz una prueba para verlo
+ With the kick-off reminder on: your teams' fixtures every 30 min while the PC is on.	 Con el recordatorio de inicio: los partidos de tus equipos cada 30 min mientras el PC está encendido.
+ is laggy.	 va con retraso.
+ is playable.	 es jugable.
+ is steady.	 es estable.
+A TCP handshake (no data) to each host on your board every {0} min while AdeeboMeter runs, even from the tray.	Un saludo TCP (sin datos) a cada host de tu panel cada {0} min mientras AdeeboMeter funciona, incluso desde la bandeja.
+A ping a minute to each device you watch on your network ({0} now). Stays on your local network.	Un ping por minuto a cada dispositivo que vigilas en tu red ({0} ahora). Se queda en tu red local.
+Add a game	Añadir un juego
+An Example is made-up data - run the tool to save or share your own result.	Un ejemplo son datos inventados: ejecuta la herramienta para guardar o compartir tu propio resultado.
+Checking your connection...	Comprobando tu conexión...
+Couldn't read Windows' connection list just now - trying again.	No se pudo leer la lista de conexiones de Windows ahora mismo; se vuelve a intentar.
+Edit	Editar
+Give the game a name.	Ponle un nombre al juego.
+Green background (for OBS Chroma Key)	Fondo verde (para el croma de OBS)
+Internet ping	Ping a internet
+Line	Línea
+Listening...	Escuchando...
+Market quotes	Cotizaciones de mercado
+Nothing measured - the router and internet checks are off in Settings.	Nada medido: las comprobaciones del router y de internet están desactivadas en Ajustes.
+Nothing measured yet - pick your broker and press Check my line.	Aún no hay nada medido: elige tu bróker y pulsa Comprobar mi línea.
+Off - it needs your own key.	Desactivado: necesita tu propia clave.
+Off - nothing is asked until you turn scores on.	Desactivado: no se pide nada hasta que actives los resultados.
+Off - your IT team turned the phone link off.	Desactivado: tu equipo de TI desactivó el enlace con el teléfono.
+Only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from bankofcanada.ca. No account, nothing about you is sent.	Solo cuando Mercados está abierto (o el resumen de la tarde está activado) y deberían salir cifras nuevas: una petición por divisa de tu lista (su historial desde 2017 la primera vez) y, más o menos cada semana, el índice de materias primas, el tipo oficial y la inflación, desde bankofcanada.ca. Sin cuenta, no se envía nada sobre ti.
+Only when you press Show the QR code, or a remembered phone connects: a sealed connection through AdeeboMeter's relay (adeebometer-remote.orkoadeeb.workers.dev). The relay passes messages along and can't read them.	Solo cuando pulsas Mostrar el código QR, o se conecta un teléfono recordado: una conexión sellada a través del relé de AdeeboMeter (adeebometer-remote.orkoadeeb.workers.dev). El relé pasa los mensajes y no puede leerlos.
+Only when you press Test my stream: the playlist of the link you gave, and up to 30 s of its video, from that link's own server.	Solo cuando pulsas Probar mi stream: la lista de reproducción del enlace que diste y hasta 30 s de su vídeo, desde el propio servidor de ese enlace.
+Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes. A typed host also gets 1.1.1.1 traced next to it, for comparison.	Solo cuando lo ejecutas: un MTR a los destinos que elegiste durante los minutos que elegiste; una búsqueda inversa de nombre para cada router del camino (en tu propio servidor DNS); hasta 4 lecturas de página de un cablemódem en 192.168.100.1 (su página de señal); tu IP pública (una petición a www.cloudflare.com/cdn-cgi/trace) solo si escribes sí. A un host escrito también se le traza 1.1.1.1 al lado, para comparar.
+Phone link	Enlace con el teléfono
+Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.	Guardar activa los resultados: AdeeboMeter pide entonces los partidos del día a la NHL, ESPN y BBC Sport, cada 5 minutos más o menos mientras la página Deportes está abierta. No se envía nada sobre ti.
+Service board watch	Vigilancia del panel de servicios
+Show the PNG in its folder	Mostrar el PNG en su carpeta
+Spike	Pico
+Sports scores	Resultados deportivos
+The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.	El rango más alto: más o menos la mitad de todo lo que AdeeboMeter puede enseñar, probado y entendido. Bien hecho.
+This is an Example (made-up data) - run the tool to save or share your own result.	Esto es un ejemplo (datos inventados): ejecuta la herramienta para guardar o compartir tu propio resultado.
+Toronto opens	Toronto abre
+Turned off by your IT team	Desactivado por tu equipo de TI
+Two servers have the same name - give each one its own.	Dos servidores tienen el mismo nombre: ponle a cada uno el suyo.
+Watched devices	Dispositivos vigilados
+While the Sports page is open (about every 5 min), or a stream plays while a team you follow is live: the day's fixtures and scores from api-web.nhle.com (NHL), site.api.espn.com (football) and feeds.bbci.co.uk (headlines), plus api.football-data.org and api.cricapi.com when you added your own key.	Mientras la página Deportes está abierta (cada 5 min aprox.), o se reproduce un stream con un equipo que sigues en directo: los partidos y resultados del día de api-web.nhle.com (NHL), site.api.espn.com (fútbol) y feeds.bbci.co.uk (titulares), más api.football-data.org y api.cricapi.com si añadiste tu propia clave.
+With your own key, while Markets is open: index and futures quotes from financialmodelingprep.com, as often as you set (1-60 min).	Con tu propia clave, mientras Mercados está abierto: cotizaciones de índices y futuros de financialmodelingprep.com, con la frecuencia que elijas (1-60 min).
+Write a PNG for OBS (overlay.png)	Escribir un PNG para OBS (overlay.png)
+ask msftconnecttest.com when a check fails (sign-in page check)	consultar msftconnecttest.com cuando falla una comprobación (detección de página de inicio de sesión)
+delay	retardo
+isn't a host name or IP - letters, digits, dots and dashes only.	no es un nombre de host ni una IP: solo letras, dígitos, puntos y guiones.
+jitter	jitter
+keep a waiting room for remembered phones at AdeeboMeter's relay	mantener una sala de espera para los teléfonos recordados en el relé de AdeeboMeter
+send your weather place to a different server: 	enviar tu lugar del tiempo a otro servidor: 
+spikes	picos
+the TCP port must be 1 - 65535.	el puerto TCP debe estar entre 1 y 65535.
+the scores couldn't be reached - it tries again in 5 minutes	no se pudo llegar a los resultados: lo intenta de nuevo en 5 minutos
+turn the internet check on (a ping to 1.1.1.1 in the background)	activar la comprobación de internet (un ping a 1.1.1.1 en segundo plano)
+waiting	esperando
+Market closed - the watch starts at 9:30 ET	Mercado cerrado: la vigilancia empieza a las 9:30 ET
+Live watch is off	La vigilancia en directo está desactivada
+region estimate	estimación de región
+Valve server	servidor de Valve
+exact	exacto
+Not measured yet.	Aún sin medir.
+up to 1 GB to the speed server you picked	hasta 1 GB al servidor de velocidad que elegiste
+Same network twice	La misma red dos veces

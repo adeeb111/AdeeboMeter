@@ -132,9 +132,9 @@ namespace AdeeboMeter
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY")), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
-            bool can = LiveCapture.Available && !switchBusy;
+            bool can = LiveCapture.Available && !switchBusy && !Policy.NoCapture;
             Theme.Fill(g, btn, 16 * S, can ? Theme.Blue : Theme.Track);
-            string bt = switchBusy ? "Listening... " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : L.T("Find my switch port");
+            string bt = switchBusy ? L.T("Listening...") + " " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : Policy.NoCapture ? L.T("Turned off by your IT team") : L.T("Find my switch port");
             using (var bb = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBodyB, bb, btn, c);
             if (can) Act(linkCanvas, btn, StartSwitch);
             string note = !LiveCapture.Available ? L.T("Needs Wireshark and Npcap on this PC.") : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";

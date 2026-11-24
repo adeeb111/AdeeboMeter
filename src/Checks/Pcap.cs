@@ -31,6 +31,7 @@ namespace AdeeboMeter
             error = ""; var list = new List<Pkt>();
             try
             {
+                if (NetPath.Is(path)) { error = "network paths (\\\\server\\share) aren't read - copy the file to this PC first"; return list; }
                 var fi = new FileInfo(path);
                 if (!fi.Exists) { error = "file not found"; return list; }
                 if (fi.Length > MaxBytes) { error = "bigger than 64 MB - filter it first in Wireshark (File › Export Specified Packets)"; return list; }

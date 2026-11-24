@@ -46,12 +46,13 @@ namespace AdeeboMeter
             var s = snap; float h = 112 * S; var r = new RectangleF(x, y, w, h);
             Kit.Box(g, r, 14 * S);
             double ping = s.Ping;
-            int plv = double.IsNaN(ping) ? 2 : ping < 40 ? 0 : ping < 80 ? 1 : 2;
+            bool none = M.NetPing.Values(6).Length == 0;   // review 1.1.6 U1 #2: nothing measured yet (or the internet check is off) is grey, never "no connection"
+            int plv = none ? 3 : double.IsNaN(ping) ? 2 : ping < 40 ? 0 : ping < 80 ? 1 : 2;
             string kind; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; }
             string bg = HudBackground(); bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5;
             // the verdict
-            string verdict = double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
-            int vlv = verdict.StartsWith("READY", StringComparison.Ordinal) ? 0 : verdict.StartsWith("NO", StringComparison.Ordinal) ? 2 : 1;
+            string verdict = none ? (Cfg.NetSec == 0 ? "NOT CHECKED - the internet check is off in Settings" : "CHECKING YOUR CONNECTION...") : double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
+            int vlv = none ? 3 : verdict.StartsWith("READY", StringComparison.Ordinal) ? 0 : verdict.StartsWith("NO", StringComparison.Ordinal) ? 2 : 1;
             // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
             // sentence case like the rest of the app (review 24 Nov); the program's own name keeps its spelling
             string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? Kit.Sent(L.T("WAIT - ")) + verdict.Substring(7)

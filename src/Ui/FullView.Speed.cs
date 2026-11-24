@@ -114,7 +114,7 @@ namespace AdeeboMeter
 
                 // one line: what it's doing, what went wrong, or what it costs
                 string st = busy ? speedRun.Status : speedErr != "" ? L.T("Speed test:") + " " + speedErr : speedNote != "" ? speedNote
-                    : L.T("About 20 seconds, up to") + " " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. " + L.T("Never runs by itself.");
+                    : L.T("About 20 seconds, up to") + " " + 2 * (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. "   /* review 1.1.6 P3 #19: the real ceiling */ + L.T("Never runs by itself.");
                 using (var stb = new SolidBrush(speedErr != "" && !busy ? Theme.LvText(1) : Theme.Muted)) g.DrawString(st, Draw.fSmall, stb, new RectangleF(rx, ry, rw, 20 * S), nf);
             }
             return cr.Bottom + 18 * S;

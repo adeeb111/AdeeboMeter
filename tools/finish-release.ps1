@@ -63,6 +63,7 @@ if ($body.IndexOf($built) -lt 0) { throw "the notes don't carry GitHub's exe fin
 $body = $body.Replace($built, $signed).Replace($oldWin, $winSum)
 if ($body.IndexOf("from this exact source.") -lt 0) { throw "the notes no longer have the sentence 'from this exact source.' - add the signing line by hand" }   # bug-hunt L-165: never a silent no-op
 $body = $body.Replace("from this exact source.", "from this exact source, then code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum, timestamped). Signing adds only the signature: the exe exactly as GitHub built it - the file GitHub's build provenance covers - had SHA256 ``$built``.")
+$body = $body.Replace("> Not code-signed yet: the signed files replace these within the day (review 1.1.6 P5 #2 - the signing line is only written once the signature is really on them).", "> Code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum). While the certificate is new, Windows may still show *`"Windows protected your PC`"* - choose **More info → Run anyway**.")
 $notes = Join-Path $out "notes.md"; [IO.File]::WriteAllText($notes, $body.TrimEnd() + "`n")
 
 Write-Host "5/6 Uploading ..."

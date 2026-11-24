@@ -544,8 +544,8 @@ Full screen	Plein écran
 Play	Lire
 Show all	Tout afficher
 Run it for real:	Lancez-le pour de vrai :
-Replay bonus · +3	Bonus de relance · +3
-Replay bonus · +3 - run it again at least 10 minutes after your first run.	Bonus de relance · +3 - relancez-le au moins 10 minutes après la première fois.
+Replay bonus · +2	Bonus de relance · +2
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	Bonus de relance · +2 - relancez-le au moins 10 minutes après la première fois.
 replay bonus	bonus de relance
 path finished	parcours terminé
 You got the Adeebo Award!	Vous avez gagné le Prix Adeebo !
@@ -553,7 +553,6 @@ You got the Adeebo Award	Vous avez gagné le Prix Adeebo
 Adeebo Award	Prix Adeebo
 Network detective	Détective réseau
 Packet whisperer	Murmureur de paquets
-Nearly everything AdeeboMeter can teach, tried and understood. Well done.	Presque tout ce qu'AdeeboMeter peut enseigner, essayé et compris. Bravo.
 +2, or +4 for the longer tests	+2, ou +4 pour les tests longs
 +3, once	+3, une fois
 +2	+2
@@ -1148,7 +1147,7 @@ Credits	Crédits
 Try it	Essayer
 Full checkup	Bilan complet
 Run full checkup	Lancer le bilan complet
-Include a speed test (up to 500 MB)	Inclure un test de vitesse (jusqu'à 500 Mo)
+Include a speed test (up to 1 GB)	Inclure un test de vitesse (jusqu'à 1 Go)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	Ce PC, ses disques et applis, votre Wi-Fi, routeur, internet et noms - un rapport, le plus gros problème d'abord.
 See it  ›	Voir  ›
 Speed only	Vitesse seulement
@@ -1724,7 +1723,7 @@ Ten years of money	Dix années d’argent
 Text files	Fichiers texte
 That didn't switch cleanly - your previous view is back, nothing lost.	Changement incomplet; l’ancienne vue est rétablie.
 That file isn't there any more.	Ce fichier n’existe plus.
-The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	Le test 4K transfère jusqu'à 500 Mo pendant 20-30 secondes et ralentit les autres usages. Démarrer?
+The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	Le test 4K transfère jusqu'à 1 Go pendant 20-30 secondes et ralentit les autres usages. Démarrer?
 The app's own connection:	Connexion de l’application :
 The biggest share is	La plus grande part :
 The busy number is the one games feel when someone else is downloading.	La valeur sous charge reflète le délai ressenti quand quelqu’un télécharge.
@@ -3178,7 +3177,7 @@ Listens to your PC's own traffic for 10 seconds and tells you what it's made of:
 Main screen	Écran principal
 Measuring 	Mesure de 
 Measuring for one second...	Mesure pendant une seconde...
-Meter	Compteur
+Meter	Meter
 No network adapter is up right now - connect, then capture again.	Aucune carte réseau n'est active en ce moment : connectez-vous, puis capturez de nouveau.
 No router to measure - are you connected?	Aucun routeur à mesurer : êtes-vous connecté?
 No valid servers in that file.	Aucun serveur valide dans ce fichier.
@@ -3392,7 +3391,6 @@ about a second per 10 packets	environ une seconde par 10 paquets
 a few seconds - or keeps watching, if you give it minutes	quelques secondes, ou continue de surveiller si vous donnez des minutes
 a few minutes (it tests the disk and memory)	quelques minutes (teste le disque et la mémoire)
 a few seconds	quelques secondes
-100-500 MB to Cloudflare's speed server	100-500 Mo vers le serveur de vitesse de Cloudflare
 one TLS handshake to each site	une négociation TLS par site
 nothing - it reads the file or text you give it	rien : lit le fichier ou le texte que vous donnez
 nothing - it's maths on this PC	rien : des calculs sur ce PC
@@ -3885,7 +3883,7 @@ Your Line at Kick-off Time	Votre ligne à l’heure du coup d’envoi
 Your phone vs this PC	Votre téléphone contre ce PC
 local network	réseau local
 {0} MB (live capture on)	{0} Mo (capture en direct activée)
-{0} MB of 80 MB budget	{0} Mo sur un budget de 80 Mo
+{0} MB of 99 MB budget	{0} Mo sur un budget de 99 Mo
 {0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} est connecté, mais n’a reçu aucune adresse du routeur (169.254.x.x - le DHCP n’a pas répondu). Redémarrez le routeur ou reconnectez-vous.
 Every network connection just dropped.	Toutes les connexions réseau viennent de tomber.
 All network connections dropped.	Toutes les connexions réseau sont tombées.
@@ -4115,3 +4113,63 @@ To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	Pour sortir : �
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici ou revenez avec Alt+Tab pour continuer.
 no server answered - is the internet down?	aucun serveur n’a répondu - Internet est-il en panne ?
 run a test to see	lancez un test pour voir
+ With the kick-off reminder on: your teams' fixtures every 30 min while the PC is on.	 Avec le rappel du coup d'envoi : les matchs de vos équipes toutes les 30 min tant que le PC est allumé.
+ is laggy.	 est saccadé.
+ is playable.	 est jouable.
+ is steady.	 est stable.
+A TCP handshake (no data) to each host on your board every {0} min while AdeeboMeter runs, even from the tray.	Une poignée de main TCP (sans données) vers chaque hôte de votre tableau toutes les {0} min tant qu'AdeeboMeter tourne, même depuis la zone de notification.
+A ping a minute to each device you watch on your network ({0} now). Stays on your local network.	Un ping par minute vers chaque appareil surveillé sur votre réseau ({0} actuellement). Reste sur votre réseau local.
+Add a game	Ajouter un jeu
+An Example is made-up data - run the tool to save or share your own result.	Un exemple, ce sont des données inventées - lancez l'outil pour enregistrer ou partager votre propre résultat.
+Checking your connection...	Vérification de votre connexion...
+Couldn't read Windows' connection list just now - trying again.	Impossible de lire la liste des connexions de Windows pour l'instant - nouvel essai.
+Edit	Modifier
+Give the game a name.	Donnez un nom au jeu.
+Green background (for OBS Chroma Key)	Fond vert (pour l'incrustation OBS)
+Internet ping	Ping Internet
+Line	Ligne
+Listening...	Écoute...
+Market quotes	Cotations boursières
+Nothing measured - the router and internet checks are off in Settings.	Rien de mesuré - les vérifications du routeur et d'Internet sont désactivées dans les Paramètres.
+Nothing measured yet - pick your broker and press Check my line.	Rien de mesuré pour l'instant - choisissez votre courtier et appuyez sur Vérifier ma ligne.
+Off - it needs your own key.	Désactivé - il faut votre propre clé.
+Off - nothing is asked until you turn scores on.	Désactivé - rien n'est demandé tant que vous n'activez pas les scores.
+Off - your IT team turned the phone link off.	Désactivé - votre service informatique a coupé le lien téléphone.
+Only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from bankofcanada.ca. No account, nothing about you is sent.	Seulement quand Marchés est ouvert (ou que le résumé du soir est activé) et que des chiffres plus récents devraient être publiés : une requête par devise de votre liste (son historique depuis 2017 la première fois) et, environ chaque semaine, l'indice des produits de base, le taux directeur et l'inflation, depuis bankofcanada.ca. Aucun compte, rien sur vous n'est envoyé.
+Only when you press Show the QR code, or a remembered phone connects: a sealed connection through AdeeboMeter's relay (adeebometer-remote.orkoadeeb.workers.dev). The relay passes messages along and can't read them.	Seulement quand vous appuyez sur Afficher le code QR, ou qu'un téléphone mémorisé se connecte : une connexion scellée via le relais d'AdeeboMeter (adeebometer-remote.orkoadeeb.workers.dev). Le relais transmet les messages sans pouvoir les lire.
+Only when you press Test my stream: the playlist of the link you gave, and up to 30 s of its video, from that link's own server.	Seulement quand vous appuyez sur Tester mon flux : la playlist du lien donné, et jusqu'à 30 s de sa vidéo, depuis le serveur de ce lien.
+Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes. A typed host also gets 1.1.1.1 traced next to it, for comparison.	Seulement quand vous le lancez : un MTR vers les destinations choisies pendant les minutes choisies ; une recherche de nom inverse pour chaque routeur du trajet (auprès de votre propre serveur DNS) ; jusqu'à 4 lectures de page d'un modem câble à 192.168.100.1 (sa page de signal) ; votre IP publique (une requête à www.cloudflare.com/cdn-cgi/trace) seulement si vous tapez oui. Un hôte tapé est aussi comparé à 1.1.1.1, tracé à côté.
+Phone link	Lien téléphone
+Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.	Enregistrer active les scores : AdeeboMeter demande alors les matchs du jour à la LNH, à ESPN et à BBC Sport, environ toutes les 5 minutes tant que la page Sports est ouverte. Rien sur vous n'est envoyé.
+Service board watch	Surveillance du tableau de services
+Show the PNG in its folder	Afficher le PNG dans son dossier
+Spike	Pic
+Sports scores	Scores sportifs
+The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.	Le rang le plus élevé - environ la moitié de tout ce qu'AdeeboMeter peut enseigner, essayé et compris. Bravo.
+This is an Example (made-up data) - run the tool to save or share your own result.	Ceci est un exemple (données inventées) - lancez l'outil pour enregistrer ou partager votre propre résultat.
+Toronto opens	Toronto ouvre
+Turned off by your IT team	Désactivé par votre service informatique
+Two servers have the same name - give each one its own.	Deux serveurs ont le même nom - donnez à chacun le sien.
+Watched devices	Appareils surveillés
+While the Sports page is open (about every 5 min), or a stream plays while a team you follow is live: the day's fixtures and scores from api-web.nhle.com (NHL), site.api.espn.com (football) and feeds.bbci.co.uk (headlines), plus api.football-data.org and api.cricapi.com when you added your own key.	Tant que la page Sports est ouverte (environ toutes les 5 min), ou qu'un flux joue pendant qu'une équipe suivie est en direct : les matchs et scores du jour depuis api-web.nhle.com (LNH), site.api.espn.com (football) et feeds.bbci.co.uk (titres), plus api.football-data.org et api.cricapi.com si vous avez ajouté votre propre clé.
+With your own key, while Markets is open: index and futures quotes from financialmodelingprep.com, as often as you set (1-60 min).	Avec votre propre clé, tant que Marchés est ouvert : cotations d'indices et de contrats à terme depuis financialmodelingprep.com, aussi souvent que vous le réglez (1 à 60 min).
+Write a PNG for OBS (overlay.png)	Écrire un PNG pour OBS (overlay.png)
+ask msftconnecttest.com when a check fails (sign-in page check)	demander à msftconnecttest.com quand une vérification échoue (détection de page de connexion)
+delay	délai
+isn't a host name or IP - letters, digits, dots and dashes only.	n'est pas un nom d'hôte ni une IP - lettres, chiffres, points et tirets uniquement.
+jitter	gigue
+keep a waiting room for remembered phones at AdeeboMeter's relay	garder une salle d'attente pour les téléphones mémorisés sur le relais d'AdeeboMeter
+send your weather place to a different server: 	envoyer votre lieu météo à un autre serveur : 
+spikes	pics
+the TCP port must be 1 - 65535.	le port TCP doit être entre 1 et 65535.
+the scores couldn't be reached - it tries again in 5 minutes	les scores sont injoignables - nouvel essai dans 5 minutes
+turn the internet check on (a ping to 1.1.1.1 in the background)	activer la vérification Internet (un ping vers 1.1.1.1 en arrière-plan)
+waiting	en attente
+Market closed - the watch starts at 9:30 ET	Marché fermé - la surveillance commence à 9 h 30 HE
+Live watch is off	La surveillance en direct est désactivée
+region estimate	estimation de région
+Valve server	serveur Valve
+exact	exact
+Not measured yet.	Pas encore mesuré.
+up to 1 GB to the speed server you picked	jusqu'à 1 Go vers le serveur de vitesse choisi
+Same network twice	Même réseau deux fois

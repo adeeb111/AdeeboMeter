@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
+// review 1.1.6 P2 #14: the report is for a provider's support desk - one language (English) throughout, never mixed with the app's
 namespace AdeeboMeter
 {
     // ================================================================== Report for my ISP: the pictures (Adeeb, 15 Nov - "a former ISP support guy:
@@ -38,24 +39,24 @@ namespace AdeeboMeter
             sb.Append("<div class=\"card v" + lvl + "\"><div class=\"cap\">THE ANSWER</div><div class=\"big\">" + X(v.Finding) + "</div>");
             sb.Append("<div class=\"chips\">");
             Action<string, string, string, int> chip = (k, val, sub, l) => sb.Append("<div class=\"chip\" style=\"background:" + (l == 2 ? "#FDE7E9" : l == 1 ? "#FFF4D6" : l == 0 ? "#E6F4EA" : "#F6F8FB") + "\"><span>" + X(k) + "</span><b>" + X(val) + "</b><span>" + X(sub) + "</span></div>");
-            chip(L.T("Connection"), v.Wifi ? "Wi-Fi" : L.T("Cable"), v.Wifi ? L.T("a cable test rules Wi-Fi out") : L.T("Wi-Fi not involved"), v.Wifi ? 1 : 0);
-            if (router != null) chip(L.T("Home router"), N1(Avg(router)) + " ms", L.T("loss") + " " + N1(Loss(router)) + "%", Loss(router) < 1 ? 0 : from != null && router.N >= from.N ? 1 : 3);   /* loss that stops there: the router ignoring probes */
-            if (isp != null) chip(L.T("Provider's first hop"), N1(Avg(isp)) + " ms", L.T("loss") + " " + N1(Loss(isp)) + "%" + (from != null && isp.N >= from.N ? " · " + L.T("carries on") : ""), from != null && isp.N >= from.N ? 2 : 0);
-            if (from != null) chip(L.T("Loss starts"), L.T("hop") + " " + from.N, v.Nm(from.Ip), 2);
+            chip(("Connection"), v.Wifi ? "Wi-Fi" : ("Cable"), v.Wifi ? ("a cable test rules Wi-Fi out") : ("Wi-Fi not involved"), v.Wifi ? 1 : 0);
+            if (router != null) chip(("Home router"), N1(Avg(router)) + " ms", ("loss") + " " + N1(Loss(router)) + "%", Loss(router) < 1 ? 0 : from != null && router.N >= from.N ? 1 : 3);   /* loss that stops there: the router ignoring probes */
+            if (isp != null) chip(("Provider's first hop"), N1(Avg(isp)) + " ms", ("loss") + " " + N1(Loss(isp)) + "%" + (from != null && isp.N >= from.N ? " · " + ("carries on") : ""), from != null && isp.N >= from.N ? 2 : 0);
+            if (from != null) chip(("Loss starts"), ("hop") + " " + from.N, v.Nm(from.Ip), 2);
             // bug-hunt ML-96/97: the destination's own loss, always - and named for what it is when the destination itself never answered
             bool endSilent = end != null && hops.Count > 0 && !ReferenceEquals(hops[hops.Count - 1], end);
-            if (end != null) chip(endSilent ? L.T("Last hop that answers") : L.T("Destination"), N1(Avg(end)) + " ms", L.T("loss") + " " + N1(Loss(end)) + "%", from != null ? 2 : Loss(end) >= 1 ? 1 : 0);
+            if (end != null) chip(endSilent ? ("Last hop that answers") : ("Destination"), N1(Avg(end)) + " ms", ("loss") + " " + N1(Loss(end)) + "%", from != null ? 2 : Loss(end) >= 1 ? 1 : 0);
             sb.Append("</div>");
             if (v.Ruled.Count > 0) { sb.Append("<div class=\"cap\">ALREADY RULED OUT</div><ul style=\"margin:6px 0 0;padding-left:0;list-style:none\">"); foreach (var r in v.Ruled) sb.Append("<li><span class=\"ok\">✓</span> " + X(r) + "</li>"); sb.Append("</ul>"); }
             sb.Append("</div>");
 
             // what we ask the provider to look at - written for the desk, from what was found
             var ask = new List<string>();
-            if (from != null && isp != null && from.N >= isp.N) ask.Add(L.T("The link at hop") + " " + from.N + " (" + v.Nm(from.Ip) + ") " + L.T("and the hand-off after it - loss starts there and carries on to the destination."));
+            if (from != null && isp != null && from.N >= isp.N) ask.Add(("The link at hop") + " " + from.N + " (" + v.Nm(from.Ip) + ") " + ("and the hand-off after it - loss starts there and carries on to the destination."));
             var badHours = v.Heat.Where(kv => kv.Value >= 1).Select(kv => kv.Key).OrderBy(k => k).ToList();
-            if (badHours.Count > 0) ask.Add(L.T("Load on the node or segment I'm on at") + " " + string.Join(", ", badHours.Select(h => h.ToString("00", Inv) + ":00")) + (badHours.All(h => h >= 17 && h <= 23) ? " - " + L.T("evenings only, which points to congestion") : ""));
-            ask.Add(L.T("Errors on my line and port (signal levels, uncorrectable errors, retrains) over the last 7 days."));
-            if (v.Wifi) ask.Add(L.T("(I'll repeat the test on a cable if you need it - this run was on Wi-Fi.)"));
+            if (badHours.Count > 0) ask.Add(("Load on the node or segment I'm on at") + " " + string.Join(", ", badHours.Select(h => h.ToString("00", Inv) + ":00")) + (badHours.All(h => h >= 17 && h <= 23) ? " - " + ("evenings only, which points to congestion") : ""));
+            ask.Add(("Errors on my line and port (signal levels, uncorrectable errors, retrains) over the last 7 days."));
+            if (v.Wifi) ask.Add(("(I'll repeat the test on a cable if you need it - this run was on Wi-Fi.)"));
             sb.Append("<div class=\"card\"><div class=\"cap\">WHAT WE ASK YOU TO CHECK</div><ol class=\"ask\">" + string.Join("", ask.Select(a => "<li>" + X(a) + "</li>")) + "</ol></div>");
 
             // ---------------------------------------------------------------- 2. the path, hop by hop
@@ -67,7 +68,7 @@ namespace AdeeboMeter
 
             // ---------------------------------------------------------------- 3. when it happens
             sb.Append("<div class=\"tag\">WHEN IT HAPPENS</div>");
-            sb.Append("<div class=\"card\"><div class=\"cap\">LOSS BY HOUR OF DAY · LAST 7 DAYS · " + X(v.Game != null ? v.Game.Name : L.T("internet checks")) + "</div>" + HourSvg(v.Heat) + "</div>");
+            sb.Append("<div class=\"card\"><div class=\"cap\">LOSS BY HOUR OF DAY · LAST 7 DAYS · " + X(v.Game != null ? v.Game.Name : ("internet checks")) + "</div>" + HourSvg(v.Heat) + "</div>");
             string grid = WeekSvg(); if (grid != "") sb.Append("<div class=\"card\"><div class=\"cap\">7 DAYS × 24 HOURS · ROUGH MINUTES (LOSS OR NO ANSWER) PER HOUR</div>" + grid + "<div class=\"cap\">Darker = more rough minutes in that hour. A band at the same hours every day is a busy network, not a broken one; random dots are a line or equipment fault.</div></div>");
 
             // ---------------------------------------------------------------- 4. two routes
@@ -113,8 +114,8 @@ namespace AdeeboMeter
                 string band = home ? "#E6F4EA" : prov ? "#E8F0FE" : "#F1EAFE";
                 sb.Append("<rect x=\"0\" y=\"" + y + "\" width=\"" + W + "\" height=\"" + (rowH - 2) + "\" fill=\"" + band + "\" rx=\"4\"/>");
                 if (i == 0 || (home != (v.FirstIsp < 0 ? i - 1 == 0 : v.Main.Hops.IndexOf(hops[i - 1]) < v.FirstIsp)))
-                    sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#4A5568\" font-weight=\"700\">" + (home ? Kit.Sent(L.T("YOUR HOME")) : Kit.Sent(L.T("YOUR PROVIDER"))) + "</text>");
-                else if (!home && !prov && i > 0) { var pi = hops[i - 1]; string po; v.Owners.TryGetValue(pi.Ip, out po); int pidx = v.Main.Hops.IndexOf(pi); bool pprov = !(pidx < v.FirstIsp) && (po == null || ispOwner == "" ? pidx < v.FirstIsp + 3 : po == ispOwner); if (pprov) sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#8250DF\" font-weight=\"700\">" + Kit.Sent(L.T("BEYOND")) + "</text>"); }
+                    sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#4A5568\" font-weight=\"700\">" + (home ? Kit.Sent(("YOUR HOME")) : Kit.Sent(("YOUR PROVIDER"))) + "</text>");
+                else if (!home && !prov && i > 0) { var pi = hops[i - 1]; string po; v.Owners.TryGetValue(pi.Ip, out po); int pidx = v.Main.Hops.IndexOf(pi); bool pprov = !(pidx < v.FirstIsp) && (po == null || ispOwner == "" ? pidx < v.FirstIsp + 3 : po == ispOwner); if (pprov) sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#8250DF\" font-weight=\"700\">" + Kit.Sent(("BEYOND")) + "</text>"); }
                 double a = Avg(h), l = Loss(h), wst = h.Worst; bool real = v.Start >= 0 && idx >= v.Start;
                 sb.Append("<text x=\"8\" y=\"" + (y + 19) + "\" font-weight=\"700\">" + h.N + "</text><text x=\"32\" y=\"" + (y + 19) + "\">" + X(Cut(v.Nm(h.Ip), 34) + (own != null ? " · " + Cut(own, 22) : "")) + "</text>");
                 if (!double.IsNaN(a))
@@ -123,8 +124,8 @@ namespace AdeeboMeter
                     if (!double.IsNaN(wst) && wst > a) { double wx = lx + bw * Math.Min(1, wst / max); sb.Append("<line x1=\"" + N0(lx + ww) + "\" x2=\"" + N0(wx) + "\" y1=\"" + (y + 14) + "\" y2=\"" + (y + 14) + "\" stroke=\"#6B7685\"/><line x1=\"" + N0(wx) + "\" x2=\"" + N0(wx) + "\" y1=\"" + (y + 9) + "\" y2=\"" + (y + 19) + "\" stroke=\"#6B7685\"/>"); }
                     sb.Append("<text x=\"" + (lx + bw + 10) + "\" y=\"" + (y + 19) + "\">" + N1(a) + " ms</text>");
                 }
-                else sb.Append("<text x=\"" + lx + "\" y=\"" + (y + 19) + "\" fill=\"#6B7685\">" + L.T("no answer to probes") + "</text>");
-                if (!double.IsNaN(l) && l >= 0.5) sb.Append("<text x=\"" + (lx + bw + 80) + "\" y=\"" + (y + 19) + "\" font-weight=\"700\" fill=\"" + (real ? "#CF222E" : "#BF8700") + "\">" + N1(l) + "% " + (real ? L.T("lost") : L.T("ignored")) + "</text>");
+                else sb.Append("<text x=\"" + lx + "\" y=\"" + (y + 19) + "\" fill=\"#6B7685\">" + ("no answer to probes") + "</text>");
+                if (!double.IsNaN(l) && l >= 0.5) sb.Append("<text x=\"" + (lx + bw + 80) + "\" y=\"" + (y + 19) + "\" font-weight=\"700\" fill=\"" + (real ? "#CF222E" : "#BF8700") + "\">" + N1(l) + "% " + (real ? ("lost") : ("ignored")) + "</text>");
             }
             sb.Append("<text x=\"" + lx + "\" y=\"" + (H - 8) + "\" fill=\"#6B7685\">0</text><text x=\"" + (lx + bw) + "\" y=\"" + (H - 8) + "\" text-anchor=\"end\" fill=\"#6B7685\">" + N0(max) + " ms</text></svg>");
             return sb.ToString();
@@ -136,9 +137,9 @@ namespace AdeeboMeter
         {
             var lines = new List<Tuple<string, List<double>, string>>();
             Func<PathTools.Hop, List<double>> H = h => { if (h == null) return null; lock (h.Hist) return h.Hist.ToList(); };
-            if (router != null) lines.Add(Tuple.Create(L.T("home router"), H(router), "#2DA44E"));
-            if (isp != null && isp != router) lines.Add(Tuple.Create(L.T("provider, first hop"), H(isp), "#1F6FEB"));
-            if (end != null && end != isp && end != router) lines.Add(Tuple.Create(L.T("destination"), H(end), "#8250DF"));
+            if (router != null) lines.Add(Tuple.Create(("home router"), H(router), "#2DA44E"));
+            if (isp != null && isp != router) lines.Add(Tuple.Create(("provider, first hop"), H(isp), "#1F6FEB"));
+            if (end != null && end != isp && end != router) lines.Add(Tuple.Create(("destination"), H(end), "#8250DF"));
             lines = lines.Where(l => l.Item2 != null && l.Item2.Count > 2).ToList(); if (lines.Count == 0) return "";
             int W = 860, H0 = 220, pad = 40, n = lines.Max(l => l.Item2.Count); var all = lines.SelectMany(l => l.Item2).Where(z => !double.IsNaN(z)).ToList(); if (all.Count == 0) return "";
             var sorted = all.OrderBy(z => z).ToList(); double max = Math.Max(10, sorted[(int)(sorted.Count * 0.98)] * 1.2);
@@ -158,16 +159,16 @@ namespace AdeeboMeter
                 sb.Append(lost); li++;
             }
             int ly = H0 + 26;
-            foreach (var l in lines) { int got = l.Item2.Count(z => !double.IsNaN(z)); sb.Append("<rect x=\"" + pad + "\" y=\"" + (ly - 9) + "\" width=\"14\" height=\"8\" rx=\"2\" fill=\"" + l.Item3 + "\"/><text x=\"" + (pad + 20) + "\" y=\"" + ly + "\">" + X(l.Item1) + " · " + (l.Item2.Count - got) + " " + L.T("of") + " " + l.Item2.Count + " " + L.T("probes lost") + "</text>"); ly += 16; }
+            foreach (var l in lines) { int got = l.Item2.Count(z => !double.IsNaN(z)); sb.Append("<rect x=\"" + pad + "\" y=\"" + (ly - 9) + "\" width=\"14\" height=\"8\" rx=\"2\" fill=\"" + l.Item3 + "\"/><text x=\"" + (pad + 20) + "\" y=\"" + ly + "\">" + X(l.Item1) + " · " + (l.Item2.Count - got) + " " + ("of") + " " + l.Item2.Count + " " + ("probes lost") + "</text>"); ly += 16; }
             sb.Append("</svg>"); return sb.ToString();
         }
         // loss % by hour of day (24 bars), evening hours shaded
         static string HourSvg(Dictionary<int, double> heat)
         {
-            if (heat.Count == 0) return "<div class=\"cap\">" + L.T("No history yet - it builds up while AdeeboMeter runs (History on).") + "</div>";
+            if (heat.Count == 0) return "<div class=\"cap\">" + ("No history yet - it builds up while AdeeboMeter runs (History on).") + "</div>";
             int W = 860, H = 170, bw = 32; double max = Math.Max(2, heat.Values.Max() * 1.2);
             var sb = new StringBuilder("<svg viewBox=\"0 0 " + W + " " + H + "\" xmlns=\"http://www.w3.org/2000/svg\" font-family=\"Segoe UI,sans-serif\" font-size=\"11\">");
-            sb.Append("<rect x=\"" + (30 + 17 * (bw + 3)) + "\" y=\"0\" width=\"" + 7 * (bw + 3) + "\" height=\"" + (H - 20) + "\" fill=\"#FFF4D6\" rx=\"4\"/><text x=\"" + (32 + 17 * (bw + 3)) + "\" y=\"12\" fill=\"#BF8700\">" + L.T("evening") + "</text>");
+            sb.Append("<rect x=\"" + (30 + 17 * (bw + 3)) + "\" y=\"0\" width=\"" + 7 * (bw + 3) + "\" height=\"" + (H - 20) + "\" fill=\"#FFF4D6\" rx=\"4\"/><text x=\"" + (32 + 17 * (bw + 3)) + "\" y=\"12\" fill=\"#BF8700\">" + ("evening") + "</text>");
             for (int hr = 0; hr < 24; hr++)
             {
                 double v; heat.TryGetValue(hr, out v); double bh = (H - 40) * Math.Min(1, v / max); int x = 30 + hr * (bw + 3);
@@ -211,8 +212,8 @@ namespace AdeeboMeter
             foreach (var z in ends)
             {
                 sb.Append("<text x=\"0\" y=\"" + (y + 16) + "\" font-weight=\"700\">" + X(Cut(z.r.Label, 36)) + "</text>");
-                if (z.e != null) { double a = Avg(z.e), l = Loss(z.e);   /* bug-hunt ML-96: the loss measured, never a 0 */ sb.Append("<rect x=\"300\" y=\"" + (y + 4) + "\" width=\"" + N0(Math.Max(3, 380 * Math.Min(1, a / max))) + "\" height=\"16\" rx=\"4\" fill=\"" + (z.real ? "#CF222E" : "#1F6FEB") + "\"/><text x=\"690\" y=\"" + (y + 16) + "\">" + N1(a) + " ms · " + L.T("loss") + " " + N1(l) + "%</text>"); }
-                else sb.Append("<text x=\"300\" y=\"" + (y + 16) + "\" fill=\"#6B7685\">" + L.T("doesn't answer ping") + "</text>");
+                if (z.e != null) { double a = Avg(z.e), l = Loss(z.e);   /* bug-hunt ML-96: the loss measured, never a 0 */ sb.Append("<rect x=\"300\" y=\"" + (y + 4) + "\" width=\"" + N0(Math.Max(3, 380 * Math.Min(1, a / max))) + "\" height=\"16\" rx=\"4\" fill=\"" + (z.real ? "#CF222E" : "#1F6FEB") + "\"/><text x=\"690\" y=\"" + (y + 16) + "\">" + N1(a) + " ms · " + ("loss") + " " + N1(l) + "%</text>"); }
+                else sb.Append("<text x=\"300\" y=\"" + (y + 16) + "\" fill=\"#6B7685\">" + ("doesn't answer ping") + "</text>");
                 y += 46;
             }
             sb.Append("</svg>"); return sb.ToString();

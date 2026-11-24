@@ -123,7 +123,7 @@ namespace AdeeboMeter
             while (i < end)
             {
                 int sh = VarintInt(blk, ref i), ns = VarintInt(blk, ref i), vl = VarintInt(blk, ref i);
-                if (sh > key.Length || i + ns + vl > blk.Length) yield break;
+                if (sh < 0 || ns < 0 || vl < 0 || sh > key.Length || ns > blk.Length - i || vl > blk.Length - i - ns) yield break;   // review 1.1.6 P5 #8: no int overflow on a damaged table
                 var k = new byte[sh + ns]; Buffer.BlockCopy(key, 0, k, 0, sh); Buffer.BlockCopy(blk, i, k, sh, ns); key = k; i += ns;
                 var v = new byte[vl]; Buffer.BlockCopy(blk, i, v, 0, vl); i += vl;
                 yield return new KeyValuePair<byte[], byte[]>(key, v);

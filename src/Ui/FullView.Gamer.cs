@@ -68,7 +68,7 @@ namespace AdeeboMeter
             Begin(gamerCanvas);
             float x = 18 * S, y = 16 * S, w = gamerCanvas.ClientSize.Width - 36 * S;
             y = PaintGamerHud(g, x, y, w); y = TryThis(g, gamerCanvas, "gamer", x, y, w, false);   // 24 Nov: no NOW line - the status chips at the top already say it
-            var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games);
+            var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games, delegate { try { if (IsHandleCreated && !IsDisposed) BeginInvoke((Action)delegate { gamerCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
             string playing = GamePing.Me.Playing;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
@@ -313,10 +313,11 @@ namespace AdeeboMeter
                     bt = known ? "Best for you over " + (int)wk[4] + (wk[4] == 1 ? " day: " : " days: ") + best.Name + " · " + Ms(wk[0]) + " ms average, " + wk[1].ToString("0.#", CultureInfo.InvariantCulture) + "% loss, trouble on " + (int)wk[3] + " evening" + (wk[3] == 1 ? "" : "s")
                                : "Best right now: " + best.Name + " - the week's verdict needs a few days of history";
                 }
-                var stop = new RectangleF(x + w - pad - 120 * S, cy, 120 * S, 22 * S);
+                float stw = (float)Math.Ceiling(g.MeasureString(L.T("Stop monitoring"), Draw.fSmall).Width) + 6 * S, edw = (float)Math.Ceiling(g.MeasureString(L.T("Edit servers"), Draw.fSmall).Width) + 6 * S;   /* review 1.1.6 U1 #10 */
+                var stop = new RectangleF(x + w - pad - Math.Max(120 * S, stw), cy, Math.Max(120 * S, stw), 22 * S);
                 g.DrawString(L.T("Stop monitoring"), Draw.fSmall, blue, stop, right);
                 var gm2 = gm; Act(gamerCanvas, stop, delegate { Games.SetMonitored(gm2.Id, false); gamerNote = "Stopped monitoring " + gm2.Name + ". Nothing more is sent to its servers."; gamerCanvas.Invalidate(); });
-                var ed = new RectangleF(stop.X - (gm.Valve ? 260 : 110) * S, cy, 100 * S, 22 * S);
+                var ed = new RectangleF(stop.X - (gm.Valve ? 160 * S : 10 * S) - Math.Max(100 * S, edw), cy, Math.Max(100 * S, edw), 22 * S);
                 g.DrawString(L.T("Edit servers"), Draw.fSmall, blue, ed, right);
                 Act(gamerCanvas, ed, delegate { EditGame(gm2, false); });
                 if (gm.Valve)

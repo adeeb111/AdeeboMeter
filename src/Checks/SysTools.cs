@@ -26,6 +26,7 @@ namespace AdeeboMeter
         public static List<string[]> Ping6(string target, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var a = Resolve6(target);
+            if (a != null) { string no1 = Lab.NotOne(a); if (no1 != "" || a.IsIPv6Multicast) { rows.Add(R(2, "IPv6 address", no1 != "" ? no1 : a + " is a multicast group - every device in it would answer. Type one device.", "", "u")); return rows; } }   // round-4 #8 / review 1.1.6
             if (a == null) { rows.Add(R(2, "IPv6 address", "couldn't find an IPv6 address for " + target, HasV6() ? "The name may have no AAAA record." : "This PC has no public IPv6 address - your network or provider doesn't give one.", "m")); return rows; }
             run.SeriesUnit = "ms"; int ok = 0;
             for (int i = 0; i < 10 && !run.Stop; i++) { var r = Icmp.Echo6(a, 32, 128, 2000); if (r.Status == Icmp.Ok) { ok++; run.Add(r.Rtt); } else run.Add(double.NaN); run.Status = "Ping " + (i + 1) + " / 10 to " + a; System.Threading.Thread.Sleep(300); }

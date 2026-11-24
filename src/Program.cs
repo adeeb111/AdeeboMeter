@@ -100,7 +100,7 @@ namespace AdeeboMeter
                 return inDownloads == 1;
             }
         }
-        static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
+        internal static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
         public static bool CanWrite(string dir)
         {
             if (string.IsNullOrEmpty(dir)) return false;

@@ -108,7 +108,7 @@ namespace AdeeboMeter
             Menus.Add(m, L.T("Hide while it stays like this"), L.T("Comes back if it gets worse or something new breaks"), delegate { HideProblemFor("while"); });
             m.Items.Add(new ToolStripSeparator());
             Menus.Add(m, L.T("Never show") + " " + KindName(k) + " " + L.T("here"), L.T("The widget still shows it. Show again undoes this."), delegate { HideProblemFor("never"); });
-            m.Show(on, at);
+            m.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)m.Dispose); else m.Dispose(); } catch (InvalidOperationException) { m.Dispose(); } };   /* review 1.1.6 U1 #11 */ m.Show(on, at);
         }
     }
 }

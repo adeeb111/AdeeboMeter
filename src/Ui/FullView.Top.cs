@@ -23,10 +23,11 @@ namespace AdeeboMeter
             // hidden for good, whatever Visible reads: it reads false while the window is still opening, so "if (x.Visible) x.Visible = false"
             // never ran and the buttons showed up later at their first position, over the logo (24 Nov, Adeeb's screenshot)
             if (linkBtn != null) linkBtn.Visible = false;   // Your phone: in the ⋯ menu and the side bar
-            xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
+            xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(12);
+            /* 1.1.6 (Adeeb): the language is always in sight at the top - a wrong pick is one click from undone */
+            if (langBtn != null) { xr -= langBtn.Width; langBtn.Location = new Point(xr, my(langBtn)); langBtn.Visible = true; xr -= Sc(18); } else xr -= Sc(6);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);
-            if (langBtn != null) { langBtn.Location = new Point(dotsBtn.Left + dotsBtn.Width / 2 - langBtn.Width / 2, my(langBtn)); langBtn.Visible = false; }   // hidden: Language is in the ⋯ menu; centred under ⋯ so the sheet's pointer points at it
             if (restartBtn != null && restartShown) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
             int room = xr - xl;
             bool show = room >= Sc(40);   // the one search, in both layouts (the side bar's own box is gone)

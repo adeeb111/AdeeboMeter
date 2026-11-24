@@ -555,7 +555,7 @@ decimal / hex / binary. New, grouped by who needs them:
 - Evidence record + the "website or app won't open" end-to-end milestone + three tester cases (DNS fails / TCP times out
   after DNS / TLS rejects the certificate): agreed as the next milestone; NOT in tonight's build unless Adeeb says so.
 - Topogram bridge: only a generic, redacted incident-file export on AdeeboMeter's side (no vendor names); any import
-  and SR OS alignment lives in topogram.
+  and the vendor-specific config alignment lives in topogram.
 - Tagline stays "is it me or the network?"; Home subtitle "See where a connection fails and what to check next."
 
 ### 11.9 Build order (after Adeeb approves this section and the line packs)

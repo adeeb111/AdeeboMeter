@@ -16,7 +16,7 @@ namespace AdeeboMeter
     // (MTU per hop, MTR). Nothing runs until you press Run, and Stop always works.
     sealed partial class FullView
     {
-        sealed class Tool { public string Id, Group, Title; public string[] Inputs = Array.Empty<string>(); public Func<string[], Toolkit.Run, List<string[]>> Do; }
+        sealed class Tool { public string Id, Group, Title, Kind;   /* Kind: the tool's own group (CALC, LAB...) - Group becomes the question it sits under */ public string[] Inputs = Array.Empty<string>(); public Func<string[], Toolkit.Run, List<string[]>> Do; }
         Panel toolboxPage; DB tbList, tbCanvas; FlowLayoutPanel tbBar; PillButton tbRun; readonly List<RoundBox> tbBoxes = new List<RoundBox>(); readonly RoundBox[] tbPool = new RoundBox[4]; CheckBox tbSweepOk; string tbIperfSrv = ""; readonly List<string> tbVisible = new List<string>(); readonly Dictionary<string, float> tbRowY = new Dictionary<string, float>();
         string tbSel = "mtu", tbRowsKey = ""; List<string[]> tbRows; Toolkit.Run tbRun0; volatile bool tbBusy; string tbTitle = ""; DateTime tbAt;
         List<PathTools.Hop> mtuHops; IPAddress mtuDst; volatile bool mtuBusy;
@@ -30,7 +30,7 @@ namespace AdeeboMeter
             tools = new List<Tool> {
                 T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
                 T("udpmtu", "PATH", "MTU over UDP (QUIC / DNS)", "Target - a website (port 443) or a DNS server (port 53)|Port - 443 or 53", (a, r) => UdpMtu.Run(a[0], a[1], r)),
-                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-60) - longer runs are a recording: a graph and a file you can keep", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(60, min)); r.Status = "Tracing..."; var start = DateTime.Now; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); r.SeriesUnit = "ms"; var hops = mtrHops; PathTools.Mtr(dst, hops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second... (the graph is the far end)"; var last = hops.LastOrDefault(h => h.Ip != ""); if (last != null) lock (last.Hist) r.Add(last.Hist.Count > 0 ? last.Hist[last.Hist.Count - 1] : double.NaN); }); LabViews.Remember(a[0], hops); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(hops), "", "i" } }; res.AddRange(PathTools.Flags(hops)); string csv = PathTools.SaveCsv(hops, a[0], start); if (csv != null) res.Add(new[] { "3", "Recording", System.IO.Path.GetFileName(csv) + " - every hop, every second (opens in Excel)", "Kept in AdeeboMeter's folder; nothing is sent.", "m", "show:" + csv }); return res; }),
+                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-60) - longer runs are a recording: a graph and a file you can keep", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(60, min)); r.Status = "Tracing..."; var start = DateTime.Now; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); r.SeriesUnit = "ms"; var hops = mtrHops; PathTools.Mtr(dst, hops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second... (the graph is the far end)"; var last = hops.LastOrDefault(h => h.Ip != ""); if (last != null) lock (last.Hist) r.Add(last.Hist.Count > 0 ? last.Hist[last.Hist.Count - 1] : double.NaN); }); LabViews.Remember(a[0], hops); int mlv; string mv = PathTools.MtrVerdict(hops, out mlv); var res = new List<string[]> { new[] { mlv.ToString(CultureInfo.InvariantCulture), "Verdict", mv, "", "i" } }; res.AddRange(PathTools.Flags(hops)); string csv = PathTools.SaveCsv(hops, a[0], start); if (csv != null) res.Add(new[] { "3", "Recording", System.IO.Path.GetFileName(csv) + " - every hop, every second (opens in Excel)", "Kept in AdeeboMeter's folder; nothing is sent.", "m", "show:" + csv }); return res; }),
                 T("ret", "PATH", "The way back (return path)", "Destination", (a, r) => Toolkit.ReturnPath(a[0], r)),
                 T("owners", "PATH", "Who carries my traffic (BGP)", "Destination", (a, r) => { if (!Online.On) return OnlineOff(); var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); r.Status = "Tracing..."; var h = PathTools.Trace(dst, 30, () => r.Stop); r.Status = "Looking up each network..."; return Online.PathOwners(h, a[0]); }),
                 T("route", "PATH", "Which route does this take?", "Destination - e.g. 10.20.30.40 or a name", (a, r) => RoutingTools.RouteFor(Host(a[0]))),
@@ -266,7 +266,7 @@ namespace AdeeboMeter
             // grouped by the question you're asking, not by technology
             var pos = new Dictionary<string, int>();
             foreach (var grp in TbLayout) for (int i = 1; i < grp.Length; i++) pos[grp[i]] = pos.Count;
-            foreach (var t in tools) { var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
+            foreach (var t in tools) { if (t.Kind == null) t.Kind = t.Group; var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
             tools = tools.OrderBy(t => { int p; return pos.TryGetValue(t.Id, out p) ? p : 999; }).ToList();
             toolsStatic = tools; return tools;
         }
@@ -323,6 +323,13 @@ namespace AdeeboMeter
         // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
         public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
         public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Concat(SenderGate).Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))).Concat(Senders.Where(id => !LabGate.Contains(id) && !SenderGate.Contains(id))); }
+        // what may be kept or shown of an HTTP request builder's boxes: no user:password in the URL, no sign-in headers, no body
+        static void Redact(string id, string[] shown)
+        {
+            if (id != "httpreq" || shown == null) return;
+            if (shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
+            if (shown.Length > 3) { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
+        }
         static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal) || label.StartsWith("Code", StringComparison.Ordinal); }
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
@@ -373,7 +380,7 @@ namespace AdeeboMeter
             tbRows = Examples.Rows(ex, tbBoxes.Any(b => b != null)); tbAward = "";
             if (Cfg.Points && tbRows.Count > 0)
             {
-                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) ? L.T("Replay bonus · +3 - run it again at least 10 minutes after your first run.") : L.T("Already earned.")) : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +3") : "");
+                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) && !Points.Me.Replayed(tbSel) ? L.T("Replay bonus · +2 - run it again at least 10 minutes after your first run.") : L.T("Already earned."))   /* review 1.1.6 U3 #12 */ : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +2") : "");
                 tbRows[0][3] = (tbRows[0][3] + "  " + note).Trim();
             } tbRowsKey = "example"; tbAt = DateTime.Now; tbRun0 = null; tbShown = null; tbCompare = false;
             tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
@@ -516,7 +523,9 @@ namespace AdeeboMeter
                 tbBusy = UiActivity.ToolRunning = true; var run = new Toolkit.Run { Status = "Asking the certificate authority..." }; tbRun0 = run; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
                 Task.Factory.StartNew(() =>
                 {
-                    List<string[]> got; try { got = Toolkit.Revocation(host, port, sni); } catch (Exception e) { got = Bad(e.Message); }
+                    /* review 1.1.6 U3 #10: Stop answers at once - the lookup can't be cut short, so its late answer is dropped */
+                    List<string[]> got; try { var rt = Task.Factory.StartNew(() => Toolkit.Revocation(host, port, sni), TaskCreationOptions.LongRunning); while (!rt.Wait(200)) if (run.Stop) break; got = run.Stop ? null : rt.Result; } catch (Exception e) { got = Bad((e is AggregateException && e.InnerException != null ? e.InnerException : e).Message); }
+                    if (got == null) { try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); }); } catch (InvalidOperationException) { tbBusy = false; } return; }
                     try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
                 }, TaskCreationOptions.LongRunning);
             }
@@ -862,7 +871,21 @@ namespace AdeeboMeter
             float ry; string rid = SnmpView(t.Id) ? "snmp" : t.Id;   // opened from a card, search or Recent: bring its row into view
             if (tbRowY.TryGetValue(rid, out ry)) { int top = -tbList.AutoScrollPosition.Y, h = tbList.ClientSize.Height; if (ry < top || ry + 46 * S > top + h) { tbList.AutoScrollPosition = new Point(0, Math.Max(0, (int)ry - Sc(40))); tbList.Invalidate(); } }
         }
-        string[] Inputs() { var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i < tbBoxes.Count && tbBoxes[i] != null ? tbBoxes[i].Box.Text.Trim() : ""; return a; }
+        string[] Inputs() { var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i < tbBoxes.Count && tbBoxes[i] != null ? AsciiDigits(tbBoxes[i].Box.Text.Trim()) : ""; return a; }
+        // review 1.1.6 P2 #6 / P3 #18 (round-4 #60): Arabic-Indic, Bengali and other digits typed in a box are read as 0-9 -
+        // every tool parses with invariant rules, which would otherwise throw "Input string was not in a correct format"
+        internal static string AsciiDigits(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            System.Text.StringBuilder sb = null;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c > 127 && char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.DecimalDigitNumber) { if (sb == null) sb = new System.Text.StringBuilder(s); sb[i] = (char)('0' + (int)char.GetNumericValue(c)); }
+                else if (c == '\u066B' || c == '\u066C') { if (sb == null) sb = new System.Text.StringBuilder(s); sb[i] = c == '\u066B' ? '.' : ','; }   // Arabic decimal and thousands marks
+            }
+            return sb == null ? s : sb.ToString();
+        }
 
         void StartTool()
         {
@@ -888,8 +911,7 @@ namespace AdeeboMeter
             // HTTP sign-in headers hidden and a request body left out
             var shown = (string[])a.Clone();
             for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
-            if (t.Id == "httpreq" && shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
-            if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
+            Redact(t.Id, shown);   // review 1.1.6 U3 #3: the same redaction for the picture and its export (VisIn)
             string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; BuddyReact.Set("sweaty", 3600);   /* the face is nervous while a tool runs */ tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
             { var __bz = Busy.Begin("Running " + L.T(t.Title)); try { 

@@ -302,6 +302,7 @@ namespace AdeeboMeter
             string k = "Ctrl K"; var ks = g.MeasureString(k, Draw.fTiny);
             using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap, LineAlignment = StringAlignment.Center })
             {
+                if (L.RunsRtl(L.T("Search tools, pages, problems"))) sf.FormatFlags |= StringFormatFlags.DirectionRightToLeft;   // review 1.1.6 D1 #16: Arabic keeps its first word, the ellipsis goes at its end
                 g.DrawString(L.T("Search tools, pages, problems"), Draw.fBody, m, new RectangleF(34 * S, 0, Width - 60 * S - ks.Width, Height), sf);
                 var kr = new RectangleF(Width - ks.Width - 22 * S, (Height - 18 * S) / 2, ks.Width + 8 * S, 18 * S);
                 Theme.Fill(g, kr, 4 * S, Theme.Card); Theme.Stroke(g, kr, 4 * S, Theme.Line, 1); g.DrawString(k, Draw.fTiny, m, kr.X + 4 * S, kr.Y + 2 * S);
@@ -395,7 +396,7 @@ namespace AdeeboMeter
         List<Row> view = new List<Row>();
         readonly VScrollBar sb = new VScrollBar();
         int hover = -1; string selKey;
-        public string Filter = "All", Query = ""; public bool ShowIdle;
+        public string Filter = "All", Query = ""; public bool ShowIdle; public volatile bool ReadFailed;   // review 1.1.6 D1 #17: Windows didn't hand over the table
         public bool CanSniff;
         public event Action<Conn> SniffRequested, JourneyRequested;
         public event Action Changed;
@@ -561,7 +562,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
                 }
                 g.ResetClip();
-                if (view.Count == 0) g.DrawString(Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);
+                if (view.Count == 0) g.DrawString(ReadFailed && Filter == "All" && Query == "" ? L.T("Couldn't read Windows' connection list just now - trying again.") : Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);
             }
         }
         static void Text2(Graphics g, string a, string b, float x, float y, int w, Brush ink, Brush muted, Font fa, Font fb)

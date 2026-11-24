@@ -81,7 +81,7 @@ namespace AdeeboMeter
             for (int i = 1; i < p.Length; i++) { long v0 = i == 1 ? p[0] * 40 + p[1] : p[i]; var st0 = new List<byte>(); st0.Add((byte)(v0 & 0x7F)); v0 >>= 7; while (v0 > 0) { st0.Add((byte)(0x80 | (v0 & 0x7F))); v0 >>= 7; } st0.Reverse(); b.AddRange(st0); }
             return Tlv(6, b.ToArray());
         }
-        public static bool ValidOid(string s) { return Regex.IsMatch((s ?? "").Trim('.'), @"^[0-2](\.\d{1,9}){1,127}$"); }
+        public static bool ValidOid(string s) { return Regex.IsMatch((s ?? "").Trim('.'), @"^[0-2](\.[0-9]{1,9}){1,127}$"); }
         static string OidText(byte[] r, int o, int l)
         {
             if (l < 1) return ""; var sb = new StringBuilder(); int f = r[o]; sb.Append(f / 40 > 2 ? 2 : f / 40).Append('.').Append(f / 40 > 2 ? f - 80 : f % 40);

@@ -105,7 +105,7 @@ namespace AdeeboMeter
             {
                 RunSteps(input, r, changed, m);
                 // Only when something failed: is a Wi-Fi sign-in page (captive portal) the real reason?
-                if (r.Level >= 1 && r.Target != "" && Cfg.Portal) Portal(r, changed);
+                if (r.Level >= 1 && r.Target != "" && Cfg.Portal && !Policy.NoOnline) Portal(r, changed);
             }
             finally { r.Running = -1; r.Done = true; changed(); }
         }

@@ -44,6 +44,7 @@ namespace AdeeboMeter
         }
         static void Save(List<P> l)
         {
+            countC = -1;
             Store.Write("phones.txt", l.Select(p => new[] { p.Id, p.Name, Convert.ToBase64String(ProtectedData.Protect(p.Key, Entropy, DataProtectionScope.CurrentUser)), p.Added.ToString("o", CultureInfo.InvariantCulture) }));
         }
         public static void Rename(string id, string name)
@@ -68,6 +69,9 @@ namespace AdeeboMeter
         public static bool Remove(string id) { lock (k) { var l = All(); int n = l.RemoveAll(p => p.Id == id); if (n > 0) Save(l); return n > 0; } }
         public static void Clear() { lock (k) Store.Write("phones.txt", Enumerable.Empty<string[]>()); }
         public static int Count { get { return All().Count; } }
+        /* review 1.1.6 U3 #9: for paint - read (and DPAPI-opened) at most once a minute, and again after a change */
+        static int countC = -1; static DateTime countAt;
+        public static int CountCached { get { if (countC < 0 || (DateTime.UtcNow - countAt).TotalSeconds > 60) { countC = All().Count; countAt = DateTime.UtcNow; } return countC; } }
 
         // the room for this phone, this 25-minute slot, attempt k (a used or timed-out room can't be reused)
         // bug-hunt ML-14: the phone corrects its clock against the internet's before picking a room, so the PC does too -
@@ -76,7 +80,7 @@ namespace AdeeboMeter
         static double clockOff; static DateTime clockAt = DateTime.MinValue; static volatile bool clockBusy;
         static void CheckClock()
         {
-            if (clockBusy || (DateTime.UtcNow - clockAt).TotalMinutes < 60) return;
+            if (clockBusy || Policy.NoRemote || (DateTime.UtcNow - clockAt).TotalMinutes < 60) return;
             clockBusy = true; clockAt = DateTime.UtcNow;
             new System.Threading.Thread(() =>
             {

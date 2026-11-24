@@ -74,7 +74,7 @@ namespace AdeeboMeter
             rows.Add(R(bad ? 2 : slow ? 1 : 0, "Broker " + host, bad ? "no answer on port " + port : Ms(k.Avg) + " average · jitter " + Ms(k.Jit) + " · worst " + Ms(k.Max) + " · " + k.Lost + " of 10 lost",
                 bad ? "The broker doesn't answer from here right now - check its status page, or your connection." : slow ? "Unsteady right now - orders may fill late. Close downloads and streams before the open." : "", "m"));
             run.Status = "Checking the clock (time.windows.com)...";
-            var clock = Protocols.Ntp("time.windows.com").FirstOrDefault(r => r.Length > 2 && r[1] == "Your clock");
+            var clock = Protocols.Ntp("time.windows.com").FirstOrDefault(r => r.Length > 2 && r[1].StartsWith("Your clock", StringComparison.Ordinal));   // review 1.1.6 P3 #4: the row is "Your clock vs this server ..."
             if (clock != null) { int lv; if (!int.TryParse(clock[0], out lv)) lv = 3; if (lv >= 1) warn++; rows.Add(R(lv, "Clock", clock[2], lv >= 1 ? "Order and fill times are stamped by this clock - fix it in Settings > Time > Sync now." : "", "m")); }
             else { warn++; rows.Add(R(1, "Clock", "couldn't ask the time server - unchecked", "Order times are stamped by this clock; check it once (Settings > Time > Sync now).", "m")); }
             var s = m.Latest; bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5, noTraffic = double.IsNaN(s.Down) && double.IsNaN(s.Up); if (busy) warn++;

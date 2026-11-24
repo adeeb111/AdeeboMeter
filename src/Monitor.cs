@@ -238,7 +238,7 @@ namespace AdeeboMeter
                 {
                     bool fast = ViewOpen || CallLikely || (Streams.Active && Cfg.Preset != "penny");   // a stream playing counts like a call: the internet check every 5 s
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
-                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? 1 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? WakeStepSec(t0) : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
                     GwSecNow = gwSec; NetSecNow = netSec;   // the pace the rings fill at (the overlay plots them by time)
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {
@@ -274,7 +274,7 @@ namespace AdeeboMeter
                         if (!NetEverReplied && double.IsNaN(n) && ++netFails >= 2) { netFails = 0; ti = (ti + 1) % targets.Length; lock (L) NetTarget = targets[ti]; }
                         string gwNow; lock (L) gwNow = Gateway != "" ? Gateway : Gateway6;
                         // the DNS lookup skips the cache, so it reaches the DNS server: at most once a minute, every 15 s with the view open
-                        if ((gwNow != "" || VpnUp) && ((t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2 || (Waking(t0) && !double.IsNaN(wakeGw)))) { lastDns = t0; ProbeDns(); bool dok; lock (L) dok = !DnsFailedLast; WakeStep(t0, false, dok); }   // no way out: a DNS failure would only be noise
+                        if ((gwNow != "" || VpnUp) && ((t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2 || (Waking(t0) && !double.IsNaN(wakeGw) && (t0 - lastDns).TotalSeconds >= WakeStepSec(t0) - 0.2))) { lastDns = t0; ProbeDns(); bool dok; lock (L) dok = !DnsFailedLast; WakeStep(t0, false, dok); }   // no way out: a DNS failure would only be noise
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
                     if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(1, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
@@ -534,11 +534,16 @@ namespace AdeeboMeter
         public void Resumed() { resumes++; wlanApiOk = true; wlanApiFails = 0; netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
         // the wake-up report: seconds from waking until the router, then DNS, answered - logged once per wake as a "wake" event
         DateTime wakeAt = DateTime.MinValue; double wakeGw = double.NaN;
+        // review 1.1.6 P1 #9: while waiting for DNS after a wake, back off - every 1, 2, 4, 8 then 16 s - not a lookup and a ping every second for 2 minutes
+        int WakeStepSec(DateTime t0) { int k = Math.Max(0, Math.Min(4, (int)((t0 - wakeAt).TotalSeconds / 10))); return 1 << k; }
         bool Waking(DateTime t0) { return wakeAt != DateTime.MinValue && (t0 - wakeAt).TotalSeconds < 120; }
         void WakeStep(DateTime t0, bool gwOk, bool dnsOk)
         {
             if (wakeAt == DateTime.MinValue) return;
             if (gwOk && double.IsNaN(wakeGw)) wakeGw = (t0 - wakeAt).TotalSeconds;
+            // review 1.1.6 P1 #3: with the internet check off DNS isn't asked - the wake report ends on the router, never "DNS didn't answer"
+            if ((Cfg.NetSec == 0 || Policy.NoInternetCheck) && !double.IsNaN(wakeGw))
+            { Events.Add(wakeGw > 30 ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", CultureInfo.InvariantCulture) + " s (DNS not checked - the internet check is off)"); wakeAt = DateTime.MinValue; return; }
             bool timeout = (t0 - wakeAt).TotalSeconds >= 120;
             if ((dnsOk && (!double.IsNaN(wakeGw) || !GwEverReplied)) || timeout)   /* a router that never answers ping: DNS alone says the network is back */
             {
@@ -624,6 +629,14 @@ namespace AdeeboMeter
         // round 6 H6-M1: a roam, channel, link-rate or signal note is written at most every 5 minutes per kind - a sawtooth signal
         // or a flapping roam can't fill the timeline (300 entries) and the day's log; the skipped ones are counted in the next note
         readonly Dictionary<string, DateTime> wifiSaid = new Dictionary<string, DateTime>(); readonly Dictionary<string, int> wifiSkipped = new Dictionary<string, int>();
+        // review 1.1.6 P1 #4: a roam is found by its sentence in English or in the language in use - the event text is translated
+        static readonly string[] RoamEn = { "Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point" };
+        public static bool IsRoamText(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return false;
+            foreach (var en in RoamEn) { if (t.IndexOf(en, StringComparison.OrdinalIgnoreCase) >= 0) return true; string tr = AdeeboMeter.L.T(en); if (tr != en && t.IndexOf(tr, StringComparison.OrdinalIgnoreCase) >= 0) return true; }
+            return t.IndexOf("roam", StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("hopped", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
         void WifiNote(string kind, string text)
         {
             DateTime t; int n;
@@ -859,6 +872,7 @@ namespace AdeeboMeter
             bool joining = offline && InJoinGrace && pAdapter == null;   // D1-A1: just started, never been online yet - give Windows a moment
             if (joining) offline = false;
             if (offline) link = 2;
+            offlineNow = offline;
             int isp = 3;
             if (!double.IsNaN(net) && !double.IsNaN(gw)) { double d = net - gw; isp = d > 100 ? 2 : d > 40 ? 1 : 0; }
             else if (!double.IsNaN(net)) isp = net > 150 ? 2 : net > 60 ? 1 : 0;
@@ -878,6 +892,7 @@ namespace AdeeboMeter
             string t1 = top.Count > 0 ? top[0].Name + " (" + Draw.MemStr(top[0].Mem) + ")" : "your apps", t2 = top.Count > 1 ? top[1].Name : "";
             string hogs = t1 + (t2 != "" ? " and " + t2 : "");
             string linkName = hasWifi ? "Wi-Fi" : AdeeboMeter.L.T("local network");   /* 24 Nov: the status sentences are templates, so they translate */
+            waiting = false;
             if (joining) Set(0, Voice.P("Just woke up - waiting for Windows to join the network.", "Starting - waiting for Windows to join the network."));
             else if (offline && apipaNow != "") Set(2, Voice.Red(apipaNow + " is connected, but the router never gave it an address (it has a 169.254 one) - restart the router, or unplug and replug.", string.Format(AdeeboMeter.L.T("{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect."), apipaNow)));
             else if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
@@ -892,6 +907,8 @@ namespace AdeeboMeter
             else if (call) Set(0, Voice.P("Call looks smooth. Go impress them.", "Call quality is good."));
             else if (pc == 1) Set(1, Voice.P("Busy, but holding. Maybe don't open another big app just yet.", "Busy but fine. Avoid opening big apps for now."));
             else if (link == 1 || isp == 1 || dn == 1 || inet == 1) Set(1, Voice.P("Network's a bit sleepy; your PC is fine.", "Network a bit slow; your PC is fine."));
+            // review 1.1.6 D1 #1: nothing past this PC measured yet (or every check is off) - say so, never a green "all quiet" from no data
+            else if (link == 3 && isp == 3 && dn == 3 && inet == 3) { Set(0, Cfg.NetSec == 0 && Cfg.GwSec == 0 ? AdeeboMeter.L.T("Nothing measured - the router and internet checks are off in Settings.") : AdeeboMeter.L.T("Checking your connection...")); waiting = true; }
             else Set(0, Voice.P("All quiet. Nothing to fix - go get coffee.", "All quiet."));
             // the Investigate check that fits the headline's cause: a red PC first, then a lost or weak link (drops) vs a slow gateway (slow), then DNS, then a call in progress
             bool linkDown = offline || link == 2 && (double.IsNaN(gw) || hasWifi && sig >= 0 && sig < 30);
@@ -934,6 +951,7 @@ namespace AdeeboMeter
             hint = h;
         }
         void Set(int l, string h) { level = l; headline = h; }
+        bool waiting = true; volatile bool offlineNow;
         string flow = ""; DateTime netAt;
         public volatile int GwSecNow = 2, NetSecNow = 5;
         public DateTime GwAt; public DateTime NetAt { get { return netAt; } }   // steady-clock time of the newest router / internet sample (old after sleep)
@@ -941,7 +959,8 @@ namespace AdeeboMeter
         Snap BuildSnap()
         {
             var s = new Snap { Level = level, Headline = headline, Flow = flow, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
-            s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? "Busy" : Voice.P("All quiet", "OK");
+            s.Waiting = waiting && level == 0; s.Offline = offlineNow;
+            s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? AdeeboMeter.L.T("Busy") : s.Waiting ? AdeeboMeter.L.T("Checking") : Voice.P("All quiet", "OK");
             if (level == 0) { string eve = Trading.EveningLine() ?? Views.ChipLine(); if (eve != null) s.Chip = eve; }
             var rm = Remote.Now; if (rm != null && rm.Active) s.Chip = "📱 " + s.Chip;   // the widget shows a phone is connected, the whole time   // opt-in: the day's close, 17:30-19:00 - a problem always wins
             s.Cpu = Cpu.Last; s.Mem = Mem.Last; s.Disk = Disk.Last; s.Down = Down.Last; s.Up = Up.Last;

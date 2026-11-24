@@ -182,7 +182,8 @@ namespace AdeeboMeter
         public static List<string[]> NameOf(string ipIn)
         {
             var rows = new List<string[]>(); IPAddress a;
-            if (!IPAddress.TryParse((ipIn ?? "").Trim(), out a)) { rows.Add(R(2, "IP", "type the device's IP address - e.g. 192.168.1.23", "", "u")); return rows; }
+            if (Icmp.OddV4((ipIn ?? "").Trim()) || !IPAddress.TryParse((ipIn ?? "").Trim(), out a)) { rows.Add(R(2, "IP", "type the device's IP address - e.g. 192.168.1.23", "", "u")); return rows; }
+            { string no1 = Lab.NotOne(a); if (no1 != "" || a.IsIPv6Multicast) { rows.Add(R(2, "IP", no1 != "" ? no1 : a + " is a multicast group - type one device", "", "u")); return rows; } }   // round-4 #8: one device only
             Program.Log("name of " + a);
             bool any = false;
             if (a.AddressFamily == AddressFamily.InterNetwork)

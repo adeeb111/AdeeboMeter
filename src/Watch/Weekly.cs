@@ -113,7 +113,7 @@ namespace AdeeboMeter
         public static string Text(Report r)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("My week online, " + r.From.ToString("ddd d MMM", CultureInfo.CurrentCulture) + " - " + r.To.ToString("ddd d MMM", CultureInfo.CurrentCulture) + " (measured by AdeeboMeter on my PC)");
+            sb.AppendLine("My week online, " + r.From.ToString("ddd d MMM", CultureInfo.InvariantCulture) + " - " + r.To.ToString("ddd d MMM", CultureInfo.InvariantCulture) + " (measured by AdeeboMeter on my PC)");
             if (r.Head != "") sb.AppendLine(r.Head);
             foreach (var p in r.Parts) sb.AppendLine("- " + p.Title + ": " + p.Line);
             return sb.ToString();

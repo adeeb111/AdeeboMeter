@@ -154,10 +154,10 @@ namespace AdeeboMeter
                     using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(facts, Draw.fSmall, mb, new RectangleF(fx, sy + 5 * S, x + w - actW - fx, 18 * S), nowrap);
                     // rename / remove
                     var spot = sp; float ax = x + w - actW + 10 * S;
-                    var rn = g.MeasureString("Rename", Draw.fSmall); var rr = new RectangleF(ax, sy + 4 * S, rn.Width, 20 * S);
+                    var rn = g.MeasureString(L.T("Rename"), Draw.fSmall);   /* review 1.1.6 U4 #10 */ var rr = new RectangleF(ax, sy + 4 * S, rn.Width, 20 * S);
                     g.DrawString(L.T("Rename"), Draw.fSmall, link, ax, sy + 5 * S);
                     Act(linkCanvas, rr, delegate { walkRename = spot.Room; walkBar.Visible = true; walkRoom.Box.Text = spot.Room; walkRoom.Box.Focus(); walkRoom.Box.SelectAll(); walkRec.Text = AdeeboMeter.L.T("Save the new name"); walkStatus.Text = AdeeboMeter.L.T("Type the new name for ") + spot.Room + ", then Save."; linkCanvas.Invalidate(); });
-                    var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString("Remove", Draw.fSmall).Width, 20 * S);
+                    var dr = new RectangleF(ax + rn.Width + 14 * S, sy + 4 * S, g.MeasureString(L.T("Remove"), Draw.fSmall).Width, 20 * S);
                     using (var red = new SolidBrush(Theme.LvText(2))) g.DrawString(L.T("Remove"), Draw.fSmall, red, dr.X, sy + 5 * S);
                     Act(linkCanvas, dr, delegate { spots.Remove(spot); SaveSpots(); if (walkRename == spot.Room) EndRename(); if (walkStatus != null) walkStatus.Text = AdeeboMeter.L.T("Removed ") + spot.Room + "."; linkCanvas.Invalidate(); });
                     sy += 30 * S;

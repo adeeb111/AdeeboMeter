@@ -74,7 +74,7 @@ namespace AdeeboMeter
                 OlText(g, L.T(Weather.Words(now.Code)) + " · " + L.T("feels like") + " " + Weather.Temp(now.Feels), Draw.fSmall, Theme.Sub, x + 100 * S, y + 104 * S);
                 var day = hours.Where(h => h.Utc < DateTime.UtcNow.AddHours(24)).ToList(); var wet = day.Where(h => h.Pop >= 0).OrderByDescending(h => h.Pop).FirstOrDefault();
                 float dy = y + 142 * S;
-                foreach (var kv in new[] { new[] { L.T("Rain chance, next 24 h"), wet == null ? "-" : wet.Pop + "% " + L.T("around") + " " + wet.Utc.ToLocalTime().ToString("h tt", CultureInfo.CurrentCulture) }, new[] { L.T("Humidity"), now.Hum < 0 ? "-" : now.Hum + "%" }, new[] { L.T("Wind"), double.IsNaN(now.Wind) ? "-" : now.Wind.ToString("0", CultureInfo.CurrentCulture) + " km/h" + (now.WindFrom >= 0 ? " " + L.T("from the") + " " + L.T(Compass(now.WindFrom)) : "") } })
+                foreach (var kv in new[] { new[] { L.T("Rain chance, next 24 h"), wet == null ? "-" : wet.Pop + "% " + L.T("around") + " " + wet.Utc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture) }, new[] { L.T("Humidity"), now.Hum < 0 ? "-" : now.Hum + "%" }, new[] { L.T("Wind"), double.IsNaN(now.Wind) ? "-" : now.Wind.ToString("0", CultureInfo.CurrentCulture) + " km/h" + (now.WindFrom >= 0 ? " " + L.T("from the") + " " + L.T(Compass(now.WindFrom)) : "") } })
                 { OlText(g, kv[0], Draw.fSmall, Theme.Muted, x + 20 * S, dy); OlTextR(g, kv[1], Draw.fBodyB, Theme.Ink, wr.Right - 20 * S, dy - 1 * S); dy += 26 * S; }
             }
             // your network
@@ -111,7 +111,7 @@ namespace AdeeboMeter
                 {
                     var h = twelve[i]; var tr = new RectangleF(x + 20 * S + i * (tw + 6 * S), y + 50 * S, tw, 84 * S);
                     if (i == 0) { Theme.Fill(g, tr, 10 * S, Theme.BlueSoft); Theme.Stroke(g, tr, 10 * S, Theme.Blue, 1); } else Theme.Stroke(g, tr, 10 * S, Theme.Line2, 1);
-                    string t = i == 0 ? L.T("Now") : h.Utc.ToLocalTime().ToString("h tt", CultureInfo.CurrentCulture); var ts = g.MeasureString(t, Draw.fTiny); OlText(g, t, Draw.fTiny, i == 0 ? Theme.BlueDark : Theme.Muted, tr.X + (tr.Width - ts.Width) / 2, tr.Y + 8 * S);
+                    string t = i == 0 ? L.T("Now") : h.Utc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture); var ts = g.MeasureString(t, Draw.fTiny); OlText(g, t, Draw.fTiny, i == 0 ? Theme.BlueDark : Theme.Muted, tr.X + (tr.Width - ts.Width) / 2, tr.Y + 8 * S);
                     var tt = Weather.TempShort(h.Temp); var tz = g.MeasureString(tt, Draw.fBodyB); OlText(g, tt, Draw.fBodyB, Theme.Ink, tr.X + (tr.Width - tz.Width) / 2, tr.Y + 30 * S);
                     var pp = h.Pop < 0 ? "" : h.Pop + "%"; var pz = g.MeasureString(pp, Draw.fTiny); OlText(g, pp, Draw.fTiny, h.Pop >= 50 ? Theme.BlueDark : Theme.Muted, tr.X + (tr.Width - pz.Width) / 2, tr.Y + 58 * S);
                 }
@@ -145,15 +145,17 @@ namespace AdeeboMeter
                 for (int i = 0; i <= 24; i += 6) OlText(g, LineHours.Clock(i % 24), Draw.fTiny, Theme.Muted, Math.Min(bars.X + i * bw, bars.Right - 40 * S), bars.Bottom + 6 * S);
             }
             var ur = new RectangleF(x + lw3 + 16 * S, y, w - lw3 - 16 * S, 210 * S); Kit.Box(g, ur); float ux = ur.X;
+            /* review 1.1.6 U2 #5: Toronto only "keeps the same hours" when its next session is New York's - not on a US- or Canada-only holiday */
+            Func<Tuple<DateTime, DateTime>, string> TsxLine = nys => { var tsx = MarketData.Exchanges.FirstOrDefault(e => e.Name == "Toronto"); var ts = tsx == null ? null : MarketData.NextSession(tsx, DateTime.UtcNow); return ts == null || ts.Item1 == nys.Item1 ? L.T("Toronto keeps the same hours") : L.T("Toronto opens") + " " + ts.Item1.ToString(AdeeboMeter.Draw.Tt("dddd h:mm tt"), CultureInfo.CurrentCulture); };
             OlText(g, L.T("Coming up"), Draw.fName, Theme.Ink, ux + 20 * S, y + 16 * S);
             float uy = y + 54 * S;
             Sports.Game next = null; if (Cfg.Sports) lock (Sports.k) next = SpNext(Sports.Games.ToList());
             var nyx = MarketData.Exchanges.First(e => e.Name == "New York"); var ses = MarketData.NextSession(nyx, DateTime.UtcNow); string nst = MarketData.State(nyx, DateTime.UtcNow);
             var rainAt = hours.Take(24).FirstOrDefault(h => h.Pop >= 50);
             var items = new List<string[]>();
-            if (next != null) items.Add(new[] { next.Home + " " + L.T("vs") + " " + next.Away, next.State == "live" ? L.T("playing now") : next.StartUtc.ToLocalTime().ToString("dddd h:mm tt", CultureInfo.CurrentCulture) + " · " + L.T("a team you follow"), "sports" });
-            if (ses != null) items.Add(new[] { nst == "open" ? L.T("Markets are open") : L.T("Markets open") + " " + ses.Item1.ToString("dddd h:mm tt", CultureInfo.CurrentCulture), L.T("New York") + " · " + L.T("Toronto keeps the same hours"), "trade" });   /* round 6: the times are New York's */
-            if (rainAt != null) items.Add(new[] { L.T("Rain from about") + " " + rainAt.Utc.ToLocalTime().ToString("h tt", CultureInfo.CurrentCulture), rainAt.Pop + "% " + L.T("chance"), "" });
+            if (next != null) items.Add(new[] { next.Home + " " + L.T("vs") + " " + next.Away, next.State == "live" ? L.T("playing now") : next.StartUtc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("dddd h:mm tt"), CultureInfo.CurrentCulture) + " · " + L.T("a team you follow"), "sports" });
+            if (ses != null) items.Add(new[] { nst == "open" ? L.T("Markets are open") : L.T("Markets open") + " " + ses.Item1.ToString(AdeeboMeter.Draw.Tt("dddd h:mm tt"), CultureInfo.CurrentCulture), L.T("New York") + " · " + TsxLine(ses), "trade" });   /* round 6: the times are New York's */
+            if (rainAt != null) items.Add(new[] { L.T("Rain from about") + " " + rainAt.Utc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture), rainAt.Pop + "% " + L.T("chance"), "" });
             if (items.Count == 0) OlText(g, L.T("Nothing planned - follow a team or turn on the markets numbers."), Draw.fSmall, Theme.Muted, ux + 20 * S, uy);
             foreach (var it in items.Take(3))
             {
@@ -169,7 +171,7 @@ namespace AdeeboMeter
             if (hours.Count > 0)
             {
                 var d24 = hours.Take(24).ToList(); var wetH = d24.Where(h => h.Pop >= 50).ToList();
-                rows.Add(new[] { L.T("Weather"), wetH.Count > 0 ? "1" : "0", wetH.Count > 0 ? L.T("Rain later") : L.T("Dry"), wetH.Count > 0 ? L.T("Rain likely around") + " " + wetH[0].Utc.ToLocalTime().ToString("h tt", CultureInfo.CurrentCulture) + " (" + wetH.Max(h => h.Pop) + "%)." : L.T("No rain expected in the next 24 hours."), L.T("Open-Meteo forecast") });
+                rows.Add(new[] { L.T("Weather"), wetH.Count > 0 ? "1" : "0", wetH.Count > 0 ? L.T("Rain later") : L.T("Dry"), wetH.Count > 0 ? L.T("Rain likely around") + " " + wetH[0].Utc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture) + " (" + wetH.Max(h => h.Pop) + "%)." : L.T("No rain expected in the next 24 hours."), L.T("Open-Meteo forecast") });
             }
             if (!Cfg.History) rows.Add(new[] { L.T("Network"), "3", L.T("History off"), L.T("Turn on History to see how your line usually behaves."), "-" });
             else if (days < 5) rows.Add(new[] { L.T("Network"), "3", L.T("Learning"), L.T("Not enough history yet to spot a pattern. Ask again in") + " " + (5 - days) + " " + L.T("days") + ".", days + " " + L.T("days of History") });

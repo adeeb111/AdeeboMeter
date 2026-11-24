@@ -55,7 +55,7 @@ h3{font-size:18px;margin:18px 0 6px}
 .winner .n{font-size:22px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere}
 .winner .p{color:rgba(255,255,255,.85);font-size:13.5px;white-space:nowrap}
 .winner .c{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12.5px;color:rgba(255,255,255,.7);margin-top:10px}
-.winner a{color:#F2CC60;font-size:13.5px;position:relative;z-index:1}
+.winner a{color:#F2CC60;font-size:13.5px;position:relative;z-index:1;overflow-wrap:anywhere;word-break:break-word}
 .empty{border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--sub)}
 .count{color:var(--muted);font-size:14px;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;font-size:15px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -123,7 +123,7 @@ footer a{color:inherit}
     <tbody>
       <tr><td>Open a tool's <b>Example</b>, then run the tool for real and get a result</td><td class="pts">+2</td><td>Toolbox - 232 tools</td></tr>
       <tr><td>…the longer tests (MTR, speed test, iperf3, bufferbloat, ISP report, game compare, MTU per hop)</td><td class="pts">+4</td><td>Toolbox</td></tr>
-      <tr><td>Run a tool marked <b>replay</b> again, 10 minutes or more after the first run - to compare</td><td class="pts">+3</td><td>Toolbox (ISP report, game compare, before/after, certificate compare, MTR)</td></tr>
+      <tr><td>Run a tool marked <b>replay</b> again, 10 minutes or more after the first run - to compare</td><td class="pts">+2</td><td>Toolbox (ISP report, game compare, before/after, certificate compare, MTR)</td></tr>
       <tr><td>Read a <b>Learn</b> topic to the end</td><td class="pts">+2</td><td>Learn - 98 topics</td></tr>
       <tr><td>Answer the topic's <b>Check yourself</b> question right the first time</td><td class="pts">+2</td><td>End of each Learn topic</td></tr>
       <tr><td>Meet a <b>lab challenge</b></td><td class="pts">+4</td><td>Learn › Labs - 11 challenges</td></tr>
@@ -262,7 +262,7 @@ footer a{color:inherit}
       c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));
       c.appendChild(el('div', 'n', String(w.name || '')));
       // just the name - and a handle, if they gave one: the link is built here from a known site, never taken from the file
-      var site = SITES[String(w.site || '')], h = String(w.handle || '');
+      var sk = String(w.site || ''), site = Object.prototype.hasOwnProperty.call(SITES, sk) ? SITES[sk] : null, h = String(w.handle || '');
       if (site && site.rx.test(h)) { var a = el('a', null, (w.site === 'linkedin' ? '' : '@') + h + ' on ' + site.name + ' ›'); a.href = site.url + encodeURIComponent(h); a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
       grid.appendChild(c);
     });

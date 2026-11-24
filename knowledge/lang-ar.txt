@@ -544,16 +544,15 @@ Full screen	ملء الشاشة
 Play	العب
 Show all	عرض الكل
 Run it for real:	أفعلها بحقيقة
-Replay bonus · +3	إضافة إعادة تشغيل · +3
-Replay bonus · +3 - run it again at least 10 minutes after your first run.	إضافة إعادة تشغيل · +3 - تشغيله مرة أخرى على الأقل 10 دقائق بعد ركضك الأول.
-replay bonus	مكافأة إعادة المباراة
+Replay bonus · +2	مكافأة إعادة التشغيل · +2
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	مكافأة إعادة التشغيل · +2 - تشغيله مرة أخرى على الأقل 10 دقائق بعد ركضك الأول.
+replay bonus	مكافأة إعادة التشغيل
 path finished	اكتمل المسار
 You got the Adeebo Award!	حصلت على جائزة (أديبو)!
 You got the Adeebo Award	لقد حصلت على جائزة (أديبو)
 Adeebo Award	جائزة أديبو
 Network detective	محقّق الشبكات
 Packet whisperer	خبير الحزم
-Nearly everything AdeeboMeter can teach, tried and understood. Well done.	تقريبا كل ما يمكن أن يعلّمه AdeeboMeter، حاولت وفهمت. أحسنت
 +2, or +4 for the longer tests	+2، أو +4 للفحوصات الأطول
 +3, once	+3، مرة واحدة
 +2	+2
@@ -1144,7 +1143,7 @@ Credits	الشكر والتقدير
 Try it	جرّبه
 Full checkup	فحص كامل
 Run full checkup	تشغيل فحص شامل
-Include a speed test (up to 500 MB)	إضافة اختبار السرعة (حتى 500 MB)
+Include a speed test (up to 1 GB)	إضافة اختبار السرعة (حتى 1 GB)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	هذا الكمبيوتر، أقراصه وتطبيقاتها، Wi-Fi الخاص بك، راوتر، الإنترنت والأسماء - تقرير واحد، أكبر مشكلة أولا.
 See it  ›	انظروا إليها
 Speed only	السرعة فقط
@@ -1715,7 +1714,7 @@ Ten years of money	عشر سنوات من المال
 Text files	ملفات نصية
 That didn't switch cleanly - your previous view is back, nothing lost.	لم يتغير ذلك بشكل واضح - نظرتك السابقة عادت، لا شيء ضائع.
 That file isn't there any more.	هذا الملف لم يعد موجوداً
-The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	يشغّل فحص 4K اختبار سرعة ينزّل ويرفع حتى 500 MB خلال 20-30 ثانية. ستتباطأ الأنشطة الأخرى على اتصالك أثناء الاختبار. هل تريد البدء؟
+The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	يشغّل فحص 4K اختبار سرعة ينزّل ويرفع حتى 1 GB خلال 20-30 ثانية. ستتباطأ الأنشطة الأخرى على اتصالك أثناء الاختبار. هل تريد البدء؟
 The app's own connection:	اتصال التطبيق نفسه:
 The biggest share is	الجزء الأكبر هو
 The busy number is the one games feel when someone else is downloading.	الرقم المزدحم هو واحد الألعاب تشعر عندما شخص آخر تنزيل.
@@ -4675,7 +4674,6 @@ about a second per 10 packets	نحو ثانية لكل 10 حزم
 a few seconds - or keeps watching, if you give it minutes	بضع ثوانٍ — أو يواصل المراقبة إن أعطيته دقائق
 a few minutes (it tests the disk and memory)	بضع دقائق (يختبر القرص والذاكرة)
 a few seconds	بضع ثوانٍ
-100-500 MB to Cloudflare's speed server	100-500 MB إلى خادم السرعة لدى Cloudflare
 one TLS handshake to each site	مصافحة TLS واحدة لكل موقع
 nothing - it reads the file or text you give it	لا شيء — يقرأ الملف أو النص الذي تعطيه
 nothing - it's maths on this PC	لا شيء — حسابات على هذا الحاسوب
@@ -5165,7 +5163,7 @@ Your Line at Kick-off Time	خطك وقت انطلاق المباراة
 Your phone vs this PC	هاتفك مقابل هذا الحاسوب
 local network	الشبكة المحلية
 {0} MB (live capture on)	{0} MB (الالتقاط المباشر مُفعَّل)
-{0} MB of 80 MB budget	{0} MB من ميزانية 80 MB
+{0} MB of 99 MB budget	{0} MB من ميزانية 99 MB
 {0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} متصل لكنه لم يحصل على عنوان من الموجّه (169.254.x.x - لم يستجب DHCP). أعد تشغيل الموجّه أو أعد الاتصال.
 Every network connection just dropped.	انقطعت كل اتصالات الشبكة للتو.
 All network connections dropped.	انقطعت كل اتصالات الشبكة.
@@ -5390,3 +5388,63 @@ To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	للخروج: E
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	أخذ Windows لوحة المفاتيح (Win أو Alt+Tab أو إشعار) - انقر هنا أو عُد بـ Alt+Tab للمتابعة.
 no server answered - is the internet down?	لم يستجب أي خادم - هل الإنترنت مقطوع؟
 run a test to see	أجرِ اختبارًا لترى
+ With the kick-off reminder on: your teams' fixtures every 30 min while the PC is on.	 مع تذكير بداية المباراة: مباريات فرقك كل 30 دقيقة ما دام الحاسوب يعمل.
+ is laggy.	 متقطّع.
+ is playable.	 قابل للعب.
+ is steady.	 مستقر.
+A TCP handshake (no data) to each host on your board every {0} min while AdeeboMeter runs, even from the tray.	مصافحة TCP (بلا بيانات) مع كل مضيف في لوحتك كل {0} دقيقة ما دام AdeeboMeter يعمل، حتى من شريط المهام.
+A ping a minute to each device you watch on your network ({0} now). Stays on your local network.	اختبار ping كل دقيقة لكل جهاز تراقبه على شبكتك ({0} الآن). يبقى داخل شبكتك المحلية.
+Add a game	إضافة لعبة
+An Example is made-up data - run the tool to save or share your own result.	المثال بيانات مختلَقة - شغّل الأداة لحفظ نتيجتك أو مشاركتها.
+Checking your connection...	جارٍ فحص اتصالك...
+Couldn't read Windows' connection list just now - trying again.	تعذّرت قراءة قائمة اتصالات Windows الآن - جارٍ المحاولة مجددًا.
+Edit	تعديل
+Give the game a name.	أعطِ اللعبة اسمًا.
+Green background (for OBS Chroma Key)	خلفية خضراء (لمفتاح الكروما في OBS)
+Internet ping	زمن استجابة الإنترنت
+Line	السطر
+Listening...	جارٍ الاستماع...
+Market quotes	أسعار السوق
+Nothing measured - the router and internet checks are off in Settings.	لم يُقَس شيء - فحصا الموجّه والإنترنت متوقفان في الإعدادات.
+Nothing measured yet - pick your broker and press Check my line.	لم يُقَس شيء بعد - اختر وسيطك واضغط افحص خطي.
+Off - it needs your own key.	متوقف - يحتاج مفتاحك الخاص.
+Off - nothing is asked until you turn scores on.	متوقف - لا يُطلب شيء حتى تشغّل النتائج.
+Off - your IT team turned the phone link off.	متوقف - فريق تقنية المعلومات أوقف ربط الهاتف.
+Only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from bankofcanada.ca. No account, nothing about you is sent.	فقط عندما تكون صفحة الأسواق مفتوحة (أو ملخص المساء مفعّلًا) ويُتوقَّع صدور أرقام أحدث: طلب واحد لكل عملة في قائمتك (وتاريخها منذ 2017 في المرة الأولى)، ونحو مرة أسبوعيًا مؤشر السلع وسعر الفائدة الرسمي والتضخم، من bankofcanada.ca. بلا حساب، ولا يُرسَل شيء عنك.
+Only when you press Show the QR code, or a remembered phone connects: a sealed connection through AdeeboMeter's relay (adeebometer-remote.orkoadeeb.workers.dev). The relay passes messages along and can't read them.	فقط عندما تضغط اعرض رمز QR، أو يتصل هاتف محفوظ: اتصال مُحكَم عبر مُرحِّل AdeeboMeter ‏(adeebometer-remote.orkoadeeb.workers.dev). المُرحِّل يمرّر الرسائل ولا يستطيع قراءتها.
+Only when you press Test my stream: the playlist of the link you gave, and up to 30 s of its video, from that link's own server.	فقط عندما تضغط اختبر بثّي: قائمة تشغيل الرابط الذي أعطيته، وحتى 30 ثانية من الفيديو، من خادم ذلك الرابط نفسه.
+Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes. A typed host also gets 1.1.1.1 traced next to it, for comparison.	فقط عند تشغيله: MTR إلى الوجهات التي اخترتها للمدة التي اخترتها؛ وبحث عكسي عن اسم كل موجّه في الطريق (لدى خادم DNS الخاص بك)؛ وحتى 4 قراءات لصفحة مودم الكابل على 192.168.100.1 (صفحة الإشارة)؛ وعنوان IP العام (طلب واحد إلى www.cloudflare.com/cdn-cgi/trace) فقط إن كتبت نعم. والمضيف المكتوب يُتتبَّع بجانبه 1.1.1.1 للمقارنة.
+Phone link	ربط الهاتف
+Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.	الحفظ يشغّل النتائج: يطلب AdeeboMeter عندها مباريات اليوم من NHL وESPN وBBC Sport، نحو كل 5 دقائق ما دامت صفحة الرياضة مفتوحة. لا يُرسَل شيء عنك.
+Service board watch	مراقبة لوحة الخدمات
+Show the PNG in its folder	إظهار ملف PNG في مجلده
+Spike	قفزة
+Sports scores	نتائج الرياضة
+The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.	أعلى رتبة - نحو نصف كل ما يمكن أن يعلّمه AdeeboMeter، جرّبته وفهمته. أحسنت.
+This is an Example (made-up data) - run the tool to save or share your own result.	هذا مثال (بيانات مختلَقة) - شغّل الأداة لحفظ نتيجتك أو مشاركتها.
+Toronto opens	تفتح بورصة تورونتو
+Turned off by your IT team	أوقفه فريق تقنية المعلومات
+Two servers have the same name - give each one its own.	خادمان بالاسم نفسه - أعطِ كلًّا منهما اسمه الخاص.
+Watched devices	الأجهزة المراقَبة
+While the Sports page is open (about every 5 min), or a stream plays while a team you follow is live: the day's fixtures and scores from api-web.nhle.com (NHL), site.api.espn.com (football) and feeds.bbci.co.uk (headlines), plus api.football-data.org and api.cricapi.com when you added your own key.	ما دامت صفحة الرياضة مفتوحة (نحو كل 5 دقائق)، أو يعمل بثّ بينما فريق تتابعه يلعب مباشرة: مباريات اليوم ونتائجها من api-web.nhle.com ‏(NHL) وsite.api.espn.com ‏(كرة القدم) وfeeds.bbci.co.uk ‏(العناوين)، إضافةً إلى api.football-data.org وapi.cricapi.com إن أضفت مفتاحك الخاص.
+With your own key, while Markets is open: index and futures quotes from financialmodelingprep.com, as often as you set (1-60 min).	بمفتاحك الخاص، ما دامت صفحة الأسواق مفتوحة: أسعار المؤشرات والعقود الآجلة من financialmodelingprep.com، بالوتيرة التي تحددها (1-60 دقيقة).
+Write a PNG for OBS (overlay.png)	كتابة ملف PNG لـ OBS ‏(overlay.png)
+ask msftconnecttest.com when a check fails (sign-in page check)	سؤال msftconnecttest.com عند فشل فحص (كشف صفحة تسجيل الدخول)
+delay	التأخير
+isn't a host name or IP - letters, digits, dots and dashes only.	ليس اسم مضيف ولا عنوان IP - حروف وأرقام ونقاط وشرطات فقط.
+jitter	التذبذب
+keep a waiting room for remembered phones at AdeeboMeter's relay	إبقاء غرفة انتظار للهواتف المحفوظة على مُرحِّل AdeeboMeter
+send your weather place to a different server: 	إرسال موقع الطقس إلى خادم آخر: 
+spikes	قفزات
+the TCP port must be 1 - 65535.	يجب أن يكون منفذ TCP من 1 إلى 65535.
+the scores couldn't be reached - it tries again in 5 minutes	تعذّر الوصول إلى النتائج - تُعاد المحاولة بعد 5 دقائق
+turn the internet check on (a ping to 1.1.1.1 in the background)	تشغيل فحص الإنترنت (ping إلى 1.1.1.1 في الخلفية)
+waiting	بانتظار
+Market closed - the watch starts at 9:30 ET	السوق مغلق - تبدأ المراقبة الساعة 9:30 بتوقيت الشرق
+Live watch is off	المراقبة المباشرة متوقفة
+region estimate	تقدير المنطقة
+Valve server	خادم Valve
+exact	دقيق
+Not measured yet.	لم يُقَس بعد.
+up to 1 GB to the speed server you picked	حتى 1 GB إلى خادم السرعة الذي اخترته
+Same network twice	الشبكة نفسها مرتين

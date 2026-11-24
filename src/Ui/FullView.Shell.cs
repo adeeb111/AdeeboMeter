@@ -66,7 +66,7 @@ namespace AdeeboMeter
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
         sealed class ShTooBig : Exception { public ShTooBig() : base("more than 16 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
-        const int ShMaxCap = 8 * 1024 * 1024;   // characters (2 bytes each): 16 MB, inside the app's 80 MB budget (review 24 Nov - 64 M characters was 128 MB)
+        const int ShMaxCap = 8 * 1024 * 1024;   // characters (2 bytes each): 16 MB, inside the app's 99 MB budget (review 24 Nov - 64 M characters was 128 MB)
 
         Panel BuildShellPage()
         {
@@ -304,7 +304,7 @@ namespace AdeeboMeter
         // an Authorization / Bearer value, NAME=value for token-, key-, secret- and password-like names, --token value, and user:password@ in an address
         static readonly Regex ScrubAuth = new Regex(@"(?i)\b(authorization\s*:\s*(?:bearer|basic|token|digest|negotiate)?\s*|bearer\s+|x-api-key\s*:\s*|api-key\s*:\s*)([^\s""'\\;|&]{4,})", RegexOptions.Compiled);
         static readonly Regex ScrubVar = new Regex(@"(?i)\b([A-Za-z0-9_]*(?:token|secret|passw(?:or)?d|pwd|api_?key|apikey|access_?key|private_?key|auth_?token|authorization|credentials?)[A-Za-z0-9_]*=)(""[^""]*""|'[^']*'|[^\s;|&]+)", RegexOptions.Compiled);
-        static readonly Regex ScrubFlag = new Regex(@"(?i)(--?(?:token|password|passwd|pass|secret|api-?key|auth|access-key|client-secret)(?:=|\s+))(""[^""]*""|'[^']*'|[^\s;|&-][^\s;|&]*)", RegexOptions.Compiled);
+        static readonly Regex ScrubFlag = new Regex(@"(?i)((?:--?(?:token|password|passwd|pass|secret|api-?key|auth|access-key|client-secret|user|proxy-user)|-u|-U)(?:=|\s+))(""[^""]*""|'[^']*'|[^\s;|&-][^\s;|&]*)", RegexOptions.Compiled);
         static readonly Regex ScrubUrl = new Regex(@"(?i)(\b[a-z][a-z0-9+.-]*://[^\s/:@]+:)([^\s/@]+)(@)", RegexOptions.Compiled);
         internal static string ShScrub(string s)
         {
@@ -720,7 +720,10 @@ namespace AdeeboMeter
         }
         static readonly Regex VarRx = new Regex(@"\$(\{(?:[^{}]|\{[^{}]*\})*\}|\?|#|@|\*|\$|\d|[A-Za-z_][A-Za-z0-9_]*)");   // round 6 D2-4: ${x:-${y}} - one level of nesting
         // $VARS in the plain parts, $(command) run and its output put in (trailing newlines off), $((math)) worked out
-        string Subst(string s, ShCtx c)
+        // review 1.1.6 (security #9): one expanded word is never bigger than what one command may print (8 M characters) -
+        // a=$a$a doubling, or a huge ${x} - so no variable can grow past the app's memory budget
+        string Subst(string s, ShCtx c) { string r = Subst0(s, c); if (r.Length > ShMaxCap) throw new ShTooBig(); return r; }
+        string Subst0(string s, ShCtx c)
         {
             var sb = new StringBuilder(); int i = 0;
             while (i < s.Length)
@@ -1131,7 +1134,7 @@ namespace AdeeboMeter
             { var ro = assigns.Select(z => z.Key.TrimEnd('+')).FirstOrDefault(z => Env.RO.Contains(z)); if (ro != null) { Err(c, "adeeboshell: " + ro + ": readonly variable"); return 1; } }
             if (args.Count == 0)   // only assignments and/or redirects: > file still makes the file, < file still has to exist (#35)
             {
-                lock (Env.Vars) foreach (var a in assigns) { if (a.Key.EndsWith("+", StringComparison.Ordinal)) { string k = a.Key.TrimEnd('+'), ov; Env.Vars.TryGetValue(k, out ov); if (ov == null) { List<string> av; if (Env.Arrs.TryGetValue(k, out av) && av.Count > 0) ov = av[0]; } Env.Vars[k] = (ov ?? "") + a.Value; } else Env.Vars[a.Key] = a.Value; }   // x+=more
+                lock (Env.Vars) foreach (var a in assigns) { if (a.Key.EndsWith("+", StringComparison.Ordinal)) { string k = a.Key.TrimEnd('+'), ov; Env.Vars.TryGetValue(k, out ov); if (ov == null) { List<string> av; if (Env.Arrs.TryGetValue(k, out av) && av.Count > 0) ov = av[0]; } if ((ov ?? "").Length + a.Value.Length > ShMaxCap) throw new ShTooBig(); Env.Vars[k] = (ov ?? "") + a.Value; } else Env.Vars[a.Key] = a.Value; }   // x+=more
                 int st = lastSubstExit >= 0 ? lastSubstExit : 0;
                 return redirs.Count == 0 ? st : ApplyRedirs(redirs, c, cc => st);
             }
@@ -1510,7 +1513,8 @@ namespace AdeeboMeter
                 {
                     char k = m.Groups[4].Value[0]; if (k == '%') return "%";
                     string flags = m.Groups[1].Value; int width = 0; if (m.Groups[2].Value == "*") { int.TryParse(ai < rest.Count ? rest[ai++] : "0", out width); } else if (m.Groups[2].Success) int.TryParse(m.Groups[2].Value, out width);
-                    int prec = -1; if (m.Groups[3].Value == "*") { int.TryParse(ai < rest.Count ? rest[ai++] : "0", out prec); } else if (m.Groups[3].Success && m.Groups[3].Value != "") prec = int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture); else if (m.Value.Contains(".")) prec = 0;
+                    int prec = -1; if (m.Groups[3].Value == "*") { int.TryParse(ai < rest.Count ? rest[ai++] : "0", out prec); } else if (m.Groups[3].Success && m.Groups[3].Value != "") { if (!int.TryParse(m.Groups[3].Value, NumberStyles.None, CultureInfo.InvariantCulture, out prec)) prec = int.MaxValue; } else if (m.Value.Contains(".")) prec = 0;
+                    if (width > 1000000 || width < -1000000 || prec > 1000000) throw new ShTooBig();   // review 1.1.6 (security #9): checked before any padding
                     string a = ai < rest.Count ? rest[ai++] : ""; string v;
                     switch (k)
                     {

@@ -45,9 +45,9 @@ namespace AdeeboMeter
                 new object[] { "cpe", L.T("Router"), LvMs(M.GwPing, gw, 15, 50) },
                 new object[] { "internet", L.T("Internet"), LvMs(M.NetPing, net, 80, 150) },
                 new object[] { "dns", L.T("Names"), double.IsNaN(dns) ? 3 : dns > 300 ? 1 : 0 } };
-            Func<double, string> msT = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+            Func<double, string> msT = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";   // the stops below say "not yet" while nothing was measured (U1 #3)
             double cpu = snap.Cpu;
-            var vals = new[] { double.IsNaN(cpu) ? "" : "CPU " + (Math.Round(cpu / 10) * 10).ToString("0", CultureInfo.CurrentCulture) + "%", link, msT(gw), msT(net), double.IsNaN(dns) ? "" : msT(dns) };
+            var vals = new[] { double.IsNaN(cpu) ? "" : "CPU " + (Math.Round(cpu / 10) * 10).ToString("0", CultureInfo.CurrentCulture) + "%", link, M.GwPing.Values(6).Length == 0 ? L.T("not yet") : msT(gw), M.NetPing.Values(6).Length == 0 ? L.T("not yet") : msT(net), double.IsNaN(dns) ? "" : msT(dns) };
             float ic = 34 * S, gap = Math.Min(110 * S, (w - stops.Length * ic) / (stops.Length - 1));
             for (int i = 0; i < stops.Length; i++)
             {

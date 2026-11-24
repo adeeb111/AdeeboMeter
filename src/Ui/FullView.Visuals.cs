@@ -147,6 +147,7 @@ namespace AdeeboMeter
             if (VisEx()) { var ex = Examples.Get(tbSel); a = ex == null ? null : ex.In; }
             else a = tbRows != null && tbShown != null ? tbShown : Inputs();
             var t = Tools2().FirstOrDefault(z => z.Id == tbSel);   // secret boxes (passwords, communities, shared secrets) never reach a picture, a phone link or an export
+            if (a != null && t != null && t.Id == "httpreq") { a = (string[])a.Clone(); Redact(t.Id, a); }   // review 1.1.6 U3 #3: before a run too
             var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null && !(t != null && i < t.Inputs.Length && SecretInput(t.Inputs[i])) ? ShareCell(a[i].Trim()) : ""; return r;
         }
         // the result rows without the example banner and table lines
@@ -165,8 +166,15 @@ namespace AdeeboMeter
         }
         static double VNum(string text, string pattern)
         {
+            /* review 1.1.6 U4 #1: the rows are written with the Windows format, so "99,8%" has a decimal comma - let the
+               pattern take it, and read it the way it was written */
+            pattern = pattern.Replace("[0-9.]", "[0-9.,]").Replace(@"(?:\.[0-9]+)", @"(?:[.,][0-9]+)");
             var m = Regex.Match(text ?? "", pattern, RegexOptions.IgnoreCase); double v;
-            return m.Success && double.TryParse(m.Groups[1].Value.Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
+            if (!m.Success) return double.NaN;
+            string s = m.Groups[1].Value.TrimEnd('.', ',');
+            var cur = CultureInfo.CurrentCulture.NumberFormat;
+            if (cur.NumberDecimalSeparator == "," && double.TryParse(s.Replace(".", ""), NumberStyles.Float, CultureInfo.CurrentCulture, out v)) return v;
+            return double.TryParse(s.Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
         }
         static string VFile(string path) { string p = (path ?? "").Trim().Trim('"'); int i = Math.Max(p.LastIndexOf('\\'), p.LastIndexOf('/')); return i >= 0 ? p.Substring(i + 1) : p; }
 
@@ -175,7 +183,8 @@ namespace AdeeboMeter
         static RectangleF VisCard(Graphics g, float x, float y, float w, float h, string caption, string state)
         {
             var r = new RectangleF(x, y, w, h); Kit.Box(g, r, 14 * S);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T(caption), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
+            int cm = caption.IndexOf("  ·  +", StringComparison.Ordinal);   /* review 1.1.6 U4 #11: translate the caption before its "+N more" */
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(cm > 0 ? L.T(caption.Substring(0, cm)) + caption.Substring(cm) : L.T(caption), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
             string sl = L.T(state); var ss = g.MeasureString(sl, Draw.fTiny); var pr = new RectangleF(x + w - ss.Width - 30 * S, y + 9 * S, ss.Width + 16 * S, ss.Height + 4 * S);
             Theme.Fill(g, pr, pr.Height / 2, state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvSoft(0) : state == "EXAMPLE" ? Theme.LvSoft(1) : Theme.Soft);
             using (var sb = new SolidBrush(state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvText(0) : state == "EXAMPLE" ? Theme.LvText(1) : Theme.Sub)) g.DrawString(sl, Draw.fTiny, sb, pr.X + 8 * S, pr.Y + 2 * S);

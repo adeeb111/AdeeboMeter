@@ -140,6 +140,7 @@ namespace AdeeboMeter
         public static List<string[]> Listen(Monitor m, string secsIn, Toolkit.Run run, bool discovery)
         {
             var rows = new List<string[]>(); string id; lock (m.L) id = m.IfaceId;
+            if (Policy.NoCapture) { rows.Add(R(3, "Turned off", "Capturing packets is turned off by your IT team (AdeeboMeter.policy).", "", "u")); return rows; }   // review 1.1.6 P3 #1
             if (!LiveCapture.Available) { rows.Add(R(3, "Needs packet capture", "Wireshark (tshark) and Npcap aren't installed on this PC", "Installing them usually needs admin - on a locked-down work PC this tool can't run. Everything else in Path & routing works without it.", "u")); return rows; }
             Guid g; if (!Guid.TryParse((id ?? "").Trim('{', '}'), out g)) { rows.Add(R(2, "Adapter", "no active wired or Wi-Fi adapter", "", "u")); return rows; }
             int secs; if (!int.TryParse((secsIn ?? "").Trim(), out secs)) secs = 60; secs = Math.Max(10, Math.Min(120, secs));

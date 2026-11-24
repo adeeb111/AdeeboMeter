@@ -27,7 +27,7 @@ namespace AdeeboMeter
         static void PortalTest(out string portal, out string portalErr)
         {
             portal = ""; portalErr = "";
-            if (!Cfg.Portal) { portalErr = "off"; return; }   // Settings › Sign-in page check is off: nothing is sent
+            if (!Cfg.Portal || Policy.NoOnline) { portalErr = "off"; return; }   // review 1.1.6 P2 #10: the IT switch covers it too   // Settings › Sign-in page check is off: nothing is sent
             try
             {
                 var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.ReadWriteTimeout = 5000; q.AllowAutoRedirect = false;

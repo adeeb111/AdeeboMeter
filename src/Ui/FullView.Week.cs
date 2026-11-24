@@ -21,6 +21,8 @@ namespace AdeeboMeter
                 float rh = 30 * S, hh = Draw.Measure(L.T(r.Head), Draw.fName, (int)(w - 40 * S)).Height;
                 var card = new RectangleF(x, y, w, 18 * S + hh + 10 * S + r.Parts.Count * rh + 56 * S); Kit.Box(g, card);
                 float cy = y + 16 * S;
+                /* review 1.1.6 U4 #9: the title column fits the widest translated title (up to a third of the card) */
+                float tcol = Math.Min(w / 3, Math.Max(106 * S, r.Parts.Count == 0 ? 0 : r.Parts.Max(p => (float)Math.Ceiling(g.MeasureString(L.T(p.Title), Draw.fBodyB).Width)) + 6 * S));
                 using (var hb = new SolidBrush(r.Lv == 0 ? Theme.Ink : Theme.LvText(Math.Min(2, r.Lv)))) g.DrawString(L.T(r.Head), Draw.fName, hb, new RectangleF(x + 20 * S, cy, w - 40 * S, hh + 4)); cy += hh + 10 * S;
                 using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                     // Review-2: a page this view hides (Trading in Gamer + Streamer) goes last, marked as earlier activity
@@ -29,9 +31,9 @@ namespace AdeeboMeter
                         bool gone = p.Id != "net" && Cfg.Off(p.Id == "game" ? "gamer" : p.Id);
                         var look = WeekLook.FirstOrDefault(z => z[0] == p.Id) ?? WeekLook[0];
                         Kit.Icon(g, look[2], new RectangleF(x + 20 * S, cy + 4 * S, 16 * S, 16 * S), Kit.Accent(look[1]));
-                        g.DrawString(L.T(p.Title), Draw.fBodyB, ink, x + 44 * S, cy + 2 * S);
-                        Draw.LvDot(g, p.Lv, x + 150 * S, cy + 8 * S, 9 * S, 9 * S);
-                        g.DrawString(gone ? L.T("Previous activity") + " · " + p.Line : p.Line, Draw.fBody, gone ? muted : sub, new RectangleF(x + 166 * S, cy + 2 * S, w - 186 * S, rh), nf);
+                        g.DrawString(L.T(p.Title), Draw.fBodyB, ink, new RectangleF(x + 44 * S, cy + 2 * S, tcol, rh), nf);
+                        Draw.LvDot(g, p.Lv, x + 44 * S + tcol, cy + 8 * S, 9 * S, 9 * S);
+                        g.DrawString(gone ? L.T("Previous activity") + " · " + p.Line : p.Line, Draw.fBody, gone ? muted : sub, new RectangleF(x + 60 * S + tcol, cy + 2 * S, w - 80 * S - tcol, rh), nf);
                         string id = p.Id; if (id != "net") Act(overviewCanvas, new RectangleF(x + 16 * S, cy, w - 32 * S, rh), delegate { tab = id == "game" ? "gamer" : id; ShowTab(); });
                         cy += rh;
                     }

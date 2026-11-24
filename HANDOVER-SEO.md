@@ -4,7 +4,7 @@ For whoever takes over SEO for **https://adeebometer.com**. Updated 17 Nov 2026 
 Read the rules first - they are the owner's, not suggestions.
 
 ## Rules (hard)
-1. **No company/employer references anywhere** (no Nokia, no employers' product names). Generic wording only.
+1. **No company/employer references anywhere** (no employer or vendor names, and none of their product names - see the private brief). Generic wording only.
 2. **No tracking**: no Google Analytics, tag managers, cookies, pixels or third-party scripts that phone home. The product
    promises "no cloud, no telemetry, never listens" - the site must match. Search Console / Bing Webmaster (no on-page
    script) are fine.

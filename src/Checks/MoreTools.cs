@@ -121,7 +121,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); name = (name ?? "").Trim().TrimEnd('.');
             if (name == "" || name.Length > 253 || !Regex.IsMatch(name, @"^[\w.-]+$")) { rows.Add(R(2, "Name", "type a name - e.g. outlook.office.com", "", "u")); return rows; }
             string dns; lock (m.L) dns = m.DnsServer; IPAddress mine; if (!IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out mine)) { rows.Add(R(2, "Your DNS", "no DNS server set", "", "u")); return rows; }
-            string o = (other ?? "").Trim(); if (o == "") o = "1.1.1.1";
+            string o = (other ?? "").Trim(); if (o == "") { if (Policy.NoOnline) { rows.Add(R(2, "Other DNS", "type the DNS server to compare with - the default 1.1.1.1 is off because your IT team turned online lookups off", "", "u")); return rows; } o = "1.1.1.1"; }   // review 1.1.6 P2 #10
             Func<Toolkit.Msg, List<string>> ans = x => x == null ? null : x.Rrs.Where(r => r.Section == 1 && (r.Type == "A" || r.Type == "AAAA" || r.Type == "CNAME")).Select(r => r.Type + " " + r.Data).OrderBy(z => z, StringComparer.Ordinal).ToList();
             Toolkit.Msg a4 = Toolkit.Query(mine, name, 1, true), a6 = Toolkit.Query(mine, name, 28, true), b4, b6; string where;
             if (o.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) { Uri u; if (!Uri.TryCreate(o, UriKind.Absolute, out u)) { rows.Add(R(2, "Other server", "not a DoH address", "", "u")); return rows; } string w; b4 = Toolkit.QueryDoh(u, name, 1, out w); b6 = Toolkit.QueryDoh(u, name, 28, out w); where = u.Host + " (DoH)"; }

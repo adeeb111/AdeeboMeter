@@ -78,6 +78,7 @@ namespace AdeeboMeter
         {
             var r = new Remote(m, p, slot, attempt);
             if (Relay == "") { r.St = State.Ended; r.Why = "The phone relay isn't set up yet."; return r; }
+            if (Policy.NoRemote) { r.St = State.Ended; r.Why = "Your IT team turned the phone link off (AdeeboMeter.policy)."; return r; }   // review 1.1.6 (security #3)
             Task.Factory.StartNew(r.Run, TaskCreationOptions.LongRunning);
             return r;
         }
@@ -88,8 +89,9 @@ namespace AdeeboMeter
         public static Remote Start(Monitor m)
         {
             var old = Now; if (old != null) Task.Factory.StartNew(() => old.End("a new session started"));   // bug-hunt L-232: its goodbye (up to 2 s) never holds the window
-            var r = new Remote(m); Now = r;
+            var r = new Remote(m); Now = r; PhoneHub.NewSession();
             if (Relay == "") { r.St = State.Ended; r.Why = "The phone relay isn't set up yet."; return r; }
+            if (Policy.NoRemote) { r.St = State.Ended; r.Why = "Your IT team turned the phone link off (AdeeboMeter.policy)."; return r; }   // review 1.1.6 (security #3)
             Task.Factory.StartNew(r.Run, TaskCreationOptions.LongRunning);
             return r;
         }
@@ -126,7 +128,7 @@ namespace AdeeboMeter
                 bool ours = St == State.Ended;   // bug-hunt L-222: our own End() cancelling the read isn't worth a log line
                 // bug-hunt L-233: Windows without the encryption the link needs (CNG) says so, not "connection lost"
                 bool noCng = e is PlatformNotSupportedException || e is System.Security.Cryptography.CryptographicException || (e is AggregateException && ((AggregateException)e).InnerException is PlatformNotSupportedException);
-                if (!ours) { End(noCng ? "this Windows can't do the encryption the phone link needs (CNG is missing or turned off)" : "connection lost"); Program.Log("remote: " + e.Message); }
+                if (!ours) { End(noCng ? "this Windows can't do the encryption the phone link needs (CNG is missing or turned off)" : St == State.Connecting ? "couldn't reach the relay - check this PC's internet connection" : "connection lost"); Program.Log("remote: " + e.Message); }   // review 1.1.6 D1 #2
             }
         }
 
@@ -143,7 +145,10 @@ namespace AdeeboMeter
                 // a phone that can show the matching words gets this PC's key now, before the question (RemoteWords.cs)
                 Words = "";
                 // bug-hunt L-41: a new phone must show the matching words - a page too old to do that is turned away, not let in on Allow alone
-                if (Known == null && j.S("w") != "1") { me.Dispose(); mine = null; Send("{\"t\":\"no\"}"); End("the phone's page is out of date - reload it on the phone and scan again"); return; }
+                // review 1.1.6 (security #5): a remembered phone's hello is bound to this room (mac3), so a relay can't replay it into another
+                if (Known != null) { byte[] mac3; try { mac3 = RemoteCrypto.Unb64u(j.S("mac3") ?? ""); } catch (FormatException) { mac3 = null; } if (mac3 == null || !RemoteCrypto.Same(mac3, RemoteCrypto.Hmac(auth, Encoding.UTF8.GetBytes("hi3|" + Room), pk))) { me.Dispose(); mine = null; End("the phone's hello wasn't for this room - ignored"); return; } }
+                // review 1.1.6 (security #2): a code session needs the signed six-word flags - no falling back to the four-word handshake
+                if (Known == null && (j.S("w") != "1" || j.S("w2") != "1" || j.S("mac2") == null)) { me.Dispose(); mine = null; Send("{\"t\":\"no\"}"); End("the phone's page is out of date - reload it on the phone and scan again"); return; }
                 if (Known == null && j.S("w") == "1")
                 {
                     int wv = j.S("w2") == "1" ? 2 : 1;   // bug-hunt H-1: six words when the phone page knows them
@@ -388,12 +393,13 @@ namespace AdeeboMeter
         }
         void Note() { var c = Changed; if (c != null) try { c(); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }
 
+        public static volatile string LastWhy = "";
         public void End(string why)
         {
             if (St == State.Ended) return;
             if (St == State.Paired) Seal("{\"t\":\"bye\"}");
             var o = op; if (o != null) o.Stop = true;   // AM-CG-367: a check started from the phone stops with the session
-            St = State.Ended; Why = why ?? "";
+            St = State.Ended; Why = why ?? ""; if (Known == null) LastWhy = Why;   // review 1.1.6 D1 #2: the page still says why after the session is gone
             var t = tick; tick = null; if (t != null) t.Dispose();
             try { if (ws.State == WebSocketState.Open) ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None).Wait(2000); } catch (AggregateException) { } catch (ObjectDisposedException) { } catch (InvalidOperationException) { }
             try { cts.Cancel(); } catch (ObjectDisposedException) { }

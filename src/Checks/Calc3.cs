@@ -29,7 +29,7 @@ namespace AdeeboMeter
         {
             t = t ?? ""; bool spaced = Regex.IsMatch(t, @"\d\s*;\s*\d|\d\s+\d|\d,\s+\d");
             if (spaced) return Regex.Split(t.Replace(", ", " "), @"[\s;]+").Where(z => z.Trim() != "").Select(P).Where(z => !double.IsNaN(z)).ToList();
-            return Regex.Matches(Regex.Replace(t, @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => double.Parse(m.Value, CultureInfo.InvariantCulture)).ToList();
+            return Regex.Matches(Regex.Replace(t, @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => { double x; return double.TryParse(m.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out x) && !double.IsInfinity(x) ? x : double.NaN; }).Where(z => !double.IsNaN(z)).ToList();   // review 1.1.6 P2 #6: a 310-digit number is skipped, not a crash
         }
         static string M(double v) { return (v < 0 ? "-$" : "$") + Math.Abs(v).ToString(Math.Abs(v) >= 1000 ? "N0" : "N2", CultureInfo.CurrentCulture); }
         static string Pc(double v) { return (v > 0 ? "+" : "") + v.ToString("0.##", CultureInfo.CurrentCulture) + "%"; }
@@ -141,7 +141,7 @@ namespace AdeeboMeter
         }
         // ---------- commodity units
         static readonly string[][] ComUnits = {   // name, family, how many base units (litre / gram / MJ)
-            new[] { "barrel", "v", "158.987" }, new[] { "US gallon", "v", "3.78541" }, new[] { "litre", "v", "1" }, new[] { "m³", "v", "1000" },
+            new[] { "barrel", "v", "158.987" }, new[] { "US gallon", "v", "3.78541" }, new[] { "imperial gallon", "v", "4.54609" }, new[] { "mg", "m", "0.001" }, new[] { "litre", "v", "1" }, new[] { "m³", "v", "1000" },
             new[] { "troy oz", "m", "31.1035" }, new[] { "gram", "m", "1" }, new[] { "kg", "m", "1000" }, new[] { "lb", "m", "453.592" }, new[] { "tonne", "m", "1000000" }, new[] { "short ton", "m", "907185" },
             new[] { "bushel", "m", "0" }, new[] { "MMBtu", "e", "1055.06" }, new[] { "GJ", "e", "1000" }, new[] { "therm", "e", "105.506" }, new[] { "kWh", "e", "3.6" } };
         static readonly Dictionary<string, double> BushelKg = new Dictionary<string, double> { { "wheat", 27.2155 }, { "soybeans", 27.2155 }, { "corn", 25.4012 } };
@@ -150,7 +150,9 @@ namespace AdeeboMeter
             t = (t ?? "").ToLowerInvariant(); baseUnits = double.NaN;
             // bug-hunt ML-66: the everyday names too (a commodity ounce is the troy ounce)
             t = Regex.Replace(t, @"\bmetric tons?\b", "tonne"); t = Regex.Replace(t, @"\btons?\b", "short ton"); t = Regex.Replace(t, @"\b(liters?|litres)\b", "litre");
-            t = Regex.Replace(t, @"\b(gal|gallons?)\b", "us gallon"); t = Regex.Replace(t, @"(?<!troy )\b(oz|ounces?)\b", "troy oz"); t = Regex.Replace(t, @"\bm3\b|\bcubic met(er|re)s?\b", "m³");
+            // review 1.1.6 P2 #8: kilograms, milligrams and the imperial gallon by name - "kilogram" no longer matches "gram"
+            t = Regex.Replace(t, @"\b(kilograms?|kgs?|kilos?)\b", "kg"); t = Regex.Replace(t, @"\b(milligrams?|mgs?)\b", "mg"); t = Regex.Replace(t, @"\b(imperial|imp\.?|uk)\s*(gal|gallons?)\b", "imperial gallon");
+            t = Regex.Replace(t, @"(?<!imperial )\b(gal|gallons?)\b", "us gallon"); t = Regex.Replace(t, @"(?<!troy )\b(oz|ounces?)\b", "troy oz"); t = Regex.Replace(t, @"\bm3\b|\bcubic met(er|re)s?\b", "m³");
             t = Regex.Replace(t, @"\b(bbls?|barrels)\b", "barrel"); t = Regex.Replace(t, @"\b(lbs|pounds?)\b", "lb"); t = Regex.Replace(t, @"\b(grams|g)\b", "gram"); t = Regex.Replace(t, @"\bbushels\b", "bushel");
             foreach (var u in ComUnits.OrderByDescending(z => z[0].Length)) if (t.IndexOf(u[0], StringComparison.OrdinalIgnoreCase) >= 0) { baseUnits = u[0] == "bushel" ? BushelKg[BushelKg.ContainsKey(crop) ? crop : "wheat"] * 1000 : double.Parse(u[2], CultureInfo.InvariantCulture); return u; }
             return null;

@@ -291,7 +291,7 @@ namespace AdeeboMeter
             else rows.Add(R(3, "How it's counted", "one look a minute at the programs running then - one that starts, works and closes between two looks isn't counted", "", "i"));   // PC-065
             try
             {
-                var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage");
+                var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage", new System.Management.ConnectionOptions { Timeout = TimeSpan.FromSeconds(8) });
                 using (var s = new System.Management.ManagementObjectSearcher(scope, new System.Management.ObjectQuery("SELECT FriendlyName, MediaType, HealthStatus, Size FROM MSFT_PhysicalDisk"), new System.Management.EnumerationOptions { Timeout = TimeSpan.FromSeconds(10), ReturnImmediately = true, Rewindable = false }))   // a sleeping USB disk or a broken WMI can't hang it forever
                     foreach (System.Management.ManagementObject d in s.Get())
                         using (d)

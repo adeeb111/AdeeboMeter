@@ -75,7 +75,7 @@ namespace AdeeboMeter
             rows.Add(CertVerdict(prev, snap));
             string sa = prev.Chain[0].Length > 4 ? prev.Chain[0][4] : "", sb = snap.Chain[0].Length > 4 ? snap.Chain[0][4] : "";
             if (sa != "" && sb != "" && sa != sb) rows.Add(R(1, "Names it covers differ", "\"" + prev.Name + "\": " + sa + "  vs  \"" + snap.Name + "\": " + sb, "A certificate made for other names on one path - a different server (DNS points elsewhere there) or a proxy's own certificate.", "i"));
-            if (prev.Chain.Count != snap.Chain.Count) rows.Add(R(1, "Chain length differs", prev.Chain.Count + " certificates vs " + snap.Chain.Count, "One path adds (or leaves out) an intermediate - a missing intermediate breaks some clients but not browsers that fetch it themselves.", "i"));
+            if (prev.Chain.Count != snap.Chain.Count) rows.Add(R(1, "Chain length differs", prev.Chain.Count + " certificates vs " + snap.Chain.Count, "As Windows built each chain (it can fill in an intermediate from its own store) - one path adds (or leaves out) an intermediate - a missing intermediate breaks some clients but not browsers that fetch it themselves.", "i"));
             return rows;
         }
         public static string[] CertVerdict(CertSnap a, CertSnap b)

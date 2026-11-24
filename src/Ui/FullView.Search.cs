@@ -263,7 +263,7 @@ namespace AdeeboMeter
             foreach (var it in all) { int sc = FullView.Score(it, words); if (sc > 0) { it.Rank = sc; hits.Add(it); } }
             return hits.Select((h, i) => new { h, i }).OrderBy(x => Array.IndexOf(FullView.SearchGroups, x.h.Group)).ThenByDescending(x => x.h.Group == "Tools" ? -x.i : x.h.Rank).Select(x => x.h).ToList();
         }
-        static T FindForm<T>() where T : Form { return Application.OpenForms.OfType<T>().FirstOrDefault(); }
+        static T FindForm<T>() where T : Form { return Application.OpenForms.OfType<T>().FirstOrDefault(f => f.Visible) ?? Application.OpenForms.OfType<T>().FirstOrDefault(); }   /* review 1.1.6 U2 #4: never the hidden phone-runner view */
         void Show(List<PalItem> rows)
         {
             list.BeginUpdate(); list.Items.Clear(); foreach (var r in rows) list.Items.Add(r); list.EndUpdate();

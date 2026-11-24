@@ -44,7 +44,7 @@ namespace AdeeboMeter
             g.TranslateTransform(learnList.AutoScrollPosition.X, learnList.AutoScrollPosition.Y);
             Begin(learnList);
             float x = 14 * S, y = 8 * S, w = learnList.ClientSize.Width - 22 * S; string q = learnSearch.Box.Text.Trim();
-            Func<string, bool> hit = s => q == "" || (s ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+            Func<string, bool> hit = s => q == "" || (s ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (L.Code != "en" && !string.IsNullOrEmpty(s) && L.T(s).IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);   /* review 1.1.6 U2 #3: the titles shown are translated, so search them too */
             var topics = Knowledge.Learn();
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

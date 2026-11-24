@@ -92,7 +92,8 @@ namespace AdeeboMeter
         // Keep It Light (R2-068: the two ticks did nothing): once a minute at most - a Friday-evening note in the corner, and a note
         // when a currency on your list moved more than 2% in a week (once a week each). From the numbers already kept; a fetch only
         // when Markets' currency data is turned on.
-        DateTime casualAt = DateTime.MinValue, casualFriDone = DateTime.MinValue; readonly Dictionary<string, DateTime> casualMoved = new Dictionary<string, DateTime>(StringComparer.Ordinal);
+        /* review 1.1.6 U2 #2: static - the window is rebuilt on every open, and "once a week each" must survive that */
+        static DateTime casualAt = DateTime.MinValue, casualFriDone = DateTime.MinValue; static readonly Dictionary<string, DateTime> casualMoved = new Dictionary<string, DateTime>(StringComparer.Ordinal);
         void CasualTick()
         {
             if ((!Cfg.CasualFriday && !Cfg.CasualMoves) || (DateTime.UtcNow - casualAt).TotalSeconds < 60) return; casualAt = DateTime.UtcNow;
@@ -118,7 +119,8 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("keep it light: " + e.Message); }
         }
-        static double FxOver(string c, int days) { return MarketData.ChangeOver(MarketData.Get("FX:" + c), TimeSpan.FromDays(days)); }
+        // a kept series that stopped more than 10 days ago has no "this week" (U2 #2: the numbers turned off, weeks back)
+        static double FxOver(string c, int days) { var s = MarketData.Get("FX:" + c); if (s == null || s.LastDay < DateTime.Today.AddDays(-10)) return double.NaN; return MarketData.ChangeOver(s, TimeSpan.FromDays(days)); }
         void MkText(Graphics g, string t, Font f, Color c, float x, float y) { using (var b = new SolidBrush(c)) g.DrawString(t, f, b, x, y); }
         void MkTextR(Graphics g, string t, Font f, Color c, float right, float y) { var s = g.MeasureString(t, f); using (var b = new SolidBrush(c)) g.DrawString(t, f, b, right - s.Width, y); }
         RectangleF MkButton(Graphics g, string t, float x, float y, bool primary)
@@ -163,7 +165,7 @@ namespace AdeeboMeter
         void PickFrom(RectangleF at, IEnumerable<string> codes, Action<string> pick)
         {
             var m = Menus.Make(); foreach (var c in codes) { string cc = c; m.Items.Add(cc + "  " + (cc == "CAD" ? L.T("Canadian dollar") : L.T(MarketData.FxName(cc))), null, delegate { pick(cc); tradeCanvas.Invalidate(); }); }
-            m.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
+            m.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)m.Dispose); else m.Dispose(); } catch (InvalidOperationException) { m.Dispose(); } };   /* review 1.1.6 U1 #11 */ m.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
         }
         double? AskNumber(string title, double now)
         {
@@ -379,7 +381,7 @@ namespace AdeeboMeter
             float h = 70 * S + MarketData.Exchanges.Length * rh + 64 * S; var r = new RectangleF(x, y, w, h); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "The World's Trading Day", L.T("in your time · worked out on this PC"));
             float ty = y + 54 * S;
-            for (int hh = 0; hh <= 24; hh += 4) { var t = from.AddHours(hh); string lbl = t.ToString("h tt", CultureInfo.CurrentCulture); var ls = g.MeasureString(lbl, Draw.fTiny); MkText(g, lbl, Draw.fTiny, Paper.Muted, Math.Min(bx + bw * hh / 24 - ls.Width / 2, bx + bw - ls.Width), ty); }
+            for (int hh = 0; hh <= 24; hh += 4) { var t = from.AddHours(hh); string lbl = t.ToString(AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture); var ls = g.MeasureString(lbl, Draw.fTiny); MkText(g, lbl, Draw.fTiny, Paper.Muted, Math.Min(bx + bw * hh / 24 - ls.Width / 2, bx + bw - ls.Width), ty); }
             ty += 20 * S;
             foreach (var ex in MarketData.Exchanges)
             {
@@ -400,7 +402,7 @@ namespace AdeeboMeter
                 ty += rh;
             }
             if (nowIn) { float nx = bx + (float)((nowL - from).TotalHours / 24) * bw; using (var np = new Pen(Paper.Red, 2 * S)) g.DrawLine(np, nx, y + 70 * S, nx, ty); }
-            MkText(g, (nowIn ? L.T("Red line: now.") : L.T("All closed now - here is the next trading day, from") + " " + nextOpen.ToString("dddd h:mm tt", CultureInfo.CurrentCulture) + ".") + " " + L.T("Holidays are known for New York and Toronto; other exchanges' holidays aren't checked."), Paper.Small, Paper.Muted, x + 16 * S, ty + 10 * S);
+            MkText(g, (nowIn ? L.T("Red line: now.") : L.T("All closed now - here is the next trading day, from") + " " + nextOpen.ToString(AdeeboMeter.Draw.Tt("dddd h:mm tt"), CultureInfo.CurrentCulture) + ".") + " " + L.T("Holidays are known for New York and Toronto; other exchanges' holidays aren't checked."), Paper.Small, Paper.Muted, x + 16 * S, ty + 10 * S);
             y = r.Bottom + 16 * S;
 
             // indexes by region (with a key)
@@ -619,7 +621,7 @@ namespace AdeeboMeter
             }
             float tx = x + lw + 16 * S, tw = w - lw - 16 * S; var tr = new RectangleF(tx, y, tw, h); Paper.Desk(g, tr);
             float ty = Paper.DeskTitle(g, tx + 16 * S, y + 12 * S, "How to Make It Better", L.T("most helpful first · each from something measured")) + 4 * S;
-            if (tips.Count == 0) MkText(g, L.T("Nothing to fix: every check came back fine."), Paper.Body, Paper.Ink, tx + 16 * S, ty);
+            if (tips.Count == 0) MkText(g, lr.Score < 0 || Cfg.TradeHost == "" ? L.T("Nothing measured yet - pick your broker and press Check my line.") : L.T("Nothing to fix: every check came back fine."), Paper.Body, Paper.Ink, tx + 16 * S, ty);   // review 1.1.6 D1 #6
             MkTips(g, tips, tx, ty, tw);
             y = Math.Max(vr.Bottom, tr.Bottom) + 18 * S;
             return PaintLineDetail(g, x, y, w);

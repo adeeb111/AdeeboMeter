@@ -89,12 +89,12 @@ namespace AdeeboMeter
         }
         int Curl(string cmd, List<string> a, ShCtx c)
         {
-            var takesValue = new HashSet<string> { "-o", "-O", "-H", "-d", "-X", "-A", "-u", "-e", "-w", "--output", "--header", "--data", "--request", "--user-agent", "--user", "--referer", "-T", "--upload-file", "-F", "--form", "-b", "--cookie", "-c", "--cookie-jar", "--max-time", "-m", "--connect-timeout", "-x", "--proxy" };
+            var takesValue = new HashSet<string> { "-o", "-O", "-H", "-d", "-X", "-A", "-u", "-e", "-w", "--output", "--header", "--data", "--request", "--user-agent", "--user", "--proxy-user", "-U", "--referer", "-T", "--upload-file", "-F", "--form", "-b", "--cookie", "-c", "--cookie-jar", "--max-time", "-m", "--connect-timeout", "-x", "--proxy" };
             string url = null; var ignored = new List<string>();
             for (int i = 0; i < a.Count; i++)
             {
                 string w = a[i];
-                if (takesValue.Contains(w)) { ignored.Add(w + " " + (i + 1 < a.Count ? a[++i] : "")); continue; }
+                if (takesValue.Contains(w)) { string val = i + 1 < a.Count ? a[++i] : ""; bool hidden = w == "-u" || w == "--user" || w == "--proxy-user" || w == "-U" || w == "-H" || w == "--header" || w == "-b" || w == "--cookie" || w == "-d" || w == "--data" || w == "-F" || w == "--form"; ignored.Add(w + (hidden ? " ****" : " " + val)); continue; }   // review 1.1.6 (security #7): a password, header, cookie or body is never echoed
                 if (w.StartsWith("-", StringComparison.Ordinal)) { if (w != "-I" && w != "-s" && w != "-L" && w != "-v" && w != "-i" && w != "-sS" && w != "--head" && w != "--silent" && w != "--location") ignored.Add(w); continue; }
                 if (url == null) url = w; else ignored.Add(w);
             }

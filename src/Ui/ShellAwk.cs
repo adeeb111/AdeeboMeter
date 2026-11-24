@@ -274,7 +274,7 @@ namespace AdeeboMeter
         Func<string> Concat(bool gt)
         {
             var l = Add();
-            while (StartsValue() && !(Peek().K == K.Op && (Peek().S == "-" || Peek().S == "+"))) { var r = Add(); var l0 = l; l = () => l0() + r(); }   // "a" "b" and $1 $2 join; a -1 stays a minus
+            while (StartsValue() && !(Peek().K == K.Op && (Peek().S == "-" || Peek().S == "+"))) { var r = Add(); var l0 = l; l = () => { string x = l0() + r(); if (x.Length > 8 * 1024 * 1024) throw new FormatException("a string over 8 M characters - stopped (review 1.1.6: memory budget)"); return x; }; }   // "a" "b" and $1 $2 join; a -1 stays a minus
             return l;
         }
         Func<string> Add() { var l = Mul(); while (Is("+") || Is("-")) { string op = Peek().S; p++; var r = Mul(); var l0 = l; l = () => Str(op == "+" ? Num(l0()) + Num(r()) : Num(l0()) - Num(r())); } return l; }
@@ -372,7 +372,8 @@ namespace AdeeboMeter
             {
                 char k = m.Groups[4].Value[0]; if (k == '%') return "%";
                 string fl = m.Groups[1].Value; int w = 0; if (m.Groups[2].Value == "*") w = (int)Num(ai < a.Count ? a[ai++] : "0"); else if (m.Groups[2].Success) int.TryParse(m.Groups[2].Value, out w);
-                int pr = m.Groups[3].Success ? int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture) : -1; string v = ai < a.Count ? a[ai++] : "", r;
+                int pr = -1; if (m.Groups[3].Success && !int.TryParse(m.Groups[3].Value, NumberStyles.None, CultureInfo.InvariantCulture, out pr)) pr = int.MaxValue; string v = ai < a.Count ? a[ai++] : "", r;
+                if (w > 1000000 || w < -1000000 || pr > 1000000) throw new FormatException("printf: a width or precision over 1,000,000 isn't done");   // review 1.1.6 (security #9)
                 switch (k)
                 {
                     case 's': r = pr >= 0 && v.Length > pr ? v.Substring(0, pr) : v; break;

@@ -150,7 +150,7 @@ A full-screen window, built only when you open it and destroyed when you leave.
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
 - **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 332 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
 - **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
-- **Footer:** AdeeboMeter's own CPU and memory, against an 80 MB budget.
+- **Footer:** AdeeboMeter's own CPU and memory, against an 99 MB budget.
 
 ### 5.12 Connections (`ConnList`)
 - A custom-drawn list of every connection, refreshed every 2 s while visible. New rows flash in; closed rows fade out.
@@ -286,7 +286,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **no handle leaks over 30 open/close cycles** — and, if one appears, it re-runs page by page to name the culprit
 - every label has an explanation
 - the parsers (Wi-Fi lists, Wi-Fi information elements, LLDP/CDP, event logs, RTP call quality, the path story) give the right answers on known samples
-- memory stays inside the 80 MB budget
+- memory stays inside the 99 MB budget
 - DLLs load only from System32
 
 `AdeeboMeter.exe --deeptest` is the hardening run (`FullView.DeepTest`, writes `AdeeboMeter-deeptest.txt`, at low priority with a 20-minute cap; `--local` keeps it off the internet): every tool gets 15 hostile inputs in every box (empty, 5,000 characters, injection strings, impossible addresses, emoji, null characters) and must answer without throwing or hanging; the safe tools run for real; the tools that grew run 15 times in a row and must give memory and handles back; and the Toolbox is stressed — every tool opened twice without new window objects, search, folding, a 600-row result, every section three times. The tools that need your own gear are on a by-hand list.

@@ -146,15 +146,16 @@ namespace AdeeboMeter
                 {
                     g.DrawString(Cfg.Sports ? (Sports.Teams().Count == 0 ? L.T("Follow your teams") : L.T("No game today for your teams")) : L.T("Your stream, ready for the match"), Paper.Head1, hb, x, ly); ly += 56 * S;
                     g.DrawString(!Cfg.Sports ? L.T("Turn on scores to see your teams' next game here.") : Sports.Teams().Count == 0 ? L.T("Their next game becomes this page's lead, with everything you need to watch it.") : L.T("Their next game shows here as soon as it's in today's fixtures."), Paper.Italic, ib, new RectangleF(x, ly, lw, 50 * S)); ly += 40 * S;
-                    var fb = MkSpButton(g, Sports.Teams().Count == 0 ? L.T("Follow teams...") : L.T("My teams ›"), x, ly, true); Act(sportsCanvas, fb, delegate { if (!Cfg.Sports) { Cfg.Sports = true; Cfg.Save(); } if (Sports.Teams().Count == 0) AskTeams(); else spTab = "teams"; sportsCanvas.Invalidate(); }); ly += 50 * S;
+                    var fb = MkSpButton(g, Sports.Teams().Count == 0 ? L.T("Follow teams...") : L.T("My teams ›"), x, ly, true); Act(sportsCanvas, fb, delegate { if (Sports.Teams().Count == 0 || !Cfg.Sports) AskTeams(); else spTab = "teams"; sportsCanvas.Invalidate(); }); ly += 50 * S;
                 }
             }
             // match details
             var dr = new RectangleF(rx, y, rw, 170 * S); Paper.Desk(g, dr);
             float dy = Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, "Match Details", null) + 6 * S;
-            var rows = next == null ? new[] { new[] { L.T("Next game"), Cfg.Sports ? L.T("none in today's fixtures") : L.T("scores are off") } } : new[] {
+            bool spFailed; lock (Sports.k) spFailed = Sports.Note.Count > 0 && Sports.FeedAt.Count == 0;   // review 1.1.6 D1 #7: a failed fetch isn't "no game today"
+            var rows = next == null ? new[] { new[] { L.T("Next game"), !Cfg.Sports ? L.T("scores are off") : spFailed ? L.T("the scores couldn't be reached - it tries again in 5 minutes") : L.T("none in today's fixtures") } } : new[] {
                 new[] { L.T("Competition:"), next.League == "" ? L.T(Sports.Name(next.Sport)) : next.League },
-                new[] { L.T("Kick-off (your time):"), next.State == "live" ? L.T("playing now") + (next.Detail != "" ? " · " + next.Detail : "") : next.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) },
+                new[] { L.T("Kick-off (your time):"), next.State == "live" ? L.T("playing now") + (next.Detail != "" ? " · " + next.Detail : "") : next.StartUtc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("ddd h:mm tt"), CultureInfo.CurrentCulture) },
                 new[] { L.T("Starts in:"), next.State == "live" ? L.T("it's on") : SpUntil(next.StartUtc.ToLocalTime()) },
                 new[] { L.T("Score:"), next.State == "live" ? next.Home + " " + next.HomeScore + " - " + next.AwayScore + " " + next.Away : "-" } };
             foreach (var rw2 in rows) { MkSpText(g, rw2[0], Paper.BodyB, Paper.Head, rx + 16 * S, dy); MkSpText(g, rw2[1], Paper.Body, Paper.Ink, rx + rw * 0.45f, dy); dy += 27 * S; }
@@ -240,7 +241,7 @@ namespace AdeeboMeter
         float SpSlotDesk(Graphics g, float x, float y, float w, DateTime ko)
         {
             var r = new RectangleF(x, y, w, 250 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Your Line at Kick-off Time"), ko.ToString("dddd h tt", CultureInfo.CurrentCulture) + " · " + L.T("last 6 weeks"));
+            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Your Line at Kick-off Time"), ko.ToString(AdeeboMeter.Draw.Tt("dddd h tt"), CultureInfo.CurrentCulture) + " · " + L.T("last 6 weeks"));
             var slots = Cfg.History ? LineHours.SameSlot(ko, 2) : null;
             if (!Cfg.History) { using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it."), Paper.Body, ib, new RectangleF(x + 16 * S, y + 60 * S, w - 32 * S, 60 * S)); return r.Bottom + 16 * S; }
             if (slots == null) { MkSpText(g, L.T("Reading your history..."), Paper.Body, Paper.Muted, x + 16 * S, y + 60 * S); return r.Bottom + 16 * S; }
@@ -305,7 +306,7 @@ namespace AdeeboMeter
                 var tg = games.Where(z => Sports.TeamIn(t, z)).ToList();
                 var live = tg.FirstOrDefault(z => z.State == "live"); var done = tg.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).FirstOrDefault(); var soon = tg.Where(z => z.State == "soon" && (z.StartUtc == DateTime.MinValue || z.StartUtc > DateTime.UtcNow.AddHours(-3))).OrderBy(z => z.StartUtc).FirstOrDefault();   /* round 6: a game from hours ago is not "next" */ var offg = tg.FirstOrDefault(z => z.State == "off");
                 string a = live != null ? L.T("Live:") + " " + live.Home + " " + live.HomeScore + " - " + live.AwayScore + " " + live.Away : offg != null ? OffWord(offg) + ": " + offg.Home + " " + L.T("vs") + " " + offg.Away : done != null ? L.T("Last:") + " " + done.Home + " " + done.HomeScore + " - " + done.AwayScore + " " + done.Away : L.T("No game in today's feeds");
-                string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + (soon.StartUtc > DateTime.MinValue.AddDays(2) ? " · " + soon.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture) : "") : "";   // R2-158: no time is no time, not year 1
+                string b2 = soon != null ? L.T("Next:") + " " + soon.Home + " " + L.T("vs") + " " + soon.Away + (soon.StartUtc > DateTime.MinValue.AddDays(2) ? " · " + soon.StartUtc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("ddd h:mm tt"), CultureInfo.CurrentCulture) : "") : "";   // R2-158: no time is no time, not year 1
                 MkSpText(g, a, Paper.Body, live != null ? Paper.Down : Paper.Ink, x + w * 0.32f, ty + 12 * S); if (b2 != "") MkSpText(g, b2, Paper.Body, Paper.Ink, x + w * 0.32f, ty + 34 * S);
                 var xr = new RectangleF(x + w - 52 * S, ty + 16 * S, 32 * S, 32 * S); Theme.Fill(g, xr, 6 * S, Paper.DeskBg); Theme.Stroke(g, xr, 6 * S, Paper.Line, 1); MkSpText(g, "×", Paper.BodyB, Paper.Muted, xr.X + 11 * S, xr.Y + 6 * S);
                 string tt = t; Act(sportsCanvas, xr, delegate { Cfg.SportTeams = string.Join(", ", Sports.Teams().Where(z => !string.Equals(z, tt, StringComparison.OrdinalIgnoreCase))); Cfg.Save(); sportsCanvas.Invalidate(); });
@@ -375,7 +376,7 @@ namespace AdeeboMeter
             foreach (var m in soon)
             {
                 bool mine = Sports.Mine(m); if (mine) using (var mp = new Pen(Color.FromArgb(31, 111, 235), 4 * S)) g.DrawLine(mp, x + 10 * S, fy, x + 10 * S, fy + 26 * S);
-                MkSpText(g, m.State == "off" ? OffWord(m) : m.StartUtc == DateTime.MinValue ? "-" : m.StartUtc.ToLocalTime().ToString("ddd h:mm tt", CultureInfo.CurrentCulture), Paper.BodyB, m.State == "off" ? Paper.Muted : Paper.Head, x + 20 * S, fy);
+                MkSpText(g, m.State == "off" ? OffWord(m) : m.StartUtc == DateTime.MinValue ? "-" : m.StartUtc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("ddd h:mm tt"), CultureInfo.CurrentCulture), Paper.BodyB, m.State == "off" ? Paper.Muted : Paper.Head, x + 20 * S, fy);
                 MkSpText(g, m.Home + " " + L.T("vs") + " " + m.Away + (mine ? "  · " + L.T("your team") : ""), mine ? Paper.BodyB : Paper.Body, Paper.Ink, x + w * 0.22f, fy);
                 var lg = m.League != "" ? m.League : L.T(Sports.Name(m.Sport)); var ls = g.MeasureString(lg, Paper.Small); MkSpText(g, lg, Paper.Small, Paper.Muted, x + w - ls.Width - 16 * S, fy + 2 * S);
                 fy += 36 * S;
@@ -464,7 +465,7 @@ namespace AdeeboMeter
                 foreach (var e in ear)
                 {
                     DateTime t; DateTime.TryParse(e[0], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out t); int sc; int.TryParse(e[4], out sc);
-                    MkSpText(g, t == DateTime.MinValue ? "-" : t.ToString("ddd MMM d · h:mm tt", CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, x + 16 * S, ey); MkSpText(g, e[1], Paper.Body, Paper.Ink, x + w * 0.3f, ey); MkSpText(g, e[2] == "" ? "-" : e[2] + " Mb/s", Paper.Body, Paper.Ink, x + w * 0.6f, ey);
+                    MkSpText(g, t == DateTime.MinValue ? "-" : t.ToString(AdeeboMeter.Draw.Tt("ddd MMM d · h:mm tt"), CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, x + 16 * S, ey); MkSpText(g, e[1], Paper.Body, Paper.Ink, x + w * 0.3f, ey); MkSpText(g, e[2] == "" ? "-" : e[2] + " Mb/s", Paper.Body, Paper.Ink, x + w * 0.6f, ey);
                     MkSpText(g, L.T(e[3]) + (sc >= 0 ? " · " + sc : ""), Paper.BodyB, sc >= 80 ? Paper.Up : sc >= 55 ? Paper.Amber : sc >= 0 ? Paper.Down : Paper.Muted, x + w * 0.72f, ey); ey += 30 * S;
                 }
                 y = er.Bottom + 16 * S;

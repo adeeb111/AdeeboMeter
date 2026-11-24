@@ -847,7 +847,7 @@ namespace AdeeboMeter
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
                 foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "", "https://github.com/adeeb111/AdeeboMeterEvil", "https://github.com/adeeb111/AdeeboMeter@evil.example", "https://x@github.com/adeeb111/AdeeboMeter", "https://adeeb111.github.io/AdeeboMeterX/" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
             });
-            T("Adeebo Points: +2 / +4 once, replay +3 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
+            T("Adeebo Points: +2 / +4 once, replay +2 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
@@ -865,14 +865,14 @@ namespace AdeeboMeter
                     if (p.Award("ping", true, true, t0.AddMinutes(1), t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3), t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
                     if (p.Award("ispreport", true, true, t0, t0) != 4) bad.Add("a longer test (ISP report) first not +4");
                     if (p.Award("ispreport", true, true, t0.AddMinutes(5), t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != 3) bad.Add("replay bonus not +3");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != Points.ReplayPts) bad.Add("replay bonus not +" + Points.ReplayPts);
                     if (p.Award("ispreport", true, true, t0.AddMinutes(40), t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
                     if (p.Award("udpsend", true, true, t0, t0) != 0) bad.Add("a Traffic Lab sender earned");
                     if (p.Award("mtr", true, true, t0, t0) != 4 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
-                    if (p.Total != 13) bad.Add("total " + p.Total + " (want 13)");
-                    var again = new Points(f); if (again.Total != 13 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (p.Total != 10 + Points.ReplayPts) bad.Add("total " + p.Total + " (want " + (10 + Points.ReplayPts) + ")");
+                    var again = new Points(f); if (again.Total != 10 + Points.ReplayPts || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
                     if (again.Award("mtr", true, true, t0.AddMinutes(12), t0.AddMinutes(2)) != 0) bad.Add("a restart plus a clock moved forward paid the replay bonus");
-                    if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != 3) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
+                    if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != Points.ReplayPts) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
                     // round-3 #10: the uptime rule holds only within one Windows boot - a reboot the next day pays at 5 min of uptime
                     {
                         string fb = f + ".boot"; try { File.Delete(fb); } catch (IOException) { }
@@ -880,12 +880,12 @@ namespace AdeeboMeter
                         {
                             var pb = new Points(fb); pb.Award("gamecompare", true, true, t0, t0, 5L << 32 | 120000);
                             if (pb.Award("gamecompare", true, true, t0.AddMinutes(12), t0.AddMinutes(12), 5L << 32 | 300000) != 0) bad.Add("same boot, 3 min of uptime later: paid");
-                            if (pb.Award("gamecompare", true, true, t0.AddDays(1), t0.AddDays(1), 6L << 32 | 300000) != 3) bad.Add("a new boot the next day: the replay bonus was refused");
+                            if (pb.Award("gamecompare", true, true, t0.AddDays(1), t0.AddDays(1), 6L << 32 | 300000) != Points.ReplayPts) bad.Add("a new boot the next day: the replay bonus was refused");
                         }
                         finally { try { File.Delete(fb); } catch (IOException) { } }
                     }
                     if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
-                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 16) bad.Add("earning off changed the total");
+                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 10 + 2 * Points.ReplayPts) bad.Add("earning off changed the total");
                     if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
                     // round-2 review: lines typed into points.txt for things that don't exist count nothing; a replay mark on a
@@ -897,7 +897,7 @@ namespace AdeeboMeter
                     int left; if (Points.Rank(29) != "Beginner" || Points.Rank(30) != "Learner" || Points.Rank(99) != "Learner" || Points.Rank(100) != "Troubleshooter" || Points.Rank(200) != "Expert" || Points.Rank(300) != "Network detective" || Points.Rank(499) != "Packet whisperer" || Points.Rank(Points.AwardAt) != "Adeebo Award" || Points.Next(32, out left) != "Troubleshooter" || left != 68 || Points.Next(600, out left) != "") bad.Add("ranks");
                     // a points file from 1.1.4 (+1 per tool, +2 replay) counts at today's values
                     string old = f + ".old"; File.WriteAllLines(old, new[] { "ping|" + t0.Ticks + "|-|1", "mtr|" + t0.Ticks + "|" + t0.AddMinutes(20).Ticks + "|2", "learn.dns|" + t0.Ticks + "|-|1" });
-                    try { var po = new Points(old); if (po.Total != 2 + 4 + 3 + 2) bad.Add("1.1.4 file total " + po.Total); } finally { try { File.Delete(old); } catch (IOException) { } }
+                    try { var po = new Points(old); if (po.Total != 2 + 4 + Points.ReplayPts + 2) bad.Add("1.1.4 file total " + po.Total); } finally { try { File.Delete(old); } catch (IOException) { } }
                     var ex = Examples.Rows(Examples.Get("ping"), true);
                     if (Points.Completed(ex, false)) bad.Add("an example counted as a run");
                     if (Points.Completed(new List<string[]> { new[] { "0", "Replies", "50 of 50", "", "m" } }, true)) bad.Add("a stopped run counted");
@@ -2202,7 +2202,7 @@ namespace AdeeboMeter
             T("memory after everything", () =>
             {
                 GC.Collect(); GC.WaitForPendingFinalizers();
-                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (80 MB in normal use; up to 120 here, where every page and tool has just been opened at once)"); if (mb > 120) throw new InvalidOperationException(mb + " MB"); }
+                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (99 MB in normal use; up to 120 here, where every page and tool has just been opened at once)"); if (mb > 120) throw new InvalidOperationException(mb + " MB"); }
             });
             T("install: paths, settings line, icon", () =>
             {

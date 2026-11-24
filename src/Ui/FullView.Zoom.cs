@@ -25,11 +25,13 @@ namespace AdeeboMeter
             if (i >= 0) ZoomTo(Zooms[Math.Max(0, Math.Min(Zooms.Length - 1, i + dir))]);
             else ZoomTo(dir > 0 ? Zooms.Where(s => s > z).DefaultIfEmpty(Zooms.Last()).First() : Zooms.Where(s => s < z).DefaultIfEmpty(Zooms[0]).Last());
         }
+        bool zoomPending;
         void ZoomTo(int z)
         {
             if (z == Cfg.Zoom || ReopenAsked == null) return;
             Cfg.Zoom = z; Cfg.Save(); StartTab = tab;
             Program.Log("zoom " + z + "%");
+            if (zoomPending) return; zoomPending = true;   /* review 1.1.6 U4 #7: one rebuild for a burst of steps - it opens at the latest Cfg.Zoom */
             var a = ReopenAsked; BeginInvoke(a);   // after this click is done: the window closes and comes back at the new size
         }
         bool IsPopup(Control c) { return c == viewSheet || c == topMenu || c == buddySheet || c == pageMenu; }

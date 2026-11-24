@@ -73,7 +73,7 @@ fault it is and what to do. When you want more, one click opens everything behin
  │ Network story · Security · Check a destination · Calculators · AdeeboLab · AdeeboShell · Your phone │
  │ Settings  ♥  │                                                                                      │
  ├──────────────┴──────────────────────────────────────────────────────────────────────────────────────┤
- │ AdeeboMeter itself  CPU · memory of its 80 MB budget          version · promises  (or: ⠹ waiting on …) │
+ │ AdeeboMeter itself  CPU · memory of its 99 MB budget          version · promises  (or: ⠹ waiting on …) │
  └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -91,7 +91,7 @@ Community card - who makes AdeeboMeter, its promises and the ways to help.
 | **⋯** | Details (raw values and sources), sidebar layout, Adeebo Points, About, report a bug |
 | **Back to corner** (Esc) | closes the view; the widget keeps watching |
 
-**The bottom line** shows what AdeeboMeter itself costs (CPU and memory against its 80 MB budget). When something takes a
+**The bottom line** shows what AdeeboMeter itself costs (CPU and memory against its 99 MB budget). When something takes a
 while - a Toolbox tool, the health check, Windows' own Wi-Fi report - it says what it's waiting on, with the seconds and a
 small spinner, once it has taken 5 seconds; the note goes away by itself when the work is done.
 

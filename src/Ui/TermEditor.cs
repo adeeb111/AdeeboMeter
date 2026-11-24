@@ -149,6 +149,7 @@ namespace AdeeboMeter
         bool cutChain, closeAfter;
 
         // ---------- vim
+        const long EdMax = 5L * 1024 * 1024;
         int Count { get { int n; return int.TryParse(count, out n) && n > 0 ? Math.Min(n, 100000) : 1; } }
         void VimKey(KeyEventArgs e)
         {
@@ -207,7 +208,7 @@ namespace AdeeboMeter
                 switch (p)
                 {
                     case "dd": Snap(); yank = string.Join("\n", buf.Skip(r).Take(n)); yankLines = true; buf.RemoveRange(r, Math.Min(n, buf.Count - r)); if (buf.Count == 0) buf.Add(""); dirty = true; Clamp(); Hz(Indent(Ln)); break;
-                    case "yy": yank = string.Join("\n", buf.Skip(r).Take(n)); yankLines = true; msg = Math.Min(n, buf.Count - r) + " line" + (n == 1 ? "" : "s") + " yanked"; break;
+                    case "yy": if (buf.Skip(r).Take(n).Sum(z => (long)z.Length + 1) > EdMax) { msg = "too much to yank (over 5 MB)"; break; } yank = string.Join("\n", buf.Skip(r).Take(n)); yankLines = true; msg = Math.Min(n, buf.Count - r) + " line" + (n == 1 ? "" : "s") + " yanked"; break;
                     case "gg": r = count == "" ? 0 : n - 1; Clamp(); Hz(Indent(Ln)); break;
                     case "dw": case "cw": { Snap(); int e = c; for (int i = 0; i < n; i++) e = WordEnd(r, e, p == "cw" && i == n - 1); Ln = Ln.Remove(c, e - c); dirty = true; if (p == "cw") mode = "INSERT"; else Clamp(); break; }
                     case "yw": { int e = c; for (int i = 0; i < n; i++) e = WordEnd(r, e, false); yank = Ln.Substring(c, e - c); yankLines = false; break; }
@@ -241,7 +242,9 @@ namespace AdeeboMeter
                 case 'X': if (c > 0) { Snap(); int m = Math.Min(n, c); Ln = Ln.Remove(c - m, m); c -= m; dirty = true; } break;
                 case 'J': if (r < buf.Count - 1) { Snap(); c = Ln.Length; Ln = Ln.TrimEnd() + " " + buf[r + 1].TrimStart(); buf.RemoveAt(r + 1); dirty = true; } break;
                 case 'p': case 'P':
-                    if (yank == "") break; Snap(); dirty = true;
+                    if (yank == "") break;
+                    if ((long)yank.Length * n + buf.Sum(z => (long)z.Length + 1) > EdMax) { msg = "the file would pass 5 MB - not pasted"; break; }   // review 1.1.6 (security #10): the result is capped, not just the count
+                    Snap(); dirty = true;
                     if (yankLines) { int at = ch == 'p' ? r + 1 : r; var ls = yank.Split('\n'); for (int i = 0; i < n; i++) buf.InsertRange(at, ls); r = at; Hz(Indent(Ln)); }
                     else { int at = ch == 'p' && Ln.Length > 0 ? c + 1 : c; Ln = Ln.Insert(Math.Min(at, Ln.Length), string.Concat(Enumerable.Repeat(yank, n))); c = at + yank.Length * n - 1; Clamp(); }
                     break;

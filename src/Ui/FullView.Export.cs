@@ -73,6 +73,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
+            if (VisEx()) { using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T("An Example is made-up data - run the tool to save or share your own result."), Draw.fSmall, b, lx, y); return y + 26 * S; }   // review 1.1.6 U3 #7 (rule 9)
             link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone);
             if (!VisEx() && tbRows != null && (tbSel == "golive" || tbSel == "board") && LabRow() != null) link("route", "Show my path", ToolPath);
             if (!VisEx() && Cfg.History && tbRows != null && tbRows.Any(r => r.Length > 0 && r[0] == "2"))   // a red result: that minute in the Time machine (FullView.Gateway.cs)
@@ -171,8 +172,11 @@ namespace AdeeboMeter
         }
         // Save picture ...: PNG, a draw.io diagram (real boxes and arrows to edit), or the data behind it (JSON, CSV)
         void SaveMenu() { SaveMenuAt(Cursor.Position); }
+        // review 1.1.6 U3 #7 (rule 9): an Example is made-up data - it is never saved, copied or sent, from the bar or its keys
+        bool ExampleBlocked() { if (!VisEx()) return false; Toast(L.T("This is an Example (made-up data) - run the tool to save or share your own result.")); return true; }
         void SaveMenuAt(Point at)
         {
+            if (ExampleBlocked()) return;
             var m = Menus.Make();
             m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
             m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo); });
@@ -326,6 +330,7 @@ namespace AdeeboMeter
         }
         void CopyPicture()
         {
+            if (ExampleBlocked()) return;
             try { using (var bmp = PictureBitmap()) Clipboard.SetDataObject(new DataObject(DataFormats.Bitmap, bmp), true, 6, 150); Toast(L.T("Picture copied - paste it into a chat, a mail or a document")); }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("copy picture: " + e.Message); Toast(L.T("Couldn't copy the picture")); }
         }
@@ -333,6 +338,7 @@ namespace AdeeboMeter
         // take Bluetooth files - use Open on my phone). AdeeboMeter never listens: Windows does the sending and the receiving.
         void SendBluetooth()
         {
+            if (ExampleBlocked()) return;
             try
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
@@ -362,6 +368,7 @@ namespace AdeeboMeter
         // person, and send the .adeebo (Bluetooth, Quick Share, mail) instead of the PNG
         void EncryptPicture()
         {
+            if (ExampleBlocked()) return;
             try
             {
                 if (tbSel == "encrypt" || tbSel == "decrypt") { Toast(L.T("This picture is from the encryption tools - nothing to encrypt")); return; }
@@ -394,6 +401,7 @@ namespace AdeeboMeter
         static string phoneOk = "";
         void OpenOnPhone()
         {
+            if (ExampleBlocked()) return;
             string link = PhoneLink(); if (link == null) return;
             var f = link.Substring(link.IndexOf('#') + 1).Split('!'); string body = string.Join("!", f.Skip(2).ToArray());
             if (body != phoneOk)

@@ -57,7 +57,7 @@ namespace AdeeboMeter
             at = DateTime.MinValue; string s = w.Trim().ToLowerInvariant(); DateTime day = DateTime.Today;
             if (s.StartsWith("yesterday", StringComparison.Ordinal)) { day = day.AddDays(-1); s = s.Substring(9).Trim(); }
             else if (s.StartsWith("today", StringComparison.Ordinal)) s = s.Substring(5).Trim();
-            var m = Regex.Match(s, @"^(\d{1,2})(?:[:h.](\d{2}))?$"); TimeSpan ts;   // "18:40", "18h40", or a bare hour "9"
+            var m = Regex.Match(s, @"^([0-9]{1,2})(?:[:h.]([0-9]{2}))?$"); TimeSpan ts;   // "18:40", "18h40", or a bare hour "9"
             if (m.Success) { int h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), mi = m.Groups[2].Success ? int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture) : 0; if (h > 23 || mi > 59) return false; at = day.AddHours(h).AddMinutes(mi); if (at > DateTime.Now.AddMinutes(5) && day == DateTime.Today) at = at.AddDays(-1); return true; }
             DateTime full; if (DateTime.TryParse(w, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out full) || DateTime.TryParse(w, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out full)) { at = full; return at <= DateTime.Now.AddMinutes(5); }
             // a time of day only ("18:40:30") - never "9" read as nine days, and never in the future
@@ -188,7 +188,7 @@ namespace AdeeboMeter
                             {
                                 if (p == null || !string.Equals(Convert.ToString(p.GetValue("ProfileName", ""), CultureInfo.InvariantCulture), name, StringComparison.Ordinal)) continue;
                                 var b = p.GetValue("DateLastConnected") as byte[]; long when = 0;   // a SYSTEMTIME: year, month, weekday, day, hour, minute, second
-                                if (b != null && b.Length >= 14) foreach (int at in new[] { 0, 2, 6, 8, 10, 12 }) when = when * 10000 + (b[at] | b[at + 1] << 8);
+                                if (b != null && b.Length >= 14) foreach (int at in new[] { 0, 2, 6, 8, 10, 12 }) when = when * 100 + ((b[at] | b[at + 1] << 8) % (at == 0 ? 10000 : 100));   /* review 1.1.6 P3 #7: was *10000 per field, overflowed */
                                 if (when > bestWhen) { bestWhen = when; best = Convert.ToInt32(p.GetValue("Category", -1), CultureInfo.InvariantCulture); }
                             }
                 if (bestWhen >= 0) return best == 0 ? "Public" : best == 1 ? "Private" : best == 2 ? "Domain" : "";
@@ -229,7 +229,7 @@ namespace AdeeboMeter
             if (ok.Count == 0) { rows.Add(R(2, "DNS race", "no server answered - DNS is blocked or the network is down", "", "m")); return rows; }
             var mine = res.FirstOrDefault(r => r.Item1.StartsWith("Yours", StringComparison.Ordinal)); var best = ok[0];
             bool mineBest = mine != null && (mine == best || (!double.IsNaN(score(mine)) && score(mine) - score(best) < 5));
-            rows.Add(R(mineBest ? 0 : 1, "Winner", best.Item1 + " - " + (double.IsNaN(best.Item2) ? "-" : best.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
+            rows.Add(R(mine == null ? 3 : mineBest ? 0 : 1, "Winner", best.Item1 + " - " + (double.IsNaN(best.Item2) ? "-" : best.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms for a name it knows, " + (double.IsNaN(best.Item3) ? "-" : best.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms for a new one", mine == null ? "Your own DNS server isn't known here, so it wasn't in the race - compare these with what your router uses." : mineBest ? "Yours is as fast as any - nothing to change." : "Yours is slower here. Speed isn't everything: your provider's DNS may steer you to closer servers, and a company PC must keep its own DNS.", "m"));
             foreach (var r in res) rows.Add(R(r.Item4 > 3 ? 1 : 3, r.Item1, double.IsNaN(r.Item2) && double.IsNaN(r.Item3) ? "no answer" : (double.IsNaN(r.Item2) ? "-" : r.Item2.ToString("0", CultureInfo.CurrentCulture)) + " ms known · " + (double.IsNaN(r.Item3) ? "-" : r.Item3.ToString("0", CultureInfo.CurrentCulture)) + " ms new" + (r.Item4 > 0 ? " · " + r.Item4 + " unanswered" : ""), "", "m"));
             rows.Add(R(3, "How", "each server was asked for 6 popular names three times and for 3 made-up names. Known = the 2nd and 3rd asks (its cached answer); new = the made-up names, which no server can have cached (it had to go and find out). Typical (middle) times shown.", "", "i"));
             return rows;
@@ -250,6 +250,20 @@ namespace AdeeboMeter
         static void SaveInv() { Store.Write("inventory.txt", inv.Select(i => new[] { i.Net, i.Mac, i.First.ToString("o", CultureInfo.InvariantCulture), i.Last.ToString("o", CultureInfo.InvariantCulture), i.Ip, i.Label })); Store.Write("watched-devices.txt", inv.Where(i => i.Watch).Select(i => new[] { i.Net, i.Mac })); }
         static HashSet<string> WatchSet { get { return new HashSet<string>(Store.Read("watched-devices.txt").Where(r => r.Length > 1).Select(r => r[0] + "|" + r[1])); } }
         public static void LoadWatched() { lock (ik) LoadInv(); }
+        // review 1.1.6 P3 #16: the list follows History - devices you didn't name or watch roll off with the history days, at most
+        // 40 networks are kept, and turning History off forgets every one of them
+        public static void TidyInventory(bool historyOff)
+        {
+            lock (ik)
+            {
+                LoadInv(); int days = Policy.MaxHistoryDays > 0 ? Math.Min(Cfg.HistoryDays, Policy.MaxHistoryDays) : Cfg.HistoryDays; var cut = DateTime.Now.AddDays(-Math.Max(1, days));
+                int before = inv.Count;
+                inv.RemoveAll(x => !x.Watch && x.Label == "" && (historyOff || x.Last < cut));
+                var nets = inv.GroupBy(x => x.Net).OrderByDescending(gp => gp.Max(x => x.Last)).Select(gp => gp.Key).ToList();
+                if (nets.Count > 40) { var keep = new HashSet<string>(nets.Take(40)); inv.RemoveAll(x => !keep.Contains(x.Net) && !x.Watch); }
+                if (inv.Count != before) SaveInv();
+            }
+        }
         public static void SeeDevices(string net, List<Arp.Entry> table, string gw)
         {
             if (net == "" || net == "offline") return;
@@ -269,6 +283,7 @@ namespace AdeeboMeter
                 }
                 SaveInv();
             }
+            TidyInventory(!Cfg.History);
         }
         // ---------- AdeeboLab's See my LAN: the same list, as data. identify = ask the devices and ping them now (about 8 s);
         // otherwise names and times come from the last time Devices on this network ran (lastAt), and nothing is sent.

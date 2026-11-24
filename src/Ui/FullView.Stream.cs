@@ -81,7 +81,7 @@ namespace AdeeboMeter
                     else {
                     Theme.Fill(g, tbr, 10 * S, Theme.Card); Theme.Stroke(g, tbr, 10 * S, Theme.Line, 1);
                     using (var bb = new SolidBrush(Theme.BlueText)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
-                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); }); }
+                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); }); }
                 }
                 y += cardH + 12 * S;
                 var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
@@ -101,7 +101,7 @@ namespace AdeeboMeter
                     Need(streamCanvas, y + 20 * S); return;   // the top card already says it's off and carries Turn it on
                 }
                 {
-                    WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null) ns = Streams.Now.S;
+                    WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null && Streams.Now.S != null) ns = Streams.Now.S.Copy();
                     var ld = ns != null && ns.Dips.Count > 0 ? ns.Dips.Last() : null;
                     if (ld != null && (DateTime.Now - ld.T).TotalMinutes < 3) y = PaintModeLine(g, "stream.dip", WatchKit.BlameName(ld.Blame, Streams.FarName) + ".", true, x, y, w);
                     else y = PaintModeLine(g, ns != null ? "stream.on" : "stream.none", ns != null ? ns.What : null, false, x, y, w);
@@ -139,7 +139,7 @@ namespace AdeeboMeter
         float PaintStreamNow(Graphics g, float x, float y, float w)
         {
             Streams.Live l; WatchKit.Session s = null; List<WatchKit.Sample> samples = null; string far = "";
-            lock (Streams.k) { l = Streams.Now; if (l != null) { s = l.S; samples = l.Samples.ToList(); far = l.FarIp; } }
+            lock (Streams.k) { l = Streams.Now; if (l != null) { s = l.S != null ? l.S.Copy() : null; samples = l.Samples.ToList(); far = l.FarIp; } }   /* review 1.1.6 U3 #1: paint from a copy, the watch thread adds dips */
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 if (s == null)

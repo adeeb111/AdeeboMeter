@@ -146,6 +146,7 @@ namespace AdeeboMeter
                         idxTiles.Add(new KeyValuePair<RectangleF, string>(r, t.Id));
                         if (!Kit.Off(g, r)) ToolTile(g, t, r, t.Id == idxHot);
                         string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, new RectangleF(r.X, r.Y, r.Width - 28 * S, r.Height), "tb." + id);   /* the ? clear of the row's › (release check screenshots) */
+                        if (!StarterPins.Contains(id)) Act(tbCanvas, PinStar(r), delegate { SetPin(id, !MyPins().Contains(id)); tbCanvas.Invalidate(); });   /* review 1.1.6 U1 #4 */
                     }
                     py += ((n + cols - 1) / cols) * th;
                 }
@@ -156,6 +157,7 @@ namespace AdeeboMeter
         readonly List<KeyValuePair<RectangleF, string>> idxTiles = new List<KeyValuePair<RectangleF, string>>(); string idxHot;
         // one row of the tool list: a small icon in the question's colour, the name, one line on what it does, and the last
         // result from this session (a dot and the time) with a chevron; a soft fill under the mouse, a line under each row
+        RectangleF PinStar(RectangleF r) { return new RectangleF(r.Right - 34 * S - 26 * S, r.Y + (r.Height - 24 * S) / 2, 24 * S, 24 * S); }
         void ToolTile(Graphics g, Tool t, RectangleF r, bool hot)
         {
             string q = QuestionOf(t), acc = QAccent(q), gk; Color c = Kit.Accent(acc);
@@ -168,6 +170,8 @@ namespace AdeeboMeter
             using (var mp = new Pen(Theme.Muted, 1.6f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
             { float ax = right - 4 * S, ay = r.Y + r.Height / 2; g.DrawLines(mp, new[] { new PointF(ax - 4 * S, ay - 5 * S), new PointF(ax + 1 * S, ay), new PointF(ax - 4 * S, ay + 5 * S) }); }
             right -= 22 * S;
+            /* review 1.1.6 U1 #4: the ☆ that pins a tool to Toolbox › Pinned (its click is registered after the row's, so it wins) */
+            if (!StarterPins.Contains(t.Id)) { var sr = PinStar(r); Kit.Icon(g, "star", new RectangleF(sr.X + 4 * S, sr.Y + 4 * S, 16 * S, 16 * S), MyPins().Contains(t.Id) ? Kit.Accent("mine") : (hot ? Theme.Sub : Theme.Line2)); right = sr.X - 6 * S; }
             if (tbLast.TryGetValue(t.Id, out last) && last.Rows != null && last.Rows.Count > 0)
             {
                 int lv = 0; foreach (var row in last.Rows) { int l; if (row.Length > 0 && int.TryParse(row[0], out l) && (l == 1 || l == 2) && l > lv) lv = l; }

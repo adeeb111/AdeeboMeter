@@ -284,7 +284,7 @@ namespace AdeeboMeter
         static bool Wet(int code) { return code >= 51 && code != 45 && code != 48; }
         public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? (c * 9 / 5 + 32).ToString("0", CultureInfo.CurrentCulture) + "°F" : c.ToString("0", CultureInfo.CurrentCulture) + "°C"; }
         public static string TempShort(double c) { if (double.IsNaN(c)) return "-"; return (Cfg.WeatherF ? c * 9 / 5 + 32 : c).ToString("0", CultureInfo.CurrentCulture) + "°"; }
-        static string At(DateTime utc) { return utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : "h tt", CultureInfo.CurrentCulture).ToLowerInvariant(); }
+        static string At(DateTime utc) { return utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture).ToLowerInvariant(); }
         // "4°C · rain from 3 pm" / "-2°C · snow until 18:00" / "21°C · clear"
         public static string Text(DateTime nowUtc)
         {

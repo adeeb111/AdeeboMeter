@@ -108,8 +108,8 @@ namespace AdeeboMeter
                     int cols = LangCols(langSheet.Width);   // R2-213: Up / Down move a row, Left / Right a tile
                     if (e.KeyCode == Keys.Down) { if (langKey + cols < n) langKey += cols; }
                     else if (e.KeyCode == Keys.Up) { if (langKey - cols >= 0) langKey -= cols; }
-                    else if (e.KeyCode == Keys.Right) { langKey = (langKey + (rtl ? n - 1 : 1)) % n; }
-                    else if (e.KeyCode == Keys.Left) { langKey = (langKey + (rtl ? 1 : n - 1)) % n; }
+                    else if (e.KeyCode == Keys.Right) { langKey = (langKey + 1) % n;   /* review 1.1.6 U2 #7: the grid isn't mirrored, so neither are the arrows */ }
+                    else if (e.KeyCode == Keys.Left) { langKey = (langKey + n - 1) % n; }
                     else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
                     {
                         // hunters10 M-2: one cursor - Enter and Space both pick whichever was moved last, the arrow tile or the Tab mark

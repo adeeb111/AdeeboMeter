@@ -76,7 +76,7 @@ namespace AdeeboMeter
             string tpl = (Cfg.WDir == "both" ? "↓ 888  ↑ 888" : "↓ 888") + " " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s");
             float tw = Math.Max(Measure(tpl, fBtn, 0).Width, Measure(txt, fBtn, 0).Width), sw = status ? Measure(s.Chip, fSmall, 0).Width + 22 * S : 0, gw = Cfg.WGraph ? 46 * S : 0;
             float ww = WeatherChipW(); int W = (int)(10 * S + (Cfg.Buddy ? 26 * S : 12 * S) + sw + tw + gw + ww + 12 * S), H = (int)(28 * S);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -117,7 +117,7 @@ namespace AdeeboMeter
             float headH = status ? Measure(s.Headline, fSmall, (int)inner).Height + 6 * S : 0;
             string wtx = WeatherCardText(); float h = pad + 24 * S + headH + 64 * S + (Cfg.WGraph ? 46 * S : 0) + (Cfg.WTotal ? 22 * S : 0) + (wtx != null ? 22 * S : 0) + (apps ? 22 * S + Math.Max(1, top.Count) * 19 * S : 0) + 16 * S + pad;   // bug-hunt L-147: 4 of space and the 12-high path strip
             int H = (int)Math.Ceiling(h);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);

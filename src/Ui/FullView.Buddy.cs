@@ -128,14 +128,16 @@ namespace AdeeboMeter
                 k++;
             }
             y += ((k + cols - 1) / cols) * (ch + 10 * S) + 10 * S;
-            var jf = new RectangleF(x, y, 260 * S, 30 * S);
-            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Just the facts (Plain, Details on, face only)"), Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
-            Act(settingsCanvas, jf, delegate { factsUndo = new[] { Voice.Serious ? "1" : "0", Lines.Chat, Cfg.Details ? "1" : "0" }; Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
+            string jft = L.T("Just the facts (Plain, Details on, face only)");   /* review 1.1.6 U1 #10: measured */
+            var jf = new RectangleF(x, y, Math.Min(w, (float)Math.Ceiling(g.MeasureString(jft, Draw.fBodyB).Width) + 8 * S), 30 * S);
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(jft, Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
+            Act(settingsCanvas, jf, delegate { if (factsUndo == null) factsUndo = new[] { Voice.Serious ? "1" : "0", Lines.Chat, Cfg.Details ? "1" : "0" }; Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
             if (factsUndo != null)
             {
                 // AM-CG-182: what it changed, and the way back
-                using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Changed: Fun lines off · Details on · How chatty: face only."), Draw.fSmall, m, jf.X, jf.Bottom + 2 * S);
-                var ur = new RectangleF(jf.X + 380 * S, jf.Bottom, 60 * S, 20 * S); using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Undo"), Draw.fBodyB, b, ur.X, ur.Y);
+                string cht = L.T("Changed: Fun lines off · Details on · How chatty: face only."); float chw = (float)Math.Ceiling(g.MeasureString(cht, Draw.fSmall).Width);
+                using (var m = new SolidBrush(Theme.Muted)) g.DrawString(cht, Draw.fSmall, m, jf.X, jf.Bottom + 2 * S);
+                var ur = new RectangleF(jf.X + Math.Max(380 * S, chw + 16 * S), jf.Bottom, 60 * S, 20 * S); using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Undo"), Draw.fBodyB, b, ur.X, ur.Y);
                 Act(settingsCanvas, ur, delegate { if (factsUndo == null) return; Voice.Serious = factsUndo[0] == "1"; Lines.Chat = factsUndo[1]; Cfg.Details = factsUndo[2] == "1"; factsUndo = null; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
                 y += 22 * S;
             }
