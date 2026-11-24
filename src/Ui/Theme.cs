@@ -838,7 +838,7 @@ namespace AdeeboMeter
             string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
             float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();
-            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
+            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
             using (var g = PrepW(bmp))
@@ -861,11 +861,27 @@ namespace AdeeboMeter
                 if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH)); y += quipH; }   // the mood's line and the season's - personality, after the facts
                 if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
                 y += 10 * S;
-                hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);
-                g.DrawString(Kit.Sent(L.T("IS IT ME OR THE NETWORK?")), fTiny, muted, pad, y);
-                y += 15 * S;
-                PathStrip(g, s, new RectangleF(pad, y, inner, 32 * S), false);
-                y += 37 * S;
+                // 24 Nov (widget mockup): the same four readings as Home, in the same order - this PC, the router, the internet,
+                // your traffic - a dot in each one's level, the number on the right
+                {
+                    bool memHot = !double.IsNaN(s.Mem) && s.Mem >= 85 && (double.IsNaN(s.Cpu) || s.Mem - 85 >= s.Cpu - 85);
+                    int pcLv = s.Path.Length > 0 ? s.Path[0] : 3, gwLv = s.Path.Length > 1 ? s.Path[1] : 3, netLv = s.Path.Length > 4 ? s.Path[4] : 3;
+                    var rows = new[] {
+                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : Fmt(s.Cpu, "0", "% ") + Kit.Sent(L.T("CPU")), pcLv),
+                        Tuple.Create("path", L.T("Router"), Fmt(s.GwMs, "0", " ms"), gwLv),
+                        Tuple.Create("inet", L.T("Internet"), Fmt(s.Ping, "0", " ms"), netLv),
+                        Tuple.Create("net", L.T("Traffic"), "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true), 3) };
+                    foreach (var rw in rows)
+                    {
+                        hits[rw.Item1] = new RectangleF(pad - 4 * S, y - 2 * S, inner + 8 * S, 21 * S);
+                        Draw.LvDot(g, rw.Item4, pad, y + 6 * S, 7 * S, 7 * S);
+                        using (var lb = new SolidBrush(Theme.Sub)) g.DrawString(rw.Item2, fSmall, lb, pad + 14 * S, y + 1 * S);
+                        var vs = Measure(rw.Item3, fSmall, 0);
+                        using (var vb = new SolidBrush(rw.Item4 == 1 || rw.Item4 == 2 ? Theme.LvText(rw.Item4) : Theme.Ink)) g.DrawString(rw.Item3, fSmall, vb, W - pad - vs.Width, y + 1 * S);
+                        y += 21 * S;
+                    }
+                    y += 6 * S;
+                }
                 if (s.Call)
                 {
                     bool bad = s.Jitter > 30 || s.LossPct > 2;
@@ -878,16 +894,8 @@ namespace AdeeboMeter
                     }
                     y += 44 * S;
                 }
-                Bar(g, "cpu", "CPU", s.Cpu, Fmt(s.Cpu, "0", "%"), 60, 88, pad, ref y, inner, hits);
-                Bar(g, "ram", "Memory", s.Mem, Fmt(s.Mem, "0", "%"), 80, 90, pad, ref y, inner, hits);
-                Bar(g, "disk", "Disk", s.Disk, Fmt(s.Disk, "0", "%"), 60, 90, pad, ref y, inner, hits);
-                y += 6 * S;
-                hits["net"] = new RectangleF(pad - 4 * S, y - 3 * S, inner + 8 * S, 56 * S);
-                using (var b = new SolidBrush(Theme.BlueText)) g.DrawString("↓ " + Rate(s.Down, true), fBodyB, b, pad, y);
-                string up = "↑ " + Rate(s.Up, true); var us = Measure(up, fBodyB, 0);
-                using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fBodyB, b, W - pad - us.Width, y);
-                y += 17 * S;
-                var gr = new RectangleF(pad, y, inner, 34 * S);
+                y += 4 * S;
+                var gr = new RectangleF(pad, y, inner, 34 * S);   // the traffic graph under the readings (the speeds are in the Traffic row)
                 Theme.Fill(g, gr, 9 * S, Theme.Soft);
                 double cap = 1; foreach (var v in s.DownHist) if (!double.IsNaN(v) && v > cap) cap = v; foreach (var v in s.UpHist) if (!double.IsNaN(v) && v > cap) cap = v;
                 Theme.Spark(g, s.DownHist, gr, Theme.Blue, cap * 1.15, true);

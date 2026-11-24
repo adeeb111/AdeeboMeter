@@ -587,7 +587,7 @@ namespace AdeeboMeter
         {
             int h = RowAt(e.Y); if (h != hover) { hover = h; Invalidate(); }
             string k = KeyAt(e.Location);
-            Cursor = h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : k != null ? Cursors.Help : Cursors.Default;
+            Cursor = h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : Cursors.Default;
             if (k != lastKey) { lastKey = k; if (HoverKey != null) HoverKey(k); }
         }
         protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
@@ -749,16 +749,24 @@ namespace AdeeboMeter
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
         }
         protected override bool ShowWithoutActivation { get { return true; } }
-        protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ExStyle |= 0x08000000 /*NOACTIVATE*/ | 0x80 /*TOOLWINDOW*/ | 0x20 /*TRANSPARENT*/; return cp; } }
+        protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ExStyle |= 0x08000000 /*NOACTIVATE*/ | 0x80 /*TOOLWINDOW*/;   /* takes clicks now: it has a close button (24 Nov) */ return cp; } }
         protected override void OnHandleCreated(EventArgs ev)
         {
             base.OnHandleCreated(ev);
             try { int round = 2; if (Native.DwmSetWindowAttribute(Handle, 33 /*corner preference: round*/, ref round, 4) != 0) Program.Log("rounded tips not supported here"); } catch { }
         }
+        public event Action Dismissed;
+        RectangleF CloseRect { get { float S = Draw.S; return new RectangleF(Width - 34 * S, 8 * S, 26 * S, 26 * S); } }
+        protected override void OnMouseDown(MouseEventArgs me)
+        {
+            base.OnMouseDown(me);
+            if (CloseRect.Contains(me.Location)) { Hide(); if (Dismissed != null) Dismissed(); }
+        }
+        protected override void OnMouseMove(MouseEventArgs me) { base.OnMouseMove(me); Cursor = CloseRect.Contains(me.Location) ? Cursors.Hand : Cursors.Default; }
         public void ShowAt(Explain.Entry en, Point at, Form owner)
         {
             e = en; float S = Draw.S; int w = (int)(400 * S);
-            int h = (int)(ExplainPaint.Paint(null, e, 16 * S, 14 * S, w - 32 * S, true) + 10 * S);
+            int h = (int)(ExplainPaint.Paint(null, e, 16 * S, 14 * S, w - 52 * S, true) + 10 * S);
             var wa = Screen.FromPoint(at).WorkingArea;
             int x = at.X + (int)(18 * S), y = at.Y + (int)(22 * S);
             if (x + w > wa.Right) x = Math.Max(wa.Left, at.X - w - (int)(12 * S));
@@ -774,7 +782,10 @@ namespace AdeeboMeter
             var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, ClientRectangle);
             using (var p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
-            if (e != null) ExplainPaint.Paint(g, e, 16 * Draw.S, 14 * Draw.S, Width - 32 * Draw.S, true);
+            if (e != null) ExplainPaint.Paint(g, e, 16 * Draw.S, 14 * Draw.S, Width - 52 * Draw.S, true);
+            // the close button, top right
+            var cr = CloseRect; float k = 5 * Draw.S, cx = cr.X + cr.Width / 2, cy = cr.Y + cr.Height / 2;
+            using (var p = new Pen(Theme.Sub, 1.6f * Draw.S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) { g.DrawLine(p, cx - k, cy - k, cx + k, cy + k); g.DrawLine(p, cx + k, cy - k, cx - k, cy + k); }
         }
     }
 }

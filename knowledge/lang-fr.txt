@@ -3872,3 +3872,22 @@ done at	terminé à
 Where this PC talks to	À qui ce PC parle
 connections from	connexions de
 apps	applis
+Add your own game	Ajouter votre jeu
+App: the same cards and type as every other page.	Appli : les mêmes cartes et polices que les autres pages.
+Click to add	Cliquez pour ajouter
+Found on this PC · click to watch	Trouvé sur ce PC · cliquez pour surveiller
+Newspaper: a masthead, serif headlines and cream paper.	Journal : un titre de une, des titres à empattements et un papier crème.
+Nothing is playing right now.	Rien ne joue en ce moment.
+Playing	En jeu
+Playing now	En cours
+Streaming is switched off.	Le streaming est désactivé.
+Traffic	Trafic
+Watching	Surveillé
+What you watched	Ce que vous avez regardé
+Your games	Vos jeux
+kept 90 days on this PC - click one to see who caused the dips	conservé 90 jours sur ce PC - cliquez pour voir qui a causé les baisses
+ping to each game's nearest server	ping vers le serveur le plus proche de chaque jeu
+starting...	démarrage...
+Markets and Sports look	Apparence Marchés et Sports
+App	Appli
+Newspaper	Journal

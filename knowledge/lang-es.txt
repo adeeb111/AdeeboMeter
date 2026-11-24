@@ -5154,3 +5154,21 @@ done at	hecho a las
 Where this PC talks to	Con quién habla este PC
 connections from	conexiones de
 apps	apps
+Add your own game	Añadir tu juego
+App: the same cards and type as every other page.	App: las mismas tarjetas y letras que las demás páginas.
+Click to add	Haz clic para añadir
+Found on this PC · click to watch	Encontrado en este PC · haz clic para vigilarlo
+Newspaper: a masthead, serif headlines and cream paper.	Periódico: cabecera, titulares con serifa y papel crema.
+Nothing is playing right now.	No se está reproduciendo nada ahora.
+Playing	Jugando
+Playing now	Reproduciendo
+Streaming is switched off.	El streaming está desactivado.
+Traffic	Tráfico
+Watching	Vigilando
+What you watched	Lo que viste
+Your games	Tus juegos
+kept 90 days on this PC - click one to see who caused the dips	se guarda 90 días en este PC - haz clic para ver quién causó las caídas
+ping to each game's nearest server	ping al servidor más cercano de cada juego
+starting...	iniciando...
+Markets and Sports look	Aspecto de Mercados y Deportes
+Newspaper	Periódico

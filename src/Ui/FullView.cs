@@ -195,7 +195,7 @@ namespace AdeeboMeter
                 if (search.Width != wanted) search.Width = wanted;
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
-            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
+            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += k => { if (k == null) SetTipKey(null); };   // rows explain themselves on What's running; no card from a plain hover (24 Nov)
             connStatus = new OneLineLabel { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             // 24 Nov (Connections mockup): who this PC talks to, by app - one bar on top of the list
@@ -388,6 +388,7 @@ namespace AdeeboMeter
                 warm.Tick += delegate { warm.Stop(); warm.Dispose(); if (!IsDisposed && tab != "toolbox") EnsureToolbox(); };
                 warm.Start();
             };
+            tip.Dismissed += delegate { tipDismissed = tipKey; tipKey = null; tipWatch = false; tipTimer.Stop(); };
             tipTimer.Tick += delegate
             {
                 tipTimer.Stop();
@@ -1076,13 +1077,19 @@ namespace AdeeboMeter
             {
                 tipPoint = null;
                 List<KeyValuePair<RectangleF, Action>> l; bool click = acts.TryGetValue(c, out l) && l.Any(kv => kv.Key.Contains(e.Location));
-                List<KeyValuePair<RectangleF, string>> h; string key = null;
-                if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { key = h[i].Value; tipArea = c.RectangleToScreen(Rectangle.Round(h[i].Key)); break; }
-                if (key != null && TipEntry(key) == null) key = null;
-                c.Cursor = click ? Cursors.Hand : key != null ? Cursors.Help : Cursors.Default;
-                SetTipKey(key);
+                // 24 Nov (Adeeb: "the suggestions are distracting"): hovering an item only shows a small ? at its corner; the card
+                // opens when the pointer rests on that ?, and has its own close button
+                List<KeyValuePair<RectangleF, string>> h; string key = null; RectangleF badge = RectangleF.Empty;
+                if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { if (TipEntry(h[i].Value) != null) { key = h[i].Value; badge = BadgeRect(h[i].Key); } break; }
+                SetBadge(c, badge);
+                bool onBadge = key != null && RectangleF.Inflate(badge, 3 * S, 3 * S).Contains(e.Location);
+                if (onBadge) tipArea = c.RectangleToScreen(Rectangle.Round(badge));
+                c.Cursor = onBadge ? Cursors.Help : click ? Cursors.Hand : Cursors.Default;
+                if (key != tipDismissed) tipDismissed = null;
+                SetTipKey(onBadge && key != tipDismissed ? key : null);
             };
-            c.MouseLeave += delegate { if (!tip.Visible) SetTipKey(null); };   // an open card stays while the pointer moves onto it (the watch below closes it)
+            c.MouseLeave += delegate { if (!tip.Visible) SetTipKey(null); if (!tip.Visible) SetBadge(c, RectangleF.Empty); };
+            c.Paint += delegate(object s, PaintEventArgs pe) { if (badgeOn == c && badgeAt.Width > 0) { pe.Graphics.ResetTransform(); DrawBadge(pe.Graphics, badgeAt); } };   // an open card stays while the pointer moves onto it (the watch below closes it)
             c.MouseClick += delegate(object s, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left) return;
@@ -1091,6 +1098,24 @@ namespace AdeeboMeter
             };
             c.MouseWheel += delegate(object s, MouseEventArgs e) { SetTipKey(null); if (ModifierKeys == Keys.Control && e.Delta != 0) ZoomBy(e.Delta > 0 ? 1 : -1); };   // Ctrl + wheel zooms
             c.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Right && !IsPopup(c)) PageMenu(c, e.Location); };
+        }
+        // the small ? that says "there's an explanation here": top-right corner of the hovered item, drawn after the page
+        Control badgeOn; RectangleF badgeAt; string tipDismissed;
+        RectangleF BadgeRect(RectangleF r) { float d = 18 * S; return new RectangleF(r.Right - d - 6 * S, r.Y + Math.Min(6 * S, Math.Max(0, (r.Height - d) / 2)), d, d); }
+        void SetBadge(Control c, RectangleF r)
+        {
+            if (badgeOn == c && badgeAt == r) return;
+            if (badgeOn != null && badgeAt.Width > 0 && !badgeOn.IsDisposed) badgeOn.Invalidate(Rectangle.Round(RectangleF.Inflate(badgeAt, 3, 3)));
+            badgeOn = r.Width > 0 ? c : null; badgeAt = r;
+            if (badgeOn != null) c.Invalidate(Rectangle.Round(RectangleF.Inflate(r, 3, 3)));
+        }
+        static void DrawBadge(Graphics g, RectangleF r)
+        {
+            var sm = g.SmoothingMode; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using (var b = new SolidBrush(Theme.Card)) g.FillEllipse(b, r);
+            using (var p = new Pen(Theme.Line, 1)) g.DrawEllipse(p, r);
+            using (var t = new SolidBrush(Theme.Sub)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString("?", Draw.fSmall, t, r, sf);
+            g.SmoothingMode = sm;
         }
         Point? tipPoint;   // set when the keyboard marked something: the tip opens there, not at the mouse
         void SetTipKey(string key)
@@ -1101,7 +1126,7 @@ namespace AdeeboMeter
             if (key == null && tip.Visible && tipWatch) return;   // the watch decides, with its grace
             tipKey = key; tipTimer.Stop();
             if (key == null) { if (tip.Visible) tip.Hide(); return; }
-            tipTimer.Interval = tip.Visible ? 60 : 1200; tipTimer.Start();
+            tipTimer.Interval = tip.Visible ? 60 : 300; tipTimer.Start();   // on the ? itself: a short rest is enough
         }
         void ShowTip()
         {

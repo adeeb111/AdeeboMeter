@@ -5154,3 +5154,21 @@ done at	শেষ হয়েছে
 Where this PC talks to	এই পিসি কার সঙ্গে কথা বলছে
 connections from	সংযোগ,
 apps	অ্যাপ থেকে
+Add your own game	নিজের গেম যোগ করুন
+App: the same cards and type as every other page.	অ্যাপ: অন্য সব পেজের মতো একই কার্ড ও লেখা।
+Click to add	যোগ করতে ক্লিক করুন
+Found on this PC · click to watch	এই পিসিতে আছে · নজর রাখতে ক্লিক করুন
+Newspaper: a masthead, serif headlines and cream paper.	সংবাদপত্র: মাস্টহেড, সেরিফ শিরোনাম আর ক্রিম কাগজ।
+Nothing is playing right now.	এখন কিছু চলছে না।
+Playing	খেলছেন
+Playing now	এখন চলছে
+Streaming is switched off.	স্ট্রিমিং বন্ধ আছে।
+Traffic	ট্রাফিক
+Watching	নজরে আছে
+What you watched	আপনি যা দেখেছেন
+Your games	আপনার গেম
+kept 90 days on this PC - click one to see who caused the dips	এই পিসিতে ৯০ দিন রাখা হয় - কে মান কমিয়েছে দেখতে ক্লিক করুন
+ping to each game's nearest server	প্রতিটি গেমের কাছের সার্ভারে পিং
+starting...	শুরু হচ্ছে...
+Markets and Sports look	মার্কেট ও খেলার চেহারা
+Newspaper	সংবাদপত্র

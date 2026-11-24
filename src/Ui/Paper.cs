@@ -15,38 +15,51 @@ namespace AdeeboMeter
     static class Paper
     {
         static float S { get { return Draw.S; } }
+        // 24 Nov (Adeeb approved the app-style mockups): "app" draws these pages in the app's own cards, type and colours; the
+        // newspaper (cream, white, or the theme's colours) stays one switch away in Settings
+        public static bool App { get { return Theme.HighContrast || Cfg.Paper == "app" || string.IsNullOrEmpty(Cfg.Paper); } }
         public static bool Dark { get { return !Theme.HighContrast && Cfg.Paper == "theme" && Theme.Dark; } }
-        public static bool Cream { get { return !Theme.HighContrast && Cfg.Paper != "white" && Cfg.Paper != "theme"; } }
+        public static bool Cream { get { return !Theme.HighContrast && Cfg.Paper == "cream"; } }
         static Color C(string h) { return ColorTranslator.FromHtml(h); }
-        public static Color Bg { get { return Theme.HighContrast ? SystemColors.Window : Dark ? C("#0E1319") : Cream ? C("#F3EBDA") : C("#FFFFFF"); } }
-        public static Color DeskBg { get { return Theme.HighContrast ? SystemColors.Window : Dark ? C("#161D26") : Cream ? C("#FBF6EA") : C("#FFFFFF"); } }
-        public static Color Line { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#2E3A46") : Cream ? C("#CDBF9F") : C("#D6DEE8"); } }
-        public static Color Line2 { get { return Theme.HighContrast ? SystemColors.GrayText : Dark ? C("#2E3A46") : Cream ? C("#E2D7BE") : C("#EEF2F6"); } }
-        public static Color Head { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#EEF2F6") : C("#141B2B"); } }
-        public static Color Ink { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#E6EDF3") : C("#1F2633"); } }
-        public static Color Muted { get { return Theme.HighContrast ? SystemColors.GrayText : Dark ? C("#9AA7B4") : Cream ? C("#6B5E44") : C("#5B6B7C"); } }
-        public static Color Red { get { return Theme.HighContrast ? SystemColors.Highlight : Dark ? C("#E5534B") : C("#B3261E"); } }
-        public static Color Navy { get { return Theme.HighContrast ? SystemColors.Highlight : Dark ? C("#2563EB") : C("#0F2A5C"); } }
-        public static Color Green { get { return Theme.HighContrast ? SystemColors.Highlight : C("#2E8B3A"); } }
-        public static Color Up { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#7EE2A8") : C("#1E7A30"); } }
-        public static Color Down { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#FFA198") : C("#B3261E"); } }
-        public static Color Amber { get { return Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#F2CC60") : C("#9A6200"); } }
-        public static Color Soft { get { return Theme.HighContrast ? SystemColors.Window : Dark ? C("#1B232D") : Cream ? C("#EEE6D2") : C("#F4F7FB"); } }
-        public static Color GoodSoft { get { return Theme.HighContrast ? SystemColors.Window : Dark ? C("#12301C") : C("#E6F1DD"); } }
+        public static Color Bg { get { return App && !Theme.HighContrast ? Theme.Bg : Theme.HighContrast ? SystemColors.Window : Dark ? C("#0E1319") : Cream ? C("#F3EBDA") : C("#FFFFFF"); } }
+        public static Color DeskBg { get { return App && !Theme.HighContrast ? Theme.Card : Theme.HighContrast ? SystemColors.Window : Dark ? C("#161D26") : Cream ? C("#FBF6EA") : C("#FFFFFF"); } }
+        public static Color Line { get { return App && !Theme.HighContrast ? Theme.Line : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#2E3A46") : Cream ? C("#CDBF9F") : C("#D6DEE8"); } }
+        public static Color Line2 { get { return App && !Theme.HighContrast ? Theme.Line2 : Theme.HighContrast ? SystemColors.GrayText : Dark ? C("#2E3A46") : Cream ? C("#E2D7BE") : C("#EEF2F6"); } }
+        public static Color Head { get { return App && !Theme.HighContrast ? Theme.Ink : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#EEF2F6") : C("#141B2B"); } }
+        public static Color Ink { get { return App && !Theme.HighContrast ? Theme.Ink : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#E6EDF3") : C("#1F2633"); } }
+        public static Color Muted { get { return App && !Theme.HighContrast ? Theme.Sub : Theme.HighContrast ? SystemColors.GrayText : Dark ? C("#9AA7B4") : Cream ? C("#6B5E44") : C("#5B6B7C"); } }
+        public static Color Red { get { return App && !Theme.HighContrast ? Theme.LvText(2) : Theme.HighContrast ? SystemColors.Highlight : Dark ? C("#E5534B") : C("#B3261E"); } }
+        public static Color Navy { get { return App && !Theme.HighContrast ? Theme.Blue : Theme.HighContrast ? SystemColors.Highlight : Dark ? C("#2563EB") : C("#0F2A5C"); } }
+        public static Color Green { get { return App && !Theme.HighContrast ? Theme.Blue : Theme.HighContrast ? SystemColors.Highlight : C("#2E8B3A"); } }
+        public static Color Up { get { return App && !Theme.HighContrast ? Theme.LvText(0) : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#7EE2A8") : C("#1E7A30"); } }
+        public static Color Down { get { return App && !Theme.HighContrast ? Theme.LvText(2) : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#FFA198") : C("#B3261E"); } }
+        public static Color Amber { get { return App && !Theme.HighContrast ? Theme.LvText(1) : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#F2CC60") : C("#9A6200"); } }
+        public static Color Soft { get { return App && !Theme.HighContrast ? Theme.Soft : Theme.HighContrast ? SystemColors.Window : Dark ? C("#1B232D") : Cream ? C("#EEE6D2") : C("#F4F7FB"); } }
+        public static Color GoodSoft { get { return App && !Theme.HighContrast ? Theme.LvSoft(0) : Theme.HighContrast ? SystemColors.Window : Dark ? C("#12301C") : C("#E6F1DD"); } }
         public static Color Lv(int lv) { return lv == 0 ? Up : lv == 1 ? Amber : lv == 2 ? Down : Muted; }
 
         // ---------- fonts (built for the current scale; rebuilt when it changes)
-        static float fontsAt = -1; static string fontsLang = "";
+        static float fontsAt = -1; static string fontsLang = ""; static bool fontsApp;
         public static Font Mast, MastSmall, Head1, Head2, Head3, Body, BodyB, Small, Italic, Big, Num, NumS;   // Num: figures in Inter (lining digits - the serif's old-style digits are hard to read in tables)
         public static void Fonts()
         {
-            if (fontsAt == S && fontsLang == L.Code) return;
+            if (fontsAt == S && fontsLang == L.Code && fontsApp == App) return;
             foreach (var f in new[] { Mast, MastSmall, Head1, Head2, Head3, Body, BodyB, Small, Italic, Big, Num, NumS }) if (f != null) f.Dispose();
             Mast = Draw.Serif(52 * S, true); MastSmall = Draw.Serif(34 * S, true); Head1 = Draw.Serif(40 * S, false); Head2 = Draw.Serif(22 * S, false); Head3 = Draw.Serif(17 * S, false); Big = Draw.Serif(34 * S, true); Num = new Font(Draw.UiFamilyName(), 30 * S, FontStyle.Bold, GraphicsUnit.Pixel); NumS = new Font(Draw.UiFamilyName(), 19 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             string body = L.IsRtl ? "Segoe UI" : L.Code == "bn" ? "Nirmala UI" : "Georgia";
             Body = new Font(body, 15 * S, FontStyle.Regular, GraphicsUnit.Pixel); BodyB = new Font(body, 15 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             Small = new Font(body, 13 * S, FontStyle.Regular, GraphicsUnit.Pixel); Italic = new Font(body, 17 * S, L.IsRtl ? FontStyle.Regular : FontStyle.Italic, GraphicsUnit.Pixel);
-            fontsAt = S; fontsLang = L.Code;
+            if (App && !L.IsRtl && L.Code != "bn")
+            {
+                // the app's type: Barlow throughout (the figures were already the app's)
+                foreach (var f in new[] { Mast, MastSmall, Head1, Head2, Head3, Body, BodyB, Small, Italic }) if (f != null) f.Dispose();
+                Mast = new Font(Draw.fHero.FontFamily, 26 * S, Draw.fHero.Style, GraphicsUnit.Pixel); MastSmall = new Font(Draw.fHero.FontFamily, 22 * S, Draw.fHero.Style, GraphicsUnit.Pixel);
+                Head1 = new Font(Draw.fBig.FontFamily, 26 * S, Draw.fBig.Style, GraphicsUnit.Pixel); Head2 = new Font(Draw.fBig.FontFamily, 19 * S, Draw.fBig.Style, GraphicsUnit.Pixel);
+                Head3 = new Font(Draw.fHead.FontFamily, 15 * S, Draw.fHead.Style, GraphicsUnit.Pixel);
+                Body = new Font(Draw.fBody.FontFamily, 14.5f * S, Draw.fBody.Style, GraphicsUnit.Pixel); BodyB = new Font(Draw.fHead.FontFamily, 14.5f * S, Draw.fHead.Style, GraphicsUnit.Pixel);
+                Small = new Font(Draw.fSmall.FontFamily, 13 * S, Draw.fSmall.Style, GraphicsUnit.Pixel); Italic = new Font(Draw.fBody.FontFamily, 15 * S, Draw.fBody.Style, GraphicsUnit.Pixel);
+            }
+            fontsAt = S; fontsLang = L.Code; fontsApp = App;
         }
 
         // ---------- the paper itself: a fill, and on cream a faint dot texture (one small tile, drawn once)
@@ -54,7 +67,7 @@ namespace AdeeboMeter
         public static void Ground(Graphics g, RectangleF r)
         {
             using (var b = new SolidBrush(Bg)) g.FillRectangle(b, r);
-            if (!Cream) return;
+            if (!Cream || App) return;
             if (dots == null || dotsAt != S)
             {
                 if (dots != null) dots.Dispose();
@@ -74,6 +87,7 @@ namespace AdeeboMeter
         public static float Masthead(Graphics g, float x, float y, float w, string title, string edition, string left1, string left2, bool compact)
         {
             Fonts();
+            if (App) return y;   // the app look: no masthead - the page starts with its tabs
             using (var head = new SolidBrush(Head)) using (var ink = new SolidBrush(Ink))
             {
                 var mf = compact ? MastSmall : Mast; var ms = g.MeasureString(title, mf); float h = ms.Height;
@@ -130,6 +144,23 @@ namespace AdeeboMeter
         public static float TabBar(Graphics g, float x, float y, float w, string[][] tabs, string current, out List<Tuple<string, RectangleF>> hits)
         {
             Fonts(); hits = new List<Tuple<string, RectangleF>>();
+            if (App)
+            {
+                // the app look: words with a line under the open one, left-aligned, one line under the row (as the page tabs)
+                float ax = x, th = 40 * S;
+                using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var bl = new SolidBrush(Theme.BlueText))
+                    foreach (var t in tabs)
+                    {
+                        string label = L.T(t[1]); var ls = g.MeasureString(label, BodyB); var r = new RectangleF(ax, y, ls.Width + 24 * S, th);
+                        if (ax > x && r.Right > x + w) { ax = x; y += th; r = new RectangleF(ax, y, ls.Width + 24 * S, th); }
+                        bool on = t[0] == current, hl = t.Length > 2 && t[2] == "hl";
+                        g.DrawString(label, BodyB, on ? ink : hl ? bl : sub, r.X + 12 * S, r.Y + (th - ls.Height) / 2);
+                        if (on) Theme.Fill(g, new RectangleF(r.X + 8 * S, r.Bottom - 3 * S, r.Width - 16 * S, 2.5f * S), 1.25f * S, Theme.Blue);
+                        hits.Add(Tuple.Create(t[0], r)); ax = r.Right + 4 * S;
+                    }
+                using (var pl = new Pen(Theme.Line, 1)) g.DrawLine(pl, x, y + th, x + w, y + th);
+                return y + th + 16 * S;
+            }
             using (var p3 = new Pen(Head, 3 * S)) g.DrawLine(p3, x, y, x + w, y);
             float pad = 14 * S, h = 40 * S, gap = 18 * S;
             var widths = tabs.Select(t => g.MeasureString(L.T(t[1]), Body).Width + 2 * pad + (t.Length > 2 && t[2] == "hl" ? 16 * S : 0)).ToList();
@@ -166,6 +197,7 @@ namespace AdeeboMeter
         public static void Desk(Graphics g, RectangleF r)
         {
             if (Kit.Off(g, r)) return;
+            if (App) { Kit.Box(g, r, 14 * S); return; }   // the app look: a card like every other page's
             Theme.Fill(g, r, 6 * S, DeskBg);
             using (var p = new Pen(Line, 1)) Theme.Stroke(g, r, 6 * S, Line, 1);
             using (var pr = new Pen(Red, 2 * S)) g.DrawLine(pr, r.X + 3 * S, r.Y + 1 * S, r.Right - 3 * S, r.Y + 1 * S);
@@ -188,7 +220,8 @@ namespace AdeeboMeter
         }
         public static float Ribbon(Graphics g, string text, float x, float y)
         {
-            Fonts(); var s = g.MeasureString(text, BodyB); float h = s.Height + 6 * S, w = s.Width + 34 * S;
+            Fonts(); if (App) return y;   // no label above a heading in the app look
+            var s = g.MeasureString(text, BodyB); float h = s.Height + 6 * S, w = s.Width + 34 * S;
             using (var b = new SolidBrush(Red)) g.FillPolygon(b, new[] { new PointF(x, y), new PointF(x + w, y), new PointF(x + w - 14 * S, y + h), new PointF(x, y + h) });
             using (var wb = new SolidBrush(Color.White)) g.DrawString(text, BodyB, wb, x + 10 * S, y + 3 * S);
             return y + h;
@@ -263,6 +296,24 @@ namespace AdeeboMeter
         {
             Fonts(); hits = new StripHits();
             float h = 96 * S; var r = new RectangleF(x, y, w, h);
+            if (App)
+            {
+                // the app look (mockup): a card - a level dot, the answer in big type, one line under it, the button on the right
+                h = 84 * S; r = new RectangleF(x, y, w, h); Kit.Box(g, r, 14 * S);
+                var bs0 = g.MeasureString(button, Draw.fBtn); var br0 = new RectangleF(r.Right - 20 * S - bs0.Width - 28 * S, r.Y + (h - 38 * S) / 2, bs0.Width + 28 * S, 38 * S);
+                Theme.Fill(g, br0, 10 * S, Theme.Card); Theme.Stroke(g, br0, 10 * S, Theme.Line, 1);
+                using (var bb = new SolidBrush(Theme.BlueText)) g.DrawString(button, Draw.fBtn, bb, br0.X + 14 * S, br0.Y + (38 * S - bs0.Height) / 2); hits.Button = br0;
+                var dl0 = L.T("Details") + " ›"; var dz0 = g.MeasureString(dl0, Draw.fSmall); hits.Details = new RectangleF(br0.X - dz0.Width - 18 * S, br0.Y, dz0.Width + 8 * S, br0.Height);
+                using (var lb = new SolidBrush(Theme.BlueText)) g.DrawString(dl0, Draw.fSmall, lb, hits.Details.X + 4 * S, br0.Y + (br0.Height - dz0.Height) / 2);
+                float tx0 = r.X + 40 * S, tw0 = hits.Details.X - tx0 - 12 * S;
+                Draw.LvDot(g, lv < 0 || lv > 2 ? 3 : lv, r.X + 20 * S, r.Y + 24 * S, 9 * S, 9 * S);
+                using (var ib = new SolidBrush(Theme.Ink)) using (var sb = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                {
+                    g.DrawString(verdict, Draw.fBig, ib, new RectangleF(tx0, r.Y + 14 * S, tw0, 30 * S), nf);
+                    g.DrawString(sub + (string.IsNullOrEmpty(tip) ? "" : "  ·  " + tip), Draw.fSmall, sb, new RectangleF(tx0, r.Y + 48 * S, tw0, 20 * S), nf);
+                }
+                return y + h + 14 * S;
+            }
             Theme.Fill(g, r, 8 * S, Navy);
             using (var gp = new Pen(lv == 0 ? Green : lv == 1 ? Amber : lv == 2 ? Down : Muted, 3 * S)) g.DrawLine(gp, r.X + 6 * S, r.Bottom - 2 * S, r.Right - 6 * S, r.Bottom - 2 * S);
             var ic = new RectangleF(r.X + 18 * S, r.Y + 19 * S, 58 * S, 58 * S);

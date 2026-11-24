@@ -167,6 +167,9 @@ namespace AdeeboMeter
                     g.DrawString(r.Title + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input : "") + "  ·  " + (r.Done ? L.T("checked at") + " " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : L.T("checking..."))), Draw.fSmall, sub, x, y);
                     y += 26 * S;
                     // the finding
+                    // 24 Nov (result mockup): on a wide window the answer and what was measured on the left, what to do in a column on the right
+                    bool side = r.Done && w > 1150 * S && r.Next.Count > 0; float sideW = side ? 360 * S : 0, top0 = y, fullW = w;
+                    if (side) w -= sideW + 16 * S;
                     string fin = r.Done ? r.Finding : Voice.P("Looking...", "Running...");
                     // the answer on a white card in big ink type, a dot in its level beside it (no tinted wash, no label above it)
                     float fh = Draw.Measure(fin, Draw.fBig, (int)(w - 64 * S)).Height;
@@ -219,16 +222,19 @@ namespace AdeeboMeter
                             y += 14 * S;
                             return y + 10 * S;
                         };
+                        float leftEnd = y, lx0s = x;
+                        if (side) { leftEnd = y; x = x + w + 16 * S; w = sideW; y = top0; }
                         y = list("WHAT TO TRY NEXT", r.Next);
-                        y = list("NOT ESTABLISHED", r.NotEst);
+                        if (!side) y = list("NOT ESTABLISHED", r.NotEst);
                         if (r.GoTab != "")
                         {
-                            var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
-                            Theme.Fill(g, br, 17 * S, Theme.Blue);
+                            var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, side ? w : ls.Width + 28 * S, 38 * S);
+                            Theme.Fill(g, br, 10 * S, Theme.Blue);
                             using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(r.GoLabel + "  >", Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                             string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else { tab = go; ShowTab(); } });
                             y += 50 * S;
                         }
+                        if (side) { float rightEnd = y; x = lx0s; w = fullW - sideW - 16 * S; y = leftEnd; y = list("NOT ESTABLISHED", r.NotEst); y = Math.Max(y, rightEnd); w = fullW; }
                         // for everyone: did it help, try again, or hand it to someone who can help
                         float lx = x; var r2 = r;
                         using (var lb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark))

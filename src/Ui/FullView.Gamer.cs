@@ -87,42 +87,51 @@ namespace AdeeboMeter
                 // this match: Start / Stop / Mark lag, then the summary
                 if (mon.Count > 0) { y = PaintSession(g, games, x, y, w); PageUsed("gamer"); }
 
-                // tiles: monitored first, then installed, then the rest; GTA VI-style "soon" last
+                // 24 Nov (Gamer mockup): your games as a list on one card - the game's letter in its colour, the name and where or
+                // what state, its ping now, how steady, a chevron - monitored first, then the ones found here, then the rest
                 var order = games.OrderBy(z => mon.Contains(z.Id) ? 0 : inst.Contains(z.Id) ? 1 : z.Soon ? 3 : 2).ToList();
-                int cols = Math.Max(2, Math.Min(6, (int)(w / (190 * S)))); float tw = (w - (cols - 1) * 10 * S) / cols, th = 64 * S;
+                int gcols = w > 900 * S ? 2 : 1; float gw = (w - 32 * S - (gcols - 1) * 24 * S) / gcols, grh = 52 * S;
+                int nrows = (order.Count + gcols - 1) / gcols; float cardTop = y;
+                Kit.Box(g, new RectangleF(x, y, w, 50 * S + nrows * grh + 10 * S), 14 * S);
+                g.DrawString(L.T("Your games"), Draw.fHead, ink, x + 18 * S, y + 16 * S);
+                { var yg = g.MeasureString(L.T("Your games"), Draw.fHead); g.DrawString(L.T("ping to each game's nearest server"), Draw.fSmall, sub, x + 18 * S + yg.Width + 8 * S, y + 18 * S); }
+                { string at = L.T("Add your own game"); var az = g.MeasureString(at, Draw.fSmall); var ar = new RectangleF(x + w - 18 * S - az.Width, y + 18 * S, az.Width, az.Height); g.DrawString(at, Draw.fSmall, blue, ar.X, ar.Y); Act(gamerCanvas, ar, delegate { EditGame(new Game { Name = "", Custom = true }, true); }); }
+                y += 50 * S;
+                using (var lp = new Pen(Theme.Line2))
                 for (int i = 0; i < order.Count; i++)
                 {
-                    var gm = order[i]; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
+                    var gm = order[i]; int col = i / nrows, row = i % nrows;
+                    var r = new RectangleF(x + 16 * S + col * (gw + 24 * S), y + row * grh, gw, grh);
                     bool on = mon.Contains(gm.Id), here = inst.Contains(gm.Id);
-                    // each game in its own colour: a tinted raised tile, the badge solid, a ring in that colour while monitored
+                    if (row > 0) g.DrawLine(lp, r.X, r.Y, r.Right, r.Y);
                     var gc = gm.Soon ? Theme.Grey : Hex(gm.Color);
-                    Kit.Box(g, r, 14 * S);
-                    Theme.Fill(g, r, 14 * S, Kit.Mix(Theme.Card, gc, gm.Soon ? 0.04f : on ? (Theme.Dark ? 0.26f : 0.14f) : (Theme.Dark ? 0.12f : 0.06f)));
-                    if (on) Theme.Stroke(g, r, 14 * S, gc, 2); else if (here) Theme.Stroke(g, r, 14 * S, Kit.Mix(Theme.Line, gc, 0.5f), 1);
-                    var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
-                    Theme.Fill(g, ic, 10 * S, gc);
-                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
-                    using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
-                    string state;
-                    if (gm.Soon) state = "On PS5 and Xbox - PC version not announced yet";
+                    var ic = new RectangleF(r.X + 2 * S, r.Y + (grh - 30 * S) / 2, 30 * S, 30 * S); Theme.Fill(g, ic, 8 * S, gc);
+                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(gm.Name.Length > 0 ? gm.Name.Substring(0, 1).ToUpperInvariant() : "?", Draw.fBodyB, wb, ic, c);
+                    string state, ping = ""; int lv = -1;
+                    if (gm.Soon) state = "PC version not announced yet";
                     else if (on)
                     {
                         var best = GamePing.Me.Best(gm); double now = double.NaN;
                         if (best != null) now = GameStat.Avg(GamePing.Me.Stat(gm.Id, best).Recent(10));
-                        state = (gm.Id == playing ? "Playing · " : "Monitoring · ") + (best != null && !double.IsNaN(now) ? Ms(now) + " ms " + best.Name : "starting...");
+                        state = (gm.Id == playing ? L.T("Playing") : L.T("Watching")) + (best != null ? " · " + best.Name : "");
+                        if (!double.IsNaN(now)) { ping = Ms(now) + " ms"; lv = now > 120 ? 2 : now > 70 ? 1 : 0; } else ping = L.T("starting...");
                     }
-                    else state = here ? "Detected on this PC · click to monitor" : "Supported · click to add";
-                    using (var sb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Muted)) g.DrawString(state, Draw.fSmall, sb, new RectangleF(r.X + 48 * S, r.Y + 34 * S, r.Width - 56 * S, 18 * S), nowrap);
+                    else state = here ? L.T("Found on this PC · click to watch") : L.T("Click to add");
+                    float rightW = 150 * S;
+                    using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(ic.Right + 12 * S, r.Y + 8 * S, r.Width - ic.Width - rightW - 20 * S, 20 * S), nowrap);
+                    g.DrawString(state, Draw.fSmall, sub, new RectangleF(ic.Right + 12 * S, r.Y + 28 * S, r.Width - ic.Width - rightW - 20 * S, 18 * S), nowrap);
+                    if (ping != "")
+                    {
+                        var pz = g.MeasureString(ping, Draw.fBodyB); float px = r.Right - 24 * S - pz.Width;
+                        g.DrawString(ping, Draw.fBodyB, ink, px, r.Y + (grh - pz.Height) / 2);
+                        if (lv >= 0) Draw.LvDot(g, lv, px - 14 * S, r.Y + grh / 2 - 4 * S, 8 * S, 8 * S);
+                    }
+                    if (!gm.Soon)
+                        using (var mp = new Pen(Theme.Muted, 1.6f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+                        { float ax = r.Right - 8 * S, ay = r.Y + grh / 2; g.DrawLines(mp, new[] { new PointF(ax - 4 * S, ay - 5 * S), new PointF(ax + 1 * S, ay), new PointF(ax - 4 * S, ay + 5 * S) }); }
                     var gm2 = gm; if (!gm.Soon) Act(gamerCanvas, r, delegate { ClickGame(gm2); });
                 }
-                {
-                    int i = order.Count; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
-                    Kit.Box(g, r);
-                    g.DrawString(L.T("+ Add your own game"), Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
-                    g.DrawString(L.T("any game, any server IP"), Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
-                    Act(gamerCanvas, r, delegate { EditGame(new Game { Name = "", Custom = true }, true); });
-                }
-                y += ((order.Count + 1 + cols - 1) / cols) * (th + 10 * S) + 14 * S;
+                y += nrows * grh + 24 * S;
 
                 // one card per monitored game, the one being played first
                 float liveY0 = y;

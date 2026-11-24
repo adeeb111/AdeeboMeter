@@ -56,35 +56,41 @@ namespace AdeeboMeter
             }
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("Streaming"), Draw.fTitle, ink, x, y);
-                // watching your team? its live score, from Sports (fetched at most every 5 min while a stream plays) - a stutter
-                // below gets its verdict here, the score lives next door
-                // AM-CG-272/273/281: it's your followed team's game (not necessarily what's playing), with how old the score is;
-                // a score older than 15 minutes isn't shown as live, and the badge never runs past the title's room
+                // 24 Nov (Streaming mockup): one card on top - what's playing (or that nothing is), one line on what this page
+                // does, and the 4K question as the card's button; your team's live score sits under it when there is one
+                WatchKit.Session ns0 = null; lock (Streams.k) if (Streams.Now != null) ns0 = Streams.Now.S;
+                string head = !Cfg.Streams ? L.T("Streaming is switched off.") : ns0 != null ? L.T("Playing now") + ": " + ns0.What : L.T("Nothing is playing right now.");
+                string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
+                string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBtn);
+                float cardH = 0;
+                {
+                    var tbr0 = new RectangleF(0, 0, tbs.Width + 28 * S, 38 * S); float tw = w - 40 * S - tbr0.Width - 16 * S;
+                    float hh = Draw.Measure(head, Draw.fBig, (int)tw).Height, lh = Draw.Measure(lead, Draw.fSmall, (int)tw).Height; cardH = Math.Max(78 * S, 16 * S + hh + 4 * S + lh + 16 * S);
+                    Kit.Box(g, new RectangleF(x, y, w, cardH), 14 * S);
+                    g.DrawString(head, Draw.fBig, ink, new RectangleF(x + 20 * S, y + 16 * S, tw, hh + 4));
+                    g.DrawString(lead, Draw.fSmall, sub, new RectangleF(x + 20 * S, y + 20 * S + hh, tw, lh + 4));
+                    var tbr = new RectangleF(x + w - 20 * S - tbr0.Width, y + (cardH - 38 * S) / 2, tbr0.Width, 38 * S);
+                    Theme.Fill(g, tbr, 10 * S, Theme.Card); Theme.Stroke(g, tbr, 10 * S, Theme.Line, 1);
+                    using (var bb = new SolidBrush(Theme.BlueText)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
+                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
+                }
+                y += cardH + 12 * S;
                 var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
                 if (lm != null && ageMin <= 15)
                 {
                     int more = Sports.LiveMineCount() - 1;
                     string t = L.T("Your team") + "  " + lm.Away + " " + lm.AwayScore + " · " + lm.Home + " " + lm.HomeScore + (lm.Detail != "" ? "  (" + lm.Detail + ")" : "") + "  · " + (ageMin < 1 ? L.T("just now") : ageMin + " " + L.T("min ago")) + (more > 0 ? "  +" + more : "") + "   " + L.T("Sports ›");
-                    float room = Math.Max(160 * S, w - g.MeasureString(L.T("Streaming"), Draw.fTitle).Width - 30 * S);
+                    float room = w;
                     var ts = g.MeasureString(t, Draw.fSmall); float bwid = Math.Min(ts.Width + 26 * S, room);
-                    var lr = new RectangleF(x + w - bwid, y + 4 * S, bwid, 26 * S); Theme.Fill(g, lr, 13 * S, Theme.LvSoft(2));
+                    var lr = new RectangleF(x, y, bwid, 26 * S); y += 36 * S; Theme.Fill(g, lr, 13 * S, Theme.LvSoft(2));
                     using (var lb = new SolidBrush(Theme.LvText(2))) using (var cf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(t, Draw.fSmall, lb, new RectangleF(lr.X + 13 * S, lr.Y + (26 * S - ts.Height) / 2, lr.Width - 20 * S, ts.Height + 2), cf);
                     Act(streamCanvas, lr, delegate { tab = "sports"; ShowTab(); SyncNav(); });
                 }
-                string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
-                // Test before I watch
-                string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBodyB);
-                var tbr = new RectangleF(x + w - tbs.Width - 32 * S, y - 2 * S, tbs.Width + 32 * S, 34 * S);
-                Theme.Fill(g, tbr, 17 * S, Kit.Accent("stream")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tb, Draw.fBodyB, wb, tbr.X + 16 * S, tbr.Y + (34 * S - tbs.Height) / 2);
-                Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
-                y += 32 * S;
-                float lh = Draw.Measure(lead, Draw.fBody, (int)(w - tbr.Width - 20 * S)).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w - tbr.Width - 20 * S, lh + 4)); y += lh + 14 * S;
                 if (streamNote != "") { using (var nb = new SolidBrush(Kit.Ink("stream"))) g.DrawString(streamNote, Draw.fSmall, nb, x, y); y += 22 * S; }
                 if (!Cfg.Streams)
                 {
                     y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "app", "stream", "Streaming is switched off", "Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.", null);
-                    var on = new RectangleF(x, y, 150 * S, 34 * S); Theme.Fill(g, on, 17 * S, Kit.Accent("stream"));
+                    var on = new RectangleF(x, y, 150 * S, 38 * S); Theme.Fill(g, on, 10 * S, Theme.Blue);
                     using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Turn it on"), Draw.fBodyB, wb, on, c);
                     Act(streamCanvas, on, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
                     Need(streamCanvas, on.Bottom + 20 * S); return;
@@ -100,7 +106,7 @@ namespace AdeeboMeter
                 // the records
                 if (all.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS")), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(L.T("What you watched"), Draw.fHead, ink, x, y); g.DrawString(L.T("kept 90 days on this PC - click one to see who caused the dips"), Draw.fSmall, sub, x + g.MeasureString(L.T("What you watched"), Draw.fHead).Width + 8 * S, y + 2 * S); y += 28 * S;
                     var rows = all.Take(12).ToList(); float rh = 38 * S;
                     var card = new RectangleF(x, y, w, rows.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))

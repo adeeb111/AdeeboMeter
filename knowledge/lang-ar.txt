@@ -5154,3 +5154,21 @@ done at	انتهى عند
 Where this PC talks to	مع من يتحدث هذا الحاسوب
 connections from	اتصالات من
 apps	تطبيقات
+Add your own game	أضف لعبتك
+App: the same cards and type as every other page.	التطبيق: البطاقات والخطوط نفسها كباقي الصفحات.
+Click to add	انقر للإضافة
+Found on this PC · click to watch	موجود على هذا الحاسوب · انقر للمراقبة
+Newspaper: a masthead, serif headlines and cream paper.	صحيفة: ترويسة وعناوين بخط مذيّل وورق كريمي.
+Nothing is playing right now.	لا شيء يُعرض الآن.
+Playing	قيد اللعب
+Playing now	يُعرض الآن
+Streaming is switched off.	البث متوقف.
+Traffic	حركة البيانات
+Watching	قيد المراقبة
+What you watched	ما شاهدته
+Your games	ألعابك
+kept 90 days on this PC - click one to see who caused the dips	يُحفظ 90 يومًا على هذا الحاسوب - انقر لترى سبب الانخفاضات
+ping to each game's nearest server	زمن الاستجابة لأقرب خادم لكل لعبة
+starting...	جارٍ البدء...
+Markets and Sports look	مظهر الأسواق والرياضة
+Newspaper	صحيفة

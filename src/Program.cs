@@ -342,7 +342,7 @@ namespace AdeeboMeter
         static readonly char[] CommaOnly = { ',' };
         public static void SetOff(string sec, bool off) { var l = HiddenSecs.Split(CommaOnly, StringSplitOptions.RemoveEmptyEntries).Where(z => z != sec && Hideable.Contains(z)).ToList(); if (off) l.Add(sec); HiddenSecs = string.Join(",", l); }
         // Trading: the live broker panel is opt-in (a check every 2 s in market hours); end-of-day currencies on by default
-        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = "", FxList = MarketData.DefaultFx, Paper = "cream"; public static volatile bool KickoffRemind, CasualFriday, CasualMoves, PhoneStandby = true; /* 1.1.6: the markets page's currencies; the Sports/Markets paper (cream, theme, white); reminders off until ticked */ public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
+        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = "", FxList = MarketData.DefaultFx, Paper = "app"; /* Paper: "app" (24 Nov, the app's own look) or the newspaper - "cream", "white", "theme" */ public static volatile bool KickoffRemind, CasualFriday, CasualMoves, PhoneStandby = true; /* 1.1.6: the markets page's currencies; the Sports/Markets paper (cream, theme, white); reminders off until ticked */ public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
         /* hunt-5: DevAlerts, LineAlertOpen and StreamLinks removed - nothing used them */
         public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
@@ -461,7 +461,7 @@ namespace AdeeboMeter
                 case "sportteams": SportTeams = v.Length > 300 ? v.Substring(0, 300) : v; break;
                 case "tradeeve": TradeEvening = v == "1"; break;
                 case "fxlist": FxList = v.Length > 200 ? v.Substring(0, 200) : v; break;   // R2-150: capped like its neighbours
-                case "paper": Paper = v == "white" || v == "theme" ? v : "cream"; break;
+                case "paper": Paper = v == "white" || v == "theme" || v == "cream" ? v : "app"; break;
                 case "kickremind": KickoffRemind = v == "1"; break;
                 case "phonestandby": PhoneStandby = v != "0"; break;
                 case "linealert": break;   // hunt-5: a 1.1.5 setting nothing reads any more - an old file still loads
