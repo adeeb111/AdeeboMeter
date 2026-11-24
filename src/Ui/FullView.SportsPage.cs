@@ -398,7 +398,7 @@ namespace AdeeboMeter
 
         // ---------- Stream Check: the link, the verdict and score, which quality will play, the test, the way along, tips
         // a game that won't be played as planned: postponed, cancelled, suspended (from the feed's own word)
-        static string OffWord(Sports.Game m) { string d = (m.Detail ?? "").ToLowerInvariant(); return L.T(d.Contains("cancel") ? "Cancelled" : d.Contains("suspend") ? "Suspended" : d.Contains("abandon") ? "Abandoned" : "Postponed"); }
+        internal static string OffWord(Sports.Game m) { string d = (m.Detail ?? "").ToLowerInvariant(); return L.T(d.Contains("cancel") ? "Cancelled" : d.Contains("suspend") ? "Suspended" : d.Contains("abandon") ? "Abandoned" : "Postponed"); }
         float SpStream(Graphics g, float x, float y, float w)
         {
             var ir = new RectangleF(x, y, w, 150 * S); Paper.Desk(g, ir);

@@ -28,7 +28,8 @@ namespace AdeeboMeter
         {
             if (double.IsNaN(mbps) || mbps < 0) return "-";
             bool bytes = Cfg.WUnits == "bytes"; double v = bytes ? mbps / 8 : mbps; string u;
-            if (v < 1) { v *= 1000; u = bytes ? "kB/s" : "kb/s"; } else if (v >= 1000) { v /= 1000; u = bytes ? "GB/s" : "Gb/s"; } else u = bytes ? "MB/s" : "Mb/s";
+            // hunters12 L3: the unit is chosen after rounding - 999.6 is "1.0 Gb/s", 0.9996 is "1.0 Mb/s", never "1000"
+            if (Math.Round(v) >= 1000) { v /= 1000; u = bytes ? "GB/s" : "Gb/s"; } else if (v < 1 && Math.Round(v * 1000) < 1000) { v *= 1000; u = bytes ? "kB/s" : "kb/s"; } else u = bytes ? "MB/s" : "Mb/s";
             string n = v == 0 ? "0" : v.ToString(v < 10 ? "0.0" : "0", CultureInfo.CurrentCulture);   // a quiet line reads "0 kb/s", not "0.0"
             return unit ? n + " " + u : n;
         }
@@ -71,20 +72,20 @@ namespace AdeeboMeter
         static Bitmap SpeedChip(Snap s) { return SpeedChip(s, 0); }
         static Bitmap SpeedChip(Snap s, double dwell)
         {
-            bool status = Style != "speed"; string txt = SpeedText(s);
+            bool status = Style != "speed", lv = (s.Level == 1 || s.Level == 2) && !s.Waiting, words = status || (s.Level == 2 && !s.Waiting); string txt = SpeedText(s);   /* hunters13 display ML-2: plain Speed says a real problem in words too */
             // width from a template, not the live digits - the strip doesn't wobble as numbers change
             string tpl = (Cfg.WDir == "both" ? "↓ 888  ↑ 888" : "↓ 888") + " " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s");
-            float tw = Math.Max(Measure(tpl, fBtn, 0).Width, Measure(txt, fBtn, 0).Width), sw = status ? Measure(s.Chip, fSmall, 0).Width + 22 * S : 0, gw = Cfg.WGraph ? 46 * S : 0;
+            float tw = Math.Max(Measure(tpl, fBtn, 0).Width, Measure(txt, fBtn, 0).Width), sw = words ? Measure(s.Chip, fSmall, 0).Width + 22 * S : 0, gw = Cfg.WGraph ? 46 * S : 0;
             float ww = WeatherChipW(); int W = (int)(10 * S + (Cfg.Buddy ? 26 * S : 12 * S) + sw + tw + gw + ww + 12 * S), H = (int)(28 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); Theme.Stroke(g, r, H / 2f, s.Level >= 1 && s.Level <= 2 && status ? Theme.Lv(s.Level) : Theme.Line, 1);
+                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); Theme.Stroke(g, r, H / 2f, lv ? Theme.Lv(s.Level) : Theme.Line, lv ? 1.5f : 1);
                 float x = 10 * S;
                 if (Cfg.Buddy) { Buddy(g, new RectangleF(x - 2 * S, (H - 20 * S) / 2, 20 * S, 20 * S), s, false); x += 26 * S; }
                 else { using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S; }
-                if (status)
+                if (words)
                 {
                     using (var b = new SolidBrush(s.Level >= 1 && s.Level <= 2 ? Theme.LvText(s.Level) : Theme.Sub)) g.DrawString(s.Chip, fSmall, b, x, (H - Measure(s.Chip, fSmall, 0).Height) / 2);
                     x += sw - 10 * S; using (var p = new Pen(Theme.Line)) g.DrawLine(p, x, 7 * S, x, H - 7 * S); x += 10 * S;
@@ -95,7 +96,7 @@ namespace AdeeboMeter
                 {
                     var gr = new RectangleF(x, 6 * S, 40 * S, H - 12 * S);
                     var v = ((Cfg.WDir == "up" ? s.UpHist : s.DownHist) ?? Array.Empty<double>()); v = v.Skip(Math.Max(0, v.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
-                    Theme.Spark(g, v, gr, Cfg.WDir == "up" ? Theme.Green : Theme.Blue, cap * 1.1, true);
+                    Theme.Spark(g, v, gr, Cfg.WDir == "up" ? Theme.Green : Theme.BlueLine, cap * 1.1, true);
                     x += gw;
                 }
                 if (ww > 0) WeatherChipDraw(g, x + 2 * S, H);
@@ -103,7 +104,7 @@ namespace AdeeboMeter
                 {
                     var tr = new RectangleF(12 * S, H - 4 * S, W - 24 * S, 2 * S);
                     using (var b = new SolidBrush(Theme.Track)) g.FillRectangle(b, tr);
-                    using (var b = new SolidBrush(Theme.Blue)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
+                    using (var b = new SolidBrush(Theme.BlueLine)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
                 }
             }
             return bmp;
@@ -111,7 +112,7 @@ namespace AdeeboMeter
 
         static Bitmap SpeedCard(Snap s, Dictionary<string, RectangleF> hits)
         {
-            hits.Clear(); bool apps = Style == "speedapps", status = Style != "speed";
+            hits.Clear(); bool apps = Style == "speedapps", status = Style != "speed" || (s.Level == 2 && !s.Waiting);   /* hunters13 display ML-2: a real problem's verdict on plain Speed too */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
             var top = (s.TopCpu ?? new List<AppStat>()).Where(a => a != null && a.Name != "AdeeboMeter").Take(3).ToList();
             float headH = status ? Measure(s.Headline, fSmall, (int)inner).Height + 6 * S : 0, wh = HintLineH(inner);   // hunters12 M-1: the blue line on the speed cards too
@@ -121,7 +122,7 @@ namespace AdeeboMeter
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, cr, 16 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 16 * S, status && s.Level >= 1 && s.Level <= 2 ? Theme.Lv(s.Level) : Theme.Line, 1);
+                Theme.Fill(g, cr, 16 * S, Color.FromArgb(250, Theme.Card)); Theme.Stroke(g, cr, 16 * S, s.Level >= 1 && s.Level <= 2 && !s.Waiting ? Theme.Lv(s.Level) : Theme.Line, s.Level >= 1 && s.Level <= 2 && !s.Waiting ? 1.5f : 1);
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
@@ -138,7 +139,7 @@ namespace AdeeboMeter
                 {
                     bool down = i == 0; if ((Cfg.WDir == "down" && !down) || (Cfg.WDir == "up" && down)) continue;
                     float bx = Cfg.WDir == "both" ? pad + i * half : pad; double v = down ? s.Down : s.Up;
-                    using (var lb = new SolidBrush(down ? Theme.Blue : Theme.Green)) g.DrawString((down ? "↓ " : "↑ ") + L.T(down ? "Download" : "Upload"), fTiny, lb, bx, y);
+                    using (var lb = new SolidBrush(down ? Theme.BlueText : Theme.LvText(0))) g.DrawString((down ? "↓ " : "↑ ") + L.T(down ? "Download" : "Upload"), fTiny, lb, bx, y);
                     string n = Rate(v, false); g.DrawString(n, fCardNum, ink, bx - 2 * S, y + 14 * S);
                     float nw2 = g.MeasureString(n, fCardNum).Width; g.DrawString(Unit(v), fSmall, muted, bx + nw2 - 4 * S, y + 32 * S);
                 }
@@ -147,13 +148,14 @@ namespace AdeeboMeter
                 {
                     var sr = new RectangleF(pad, y, inner, 38 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                     var dv = s.DownHist ?? Array.Empty<double>(); var uv = s.UpHist ?? Array.Empty<double>(); double cap = 1; foreach (var q in (Cfg.WDir == "up" ? uv : Cfg.WDir == "down" ? dv : dv.Concat(uv))) if (!double.IsNaN(q) && q > cap) cap = q;   // AM-CG-194: scaled to what's drawn
-                    if (Cfg.WDir != "up") Theme.Spark(g, dv, sr, Theme.Blue, cap * 1.1, true);
+                    if (Cfg.WDir != "up") Theme.Spark(g, dv, sr, Theme.BlueLine, cap * 1.1, true);
                     if (Cfg.WDir != "down") Theme.Spark(g, uv, sr, Theme.Green, cap * 1.1, false);
                     y += 46 * S;
                 }
                 if (Cfg.WTotal)
                 {
-                    string t = L.T("Today") + "  ↓ " + MB(s.TodayDown) + "   ↑ " + MB(s.TodayUp);
+                    var du = Usage.TodayDU();   /* hunters12 data ML7: the same "today" as the Data use card - since midnight, every session */
+                    string t = L.T("Today") + "  ↓ " + (du != null && du.Length > 1 ? Usage.Mb(du[0]) : MB(s.TodayDown)) + "   ↑ " + (du != null && du.Length > 1 ? Usage.Mb(du[1]) : MB(s.TodayUp));
                     g.DrawString(t, fSmall, muted, pad, y); y += 22 * S;
                 }
                 if (wtx != null) { WeatherCardDraw(g, pad, y, inner, wtx); y += 22 * S; }

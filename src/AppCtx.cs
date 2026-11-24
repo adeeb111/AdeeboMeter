@@ -170,8 +170,26 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("crash note: " + e.Message); }
 
             widget.Show(); detailWin.Show(); widget.Vanish(); detailWin.Vanish();
-            widget.MouseDown += (s2, e2) => { if (!moveOn) return; if (e2.Button != MouseButtons.Left) { Lock(); return; } dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; };
-            widget.MouseWheel += (s2, e2) => { if (moveOn && dragFrom == null) Lock(); };
+            // hunters13 widget input: another button, the wheel or a sideways scroll ends move mode and is passed on to the app under
+            // the widget (ML-4, L-7) - except mid-drag, where another button cancels the drag, as in Windows (L-1)
+            widget.MouseDown += (s2, e2) =>
+            {
+                if (!moveOn) return;
+                if (e2.Button != MouseButtons.Left)
+                {
+                    bool mid = dragFrom != null; if (mid) CancelDrag(); Lock(); widget.Capture = false;
+                    if (!mid) { var b = e2.Button; if (b == MouseButtons.Right) Native.ReplayMouse(0x0008, 0); else if (b == MouseButtons.Middle) Native.ReplayMouse(0x0020, 0); else if (b == MouseButtons.XButton1) Native.ReplayMouse(0x0080, 1); else if (b == MouseButtons.XButton2) Native.ReplayMouse(0x0080, 2); }
+                    return;
+                }
+                Native.GetAsyncKeyState(0x01);   /* this press's "pressed since" is read here - a new one later means a new press (L-3) */
+                dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = false;
+            };
+            widget.MouseWheel += (s2, e2) => { if (moveOn && dragFrom == null) { Lock(); Native.ReplayMouse(0x0800, e2.Delta); } };
+            widget.HWheel += d => { if (moveOn && dragFrom == null) { Lock(); Native.ReplayMouse(0x1000, d); } };
+            // a finger on the unlocked widget drags it (the tray's Move widget unlocks it for touch)
+            widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; return true; };
+            widget.TouchDrag = p => { if (dragFrom == null || !touchDrag) return; int dx = p.X - dragFrom.Value.X, dy = p.Y - dragFrom.Value.Y; moveTouched = Clock.Mono; if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); } if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy); };
+            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock(); } else dragFrom = null; };
             widget.MouseMove += (s2, e2) => WidgetDrag(); ResetWidget = ResetPos;
             widget.MouseUp += (s2, e2) => WidgetDrop();
             widget.MouseCaptureChanged += (s2, e2) => { if (dragFrom != null && Control.MouseButtons != MouseButtons.Left) WidgetDrop(); };
@@ -458,7 +476,7 @@ namespace AdeeboMeter
 
         DateTime lastTop, lastCard; string lastHead = ""; volatile bool locked;   // locked: the lock screen is up
         void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
-        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; } }   /* L-8: a rest before sleep doesn't count after it */
+        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; Lock(); ctrlSpoiled = false; moveSteps = 0; arrivedByMouse = false; if (wasHovered) { Corner.Looked(); sinceLine = ""; wasHovered = false; } } }   /* L-8: a rest before sleep doesn't count after it; hunters13 lifecycle L-6: nor an unlock or a catch-up line */
         void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e)
         {
             if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleDisconnect) locked = true;   // the lock screen: the widget rests
@@ -538,7 +556,7 @@ namespace AdeeboMeter
         }
 
         // ---------- move mode (hunters12 widget-input fixes, 24 Nov)
-        Point restAt; bool arrivedByMouse, dragGame; DateTime ctrlSince = DateTime.MinValue, trayUnlockAt = DateTime.MinValue, onItAt = DateTime.MinValue;
+        Point restAt; bool arrivedByMouse, dragGame, touchDrag, ctrlSpoiled; int moveSteps; DateTime ctrlSince = DateTime.MinValue, trayUnlockAt = DateTime.MinValue, onItAt = DateTime.MinValue;
         void Unlock()
         {
             if (moveOn) { moveTouched = Clock.Mono; return; }
@@ -548,7 +566,8 @@ namespace AdeeboMeter
         void Lock()
         {
             if (dragging) SaveDrop();   // L-4: the full view opening, a presentation or the lock screen mid-drag keeps the drag
-            dragFrom = null; dragging = false; moveByTray = false; hoverSince = DateTime.MinValue; ctrlSince = DateTime.MinValue;
+            dragFrom = null; dragging = false; touchDrag = false; moveByTray = false; hoverSince = DateTime.MinValue; ctrlSince = DateTime.MinValue;
+            if ((Native.GetAsyncKeyState(0x11) & 0x8000) != 0) ctrlSpoiled = true;   /* hunters13 ML-1: Ctrl+wheel zoom can't pulse it open and shut */
             if (!moveOn) return;
             moveOn = false; widget.SetClickThrough(true); drawnKey = "";
         }
@@ -568,35 +587,43 @@ namespace AdeeboMeter
             bool onIt = widget.Placed.Width > 1 && widget.Placed.Contains(cur);
             var nearR = widget.Placed; nearR.Inflate((int)(120 * Draw.Base), (int)(120 * Draw.Base));
             bool near = widget.Placed.Width > 1 && nearR.Contains(cur);
-            if (!near) arrivedByMouse = false;
-            else if (cur != lastCur && nearR.Contains(lastCur) && Math.Abs(cur.X - lastCur.X) + Math.Abs(cur.Y - lastCur.Y) < 200 * Draw.Base) arrivedByMouse = true;   // seen moving in, not jumping in
+            // hunters13 input M-1: "came by mouse" is judged by the input itself - Windows hides the pointer while a finger or pen is
+            // used - and by at least two small steps seen on the way in, not one (a second tap a few pixels from the first is one step)
+            if (!near || Native.CursorFromTouch()) { arrivedByMouse = false; moveSteps = 0; }
+            else if (cur != lastCur && nearR.Contains(lastCur) && Math.Abs(cur.X - lastCur.X) + Math.Abs(cur.Y - lastCur.Y) < 200 * Draw.Base) { if (++moveSteps >= 2) arrivedByMouse = true; }
             bool moved = cur != lastCur; lastCur = cur;
             if (onIt) onItAt = Clock.Mono;
             if (moveOn)
             {
                 if (moved && onIt) moveTouched = Clock.Mono;
                 if (onIt) moveByTray = false;
+                if (dragFrom == null && (Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { Lock(); moveSpent = onIt; return; }   /* ML-3: Esc leaves move mode */
                 bool buttons = (Control.MouseButtons & (MouseButtons.Right | MouseButtons.Middle)) != 0;
                 bool tray = moveByTray && (Clock.Mono - trayUnlockAt).TotalSeconds < 15;
                 bool gone = !tray && (Clock.Mono - onItAt).TotalMilliseconds > 350, idle = (Clock.Mono - moveTouched).TotalSeconds > 8 && !tray;
                 if (dragFrom == null && (gone || idle || buttons)) { Lock(); moveSpent = onIt; }   // locked while resting on it: not again until you leave
                 else { hovered = true; return; }
             }
-            if (!onIt) { hoverSince = DateTime.MinValue; moveSpent = false; ctrlSince = DateTime.MinValue; }
+            if (!onIt) { hoverSince = DateTime.MinValue; moveSpent = false; }
             var ghostR = widget.Placed; ghostR.Inflate((int)(24 * Draw.Base), (int)(24 * Draw.Base));
             bool g = Cfg.WHideNear && !covered && widget.Placed.Width > 1 && ghostR.Contains(cur);   // ML-2: a covered corner still opens by resting on it
-            bool ctrl = (Native.GetAsyncKeyState(0x11) & 0x8000) != 0 && Control.MouseButtons == MouseButtons.None && (Native.GetAsyncKeyState(0x10) & 0x8000) == 0 && (Native.GetAsyncKeyState(0x12) & 0x8000) == 0;
-            if (onIt && ctrl && !GameFinder.PlayingInFront())
+            // hunters13 input ML-1, ML-5, L-8: Ctrl unlocks only when pressed while on the widget and then held alone for 0.7 s -
+            // any other key or button pressed meanwhile (Ctrl+C, Ctrl+click, even between two ticks) spoils it until Ctrl is let go,
+            // and never while a game you added runs or anything fills the screen (Ctrl is crouch)
+            if ((Native.GetAsyncKeyState(0x11) & 0x8000) == 0) { ctrlSpoiled = false; ctrlSince = DateTime.MinValue; }
+            else if (!ctrlSpoiled)
             {
-                if (ctrlSince == DateTime.MinValue) ctrlSince = DateTime.UtcNow;
+                if (ctrlSince == DateTime.MinValue) { if (!onIt || CtrlIsGame()) ctrlSpoiled = true; else { Native.OtherInput(); ctrlSince = DateTime.UtcNow; } }
+                else if (!onIt || Native.OtherInput() || Control.MouseButtons != MouseButtons.None || CtrlIsGame()) { ctrlSpoiled = true; ctrlSince = DateTime.MinValue; }
                 else if ((DateTime.UtcNow - ctrlSince).TotalMilliseconds >= 700) { Unlock(); hovered = true; return; }
             }
-            else ctrlSince = DateTime.MinValue;
             if (g != ghost) { ghost = g; drawnKey = ""; }
             if (ghost) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; return; }
-            if (onIt && hovered && !moveSpent && arrivedByMouse)
+            // resting: no button held (a paused drag in the app underneath isn't a rest on the widget - ML-2), and "still" is Windows'
+            // own double-click box, 4 px each way, so a slight tremor or a drifting trackpoint still counts (L-5)
+            if (onIt && hovered && !moveSpent && arrivedByMouse && Control.MouseButtons == MouseButtons.None)
             {
-                if (hoverSince == DateTime.MinValue || Math.Abs(cur.X - restAt.X) + Math.Abs(cur.Y - restAt.Y) > 3 * Draw.Base) { hoverSince = DateTime.UtcNow; restAt = cur; }   // moving: the wait starts again
+                if (hoverSince == DateTime.MinValue || !Still(cur, restAt, Draw.Base)) { hoverSince = DateTime.UtcNow; restAt = cur; }   // moving: the wait starts again
                 else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 1500) { Unlock(); hovered = true; }
             }
             else hoverSince = DateTime.MinValue;
@@ -604,13 +631,20 @@ namespace AdeeboMeter
         void WidgetDrag()
         {
             if (dragFrom == null || !moveOn) return;
-            if (Control.MouseButtons != MouseButtons.Left) { WidgetDrop(); return; }
-            if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); return; }   // ML-6: Esc puts it back
+            if (touchDrag) return;
+            if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(); return; }
+            if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Lock(); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
             var c = Cursor.Position; int dx = c.X - dragFrom.Value.X, dy = c.Y - dragFrom.Value.Y; moveTouched = Clock.Mono;
             if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); }
             if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy);
         }
-        void CancelDrag() { if (dragging) widget.MoveTo(dragOrigin.X, dragOrigin.Y); dragFrom = null; dragging = false; drawnKey = ""; }
+        void CancelDrag() { if (dragging) widget.MoveTo(dragOrigin.X, dragOrigin.Y); dragFrom = null; dragging = false; touchDrag = false; drawnKey = ""; }
+        // the left button was pressed again since the drag began (released and pressed between two ticks - hunters13 L-3)
+        static bool RePressed() { return (Native.GetAsyncKeyState(0x01) & 0x0001) != 0; }
+        // Ctrl is a game key here: a game you added is running, or anything fills the screen in front
+        static bool CtrlIsGame() { return GamePing.Me.Playing != null || Native.FrontFullScreen() || GameFinder.PlayingInFront(); }
+        // still enough to count as resting: inside Windows' double-click box around where the rest began
+        public static bool Still(Point cur, Point at, float scale) { return Math.Abs(cur.X - at.X) <= 4 * scale && Math.Abs(cur.Y - at.Y) <= 4 * scale; }
         void WidgetDrop()
         {
             if (dragFrom == null) return;
@@ -657,16 +691,19 @@ namespace AdeeboMeter
                 // 24 Nov: the ladder ticks even while the widget is hidden (a game closing while the full view is open still gets its recap)
                 { var cs = M.Latest; if (cs != null) Corner.Tick(cs); }
                 if ((Clock.Mono - presentAt).TotalMilliseconds >= 450) { presentAt = Clock.Mono; presenting = Native.Presenting() && !(Cfg.GameWidget && GameFinder.PlayingInFront()); }   /* 24 Nov: a game you added, in front (borderless): the widget stays over it. hunters12 ML-7: twice a second by the clock, not every 8th tick */
-                if (!widgetOn || viewUp || presenting || locked) { Lock(); hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
+                // hunters12 ML-8: the feeds keep your corner's numbers fresh while the full view is open too
+                try { Corner.Feeds(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("feeds: " + e.Message); }
+                if (!widgetOn || viewUp || presenting || locked) { if (wasHovered) { Corner.Looked(); sinceLine = ""; wasHovered = false; } /* hunters12 data ML2: a hover cut short by the view still counts as a look */ Lock(); hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
                 // 24 Nov: the ladder (a game, a match, the weather, the day plan) and the feeds for what may show
-                { Corner.Feeds(); if (Corner.Effective != lastEff) { if (lastEff != null) fadeAt = Clock.Mono; lastEff = Corner.Effective; drawnKey = ""; } }
+                { if (Corner.Effective != lastEff) { if (lastEff != null) fadeAt = Clock.Mono; lastEff = Corner.Effective; drawnKey = ""; } }
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
                 var near = Zone(); near.Inflate((int)(120 * Draw.Base), (int)(120 * Draw.Base));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (moveOn || Fading) want = 50;
                 if (ui.Interval != want) ui.Interval = want;
-                if (dragging && Control.MouseButtons != MouseButtons.Left) WidgetDrop();   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here
-                if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) CancelDrag(); return; }   // the window follows the mouse by itself; drawn again on the drop
+                if (dragFrom != null && !touchDrag && (Control.MouseButtons != MouseButtons.Left || (dragging && RePressed()))) { if (dragging) WidgetDrop(); else dragFrom = null; }   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here; a new press is a new click (L-3)
+                if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Lock(); } return; }   // the window follows the mouse by itself; drawn again on the drop
+                if (dragFrom != null) return;   // pressed, not moved yet: not drawn again, so the press point and the window agree (hunters13 L-2)
                 if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 800 : 2000) && !hovered)   // AM-CG-214; bug-hunt ML-146: the window walk every 0.8 s near the corner, not 0.4   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
                     lastCover = Clock.Mono;
@@ -703,10 +740,13 @@ namespace AdeeboMeter
                 // hunters12: one blue line, in this order - unlocked: how to move; what changed since you looked (it stays for the whole
                 // hover, the move hint no longer replaces it - ML-4); why this card is showing (a takeover, the day plan, a hold - ML-3);
                 // then, resting still, that it's about to unlock. Move hints off hides only the move lines (ML-5).
-                string why = hovered ? Corner.WhyLine() : "";
-                string wh = moveOn ? (!Cfg.WHint ? "" : Cfg.WHideNear ? L.T("Drag to move · click opens AdeeboMeter · fades again when you leave") : L.T("Drag to move · click opens AdeeboMeter"))
-                    : !hovered ? "" : sinceLine != "" ? sinceLine : why != "" && !(hoverSince != DateTime.MinValue && (DateTime.UtcNow - hoverSince).TotalMilliseconds >= 400) ? why
-                    : Cfg.WHint && hoverSince != DateTime.MinValue && (DateTime.UtcNow - hoverSince).TotalMilliseconds >= 400 ? L.T("Keep resting to move it, or hold Ctrl") : why;
+                // hunters13 display ML-3 / ML-4: each line keeps its place for as long as it's true - what changed, why this card, and
+                // (resting or unlocked) how to move it - one under the other, so none of them pushes another off the card
+                var lines = new List<string>();
+                if (hovered || moveOn) { if (sinceLine != "") lines.Add(sinceLine); var why = Corner.WhyLine(); if (why != "") lines.Add(why); }
+                if (Cfg.WHint && moveOn) lines.Add(Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter"));
+                else if (Cfg.WHint && hovered && hoverSince != DateTime.MinValue && (DateTime.UtcNow - hoverSince).TotalMilliseconds >= 400) lines.Add(L.T("Keep resting to move it, or hold Ctrl"));
+                string wh = string.Join("\n", lines);
                 if (wh != Draw.WidgetHint) { Draw.WidgetHint = wh; drawnKey = ""; }
                 M.HoverOpen = hovered;
                 string key = "";
@@ -859,7 +899,8 @@ namespace AdeeboMeter
         }
         // the normal position's corner, whatever a game is doing (Settings shows and edits the same one - M-6)
         public static int NormalCornerIndex { get { var v = Cfg.WPos; if (v == "") return 0; var p = v.Split('|'); return Math.Max(0, Array.IndexOf(Corners, p[0])); } }
-        public static string PickGame(int i) { return i <= 0 ? "" : Corners[i - 1] + "|0|0"; }   // 0 = same as usual, then the four corners
+        // 0 = same as usual, then the four corners; picking the corner it's already in keeps the distance (hunters13 lifecycle L-2)
+        public static string PickGame(int i) { if (i <= 0) return ""; var p = Cfg.WPosGame.Split('|'); if (p.Length == 3 && p[0] == Corners[i - 1]) return Clean(Cfg.WPosGame, true); return Corners[i - 1] + "|0|0"; }
         public static int GameIndex { get { var v = Cfg.WPosGame; if (v == "") return 0; var p = v.Split('|'); int i = Array.IndexOf(Corners, p[0]); return i < 0 ? 0 : i + 1; } }
     }
 

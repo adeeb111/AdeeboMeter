@@ -68,6 +68,9 @@ namespace AdeeboMeter
         // round 6 H6-ML3: the accent used as text - itself where it reads at 4.5:1 on a card, otherwise moved toward the text colour
         // step by step until it does (Mint's green and the dark theme's blue were 3.5-3.7:1)
         public static double Ratio(Color a, Color b) { Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); }; Func<Color, double> L = x => 0.2126 * lin(x.R) + 0.7152 * lin(x.G) + 0.0722 * lin(x.B); double la = L(a), lb = L(b); return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05); }
+        // hunters13 display ML-5: the download colour as a line or a bar - itself where it shows at 3:1 on the card, the graph's panel
+        // and the empty track, otherwise moved toward the text colour until it does (raw blue was 2.3-2.8:1 in the dark theme)
+        public static Color BlueLine { get { var c = Blue; for (int i = 1; i <= 10 && (Ratio(c, Card) < 3 || Ratio(c, Soft) < 3 || Ratio(c, Track) < 3); i++) c = Kit.Mix(Blue, Ink, i * 0.1f); return c; } }
         public static Color BlueText { get { var c = Blue; for (int i = 1; i <= 10 && Ratio(c, Card) < 4.5; i++) c = Kit.Mix(Blue, Ink, i * 0.1f); return c; } }
         public static Color OnColor(Color bg)
         {
@@ -685,9 +688,12 @@ namespace AdeeboMeter
         public static string ChipWords(Snap s)
         {
             string st = Style;
-            if (Corner.IsTile(st) && !(s.Level == 2 && !s.Waiting)) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }   // hunters12 display M-1: a network problem folds to the verdict, not a price
-            if (!SpeedStyle && Layout(s.Call) == "gamer") { var w = GamerChip(); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
-            return s.Chip;
+            // hunters12 display M-1, hunters13 ML-1: a slow or broken network folds a tile preset to the verdict ("Busy", "Problem"),
+            // not a price; the gamer card's ping gives way to it on a real problem (the game's own ping still shows when it's only slow)
+            bool lv = (s.Level == 1 || s.Level == 2) && !s.Waiting;
+            if (Corner.IsTile(st) && !lv) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            if (!SpeedStyle && Layout(s.Call) == "gamer" && !(s.Level == 2 && !s.Waiting)) { var w = GamerChip(); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            return Trunc(s.Chip, 48);   /* display L-5: never wider than the strip was meant to be */
         }
         public static Bitmap Chip(Snap s, double dwell)
         {
@@ -698,7 +704,7 @@ namespace AdeeboMeter
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); bool bad = s.Level == 2 && !s.Waiting; Theme.Stroke(g, r, H / 2f, bad ? Theme.Red : Theme.Line, bad ? 1.5f : 1);   /* hunters12 display M-1: a problem shows on the folded strip, not only in its 8 px dot */
+                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); bool bad = (s.Level == 1 || s.Level == 2) && !s.Waiting; Theme.Stroke(g, r, H / 2f, bad ? Theme.Lv(s.Level) : Theme.Line, bad ? 1.5f : 1);   /* hunters12 display M-1: a problem shows on the folded strip, not only in its 8 px dot */
                 float x = 9 * S;
                 if (Cfg.Buddy) { Buddy(g, new RectangleF(x - 2 * S, (H - 20 * S) / 2, 20 * S, 20 * S), s, s.Level == 0 && !s.Call); x += 36 * S; }   // folded and all quiet: asleep
                 else
@@ -712,7 +718,7 @@ namespace AdeeboMeter
                 {
                     var tr = new RectangleF(10 * S, H - 4 * S, W - 20 * S, 2 * S);
                     using (var b = new SolidBrush(Theme.Track)) g.FillRectangle(b, tr);
-                    using (var b = new SolidBrush(Theme.Blue)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
+                    using (var b = new SolidBrush(Theme.BlueLine)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
                 }
             }
             return bmp;
@@ -745,7 +751,7 @@ namespace AdeeboMeter
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;
             Color gt = grade == "Competitive" ? Theme.LvText(0) : grade == "Casual" ? Theme.LvText(1) : grade == "Laggy" ? Theme.LvText(2) : Theme.Muted;   // H6-ML3: text in the grade's readable shade (4.5:1), the raw colour only for the wash and the graph
-            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.FirstOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);
+            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.LastOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);   /* hunters12 data L4: the latest spike */
             string head = last != null ? L.T("Spike") + " " + Math.Round(last.Ms) + " ms: " + L.T(last.Blame) + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? L.T(" is steady.") : grade == "Casual" ? L.T(" is playable.") : grade == "Laggy" ? L.T(" is laggy.") : "...");
             string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
@@ -938,11 +944,11 @@ namespace AdeeboMeter
                 var gr = new RectangleF(pad, y, inner, 34 * S);   // the traffic graph under the readings (the speeds are in the Traffic row)
                 Theme.Fill(g, gr, 9 * S, Theme.Soft);
                 double cap = 1; foreach (var v in s.DownHist) if (!double.IsNaN(v) && v > cap) cap = v; foreach (var v in s.UpHist) if (!double.IsNaN(v) && v > cap) cap = v;
-                Theme.Spark(g, s.DownHist, gr, Theme.Blue, cap * 1.15, true);
+                Theme.Spark(g, s.DownHist, gr, Theme.BlueLine, cap * 1.15, true);
                 Theme.Spark(g, s.UpHist, gr, Theme.Orange, cap * 1.15, false);
                 // data used today, in the graph's top corners (no extra height); this month against a cap at the bottom right
                 var du = Usage.TodayDU();
-                using (var tb = new SolidBrush(Theme.Muted))
+                using (var tb = new SolidBrush(Theme.Sub))   /* hunters13 display L-4: on the graph's panel, muted grey was 4.3:1 in dark */
                 {
                     g.DrawString(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
                     string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);

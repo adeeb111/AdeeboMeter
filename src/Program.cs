@@ -509,7 +509,7 @@ namespace AdeeboMeter
                 case "wrain": WRainSoon = v == "1"; break;
                 case "wsince": WSince = v != "0"; break;
                 case "wheld": WHeld = AdeeboMeter.Corner.Known(v) ? v : ""; break;
-                case "wback": WBack = v.Length < 200 ? v : ""; break;
+                case "wback": WBack = string.Join(AdeeboMeter.Corner.BackSep, AdeeboMeter.Corner.SplitBacks(v)); break;
                 case "wscreen": WidgetScreen = v.StartsWith(@"\\.\DISPLAY", StringComparison.OrdinalIgnoreCase) && v.Length < 40 ? v : ""; break;
                 case "portal": Portal = v != "0"; break;
                 case "seentip": SeenTip = v == "1"; break;

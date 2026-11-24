@@ -5611,3 +5611,21 @@ Cold start latency - something's frozen up the line.	تأخر البداية ا�
 A clean network to start the year.	شبكة نظيفة لبداية العام.
 New year, same Wi-Fi.	عام جديد، نفس Wi-Fi.
 New year, same provider.	عام جديد، نفس المزوّد.
+ - without your weather place, broker, teams, market symbols, pinned game, widget position, the name you are called and your words of comfort (they stay on this PC).	 - بدون مكان الطقس والوسيط والفرق ورموز الأسواق والمباراة المثبتة وموضع الأداة والاسم الذي تُنادى به وكلمات المواساة (تبقى على هذا الحاسوب).
+A game is open, so the widget is at its gaming spot now - this corner applies when the game closes.	لعبة مفتوحة، لذا الأداة في مكان اللعب الآن - هذه الزاوية تُطبَّق عند إغلاق اللعبة.
+A scores feed couldn't be read - the Sports page says which	تعذرت قراءة مصدر نتائج - صفحة الرياضة تذكر أيها
+Couldn't reach the quote service - it tries again soon	تعذر الوصول إلى خدمة الأسعار - ستحاول مجددًا قريبًا
+Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter	اسحب للنقل · Esc أو مغادرتها يقفلها · النقر يفتح AdeeboMeter
+Drag to move · Esc or leaving it locks it · fades again when you leave	اسحب للنقل · Esc أو مغادرتها يقفلها · تتلاشى عند ابتعادك
+Held on another card now - tray › Stop holding goes back to this style.	مثبّتة على بطاقة أخرى الآن - شريط المهام › إيقاف التثبيت يعيد هذا النمط.
+Held · the match that ended at	مثبّتة · المباراة التي انتهت عند
+Its screen isn't connected, so it's in the bottom-right corner of the main screen until that screen is back.	شاشتها غير موصولة، لذا هي في الزاوية السفلية اليمنى من الشاشة الرئيسية حتى تعود تلك الشاشة.
+Looking for today's games...	جارٍ البحث عن مباريات اليوم...
+No price for this symbol - check it in Settings › Widget	لا سعر لهذا الرمز - تحقق منه في الإعدادات › الأداة
+Start time not given yet	وقت البداية لم يُعلن بعد
+The quote service didn't accept your key - Settings › Markets	خدمة الأسعار لم تقبل مفتاحك - الإعدادات › الأسواق
+Today's free calls are used up - prices are from earlier	نفدت المكالمات المجانية لليوم - الأسعار من وقت سابق
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one. Picking the corner it's in keeps the distance.	مكان الأداة أثناء فتح لعبة أضفتها - بعيدًا عن الخريطة المصغرة مثلًا. سحبها أثناء اللعب ينقل هذا المكان. اختيار الزاوية التي هي فيها يحفظ المسافة.
+forecast from	توقعات من
+tray › Stop holding lets it go	شريط المهام › إيقاف التثبيت يحررها
+New year, same old internet hiccups.	عام جديد، نفس عثرات الإنترنت القديمة.

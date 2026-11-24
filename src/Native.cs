@@ -32,6 +32,32 @@ namespace AdeeboMeter
         [DllImport("gdi32.dll")] public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pdv, out uint pcFonts);
         [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey);   // the freeze watchdog: is a mouse button held right now
         [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+        // ---- the corner widget's move mode (hunters13 widget input, 24 Nov)
+        [StructLayout(LayoutKind.Sequential)] struct CURSORINFO { public int cbSize, flags; public IntPtr hCursor; public int x, y; }
+        [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO ci);
+        // Windows hides the pointer while a finger or a pen is used (CURSOR_SUPPRESSED): the cursor moved by touch, not by a mouse
+        public static bool CursorFromTouch() { try { var ci = new CURSORINFO { cbSize = Marshal.SizeOf(typeof(CURSORINFO)) }; return GetCursorInfo(ref ci) && (ci.flags & 2) != 0; } catch (EntryPointNotFoundException) { return false; } }
+        // any key or mouse button other than Ctrl down now, or pressed since the last look (a quick Ctrl+C between two ticks)
+        public static bool OtherInput()
+        {
+            bool any = false;
+            for (int vk = 0x01; vk <= 0xFE; vk++) { if (vk == 0x11 || vk == 0xA2 || vk == 0xA3) continue; if ((GetAsyncKeyState(vk) & 0x8001) != 0) any = true; }   // every key read, so each one's "pressed since" is cleared
+            return any;
+        }
+        [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+        // the window in front fills its whole screen (a borderless game, a video) - not the desktop
+        public static bool FrontFullScreen()
+        {
+            var h = GetForegroundWindow(); if (h == IntPtr.Zero) return false;
+            var cls = new char[32]; int n = GetClassName(h, cls, cls.Length); string c = n > 0 ? new string(cls, 0, n) : ""; if (c == "Progman" || c == "WorkerW" || c == "Shell_TrayWnd") return false;
+            RECT r; if (!GetWindowRect(h, out r)) return false;
+            var b = System.Windows.Forms.Screen.FromHandle(h).Bounds; return r.Left <= b.Left && r.Top <= b.Top && r.Right >= b.Right && r.Bottom >= b.Bottom;
+        }
+        [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx, dy, mouseData, dwFlags, time; public IntPtr dwExtraInfo; }
+        [StructLayout(LayoutKind.Sequential)] struct INPUT { public int type; public MOUSEINPUT mi; }
+        [DllImport("user32.dll", SetLastError = true)] static extern uint SendInput(uint n, INPUT[] inputs, int size);
+        // a press or a wheel turn the unlocked widget caught, sent on to the window under it once it lets clicks through again
+        public static void ReplayMouse(int flags, int data) { try { var i = new[] { new INPUT { type = 0, mi = new MOUSEINPUT { dwFlags = flags, mouseData = data } } }; SendInput(1, i, Marshal.SizeOf(typeof(INPUT))); } catch (EntryPointNotFoundException) { } }
         [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SystemParametersInfo(uint action, uint param, out bool value, uint winIni);
         [DllImport("kernel32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDefaultDllDirectories(uint flags);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string name);

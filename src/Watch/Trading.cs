@@ -229,6 +229,7 @@ namespace AdeeboMeter
             if (usd == null && en == null) return null;
             // AM-CG-126: the Bank's figure is a daily average, not a close - and an older one carries its date
             if (usd != null && (today - usd.Day).TotalDays > 4) usd = null;   // over a long weekend's age: too old for a "today" line
+            if (en != null && (today - en.Day).TotalDays > 13) en = null;   // hunters13 data L6: the weekly index is late by a week at most - older isn't "this week"
             if (usd == null && en == null) return null;
             var parts = new List<string> { usd != null ? (usd.Day == today ? L.T("Daily avg") : L.T("Daily avg") + " " + usd.Day.ToString("d MMM", CultureInfo.CurrentCulture)) : L.T("Week of") + " " + en.Day.ToString("d MMM", CultureInfo.CurrentCulture) };
             if (usd != null) parts.Add("US$ " + usd.Cad.ToString("0.0000", CultureInfo.CurrentCulture) + Arrow(double.IsNaN(usd.Prev) || usd.Prev <= 0 ? double.NaN : (usd.Cad - usd.Prev) / usd.Prev * 100, "0.00"));

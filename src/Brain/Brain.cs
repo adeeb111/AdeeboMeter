@@ -39,7 +39,7 @@ namespace AdeeboMeter
 
         // ---------- one-minute accumulation
         static int minute = -1, n, worst; static double cpu, mem, down, up, gw, net, wifi, rx, gwMax, netMax, mbDown, mbUp; static int gwN, netN, wifiN, rxN, lossN, lossBad, cpuN, memN, downN, upN;   // each average over its own real samples
-        static DateTime lastGwAt, lastNetAt, minuteAt;   // a new sample = a new probe (by its time), never "the value changed"; minuteAt: the minute the samples belong to
+        static DateTime lastGwAt, lastNetAt, minuteAt; static DateTime lastSecond = DateTime.MinValue;   // a new sample = a new probe (by its time), never "the value changed"; minuteAt: the minute the samples belong to
         public static void Second(Monitor m)
         {
             try
@@ -52,8 +52,11 @@ namespace AdeeboMeter
                 var s = m.Latest; worst = Math.Max(worst, s.Level);
                 double cv = m.Cpu.Last, mv = m.Mem.Last; if (!double.IsNaN(cv)) { cpu += cv; cpuN++; } if (!double.IsNaN(mv)) { mem += mv; memN++; }
                 double d = m.Down.Last, u = m.Up.Last;
-                if (!double.IsNaN(d)) { down += d; downN++; mbDown += d / 8; }
-                if (!double.IsNaN(u)) { up += u; upN++; mbUp += u / 8; }
+                // hunters12 data ML8: the data counted is the rate times the time it covered - a late tick (a busy PC) counts its 1.6 s,
+                // not 1 s; a gap over 5 s (sleep, a stall) counts 5 at most
+                var nowM = Clock.Mono; double dt = lastSecond == DateTime.MinValue ? 1 : Math.Max(0.2, Math.Min(5, (nowM - lastSecond).TotalSeconds)); lastSecond = nowM;
+                if (!double.IsNaN(d)) { down += d; downN++; mbDown += d / 8 * dt; }
+                if (!double.IsNaN(u)) { up += u; upN++; mbUp += u / 8 * dt; }
                 double g = m.GwPing.Last, t = m.NetPing.Last;
                 DateTime gAt = m.GwAt, tAt = m.NetAt;
                 if (gAt != lastGwAt) { if (!double.IsNaN(g)) { gw += g; gwN++; gwMax = Math.Max(gwMax, g); Bloat.Sample(g, d, u); } lastGwAt = gAt; }
@@ -212,7 +215,7 @@ namespace AdeeboMeter
                     .OrderByDescending(x => Store.D(x[1]) + Store.D(x[2])).ToList();
             }
         }
-        public static string Mb(double mb) { return mb >= 1000 ? (mb / 1000).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }
+        public static string Mb(double mb) { return Math.Round(mb) >= 1000 ? (mb / 1000).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }   // hunters12 L3: 999.6 MB is "1.0 GB", not "1000 MB"
     }
 
     // ================================================================== what's normal for each network ("slower than usual")

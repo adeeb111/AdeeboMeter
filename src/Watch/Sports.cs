@@ -124,12 +124,20 @@ namespace AdeeboMeter
         public static int CricketCallsToday { get { return HitsToday(); } }
         // the corner widget wants scores: a followed (or pinned) game is live or starts within 20 minutes - fixtures and scores only,
         // no headlines; cricket at the key's pace. Nothing at all otherwise (ReminderTick keeps its 30-minute pace).
-        static DateTime lastLive = DateTime.MinValue;
+        static DateTime lastLive = DateTime.MinValue, lastWarm = DateTime.MinValue;
         public static void WidgetTick(Func<Game, bool> wanted)
         {
             if (!Cfg.Sports || Policy.NoOnline) return;
-            bool hot; lock (k) hot = Games.Any(g => wanted(g) && (g.State == "live" || (g.State == "soon" && (g.StartUtc - DateTime.UtcNow).TotalMinutes < 20)));
-            if (!hot) return;
+            // a game with no start time in the feed is never "about to start" (hunters13 data L1)
+            bool hot; lock (k) hot = Games.Any(g => wanted(g) && (g.State == "live" || (g.State == "soon" && g.StartUtc != DateTime.MinValue && (g.StartUtc - DateTime.UtcNow).TotalMinutes < 20)));
+            // hunters12 data M1: a cold feed warms itself - a widget that wants scores looks at today's fixtures when nothing is known
+            // yet (after a start, or the Sports page never opened) and again every 30 minutes, fixtures only (no headlines, no cricket key)
+            if (!hot)
+            {
+                DateTime f; lock (k) f = FetchedAt;
+                if ((DateTime.UtcNow - f).TotalMinutes >= 30 && (DateTime.UtcNow - lastWarm).TotalMinutes >= 30) { lastWarm = DateTime.UtcNow; Fetch(null, true, false); }
+                return;
+            }
             if ((DateTime.UtcNow - lastLive).TotalMinutes < EveryMin) return;
             lastLive = DateTime.UtcNow; Fetch(null, true, true);
         }
@@ -237,6 +245,9 @@ namespace AdeeboMeter
                     bool fresh = File.Exists(f) && File.GetLastWriteTime(f).Date == DateTime.Now.Date;
                     List<Game> got = null;
                     if (fresh) { try { got = EspnFrom(File.ReadAllText(f), lg[1]); } catch (InvalidDataException) { got = null; } catch (FormatException) { got = null; } catch (ArgumentException) { got = null; } }   // R2-044: a bad cached file is fetched again, not kept for a day
+                    // hunters12 data H1: the day's copy is good for fixtures, not for a score - while a game in it is live (or its kick-off
+                    // has passed), it's read again at the scores' pace, so a 15:00 match never shows its 09:00 score under "Live"
+                    if (got != null && (DateTime.Now - File.GetLastWriteTime(f)).TotalMinutes >= EveryMin && got.Any(z => z.State == "live" || (z.State == "soon" && z.StartUtc != DateTime.MinValue && z.StartUtc <= DateTime.UtcNow))) got = null;
                     if (got == null)
                     {
                         json = Get("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg[0] + "/scoreboard", null, null);
@@ -281,7 +292,8 @@ namespace AdeeboMeter
                 var m = D(o); if (m == null) continue; var h = D(V(m, "homeTeam")); var a = D(V(m, "awayTeam")); var ft = D(V(D(V(m, "score")), "fullTime")); string st = Sv(m, "status");
                 var x = new Game { Sport = "football", League = Sv(D(V(m, "competition")), "name"), Home = Or(Sv(h, "shortName"), Sv(h, "name")), Away = Or(Sv(a, "shortName"), Sv(a, "name")), HomeAlso = Sv(h, "name") + " " + Sv(h, "tla"), AwayAlso = Sv(a, "name") + " " + Sv(a, "tla"), HomeScore = Sv(ft, "home"), AwayScore = Sv(ft, "away"), StartUtc = Utc(Sv(m, "utcDate")) };
                 x.State = st == "IN_PLAY" || st == "PAUSED" || st == "LIVE" ? "live" : st == "FINISHED" || st == "AWARDED" ? "done" : st == "POSTPONED" || st == "CANCELLED" || st == "SUSPENDED" ? "off" : "soon";
-                x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : "";
+                string min = Sv(m, "minute");   /* hunters12 data L5: the minute, when the key's plan sends it */
+                x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : x.State == "live" && min != "" ? min + "'" : "";
                 if (x.Home != "" && x.Away != "") r.Add(x);   // bug-hunt L-83: a match needs both sides
             }
             return r;

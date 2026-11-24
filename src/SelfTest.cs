@@ -846,7 +846,14 @@ namespace AdeeboMeter
             {
                 var bad = new List<string>();
                 if (Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft") != "AAPL,SHOP.TO,^GSPC,FX:USD") bad.Add("symbols: " + Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft"));
-                if (Corner.CleanMine("cpu,nope,cpu,ping") != "cpu,ping") bad.Add("readings: " + Corner.CleanMine("cpu,nope,cpu,ping"));
+                if (Corner.CleanMine("cpu,nope,cpu,ping") != "cpu,,,ping") bad.Add("readings: " + Corner.CleanMine("cpu,nope,cpu,ping"));   // hunters13 lifecycle ML-4: rows keep their places
+                { string km = Cfg.WMine; try { Cfg.WMine = "none"; if (Corner.SetMine(2, "cpu") != ",,cpu") bad.Add("row 3 landed elsewhere: " + Corner.SetMine(2, "cpu")); Cfg.WMine = "down,cpu"; if (Corner.SetMine(0, "cpu") != "cpu") bad.Add("a reading set twice: " + Corner.SetMine(0, "cpu")); Cfg.WMine = "down"; if (Corner.SetMine(0, null) != "none") bad.Add("the last row emptied"); } finally { Cfg.WMine = km; } }
+                if (string.Join("|", Corner.SplitBacks("match|a~~weather|1~~match|a")) != "match|a|weather|1") bad.Add("sent-away takeovers: " + string.Join("|", Corner.SplitBacks("match|a~~weather|1~~match|a")));   // hunters13 lifecycle ML-2
+                { string kg = Cfg.WPosGame; try { Cfg.WPosGame = "tl|120|40"; if (WidgetPos.PickGame(4) != "tl|120|40") bad.Add("re-picking the gaming corner lost the distance"); if (WidgetPos.PickGame(1) != "br|0|0") bad.Add("another gaming corner kept the distance"); } finally { Cfg.WPosGame = kg; } }   // hunters13 lifecycle L-2
+                if (!AppCtx.Still(new Point(100, 100), new Point(104, 97), 1f) || AppCtx.Still(new Point(100, 100), new Point(106, 100), 1f) || !AppCtx.Still(new Point(100, 100), new Point(106, 105), 1.5f)) bad.Add("resting box");   // hunters13 input L-5
+                if (MarketData.Venue("^FTSE") != "London" || MarketData.Venue("SHOP.TO") != "Toronto" || MarketData.Venue("7203.T") != "Tokyo" || MarketData.Venue("AAPL") != "New York") bad.Add("venues");   // hunters12 data M3
+                if (Weather.Temp(-0.4).StartsWith("-", StringComparison.Ordinal) || Weather.Temp(-0.4).StartsWith("−", StringComparison.Ordinal)) bad.Add("minus zero: " + Weather.Temp(-0.4));   // hunters12 data L6
+                if (Usage.Mb(999.6).Contains("1000")) bad.Add("1000 MB");   // hunters12 data L3
                 if (Corner.CleanMine("") != "down,ping,weather,market1") bad.Add("empty readings have no default");
                 if (Corner.CleanMine("none") != "none") bad.Add("an emptied My widget came back with the defaults");   // hunters12 ML-2
                 { string kp = Cfg.WPos; try { Cfg.WPos = "tr|40|30"; if (WidgetPos.Pick(2) != "tr|40|30") bad.Add("picking its own corner lost the distance"); if (WidgetPos.Pick(3) != "tl|0|0") bad.Add("another corner kept the distance"); if (WidgetPos.NormalCornerIndex != 2) bad.Add("normal corner index"); } finally { Cfg.WPos = kp; } }   // hunters12 L-1 / M-6

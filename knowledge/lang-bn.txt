@@ -5611,3 +5611,21 @@ Cold start latency - something's frozen up the line.	ঠান্ডায় �
 A clean network to start the year.	বছর শুরুর জন্য একটা পরিষ্কার নেটওয়ার্ক।
 New year, same Wi-Fi.	নতুন বছর, সেই একই Wi-Fi।
 New year, same provider.	নতুন বছর, সেই একই সেবাদাতা।
+ - without your weather place, broker, teams, market symbols, pinned game, widget position, the name you are called and your words of comfort (they stay on this PC).	 - আপনার আবহাওয়ার জায়গা, ব্রোকার, দল, মার্কেট সিম্বল, পিন করা খেলা, উইজেটের অবস্থান, আপনাকে যে নামে ডাকা হয় আর আপনার সান্ত্বনার কথা ছাড়া (এগুলো এই পিসিতেই থাকে)।
+A game is open, so the widget is at its gaming spot now - this corner applies when the game closes.	একটা গেম খোলা, তাই উইজেট এখন গেমের জায়গায় - গেম বন্ধ হলে এই কোণ কাজ করবে।
+A scores feed couldn't be read - the Sports page says which	একটা স্কোর ফিড পড়া যায়নি - স্পোর্টস পেজে কোনটা তা লেখা আছে
+Couldn't reach the quote service - it tries again soon	কোট সার্ভিসে পৌঁছানো যায়নি - শিগগির আবার চেষ্টা করবে
+Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter	সরাতে টেনে আনুন · Esc বা সরে গেলে লক হয় · ক্লিক করলে AdeeboMeter খোলে
+Drag to move · Esc or leaving it locks it · fades again when you leave	সরাতে টেনে আনুন · Esc বা সরে গেলে লক হয় · সরে গেলে আবার মিলিয়ে যায়
+Held on another card now - tray › Stop holding goes back to this style.	এখন অন্য কার্ডে ধরে রাখা - ট্রে › ধরে রাখা বন্ধ দিলে এই স্টাইলে ফেরে।
+Held · the match that ended at	ধরে রাখা · যে ম্যাচ শেষ হয়েছে
+Its screen isn't connected, so it's in the bottom-right corner of the main screen until that screen is back.	এর স্ক্রিন যুক্ত নেই, তাই সেই স্ক্রিন ফেরা পর্যন্ত এটা মূল স্ক্রিনের নিচের ডান কোণে।
+Looking for today's games...	আজকের খেলা খোঁজা হচ্ছে...
+No price for this symbol - check it in Settings › Widget	এই সিম্বলের দাম নেই - সেটিংস › উইজেট-এ দেখে নিন
+Start time not given yet	শুরুর সময় এখনও জানানো হয়নি
+The quote service didn't accept your key - Settings › Markets	কোট সার্ভিস আপনার কি নেয়নি - সেটিংস › মার্কেট
+Today's free calls are used up - prices are from earlier	আজকের ফ্রি কল শেষ - দাম আগের
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one. Picking the corner it's in keeps the distance.	আপনার যোগ করা গেম খোলা থাকলে উইজেট কোথায় থাকবে - যেমন মিনিম্যাপ থেকে দূরে। খেলার সময় টেনে সরালে এটাই বদলায়। যে কোণে আছে সেটা বাছলে দূরত্ব থাকে।
+forecast from	পূর্বাভাস
+tray › Stop holding lets it go	ট্রে › ধরে রাখা বন্ধ দিলে ছেড়ে দেয়
+New year, same old internet hiccups.	নতুন বছর, ইন্টারনেটের সেই পুরোনো হেঁচকি।

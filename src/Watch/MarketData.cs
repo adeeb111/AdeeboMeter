@@ -315,6 +315,32 @@ namespace AdeeboMeter
         public static int CallsUsedToday { get { return CallsToday(); } }
         public static readonly Dictionary<string, List<double>> Hist = new Dictionary<string, List<double>>();   // the widget's little graph: the last 40 prices seen
         public static void FetchWidget(List<string> syms, Action done) { if (syms.Count > 0) FetchList(2, syms.Take(6).ToList(), done); }
+        // hunters13 data M1: symbols the service answered without a price today (a typo, delisted, a wrong suffix): after two, the
+        // widget stops asking for it until tomorrow (UTC) and says so - the good symbols keep their calls
+        static readonly Dictionary<string, int> noQuote = new Dictionary<string, int>(); static string noQuoteDay = "";
+        public static bool Dead(string sym) { lock (k) { NoQuoteDay(); int n; return noQuote.TryGetValue(sym, out n) && n >= 2; } }
+        static void NoQuoteDay() { string d = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); if (d != noQuoteDay) { noQuote.Clear(); noQuoteDay = d; } }
+        // hunters12 data M3: is this symbol's own market open right now - an index by its exchange, a typed symbol by its suffix
+        // (.TO Toronto, .L London, .T Tokyo...; none: New York), futures Sunday evening to Friday evening (Eastern) but their daily hour
+        public static bool OpenNow(string sym, DateTime utc)
+        {
+            if (string.IsNullOrEmpty(sym) || sym.StartsWith("FX:", StringComparison.Ordinal)) return false;
+            if (FuturesList.Any(f => f[0] == sym))
+            {
+                var et = Trading.EasternNow(); var t = et.TimeOfDay; var d = et.DayOfWeek;
+                if (d == DayOfWeek.Saturday) return false; if (d == DayOfWeek.Sunday) return t >= new TimeSpan(18, 0, 0); if (d == DayOfWeek.Friday) return t < new TimeSpan(17, 0, 0);
+                return t < new TimeSpan(17, 0, 0) || t >= new TimeSpan(18, 0, 0);
+            }
+            string v = Venue(sym); var x = Exchanges.FirstOrDefault(e => e.Name == v); return x != null && State(x, utc) != "closed";
+        }
+        public static string Venue(string sym)
+        {
+            var ix = IndexList.FirstOrDefault(i => i[0] == sym); if (ix != null) return ix[4];
+            string u = (sym ?? "").ToUpperInvariant();
+            foreach (var p in new[] { new[] { ".TO", "Toronto" }, new[] { ".V", "Toronto" }, new[] { ".NE", "Toronto" }, new[] { ".CN", "Toronto" }, new[] { ".L", "London" }, new[] { ".T", "Tokyo" }, new[] { ".SS", "Shanghai" }, new[] { ".SZ", "Shanghai" }, new[] { ".HK", "Hong Kong" }, new[] { ".NS", "Mumbai" }, new[] { ".BO", "Mumbai" }, new[] { ".DE", "Frankfurt" }, new[] { ".F", "Frankfurt" }, new[] { ".PA", "Paris" } })
+                if (u.EndsWith(p[0], StringComparison.Ordinal)) return p[1];
+            return "New York";
+        }
         public static bool ValidSym(string s) { return !string.IsNullOrEmpty(s) && s.Length <= 20 && Regex.IsMatch(s, @"^[\^A-Za-z0-9.=\-]{1,20}$"); }
         static void FetchList(int qi, List<string> list, Action done)
         {
@@ -335,7 +361,9 @@ namespace AdeeboMeter
                         string body;
                         try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; Call(); }
                         catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null) Call(); if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
-                        var q = ParseFmp(body, sym); if (q == null) continue;
+                        var q = ParseFmp(body, sym);
+                        if (q == null) { if (qi == 2) lock (k) { NoQuoteDay(); int n; noQuote.TryGetValue(sym, out n); noQuote[sym] = n + 1; } continue; }
+                        if (qi == 2) lock (k) noQuote.Remove(sym);
                         lock (k) { Quotes[sym] = q; Ver++; List<double> h; if (!Hist.TryGetValue(sym, out h)) Hist[sym] = h = new List<double>(); if (h.Count == 0 || h[h.Count - 1] != q.Price) h.Add(q.Price); if (h.Count > 40) h.RemoveAt(0); } got++;
                     }
                     if (got > 0 && !capped) lock (k) QuoteNote = "";   // R2-065: the cap note stays when the cap is why the rest are old

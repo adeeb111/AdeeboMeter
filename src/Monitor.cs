@@ -960,7 +960,7 @@ namespace AdeeboMeter
         {
             var s = new Snap { Level = level, Headline = headline, Flow = flow, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
             s.Waiting = waiting && level == 0; s.Offline = offlineNow;
-            s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? AdeeboMeter.L.T("Busy") : s.Waiting ? AdeeboMeter.L.T("Checking") : Voice.P("All quiet", "OK");
+            s.Chip = level == 2 ? Voice.ByLevel(2, "Needs you", "Problem") /* hunters13 display L-3: a real problem is named plainly */ : level == 1 ? AdeeboMeter.L.T("Busy") : s.Waiting ? AdeeboMeter.L.T("Checking") : Voice.P("All quiet", "OK");
             if (level == 0) { string eve = Trading.EveningLine() ?? Views.ChipLine(); if (eve != null) s.Chip = eve; }
             var rm = Remote.Now; if (rm != null && rm.Active) s.Chip = AdeeboMeter.L.T("Phone linked") + " · " + s.Chip;   /* hunters12 display ML-2: words, not an emoji the font can't draw */   // the widget shows a phone is connected, the whole time   // opt-in: the day's close, 17:30-19:00 - a problem always wins
             s.Cpu = Cpu.Last; s.Mem = Mem.Last; s.Disk = Disk.Last; s.Down = Down.Last; s.Up = Up.Last;

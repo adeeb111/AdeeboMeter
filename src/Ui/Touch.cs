@@ -14,6 +14,7 @@ namespace AdeeboMeter
     // a control that is dragged, not scrolled, where the finger lands (the Time machine's slider, the stream overlay): it says so
     // on touch-down and then follows the finger (screen coordinates)
     interface ITouchDrag { bool Grab(Point screen); void DragTo(Point screen); }
+    interface ITouchEnd { void TouchEnd(Point screen); }   // a drag target that wants to know the finger lifted
 
     sealed class TouchPan : IMessageFilter
     {
@@ -58,7 +59,7 @@ namespace AdeeboMeter
                     if (target == null) return false;
                     return Used(m);
                 }
-                if (grabbed != null) { grabbed.DragTo(p); last = p; return Used(m); }
+                if (grabbed != null) { grabbed.DragTo(p); last = p; if ((gi.dwFlags & 4) != 0) { var te = grabbed as ITouchEnd; grabbed = null; if (te != null) te.TouchEnd(p); } return Used(m); }   /* GF_END */
                 int dx = last.X - p.X, dy = last.Y - p.Y; last = p;
                 if (dx == 0 && dy == 0) return Used(m);
                 for (var c = target; c != null; c = c.Parent)

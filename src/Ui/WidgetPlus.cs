@@ -23,7 +23,11 @@ namespace AdeeboMeter
         public static readonly string[] TileStyles = { "markets", "sports", "data", "weather", "mine" };
         public static bool IsTile(string st) { return Array.IndexOf(TileStyles, st) >= 0 || st == "recap"; }
         static volatile string style = "", why = "", held = "";
-        static string backKey = "", curKey = ""; static DateTime backSeen = DateTime.MinValue; static bool loaded;
+        // hunters13 lifecycle ML-2: each takeover you sent away is remembered on its own (up to four), so sending a second one away
+        // doesn't bring the first back
+        static readonly List<string> backs = new List<string>(); static readonly Dictionary<string, DateTime> backSeen = new Dictionary<string, DateTime>();
+        static string curKey = ""; static bool loaded; static DateTime loadedAt = DateTime.MinValue;
+        public const string BackSep = "~~";
         // what the corner shows now: a takeover's preset, else yours
         public static string Effective { get { var h = held; if (h != "") return h; var s = style; return s == "" ? Cfg.WidgetStyle : s; } }
         public static string Why { get { return held != "" ? "held" : why; } }
@@ -36,14 +40,27 @@ namespace AdeeboMeter
         // game (M-7). A hold and a "Back to my widget" are kept in the settings, so a restart keeps them.
         public static void Hold(bool call) { var e = Effective; held = e == "auto" ? Draw.Layout(call) : e; Save(); }
         public static void Release() { held = ""; Save(); }
-        public static void Back() { if (curKey != "") { backKey = curKey; backSeen = DateTime.UtcNow; } held = ""; Save(); }
-        static void Save() { Cfg.WHeld = held == "recap" ? "" : held; Cfg.WBack = backKey; Cfg.Save(); }
+        public static void Back() { if (curKey != "" && !backs.Contains(curKey)) { backs.Add(curKey); if (backs.Count > 4) backs.RemoveAt(0); backSeen[curKey] = DateTime.UtcNow; } held = ""; Save(); }
+        // a held recap isn't kept over a restart on purpose: the session behind it is gone, so it would be an empty card
+        static void Save() { Cfg.WHeld = held == "recap" ? "" : held; Cfg.WBack = string.Join(BackSep, backs); Cfg.Save(); }
+        public static List<string> SplitBacks(string v) { return (v ?? "").Split(new[] { BackSep }, StringSplitOptions.RemoveEmptyEntries).Where(z => z.Length < 200).Distinct().Take(4).ToList(); }
+        // can a sent-away takeover's absence be trusted to mean it's over? Not on battery (those rungs rest), not before the
+        // scores were read since the start (a cold feed), not without a forecast (hunters13 lifecycle M-1, ML-1)
+        static bool CanJudge(string key)
+        {
+            string kind = key.Split('|')[0];
+            if (kind == "game" || kind == "recap") return true;
+            if (onBattery) return false;
+            if (kind == "match") { DateTime f; lock (Sports.k) f = Sports.FetchedAt; return Cfg.Sports && f > loadedAt; }
+            if (kind == "weather") return Weather.Active && Weather.Fetched != DateTime.MinValue;
+            return true;
+        }
         // one short line for the card: why this isn't your own preset right now (hunters12 ML-3 / ML-5)
         public static string WhyLine()
         {
             switch (Why)
             {
-                case "held": return L.T("Held - tray › Stop holding lets it go");
+                case "held": return held == "recap" && RecapOf != null ? L.T("Held · the match that ended at") + " " + Draw.When(RecapOf.End.ToUniversalTime()) + " - " + L.T("tray › Stop holding lets it go") : L.T("Held - tray › Stop holding lets it go");   /* hunters12 M-7: a held recap says how old it is */
                 case "plan": return L.T("Day plan") + " · " + L.T(SlotOf(DateTime.Now) == "m" ? "morning" : SlotOf(DateTime.Now) == "w" ? "working hours" : SlotOf(DateTime.Now) == "e" ? "evening" : "night") + " - " + L.T("tray › Back to my widget");
                 case "match": return L.T("Your team is playing - back to yours 5 min after the end");
                 case "weather": return L.T("Rain or snow within the hour - back to yours once it starts");
@@ -60,7 +77,7 @@ namespace AdeeboMeter
         public static void Tick(Snap s)
         {
             var now = DateTime.UtcNow;
-            if (!loaded) { loaded = true; held = Known(Cfg.WHeld) && Cfg.WHeld != "auto" ? Cfg.WHeld : ""; backKey = Cfg.WBack ?? ""; backSeen = now; }
+            if (!loaded) { loaded = true; loadedAt = now; held = Known(Cfg.WHeld) && Cfg.WHeld != "auto" ? Cfg.WHeld : ""; backs.Clear(); backs.AddRange(SplitBacks(Cfg.WBack)); foreach (var b in backs) backSeen[b] = now; }
             if ((now - battAt).TotalSeconds > 30) { battAt = now; try { onBattery = SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline; } catch (Exception e) { if (e is OutOfMemoryException) throw; onBattery = false; } }
             // a game: from any preset; when it closes, its recap for a minute
             string playing = Cfg.GameWidget ? GamePing.Me.Playing : null; bool game = playing != null && Draw.HasGamerTarget();
@@ -77,10 +94,19 @@ namespace AdeeboMeter
             if (!onBattery && cMatch != "") rungs.Add(new[] { "sports", "match", "match|" + cMatch });
             if (!onBattery && cWeather != "") rungs.Add(new[] { "weather", "weather", "weather|" + cWeather });
             if (!onBattery) { var p = PlanNow(DateTime.Now); if (p != "") rungs.Add(new[] { p, "plan", "plan|" + SlotOf(DateTime.Now) + "|" + p }); }
-            if (backKey != "") { if (rungs.Any(r => r[2] == backKey)) backSeen = now; else if ((now - backSeen).TotalSeconds > 20) { backKey = ""; Save(); } }   // gone for 20 s (a feed gap is shorter): forgotten
-            var win = rungs.FirstOrDefault(r => r[2] != backKey && r[0] != Cfg.WidgetStyle);   // L-1: a takeover that is your own preset changes nothing
+            // a sent-away takeover is forgotten once it has really been gone for a minute - not while its feed is cold or its rung
+            // rests on battery (hunters13 lifecycle M-1, ML-1)
+            bool forgot = false;
+            foreach (var b in backs.ToList())
+            {
+                DateTime seen; if (!backSeen.TryGetValue(b, out seen)) backSeen[b] = seen = now;
+                if (rungs.Any(r => r[2] == b) || !CanJudge(b)) backSeen[b] = now;
+                else if ((now - seen).TotalSeconds > 60) { backs.Remove(b); backSeen.Remove(b); forgot = true; }
+            }
+            if (forgot) Save();
+            var win = rungs.FirstOrDefault(r => !backs.Contains(r[2]) && r[0] != Cfg.WidgetStyle);   // L-1: a takeover that is your own preset changes nothing
             string st = win == null ? "" : win[0], w = win == null ? "" : win[1], key = win == null ? "" : win[2];
-            if (win == null && game) w = "game";   // your own preset is Gamer: still the gaming spot
+            if (win == null && game && Cfg.WidgetStyle == "gamer" && !backs.Contains("game|" + playing)) w = "game";   // your own preset is Gamer: still the gaming spot - but a game you sent away doesn't park your card there (hunters13 lifecycle L-4)
             curKey = key; style = st; why = w;
         }
 
@@ -147,7 +173,7 @@ namespace AdeeboMeter
         public static readonly string[] AllStyles = { "speed", "speedstatus", "speedapps", "everyday", "gamer", "calls", "engineer", "auto", "markets", "sports", "data", "weather", "mine" };
 
         // ---------- the feeds: asked only for what the corner shows or may show soon (AppCtx, every ~15 s)
-        static DateTime feedsAt = DateTime.MinValue;
+        static DateTime feedsAt = DateTime.MinValue, closedLook = DateTime.MinValue;
         public static void Feeds()
         {
             var now = DateTime.UtcNow; if ((now - feedsAt).TotalSeconds < 15) return; feedsAt = now;
@@ -157,11 +183,14 @@ namespace AdeeboMeter
             bool marketsUp = st == "markets" || mineSt == "markets" || tiles.Any(t => t.StartsWith("market", StringComparison.Ordinal));
             if (marketsUp && !Policy.NoOnline)
             {
-                var syms = Syms(); var et = Trading.EasternNow();
-                bool open = Markets.Open(et, "us") || Markets.Open(et, "ca");
-                var fmp = syms.Where(z => !z.StartsWith("FX:", StringComparison.Ordinal)).ToList();
-                bool haveAll; lock (MarketData.k) haveAll = fmp.All(MarketData.Quotes.ContainsKey);
-                if (fmp.Count > 0 && (open || !haveAll)) MarketData.FetchWidget(fmp, null);   // closed: one look for the last price, then nothing
+                var syms = Syms();
+                // hunters12 data M3: each symbol by its own exchange's hours (London's FTSE in London's morning, futures nearly round the
+                // clock); hunters13 data M1: a symbol the service never prices (a typo, delisted) is dropped for the day after two misses,
+                // and a closed one is looked at once an hour at most - one bad symbol can't spend the day's free calls
+                var fmp = syms.Where(z => !z.StartsWith("FX:", StringComparison.Ordinal) && !MarketData.Dead(z)).ToList();
+                bool lookClosed = (now - closedLook).TotalMinutes >= 60;
+                List<string> ask; lock (MarketData.k) ask = fmp.Where(z => MarketData.OpenNow(z, now) || (lookClosed && !MarketData.Quotes.ContainsKey(z))).ToList();
+                if (ask.Count > 0) { if (ask.Any(z => !MarketData.OpenNow(z, now))) closedLook = now; MarketData.FetchWidget(ask, null); }
                 foreach (var fx in syms.Where(z => z.StartsWith("FX:", StringComparison.Ordinal))) { MarketData.Load(fx); if (MarketData.Stale(fx)) MarketData.Fetch(fx, null); }
             }
             if ((Cfg.WPinGame != "" || Kinds().Count > 0 || st == "sports" || mineSt == "sports" || tiles.Contains("team")) && Sports.Teams().Count + (Cfg.WPinGame != "" ? 1 : 0) > 0)
@@ -183,8 +212,28 @@ namespace AdeeboMeter
             new[] { "today", "Data today" }, new[] { "month", "Data this month" }, new[] { "game", "Game ping" }, new[] { "weather", "Weather" },
             new[] { "market1", "First market" }, new[] { "market2", "Second market" }, new[] { "team", "My team" }, new[] { "clock", "Time" } };
         // "none": every row set to (nothing) - an empty My widget, not the defaults back (hunters12 ML-2)
-        public static List<string> Mine() { if (Cfg.WMine == "none") return new List<string>(); return (Cfg.WMine ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); }
-        public static string CleanMine(string v) { if (v == "none") return "none"; var l = (v ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); return l.Count == 0 ? "down,ping,weather,market1" : string.Join(",", l); }
+        // hunters13 lifecycle ML-4: six rows, each in its own place ("down,,cpu" - row 2 empty), so a reading set on row 3 stays on row 3
+        public static List<string> Mine() { return MineSlots().Where(z => z != "").ToList(); }
+        public static List<string> MineSlots()
+        {
+            var l = new List<string>(); if (Cfg.WMine != "none") foreach (var z0 in CleanMine(Cfg.WMine).Split(',')) l.Add(z0);
+            while (l.Count < 6) l.Add(""); return l.Take(6).ToList();
+        }
+        public static string CleanMine(string v)
+        {
+            if (v == "none") return "none";
+            var l = new List<string>();
+            foreach (var z0 in (v ?? "").Split(',').Take(6)) { var z = z0.Trim(); l.Add(Fields.Any(f => f[0] == z) && !l.Contains(z) ? z : ""); }
+            while (l.Count > 0 && l[l.Count - 1] == "") l.RemoveAt(l.Count - 1);
+            return l.Count == 0 ? "down,ping,weather,market1" : string.Join(",", l);
+        }
+        // a row set from Settings: the same reading elsewhere moves here; all rows empty is "none"
+        public static string SetMine(int slot, string f)
+        {
+            var l = MineSlots(); if (f != null) for (int i = 0; i < l.Count; i++) if (l[i] == f) l[i] = "";
+            l[slot] = f ?? ""; while (l.Count > 0 && l[l.Count - 1] == "") l.RemoveAt(l.Count - 1);
+            return l.Count == 0 ? "none" : string.Join(",", l);
+        }
 
         // ---------- "since you looked": what changed while you weren't hovering (built when a hover starts)
         static DateTime lookAt = DateTime.MinValue; static Dictionary<string, double> lookPx = new Dictionary<string, double>(); static Dictionary<string, string> lookScore = new Dictionary<string, string>(); static string lookWx = "";
@@ -192,7 +241,7 @@ namespace AdeeboMeter
         {
             lookAt = DateTime.Now; lookPx = new Dictionary<string, double>(); lookScore = new Dictionary<string, string>();
             lock (MarketData.k) foreach (var q in MarketData.Quotes) lookPx[q.Key] = q.Value.Price;
-            lock (Sports.k) foreach (var g in Sports.Games.Where(z => z.State == "live" || z.State == "done")) lookScore[PinKey(g)] = g.HomeScore + "-" + g.AwayScore;
+            lock (Sports.k) foreach (var g in Sports.Games) lookScore[PinKey(g)] = g.State + "|" + g.HomeScore + "-" + g.AwayScore;
             lookWx = Weather.Active ? WxNext() ?? "" : "";
         }
         static string WxNext() { var t = Weather.Text(DateTime.UtcNow); if (t == null) return null; int i = t.IndexOf(" · ", StringComparison.Ordinal); return i < 0 ? "" : t.Substring(i + 3); }
@@ -203,7 +252,7 @@ namespace AdeeboMeter
             var evs = (s.Recent ?? new List<Timeline.Ev>()).Where(e => e.T > lookAt && e.Lv >= 1).ToList();
             if (evs.Count > 0) parts.Add(Draw.Trunc(evs[0].Text, 40) + (evs.Count > 1 ? " +" + (evs.Count - 1).ToString(CultureInfo.CurrentCulture) : ""));
             lock (Sports.k) foreach (var g in Sports.Games.Where(z => (z.State == "live" || z.State == "done") && Sports.Mine(z)))
-                { string was; string k = PinKey(g); if (lookScore.TryGetValue(k, out was) && was != g.HomeScore + "-" + g.AwayScore) parts.Add(g.Home + " " + g.HomeScore + "–" + g.AwayScore + " " + g.Away); }
+                { string was; string k = PinKey(g); if (lookScore.TryGetValue(k, out was) && was != g.State + "|" + g.HomeScore + "-" + g.AwayScore) parts.Add(g.Home + " " + g.HomeScore + "–" + g.AwayScore + " " + g.Away + (g.State == "done" ? " · " + L.T("Final") : "")); }
             lock (MarketData.k) foreach (var sym in Syms())
                 { MarketData.Quote q; double was; if (MarketData.Quotes.TryGetValue(sym, out q) && lookPx.TryGetValue(sym, out was) && was > 0) { double d = (q.Price - was) / was * 100; if (Math.Abs(d) >= 0.5) parts.Add(Short(q) + " " + (d > 0 ? "+" : "") + d.ToString("0.0", CultureInfo.CurrentCulture) + "%"); } }
             if (Weather.Active) { var wx = WxNext(); if (wx != null && wx != "" && lookWx != "" && wx != lookWx) parts.Add(wx); }
@@ -219,7 +268,7 @@ namespace AdeeboMeter
     }
 
     // ================================================================== the tiles
-    sealed class Tile { public string Label = "", Value = "", Sub = ""; public int Lv = 3; public double[] Series; public bool Big; public Color? Tint; }
+    sealed class Tile { public string Label = "", Value = "", Sub = ""; public int Lv = 3; public double[] Series; public bool Big, Moved; public Color? Tint; }
 
     static partial class Draw
     {
@@ -232,13 +281,14 @@ namespace AdeeboMeter
                 case "markets":
                     foreach (var sym in Corner.Syms()) tiles.Add(MarketTile(sym, true));
                     if (tiles.Count == 0) tiles.Add(new Tile { Label = L.T("No markets picked"), Sub = L.T("Settings › Widget › Markets on the widget") });
+                    else { var qn = QuoteWhy(); if (qn != "" && tiles.Any(z => z.Value != "-")) tiles.Add(new Tile { Label = qn, Lv = 1 }); }   // hunters12 data ML4: why the prices are old
                     return L.T("Markets") + AsOf();
                 case "sports":
                     {
                         var main = Corner.MatchGame(); List<Sports.Game> gs; lock (Sports.k) gs = Sports.Games.Where(Sports.Mine).ToList();
                         if (main != null) tiles.Add(GameTile(main, true));
-                        foreach (var g in gs.Where(z => main == null || Corner.PinKey(z) != Corner.PinKey(main)).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.State == "done" ? -z.StartUtc.Ticks : z.StartUtc.Ticks).Take(main == null ? 4 : 3)) tiles.Add(GameTile(g, false));
-                        if (tiles.Count == 0) tiles.Add(!Cfg.Sports ? new Tile { Label = L.T("Sports is off"), Sub = L.T("Sports is off - turn it on from the Sports page") } : new Tile { Label = Sports.Teams().Count == 0 ? L.T("No teams followed yet") : L.T("No games today"), Sub = Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : "" });   // lifecycle L-6
+                        foreach (var g in gs.Where(z => main == null || Corner.PinKey(z) != Corner.PinKey(main)).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.State == "done" ? -z.StartUtc.Ticks : z.StartUtc == DateTime.MinValue ? long.MaxValue : z.StartUtc.Ticks).Take(main == null ? 4 : 3)) tiles.Add(GameTile(g, false));
+                        if (tiles.Count == 0) tiles.Add(!Cfg.Sports ? new Tile { Label = L.T("Sports is off"), Sub = L.T("Sports is off - turn it on from the Sports page") } : new Tile { Label = Sports.Teams().Count == 0 ? L.T("No teams followed yet") : NoGames(), Sub = Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : NoGamesWhy() });   // lifecycle L-6; hunters12 data ML5: not fetched yet, or the feed failed, says so
                         return L.T("My teams");
                     }
                 case "data":
@@ -248,8 +298,8 @@ namespace AdeeboMeter
                         var mt = new Tile { Label = L.T("This month"), Value = Usage.Mb(month) + (Cfg.CapGB > 0 ? " / " + Cfg.CapGB + " GB" : "") };
                         if (Cfg.CapGB > 0) { double pct = month / 1000 / Cfg.CapGB; mt.Lv = pct >= 1 ? 2 : pct >= 0.8 ? 1 : 0; mt.Series = new[] { Math.Min(1, pct) }; }
                         tiles.Add(mt);
-                        var t = DateTime.Now; int dim = DateTime.DaysInMonth(t.Year, t.Month); double pace = t.Day > 0 ? month / t.Day * dim : double.NaN;
-                        if (t.Day >= 3 && !double.IsNaN(pace)) tiles.Add(new Tile { Label = L.T("At this pace"), Value = Usage.Mb(pace), Sub = L.T("by the end of the month"), Lv = Cfg.CapGB > 0 && pace / 1000 > Cfg.CapGB ? 1 : 3 });
+                        var t = DateTime.Now; int dim = DateTime.DaysInMonth(t.Year, t.Month); double ran = (t - new DateTime(t.Year, t.Month, 1)).TotalDays, pace = ran >= 1 ? month / ran * dim : double.NaN;
+                        if (ran >= 2 && !double.IsNaN(pace)) tiles.Add(new Tile { Label = L.T("At this pace"), Value = Usage.Mb(pace), Sub = L.T("by the end of the month"), Lv = Cfg.CapGB > 0 && pace / 1000 > Cfg.CapGB ? 1 : 3 });
                         tiles.Add(new Tile { Label = L.T("Right now"), Value = Pair(s.Down, s.Up) });
                         return L.T("Data use");
                     }
@@ -257,21 +307,26 @@ namespace AdeeboMeter
                     {
                         var now = DateTime.UtcNow; var h = Weather.Active ? Weather.Now(now) : null;
                         if (h == null) { tiles.Add(new Tile { Label = L.T("No forecast yet"), Sub = Cfg.WeatherOn ? L.T("It comes with the next look") : L.T("Turn Weather on in Settings › Weather") }); return L.T("Weather"); }
-                        tiles.Add(new Tile { Label = Weather.PlaceName(), Value = Weather.Temp(h.Temp), Sub = L.T(Weather.Words(h.Code)), Big = true });
-                        var t = Weather.Text(now); int i = t == null ? -1 : t.IndexOf(" · ", StringComparison.Ordinal); if (i > 0) tiles.Add(new Tile { Label = L.T("Next"), Value = t.Substring(i + 3), Lv = Corner.RainSoon(now) != DateTime.MinValue ? 1 : 3 });
+                        var fat = Weather.Fetched; string age = fat != DateTime.MinValue && (now - fat).TotalHours >= 3 ? " · " + L.T("forecast from") + " " + When(fat) : "";
+                        tiles.Add(new Tile { Label = Weather.PlaceName(), Value = Weather.Temp(h.Temp), Sub = L.T(Weather.Words(h.Code)) + age, Big = true });
+                        string wk = Weather.Kind(h); bool wetNow = wk == "rain" || wk == "snow" || wk == "storm";
+                        var t = Weather.Text(now); int i = t == null ? -1 : t.IndexOf(" · ", StringComparison.Ordinal); if (i > 0) tiles.Add(new Tile { Label = wetNow ? L.T("Now") : L.T("Next"), Value = t.Substring(i + 3), Lv = Corner.RainSoon(now) != DateTime.MinValue ? 1 : 3 });
                         foreach (var a in Weather.Ahead(now, 12).Where(z => z.Utc > now).Where((z, k) => k % 3 == 2).Take(3))
                             tiles.Add(new Tile { Label = a.Utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h tt"), CultureInfo.CurrentCulture).ToLowerInvariant(), Value = Weather.TempShort(a.Temp) + (Weather.Words(a.Code) != "" ? " " + L.T(Weather.Words(a.Code)) : "") });
+                        if (!string.IsNullOrEmpty(Weather.Note)) tiles.Add(new Tile { Label = L.T(Weather.Note), Lv = 1 });
                         return L.T("Weather");
                     }
                 case "recap":
                     {
                         var ss = Corner.RecapOf; var rows = ss == null ? new List<GameSession.Sec>() : ss.All();
-                        var v = rows.Select(r => r.Game).Where(x => !double.IsNaN(x) && x > 0).ToArray();
+                        var all = rows.Select(r => r.Game).Where(x => double.IsNaN(x) || x > 0).ToArray(); var v = all.Where(x => !double.IsNaN(x)).ToArray();
+                        double loss = GameStat.Loss(all);   /* hunters12 data M4: a lost reply is a lost reply - 40% loss at 30 ms isn't Competitive */
                         double avg = v.Length == 0 ? double.NaN : v.Average(), worst = v.Length == 0 ? double.NaN : v.Max();
                         List<Spike> sp; lock (GamePing.Me.Spikes) sp = ss == null ? new List<Spike>() : GamePing.Me.Spikes.Where(z => z.Game == ss.GameId && z.T >= ss.Start && z.T <= ss.End).ToList();
-                        double jit = GameStat.Jitter(v); string grade = v.Length == 0 ? "No reply" : GameStat.Grade(avg, jit, 0);
+                        double jit = GameStat.Jitter(v); string grade = v.Length == 0 ? "No reply" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
                         tiles.Add(new Tile { Label = L.T("Average"), Value = Fmt(avg, "0", " ms"), Big = true, Lv = grade == "Competitive" ? 0 : grade == "Casual" ? 1 : grade == "Laggy" ? 2 : 3 });
                         tiles.Add(new Tile { Label = L.T("Worst"), Value = Fmt(worst, "0", " ms") });
+                        if (!double.IsNaN(loss) && loss > 0) tiles.Add(new Tile { Label = L.T("Packet loss"), Value = Fmt(loss, "0.#", "%"), Lv = loss >= 3 ? 2 : loss >= 1 ? 1 : 3 });
                         var blames = sp.GroupBy(z => z.Blame).OrderByDescending(z => z.Count()).Select(z => L.T(z.Key)).ToList();
                         tiles.Add(new Tile { Label = L.T("Spikes"), Value = sp.Count.ToString(CultureInfo.CurrentCulture) + (blames.Count > 0 ? " · " + blames[0] : ""), Lv = sp.Count == 0 ? 0 : sp.Count > 4 ? 1 : 3 });
                         tiles.Add(new Tile { Label = L.T("Grade"), Value = L.T(grade) });
@@ -286,10 +341,31 @@ namespace AdeeboMeter
         }
         static string AsOf()
         {
-            DateTime last = DateTime.MinValue; lock (MarketData.k) foreach (var sym in Corner.Syms()) { MarketData.Quote q; if (MarketData.Quotes.TryGetValue(sym, out q) && q.When > last) last = q.When; }
-            if (last == DateTime.MinValue) return "";
-            var lt = last.ToLocalTime(); string tm = lt.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture);
-            return " · " + L.T("as of") + " " + (lt.Date == DateTime.Today ? tm : lt.ToString("ddd", CultureInfo.CurrentCulture) + " " + tm);   // display L-3: Friday's close says Friday
+            // the oldest price on the card, so one fresh symbol can't hide a stale one (hunters12 data ML10)
+            DateTime last = DateTime.MaxValue; lock (MarketData.k) foreach (var sym in Corner.Syms()) { MarketData.Quote q; if (MarketData.Quotes.TryGetValue(sym, out q) && q.When < last) last = q.When; }
+            if (last == DateTime.MaxValue) return "";
+            return " · " + L.T("as of") + " " + When(last);
+        }
+        // "16:00" today, "Fri 16:00" this week, "13 Nov 16:00" before that (hunters13 display L-6: a weekday alone can be a week out)
+        public static string When(DateTime utc)
+        {
+            var lt = utc.ToLocalTime(); string tm = lt.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture);
+            return lt.Date == DateTime.Today ? tm : (DateTime.Today - lt.Date).TotalDays < 6 ? lt.ToString("ddd", CultureInfo.CurrentCulture) + " " + tm : lt.ToString("d MMM", CultureInfo.CurrentCulture) + " " + tm;
+        }
+        // the quote service's reason, in a few words, when the prices are old
+        static string QuoteWhy()
+        {
+            string n; lock (MarketData.k) n = MarketData.QuoteNote ?? "";
+            if (n.StartsWith("Today's free calls", StringComparison.Ordinal)) return L.T("Today's free calls are used up - prices are from earlier");
+            if (n.IndexOf("didn't accept", StringComparison.Ordinal) >= 0) return L.T("The quote service didn't accept your key - Settings › Markets");
+            if (n.StartsWith("Couldn't reach", StringComparison.Ordinal)) return L.T("Couldn't reach the quote service - it tries again soon");
+            return "";
+        }
+        static string NoGames() { DateTime f; lock (Sports.k) f = Sports.FetchedAt; return f == DateTime.MinValue ? L.T("Looking for today's games...") : L.T("No games today"); }
+        static string NoGamesWhy()
+        {
+            lock (Sports.k) foreach (var kv in Sports.Note) if (!kv.Key.StartsWith("news-", StringComparison.Ordinal) && kv.Value != "" && kv.Value != "nokey") return L.T("A scores feed couldn't be read - the Sports page says which");
+            return "";
         }
         static Tile MarketTile(string sym, bool graph)
         {
@@ -298,28 +374,31 @@ namespace AdeeboMeter
                 var ser = MarketData.Get(sym); string code = sym.Substring(3);
                 var t = new Tile { Label = code + "/CAD" };
                 if (ser == null || ser.Count == 0) { t.Value = "-"; t.Sub = L.T("Bank of Canada, daily"); return t; }
-                double pct = MarketData.ChangeOver(ser, TimeSpan.FromDays(1));
-                t.Value = ser.Last.ToString(ser.Last < 10 ? "0.0000" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(pct) ? "" : "  " + Signed(pct));
-                t.Lv = double.IsNaN(pct) ? 3 : pct >= 0 ? 0 : 2; t.Tint = double.IsNaN(pct) ? (Color?)null : pct >= 0 ? Theme.LvText(0) : Theme.LvText(2);
+                double pct = MarketData.ChangeOver(ser, TimeSpan.FromDays(1)); int dir = Dir(pct);
+                t.Value = ser.Last.ToString(ser.Last < 10 ? "0.0000" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(pct) ? "" : "  " + Signed(pct) + " " + L.T("day"));   /* hunters12 data L2: which change it is */
+                t.Lv = dir == 0 ? 3 : dir > 0 ? 0 : 2; t.Tint = dir == 0 ? (Color?)null : dir > 0 ? Theme.LvText(0) : Theme.LvText(2);
                 if (graph) t.Series = ser.V.Skip(Math.Max(0, ser.Count - 30)).ToArray();
-                t.Sub = L.T("Bank of Canada, daily");
+                t.Sub = L.T("Bank of Canada") + " · " + (ser.LastDay.Date == DateTime.Today ? L.T("today") : ser.LastDay.ToString((DateTime.Today - ser.LastDay.Date).TotalDays < 6 ? "ddd" : "d MMM", CultureInfo.CurrentCulture));
                 return t;
             }
             MarketData.Quote q; List<double> h; lock (MarketData.k) { MarketData.Quotes.TryGetValue(sym, out q); MarketData.Hist.TryGetValue(sym, out h); h = h == null ? null : h.ToList(); }
             var tq = new Tile { Label = q != null && !string.IsNullOrEmpty(q.Name) ? Trunc(q.Name, 22) : sym.TrimStart('^') };
-            if (q == null) { tq.Value = "-"; tq.Sub = Policy.NoOnline ? L.T("Online lookups are off on this PC (your IT team's policy)") : MarketData.HasQuoteKey() ? L.T("Waiting for the first price") : L.T("Needs your Financial Modeling Prep key (Settings › Markets)"); return tq; }   // lifecycle L-5
-            tq.Value = q.Price.ToString(q.Price >= 1000 ? "#,0" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(q.Pct) ? "" : "  " + Signed(q.Pct));
-            tq.Tint = double.IsNaN(q.Pct) ? (Color?)null : q.Pct >= 0 ? Theme.LvText(0) : Theme.LvText(2);
+            if (q == null) { tq.Value = "-"; tq.Sub = Policy.NoOnline ? L.T("Online lookups are off on this PC (your IT team's policy)") : !MarketData.HasQuoteKey() ? L.T("Needs your Financial Modeling Prep key (Settings › Markets)") : MarketData.Dead(sym) ? L.T("No price for this symbol - check it in Settings › Widget") : QuoteWhy() != "" ? QuoteWhy() : L.T("Waiting for the first price"); return tq; }   // lifecycle L-5; hunters13 data M1
+            tq.Value = q.Price.ToString(q.Price >= 1000 ? "#,0.00" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(q.Pct) ? "" : "  " + Signed(q.Pct) + " " + L.T("day"));   /* hunters12 L3: cents kept past $1,000 */
+            int qd = Dir(q.Pct); tq.Tint = qd == 0 ? (Color?)null : qd > 0 ? Theme.LvText(0) : Theme.LvText(2);
             if (graph && h != null && h.Count >= 2) tq.Series = h.ToArray();
             return tq;
         }
-        static string Signed(double pct) { return (pct >= 0 ? "+" : "−") + Math.Abs(pct).ToString("0.0", CultureInfo.CurrentCulture) + "%"; }
+        // hunters13 data L4: the sign of what's shown - a -0.04% move is "0.0%", not "−0.0%"
+        static string Signed(double pct) { double r = Math.Round(pct, 1); return (r > 0 ? "+" : r < 0 ? "−" : "") + Math.Abs(r).ToString("0.0", CultureInfo.CurrentCulture) + "%"; }
+        static int Dir(double pct) { if (double.IsNaN(pct)) return 0; double r = Math.Round(pct, 1); return r > 0 ? 1 : r < 0 ? -1 : 0; }
         static Tile GameTile(Sports.Game g, bool main)
         {
             var t = new Tile { Big = main };
+            if (g.State == "soon" && g.StartUtc == DateTime.MinValue) { t.Label = g.Home + " " + L.T("vs") + " " + g.Away; t.Value = "-"; t.Sub = L.T("Start time not given yet"); return t; }
             if (g.State == "soon") { t.Label = g.Home + " " + L.T("vs") + " " + g.Away; t.Value = g.StartUtc.ToLocalTime().ToString((g.StartUtc.ToLocalTime().Date == DateTime.Today ? "" : "ddd ") + (CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt")), CultureInfo.CurrentCulture); return t; }
             t.Label = g.Home + " " + g.HomeScore + " – " + g.AwayScore + " " + g.Away;
-            t.Value = g.State == "live" ? L.T("Live") : g.State == "done" ? L.T("Final") : L.T("Off");
+            t.Value = g.State == "live" ? L.T("Live") : g.State == "done" ? L.T("Final") : FullView.OffWord(g);
             t.Lv = g.State == "live" ? 2 : 3; t.Tint = g.State == "live" ? Theme.LvText(2) : (Color?)null;
             t.Sub = g.State == "live" ? g.Detail : "";
             return t;
@@ -339,7 +418,7 @@ namespace AdeeboMeter
                 case "cpu": return new Tile { Label = L.T("CPU"), Value = Fmt(s.Cpu, "0", "%"), Lv = double.IsNaN(s.Cpu) ? 3 : s.Cpu >= 90 ? 1 : 0 };
                 case "mem": return new Tile { Label = L.T("Memory"), Value = Fmt(s.Mem, "0", "%"), Lv = double.IsNaN(s.Mem) ? 3 : s.Mem >= 85 ? 1 : 0 };
                 case "disk": return new Tile { Label = L.T("Disk"), Value = Fmt(s.Disk, "0", "%") };
-                case "apps": { var a = s.TopCpu.FirstOrDefault(); return new Tile { Label = L.T("Busiest app"), Value = a == null ? "-" : Trunc(a.Name, 18) + " " + Fmt(a.Cpu, "0", "%") }; }
+                case "apps": { var a = s.TopCpu.FirstOrDefault(z => z.Name != "AdeeboMeter"); return new Tile { Label = L.T("Busiest app"), Value = a == null ? "-" : Trunc(a.Name, 18) + " " + Fmt(a.Cpu, "0", "%") }; }
                 case "today": { var td = Usage.TodayDU(); return new Tile { Label = L.T("Data today"), Value = td != null && td.Length > 1 ? Usage.Mb(td[0] + td[1]) : "-" }; }
                 case "month": return new Tile { Label = L.T("Data this month"), Value = Usage.Mb(Usage.Month(null)) + (Cfg.CapGB > 0 ? " / " + Cfg.CapGB + " GB" : "") };
                 case "game":
@@ -353,7 +432,7 @@ namespace AdeeboMeter
                 case "team":
                     {
                         List<Sports.Game> gs; lock (Sports.k) gs = Sports.Games.Where(Sports.Mine).ToList();
-                        var g = gs.OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.StartUtc).FirstOrDefault();
+                        var g = gs.OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.State == "done" ? -z.StartUtc.Ticks : z.StartUtc == DateTime.MinValue ? long.MaxValue : z.StartUtc.Ticks).FirstOrDefault();   /* hunters13 data L3: the latest final, as the sports card */
                         return g == null ? new Tile { Label = L.T("My team"), Value = "-", Sub = !Cfg.Sports ? L.T("Sports is off - turn it on from the Sports page") : Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : L.T("No games today") } : GameTile(g, false);   // L-7
                     }
                 case "clock": return new Tile { Label = DateTime.Now.ToString("ddd d MMM", CultureInfo.CurrentCulture), Value = DateTime.Now.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture) };
@@ -375,16 +454,22 @@ namespace AdeeboMeter
             if (st == "sports") { var g = Corner.MatchGame(); if (g != null && g.State != "soon") return g.Home + " " + g.HomeScore + "–" + g.AwayScore + " " + g.Away + (g.State == "live" && g.Detail != "" ? " · " + Trunc(g.Detail, 14) : g.State == "done" ? " · " + L.T("Final") : ""); }
             if (st == "recap") return L.T("Match") + " · " + (tl.Count > 0 ? tl[0].Value : "-") + " " + L.T("avg");
             var f = tl.FirstOrDefault(); if (f == null) return s.Chip;
-            if (st == "markets") return Corner.Syms().Count == 0 ? L.T("Markets") : (f.Label.Length > 12 ? Trunc(f.Label, 12) : f.Label) + " " + f.Value;
+            if (st == "markets") return Corner.Syms().Count == 0 ? L.T("Markets") : (f.Label.Length > 12 ? Trunc(f.Label, 12) : f.Label) + " " + f.Value + ChipAge();   /* hunters12 display L-3: an old price on the strip says its day */
             if (st == "data") return L.T("Today") + " " + f.Value;
             if (st == "weather") { var w = Weather.Active ? Weather.Text(DateTime.UtcNow) : null; return w ?? L.T("Weather"); }
             return f.Label + " " + f.Value;
+        }
+        static string ChipAge()
+        {
+            DateTime last = DateTime.MaxValue; lock (MarketData.k) foreach (var sym in Corner.Syms()) { MarketData.Quote q; if (MarketData.Quotes.TryGetValue(sym, out q) && q.When < last) last = q.When; }
+            if (last == DateTime.MaxValue || last.ToLocalTime().Date == DateTime.Today) return "";
+            var lt = last.ToLocalTime(); return " · " + lt.ToString((DateTime.Today - lt.Date).TotalDays < 6 ? "ddd" : "d MMM", CultureInfo.CurrentCulture);
         }
         // the gamer chip: "32 ms · Competitive", a spike held 5 s: "Spike 140 ms · Wi-Fi"
         public static string GamerChip()
         {
             var t = GamerTarget(); if (t == null) return null;
-            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.FirstOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 5);
+            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.LastOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 5);
             if (last != null) return L.T("Spike") + " " + Math.Round(last.Ms).ToString(CultureInfo.CurrentCulture) + " ms · " + L.T(last.Blame);
             var v = GamePing.Me.Stat(t.Item1.Id, t.Item2).Window(60, 3600); if (v.Length == 0) return t.Item1.Name;
             double now = v[v.Length - 1], avg = GameStat.Avg(v), jit = GameStat.Jitter(v), loss = GameStat.Loss(v);
@@ -405,7 +490,7 @@ namespace AdeeboMeter
             // hunters12 display ML-1: a value too wide for its row (a long forecast, a far place's "(your PC's time)") goes on its own
             // line under the label, where it can wrap - never off the card's left edge over the label
             foreach (var t in tiles)
-                if (t.Value != "" && Measure(t.Value, t.Big ? fName : fMono, 0).Width > inner * 0.62f) { t.Sub = t.Value + (string.IsNullOrEmpty(t.Sub) ? "" : " · " + t.Sub); t.Value = ""; }
+                if (t.Value != "" && Measure(t.Value, t.Big ? fName : fMono, 0).Width > inner * 0.62f) { t.Sub = t.Value + (string.IsNullOrEmpty(t.Sub) ? "" : " · " + t.Sub); t.Value = ""; t.Moved = true; }
             var hs = new List<float>();
             foreach (var t in tiles)
             {
@@ -448,20 +533,21 @@ namespace AdeeboMeter
                         var lf = t.Big ? fBodyB : fBody; var vf = t.Big ? fName : fMono;
                         float vw = t.Value == "" ? 0 : Measure(t.Value, vf, 0).Width;
                         float ly = y + 3 * S;
-                        if (t.Lv <= 2 && t.Value != "") { LvDot(g, t.Lv, pad, ly + 5 * S, 7 * S, 7 * S); }
-                        float lx = pad + (t.Lv <= 2 && t.Value != "" ? 12 * S : 0);
+                        bool dot = t.Lv <= 2 && (t.Value != "" || t.Moved);   /* hunters13 data L7: a value moved under its label keeps the label's dot */
+                        if (dot) { LvDot(g, t.Lv, pad, ly + 5 * S, 7 * S, 7 * S); }
+                        float lx = pad + (dot ? 12 * S : 0);
                         using (var ls = new StringFormat(sf) { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = (t.Value == "" ? 0 : StringFormatFlags.NoWrap) | (L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0) })
                         using (var lb = new SolidBrush(t.Value == "" ? (t.Lv <= 2 ? Theme.LvText(t.Lv) : Theme.Ink) : t.Big ? Theme.Ink : Theme.Muted))
                             g.DrawString(t.Label, lf, lb, new RectangleF(lx, ly, Math.Max(10, inner - (lx - pad) - vw - 6 * S), t.Value == "" ? h : 20 * S), ls);
                         if (t.Value != "") using (var vb = new SolidBrush(t.Tint ?? (t.Lv <= 2 && t.Lv > 0 ? Theme.LvText(t.Lv) : Theme.Ink))) g.DrawString(t.Value, vf, vb, W - pad - vw, ly - (t.Big ? 2 * S : 0));
                         float yy = ly + (t.Big ? 24 : 18) * S;
                         if (!string.IsNullOrEmpty(t.Sub)) { float sh = Measure(t.Sub, fSmall, (int)inner).Height; g.DrawString(t.Sub, fSmall, muted, new RectangleF(pad, yy - 2 * S, inner, sh), sf); yy += sh; }
-                        if (t.Series != null && t.Series.Length >= 2) MiniLine(g, t.Series, new RectangleF(pad, yy, inner, 12 * S), t.Tint ?? Theme.Blue);
+                        if (t.Series != null && t.Series.Length >= 2) MiniLine(g, t.Series, new RectangleF(pad, yy, inner, 12 * S), t.Tint ?? Theme.BlueLine);
                         else if (t.Series != null && t.Series.Length == 1)
                         {
                             var br = new RectangleF(pad, yy, inner, 5 * S);
                             using (var tb = new SolidBrush(Theme.Track)) g.FillRectangle(tb, br);
-                            using (var fb = new SolidBrush(t.Lv == 2 ? Theme.Red : t.Lv == 1 ? Theme.Amber : Theme.Blue)) g.FillRectangle(fb, br.X, br.Y, br.Width * (float)Math.Max(0, Math.Min(1, t.Series[0])), br.Height);
+                            using (var fb = new SolidBrush(t.Lv == 2 ? Theme.Red : t.Lv == 1 ? Theme.Amber : Theme.BlueLine)) g.FillRectangle(fb, br.X, br.Y, br.Width * (float)Math.Max(0, Math.Min(1, t.Series[0])), br.Height);
                         }
                         y += h;
                     }

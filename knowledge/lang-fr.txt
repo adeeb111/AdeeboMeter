@@ -5623,3 +5623,21 @@ Cold start latency - something's frozen up the line.	Latence de démarrage à fr
 A clean network to start the year.	Un réseau propre pour commencer l'année.
 New year, same Wi-Fi.	Nouvelle année, même Wi-Fi.
 New year, same provider.	Nouvelle année, même fournisseur.
+ - without your weather place, broker, teams, market symbols, pinned game, widget position, the name you are called and your words of comfort (they stay on this PC).	 - sans votre lieu météo, votre courtier, vos équipes, vos symboles boursiers, le match épinglé, la position du widget, le nom qu'on vous donne et vos mots de réconfort (ils restent sur ce PC).
+A game is open, so the widget is at its gaming spot now - this corner applies when the game closes.	Un jeu est ouvert : le widget est à sa place de jeu - ce coin s'applique quand le jeu se ferme.
+A scores feed couldn't be read - the Sports page says which	Un flux de scores n'a pas pu être lu - la page Sports dit lequel
+Couldn't reach the quote service - it tries again soon	Service de cotations injoignable - il réessaie bientôt
+Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter	Faites glisser pour déplacer · Échap ou le quitter le verrouille · un clic ouvre AdeeboMeter
+Drag to move · Esc or leaving it locks it · fades again when you leave	Faites glisser pour déplacer · Échap ou le quitter le verrouille · s'efface quand vous partez
+Held on another card now - tray › Stop holding goes back to this style.	Gardé sur une autre carte - zone de notification › Arrêter de garder revient à ce style.
+Held · the match that ended at	Gardé · le match terminé à
+Its screen isn't connected, so it's in the bottom-right corner of the main screen until that screen is back.	Son écran n'est pas branché : il est dans le coin inférieur droit de l'écran principal jusqu'au retour de cet écran.
+Looking for today's games...	Recherche des matchs du jour...
+No price for this symbol - check it in Settings › Widget	Pas de prix pour ce symbole - vérifiez-le dans Paramètres › Widget
+Start time not given yet	Heure de début pas encore donnée
+The quote service didn't accept your key - Settings › Markets	Le service de cotations n'a pas accepté votre clé - Paramètres › Marchés
+Today's free calls are used up - prices are from earlier	Les appels gratuits du jour sont épuisés - prix d'il y a un moment
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one. Picking the corner it's in keeps the distance.	Où se place le widget quand un jeu ajouté est ouvert - loin de votre minicarte, par exemple. Le déplacer pendant que vous jouez change celui-ci. Choisir le coin où il est garde la distance.
+forecast from	prévision de
+tray › Stop holding lets it go	zone de notification › Arrêter de garder le libère
+New year, same old internet hiccups.	Nouvelle année, mêmes petits hoquets d'internet.

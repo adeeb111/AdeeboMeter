@@ -27,8 +27,18 @@ using Microsoft.Win32;
 namespace AdeeboMeter
 {
     // A window drawn with per-pixel alpha that never takes the mouse (clicks go to whatever is below).
-    sealed class LayeredForm : Form
+    sealed class LayeredForm : Form, ITouchDrag, ITouchEnd
     {
+        // the unlocked widget under a finger (hunters13 widget input): the drag follows it, the lift drops it
+        public Func<Point, bool> TouchGrab; public Action<Point> TouchDrag, TouchUp; public event Action<int> HWheel;
+        bool ITouchDrag.Grab(Point screen) { return TouchGrab != null && TouchGrab(screen); }
+        void ITouchDrag.DragTo(Point screen) { if (TouchDrag != null) TouchDrag(screen); }
+        void ITouchEnd.TouchEnd(Point screen) { if (TouchUp != null) TouchUp(screen); }
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x020E) { var h = HWheel; if (h != null) h((short)((m.WParam.ToInt64() >> 16) & 0xFFFF)); m.Result = IntPtr.Zero; return; }   // WM_MOUSEHWHEEL: a sideways scroll (L-7)
+            base.WndProc(ref m);
+        }
         public LayeredForm() { FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual; TopMost = true; }
         protected override CreateParams CreateParams
         {

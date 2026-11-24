@@ -284,8 +284,10 @@ namespace AdeeboMeter
             if (code >= 80 && code <= 82) return "showers"; if (code == 85 || code == 86) return "snow showers"; return code == 96 || code == 99 ? "thunderstorm with hail" : code == 95 ? "thunderstorm" : "";
         }
         static bool Wet(int code) { return code >= 51 && code != 45 && code != 48; }
-        public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? (c * 9 / 5 + 32).ToString("0", CultureInfo.CurrentCulture) + "°F" : c.ToString("0", CultureInfo.CurrentCulture) + "°C"; }
-        public static string TempShort(double c) { if (double.IsNaN(c)) return "-"; return (Cfg.WeatherF ? c * 9 / 5 + 32 : c).ToString("0", CultureInfo.CurrentCulture) + "°"; }
+        // hunters12 data L6: rounded first, so -0.4 °C reads "0°C", never "-0°C"
+        static string Deg(double v) { double r = Math.Round(v); if (r == 0) r = 0; return r.ToString("0", CultureInfo.CurrentCulture); }
+        public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? Deg(c * 9 / 5 + 32) + "°F" : Deg(c) + "°C"; }
+        public static string TempShort(double c) { if (double.IsNaN(c)) return "-"; return Deg(Cfg.WeatherF ? c * 9 / 5 + 32 : c) + "°"; }
         static string At(DateTime utc) { return utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture).ToLowerInvariant(); }
         // "4°C · rain from 3 pm" / "-2°C · snow until 18:00" / "21°C · clear"
         public static string Text(DateTime nowUtc)
