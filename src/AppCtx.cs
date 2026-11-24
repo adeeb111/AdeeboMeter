@@ -81,7 +81,7 @@ namespace AdeeboMeter
             var miSettings = new ToolStripMenuItem(L.T("Settings...")); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
             miWidget = new ToolStripMenuItem(L.T("Hide widget (keep tray icon)")); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
             miBig = new ToolStripMenuItem(L.T("Bigger widget")); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
-            var miMove = new ToolStripMenuItem(L.T("Move widget")); miMove.Click += delegate { bool was = widgetOn; widgetOn = true; if (!was) SaveSettings(); moveByTray = true; trayUnlockAt = Clock.Mono; Unlock(); };   /* M-4: a re-shown widget stays shown */
+            var miMove = new ToolStripMenuItem(L.T("Move widget")); miMove.Click += delegate { bool was = widgetOn; widgetOn = true; if (!was) SaveSettings(); moveByTray = true; trayUnlockAt = Clock.Mono; Unlock("tray"); };   /* M-4: a re-shown widget stays shown */
             var miReset = new ToolStripMenuItem(L.T("Reset widget position")); miReset.Click += delegate { ResetPos(); };
             var miHold = new ToolStripMenuItem(L.T("Hold this")); miHold.Click += delegate { if (Corner.Holding) Corner.Release(); else { var ls = M.Latest; Corner.Hold(ls != null && ls.Call); } drawnKey = ""; };
             var miBack = new ToolStripMenuItem(L.T("Back to my widget")); miBack.Click += delegate { Corner.Back(); drawnKey = ""; };
@@ -177,19 +177,20 @@ namespace AdeeboMeter
                 if (!moveOn) return;
                 if (e2.Button != MouseButtons.Left)
                 {
-                    bool mid = dragFrom != null; if (mid) CancelDrag(); Lock(); widget.Capture = false;
+                    bool mid = dragFrom != null; if (mid) CancelDrag(); Lock("button-" + e2.Button); widget.Capture = false;
+                    Trace(mid ? "drag cancelled by " + e2.Button : "replay " + e2.Button);
                     if (!mid) { var b = e2.Button; if (b == MouseButtons.Right) Native.ReplayMouse(0x0008, 0); else if (b == MouseButtons.Middle) Native.ReplayMouse(0x0020, 0); else if (b == MouseButtons.XButton1) Native.ReplayMouse(0x0080, 1); else if (b == MouseButtons.XButton2) Native.ReplayMouse(0x0080, 2); }
                     return;
                 }
                 Native.GetAsyncKeyState(0x01);   /* this press's "pressed since" is read here - a new one later means a new press (L-3) */
                 dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = false;
             };
-            widget.MouseWheel += (s2, e2) => { if (moveOn && dragFrom == null) { Lock(); Native.ReplayMouse(0x0800, e2.Delta); } };
-            widget.HWheel += d => { if (moveOn && dragFrom == null) { Lock(); Native.ReplayMouse(0x1000, d); } };
+            widget.MouseWheel += (s2, e2) => { if (moveOn && dragFrom == null) { Lock("wheel"); Trace("replay wheel " + e2.Delta); Native.ReplayMouse(0x0800, e2.Delta); } };
+            widget.HWheel += d => { if (moveOn && dragFrom == null) { Lock("hwheel"); Trace("replay hwheel " + d); Native.ReplayMouse(0x1000, d); } };
             // a finger on the unlocked widget drags it (the tray's Move widget unlocks it for touch)
-            widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; return true; };
+            widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; Trace("touch grab"); return true; };
             widget.TouchDrag = p => { if (dragFrom == null || !touchDrag) return; int dx = p.X - dragFrom.Value.X, dy = p.Y - dragFrom.Value.Y; moveTouched = Clock.Mono; if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); } if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy); };
-            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock(); } else dragFrom = null; };
+            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock("touch-drop"); } else dragFrom = null; };
             widget.MouseMove += (s2, e2) => WidgetDrag(); ResetWidget = ResetPos;
             widget.MouseUp += (s2, e2) => WidgetDrop();
             widget.MouseCaptureChanged += (s2, e2) => { if (dragFrom != null && Control.MouseButtons != MouseButtons.Left) WidgetDrop(); };
@@ -556,15 +557,26 @@ namespace AdeeboMeter
         }
 
         // ---------- move mode (hunters12 widget-input fixes, 24 Nov)
-        Point restAt; bool arrivedByMouse, dragGame, touchDrag, ctrlSpoiled; int moveSteps; DateTime ctrlSince = DateTime.MinValue, trayUnlockAt = DateTime.MinValue, onItAt = DateTime.MinValue;
-        void Unlock()
+        Point restAt; bool arrivedByMouse, dragGame, touchDrag, ctrlSpoiled, lastTouch; int moveSteps; DateTime ctrlSince = DateTime.MinValue, trayUnlockAt = DateTime.MinValue, onItAt = DateTime.MinValue;
+        // --widget-trace (the test script): what move mode does, with the widget's place, to a file next to the log
+        static readonly object traceLock = new object();
+        public static void Trace(string m)
+        {
+            if (!Program.WidgetTrace) return;
+            try { lock (traceLock) File.AppendAllText(Path.Combine(Program.WriteDir, "widget-trace.txt"), DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " " + m + Environment.NewLine); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        void Unlock() { Unlock("other"); }
+        void Unlock(string why)
         {
             if (moveOn) { moveTouched = Clock.Mono; return; }
+            Trace("unlock " + why);
             moveOn = true; ghost = false; moveTouched = Clock.Mono; lastCur = Cursor.Position; onItAt = Clock.Mono;
             widget.SetClickThrough(false); drawnKey = ""; if (ui.Interval != 50) ui.Interval = 50;
         }
-        void Lock()
+        void Lock() { Lock("other"); }
+        void Lock(string why)
         {
+            if (moveOn) Trace("lock " + why);
             if (dragging) SaveDrop();   // L-4: the full view opening, a presentation or the lock screen mid-drag keeps the drag
             dragFrom = null; dragging = false; touchDrag = false; moveByTray = false; hoverSince = DateTime.MinValue; ctrlSince = DateTime.MinValue;
             if ((Native.GetAsyncKeyState(0x11) & 0x8000) != 0) ctrlSpoiled = true;   /* hunters13 ML-1: Ctrl+wheel zoom can't pulse it open and shut */
@@ -589,7 +601,8 @@ namespace AdeeboMeter
             bool near = widget.Placed.Width > 1 && nearR.Contains(cur);
             // hunters13 input M-1: "came by mouse" is judged by the input itself - Windows hides the pointer while a finger or pen is
             // used - and by at least two small steps seen on the way in, not one (a second tap a few pixels from the first is one step)
-            if (!near || Native.CursorFromTouch()) { arrivedByMouse = false; moveSteps = 0; }
+            bool tch = Native.CursorFromTouch(); if (tch != lastTouch) { lastTouch = tch; Trace("touch cursor " + tch); }
+            if (!near || tch) { arrivedByMouse = false; moveSteps = 0; }
             else if (cur != lastCur && nearR.Contains(lastCur) && Math.Abs(cur.X - lastCur.X) + Math.Abs(cur.Y - lastCur.Y) < 200 * Draw.Base) { if (++moveSteps >= 2) arrivedByMouse = true; }
             bool moved = cur != lastCur; lastCur = cur;
             if (onIt) onItAt = Clock.Mono;
@@ -597,11 +610,11 @@ namespace AdeeboMeter
             {
                 if (moved && onIt) moveTouched = Clock.Mono;
                 if (onIt) moveByTray = false;
-                if (dragFrom == null && (Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { Lock(); moveSpent = onIt; return; }   /* ML-3: Esc leaves move mode */
+                if (dragFrom == null && (Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { Lock("esc"); moveSpent = onIt; return; }   /* ML-3: Esc leaves move mode */
                 bool buttons = (Control.MouseButtons & (MouseButtons.Right | MouseButtons.Middle)) != 0;
                 bool tray = moveByTray && (Clock.Mono - trayUnlockAt).TotalSeconds < 15;
                 bool gone = !tray && (Clock.Mono - onItAt).TotalMilliseconds > 350, idle = (Clock.Mono - moveTouched).TotalSeconds > 8 && !tray;
-                if (dragFrom == null && (gone || idle || buttons)) { Lock(); moveSpent = onIt; }   // locked while resting on it: not again until you leave
+                if (dragFrom == null && (gone || idle || buttons)) { Lock(gone ? "gone" : idle ? "idle" : "buttons"); moveSpent = onIt; }   // locked while resting on it: not again until you leave
                 else { hovered = true; return; }
             }
             if (!onIt) { hoverSince = DateTime.MinValue; moveSpent = false; }
@@ -613,9 +626,9 @@ namespace AdeeboMeter
             if ((Native.GetAsyncKeyState(0x11) & 0x8000) == 0) { ctrlSpoiled = false; ctrlSince = DateTime.MinValue; }
             else if (!ctrlSpoiled)
             {
-                if (ctrlSince == DateTime.MinValue) { if (!onIt || CtrlIsGame()) ctrlSpoiled = true; else { Native.OtherInput(); ctrlSince = DateTime.UtcNow; } }
-                else if (!onIt || Native.OtherInput() || Control.MouseButtons != MouseButtons.None || CtrlIsGame()) { ctrlSpoiled = true; ctrlSince = DateTime.MinValue; }
-                else if ((DateTime.UtcNow - ctrlSince).TotalMilliseconds >= 700) { Unlock(); hovered = true; return; }
+                if (ctrlSince == DateTime.MinValue) { if (!onIt || CtrlIsGame()) { ctrlSpoiled = true; Trace("ctrl ignored (" + (onIt ? "game" : "pressed off the widget") + ")"); } else { Native.OtherInput(); ctrlSince = DateTime.UtcNow; Trace("ctrl down on the widget"); } }
+                else if (!onIt || Native.OtherInput() || Control.MouseButtons != MouseButtons.None || CtrlIsGame()) { ctrlSpoiled = true; ctrlSince = DateTime.MinValue; Trace("ctrl spoiled"); }
+                else if ((DateTime.UtcNow - ctrlSince).TotalMilliseconds >= 700) { Unlock("ctrl"); hovered = true; return; }
             }
             if (g != ghost) { ghost = g; drawnKey = ""; }
             if (ghost) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; return; }
@@ -624,7 +637,7 @@ namespace AdeeboMeter
             if (onIt && hovered && !moveSpent && arrivedByMouse && Control.MouseButtons == MouseButtons.None)
             {
                 if (hoverSince == DateTime.MinValue || !Still(cur, restAt, Draw.Base)) { hoverSince = DateTime.UtcNow; restAt = cur; }   // moving: the wait starts again
-                else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 1500) { Unlock(); hovered = true; }
+                else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 1500) { Unlock("rest"); hovered = true; }
             }
             else hoverSince = DateTime.MinValue;
         }
@@ -633,9 +646,9 @@ namespace AdeeboMeter
             if (dragFrom == null || !moveOn) return;
             if (touchDrag) return;
             if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(); return; }
-            if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Lock(); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
+            if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
             var c = Cursor.Position; int dx = c.X - dragFrom.Value.X, dy = c.Y - dragFrom.Value.Y; moveTouched = Clock.Mono;
-            if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); }
+            if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; Trace("drag start"); if (detailWin.Placed.Width > 1) detailWin.Vanish(); }
             if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy);
         }
         void CancelDrag() { if (dragging) widget.MoveTo(dragOrigin.X, dragOrigin.Y); dragFrom = null; dragging = false; touchDrag = false; drawnKey = ""; }
@@ -649,7 +662,7 @@ namespace AdeeboMeter
         {
             if (dragFrom == null) return;
             bool moved = dragging; dragFrom = null; dragging = false; moveTouched = Clock.Mono;
-            if (!moved) { Lock(); OpenFull(); return; }   // a click, no drag: the full window
+            if (!moved) { Lock("click"); Trace("open full"); OpenFull(); return; }   // a click, no drag: the full window
             SaveDrop(true);
         }
         // the drop's place: into the slot the drag started in (a game starting or ending mid-drag doesn't move it - L-3)
@@ -663,6 +676,7 @@ namespace AdeeboMeter
             string pos = WidgetPos.From(r, scr.WorkingArea, Draw.Base);
             if (dragGame) Cfg.WPosGame = pos == "" ? "br|0|0" : pos;   // dragged while gaming: the gaming corner
             else Cfg.WPos = pos;
+            Trace("drag saved " + (pos == "" ? "default" : pos) + " at " + r.X + " " + r.Y);
             SaveSettings(); drawnKey = ""; lastCover = DateTime.MinValue;
         }
         // the dashed outline: this widget can move now
@@ -702,7 +716,7 @@ namespace AdeeboMeter
                 if (moveOn || Fading) want = 50;
                 if (ui.Interval != want) ui.Interval = want;
                 if (dragFrom != null && !touchDrag && (Control.MouseButtons != MouseButtons.Left || (dragging && RePressed()))) { if (dragging) WidgetDrop(); else dragFrom = null; }   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here; a new press is a new click (L-3)
-                if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Lock(); } return; }   // the window follows the mouse by itself; drawn again on the drop
+                if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); } return; }   // the window follows the mouse by itself; drawn again on the drop
                 if (dragFrom != null) return;   // pressed, not moved yet: not drawn again, so the press point and the window agree (hunters13 L-2)
                 if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 800 : 2000) && !hovered)   // AM-CG-214; bug-hunt ML-146: the window walk every 0.8 s near the corner, not 0.4   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
@@ -774,6 +788,7 @@ namespace AdeeboMeter
             float keep = Draw.S; Draw.Use(Draw.Base);   // the corner widget is drawn at the screen's own scale - the window's zoom isn't for it
             try { RenderAt(s, compact); } finally { Draw.Use(keep); }
         }
+        string traceKey = "";
         void RenderAt(Snap s, bool compact)
         {
             var ws0 = WidgetScreen(); if (ws0 == null) return;   // L-49
@@ -784,6 +799,7 @@ namespace AdeeboMeter
                 if (moveOn) Outline(bmp);
                 var at = WidgetPos.At(wa, bmp.Width, bmp.Height, Draw.S);   // AM-CG-201: inside the work area
                 byte a0 = ghost ? (byte)0 : hovered ? (byte)255 : FADE; widget.Present(bmp, (byte)(a0 * FadeK), at.X, at.Y);
+                if (Program.WidgetTrace) { string tk = widget.Placed + "|" + compact + "|" + hovered + "|" + moveOn + "|" + covered + "|" + Corner.Effective; if (tk != traceKey) { traceKey = tk; var p = widget.Placed; Trace("rect " + p.X + " " + p.Y + " " + p.Width + " " + p.Height + " folded=" + compact + " open=" + hovered + " unlocked=" + moveOn + " covered=" + covered + " style=" + Corner.Effective + " alpha=" + a0 + " clickthrough=" + !widget.TakesClicks); } }
             }
             lastChip = Draw.ChipKey(s); lastLevel = s.Level;
             string sk = Draw.ChipSpeedKey(s), ok = Draw.ChipOtherKey(s);

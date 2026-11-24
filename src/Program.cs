@@ -142,6 +142,8 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--dark", StringComparison.OrdinalIgnoreCase))) ForceTheme = 1;
             if (args.Any(a => string.Equals(a, "--light", StringComparison.OrdinalIgnoreCase))) ForceTheme = 0;
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
+            WidgetTrace = args.Any(a => string.Equals(a, "--widget-trace", StringComparison.OrdinalIgnoreCase));   // the test script: move mode's steps to widget-trace.txt
+            int wg = Array.FindIndex(args, a => string.Equals(a, "--widget-gallery", StringComparison.OrdinalIgnoreCase)); if (wg >= 0 && wg + 1 < args.Length) return SelfTest.Gallery(args[wg + 1]);
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
             int ri = Array.FindIndex(args, a => string.Equals(a, "--report", StringComparison.OrdinalIgnoreCase));
             if (ri >= 0) { if (ri + 1 >= args.Length) return 4;   /* no file name: the report couldn't be made */ int si = Array.FindIndex(args, a => string.Equals(a, "--seconds", StringComparison.OrdinalIgnoreCase)), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
@@ -268,6 +270,7 @@ namespace AdeeboMeter
             d.SetData("CanUploadToCloudClipboard", new MemoryStream(new byte[4]));
             System.Windows.Forms.Clipboard.SetDataObject(d, false);
         }
+        public static bool WidgetTrace;
         public static void Log(string m)
         {
             try

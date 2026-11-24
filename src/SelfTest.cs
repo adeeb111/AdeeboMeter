@@ -61,6 +61,90 @@ namespace AdeeboMeter
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
         static double MemNow(Monitor M) { double m = M.Mem.Last; return double.IsNaN(m) && M.Latest != null ? M.Latest.Mem : m; }   // real-PC find: Latest.Mem can be empty while the series has it
         static double Busy(Monitor M) { try { double c = M.Cpu.Last, m = MemNow(M); return (!double.IsNaN(c) && c > 50) || (!double.IsNaN(m) && m > 85) ? 3 : 1; } catch (NullReferenceException) { return 1; } }
+        // --widget-gallery <folder> (the test script): every widget style, folded and open, in four network states and with the
+        // blue lines, light and dark, at 100% and 150% - one sheet per theme and scale, plus every size in a table. No window.
+        public static int Gallery(string dir)
+        {
+            try
+            {
+                Directory.CreateDirectory(dir);
+                Cfg.Mode = "pro"; Cfg.Buddy = false; Cfg.SportTeams = "TOR,Arsenal"; Cfg.Sports = true; Cfg.CapGB = 500;
+                var now = DateTime.UtcNow;
+                lock (Sports.k) Sports.Games = new List<Sports.Game> {
+                    new Sports.Game { Sport = "hockey", League = "NHL", Home = "TOR", Away = "MTL", HomeScore = "2", AwayScore = "1", State = "live", Detail = "P2 · 08:41", StartUtc = now.AddMinutes(-50) },
+                    new Sports.Game { Sport = "football", League = "Premier League", Home = "Arsenal", Away = "Chelsea", HomeScore = "3", AwayScore = "0", State = "done", Detail = "FT", StartUtc = now.AddHours(-5) },
+                    new Sports.Game { Sport = "hockey", League = "NHL", Home = "BOS", Away = "TOR", State = "soon", StartUtc = now.AddDays(1) },
+                    new Sports.Game { Sport = "football", League = "Premier League", Home = "Arsenal", Away = "Spurs", State = "off", Detail = "postponed", StartUtc = now.AddDays(2) } };
+                lock (MarketData.k)
+                {
+                    MarketData.Quotes["^GSPC"] = new MarketData.Quote { Sym = "^GSPC", Name = "S&P 500", Price = 6812.43, Pct = 0.42, When = now.AddMinutes(-20) };
+                    MarketData.Quotes["GCUSD"] = new MarketData.Quote { Sym = "GCUSD", Name = "Gold", Price = 2650.10, Pct = -0.04, When = now.AddDays(-3) };
+                    MarketData.Hist["^GSPC"] = new List<double> { 6790, 6801, 6795, 6808, 6812 };
+                }
+                Func<int, Snap> mk = lv =>
+                {
+                    if (lv < 0) return new Snap();   // checking
+                    var s = new Snap { Level = lv, Waiting = false, Down = 48.2, Up = 11.6, Ping = lv == 2 ? double.NaN : 18, GwMs = 3, DnsMs = lv == 1 ? 180 : 22, Jitter = 2.1, LossPct = lv == 2 ? 100 : 0, Cpu = 23, Mem = 61, Disk = 4,
+                        DownHist = Enumerable.Range(0, 60).Select(i => 20 + 30 * Math.Abs(Math.Sin(i / 6.0))).ToArray(), UpHist = Enumerable.Range(0, 60).Select(i => 5 + 8 * Math.Abs(Math.Cos(i / 7.0))).ToArray(),
+                        TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "AdeeboMeter", Cpu = 1 }, new AppStat { Name = "chrome", Cpu = 12 }, new AppStat { Name = "Teams", Cpu = 6 } } };
+                    s.Headline = lv == 0 ? L.T("All quiet") : lv == 1 ? "DNS is slow (180 ms); pages will be slow to start." : "The internet is down - your router answers, the internet doesn't.";
+                    s.Chip = lv == 0 ? "All quiet" : lv == 1 ? L.T("Busy") : L.T("Problem");
+                    s.Path = lv == 0 ? new[] { 0, 0, 0, 0, 0 } : lv == 1 ? new[] { 0, 0, 0, 1, 0 } : new[] { 0, 0, 2, 3, 2 };
+                    s.Hint = lv == 0 ? "" : lv == 1 ? "your DNS server answers slowly" : "your provider's side";
+                    return s;
+                };
+                var states = new[] { Tuple.Create("checking", -1, false), Tuple.Create("ok", 0, false), Tuple.Create("busy", 1, false), Tuple.Create("problem", 2, false), Tuple.Create("ok+lines", 0, true) };
+                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL\nYour team is playing - back to yours 5 min after the end\nKeep resting to move it, or hold Ctrl";
+                var styles = Corner.AllStyles.ToList(); styles.Add("recap");
+                var csv = new List<string> { "theme,scale,style,state,chip_w,chip_h,card_w,card_h" };
+                foreach (bool dark in new[] { false, true })
+                    foreach (float sc in new[] { 1.5f, 1f })
+                    {
+                        Program.ForceTheme = dark ? 1 : 0; Theme.Apply(dark); Draw.Init(sc); Draw.Use(sc); Draw.Base = sc;
+                        var cells = new List<Tuple<string, string, Bitmap, Bitmap>>();
+                        foreach (var st in styles)
+                            foreach (var stt in states)
+                            {
+                                Draw.WidgetHint = stt.Item3 ? lines : "";
+                                var s = mk(stt.Item2); Bitmap chip = null, card = null;
+                                try { chip = Draw.Preview(s, st, false); card = Draw.Preview(s, st, true); }
+                                catch (Exception e) { if (e is OutOfMemoryException) throw; csv.Add((dark ? "dark" : "light") + "," + sc + "," + st + "," + stt.Item1 + ",ERROR " + e.GetType().Name + " " + e.Message.Replace(",", ";")); continue; }
+                                csv.Add((dark ? "dark" : "light") + "," + sc.ToString(CultureInfo.InvariantCulture) + "," + st + "," + stt.Item1 + "," + chip.Width + "," + chip.Height + "," + card.Width + "," + card.Height);
+                                cells.Add(Tuple.Create(st, stt.Item1, chip, card));
+                            }
+                        Draw.WidgetHint = "";
+                        int colW = (int)cells.Max(c => Math.Max(c.Item3.Width, c.Item4.Width)) + 30, label = 150, head = 40, gap = 16;
+                        var rowH = styles.Select(st => cells.Where(c => c.Item1 == st).Select(c => c.Item3.Height + 8 + c.Item4.Height).DefaultIfEmpty(40).Max() + gap).ToList();
+                        using (var sheet = new Bitmap(label + colW * states.Length, head + rowH.Sum() + 10))
+                        using (var g = Graphics.FromImage(sheet))
+                        using (var f = new Font("Segoe UI", 11f, GraphicsUnit.Pixel))
+                        {
+                            // a desktop-ish backdrop, so the 30% fade and the card edges read as they will on screen
+                            g.Clear(dark ? Color.FromArgb(32, 36, 44) : Color.FromArgb(214, 222, 232));
+                            using (var tb = new SolidBrush(dark ? Color.White : Color.Black))
+                            {
+                                for (int i = 0; i < states.Length; i++) g.DrawString(states[i].Item1, f, tb, label + i * colW + 4, 12);
+                                int y = head;
+                                for (int r = 0; r < styles.Count; r++)
+                                {
+                                    g.DrawString(styles[r], f, tb, 6, y + 4);
+                                    for (int i = 0; i < states.Length; i++)
+                                    {
+                                        var c = cells.FirstOrDefault(z => z.Item1 == styles[r] && z.Item2 == states[i].Item1); if (c == null) continue;
+                                        g.DrawImage(c.Item3, label + i * colW + 4, y); g.DrawImage(c.Item4, label + i * colW + 4, y + c.Item3.Height + 8);
+                                    }
+                                    y += rowH[r];
+                                }
+                            }
+                            sheet.Save(Path.Combine(dir, "widgets-" + (dark ? "dark" : "light") + "-" + (sc == 1f ? "100" : "150") + ".png"), ImageFormat.Png);
+                        }
+                        foreach (var c in cells) { c.Item3.Dispose(); c.Item4.Dispose(); }
+                    }
+                File.WriteAllLines(Path.Combine(dir, "widget-sizes.csv"), csv);
+                return csv.Any(z => z.Contains("ERROR")) ? 1 : 0;
+            }
+            catch (Exception e) { try { File.WriteAllText(Path.Combine(dir, "gallery-error.txt"), e.ToString()); } catch (IOException) { } return 2; }
+        }
         public static int Perf()
         {
             var sb = new StringBuilder();
