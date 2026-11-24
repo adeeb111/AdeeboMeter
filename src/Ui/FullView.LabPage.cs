@@ -111,7 +111,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < starts.Length; i++)
                 {
                     var r = new RectangleF(x + (i % sc) * (sw + 14 * S), y + (i / sc) * (sh + 12 * S), sw, sh);
-                    bool big = i == 0; Theme.Fill(g, r, Kit.CardRad, big ? Kit.Soft("learn") : Theme.Card); Theme.Stroke(g, Kit.Edge(r), Kit.CardRad, big ? acc : Theme.Line, big ? 1.5f : 1);
+                    bool big = i == 0; Theme.Fill(g, r, Kit.CardR(Kit.CardRad), big ? Kit.Soft("learn") : Theme.Card); Theme.Stroke(g, Kit.Edge(r), Kit.CardR(Kit.CardRad), big ? acc : Theme.Line, big ? 1.5f : 1);
                     Glyphs.Tile(g, (string)starts[i][0], new RectangleF(r.X + 16 * S, r.Y + 22 * S, 42 * S, 42 * S), acc, 12 * S);
                     g.DrawString((string)starts[i][1], Draw.fName, ink, new RectangleF(r.X + 72 * S, r.Y + 16 * S, r.Width - 84 * S, 24 * S), nf);
                     g.DrawString((string)starts[i][2], Draw.fSmall, mut, new RectangleF(r.X + 72 * S, r.Y + 42 * S, r.Width - 84 * S, r.Bottom - (r.Y + 42 * S) - 4 * S));

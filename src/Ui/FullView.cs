@@ -195,7 +195,7 @@ namespace AdeeboMeter
                 if (search.Width != wanted) search.Width = wanted;
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
-            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += k => { if (k != null) tipArea = list.RectangleToScreen(Rectangle.Round(list.BadgeAt)); SetTipKey(k); };   /* review 24 Nov (ML-2): the state's ? explains TIME_WAIT and friends again - only the ?, never a plain hover */   // rows explain themselves on What's running; no card from a plain hover (24 Nov)
+            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += k => { if (k != null) tipArea = list.RectangleToScreen(Rectangle.Round(list.BadgeAt)); SetTipKey(k != null && !tipClosed.Contains(k) ? k : null); };   /* review 24 Nov (ML-2): the state's ? explains TIME_WAIT and friends again - only the ?, never a plain hover; a card closed with x stays closed here too (L-3) */   // rows explain themselves on What's running; no card from a plain hover (24 Nov)
             // the footer line is painted here (a Label still cut it to "26 sho…" on Windows, v8 walk): full width, "…" only at the end
             connStatus = new DB { Name = "connStatus", Dock = DockStyle.Bottom, Height = Sc(32), BackColor = Theme.Card };
             connStatus.Paint += delegate(object s, PaintEventArgs e)
@@ -998,7 +998,7 @@ namespace AdeeboMeter
                 {
                     var sg = segs[si]; string lt = sg.Item1, ln = sg.Item2.ToString(CultureInfo.CurrentCulture); var lsz = g.MeasureString(lt, Draw.fSmall); var nsz = g.MeasureString(ln, Draw.fSmall);
                     string more = "+" + (segs.Count - si) + " " + L.T("more"); float mw = si < segs.Count - 1 ? g.MeasureString(more, Draw.fSmall).Width + 8 * S : 0;
-                    if (lx + 12 * S + lsz.Width + 4 * S + nsz.Width + mw > x + w) { g.DrawString(more, Draw.fSmall, sub, lx, y); break; }   // review L-1: say what didn't fit
+                    if (lx + 12 * S + lsz.Width + 4 * S + nsz.Width + mw > x + w) { g.DrawString(more, Draw.fSmall, sub, Math.Min(lx, x + w - g.MeasureString(more, Draw.fSmall).Width), y); break; }   /* never past the edge (review 24 Nov L-8) */   // review L-1: say what didn't fit
                     using (var cb = new SolidBrush(sg.Item3)) g.FillEllipse(cb, lx, y + 5 * S, 8 * S, 8 * S);
                     g.DrawString(lt, Draw.fSmall, sub, lx + 12 * S, y); g.DrawString(ln, Draw.fSmall, ink, lx + 12 * S + lsz.Width + 4 * S, y);   // review L-1: a gap, not "chrome.exe12"
                     lx += 12 * S + lsz.Width + 4 * S + nsz.Width + 16 * S;

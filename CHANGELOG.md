@@ -43,6 +43,12 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - Hunt round 6, core: Wi-Fi roam/channel/signal notes at most every 5 minutes; a long slowdown no longer becomes "normal"; the router-latency jump detector starts from the network's best answers; networks told apart by Wi-Fi name when the router's hardware address can't be read (and what was learned moves over when it can); an internet that never answers says so instead of "All quiet"; game week stats weighted by real samples; Compare refuses runs with too few probes; two open games don't chop each other's sessions; an update that waits on your open dialog says so.
 - Shell, round 6: $(( )) with 010, 0x1F, 2#101, & | ^ ~ << >>, ?: and ++ / += ; 1>&2; ~user; honest exit codes (basename, dirname, mkdir, touch, stat, which, unset, local, grep); ls -t -S -r, wc -L, head/tail -c, uniq -f -s and an output file, read's backslashes and last line, ${v/pat/[&]}, */file globs, every tr class, xargs quotes, seq fractions and -w, sleep 1m 30, cd -, awk nextfile, printf %e %g %u %.*s, sort -k2,2 with GNU's tie-break.
 - Every build now checks for code hidden in comments, that the site's scripts parse and that the phone and PC agree; a release also runs the deep test.
+- Connections by app: who this PC talks to, grouped by app and PID in one bar above the list; the ? beside a state explains it.
+- The look, reviewed: Markets and Sports cards dark in a dark theme; pills, ticks and buttons readable in every theme (4.5:1 or better); Network story and the Gamer HUD as calm cards; one set of corners on the PC, the site and the phone; whole-pixel text, never under 12 px.
+- Weather: your own place-search and forecast servers, named in the privacy line; a bad server name is said, Cancel puts the old ones back.
+- First-run setup resumes at the same question if the window closed halfway.
+- Site and phone: the More menu carries How it works, Learn and Blog on narrow screens; the phone's privacy line is on Home too; the phone's Bengali is complete, and the measure buttons and pairing steps follow your language.
+- From a result on What's wrong?: open it as a script in AdeeboShell, or as your network in AdeeboLab.
 
 ## 1.1.5 (2026-11-17)
 

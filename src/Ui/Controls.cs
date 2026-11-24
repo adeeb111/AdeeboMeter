@@ -582,7 +582,7 @@ namespace AdeeboMeter
         static bool Journeyable(Conn c) { return c.State != "LISTEN" && ((!string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0) || (c.Proto.StartsWith("UDP", StringComparison.Ordinal) && c.LocalPort > 0)); }
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            int h = RowAt(e.Y); if (h != hover) { hover = h; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); }
+            int h = RowAt(e.Y); if (h != hover) { hover = h; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); Update(); }   /* paint now, so the new row's ? is there for KeyAt (review 24 Nov L-9) */
             string k = KeyAt(e.Location);
             Cursor = k != null ? Cursors.Help : h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : Cursors.Default;
             if (k != lastKey) { lastKey = k; if (HoverKey != null) HoverKey(k); }

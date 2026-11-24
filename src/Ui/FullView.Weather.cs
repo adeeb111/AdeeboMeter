@@ -99,9 +99,11 @@ namespace AdeeboMeter
                 list.MouseMove += delegate(object s, MouseEventArgs e) { int i = list.IndexFromPoint(e.Location); if (i != hot) { hot = i; list.Invalidate(); } };
                 list.MouseLeave += delegate { if (hot != -1) { hot = -1; list.Invalidate(); } };
                 list.SelectedIndexChanged += delegate { ok.Enabled = list.SelectedIndex >= 0 && list.SelectedIndex < found.Count; list.Invalidate(); };
-                list.DoubleClick += delegate { if (ok.Enabled) f.DialogResult = DialogResult.OK; };
-                list.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter && ok.Enabled) { e.SuppressKeyPress = true; f.DialogResult = DialogResult.OK; } };
-                ok.Click += delegate { if (ok.Enabled) f.DialogResult = DialogResult.OK; };
+                /* OK checks the servers first: a bad one is said, not silently dropped (review 24 Nov L-4) */
+                Action accept = delegate { if (!ok.Enabled) return; string bad = keepServers(); if (bad != "") { say(bad, true); return; } f.DialogResult = DialogResult.OK; };
+                list.DoubleClick += delegate { accept(); };
+                list.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter && ok.Enabled) { e.SuppressKeyPress = true; accept(); } };
+                ok.Click += delegate { accept(); };
                 no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
                 // AM-CG-167: laid out from what each piece needs (long translations, 150-200 % scaling) - nothing fixed-height
                 f.Controls.AddRange(new Control[] { title, hint, box, find, state, list, note, geoBox, apiBox, ok, no });

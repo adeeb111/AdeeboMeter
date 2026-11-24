@@ -29,6 +29,7 @@ namespace AdeeboMeter
             var f = Draw.fBody; var bf = Draw.fBtn; var bs = g.MeasureString(L.T(tip[2]) + "  ›", bf);
             float h = 48 * S; var r = new RectangleF(x, y, w, h);
             Color acc = paper ? Paper.Navy : Theme.BlueText;   // 24 Nov (v8): one calm blue, not the section's colour - the row is a hint, not an alarm
+            if (paper) { var n0 = acc; for (int i = 1; i <= 10 && Theme.Ratio(acc, Paper.DeskBg) < 4.5; i++) acc = Kit.Mix(n0, Paper.Ink, i * 0.1f); }   /* review 24 Nov L-10: the paper blue was 2.8:1 in dark */
             if (paper) { Theme.Fill(g, r, 6 * S, Paper.DeskBg); Theme.Stroke(g, r, 6 * S, Paper.Line, 1); }
             else { Theme.Fill(g, r, 12 * S, Theme.Card); Theme.Stroke(g, r, 12 * S, Theme.Line, 1); }   // a plain card; the icon carries the colour (24 Nov)
             var ir = new RectangleF(x + 14 * S, y + (h - 26 * S) / 2, 26 * S, 26 * S);

@@ -154,7 +154,7 @@ namespace AdeeboMeter
                 // tiles inside the card (a card in a card is one box too many): soft fill, the picked one blue
                 Theme.Fill(g, br, 12 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, br, 12 * S, Theme.Blue, 2);
                 Draw.LvDot(g, lv, br.X + 12 * S, br.Y + 15 * S, 9 * S, 9 * S);
-                using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(L.T(i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]), Draw.fSmall, mb, br.X + 27 * S, br.Y + 11 * S);
+                using (var mb = new SolidBrush(Theme.Sub)) using (var one = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T(i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]), Draw.fSmall, mb, new RectangleF(br.X + 27 * S, br.Y + 11 * S, Math.Max(10 * S, bw - 35 * S), 20 * S), one);   /* "…" in a narrow tile (review 24 Nov L-6) */
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 {
                     using (var ib = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(box[i][0], Draw.fBodyB, ib, new RectangleF(br.X + 12 * S, br.Y + 36 * S, bw - 20 * S, 22 * S), nowrap);

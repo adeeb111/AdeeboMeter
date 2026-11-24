@@ -37,7 +37,7 @@ namespace AdeeboMeter
         public static Color CardBg { get { return App && !Theme.HighContrast ? Theme.Card : Theme.HighContrast ? SystemColors.Window : Dark ? Soft : Color.White; } }
         // a colour used as a fill under text or a mark (pills, ticks, rank dots). In the app look the level colours are text
         // colours (pale in dark), so the fill is their tint and the text or mark is the colour itself; the blue stays solid.
-        public static Color FillOf(Color c) { return App && !Theme.HighContrast && c.ToArgb() != Theme.Blue.ToArgb() ? Color.FromArgb(Theme.Dark ? 64 : 36, c) : c; }
+        public static Color FillOf(Color c) { return App && !Theme.HighContrast && c.ToArgb() != Theme.Blue.ToArgb() ? Color.FromArgb(Theme.Dark ? 56 : 32, c) : c; }
         public static Color OnFill(Color c) { return App && !Theme.HighContrast && c.ToArgb() != Theme.Blue.ToArgb() ? c : Theme.HighContrast ? SystemColors.HighlightText : Color.White; }
         public static Color Up { get { return App && !Theme.HighContrast ? Theme.LvText(0) : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#7EE2A8") : C("#1E7A30"); } }
         public static Color Down { get { return App && !Theme.HighContrast ? Theme.LvText(2) : Theme.HighContrast ? SystemColors.WindowText : Dark ? C("#FFA198") : C("#B3261E"); } }

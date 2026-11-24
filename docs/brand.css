@@ -262,6 +262,9 @@ a{text-underline-offset:.18em}
 @media (max-width:460px){header.top .brand span{display:none}}   /* the More menu needs the room the wordmark took */
 /* review 24 Nov: the ghost button (Theory PDF) used --blue on its tint - 3.99:1 in dark; the darker-text blue is 5.1:1 */
 .btn.ghost{color:var(--blue-d)}
+/* review 24 Nov: the dark ghost sits on --blue-s #1E3E78, not #14233D - #9CB9FA (the PC's dark text blue) is 5.3:1 there */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.ghost{color:#9CB9FA}}
+:root[data-theme="dark"] .btn.ghost{color:#9CB9FA}
 /* the shared corner scale (base.css) */
 .box,.donate-box,.v3card,.v4card,.v5box,.v5l,.v5lcard,.v5t,.tile,.step,.stage,.scene,.sisp,.v4sig,.upd,.v5chips{border-radius:var(--r-lg)}
 .meter{border-radius:var(--r-xl)}

@@ -91,8 +91,8 @@ namespace AdeeboMeter
             var pr = new RectangleF(x + w - bw - pw - 10 * S, y - 2 * S, pw, box.Height + 4 * S); Theme.Fill(g, pr, 6 * S, Paper.DeskBg); Theme.Stroke(g, pr, 6 * S, Paper.Line, 1);
             var ps = g.MeasureString(L.T("Paste"), Draw.fBtn); using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Paste"), Draw.fBtn, ib, pr.X + (pr.Width - ps.Width) / 2, pr.Y + (pr.Height - ps.Height) / 2);
             Act(sportsCanvas, pr, delegate { try { if (Clipboard.ContainsText()) spLink.Text = Clipboard.GetText().Trim(); } catch (System.Runtime.InteropServices.ExternalException) { } });
-            var tr = new RectangleF(x + w - bw, y - 2 * S, bw, box.Height + 4 * S); Theme.Fill(g, tr, 6 * S, StreamCheck.Running ? Paper.Muted : Paper.Act);
-            string tt = StreamCheck.Running ? L.T("Testing...") : L.T("Test my stream"); var ts = g.MeasureString(tt, Draw.fBtn); using (var wb = new SolidBrush(Color.White)) g.DrawString(tt, Draw.fBtn, wb, tr.X + (tr.Width - ts.Width) / 2, tr.Y + (tr.Height - ts.Height) / 2);
+            var tr = new RectangleF(x + w - bw, y - 2 * S, bw, box.Height + 4 * S); if (StreamCheck.Running) { Theme.Fill(g, tr, 6 * S, Paper.Soft); Theme.Stroke(g, tr, 6 * S, Paper.Line, 1); } else Theme.Fill(g, tr, 6 * S, Paper.Act);   /* review 24 Nov L-5 */
+            string tt = StreamCheck.Running ? L.T("Testing...") : L.T("Test my stream"); var ts = g.MeasureString(tt, Draw.fBtn); using (var wb = new SolidBrush(StreamCheck.Running ? Paper.Muted : Paper.OnFill(Paper.Act))) g.DrawString(tt, Draw.fBtn, wb, tr.X + (tr.Width - ts.Width) / 2, tr.Y + (tr.Height - ts.Height) / 2);
             Act(sportsCanvas, tr, SpTest);
             return y + box.Height + 14 * S;
         }

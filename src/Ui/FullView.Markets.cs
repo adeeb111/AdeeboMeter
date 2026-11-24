@@ -612,7 +612,8 @@ namespace AdeeboMeter
             if (Cfg.TradeHost != "")
             {
                 string bt = L.T("Check my line now (20 s)"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(x + (lw - bs.Width - 36 * S) / 2, vr.Bottom - 58 * S, bs.Width + 36 * S, 42 * S);
-                Theme.Fill(g, br, 6 * S, LineCheck.Checking ? Paper.Muted : Paper.Act); MkText(g, bt, Draw.fBtn, Color.White, br.X + 18 * S, br.Y + (br.Height - bs.Height) / 2);
+                if (LineCheck.Checking) { Theme.Fill(g, br, 6 * S, Paper.Soft); Theme.Stroke(g, br, 6 * S, Paper.Line, 1); } else Theme.Fill(g, br, 6 * S, Paper.Act);   /* busy: a quiet box, not white on grey (review 24 Nov L-5) */
+                MkText(g, bt, Draw.fBtn, LineCheck.Checking ? Paper.Muted : Paper.OnFill(Paper.Act), br.X + 18 * S, br.Y + (br.Height - bs.Height) / 2);
                 Act(tradeCanvas, br, delegate { LineCheck.Check(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { tradeCanvas.Invalidate(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; } }); tradeCanvas.Invalidate(); });
             }
             float tx = x + lw + 16 * S, tw = w - lw - 16 * S; var tr = new RectangleF(tx, y, tw, h); Paper.Desk(g, tr);
