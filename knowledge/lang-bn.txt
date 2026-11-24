@@ -5151,3 +5151,6 @@ What I couldn't tell	যা বোঝা যায়নি
 Extra numbers for engineers	প্রকৌশলীদের জন্য বাড়তি সংখ্যা
 an example	একটি উদাহরণ
 done at	শেষ হয়েছে
+Where this PC talks to	এই পিসি কার সঙ্গে কথা বলছে
+connections from	সংযোগ,
+apps	অ্যাপ থেকে

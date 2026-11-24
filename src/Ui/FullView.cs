@@ -198,7 +198,11 @@ namespace AdeeboMeter
             list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += SetTipKey;
             connStatus = new OneLineLabel { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
-            connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips);
+            // 24 Nov (Connections mockup): who this PC talks to, by app - one bar on top of the list
+            connSum = new DB { Name = "connSum", Dock = DockStyle.Top, Height = Sc(96), BackColor = Theme.Card };
+            connSum.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintConnSum(e.Graphics); };
+            list.Changed += delegate { connSum.Invalidate(); };
+            connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips); connPage.Controls.Add(connSum);
             StyleChips();
 
             // Destination page
@@ -962,6 +966,34 @@ namespace AdeeboMeter
             try { foreach (var x in l.ToArray()) unchecked { h = h * 31 + x.N; h = h * 31 + (x.Ip ?? "").GetHashCode(); h = h * 31 + (int)x.Rtt; h = h * 31 + x.Sent; h = h * 31 + x.Lost; h = h * 31 + x.Mtu; h = h * 31 + (x.Reached ? 1 : 0); } }
             catch (ArgumentException) { return "busy"; }   // the tool thread was adding a hop just then: try again next tick
             return l.Count + ":" + h;
+        }
+        DB connSum;
+        void PaintConnSum(Graphics g)
+        {
+            float x = 16 * S, y = 12 * S, w = connSum.ClientSize.Width - 32 * S, h = connSum.ClientSize.Height - 18 * S;
+            var apps = list.ByApp(); int total = apps.Sum(a => a.Value);
+            Kit.Box(g, new RectangleF(x, y, w, h), 14 * S); x += 18 * S; w -= 36 * S; y += 12 * S;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
+            {
+                string t = L.T("Where this PC talks to"); var ts = g.MeasureString(t, Draw.fBodyB); g.DrawString(t, Draw.fBodyB, ink, x, y);
+                g.DrawString(total + " " + L.T("connections from") + " " + apps.Count + " " + L.T("apps"), Draw.fSmall, sub, x + ts.Width + 8 * S, y + 2 * S);
+                y += ts.Height + 8 * S;
+                if (total == 0) return;
+                // the five busiest apps by name, the rest as Other; each a segment of the bar and an entry under it
+                var top = apps.Take(5).ToList(); int rest = total - top.Sum(a => a.Value);
+                var segs = top.Select(a => Tuple.Create(a.Key, a.Value, ConnList.AppColor(a.Key))).ToList(); if (rest > 0) segs.Add(Tuple.Create(L.T("Other"), rest, Theme.Grey));
+                float bx = x;
+                foreach (var sg in segs) { float sw = Math.Max(4 * S, w * sg.Item2 / total - 3 * S); Theme.Fill(g, new RectangleF(bx, y, sw, 8 * S), 4 * S, sg.Item3); bx += sw + 3 * S; }
+                y += 16 * S; float lx = x;
+                foreach (var sg in segs)
+                {
+                    string lt = sg.Item1, ln = sg.Item2.ToString(CultureInfo.CurrentCulture); var lsz = g.MeasureString(lt, Draw.fSmall); var nsz = g.MeasureString(ln, Draw.fSmall);
+                    if (lx + lsz.Width + nsz.Width + 30 * S > x + w) break;
+                    using (var cb = new SolidBrush(sg.Item3)) g.FillEllipse(cb, lx, y + 5 * S, 8 * S, 8 * S);
+                    g.DrawString(lt, Draw.fSmall, sub, lx + 12 * S, y); g.DrawString(ln, Draw.fSmall, ink, lx + 12 * S + lsz.Width, y);
+                    lx += 12 * S + lsz.Width + nsz.Width + 16 * S;
+                }
+            }
         }
         static Point ScrollOf(Control c) { var sc = c as ScrollableControl; return sc != null && sc.AutoScroll ? sc.AutoScrollPosition : Point.Empty; }
         void Hint(Control c, RectangleF r, string key)

@@ -476,7 +476,9 @@ namespace AdeeboMeter
         }
 
         static readonly Color[] palette = { Theme.C("#0B7A75"), Theme.C("#C2410C"), Theme.C("#4F46E5"), Theme.C("#DC2626"), Theme.C("#2563EB"), Theme.C("#B91C1C"), Theme.C("#0369A1"), Theme.C("#15803D"), Theme.C("#A16207"), Theme.C("#7C3AED") };
-        static Color AppColor(string n) { int h = 0; foreach (char ch in n) h = unchecked(h * 31 + ch); return palette[(h & 0x7fffffff) % palette.Length]; }
+        // how many connections each app has right now (the summary bar above the list), busiest first
+        public List<KeyValuePair<string, int>> ByApp() { return view.Where(r => r.Gone == DateTime.MinValue).GroupBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).Select(gr => new KeyValuePair<string, int>(gr.Key, gr.Count())).OrderByDescending(kv => kv.Value).ToList(); }
+        public static Color AppColor(string n) { int h = 0; foreach (char ch in n) h = unchecked(h * 31 + ch); return palette[(h & 0x7fffffff) % palette.Length]; }
         static Color[] StateColors(string st)
         {
             switch (st)

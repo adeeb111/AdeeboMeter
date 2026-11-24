@@ -3869,3 +3869,6 @@ What I couldn't tell	Ce que je n’ai pas pu établir
 Extra numbers for engineers	Chiffres supplémentaires pour les ingénieurs
 an example	un exemple
 done at	terminé à
+Where this PC talks to	À qui ce PC parle
+connections from	connexions de
+apps	applis
