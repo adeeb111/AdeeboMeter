@@ -4990,7 +4990,7 @@ couldn't check	تعذّر فحصها
 nothing was changed - each fix opens the Windows screen where you change it.	لم يُغيَّر شيء - كل إصلاح يفتح شاشة Windows التي تغيّره منها.
 to fix	للإصلاح
 {0} things to fix on this PC.	{0} أمور تحتاج إلى إصلاح في هذا الحاسوب.
-{0} thing to fix on this PC.	أمر واحد يحتاج إلى إصلاح في هذا الحاسوب.
+{0} thing to fix on this PC.	{0} أمر يحتاج إلى إصلاح في هذا الحاسوب.
 What to do	ما العمل
 What I couldn't tell	ما لم أستطع تحديده
 Extra numbers for engineers	أرقام إضافية للمهندسين
