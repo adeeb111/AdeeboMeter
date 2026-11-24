@@ -32,10 +32,12 @@ header .amlogo{width:30px!important;height:30px!important}
 .card.face .tag2{color:#CFE0FF}
 .card.face .dial{display:block;width:78%;margin:6px auto -4px}
 .card.face .dial .tick{stroke:rgba(255,255,255,.35);stroke-width:2;stroke-linecap:round}
-.card.face .dial .needle{transform-origin:200px 190px;transform:rotate(var(--r,0deg));transition:transform .6s var(--ease-out)}
+.card.face .dial .needle{transform-origin:200px 190px;transform:rotate(var(--r,0deg));transition:transform .25s var(--ease-out)}
 .card.face .vh{font-size:28px;line-height:1.05;margin:6px 0 4px}
 .card.face>div[style*="color:var(--sub)"],.card.face .fine{color:#CFE0FF!important}
-.card.face .big3>div{background:rgba(255,255,255,.1);border:0}
+.card.face .big3{gap:0}
+.card.face .big3>div{background:none;border:0;border-radius:0;padding:2px 0}
+.card.face .big3>div+div{border-inline-start:1px solid rgba(255,255,255,.24)}
 .card.face .big3 small,.card.face .big3 b small{color:#CFE0FF}
 .card.face .btn{margin:16px 0 0;background:#fff!important;color:var(--face)!important;border-radius:14px}
 :root[data-theme="light"] .card.face{color:#fff}
@@ -99,3 +101,15 @@ input.search:focus{box-shadow:0 0 0 1px var(--blue),0 0 0 4px color-mix(in srgb,
 .sdial .lbl text{font-family:"Barlow SC","Barlow",sans-serif;font-weight:600;font-size:17px;fill:#CFE0FF}
 /* rows: a pressed row tints instead of shrinking the whole list */
 .row:active{transform:none;background:color-mix(in srgb,var(--blue) 8%,transparent)}
+
+/* ---- Simplify pass (Nov 23) ---- */
+/* Settings: language as a row, the picker sits where the chevron would */
+.card.langrow{display:flex;align-items:center;gap:12px}
+.card.langrow .tx{flex:1;min-width:0}.card.langrow .tx b{display:block;font-size:16px}.card.langrow .tx span{display:block;color:var(--sub);font-size:13px}
+.card.langrow .phone-locale select{font:inherit;font-size:15px;font-weight:500;color:var(--blue);background:transparent;border:1px solid var(--edge);border-radius:10px;padding:8px 10px;max-width:42vw}
+/* Companion: one setting per row, like Settings */
+#pickhere>div{display:grid!important;grid-template-columns:minmax(0,1fr);gap:0!important;font-size:16px!important;color:inherit!important}
+#pickhere label{min-width:0;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:52px;border-bottom:1px solid var(--edge)}
+#pickhere label:last-of-type{border-bottom:0}
+#pickhere select{min-width:0;max-width:60%!important;border:0!important;text-align:end;color:var(--blue)!important;font-weight:500!important;padding:6px 0!important;font-size:15px!important}
+#pickhere input{width:100%!important;margin:4px 0 8px;padding:10px 12px!important;font-size:15px!important}

@@ -76,7 +76,10 @@
     });
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       var key = node.dataset.i18n;
-      node.textContent = t(key);
+      var text = t(key);
+      // pages that draw their own arrow (class arr / arr-ext) drop the typed one
+      if (node.classList.contains("arr") || node.classList.contains("arr-ext")) text = text.replace(/\s*[›↗]\s*$/, "");
+      node.textContent = text;
       node.lang = t(key) === key ? "en" : root.lang;
       node.dir = "auto";
     });
@@ -99,6 +102,8 @@
       select.title = t("Language");
       select.value = choice;
       select.hidden = false;
+      var face = select.parentNode.querySelector(".lang-face b");
+      if (face) face.textContent = code.toUpperCase();
     });
   }
 
