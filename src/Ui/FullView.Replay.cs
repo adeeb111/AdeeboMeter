@@ -181,7 +181,7 @@ namespace AdeeboMeter
                 }
                 if (data == null || data.M.Count == 0)
                 {
-                    string t = replayLoading || (data == null && Cfg.History) ? "Reading that day..." : Cfg.History ? Voice.P("Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.", "No history for this day yet (one line is written per minute).") : Voice.P("History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.", "History is off. Enable it in Settings to replay past minutes.");
+                    string t = replayLoading || (data == null && Cfg.History) ? L.T("Reading that day...") : Cfg.History ? Voice.P("Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.", "No history for this day yet (one line is written per minute).") : Voice.P("History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.", "History is off. Enable it in Settings to replay past minutes.");
                     g.DrawString(t, Draw.fBody, muted, new RectangleF(x, y, w, 60 * S));
                     if (!replayLoading && !(data == null && Cfg.History))
                     {
@@ -281,12 +281,12 @@ namespace AdeeboMeter
                 // AM-CG-265: only what was measured is vouched for, and more than one cause can be named
                 bool known = !double.IsNaN(gw) && !double.IsNaN(net);
                 string also = pcLv >= 1 && (netLv == 1 || netLv == 2) ? " The internet was slow too (" + ms(net) + ")." : "";
-                string plain = lvAll == 0 && known ? "Everything measured was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": router " + ms(gw) + ", internet " + ms(net) + "."
-                    : lvAll == 0 ? "Nothing looked wrong at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " in what was measured - router " + ms(gw) + ", internet " + ms(net) + "."
+                string plain = lvAll == 0 && known ? string.Format(L.T("Everything measured was fine at {0}: router {1}, internet {2}."), at.ToString("HH:mm", CultureInfo.CurrentCulture), ms(gw), ms(net))
+                    : lvAll == 0 ? string.Format(L.T("Nothing looked wrong at {0} in what was measured - router {1}, internet {2}."), at.ToString("HH:mm", CultureInfo.CurrentCulture), ms(gw), ms(net))
                     : pcLv == 2 ? "Your PC was the busy one at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (" + (pd0 > 50 ? "the disk took " + pd0.ToString("0", CultureInfo.CurrentCulture) + " ms per request" : pf0 > 300 ? "memory was full" : "CPU " + cpu.ToString("0", CultureInfo.CurrentCulture) + "%") + ")" + (also != "" ? "." + also : " - it wasn't the network.")
                     : (lanLv == 1 || lanLv == 2) && (netLv == 3 || lanLv >= netLv) ? "The trouble at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " was close to you - the router took " + ms(gw) + (wifi >= 0 ? " with Wi-Fi at " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "") + "."
                     : netLv == 1 || netLv == 2 ? (lanLv == 0 ? "Your side was fine at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " (router " + ms(gw) + "); the internet" : "At " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " the internet") + " was slow or dropping (" + ms(net) + (double.IsNaN(loss) ? "" : ", " + loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost") + ")" + (lanLv == 3 ? " - the router wasn't measured then, so your side can't be cleared." : ".")
-                    : "Something needed attention at " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " - see what changed around then below.";
+                    : string.Format(L.T("Something needed attention at {0} - see what changed around then below."), at.ToString("HH:mm", CultureInfo.CurrentCulture));
                 if (replayGap >= 0) plain = "No recording at " + replayDay.Value.Date.AddSeconds(replayGap).ToString("HH:mm", CultureInfo.CurrentCulture) + " - AdeeboMeter wasn't running or history was off. The nearest reading, " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + plain;
                 // AM-CG-269: the hour the clocks go back happens twice - the second one says so
                 if (replayIdx < data.Off.Count && data.Off[replayIdx] != int.MinValue) { int oi = data.Off[replayIdx]; if (Enumerable.Range(0, replayIdx).Any(j => j < data.Off.Count && data.Off[j] != int.MinValue && data.Off[j] != oi && Math.Abs(data.M[j][0] - sec) < 60)) plain = "(" + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " for the second time - the clocks went back) " + plain; }
@@ -316,16 +316,16 @@ namespace AdeeboMeter
                 // the numbers, each with where it came from; compared with the rest of that day
                 g.DrawString(Kit.Sent(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 var rows = new List<object[]> {
-                    new object[] { "Router answered in", ms(gw) + (Cfg.Details && !double.IsNaN(gwMax) ? " (worst " + ms(gwMax) + ")" : ""), "m", replayMed[5], gw, " ms" },
-                    new object[] { "Internet answered in", ms(net) + (Cfg.Details && !double.IsNaN(netMax) ? " (worst " + ms(netMax) + ")" : ""), "m", replayMed[6], net, " ms" },
+                    new object[] { L.T("Router answered in"), ms(gw) + (Cfg.Details && !double.IsNaN(gwMax) ? " (worst " + ms(gwMax) + ")" : ""), "m", replayMed[5], gw, " ms" },
+                    new object[] { L.T("Internet answered in"), ms(net) + (Cfg.Details && !double.IsNaN(netMax) ? " (worst " + ms(netMax) + ")" : ""), "m", replayMed[6], net, " ms" },
                     new object[] { "Lost replies", double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "%", "m", replayMed[11], loss, "%" },
                     new object[] { "Wi-Fi signal", wifi >= 0 ? wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "not on Wi-Fi / hidden", wifi >= 0 ? "w" : "u", replayMed[7], wifi, "%" },
                     new object[] { "Your traffic", (double.IsNaN(down) ? "?" : down.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s down · " + (double.IsNaN(up) ? "?" : up.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s up", "w", double.NaN, double.NaN, "" },
                     new object[] { "Processor / memory", (double.IsNaN(cpu) ? "?" : cpu.ToString("0", CultureInfo.CurrentCulture)) + "% / " + (double.IsNaN(mem) ? "?" : mem.ToString("0", CultureInfo.CurrentCulture)) + "%", "w", replayMed[2], cpu, "%" } };
                 double pdisk = replayIdx < data.Pc.Count ? data.Pc[replayIdx][0] : double.NaN, pfault = replayIdx < data.Pc.Count ? data.Pc[replayIdx][1] : double.NaN;
                 if (!double.IsNaN(pdisk)) rows.Add(new object[] { "Disk latency", pdisk.ToString("0.0", CultureInfo.CurrentCulture) + " ms per request" + (pdisk > 15 ? " - slow" : ""), "w", double.NaN, double.NaN, "" });
-                if (!double.IsNaN(pfault)) rows.Add(new object[] { "Memory read back from disk", pfault.ToString("0", CultureInfo.CurrentCulture) + " pages/s" + (pfault > 60 ? " - memory was full" : ""), "w", double.NaN, double.NaN, "" });
-                if (Cfg.Details) { rows.Add(new object[] { "Wi-Fi link rate", double.IsNaN(rx) ? "-" : rx.ToString("0", CultureInfo.CurrentCulture) + " Mb/s", "w", replayMed[12], rx, " Mb/s" }); rows.Add(new object[] { "Data that minute", (double.IsNaN(mbD) ? "?" : mbD.ToString("0.0", CultureInfo.CurrentCulture)) + " MB down · " + (double.IsNaN(mbU) ? "?" : mbU.ToString("0.0", CultureInfo.CurrentCulture)) + " MB up", "w", double.NaN, double.NaN, "" }); }
+                if (!double.IsNaN(pfault)) rows.Add(new object[] { L.T("Memory read back from disk"), pfault.ToString("0", CultureInfo.CurrentCulture) + " pages/s" + (pfault > 60 ? " - memory was full" : ""), "w", double.NaN, double.NaN, "" });
+                if (Cfg.Details) { rows.Add(new object[] { L.T("Wi-Fi link rate"), double.IsNaN(rx) ? "-" : rx.ToString("0", CultureInfo.CurrentCulture) + " Mb/s", "w", replayMed[12], rx, " Mb/s" }); rows.Add(new object[] { L.T("Data that minute"), (double.IsNaN(mbD) ? "?" : mbD.ToString("0.0", CultureInfo.CurrentCulture)) + " MB down · " + (double.IsNaN(mbU) ? "?" : mbU.ToString("0.0", CultureInfo.CurrentCulture)) + " MB up", "w", double.NaN, double.NaN, "" }); }
                 float nameW = Math.Min(230 * S, w * 0.3f), cmpW = Math.Min(220 * S, w * 0.28f);
                 // the rows sit on a raised card
                 Kit.Box(g, new RectangleF(x, y, w, rows.Count * 30 * S + 12 * S)); float rx0 = x, rw0 = w; x += 16 * S; w -= 32 * S; y += 6 * S; int ri = 0;

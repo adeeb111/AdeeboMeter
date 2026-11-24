@@ -63,7 +63,7 @@ namespace AdeeboMeter
             }
             else
             {
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Cfg.History ? "Reading history..." : "Turn on history in Settings to see your week.", Draw.fBody, mb, x, y);
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Cfg.History ? "Reading history..." : L.T("Turn on history in Settings to see your week."), Draw.fBody, mb, x, y);
                 y += 30 * S;
             }
 
@@ -77,7 +77,7 @@ namespace AdeeboMeter
             foreach (var r in Usage.MonthByNetwork().Take(4)) rows.Add(new[] { "  " + Draw.Trunc(r[0], 26), Usage.Mb(Store.D(r[1])) + " down · " + Usage.Mb(Store.D(r[2])) + " up" });
             string normal = Baseline.Normal(Brain.NetKey);
             if (normal != "") rows.Add(new[] { "What's normal here", normal });
-            rows.Add(new[] { "Latency under load", Bloat.Story() });
+            rows.Add(new[] { L.T("Latency under load"), Bloat.Story() });
             y = InfoCard(g, "DATA USAGE AND WHAT'S NORMAL  ·  COUNTED ON THIS PC, NEVER SENT", rows, "hist.USAGE", x, y, w);
 
             // ---- after your calls (memory only)

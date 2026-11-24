@@ -5085,3 +5085,301 @@ Monitor, diagnose, automate, visualize, learn.	راقب، شخّص، أتمت، 
 Finish	إنهاء
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	أخذ Windows لوحة المفاتيح (Win أو Alt+Tab أو إشعار) - انقر هنا للمتابعة.
 Arabic text reads right to left.	النص العربي يُقرأ من اليمين إلى اليسار.
+Added as "My match" and watched from now on.	أُضيفت باسم «مباراتي» وستُراقَب من الآن.
+An app	تطبيق
+CPU is pegged ({0}%). {1} uses the most.	المعالج في أقصى طاقته ({0}%). {1} يستهلك أكثر من غيره.
+Capturing packets is turned off by your IT team (AdeeboMeter.policy).	أوقف فريق تقنية المعلومات التقاط الحزم (AdeeboMeter.policy).
+Checking the destination	جارٍ فحص الوجهة
+Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	انقر أي صف على اليسار. سأخبرك بما يفعله وكيف يعمل ولماذا هو موجود وما الذي سيحدث بدونه - وهل إغلاقه آمن.
+Collecting - one row a second while the session is open.	جارٍ الجمع - صف كل ثانية ما دامت الجلسة مفتوحة.
+Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	النقاط الملونة: أخضر = آمن للإغلاق، كهرماني = اتركه (لا بأس بإعادة تشغيله)، أحمر = يحتاجه Windows، بنفسجي = تديره تقنية المعلومات، رمادي = ليس في دليلي.
+Copy match report (internal addresses removed)	نسخ تقرير المباراة (دون العناوين الداخلية)
+Couldn't tell which server the match uses.	تعذّر معرفة الخادم الذي تستخدمه المباراة.
+Currencies, commodities and Canada's rates	العملات والسلع وأسعار الفائدة في كندا
+DNS is slow ({0} ms); pages will be slow to start.	DNS بطيء ({0} ms)؛ ستتأخر الصفحات في البدء.
+Data that minute	بيانات تلك الدقيقة
+Each Group in Detail	كل مجموعة بالتفصيل
+Energy and the Loonie	الطاقة والدولار الكندي
+Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.	Esc أو التصغير أو X أو «العودة إلى الزاوية» تعيدك إلى أداة الزاوية، التي تواصل المراقبة. للخروج، انقر بزر الماوس الأيمن على أيقونة شريط المهام واختر خروج.
+Every device on your network, grouped - with how fast each answers	كل جهاز على شبكتك، في مجموعات - مع سرعة استجابة كل منها
+Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.	كل برنامج على حاسوبك هو «عملية» أو أكثر - نسخة قيد التشغيل لها ذاكرتها الخاصة. Windows نفسه عشرات منها، لكل واحدة مهمة.
+Find my match server	ابحث عن خادم مباراتي
+Find my switch port	ابحث عن منفذ المحوّل الخاص بي
+Finding your match server...	جارٍ البحث عن خادم مباراتك...
+Five Commodity Groups, Side by Side	خمس مجموعات من السلع جنبًا إلى جنب
+Game pings are turned off by your IT team (AdeeboMeter.policy).	أوقف فريق تقنية المعلومات قياس ping للألعاب (AdeeboMeter.policy).
+Getting Valve's server list (one request to api.steampowered.com)...	جارٍ جلب قائمة خوادم Valve (طلب واحد إلى api.steampowered.com)...
+History is on - the first day appears here after a few minutes.	السجل مُفعَّل - يظهر اليوم الأول هنا بعد بضع دقائق.
+If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.	إن كان تطبيقًا فتحته أنت فإغلاقه آمن. إن لم تعرفه ولم يكن في Program Files أو مجلد Windows، فاسأل تقنية المعلومات قبل لمسه.
+Internet answered in	أجاب الإنترنت خلال
+Keep this capture	احتفظ بهذا الالتقاط
+Kept on this PC for 90 days; about 2 KB a stream	يُحفظ على هذا الحاسوب 90 يومًا؛ نحو 2 KB لكل بث
+Listing this program's connections	جارٍ سرد اتصالات هذا البرنامج
+Looking up where programs live	جارٍ البحث عن أماكن البرامج
+Marked - the 30 seconds around it are in the match summary.	تم التعليم - الثواني الـ 30 المحيطة موجودة في ملخص المباراة.
+Measured here, the usual setup there - where each one's way out goes	قيس هنا، والإعداد المعتاد هناك - إلى أين يخرج كل منها
+Memory is almost full ({0}%), so Windows keeps swapping programs to the disk - that's the slowness. {1} use the most.	الذاكرة شبه ممتلئة ({0}%)، لذا يظل Windows ينقل البرامج إلى القرص - وهذا سبب البطء. {1} هي الأكثر استهلاكًا.
+Memory read back from disk	ذاكرة أُعيدت قراءتها من القرص
+Needs Wireshark (tshark) and Npcap - not found on this PC.	يحتاج Wireshark (tshark) وNpcap - غير موجودين على هذا الحاسوب.
+Needs Wireshark and Npcap on this PC.	يحتاج Wireshark وNpcap على هذا الحاسوب.
+No Valve servers yet - press Refresh Valve list (one request to Valve).	لا توجد خوادم Valve بعد - اضغط «تحديث قائمة Valve» (طلب واحد إلى Valve).
+No servers yet - press Edit servers and add your server's address.	لا توجد خوادم بعد - اضغط «تعديل الخوادم» وأضف عنوان خادمك.
+No streams recorded yet	لم يُسجَّل أي بث بعد
+No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	لم يُعثر على لعبة مدعومة مثبتة على هذا الحاسوب. انقر أيًّا منها لمراقبة خوادمها على أي حال - لا يُرسل شيء إلى خوادم شركة ألعاب حتى تفعل.
+None - the internet answered every time AdeeboMeter checked.	لا شيء - أجاب الإنترنت في كل مرة تحقق فيها AdeeboMeter.
+None in Windows' table yet.	لا شيء في جدول Windows بعد.
+Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	ما لا نفعله عمدًا: تجربة كلمات المرور الافتراضية، أو البحث عنك في قواعد بيانات التسريبات (فذلك يرسل بياناتك إلى موقع ويب)، أو فحص أجهزة الآخرين، أو تغيير أي شيء نيابةً عنك.
+Off (Settings > Weather). Your PC's location is never used.	متوقف (الإعدادات > الطقس). لا يُستخدم موقع حاسوبك أبدًا.
+Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	حين تعرف من هو من، يكفّ مدير المهام عن إخافتك - وستعرف بالضبط ما تغلقه حين يتعب الحاسوب.
+Phone waiting room	غرفة انتظار الهاتف
+Pick a game to watch	اختر لعبة لمراقبتها
+Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	شغّل شيئًا - مباراة أو برنامجًا أو قناة مباشرة - لبضع دقائق. يصل السجل إلى هنا مع كل هبوط ومن المتسبب فيه.
+Prices per Barrel and Ounce	الأسعار لكل برميل وأونصة
+Rates and Prices in Canada	الأسعار والفوائد في كندا
+Reading that day...	جارٍ قراءة ذلك اليوم...
+Reading this program's details	جارٍ قراءة تفاصيل هذا البرنامج
+Refresh Valve list	تحديث قائمة Valve
+Router answered in	أجاب الموجّه خلال
+Running the health check	جارٍ إجراء الفحص الصحي
+Running the security checkup	جارٍ إجراء الفحص الأمني
+Same name, different lock	الاسم نفسه، قفل مختلف
+Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.	تم الحفظ؛ جارٍ الفتح في Wireshark. يُحذف عند الخروج - انقر «احتفظ بهذا الالتقاط» لحفظ نسخة.
+Scores and headlines	النتائج والعناوين
+See the packet journey	شاهد رحلة الحزمة
+Session started - press Mark lag whenever it feels wrong.	بدأت الجلسة - اضغط «تعليم التأخير» متى شعرت بخلل.
+The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card.	بطاقة المهندس تحتاج وضع Pro (عام > الوضع) - وحتى ذلك الحين تُعرض البطاقة اليومية.
+The file doesn't describe itself.	الملف لا يصف نفسه.
+The internet check is off in Settings, so outages can't be noticed.	فحص الإنترنت متوقف في الإعدادات، لذا لا يمكن ملاحظة الانقطاعات.
+The networks this PC hears, by channel - yours and the loud neighbours	الشبكات التي يلتقطها هذا الحاسوب، حسب القناة - شبكتك والجيران المزعجون
+The route your last trace or MTR took, hop by hop	المسار الذي سلكه آخر traceroute أو MTR، قفزة بقفزة
+The {0} is slow (gateway {1}). The PC is not the cause.	{0} بطيء (البوابة {1}). الحاسوب ليس السبب.
+Top by memory	الأعلى استهلاكًا للذاكرة
+Want to look back at yesterday? Turn on 7-day history in Settings  >	تريد النظر إلى الأمس؟ فعّل سجل 7 أيام في الإعدادات  >
+What goes through the tunnel and what goes straight out	ما يمر عبر النفق وما يخرج مباشرة
+Where it lives	أين يقيم
+Wi-Fi around you	شبكات Wi-Fi من حولك
+Wi-Fi link rate	معدل ارتباط Wi-Fi
+Wi-Fi signal is weak ({0}%). Move closer to the access point or use a cable.	إشارة Wi-Fi ضعيفة ({0}%). اقترب من نقطة الوصول أو استخدم كابلًا.
+You marked lag here	علّمت تأخيرًا هنا
+Your Line at Kick-off Time	خطك وقت انطلاق المباراة
+Your phone vs this PC	هاتفك مقابل هذا الحاسوب
+local network	الشبكة المحلية
+{0} MB (live capture on)	{0} MB (الالتقاط المباشر مُفعَّل)
+{0} MB of 80 MB budget	{0} MB من ميزانية 80 MB
+{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} متصل لكنه لم يحصل على عنوان من الموجّه (169.254.x.x - لم يستجب DHCP). أعد تشغيل الموجّه أو أعد الاتصال.
+Every network connection just dropped.	انقطعت كل اتصالات الشبكة للتو.
+All network connections dropped.	انقطعت كل اتصالات الشبكة.
+Lost the network - you're offline, boss.	فُقدت الشبكة - أنت غير متصل يا زعيم.
+Network connection lost.	فُقد اتصال الشبكة.
+VPN dropped.	سقطت الـ VPN.
+VPN disconnected.	انقطع اتصال VPN.
+Wi-Fi dropped.	سقط الـ Wi-Fi.
+Wi-Fi disconnected.	انقطع اتصال Wi-Fi.
+Wi-Fi hopped to another access point	قفز الـ Wi-Fi إلى نقطة وصول أخرى
+Wi-Fi roamed to another access point	انتقل الـ Wi-Fi إلى نقطة وصول أخرى
+Just woke up - waiting for Windows to join the network.	استيقظت للتو - بانتظار انضمام Windows إلى الشبكة.
+Starting - waiting for Windows to join the network.	جارٍ البدء - بانتظار انضمام Windows إلى الشبكة.
+You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.	لست متصلًا بأي شبكة يا زعيم - الـ Wi-Fi مطفأ أو الكابل مفصول أو وضع الطيران مُفعَّل.
+Not connected to any network (no Wi-Fi, no cable, or airplane mode).	غير متصل بأي شبكة (لا Wi-Fi ولا كابل، أو وضع الطيران).
+Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.	المكالمة بدأت تتأرجح (التذبذب {0}). إن تجمدت الوجوه فأطفئ الفيديو - سيصمد الصوت.
+Call quality dropping (jitter {0}). Turn video off if it stutters.	جودة المكالمة تتراجع (التذبذب {0}). أطفئ الفيديو إن تقطّع.
+The internet isn't answering at all - your router is fine, so it's the line or your provider.	الإنترنت لا يجيب إطلاقًا - موجّهك بخير، فالمشكلة في الخط أو لدى مزوّدك.
+The internet isn't answering (your router does) - the line or the provider.	الإنترنت لا يجيب (موجّهك يجيب) - الخط أو المزوّد.
+The internet's there but DNS lost the phone book - sites won't open by name.	الإنترنت موجود لكن DNS أضاع دليل الهاتف - لن تُفتح المواقع بأسمائها.
+DNS lookups are failing; sites won't open by name.	استعلامات DNS تفشل؛ لن تُفتح المواقع بأسمائها.
+Call looks smooth. Go impress them.	المكالمة سلسة. اذهب وأبهرهم.
+Call quality is good.	جودة المكالمة جيدة.
+Busy, but holding. Maybe don't open another big app just yet.	مشغول لكنه صامد. ربما لا تفتح تطبيقًا كبيرًا آخر الآن.
+Busy but fine. Avoid opening big apps for now.	مشغول لكنه بخير. تجنّب فتح تطبيقات كبيرة الآن.
+Network's a bit sleepy; your PC is fine.	الشبكة ناعسة قليلًا؛ حاسوبك بخير.
+Network a bit slow; your PC is fine.	الشبكة بطيئة قليلًا؛ حاسوبك بخير.
+All quiet. Nothing to fix - go get coffee.	كل شيء هادئ. لا شيء لإصلاحه - اذهب لتناول القهوة.
+All quiet.	كل شيء هادئ.
+Back to normal.	عاد كل شيء إلى طبيعته.
+Recovered.	تعافى.
+Needs you	يحتاجك
+Above 88% for 10 s and I start nagging.	فوق 88% لمدة 10 s وأبدأ بالإلحاح.
+Above 88% for 10 s turns AdeeboMeter red.	فوق 88% لمدة 10 s يتحول AdeeboMeter إلى الأحمر.
+No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.	لا يوجد أي اتصال بالشبكة يا زعيم. صِل كابلًا أو اختر شبكة Wi-Fi.
+Not connected.	غير متصل.
+You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.	أنت على 2.4 GHz، لكن شبكتك توفّر أيضًا نطاقًا أسرع. الاقتراب قليلًا يتيح لـ Windows التبديل عادةً.
+Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded.	شبكتك فيها أيضًا 5/6 GHz؛ ونطاق 2.4 GHz أبطأ وأكثر ازدحامًا.
+Windows gave itself a 169.254 address - nobody handed you a real one. The router's DHCP isn't answering.	أعطى Windows نفسه عنوان 169.254 - لم يعطك أحد عنوانًا حقيقيًا. DHCP في الموجّه لا يستجيب.
+No DHCP address (169.254.x.x).	لا يوجد عنوان DHCP (169.254.x.x).
+You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.	أنت متصل بالشبكة، لكن لا يوجد موجّه (بوابة) للوصول إلى ما وراءها. غالبًا فشل DHCP، أو الشبكة محلية فقط.
+Connected, but no default gateway.	متصل، لكن دون بوابة افتراضية.
+Your Wi-Fi is in great shape - strong signal, clean air, quick router.	شبكة Wi-Fi لديك في أفضل حال - إشارة قوية وهواء نظيف وموجّه سريع.
+Wi-Fi link looks healthy.	ارتباط Wi-Fi يبدو سليمًا.
+Cable, full speed, no errors. The steadiest link there is.	كابل، سرعة كاملة، لا أخطاء. أثبت ارتباط ممكن.
+Wired link looks healthy.	الارتباط السلكي يبدو سليمًا.
+Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.	يخفي Windows تفاصيل Wi-Fi حتى تسمح بالموقع لتطبيقات سطح المكتب (الإعدادات > الخصوصية والأمان > الموقع > السماح لتطبيقات سطح المكتب بالوصول إلى موقعك). مزعج، لكن هكذا يحمي Windows 11 مكانك.
+Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.	تفاصيل Wi-Fi تحتاج إذن الموقع: الإعدادات > الخصوصية والأمان > الموقع > السماح لتطبيقات سطح المكتب بالوصول إلى موقعك.
+Nothing to tweak - your Wi-Fi is set up well.	لا شيء لتعديله - شبكة Wi-Fi لديك مُعدّة جيدًا.
+No changes suggested.	لا تغييرات مقترحة.
+Live capture needs Wireshark (tshark) and Npcap - not on this PC.	الالتقاط المباشر يحتاج Wireshark (tshark) وNpcap - غير موجودين على هذا الحاسوب.
+Live capture needs Wireshark and Npcap.	الالتقاط المباشر يحتاج Wireshark وNpcap.
+Digging through the last few minutes and listening 15 s more...	جارٍ التنقيب في الدقائق الأخيرة والاستماع 15 s أخرى...
+Collecting history + 15 s...	جارٍ جمع السجل + 15 s...
+Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)	تم، مع السجل - جارٍ الفتح في Wireshark. (يُحذف عند خروج AdeeboMeter - انقر «احتفظ بهذا الالتقاط» لحفظ نسخة.)
+Saved with history; opening in Wireshark.	حُفظ مع السجل؛ جارٍ الفتح في Wireshark.
+On a public website that usually means your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	على موقع ويب عام، يعني هذا عادةً أن شركتك تفحص HTTPS. ليس عطلًا - لكن من المفيد معرفته حين يتصرف موقع بغرابة.
+On a public site this usually means HTTPS inspection by a company proxy.	على موقع عام، يعني هذا عادةً فحص HTTPS عبر وكيل الشركة.
+Your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	شركتك تفحص HTTPS. ليس عطلًا - لكن من المفيد معرفته حين يتصرف موقع بغرابة.
+Your company's web filter decrypts HTTPS to inspect it - common and expected at work.	مرشّح الويب في شركتك يفك تشفير HTTPS لفحصه - أمر شائع ومتوقع في العمل.
+Fresh enough.	حديث بما يكفي.
+Recently restarted.	أُعيد تشغيله مؤخرًا.
+Windows is waiting for a restart. Some network fixes only land after it.	ينتظر Windows إعادة تشغيل. بعض إصلاحات الشبكة لا تسري إلا بعدها.
+A restart is pending; some fixes apply only after it.	إعادة التشغيل معلّقة؛ بعض الإصلاحات لا تسري إلا بعدها.
+Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.	شبه ممتلئ - يتذمر Windows تحت 10%. أفرغ مجلد التنزيلات أو الالتقاطات القديمة.
+Nearly full; free some space.	شبه ممتلئ؛ حرّر بعض المساحة.
+The adapter itself is coughing. Try another cable or port, or update the driver.	المحوّل نفسه يسعل. جرّب كابلًا أو منفذًا آخر، أو حدّث برنامج التشغيل.
+Adapter errors: try another cable or port, or update the driver.	أخطاء المحوّل: جرّب كابلًا أو منفذًا آخر، أو حدّث برنامج التشغيل.
+Crowded or weak. Move closer, or switch band (5 GHz near the router, 2.4 GHz far away).	مزدحم أو ضعيف. اقترب أو بدّل النطاق (5 GHz قرب الموجّه، 2.4 GHz بعيدًا عنه).
+Crowded or weak channel; move closer or change band.	قناة مزدحمة أو ضعيفة؛ اقترب أو غيّر النطاق.
+Your channel is calm.	قناتك هادئة.
+Channel is clear.	القناة صافية.
+Battery saver is slowing things down on purpose. Plug in if it feels sluggish.	موفّر البطارية يبطئ الأمور عمدًا. صِل الشاحن إن شعرت بالبطء.
+Battery saver is on and throttles performance.	موفّر البطارية مُفعَّل ويحدّ من الأداء.
+Let's talk about it	لنتحدث عن الأمر
+How it started	كيف بدأ
+First sign	أول علامة
+The low point	أدنى نقطة
+Worst moment	أسوأ لحظة
+Healing	التعافي
+Recovery	الاستعادة
+The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.	لا يُظهر السجل تعافيًا واضحًا - هدأت الأمور فحسب. أحيانًا لا تأتي الخاتمة مع طابع زمني.
+No recovery recorded in this stretch.	لم يُسجَّل تعافٍ في هذه الفترة.
+This one was close to home: your Wi-Fi or router. It's not a character flaw. A cable, or moving closer to the router, is self-care.	كان هذا قريبًا من البيت: شبكة Wi-Fi أو الموجّه. ليس عيبًا في شخصيتك. الكابل، أو الاقتراب من الموجّه، عناية بالنفس.
+Most of it was your Wi-Fi or router. A cable or a better spot helps; Toolbox › Wi-Fi has the details.	معظمه من شبكة Wi-Fi أو الموجّه. الكابل أو مكان أفضل يساعد؛ صندوق الأدوات › Wi-Fi فيه التفاصيل.
+It was DNS. It's always DNS. Toolbox › DNS race finds you a calmer one.	كان DNS. دائمًا DNS. صندوق الأدوات › سباق DNS يجد لك واحدًا أهدأ.
+Most of it was DNS. Toolbox › DNS race compares servers.	معظمه من DNS. صندوق الأدوات › سباق DNS يقارن الخوادم.
+It was this PC, working too hard. Rest is productive. So is closing a few apps.	كان هذا الحاسوب، يعمل بجهد زائد. الراحة إنتاجية. وكذلك إغلاق بعض التطبيقات.
+Most of it was this PC being busy. The Apps tab shows what.	معظمه من انشغال هذا الحاسوب. تبويب التطبيقات يُظهر أيها.
+What we learned	ما تعلمناه
+Cause	السبب
+Honestly? Your connection's been good. You can send this, but it's more of a thank-you note.	بصراحة؟ اتصالك كان جيدًا. يمكنك إرسال هذا، لكنه أقرب إلى رسالة شكر.
+The connection has been good - there is little to complain about.	كان الاتصال جيدًا - لا يوجد ما يُشتكى منه تقريبًا.
+Give me a host, an IP or a URL first.	أعطني مضيفًا أو IP أو URL أولًا.
+Type a host, IP or URL.	اكتب مضيفًا أو IP أو URL.
+That doesn't look like a host, an IP or a URL, boss.	هذا لا يبدو مضيفًا ولا IP ولا URL يا زعيم.
+That is not a valid host, IP or URL.	هذا ليس مضيفًا أو IP أو URL صالحًا.
+One more thing - checking whether a Wi-Fi sign-in page is in the way...	أمر آخر - جارٍ التحقق مما إذا كانت صفحة تسجيل دخول Wi-Fi تعترض الطريق...
+Checking for a captive portal (sign-in page)...	جارٍ البحث عن بوابة مقيّدة (صفحة تسجيل دخول)...
+Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?	لا أجد عنوانه حتى يا زعيم - يقول خادم DNS إن هذا الاسم غير موجود. خطأ إملائي، أم اسم داخلي يحتاج الـ VPN؟
+DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.	يقول DNS إن الاسم غير موجود. تحقق من الإملاء، أو اتصل بالـ VPN للأسماء الداخلية.
+Port's shut - tracing the path to see who shut it...	المنفذ مغلق - جارٍ تتبّع المسار لمعرفة من أغلقه...
+Tracing the path...	جارٍ تتبّع المسار...
+Reading the router names along the way...	جارٍ قراءة أسماء الموجّهات على الطريق...
+Naming the hops...	جارٍ تسمية القفزات...
+TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.	يتصل TCP، ثم TLS... يتوقف. شيء في المنتصف يحتجز المصافحة - وكيل أو جدار حماية أو مشكلة MTU.
+TLS handshake stalls after TCP connects (proxy, firewall or MTU).	تتعثر مصافحة TLS بعد اتصال TCP (وكيل أو جدار حماية أو MTU).
+Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).	يصل إلى الباب لكن الحارس لا يسمح بالدخول: Windows لا يثق بالشهادة (غالبًا وكيل فحص).
+TLS works but the certificate is not trusted by Windows (often an inspection proxy).	TLS يعمل لكن Windows لا يثق بالشهادة (غالبًا وكيل فحص).
+TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.	TCP بخير، لكن الخادم يرفض TLS 1.2 أو أحدث - إنه عالق في الماضي (TLS 1.0 / 1.1). المشكلة لدى الخادم.
+TLS handshake failed: the server likely supports only TLS 1.0/1.1.	فشلت مصافحة TLS: الخادم يدعم على الأرجح TLS 1.0/1.1 فقط.
+TCP is fine, TLS fails. The two sides can't agree on how to talk securely.	TCP بخير، وTLS يفشل. الطرفان لا يتفقان على طريقة للتحدث بأمان.
+TLS handshake failed.	فشلت مصافحة TLS.
+Asking Windows about your connection...	جارٍ سؤال Windows عن اتصالك...
+Reading...	جارٍ القراءة...
+Not a single drop. Rock solid.	ولا انقطاع واحد. ثابت كالصخر.
+No drops in 24 h.	لا انقطاعات خلال 24 h.
+Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.	الكابل هو المعيار الذهبي: لا تداخل ولا تجوال ولا جيران. إن ظلت المكالمات تتقطع فالمشكلة أبعد - افحص وجهة.
+Wired links have no radio interference; look further along the path if problems persist.	الارتباطات السلكية بلا تداخل لاسلكي؛ ابحث أبعد على المسار إن استمرت المشكلات.
+Click anything for the plain-English story. I only explain - I never close anything.	انقر أي شيء لشرح بلغة بسيطة. أنا أشرح فقط - لا أغلق شيئًا أبدًا.
+Click a process for its explanation. AdeeboMeter never closes processes.	انقر عملية لرؤية شرحها. AdeeboMeter لا يغلق العمليات أبدًا.
+Not in my guide - here's what Windows knows.	ليس في دليلي - هذا ما يعرفه Windows.
+Not in AdeeboMeter's guide.	ليس في دليل AdeeboMeter.
+Rewinding the tape...	جارٍ إرجاع الشريط...
+Collecting...	جارٍ الجمع...
+Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.	هل التخزين المؤقت منك، أم من Wi-Fi، أم من مزوّدك - أم من البث؟ حين يُشغَّل شيء، في تطبيق أو متصفح، ألاحظه وأراقبه.
+Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.	جودة البث: من تسبب في كل هبوط. تُعرف البثوث بأسماء خوادمها - لا تُقرأ التبويبات والعناوين أبدًا.
+Click a row for the full story.	انقر صفًا للقصة الكاملة.
+Click a row for details.	انقر صفًا للتفاصيل.
+Give me a host, an IP or a URL and press Check. Nothing runs until you do.	أعطني مضيفًا أو IP أو URL واضغط «افحص». لا شيء يعمل حتى تفعل.
+Type a host, IP or URL and press Check.	اكتب مضيفًا أو IP أو URL واضغط «افحص».
+Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...	جارٍ المرور على DNS والمسار وping وTCP وTLS وHTTP وMTU والطريق...
+Poking around...	جارٍ التنقيب...
+Running...	قيد التشغيل...
+Nothing has changed yet. Boring is good.	لم يتغير شيء بعد. الملل علامة جيدة.
+No changes recorded yet.	لم تُسجَّل تغييرات بعد.
+Warming up tshark...	جارٍ تجهيز tshark...
+No call running. Start a Teams call and I'll grade it live.	لا مكالمة جارية. ابدأ مكالمة Teams وسأقيّمها مباشرة.
+No call media seen yet.	لم تُرصد وسائط مكالمة بعد.
+Quiet out there.	الهدوء يعمّ الخارج.
+No traffic yet.	لا حركة بيانات بعد.
+Called it.	قلتها لك.
+The guardian steps aside.	الحارس يتنحّى جانبًا.
+Ouch - a heart lost. Try again.	آخ - خسرت قلبًا. حاول مجددًا.
+Not right - one heart lost.	غير صحيح - خسرت قلبًا.
+Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.	لم يُسجَّل شيء لهذا اليوم بعد - يكتب السجل سطرًا كل دقيقة، فامنحه بضع دقائق.
+No history for this day yet (one line is written per minute).	لا يوجد سجل لهذا اليوم بعد (يُكتب سطر كل دقيقة).
+History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.	السجل متوقف، فلا يوجد ما يُعاد تشغيله. فعّله في الإعدادات - يبقى على هذا الحاسوب ويحذف نفسه بعد عدد الأيام الذي تختاره.
+History is off. Enable it in Settings to replay past minutes.	السجل متوقف. فعّله في الإعدادات لإعادة تشغيل الدقائق الماضية.
+✨ New device!	✨ جهاز جديد!
+New device	جهاز جديد
+🦘 Wi-Fi hop!	🦘 قفزة Wi-Fi!
+Wi-Fi roamed	تجوال Wi-Fi
+Nothing changed around then. Quiet minute.	لم يتغير شيء في ذلك الوقت. دقيقة هادئة.
+No changes within 15 minutes.	لا تغييرات خلال 15 دقيقة.
+Reading the process list...	جارٍ قراءة قائمة العمليات...
+Meet the crew running your PC.	تعرّف على الفريق الذي يشغّل حاسوبك.
+What's running on this PC	ما يعمل على هذا الحاسوب
+Nothing matches. Either the filter's too picky or it's really quiet out there.	لا شيء يطابق. إما أن المرشّح صارم جدًا أو أن الهدوء حقيقي.
+No connections match.	لا اتصالات مطابقة.
+What's wrong? (I can't name it)	ما المشكلة؟ (لا أستطيع تسميتها)
+Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken. Only what's stale is re-tested: a few pings (1.1.1.1 if needed), one DNS question and Windows' own connectivity test page - only when you press it.	يمر طبقة طبقة - هذا الحاسوب، الارتباط، موجّهك، الإنترنت، الأسماء، طريق الدخول - ويتوقف عند أول طبقة معطلة. لا يُعاد اختبار إلا ما هو قديم: بضعة pings (‏1.1.1.1 عند الحاجة)، وسؤال DNS واحد، وصفحة اختبار الاتصال الخاصة بـ Windows - فقط حين تضغط.
+Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS.	يجد أين يبدأ التأخير: حاسوبك أو Wi-Fi أو موجّهك أو مزوّدك أو DNS.
+Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails.	يمر على الاسم والمسار والباب (TCP) والقفل (TLS) والإجابة (HTTP) ليجد أول خطوة تفشل.
+Calls freeze or sound robotic	المكالمات تتجمد أو يبدو الصوت آليًا
+Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about.	يفحص التذبذب والفقد والرفع وموجّهك تحت الحمل وWi-Fi والـ VPN - ما يهم المكالمات.
+I keep disconnecting	ينقطع اتصالي باستمرار
+Reads today's drops, roams and changes and what the signal was doing just before.	يقرأ انقطاعات اليوم وتنقلاته وتغييراته، وما كانت تفعله الإشارة قبلها مباشرة.
+Works at home, not on VPN or at work	يعمل في البيت، لا على الـ VPN ولا في العمل
+Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself.	الشبكات المتداخلة والوكيل وقواعد الأسماء في الـ VPN وقيمة MTU على الطريق والمنفذ نفسه.
+Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	المعالج وضغط الذاكرة والقرص والحرارة وبرامج التشغيل والتطبيقات المتجمدة والمهام الخلفية - بهذا الترتيب.
+Network (SSID)	الشبكة (SSID)
+Access point (BSSID)	نقطة الوصول (BSSID)
+Band	النطاق
+Channel	القناة
+Standard	المعيار
+Signal	الإشارة
+Receive rate	معدل الاستقبال
+Transmit rate	معدل الإرسال
+Sharing your channel	من يشاركك القناة
+Air time used	وقت البث المستخدم
+Channel width	عرض القناة
+Roaming help	مساعدة التجوال
+Adapter	المحوّل
+Link speed	سرعة الارتباط
+IPv4 address	عنوان IPv4
+IPv6	IPv6
+Gateway (router)	البوابة (الموجّه)
+DNS servers	خوادم DNS
+Address from	العنوان من
+Packet size (MTU)	حجم الحزمة (MTU)
+Hardware address (MAC)	العنوان الفعلي (MAC)
+Received	المستلَم
+Sent	المرسَل
+Damaged packets (errors)	حزم تالفة (أخطاء)
+Dropped packets (discards)	حزم مُسقطة (مهملة)
+Driver	برنامج التشغيل
+Router answers in	يجيب الموجّه خلال
+Everything measured was fine at {0}: router {1}, internet {2}.	كل ما قيس كان بخير عند {0}: الموجّه {1}، الإنترنت {2}.
+Latency under load	زمن الاستجابة تحت الحمل
+Nothing looked wrong at {0} in what was measured - router {1}, internet {2}.	لم يبدُ شيء خاطئًا عند {0} فيما قيس - الموجّه {1}، الإنترنت {2}.
+Something needed attention at {0} - see what changed around then below.	كان هناك ما يحتاج انتباهًا عند {0} - انظر أدناه ما تغير حول ذلك الوقت.
+Turn on history in Settings to see your week.	فعّل السجل في الإعدادات لرؤية أسبوعك.
+My Teams	فِرَقي
+Live Scores	النتائج المباشرة
+Fixtures	المواعيد
+Headlines	العناوين
+Stream Check	فحص البث
+World Markets	الأسواق العالمية
+Currencies	العملات
+Commodities	السلع
+Line Check	فحص الخط
+Casual Investor	المستثمر العابر
+Windows core	نواة Windows
+Company / IT tools	أدوات الشركة / تقنية المعلومات
+Windows helpers	مساعدات Windows
+Who carries it	من يحمله

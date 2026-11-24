@@ -63,7 +63,7 @@ namespace AdeeboMeter
                 string head = !Cfg.Streams ? L.T("Streaming is switched off.") : ns0 != null ? L.T("Playing now") + ": " + ns0.What : L.T("Nothing is playing right now.");
                 string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
                 if (!Cfg.Streams) lead = L.T("Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.");   /* v8: said once, in the top card */
-                string tb = L.T(!Cfg.Streams ? "Turn it on" : SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBtn);
+                string tb = L.T(!Cfg.Streams ? L.T("Turn it on") : SpeedTest.Busy ? "Testing..." : L.T("Can I stream 4K right now?")); var tbs = g.MeasureString(tb, Draw.fBtn);
                 float cardH = 0;
                 {
                     var tbr0 = new RectangleF(0, 0, tbs.Width + 28 * S, 38 * S); float tw = Math.Max(120 * S, w - 40 * S - tbr0.Width - 16 * S);   /* review L-13: never a negative width */
@@ -130,11 +130,11 @@ namespace AdeeboMeter
                     y += 22 * S;
                     y = PaintStreamPatterns(g, all, x, y, w);
                 }
-                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", "No streams recorded yet", "Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.", StreamPoints);
+                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", L.T("No streams recorded yet"), L.T("Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was."), StreamPoints);
             }
             Need(streamCanvas, y + 10 * S);
         }
-        static readonly string[] StreamPoints = { "YouTube, Netflix, Prime Video, Hulu, Disney+, Max, Twitch, Crunchyroll, Hotstar, DAZN and more - in an app or a browser", "IPTV and network video in VLC, Kodi and other players", "Kept on this PC for 90 days; about 2 KB a stream" };
+        static readonly string[] StreamPoints = { "YouTube, Netflix, Prime Video, Hulu, Disney+, Max, Twitch, Crunchyroll, Hotstar, DAZN and more - in an app or a browser", "IPTV and network video in VLC, Kodi and other players", L.T("Kept on this PC for 90 days; about 2 KB a stream") };
 
         float PaintStreamNow(Graphics g, float x, float y, float w)
         {
@@ -352,7 +352,7 @@ namespace AdeeboMeter
                 var or = new RectangleF(x, y, w, 44 * S); Theme.Fill(g, or, 12 * S, Kit.Soft("stream"));
                 using (var ob = new SolidBrush(Kit.Ink("stream"))) g.DrawString(L.T("In one line: ") + one, Draw.fBody, ob, new RectangleF(or.X + 16 * S, or.Y + 12 * S, w - 32 * S, 24 * S));
                 y = or.Bottom + 14 * S;
-                string ct = L.T((DateTime.Now - streamCopied).TotalSeconds < 3 ? "Copied" : "Copy for my provider"); var cs = g.MeasureString(ct, Draw.fBodyB);
+                string ct = L.T((DateTime.Now - streamCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for my provider")); var cs = g.MeasureString(ct, Draw.fBodyB);
                 var cr = new RectangleF(x, y, cs.Width + 30 * S, 34 * S); Theme.Fill(g, cr, 17 * S, Theme.Soft); g.DrawString(ct, Draw.fBodyB, ink, cr.X + 15 * S, cr.Y + (34 * S - cs.Height) / 2);
                 var rec = s; Act(streamCanvas, cr, delegate { try { Clipboard.SetText(RecordText(rec)); streamCopied = DateTime.Now; } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } streamCanvas.Invalidate(); });
                 // the lesson that fits what went wrong most, right where it's needed

@@ -23,8 +23,8 @@ namespace AdeeboMeter
         {
             securityPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var bar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(0, Sc(64)), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), Sc(8), Sc(6)), WrapContents = true };
-            secRun = new PillButton("Run security checkup", PillButton.K.Primary); secRun.Click += delegate { if (secBusy) secStop = true; else SecRun(null); };
-            secSite = new RoundBox(Sc(320), Draw.fInput, "Your website or mail domain (optional)") { Margin = new Padding(Sc(10), 0, 0, 0) };
+            secRun = new PillButton(L.T("Run security checkup"), PillButton.K.Primary); secRun.Click += delegate { if (secBusy) secStop = true; else SecRun(null); };
+            secSite = new RoundBox(Sc(320), Draw.fInput, L.T("Your website or mail domain (optional)")) { Margin = new Padding(Sc(10), 0, 0, 0) };
             secSite.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; if (!secBusy) SecRun(null); } };
             bar.Controls.Add(secRun); bar.Controls.Add(secSite);
             secCanvas = new DB { Name = "secCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
@@ -46,7 +46,7 @@ namespace AdeeboMeter
             if (only == null) { lock (secRes) secRes.Clear(); Program.Log("security checkup started"); }
             secCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Running the security checkup"); try { 
+            { var __bz = Busy.Begin(L.T("Running the security checkup")); try { 
                 foreach (var c in list)
                 {
                     if (secStop) break; secNow = c.Title;
@@ -187,7 +187,7 @@ namespace AdeeboMeter
                         }
                     y += 16 * S;
                 }
-                string foot = "Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.";
+                string foot = L.T("Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.");
                 var fh = Draw.Measure(foot, Draw.fSmall, (int)w).Height; g.DrawString(foot, Draw.fSmall, muted, new RectangleF(x, y, w, fh + 4)); y += fh + 10 * S;
             }
             Need(secCanvas, y);

@@ -80,18 +80,18 @@ namespace AdeeboMeter
         void GoGuide(string id) { tab = "guide"; ShowTab(); if (id != null) StartGuide(id, false); }
         // the symptoms people notice: { where it goes, what they see, a few words more }
         static readonly string[][] Symptoms = {
-            new[] { "guide:whats", "I have no internet", "nothing opens - works even when you can't google it" },
-            new[] { "case:slow", "My internet is slow", "pages take ages" },
-            new[] { "case:drops", "Internet stops and starts", "works, then doesn't, then works" },
-            new[] { "case:buffer", "Videos keep buffering", "YouTube, Netflix stop and spin" },
-            new[] { "link", "Can't find my Wi-Fi", "the network isn't in the list" },
-            new[] { "case:site", "Only one website is broken", "everything else works" },
-            new[] { "case:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
-            new[] { "case:game", "My game lags", "ping spikes, rubber-banding" },
-            new[] { "case:pc", "Computer feels slow", "everything takes a long time" },
-            new[] { "tool:tidy", "Running out of space", "the disk is full, Windows nags" },
-            new[] { "guide:pc", "Fan is loud or it's hot", "something is working hard" },
-            new[] { "changes", "It was fine yesterday", "what changed since then?" } };
+            new[] { "guide:whats", L.T("I have no internet"), "nothing opens - works even when you can't google it" },
+            new[] { "case:slow", L.T("My internet is slow"), "pages take ages" },
+            new[] { "case:drops", L.T("Internet stops and starts"), "works, then doesn't, then works" },
+            new[] { "case:buffer", L.T("Videos keep buffering"), "YouTube, Netflix stop and spin" },
+            new[] { "link", L.T("Can't find my Wi-Fi"), "the network isn't in the list" },
+            new[] { "case:site", L.T("Only one website is broken"), "everything else works" },
+            new[] { "case:calls", L.T("Calls are choppy"), L.T("Teams, Zoom, WhatsApp cut out") },
+            new[] { "case:game", L.T("My game lags"), "ping spikes, rubber-banding" },
+            new[] { "case:pc", L.T("Computer feels slow"), "everything takes a long time" },
+            new[] { "tool:tidy", L.T("Running out of space"), "the disk is full, Windows nags" },
+            new[] { "guide:pc", L.T("Fan is loud or it's hot"), "something is working hard" },
+            new[] { "changes", L.T("It was fine yesterday"), "what changed since then?" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
         // Whole words only ("work" never matches "working"); a word of 6+ letters also matches what starts with it
         // ("disconnect" -> "disconnecting"). What's wrong (a symptom) beats where it happens ("at work", "work laptop"): the
@@ -286,8 +286,8 @@ namespace AdeeboMeter
                 {
                     g.DrawString(Kit.Sent(L.T("HOW WOULD YOU LIKE ADEEBOMETER?")), Draw.fTiny, muted, x, y); y += 22 * S;
                     var opts = new[] {
-                        new[] { "simple", "Simple", "Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone." },
-                        new[] { "pro", "Pro", "All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn." } };
+                        new[] { "simple", "Simple", L.T("Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.") },
+                        new[] { "pro", "Pro", L.T("All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.") } };
                     float ow = (w - 12 * S) / 2, oh = 84 * S;
                     for (int i = 0; i < 2; i++)
                     {

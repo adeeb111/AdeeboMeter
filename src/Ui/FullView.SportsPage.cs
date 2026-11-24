@@ -48,7 +48,7 @@ namespace AdeeboMeter
         {
             if (Cfg.Sports && !Policy.NoOnline) return true;
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, "Scores and headlines", null);
+            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, L.T("Scores and headlines"), null);
             using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most."), Paper.Body, ib, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
             if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(sportsCanvas, br, delegate { Cfg.Sports = true; Cfg.Save(); sportsCanvas.Invalidate(); }); }
             return false;
@@ -240,7 +240,7 @@ namespace AdeeboMeter
         float SpSlotDesk(Graphics g, float x, float y, float w, DateTime ko)
         {
             var r = new RectangleF(x, y, w, 250 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Your Line at Kick-off Time", ko.ToString("dddd h tt", CultureInfo.CurrentCulture) + " · " + L.T("last 6 weeks"));
+            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Your Line at Kick-off Time"), ko.ToString("dddd h tt", CultureInfo.CurrentCulture) + " · " + L.T("last 6 weeks"));
             var slots = Cfg.History ? LineHours.SameSlot(ko, 2) : null;
             if (!Cfg.History) { using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it."), Paper.Body, ib, new RectangleF(x + 16 * S, y + 60 * S, w - 32 * S, 60 * S)); return r.Bottom + 16 * S; }
             if (slots == null) { MkSpText(g, L.T("Reading your history..."), Paper.Body, Paper.Muted, x + 16 * S, y + 60 * S); return r.Bottom + 16 * S; }

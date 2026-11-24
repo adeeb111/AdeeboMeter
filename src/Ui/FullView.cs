@@ -100,7 +100,7 @@ namespace AdeeboMeter
             settingsBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
             aboutBtn = new PillButton("About", PillButton.K.Chip);
             aboutBtn.Click += delegate { tab = tab == "about" ? lastPage : "about"; ShowTab(); };
-            backBtn = new PillButton("Back to corner", PillButton.K.Primary);
+            backBtn = new PillButton(L.T("Back to corner"), PillButton.K.Primary);
             backBtn.Click += delegate { Close(); };
             viewBtn = new ViewButton(); SyncViewBtn();
             viewBtn.Click += delegate { ViewMenu(); };
@@ -108,7 +108,7 @@ namespace AdeeboMeter
             detailsBtn = new SlideSwitch("Details", Cfg.Details);   // a sliding on/off switch: the engineer view
             detailsBtn.Click += delegate { SetDetails(detailsBtn.On); };
             detailsBtn.MouseEnter += delegate { SetTipKey("ov.DETAILS"); }; detailsBtn.MouseLeave += delegate { SetTipKey(null); };
-            onlineChip = new PillButton("Online lookups on", PillButton.K.Chip) { Visible = false };
+            onlineChip = new PillButton(L.T("Online lookups on"), PillButton.K.Chip) { Visible = false };
             onlineChip.Click += delegate { Online.Stop(); SyncOnlineChip(); };
             onlineChip.MouseEnter += delegate { SetTipKey("ov.ONLINE"); }; onlineChip.MouseLeave += delegate { SetTipKey(null); };
             themeSw = new ThemeSwitch();
@@ -170,7 +170,7 @@ namespace AdeeboMeter
             // Connections page
             connPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card };
             chips = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(52), BackColor = Theme.Card, Padding = new Padding(Sc(12), Sc(8), 0, 0), WrapContents = false };
-            search = new RoundBox(Sc(300), Draw.fBody, "Filter by app, host, IP or port");
+            search = new RoundBox(Sc(300), Draw.fBody, L.T("Filter by app, host, IP or port"));
             search.Box.TextChanged += delegate { list.Query = search.Box.Text; list.Rebuild(); };
             chips.Controls.Add(search);
             foreach (var f in new[] { "All", "Teams", "Edge", "Chrome", "Outlook", "OneDrive", "Other" })
@@ -225,7 +225,7 @@ namespace AdeeboMeter
             destBar.Controls.Add(destBox); destBar.Controls.Add(checkBtn); destBar.Controls.Add(pinBtn);
             foreach (var t in new[] { "mtu|MTU per hop", "mtr|MTR", "ret|The way back", "owners|Who carries it" })
             {
-                var p = t.Split('|'); var b = new PillButton(p[1], PillButton.K.Chip) { Tag = p[0], Margin = new Padding(Sc(8), Sc(3), 0, 0) };
+                var p = t.Split('|'); var b = new PillButton(L.T(p[1]), PillButton.K.Chip) { Tag = p[0], Margin = new Padding(Sc(8), Sc(3), 0, 0) };
                 b.Click += delegate(object s, EventArgs e) { string id = (string)((Control)s).Tag; tab = "toolbox"; ShowTab(); SelectTool(id); };
                 destBar.Controls.Add(b);
             }
@@ -239,9 +239,9 @@ namespace AdeeboMeter
             // Health page
             healthPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var hb = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
-            healthBtn = new PillButton("Run health check", PillButton.K.Primary); healthBtn.Click += delegate { StartHealth(); };
+            healthBtn = new PillButton(L.T("Run health check"), PillButton.K.Primary); healthBtn.Click += delegate { StartHealth(); };
             hb.Controls.Add(healthBtn);
-            foreach (var t in new[] { new[] { "precall", "Pre-call check" }, new[] { "dns", "DNS speed test" }, new[] { "vpn", "VPN map" }, new[] { "see", "What can AdeeboMeter see here?" } })
+            foreach (var t in new[] { new[] { "precall", L.T("Pre-call check") }, new[] { "dns", "DNS speed test" }, new[] { "vpn", "VPN map" }, new[] { "see", L.T("What can AdeeboMeter see here?") } })
             {
                 var tb = new PillButton(t[1], PillButton.K.Chip) { Tag = t[0], Margin = new Padding(Sc(8), Sc(3), 0, 0) };
                 tb.Click += delegate(object s, EventArgs e) { RunTool((string)((Control)s).Tag, ((Control)s).Text); };
@@ -260,9 +260,9 @@ namespace AdeeboMeter
             // Live capture page
             livePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var lb = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
-            liveBtn = new PillButton("Start live capture", PillButton.K.Primary); liveBtn.Click += delegate { ToggleLive(); };
+            liveBtn = new PillButton(L.T("Start live capture"), PillButton.K.Primary); liveBtn.Click += delegate { ToggleLive(); };
             lb.Controls.Add(liveBtn);
-            Func<string> liveText = () => Policy.NoCapture ? L.T("Live capture is turned off by your IT team (AdeeboMeter.policy).") : LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : "Needs Wireshark (tshark) and Npcap - not found on this PC.";
+            Func<string> liveText = () => Policy.NoCapture ? L.T("Live capture is turned off by your IT team (AdeeboMeter.policy).") : LiveCapture.Available ? "Wireshark's tshark decodes your PC's own traffic. Off until you press Start; stops when you leave this tab, close the view, or after " + Cfg.LiveMin + " min (Settings)." : L.T("Needs Wireshark (tshark) and Npcap - not found on this PC.");
             var liveLbl = new Label { Text = liveText(), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) };
             liveLbl.VisibleChanged += delegate { if (liveLbl.Visible) liveLbl.Text = liveText(); };   // the minutes follow Settings
             lb.Controls.Add(liveLbl);
@@ -287,7 +287,7 @@ namespace AdeeboMeter
             // What's running page
             procPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var pbar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
-            procSearch = new RoundBox(Sc(300), Draw.fBody, "Find a process or app");
+            procSearch = new RoundBox(Sc(300), Draw.fBody, L.T("Find a process or app"));
             procSearch.Box.TextChanged += delegate { procList.AutoScrollPosition = Point.Empty; procList.Invalidate(); };
             pbar.Controls.Add(procSearch);
             pbar.Controls.Add(new Label { Text = Voice.P("Click anything for the plain-English story. I only explain - I never close anything.", "Click a process for its explanation. AdeeboMeter never closes processes."), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(4), Sc(10), 0, 0) });
@@ -665,7 +665,7 @@ namespace AdeeboMeter
                 {
                     if (!IsDisposed) BeginInvoke((Action)delegate
                     {
-                        liveBtn.Enabled = true; liveBtn.Text = AdeeboMeter.L.T(live.Running ? "Stop live capture" : "Start live capture");
+                        liveBtn.Enabled = true; liveBtn.Text = AdeeboMeter.L.T(live.Running ? L.T("Stop live capture") : L.T("Start live capture"));
                         if (started) liveView = null; liveCanvas.Invalidate();
                     });
                 }
@@ -728,7 +728,7 @@ namespace AdeeboMeter
         void KeepCapture()
         {
             string f = Program.LastCapture; if (f == "" || !File.Exists(f)) return;
-            using (var d = new SaveFileDialog { Title = "Keep this capture", Filter = "Wireshark capture (*.pcapng)|*.pcapng", FileName = Path.GetFileName(f), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), OverwritePrompt = true })
+            using (var d = new SaveFileDialog { Title = L.T("Keep this capture"), Filter = "Wireshark capture (*.pcapng)|*.pcapng", FileName = Path.GetFileName(f), InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), OverwritePrompt = true })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
                 try { File.Copy(f, d.FileName, true); sniffStatus = "Kept: " + d.FileName; UpdateConnStatus(); }
@@ -755,7 +755,7 @@ namespace AdeeboMeter
         {
             tipBar = new Panel { Dock = DockStyle.Top, Height = Sc(46), BackColor = Theme.BlueSoft, Tag = "tip" };
             var msg = new Label { Text = Voice.P("Quick tip, boss: Esc, minimise, the X or Back to corner all take you back to the corner widget - I keep watching. Exit lives in the tray icon (right-click).",
-                                                 "Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit."),
+                                                 L.T("Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.")),
                                   AutoSize = false, Dock = DockStyle.Fill, Font = Draw.fBody, ForeColor = Theme.Dark ? Theme.Ink : Theme.BlueDark, BackColor = Theme.BlueSoft, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(Sc(20), 0, 0, 0), Tag = "tip" };
             var ok = new PillButton("Got it", PillButton.K.Chip) { Anchor = AnchorStyles.Right | AnchorStyles.Top };
             ok.Click += delegate { Cfg.SeenTip = true; Cfg.Save(); var t = tipBar; tipBar = null; Controls.Remove(t); t.Dispose(); };
@@ -1190,10 +1190,10 @@ namespace AdeeboMeter
             {
                 Friendly = desc != "" ? desc : name, Cat = Explain.Other, Close = -1,
                 Tag = comp != "" ? "Made by " + comp + "." : Voice.P("Not in my guide - here's what Windows knows.", "Not in AdeeboMeter's guide."),
-                What = desc != "" ? "The file calls itself '" + desc + "'" + (prod != "" && prod != desc ? ", part of " + prod : "") + "." : facts == null ? "Open What's running and click it - I'll read what the file says about itself." : "The file doesn't describe itself.",
+                What = desc != "" ? "The file calls itself '" + desc + "'" + (prod != "" && prod != desc ? ", part of " + prod : "") + "." : facts == null ? "Open What's running and click it - I'll read what the file says about itself." : L.T("The file doesn't describe itself."),
                 How = facts == null ? "" : Explain.WhereText(path == "" ? "" : where),
                 Why = "AdeeboMeter's guide doesn't know this one by heart, so this is what the program file itself says.",
-                Without = "If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it."
+                Without = L.T("If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.")
             };
         }
 
@@ -1263,7 +1263,7 @@ namespace AdeeboMeter
             dest = new DestResult(); pinResults = null; destRunning = true; checkBtn.Enabled = false; destCanvas.Invalidate();
             var r = dest;
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Checking the destination"); try { 
+            { var __bz = Busy.Begin(L.T("Checking the destination")); try { 
                 try { DestCheck.Run(input, r, delegate { }, M); }
                 catch (Exception e) { r.Verdict = "Check failed: " + e.Message; r.Level = 1; r.Done = true; Program.Log("dest: " + e); }
                 finally
@@ -1279,7 +1279,7 @@ namespace AdeeboMeter
             if (healthRunning) return;
             healthRunning = true; health = null; healthBtn.Enabled = false; healthCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Running the health check"); try { 
+            { var __bz = Busy.Begin(L.T("Running the health check")); try { 
                 List<string[]> res = null;
                 try { res = HealthCheck.Run(M); } catch (Exception e) { Program.Log("health: " + e); }
                 try { if (!IsDisposed) BeginInvoke((Action)delegate { health = res ?? new List<string[]>(); healthAt = DateTime.Now; healthRunning = false; healthBtn.Enabled = true; healthBtn.Text = AdeeboMeter.L.T("Run again"); healthCanvas.Invalidate(); }); } catch { }
@@ -1289,7 +1289,7 @@ namespace AdeeboMeter
         void Sniff(Conn c)
         {
             if (!npcap || sniffing || c == null) return;
-            if (Policy.NoCapture) { sniffStatus = "Capturing packets is turned off by your IT team (AdeeboMeter.policy)."; UpdateConnStatus(); return; }
+            if (Policy.NoCapture) { sniffStatus = L.T("Capturing packets is turned off by your IT team (AdeeboMeter.policy)."); UpdateConnStatus(); return; }
             if (live.Running && !live.RingActive && live.RingError != "") { sniffStatus = "The rewind buffer stopped (" + live.RingError + ") - capturing from now instead."; UpdateConnStatus(); }
             if (live.RingActive && !string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0)
             {
@@ -1332,7 +1332,7 @@ namespace AdeeboMeter
                             if (File.Exists(file) && new FileInfo(file).Length > 0)
                             {
                                 Program.LastCapture = file;
-                                sniffStatus = Voice.P("Got it - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)", "Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.");
+                                sniffStatus = Voice.P("Got it - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)", L.T("Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy."));
                                 try { if (File.Exists(wireshark)) { var ws = new ProcessStartInfo(wireshark, "\"" + file + "\""); ws.WorkingDirectory = Path.GetDirectoryName(wireshark); ws.UseShellExecute = false; Process.Start(ws).Dispose(); } } catch (Exception ex) { sniffStatus = "Saved " + file + " (" + ex.Message + ")"; }
                             }
                             else { string e2; lock (err) e2 = err.ToString().Trim(); sniffStatus = "Capture failed: " + Draw.Trunc(e2.Replace(Environment.NewLine, " "), 120); Program.Log("dumpcap: " + e2); }

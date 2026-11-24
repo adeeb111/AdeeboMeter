@@ -3804,3 +3804,307 @@ Monitor, diagnose, automate, visualize, learn.	Surveiller, diagnostiquer, automa
 Finish	Terminer
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici pour continuer.
 Arabic text reads right to left.	L’arabe se lit de droite à gauche.
+Added as "My match" and watched from now on.	Ajouté comme « Mon match » et surveillé à partir de maintenant.
+An app	Une appli
+CPU is pegged ({0}%). {1} uses the most.	Le processeur est à fond ({0} %). {1} en utilise le plus.
+Capturing packets is turned off by your IT team (AdeeboMeter.policy).	La capture de paquets est désactivée par votre équipe TI (AdeeboMeter.policy).
+Checking the destination	Vérification de la destination
+Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	Cliquez sur une ligne à gauche. Je vous dirai ce qu’elle fait, comment elle fonctionne, pourquoi elle est là, ce qui arriverait sans elle - et s’il est sûr de la fermer.
+Collecting - one row a second while the session is open.	Collecte - une ligne par seconde tant que la session est ouverte.
+Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	Points de couleur : vert = sûr à fermer, ambre = laissez-le (OK de redémarrer), rouge = Windows en a besoin, violet = géré par les TI, gris = absent de mon guide.
+Copy match report (internal addresses removed)	Copier le rapport de match (adresses internes retirées)
+Couldn't tell which server the match uses.	Impossible de savoir quel serveur le match utilise.
+Currencies, commodities and Canada's rates	Devises, matières premières et taux du Canada
+DNS is slow ({0} ms); pages will be slow to start.	Le DNS est lent ({0} ms) ; les pages tarderont à démarrer.
+Data that minute	Données de cette minute
+Each Group in Detail	Chaque groupe en détail
+Energy and the Loonie	L’énergie et le huard
+Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.	Échap, réduire, le X ou Retour au coin vous ramènent au widget du coin, qui continue de surveiller. Pour quitter, faites un clic droit sur l’icône de la barre des tâches et choisissez Quitter.
+Every device on your network, grouped - with how fast each answers	Chaque appareil de votre réseau, regroupés - avec la vitesse de réponse de chacun
+Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.	Chaque programme de votre PC est un ou plusieurs « processus » - une copie en cours avec sa propre mémoire. Windows lui-même en compte des dizaines, chacun avec une tâche.
+Find my match server	Trouver le serveur de mon match
+Find my switch port	Trouver mon port de commutateur
+Finding your match server...	Recherche du serveur de votre match...
+Five Commodity Groups, Side by Side	Cinq groupes de matières premières, côte à côte
+Game pings are turned off by your IT team (AdeeboMeter.policy).	Les pings de jeu sont désactivés par votre équipe TI (AdeeboMeter.policy).
+Getting Valve's server list (one request to api.steampowered.com)...	Récupération de la liste des serveurs de Valve (une requête à api.steampowered.com)...
+History is on - the first day appears here after a few minutes.	L’historique est activé - le premier jour apparaît ici après quelques minutes.
+If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.	Si c’est une appli que vous avez ouverte, la fermer est sans risque. Si vous ne la reconnaissez pas et qu’elle n’est ni dans Program Files ni dans le dossier Windows, demandez aux TI avant d’y toucher.
+Internet answered in	Internet a répondu en
+Keep this capture	Garder cette capture
+Kept on this PC for 90 days; about 2 KB a stream	Conservé sur ce PC pendant 90 jours ; environ 2 Ko par flux
+Listing this program's connections	Liste des connexions de ce programme
+Looking up where programs live	Recherche de l’emplacement des programmes
+Marked - the 30 seconds around it are in the match summary.	Marqué - les 30 secondes autour sont dans le résumé du match.
+Measured here, the usual setup there - where each one's way out goes	Mesuré ici, la configuration habituelle là-bas - où sort chacun
+Memory is almost full ({0}%), so Windows keeps swapping programs to the disk - that's the slowness. {1} use the most.	La mémoire est presque pleine ({0} %), alors Windows échange sans cesse des programmes avec le disque - d’où la lenteur. {1} en utilisent le plus.
+Memory read back from disk	Mémoire relue depuis le disque
+Needs Wireshark (tshark) and Npcap - not found on this PC.	Nécessite Wireshark (tshark) et Npcap - introuvables sur ce PC.
+Needs Wireshark and Npcap on this PC.	Nécessite Wireshark et Npcap sur ce PC.
+No Valve servers yet - press Refresh Valve list (one request to Valve).	Aucun serveur Valve pour l’instant - appuyez sur Actualiser la liste Valve (une requête à Valve).
+No servers yet - press Edit servers and add your server's address.	Aucun serveur pour l’instant - appuyez sur Modifier les serveurs et ajoutez l’adresse de votre serveur.
+No streams recorded yet	Aucun flux enregistré pour l’instant
+No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	Aucun jeu pris en charge n’a été trouvé sur ce PC. Cliquez sur l’un d’eux pour surveiller ses serveurs quand même - rien n’est envoyé aux serveurs d’un éditeur de jeux avant que vous le fassiez.
+None - the internet answered every time AdeeboMeter checked.	Aucune - Internet a répondu chaque fois qu’AdeeboMeter a vérifié.
+None in Windows' table yet.	Rien encore dans la table de Windows.
+Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	Volontairement non fait : essayer des mots de passe par défaut, vous chercher dans des bases de fuites (cela enverrait vos données à un site Web), analyser les appareils des autres ou changer quoi que ce soit à votre place.
+Off (Settings > Weather). Your PC's location is never used.	Désactivé (Paramètres > Météo). La position de votre PC n’est jamais utilisée.
+Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	Une fois que vous savez qui est qui, le Gestionnaire des tâches ne fait plus peur - et vous saurez exactement quoi fermer quand le PC peine.
+Phone waiting room	Salle d’attente du téléphone
+Pick a game to watch	Choisissez un jeu à surveiller
+Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	Faites jouer quelque chose - un match, une émission, une chaîne en direct - pendant quelques minutes. Le relevé arrive ici avec chaque baisse et à qui la faute.
+Prices per Barrel and Ounce	Prix au baril et à l’once
+Rates and Prices in Canada	Taux et prix au Canada
+Reading that day...	Lecture de cette journée...
+Reading this program's details	Lecture des détails de ce programme
+Refresh Valve list	Actualiser la liste Valve
+Router answered in	Le routeur a répondu en
+Running the health check	Bilan de santé en cours
+Running the security checkup	Vérification de sécurité en cours
+Same name, different lock	Même nom, cadenas différent
+Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.	Enregistré ; ouverture dans Wireshark. Supprimé à la fermeture - cliquez sur Garder cette capture pour en conserver une copie.
+Scores and headlines	Résultats et manchettes
+See the packet journey	Voir le parcours du paquet
+Session started - press Mark lag whenever it feels wrong.	Session commencée - appuyez sur Marquer le lag dès que ça cloche.
+Stop live capture	Arrêter la capture en direct
+The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card.	La carte ingénieur nécessite le mode Pro (Général > Mode) - d’ici là, elle affiche la carte de tous les jours.
+The file doesn't describe itself.	Le fichier ne se décrit pas lui-même.
+The internet check is off in Settings, so outages can't be noticed.	La vérification Internet est désactivée dans les Paramètres, donc les pannes ne peuvent pas être repérées.
+The networks this PC hears, by channel - yours and the loud neighbours	Les réseaux que ce PC capte, par canal - le vôtre et les voisins bruyants
+The route your last trace or MTR took, hop by hop	Le chemin pris par votre dernier traceroute ou MTR, saut par saut
+The {0} is slow (gateway {1}). The PC is not the cause.	Le {0} est lent (passerelle {1}). Le PC n’y est pour rien.
+Top by memory	Les plus gourmands en mémoire
+Want to look back at yesterday? Turn on 7-day history in Settings  >	Envie de revoir hier ? Activez l’historique de 7 jours dans les Paramètres  >
+What goes through the tunnel and what goes straight out	Ce qui passe par le tunnel et ce qui sort directement
+Where it lives	Où il se trouve
+Wi-Fi around you	Le Wi-Fi autour de vous
+Wi-Fi link rate	Débit du lien Wi-Fi
+Wi-Fi signal is weak ({0}%). Move closer to the access point or use a cable.	Le signal Wi-Fi est faible ({0} %). Rapprochez-vous du point d’accès ou utilisez un câble.
+You marked lag here	Vous avez marqué du lag ici
+Your Line at Kick-off Time	Votre ligne à l’heure du coup d’envoi
+Your phone vs this PC	Votre téléphone contre ce PC
+local network	réseau local
+{0} MB (live capture on)	{0} Mo (capture en direct activée)
+{0} MB of 80 MB budget	{0} Mo sur un budget de 80 Mo
+{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} est connecté, mais n’a reçu aucune adresse du routeur (169.254.x.x - le DHCP n’a pas répondu). Redémarrez le routeur ou reconnectez-vous.
+Every network connection just dropped.	Toutes les connexions réseau viennent de tomber.
+All network connections dropped.	Toutes les connexions réseau sont tombées.
+Lost the network - you're offline, boss.	Réseau perdu - vous êtes hors ligne, patron.
+Network connection lost.	Connexion réseau perdue.
+VPN dropped.	Le VPN a décroché.
+VPN disconnected.	VPN déconnecté.
+Wi-Fi dropped.	Le Wi-Fi a décroché.
+Wi-Fi disconnected.	Wi-Fi déconnecté.
+Wi-Fi hopped to another access point	Le Wi-Fi a sauté vers un autre point d’accès
+Wi-Fi roamed to another access point	Le Wi-Fi est passé à un autre point d’accès
+Just woke up - waiting for Windows to join the network.	Je viens de me réveiller - j’attends que Windows rejoigne le réseau.
+Starting - waiting for Windows to join the network.	Démarrage - en attente que Windows rejoigne le réseau.
+You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.	Vous n’êtes connecté à aucun réseau, patron - le Wi-Fi est éteint, le câble est débranché ou le mode avion est activé.
+Not connected to any network (no Wi-Fi, no cable, or airplane mode).	Connecté à aucun réseau (pas de Wi-Fi, pas de câble ou mode avion).
+Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.	L’appel devient instable (gigue {0}). Si les visages figent, coupez la vidéo - l’audio tiendra.
+Call quality dropping (jitter {0}). Turn video off if it stutters.	La qualité de l’appel baisse (gigue {0}). Coupez la vidéo si ça saccade.
+The internet isn't answering at all - your router is fine, so it's the line or your provider.	Internet ne répond pas du tout - votre routeur va bien, c’est donc la ligne ou votre fournisseur.
+The internet isn't answering (your router does) - the line or the provider.	Internet ne répond pas (votre routeur, oui) - la ligne ou le fournisseur.
+The internet's there but DNS lost the phone book - sites won't open by name.	Internet est là, mais le DNS a perdu l’annuaire - les sites ne s’ouvrent pas par leur nom.
+DNS lookups are failing; sites won't open by name.	Les recherches DNS échouent ; les sites ne s’ouvrent pas par leur nom.
+Call looks smooth. Go impress them.	L’appel est fluide. Allez les impressionner.
+Call quality is good.	La qualité de l’appel est bonne.
+Busy, but holding. Maybe don't open another big app just yet.	Occupé, mais ça tient. Évitez d’ouvrir une autre grosse appli pour l’instant.
+Busy but fine. Avoid opening big apps for now.	Occupé, mais correct. Évitez d’ouvrir de grosses applis pour l’instant.
+Network's a bit sleepy; your PC is fine.	Le réseau est un peu endormi ; votre PC va bien.
+Network a bit slow; your PC is fine.	Réseau un peu lent ; votre PC va bien.
+All quiet. Nothing to fix - go get coffee.	Tout est calme. Rien à réparer - allez prendre un café.
+All quiet.	Tout est calme.
+Back to normal.	Retour à la normale.
+Recovered.	Rétabli.
+Needs you	A besoin de vous
+Above 88% for 10 s and I start nagging.	Au-dessus de 88 % pendant 10 s, je commence à insister.
+Above 88% for 10 s turns AdeeboMeter red.	Au-dessus de 88 % pendant 10 s, AdeeboMeter passe au rouge.
+No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.	Aucune connexion réseau, patron. Branchez un câble ou choisissez un réseau Wi-Fi.
+Not connected.	Non connecté.
+You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.	Vous êtes sur 2.4 GHz, mais votre réseau offre aussi une bande plus rapide. Se rapprocher un peu permet généralement à Windows de basculer.
+Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded.	Votre réseau a aussi du 5/6 GHz ; le 2.4 GHz est plus lent et plus encombré.
+Windows gave itself a 169.254 address - nobody handed you a real one. The router's DHCP isn't answering.	Windows s’est donné une adresse 169.254 - personne ne vous en a fourni une vraie. Le DHCP du routeur ne répond pas.
+No DHCP address (169.254.x.x).	Pas d’adresse DHCP (169.254.x.x).
+You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.	Vous êtes connecté au réseau, mais il n’y a pas de routeur (passerelle) pour atteindre quoi que ce soit au-delà. Le plus souvent, le DHCP a échoué ou le réseau est local seulement.
+Connected, but no default gateway.	Connecté, mais sans passerelle par défaut.
+Your Wi-Fi is in great shape - strong signal, clean air, quick router.	Votre Wi-Fi est en pleine forme - signal fort, air dégagé, routeur rapide.
+Wi-Fi link looks healthy.	Le lien Wi-Fi semble en bonne santé.
+Cable, full speed, no errors. The steadiest link there is.	Câble, pleine vitesse, aucune erreur. Le lien le plus stable qui soit.
+Wired link looks healthy.	Le lien filaire semble en bonne santé.
+Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.	Windows cache les détails du Wi-Fi tant que vous n’autorisez pas la localisation pour les applis de bureau (Paramètres > Confidentialité et sécurité > Localisation > Autoriser les applications de bureau à accéder à votre emplacement). Agaçant, mais c’est ainsi que Windows 11 protège l’endroit où vous êtes.
+Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.	Les détails du Wi-Fi nécessitent l’accès à la localisation : Paramètres > Confidentialité et sécurité > Localisation > Autoriser les applications de bureau à accéder à votre emplacement.
+Nothing to tweak - your Wi-Fi is set up well.	Rien à ajuster - votre Wi-Fi est bien configuré.
+No changes suggested.	Aucun changement suggéré.
+Live capture needs Wireshark (tshark) and Npcap - not on this PC.	La capture en direct nécessite Wireshark (tshark) et Npcap - absents de ce PC.
+Live capture needs Wireshark and Npcap.	La capture en direct nécessite Wireshark et Npcap.
+Digging through the last few minutes and listening 15 s more...	Je fouille les dernières minutes et j’écoute 15 s de plus...
+Collecting history + 15 s...	Collecte de l’historique + 15 s...
+Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)	C’est fait, avec l’historique - ouverture dans Wireshark. (Supprimé à la fermeture d’AdeeboMeter - cliquez sur Garder cette capture pour en conserver une copie.)
+Saved with history; opening in Wireshark.	Enregistré avec l’historique ; ouverture dans Wireshark.
+On a public website that usually means your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	Sur un site Web public, cela signifie généralement que votre entreprise inspecte le HTTPS. Pas une panne - juste bon à savoir quand un site se comporte mal.
+On a public site this usually means HTTPS inspection by a company proxy.	Sur un site public, cela signifie généralement une inspection HTTPS par un proxy d’entreprise.
+Your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	Votre entreprise inspecte le HTTPS. Pas une panne - juste bon à savoir quand un site se comporte mal.
+Your company's web filter decrypts HTTPS to inspect it - common and expected at work.	Le filtre Web de votre entreprise déchiffre le HTTPS pour l’inspecter - courant et attendu au travail.
+Fresh enough.	Assez récent.
+Recently restarted.	Redémarré récemment.
+Windows is waiting for a restart. Some network fixes only land after it.	Windows attend un redémarrage. Certains correctifs réseau ne s’appliquent qu’après.
+A restart is pending; some fixes apply only after it.	Un redémarrage est en attente ; certains correctifs ne s’appliquent qu’après.
+Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.	Presque plein - Windows devient grincheux sous les 10 %. Videz Téléchargements ou les vieilles captures.
+Nearly full; free some space.	Presque plein ; libérez de l’espace.
+The adapter itself is coughing. Try another cable or port, or update the driver.	L’adaptateur lui-même tousse. Essayez un autre câble ou port, ou mettez à jour le pilote.
+Adapter errors: try another cable or port, or update the driver.	Erreurs de l’adaptateur : essayez un autre câble ou port, ou mettez à jour le pilote.
+Crowded or weak. Move closer, or switch band (5 GHz near the router, 2.4 GHz far away).	Encombré ou faible. Rapprochez-vous ou changez de bande (5 GHz près du routeur, 2.4 GHz loin).
+Crowded or weak channel; move closer or change band.	Canal encombré ou faible ; rapprochez-vous ou changez de bande.
+Your channel is calm.	Votre canal est calme.
+Channel is clear.	Le canal est dégagé.
+Battery saver is slowing things down on purpose. Plug in if it feels sluggish.	L’économiseur de batterie ralentit volontairement les choses. Branchez-vous si c’est lent.
+Battery saver is on and throttles performance.	L’économiseur de batterie est activé et bride les performances.
+Let's talk about it	Parlons-en
+How it started	Comment ça a commencé
+First sign	Premier signe
+The low point	Le creux
+Worst moment	Pire moment
+Healing	La guérison
+Recovery	Rétablissement
+The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.	Le relevé ne montre pas de vrai rétablissement - les choses se sont juste calmées. Parfois, la paix ne vient pas avec un horodatage.
+No recovery recorded in this stretch.	Aucun rétablissement enregistré sur cette période.
+This one was close to home: your Wi-Fi or router. It's not a character flaw. A cable, or moving closer to the router, is self-care.	Celui-ci était près de chez vous : votre Wi-Fi ou votre routeur. Ce n’est pas un défaut de caractère. Un câble, ou vous rapprocher du routeur, c’est prendre soin de soi.
+Most of it was your Wi-Fi or router. A cable or a better spot helps; Toolbox › Wi-Fi has the details.	L’essentiel venait de votre Wi-Fi ou de votre routeur. Un câble ou un meilleur emplacement aide ; Boîte à outils › Wi-Fi donne les détails.
+It was DNS. It's always DNS. Toolbox › DNS race finds you a calmer one.	C’était le DNS. C’est toujours le DNS. Boîte à outils › Course DNS vous en trouve un plus calme.
+Most of it was DNS. Toolbox › DNS race compares servers.	L’essentiel venait du DNS. Boîte à outils › Course DNS compare les serveurs.
+It was this PC, working too hard. Rest is productive. So is closing a few apps.	C’était ce PC, qui travaillait trop. Le repos est productif. Fermer quelques applis aussi.
+Most of it was this PC being busy. The Apps tab shows what.	L’essentiel venait de ce PC trop occupé. L’onglet Applis montre lesquelles.
+What we learned	Ce que nous avons appris
+Cause	Cause
+Honestly? Your connection's been good. You can send this, but it's more of a thank-you note.	Honnêtement ? Votre connexion a été bonne. Vous pouvez envoyer ceci, mais c’est plutôt une carte de remerciement.
+The connection has been good - there is little to complain about.	La connexion a été bonne - il y a peu de quoi se plaindre.
+Give me a host, an IP or a URL first.	Donnez-moi d’abord un hôte, une IP ou une URL.
+Type a host, IP or URL.	Tapez un hôte, une IP ou une URL.
+That doesn't look like a host, an IP or a URL, boss.	Ça ne ressemble pas à un hôte, une IP ou une URL, patron.
+That is not a valid host, IP or URL.	Ce n’est pas un hôte, une IP ou une URL valide.
+One more thing - checking whether a Wi-Fi sign-in page is in the way...	Encore une chose - je vérifie si une page de connexion Wi-Fi bloque le chemin...
+Checking for a captive portal (sign-in page)...	Recherche d’un portail captif (page de connexion)...
+Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?	Impossible même de trouver son adresse, patron - le serveur DNS dit que ce nom n’existe pas. Une faute de frappe, ou un nom interne qui exige le VPN ?
+DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.	Le DNS indique que le nom n’existe pas. Vérifiez l’orthographe ou connectez le VPN pour les noms internes.
+Port's shut - tracing the path to see who shut it...	Le port est fermé - je trace le chemin pour voir qui l’a fermé...
+Tracing the path...	Traçage du chemin...
+Reading the router names along the way...	Lecture des noms des routeurs en chemin...
+Naming the hops...	Identification des sauts...
+TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.	Le TCP se connecte, puis le TLS... s’arrête. Quelque chose au milieu retient la négociation - un proxy, un pare-feu ou un problème de MTU.
+TLS handshake stalls after TCP connects (proxy, firewall or MTU).	La négociation TLS bloque après la connexion TCP (proxy, pare-feu ou MTU).
+Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).	Arrivé à la porte, mais le videur refuse l’entrée : Windows ne fait pas confiance au certificat (souvent un proxy d’inspection).
+TLS works but the certificate is not trusted by Windows (often an inspection proxy).	Le TLS fonctionne, mais Windows ne fait pas confiance au certificat (souvent un proxy d’inspection).
+TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.	Le TCP va bien, mais le serveur refuse le TLS 1.2 ou plus récent - il est coincé dans le passé (TLS 1.0 / 1.1). C’est du côté du serveur.
+TLS handshake failed: the server likely supports only TLS 1.0/1.1.	La négociation TLS a échoué : le serveur ne prend probablement en charge que TLS 1.0/1.1.
+TCP is fine, TLS fails. The two sides can't agree on how to talk securely.	Le TCP va bien, le TLS échoue. Les deux côtés n’arrivent pas à s’entendre pour parler en sécurité.
+TLS handshake failed.	La négociation TLS a échoué.
+Asking Windows about your connection...	Je demande à Windows des nouvelles de votre connexion...
+Reading...	Lecture...
+Not a single drop. Rock solid.	Pas une seule coupure. Solide comme le roc.
+No drops in 24 h.	Aucune coupure en 24 h.
+Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.	Le câble est la référence : pas d’interférence, pas d’itinérance, pas de voisins. Si les appels saccadent encore, le problème est plus loin - vérifiez une destination.
+Wired links have no radio interference; look further along the path if problems persist.	Les liens filaires n’ont pas d’interférence radio ; regardez plus loin sur le chemin si les problèmes persistent.
+Click anything for the plain-English story. I only explain - I never close anything.	Cliquez sur n’importe quoi pour l’explication en langage simple. J’explique seulement - je ne ferme jamais rien.
+Click a process for its explanation. AdeeboMeter never closes processes.	Cliquez sur un processus pour son explication. AdeeboMeter ne ferme jamais de processus.
+Not in my guide - here's what Windows knows.	Absent de mon guide - voici ce que Windows en sait.
+Not in AdeeboMeter's guide.	Absent du guide d’AdeeboMeter.
+Rewinding the tape...	Je rembobine la cassette...
+Collecting...	Collecte...
+Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.	La mise en mémoire tampon vient-elle de vous, de votre Wi-Fi, de votre fournisseur - ou du flux ? Quand quelque chose joue, dans une appli ou un navigateur, je le remarque et je le surveille.
+Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.	Qualité du flux : qui a causé chaque baisse. Les flux sont reconnus par le nom de leurs serveurs - les onglets et les titres ne sont jamais lus.
+Click a row for the full story.	Cliquez sur une ligne pour toute l’histoire.
+Click a row for details.	Cliquez sur une ligne pour les détails.
+Give me a host, an IP or a URL and press Check. Nothing runs until you do.	Donnez-moi un hôte, une IP ou une URL et appuyez sur Vérifier. Rien ne s’exécute avant.
+Type a host, IP or URL and press Check.	Tapez un hôte, une IP ou une URL et appuyez sur Vérifier.
+Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...	Je passe par le DNS, la route, le ping, TCP, TLS, HTTP, la MTU et le chemin...
+Checking...	Vérification...
+Poking around...	Je fouine...
+Running...	En cours...
+Nothing has changed yet. Boring is good.	Rien n’a encore changé. Ennuyeux, c’est bon signe.
+No changes recorded yet.	Aucun changement enregistré pour l’instant.
+Warming up tshark...	Démarrage de tshark...
+No call running. Start a Teams call and I'll grade it live.	Aucun appel en cours. Lancez un appel Teams et je le noterai en direct.
+No call media seen yet.	Aucun média d’appel vu pour l’instant.
+Quiet out there.	C’est calme dehors.
+No traffic yet.	Pas encore de trafic.
+Called it.	Je l’avais dit.
+The guardian steps aside.	Le gardien s’écarte.
+Ouch - a heart lost. Try again.	Aïe - un cœur de perdu. Réessayez.
+Not right - one heart lost.	Pas tout à fait - un cœur de perdu.
+Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.	Rien d’enregistré pour cette journée encore - l’historique écrit une ligne par minute, alors laissez-lui quelques minutes.
+No history for this day yet (one line is written per minute).	Pas encore d’historique pour cette journée (une ligne est écrite par minute).
+History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.	L’historique est désactivé, donc il n’y a rien à rejouer. Activez-le dans les Paramètres - il reste sur ce PC et s’efface après le nombre de jours choisi.
+History is off. Enable it in Settings to replay past minutes.	L’historique est désactivé. Activez-le dans les Paramètres pour rejouer les minutes passées.
+✨ New device!	✨ Nouvel appareil !
+New device	Nouvel appareil
+🦘 Wi-Fi hop!	🦘 Saut Wi-Fi !
+Wi-Fi roamed	Itinérance Wi-Fi
+Nothing changed around then. Quiet minute.	Rien n’a changé autour de ce moment. Minute tranquille.
+No changes within 15 minutes.	Aucun changement dans les 15 minutes.
+Reading the process list...	Lecture de la liste des processus...
+Loading...	Chargement...
+Meet the crew running your PC.	Faites connaissance avec l’équipe qui fait tourner votre PC.
+What's running on this PC	Ce qui tourne sur ce PC
+Nothing matches. Either the filter's too picky or it's really quiet out there.	Rien ne correspond. Soit le filtre est trop exigeant, soit c’est vraiment calme.
+No connections match.	Aucune connexion ne correspond.
+What's wrong? (I can't name it)	Qu’est-ce qui ne va pas ? (je ne sais pas le nommer)
+Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken. Only what's stale is re-tested: a few pings (1.1.1.1 if needed), one DNS question and Windows' own connectivity test page - only when you press it.	Avance couche par couche - ce PC, le lien, votre routeur, Internet, les noms, l’accès - et s’arrête à la première qui est en panne. Seul ce qui est périmé est retesté : quelques pings (1.1.1.1 au besoin), une question DNS et la page de test de connectivité de Windows - seulement quand vous appuyez.
+Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS.	Trouve où le délai commence : votre PC, votre Wi-Fi, votre routeur, votre fournisseur ou le DNS.
+Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails.	Parcourt le nom, la route, la porte (TCP), le cadenas (TLS) et la réponse (HTTP) pour trouver la première étape qui échoue.
+Calls freeze or sound robotic	Les appels figent ou le son est robotique
+Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about.	Vérifie la gigue, la perte, votre envoi, votre routeur sous charge, le Wi-Fi et le VPN - ce qui compte pour les appels.
+I keep disconnecting	Je suis sans cesse déconnecté
+Reads today's drops, roams and changes and what the signal was doing just before.	Lit les coupures, les itinérances et les changements d’aujourd’hui, et ce que faisait le signal juste avant.
+Works at home, not on VPN or at work	Ça marche à la maison, pas sur le VPN ni au bureau
+Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself.	Réseaux qui se chevauchent, proxy, règles de noms du VPN, la MTU en chemin et le port lui-même.
+Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	Processeur, pression mémoire, disque, chaleur, pilotes, applis figées et tâches de fond - dans cet ordre.
+Network (SSID)	Réseau (SSID)
+Access point (BSSID)	Point d’accès (BSSID)
+Band	Bande
+Channel	Canal
+Standard	Norme
+Signal	Signal
+Receive rate	Débit de réception
+Transmit rate	Débit d’émission
+Sharing your channel	Partage de votre canal
+Air time used	Temps d’antenne utilisé
+Channel width	Largeur du canal
+Roaming help	Aide à l’itinérance
+Adapter	Adaptateur
+Link speed	Vitesse du lien
+IPv4 address	Adresse IPv4
+IPv6	IPv6
+Gateway (router)	Passerelle (routeur)
+DNS servers	Serveurs DNS
+Address from	Adresse fournie par
+Packet size (MTU)	Taille de paquet (MTU)
+Hardware address (MAC)	Adresse matérielle (MAC)
+Received	Reçu
+Sent	Envoyé
+Damaged packets (errors)	Paquets endommagés (erreurs)
+Dropped packets (discards)	Paquets abandonnés (rejets)
+Driver	Pilote
+Router answers in	Le routeur répond en
+Jitter	Gigue
+Everything measured was fine at {0}: router {1}, internet {2}.	Tout ce qui a été mesuré allait bien à {0} : routeur {1}, Internet {2}.
+Latency under load	Latence sous charge
+Nothing looked wrong at {0} in what was measured - router {1}, internet {2}.	Rien ne semblait anormal à {0} dans ce qui a été mesuré - routeur {1}, Internet {2}.
+Something needed attention at {0} - see what changed around then below.	Quelque chose demandait votre attention à {0} - voyez ce qui a changé autour de ce moment ci-dessous.
+Turn on history in Settings to see your week.	Activez l’historique dans les Paramètres pour voir votre semaine.
+My Teams	Mes équipes
+Live Scores	Résultats en direct
+Fixtures	Calendrier
+Headlines	Manchettes
+Stream Check	Vérif. du flux
+World Markets	Marchés mondiaux
+Currencies	Devises
+Commodities	Matières premières
+Line Check	Vérif. de la ligne
+Casual Investor	Investisseur occasionnel
+Windows core	Noyau de Windows
+Company / IT tools	Outils de l’entreprise / TI
+Your apps	Vos applis
+Windows helpers	Assistants de Windows
+The way back	Le chemin du retour
+Who carries it	Qui le transporte

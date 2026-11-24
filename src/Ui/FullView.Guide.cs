@@ -19,7 +19,7 @@ namespace AdeeboMeter
         {
             guidePage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
-            guideBox = new RoundBox(Sc(320), Draw.fInput, "Site, app or server - e.g. outlook.office.com");
+            guideBox = new RoundBox(Sc(320), Draw.fInput, L.T("Site, app or server - e.g. outlook.office.com"));
             guideBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; StartGuide("site", false); } };
             bar.Controls.Add(guideBox);
             bar.Controls.Add(new Label { Text = Voice.P("Pick what's wrong - I'll run the checks and tell you what I saw, what I can't know, and what to try next.", "Choose the problem. AdeeboMeter runs the checks and reports findings, evidence, limits and next steps."), AutoSize = true, ForeColor = Theme.Muted, Font = Draw.fSmall, Margin = new Padding(Sc(10), Sc(10), 0, 0) });
@@ -106,22 +106,22 @@ namespace AdeeboMeter
         // icon, colour and one line per problem (the long description stays for hover and the result page)
         static readonly Dictionary<string, string[]> GuideLook = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            { "whats", new[] { "question", "home", "Layer by layer, stops at the first broken one" } }, { "slow", new[] { "speed", "q.slow", "Finds where the delay starts" } },
+            { "whats", new[] { "question", "home", L.T("Layer by layer, stops at the first broken one") } }, { "slow", new[] { "speed", "q.slow", L.T("Finds where the delay starts") } },
             { "site", new[] { "dest", "q.reach", "Name, route, door, lock, answer" } }, { "calls", new[] { "phone", "q.join", "Jitter, loss, upload, Wi-Fi, VPN" } },
-            { "drops", new[] { "wifioff", "q.break", "Today's drops and what came just before" } }, { "vpn", new[] { "lock", "q.padlock", "Overlaps, proxy, VPN names, MTU" } },
+            { "drops", new[] { "wifioff", "q.break", L.T("Today's drops and what came just before") } }, { "vpn", new[] { "lock", "q.padlock", "Overlaps, proxy, VPN names, MTU" } },
             { "pc", new[] { "cpu", "q.windows", "CPU, memory, disk, heat, drivers" } }
         };
         // { where it goes, title, icon, one line, accent }
         static readonly string[][] MoreProblems = {
-            new[] { "guide:whats", "No internet at all", "wifioff", "Nothing opens - checks every step", "q.break" },
-            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "wifi", "Connected, but nothing works", "q.break" },
-            new[] { "link", "Can't find my Wi-Fi", "wifi", "The network isn't in the list", "q.join" },
-            new[] { "tool:netcap", "Downloads are slow", "speed", "Your plan vs this PC's link and disk", "q.slow" },
-            new[] { "tool:lag", "My game lags", "game", "Your Wi-Fi, your line, or the game", "q.traffic" },
-            new[] { "case:buffer", "Videos keep buffering", "traffic", "Speed now and what else is busy", "q.slow" },
-            new[] { "tool:wakeup", "Slow after sleep or waking", "time", "How long it takes to get back online", "q.hw" },
-            new[] { "tool:mail", "Email won't send", "app", "Can this PC reach your mail server?", "q.reach" },
-            new[] { "tool:inventory", "A device on my network is missing", "devices", "Everything seen on this network", "q.network" } };
+            new[] { "guide:whats", L.T("No internet at all"), "wifioff", L.T("Nothing opens - checks every step"), "q.break" },
+            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "wifi", L.T("Connected, but nothing works"), "q.break" },
+            new[] { "link", L.T("Can't find my Wi-Fi"), "wifi", L.T("The network isn't in the list"), "q.join" },
+            new[] { "tool:netcap", L.T("Downloads are slow"), "speed", L.T("Your plan vs this PC's link and disk"), "q.slow" },
+            new[] { "tool:lag", L.T("My game lags"), "game", L.T("Your Wi-Fi, your line, or the game"), "q.traffic" },
+            new[] { "case:buffer", L.T("Videos keep buffering"), "traffic", L.T("Speed now and what else is busy"), "q.slow" },
+            new[] { "tool:wakeup", L.T("Slow after sleep or waking"), "time", L.T("How long it takes to get back online"), "q.hw" },
+            new[] { "tool:mail", "Email won't send", "app", L.T("Can this PC reach your mail server?"), "q.reach" },
+            new[] { "tool:inventory", L.T("A device on my network is missing"), "devices", L.T("Everything seen on this network"), "q.network" } };
         void PaintGuide(Graphics g)
         {
             g.TranslateTransform(guideCanvas.AutoScrollPosition.X, guideCanvas.AutoScrollPosition.Y);
@@ -133,7 +133,7 @@ namespace AdeeboMeter
                 if (r == null)
                 {
                     if (guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }
-                    y = Kit.Header(g, x, y, w, "question", "What's wrong?", "Pick what it feels like - I check it step by step.", "home");
+                    y = Kit.Header(g, x, y, w, "question", "What's wrong?", L.T("Pick what it feels like - I check it step by step."), "home");
                     // icon tiles, one line each (PLAN 11.5); the full description shows on hover
                     int cols = w > 760 * S ? 3 : 2; float cw = (w - 14 * S * (cols - 1)) / cols, chh = 76 * S;
                     for (int i = 0; i < Investigate.All.Length; i++)
@@ -211,7 +211,7 @@ namespace AdeeboMeter
                             bool steps = head == "WHAT TO TRY NEXT"; float ch0 = 16 * S + 30 * S;
                             foreach (var it in items) ch0 += Math.Max(26 * S, Draw.Measure(it, Draw.fBody, (int)(w - 76 * S)).Height + 10 * S);
                             Kit.Box(g, new RectangleF(x, y, w, ch0), 14 * S); float lx0 = x + 20 * S; y += 16 * S;
-                            g.DrawString(L.T(steps ? "What to do" : "What I couldn't tell"), Draw.fHead, ink, lx0, y); y += 30 * S; int k = 0;
+                            g.DrawString(L.T(steps ? L.T("What to do") : "What I couldn't tell"), Draw.fHead, ink, lx0, y); y += 30 * S; int k = 0;
                             foreach (var it in items)
                             {
                                 k++; float ih = Draw.Measure(it, Draw.fBody, (int)(w - 76 * S)).Height;
@@ -238,7 +238,7 @@ namespace AdeeboMeter
                         // for everyone: did it help, try again, or hand it to someone who can help
                         float lx = x; var r2 = r;
                         using (var lb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark))
-                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? "Report saved - show it" : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", "Still broken - check again", "Open as script" }).Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in AdeeboLab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : "Copy for someone who can help" }))
+                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? L.T("Report saved - show it") : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", L.T("Still broken - check again"), L.T("Open as script") }).Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in AdeeboLab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for someone who can help") }))
                             {
                                 var asz = g.MeasureString(L.T(a), Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width + 28 * S, 34 * S);
                                 if (ar.Right > x + w && lx > x) { lx = x; y += 44 * S; ar = new RectangleF(lx, y, ar.Width, ar.Height); }
@@ -258,7 +258,7 @@ namespace AdeeboMeter
                                     th.SetApartmentState(System.Threading.ApartmentState.STA); th.Start(); guideCanvas.Invalidate();
                                 }); }
                                 else if (a == "Learn why") { string tp = guideCase.Topic; Act(guideCanvas, ar, delegate { GoTopic(tp); }); }
-                                else if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = "Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."; guideRun = null; guideCanvas.Invalidate(); });
+                                else if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = L.T("Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."); guideRun = null; guideCanvas.Invalidate(); });
                                 else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });
                                 else if (a == "Open as script") Act(guideCanvas, ar, delegate { ShellPrefill(GuideScript(r2)); });   // Monitor -> Shell (FullView.Linked.cs)
                                 else if (a == "Open in AdeeboLab") Act(guideCanvas, ar, delegate { OpenLab(null, false, GuideLabView(r2.Id), false); });   // Monitor -> Lab

@@ -89,7 +89,7 @@ namespace AdeeboMeter
             if (!ls.Wifi) y = PaintSwitch(g, x, y, w);
             if (ls.Wifi) y = ListCard(g, "WI-FI DROPS IN THE LAST 24 HOURS  ·  FROM WINDOWS' OWN LOG", ls.Drops, ls.DropsErr != "" ? ls.DropsErr : Voice.P("Not a single drop. Rock solid.", "No drops in 24 h."), "link.DROPS", x, y, w);
             y = ListCard(g, "ADDRESS (DHCP) TROUBLE IN THE LAST 24 HOURS", ls.Dhcp, ls.DhcpErr != "" ? ls.DhcpErr : "None - your address renewed without a hitch.", "link.DHCP", x, y, w);
-            y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), "None in Windows' table yet.", "link.LAN", x, y, w);
+            y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), L.T("None in Windows' table yet."), "link.LAN", x, y, w);
             if (ls.Wifi && ls.MyChannel > 0 && ls.Aps.Count > 0) y = PaintChannelMap(g, ls, x, y, w);
             if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
                 using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so."), Draw.fBody, mb, x, y); y += 30 * S; }
@@ -134,10 +134,10 @@ namespace AdeeboMeter
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
             bool can = LiveCapture.Available && !switchBusy;
             Theme.Fill(g, btn, 16 * S, can ? Theme.Blue : Theme.Track);
-            string bt = switchBusy ? "Listening... " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : "Find my switch port";
+            string bt = switchBusy ? "Listening... " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : L.T("Find my switch port");
             using (var bb = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBodyB, bb, btn, c);
             if (can) Act(linkCanvas, btn, StartSwitch);
-            string note = !LiveCapture.Available ? "Needs Wireshark and Npcap on this PC." : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";
+            string note = !LiveCapture.Available ? L.T("Needs Wireshark and Npcap on this PC.") : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";
             using (var nb = new SolidBrush(switchErr != "" ? Theme.LvText(1) : Theme.Muted)) g.DrawString(note, Draw.fSmall, nb, new RectangleF(btn.Right + 14 * S, btn.Y, w - btn.Width - 56 * S, 34 * S));
             var si = switchInfo;
             if (si != null)
@@ -208,7 +208,7 @@ namespace AdeeboMeter
             {
                 var secs = grp.Select(a => a.Sec).Distinct().ToList();
                 if (secs.Count > 1 && secs.Any(WlanApi.Weak) && secs.Any(z => !WlanApi.Weak(z)))
-                    tips.Add(new[] { "Same name, different lock", "\"" + grp.Key + "\" is on the air both as " + string.Join(" and as ", secs) + ". The " + secs.First(WlanApi.Weak) + " one could be a fake copy - join the protected one, and don't sign in on a page you didn't expect.", "2" });
+                    tips.Add(new[] { L.T("Same name, different lock"), "\"" + grp.Key + "\" is on the air both as " + string.Join(" and as ", secs) + ". The " + secs.First(WlanApi.Weak) + " one could be a fake copy - join the protected one, and don't sign in on a page you didn't expect.", "2" });
             }
             if (tips.Count > 0) y = TextCard(g, "WHAT TO DO ABOUT IT", tips, "link.CHANNEL MAP", x, y, w);
 

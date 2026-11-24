@@ -64,7 +64,7 @@ namespace AdeeboMeter
         float MkTurnOn(Graphics g, float x, float y, float w)
         {
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, "Currencies, commodities and Canada's rates", null);
+            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, L.T("Currencies, commodities and Canada's rates"), null);
             using (var ink = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on."), Paper.Body, ink, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
             if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); }); }
             return r.Bottom + 16 * S;
@@ -279,7 +279,7 @@ namespace AdeeboMeter
         float MkWeekDesk(Graphics g, float x, float y, float w)
         {
             var facts = MkWeekFacts(); float h = 58 * S + Math.Max(1, facts.Count) * 28 * S + 30 * S; var r = new RectangleF(x, y, w, h); Paper.Desk(g, r);
-            float ty = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "The Week in Numbers", null) + 4 * S;
+            float ty = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("The Week in Numbers"), null) + 4 * S;
             if (facts.Count == 0) { MkText(g, L.T("The numbers arrive after the first fetch."), Paper.Body, Paper.Muted, x + 16 * S, ty); ty += 28 * S; }
             foreach (var f in facts) { using (var b = new SolidBrush(f.Item1 > 0 ? Paper.Up : f.Item1 < 0 ? Paper.Down : Paper.Muted)) g.FillEllipse(b, x + 16 * S, ty + 6 * S, 9 * S, 9 * S); using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(f.Item2, Paper.Body, ib, new RectangleF(x + 32 * S, ty, w - 48 * S, 26 * S)); ty += 28 * S; }
             MkText(g, L.T("Facts from this week's numbers, not a forecast."), Paper.Small, Paper.Muted, x + 16 * S, ty + 2 * S);
@@ -529,7 +529,7 @@ namespace AdeeboMeter
             var from = mkRange == "3m" ? DateTime.Today.AddMonths(-3) : mkRange == "5y" ? DateTime.Today.AddYears(-5) : DateTime.Today.AddYears(-1);
             var groups = new[] { "ENER", "FISH", "AGRI", "MTLS", "FOPR" }; var cols = new[] { Paper.Up, Color.FromArgb(61, 111, 168), Color.FromArgb(122, 91, 166), Color.FromArgb(176, 138, 30), Paper.Down };
             var r = new RectangleF(x, y, w, 400 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Five Commodity Groups, Side by Side", L.T("each set to 100 at the start, so you can compare"));
+            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Five Commodity Groups, Side by Side"), L.T("each set to 100 at the start, so you can compare"));
             MkRange(g, x + w - 16 * S, y + 14 * S, new[] { new[] { "3m", "3 months" }, new[] { "1y", "1 year" }, new[] { "5y", "5 years" } }, mkRange == "3m" || mkRange == "5y" ? mkRange : "1y", id => mkRange = id);
             var ch = new RectangleF(x + 50 * S, y + 64 * S, w - 70 * S, 270 * S);
             var series = groups.Select(c => MarketData.Window(MarketData.Get(c), from)).ToList();
@@ -554,7 +554,7 @@ namespace AdeeboMeter
             float lw = w * 0.6f;
             var all = new[] { "ENER", "MTLS", "AGRI", "FOPR", "FISH", "BCPI", "BCNE" };
             var tr = new RectangleF(x, y, lw, 90 * S + all.Length * 38 * S); Paper.Desk(g, tr);
-            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Each Group in Detail", null);
+            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Each Group in Detail"), null);
             float ty = y + 56 * S, c2 = x + lw * 0.68f, c3 = x + lw * 0.82f, c4 = x + lw - 16 * S;
             using (var hb = new SolidBrush(Paper.Soft)) g.FillRectangle(hb, x + 8 * S, ty, lw - 16 * S, 26 * S);
             MkText(g, L.T("Group · what's in it"), Draw.fSmall, Paper.Ink, x + 16 * S, ty + 5 * S); MkTextR(g, L.T("Week"), Draw.fSmall, Paper.Ink, c2, ty + 5 * S); MkTextR(g, L.T("3 months"), Draw.fSmall, Paper.Ink, c3, ty + 5 * S); MkTextR(g, L.T("Year"), Draw.fSmall, Paper.Ink, c4, ty + 5 * S);
@@ -569,7 +569,7 @@ namespace AdeeboMeter
             }
             float ex = x + lw + 16 * S, ew = w - lw - 16 * S;
             var er = new RectangleF(ex, y, ew, 320 * S); Paper.Desk(g, er);
-            Paper.DeskTitle(g, ex + 16 * S, y + 12 * S, "Energy and the Loonie", null);
+            Paper.DeskTitle(g, ex + 16 * S, y + 12 * S, L.T("Energy and the Loonie"), null);
             using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start."), Paper.Small, ib, new RectangleF(ex + 16 * S, y + 46 * S, ew - 32 * S, 40 * S));
             var en = MarketData.Window(MarketData.Get("ENER"), from); var usd = MarketData.Window(MarketData.Get("FX:USD"), from);
             var ec = new RectangleF(ex + 16 * S, y + 96 * S, ew - 32 * S, 170 * S);
@@ -593,7 +593,7 @@ namespace AdeeboMeter
             {
                 List<MarketData.Quote> qs; lock (MarketData.k) qs = MarketData.Quotes.Values.ToList();
                 var fr = new RectangleF(x, y, w, 70 * S + MarketData.FuturesList.Length * 32 * S); Paper.Desk(g, fr);
-                Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Prices per Barrel and Ounce", L.T("futures, from your quote key · delayed while open"));
+                Paper.DeskTitle(g, x + 16 * S, y + 12 * S, L.T("Prices per Barrel and Ounce"), L.T("futures, from your quote key · delayed while open"));
                 float fy = y + 54 * S;
                 foreach (var f in MarketData.FuturesList) { var q = qs.FirstOrDefault(z => z.Sym == f[0]); MkText(g, L.T(f[1]), Paper.BodyB, Paper.Head, x + 16 * S, fy); MkTextR(g, q == null ? "-" : q.Price.ToString("N2", CultureInfo.CurrentCulture), Paper.Body, Paper.Ink, x + w * 0.45f, fy); Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Small, x + w * 0.6f, fy + 2 * S, "0.00"); MkText(g, L.T(f[2]), Paper.Small, Paper.Muted, x + w * 0.66f, fy + 2 * S); fy += 32 * S; }
                 y = fr.Bottom + 16 * S;
@@ -649,7 +649,7 @@ namespace AdeeboMeter
             // Canada
             var rate = MarketData.Get("V39079"); var cpi = MarketData.Get("STATIC_TOTALCPICHANGE");
             var cr = new RectangleF(rx, y, rw, 250 * S); Paper.Desk(g, cr);
-            Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, "Rates and Prices in Canada", null);
+            Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, L.T("Rates and Prices in Canada"), null);
             float sw = (rw - 42 * S) / 2;
             Action<float, float, string, string, string> stat = (sx, sy, a, b, c) => { var sr = new RectangleF(sx, sy, sw, 84 * S); Theme.Fill(g, sr, 6 * S, Paper.CardBg); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, a, Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, b, Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 30 * S); MkText(g, c, Draw.fTiny, Paper.Muted, sr.X + 10 * S, sr.Y + 62 * S); };
             var since = MarketData.RateSince(rate);

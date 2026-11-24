@@ -41,7 +41,7 @@ namespace AdeeboMeter
             if (todo.Count == 0 || whereBusy) return;
             whereBusy = true;
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Looking up where programs live"); try { 
+            { var __bz = Busy.Begin(L.T("Looking up where programs live")); try { 
                 var res = new Dictionary<string, string>();
                 foreach (var t in todo) { string path = ""; try { path = Native.ExePath(t.Value); } catch { } res[t.Key] = path == "" ? "" : Explain.Where(path); }
                 try { BeginInvoke((Action)delegate { foreach (var kv in res) procWhere[kv.Key] = kv.Value; whereBusy = false; procList.Invalidate(); }); } catch { whereBusy = false; }
@@ -63,7 +63,7 @@ namespace AdeeboMeter
             var snap = connSnap; if (snap != null && (DateTime.UtcNow - lastConns).TotalSeconds < 10) { procConns = snap.Where(c => c.Proc == name).ToList(); procInfo.Invalidate(); return; }
             procConnBusy = true;
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Listing this program's connections"); try { 
+            { var __bz = Busy.Begin(L.T("Listing this program's connections")); try { 
                 List<Conn> l = null; try { l = M.Connections(true).Where(c => c.Proc == name).ToList(); } catch (Exception e) { Program.Log("app connections: " + e.Message); }
                 try { BeginInvoke((Action)delegate { procConnBusy = false; if (procSel == name) { procConns = l; procInfo.Invalidate(); } }); } catch (InvalidOperationException) { procConnBusy = false; }
             } finally { __bz.End(); } });
@@ -91,7 +91,7 @@ namespace AdeeboMeter
             procSel = a.Name; procFacts = null; procPathSel = ""; procConns = null; LoadProcConns(a.Name); procInfo.AutoScrollPosition = Point.Empty; procList.Invalidate(); procInfo.Invalidate();
             string name = a.Name; int pid = a.Pid;
             Task.Factory.StartNew(() =>
-            { var __bz = Busy.Begin("Reading this program's details"); try { 
+            { var __bz = Busy.Begin(L.T("Reading this program's details")); try { 
                 string path = ""; try { path = Native.ExePath(pid); } catch { }
                 var f = Explain.FileFacts(path);
                 try { BeginInvoke((Action)delegate { if (procSel == name) { procFacts = f; procPathSel = path; procInfo.Invalidate(); } }); } catch { }
@@ -121,7 +121,7 @@ namespace AdeeboMeter
                     List<ProcRow> rows; if (!procRowsByCat.TryGetValue(cat, out rows)) rows = new List<ProcRow>();
                     if (rows.Count == 0) continue;
                     y += 8 * S;
-                    g.DrawString(cat + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(L.T(cat) + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var i in rows)
                     {
                         var a = i.A; var rr = new RectangleF(0, y, w + 8 * S, rh);
@@ -172,10 +172,10 @@ namespace AdeeboMeter
                 {
                     Friendly = Voice.P("Meet the crew running your PC.", "What's running on this PC"), Close = -1,
                     Tag = total + " processes, grouped into " + procs.Count + " programs. I know " + known + " of them by heart.",
-                    What = "Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.",
-                    How = "Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.",
-                    Why = "Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.",
-                    Without = "Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide."
+                    What = L.T("Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job."),
+                    How = L.T("Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close."),
+                    Why = L.T("Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling."),
+                    Without = L.T("Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.")
                 };
                 y = ExplainPaint.Paint(g, intro, x, y, w, false);
             }
@@ -190,7 +190,7 @@ namespace AdeeboMeter
                 rows.Add(new[] { "Program file", procFacts == null ? "reading..." : procPathSel != "" ? procPathSel : "hidden by Windows (protected process)" });
                 if (procFacts != null && procFacts[0] != "") rows.Add(new[] { "Describes itself as", procFacts[0] });
                 if (procFacts != null && procFacts[1] != "") rows.Add(new[] { "Publisher", procFacts[1] });
-                if (procFacts != null) rows.Add(new[] { "Where it lives", Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
+                if (procFacts != null) rows.Add(new[] { L.T("Where it lives"), Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
                 y = ExplainPaint.Section(g, "ON THIS PC", rows, x, y, w);
                 y += 6 * S;
                 y = ExplainPaint.Section(g, "ITS CONNECTIONS RIGHT NOW", ConnRows(procConns), x, y, w);

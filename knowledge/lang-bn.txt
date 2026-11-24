@@ -5085,3 +5085,301 @@ Monitor, diagnose, automate, visualize, learn.	নজর রাখুন, নি
 Finish	শেষ করুন
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows কিবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন।
 Arabic text reads right to left.	আরবি লেখা ডান থেকে বামে পড়া হয়।
+Added as "My match" and watched from now on.	"আমার ম্যাচ" হিসেবে যোগ হয়েছে, এখন থেকে নজরে থাকবে।
+An app	একটি অ্যাপ
+CPU is pegged ({0}%). {1} uses the most.	সিপিইউ পুরো চাপে ({0}%)। {1} সবচেয়ে বেশি ব্যবহার করছে।
+Capturing packets is turned off by your IT team (AdeeboMeter.policy).	আপনার আইটি টিম প্যাকেট ক্যাপচার বন্ধ করে রেখেছে (AdeeboMeter.policy)।
+Checking the destination	গন্তব্য যাচাই চলছে
+Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	বাঁ দিকের যেকোনো সারিতে ক্লিক করুন। আমি বলব এটা কী করে, কীভাবে কাজ করে, কেন আছে, না থাকলে কী হতো - আর বন্ধ করা নিরাপদ কি না।
+Collecting - one row a second while the session is open.	সংগ্রহ চলছে - সেশন খোলা থাকা পর্যন্ত প্রতি সেকেন্ডে একটি সারি।
+Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	রঙিন বিন্দু: সবুজ = বন্ধ করা নিরাপদ, অ্যাম্বার = থাকতে দিন (রিস্টার্ট করা চলে), লাল = Windows-এর দরকার, বেগুনি = আইটি পরিচালিত, ধূসর = আমার গাইডে নেই।
+Copy match report (internal addresses removed)	ম্যাচের রিপোর্ট কপি করুন (ভেতরের ঠিকানা বাদ দিয়ে)
+Couldn't tell which server the match uses.	ম্যাচ কোন সার্ভার ব্যবহার করছে বোঝা যায়নি।
+Currencies, commodities and Canada's rates	মুদ্রা, পণ্য ও কানাডার হার
+DNS is slow ({0} ms); pages will be slow to start.	DNS ধীর ({0} ms); পেজ খুলতে দেরি হবে।
+Data that minute	সেই মিনিটের তথ্য
+Each Group in Detail	প্রতিটি গ্রুপ বিস্তারিত
+Energy and the Loonie	জ্বালানি ও কানাডিয়ান ডলার
+Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.	Esc, মিনিমাইজ, X বা কোণে ফিরুন আপনাকে কোণের উইজেটে ফিরিয়ে নেয়, যা নজর রেখে চলে। বন্ধ করতে, ট্রে আইকনে রাইট-ক্লিক করে প্রস্থান বেছে নিন।
+Every device on your network, grouped - with how fast each answers	আপনার নেটওয়ার্কের প্রতিটি ডিভাইস, দলে দলে - প্রতিটি কত দ্রুত সাড়া দেয় তা সহ
+Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.	আপনার পিসির প্রতিটি প্রোগ্রাম এক বা একাধিক 'প্রসেস' - নিজস্ব মেমরিসহ একটি চলমান কপি। Windows নিজেই এমন কয়েক ডজন, প্রত্যেকের একটি করে কাজ।
+Find my match server	আমার ম্যাচের সার্ভার খুঁজুন
+Find my switch port	আমার সুইচ পোর্ট খুঁজুন
+Finding your match server...	আপনার ম্যাচের সার্ভার খোঁজা হচ্ছে...
+Five Commodity Groups, Side by Side	পাঁচটি পণ্য গ্রুপ, পাশাপাশি
+Game pings are turned off by your IT team (AdeeboMeter.policy).	আপনার আইটি টিম গেম পিং বন্ধ করে রেখেছে (AdeeboMeter.policy)।
+Getting Valve's server list (one request to api.steampowered.com)...	Valve-এর সার্ভার তালিকা আনা হচ্ছে (api.steampowered.com-এ একটি অনুরোধ)...
+History is on - the first day appears here after a few minutes.	ইতিহাস চালু - কয়েক মিনিট পরে প্রথম দিনটি এখানে দেখা যাবে।
+If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.	এটা যদি আপনার খোলা কোনো অ্যাপ হয়, বন্ধ করা নিরাপদ। চিনতে না পারলে এবং Program Files বা Windows ফোল্ডারে না থাকলে, হাত দেওয়ার আগে আইটিকে জিজ্ঞেস করুন।
+Internet answered in	ইন্টারনেট সাড়া দিয়েছে
+Keep this capture	এই ক্যাপচার রাখুন
+Kept on this PC for 90 days; about 2 KB a stream	এই পিসিতে 90 দিন রাখা হয়; প্রতি স্ট্রিমে প্রায় 2 KB
+Listing this program's connections	এই প্রোগ্রামের সংযোগগুলোর তালিকা হচ্ছে
+Looking up where programs live	প্রোগ্রামগুলো কোথায় থাকে খোঁজা হচ্ছে
+Marked - the 30 seconds around it are in the match summary.	চিহ্নিত - আশপাশের 30 সেকেন্ড ম্যাচের সারাংশে আছে।
+Measured here, the usual setup there - where each one's way out goes	এখানে মাপা, ওখানে সাধারণ সেটআপ - প্রতিটি কোন পথে বেরোয়
+Memory is almost full ({0}%), so Windows keeps swapping programs to the disk - that's the slowness. {1} use the most.	মেমরি প্রায় ভরা ({0}%), তাই Windows বারবার প্রোগ্রাম ডিস্কে সরাচ্ছে - এটাই ধীরগতির কারণ। {1} সবচেয়ে বেশি ব্যবহার করছে।
+Memory read back from disk	ডিস্ক থেকে আবার পড়া মেমরি
+Needs Wireshark (tshark) and Npcap - not found on this PC.	Wireshark (tshark) ও Npcap লাগবে - এই পিসিতে পাওয়া যায়নি।
+Needs Wireshark and Npcap on this PC.	এই পিসিতে Wireshark ও Npcap লাগবে।
+No Valve servers yet - press Refresh Valve list (one request to Valve).	এখনও কোনো Valve সার্ভার নেই - Valve তালিকা রিফ্রেশ চাপুন (Valve-এ একটি অনুরোধ)।
+No servers yet - press Edit servers and add your server's address.	এখনও কোনো সার্ভার নেই - সার্ভার সম্পাদনা চেপে আপনার সার্ভারের ঠিকানা যোগ করুন।
+No streams recorded yet	এখনও কোনো স্ট্রিম রেকর্ড হয়নি
+No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	এই পিসিতে সমর্থিত কোনো গেম ইনস্টল করা পাওয়া যায়নি। তবুও যেকোনোটিতে ক্লিক করে তার সার্ভারে নজর রাখতে পারেন - আপনি না করা পর্যন্ত কোনো গেম কোম্পানির সার্ভারে কিছু পাঠানো হয় না।
+None - the internet answered every time AdeeboMeter checked.	একটিও না - AdeeboMeter যতবার দেখেছে, ইন্টারনেট সাড়া দিয়েছে।
+None in Windows' table yet.	Windows-এর টেবিলে এখনও কিছু নেই।
+Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	ইচ্ছে করেই করা হয় না: ডিফল্ট পাসওয়ার্ড চেষ্টা করা, ফাঁস হওয়া ডেটাবেসে আপনাকে খোঁজা (তাতে আপনার তথ্য কোনো ওয়েবসাইটে যাবে), অন্যের ডিভাইস স্ক্যান করা, বা আপনার হয়ে কিছু বদলানো।
+Off (Settings > Weather). Your PC's location is never used.	বন্ধ (সেটিংস > আবহাওয়া)। আপনার পিসির অবস্থান কখনো ব্যবহার হয় না।
+Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	কে কী তা জানা হয়ে গেলে টাস্ক ম্যানেজার আর ভয়ের থাকে না - আর পিসি হিমশিম খেলে ঠিক কী বন্ধ করতে হবে জানবেন।
+Phone waiting room	ফোনের অপেক্ষার ঘর
+Pick a game to watch	নজর রাখতে একটি গেম বেছে নিন
+Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	কয়েক মিনিট কিছু চালান - একটা ম্যাচ, অনুষ্ঠান বা লাইভ চ্যানেল। প্রতিটি পতন আর কার দোষে, সেই রেকর্ড এখানে আসবে।
+Prices per Barrel and Ounce	প্রতি ব্যারেল ও আউন্সে দাম
+Rates and Prices in Canada	কানাডায় হার ও দাম
+Reading that day...	সেই দিনটি পড়া হচ্ছে...
+Reading this program's details	এই প্রোগ্রামের বিস্তারিত পড়া হচ্ছে
+Refresh Valve list	Valve তালিকা রিফ্রেশ
+Router answered in	রাউটার সাড়া দিয়েছে
+Running the health check	স্বাস্থ্য পরীক্ষা চলছে
+Running the security checkup	নিরাপত্তা পরীক্ষা চলছে
+Same name, different lock	একই নাম, ভিন্ন তালা
+Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.	সংরক্ষিত; Wireshark-এ খুলছে। বন্ধ করলে মুছে যাবে - একটি কপি রাখতে এই ক্যাপচার রাখুন-এ ক্লিক করুন।
+Scores and headlines	স্কোর ও শিরোনাম
+See the packet journey	প্যাকেটের যাত্রা দেখুন
+Session started - press Mark lag whenever it feels wrong.	সেশন শুরু হয়েছে - গোলমাল মনে হলেই ল্যাগ চিহ্নিত করুন চাপুন।
+The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card.	ইঞ্জিনিয়ার কার্ডের জন্য Pro মোড লাগবে (সাধারণ > মোড) - ততক্ষণ দৈনন্দিন কার্ড দেখাবে।
+The file doesn't describe itself.	ফাইলটি নিজের পরিচয় দেয় না।
+The internet check is off in Settings, so outages can't be noticed.	সেটিংসে ইন্টারনেট পরীক্ষা বন্ধ, তাই বিভ্রাট ধরা পড়বে না।
+The networks this PC hears, by channel - yours and the loud neighbours	এই পিসি যেসব নেটওয়ার্ক শুনতে পায়, চ্যানেল অনুযায়ী - আপনারটি আর হইচই করা প্রতিবেশীরা
+The route your last trace or MTR took, hop by hop	আপনার শেষ traceroute বা MTR যে পথে গেছে, হপ ধরে ধরে
+The {0} is slow (gateway {1}). The PC is not the cause.	{0} ধীর (গেটওয়ে {1})। পিসি এর কারণ নয়।
+Top by memory	মেমরিতে শীর্ষে
+Want to look back at yesterday? Turn on 7-day history in Settings  >	গতকাল ফিরে দেখতে চান? সেটিংসে 7 দিনের ইতিহাস চালু করুন  >
+What goes through the tunnel and what goes straight out	কী টানেলের ভেতর দিয়ে যায় আর কী সরাসরি বেরোয়
+Where it lives	এটি কোথায় থাকে
+Wi-Fi around you	আপনার চারপাশের Wi-Fi
+Wi-Fi link rate	Wi-Fi লিংক রেট
+Wi-Fi signal is weak ({0}%). Move closer to the access point or use a cable.	Wi-Fi সিগন্যাল দুর্বল ({0}%)। অ্যাক্সেস পয়েন্টের কাছে যান বা কেবল ব্যবহার করুন।
+You marked lag here	আপনি এখানে ল্যাগ চিহ্নিত করেছেন
+Your Line at Kick-off Time	কিক-অফের সময় আপনার লাইন
+Your phone vs this PC	আপনার ফোন বনাম এই পিসি
+local network	লোকাল নেটওয়ার্ক
+{0} MB (live capture on)	{0} MB (লাইভ ক্যাপচার চালু)
+{0} MB of 80 MB budget	80 MB বাজেটের {0} MB
+{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} সংযুক্ত, কিন্তু রাউটার থেকে কোনো ঠিকানা পায়নি (169.254.x.x - DHCP সাড়া দেয়নি)। রাউটার রিস্টার্ট করুন বা আবার সংযোগ করুন।
+Every network connection just dropped.	সব নেটওয়ার্ক সংযোগ এইমাত্র চলে গেল।
+All network connections dropped.	সব নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।
+Lost the network - you're offline, boss.	নেটওয়ার্ক হারিয়েছে - আপনি অফলাইন, বস।
+Network connection lost.	নেটওয়ার্ক সংযোগ হারিয়েছে।
+VPN dropped.	VPN পড়ে গেছে।
+VPN disconnected.	VPN বিচ্ছিন্ন।
+Wi-Fi dropped.	Wi-Fi পড়ে গেছে।
+Wi-Fi disconnected.	Wi-Fi বিচ্ছিন্ন।
+Wi-Fi hopped to another access point	Wi-Fi অন্য অ্যাক্সেস পয়েন্টে লাফ দিয়েছে
+Wi-Fi roamed to another access point	Wi-Fi অন্য অ্যাক্সেস পয়েন্টে সরে গেছে
+Just woke up - waiting for Windows to join the network.	এইমাত্র জেগেছি - Windows নেটওয়ার্কে যোগ দেওয়ার অপেক্ষায়।
+Starting - waiting for Windows to join the network.	শুরু হচ্ছে - Windows নেটওয়ার্কে যোগ দেওয়ার অপেক্ষায়।
+You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.	আপনি কোনো নেটওয়ার্কে সংযুক্ত নন, বস - Wi-Fi বন্ধ, কেবল খোলা, বা এয়ারপ্লেন মোড চালু।
+Not connected to any network (no Wi-Fi, no cable, or airplane mode).	কোনো নেটওয়ার্কে সংযুক্ত নয় (Wi-Fi নেই, কেবল নেই, বা এয়ারপ্লেন মোড)।
+Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.	কল টলমল করছে (জিটার {0})। মুখ জমে গেলে ভিডিও বন্ধ করুন - অডিও টিকে যাবে।
+Call quality dropping (jitter {0}). Turn video off if it stutters.	কলের মান কমছে (জিটার {0})। আটকে গেলে ভিডিও বন্ধ করুন।
+The internet isn't answering at all - your router is fine, so it's the line or your provider.	ইন্টারনেট একদমই সাড়া দিচ্ছে না - আপনার রাউটার ঠিক আছে, তাই সমস্যা লাইনে বা আপনার প্রোভাইডারে।
+The internet isn't answering (your router does) - the line or the provider.	ইন্টারনেট সাড়া দিচ্ছে না (রাউটার দিচ্ছে) - লাইন বা প্রোভাইডার।
+The internet's there but DNS lost the phone book - sites won't open by name.	ইন্টারনেট আছে, কিন্তু DNS ফোনবুক হারিয়েছে - সাইট নাম দিয়ে খুলবে না।
+DNS lookups are failing; sites won't open by name.	DNS খোঁজ ব্যর্থ হচ্ছে; সাইট নাম দিয়ে খুলবে না।
+Call looks smooth. Go impress them.	কল মসৃণ চলছে। যান, মুগ্ধ করে দিন।
+Call quality is good.	কলের মান ভালো।
+Busy, but holding. Maybe don't open another big app just yet.	ব্যস্ত, তবে সামলে নিচ্ছে। এখনই আরেকটা বড় অ্যাপ না খোলাই ভালো।
+Busy but fine. Avoid opening big apps for now.	ব্যস্ত, তবে ঠিক আছে। আপাতত বড় অ্যাপ খুলবেন না।
+Network's a bit sleepy; your PC is fine.	নেটওয়ার্ক একটু ঘুমঘুম; আপনার পিসি ঠিক আছে।
+Network a bit slow; your PC is fine.	নেটওয়ার্ক একটু ধীর; আপনার পিসি ঠিক আছে।
+All quiet. Nothing to fix - go get coffee.	সব শান্ত। ঠিক করার কিছু নেই - এক কাপ কফি খেয়ে আসুন।
+All quiet.	সব শান্ত।
+Back to normal.	আবার স্বাভাবিক।
+Recovered.	ঠিক হয়ে গেছে।
+Needs you	আপনাকে দরকার
+Above 88% for 10 s and I start nagging.	10 s ধরে 88%-এর বেশি থাকলে আমি তাগাদা দিতে শুরু করি।
+Above 88% for 10 s turns AdeeboMeter red.	10 s ধরে 88%-এর বেশি থাকলে AdeeboMeter লাল হয়ে যায়।
+No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.	কোনো নেটওয়ার্ক সংযোগই নেই, বস। কেবল লাগান বা একটি Wi-Fi নেটওয়ার্ক বেছে নিন।
+Not connected.	সংযুক্ত নয়।
+You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.	আপনি 2.4 GHz-এ আছেন, কিন্তু আপনার নেটওয়ার্কে আরও দ্রুত ব্যান্ডও আছে। একটু কাছে গেলে সাধারণত Windows বদলে নেয়।
+Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded.	আপনার নেটওয়ার্কে 5/6 GHz-ও আছে; 2.4 GHz ধীর ও বেশি ভিড়ের।
+Windows gave itself a 169.254 address - nobody handed you a real one. The router's DHCP isn't answering.	Windows নিজেকে একটি 169.254 ঠিকানা দিয়েছে - কেউ আসল ঠিকানা দেয়নি। রাউটারের DHCP সাড়া দিচ্ছে না।
+No DHCP address (169.254.x.x).	DHCP ঠিকানা নেই (169.254.x.x)।
+You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.	আপনি নেটওয়ার্কে সংযুক্ত, কিন্তু এর বাইরে কিছুতে পৌঁছানোর মতো রাউটার (গেটওয়ে) নেই। সাধারণত DHCP ব্যর্থ হয়েছে, বা নেটওয়ার্কটি শুধু লোকাল।
+Connected, but no default gateway.	সংযুক্ত, কিন্তু ডিফল্ট গেটওয়ে নেই।
+Your Wi-Fi is in great shape - strong signal, clean air, quick router.	আপনার Wi-Fi দারুণ অবস্থায় - জোরালো সিগন্যাল, পরিষ্কার বাতাস, দ্রুত রাউটার।
+Wi-Fi link looks healthy.	Wi-Fi লিংক সুস্থ দেখাচ্ছে।
+Cable, full speed, no errors. The steadiest link there is.	কেবল, পুরো গতি, কোনো ত্রুটি নেই। সবচেয়ে স্থির লিংক।
+Wired link looks healthy.	তারযুক্ত লিংক সুস্থ দেখাচ্ছে।
+Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.	ডেস্কটপ অ্যাপের জন্য লোকেশন চালু না করা পর্যন্ত Windows Wi-Fi-এর বিস্তারিত লুকিয়ে রাখে (সেটিংস > গোপনীয়তা ও নিরাপত্তা > লোকেশন > ডেস্কটপ অ্যাপকে আপনার লোকেশন দেখতে দিন)। বিরক্তিকর, তবে এভাবেই Windows 11 আপনার অবস্থান রক্ষা করে।
+Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.	Wi-Fi-এর বিস্তারিত দেখতে লোকেশন অনুমতি লাগবে: সেটিংস > গোপনীয়তা ও নিরাপত্তা > লোকেশন > ডেস্কটপ অ্যাপকে আপনার লোকেশন দেখতে দিন।
+Nothing to tweak - your Wi-Fi is set up well.	কিছু বদলানোর নেই - আপনার Wi-Fi ভালোভাবে সেট করা।
+No changes suggested.	কোনো পরিবর্তনের পরামর্শ নেই।
+Live capture needs Wireshark (tshark) and Npcap - not on this PC.	লাইভ ক্যাপচারের জন্য Wireshark (tshark) ও Npcap লাগবে - এই পিসিতে নেই।
+Live capture needs Wireshark and Npcap.	লাইভ ক্যাপচারের জন্য Wireshark ও Npcap লাগবে।
+Digging through the last few minutes and listening 15 s more...	শেষ কয়েক মিনিট ঘাঁটা হচ্ছে আর আরও 15 s শোনা হচ্ছে...
+Collecting history + 15 s...	ইতিহাস + 15 s সংগ্রহ হচ্ছে...
+Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)	হয়ে গেছে, ইতিহাসসহ - Wireshark-এ খুলছে। (AdeeboMeter বন্ধ হলে মুছে যাবে - একটি কপি রাখতে এই ক্যাপচার রাখুন-এ ক্লিক করুন।)
+Saved with history; opening in Wireshark.	ইতিহাসসহ সংরক্ষিত; Wireshark-এ খুলছে।
+On a public website that usually means your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	কোনো পাবলিক ওয়েবসাইটে এর মানে সাধারণত আপনার কোম্পানি HTTPS পরীক্ষা করছে। এটা ত্রুটি নয় - কোনো সাইট গোলমাল করলে জানা ভালো।
+On a public site this usually means HTTPS inspection by a company proxy.	পাবলিক সাইটে এর মানে সাধারণত কোম্পানির প্রক্সি দিয়ে HTTPS পরীক্ষা।
+Your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	আপনার কোম্পানি HTTPS পরীক্ষা করছে। এটা ত্রুটি নয় - কোনো সাইট গোলমাল করলে জানা ভালো।
+Your company's web filter decrypts HTTPS to inspect it - common and expected at work.	আপনার কোম্পানির ওয়েব ফিল্টার পরীক্ষার জন্য HTTPS ডিক্রিপ্ট করে - কর্মস্থলে এটা সাধারণ ও প্রত্যাশিত।
+Fresh enough.	যথেষ্ট নতুন।
+Recently restarted.	সম্প্রতি রিস্টার্ট হয়েছে।
+Windows is waiting for a restart. Some network fixes only land after it.	Windows রিস্টার্টের অপেক্ষায়। কিছু নেটওয়ার্ক সমাধান তার পরেই কাজ করে।
+A restart is pending; some fixes apply only after it.	একটি রিস্টার্ট বাকি; কিছু সমাধান তার পরেই কাজ করে।
+Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.	প্রায় ভরা - 10%-এর নিচে Windows খিটখিটে হয়ে যায়। ডাউনলোডস বা পুরোনো ক্যাপচার খালি করুন।
+Nearly full; free some space.	প্রায় ভরা; কিছু জায়গা খালি করুন।
+The adapter itself is coughing. Try another cable or port, or update the driver.	অ্যাডাপ্টার নিজেই কাশছে। অন্য কেবল বা পোর্ট চেষ্টা করুন, বা ড্রাইভার আপডেট করুন।
+Adapter errors: try another cable or port, or update the driver.	অ্যাডাপ্টারের ত্রুটি: অন্য কেবল বা পোর্ট চেষ্টা করুন, বা ড্রাইভার আপডেট করুন।
+Crowded or weak. Move closer, or switch band (5 GHz near the router, 2.4 GHz far away).	ভিড় বা দুর্বল। কাছে যান, বা ব্যান্ড বদলান (রাউটারের কাছে 5 GHz, দূরে 2.4 GHz)।
+Crowded or weak channel; move closer or change band.	চ্যানেল ভিড় বা দুর্বল; কাছে যান বা ব্যান্ড বদলান।
+Your channel is calm.	আপনার চ্যানেল শান্ত।
+Channel is clear.	চ্যানেল পরিষ্কার।
+Battery saver is slowing things down on purpose. Plug in if it feels sluggish.	ব্যাটারি সেভার ইচ্ছে করে সব ধীর করছে। ধীর মনে হলে চার্জারে লাগান।
+Battery saver is on and throttles performance.	ব্যাটারি সেভার চালু, পারফরম্যান্স কমিয়ে রাখছে।
+Let's talk about it	চলুন এ নিয়ে কথা বলি
+How it started	কীভাবে শুরু হলো
+First sign	প্রথম লক্ষণ
+The low point	সবচেয়ে নিচু সময়
+Worst moment	সবচেয়ে খারাপ মুহূর্ত
+Healing	সেরে ওঠা
+Recovery	পুনরুদ্ধার
+The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.	রেকর্ডে পরিষ্কার কোনো পুনরুদ্ধার নেই - সব শুধু শান্ত হয়ে গেছে। কখনো কখনো সমাপ্তি টাইমস্ট্যাম্প নিয়ে আসে না।
+No recovery recorded in this stretch.	এই সময়টায় কোনো পুনরুদ্ধার রেকর্ড হয়নি।
+This one was close to home: your Wi-Fi or router. It's not a character flaw. A cable, or moving closer to the router, is self-care.	এবারেরটা ঘরের কাছেই: আপনার Wi-Fi বা রাউটার। এটা চরিত্রের দোষ নয়। একটা কেবল, বা রাউটারের কাছে যাওয়া - এটাই নিজের যত্ন।
+Most of it was your Wi-Fi or router. A cable or a better spot helps; Toolbox › Wi-Fi has the details.	বেশিরভাগই আপনার Wi-Fi বা রাউটার। কেবল বা ভালো জায়গা সাহায্য করে; টুলবক্স › Wi-Fi-তে বিস্তারিত আছে।
+It was DNS. It's always DNS. Toolbox › DNS race finds you a calmer one.	DNS ছিল। সবসময়ই DNS। টুলবক্স › DNS রেস আপনাকে একটা শান্ত সার্ভার খুঁজে দেবে।
+Most of it was DNS. Toolbox › DNS race compares servers.	বেশিরভাগই DNS। টুলবক্স › DNS রেস সার্ভারগুলো তুলনা করে।
+It was this PC, working too hard. Rest is productive. So is closing a few apps.	এই পিসিই ছিল, বেশি খাটছিল। বিশ্রামও কাজের। কয়েকটা অ্যাপ বন্ধ করাও।
+Most of it was this PC being busy. The Apps tab shows what.	বেশিরভাগই এই পিসি ব্যস্ত থাকায়। অ্যাপস ট্যাব দেখায় কোনগুলো।
+What we learned	আমরা যা শিখলাম
+Cause	কারণ
+Honestly? Your connection's been good. You can send this, but it's more of a thank-you note.	সত্যি বলতে? আপনার সংযোগ ভালোই ছিল। এটা পাঠাতে পারেন, তবে এটা বরং ধন্যবাদ-চিঠি।
+The connection has been good - there is little to complain about.	সংযোগ ভালো ছিল - অভিযোগ করার মতো তেমন কিছু নেই।
+Give me a host, an IP or a URL first.	আগে আমাকে একটি হোস্ট, IP বা URL দিন।
+Type a host, IP or URL.	একটি হোস্ট, IP বা URL লিখুন।
+That doesn't look like a host, an IP or a URL, boss.	এটা হোস্ট, IP বা URL মনে হচ্ছে না, বস।
+That is not a valid host, IP or URL.	এটি বৈধ হোস্ট, IP বা URL নয়।
+One more thing - checking whether a Wi-Fi sign-in page is in the way...	আরেকটা কথা - পথে কোনো Wi-Fi সাইন-ইন পেজ আছে কি না দেখা হচ্ছে...
+Checking for a captive portal (sign-in page)...	ক্যাপটিভ পোর্টাল (সাইন-ইন পেজ) খোঁজা হচ্ছে...
+Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?	এর ঠিকানাই খুঁজে পাচ্ছি না, বস - DNS সার্ভার বলছে এই নাম নেই। বানান ভুল, নাকি ভেতরের কোনো নাম যার জন্য VPN লাগে?
+DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.	DNS বলছে নামটি নেই। বানান দেখুন, বা ভেতরের নামের জন্য VPN সংযোগ করুন।
+Port's shut - tracing the path to see who shut it...	পোর্ট বন্ধ - কে বন্ধ করল দেখতে পথ খোঁজা হচ্ছে...
+Tracing the path...	পথ খোঁজা হচ্ছে...
+Reading the router names along the way...	পথের রাউটারগুলোর নাম পড়া হচ্ছে...
+Naming the hops...	হপগুলোর নাম দেওয়া হচ্ছে...
+TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.	TCP সংযোগ হয়, তারপর TLS... থেমে যায়। মাঝখানে কিছু হ্যান্ডশেক আটকে রাখছে - প্রক্সি, ফায়ারওয়াল, বা MTU সমস্যা।
+TLS handshake stalls after TCP connects (proxy, firewall or MTU).	TCP সংযোগের পর TLS হ্যান্ডশেক আটকে যায় (প্রক্সি, ফায়ারওয়াল বা MTU)।
+Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).	দরজা পর্যন্ত পৌঁছায়, কিন্তু দারোয়ান ঢুকতে দেয় না: Windows সার্টিফিকেট বিশ্বাস করে না (প্রায়ই পরীক্ষণ প্রক্সি)।
+TLS works but the certificate is not trusted by Windows (often an inspection proxy).	TLS কাজ করে, কিন্তু Windows সার্টিফিকেট বিশ্বাস করে না (প্রায়ই পরীক্ষণ প্রক্সি)।
+TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.	TCP ঠিক আছে, কিন্তু সার্ভার TLS 1.2 বা নতুনটা নেয় না - অতীতে আটকে আছে (TLS 1.0 / 1.1)। সমস্যা সার্ভারের দিকে।
+TLS handshake failed: the server likely supports only TLS 1.0/1.1.	TLS হ্যান্ডশেক ব্যর্থ: সার্ভার সম্ভবত শুধু TLS 1.0/1.1 সমর্থন করে।
+TCP is fine, TLS fails. The two sides can't agree on how to talk securely.	TCP ঠিক আছে, TLS ব্যর্থ। দুই পক্ষ নিরাপদে কথা বলার উপায়ে একমত হতে পারছে না।
+TLS handshake failed.	TLS হ্যান্ডশেক ব্যর্থ।
+Asking Windows about your connection...	Windows-কে আপনার সংযোগের খবর জিজ্ঞেস করা হচ্ছে...
+Reading...	পড়া হচ্ছে...
+Not a single drop. Rock solid.	একবারও বিচ্ছিন্ন হয়নি। পাথরের মতো মজবুত।
+No drops in 24 h.	24 h-এ কোনো বিচ্ছিন্নতা নেই।
+Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.	কেবলই সেরা মান: কোনো ইন্টারফেরেন্স নেই, রোমিং নেই, প্রতিবেশী নেই। তবুও কল আটকালে সমস্যা আরও দূরে - একটি গন্তব্য যাচাই করুন।
+Wired links have no radio interference; look further along the path if problems persist.	তারযুক্ত লিংকে রেডিও ইন্টারফেরেন্স নেই; সমস্যা থাকলে পথের আরও সামনে দেখুন।
+Click anything for the plain-English story. I only explain - I never close anything.	সহজ ভাষায় ব্যাখ্যা পেতে যেকোনো কিছুতে ক্লিক করুন। আমি শুধু ব্যাখ্যা করি - কখনো কিছু বন্ধ করি না।
+Click a process for its explanation. AdeeboMeter never closes processes.	ব্যাখ্যা দেখতে একটি প্রসেসে ক্লিক করুন। AdeeboMeter কখনো প্রসেস বন্ধ করে না।
+Not in my guide - here's what Windows knows.	আমার গাইডে নেই - Windows যা জানে তা এই।
+Not in AdeeboMeter's guide.	AdeeboMeter-এর গাইডে নেই।
+Rewinding the tape...	টেপ রিওয়াইন্ড হচ্ছে...
+Collecting...	সংগ্রহ হচ্ছে...
+Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.	বাফারিং কি আপনার, আপনার Wi-Fi-এর, প্রোভাইডারের - নাকি স্ট্রিমের? অ্যাপে বা ব্রাউজারে কিছু চললে আমি টের পাই আর নজর রাখি।
+Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.	স্ট্রিমের মান: প্রতিটি পতন কে ঘটাল। স্ট্রিম চেনা হয় সার্ভারের নাম দিয়ে - ট্যাব বা শিরোনাম কখনো পড়া হয় না।
+Click a row for the full story.	পুরো গল্পের জন্য একটি সারিতে ক্লিক করুন।
+Click a row for details.	বিস্তারিত দেখতে একটি সারিতে ক্লিক করুন।
+Give me a host, an IP or a URL and press Check. Nothing runs until you do.	একটি হোস্ট, IP বা URL দিয়ে যাচাই চাপুন। তার আগে কিছুই চলবে না।
+Type a host, IP or URL and press Check.	একটি হোস্ট, IP বা URL লিখে যাচাই চাপুন।
+Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...	DNS, রুট, পিং, TCP, TLS, HTTP, MTU আর পথ ধরে এগোনো হচ্ছে...
+Poking around...	খোঁজাখুঁজি চলছে...
+Running...	চলছে...
+Nothing has changed yet. Boring is good.	এখনও কিছু বদলায়নি। একঘেয়ে মানেই ভালো।
+No changes recorded yet.	এখনও কোনো পরিবর্তন রেকর্ড হয়নি।
+Warming up tshark...	tshark চালু হচ্ছে...
+No call running. Start a Teams call and I'll grade it live.	কোনো কল চলছে না। একটি Teams কল শুরু করুন, আমি সরাসরি মান যাচাই করব।
+No call media seen yet.	এখনও কলের মিডিয়া দেখা যায়নি।
+Quiet out there.	বাইরে সব চুপচাপ।
+No traffic yet.	এখনও কোনো ট্রাফিক নেই।
+Called it.	বলেছিলাম না।
+The guardian steps aside.	প্রহরী সরে দাঁড়ায়।
+Ouch - a heart lost. Try again.	উফ - একটা হৃদয় গেল। আবার চেষ্টা করুন।
+Not right - one heart lost.	ঠিক হয়নি - একটা হৃদয় গেল।
+Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.	এই দিনের জন্য এখনও কিছু রেকর্ড হয়নি - ইতিহাস প্রতি মিনিটে একটি লাইন লেখে, তাই কয়েক মিনিট সময় দিন।
+No history for this day yet (one line is written per minute).	এই দিনের ইতিহাস এখনও নেই (প্রতি মিনিটে একটি লাইন লেখা হয়)।
+History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.	ইতিহাস বন্ধ, তাই আবার চালানোর কিছু নেই। সেটিংসে চালু করুন - এটা এই পিসিতেই থাকে আর আপনার বেছে নেওয়া দিন পরে নিজে মুছে যায়।
+History is off. Enable it in Settings to replay past minutes.	ইতিহাস বন্ধ। আগের মিনিটগুলো আবার দেখতে সেটিংসে চালু করুন।
+✨ New device!	✨ নতুন ডিভাইস!
+New device	নতুন ডিভাইস
+🦘 Wi-Fi hop!	🦘 Wi-Fi লাফ!
+Wi-Fi roamed	Wi-Fi রোমিং
+Nothing changed around then. Quiet minute.	তখন আশপাশে কিছু বদলায়নি। শান্ত মিনিট।
+No changes within 15 minutes.	15 মিনিটের মধ্যে কোনো পরিবর্তন নেই।
+Reading the process list...	প্রসেসের তালিকা পড়া হচ্ছে...
+Meet the crew running your PC.	আপনার পিসি যারা চালায়, সেই দলের সঙ্গে পরিচিত হোন।
+What's running on this PC	এই পিসিতে কী চলছে
+Nothing matches. Either the filter's too picky or it's really quiet out there.	কিছুই মেলেনি। হয় ফিল্টার খুব খুঁতখুঁতে, নয়তো সত্যিই সব চুপচাপ।
+No connections match.	কোনো সংযোগ মেলেনি।
+What's wrong? (I can't name it)	সমস্যা কী? (নাম বলতে পারছি না)
+Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken. Only what's stale is re-tested: a few pings (1.1.1.1 if needed), one DNS question and Windows' own connectivity test page - only when you press it.	স্তরে স্তরে এগোয় - এই পিসি, লিংক, আপনার রাউটার, ইন্টারনেট, নাম, ঢোকার পথ - আর প্রথম যেটা নষ্ট সেখানে থামে। শুধু পুরোনো হয়ে যাওয়াগুলো আবার পরীক্ষা হয়: কয়েকটা পিং (দরকারে 1.1.1.1), একটি DNS প্রশ্ন আর Windows-এর নিজস্ব সংযোগ পরীক্ষার পেজ - শুধু আপনি চাপলে।
+Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS.	দেরি কোথায় শুরু হয় খুঁজে বের করে: আপনার পিসি, Wi-Fi, রাউটার, প্রোভাইডার বা DNS।
+Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails.	নাম, রুট, দরজা (TCP), তালা (TLS) আর উত্তর (HTTP) ধরে এগিয়ে প্রথম ব্যর্থ ধাপটি খোঁজে।
+Calls freeze or sound robotic	কল জমে যায় বা আওয়াজ যান্ত্রিক শোনায়
+Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about.	জিটার, লস, আপনার আপলোড, লোডে রাউটার, Wi-Fi আর VPN পরীক্ষা করে - কলের জন্য যা জরুরি।
+I keep disconnecting	বারবার সংযোগ চলে যায়
+Reads today's drops, roams and changes and what the signal was doing just before.	আজকের বিচ্ছিন্নতা, রোমিং ও পরিবর্তন পড়ে, আর ঠিক তার আগে সিগন্যাল কী করছিল দেখে।
+Works at home, not on VPN or at work	বাসায় চলে, VPN-এ বা অফিসে চলে না
+Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself.	একে অপরের ওপর পড়া নেটওয়ার্ক, প্রক্সি, VPN-এর নামের নিয়ম, পথের MTU আর পোর্ট নিজেই।
+Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপ, ড্রাইভার, জমে যাওয়া অ্যাপ আর ব্যাকগ্রাউন্ডের কাজ - এই ক্রমে।
+Network (SSID)	নেটওয়ার্ক (SSID)
+Access point (BSSID)	অ্যাক্সেস পয়েন্ট (BSSID)
+Band	ব্যান্ড
+Channel	চ্যানেল
+Standard	স্ট্যান্ডার্ড
+Signal	সিগন্যাল
+Receive rate	গ্রহণের হার
+Transmit rate	পাঠানোর হার
+Sharing your channel	আপনার চ্যানেলের ভাগীদার
+Air time used	ব্যবহৃত এয়ারটাইম
+Channel width	চ্যানেলের প্রস্থ
+Roaming help	রোমিং সহায়তা
+Adapter	অ্যাডাপ্টার
+Link speed	লিংক গতি
+IPv4 address	IPv4 ঠিকানা
+IPv6	IPv6
+Gateway (router)	গেটওয়ে (রাউটার)
+DNS servers	DNS সার্ভার
+Address from	ঠিকানা এসেছে
+Packet size (MTU)	প্যাকেটের আকার (MTU)
+Hardware address (MAC)	হার্ডওয়্যার ঠিকানা (MAC)
+Received	গৃহীত
+Sent	প্রেরিত
+Damaged packets (errors)	ক্ষতিগ্রস্ত প্যাকেট (ত্রুটি)
+Dropped packets (discards)	বাদ পড়া প্যাকেট (ডিসকার্ড)
+Driver	ড্রাইভার
+Router answers in	রাউটার সাড়া দেয়
+Everything measured was fine at {0}: router {1}, internet {2}.	{0}-এ যা মাপা হয়েছে সব ঠিক ছিল: রাউটার {1}, ইন্টারনেট {2}।
+Latency under load	লোডে ল্যাটেন্সি
+Nothing looked wrong at {0} in what was measured - router {1}, internet {2}.	{0}-এ মাপা কিছুতে ভুল দেখা যায়নি - রাউটার {1}, ইন্টারনেট {2}।
+Something needed attention at {0} - see what changed around then below.	{0}-এ কিছুতে মনোযোগ দরকার ছিল - সেই সময়ের আশপাশে কী বদলেছে নিচে দেখুন।
+Turn on history in Settings to see your week.	আপনার সপ্তাহ দেখতে সেটিংসে ইতিহাস চালু করুন।
+My Teams	আমার দল
+Live Scores	লাইভ স্কোর
+Fixtures	সূচি
+Headlines	শিরোনাম
+Stream Check	স্ট্রিম যাচাই
+World Markets	বিশ্ববাজার
+Currencies	মুদ্রা
+Commodities	পণ্য
+Line Check	লাইন যাচাই
+Casual Investor	সাধারণ বিনিয়োগকারী
+Windows core	Windows-এর মূল অংশ
+Company / IT tools	কোম্পানি / আইটি টুল
+Windows helpers	Windows-এর সহায়ক
+Who carries it	কে বহন করে

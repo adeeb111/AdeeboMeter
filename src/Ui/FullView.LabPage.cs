@@ -15,11 +15,11 @@ namespace AdeeboMeter
     {
         Panel labPage; DB labCanvas; List<string[]> labSaved; volatile bool labSavedBusy; DateTime labSavedAt = DateTime.MinValue;
         static readonly string[][] LabViewTiles = {
-            new[] { "lan", "See my LAN", "Every device on your network, grouped - with how fast each answers", "users" },
-            new[] { "path", "My path", "The route your last trace or MTR took, hop by hop", "route" },
-            new[] { "wifi", "Wi-Fi around you", "The networks this PC hears, by channel - yours and the loud neighbours", "wifi" },
-            new[] { "phone", "Your phone vs this PC", "Measured here, the usual setup there - where each one's way out goes", "phone" },
-            new[] { "vpn", "VPN split", "What goes through the tunnel and what goes straight out", "lock" } };
+            new[] { "lan", "See my LAN", L.T("Every device on your network, grouped - with how fast each answers"), "users" },
+            new[] { "path", "My path", L.T("The route your last trace or MTR took, hop by hop"), "route" },
+            new[] { "wifi", L.T("Wi-Fi around you"), L.T("The networks this PC hears, by channel - yours and the loud neighbours"), "wifi" },
+            new[] { "phone", L.T("Your phone vs this PC"), L.T("Measured here, the usual setup there - where each one's way out goes"), "phone" },
+            new[] { "vpn", "VPN split", L.T("What goes through the tunnel and what goes straight out"), "lock" } };
         static readonly string[][] LabExamples = { new[] { "gamer", "Gamer" }, new[] { "cell", "On 4G / 5G" }, new[] { "trader", "Trader" }, new[] { "streamer", "Streamer" }, new[] { "iptv", "IPTV viewer" }, new[] { "server", "Server owner" } };
 
         Panel BuildLabPage()

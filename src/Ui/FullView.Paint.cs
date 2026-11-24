@@ -199,7 +199,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(Kit.Sent(L.T("TOP BY MEMORY")), Draw.fTiny, muted, xx, yy); g.DrawString(Kit.Sent(L.T("TOP BY CPU")), Draw.fTiny, muted, xx + colW + 16 * S, yy);
-                Hint(side, new RectangleF(xx, yy, colW, 16 * S), "Top by memory"); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
+                Hint(side, new RectangleF(xx, yy, colW, 16 * S), L.T("Top by memory")); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
                 for (int i = 0; i < n; i++)
                 {
                     if (i < snap.TopMem.Count) Hint(side, new RectangleF(xx, yy, colW, 20 * S), "proc:" + snap.TopMem[i].Name);
@@ -266,7 +266,7 @@ namespace AdeeboMeter
             if (done)
             {
                 // Copy as text and Save: only when you press them, only where you choose
-                string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", st = "Save...";
+                string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : L.T("Copy as text"), st = "Save...";
                 var cs = g.MeasureString(ct, Draw.fSmall); var ss = g.MeasureString(st, Draw.fSmall); var cr = new RectangleF(x + w - 16 * S - cs.Width, vb.Y + 8 * S, cs.Width, cs.Height); var sr = new RectangleF(cr.X - 14 * S - ss.Width, cr.Y, ss.Width, ss.Height);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { g.DrawString(ct, Draw.fSmall, lb, cr.X, cr.Y); g.DrawString(st, Draw.fSmall, lb, sr.X, sr.Y); }
                 var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } destCanvas.Invalidate(); });
@@ -342,8 +342,8 @@ namespace AdeeboMeter
             Need(destCanvas, y);
         }
 
-        static readonly string[] HealthPoints = { "How long since a restart, and whether Windows is waiting for one", "Memory and free disk space", "Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings" },
-            LivePoints = { "Which apps and conversations use the most traffic", "Call quality (loss, jitter, MOS) and Wireshark's own warnings", "Stays on this PC - nothing is uploaded" };
+        static readonly string[] HealthPoints = { L.T("How long since a restart, and whether Windows is waiting for one"), L.T("Memory and free disk space"), L.T("Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings") },
+            LivePoints = { L.T("Which apps and conversations use the most traffic"), L.T("Call quality (loss, jitter, MOS) and Wireshark's own warnings"), L.T("Stays on this PC - nothing is uploaded") };
         void PaintHealth(Graphics g)
         {
             g.TranslateTransform(healthCanvas.AutoScrollPosition.X, healthCanvas.AutoScrollPosition.Y);
@@ -357,7 +357,7 @@ namespace AdeeboMeter
                 if (health == null)
                 {
                     if (healthRunning) g.DrawString(Voice.P("Poking around...", "Running..."), Draw.fBody, muted, x, y + 6 * S);
-                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "cpu", "home", "A quick once-over of this PC", Voice.P("Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.", "Press Run health check. Takes a few seconds."),
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "cpu", "home", L.T("A quick once-over of this PC"), Voice.P("Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.", "Press Run health check. Takes a few seconds."),
                         HealthPoints);
                     return;
                 }
@@ -387,7 +387,7 @@ namespace AdeeboMeter
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
                 g.DrawString(AdeeboMeter.Kit.Sent(L.T("INTERNET OUTAGES · LAST 7 DAYS")) + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
-                if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? "The internet check is off in Settings, so outages can't be noticed." : "None - the internet answered every time AdeeboMeter checked.", Draw.fBody, muted, x, y); y += 26 * S; }
+                if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? L.T("The internet check is off in Settings, so outages can't be noticed.") : L.T("None - the internet answered every time AdeeboMeter checked."), Draw.fBody, muted, x, y); y += 26 * S; }
                 foreach (var o in list.Take(8))
                 {
                     using (var b = new SolidBrush(o.Ongoing ? Theme.Red : Theme.Amber)) g.FillEllipse(b, x + 2 * S, y + 6 * S, 9 * S, 9 * S);
@@ -445,7 +445,7 @@ namespace AdeeboMeter
             var days = histDays;
             if (days.Count == 0)
             {
-                string t = Cfg.History ? "History is on - the first day appears here after a few minutes." : "Want to look back at yesterday? Turn on 7-day history in Settings  >";
+                string t = Cfg.History ? L.T("History is on - the first day appears here after a few minutes.") : L.T("Want to look back at yesterday? Turn on 7-day history in Settings  >");
                 using (var b = new SolidBrush(Cfg.History ? Theme.Muted : (Theme.Dark ? Theme.BlueDark : Theme.Blue))) g.DrawString(t, Draw.fBody, b, x, y);
                 if (!Cfg.History) Act(changesCanvas, new RectangleF(x, y, g.MeasureString(t, Draw.fBody).Width, 20 * S), delegate { tab = "settings"; ShowTab(); });
                 return y + 32 * S;
@@ -525,7 +525,7 @@ namespace AdeeboMeter
                 if (!live.Running || v == null)
                 {
                     if (live.Running) g.DrawString(Voice.P("Warming up tshark...", "Starting..."), Draw.fBody, muted, x, y + 6 * S);
-                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "traffic", "home", "See your traffic, live", Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture. Nothing runs until you do."),
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "traffic", "home", L.T("See your traffic, live"), Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture. Nothing runs until you do."),
                         LivePoints);
                     return;
                 }
