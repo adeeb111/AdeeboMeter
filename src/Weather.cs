@@ -302,7 +302,7 @@ namespace AdeeboMeter
 
         // the face: 2.5 minutes three times an hour (:12, :32, :52) when the hour is notable
         public static bool InWindow(DateTime local) { double m = local.Minute + local.Second / 60.0; return (m >= 12 && m < 14.5) || (m >= 32 && m < 34.5) || (m >= 52 && m < 54.5); }
-        public static string Face(DateTime nowUtc) { if (!Active || !Moments.On || !InWindow(nowUtc.ToLocalTime())) return null; return EmojiOf(Kind(Now(nowUtc))); }
+        public static string Face(DateTime nowUtc) { if (!Active || !Cfg.WWeather || !Moments.On || !InWindow(nowUtc.ToLocalTime())) return null; return EmojiOf(Kind(Now(nowUtc))); }
 
         // what Settings says under the switch
         public static string Status()

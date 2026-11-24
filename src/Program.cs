@@ -336,7 +336,7 @@ namespace AdeeboMeter
         public static volatile string View = "";
         public static volatile string Corner = "moments";
         // Weather (Adeeb, 14 Nov): off until you turn it on; the place is one you typed (never located); "lat;lon;name"
-        public static volatile bool WeatherOn, WeatherF, WWeather = true; public static volatile string WeatherPlace = "", WeatherAcc = "normal", WeatherGeo = "", WeatherApi = "";   // WeatherGeo/Api: another server than Open-Meteo's (24 Nov); empty = Open-Meteo
+        public static volatile bool WeatherOn, WeatherF, WWeather;   /* WWeather: the widget shows it only if you ask (Adeeb, 24 Nov) */ public static volatile string WeatherPlace = "", WeatherAcc = "normal", WeatherGeo = "", WeatherApi = "";   // WeatherGeo/Api: another server than Open-Meteo's (24 Nov); empty = Open-Meteo
         public static volatile int Zoom = 100;   // the window's zoom in percent (80-175): Ctrl + / Ctrl - / Ctrl 0, Ctrl+wheel, right-click   // how the corner behaves: quiet (never changes by itself) / moments / view (Moments.cs)   // the view in use (Views.cs): everyday / gamer / streamer / trader / engineer / my-N
         public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer" };
         public static bool Off(string sec) { return ("," + HiddenSecs + ",").Contains("," + sec + ","); }
@@ -477,7 +477,7 @@ namespace AdeeboMeter
                 case "wapi": WeatherApi = Weather.CleanServer(v); break;
                 case "wacc": WeatherAcc = v == "better" ? "better" : "normal"; break;
                 case "wtempf": WeatherF = v == "1"; break;
-                case "wweather": WWeather = v != "0"; break;
+                case "wweather": WWeather = v == "1"; break;
                 case "zoom": { int z; if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out z)) Zoom = Math.Max(80, Math.Min(175, z)); } break;
                 case "tradehost": TradeHost = CleanHost(v); break;
                 case "trademode": TradeMode = v == "casual" ? "casual" : "active"; break;

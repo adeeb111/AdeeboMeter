@@ -1180,10 +1180,10 @@ namespace AdeeboMeter
                 if (!Weather.InWindow(new DateTime(2026, 11, 14, 9, 12, 0)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 15, 0)) || !Weather.InWindow(new DateTime(2026, 11, 14, 9, 54, 20)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 55, 0))) bad.Add("face minutes");
                 int win = Enumerable.Range(0, 3600).Count(sec => Weather.InWindow(new DateTime(2026, 11, 14, 9, 0, 0).AddSeconds(sec))); if (win < 400 || win > 540) bad.Add("face shows " + win + " s an hour, want 6-9 min");
                 // the line and the face, with a forecast on hand (settings put back after)
-                bool on0 = Cfg.WeatherOn; string pl0 = Cfg.WeatherPlace, co0 = Cfg.Corner; bool f0 = Cfg.WeatherF;
+                bool on0 = Cfg.WeatherOn, ww0 = Cfg.WWeather; string pl0 = Cfg.WeatherPlace, co0 = Cfg.Corner; bool f0 = Cfg.WeatherF;
                 try
                 {
-                    Cfg.WeatherOn = true; Cfg.WeatherPlace = "45.41;-75.7;Ottawa, Ontario, Canada"; Cfg.Corner = Moments.WithMoments; Cfg.WeatherF = false;
+                    Cfg.WeatherOn = true; Cfg.WWeather = true; Cfg.WeatherPlace = "45.41;-75.7;Ottawa, Ontario, Canada"; Cfg.Corner = Moments.WithMoments; Cfg.WeatherF = false;
                     var nowU = DateTime.UtcNow; var hb = new DateTime(nowU.Year, nowU.Month, nowU.Day, nowU.Hour, 0, 0, DateTimeKind.Utc);
                     var l = Enumerable.Range(-1, 30).Select(i => new Weather.Hour { Utc = hb.AddHours(i), Temp = 4, Feels = 1, Code = i >= 0 && i < 3 ? 61 : 3 }).ToList();
                     Weather.Inject(l, Cfg.WeatherPlace);
@@ -1199,10 +1199,11 @@ namespace AdeeboMeter
                     Cfg.Corner = Moments.Quiet; if (Weather.Face(inWin) != null) bad.Add("a face in the Quiet corner"); Cfg.Corner = Moments.WithMoments;
                     var sn = new Snap { Call = true }; if (Moments.FaceFor(sn) != null) bad.Add("a face during a call");
                     Weather.Inject(l, "1;1;Elsewhere"); if (Weather.Text(nowU) != null) bad.Add("another place's forecast shown");
+                    Cfg.WWeather = false; if (Weather.Chip(nowU) != null || Weather.Face(inWin) != null) bad.Add("the widget shows weather with \"Weather in the widget\" off"); Cfg.WWeather = true;
                     Cfg.WeatherOn = false; if (Weather.Chip(nowU) != null || Weather.Face(inWin) != null) bad.Add("shows while off");
                     foreach (var e in new[] { "1f975", "1f976", "1f327", "1f328", "26c8" }) if (Draw.Emoji(e) == null) bad.Add("emoji " + e + " not built in");
                 }
-                finally { Cfg.WeatherOn = on0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
+                finally { Cfg.WeatherOn = on0; Cfg.WWeather = ww0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
             });
             // 21 Nov: the sitting test - what a person notices by leaving it open (Adeeb: "I found a lot of bugs just by sitting").
