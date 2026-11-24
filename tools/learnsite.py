@@ -241,7 +241,7 @@ for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'fil
 core = ['locale-surfaces.js', 'locale.js', 'locale-messages.js', 'locale.css', 'img/canada.svg', 'fr/index.html', 'app.html', 'ui.css', 'ui.js', 'calc.js', 'journey.js', 'qr.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png',
         'base.css', 'brand.css', 'brand-app.css', 'fonts/barlow-latin-500-normal.woff2', 'fonts/barlow-latin-600-normal.woff2',
-        'fonts/barlow-semi-condensed-latin-600-normal.woff2', 'fonts/barlow-semi-condensed-latin-700-normal.woff2', 'sample.js']   # 23 Nov: the brand look and its fonts work offline
+        'fonts/barlow-semi-condensed-latin-600-normal.woff2', 'fonts/barlow-semi-condensed-latin-700-normal.woff2', 'sample.js', 'home.js']   # 23 Nov: the brand look and its fonts work offline
 extra = ['bn/index.html', 'bn/blog/index.html', 'bn/wifi-or-isp.html', 'bn/internet-speed-monitor.html', 'bn/pc-monitoring.html', 'bn/isp-report.html', 'bn/video-calls-freeze.html', 'guide.css', 'feature.css', 'lab.html'] + ['bn/learn/index.html'] + [f'bn/learn/{t["id"]}.html' for t in topics] + [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
 # Restore the public-page analytics loader after lesson generation.
 runpy.run_path(os.path.join(root, 'tools/web-analytics.py'), run_name='__main__')

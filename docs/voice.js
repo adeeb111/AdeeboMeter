@@ -101,7 +101,7 @@
       index().then(function (j) {
         var S = 'style="font:inherit;font-size:14px;color:inherit;background:transparent;border:1px solid var(--line,#E3E8EF);border-radius:8px;padding:4px 6px;max-width:210px"';
         el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;color:var(--sub,#4A5568)">' +
-          '<label>Companion <select data-v ' + S + '><option value="">Same as my PC</option><option value="surprise">Surprise me (a new one each day)</option>' +
+          '<label>Companion <select data-v ' + S + '><option value="">Same as my PC</option><option value="surprise">Surprise me daily</option>' +
           '<optgroup label="Moods">' + j.moods.map(function (m) { return '<option value="' + m[0] + '">' + m[1] + (m[0] === "plain" ? " (just the facts)" : "") + '</option>'; }).join("") + '</optgroup>' +
           '<optgroup label="Personas">' + j.personas.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join("") + '</optgroup></select></label>' +
           '<label>Talks <select data-c ' + S + '><option value="face">Face only</option><option value="quiet">Quiet</option><option value="normal">Normal</option><option value="chatty">Chatty</option></select></label>' +

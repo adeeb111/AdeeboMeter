@@ -182,3 +182,55 @@ a{text-underline-offset:.18em}
 .stiles small{display:block;color:#4B5360;font-size:12px}.stiles b{font-size:16px}
 .sisp .sr{color:#2B313A}
 .schain{column-gap:10px}.schain li{min-width:0;overflow-wrap:anywhere}
+
+/* ---- Simplify pass (Nov 23): language as a globe, folded slides and policy, feedback opens on request ---- */
+.site-language{position:relative;display:inline-flex;align-items:center}
+.site-language .lang-face{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);pointer-events:none}
+.site-language .lang-face svg{width:18px;height:18px}.site-language .lang-face b{font-weight:600;letter-spacing:.02em}
+.site-language select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+
+.site-language:has(select[hidden]) .lang-face{display:none}
+.site-language:focus-within .lang-face{outline:2px solid var(--blue);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.site-language:hover .lang-face{border-color:var(--sub)}}
+/* features: the rest in one line */
+.v5also{grid-column:1/-1;margin:28px 0 0;max-width:72ch;color:var(--sub);font-size:16px;line-height:1.55}
+.v5also a{color:var(--blue);text-underline-offset:3px}
+/* drawn arrows instead of typed › and ↗ */
+.arr::after,.arr-ext::after{content:"";display:inline-block;width:.8em;height:.8em;margin-inline-start:.3em;vertical-align:-.05em;background:currentColor;
+  -webkit-mask:var(--arr) center/contain no-repeat;mask:var(--arr) center/contain no-repeat}
+.arr{--arr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E")}
+.arr-ext{--arr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17L17 7M8 7h9v9'/%3E%3C/svg%3E")}
+[dir="rtl"] .arr::after{transform:scaleX(-1)}
+/* slides: one line until asked */
+.tfoldsec{padding:0 0 24px}
+.tfold>summary{list-style:none;cursor:pointer;padding:18px 0;font-size:17px;color:var(--sub)}
+.tfold>summary>.wrap{display:block}
+.tfold>summary::-webkit-details-marker{display:none}
+.tfold>summary u{color:var(--blue);text-underline-offset:3px;font-weight:600}
+.tfold>summary .tsub{color:var(--sub)}
+.tfold>summary:focus-visible{outline:none}.tfold>summary:focus-visible u{outline:2px solid var(--blue);outline-offset:3px;border-radius:3px}
+.tfold[open]>summary{padding-bottom:8px}.tfold .tpdf{margin:0 auto 18px}
+/* policy: three lines, the full text folded */
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:68ch;font-size:17px;line-height:1.5}
+.plist b{font-weight:600}
+.pfull{margin-top:18px}
+.pfull>summary{cursor:pointer;color:var(--blue);font-weight:600;width:max-content;text-underline-offset:3px;text-decoration:underline}
+.pfull[open]>summary{margin-bottom:18px}
+/* feedback: three buttons; the form appears under them */
+.fbopen{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px}
+.fbopen .v4btn{flex:none;height:46px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;border:1px solid transparent}
+.fbopen .v4btn.line{border-color:var(--line)}
+#fb-form .seg{display:none}
+/* donate: one line under the final download */
+.final .give{margin:18px 0 0;color:var(--sub);font-size:15px}
+.final .give a{color:var(--blue);font-weight:600;text-underline-offset:3px}
+/* phone: one-row header; the meter right under the headline */
+@media (max-width:760px){
+  header.top .wrap{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:8px;padding-block:.4rem}
+  header.top .links{gap:8px;flex-wrap:nowrap;justify-content:flex-end}
+  .v4grid{display:flex;flex-direction:column;align-items:stretch;gap:22px}
+  .v4l h1{align-self:flex-start}
+  .v4l{display:contents}
+  .v4l>*{margin-block:0}
+  .v4pill{order:0}.v4l h1{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
+}
