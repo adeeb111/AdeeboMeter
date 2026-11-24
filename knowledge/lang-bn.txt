@@ -5383,3 +5383,10 @@ Windows core	Windows-এর মূল অংশ
 Company / IT tools	কোম্পানি / আইটি টুল
 Windows helpers	Windows-এর সহায়ক
 Who carries it	কে বহন করে
+Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General.	Ctrl+K দিয়ে যেকোনো কিছুতে যান।   ইঞ্জিনিয়ারদের জন্য বাড়তি সংখ্যা: সেটিংস > সাধারণ।
+Off: no weather on the widget or the buddy's face.	বন্ধ: উইজেটে বা সঙ্গীর মুখে কোনো আবহাওয়া নেই।
+TALKS LIKE - A SAMPLE ON EACH CARD	কথার ধরন - প্রতিটি কার্ডে একটি নমুনা
+To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	বেরোতে: খালি লাইনে Esc, Ctrl+Tab, বা কোনো পেজে যেতে Ctrl+1-7
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows কীবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন বা Alt+Tab দিয়ে ফিরে আসুন।
+no server answered - is the internet down?	কোনো সার্ভার সাড়া দেয়নি - ইন্টারনেট কি বন্ধ?
+run a test to see	দেখতে একটি টেস্ট চালান

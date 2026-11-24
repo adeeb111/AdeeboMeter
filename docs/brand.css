@@ -223,6 +223,8 @@ a{text-underline-offset:.18em}
 .fbopen .v4btn.line{border-color:var(--line)}
 #fb-form .seg{display:none}
 /* phone: one-row header; the meter right under the headline */
+/* hunters10 L-2: at 320-400 px the 8 px gap pushed the Download pill past the edge (worst in French) */
+@media (max-width:400px){header.top .links{gap:4px!important}header.top .wrap{gap:6px!important}}
 @media (max-width:760px){
   header.top .wrap{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:8px;padding-block:.4rem}
   header.top .links{gap:8px;flex-wrap:nowrap;justify-content:flex-end}

@@ -51,6 +51,9 @@ namespace AdeeboMeter
             var c = new ToolStripMenuItem("Close"); c.Click += delegate { Close(); };
             menu.Items.AddRange(new ToolStripItem[] { g, p, f, new ToolStripSeparator(), c });
             ContextMenuStrip = menu;
+            // hunters10: a finger has no right-click to rely on - a tap opens the same menu; Esc closes it from the keyboard
+            MouseUp += (s, e) => { if (e.Button == MouseButtons.Left && TouchPan.Finger() && Math.Abs(e.X - down.X) < Sc(6) && Math.Abs(e.Y - down.Y) < Sc(6)) menu.Show(this, e.Location); };
+            KeyPreview = true; KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) Close(); };
             tick.Tick += delegate
             {
                 // repaint (and encode the PNG) only when what it shows changed

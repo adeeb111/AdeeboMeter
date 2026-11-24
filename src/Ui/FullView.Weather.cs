@@ -144,7 +144,7 @@ namespace AdeeboMeter
         {
             if (Policy.NoOnline) return "Off - your IT team turned online lookups off (AdeeboMeter.policy).";
             var p = Weather.Current;
-            if (!Cfg.WeatherOn || p == null) return "Off. When on: the buddy shows hot, cold, rain, snow or a storm for 2-3 minutes a few times an hour, and the widget can show one line. You type the place - your PC's location is never used.";
+            if (!Cfg.WeatherOn || p == null) return "Off. When on, with Weather in the widget on too: the buddy shows hot, cold, rain, snow or a storm for 2-3 minutes a few times an hour, and the widget shows one line. You type the place - your PC's location is never used.";
             return "On for " + p.Name + ".\n" + Weather.Status() + "\nOnly its coordinates go to " + (Weather.ApiHost == Weather.ApiDefault ? "Open-Meteo (free, no account)" : Weather.ApiHost) + ". Kept on this PC: the coming days and the last one - no history.";
         }
         // what leaves the PC, naming the servers actually set

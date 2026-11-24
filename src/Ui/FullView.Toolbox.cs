@@ -727,9 +727,11 @@ namespace AdeeboMeter
             // 16 Nov fix: by question the list is hidden - its column stays 0 on a resize, or the page opens with an empty third on the left
             split.Resize += delegate { float want = ByQuestion ? 0 : Math.Max(Sc(170), Math.Min(Sc(290), split.ClientSize.Width / 3f)); if (Math.Abs(split.ColumnStyles[0].Width - want) > 1) split.ColumnStyles[0].Width = want; };
             tbList = new DB { Name = "tbList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
+            // the list works from the keyboard too: arrows move, Enter goes to the first box, Home/End, typing jumps to search.
+            // hunters10 ML-1: KeyNav before Wire, so Tab leaves the list in one press instead of walking all ~230 tools
+            tbList.KeyNav = true;
             tbList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbList(e.Graphics); }; Wire(tbList);
-            // the list works from the keyboard too: arrows move, Enter goes to the first box, Home/End, typing jumps to search
-            tbList.KeyNav = true; tbList.AccessibleName = "Tools"; tbList.AccessibleRole = AccessibleRole.List;
+            tbList.AccessibleName = "Tools"; tbList.AccessibleRole = AccessibleRole.List;
             tbList.GotFocus += delegate { tbList.Invalidate(); }; tbList.LostFocus += delegate { tbList.Invalidate(); };
             tbList.KeyDown += delegate(object s, KeyEventArgs e)
             {

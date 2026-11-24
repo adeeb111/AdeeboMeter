@@ -16,7 +16,7 @@ namespace AdeeboMeter
     // what was built before the switch catches up at a restart, so a Restart button shows in the top bar until then.
     sealed partial class FullView
     {
-        LangButton langBtn; PillButton restartBtn; bool restartShown; DB langSheet; LangFilter langFilter; string langHover, langDebug; int langKey = -1;
+        LangButton langBtn; PillButton restartBtn; bool restartShown; DB langSheet; LangFilter langFilter; string langHover, langDebug; int langKey = -1; bool langArrow;
         static string runLang;
         static readonly Dictionary<string, Bitmap> langArt = new Dictionary<string, Bitmap>();   // the tile patterns, drawn once   // the language this run started in: a different one now = a restart finishes the switch
 
@@ -100,7 +100,7 @@ namespace AdeeboMeter
                 langSheet.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLangSheet(e.Graphics); }; Wire(langSheet);
                 langSheet.MouseMove += delegate(object s, MouseEventArgs e) { string h = TileAt(e.Location); if (h != langHover) { langHover = h; langSheet.Invalidate(); } };
                 langSheet.MouseLeave += delegate { if (langHover != null) { langHover = null; langSheet.Invalidate(); } };
-                langSheet.PreviewKeyDown += delegate(object s, PreviewKeyDownEventArgs e) { if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Enter) e.IsInputKey = true; };
+                langSheet.PreviewKeyDown += delegate(object s, PreviewKeyDownEventArgs e) { if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) e.IsInputKey = true; if (e.KeyCode == Keys.Tab) langArrow = false; };
                 langSheet.KeyDown += delegate(object s, KeyEventArgs e)
                 {
                     int n = L.Languages.Length; if (langKey < 0) langKey = Math.Max(0, Array.FindIndex(L.Languages, l => l[0] == L.Code));
@@ -110,16 +110,22 @@ namespace AdeeboMeter
                     else if (e.KeyCode == Keys.Up) { if (langKey - cols >= 0) langKey -= cols; }
                     else if (e.KeyCode == Keys.Right) { langKey = (langKey + (rtl ? n - 1 : 1)) % n; }
                     else if (e.KeyCode == Keys.Left) { langKey = (langKey + (rtl ? 1 : n - 1)) % n; }
-                    else if (e.KeyCode == Keys.Enter) { string c = L.Languages[langKey][0]; HideLangSheet(); PickLanguage(c); e.Handled = true; return; }
+                    else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
+                    {
+                        // hunters10 M-2: one cursor - Enter and Space both pick whichever was moved last, the arrow tile or the Tab mark
+                        string c = L.Languages[langKey][0];
+                        if (!langArrow && langSheet.Mark != null) { var m = langSheet.Mark(); foreach (var kv in langTiles) if (kv.Value.IntersectsWith(m)) { c = kv.Key; break; } }
+                        HideLangSheet(); PickLanguage(c); e.Handled = true; e.SuppressKeyPress = true; return;
+                    }
                     else if (e.KeyCode == Keys.Escape) { HideLangSheet(); e.Handled = true; return; }
                     else return;
-                    langHover = L.Languages[langKey][0]; e.Handled = true; langSheet.Invalidate();
+                    langArrow = true; langHover = L.Languages[langKey][0]; e.Handled = true; langSheet.Invalidate();
                 };
                 Controls.Add(langSheet);
                 Deactivate += delegate { HideLangSheet(); };
                 Resize += delegate { if (langSheet.Visible) PlaceLangSheet(); };
             }
-            langHover = null; langKey = -1; SetTipKey(null);
+            langHover = null; langKey = -1; langArrow = false; SetTipKey(null);
             langSheet.BackColor = Theme.Bg; PlaceLangSheet();
             langSheet.Visible = true; langSheet.BringToFront(); langSheet.Focus(); langSheet.Invalidate();
             langBtn.Selected = true;

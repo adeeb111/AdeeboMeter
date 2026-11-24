@@ -17,11 +17,14 @@ namespace AdeeboMeter
 
     sealed class TouchPan : IMessageFilter
     {
-        const int WM_GESTURE = 0x0119, GID_PAN = 4, GF_BEGIN = 1;
+        const int WM_GESTURE = 0x0119, GID_ZOOM = 3, GID_PAN = 4, GF_BEGIN = 1;
         [StructLayout(LayoutKind.Sequential)] struct GESTUREINFO { public int cbSize, dwFlags, dwID; public IntPtr hwndTarget; public short x, y; public int dwInstanceID, dwSequenceID; public long ullArguments; public int cbExtraArgs; }
         [DllImport("user32.dll")] static extern bool GetGestureInfo(IntPtr h, ref GESTUREINFO gi);
         [DllImport("user32.dll")] static extern bool CloseGestureInfoHandle(IntPtr h);
-        static bool installed; Point last; Control target; ITouchDrag grabbed;
+        static bool installed; Point last; Control target; ITouchDrag grabbed; long pinch0;
+        [DllImport("user32.dll")] static extern IntPtr GetMessageExtraInfo();
+        // the mouse message being handled was made by Windows from a finger (not a pen, not a mouse): its signature is in the extra info
+        public static bool Finger() { try { long x = GetMessageExtraInfo().ToInt64(); return (x & 0xFFFFFF00) == 0xFF515700 && (x & 0x80) != 0; } catch (Exception) { return false; } }
 
         public static void Install()
         {
@@ -36,7 +39,16 @@ namespace AdeeboMeter
             try
             {
                 if (!GetGestureInfo(m.LParam, ref gi)) return false;
-                if (gi.dwID != GID_PAN) return false;   // zoom, rotate, two-finger tap, begin/end: Windows' default
+                if (gi.dwID == GID_ZOOM)
+                {
+                    // hunters10 ML-5: a pinch zooms the window, one step (like Ctrl + / Ctrl -) each time the fingers spread or close by a quarter
+                    long d = gi.ullArguments & 0xFFFFFFFF; var fv = Control.FromChildHandle(m.HWnd) == null ? null : Control.FromChildHandle(m.HWnd).FindForm() as FullView;
+                    if ((gi.dwFlags & GF_BEGIN) != 0 || pinch0 <= 0) pinch0 = d;
+                    else if (fv != null && d > pinch0 * 5 / 4) { fv.TouchZoom(1); pinch0 = d; }
+                    else if (fv != null && d < pinch0 * 4 / 5) { fv.TouchZoom(-1); pinch0 = d; }
+                    return fv != null ? Used(m) : false;
+                }
+                if (gi.dwID != GID_PAN) return false;   // rotate, two-finger tap, begin/end: Windows' default
                 var p = new Point(gi.x, gi.y);
                 if ((gi.dwFlags & GF_BEGIN) != 0 || target == null || target.IsDisposed)
                 {

@@ -28,7 +28,7 @@ namespace AdeeboMeter
             g = game; isNew = asNew;
             Text = asNew ? "Add a game" : "Edit " + game.Name; FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false; ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent; BackColor = Theme.Card; ForeColor = Theme.Ink; Font = Draw.fBody; KeyPreview = true;
-            ClientSize = new Size(Sc(980), Sc(640)); Padding = new Padding(Sc(18));
+            ClientSize = new Size(Sc(980), Sc(640)); Padding = new Padding(Sc(18)); Draw.FitOnShow(this, true);
 
             var top = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, BackColor = Theme.Card, WrapContents = true, Padding = new Padding(0, 0, 0, Sc(8)) };
             name = new RoundBox(Sc(300), Draw.fInput, "e.g. My game") { Label = "Game name" }; name.Box.Text = game.Name ?? ""; name.Box.MaxLength = 40;

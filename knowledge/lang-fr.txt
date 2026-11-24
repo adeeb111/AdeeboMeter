@@ -4108,3 +4108,10 @@ Your apps	Vos applis
 Windows helpers	Assistants de Windows
 The way back	Le chemin du retour
 Who carries it	Qui le transporte
+Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General.	Ctrl+K mène à tout.   Chiffres en plus pour ingénieurs : Paramètres > Général.
+Off: no weather on the widget or the buddy's face.	Désactivée : pas de météo sur le widget ni sur le visage du compagnon.
+TALKS LIKE - A SAMPLE ON EACH CARD	FAÇON DE PARLER - UN EXEMPLE SUR CHAQUE CARTE
+To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	Pour sortir : Échap sur une ligne vide, Ctrl+Tab, ou Ctrl+1-7 pour une page
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici ou revenez avec Alt+Tab pour continuer.
+no server answered - is the internet down?	aucun serveur n’a répondu - Internet est-il en panne ?
+run a test to see	lancez un test pour voir

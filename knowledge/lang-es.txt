@@ -5383,3 +5383,10 @@ Windows core	Núcleo de Windows
 Company / IT tools	Herramientas de empresa / TI
 Windows helpers	Ayudantes de Windows
 Who carries it	Quién lo transporta
+Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General.	Ctrl+K lleva a cualquier cosa.   Números extra para ingenieros: Ajustes > General.
+Off: no weather on the widget or the buddy's face.	Desactivado: sin tiempo en el widget ni en la cara del compañero.
+TALKS LIKE - A SAMPLE ON EACH CARD	ASÍ HABLA: UN EJEMPLO EN CADA TARJETA
+To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	Para salir: Esc con la línea vacía, Ctrl+Tab o Ctrl+1-7 para ir a una página
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows se llevó el teclado (Win, Alt+Tab o una notificación): haz clic aquí o vuelve con Alt+Tab para seguir.
+no server answered - is the internet down?	ningún servidor respondió: ¿se cayó internet?
+run a test to see	haz una prueba para verlo

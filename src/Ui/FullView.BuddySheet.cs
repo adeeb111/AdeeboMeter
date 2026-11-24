@@ -31,7 +31,7 @@ namespace AdeeboMeter
             }
             buddyMore = false; buddyHover = "";
             SizeBuddySheet();
-            buddySheet.BackColor = header.BackColor; buddySheet.Visible = true; buddySheet.BringToFront(); buddySheet.Invalidate();
+            buddySheet.BackColor = header.BackColor; buddySheet.Visible = true; buddySheet.BringToFront(); buddySheet.Focus(); buddySheet.Invalidate();   // hunters10 M-3: the keyboard goes where the sheet is
             if (buddyFilter == null) buddyFilter = new PopFilter(this, () => buddySheet, () => RectangleToScreen(new Rectangle(dotsBtn.Left - Sc(52), header.Top, Sc(48), header.Height)), HideBuddySheet);
             Application.AddMessageFilter(buddyFilter);
         }
@@ -99,7 +99,7 @@ namespace AdeeboMeter
             y += 48 * S;
 
             // voices: coloured cards with a sample line
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("TALKS LIKE - HOVER TO HEAR ONE")), Draw.fTiny, mb, x, y); y += 20 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("TALKS LIKE - A SAMPLE ON EACH CARD")), Draw.fTiny, mb, x, y); y += 20 * S;
             var ids = new System.Collections.Generic.List<string> { "surprise" }; ids.AddRange(Lines.Personas.Take(Lines.Featured).Select(p => p[0]));
             if (buddyMore) ids.AddRange(Lines.Personas.Skip(Lines.Featured).Select(p => p[0]));
             int cols = w > 560 * S ? 3 : 2; float gap = 8 * S, cw = (w - (cols - 1) * gap) / cols, chh = 60 * S;

@@ -187,15 +187,15 @@ namespace AdeeboMeter
             double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), cpu = M.Cpu.Avg(3);
             Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             var items = new List<object[]> {
-                new object[] { "cpe", L.T("Router") + " " + ms(gw), LvMs(M.GwPing, gw, 15, 50) },
-                new object[] { "internet", L.T("Internet") + " " + ms(net), LvMs(M.NetPing, net, 80, 150) } };
+                new object[] { "cpe", L.T("Router") + " " + (M.GwPing.Values(6).Length == 0 ? L.T("not yet") : ms(gw)), LvMs(M.GwPing, gw, 15, 50) },   // hunters10: "not yet" like Home's DNS tile
+                new object[] { "internet", L.T("Internet") + " " + (M.NetPing.Values(6).Length == 0 ? L.T("not yet") : ms(net)), LvMs(M.NetPing, net, 80, 150) } };
             if (kind == "Wi-Fi") items.Add(new object[] { "wifi", "Wi-Fi " + (sig >= 0 ? sig + "%" : L.T("on")), sig >= 0 && sig < 40 ? 1 : 0 });
             else items.Add(new object[] { "switch", L.T("Cable"), 0 });
             items.Add(new object[] { "pc", L.T("PC busy") + " " + (double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%"), double.IsNaN(cpu) ? 3 : cpu > 90 ? 2 : cpu > 75 ? 1 : 0 });
             var bar = new RectangleF(x, y, w, 40 * S); Theme.Fill(g, bar, 12 * S, Theme.Soft);
             LiveSpot(c, "now", bar);   // kept live on its own by NowTick, the page around it isn't redrawn
             float cx = x + 12 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(Kit.Sent(L.T("NOW")), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(Kit.Sent(L.T("NOW")), Draw.fTiny).Width + 10 * S; }
+            using (var mb = new SolidBrush(Theme.Sub)) { g.DrawString(Kit.Sent(L.T("NOW")), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(Kit.Sent(L.T("NOW")), Draw.fTiny).Width + 10 * S; }
             string hm = L.T("Home") + "  ›"; var hs = g.MeasureString(hm, Draw.fBodyB); var hr = new RectangleF(bar.Right - hs.Width - 16 * S, y, hs.Width + 8 * S, 40 * S);
             foreach (var it in items)
             {

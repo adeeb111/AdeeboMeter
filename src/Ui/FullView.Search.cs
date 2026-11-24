@@ -168,8 +168,8 @@ namespace AdeeboMeter
                 if (e.KeyCode == Keys.Escape) Close();
                 else if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; Pick(); }
                 else if (e.KeyCode == Keys.P && e.Control) { e.SuppressKeyPress = true; PinSel(); }
-                else if (e.KeyCode == Keys.Down) { e.Handled = true; Step(1); }
-                else if (e.KeyCode == Keys.Up) { e.Handled = true; Step(-1); }
+                else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; Step(1); }   // hunters10 L-4: suppressed, so a focused list doesn't move a second time
+                else if (e.KeyCode == Keys.Up) { e.SuppressKeyPress = true; Step(-1); }
             };
             Deactivate += delegate { Close(); };
             Shown += delegate { box.Box.Focus(); };

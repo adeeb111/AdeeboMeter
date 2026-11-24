@@ -296,6 +296,7 @@ namespace AdeeboMeter
         readonly Font fTitle, fTag, fBody, fBtn, fSmall;
         readonly Dictionary<string, RectangleF> hot = new Dictionary<string, RectangleF>();
         string hover = "";
+        string focus; bool kbd;   // hunters10 M-1: Tab/arrows move a focus ring over the painted buttons, Enter/Space press it
         public bool RunHere { get { return startHere; } }
 
         public SetupWindow(bool remove)
@@ -341,8 +342,21 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape && st != St.Working) Close();
-            if (e.KeyCode == Keys.Enter) Press("main");
             base.OnKeyDown(e);
+        }
+        List<string> Order() { return hot.Keys.Where(k => k != "close").ToList(); }   // painting order: the switch, the main button, the second choice
+        string Focused() { if (focus != null && hot.ContainsKey(focus)) return focus; return st == St.AskRemove ? "close2" : "main"; }   // removing: Enter keeps it unless you move to Remove
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            var k = keyData & Keys.KeyCode;
+            if (st != St.Working && (k == Keys.Tab || k == Keys.Up || k == Keys.Down))
+            {
+                var o = Order(); if (o.Count == 0) return true;
+                int i = o.IndexOf(Focused()); bool back = k == Keys.Up || (keyData & Keys.Shift) != 0;
+                focus = o[((i < 0 ? 0 : i) + (back ? o.Count - 1 : 1)) % o.Count]; kbd = true; Invalidate(); return true;
+            }
+            if (k == Keys.Enter || k == Keys.Space) { Press(Focused()); return true; }
+            return base.ProcessDialogKey(keyData);
         }
 
         bool Upgrade { get { return instVer != null && instVer != Program.Version && !Newer; } }
@@ -453,6 +467,9 @@ namespace AdeeboMeter
                 Center(g, "Thanks for giving it a try.", fBody, Theme.Sub, y, W);
                 Btn(g, "main", new RectangleF(58 * S, H - 86 * S, W - 116 * S, 46 * S), "Close", Theme.Blue, Color.White, true);
             }
+            RectangleF fr;
+            if ((kbd || st == St.AskRemove) && st != St.Working && hot.TryGetValue(Focused(), out fr))
+                Theme.Stroke(g, RectangleF.Inflate(fr, 3 * S, 3 * S), 12 * S, Theme.Blue, 2 * S);   // where Enter goes
         }
 
         protected override void OnMouseMove(MouseEventArgs e)

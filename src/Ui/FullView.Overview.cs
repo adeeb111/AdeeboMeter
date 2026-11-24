@@ -46,7 +46,7 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         speedFinding = false;
-                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); var bs = SpeedTest.Pick(best); speedNote = L.T("Closest:") + " " + (best == "cloudflare" ? "Cloudflare" : bs != null ? bs.Label : best) + " (" + Math.Round(bestMs).ToString(CultureInfo.CurrentCulture) + " ms) - " + L.T("picked. Press Test my speed."); } else speedErr = "no server answered - is the internet down?";
+                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); var bs = SpeedTest.Pick(best); speedNote = L.T("Closest:") + " " + (best == "cloudflare" ? "Cloudflare" : bs != null ? bs.Label : best) + " (" + Math.Round(bestMs).ToString(CultureInfo.CurrentCulture) + " ms) - " + L.T("picked. Press Test my speed."); } else speedErr = L.T("no server answered - is the internet down?");
                         overviewCanvas.Invalidate();
                     });
                 }
@@ -167,8 +167,9 @@ namespace AdeeboMeter
                 if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
                 var tiles = new[] {
                     new[] { "This PC", pcMain, pcSub, lvPc.ToString(CultureInfo.InvariantCulture), "path.PC" },
-                    new[] { "Your router", ms(gw), "", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
-                    new[] { "The internet", ms(net), "", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
+                    // hunters10 M-1 (R2-076): nothing measured yet (or the check is off) is grey "not yet" - red "no answer" only after pings came back empty
+                    new[] { "Your router", M.GwPing.Values(6).Length == 0 ? L.T("not yet") : ms(gw), "", LvMs(M.GwPing, gw, 15, 50).ToString(CultureInfo.InvariantCulture), "path.LAN" },
+                    new[] { "The internet", M.NetPing.Values(6).Length == 0 ? L.T("not yet") : ms(net), "", LvMs(M.NetPing, net, 80, 150).ToString(CultureInfo.InvariantCulture), "path.Internet" },
                     new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), "", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
                     new[] { "Your traffic", Draw.Pair(down, up), "", "3", "ov.TRAFFIC" } };
                 var rects = PaintReadings(g, overviewCanvas, tiles, ix, ty, iw, cols, th);
@@ -229,11 +230,16 @@ namespace AdeeboMeter
                 if (!Cfg.SetupDone) { y = PaintSetup(g, x, y, w); SetNeed(overviewCanvas, new Size(0, (int)(y + 20 * S))); return; }
                 if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
                 {
-                    var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
-                    Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));
-                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New look: sections down the left, search on top, a live meter. Prefer the Classic tabs?"), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
-                    string tt = L.T("Keep this"), nt = L.T("Classic tabs"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
-                    var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + 13 * S, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
+                    // hunters10 (display ML-1): the buttons are measured first and the question wraps into the room left, the card growing to fit -
+                    // at the smallest window the second half of the sentence was cut off
+                    string tt = L.T("Keep this"), nt = L.T("Classic tabs"), q = L.T("New look: sections down the left, search on top, a live meter. Prefer the Classic tabs?");
+                    var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
+                    float bw = ns.Width + 16 * S + ts.Width + 20 * S + 14 * S + 30 * S, qw = Math.Max(120 * S, w - 48 * S - bw - 12 * S);
+                    float qh = g.MeasureString(q, Draw.fBodyB, (int)qw).Height, chh = Math.Max(58 * S, qh + 26 * S);
+                    var cr = new RectangleF(x, y, w, chh); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
+                    Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + (chh - 20 * S) / 2, 20 * S, 20 * S), Kit.Accent("home"));
+                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(q, Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + (chh - qh) / 2, qw, qh + 2));
+                    var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + (chh - 32 * S) / 2, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
                     Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
                     using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(nt, Draw.fBtn, mb, nr.X + 8 * S, nr.Y + (32 * S - ns.Height) / 2);
                     Act(overviewCanvas, tr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
@@ -365,7 +371,7 @@ namespace AdeeboMeter
                 // where things live: big-icon tiles with a live line (FullView.Gateway.cs)
                 y = PaintOutlookBody(g, overviewCanvas, x, y, w, false) + 10 * S; OvLap("outlook");   // the Outlook lives on Home now (22 Nov)
                 y = PaintGateway(g, x, y, w); OvLap("gateway");
-                g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
+                g.DrawString(L.T("Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
             SetNeed(overviewCanvas, need);

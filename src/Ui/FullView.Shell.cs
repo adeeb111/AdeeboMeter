@@ -109,7 +109,8 @@ namespace AdeeboMeter
             term.Write("    " + "five-at-a-time.sh".PadRight(24), ShGreen); term.Write("five pings at once, merged into one file\n", ShDim);
             term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  cd /data  then  nano my-check.sh  · keep any output with  > file.txt  (inside /data)\n\n", ShDim);
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
-            term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n\n", ShDim);
+            term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n", ShDim);
+            term.Write("  " + L.T("To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page") + "\n\n", ShDim);
         }
 
         // ---------- the screen, from any thread. Writes are batched (one UI call per burst, not per line - #3), and a batch is
@@ -178,6 +179,7 @@ namespace AdeeboMeter
                 else if (k == Keys.Escape || (e.Control && k == Keys.C)) { shPasteBlock = null; term.Write("not run\n", ShDim); ShPrompt(); }
                 return;
             }
+            if (k == Keys.Tab && e.Control && term.Editor == null) { e.SuppressKeyPress = true; SelectNextControl(term, !e.Shift, true, true, true); return; }   // hunters10 H-1: Ctrl+Tab leaves the shell
             if (k != Keys.Tab) shTabTwice = false;
             if (e.Control && k == Keys.C) { e.SuppressKeyPress = true; if (term.Copy()) return; ShInterrupt(); return; }
             if (e.Control && k == Keys.V) { e.SuppressKeyPress = true; ShPaste(); return; }
@@ -197,7 +199,7 @@ namespace AdeeboMeter
                 case Keys.Right: e.SuppressKeyPress = true; if (c < inp.Length) { if (e.Control) { int n = inp.IndexOf(' ', c + 1); term.Caret = n < 0 ? inp.Length : n; } else term.Caret = c + 1; term.Invalidate(); } return;
                 case Keys.Home: e.SuppressKeyPress = true; term.Caret = 0; term.Invalidate(); return;
                 case Keys.End: e.SuppressKeyPress = true; term.Caret = inp.Length; term.Invalidate(); return;
-                case Keys.Escape: e.SuppressKeyPress = true; term.Input = ""; term.Caret = 0; term.Invalidate(); return;
+                case Keys.Escape: e.SuppressKeyPress = true; if (inp == "" && !ShBusy) { SelectNextControl(term, true, true, true, true); return; } term.Input = ""; term.Caret = 0; term.Invalidate(); return;   // hunters10 H-1: Esc on an empty line leaves the shell (a second Esc then works as everywhere else)
                 case Keys.Tab: e.SuppressKeyPress = true; if (shAskWait == null) ShComplete(); return;
                 case Keys.Up: case Keys.Down:
                     e.SuppressKeyPress = true; if (shAskWait != null || shHist.Count == 0) return;

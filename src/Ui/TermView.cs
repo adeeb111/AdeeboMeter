@@ -42,7 +42,7 @@ namespace AdeeboMeter
             blink = new Timer { Interval = 530 }; blink.Tick += delegate { if (!Visible) return; caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
         }
         protected override void Dispose(bool disposing) { if (disposing) blink.Dispose(); base.Dispose(disposing); }
-        protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return b == Keys.Tab || b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }
+        protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return (b == Keys.Tab && (k & Keys.Control) == 0) || b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }
         protected override void OnKeyDown(KeyEventArgs e) { typedAt = DateTime.UtcNow; caretOn = true; if (Editor != null) { Editor.Key(e); Invalidate(); base.OnKeyDown(e); return; } if (TermKey != null) TermKey(this, e); base.OnKeyDown(e); }
         protected override void OnKeyPress(KeyPressEventArgs e) { if (Editor != null) { Editor.Char(e.KeyChar); e.Handled = true; Invalidate(); return; } if (TermChar != null) TermChar(this, e); base.OnKeyPress(e); }
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
@@ -270,7 +270,7 @@ namespace AdeeboMeter
             Focus();
             if (e.Button == MouseButtons.Left && e.Y < 30 * Draw.S) { if (barBtns[0].Contains(e.Location) && CopyAll != null) CopyAll(); else if (barBtns[1].Contains(e.Location) && SaveLog != null) SaveLog(); return; }   // review UI-4: the buttons work while nano / vim / less own the screen too
             if (Editor != null) return;
-            if (e.Button == MouseButtons.Right) { if (SelectedText() != "") { Copy(); } else if (Paste != null) Paste(); return; }
+            if (e.Button == MouseButtons.Right) { if (SelectedText() != "") { Copy(); } else if (Paste != null && !TouchPan.Finger()) Paste(); return; }   // hunters10 touch ML-7: a finger's press-and-hold (often an accident while reading) never pastes
             if (e.Button == MouseButtons.Left && OnBar(e.Location))
             {
                 int count = Relayout(), vis = VisibleRows; var th = Thumb(count, vis); if (th.Height <= 0) return;

@@ -58,7 +58,7 @@ namespace AdeeboMeter
             var at = PointToClient(dotsBtn.Parent.PointToScreen(new Point(dotsBtn.Right, dotsBtn.Bottom)));
             topMenu.Bounds = new Rectangle(Math.Max(Sc(8), at.X - w + Sc(6)), at.Y + Sc(6), w, h);
             topMenu.BackColor = header.BackColor;
-            topMenu.Visible = true; topMenu.BringToFront(); topMenu.Invalidate();
+            topMenu.Visible = true; topMenu.BringToFront(); topMenu.Focus(); topMenu.Invalidate();   // hunters10 M-3
             dotsBtn.Selected = true;
             if (topFilter == null) topFilter = new TopMenuFilter(this);
             Application.AddMessageFilter(topFilter);

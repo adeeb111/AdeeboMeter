@@ -444,7 +444,7 @@ namespace AdeeboMeter
         public static string BuddyMood(Snap s)
         {
             // a reaction first (a tool run, an outage starting or ending...) - never on a replayed minute
-            string re = s != null && !(s.Chip ?? "").StartsWith("⏪", StringComparison.Ordinal) ? BuddyReact.Now(s.Level) : null;
+            string re = s != null && !(s.Chip ?? "").StartsWith("«", StringComparison.Ordinal) ? BuddyReact.Now(s.Level) : null;
             return re ?? BaseMood(s);
         }
         public static string BaseMood(Snap s)
@@ -551,7 +551,7 @@ namespace AdeeboMeter
         // forFile: a picture that gets saved or shared - never the surprise face or the hour mark (they're on-screen moments)
         public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep, bool forFile)
         {
-            string re = asleep || forFile || s == null || (s.Chip ?? "").StartsWith("⏪", StringComparison.Ordinal) ? null : BuddyReact.Now(s.Level);
+            string re = asleep || forFile || s == null || (s.Chip ?? "").StartsWith("«", StringComparison.Ordinal) ? null : BuddyReact.Now(s.Level);
             string m = asleep ? "asleep" : re ?? BaseMood(s);
             string hm = asleep || forFile || re != null ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
             string face = !forFile && re == null && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;

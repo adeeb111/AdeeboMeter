@@ -36,6 +36,7 @@ namespace AdeeboMeter
 
         // ---------- the right-click menu: a small card at the mouse
         DB pageMenu; PopFilter pageFilter; readonly List<string[]> pageItems = new List<string[]>(); readonly List<Action> pageActs = new List<Action>();
+        internal void TouchZoom(int d) { ZoomBy(d); }   // a pinch (Touch.cs)
         void PageMenu(Control on, Point at)
         {
             pageItems.Clear(); pageActs.Clear();
@@ -60,7 +61,7 @@ namespace AdeeboMeter
             int w = Sc(270), h = Sc(16); foreach (var it in pageItems) h += it[0] == "-" ? Sc(11) : Sc(34);
             var p = PointToClient(on.PointToScreen(at));
             pageMenu.Bounds = new Rectangle(Math.Max(0, Math.Min(p.X, ClientSize.Width - w - Sc(6))), Math.Max(0, Math.Min(p.Y, ClientSize.Height - h - Sc(6))), w, h);
-            pageMenu.BackColor = header.BackColor; pageMenu.Visible = true; pageMenu.BringToFront(); pageMenu.Invalidate();
+            pageMenu.BackColor = header.BackColor; pageMenu.Visible = true; pageMenu.BringToFront(); pageMenu.Focus(); pageMenu.Invalidate();   // hunters10 M-3
             if (pageFilter == null) pageFilter = new PopFilter(this, () => pageMenu, () => Rectangle.Empty, HidePageMenu);
             Application.AddMessageFilter(pageFilter);
         }

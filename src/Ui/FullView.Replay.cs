@@ -266,7 +266,7 @@ namespace AdeeboMeter
                 snapAt.Path = new[] { pcLv, lanLv, netLv, 3, netLv };
                 snapAt.PathMain = new[] { double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU", ms(gw), double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost", "not kept", ms(net) };
                 snapAt.PathSub = new[] { double.IsNaN(mem) ? "" : mem.ToString("0", CultureInfo.CurrentCulture) + "% memory", wifi >= 0 ? "Wi-Fi " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "router", "provider", "in history", "internet" };
-                snapAt.Headline = Voice.P("Time travelling: ", "Replaying ") + at.ToString("ddd HH:mm", CultureInfo.CurrentCulture); snapAt.Chip = "⏪ " + at.ToString("HH:mm", CultureInfo.CurrentCulture);
+                snapAt.Headline = Voice.P("Time travelling: ", "Replaying ") + at.ToString("ddd HH:mm", CultureInfo.CurrentCulture); snapAt.Chip = "« " + at.ToString("HH:mm", CultureInfo.CurrentCulture);
                 // the widget on the desktop travels with you while you drag (and for a few seconds after), then comes back to now
                 if (!replayExample && (replayDrag || (rewindIdx >= 0 && replayIdx != rewindIdx))) { AppCtx.Rewind = snapAt; AppCtx.RewindUntil = Clock.Mono.AddSeconds(5); }
                 rewindIdx = replayIdx;   // opening the page isn't time travel - only moving the cursor is

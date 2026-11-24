@@ -116,7 +116,7 @@ namespace AdeeboMeter
             // the top line (Adeeb, 14 Nov): logo · your view · search · theme · buddy · Settings · ⋯ · Back to corner. Details,
             // the layout, points and About live in the ⋯ menu; the verdict moved down beside the path it explains.
             gearBtn = new IconButton("settings", "Settings"); gearBtn.Click += delegate { tab = tab == "settings" ? lastPage : "settings"; ShowTab(); };
-            dotsBtn = new IconButton("more", "More: Details, layout, points, About"); dotsBtn.Click += delegate { TopMenu(); };
+            dotsBtn = new IconButton("more", "More: phone, language, layout, points, About"); dotsBtn.Click += delegate { TopMenu(); };
             headSearch = new SearchPill(); headSearch.Click += delegate { OpenPalette(); };
             header.Controls.Add(themeSw); header.Controls.Add(viewBtn); header.Controls.Add(headSearch); header.Controls.Add(gearBtn); header.Controls.Add(dotsBtn); header.Controls.Add(backBtn);
             MakeLangButton();   // the language button beside VIEW, and Restart when a switch needs one (21 Nov)
@@ -126,26 +126,11 @@ namespace AdeeboMeter
             pathPanel.Paint += delegate(object s, PaintEventArgs e)
             {
                 Prep(e.Graphics);
-                if (!Cfg.Details) { PaintPlainPath(e.Graphics, pathPanel.ClientRectangle); return; }   // Details off: three plain chips (PLAN 11.4)
-                Begin(pathPanel);
-                float vend = PaintVerdict(e.Graphics, pathPanel, Sc(20), Sc(18), pathPanel.Width * 0.62f);
-                if (!string.IsNullOrEmpty(snap.Hint) && vend < pathPanel.Width * 0.62f + 1)
-                    using (var hintBrush = new SolidBrush(Theme.LvText(1))) using (var sf = new StringFormat { Alignment = StringAlignment.Far, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                        e.Graphics.DrawString(AdeeboMeter.L.T("Why: ") + snap.Hint, Draw.fBodyB, hintBrush, new RectangleF(pathPanel.Width * 0.62f + Sc(16), Sc(9), pathPanel.Width * 0.38f - Sc(36) - (onlineChip.Visible ? onlineChip.Width + Sc(12) : 0), Sc(20)), sf);
-                var pr = new RectangleF(Sc(20), Sc(36), pathPanel.Width - Sc(40), Sc(86));
-                Draw.PathStrip(e.Graphics, snap, pr, true);
-                float slot = pr.Width / 5;
-                for (int i = 0; i < 5 && i < snap.PathLabel.Length; i++)
-                {
-                    var hr = new RectangleF(pr.X + i * slot, pr.Y - 6 * S, slot, pr.Height + 6 * S);
-                    Hint(pathPanel, hr, "path." + snap.PathLabel[i]);
-                    string go = i == 0 ? "procs" : i == 1 ? "link" : "dest";
-                    Act(pathPanel, hr, delegate { tab = go; ShowTab(); });
-                }
+                PaintPlainPath(e.Graphics, pathPanel.ClientRectangle);   // hunters10 H-2: the strip is 58 px for everyone since 24 Nov, so Details no longer draws the tall strip (it was cut off)
             };
             Wire(pathPanel);
             pathPanel.Controls.Add(onlineChip);   // online lookups: at the end of the path line, not crowding the top
-            EventHandler placeChip = delegate { onlineChip.Location = new Point(pathPanel.Width - onlineChip.Width - Sc(20), Cfg.Details ? Sc(6) : (pathPanel.Height - onlineChip.Height) / 2); };
+            EventHandler placeChip = delegate { onlineChip.Location = new Point(pathPanel.Width - onlineChip.Width - Sc(20), (pathPanel.Height - onlineChip.Height) / 2); };
             pathPanel.Resize += placeChip; onlineChip.Resize += placeChip; onlineChip.VisibleChanged += placeChip;
             footer = new DB { Name = "footer", Dock = DockStyle.Bottom, Height = Sc(30), BackColor = Theme.Card };
             footer.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintFooter(e.Graphics, footer.ClientRectangle); };
@@ -344,9 +329,11 @@ namespace AdeeboMeter
                 if (e.Control && (e.KeyCode == Keys.Oemplus || e.KeyCode == Keys.Add)) { e.SuppressKeyPress = true; ZoomBy(1); return; }
                 if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract)) { e.SuppressKeyPress = true; ZoomBy(-1); return; }
                 if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
-                if (term != null && term.Focused) return;   // AdeeboShell (and its nano/vim) owns every key: / ^K ^1-7 Esc are its own there
+                bool pageKey = e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7;   // hunters10 H-1: Ctrl+1-7 still switch pages from the shell
+                if (term != null && term.Focused && !(pageKey && term.Editor == null)) return;   // AdeeboShell (and its nano/vim) owns every other key: / ^K Esc are its own there
                 if (e.KeyCode == Keys.Escape)
                 {
+                    if (tip != null && tip.Visible) { e.SuppressKeyPress = true; tipKey = null; tipWatch = false; tip.Hide(); return; }   // hunters10 ML-2: Esc closes an open explanation first, not the window
                     if (langSheet != null && langSheet.Visible) { e.SuppressKeyPress = true; HideLangSheet(); return; }
                     if (topMenu != null && topMenu.Visible) { e.SuppressKeyPress = true; HideTopMenu(); return; }
                     if (buddySheet != null && buddySheet.Visible) { e.SuppressKeyPress = true; HideBuddySheet(); return; }
@@ -371,6 +358,7 @@ namespace AdeeboMeter
                     e.Handled = true; try { Clipboard.SetText(ResultText()); tbCopied = DateTime.Now; tbCanvas.Invalidate(); } catch (Exception ce) { CopyFailed(ce); }   // Ctrl+C copies the result, like the link
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
+                else if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && e.Shift && !e.Control && !e.Alt)) { e.SuppressKeyPress = true; e.Handled = true; var on = ActiveControl != null && !IsPopup(ActiveControl) ? ActiveControl : (Control)this; PageMenu(on, new Point(Sc(24), Sc(24))); }   // hunters10 M-3: the Menu key or Shift+F10 opens the page menu
                 else if (e.KeyCode == Keys.Oemtilde && e.Control) { e.SuppressKeyPress = true; OpenNav("shell"); }   // Ctrl+` : AdeeboShell from anywhere
                 else if (e.KeyCode == Keys.OemQuestion && !e.Shift && !e.Control && !e.Alt && ActiveTextBox() == null) { e.SuppressKeyPress = true; OpenPalette(); }   // "/" = search anything
                 else if (e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7) { var bar = NavBar(); int k = e.KeyCode - Keys.D1; if (k < bar.Count) { e.SuppressKeyPress = true; OpenNav(bar[k]); } }
@@ -1110,7 +1098,19 @@ namespace AdeeboMeter
                 for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* Adeebo Points: a page counts as used when something on it was really clicked */
             };
             c.MouseWheel += delegate(object s, MouseEventArgs e) { SetTipKey(null); if (ModifierKeys == Keys.Control && e.Delta != 0) ZoomBy(e.Delta > 0 ? 1 : -1); };   // Ctrl + wheel zooms
-            c.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Right && !IsPopup(c)) PageMenu(c, e.Location); };
+            c.MouseClick += delegate(object s, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Right || IsPopup(c)) return;
+                // hunters10 touch ML-1: a finger can't hover for the ?, so press-and-hold on a spot opens its explanation (the page menu stays on a mouse's right-click)
+                if (TouchPan.Finger())
+                {
+                    List<KeyValuePair<RectangleF, string>> h; string hk = null;
+                    if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { hk = h[i].Value; break; }
+                    var en = hk != null ? TipEntry(hk) : null;
+                    if (en != null) { tipTimer.Stop(); tipKey = hk; tip.ShowAt(en, c.PointToScreen(e.Location), this); tipOver = WindowFromPoint(Cursor.Position); tipPoint = null; tipArea = c.RectangleToScreen(Rectangle.Round(h.First(x => x.Value == hk).Key)); tipWatch = true; tipAway = 0; tipTimer.Interval = 400; tipTimer.Start(); return; }
+                }
+                PageMenu(c, e.Location);
+            };
         }
         // the small ? that says "there's an explanation here": top-right corner of the hovered item, drawn after the page
         Control badgeOn; RectangleF badgeAt; string badgeKey; readonly HashSet<string> tipClosed = new HashSet<string>();

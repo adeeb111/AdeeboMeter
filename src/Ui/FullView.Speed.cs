@@ -74,7 +74,7 @@ namespace AdeeboMeter
                     new[] { "Download", cur != null ? mb(cur.Down) : "-", "Mb/s", busy && SpeedTest.Stage == 2 ? "1" : "" },
                     new[] { "Upload", cur == null ? "-" : cur.NoUpload ? L.T("n/a") : mb(cur.Up), cur != null && cur.NoUpload ? L.T("this server: download only") : "Mb/s", busy && SpeedTest.Stage == 3 ? "1" : "" },
                     new[] { "Ping", cur == null || double.IsNaN(cur.Idle) ? "-" : Math.Round(cur.Idle).ToString(CultureInfo.CurrentCulture), "ms", busy && SpeedTest.Stage == 1 ? "1" : "" },
-                    new[] { "When busy", cur != null && cur.Grade != "" ? cur.Grade : "-", L.T("lag under load"), "" } };
+                    new[] { "When busy", cur != null && cur.Grade != "" ? cur.Grade : "-", cur != null && cur.Grade != "" ? L.T("lag under load") : L.T("run a test to see"), "" } };   // hunters10 L-5: before a test the dash says why
                 float sw = (rw - 3 * 8 * S) / 4, sh = 66 * S;
                 for (int i = 0; i < 4; i++)
                 {
@@ -235,6 +235,18 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Escape) { e.Handled = true; done = true; Close(); } base.OnKeyDown(e); }
         protected override void OnMouseMove(MouseEventArgs e) { string h = ""; foreach (var x in hits) if (x.R.Contains(e.Location)) { h = x.Id; break; } if (h != hot) { hot = h; Cursor = h != "" ? Cursors.Hand : Cursors.Default; Invalidate(); } }
         protected override void OnMouseLeave(EventArgs e) { if (hot != "") { hot = ""; Invalidate(); } }
+        // hunters10 ML-3: the keyboard too - arrows or Tab move the highlight, Enter or Space picks it
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            var k = keyData & Keys.KeyCode;
+            if (hits.Count > 0 && (k == Keys.Tab || k == Keys.Up || k == Keys.Down || k == Keys.Left || k == Keys.Right))
+            {
+                int i = hits.FindIndex(x => x.Id == hot); bool back = k == Keys.Up || k == Keys.Left || (k == Keys.Tab && (keyData & Keys.Shift) != 0);
+                i = i < 0 ? (back ? hits.Count - 1 : 0) : (i + (back ? hits.Count - 1 : 1)) % hits.Count; hot = hits[i].Id; Invalidate(); return true;
+            }
+            if ((k == Keys.Enter || k == Keys.Space) && hot != "") { string id = hot; done = true; Close(); try { pick(id); } catch (Exception ex) { if (ex is OutOfMemoryException) throw; Program.Log("speed picker pick: " + ex.Message); } return true; }
+            return base.ProcessDialogKey(keyData);
+        }
         protected override void OnMouseClick(MouseEventArgs e)
         {
             foreach (var x in hits) if (x.R.Contains(e.Location)) { string id = x.Id; done = true; Close(); try { pick(id); } catch (Exception ex) { if (ex is OutOfMemoryException) throw; Program.Log("speed picker pick: " + ex.Message); } return; }

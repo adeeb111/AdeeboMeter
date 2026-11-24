@@ -384,7 +384,7 @@ namespace AdeeboMeter
             }
             return Math.Min(i + 1, cols.Length);
         }
-        static readonly string[] KeyRows = { "Esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12", "` 1 2 3 4 5 6 7 8 9 0 - = Back", "Tab Q W E R T Y U I O P [ ] \\", "Caps A S D F G H J K L ; ' Enter", "Shift Z X C V B N M , . / RShift", "Ctrl Win Alt Space RAlt RCtrl ← ↑ ↓ →" };
+        static readonly string[] KeyRows = { "Esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 PrtSc", "` 1 2 3 4 5 6 7 8 9 0 - = Back", "Tab Q W E R T Y U I O P [ ] \\", "Caps A S D F G H J K L ; ' Enter", "Shift Z X C V B N M , . / RShift", "Ctrl Win Alt Space RAlt RCtrl ← ↑ ↓ →" };
         static string KeyName(Keys k, Keys code)
         {
             switch (code)
@@ -393,6 +393,7 @@ namespace AdeeboMeter
                 case Keys.OemOpenBrackets: return "["; case Keys.OemCloseBrackets: return "]"; case Keys.OemPipe: return "\\"; case Keys.OemBackslash: return "\\"; case Keys.CapsLock: return "Caps"; case Keys.OemSemicolon: return ";"; case Keys.OemQuotes: return "'"; case Keys.Enter: return "Enter";
                 case Keys.ShiftKey: case Keys.LShiftKey: return "Shift"; case Keys.RShiftKey: return "RShift"; case Keys.Oemcomma: return ","; case Keys.OemPeriod: return "."; case Keys.OemQuestion: return "/";
                 case Keys.ControlKey: case Keys.LControlKey: return "Ctrl"; case Keys.RControlKey: return "RCtrl"; case Keys.LWin: case Keys.RWin: return "Win"; case Keys.Menu: case Keys.LMenu: return "Alt"; case Keys.RMenu: return "RAlt"; case Keys.Space: return "Space";
+                case Keys.PrintScreen: return "PrtSc";
                 case Keys.Left: return "←"; case Keys.Up: return "↑"; case Keys.Down: return "↓"; case Keys.Right: return "→";
             }
             if (code >= Keys.D0 && code <= Keys.D9) return ((int)(code - Keys.D0)).ToString(CultureInfo.InvariantCulture);
@@ -422,6 +423,7 @@ namespace AdeeboMeter
                     if (code == Keys.ShiftKey) code = ((long)msg.LParam >> 16 & 0xFF) == 0x36 ? Keys.RShiftKey : Keys.LShiftKey;
                     if (code == Keys.ControlKey) code = ext ? Keys.RControlKey : Keys.LControlKey; if (code == Keys.Menu) code = ext ? Keys.RMenu : Keys.LMenu;
                     if (code == Keys.Escape && Hit.Contains("Esc")) { Close(); return true; }
+                    if (keyData == (Keys.Alt | Keys.F4)) { Close(); return true; }   // hunters10 ML-6: Alt+F4 closes it, as everywhere
                     Hit.Add(KeyName(keyData, code)); Presses++; Invalidate(); return true;
                 }
                 return base.ProcessCmdKey(ref msg, keyData);
@@ -459,11 +461,11 @@ namespace AdeeboMeter
                     }
                     var cs = f.ClientSize; var dn = new RectangleF(cs.Width - 136 * S, cs.Height - 48 * S, 120 * S, 34 * S); f.Done = dn;
                     Theme.Fill(g, dn, dn.Height / 2, Theme.Blue); VTextC(g, L.T("Finish"), Draw.fBtn, Theme.OnBlue, dn.X + dn.Width / 2, dn.Y + 8 * S, dn.Width);
-                    VText(g, f.Away ? L.T("Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.") : f.Hit.Count + " / " + KeyRows.Sum(r => r.Split(' ').Length), Draw.fSmall, f.Away ? Theme.LvText(1) : Theme.Sub, 16 * S, cs.Height - 40 * S);
+                    VText(g, f.Away ? L.T("Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.") : f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h))) + " / " + KeyRows.Sum(r => r.Split(' ').Length), Draw.fSmall, f.Away ? Theme.LvText(1) : Theme.Sub, 16 * S, cs.Height - 40 * S);
                 };
-                f.ShowDialog(this);
+                Draw.FitOnShow(f, true); f.ShowDialog(this);
                 foreach (var row in KeyRows) foreach (var k in row.Split(' ')) if (!f.Hit.Contains(k)) missing.Add(k);
-                return f.Hit.Count;
+                return f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h)));
             }
         }
         // a 1-second tone in one ear, then "did you hear it there?"

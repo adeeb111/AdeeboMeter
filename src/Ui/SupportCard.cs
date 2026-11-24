@@ -28,7 +28,7 @@ namespace AdeeboMeter
             this.feedback = feedback;
             FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.CenterParent; KeyPreview = true;
             BackColor = Theme.Card; Font = Draw.fBody; Text = L.T("Community and support"); DoubleBuffered = true;
-            ClientSize = new Size((int)(640 * S), (int)(Measure() + 0.5f));
+            ClientSize = new Size((int)(640 * S), (int)(Measure() + 0.5f)); Draw.FitOnShow(this, false);   // on screen, so its close button is reachable
             using (var p = Theme.Round(new RectangleF(0, 0, ClientSize.Width, ClientSize.Height), 18 * S)) Region = new Region(p);
         }
         protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ClassStyle |= 0x00020000; return cp; } }   // CS_DROPSHADOW
@@ -205,10 +205,20 @@ namespace AdeeboMeter
             if (e.Button == MouseButtons.Left) { Native.ReleaseCapture(); Native.SendMessage(Handle, 0xA1, (IntPtr)2, IntPtr.Zero); }   // drag it by the card
             base.OnMouseDown(e);
         }
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            // hunters10 ML-5: Tab / Shift+Tab walk every button on the card (amounts, donate, the free ways to help); the highlight is the mark
+            if ((keyData & Keys.KeyCode) == Keys.Tab && hits.Count > 0)
+            {
+                int i = hits.FindIndex(z => z.Key == hot); bool back = (keyData & Keys.Shift) != 0;
+                i = i < 0 ? (back ? hits.Count - 1 : 0) : (i + (back ? hits.Count - 1 : 1)) % hits.Count; hot = hits[i].Key; Invalidate(); return true;
+            }
+            return base.ProcessDialogKey(keyData);
+        }
         protected override void OnKeyDown(KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape) { Close(); e.Handled = true; return; }
-            if (e.KeyCode == Keys.Enter) { Crash.OpenUrl(Url(picked)); e.Handled = true; return; }
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { var hh = hits.Find(z => z.Key == hot); if (hh != null) hh.Go(); else if (e.KeyCode == Keys.Enter) Crash.OpenUrl(Url(picked)); e.Handled = true; return; }   // hunters10 ML-5: Enter presses what Tab marked
             if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right)
             {
                 var keys = new List<string>(); foreach (var a in Amounts) keys.Add(a[0]); keys.Add("");

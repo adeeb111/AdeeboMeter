@@ -186,7 +186,7 @@ body.page #app>*{animation:amFade .12s cubic-bezier(.23,1,.32,1) backwards}
 .led:not(.off):not(.warn){animation:none}
 
 .btn,.row,.card[data-go],.card[data-act],#tabs button,.vchip,.gcard{transition:transform .12s ease,background-color .2s,box-shadow .2s}
-.btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active{transform:scale(.975)}
+.btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active,.vopt:active,.seg button:active,.ibtn:active,.cbtn:active,.lnk:active,.tog:active{transform:scale(.975)}
 }
 p.foot{margin:22px 4px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.6}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
@@ -240,7 +240,7 @@ textarea.in{resize:vertical;min-height:120px}
 .vopt .tx{flex:1;min-width:0}.vopt .tx b{display:block}.vopt .tx span{color:var(--sub);font-size:13px}.vopt .ic{width:40px;height:40px;border-radius:12px}
 .tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--edge);display:grid;place-items:center;flex:none}.tick.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .voices{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:8px;margin:8px -18px 4px;padding:2px 18px;overflow-x:auto;scrollbar-width:none;justify-content:start}.voices::-webkit-scrollbar{display:none}
-.voices button,.mini button{border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.voices button,.mini button{min-height:44px;border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mini button{border-radius:10px;padding:9px 0}
 @media (min-width:768px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px}}
 /* matching words */
@@ -1058,7 +1058,7 @@ textarea.in{resize:vertical;min-height:120px}
     return '<div class="card"><h2 style="margin:0 0 10px"><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)">' + ic("wifi", 20) + esc(w.ssid) + '</span>' + where("pc") + '</h2><div class="stats">' + stat("signal", lv === 0 ? "c-green" : lv === 1 ? "c-amber" : "c-red", "Signal", sig == null ? "–" : pct(sig), lv) + stat("wifi", "c-blue", "Band", b || "–") + stat("chart", "c-purple", "Channel", esc(String(w.ch || "–").replace(/\s*\(.*$/, ""))) + '</div>' + (w.rate != null ? '<p style="margin:10px 2px 0;color:var(--sub);font-size:14px">Link rate ' + Math.round(w.rate) + ' Mb/s' + (lv === 2 ? ' · weak signal - closer to the router, or 5 GHz if it reaches' : '') + '</p>' : '') + '</div>';
   }
   VIEWS.pc = function () {
-    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, click the link button at its top, and press Scan the code on your PC here.");
+    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, open ⋯ › Your phone in it, and press Scan the code on your PC here.");
     var t = S.pcTab, L = live || {}, on = isLive();
     var a = hdr("My PC", '<span class="pill"><span class="led' + (on ? '' : ' warn') + '"></span>' + (on ? "Connected · live" : phase === "ended" ? "Session ended" : phase === "live" && !liveAt ? "Connected · waiting for the first reading" : "Not live · " + ago(age()) + " ago") + '</span>');
     a += '<div class="pcart"><svg viewBox="0 0 120 90" width="140" aria-hidden="true"><rect x="10" y="6" width="100" height="62" rx="7" fill="#0E2147" stroke="#CFE0FF" stroke-width="4"/><rect x="18" y="14" width="84" height="46" rx="3" fill="' + (on ? "#1F6FEB" : "#3A4A66") + '"/><path d="M18 50 Q50 30 102 40 L102 60 L18 60z" fill="#3B8BFF" opacity="' + (on ? ".6" : ".15") + '"/><rect x="46" y="70" width="28" height="8" fill="#CFE0FF"/><rect x="34" y="78" width="52" height="5" rx="2.5" fill="#CFE0FF"/></svg></div>';
@@ -2263,14 +2263,16 @@ textarea.in{resize:vertical;min-height:120px}
     if ((S.sheet === "view" || S.tab === "settings" || S.tab === "web") && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
+    else if (S.sheet) { var sh = document.querySelector(".sheet"); if (sh && !sh.contains(document.activeElement)) { var fb = sh.querySelector("button:not([hidden]),select:not([hidden]),input"); if (fb) try { fb.focus({ preventScroll: true }); } catch (x) {} } }   // hunters10 ML-7: the keyboard goes into an open sheet
   }
   document.addEventListener("adeebometerlanguagechange", function () { keepDraft(); draw(); });
-  function go(t) { keepDraft(); if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
+  function closeSheet() { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; }
+  function go(t) { keepDraft(); if (S.sheet && t !== "home") closeSheet();   /* hunters10 ML-8: a sheet left open doesn't pop back on the next visit to Home */ if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
     if (t === "tools" && S.fromGuide && S.tab !== "tools") { S.tab = "tool"; S.tool = "guide"; S.guide = S.fromGuide; S.fromGuide = ""; draw(); window.scrollTo(0, 0); return; }
     if (!hasPc() && (t === "devices" || t === "pc" || t === "send")) { S.from2 = S.tab === "web" ? "home" : S.tab; t = "addpc"; } if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); var was = (drafts[open] || T.in.map(function (y) { return y[2] || ""; }))[k]; return e ? (e.value.trim() || (/^@(broker|gw)$/.test(was) ? was : "")) : ""; }); }
 
-  document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.sheet) { e.preventDefault(); closeSheet(); draw(); return; }   /* hunters10 ML-7: Esc closes a sheet */ if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt],[data-peek]");
     if (!b || b.disabled) return;
@@ -2324,7 +2326,7 @@ textarea.in{resize:vertical;min-height:120px}
     var act = A("data-act");
     if (act === "report") { oneTap(); return; }
     if (act === "sheet") { S.sheet = A("data-s"); draw(); return; }
-    if (act === "closesheet") { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; draw(); return; }
+    if (act === "closesheet") { closeSheet(); draw(); return; }
     if (act === "measure") { measure(A("data-k")); return; }
     if (act === "phone2") { phoneCheck(); return; }
     if (act === "scanqr") { scanStart(); return; }
