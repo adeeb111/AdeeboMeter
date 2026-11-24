@@ -27,7 +27,7 @@ main{max-width:1160px;margin:0 auto;padding:0 24px 64px}
 .shot{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px -34px rgba(0,0,0,.55)}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
-.card h3{margin:0 0 8px;font-size:17px}.card p{margin:0;color:var(--sub);font-size:15px;line-height:1.5}
+.card h2,.card h3{margin:0 0 8px;font-size:17px}.card p{margin:0;color:var(--sub);font-size:15px;line-height:1.5}
 .short{display:flex;gap:14px;align-items:flex-start;background:var(--green-s);border-radius:16px;padding:18px 20px;margin:24px 0 0}
 .short svg{flex:none;width:22px;height:22px;margin-top:2px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .short p{margin:0}

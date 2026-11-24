@@ -235,7 +235,7 @@ textarea.in{resize:vertical;min-height:120px}
 .dim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5)}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:86vh;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -1px 0 var(--edge);padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
 @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
-.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:0 auto 12px}.sheet h3{font-size:20px;margin:0 0 4px}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:-10px auto 2px;padding:12px 40px;background-clip:content-box;box-sizing:content-box;touch-action:none;cursor:grab}.sheet h3{font-size:20px;margin:0 0 4px}
 .vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:start;cursor:pointer}.vopt:first-of-type{border-top:0}
 .vopt .tx{flex:1;min-width:0}.vopt .tx b{display:block}.vopt .tx span{color:var(--sub);font-size:13px}.vopt .ic{width:40px;height:40px;border-radius:12px}
 .tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--edge);display:grid;place-items:center;flex:none}.tick.on{background:var(--blue);border-color:var(--blue);color:#fff}
@@ -2314,6 +2314,14 @@ textarea.in{resize:vertical;min-height:120px}
     if (e.shiftKey && at === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.sheet) { e.preventDefault(); closeSheet(); draw(); return; }   /* hunters10 ML-7: Esc closes a sheet */ if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+  // hunters10 L-4: the grab bar works - pull the sheet down to close it (a short or slow pull springs back)
+  (function () {
+    var sh = null, y0 = 0, t0 = 0, dy = 0;
+    document.addEventListener("touchstart", function (e) { var g = e.target.closest && e.target.closest(".sheet .grab"); if (!g || e.touches.length !== 1) return; sh = g.parentNode; y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; sh.style.transition = "none"; }, { passive: true });
+    document.addEventListener("touchmove", function (e) { if (!sh) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transform = "translateY(" + dy + "px)"; e.preventDefault(); }, { passive: false });
+    function end() { if (!sh) return; var s = sh, v = dy / Math.max(1, Date.now() - t0); sh = null; if (dy > 90 || (dy > 24 && v > 0.5)) { closeSheet(); draw(); return; } s.style.transition = "transform .2s cubic-bezier(.23,1,.32,1)"; s.style.transform = ""; }
+    document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
+  })();
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt],[data-peek]");
     if (!b || b.disabled) return;

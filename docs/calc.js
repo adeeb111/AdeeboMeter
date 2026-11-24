@@ -59,6 +59,7 @@
     if (p.err != null) { rows.push(R(2, "Layers", "\"" + p.err + "\" isn't a layer I know - try: " + Known.map(function (k) { return k.Key; }).join(", ") + ", or a preset: " + Presets.map(function (x) { return x[0]; }).join(", "), "")); return rows; }
     var mtu = 1500; if (!blank(mtuText)) { mtu = intText(mtuText); if (isNaN(mtu) || mtu < 576 || mtu > 9216) { rows.push(R(2, "MTU", "type a link MTU between 576 and 9216 (1500 = normal Ethernet)", "")); return rows; } }
     var payload = -1; if (!blank(payloadText)) { payload = intText(payloadText); if (isNaN(payload)) { rows.push(R(2, "Payload", "type the data size in bytes, e.g. 1400", "")); return rows; } }
+    if (payload > 1000000000) { rows.push(R(2, "Payload", "1,000,000,000 bytes (1 GB) at most", "")); return rows; }
     var ips = st.filter(function (x) { return x.Kind === "i"; }).length; if (ips > 1) rows.push(R(1, "Layers", ips + " IP layers - both are counted inside the MTU. A tunnel's outer IP belongs to the tunnel layer (gre, ipsec, vxlan...), which already carries it.", "")); if (ips === 0) { rows.push(R(2, "Layers", "add an IP layer (ipv4 or ipv6) - the MTU is counted against it", "")); return rows; }
     var tl = st.filter(function (x) { return x.Key === "tcp" || x.Key === "udp" || x.Key === "icmp"; }).map(function (x) { return x.Key; }), trans = tl.filter(function (x, i) { return tl.indexOf(x) === i; });   // FRESH-041
     if (tl.length > 1) { rows.push(R(2, "Layers", "one transport per packet - pick tcp, udp or icmp, not " + (trans.length > 1 ? trans : [trans[0], trans[0]]).join(" and "), "")); return rows; }
@@ -271,6 +272,7 @@
     if (bdp > 65535 * 16384) rows.push(R(1, "Window scaling", "even the largest shift (14, ×16384) caps one window at about 1.07 GB - less than the " + ByteSize(bdp) + " in flight, so one stream can't fill this link; use several", ""));   // FRESH-005
     else rows.push(R(3, "Window scaling", scale === 0 ? "not needed - fits in 64 KB" : "shift " + scale + " (×" + Math.pow(2, scale) + ") - Windows and Linux do this on their own", ""));
     var win = Size(winText);
+    if (!blank(winText) && (isNaN(win) || win <= 0)) rows.push(R(1, "Window", "\"" + String(winText).trim() + "\" isn't a size - type e.g. 64 KB or 4 MB", ""));
     if (!isNaN(win) && win > 0) { var max = win * 8 / rtt; rows.push(R(max < bps ? 1 : 0, "With a " + ByteSize(win) + " window", "at most " + Bits(Math.min(max, bps)) + (max < bps ? " - the window, not the link, is the limit" : " - enough to fill the link"), "Throughput ≤ window ÷ round trip.")); }
     rows.push(R(3, "One stream, 64 KB window", "at most " + Bits(65535 * 8 / rtt), "Why old apps and some VPNs crawl on long links."));
     return rows;
@@ -304,7 +306,7 @@
   }
   function WifiRate(genText, widthText, ssText) {
     var gen = Math.trunc(First(genText)) || 0, g0 = String(genText || "").toLowerCase();
-    if (g0.indexOf("ax") >= 0) gen = 6; else if (g0.indexOf("be") >= 0) gen = 7; else if (g0.indexOf("ac") >= 0) gen = 5; else if (/\bn\b/.test(g0)) gen = 4;
+    if (g0.indexOf("ax") >= 0) gen = 6; else if (g0.indexOf("be") >= 0) gen = 7; else if (g0.indexOf("ac") >= 0) gen = 5; else if (/(\b|11)n\b/.test(g0)) gen = 4;   /* hunters S-5: "802.11n" too, as the PC */
     if (gen < 4 || gen > 7) return Need("Generation", "type 4 (n), 5 (ac), 6 (ax) or 7 (be)");
     var wf = First(widthText), sf = First(ssText), w = isNaN(wf) ? (gen >= 6 ? 80 : gen === 5 ? 80 : 40) : Whole(wf) ? Math.round(wf) : -1, ss = isNaN(sf) ? 2 : Whole(sf) ? Math.round(sf) : -1;   // FRESH-010/011
     var maxW = gen === 4 ? 40 : gen === 7 ? 320 : 160, maxSs = gen === 4 ? 4 : gen === 7 ? 16 : 8;
@@ -337,7 +339,7 @@
     return rows;
   }
   function Raid(levelText, disksText, sizeText) {
-    var lv = String(levelText || "").toLowerCase().replace(/raid|\s/g, ""), fd = First(disksText), n = Math.trunc(fd), size = Bare(sizeText) ? First(sizeText) * 1e12 : Size(sizeText);   // FRESH-015
+    var lv = String(levelText || "").toLowerCase().replace(/raid|[\s_-]/g, ""), fd = First(disksText), n = Math.trunc(fd), size = Bare(sizeText) ? First(sizeText) * 1e12 : Size(sizeText);   // FRESH-015
     if (isNaN(fd) || n < 1) return Need("Disks", "type how many, e.g. 6");
     if (!/^\d+(\s*(disks?|drives?))?$/i.test(String(disksText || "").trim())) return Need("Disks", "a whole number of disks, e.g. 6 - \"" + String(disksText || "").trim() + "\" isn't one");
     if (isNaN(size) || size <= 0) return Need("Disk size", "type e.g. 4 TB");
@@ -362,7 +364,7 @@
     var bytes = Size(dataText), bps = Speed(linkText); if (isNaN(bytes) || bytes <= 0) return Need("Data", "type e.g. 2 TB"); if (isNaN(bps) || bps <= 0) return Need("Link", "type e.g. 1 Gbps");
     var eff = 0.7, full = bytes * 8 / (bps * eff), rows = [R(0, "Full copy", Dur(full) + " at about 70% of " + Bits(bps), "Disks, encryption, small files and the far end rarely let a copy run at the full link speed."), R(3, "At the full link speed", Dur(bytes * 8 / bps), "")];
     var ch = First(changeText);
-    if (!isNaN(ch) && ch > 0) { var daily = String(changeText || "").indexOf("%") >= 0 || Bare(changeText) ? bytes * ch / 100 : Size(changeText); if (isNaN(daily)) return Need("Daily change", "type e.g. 3% or 60 GB"); var t = daily * 8 / (bps * eff); rows.push(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "")); }
+    if (!isNaN(ch) && ch > 0) { if (Bare(changeText)) return Need("Daily change", "say which: " + String(changeText).trim() + "% or " + String(changeText).trim() + " GB"); var daily = String(changeText || "").indexOf("%") >= 0 ? bytes * ch / 100 : Size(changeText); if (isNaN(daily)) return Need("Daily change", "type e.g. 3% or 60 GB"); var t = daily * 8 / (bps * eff); rows.push(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "")); }
     rows.push(R(3, "Restore", "plan on the full-copy time or longer - restores are usually slower than backups", ""));
     return rows;
   }
@@ -483,6 +485,7 @@
   }
   function JitterBuf(pdvText, ptimeText, codecText) {
     var pd = anyNums(pdvText); if (!pd.length) return Need("Delay variation", "type e.g. 30 ms, or the measured range 20-70 ms");
+    if (pd.length > 2) return Need("Delay variation", "one number, or a range of two - e.g. 30 ms, or 20-70 ms");
     if (pd.some(function (x) { return x < 0; })) return Need("Delay variation", "can't be negative - e.g. 30 ms, or 20-70 ms");   // FRESH-028
     var pdv = pd.length >= 2 ? Math.abs(pd[1] - pd[0]) : pd[0], pt = First(ptimeText);
     if (blank(ptimeText)) pt = 20; else if (isNaN(pt) || pt <= 0) return Need("Packet time", "more than 0 - usually 20 ms");   // FRESH-051

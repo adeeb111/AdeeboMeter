@@ -172,3 +172,10 @@ LinkBudget	20 MW	2 km	5.8 GHz
 Stream	8k60	AV1	100 Mbps
 Vlsm	10.0.0.5/22	200, 60
 V6Split	2001:db8:abcd:1::/48	/56
+WifiRate	802.11n	40	2
+Raid	raid-10	6	4 TB
+Raid	raid_6	6	4 TB
+Backup	2 TB	1 Gbps	5
+JitterBuf	1, 2, 3	20	
+Bdp	1 Gbps	80 ms	banana
+Stack	ipv4 tcp	1500	1000000001

@@ -705,10 +705,12 @@ namespace AdeeboMeter
             string fl = string.Concat(a.Where(z => Regex.IsMatch(z, "^-[cCds]+$")).Select(z => z.Substring(1))); bool comp = fl.IndexOf('c') >= 0 || fl.IndexOf('C') >= 0, del = fl.Contains('d'), sq = fl.Contains('s');
             var sets = a.Where(z => !Regex.IsMatch(z, "^-[cCds]+$")).ToList();
             int want = del && !sq ? 1 : sq && !del && sets.Count == 1 ? 1 : 2;
-            if (sets.Count == 0 || sets.Count > 2 || (sets.Count > want && del && !sq)) { Err(c, sets.Count > want ? "tr: tr reads from a pipe, not a file - cat " + sets[sets.Count - 1] + " | tr ..." : "usage: tr 'a-z' 'A-Z'  ·  tr -d '\\r'  ·  tr -s ' '  ·  tr -cd '0-9'"); return 2; }
+            if (sets.Count == 0) { Err(c, "usage: tr 'a-z' 'A-Z'  ·  tr -d '\\r'  ·  tr -s ' '  ·  tr -cd '0-9'"); return 2; }
+            if (sets.Count > 2 || (sets.Count > want && del && !sq)) { Err(c, "tr: extra operand '" + sets[want] + "' - " + (del && !sq ? "-d takes one set" : "tr takes two sets at most") + "; tr reads only what's piped in (cat file | tr ...)"); return 2; }   /* hunters11 L-9: an extra set isn't a file */
             string s1 = TrSet(sets[0]), s2 = sets.Count > 1 ? TrSet(sets[1]) : null;
             Func<char, bool> inS1 = x => (s1.IndexOf(x) >= 0) != comp;
-            string t = c.Stdin ?? ""; var sb = new StringBuilder(); char last = '\0'; bool lastSq = false;
+            if (NoInput(c)) return 1;
+            string t = c.Stdin; var sb = new StringBuilder(); char last = '\0'; bool lastSq = false;
             foreach (char x in t)
             {
                 char o = x; bool member = inS1(x);
@@ -731,26 +733,63 @@ namespace AdeeboMeter
             {
                 char ch = prog[i];
                 if (ch == ';' || ch == '\n') { yield return sb.ToString(); sb.Clear(); i++; continue; }
-                if (ch == 's' && Regex.IsMatch(sb.ToString().Trim(), @"^((\d+|\$)(,(\d+|\$))?|/(?:[^/\\]|\\.)*/)?$") && i + 1 < prog.Length) { char d = prog[i + 1]; sb.Append(ch).Append(d); i += 2; delimited(d); delimited(d); continue; }
-                if (ch == '/' && sb.ToString().Trim() == "") { sb.Append(ch); i++; delimited('/'); continue; }
+                if (ch == 's' && Regex.IsMatch(sb.ToString().Trim(), @"^((\d+|\$|/(?:[^/\\]|\\.)*/I?)(,(\d+|\$|/(?:[^/\\]|\\.)*/I?))?)?$") && i + 1 < prog.Length) { char d = prog[i + 1]; sb.Append(ch).Append(d); i += 2; delimited(d); delimited(d); continue; }
+                if (ch == '/' && (sb.ToString().Trim() == "" || sb.ToString().TrimEnd().EndsWith(",", StringComparison.Ordinal))) { sb.Append(ch); i++; delimited('/'); continue; }   // an address pattern, first or after the comma
                 sb.Append(ch); i++;
             }
             if (sb.Length > 0) yield return sb.ToString();
         }
+        // one address: N, $ or /re/ (with I) - its length, and the line number it names (0 = a pattern, -1 = the last line)
+        static Func<string, int, int, bool> SedAddr(string s, int at, bool ere, out int len, out int num, out string err)
+        {
+            len = 0; num = 0; err = null;
+            var m = Regex.Match(s.Substring(at), @"^(?:(\d+)|(\$)|/((?:[^/\\]|\\.)*)/(I?))");
+            if (!m.Success || m.Length == 0) return null;
+            len = m.Length;
+            if (m.Groups[1].Success) { int v; if (!int.TryParse(m.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out v) || v < 1) { err = "line numbers start at 1"; return null; } num = v; return (x, n, tot) => n == v; }
+            if (m.Groups[2].Success) { num = -1; return (x, n, tot) => n == tot; }
+            Regex rx; try { rx = new Regex(ere ? m.Groups[3].Value : BreToNet(m.Groups[3].Value), m.Groups[4].Value == "I" ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); }
+            catch (ArgumentException) { err = m.Groups[3].Value + ": not a pattern"; return null; }
+            return (x, n, tot) => rx.IsMatch(x);
+        }
+        static Func<string, int, int, bool> SedRange(ref string pr, bool ere, out string err)
+        {
+            int l1, n1; var a1 = SedAddr(pr, 0, ere, out l1, out n1, out err); if (err != null) return null;
+            if (a1 == null) return (x, n, tot) => true;
+            string rest = pr.Substring(l1);
+            if (!rest.StartsWith(",", StringComparison.Ordinal)) { pr = rest.TrimStart(); return a1; }
+            int l2, n2; var a2 = SedAddr(rest, 1, ere, out l2, out n2, out err); if (err != null) return null;
+            if (a2 == null) { err = "a range needs an end after the comma (2,5 or 2,/re/ or 2,$)"; return null; }
+            pr = rest.Substring(1 + l2).TrimStart();
+            bool on = false; int endNum = n2;
+            return (x, n, tot) =>
+            {
+                if (n == 1) on = false;   // a new file
+                if (!on)
+                {
+                    if (!a1(x, n, tot)) return false;
+                    int end = endNum == -1 ? tot : endNum;
+                    on = endNum == 0 || end > n;   // a pattern end is looked for from the next line; a number at or before here: this line only
+                    return true;
+                }
+                if (endNum == 0) { if (a2(x, n, tot)) on = false; return true; }
+                int e2 = endNum == -1 ? tot : endNum; if (n >= e2) on = false; return n <= e2;
+            };
+        }
         int Sed(List<string> a, ShCtx c)
         {
-            var progs = new List<string>(); var files = new List<string>(); bool quiet = false, ere = false, inPlace = false;
-            for (int i = 0; i < a.Count; i++) { string w = a[i]; if (w == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (Regex.IsMatch(w, "^-[nEri]+$")) { quiet |= w.Contains("n"); ere |= w.Contains("E") || w.Contains("r"); inPlace |= w.Contains("i"); continue; } if (progs.Count == 0) progs.Add(w); else files.Add(w); }
+            var progs = new List<string>(); var files = new List<string>(); bool quiet = false, ere = false, inPlace = false; string backup = null;
+            for (int i = 0; i < a.Count; i++) { string w = a[i]; if (w == "-e" && i + 1 < a.Count) { progs.Add(a[++i]); continue; } if (Regex.IsMatch(w, "^-[nEri]+$")) { quiet |= w.Contains("n"); ere |= w.Contains("E") || w.Contains("r"); inPlace |= w.Contains("i"); continue; } var bk = Regex.Match(w, @"^-([nEr]*)i([.~_\-A-Za-z0-9]{1,12})$"); if (bk.Success) { quiet |= bk.Groups[1].Value.Contains("n"); ere |= bk.Groups[1].Value.Contains("E") || bk.Groups[1].Value.Contains("r"); inPlace = true; backup = bk.Groups[2].Value; continue; }   /* hunters11 L-6: -i.bak keeps a copy */ if (progs.Count == 0) progs.Add(w); else files.Add(w); }
             if (progs.Count == 0) { Err(c, "usage: sed 's/old/new/g' [file]   ·   sed -n '2,5p'   ·   sed '/re/d'   ·   sed -i 's/a/b/' file"); return 2; }
             var steps = new List<Func<string, int, int, string>>();   // (line, number, total) -> the line, null = deleted, "\u0000p" in front = print it too
             foreach (var pr0 in progs.SelectMany(z => SedSplit(z)).Select(z => z.Trim()).Where(z => z != ""))
             {
                 string pr = pr0;
-                // round 6: an address in front of s - N, N,M, $ or /re/ - limits it to those lines (2s/a;b/c/)
-                Func<string, int, int, bool> inAddr = (x, n, tot) => true;
-                var am = Regex.Match(pr, @"^(\d+|\$)(?:,(\d+|\$))?(?=s)");
-                if (am.Success) { string f0 = am.Groups[1].Value, t0 = am.Groups[2].Success ? am.Groups[2].Value : f0; pr = pr.Substring(am.Length); inAddr = (x, n, tot) => { int from = f0 == "$" ? tot : int.Parse(f0, CultureInfo.InvariantCulture), to = t0 == "$" ? tot : int.Parse(t0, CultureInfo.InvariantCulture); return n >= from && n <= to; }; }
-                else { var ra = Regex.Match(pr, @"^/((?:[^/\\]|\\.)*)/(?=s)"); if (ra.Success) { Regex arx; try { arx = new Regex(ere ? ra.Groups[1].Value : BreToNet(ra.Groups[1].Value), RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + ra.Groups[1].Value + ": not a pattern"); return 2; } pr = pr.Substring(ra.Length); inAddr = (x, n, tot) => arx.IsMatch(x); } }
+                // an address in front of the command - N, $, /re/ (I), or a range of two: 2,5  2,/re/  /a/,/b/  /a/,$ (hunters11 L-6).
+                // GNU's way: from the first line the start matches through the first later line the end matches; a number at or
+                // before the start line makes it that one line
+                string aerr; var inAddr = SedRange(ref pr, ere, out aerr);
+                if (aerr != null) { Err(c, "sed: " + aerr); return 2; }
                 var sm = Regex.Match(pr, @"^s(.)(.*?)(?<!\\)\1(.*?)(?<!\\)\1([gipI0-9]*)$");
                 if (sm.Success)
                 {
@@ -761,11 +800,8 @@ namespace AdeeboMeter
                     var only = inAddr; steps.Add((x, n, tot) => { if (!only(x, n, tot)) return x; string y; if (g) y = rx.Replace(x, rep); else if (nth > 1) { int k = 0; y = rx.Replace(x, m => ++k == nth ? m.Result(rep) : m.Value); } else y = rx.Replace(x, rep, 1); return p && y != x ? "\u0000p" + y : y; });
                     continue;
                 }
-                var dm = Regex.Match(pr, @"^/(.*)/(I?)([dp])$");
-                if (dm.Success) { Regex rx; try { rx = new Regex(ere ? dm.Groups[1].Value : BreToNet(dm.Groups[1].Value), dm.Groups[2].Value == "I" ? RegexOptions.IgnoreCase : RegexOptions.None, TimeSpan.FromSeconds(2)); } catch (ArgumentException) { Err(c, "sed: " + dm.Groups[1].Value + ": not a pattern"); return 2; } bool del = dm.Groups[3].Value == "d"; steps.Add((x, n, tot) => rx.IsMatch(x) ? (del ? null : "\u0000p" + x) : x); continue; }
-                var nm = Regex.Match(pr, @"^(\d+|\$)(?:,(\d+|\$))?([dp])$");
-                if (nm.Success) { string f0 = nm.Groups[1].Value, t0 = nm.Groups[2].Success ? nm.Groups[2].Value : f0; bool del = nm.Groups[3].Value == "d"; steps.Add((x, n, tot) => { int from = f0 == "$" ? tot : int.Parse(f0, CultureInfo.InvariantCulture), to = t0 == "$" ? tot : int.Parse(t0, CultureInfo.InvariantCulture); return n >= from && n <= to ? (del ? null : "\u0000p" + x) : x; }); continue; }
-                Err(c, "sed: this sed knows s/old/new/[g i p N], /re/d, /re/p, N,Md and N,Mp - not '" + pr + "'"); return 2;
+                if (pr == "d" || pr == "p") { bool del = pr == "d"; var only = inAddr; steps.Add((x, n, tot) => only(x, n, tot) ? (del ? null : "\u0000p" + x) : x); continue; }
+                Err(c, "sed: this sed knows s/old/new/[g i p N], d and p, after an address N, $, /re/ or a range of two (2,/re/) - not '" + pr0 + "'"); return 2;
             }
             if (inPlace && files.Count == 0) { Err(c, "sed -i: which file?"); return 2; }
             foreach (var target in inPlace ? files : new List<string> { null })
@@ -792,7 +828,9 @@ namespace AdeeboMeter
                 }
                 catch (RegexMatchTimeoutException) { Err(c, "sed: the pattern took too long - stopped"); return 2; }
                 if (target == null) { O(c, outp.ToString(), ShFg); continue; }
-                string r = Real(Abs(target)); if (!Writable(r, target, "sed -i", c)) return 1; try { WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
+                string r = Real(Abs(target)); if (!Writable(r, target, "sed -i", c)) return 1;
+                if (backup != null) { string bp = Real(Abs(target + backup)); if (bp == null || !Writable(bp, target + backup, "sed -i", c)) return 1; try { File.Copy(r, bp, true); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + backup + ": " + e.Message); return 1; } }
+                try { WriteShaped(r, outp.ToString(), shape); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "sed -i: " + target + ": " + e.Message); return 1; }
             }
             return 0;
         }

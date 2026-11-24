@@ -4307,3 +4307,1288 @@ Day plan: working hours (9-17)	Plan de la journée : heures de travail (9-17)
 Day plan: evening (17-23)	Plan de la journée : soirée (17-23)
 Day plan: night (23-7)	Plan de la journée : nuit (23-7)
 Since you looked	Depuis votre dernier coup d'œil
+# 24 Nov: the Learn topics, games and short labels French was missing (hunters: French still partly English)
+Better	Meilleur
+Connected	Connecté
+Exit	Quitter
+Gaming	Jeux
+OK	OK
+Offline	Hors ligne
+Pause	Pause
+Ready	Prêt
+Reports	Rapports
+Show	Afficher
+Unknown	Inconnu
+View	Affichage
+What's wrong?	Qu'est-ce qui ne va pas?
+Yes	Oui
+DNS - the internet's phone book	DNS - l'annuaire d'Internet
+You type a name; DNS finds the number.	Vous tapez un nom; le DNS trouve le numéro.
+What does DNS do when you type a site's name?	Que fait le DNS quand vous tapez le nom d'un site?
+Finds the IP address for that name	Il trouve l'adresse IP de ce nom
+Encrypts the page	Il chiffre la page
+Picks the fastest Wi-Fi channel	Il choisit le canal Wi-Fi le plus rapide
+Gives your PC its own address	Il donne au PC sa propre adresse
+Turns a name like github.com into the number computers use.	Il transforme un nom comme github.com en numéro utilisé par les ordinateurs.
+Slow DNS makes every new site slow; broken DNS looks like 'no internet'.	Un DNS lent ralentit chaque nouveau site; un DNS en panne ressemble à « pas d'Internet ».
+Where is github.com?	Où est github.com?
+140.82.112.3 (good for 60 s)	140.82.112.3 (valable 60 s)
+Open a website you haven't visited today.	Ouvrez un site que vous n'avez pas visité aujourd'hui.
+DHCP - how your PC gets an address	DHCP - comment le PC obtient une adresse
+Four messages, and you're on the network.	Quatre messages, et vous êtes sur le réseau.
+What does DHCP give your PC when it joins a network?	Que donne le DHCP au PC quand il rejoint un réseau?
+An IP address, the router and DNS servers	Une adresse IP, le routeur et les serveurs DNS
+A Wi-Fi password	Un mot de passe Wi-Fi
+A faster internet plan	Un forfait Internet plus rapide
+The website's certificate	Le certificat du site
+Gives your PC an address, the router's address and DNS servers when you join a network.	Il donne au PC une adresse, l'adresse du routeur et les serveurs DNS quand vous rejoignez un réseau.
+A 169.254.x.x address means DHCP failed - restart Wi-Fi or the router.	Une adresse 169.254.x.x veut dire que le DHCP a échoué - redémarrez le Wi-Fi ou le routeur.
+Everyone	Tout le monde
+DISCOVER - any DHCP server here?	DISCOVER - un serveur DHCP ici?
+REQUEST - I'll take .37	REQUEST - je prends la .37
+ACK - it's yours for 24 hours	ACK - elle est à vous pour 24 heures
+Turn Wi-Fi off and on again.	Éteignez puis rallumez le Wi-Fi.
+ARP - finding the hardware next door	ARP - trouver le matériel d'à côté
+IP addresses for the journey, hardware addresses for the next step.	Des adresses IP pour le trajet, des adresses matérielles pour l'étape suivante.
+What does ARP find out?	Que découvre ARP?
+The hardware (MAC) address of a device on your own network	L'adresse matérielle (MAC) d'un appareil de votre réseau
+The country a server is in	Le pays d'un serveur
+The best route across the internet	Le meilleur chemin sur Internet
+Which app owns a port	Quelle appli utilise un port
+Finds the hardware address of the router next to you, so packets can leave the room.	Il trouve l'adresse matérielle du routeur voisin, pour que les paquets puissent sortir de la pièce.
+If the router's hardware address suddenly changes, someone may be in the middle.	Si l'adresse matérielle du routeur change soudain, quelqu'un est peut-être au milieu.
+Who has 192.168.1.1?	Qui a 192.168.1.1?
+I do - 3c:84:6a:..	Moi - 3c:84:6a:..
+Wait - it happens on its own every few minutes.	Attendez - ça se fait tout seul toutes les quelques minutes.
+TCP - the reliable conversation	TCP - la conversation fiable
+Numbered, acknowledged, resent when lost.	Numérotés, confirmés, renvoyés s'ils se perdent.
+What does TCP do when a packet goes missing?	Que fait TCP quand un paquet disparaît?
+Sends it again, so nothing arrives missing	Il le renvoie, pour que rien n'arrive incomplet
+Skips it to stay fast	Il le saute pour rester rapide
+Closes the connection	Il ferme la connexion
+Asks DNS again	Il redemande au DNS
+A reliable conversation: numbered pieces, every one confirmed, lost ones sent again.	Une conversation fiable : des morceaux numérotés, chacun confirmé, les perdus renvoyés.
+Lots of resends (retransmits) mean loss on the way - usually Wi-Fi.	Beaucoup de renvois (retransmissions) veut dire des pertes en route - souvent le Wi-Fi.
+Server	Serveur
+SYN - let's talk	SYN - parlons
+SYN-ACK - sure	SYN-ACK - d'accord
+ACK - connected	ACK - connecté
+data	données
+ACK - got it	ACK - bien reçu
+Refresh a web page.	Actualisez une page Web.
+UDP - fast and fire-and-forget	UDP - rapide, envoyé sans attendre
+No handshake, no resending - speed first.	Pas de poignée de main, pas de renvoi - la vitesse d'abord.
+Why do games and calls usually use UDP?	Pourquoi les jeux et les appels utilisent-ils surtout UDP?
+Late data is useless, so speed beats resending	Des données en retard ne servent à rien, donc la vitesse passe avant le renvoi
+UDP is encrypted and TCP isn't	UDP est chiffré et TCP non
+UDP packets can't be lost	Les paquets UDP ne peuvent pas se perdre
+Routers block TCP	Les routeurs bloquent TCP
+Fire and forget: no confirmations, no resends - fast, for calls, games and DNS.	Envoyé sans attendre : pas de confirmation, pas de renvoi - rapide, pour les appels, les jeux et le DNS.
+A lost UDP packet is just gone - in a call that's a glitch or robot voice.	Un paquet UDP perdu est simplement perdu - dans un appel, c'est un accroc ou une voix robotique.
+Join a Teams call or play a video.	Rejoignez un appel Teams ou lancez une vidéo.
+packet 1	paquet 1
+packet 2	paquet 2
+packet 3 (no replies needed)	paquet 3 (aucune réponse nécessaire)
+TLS - the padlock	TLS - le cadenas
+Proves who the server is, then encrypts everything.	Il prouve qui est le serveur, puis chiffre tout.
+What does the padlock (TLS) prove before encrypting?	Que prouve le cadenas (TLS) avant de chiffrer?
+That the server really is who it says it is	Que le serveur est bien celui qu'il prétend être
+That your Wi-Fi is fast	Que votre Wi-Fi est rapide
+That the site has no ads	Que le site n'a pas de publicité
+That your PC has no viruses	Que votre PC n'a pas de virus
+The padlock: proves the server is real and encrypts everything after.	Le cadenas : il prouve que le serveur est authentique et chiffre tout ce qui suit.
+A certificate error means the wrong server, a wrong clock, or something in the middle.	Une erreur de certificat veut dire le mauvais serveur, une horloge fausse ou quelque chose au milieu.
+ClientHello - I speak TLS 1.3	ClientHello - je parle TLS 1.3
+ServerHello + certificate	ServerHello + certificat
+Finished - keys agreed	Finished - clés convenues
+encrypted request	requête chiffrée
+encrypted answer	réponse chiffrée
+Open a website.	Ouvrez un site Web.
+QUIC and HTTP/3 - the modern web	QUIC et HTTP/3 - le Web moderne
+TCP and TLS rebuilt on top of UDP.	TCP et TLS reconstruits par-dessus UDP.
+What is QUIC built on?	Sur quoi QUIC est-il construit?
+UDP, with TCP-like reliability and TLS built in	UDP, avec la fiabilité de TCP et TLS intégré
+A new kind of cable	Un nouveau type de câble
+ARP	ARP
+The modern web: connection and encryption in one quick handshake, over UDP 443.	Le Web moderne : connexion et chiffrement en une seule poignée de main rapide, sur UDP 443.
+If UDP is blocked, browsers quietly fall back to TCP - slower, but it works.	Si UDP est bloqué, les navigateurs reviennent discrètement à TCP - plus lent, mais ça marche.
+Open YouTube or Google in Edge or Chrome.	Ouvrez YouTube ou Google dans Edge ou Chrome.
+hello + keys (UDP 443)	hello + clés (UDP 443)
+hello + certificate	hello + certificat
+request, already encrypted	requête, déjà chiffrée
+HTTP - asking for a page	HTTP - demander une page
+A request, a status, an answer.	Une requête, un statut, une réponse.
+What does a 404 answer from a web server mean?	Que veut dire une réponse 404 d'un serveur Web?
+The page you asked for isn't there	La page demandée n'existe pas
+The server is overloaded	Le serveur est surchargé
+Your password is wrong	Votre mot de passe est erroné
+The connection is encrypted	La connexion est chiffrée
+How apps ask for things: GET this page, POST this form - the server answers with a code.	Comment les applis demandent des choses : GET cette page, POST ce formulaire - le serveur répond par un code.
+Codes: 200 fine, 401/403 not allowed, 404 not found, 5xx the server is broken.	Codes : 200 OK, 401/403 non autorisé, 404 introuvable, 5xx le serveur est en panne.
+GET /	GET /
+200 OK + the page	200 OK + la page
+Ping and traceroute (ICMP)	Ping et traceroute (ICMP)
+Are you there? How far? Which way?	Êtes-vous là? À quelle distance? Par où?
+What does traceroute show?	Que montre traceroute?
+The routers that answer along the path your probes took (silent hops show as *)	Les routeurs qui répondent le long du chemin pris par vos sondes (les sauts muets s'affichent avec *)
+The speed of your Wi-Fi	La vitesse de votre Wi-Fi
+Which apps use the internet	Quelles applis utilisent Internet
+The network's own messages: ping asks 'are you there?', traceroute asks every router on the way.	Les messages propres au réseau : ping demande « êtes-vous là? », traceroute interroge chaque routeur en route.
+No ping reply doesn't always mean down - many servers ignore ping on purpose.	Pas de réponse au ping ne veut pas toujours dire en panne - beaucoup de serveurs ignorent le ping exprès.
+echo request (TTL 1)	echo request (TTL 1)
+time exceeded - I'm hop 1	time exceeded - je suis le saut 1
+echo request	echo request
+echo reply - 22 ms	echo reply - 22 ms
+Run a check in Check a destination.	Lancez une vérification dans Vérifier une destination.
+IPv6 and how your PC gets its addresses	IPv6 et comment le PC obtient ses adresses
+Many addresses at once, and some of them change every day.	Plusieurs adresses à la fois, dont certaines changent chaque jour.
+Why can a PC have several IPv6 addresses at once?	Pourquoi un PC peut-il avoir plusieurs adresses IPv6 à la fois?
+Some are temporary (privacy) addresses that change over time	Certaines sont des adresses temporaires (confidentialité) qui changent avec le temps
+IPv6 is broken	IPv6 est en panne
+Each app gets its own	Chaque appli a la sienne
+One per Wi-Fi channel	Une par canal Wi-Fi
+The newer, much bigger address system; your PC usually has both IPv4 and IPv6.	Le système d'adresses plus récent et bien plus vaste; votre PC a en général IPv4 et IPv6.
+Broken IPv6 makes some sites slow to start while the PC falls back to IPv4.	Un IPv6 défaillant rend certains sites lents à démarrer pendant que le PC revient à IPv4.
+Wait - routers advertise every few minutes.	Attendez - les routeurs s'annoncent toutes les quelques minutes.
+here's the network prefix	voici le préfixe du réseau
+itself	lui-même
+makes its own address from it	en tire sa propre adresse
+talks over IPv6	parle en IPv6
+NAT - many devices, one public address	NAT - plusieurs appareils, une adresse publique
+Why your PC's address isn't the one the internet sees.	Pourquoi l'adresse de votre PC n'est pas celle qu'Internet voit.
+Why does a website see a different address than your PC's own?	Pourquoi un site voit-il une autre adresse que celle de votre PC?
+Your router swaps your private address for its public one (NAT)	Votre routeur remplace votre adresse privée par son adresse publique (NAT)
+DNS changes it	Le DNS la change
+Your PC lies about it	Votre PC ment à ce sujet
+TLS hides it	TLS la cache
+Your router swaps your private address for its one public address on the way out.	Votre routeur remplace votre adresse privée par son unique adresse publique en sortant.
+A 100.64.x.x hop means your provider adds a second NAT - some games and calls struggle.	Un saut en 100.64.x.x veut dire que votre fournisseur ajoute un deuxième NAT - certains jeux et appels en souffrent.
+Your PC (192.168.1.37)	Votre PC (192.168.1.37)
+to github.com	vers github.com
+Router (public 24.x.x.x)	Routeur (public 24.x.x.x)
+github.com	github.com
+same request, new address	même requête, nouvelle adresse
+MTU - how big a packet can be	MTU - la taille maximale d'un paquet
+1500 bytes, minus whatever tunnels add.	1500 octets, moins ce qu'ajoutent les tunnels.
+What usually makes the usable MTU smaller than 1500 bytes?	Qu'est-ce qui réduit généralement le MTU utilisable sous 1500 octets?
+A tunnel such as a VPN or PPPoE adding its own headers	Un tunnel comme un VPN ou PPPoE qui ajoute ses propres en-têtes
+A slow Wi-Fi signal	Un signal Wi-Fi faible
+Too many browser tabs	Trop d'onglets ouverts
+A weak password	Un mot de passe faible
+The biggest packet that fits on a link - usually 1500 bytes, less on VPNs and PPPoE.	Le plus gros paquet qui passe sur un lien - en général 1500 octets, moins sur les VPN et en PPPoE.
+Pages that half-load or hang on a VPN are often an MTU problem.	Des pages qui chargent à moitié ou bloquent sur un VPN sont souvent un problème de MTU.
+1500 bytes	1500 octets
+too big - needs 1400	trop gros - il faut 1400
+resends smaller	renvoie plus petit
+Wi-Fi - how your laptop joins and stays connected	Wi-Fi - comment le portable se connecte et reste connecté
+Scan, authenticate, associate, then share the air.	Balayer, s'authentifier, s'associer, puis partager les ondes.
+What does a Wi-Fi device do before it can send data?	Que fait un appareil Wi-Fi avant de pouvoir envoyer des données?
+Scans, authenticates and associates with an access point	Il balaie, s'authentifie et s'associe à un point d'accès
+Asks DNS for permission	Il demande la permission au DNS
+Opens a TCP connection to the router	Il ouvre une connexion TCP vers le routeur
+Runs a speed test	Il lance un test de vitesse
+Radio between your PC and the access point - band, channel and signal decide how good it is.	La radio entre le PC et le point d'accès - la bande, le canal et le signal décident de sa qualité.
+Weak signal or a crowded channel: move closer, or use 5 GHz.	Signal faible ou canal encombré : rapprochez-vous, ou passez en 5 GHz.
+Access point	Point d'accès
+radio frame	trame radio
+got it (ACK)	bien reçu (ACK)
+on the cable	sur le câble
+802.1X - company sign-in for Wi-Fi and network ports	802.1X - la connexion d'entreprise au Wi-Fi et aux prises réseau
+The network checks who you are before letting you in.	Le réseau vérifie qui vous êtes avant de vous laisser entrer.
+What does 802.1X check before letting a device onto the network?	Que vérifie 802.1X avant de laisser un appareil sur le réseau?
+Who the user or device is, through a server such as RADIUS	Qui est l'utilisateur ou l'appareil, via un serveur comme RADIUS
+The device's speed	La vitesse de l'appareil
+Its DNS cache	Son cache DNS
+Its screen size	La taille de son écran
+Work networks check who you are (certificate or password) before letting you on.	Les réseaux de travail vérifient qui vous êtes (certificat ou mot de passe) avant de vous laisser entrer.
+Can't join the work Wi-Fi but others can: your certificate or account, not the radio.	Impossible de rejoindre le Wi-Fi du travail alors que les autres y arrivent : c'est votre certificat ou votre compte, pas la radio.
+Switch / AP	Commutateur / PA
+EAPOL start	début EAPOL
+here's who it claims to be	voici qui il prétend être
+Access-Accept, VLAN 20	Access-Accept, VLAN 20
+you're in	vous êtes connecté
+QoS and DSCP - priority for calls	QoS et DSCP - la priorité aux appels
+A label on each packet that says "me first".	Une étiquette sur chaque paquet qui dit « moi d'abord ».
+What is a DSCP mark?	Qu'est-ce qu'une marque DSCP?
+A label on a packet asking routers to treat it with priority	Une étiquette sur un paquet qui demande aux routeurs de le traiter en priorité
+A type of cable	Un type de câble
+An encryption key	Une clé de chiffrement
+A priority label on packets - calls get 'express', downloads get normal.	Une étiquette de priorité sur les paquets - les appels passent en « express », les téléchargements en normal.
+Most home routers and the internet ignore it; it helps mainly inside company networks.	La plupart des routeurs domestiques et Internet l'ignorent; elle sert surtout dans les réseaux d'entreprise.
+Join a Teams call.	Rejoignez un appel Teams.
+Teams	Teams
+mark audio EF (express)	marquer l'audio EF (express)
+EF packet	paquet EF
+label often removed here	étiquette souvent retirée ici
+How Windows starts, from power to desktop	Comment Windows démarre, de l'allumage au bureau
+Each one starts the next - and if certain ones die, Windows dies with them.	Chacun lance le suivant - et si certains meurent, Windows meurt avec eux.
+Why does Windows stop if certain core processes die?	Pourquoi Windows s'arrête-t-il si certains processus essentiels meurent?
+Each one starts the next, and Windows can't run without them	Chacun lance le suivant, et Windows ne peut pas fonctionner sans eux
+They hold your files	Ils contiennent vos fichiers
+They are viruses	Ce sont des virus
+They run the internet	Ils font tourner Internet
+Power on to desktop: firmware, Windows' loader, the kernel, then the core processes in order.	De l'allumage au bureau : le micrologiciel, le chargeur de Windows, le noyau, puis les processus essentiels dans l'ordre.
+If one of the core processes dies, Windows stops with a blue screen.	Si l'un des processus essentiels meurt, Windows s'arrête avec un écran bleu.
+Firmware	Micrologiciel
+Boot manager	Gestionnaire de démarrage
+load Windows	charger Windows
+Kernel	Noyau
+smss	smss
+start the session	démarrer la session
+wininit	wininit
+start services	démarrer les services
+winlogon	winlogon
+show sign-in	afficher la connexion
+explorer	explorer
+your desktop	votre bureau
+svchost.exe - one host, many services	svchost.exe - un hôte, plusieurs services
+Why there are twenty of them, and what's inside each.	Pourquoi il y en a vingt, et ce qu'il y a dans chacun.
+Why are there many svchost.exe processes?	Pourquoi y a-t-il beaucoup de processus svchost.exe?
+Each hosts one or more Windows services	Chacun héberge un ou plusieurs services Windows
+They are copies of a virus	Ce sont des copies d'un virus
+One per browser tab	Un par onglet de navigateur
+One per user	Un par utilisateur
+A shared host: many small Windows services run inside each svchost.exe.	Un hôte partagé : beaucoup de petits services Windows tournent dans chaque svchost.exe.
+When 'svchost' is busy, it's one service inside - Inside Windows shows which.	Quand « svchost » est occupé, c'est un service à l'intérieur - Dans Windows montre lequel.
+services	services
+svchost	svchost
+host these services	héberger ces services
+Windows Update	Windows Update
+run	exécuter
+DNS Client	Client DNS
+lsass.exe - the security guard	lsass.exe - l'agent de sécurité
+Checks every password and keeps your sign-in tokens.	Il vérifie chaque mot de passe et garde vos jetons de connexion.
+What does lsass.exe do?	Que fait lsass.exe?
+Checks sign-ins and keeps your sign-in tokens	Il vérifie les connexions et garde vos jetons de connexion
+Draws windows	Il dessine les fenêtres
+Plays sound	Il joue le son
+Indexes files for search	Il indexe les fichiers pour la recherche
+The security guard: checks your password or PIN and keeps your sign-in tokens.	L'agent de sécurité : il vérifie votre mot de passe ou NIP et garde vos jetons de connexion.
+Never end it - Windows restarts within a minute. High CPU at work is usually sign-in traffic.	Ne l'arrêtez jamais - Windows redémarre en moins d'une minute. Un processeur élevé au travail, c'est en général du trafic de connexion.
+lsass	lsass
+check this PIN	vérifier ce NIP
+correct - here's your token	correct - voici votre jeton
+sign me in to the company server	connecte-moi au serveur de l'entreprise
+csrss.exe - the session's core	csrss.exe - le cœur de la session
+Old name, still essential.	Vieux nom, toujours essentiel.
+What happens if csrss.exe stops?	Que se passe-t-il si csrss.exe s'arrête?
+Windows stops - it's essential to the session	Windows s'arrête - il est essentiel à la session
+Only the sound stops	Seul le son s'arrête
+Nothing, it's optional	Rien, il est facultatif
+The taskbar restarts	La barre des tâches redémarre
+Draws console windows and helps start and shut down every program.	Il dessine les fenêtres de console et aide à démarrer et fermer chaque programme.
+Can't be ended; if it dies, Windows stops. Two copies is normal.	Impossible de l'arrêter; s'il meurt, Windows s'arrête. Deux copies, c'est normal.
+csrss	csrss
+start for the session	démarrer pour la session
+Any program	N'importe quel programme
+I'm starting	je démarre
+noted	noté
+wininit.exe - starts the background world	wininit.exe - lance le monde en arrière-plan
+Starts services and the security guard, then waits.	Il lance les services et l'agent de sécurité, puis attend.
+What does wininit.exe start?	Que lance wininit.exe?
+The Service Control Manager and the security guard (lsass)	Le gestionnaire de contrôle des services et l'agent de sécurité (lsass)
+Your browser	Votre navigateur
+Microsoft Teams	Microsoft Teams
+The printer	L'imprimante
+Starts the system part of Windows: the service manager and the security guard.	Il lance la partie système de Windows : le gestionnaire de services et l'agent de sécurité.
+Can't be ended; if it dies, Windows stops.	Impossible de l'arrêter; s'il meurt, Windows s'arrête.
+start	démarrer
+start the service manager	lancer le gestionnaire de services
+start the security guard	lancer l'agent de sécurité
+winlogon.exe - your sign-in	winlogon.exe - votre connexion
+Sign-in screen, Ctrl+Alt+Del, lock and sign out.	Écran de connexion, Ctrl+Alt+Suppr, verrouillage et déconnexion.
+What is winlogon.exe responsible for?	De quoi winlogon.exe est-il responsable?
+Sign-in, Ctrl+Alt+Del, lock and sign-out	La connexion, Ctrl+Alt+Suppr, le verrouillage et la déconnexion
+Drawing the desktop	Dessiner le bureau
+Downloading updates	Télécharger les mises à jour
+Handles signing in, locking (Win+L) and Ctrl+Alt+Del.	Il gère la connexion, le verrouillage (Win+L) et Ctrl+Alt+Suppr.
+If sign-in hangs, a startup program or a profile problem is usually behind it.	Si la connexion bloque, c'est en général un programme de démarrage ou un problème de profil.
+Ctrl+Alt+Del	Ctrl+Alt+Suppr
+check PIN	vérifier le NIP
+start your desktop	lancer votre bureau
+services.exe - the Service Control Manager	services.exe - le gestionnaire de contrôle des services
+Starts, stops and watches every Windows service.	Il démarre, arrête et surveille chaque service Windows.
+What does services.exe manage?	Que gère services.exe?
+Starting, stopping and watching Windows services	Le démarrage, l'arrêt et la surveillance des services Windows
+Your passwords	Vos mots de passe
+The internet connection speed	La vitesse de la connexion Internet
+The screen brightness	La luminosité de l'écran
+The service manager: starts, stops and restarts every Windows service.	Le gestionnaire de services : il démarre, arrête et redémarre chaque service Windows.
+A service that keeps restarting shows up here as repeated starts - check its name.	Un service qui redémarre sans cesse apparaît ici en démarrages répétés - vérifiez son nom.
+run these services	exécuter ces services
+Spooler	Spouleur
+you crashed - restart	tu as planté - redémarre
+dwm.exe - the desktop's painter	dwm.exe - le peintre du bureau
+Every window you see is drawn by it.	Chaque fenêtre que vous voyez est dessinée par lui.
+What does dwm.exe do?	Que fait dwm.exe?
+Draws (composes) every window you see	Il dessine (compose) chaque fenêtre que vous voyez
+Checks passwords	Il vérifie les mots de passe
+Downloads updates	Il télécharge les mises à jour
+Runs scheduled tasks	Il exécute les tâches planifiées
+Draws everything you see - windows, shadows, animations - with the graphics card.	Il dessine tout ce que vous voyez - fenêtres, ombres, animations - avec la carte graphique.
+High GPU or memory here usually means many monitors or a graphics driver issue.	Un GPU ou une mémoire élevés ici veulent souvent dire plusieurs écrans ou un problème de pilote graphique.
+Apps	Applis
+dwm	dwm
+here's my window	voici ma fenêtre
+Graphics card	Carte graphique
+combine them	les assembler
+the frame	l'image
+explorer.exe - your desktop, taskbar and folders	explorer.exe - votre bureau, la barre des tâches et les dossiers
+The shell: everything you click to start things.	L'interpréteur : tout ce que vous cliquez pour lancer des choses.
+What is explorer.exe?	Qu'est-ce qu'explorer.exe?
+The shell: desktop, taskbar, Start and folders	L'interpréteur : bureau, barre des tâches, Démarrer et dossiers
+Internet Explorer	Internet Explorer
+A virus scanner	Un antivirus
+The Wi-Fi driver	Le pilote Wi-Fi
+Your desktop, taskbar, Start menu and File Explorer - all one process.	Votre bureau, la barre des tâches, le menu Démarrer et l'Explorateur de fichiers - un seul processus.
+Taskbar frozen? Restart 'Windows Explorer' in Task Manager - nothing is lost.	Barre des tâches figée? Redémarrez « Explorateur Windows » dans le Gestionnaire des tâches - rien n'est perdu.
+start the desktop	lancer le bureau
+start them from Start	les lancer depuis Démarrer
+open a folder	ouvrir un dossier
+RuntimeBroker.exe - the permission checker	RuntimeBroker.exe - le vérificateur d'autorisations
+Asks Windows' permission on behalf of Store apps.	Il demande l'autorisation à Windows au nom des applis du Store.
+What does RuntimeBroker.exe check?	Que vérifie RuntimeBroker.exe?
+Whether Store apps have permission for things like the camera or location	Si les applis du Store ont l'autorisation pour la caméra ou la position, par exemple
+Your internet speed	Votre vitesse Internet
+Your files for viruses	Vos fichiers contre les virus
+Your sign-in password	Votre mot de passe de connexion
+Checks Store apps' permissions - camera, location, files.	Il vérifie les autorisations des applis du Store - caméra, position, fichiers.
+Many copies are normal; high CPU usually means one app asking over and over.	Plusieurs copies, c'est normal; un processeur élevé veut souvent dire qu'une appli redemande sans cesse.
+Store app	Appli du Store
+RuntimeBroker	RuntimeBroker
+may I use the camera?	puis-je utiliser la caméra?
+yes - you allowed it	oui - vous l'avez autorisé
+SearchHost.exe / SearchIndexer - Windows Search	SearchHost.exe / SearchIndexer - la recherche Windows
+The search box, and the index behind it.	La zone de recherche, et l'index derrière elle.
+What does the Windows Search indexer build?	Que construit l'indexeur de la recherche Windows?
+An index of your files so search answers instantly	Un index de vos fichiers pour que la recherche réponde aussitôt
+A list of websites	Une liste de sites Web
+A backup of your PC	Une sauvegarde de votre PC
+A map of your network	Une carte de votre réseau
+The Start menu search box and its results.	La zone de recherche du menu Démarrer et ses résultats.
+Slow search is usually the indexer catching up after many new files.	Une recherche lente, c'est souvent l'indexeur qui rattrape son retard après beaucoup de nouveaux fichiers.
+SearchHost	SearchHost
+type 'excel'	tapez « excel »
+Index	Index
+anything matching?	quelque chose qui correspond?
+Excel, 3 files	Excel, 3 fichiers
+MsMpEng.exe - Microsoft Defender	MsMpEng.exe - Microsoft Defender
+Checks every file as it's opened.	Il vérifie chaque fichier à son ouverture.
+What does MsMpEng.exe (Defender) do as files are opened?	Que fait MsMpEng.exe (Defender) à l'ouverture des fichiers?
+Checks them for malware	Il les vérifie contre les logiciels malveillants
+Compresses them	Il les compresse
+Uploads them to OneDrive	Il les téléverse sur OneDrive
+Translates them	Il les traduit
+Microsoft Defender's scanner - checks files as they open and runs scans.	L'analyseur de Microsoft Defender - il vérifie les fichiers à l'ouverture et lance des analyses.
+Busy during big copies or builds; never stop it - it's your antivirus.	Occupé pendant les grosses copies ou compilations; ne l'arrêtez jamais - c'est votre antivirus.
+Program	Programme
+open this file	ouvrir ce fichier
+MsMpEng	MsMpEng
+scan it first	analyse-le d'abord
+clean - go ahead	sain - vas-y
+msedgewebview2.exe - Edge inside other apps	msedgewebview2.exe - Edge dans d'autres applis
+Why Teams and new Outlook have so many Edge processes.	Pourquoi Teams et le nouvel Outlook ont autant de processus Edge.
+Why do Teams and new Outlook run msedgewebview2.exe?	Pourquoi Teams et le nouvel Outlook lancent-ils msedgewebview2.exe?
+They show their screens using Edge's engine inside the app	Ils affichent leurs écrans avec le moteur d'Edge à l'intérieur de l'appli
+They are hiding a browser	Ils cachent un navigateur
+They mine cryptocurrency	Ils minent de la cryptomonnaie
+They update Windows	Ils mettent Windows à jour
+A built-in Edge engine that apps like Teams, Outlook and widgets use to draw their screens.	Un moteur Edge intégré que des applis comme Teams, Outlook et les widgets utilisent pour dessiner leurs écrans.
+Many copies are normal - each belongs to an app; Inside Windows shows which.	Plusieurs copies, c'est normal - chacune appartient à une appli; Dans Windows montre laquelle.
+WebView2	WebView2
+draw the chat window	dessiner la fenêtre de clavardage
+Teams service	Service Teams
+load it (HTTPS)	le charger (HTTPS)
+drawn	dessiné
+Memory Compression	Compression de la mémoire
+Squeezes memory instead of writing it to disk.	Elle comprime la mémoire au lieu de l'écrire sur le disque.
+What does Memory Compression do?	Que fait la compression de la mémoire?
+Squeezes memory instead of writing it to the disk	Elle comprime la mémoire au lieu de l'écrire sur le disque
+Deletes old files	Elle supprime les vieux fichiers
+Makes downloads smaller	Elle rend les téléchargements plus petits
+Speeds up Wi-Fi	Elle accélère le Wi-Fi
+Windows squeezes memory it isn't using right now instead of writing it to disk.	Windows comprime la mémoire inutilisée pour l'instant au lieu de l'écrire sur le disque.
+Large means memory is tight - close something heavy or add RAM.	Si elle est grosse, la mémoire est juste - fermez quelque chose de lourd ou ajoutez de la RAM.
+Memory compression	Compression de la mémoire
+squeeze this idle app	comprimer cette appli inactive
+I need it again	j'en ai de nouveau besoin
+unsqueezed - instant	décomprimée - instantané
+System (the kernel)	System (le noyau)
+The engine room - drivers and the kernel itself.	La salle des machines - les pilotes et le noyau lui-même.
+What runs inside the System process?	Qu'est-ce qui tourne dans le processus System?
+The Windows kernel and drivers	Le noyau Windows et les pilotes
+Microsoft Office	Microsoft Office
+The Windows kernel and drivers - the part that talks to the hardware.	Le noyau Windows et les pilotes - la partie qui parle au matériel.
+High CPU here usually means a driver: Wi-Fi, storage or antivirus filter.	Un processeur élevé ici veut souvent dire un pilote : Wi-Fi, stockage ou filtre antivirus.
+Wi-Fi card	Carte Wi-Fi
+System	System
+packet arrived	paquet arrivé
+here's your data	voici vos données
+send this	envoie ceci
+How a Teams call connects	Comment se connecte un appel Teams
+Sign in, signal, find a path, then audio and video over UDP.	Connexion, signalisation, recherche d'un chemin, puis audio et vidéo sur UDP.
+How does a Teams call prefer to carry audio and video?	Comment un appel Teams préfère-t-il transporter l'audio et la vidéo?
+UDP, falling back to TCP if UDP is blocked	UDP, avec repli sur TCP si UDP est bloqué
+Only TCP port 25	Seulement le port TCP 25
+Teams signs in, rings the other side over HTTPS, then sends audio and video over UDP.	Teams se connecte, fait sonner l'autre côté sur HTTPS, puis envoie l'audio et la vidéo sur UDP.
+Robot voice or freezing: UDP blocked, the VPN in the way, or weak Wi-Fi.	Voix robotique ou image figée : UDP bloqué, le VPN dans le chemin ou un Wi-Fi faible.
+Sign-in (WAM)	Connexion (WAM)
+token please	un jeton, s'il vous plaît
+token	jeton
+call Alex (HTTPS)	appeler Alex (HTTPS)
+Alex answered + relay addresses	Alex a répondu + adresses de relais
+Media relay	Relais média
+STUN - which path works? (UDP 3478)	STUN - quel chemin fonctionne? (UDP 3478)
+audio + video (SRTP over UDP)	audio + vidéo (SRTP sur UDP)
+Join or start a Teams call.	Rejoignez ou lancez un appel Teams.
+How Outlook gets your mail	Comment Outlook reçoit vos courriels
+Signs in once, keeps a copy on your PC, syncs in the background.	Il se connecte une fois, garde une copie sur le PC et synchronise en arrière-plan.
+Why can Outlook show your mail while offline?	Pourquoi Outlook peut-il afficher vos courriels hors ligne?
+It keeps a copy on your PC and syncs in the background	Il garde une copie sur le PC et synchronise en arrière-plan
+It guesses the mail	Il devine les courriels
+The mail is stored in DNS	Les courriels sont stockés dans le DNS
+It can't	Il ne peut pas
+Outlook keeps a copy of your mailbox on the PC and syncs it with Exchange Online over HTTPS.	Outlook garde une copie de votre boîte aux lettres sur le PC et la synchronise avec Exchange Online sur HTTPS.
+Slow Outlook is often the big local mailbox file or OneDrive using your upload.	Un Outlook lent, c'est souvent le gros fichier de boîte aux lettres local ou OneDrive qui utilise votre envoi.
+Exchange Online	Exchange Online
+sync my mailbox (HTTPS)	synchroniser ma boîte (HTTPS)
+new items	nouveaux éléments
+notification - new mail	avis - nouveau courriel
+OneDrive - files on demand	OneDrive - fichiers à la demande
+Your files in the cloud, downloaded only when you open them.	Vos fichiers dans le nuage, téléchargés seulement quand vous les ouvrez.
+What does 'files on demand' mean in OneDrive?	Que veut dire « fichiers à la demande » dans OneDrive?
+Files are listed but only downloaded when you open them	Les fichiers sont listés mais téléchargés seulement à l'ouverture
+Files are deleted when not used	Les fichiers inutilisés sont supprimés
+Files are emailed to you	Les fichiers vous sont envoyés par courriel
+Files are printed	Les fichiers sont imprimés
+Keeps a folder on your PC in sync with the cloud, both ways, in the background.	Il garde un dossier du PC synchronisé avec le nuage, dans les deux sens, en arrière-plan.
+A big sync uses your upload - that's when calls get worse.	Une grosse synchronisation utilise votre envoi - c'est là que les appels se dégradent.
+OneDrive	OneDrive
+Microsoft	Microsoft
+anything new?	du nouveau?
+2 files changed	2 fichiers modifiés
+uploading your photo	envoi de votre photo
+Sign-in broker (WAM) - one sign-in for every Microsoft app	Courtier de connexion (WAM) - une connexion pour toutes les applis Microsoft
+Why Teams, Outlook and OneDrive never ask for your password separately.	Pourquoi Teams, Outlook et OneDrive ne demandent jamais votre mot de passe séparément.
+Why don't Teams, Outlook and OneDrive each ask for your password?	Pourquoi Teams, Outlook et OneDrive ne demandent-ils pas chacun votre mot de passe?
+They share one sign-in through Windows' sign-in broker	Ils partagent une connexion par le courtier de connexion de Windows
+They don't need one	Ils n'en ont pas besoin
+They store it in plain text	Ils le stockent en clair
+They use DNS to sign in	Ils se connectent par le DNS
+Windows' sign-in broker: Office and Teams ask it for tokens instead of asking you for passwords.	Le courtier de connexion de Windows : Office et Teams lui demandent des jetons au lieu de vous demander vos mots de passe.
+Endless sign-in prompts: the token broker is stuck - sign out of Office and back in.	Demandes de connexion sans fin : le courtier de jetons est bloqué - déconnectez-vous d'Office puis reconnectez-vous.
+WAM	WAM
+Microsoft sign-in	Connexion Microsoft
+here's the account	voici le compte
+The layers, in plain words	Les couches, en mots simples
+A letter in envelopes inside envelopes - each layer adds one, the other side opens them in reverse.	Une lettre dans des enveloppes dans des enveloppes - chaque couche en ajoute une, l'autre côté les ouvre dans l'ordre inverse.
+In the 'envelopes' picture of the layers, what does the receiving side do?	Dans l'image des « enveloppes », que fait le côté qui reçoit?
+Opens the envelopes in reverse order	Il ouvre les enveloppes dans l'ordre inverse
+Adds more envelopes	Il ajoute d'autres enveloppes
+Throws away the outer one only	Il ne jette que celle du dessus
+Each layer adds an envelope on the way out; the other side opens them in reverse.	Chaque couche ajoute une enveloppe à l'aller; l'autre côté les ouvre dans l'ordre inverse.
+The layer that fails tells you who to blame: room, router, firewall, or the website.	La couche qui échoue vous dit à qui s'en prendre : la pièce, le routeur, le pare-feu ou le site.
+here's my message	voici mon message
+TCP + IP + Wi-Fi envelopes	enveloppes TCP + IP + Wi-Fi
+radio waves	ondes radio
+new outer envelope, same inside	nouvelle enveloppe extérieure, même contenu
+opened in reverse, the reply comes back the same way	ouvertes dans l'ordre inverse, la réponse revient de la même façon
+Open any website.	Ouvrez n'importe quel site Web.
+What happens when you open a website	Ce qui se passe quand vous ouvrez un site Web
+Six steps in about a fifth of a second.	Six étapes en un cinquième de seconde environ.
+What happens first when you open a website?	Que se passe-t-il d'abord quand vous ouvrez un site Web?
+The name is looked up in DNS	Le nom est cherché dans le DNS
+The page is downloaded	La page est téléchargée
+The padlock is checked	Le cadenas est vérifié
+The cookies are sent	Les témoins sont envoyés
+Find the address, open a connection, agree on encryption, ask for the page.	Trouver l'adresse, ouvrir une connexion, convenir du chiffrement, demander la page.
+Far-away sites feel slow because each step costs a round trip.	Les sites lointains semblent lents parce que chaque étape coûte un aller-retour.
+where is github.com?	où est github.com?
+SYN	SYN
+SYN-ACK	SYN-ACK
+ACK + TLS hello	ACK + hello TLS
+certificate + key	certificat + clé
+How apps actually use the internet	Comment les applis utilisent vraiment Internet
+Apps never touch the network - they ask Windows, through sockets.	Les applis ne touchent jamais le réseau - elles demandent à Windows, par des sockets.
+How does an app send data on the network?	Comment une appli envoie-t-elle des données sur le réseau?
+It asks Windows through a socket - it never touches the network itself	Elle demande à Windows par un socket - elle ne touche jamais le réseau elle-même
+It talks to the network card directly	Elle parle directement à la carte réseau
+It sends email	Elle envoie un courriel
+It uses Bluetooth	Elle utilise Bluetooth
+Apps never touch the network - they ask Windows for a connection (a socket).	Les applis ne touchent jamais le réseau - elles demandent une connexion à Windows (un socket).
+Every connection belongs to exactly one program - Connections shows which.	Chaque connexion appartient à un seul programme - Connexions montre lequel.
+open a socket to 52.112.0.5 port 443	ouvrir un socket vers 52.112.0.5 port 443
+SYN from port 51834	SYN depuis le port 51834
+connected - send away	connecté - envoyez
+reply data	données de réponse
+Open an app you haven't used today.	Ouvrez une appli que vous n'avez pas utilisée aujourd'hui.
+Ports - which app gets the packet	Les ports - quelle appli reçoit le paquet
+The IP address finds the building; the port finds the flat.	L'adresse IP trouve l'immeuble; le port trouve l'appartement.
+If the IP address finds the building, what does the port find?	Si l'adresse IP trouve l'immeuble, que trouve le port?
+The flat - which app gets the packet	L'appartement - quelle appli reçoit le paquet
+The street	La rue
+The country	Le pays
+The postman	Le facteur
+The address finds the computer; the port finds the program on it.	L'adresse trouve l'ordinateur; le port trouve le programme dessus.
+'Door refused' means a firewall or a stopped service on that port.	« Porte refusée » veut dire un pare-feu ou un service arrêté sur ce port.
+Your PC (port 51834)	Votre PC (port 51834)
+Server (port 443)	Serveur (port 443)
+HTTPS please	HTTPS, s'il vous plaît
+Server (443)	Serveur (443)
+Your PC (51834)	Votre PC (51834)
+here you go	voilà
+Open a secure website.	Ouvrez un site sécurisé.
+Speed isn't one number	La vitesse n'est pas un seul chiffre
+Bandwidth, delay, jitter and loss - four different things that all feel like "slow".	Bande passante, délai, gigue et perte - quatre choses différentes qui donnent toutes l'impression de « lent ».
+Which can feel 'slow' even on a fast plan?	Qu'est-ce qui peut sembler « lent » même avec un forfait rapide?
+High delay, jitter or loss	Un délai, une gigue ou des pertes élevés
+A big hard disk	Un gros disque dur
+A bright screen	Un écran lumineux
+A long password	Un long mot de passe
+Bandwidth is how much; delay is how long; jitter is how uneven; loss is how much goes missing.	La bande passante, c'est combien; le délai, combien de temps; la gigue, l'irrégularité; la perte, ce qui disparaît.
+Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.	Les tests de vitesse montrent la bande passante, mais les appels et la navigation souffrent du délai, de la gigue et des pertes.
+ping (3 ms)	ping (3 ms)
+ping (+18 ms)	ping (+18 ms)
+reply after 21 ms, jitter 2 ms, 0% lost	réponse après 21 ms, gigue 2 ms, 0 % perdu
+Leave it running for a minute.	Laissez-le tourner une minute.
+Streaming vs calls - why one buffers and the other stutters	Diffusion contre appels - pourquoi l'un met en mémoire tampon et l'autre saccade
+Netflix can wait; a conversation can't.	Netflix peut attendre; une conversation, non.
+Why does Netflix buffer instead of stuttering like a call?	Pourquoi Netflix met-il en mémoire tampon au lieu de saccader comme un appel?
+It can download ahead and wait; a conversation can't	Il peut télécharger d'avance et attendre; une conversation ne peut pas
+It uses better cables	Il utilise de meilleurs câbles
+It doesn't use the internet	Il n'utilise pas Internet
+Calls use no buffer at all	Les appels n'ont aucune mémoire tampon
+Video downloads ahead and buffers; calls play every packet the moment it arrives.	La vidéo se télécharge d'avance et se met en tampon; les appels jouent chaque paquet dès son arrivée.
+YouTube fine but Teams breaking up is normal on a jittery network.	YouTube qui va bien mais Teams qui coupe, c'est normal sur un réseau instable.
+Video server	Serveur vidéo
+10 s of video ahead (TCP)	10 s de vidéo d'avance (TCP)
+Teams relay	Relais Teams
+20 ms of audio (UDP)	20 ms d'audio (UDP)
+20 ms of their audio (UDP)	20 ms de leur audio (UDP)
+Join a call or play a video.	Rejoignez un appel ou lancez une vidéo.
+Why your PC talks when you're doing nothing	Pourquoi le PC parle quand vous ne faites rien
+Sync, updates, notifications and check-ins - all normal, all named.	Synchronisation, mises à jour, avis et vérifications - tout est normal, tout est nommé.
+Why does your PC send traffic when you're doing nothing?	Pourquoi le PC envoie-t-il du trafic quand vous ne faites rien?
+Sync, updates, notifications and check-ins run in the background	La synchronisation, les mises à jour, les avis et les vérifications tournent en arrière-plan
+It's always a virus	C'est toujours un virus
+The screen saver uses internet	L'écran de veille utilise Internet
+It never does	Ça n'arrive jamais
+Sync, updates, notifications and clock checks keep your PC talking even when idle.	La synchronisation, les mises à jour, les avis et la vérification de l'heure font parler le PC même au repos.
+A program from Downloads talking at 3 am is worth a look; Defender updating isn't.	Un programme des Téléchargements qui parle à 3 h du matin mérite un coup d'œil; Defender qui se met à jour, non.
+still here (keep-alive)	toujours là (keep-alive)
+time server	serveur de temps
+Leave the PC alone for a minute.	Laissez le PC tranquille une minute.
+How a message reaches you instantly	Comment un message vous arrive instantanément
+Your app keeps one line open, so the server can call you back.	L'appli garde une ligne ouverte, pour que le serveur puisse vous rappeler.
+How does a chat app get a message to you instantly?	Comment une appli de clavardage vous envoie-t-elle un message instantanément?
+It keeps one connection open so the server can send to you	Elle garde une connexion ouverte pour que le serveur puisse vous écrire
+It checks email every minute	Elle vérifie les courriels chaque minute
+It uses SMS	Elle utilise les SMS
+It polls DNS	Elle interroge le DNS
+Apps keep one connection open so the server can send you a message instantly.	Les applis gardent une connexion ouverte pour que le serveur vous envoie un message aussitôt.
+Late messages: that open line broke quietly after a network change.	Messages en retard : cette ligne ouverte s'est rompue sans bruit après un changement de réseau.
+open, and keep this line open	ouvrir, et garder cette ligne ouverte
+(silence...)	(silence...)
+new message from Alex	nouveau message d'Alex
+got it	bien reçu
+Ask someone to send you a chat message.	Demandez à quelqu'un de vous envoyer un message.
+Path MTU - the biggest packet that fits	MTU du chemin - le plus gros paquet qui passe
+Every link has a size limit; the smallest one on the way wins.	Chaque lien a une limite de taille; la plus petite en chemin l'emporte.
+Which link decides the biggest packet that fits a whole path?	Quel lien décide du plus gros paquet qui passe sur tout un chemin?
+The smallest MTU anywhere on the way	Le plus petit MTU, n'importe où en chemin
+The first link	Le premier lien
+The fastest link	Le lien le plus rapide
+The last link	Le dernier lien
+Ethernet carries 1500 bytes; PPPoE, VPNs and tunnels wrap packets and leave less room.	Ethernet transporte 1500 octets; PPPoE, les VPN et les tunnels emballent les paquets et laissent moins de place.
+Too-big packets are dropped - if no router says so, pages half-load and VPNs stall (a black hole).	Les paquets trop gros sont rejetés - si aucun routeur ne le dit, les pages chargent à moitié et les VPN bloquent (un trou noir).
+1500 bytes, don't fragment	1500 octets, ne pas fragmenter
+Provider (PPPoE)	Fournisseur (PPPoE)
+Provider	Fournisseur
+too big - max 1492	trop gros - max 1492
+1492 bytes	1492 octets
+Your packets and the replies often take different roads.	Vos paquets et les réponses prennent souvent des routes différentes.
+Do replies always come back the same way your packets went?	Les réponses reviennent-elles toujours par le même chemin que vos paquets?
+No - the way back is often a different road	Non - le retour emprunte souvent une autre route
+Yes, always	Oui, toujours
+Only on Wi-Fi	Seulement en Wi-Fi
+Only for DNS	Seulement pour le DNS
+Each network sends traffic out by its own choice, so the reply route is decided by the far end.	Chaque réseau fait sortir le trafic selon son propre choix, donc la route du retour est décidée par l'autre bout.
+Loss or delay only on the way back looks like a problem 'out there' that no trace from your PC shows.	Des pertes ou un délai seulement au retour ressemblent à un problème « là-bas » qu'aucune trace depuis votre PC ne montre.
+Rogers	Rogers
+request	requête
+NTT	NTT
+Cogent	Cogent
+Run a trace.	Lancez une trace.
+Why a PC feels slow	Pourquoi un PC semble lent
+It's rarely the processor - it's memory and the disk.	C'est rarement le processeur - c'est la mémoire et le disque.
+What usually makes a PC feel slow?	Qu'est-ce qui rend généralement un PC lent?
+Running out of memory, so it waits on the disk	Manquer de mémoire, donc attendre le disque
+A slow processor clock	Une fréquence de processeur lente
+A small screen	Un petit écran
+Too many desktop icons	Trop d'icônes sur le bureau
+When memory is full, Windows parks parts of programs on the disk and reads them back when needed - thousands of times slower.	Quand la mémoire est pleine, Windows range des morceaux de programmes sur le disque et les relit au besoin - des milliers de fois plus lentement.
+Many pages read back per second, or a disk taking more than 15 ms per request, makes everything stutter.	Beaucoup de pages relues par seconde, ou un disque qui prend plus de 15 ms par requête, fait tout saccader.
+I need my code	j'ai besoin de mon code
+it was parked - read it back	il était rangé - le relire
+here (12 ms later)	le voici (12 ms plus tard)
+carry on	continue
+BGP - how the internet's networks agree on the way	BGP - comment les réseaux d'Internet s'entendent sur le chemin
+Thousands of networks, each telling its neighbours what it can reach.	Des milliers de réseaux, chacun disant à ses voisins ce qu'il peut atteindre.
+What does BGP decide?	Que décide BGP?
+Which network-to-network path traffic takes across the internet	Le chemin de réseau en réseau que prend le trafic sur Internet
+Which Wi-Fi channel your router uses	Le canal Wi-Fi de votre routeur
+Which IP address your PC gets	L'adresse IP de votre PC
+How fast a single cable runs	La vitesse d'un seul câble
+The internet is about 80,000 networks (autonomous systems, each with an AS number). BGP is how they tell each other "I can reach these addresses, through me".	Internet, c'est environ 80 000 réseaux (systèmes autonomes, chacun avec un numéro d'AS). BGP est la façon dont ils se disent « je peux atteindre ces adresses, en passant par moi ».
+Each provider runs BGP on its border routers. A route carries the path of AS numbers it went through; routers prefer the shortest AS path unless a business rule says otherwise (a cheaper neighbour, a paying customer first). Inside a provider, the same routes are spread with internal BGP (iBGP, often via route reflectors). Peering at an internet exchange (IXP) is two networks connecting directly for free; transit is paying a bigger network to reach everyone else. That's why one site is fast and another, just as close, is slow: the way there is a business decision. AdeeboMeter's "Who carries my traffic (BGP)" shows the networks your packets cross.	Chaque fournisseur fait tourner BGP sur ses routeurs de bordure. Une route porte la liste des numéros d'AS traversés; les routeurs préfèrent le chemin d'AS le plus court, sauf si une règle d'affaires dit autrement (un voisin moins cher, un client payant d'abord). À l'intérieur d'un fournisseur, les mêmes routes sont diffusées par BGP interne (iBGP, souvent par des réflecteurs de routes). Le peering dans un point d'échange Internet (IXP), c'est deux réseaux reliés directement gratuitement; le transit, c'est payer un plus gros réseau pour atteindre tous les autres. Voilà pourquoi un site est rapide et un autre, tout aussi proche, est lent : le chemin est une décision d'affaires. « Qui transporte mon trafic (BGP) » d'AdeeboMeter montre les réseaux que vos paquets traversent.
+A wrong announcement (a "route leak" or hijack) can send traffic the wrong way for the whole internet in minutes. A slow site that's slow for everyone on your provider is often a peering choice, not your line.	Une mauvaise annonce (une « fuite de route » ou un détournement) peut envoyer le trafic du mauvais côté pour tout Internet en quelques minutes. Un site lent pour tout le monde chez votre fournisseur, c'est souvent un choix de peering, pas votre ligne.
+Transit network	Réseau de transit
+UPDATE - 198.51.100.0/24 is reachable through AS64500	UPDATE - 198.51.100.0/24 est joignable par AS64500
+The world	Le monde
+UPDATE - 198.51.100.0/24 via AS64510 AS64500	UPDATE - 198.51.100.0/24 via AS64510 AS64500
+Content network	Réseau de contenu
+traffic for 198.51.100.7	trafic pour 198.51.100.7
+forwarded, following the path it learned	acheminé, en suivant le chemin appris
+OSPF and IS-IS - the map inside one network	OSPF et IS-IS - la carte à l'intérieur d'un réseau
+Every router knows the whole map of its own network, and the shortest way across it.	Chaque routeur connaît toute la carte de son réseau, et le chemin le plus court pour le traverser.
+What do OSPF and IS-IS build inside a provider's network?	Que construisent OSPF et IS-IS dans le réseau d'un fournisseur?
+A map of every router and link, to work out the shortest paths	Une carte de chaque routeur et lien, pour calculer les chemins les plus courts
+The list of websites customers visit	La liste des sites que visitent les clients
+Wi-Fi passwords	Les mots de passe Wi-Fi
+The public routes of other networks	Les routes publiques des autres réseaux
+Inside one provider, routers run a link-state protocol - OSPF or IS-IS - so each one holds the same map of all routers and links, with a cost on each link.	À l'intérieur d'un fournisseur, les routeurs font tourner un protocole à état de liens - OSPF ou IS-IS - pour que chacun ait la même carte de tous les routeurs et liens, avec un coût sur chaque lien.
+Every router floods small notices about its own links (OSPF's LSAs, IS-IS's LSPs). Each then runs Dijkstra's shortest-path algorithm on the full map. When a fibre is cut, the routers at each end flood the change and every router recomputes - in well-tuned networks, well under a second, and fast-reroute backups are often ready before that. BGP decides which exit to use; OSPF or IS-IS find the way to that exit. Big providers often prefer IS-IS: it runs directly on the link layer, not over IP, and copes well with very large single areas. OSPF splits big networks into areas around a backbone area 0.	Chaque routeur diffuse de petits avis sur ses propres liens (les LSA d'OSPF, les LSP d'IS-IS). Chacun lance ensuite l'algorithme du plus court chemin de Dijkstra sur la carte complète. Quand une fibre est coupée, les routeurs à chaque bout diffusent le changement et chaque routeur recalcule - dans les réseaux bien réglés, en bien moins d'une seconde, et les secours de reroutage rapide sont souvent prêts avant. BGP décide de la sortie à utiliser; OSPF ou IS-IS trouvent le chemin vers cette sortie. Les grands fournisseurs préfèrent souvent IS-IS : il tourne directement sur la couche liaison, pas sur IP, et gère bien de très grandes zones uniques. OSPF découpe les grands réseaux en zones autour d'une zone dorsale 0.
+Two routers that disagree on timers, area or MTU never become neighbours, and part of the map goes missing. A flapping link makes every router recompute again and again - the network "churns".	Deux routeurs en désaccord sur les minuteries, la zone ou le MTU ne deviennent jamais voisins, et une partie de la carte manque. Un lien instable fait recalculer chaque routeur encore et encore - le réseau « s'agite ».
+Router A	Routeur A
+Router B	Routeur B
+Hello - I'm A, area 0	Hello - je suis A, zone 0
+Hello - I see you	Hello - je te vois
+here is my whole link database	voici toute ma base de liens
+my link to C just went down (new LSA)	mon lien vers C vient de tomber (nouvelle LSA)
+Every router	Chaque routeur
+Itself	Lui-même
+run shortest path again, update the routes	relancer le plus court chemin, mettre les routes à jour
+MPLS - labels for fast lanes through the core	MPLS - des étiquettes pour des voies rapides dans le cœur
+A short label on the front of each packet decides where it goes next.	Une courte étiquette à l'avant de chaque paquet décide où il va ensuite.
+What does an MPLS router look at to forward a packet?	Que regarde un routeur MPLS pour acheminer un paquet?
+A short label added in front of the packet	Une courte étiquette ajoutée devant le paquet
+The website's name	Le nom du site
+The Wi-Fi signal	Le signal Wi-Fi
+The packet's payload	Le contenu du paquet
+At the edge of a provider's network the packet gets a label; core routers just swap labels along a pre-built path (an LSP) without reading the IP address underneath.	À l'entrée du réseau d'un fournisseur, le paquet reçoit une étiquette; les routeurs du cœur se contentent d'échanger les étiquettes le long d'un chemin préparé (un LSP) sans lire l'adresse IP dessous.
+Labels are handed out by LDP or, more and more, carried in the IGP itself (segment routing). A packet can carry a stack: an outer label for the path across the core and an inner label that says which customer or service it belongs to. That inner label is what makes VPNs, Ethernet services and traffic engineering possible on one shared network. The last-but-one router usually pops the outer label (penultimate hop popping) so the exit router only sees the service label. Traceroute through MPLS often shows hops with labels (ICMP extensions) - or hides them entirely when the provider tunnels them.	Les étiquettes sont distribuées par LDP ou, de plus en plus, transportées par l'IGP lui-même (routage par segments). Un paquet peut porter une pile : une étiquette extérieure pour le chemin dans le cœur et une étiquette intérieure qui dit à quel client ou service il appartient. C'est cette étiquette intérieure qui rend possibles les VPN, les services Ethernet et l'ingénierie de trafic sur un seul réseau partagé. L'avant-dernier routeur retire en général l'étiquette extérieure (penultimate hop popping), pour que le routeur de sortie ne voie que l'étiquette de service. Une trace à travers MPLS montre souvent des sauts avec étiquettes (extensions ICMP) - ou les cache complètement quand le fournisseur les tunnelise.
+Labels add 4 bytes each; if the core's MTU wasn't raised to carry them, big packets get dropped - an MTU black hole inside the provider.	Chaque étiquette ajoute 4 octets; si le MTU du cœur n'a pas été augmenté pour les transporter, les gros paquets sont rejetés - un trou noir de MTU chez le fournisseur.
+Customer router	Routeur client
+Provider edge PE1	Bordure fournisseur PE1
+IP packet to 10.2.0.9	paquet IP vers 10.2.0.9
+PE1	PE1
+Core P1	Cœur P1
+label 300 (path) + label 17 (customer VPN) + packet	étiquette 300 (chemin) + étiquette 17 (VPN client) + paquet
+P1	P1
+P2	P2
+label 410 + 17 + packet (swapped)	étiquette 410 + 17 + paquet (échangée)
+PE2	PE2
+label 17 + packet (outer label popped)	étiquette 17 + paquet (étiquette extérieure retirée)
+Customer site B	Site client B
+L3VPN (VRF) - a private network inside the provider	L3VPN (VRF) - un réseau privé à l'intérieur du fournisseur
+Many companies on one provider network, each in its own walled routing table.	Beaucoup d'entreprises sur un même réseau de fournisseur, chacune dans sa propre table de routage cloisonnée.
+Two companies both use 10.0.0.0/8 over the same provider. What keeps them apart?	Deux entreprises utilisent toutes deux 10.0.0.0/8 chez le même fournisseur. Qu'est-ce qui les sépare?
+Each has its own routing table (a VRF) and its own VPN label	Chacune a sa propre table de routage (une VRF) et sa propre étiquette VPN
+They take turns	Elles passent à tour de rôle
+The provider changes their addresses	Le fournisseur change leurs adresses
+Wi-Fi encryption	Le chiffrement Wi-Fi
+An enterprise connects its offices through the provider. The provider edge keeps a separate routing table per customer (a VRF - virtual routing and forwarding), so overlapping private addresses never mix.	Une entreprise relie ses bureaux par le fournisseur. La bordure du fournisseur garde une table de routage distincte par client (une VRF - virtual routing and forwarding), pour que des adresses privées qui se chevauchent ne se mélangent jamais.
+Customer routes are learned at each site (static, OSPF or BGP), then carried between provider edges by MP-BGP as VPN-IPv4 routes: the customer's prefix plus a route distinguisher to keep it unique, plus route targets that say which VRFs import it - that's how a hub-and-spoke or a shared-services VPN is built. In the core the traffic rides MPLS (or segment routing / SRv6) with an inner VPN label. Internet access for the same company is often just another VRF. EVPN is the same idea for Ethernet (layer 2) services and data-centre fabrics.	Les routes du client sont apprises à chaque site (statiques, OSPF ou BGP), puis transportées entre bordures du fournisseur par MP-BGP sous forme de routes VPN-IPv4 : le préfixe du client plus un distinguant de route pour le rendre unique, plus des cibles de route qui disent quelles VRF l'importent - c'est ainsi qu'on bâtit un VPN en étoile ou de services partagés. Dans le cœur, le trafic circule sur MPLS (ou routage par segments / SRv6) avec une étiquette VPN intérieure. L'accès Internet de la même entreprise n'est souvent qu'une autre VRF. EVPN, c'est la même idée pour les services Ethernet (couche 2) et les centres de données.
+A route-target typo means a branch silently can't see head office. Overlapping addresses are fine inside separate VRFs and break the moment two are joined.	Une faute de frappe dans une cible de route, et une succursale ne voit plus le siège sans rien dire. Des adresses qui se chevauchent vont bien dans des VRF séparées et cassent dès que deux sont réunies.
+Branch router	Routeur de la succursale
+PE-Branch	PE-Succursale
+OSPF - I have 10.20.0.0/16	OSPF - j'ai 10.20.0.0/16
+Route reflector	Réflecteur de routes
+MP-BGP - RD 64500:7 10.20.0.0/16, label 22, target "Acme"	MP-BGP - RD 64500:7 10.20.0.0/16, étiquette 22, cible « Acme »
+PE-Head office	PE-Siège
+the same route	la même route
+Head-office router	Routeur du siège
+10.20.0.0/16 is reachable through me	10.20.0.0/16 est joignable par moi
+Head office	Siège
+Branch	Succursale
+traffic, carried with VPN label 22	trafic, transporté avec l'étiquette VPN 22
+Multicast - one TV stream for thousands of homes	Multidiffusion - un flux télé pour des milliers de foyers
+Sent once, copied only where someone is watching.	Envoyé une fois, copié seulement là où quelqu'un regarde.
+Why does IPTV use multicast?	Pourquoi la télé IP utilise-t-elle la multidiffusion?
+The stream is sent once and copied only where viewers are	Le flux est envoyé une fois et copié seulement là où il y a des spectateurs
+It encrypts the channel	Elle chiffre la chaîne
+It makes the picture sharper	Elle rend l'image plus nette
+It avoids needing a router	Elle évite d'avoir besoin d'un routeur
+A live channel is one multicast group address. Your set-top box joins the group; routers copy the stream only onto links where somebody is watching.	Une chaîne en direct est une adresse de groupe de multidiffusion. Le terminal rejoint le groupe; les routeurs copient le flux seulement sur les liens où quelqu'un regarde.
+The box sends an IGMP "join" (MLD on IPv6) when you change channel; the access switch or router notes it (IGMP snooping keeps it off ports that didn't ask). Routers build a distribution tree toward the source with PIM - usually source-specific (PIM-SSM: "this channel from that server"). One 8 Mbps channel watched by 50,000 homes costs the core 8 Mbps, not 400 Gbps. Channel change speed depends on how fast the join reaches a router that already has the stream - providers add fast-channel-change servers that blast a short unicast burst while the multicast joins. Ordinary internet streaming (Netflix, YouTube) can't use multicast - every viewer pulls their own copy.	Le terminal envoie un « join » IGMP (MLD en IPv6) quand vous changez de chaîne; le commutateur ou routeur d'accès le note (l'IGMP snooping l'empêche d'aller sur les ports qui n'ont rien demandé). Les routeurs construisent un arbre de distribution vers la source avec PIM - en général spécifique à la source (PIM-SSM : « cette chaîne depuis ce serveur »). Une chaîne de 8 Mbit/s regardée par 50 000 foyers coûte 8 Mbit/s au cœur, pas 400 Gbit/s. La vitesse de changement de chaîne dépend de la rapidité avec laquelle le join atteint un routeur qui a déjà le flux - les fournisseurs ajoutent des serveurs de changement rapide qui envoient une courte rafale en unicast pendant que la multidiffusion se joint. La diffusion Internet ordinaire (Netflix, YouTube) ne peut pas utiliser la multidiffusion - chaque spectateur tire sa propre copie.
+IGMP snooping off on a home switch floods the TV stream to every port - Wi-Fi collapses. A join that never reaches the tree gives a black screen while the internet works fine.	Sans IGMP snooping, un commutateur domestique inonde chaque port avec le flux télé - le Wi-Fi s'effondre. Un join qui n'atteint jamais l'arbre donne un écran noir alors qu'Internet fonctionne.
+Set-top box	Terminal télé
+IGMP join 239.1.1.5 (channel 5)	IGMP join 239.1.1.5 (chaîne 5)
+Provider router	Routeur du fournisseur
+join 239.1.1.5	join 239.1.1.5
+Toward the TV head-end	Vers la tête de réseau télé
+PIM join (S,G)	PIM join (S,G)
+TV head-end	Tête de réseau télé
+Many routers	Beaucoup de routeurs
+one stream, copied at each branch	un flux, copié à chaque embranchement
+channel 5, 8 Mbps	chaîne 5, 8 Mbit/s
+Netflix, HBO and YouTube - how streaming really reaches you	Netflix, HBO et YouTube - comment la diffusion vous arrive vraiment
+The film comes from a box inside your provider, a few chunks at a time.	Le film vient d'une boîte chez votre fournisseur, quelques morceaux à la fois.
+Where does a Netflix film usually come from?	D'où vient généralement un film Netflix?
+A cache server inside or next to your provider's network	D'un serveur cache dans le réseau de votre fournisseur ou à côté
+Netflix's head office	Du siège de Netflix
+Your neighbour's PC	Du PC de votre voisin
+A satellite every time	D'un satellite à chaque fois
+Big streamers put cache servers (a CDN - Netflix's is Open Connect) inside providers' networks. Your player downloads the film in short chunks over HTTPS, choosing the quality for each chunk from your speed right now.	Les grands services de diffusion placent des serveurs cache (un CDN - celui de Netflix s'appelle Open Connect) dans les réseaux des fournisseurs. Votre lecteur télécharge le film en courts morceaux sur HTTPS, en choisissant la qualité de chaque morceau selon votre vitesse du moment.
+The video is cut into 2-10 second segments, each encoded at several qualities (a "ladder" from 240p to 4K). The player (DASH or HLS) keeps a buffer of upcoming segments; if downloads slow, it picks a lower rung - that's why quality drops before the video stops. Buffering only happens when the buffer runs dry. Popular titles are pre-loaded onto the caches overnight; a DNS answer or a steering service sends you to the nearest healthy cache. HBO, Disney+ and YouTube work the same way with their own or rented CDNs. 4K needs about 15-25 Mbps steady - the average speed matters less than the dips.	La vidéo est découpée en segments de 2 à 10 secondes, chacun encodé en plusieurs qualités (une « échelle » de 240p à 4K). Le lecteur (DASH ou HLS) garde une réserve de segments à venir; si les téléchargements ralentissent, il descend d'un barreau - voilà pourquoi la qualité baisse avant que la vidéo s'arrête. La mise en mémoire tampon n'arrive que quand la réserve est vide. Les titres populaires sont préchargés dans les caches pendant la nuit; une réponse DNS ou un service d'aiguillage vous envoie vers le cache sain le plus proche. HBO, Disney+ et YouTube fonctionnent pareil avec leurs propres CDN ou des CDN loués. La 4K demande environ 15 à 25 Mbit/s stables - la vitesse moyenne compte moins que les creux.
+A busy evening Wi-Fi or a provider link to the CDN that's full shows up as quality drops first, buffering second. A VPN can send you to a far-away cache - slower and lower quality.	Un Wi-Fi chargé le soir ou un lien plein entre le fournisseur et le CDN se voit d'abord par des baisses de qualité, puis par la mise en mémoire tampon. Un VPN peut vous envoyer vers un cache lointain - plus lent et de moins bonne qualité.
+Your TV	Votre télé
+Streaming service	Service de diffusion
+play this film (sign-in, licence)	lire ce film (connexion, licence)
+use the cache cache-12 near you, here's the segment list	utilisez le cache cache-12 près de chez vous, voici la liste des segments
+Cache in your provider	Cache chez votre fournisseur
+segment 1, 1080p	segment 1, 1080p
+Cache	Cache
+4 s of video	4 s de vidéo
+segment 2, 4K (the buffer is healthy - go up a rung)	segment 2, 4K (la réserve est saine - on monte d'un barreau)
+Live football online - why your neighbour cheers first	Le soccer en direct en ligne - pourquoi le voisin crie avant vous
+Live streams are chunked, cached and buffered - 20 to 60 seconds behind the pitch.	Les flux en direct sont découpés, mis en cache et en mémoire tampon - 20 à 60 secondes derrière le terrain.
+Why is a live football stream often 30 seconds behind TV?	Pourquoi un match de soccer en ligne a-t-il souvent 30 secondes de retard sur la télé?
+It is cut into chunks, encoded, sent through a CDN and buffered by the player	Il est découpé en morceaux, encodé, envoyé par un CDN et mis en mémoire tampon par le lecteur
+The camera is slow	La caméra est lente
+Your Wi-Fi is weak	Votre Wi-Fi est faible
+The referee adds a delay	L'arbitre ajoute un délai
+A live match goes camera → encoder → packager (chunks) → CDN → your player's buffer. Each step adds seconds; classic HLS sits 20-45 s behind broadcast.	Un match en direct passe par caméra → encodeur → empaqueteur (morceaux) → CDN → réserve du lecteur. Chaque étape ajoute des secondes; le HLS classique a 20 à 45 s de retard sur la diffusion.
+Low-latency HLS and DASH cut chunks into small parts and push them as soon as they exist, getting to 3-8 seconds - but with a smaller buffer, a Wi-Fi hiccup stalls the picture sooner. A big match is the hardest day for a CDN: millions ask for the same seconds at the same moment, so providers pre-position capacity and some use multicast-assisted delivery inside their own network. Satellite and IPTV multicast are usually closer to live than online apps. Picture stutter on a big match night is often the shared links, not your line.	Le HLS et le DASH à faible latence découpent les morceaux en petites parties et les poussent dès qu'elles existent, pour arriver à 3 à 8 secondes - mais avec une plus petite réserve, un accroc du Wi-Fi bloque l'image plus vite. Un grand match est le jour le plus dur pour un CDN : des millions demandent les mêmes secondes au même moment, alors les fournisseurs prépositionnent de la capacité et certains utilisent une livraison assistée par multidiffusion dans leur propre réseau. Le satellite et la multidiffusion IPTV sont souvent plus proches du direct que les applis en ligne. Une image qui saccade un soir de grand match, ce sont souvent les liens partagés, pas votre ligne.
+Shrinking the buffer for lower delay makes stalls more likely. A goal alert on your phone beats the stream because notifications don't wait in a video buffer.	Réduire la réserve pour moins de délai rend les blocages plus probables. Une alerte de but sur le téléphone devance le flux parce que les avis n'attendent pas dans une réserve vidéo.
+Stadium cameras	Caméras du stade
+Encoder	Encodeur
+live picture	image en direct
+Packager	Empaqueteur
+video in 2 s chunks	vidéo en morceaux de 2 s
+CDN	CDN
+chunk 4512	morceau 4512
+Your app	Votre appli
+newest chunk, please	le morceau le plus récent, s'il vous plaît
+chunk 4512 - it plays about 30 s after the kick	morceau 4512 - il joue environ 30 s après le coup de pied
+The mobile network in plain words	Le réseau mobile en mots simples
+Your phone, the radio towers, and a core network that decides who you are and where your data goes.	Votre téléphone, les antennes et un réseau central qui décide qui vous êtes et où vont vos données.
+What are the three big parts of a mobile network?	Quelles sont les trois grandes parties d'un réseau mobile?
+The phone, the radio access network (towers), and the core network	Le téléphone, le réseau d'accès radio (les antennes) et le réseau central
+Wi-Fi, Bluetooth and cable	Le Wi-Fi, Bluetooth et le câble
+The SIM, the screen and the battery	La carte SIM, l'écran et la batterie
+DNS, DHCP and NAT	Le DNS, le DHCP et le NAT
+The phone (UE) talks by radio to a base station (eNodeB in 4G, gNodeB in 5G). The base stations connect over fibre to the core, which checks your SIM, gives you an IP address and sends your data to the internet.	Le téléphone (UE) parle par radio à une station de base (eNodeB en 4G, gNodeB en 5G). Les stations de base sont reliées par fibre au cœur, qui vérifie votre SIM, vous donne une adresse IP et envoie vos données vers Internet.
+The radio access network (RAN) handles the air: scheduling who transmits when, handovers between cells, signal quality. The core does everything else: authentication (from the SIM's secret key), mobility (which tower you're under), sessions (your IP address and the path for your data), policy and charging. Control (signalling) and user data travel separately: signalling to the core's control functions, your packets through user-plane gateways. "Registered but no data" is a classic case where the control side worked and the data session didn't. A cellular router or a phone hotspot looks like any other router to your PC - AdeeboMeter sees the link to it, DNS and reachability, not the radio or the core.	Le réseau d'accès radio (RAN) gère les ondes : qui émet quand, les relèves entre cellules, la qualité du signal. Le cœur fait tout le reste : l'authentification (à partir de la clé secrète de la SIM), la mobilité (sous quelle antenne vous êtes), les sessions (votre adresse IP et le chemin de vos données), les règles et la facturation. Le contrôle (la signalisation) et les données voyagent séparément : la signalisation vers les fonctions de contrôle du cœur, vos paquets par les passerelles du plan usager. « Enregistré mais pas de données » est un cas classique où le contrôle a marché et la session de données non. Un routeur cellulaire ou le partage de connexion d'un téléphone ressemble à n'importe quel routeur pour votre PC - AdeeboMeter voit le lien vers lui, le DNS et l'accessibilité, pas la radio ni le cœur.
+Full bars and no internet usually means the data session (APN/DNN) failed, not the radio. Slow data with full bars is often a busy cell - many users sharing it.	Toutes les barres et pas d'Internet veut généralement dire que la session de données (APN/DNN) a échoué, pas la radio. Des données lentes avec toutes les barres, c'est souvent une cellule chargée - beaucoup d'utilisateurs la partagent.
+Tower	Antenne
+radio connection	connexion radio
+Core (control)	Cœur (contrôle)
+who is this, may they connect?	qui est-ce, peut-il se connecter?
+Core	Cœur
+welcome, here is your IP address	bienvenue, voici votre adresse IP
+Core (user plane)	Cœur (plan usager)
+your data	vos données
+your data, from the phone's address	vos données, depuis l'adresse du téléphone
+eNodeB and gNodeB - the towers	eNodeB et gNodeB - les antennes
+The base station: radio on one side, fibre to the core on the other.	La station de base : la radio d'un côté, la fibre vers le cœur de l'autre.
+What is a gNodeB?	Qu'est-ce qu'un gNodeB?
+The 5G base station (the "tower" equipment)	La station de base 5G (l'équipement de l'« antenne »)
+A type of SIM card	Un type de carte SIM
+The 5G core's database	La base de données du cœur 5G
+A Wi-Fi router	Un routeur Wi-Fi
+eNodeB is the 4G base station, gNodeB the 5G one. They schedule the radio, measure your signal, hand you to a better cell, and connect to the core over S1 (4G) or N2 and N3 (5G).	L'eNodeB est la station de base 4G, le gNodeB celle de la 5G. Ils organisent la radio, mesurent votre signal, vous passent à une meilleure cellule et se relient au cœur par S1 (4G) ou N2 et N3 (5G).
+Each cell broadcasts its identity; the phone measures signal strength (RSRP) and quality (RSRQ, SINR) and reports them, and the base station decides handovers - directly over the X2/Xn link to the neighbour cell when it can. A 5G gNodeB is often split: a radio unit on the mast, distributed and central units further back (CU/DU split, O-RAN). Early 5G is "non-standalone" (NSA): 5G radio added to a 4G eNodeB, still on the 4G core. "Standalone" (SA) uses the 5G core. RedCap is a lighter 5G for sensors and routers that don't need full speed.	Chaque cellule diffuse son identité; le téléphone mesure la puissance du signal (RSRP) et sa qualité (RSRQ, SINR) et les rapporte, et la station de base décide des relèves - directement par le lien X2/Xn vers la cellule voisine quand elle le peut. Un gNodeB 5G est souvent découpé : une unité radio sur le mât, des unités distribuée et centrale plus loin (séparation CU/DU, O-RAN). La 5G des débuts est « non autonome » (NSA) : une radio 5G ajoutée à un eNodeB 4G, toujours sur le cœur 4G. La 5G « autonome » (SA) utilise le cœur 5G. RedCap est une 5G allégée pour les capteurs et les routeurs qui n'ont pas besoin de toute la vitesse.
+Good RSRP but poor SINR means interference or a busy cell, not distance. Constant handovers at a cell edge show up as short stalls and jitter.	Un bon RSRP mais un mauvais SINR veut dire des interférences ou une cellule chargée, pas la distance. Des relèves constantes en bordure de cellule se voient par de courts blocages et de la gigue.
+gNodeB	gNodeB
+random access - I'd like to talk	accès aléatoire - j'aimerais parler
+radio resources granted	ressources radio accordées
+measurement report - neighbour cell is stronger	rapport de mesure - la cellule voisine est plus forte
+Neighbour gNodeB	gNodeB voisin
+handover request (Xn)	demande de relève (Xn)
+handover accepted	relève acceptée
+handover command - move to the neighbour cell	ordre de relève - passez à la cellule voisine
+random access - I'm here	accès aléatoire - je suis là
+The 4G core: MME, SGW, PGW, HSS	Le cœur 4G : MME, SGW, PGW, HSS
+The MME signals; the gateways carry your data.	Le MME signale; les passerelles transportent vos données.
+In a 4G core, which part handles signalling and mobility (not your data)?	Dans un cœur 4G, quelle partie gère la signalisation et la mobilité (pas vos données)?
+The MME	Le MME
+The PGW	Le PGW
+The eNodeB	L'eNodeB
+The DNS server	Le serveur DNS
+The MME authenticates you and tracks which area you're in. The SGW carries your data from the tower; the PGW gives you an IP address and connects to the internet (the APN). The HSS holds subscriber data.	Le MME vous authentifie et suit la zone où vous êtes. Le SGW transporte vos données depuis l'antenne; le PGW vous donne une adresse IP et se relie à Internet (l'APN). Le HSS contient les données d'abonné.
+Signalling goes eNodeB → MME (S1-MME, protocol S1AP with NAS inside). Data goes in GTP-U tunnels: eNodeB → SGW (S1-U) → PGW (S5/S8) → internet (SGi). Each tunnel has an ID (TEID), so a capture on S1-U shows your packets wrapped in GTP. The MME asks the HSS for your keys and profile (S6a, Diameter); the PCRF sets policy and the bearers' QoS. When you roam, the PGW can be your home network's - your traffic goes home first, which is why roaming can be slow.	La signalisation va de l'eNodeB au MME (S1-MME, protocole S1AP avec NAS dedans). Les données passent dans des tunnels GTP-U : eNodeB → SGW (S1-U) → PGW (S5/S8) → Internet (SGi). Chaque tunnel a un identifiant (TEID), donc une capture sur S1-U montre vos paquets emballés dans GTP. Le MME demande au HSS vos clés et votre profil (S6a, Diameter); le PCRF fixe les règles et la QoS des porteuses. En itinérance, le PGW peut être celui de votre réseau d'origine - votre trafic rentre d'abord à la maison, d'où la lenteur possible de l'itinérance.
+An MME problem means phones can't attach at all. A PGW or APN problem means attached but no data - the bars look fine.	Un problème de MME veut dire que les téléphones ne peuvent pas du tout s'attacher. Un problème de PGW ou d'APN veut dire attaché mais pas de données - les barres semblent correctes.
+eNodeB	eNodeB
+MME	MME
+initial UE message (attach request)	message UE initial (demande d'attachement)
+HSS	HSS
+authentication info for this IMSI	infos d'authentification pour cet IMSI
+SGW	SGW
+create session	créer la session
+PGW	PGW
+create session (APN internet)	créer la session (APN internet)
+create session response - the PGW allocated IP 100.70.3.9	réponse de création - le PGW a attribué l'IP 100.70.3.9
+The 5G core: AMF, SMF, UPF and friends	Le cœur 5G : AMF, SMF, UPF et compagnie
+Separate small functions that call each other over HTTP APIs.	De petites fonctions séparées qui s'appellent par des API HTTP.
+In the 5G core, which function carries your actual data packets?	Dans le cœur 5G, quelle fonction transporte vos paquets de données?
+The UPF	L'UPF
+The AMF	L'AMF
+The AUSF	L'AUSF
+The NRF	Le NRF
+The AMF handles registration and mobility; the SMF sets up your data session; the UPF carries your packets; AUSF and UDM check who you are; the NRF is the directory where functions find each other.	L'AMF gère l'enregistrement et la mobilité; la SMF établit votre session de données; l'UPF transporte vos paquets; l'AUSF et l'UDM vérifient qui vous êtes; le NRF est l'annuaire où les fonctions se trouvent entre elles.
+The 5G core is "service-based": functions expose HTTP/2 APIs on a shared bus (N11 between AMF and SMF, N12 to the AUSF, N8 and N10 to the UDM). The gNodeB talks to the AMF over N2 (NGAP, with NAS inside) and sends data to the UPF over N3 (GTP-U); the UPF reaches the internet or a company network over N6. The SMF programs the UPF over N4 (PFCP). Because functions are software, they run in clouds with several copies; when one fails, another takes over - and a test of that failover asks one question: how long until data works again? The PCF sets policy; network slices let one core run separate virtual networks with different rules.	Le cœur 5G est « basé sur les services » : les fonctions exposent des API HTTP/2 sur un bus partagé (N11 entre AMF et SMF, N12 vers l'AUSF, N8 et N10 vers l'UDM). Le gNodeB parle à l'AMF par N2 (NGAP, avec NAS dedans) et envoie les données à l'UPF par N3 (GTP-U); l'UPF atteint Internet ou un réseau d'entreprise par N6. La SMF programme l'UPF par N4 (PFCP). Comme les fonctions sont du logiciel, elles tournent dans des nuages en plusieurs copies; quand l'une tombe, une autre prend le relais - et un test de cette bascule pose une seule question : combien de temps avant que les données refonctionnent? Le PCF fixe les règles; les tranches de réseau permettent à un même cœur de faire tourner des réseaux virtuels séparés aux règles différentes.
+AMF trouble: phones can't register. SMF or UPF trouble: registered, no data. A failover that keeps registration but drops sessions looks exactly like "full bars, no internet" until the phone re-establishes its session.	Ennui d'AMF : les téléphones ne peuvent pas s'enregistrer. Ennui de SMF ou d'UPF : enregistré, pas de données. Une bascule qui garde l'enregistrement mais perd les sessions ressemble exactement à « toutes les barres, pas d'Internet » jusqu'à ce que le téléphone rétablisse sa session.
+AMF	AMF
+registration request (N2)	demande d'enregistrement (N2)
+AUSF	AUSF
+authenticate this subscriber (N12)	authentifier cet abonné (N12)
+SMF	SMF
+create a PDU session (N11)	créer une session PDU (N11)
+UPF	UPF
+set up the forwarding rules (N4)	établir les règles d'acheminement (N4)
+your packets (N6)	vos paquets (N6)
+How a phone joins: LTE attach and 5G registration	Comment un téléphone se connecte : l'attachement LTE et l'enregistrement 5G
+Who are you, prove it, here's your address.	Qui êtes-vous, prouvez-le, voici votre adresse.
+In 5G, after registration is accepted, what still has to happen before data flows?	En 5G, une fois l'enregistrement accepté, que reste-t-il à faire avant que les données circulent?
+A PDU session must be set up	Une session PDU doit être établie
+The SIM must be removed	La SIM doit être retirée
+Wi-Fi must be turned on	Le Wi-Fi doit être activé
+The phone must restart	Le téléphone doit redémarrer
+Joining has two halves: registration (who you are, proven with the SIM's key) and a data session (an IP address and a path). In 4G the default bearer comes with the attach; in 5G the PDU session is a separate step.	Se connecter a deux moitiés : l'enregistrement (qui vous êtes, prouvé par la clé de la SIM) et une session de données (une adresse IP et un chemin). En 4G, la porteuse par défaut vient avec l'attachement; en 5G, la session PDU est une étape à part.
+In 4G: attach request → authentication (the network sends a challenge only your SIM can answer) → security mode → the MME asks the gateways for a session → attach accept with your IP → the default bearer is up. In 5G SA: registration request → authentication → security mode → registration accept; then the phone asks for a PDU session for a DNN (5G's name for the APN) → the SMF picks a UPF and an address → PDU session accept. Each step can be rejected with a cause code (for example "DNN not supported", "insufficient resources"). A modem log that ends after "PDU Session Establishment Request" with no accept or reject is a strong clue the problem is the session side, not the radio.	En 4G : demande d'attachement → authentification (le réseau envoie un défi auquel seule votre SIM peut répondre) → mode de sécurité → le MME demande une session aux passerelles → acceptation de l'attachement avec votre IP → la porteuse par défaut est active. En 5G SA : demande d'enregistrement → authentification → mode de sécurité → acceptation de l'enregistrement; puis le téléphone demande une session PDU pour un DNN (le nom 5G de l'APN) → la SMF choisit une UPF et une adresse → acceptation de la session PDU. Chaque étape peut être refusée avec un code de cause (par exemple « DNN not supported », « insufficient resources »). Un journal de modem qui s'arrête après « PDU Session Establishment Request » sans acceptation ni refus est un indice fort que le problème vient de la session, pas de la radio.
+"Registered" on the router's screen only means the first half worked. Look for the session accept and an IP address before blaming anything else.	« Enregistré » à l'écran du routeur veut seulement dire que la première moitié a marché. Cherchez l'acceptation de la session et une adresse IP avant d'accuser autre chose.
+Registration Request	Registration Request
+Authentication Request (challenge)	Authentication Request (défi)
+Authentication Response	Authentication Response
+Registration Accept	Registration Accept
+PDU Session Establishment Request (DNN internet - passed on to the SMF)	PDU Session Establishment Request (DNN internet - transmis à la SMF)
+PDU Session Establishment Accept from the SMF - IP 100.70.3.9	PDU Session Establishment Accept de la SMF - IP 100.70.3.9
+APN, DNN, bearers and PDU sessions	APN, DNN, porteuses et sessions PDU
+The name of the network you ask for, and the pipe you get.	Le nom du réseau que vous demandez, et le tuyau que vous obtenez.
+What is an APN (4G) or DNN (5G)?	Qu'est-ce qu'un APN (4G) ou un DNN (5G)?
+The name of the data network a device asks to connect to	Le nom du réseau de données auquel un appareil demande à se connecter
+The phone's serial number	Le numéro de série du téléphone
+The tower's name	Le nom de l'antenne
+The APN (4G) or DNN (5G) names the network you want: "internet", a company's private network, IMS for voice calls. The bearer (4G) or PDU session (5G) is the resulting pipe, with its own IP address and QoS.	L'APN (4G) ou le DNN (5G) nomme le réseau voulu : « internet », le réseau privé d'une entreprise, IMS pour les appels vocaux. La porteuse (4G) ou la session PDU (5G) est le tuyau obtenu, avec sa propre adresse IP et sa QoS.
+One device can hold several at once: internet data, IMS for VoLTE calls (with a guaranteed-bit-rate bearer for the voice itself), a private APN for a company's routers. Each gets its own address and can go to a different gateway. QoS is set per flow: a QCI (4G) or 5QI (5G) number says the priority, delay budget and loss target - voice gets a better one than web browsing. A private APN with the wrong name or no subscription in the core is a classic "registered, no data" cause: the core rejects the session with a cause code that's only visible in the modem's log.	Un appareil peut en avoir plusieurs à la fois : les données Internet, IMS pour les appels VoLTE (avec une porteuse à débit garanti pour la voix elle-même), un APN privé pour les routeurs d'une entreprise. Chacun a sa propre adresse et peut aller vers une passerelle différente. La QoS se règle par flux : un numéro QCI (4G) ou 5QI (5G) indique la priorité, le budget de délai et la cible de pertes - la voix en a un meilleur que la navigation. Un APN privé mal nommé ou sans abonnement dans le cœur est une cause classique de « enregistré, pas de données » : le cœur refuse la session avec un code de cause visible seulement dans le journal du modem.
+Typo in the APN on a router: registered, no data. The wrong IP type (IPv4 vs IPv6 vs both) can also be refused.	Une faute de frappe dans l'APN d'un routeur : enregistré, pas de données. Le mauvais type d'IP (IPv4, IPv6 ou les deux) peut aussi être refusé.
+connect me to APN "acme.corp"	connecte-moi à l'APN « acme.corp »
+Subscriber database	Base de données des abonnés
+is this SIM allowed on acme.corp?	cette SIM est-elle autorisée sur acme.corp?
+yes, fixed IP 10.40.0.17	oui, IP fixe 10.40.0.17
+session up, IP 10.40.0.17, QoS 9	session active, IP 10.40.0.17, QoS 9
+Company network	Réseau de l'entreprise
+data through the private APN	données par l'APN privé
+5G NSA vs SA, and why your router says 5G but behaves like 4G	5G NSA contre SA, et pourquoi le routeur dit 5G mais se comporte comme la 4G
+Non-standalone borrows the 4G core; standalone is 5G all the way.	Le non autonome emprunte le cœur 4G; l'autonome est 5G de bout en bout.
+In 5G non-standalone (NSA), which core is used?	En 5G non autonome (NSA), quel cœur est utilisé?
+The 4G core (EPC)	Le cœur 4G (EPC)
+The 5G core	Le cœur 5G
+No core at all	Aucun cœur
+The Wi-Fi router	Le routeur Wi-Fi
+NSA adds 5G radio to a 4G anchor cell: the phone signals over 4G and gets extra speed on 5G, but the core is still the 4G one. SA uses a 5G core and 5G for everything.	La NSA ajoute une radio 5G à une cellule d'ancrage 4G : le téléphone signale en 4G et obtient de la vitesse en plus sur la 5G, mais le cœur reste celui de la 4G. La SA utilise un cœur 5G et la 5G pour tout.
+NSA (option 3x) gave early 5G its speed without a new core. Features that need the 5G core - network slicing, the lower-latency user plane, RedCap devices, the newer session handling - only come with SA. On NSA, losing the 4G anchor drops the 5G leg too, so a "5G" icon can flicker while data stalls. Routers usually show which one they're on (EN-DC means NSA). Latency on NSA is close to good 4G; on SA with a nearby UPF it can be lower.	La NSA (option 3x) a donné sa vitesse à la 5G des débuts sans nouveau cœur. Les fonctions qui ont besoin du cœur 5G - les tranches de réseau, le plan usager à plus faible latence, les appareils RedCap, la nouvelle gestion des sessions - ne viennent qu'avec la SA. En NSA, perdre l'ancre 4G fait aussi tomber la branche 5G, donc une icône « 5G » peut clignoter pendant que les données bloquent. Les routeurs indiquent en général lequel ils utilisent (EN-DC veut dire NSA). La latence en NSA est proche d'une bonne 4G; en SA avec une UPF proche, elle peut être plus basse.
+A device that only supports SA in a place that only has NSA (or the reverse) falls back to 4G - working, slower.	Un appareil qui ne gère que la SA dans un endroit qui n'a que la NSA (ou l'inverse) revient en 4G - ça fonctionne, plus lentement.
+4G anchor cell	Cellule d'ancrage 4G
+attach (as in 4G)	attachement (comme en 4G)
+4G anchor	Ancre 4G
+5G cell	Cellule 5G
+add a 5G leg for this phone (EN-DC)	ajouter une branche 5G pour ce téléphone (EN-DC)
+extra capacity	capacité supplémentaire
+4G core	Cœur 4G
+all signalling stays here	toute la signalisation reste ici
+A hash - a file's fingerprint	Un hachage - l'empreinte d'un fichier
+Change one bit, get a completely different fingerprint.	Changez un seul bit, obtenez une empreinte complètement différente.
+You change one letter in a 2 GB file. What happens to its SHA-256 fingerprint?	Vous changez une lettre dans un fichier de 2 Go. Qu'arrive-t-il à son empreinte SHA-256?
+It changes completely	Elle change complètement
+It changes by one letter too	Elle change aussi d'une lettre
+It stays the same	Elle reste la même
+It gets shorter	Elle raccourcit
+A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always gives the same one.	Un hachage réduit n'importe quel fichier à une courte empreinte (SHA-256 : 64 chiffres hexadécimaux). Le même fichier donne toujours la même.
+A download whose hash doesn't match the published one is damaged or not the real file - get it again.	Un téléchargement dont le hachage ne correspond pas à celui publié est abîmé ou n'est pas le vrai fichier - téléchargez-le de nouveau.
+You can't turn a fingerprint back into the file, and nobody can make two different files with the same fingerprint (with SHA-256 - MD5 and SHA-1 are broken for that: someone can make a matching pair, though not a match for a file that already exists). Certificates, Windows Update and package managers all lean on this.	On ne peut pas retrouver le fichier à partir de l'empreinte, et personne ne peut fabriquer deux fichiers différents avec la même empreinte (avec SHA-256 - MD5 et SHA-1 sont cassés pour ça : on peut fabriquer une paire assortie, mais pas une correspondance pour un fichier qui existe déjà). Les certificats, Windows Update et les gestionnaires de paquets s'appuient tous là-dessus.
+Download page	Page de téléchargement
+setup.exe is 3f2a...9c1d	setup.exe est 3f2a...9c1d
+hash the file I got - 3f2a...9c1d	hacher le fichier reçu - 3f2a...9c1d
+same fingerprint - it's the real file	même empreinte - c'est le vrai fichier
+AES - one key locks and unlocks	AES - une seule clé ferme et ouvre
+The fast lock that carries all your data.	La serrure rapide qui transporte toutes vos données.
+In AES, what unlocks the data?	Avec AES, qu'est-ce qui déverrouille les données?
+The same key that locked it	La même clé qui les a verrouillées
+The server's certificate	Le certificat du serveur
+Any long password	N'importe quel long mot de passe
+The website's address	L'adresse du site
+AES uses one shared key: the same key locks and unlocks. It is fast enough to encrypt everything you send.	AES utilise une seule clé partagée : la même clé ferme et ouvre. Il est assez rapide pour chiffrer tout ce que vous envoyez.
+The hard part isn't the lock - it's getting the same key to both sides without anyone seeing it. That's what the key agreement solves.	La partie difficile n'est pas la serrure - c'est de faire parvenir la même clé aux deux côtés sans que personne la voie. C'est ce que résout l'accord de clés.
+AES-GCM also seals the data, so any change on the way is caught. A 128-bit key already has more combinations than anyone could ever try; 256-bit is for the long haul.	AES-GCM scelle aussi les données, donc toute modification en route est détectée. Une clé de 128 bits a déjà plus de combinaisons que quiconque pourrait en essayer; 256 bits, c'est pour le très long terme.
+AES-locked data (key K)	données verrouillées par AES (clé K)
+unlock with the same key K	déverrouiller avec la même clé K
+AES-locked answer (key K)	réponse verrouillée par AES (clé K)
+Diffie-Hellman - mixing paint in public	Diffie-Hellman - mélanger la peinture en public
+Two strangers agree on a secret while everyone listens.	Deux inconnus s'entendent sur un secret pendant que tout le monde écoute.
+What do both sides end up with after Diffie-Hellman?	Qu'obtiennent les deux côtés après Diffie-Hellman?
+The same secret, never sent across	Le même secret, jamais envoyé
+Each other's password	Le mot de passe de l'autre
+A certificate	Un certificat
+The website's IP address	L'adresse IP du site
+Both start with a public colour, add their own secret colour and swap the mixes. Each adds its secret again - both get the same final colour; a listener can't unmix it.	Les deux partent d'une couleur publique, ajoutent leur propre couleur secrète et échangent les mélanges. Chacun rajoute son secret - les deux obtiennent la même couleur finale; un espion ne peut pas la démélanger.
+On its own it doesn't prove who you're talking to - the certificate does that. ECDHE makes a fresh secret every session (forward secrecy).	Seul, il ne prouve pas à qui vous parlez - c'est le rôle du certificat. ECDHE crée un nouveau secret à chaque session (confidentialité persistante).
+public yellow + my secret red = orange	jaune public + mon rouge secret = orange
+public yellow + my secret blue = green	jaune public + mon bleu secret = vert
+green + my red = brown	vert + mon rouge = brun
+orange + my blue = the same brown	orange + mon bleu = le même brun
+Public and private keys	Clés publiques et privées
+Hand out the padlock, keep the only key.	Distribuez le cadenas, gardez la seule clé.
+Which half of a key pair must stay secret?	Quelle moitié d'une paire de clés doit rester secrète?
+The private key	La clé privée
+The public key	La clé publique
+Neither	Aucune des deux
+A key pair: anyone may have the public key; only the owner has the private key. What one half does, only the other half can undo.	Une paire de clés : tout le monde peut avoir la clé publique; seul le propriétaire a la clé privée. Ce que fait une moitié, seule l'autre peut le défaire.
+A leaked private key means anyone can pretend to be you - the certificate has to be revoked and replaced.	Une clé privée qui fuit veut dire que n'importe qui peut se faire passer pour vous - le certificat doit être révoqué et remplacé.
+RSA and ECDSA are the two common kinds. ECDSA keys are much smaller for the same strength (P-256 is about RSA 3072).	RSA et ECDSA sont les deux types courants. Les clés ECDSA sont bien plus petites pour la même solidité (P-256 vaut environ RSA 3072).
+here's my public key	voici ma clé publique
+(checks against the public key)	(vérifie avec la clé publique)
+only my private key can do this part	seule ma clé privée peut faire cette partie
+A signature - sign with private, check with public	Une signature - signer avec la privée, vérifier avec la publique
+Proves who wrote it, and that nobody changed it.	Elle prouve qui l'a écrit, et que personne ne l'a modifié.
+How do you check a digital signature?	Comment vérifie-t-on une signature numérique?
+With the signer's public key	Avec la clé publique du signataire
+With the signer's private key	Avec la clé privée du signataire
+With your own password	Avec votre propre mot de passe
+With the file's name	Avec le nom du fichier
+The signer hashes the document and seals the hash with their private key. Anyone checks it with the signer's public key.	Le signataire hache le document et scelle le hachage avec sa clé privée. N'importe qui le vérifie avec la clé publique du signataire.
+Change one bit of the document and the check fails - that's the point. "Bad signature" means altered, or signed by someone else.	Changez un bit du document et la vérification échoue - c'est le but. « Mauvaise signature » veut dire modifié, ou signé par quelqu'un d'autre.
+Signer	Signataire
+hash the document, seal it with my private key	hacher le document, le sceller avec ma clé privée
+document + signature	document + signature
+open the seal with the public key - the hash matches	ouvrir le sceau avec la clé publique - le hachage correspond
+A certificate - the server's passport	Un certificat - le passeport du serveur
+Name, photo (the public key), dates, and the issuer's stamp.	Nom, photo (la clé publique), dates et tampon de l'émetteur.
+Who vouches for a certificate?	Qui se porte garant d'un certificat?
+Its issuer, a certificate authority	Son émetteur, une autorité de certification
+The website itself, always	Le site lui-même, toujours
+Your internet provider	Votre fournisseur Internet
+A certificate ties a name (www.example.com) to a public key, with start and end dates, signed by an issuer that vouches for it.	Un certificat relie un nom (www.example.com) à une clé publique, avec des dates de début et de fin, signé par un émetteur qui s'en porte garant.
+Wrong name, past its end date, or an issuer your PC doesn't trust: the padlock breaks. Toolbox › HTTPS check says which.	Mauvais nom, date de fin dépassée ou émetteur auquel votre PC ne fait pas confiance : le cadenas casse. Boîte à outils › Vérification HTTPS dit lequel.
+The names it is valid for are in the SAN list. A site's own certificate says CA: false; only issuers say CA: true.	Les noms pour lesquels il est valide sont dans la liste SAN. Le certificat propre d'un site dit CA: false; seuls les émetteurs disent CA: true.
+Issuer	Émetteur
+I checked you own www.example.com - here's your signed passport	j'ai vérifié que vous possédez www.example.com - voici votre passeport signé
+my passport	mon passeport
+right name, in date, stamp from an issuer I trust	bon nom, dans les dates, tampon d'un émetteur de confiance
+The chain of trust - a ladder	La chaîne de confiance - une échelle
+Root at the top, your certificate at the bottom.	La racine en haut, votre certificat en bas.
+A site works in a browser but an app says "untrusted". What's the usual cause?	Un site marche dans le navigateur mais une appli dit « non fiable ». Quelle est la cause habituelle?
+The server doesn't send its middle certificate	Le serveur n'envoie pas son certificat intermédiaire
+The site is down	Le site est en panne
+The DNS is wrong	Le DNS est faux
+The Wi-Fi is weak	Le Wi-Fi est faible
+Your PC trusts a few roots. A root signs a middle (intermediate) certificate, which signs the site's - each link checked up to a root.	Votre PC fait confiance à quelques racines. Une racine signe un certificat intermédiaire, qui signe celui du site - chaque maillon vérifié jusqu'à une racine.
+The classic break: the server forgets the middle certificate. Browsers often find it anyway; apps and devices don't. Toolbox › Chain check shows the ladder.	La panne classique : le serveur oublie le certificat intermédiaire. Les navigateurs le trouvent souvent quand même; les applis et les appareils, non. Boîte à outils › Vérification de la chaîne montre l'échelle.
+Root CA	AC racine
+Middle CA	AC intermédiaire
+I vouch for you (signed)	je me porte garant de vous (signé)
+Site	Site
+my certificate + the middle one	mon certificat + l'intermédiaire
+climb the ladder to a root I trust	monter l'échelle jusqu'à une racine de confiance
+Revocation - cancelling a passport early	La révocation - annuler un passeport avant terme
+A list of certificates that must not be trusted any more.	Une liste de certificats auxquels il ne faut plus faire confiance.
+What does a revocation list (CRL) hold?	Que contient une liste de révocation (CRL)?
+Serial numbers of certificates withdrawn early	Les numéros de série des certificats retirés avant terme
+Every website's address	L'adresse de chaque site
+Expired passwords	Des mots de passe expirés
+The fastest servers	Les serveurs les plus rapides
+When a private key leaks, the issuer withdraws the certificate before its end date and lists its serial number (CRL) - or answers "revoked" when asked (OCSP).	Quand une clé privée fuit, l'émetteur retire le certificat avant sa date de fin et inscrit son numéro de série (CRL) - ou répond « révoqué » quand on le lui demande (OCSP).
+Checking means asking the issuer over the internet, so it can be slow or blocked - AdeeboMeter only asks if you turn it on in Settings.	Vérifier veut dire interroger l'émetteur par Internet, ce qui peut être lent ou bloqué - AdeeboMeter ne le demande que si vous l'activez dans les Paramètres.
+is serial 3003 still good?	le numéro 3003 est-il toujours bon?
+good (signed answer)	bon (réponse signée)
+trust it for now	lui faire confiance pour l'instant
+Why the clock matters for HTTPS	Pourquoi l'horloge compte pour HTTPS
+A wrong clock breaks the padlock before the network does.	Une horloge fausse casse le cadenas avant le réseau.
+Your PC thinks it's the year 2000. What happens to HTTPS?	Votre PC croit qu'on est en l'an 2000. Qu'arrive-t-il à HTTPS?
+Every certificate looks "not yet valid"	Chaque certificat paraît « pas encore valide »
+Pages load faster	Les pages chargent plus vite
+Nothing - the clock doesn't matter	Rien - l'horloge n'a aucune importance
+Only video breaks	Seule la vidéo casse
+Certificates have a start and an end date. Your PC checks them against its own clock - so a clock that's far off fails every site at once.	Les certificats ont une date de début et une date de fin. Votre PC les compare à sa propre horloge - une horloge très décalée fait donc échouer tous les sites d'un coup.
+All sites showing certificate errors at the same time? Check the clock first (Toolbox › Clock check).	Tous les sites affichent des erreurs de certificat en même temps? Vérifiez d'abord l'horloge (Boîte à outils › Vérification de l'horloge).
+my certificate, valid Nov 2026 - Nov 2027	mon certificat, valide de nov. 2026 à nov. 2027
+my clock says 2000 - not valid yet	mon horloge dit 2000 - pas encore valide
+certificate error on every site	erreur de certificat sur chaque site
+How a video stream works	Comment fonctionne un flux vidéo
+Small chunks, downloaded a little ahead of what you watch.	De petits morceaux, téléchargés un peu avant ce que vous regardez.
+What is a video's "buffer"?	Qu'est-ce que la « mémoire tampon » d'une vidéo?
+Video already downloaded, waiting to be shown	De la vidéo déjà téléchargée, qui attend d'être affichée
+A setting that makes video sharper	Un réglage qui rend la vidéo plus nette
+The server's copy of the film	La copie du film sur le serveur
+A cable that carries the picture	Un câble qui transporte l'image
+The player downloads the video in chunks of a few seconds and keeps some ready before you need them - that store is the buffer.	Le lecteur télécharge la vidéo en morceaux de quelques secondes et en garde d'avance - cette réserve, c'est la mémoire tampon.
+When chunks arrive slower than you watch them, the buffer empties and the spinner appears.	Quand les morceaux arrivent moins vite que vous les regardez, la réserve se vide et la roue tourne.
+Player	Lecteur
+chunk 1 please (4 s of video)	le morceau 1, s'il vous plaît (4 s de vidéo)
+chunk 1	morceau 1
+chunk 2 please	le morceau 2, s'il vous plaît
+chunk 2 (buffer: 8 s ready)	morceau 2 (réserve : 8 s prêtes)
+Play a video and watch the download graph pulse every few seconds.	Lancez une vidéo et regardez le graphique de téléchargement pulser toutes les quelques secondes.
+Adaptive quality - why the picture goes blurry	La qualité adaptative - pourquoi l'image devient floue
+Blurrier beats spinning.	Mieux vaut flou que la roue qui tourne.
+The speed drops for a minute. What does a modern player usually do?	La vitesse baisse pendant une minute. Que fait généralement un lecteur moderne?
+Picks a lower quality for the next chunks so it keeps playing	Il choisit une qualité plus basse pour les morceaux suivants afin de continuer à jouer
+Stops and waits for the speed to return	Il s'arrête et attend le retour de la vitesse
+Switches to 4K to catch up	Il passe en 4K pour rattraper
+Closes the app	Il ferme l'appli
+Every chunk comes in several qualities. The player measures how fast the last chunks arrived and picks the next one to fit.	Chaque morceau existe en plusieurs qualités. Le lecteur mesure la vitesse d'arrivée des derniers morceaux et choisit le suivant en conséquence.
+A line that keeps dipping makes the picture switch between sharp and blurry - a cable or a closer router usually steadies it.	Une ligne qui baisse sans cesse fait alterner l'image entre nette et floue - un câble ou un routeur plus proche la stabilise en général.
+next chunk in 4K	morceau suivant en 4K
+(slow - took 6 s for 4 s of video)	(lent - 6 s pour 4 s de vidéo)
+next chunk in HD instead	morceau suivant en HD plutôt
+HD chunk (on time)	morceau HD (à l'heure)
+Watch a video while something big downloads - the quality steps down.	Regardez une vidéo pendant un gros téléchargement - la qualité baisse.
+Where the video comes from - CDNs	D'où vient la vidéo - les CDN
+A copy of the show in a building near you.	Une copie de l'émission dans un bâtiment près de chez vous.
+Why do Netflix, YouTube and others keep copies of videos close to viewers?	Pourquoi Netflix, YouTube et les autres gardent-ils des copies des vidéos près des spectateurs?
+Shorter trips mean faster, steadier streams	Des trajets plus courts donnent des flux plus rapides et plus stables
+Copies are cheaper to film	Les copies coûtent moins cher à filmer
+It hides the video from the internet	Ça cache la vidéo d'Internet
+Routers can only reach nearby servers	Les routeurs ne peuvent atteindre que des serveurs proches
+Big services copy popular videos to servers inside or near your provider's network (a content delivery network), so a stream rarely crosses the whole internet.	Les grands services copient les vidéos populaires sur des serveurs dans le réseau de votre fournisseur ou à côté (un réseau de diffusion de contenu), donc un flux traverse rarement tout Internet.
+When the nearby copy is busy or down, the player is sent further away - the stream server's delay jumps while your own line is fine.	Quand la copie proche est occupée ou en panne, le lecteur est envoyé plus loin - le délai du serveur de diffusion bondit alors que votre ligne va bien.
+Service	Service
+play this show	lire cette émission
+get it from the server in your city	prends-la sur le serveur de ta ville
+Nearby server	Serveur proche
+Start a show: Connections lists the nearby video server by name.	Lancez une émission : Connexions affiche le serveur vidéo proche par son nom.
+What 4K really needs	Ce que demande vraiment la 4K
+About 25 Mb/s - steady, not just at the speed test.	Environ 25 Mbit/s - stables, pas seulement au test de vitesse.
+Roughly how much steady speed does a 4K stream need?	Quelle vitesse stable demande environ un flux 4K?
+About 25 Mb/s	Environ 25 Mbit/s
+About 2 Mb/s	Environ 2 Mbit/s
+About 500 Mb/s	Environ 500 Mbit/s
+4K doesn't depend on speed	La 4K ne dépend pas de la vitesse
+SD needs about 3 Mb/s, HD about 5, Full HD about 8 and 4K about 25 - and the line has to hold it the whole time, not just for a moment.	La SD demande environ 3 Mbit/s, la HD environ 5, la Full HD environ 8 et la 4K environ 25 - et la ligne doit tenir tout le temps, pas seulement un instant.
+A 100 Mb/s plan can still struggle with 4K on weak Wi-Fi in a far room: the speed that reaches the TV or PC is what counts.	Un forfait de 100 Mbit/s peut quand même peiner en 4K sur un Wi-Fi faible dans une pièce éloignée : c'est la vitesse qui arrive à la télé ou au PC qui compte.
+Speed check	Vérification de la vitesse
+how fast right now?	quelle vitesse en ce moment?
+18 Mb/s on Wi-Fi	18 Mbit/s en Wi-Fi
+HD is safe, 4K is risky here	la HD est sûre, la 4K est risquée ici
+Run "Can I stream 4K right now?" in Streaming.	Lancez « Puis-je regarder en 4K maintenant? » dans Diffusion.
+IPTV and live channels	IPTV et chaînes en direct
+Live TV over the internet - less buffer, less forgiveness.	La télé en direct par Internet - moins de réserve, moins d'indulgence.
+Why does live TV stutter more easily than a movie?	Pourquoi la télé en direct saccade-t-elle plus facilement qu'un film?
+It keeps only a few seconds of buffer, so short dips show	Elle ne garde que quelques secondes de réserve, donc les petites baisses se voient
+Live TV is a much bigger file	La télé en direct est un fichier bien plus gros
+Live TV uses a slower kind of cable	La télé en direct utilise un câble plus lent
+Movies are stored on your router	Les films sont stockés sur votre routeur
+A live channel can't download far ahead - the next minute hasn't happened yet - so it keeps only a few seconds in the buffer.	Une chaîne en direct ne peut pas télécharger loin d'avance - la minute suivante n'a pas encore eu lieu - donc elle ne garde que quelques secondes en réserve.
+Many stutters on a live channel come from the channel's own server; when your router and provider look fine, the record says "the stream's server".	Beaucoup de saccades d'une chaîne en direct viennent du serveur de la chaîne; quand votre routeur et votre fournisseur vont bien, le dossier dit « le serveur du flux ».
+Channel server	Serveur de la chaîne
+next few seconds, please	les prochaines secondes, s'il vous plaît
+2 s of live video	2 s de vidéo en direct
+next 2 s	les 2 s suivantes
+(late - the picture freezes)	(en retard - l'image fige)
+Watch a live channel and open its record in Streaming afterwards.	Regardez une chaîne en direct, puis ouvrez son dossier dans Diffusion.
+Whose fault is the buffering?	À qui la faute pour la mise en mémoire tampon?
+The first broken hop is the culprit.	Le premier saut en panne est le coupable.
+Your router answers fast, but the internet check loses replies. Whose fault?	Votre routeur répond vite, mais la vérification Internet perd des réponses. À qui la faute?
+Your provider's - the trouble is past your router	À votre fournisseur - le problème est au-delà du routeur
+Your Wi-Fi's	À votre Wi-Fi
+The PC's	Au PC
+The video's	À la vidéo
+AdeeboMeter checks each hop of the path - PC, Wi-Fi, router, provider, the stream's server. Everything after the first broken hop is a victim, not a cause.	AdeeboMeter vérifie chaque saut du chemin - PC, Wi-Fi, routeur, fournisseur, serveur du flux. Tout ce qui suit le premier saut en panne est une victime, pas une cause.
+Evening-only dips with a healthy router usually mean the provider's busy hours - the monthly report gives you the evidence to show them.	Des baisses seulement le soir avec un routeur en santé veulent souvent dire les heures chargées du fournisseur - le rapport mensuel vous donne la preuve à lui montrer.
+2 ms - fine	2 ms - correct
+3 of 10 lost - broken	3 sur 10 perdus - en panne
+Stream server	Serveur du flux
+Open a stream record and look at the evidence for each dip.	Ouvrez le dossier d'un flux et regardez la preuve pour chaque baisse.
+Stocks, indexes and ETFs	Actions, indices et FNB
+A slice of a company, a scoreboard, and a basket.	Une part d'entreprise, un tableau de pointage et un panier.
+What is an index like the S&P 500 or the TSX?	Qu'est-ce qu'un indice comme le S&P 500 ou le TSX?
+A scoreboard that tracks a group of companies	Un tableau de pointage qui suit un groupe d'entreprises
+A single company's share price	Le cours d'une seule entreprise
+A bank account with interest	Un compte bancaire avec intérêts
+A government bond	Une obligation d'État
+A share is a small piece of one company. An index tracks a group of companies to show how a market is doing. An ETF is a fund you can buy that holds a whole basket, often following an index.	Une action est un petit morceau d'une entreprise. Un indice suit un groupe d'entreprises pour montrer comment va un marché. Un FNB est un fonds que vous pouvez acheter qui contient tout un panier, souvent calqué sur un indice.
+One company can fall a lot on its own news; a basket spreads that out - which is why indexes move less wildly than single stocks.	Une entreprise peut beaucoup chuter sur ses propres nouvelles; un panier étale ça - voilà pourquoi les indices bougent moins violemment que les actions seules.
+Broker	Courtier
+buy 1 share of a company	acheter 1 action d'une entreprise
+Exchange	Bourse
+order	ordre
+filled	exécuté
+you own a slice	vous en possédez une part
+Look at today's close in Trading: the S&P and TSX are indexes.	Regardez la clôture du jour dans Bourse : le S&P et le TSX sont des indices.
+Why prices move	Pourquoi les prix bougent
+More buyers than sellers - for whatever reason.	Plus d'acheteurs que de vendeurs - pour une raison ou une autre.
+What actually moves a share price during the day?	Qu'est-ce qui fait vraiment bouger le cours d'une action dans la journée?
+The balance of people wanting to buy and to sell	L'équilibre entre ceux qui veulent acheter et ceux qui veulent vendre
+The company's office opening hours	Les heures d'ouverture du bureau de l'entreprise
+The weather at the exchange	La météo à la Bourse
+The price your broker chooses	Le prix que choisit votre courtier
+A price is simply the last trade. When more people want to buy than sell, buyers pay up and the price rises; news, results and rumours shift that balance.	Un prix, c'est simplement la dernière transaction. Quand plus de gens veulent acheter que vendre, les acheteurs paient plus et le prix monte; les nouvelles, les résultats et les rumeurs déplacent cet équilibre.
+A big move on no news, in a small company, is often just a few traders - not a sign of anything.	Un gros mouvement sans nouvelle, sur une petite entreprise, ce n'est souvent que quelques négociateurs - pas un signe de quoi que ce soit.
+Buyer	Acheteur
+I'll pay $10.05	je paie 10,05 $
+Seller	Vendeur
+I'll sell at $10.05	je vends à 10,05 $
+last trade $10.05	dernière transaction 10,05 $
+Compare a big company and a tiny one in Market movers.	Comparez une grande entreprise et une toute petite dans Les plus actives.
+End-of-day, delayed and live prices	Prix de clôture, différés et en direct
+Know which clock your number is on.	Sachez sur quelle horloge est votre chiffre.
+Prices on many free websites are usually...	Les prix sur beaucoup de sites gratuits sont généralement...
+Delayed by about 15 minutes	Différés d'environ 15 minutes
+Live to the second	En direct à la seconde près
+From yesterday only	Seulement ceux d'hier
+Made up	Inventés
+Check the time stamp on any price you trade on: brokers can take orders while showing delayed quotes, and live data is often a subscription. Free sites often show prices about 15 minutes late. AdeeboMeter's Trading summary uses end-of-day numbers, after the close.	Vérifiez l'heure de tout prix sur lequel vous négociez : les courtiers peuvent prendre des ordres tout en affichant des cotes différées, et les données en direct sont souvent payantes. Les sites gratuits montrent souvent les prix avec environ 15 minutes de retard. Le résumé Bourse d'AdeeboMeter utilise les chiffres de fin de journée, après la clôture.
+Comparing a live price with a delayed one makes it look like something jumped - check the time stamp first.	Comparer un prix en direct avec un prix différé donne l'impression que quelque chose a bondi - vérifiez d'abord l'heure.
+live price	prix en direct
+Free website	Site gratuit
+price, 15 min later	prix, 15 min plus tard
+Summary	Résumé
+closing price, after 16:00	prix de clôture, après 16:00
+Look at the source line under Trading's numbers.	Regardez la ligne de source sous les chiffres de Bourse.
+Currencies and your money	Les devises et votre argent
+A US stock in Canada is two bets: the stock and the dollar.	Une action américaine au Canada, c'est deux paris : l'action et le dollar.
+You own a US stock that stays flat, but the US dollar falls against the Canadian dollar. In CAD your holding...	Vous détenez une action américaine qui ne bouge pas, mais le dollar américain baisse face au dollar canadien. En CAD, votre placement...
+Is worth less	Vaut moins
+Is worth more	Vaut plus
+Stays exactly the same	Reste exactement pareil
+Doubles	Double
+Anything priced in another currency moves with the exchange rate too. Banks and apps also add a spread - the difference between their rate and the daily rate - which is a fee.	Tout ce qui est coté dans une autre devise bouge aussi avec le taux de change. Les banques et les applis ajoutent aussi un écart - la différence entre leur taux et le taux du jour - qui est un frais.
+"No-fee" conversions often hide the fee in a worse rate. Compare with the day's rate in Trading.	Les conversions « sans frais » cachent souvent le frais dans un moins bon taux. Comparez avec le taux du jour dans Bourse.
+Bank	Banque
+change 1,000 CAD to USD	changer 1 000 CAD en USD
+at 1.38 (daily rate 1.35)	à 1,38 (taux du jour 1,35)
+the 0.03 per dollar is the fee	les 0,03 par dollar, c'est le frais
+Check today's currencies in Trading.	Consultez les devises du jour dans Bourse.
+Spotting investment scams	Repérer les arnaques à l'investissement
+"Guaranteed", "urgent", "secret" and "send crypto" - walk away.	« Garanti », « urgent », « secret » et « envoyez des cryptos » - partez.
+A stranger promises guaranteed returns if you send crypto to their wallet. What is it?	Un inconnu promet des rendements garantis si vous envoyez des cryptos à son portefeuille. Qu'est-ce que c'est?
+A scam	Une arnaque
+A normal crypto deal	Une transaction crypto normale
+A bank product	Un produit bancaire
+A government programme	Un programme gouvernemental
+Real investments carry risk and never promise a fixed big return. Scams lean on urgency, secrecy, fake screenshots, celebrity videos and pressure to pay in crypto or gift cards.	Les vrais placements comportent un risque et ne promettent jamais un gros rendement fixe. Les arnaques misent sur l'urgence, le secret, de fausses captures d'écran, des vidéos de vedettes et la pression pour payer en cryptos ou en cartes-cadeaux.
+Pump-and-dump groups hype a tiny stock so the organisers can sell to the people they excited. Recovery services that promise to get scam money back for a fee are scams too.	Les groupes de « pump-and-dump » font mousser une toute petite action pour que les organisateurs vendent aux gens qu'ils ont excités. Les services de récupération qui promettent de ravoir l'argent volé contre un frais sont aussi des arnaques.
+Stranger	Inconnu
+guaranteed 30% a month!	30 % garantis par mois!
+(sends crypto)	(envoie des cryptos)
+(blocks you)	(vous bloque)
+Play "Spot the scam" in Games.	Jouez à « Repérez l'arnaque » dans Jeux.
+What your connection means for trading	Ce que votre connexion signifie pour la négociation
+The network carries the order; it doesn't fill it.	Le réseau transporte l'ordre; il ne l'exécute pas.
+What can AdeeboMeter's broker check NOT tell you?	Que NE peut PAS vous dire la vérification du courtier d'AdeeboMeter?
+How fast the broker actually fills your order	À quelle vitesse le courtier exécute vraiment votre ordre
+Your delay to the broker's server	Votre délai vers le serveur du courtier
+Whether your Wi-Fi is dropping	Si votre Wi-Fi décroche
+Whether your provider is losing packets	Si votre fournisseur perd des paquets
+Your order travels from your PC through Wi-Fi, your router and your provider to the broker. AdeeboMeter times that path every few seconds while the market is open and says whose side a slow moment is on.	Votre ordre voyage du PC par le Wi-Fi, votre routeur et votre fournisseur jusqu'au courtier. AdeeboMeter chronomètre ce chemin toutes les quelques secondes pendant que le marché est ouvert et dit de quel côté se trouve un moment lent.
+If the order screen spins after a lost reply, check your orders list before clicking again - a second click can mean a second order.	Si l'écran d'ordre tourne après une réponse perdue, vérifiez votre liste d'ordres avant de recliquer - un deuxième clic peut vouloir dire un deuxième ordre.
+Buy (2 ms)	Acheter (2 ms)
+Buy (15 ms)	Acheter (15 ms)
+Buy (12 ms)	Acheter (12 ms)
+order received	ordre reçu
+Turn on the live broker check in Trading.	Activez la vérification du courtier en direct dans Bourse.
+Bull and bear markets	Marchés haussiers et baissiers
+Up 20% from a low is a bull; down 20% from a high is a bear.	20 % de hausse depuis un creux, c'est haussier; 20 % de baisse depuis un sommet, c'est baissier.
+A bear market means prices have...	Un marché baissier veut dire que les prix ont...
+Fallen 20% or more from their last high	Chuté de 20 % ou plus depuis leur dernier sommet
+Risen 20% from a low	Monté de 20 % depuis un creux
+Stayed flat for a year	Stagné pendant un an
+Fallen 1% in a day	Baissé de 1 % en une journée
+In a bull market prices are rising and people feel confident. A bear market is a fall of 20% or more from the last high - usually with plenty of fear in the news.	Dans un marché haussier, les prix montent et les gens ont confiance. Un marché baissier est une chute de 20 % ou plus depuis le dernier sommet - en général avec beaucoup de peur dans les nouvelles.
+Bears have always ended so far, but some took years to recover - money you need soon doesn't belong in shares.	Les marchés baissiers ont toujours fini jusqu'ici, mais certains ont mis des années à se remettre - l'argent dont vous aurez bientôt besoin n'a pas sa place en actions.
+Play "Ten years of money" in Games and live through one.	Jouez à « Dix ans d'argent » dans Jeux et traversez-en un.
+Recession	Récession
+When the whole economy shrinks for a while - jobs, spending and profits together.	Quand toute l'économie rétrécit pendant un moment - emplois, dépenses et profits ensemble.
+A common rule of thumb for a recession is...	Une règle courante pour une récession est...
+Two quarters in a row of shrinking GDP	Deux trimestres de suite de PIB en baisse
+Any day the stock market falls	N'importe quel jour où la Bourse baisse
+Inflation above 2%	Une inflation au-dessus de 2 %
+Interest rates going up once	Une seule hausse des taux d'intérêt
+A recession is a broad fall in economic activity lasting months. A common rule of thumb is two quarters in a row of shrinking GDP (everything a country produces). Jobs get scarcer, people spend less, profits fall.	Une récession est une baisse générale de l'activité économique qui dure des mois. Une règle courante est deux trimestres de suite de baisse du PIB (tout ce qu'un pays produit). Les emplois se font rares, les gens dépensent moins, les profits baissent.
+Shares often fall before a recession is announced and recover before it ends - the news and the prices don't move on the same clock.	Les actions baissent souvent avant l'annonce d'une récession et remontent avant sa fin - les nouvelles et les prix n'avancent pas au même rythme.
+An emergency fund is what carries you through a lost job - see that topic.	Un fonds d'urgence, c'est ce qui vous porte après une perte d'emploi - voyez ce sujet.
+Inflation	Inflation
+The same $100 buys a little less each year.	Les mêmes 100 $ achètent un peu moins chaque année.
+At 3% inflation, $100 kept as cash for 10 years buys about...	Avec 3 % d'inflation, 100 $ gardés en argent comptant pendant 10 ans achètent environ...
+$74 worth of today's goods	l'équivalent de 74 $ en biens d'aujourd'hui
+$100 worth	l'équivalent de 100 $
+$130 worth	l'équivalent de 130 $
+$3 less	3 $ de moins
+Inflation is prices rising over time. The Bank of Canada aims for about 2% a year. At 3%, $100 of groceries today costs about $134 in ten years - so $100 in a drawer quietly buys about a quarter less.	L'inflation, c'est la hausse des prix avec le temps. La Banque du Canada vise environ 2 % par an. À 3 %, 100 $ d'épicerie aujourd'hui coûtent environ 134 $ dans dix ans - donc 100 $ dans un tiroir achètent discrètement environ un quart de moins.
+Cash feels safe because the number never drops - but at 3% inflation it loses half its buying power in about 24 years.	L'argent comptant semble sûr parce que le chiffre ne baisse jamais - mais avec 3 % d'inflation, il perd la moitié de son pouvoir d'achat en environ 24 ans.
+See what a savings rate does against it in Compound growth (Toolbox › Work it out).	Voyez ce que fait un taux d'épargne contre elle dans Croissance composée (Boîte à outils › Calculez-le).
+Growth on your growth - slow at first, then fast.	La croissance sur votre croissance - lente au début, puis rapide.
+With the rule of 72, money growing 8% a year doubles in about...	Avec la règle de 72, de l'argent qui croît de 8 % par an double en environ...
+9 years	9 ans
+72 years	72 ans
+8 years	8 ans
+2 years	2 ans
+Money that grows earns on what it already earned. At 6% a year it roughly doubles every 12 years (the rule of 72: 72 ÷ 6 = 12). Time matters more than the amount: starting ten years earlier can beat putting in twice as much later.	L'argent qui croît rapporte sur ce qu'il a déjà rapporté. À 6 % par an, il double à peu près tous les 12 ans (la règle de 72 : 72 ÷ 6 = 12). Le temps compte plus que le montant : commencer dix ans plus tôt peut battre le fait de mettre deux fois plus plus tard.
+Compounding works on debt too: a credit card at 20% doubles what you owe in under 4 years.	La capitalisation joue aussi sur les dettes : une carte de crédit à 20 % double ce que vous devez en moins de 4 ans.
+Try your own numbers: Toolbox › Work it out › Compound growth.	Essayez vos propres chiffres : Boîte à outils › Calculez-le › Croissance composée.
+Making money work for you	Faire travailler votre argent
+Under the mattress, in savings, or invested - three very different paths.	Sous le matelas, en épargne ou investi - trois chemins très différents.
+Why does money for next year's rent usually not go into shares?	Pourquoi l'argent du loyer de l'an prochain ne va-t-il généralement pas en actions?
+A fall could hit just when you need it	Une baisse pourrait frapper juste au moment où vous en avez besoin
+Shares are illegal for rent	Les actions sont interdites pour le loyer
+Banks forbid it	Les banques l'interdisent
+Shares only pay out after 30 years	Les actions ne paient qu'après 30 ans
+Cash in a drawer earns nothing and loses to inflation. A savings account pays a little and is safe. A broad index fund has historically grown far more over long periods - with big drops on the way, and nothing is ever guaranteed.	L'argent dans un tiroir ne rapporte rien et perd face à l'inflation. Un compte d'épargne rapporte un peu et il est sûr. Un fonds indiciel large a historiquement beaucoup plus progressé sur de longues périodes - avec de grosses baisses en route, et rien n'est jamais garanti.
+The higher the possible growth, the bigger the swings. Money for next year's rent wants safety; money for 20 years from now can ride the swings.	Plus la croissance possible est forte, plus les écarts sont grands. L'argent du loyer de l'an prochain veut la sécurité; l'argent pour dans 20 ans peut encaisser les écarts.
+Compare the paths in Compound growth with 0%, 2% and 6%.	Comparez les chemins dans Croissance composée avec 0 %, 2 % et 6 %.
+Dips and corrections	Baisses et corrections
+A 10% fall is normal weather, not a storm.	Une baisse de 10 %, c'est la météo normale, pas une tempête.
+A correction is usually defined as a fall of...	Une correction est généralement définie comme une baisse de...
+10% or more from a recent high	10 % ou plus depuis un sommet récent
+Exactly 1%	Exactement 1 %
+50% or more	50 % ou plus
+Any red day	N'importe quelle journée dans le rouge
+A correction is a fall of 10% or more from a high. Historically, broad markets have had one roughly every year or two, and most recovered within months.	Une correction est une baisse de 10 % ou plus depuis un sommet. Historiquement, les marchés larges en ont connu une à peu près tous les un ou deux ans, et la plupart se sont remis en quelques mois.
+Selling in a dip turns a paper loss into a real one - and you then have to guess when to get back in.	Vendre pendant une baisse transforme une perte sur papier en perte réelle - et il faut ensuite deviner quand revenir.
+Play "Bull or bear?" in this section.	Jouez à « Haussier ou baissier? » dans cette section.
+Emergency fund	Fonds d'urgence
+Cash set aside so a surprise doesn't become a disaster.	De l'argent de côté pour qu'une surprise ne devienne pas un désastre.
+An emergency fund is usually about...	Un fonds d'urgence représente généralement...
+3-6 months of essential costs, kept safe	3 à 6 mois de dépenses essentielles, gardés en sécurité
+All your money, invested in shares	Tout votre argent, investi en actions
+One week of costs	Une semaine de dépenses
+Whatever is left after a holiday	Ce qui reste après des vacances
+Keep about 3-6 months of essential costs in a safe, easy-to-reach account. When the car breaks or a job ends, you pay from the fund instead of a credit card - or instead of selling investments at a bad moment.	Gardez environ 3 à 6 mois de dépenses essentielles dans un compte sûr et facile d'accès. Quand l'auto brise ou qu'un emploi se termine, vous payez avec le fonds plutôt qu'avec une carte de crédit - ou plutôt que de vendre des placements au mauvais moment.
+Without one, the worst surprises tend to arrive together: a recession can cost you your job and push prices down at the same time.	Sans lui, les pires surprises ont tendance à arriver ensemble : une récession peut vous coûter votre emploi et faire baisser les prix en même temps.
+Play "Ten years of money": watch what a job loss does without one.	Jouez à « Dix ans d'argent » : voyez ce que fait une perte d'emploi sans lui.
+Money management	Gestion de l'argent
+A plan for every dollar before the month spends it for you.	Un plan pour chaque dollar avant que le mois le dépense pour vous.
+In the 50/30/20 rule, the 20 is for...	Dans la règle 50/30/20, le 20 sert à...
+Saving and paying off debt	Épargner et rembourser les dettes
+Rent	Le loyer
+Holidays	Les vacances
+Taxes	Les impôts
+A simple start is 50/30/20: about half of take-home pay for needs (rent, food, bills), 30% for wants, 20% for saving and paying off debt. Pay yourself first: move the saving on payday, not at the end of the month.	Un début simple, c'est 50/30/20 : environ la moitié de la paie nette pour les besoins (loyer, nourriture, factures), 30 % pour les envies, 20 % pour épargner et rembourser les dettes. Payez-vous d'abord : déplacez l'épargne le jour de paie, pas à la fin du mois.
+High-interest debt first: paying off a 20% card beats almost any investment.	Les dettes à intérêt élevé d'abord : rembourser une carte à 20 % bat presque tout placement.
+Write your own three numbers down - that's the whole method.	Écrivez vos trois chiffres - c'est toute la méthode.
+Spreading the risk	Répartir le risque
+One company can sink; a basket rarely does.	Une entreprise peut couler; un panier, rarement.
+Why does an index fund usually swing less than one company's shares?	Pourquoi un fonds indiciel varie-t-il généralement moins que les actions d'une seule entreprise?
+Many companies average each other out	Beaucoup d'entreprises se compensent
+It's guaranteed by the government	Il est garanti par le gouvernement
+It only holds banks	Il ne contient que des banques
+It never falls	Il ne baisse jamais
+Holding many companies (an index fund holds hundreds) means one bad company barely dents the whole. Spreading across countries and types of investment smooths things further.	Détenir beaucoup d'entreprises (un fonds indiciel en contient des centaines) veut dire qu'une mauvaise entreprise entame à peine l'ensemble. Répartir entre pays et types de placements lisse encore plus.
+Owning five tech companies isn't spread - they tend to fall together.	Posséder cinq entreprises techno, ce n'est pas répartir - elles ont tendance à baisser ensemble.
+Look at the S&P and TSX in Trading - each is hundreds of companies.	Regardez le S&P et le TSX dans Bourse - chacun regroupe des centaines d'entreprises.
+Fees and time	Les frais et le temps
+A small yearly fee eats a big slice over decades.	Un petit frais annuel mange une grosse part sur des décennies.
+Over 30 years, a 2% yearly fee instead of 0.2% leaves you with roughly...	Sur 30 ans, un frais annuel de 2 % au lieu de 0,2 % vous laisse environ...
+40% less	40 % de moins
+2% less	2 % de moins
+the same	la même chose
+twice as much	deux fois plus
+A fee is taken every year from the whole amount, so it compounds against you. Over 30 years at 6% growth, a 2% yearly fee leaves about 40% less than a 0.2% fee does.	Un frais est prélevé chaque année sur tout le montant, donc il se capitalise contre vous. Sur 30 ans avec 6 % de croissance, un frais annuel de 2 % laisse environ 40 % de moins qu'un frais de 0,2 %.
+Fees hide in names like MER and management expense - look for the percentage.	Les frais se cachent sous des noms comme RFG et frais de gestion - cherchez le pourcentage.
+Run Compound growth at 6% and at 4% to see it.	Lancez Croissance composée à 6 % puis à 4 % pour le voir.
+name + points + date, mixed with a secret key (HMAC-SHA256)	nom + points + date, mélangés avec une clé secrète (HMAC-SHA256)
+your card + its code	votre carte + son code
+the card	la carte
+same mix, same key - same code? You're in	même mélange, même clé - même code? Vous y êtes
+Hall of Fame	Temple de la renommée

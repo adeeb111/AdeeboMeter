@@ -412,7 +412,8 @@ namespace AdeeboMeter
             ShellAwk awk;
             try { awk = new ShellAwk(prog, fs, pre); } catch (FormatException e) { Err(c, "awk: " + e.Message); return 2; } catch (ArgumentException e) { Err(c, "awk: a pattern isn't valid - " + e.Message); return 2; }
             var outp = new StringBuilder(); awk.Out = s => { outp.Append(s); if (outp.Length > 65536) { O(c, outp.ToString(), ShFg); outp.Clear(); } }; awk.Cancelled = () => c.Job.Cancel;
-            IEnumerable<string> lines = files.Count == 0 ? SplitLines(c.Stdin ?? "") : null;
+            if (files.Count == 0 && NoInput(c)) return 1;
+            IEnumerable<string> lines = files.Count == 0 ? SplitLines(c.Stdin) : null;
             var inputs = new List<KeyValuePair<string, IEnumerable<string>>>();
             if (files.Count == 0) inputs.Add(new KeyValuePair<string, IEnumerable<string>>("", lines));
             else foreach (var f in files) { var ls = StreamLines(f, c); if (ls == null) return 2; inputs.Add(new KeyValuePair<string, IEnumerable<string>>(f, ls)); }

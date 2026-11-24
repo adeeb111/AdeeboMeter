@@ -330,7 +330,7 @@ namespace AdeeboMeter
                 if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract)) { e.SuppressKeyPress = true; ZoomBy(-1); return; }
                 if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
                 bool pageKey = e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7;   // hunters10 H-1: Ctrl+1-7 still switch pages from the shell
-                if (term != null && term.Focused && !(pageKey && term.Editor == null)) return;   // AdeeboShell (and its nano/vim) owns every other key: / ^K Esc are its own there
+                if (term != null && term.Focused && !pageKey) return;   /* hunters11 ML-8: inside nano / vim / less too - the edit stays open on the shell page */   // AdeeboShell (and its nano/vim) owns every other key: / ^K Esc are its own there
                 if (e.KeyCode == Keys.Escape)
                 {
                     if (tip != null && tip.Visible) { e.SuppressKeyPress = true; tipKey = null; tipWatch = false; tip.Hide(); return; }   // hunters10 ML-2: Esc closes an open explanation first, not the window

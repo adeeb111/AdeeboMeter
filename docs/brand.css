@@ -34,7 +34,7 @@ h1,h2,h3,.amword,.brand{font-family:"Barlow SC","Barlow","Segoe UI",system-ui,sa
 .meter .chain li:before{content:"";position:absolute;top:0;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#A8F5D4;box-shadow:0 0 0 3px var(--face)}
 .meter .chain li.wa:before{background:#FCD34D}.meter .chain li.no:before{background:var(--face);box-shadow:0 0 0 3px var(--face),inset 0 0 0 2px rgba(255,255,255,.45)}
 .meter .chain b{display:block;font-family:"Barlow SC",sans-serif;font-weight:600;font-size:17px;color:#fff;margin-bottom:2px}
-.meter .chain li.ok span{color:#A8F5D4}.meter .chain li.wa span{color:#FCD34D}
+.meter .chain li.ok span{color:#A8F5D4}.meter .chain li.wa span{color:#FDE047}
 .meter .acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .v4sig{position:static;display:flex;margin:14px auto 0;background:none;border:0;box-shadow:none;justify-content:center;color:var(--sub)}
 @media (max-width:900px){.meter{padding:22px 16px 20px}.meter .chain b{font-size:15px}.meter .chain li{font-size:12.5px}}
@@ -139,7 +139,7 @@ a{text-underline-offset:.18em}
 .meter .acts button{font:inherit;border:0;cursor:pointer;border-radius:11px;padding:11px 18px;font-weight:600;font-size:15px;background:rgba(255,255,255,.14);color:#fff;transition:transform .14s var(--ease-out),background-color .15s ease}
 .meter .acts button.pri{background:#fff;color:var(--face)}
 .meter .acts button:active{transform:scale(.97)}
-@media (hover:hover) and (pointer:fine){.meter .acts button:hover{background:rgba(255,255,255,.22)}.meter .acts button.pri:hover{background:#E8EFFE}}
+@media (hover:hover) and (pointer:fine){.meter .acts button:hover{background:rgba(0,0,0,.16)}.meter .acts button.pri:hover{background:#E8EFFE}}
 .meter .acts button:focus-visible,.sample .sx:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .sample{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;gap:12px;padding:20px 20px 26px;border-radius:inherit;background:var(--face);color:#fff;overflow:auto;
   opacity:0;transform:translateY(8px) scale(.98);transform-origin:50% 100%;transition:opacity .14s ease-out,transform .14s ease-out}

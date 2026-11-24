@@ -276,11 +276,20 @@ namespace AdeeboMeter
             ShPrompt();
         }
         // a question from a running command (y/N, read): the answer comes back on the next Enter
-        string ShAsk(string q, bool secret)
+        static readonly HashSet<string> ShKeywords = new HashSet<string> { "if", "then", "else", "elif", "fi", "for", "while", "until", "do", "done", "case", "esac", "in", "function", "time", "!", "{", "}", "[[", "]]" };
+        string ShAsk(string q, bool secret) { bool late; return ShAsk(q, secret, -1, out late); }
+        // hunters11 L-10: read -t - the question goes away after the time, the answer is "nothing" and late is set
+        string ShAsk(string q, bool secret, int ms, out bool late)
         {
-            var w = new ManualResetEvent(false); shAskAnswer = null;
+            var w = new ManualResetEvent(false); shAskAnswer = null; late = false;
             Ui(delegate { term.EndLive(); term.Write(q, ShAmber); term.PromptSegs = new List<TermView.Seg>(); term.Secret = secret; shAskWait = w; term.ShowInput = true; term.Input = ""; term.Caret = 0; term.Invalidate(); });
-            w.WaitOne(); using (w) { }
+            if (!w.WaitOne(ms < 0 ? Timeout.Infinite : ms))
+            {
+                bool gone = false; Ui(delegate { if (shAskWait == w) { shAskWait = null; gone = true; term.Write("\n", ShFg); term.Input = ""; term.Caret = 0; } });
+                if (gone) { late = true; Ui(delegate { term.Secret = false; ShPromptKeepHidden(); }); using (w) { } return null; }
+                w.WaitOne();   // answered at the very moment it ran out
+            }
+            using (w) { }
             Ui(delegate { term.Secret = false; ShPromptKeepHidden(); });
             return shAskAnswer;
         }
@@ -1374,7 +1383,7 @@ namespace AdeeboMeter
                 case "basename": { if (args.Count == 0) { Err(c, "basename: missing operand"); return 1; } string b = args[0].TrimEnd('/'); b = b.Substring(b.LastIndexOf('/') + 1); if (args.Count > 1 && b.EndsWith(args[1], StringComparison.Ordinal) && b != args[1]) b = b.Substring(0, b.Length - args[1].Length); OL(c, b); return 0; }
                 case "dirname": if (args.Count == 0) { Err(c, "dirname: missing operand"); return 1; } OL(c, args.Count > 0 && args[0].TrimEnd('/').Contains("/") ? (args[0].TrimEnd('/').LastIndexOf('/') == 0 ? "/" : args[0].TrimEnd('/').Substring(0, args[0].TrimEnd('/').LastIndexOf('/'))) : "."); return 0;
                 case "realpath": case "readlink": foreach (var f in Files(args)) { string v = Abs(f), r = Real(v); OL(c, r != null ? v + "   (" + r + ")" : v); } return 0;
-                case "which": case "type": { int miss = 0; foreach (var w in args) { bool known = ShCmds.Contains(w) || shTools.Any(t => t.Id == w); if (!known) miss++; OL(c, ShCmds.Contains(w) ? w + " is a shell command" : shTools.Any(t => t.Id == w) ? w + " is a tool: /tools/" + ToolDir(shTools.First(t => t.Id == w).Group) + "/" + w : w + ": not found"); } return miss > 0 || args.Count == 0 ? 1 : 0; }   // round 6 D2-11: not found is exit 1
+                case "which": case "type": { int miss = 0; foreach (var w in args) { bool fn; lock (Env.Vars) fn = Env.Funcs.ContainsKey(w); bool kw = ShKeywords.Contains(w); /* hunters11 L-12: functions and keywords too */ bool known = fn || kw || ShCmds.Contains(w) || shTools.Any(t => t.Id == w); if (!known) miss++; OL(c, fn ? w + " is a function (defined in this session)" : kw ? w + " is a shell keyword" : ShCmds.Contains(w) ? w + " is a shell command" : shTools.Any(t => t.Id == w) ? w + " is a tool: /tools/" + ToolDir(shTools.First(t => t.Id == w).Group) + "/" + w : w + ": not found"); } return miss > 0 || args.Count == 0 ? 1 : 0; }   // round 6 D2-11: not found is exit 1
                 case "open": case "go": return Open(args, c);
                 case "pages": foreach (var id in ShPageIds()) { O(c, "  " + id.PadRight(12), ShCyan); OL(c, NavInfo.ContainsKey(id) ? NavName(id) : id, ShDim); } return 0;
                 case "status": Status(c); return 0;
@@ -1576,7 +1585,7 @@ namespace AdeeboMeter
             long tl = 0, tw = 0, tb = 0, tm = 0; int ex = 0;
             Action<long, long, long, long, string> line = (a1, a2, a3, a4, name) => { var p = new List<string>(); if (l) p.Add(a1.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (w) p.Add(a2.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (m) p.Add(a4.ToString(CultureInfo.InvariantCulture).PadLeft(7)); if (b) p.Add(a3.ToString(CultureInfo.InvariantCulture).PadLeft(8)); string s0 = string.Join(" ", p).TrimStart(); OL(c, name == null ? s0 : s0 + " " + name); };
             Action<IEnumerable<string>, string> count = (ls, name) => { long a1 = 0, a2 = 0, a3 = 0, a4 = 0; foreach (var x in ls) { a1++; a2 += Regex.Matches(x, @"\S+").Count; a4 += x.Length + 1; a3 += Encoding.UTF8.GetByteCount(x) + 1; } tl += a1; tw += a2; tb += a3; tm += a4; line(a1, a2, a3, a4, name); };
-            if (files.Count == 0) { string t = c.Stdin ?? ""; long a1 = t.Count(ch => ch == '\n'), a2 = Regex.Matches(t, @"\S+").Count; line(a1, a2, Encoding.UTF8.GetByteCount(t), t.Length, null); return 0; }
+            if (files.Count == 0) { if (NoInput(c)) return 1; string t = c.Stdin; long a1 = t.Count(ch => ch == '\n'), a2 = Regex.Matches(t, @"\S+").Count; line(a1, a2, Encoding.UTF8.GetByteCount(t), t.Length, null); return 0; }
             // #61: what GNU wc counts - newline characters, the file's real bytes, characters and words - not rebuilt lines
             foreach (var f in files)
             {
@@ -1611,7 +1620,7 @@ namespace AdeeboMeter
         int Read(List<string> args, ShCtx c)
         {
             bool sec = false, raw = false, partial = false; string ask = ""; var names = new List<string>();
-            string arrName = null;
+            string arrName = null; double tmo = -1; int nchars = -1; char delim = '\n';
             for (int i = 0; i < args.Count; i++)   // RG-8: the flags bash's read has take their value; an unknown one is an error, never a variable name
             {
                 string x = args[i];
@@ -1619,7 +1628,12 @@ namespace AdeeboMeter
                 else if (x == "-p" || x == "-t" || x == "-n" || x == "-N" || x == "-d" || x == "-a" || x == "-u")
                 {
                     if (i + 1 >= args.Count) { Err(c, "read: " + x + " needs a value"); return 2; }
-                    string v = args[++i]; if (x == "-p") ask = v; else if (x == "-a") arrName = v;   // -t -n -d -u: accepted; a line is read whole
+                    string v = args[++i]; if (x == "-p") ask = v; else if (x == "-a") arrName = v;
+                    // hunters11 L-10: -t seconds, -n / -N characters, -d a stop character; -u only 0 (there's one input here)
+                    else if (x == "-t") { if (!double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out tmo) || tmo < 0) { Err(c, "read: " + v + ": not a number of seconds"); return 2; } }
+                    else if (x == "-n" || x == "-N") { if (!int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out nchars)) { Err(c, "read: " + v + ": not a number of characters"); return 2; } raw |= x == "-N"; }
+                    else if (x == "-d") delim = v.Length == 0 ? '\0' : v[0];
+                    else if (x == "-u" && v != "0") { Err(c, "read: -u " + v + ": this shell has one input (0)"); return 1; }
                 }
                 else if (x.StartsWith("-", StringComparison.Ordinal) && x.Length > 1) { Err(c, "read: " + x + ": not a flag read knows (-r -s -p -a -t -n -d)"); return 2; }
                 else names.Add(x);
@@ -1635,7 +1649,9 @@ namespace AdeeboMeter
                 var line = new StringBuilder();
                 while (true)
                 {
-                    string pend = c.In.Rest; int nl = pend.IndexOf('\n'); string part = (nl < 0 ? pend : pend.Substring(0, nl)).TrimEnd('\r'); c.In.Rest = nl < 0 ? "" : pend.Substring(nl + 1); if (nl < 0) partial = true;
+                    string pend = c.In.Rest; int nl = delim == '\n' ? pend.IndexOf('\n') : pend.IndexOf(delim);
+                    if (nchars >= 0 && (nl < 0 || nl > nchars) && pend.Length >= nchars) { line.Append(pend.Substring(0, nchars)); c.In.Rest = pend.Substring(nchars); break; }   /* -n N: N characters (or the line, if shorter) */
+                    string part = (nl < 0 ? pend : pend.Substring(0, nl)).TrimEnd('\r'); c.In.Rest = nl < 0 ? "" : pend.Substring(nl + 1); if (nl < 0) partial = true;
                     if (raw) { line.Append(part); break; }
                     bool join = false;
                     for (int q = 0; q < part.Length; q++) { if (part[q] == '\\') { if (q + 1 < part.Length) line.Append(part[++q]); else join = true; } else line.Append(part[q]); }
@@ -1643,7 +1659,15 @@ namespace AdeeboMeter
                 }
                 ans = line.ToString();
             }
-            else { if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; } ans = ShAsk(ask, sec); if (ans == null) return 130; }
+            else
+            {
+                if (c.Job.Bg) { Err(c, "read: nothing to read here - pipe lines into it (cat list.txt | while read h; do ...; done)"); return 1; }
+                bool late; ans = ShAsk(ask, sec, tmo < 0 ? -1 : (int)Math.Min(int.MaxValue, tmo * 1000), out late);
+                if (late) return 142;   // timed out (bash: more than 128)
+                if (ans == null) return 130;
+                if (delim != '\n' && delim != '\0') { int di = ans.IndexOf(delim); if (di >= 0) ans = ans.Substring(0, di); }
+                if (nchars >= 0 && ans.Length > nchars) ans = ans.Substring(0, nchars);   // typed a whole line: the first N characters
+            }
             if (arrName != null) { lock (Env.Vars) { Env.Vars.Remove(arrName); Env.Arrs[arrName] = ans.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList(); } return partial ? 1 : 0; }   // read -a a: one element per word
             if (names.Count == 1) { lock (Env.Vars) Env.Vars[names[0]] = names[0] == "REPLY" ? ans : ans.Trim(); return partial ? 1 : 0; }
             var rest = ans.Trim();
@@ -1784,7 +1808,7 @@ namespace AdeeboMeter
         }
         string ReadAll(string f, ShCtx c)
         {
-            if (f == "-") return c.Stdin ?? "";
+            if (f == "-") return NoInput(c) ? null : c.Stdin;
             string av = Abs(f); if (av.StartsWith("/proc/", StringComparison.Ordinal)) { var pf = ProcFile(av.Substring(6)); if (pf == null) Err(c, f + ": no such file"); return pf; }
             { var vn = VirtualNote(av); if (vn != null) return vn; }
             string r = Real(av); if (r == null || !File.Exists(r)) { Err(c, f + ": " + (r != null && Directory.Exists(r) ? "is a folder" : "no such file")); return null; }
@@ -1794,7 +1818,7 @@ namespace AdeeboMeter
         // a file's lines one at a time, any size (#26) - head, tail, grep and wc use it; - is the pipe, /proc works too
         IEnumerable<string> StreamLines(string f, ShCtx c)
         {
-            if (f == "-") return SplitLines(c.Stdin ?? "");
+            if (f == "-") return NoInput(c) ? null : SplitLines(c.Stdin);
             string av = Abs(f); if (av.StartsWith("/proc/", StringComparison.Ordinal)) { var pf = ProcFile(av.Substring(6)); if (pf == null) { Err(c, f + ": no such file"); return null; } return SplitLines(pf); }
             { var vn = VirtualNote(av); if (vn != null) return SplitLines(vn); }
             string r = Real(av); if (r == null || !File.Exists(r)) { Err(c, f + ": " + (r != null && Directory.Exists(r) ? "is a folder" : "no such file")); return null; }
@@ -1824,9 +1848,17 @@ namespace AdeeboMeter
             if (l.Count > 0 && l[l.Count - 1] == "") l.RemoveAt(l.Count - 1);
             return l;
         }
+        // hunters11 L-14: a text tool typed bare (no file, nothing piped in) says so - this shell has no way to type input to it,
+        // and an empty answer or "0 0 0" would look like a real result
+        bool NoInput(ShCtx c)
+        {
+            if (c.In != null) return false;
+            Err(c, "nothing to read - give a file name, or pipe text in (echo hello | sort, cat notes.txt | wc -l)");
+            return true;
+        }
         List<string> InLines(List<string> files, ShCtx c)
         {
-            if (files.Count == 0) return SplitLines(c.Stdin ?? "");
+            if (files.Count == 0) return NoInput(c) ? null : SplitLines(c.Stdin);
             var l = new List<string>(); foreach (var f in files) { var t = ReadAll(f, c); if (t == null) return null; l.AddRange(SplitLines(t)); } return l;
         }
         int Cat(List<string> args, ShCtx c)
@@ -1866,7 +1898,7 @@ namespace AdeeboMeter
             {
                 foreach (var f in files)
                 {
-                    string t = f == "-" ? (c.Stdin ?? "") : ReadAll(f, c); if (t == null) { ex = 1; continue; }
+                    string t = ReadAll(f, c); if (t == null) { ex = 1; continue; }
                     var by = Encoding.UTF8.GetBytes(t); long n2 = bytesN;
                     byte[] part = head ? (n2 >= 0 ? by.Take((int)Math.Min(by.Length, n2)).ToArray() : by.Take((int)Math.Max(0, by.Length + n2)).ToArray())
                                       : bytesFromStart ? by.Skip((int)Math.Max(0, n2 - 1)).ToArray() : by.Skip((int)Math.Max(0, by.Length - Math.Abs(n2))).ToArray();
@@ -2123,7 +2155,9 @@ namespace AdeeboMeter
         // ---------- pages, the lab, the help
         int Open(List<string> args, ShCtx c)
         {
+            if (args.Count > 1) { Err(c, "open: one page at a time - open " + args[0]); return 2; }   // hunters11 L-17: nothing dropped silently
             string p = args.Count == 0 ? "" : args[0].ToLowerInvariant().Trim('/');
+            if (p == "pages" || (p == "" && Env.Cwd.Trim('/') == "pages")) { OL(c, "the pages: " + string.Join("  ", ShPageIds().OrderBy(z => z)) + "  - open one by name (open markets)", ShFg); return 0; }   // hunters11 L-17: the folder lists them
             if ((p == "" || p == ".") && Env.Cwd.StartsWith("/data", StringComparison.OrdinalIgnoreCase)) { args = new List<string> { "." }; p = "\u0001"; }   // open . inside /data: File Explorer (below)
             if (p == "" || p == ".") { var seg = Env.Cwd.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries); if (seg.Length == 2 && seg[0] == "pages") p = seg[1]; else if (seg.Length == 3 && seg[0] == "tools") p = "tool:" + seg[2]; else { Err(c, "open: which page? (cd pages/<name> then open, or open <name>)"); return 1; } }
             if (p.StartsWith("pages/", StringComparison.Ordinal)) p = p.Substring(6);
@@ -2662,9 +2696,10 @@ namespace AdeeboMeter
         void ShComplete()
         {
             string inp = term.Input; int caret = term.Caret; string before = inp.Substring(0, caret);
-            int ws = Math.Max(before.LastIndexOf(' '), Math.Max(before.LastIndexOf('|'), before.LastIndexOf(';'))) + 1; string word = before.Substring(ws);
-            string head = before.Substring(0, ws).TrimEnd(); string prevCmd = Regex.Match(head, @"(?:^|[|;&]\s*)(\S+)[^|;&]*$").Groups[1].Value.ToLowerInvariant();
-            bool firstWord = head == "" || Regex.IsMatch(head, @"[|;&]$");
+            // hunters11 L-23: a word also starts after ( and $( and `, and a command is completed after time, !, ( and $( too
+            int ws = before.LastIndexOfAny(new[] { ' ', '|', ';', '(', '`', '&' }) + 1; string word = before.Substring(ws);
+            string head = before.Substring(0, ws).TrimEnd(); string prevCmd = Regex.Match(head, @"(?:^|[|;&(`]\s*)(\S+)[^|;&(`]*$").Groups[1].Value.ToLowerInvariant();
+            bool firstWord = head == "" || Regex.IsMatch(head, @"([|;&(`]|(^|[|;&(`\s])(time|!|then|do|else))$");
             var pool = new List<string>(); bool pathMode = false;
             if (firstWord && !word.Contains("/") && !word.StartsWith(".", StringComparison.Ordinal) && !word.StartsWith("~", StringComparison.Ordinal)) pool.AddRange(ShCmds.Concat(shTools.Select(t => t.Id)));
             else if ((prevCmd == "open" || prevCmd == "go") && !word.Contains("/")) pool.AddRange(ShPageIds());
@@ -2693,8 +2728,10 @@ namespace AdeeboMeter
             try
             {
                 if (!Directory.Exists(real)) return r;
-                foreach (var d in Directory.EnumerateDirectories(real).Take(500)) r.Add(dirPart + Path.GetFileName(d) + "/");
-                foreach (var f in Directory.EnumerateFiles(real).Take(1000)) r.Add(dirPart + Path.GetFileName(f));
+                // hunters11 L-23: only names starting with what's typed - a big folder no longer loses the ones past the first thousand
+                string pre = word.Substring(dirPart.Length);
+                foreach (var d in Directory.EnumerateDirectories(real).Where(z => Path.GetFileName(z).StartsWith(pre, StringComparison.OrdinalIgnoreCase)).Take(500)) r.Add(dirPart + Path.GetFileName(d) + "/");
+                foreach (var f in Directory.EnumerateFiles(real).Where(z => Path.GetFileName(z).StartsWith(pre, StringComparison.OrdinalIgnoreCase)).Take(1000)) r.Add(dirPart + Path.GetFileName(f));
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             return r;

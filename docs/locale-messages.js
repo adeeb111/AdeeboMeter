@@ -4277,7 +4277,9 @@ window.AdeeboMeterMessages = {
     "Windows remote procedure calls - keep inside the network": "Appels de procédure à distance Windows - à garder dans le réseau",
     "Xbox and Call of Duty multiplayer": "Multijoueur Xbox et Call of Duty",
     "Your device asking for an address": "Votre appareil qui demande une adresse",
-    "Your provider managing your router": "Votre fournisseur qui gère votre routeur"
+    "Your provider managing your router": "Votre fournisseur qui gère votre routeur",
+    "This phone couldn't reach the internet": "Ce téléphone n'a pas pu joindre Internet",
+    "This phone checked": "Ce téléphone a vérifié"
   },
   "es": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} ya está disponible - tienes la {mine}. Descárgala abajo y elige Actualizar.",
@@ -8696,7 +8698,9 @@ window.AdeeboMeterMessages = {
     "Windows remote procedure calls - keep inside the network": "Llamadas a procedimiento remoto de Windows: mantenlas dentro de la red",
     "Xbox and Call of Duty multiplayer": "Multijugador de Xbox y Call of Duty",
     "Your device asking for an address": "Tu dispositivo pidiendo una dirección",
-    "Your provider managing your router": "Tu proveedor gestionando tu router"
+    "Your provider managing your router": "Tu proveedor gestionando tu router",
+    "This phone couldn't reach the internet": "Este teléfono no pudo conectarse a internet",
+    "This phone checked": "Este teléfono comprobó"
   },
   "ar": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "صدر AdeeboMeter {v} - لديك {mine}. نزّله من الأسفل واختر تحديث.",
@@ -13115,7 +13119,9 @@ window.AdeeboMeterMessages = {
     "Windows remote procedure calls - keep inside the network": "استدعاءات Windows عن بُعد - أبقِها داخل الشبكة",
     "Xbox and Call of Duty multiplayer": "اللعب الجماعي في Xbox وCall of Duty",
     "Your device asking for an address": "جهازك يطلب عنوانًا",
-    "Your provider managing your router": "مزوّدك يدير موجّهك"
+    "Your provider managing your router": "مزوّدك يدير موجّهك",
+    "This phone couldn't reach the internet": "تعذّر على هذا الهاتف الوصول إلى الإنترنت",
+    "This phone checked": "فحص هذا الهاتف"
   },
   "bn": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} এসেছে - আপনার কাছে আছে {mine}। নিচ থেকে ডাউনলোড করে আপডেট বেছে নিন।",
@@ -17395,7 +17401,9 @@ window.AdeeboMeterMessages = {
     "Windows remote procedure calls - keep inside the network": "Windows রিমোট প্রসিডিউর কল - নেটওয়ার্কের ভেতরে রাখুন",
     "Xbox and Call of Duty multiplayer": "Xbox ও Call of Duty মাল্টিপ্লেয়ার",
     "Your device asking for an address": "আপনার ডিভাইস ঠিকানা চাইছে",
-    "Your provider managing your router": "আপনার প্রোভাইডার আপনার রাউটার পরিচালনা করছে"
+    "Your provider managing your router": "আপনার প্রোভাইডার আপনার রাউটার পরিচালনা করছে",
+    "This phone couldn't reach the internet": "এই ফোন ইন্টারনেটে পৌঁছাতে পারেনি",
+    "This phone checked": "এই ফোন পরীক্ষা করেছে"
   },
   "zh": {
     "Language": "语言",
