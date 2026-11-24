@@ -90,7 +90,7 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Ping al router:</b> un pequeño ping a tu propio router cada pocos segundos. Se queda en tu red local.</li>
   <li><b>Comprobación de internet y DNS:</b> un ping a <code>1.1.1.1</code> (o <code>8.8.8.8</code>) cada 15 segundos en Equilibrado (cada 5 minutos en Penny) y una consulta de nombre como mucho una vez por minuto. En redes que bloquean el ping, una conexión cronometrada al puerto 443 de la misma dirección, cerrada al momento. En Desactivado, nada sale a internet en segundo plano.</li>
   <li><b>Nombre del proveedor:</b> una vez por red, un traceroute corto (6 saltos) hacia <code>1.1.1.1</code> y una consulta de nombre inversa.</li>
-  <li><b>Comprobación de página de inicio de sesión:</b> solo cuando falla una comprobación, una petición a la página de prueba que usa el propio Windows (<code>msftconnecttest.com</code>).</li>
+  <li><b>Comprobación de página de inicio de sesión:</b> solo dentro de una comprobación que inicias (¿Qué pasa? y la revisión completa), una petición a la página de prueba que usa el propio Windows (<code>msftconnecttest.com</code>).</li>
   <li><b>Vigilancia de un destino fijado:</b> un ping cada 30 segundos, solo si la activas.</li>
   <li><b>Zona Gamer:</b> nada hasta que haces clic en un juego. Después, pings (o conexiones cronometradas) a las regiones de ese juego; la lista de Valve desde <code>api.steampowered.com</code> solo al añadir un juego de Valve o pulsar Actualizar.</li>
   <li><b>Emisiones:</b> solo mientras algo se emite, una conexión cronometrada (sin datos) al servidor de la emisión cada 10 segundos (30 en Penny) - seis intentos como máximo si nunca responde.</li>

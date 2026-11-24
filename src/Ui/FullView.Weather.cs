@@ -117,7 +117,7 @@ namespace AdeeboMeter
                     int by = Math.Max(geoBox.Bottom, apiBox.Bottom) + Sc(18); ok.Location = new Point(Sc(20) + cw - ok.Width, by); no.Location = new Point(ok.Left - no.Width - Sc(10), by + (ok.Height - no.Height) / 2);
                     f.ClientSize = new Size(cw + Sc(40), ok.Bottom + Sc(18));
                 };
-                lowerPart(); note.SizeChanged += delegate { lowerPart(); };
+                Draw.FitOnShow(f, true);   /* hunters11 core ML-2 */ lowerPart(); note.SizeChanged += delegate { lowerPart(); };
                 say(L.T("Type a place and press Enter."), false);
                 var cur = Weather.Current; if (cur != null) box.Box.Text = cur.Name.Split(',')[0];
                 f.Shown += delegate { box.Box.Focus(); box.Box.SelectAll(); };

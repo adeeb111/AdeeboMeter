@@ -17,7 +17,7 @@ namespace AdeeboMeter
             if (r == null || r.Parts.Count == 0) return y;   // nothing recorded yet: no empty card
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(Kit.Sent(L.T("YOUR WEEK · LAST 7 DAYS · EVERYTHING YOU DO ONLINE")), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("YOUR WEEK · LAST 7 DAYS · EVERYTHING YOU DO ONLINE"), Draw.fTiny, muted, x, y); y += 22 * S;
                 float rh = 30 * S, hh = Draw.Measure(L.T(r.Head), Draw.fName, (int)(w - 40 * S)).Height;
                 var card = new RectangleF(x, y, w, 18 * S + hh + 10 * S + r.Parts.Count * rh + 56 * S); Kit.Box(g, card);
                 float cy = y + 16 * S;

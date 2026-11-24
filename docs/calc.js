@@ -98,7 +98,7 @@
     if (!need.length) { rows.push(R(2, "Sizes", "type how many hosts each subnet needs, e.g. 200, 60, 12, 2", "")); return rows; }
     if (need.length > 64) { rows.push(R(2, "Sizes", "64 subnets at most", "")); return rows; }
     var total = Math.pow(2, 32 - pre), start = ip - ip % total, end = start + total;
-    rows.push(R(3, "Block", U(start) + "/" + pre + "  (" + I(total) + " addresses)", "Biggest first, so every subnet lands on its own boundary."));
+    rows.push(R(3, "Block", U(start) + "/" + pre + "  (" + I(total) + " addresses)", (ip !== start ? U(ip) + " isn't the network address - the block starts at " + U(start) + ". " : "") + "Biggest first, so every subnet lands on its own boundary."));   // hunters11 L-6
     var order = need.map(function (n, i) { return { n: n, i: i }; }).sort(function (a, b) { return b.n - a.n || a.i - b.i; }), at = start, used = 0, full = false;
     order.forEach(function (x) {
       var p = 32; while (p > 0 && Math.pow(2, 32 - p) - (p <= 30 ? 2 : 0) < x.n) p--;
@@ -255,6 +255,7 @@
     if (q <= p || q > 128) return Need("Split into", "has to be longer than /" + p + " and at most /128");
     var extra = q - p, b = ip.slice(); for (var bit = p; bit < 128; bit++) b[bit >> 3] &= ~(0x80 >> (bit % 8)) & 255;
     var rows = [R(0, "Pieces", (extra >= 63 ? "2^" + extra : I(Math.pow(2, extra))) + " × /" + q, "")];
+    if (b.some(function (x, i) { return x !== ip[i]; })) rows.push(R(1, "Moved", "what you typed isn't the start of a /" + p + " - the pieces start at its first address", ""));   // hunters11 L-6
     if (q <= 64) rows.push(R(3, "Each one holds", (64 - q >= 63 ? "2^" + (64 - q) : I(Math.pow(2, 64 - q))) + " LAN-sized /64" + (q === 64 ? "" : "s"), "A /64 is one LAN (SLAAC needs exactly /64)."));
     else rows.push(R(1, "Smaller than /64", "SLAAC and most LANs need a /64; /" + q + " fits point-to-point links (/127) or loopbacks (/128)", ""));
     var show = Math.min(4, Math.pow(2, Math.min(extra, 20)));
@@ -320,6 +321,7 @@
   }
   function LinkBudget(txText, gainText, distText, sensText) {
     var tx = First(txText); if (isNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
+    if (/(^|[^A-Za-z])M[wW]\b/.test(txText || "")) return Need("Transmit power", "MW is megawatts - type mW for milliwatts");   // hunters11 L-4
     if (/(^|[^a-z])m?w\b/i.test(txText || "") && !/dbm/i.test(txText)) { if (tx <= 0) return Need("Transmit power", "has to be more than 0 W"); tx = 10 * Math.log10(tx * (/(^|[^a-z])mw\b/i.test(txText) ? 1 : 1000)); }   // round 6 S-3: "100mW" and "1W" with no space, as the app   // FRESH-012/013
     var gains = anyNums(gainText), gt = gains.length > 0 ? gains[0] : 0, gr = gains.length > 1 ? gains[1] : gt;
     var dt = String(distText || "").toLowerCase(), dm = /(-?[0-9.,]+)\s*(km|m|mi)\b/.exec(dt), fm = /(-?[0-9.,]+)\s*(ghz|mhz)/.exec(dt);   // FRESH-014
@@ -372,7 +374,7 @@
     if (wh <= 0) return Need("Battery", "has to be more than 0 Wh");
     var load = First(loadText); if (/\bkw\b/i.test(loadText || "")) load *= 1000;   // FRESH-073
     if (isNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
-    var eff = First(effText); eff = isNaN(eff) ? 0.85 : String(effText || "").indexOf("%") >= 0 || eff > 1 ? eff / 100 : eff;   // FRESH-019
+    var eff = First(effText); eff = isNaN(eff) ? 0.85 : String(effText || "").indexOf("%") >= 0 || eff > 1 || (eff === 1 && String(effText || "").indexOf(".") < 0) ? eff / 100 : eff;   // FRESH-019; hunters11 L-2
     if (eff <= 0 || eff > 1) return Need("Efficiency", "0 to 100% - most inverters are 80-90%");   // FRESH-018
     var hours = wh * eff / load, real = hours * (load > wh ? 0.6 : 0.8);
     return [R(real < 5 / 60 ? 1 : 0, "Runtime", "about " + Dur(real * 3600) + " at " + F(load, "0") + " W", "Energy × inverter efficiency ÷ load, less ~20% (more at heavy loads) for battery chemistry and age."),
@@ -381,6 +383,7 @@
   function Sla(text) {
     var t = String(text || "").trim().toLowerCase().replace(/\s*(per\s*cent|percent|pct)\b/g, "%"), up, n = First(t), Year = 365.25 * 86400;
     if (isNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
+    if (t.indexOf("%") < 0 && !/[a-z]/.test(t) && n > 100) return Need("Uptime", "a percentage is 0 to 100 - for a downtime add its unit, e.g. 2 h a year");   // hunters11 L-3
     if (t.indexOf("%") >= 0 || (n > 0 && n <= 100 && !/[a-z]/.test(t))) up = n / 100;   // round 6 S-2: a bare number is a percentage, as the app
     else { var secs = Time(t.replace(/\s*(a|per|\/)\s*(year|quarter|month|week|day).*$/, "").trim()); if (isNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year"); var per = t.indexOf("quarter") >= 0 ? Year / 4 : t.indexOf("month") >= 0 ? Year / 12 : t.indexOf("week") >= 0 ? 7 * 86400 : t.indexOf("day") >= 0 ? 86400 : Year; up = 1 - secs / per; }
     if (up <= 0 || up > 1) return Need("Uptime", "has to be between 0 and 100%");
@@ -406,8 +409,8 @@
   }
   function Stream(resText, codecText, upText) {
     var r = String(resText || "").toLowerCase(), m = /(\d{3,4})\s*p\s*(\d{2,3})?/.exec(r), h, fps;
-    if (r.indexOf("4k") >= 0 || r.indexOf("2160") >= 0) h = 2160; else if (r.indexOf("1440") >= 0 || r.indexOf("2k") >= 0) h = 1440; else if (m) h = +m[1]; else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
-    var fm = /p\s*(\d{1,3})|(\d{1,3})\s*fps|4k\s*(\d{1,3})/.exec(r); fps = fm ? +(fm[1] || fm[2] || fm[3]) : 30;
+    if (r.indexOf("8k") >= 0 || r.indexOf("4320") >= 0) h = 4320; else if (r.indexOf("4k") >= 0 || r.indexOf("2160") >= 0) h = 2160; /* hunters11 L-5 */ else if (r.indexOf("1440") >= 0 || r.indexOf("2k") >= 0) h = 1440; else if (m) h = +m[1]; else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
+    var fm = /p\s*(\d{1,3})|(\d{1,3})\s*fps|[48]k\s*(\d{1,3})/.exec(r); fps = fm ? +(fm[1] || fm[2] || fm[3]) : 30;
     if (h < 240 || h > 4320) return Need("Resolution", "type e.g. 1080p60");
     if (fps < 10 || fps > 240) return Need("Frame rate", "10 to 240 fps - e.g. 1080p60");
     var w = h * 16 / 9, c = String(codecText || "").toLowerCase(), codec = c.indexOf("av1") >= 0 ? 0.55 : c.indexOf("hevc") >= 0 || c.indexOf("265") >= 0 || c.indexOf("vp9") >= 0 ? 0.65 : 1, cname = codec === 0.55 ? "AV1" : c.indexOf("vp9") >= 0 ? "VP9" : codec === 0.65 ? "HEVC" : "H.264";
@@ -491,8 +494,21 @@
   }
 
   // ================================================================== Calc3: money, markets, commodities, games
-  function P(t) { var m = /-?[0-9]+(?:\.[0-9]+)?/.exec(String(t || "").replace(/,/g, "")); return m ? parseFloat(m[0]) : NaN; }
-  function Ps(t) { return (String(t || "").replace(/, /g, " ").match(/-?[0-9]+(?:\.[0-9]+)?/g) || []).map(parseFloat); }
+  // hunters11 lab ML-1: the PC's own reading (Calc3.cs P / Ps) - 1,5 is one and a half, 1,000 is a thousand, "1,5; 2,25" two prices
+  function P(t) {
+    var m = /-?[0-9](?:[0-9]|[.,\u00A0\u202F ](?=[0-9]))*/.exec(String(t || "")); if (!m) return NaN;
+    var x = m[0].replace(/[\u00A0\u202F ]/g, ""), lc = x.lastIndexOf(","), ld = x.lastIndexOf(".");
+    if (lc >= 0 && ld >= 0) x = lc > ld ? x.replace(/\./g, "").replace(",", ".") : x.replace(/,/g, "");
+    else if (lc >= 0) x = /^-?\d{1,3}(,\d{3})+$/.test(x) ? x.replace(/,/g, "") : x.indexOf(",") === lc ? x.replace(",", ".") : x.replace(/,/g, "");
+    else if (ld >= 0 && x.indexOf(".") !== ld) x = x.replace(/\./g, "");
+    var v = parseFloat(x); return isFinite(v) ? v : NaN;
+  }
+  function Ps(t) {
+    t = String(t || ""); var spaced = /\d\s*;\s*\d|\d\s+\d|\d,\s+\d/.test(t);
+    if (!spaced && /^-?[0-9]+,[0-9]{1,2}$/.test(t.trim())) return [P(t)];
+    if (spaced) return t.replace(/, /g, " ").split(/[\s;]+/).filter(function (z) { return z.trim() !== ""; }).map(P).filter(function (z) { return !isNaN(z); });
+    return (t.replace(/(\d),(?=\d{3}(?!\d))/g, "$1").match(/-?[0-9]+(?:\.[0-9]+)?/g) || []).map(parseFloat).filter(function (z) { return isFinite(z); });
+  }
   function M(v) { return (v < 0 ? "-$" : "$") + F(Math.abs(v), Math.abs(v) >= 1000 ? "N0" : "N2"); }
   function Pc(v) { return (v > 0 ? "+" : "") + F(v, "0.##") + "%"; }
   var Edu = "The numbers only - not advice.", MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -565,10 +581,10 @@
     return [R(ping < 150 ? 0 : 1, "Typical move while your order travels", M(move) + " on " + M(price) + " (" + F(move / price * 100, "0.####") + "%)", (ping < 200 ? "For anyone clicking by hand, " + F(ping, "0") + " ms is far below what matters - your own reaction takes 200 ms or more." : F(ping, "N0") + " ms is as long as a person's reaction or longer - in a fast market that's noticeable.") + " Spikes and drops matter more than the average."),
       R(3, "In that time", "light could cross about " + F(ping * 100, "N0") + " km of fibre each way", "")];
   }
-  var ComUnits = [["barrel", "v", 158.987], ["US gallon", "v", 3.78541], ["litre", "v", 1], ["m³", "v", 1000], ["troy oz", "m", 31.1035], ["gram", "m", 1], ["kg", "m", 1000], ["lb", "m", 453.592], ["tonne", "m", 1000000], ["short ton", "m", 907185], ["bushel", "m", 0], ["MMBtu", "e", 1055.06], ["GJ", "e", 1000], ["therm", "e", 105.506], ["kWh", "e", 3.6]];
+  var ComUnits = [["barrel", "v", 158.987], ["US gallon", "v", 3.78541], ["imperial gallon", "v", 4.54609], ["mg", "m", 0.001], ["litre", "v", 1], ["m³", "v", 1000], ["troy oz", "m", 31.1035], ["gram", "m", 1], ["kg", "m", 1000], ["lb", "m", 453.592], ["tonne", "m", 1000000], ["short ton", "m", 907185], ["bushel", "m", 0], ["MMBtu", "e", 1055.06], ["GJ", "e", 1000], ["therm", "e", 105.506], ["kWh", "e", 3.6]];
   var BushelKg = { wheat: 27.2155, soybeans: 27.2155, corn: 25.4012 };
   function bushel(crop) { return (BushelKg[crop] || BushelKg.wheat) * 1000; }
-  function UnitOf(t, crop) { t = String(t || "").toLowerCase(); var s = ComUnits.slice().sort(function (a, b) { return b[0].length - a[0].length; }); for (var i = 0; i < s.length; i++) if (t.indexOf(s[i][0].toLowerCase()) >= 0) return { u: s[i], b: s[i][0] === "bushel" ? bushel(crop) : s[i][2] }; return null; }
+  function UnitOf(t, crop) { t = String(t || "").toLowerCase().replace(/\b(kilograms?|kgs?|kilos?)\b/g, "kg").replace(/\b(milligrams?|mgs?)\b/g, "mg").replace(/\b(imperial|imp\.?|uk)\s*(gal|gallons?)\b/g, "imperial gallon"); /* as the PC (review 1.1.6 P2 #8) */ var s = ComUnits.slice().sort(function (a, b) { return b[0].length - a[0].length; }); for (var i = 0; i < s.length; i++) if (t.indexOf(s[i][0].toLowerCase()) >= 0) return { u: s[i], b: s[i][0] === "bushel" ? bushel(crop) : s[i][2] }; return null; }
   function ComConv(amountText, unitText, cropText) {
     var amt = P(amountText), crop = String(cropText == null ? "" : cropText).trim().toLowerCase() || "wheat", x = UnitOf(unitText, crop);
     if (isNaN(amt) || !x) return Need("Amount and unit", "e.g. 1 barrel, 1 troy oz, 100 bushel, 1 MMBtu");

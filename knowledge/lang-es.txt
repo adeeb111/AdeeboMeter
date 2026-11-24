@@ -110,7 +110,7 @@ Names for IP addresses	Nombres de direcciones IP
 Network story	Historia de la red
 Never	Nunca
 Not sure what's wrong	No sé qué falla
-Off	No
+Off	Desactivado
 On	Sí
 Online lookups on	Consultas en línea activadas
 Only one website is broken	Solo falla un sitio web
@@ -484,7 +484,7 @@ equal turns	turnos iguales
 airtime fairness	reparto justo del tiempo de radio
 nothing	nada
 on (TCP, most traffic)	activado (TCP, la mayor parte del tráfico)
-off	No
+off	desactivado
 is blocked from saying it	se impide que lo indique
 First come, first served (most home routers)	Por orden de llegada (la mayoría de routers domésticos)
 Fair queuing (each flow takes turns)	Colas justas (cada flujo tiene su turno)
@@ -5448,3 +5448,10 @@ exact	exacto
 Not measured yet.	Aún sin medir.
 up to 1 GB to the speed server you picked	hasta 1 GB al servidor de velocidad que elegiste
 Same network twice	La misma red dos veces
+The internet past your router / VPN is slow. Your PC and {0} are fine.	Internet más allá de tu router / VPN va lento. Tu PC y {0} están bien.
+The internet past your router is slow. Your PC and {0} are fine.	Internet más allá de tu router va lento. Tu PC y {0} están bien.
+start game monitoring on its own when a game opens	empezar a vigilar un juego por su cuenta cuando se abre
+Only inside a check you start (What's wrong? and the full checkup): one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	Solo dentro de una comprobación que inicias (¿Qué pasa? y la revisión completa): una petición mínima a la misma página de prueba que usa Windows, para detectar páginas de inicio de sesión de hoteles y aeropuertos.
+Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	Solo dentro de una comprobación que inicias (¿Qué pasa? y la revisión completa): una petición a la misma página de prueba que usa el propio Windows (msftconnecttest.com).
+Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	Las comprobaciones usan TLS con la validación de certificados del propio Windows (Windows elige TLS 1.2 o 1.3). Una excepción: cuando pides otro nombre al inspector TLS, acepta un certificado de otro nombre y lo dice en su página. Las entradas se validan; nunca se usa un shell.
+and {0} more - Open a file... in the lab lists them all	y {0} más: Abrir un archivo... en el laboratorio los muestra todos

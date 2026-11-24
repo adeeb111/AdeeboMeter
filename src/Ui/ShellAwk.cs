@@ -368,16 +368,17 @@ namespace AdeeboMeter
         static string Printf(List<string> a)
         {
             if (a.Count == 0) return ""; int ai = 1;
-            return Regex.Replace(a[0], @"%([-+ 0#]*)(\*|\d+)?(?:\.(\d+))?([sdifeEgGxXoc%])", m =>
+            return Regex.Replace(a[0], @"%([-+ 0#]*)(\*|\d+)?(?:\.(\*|\d+))?([sdiufeEgGxXoc%])", m =>   /* hunters11 shell L-7: %u and .* as in the shell's printf */
             {
                 char k = m.Groups[4].Value[0]; if (k == '%') return "%";
                 string fl = m.Groups[1].Value; int w = 0; if (m.Groups[2].Value == "*") w = (int)Num(ai < a.Count ? a[ai++] : "0"); else if (m.Groups[2].Success) int.TryParse(m.Groups[2].Value, out w);
-                int pr = -1; if (m.Groups[3].Success && !int.TryParse(m.Groups[3].Value, NumberStyles.None, CultureInfo.InvariantCulture, out pr)) pr = int.MaxValue; string v = ai < a.Count ? a[ai++] : "", r;
+                int pr = -1; if (m.Groups[3].Value == "*") pr = (int)Num(ai < a.Count ? a[ai++] : "0"); else if (m.Groups[3].Success && !int.TryParse(m.Groups[3].Value, NumberStyles.None, CultureInfo.InvariantCulture, out pr)) pr = int.MaxValue; string v = ai < a.Count ? a[ai++] : "", r;
                 if (w > 1000000 || w < -1000000 || pr > 1000000) throw new FormatException("printf: a width or precision over 1,000,000 isn't done");   // review 1.1.6 (security #9)
                 switch (k)
                 {
                     case 's': r = pr >= 0 && v.Length > pr ? v.Substring(0, pr) : v; break;
                     case 'c': r = LooksNum(v) ? ((char)(int)Num(v)).ToString() : v.Length > 0 ? v.Substring(0, 1) : ""; break;
+                    case 'u': { double uv = Math.Truncate(Num(v)); r = (uv < 0 ? unchecked((ulong)(long)uv) : (ulong)uv).ToString(CultureInfo.InvariantCulture); break; }
                     case 'd': case 'i': r = ((long)Math.Truncate(Num(v))).ToString(CultureInfo.InvariantCulture); if (fl.Contains("+") && Num(v) >= 0) r = "+" + r; break;
                     case 'x': r = ((long)Num(v)).ToString("x", CultureInfo.InvariantCulture); break;
                     case 'X': r = ((long)Num(v)).ToString("X", CultureInfo.InvariantCulture); break;

@@ -164,7 +164,7 @@ namespace AdeeboMeter
         float PaintGameList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
             var list = LearnGames.All.Where(z => hit(z[1]) || hit(z[2]) || hit("game")).ToList(); if (list.Count == 0) return y;
-            g.DrawString(Kit.Sent(L.T("GAMES - PLAY TO LEARN")), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+            g.DrawString(Kit.Sent("GAMES - PLAY TO LEARN"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
             foreach (var z in list) y = LearnRow(g, "game:" + z[0], L.T(z[1]), L.T(z[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
         }

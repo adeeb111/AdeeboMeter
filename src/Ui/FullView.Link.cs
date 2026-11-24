@@ -28,6 +28,13 @@ namespace AdeeboMeter
 {
     sealed partial class FullView
     {
+        // hunters11 core ML-4: a value is data - a network called "Home" stays "Home". Only a value that is a known UI word
+        // (for example "no answer") is translated, and never under a label that names something.
+        static string LinkVal(string label, string v)
+        {
+            if (string.IsNullOrEmpty(v) || System.Text.RegularExpressions.Regex.IsMatch(label ?? "", "SSID|[Nn]ame|Network|Profile|Adapter|Description|Vendor|Driver|Router|DNS|Gateway|Domain")) return v;
+            return L.T(v);
+        }
         // ---------- Your connection
         string linkErr;   // why the last read failed - shown instead of a "still asking" that never ends
         void RefreshLink(bool now)
@@ -55,7 +62,7 @@ namespace AdeeboMeter
                 {
                     g.DrawString(L.T(row[0]), Draw.fBody, muted, new RectangleF(cr.X + 14 * S, ry, lw, 20 * S), nowrap);
                     using (var vb = new SolidBrush(row.Length > 2 && row[2] != "0" ? Theme.LvText(int.Parse(row[2], CultureInfo.InvariantCulture)) : Theme.Ink))
-                        g.DrawString(L.T(row[1]), Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
+                        g.DrawString(LinkVal(row[0], row[1]), Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
                     Hint(linkCanvas, new RectangleF(cr.X, ry - 2 * S, cr.Width, 22 * S), "link." + row[0]);
                     ry += 22 * S;
                 }
@@ -119,7 +126,7 @@ namespace AdeeboMeter
                     int lv = r.Length > 2 ? int.Parse(r[2], CultureInfo.InvariantCulture) : 0;
                     using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 18 * S, ry + 7 * S, 8 * S, 8 * S);
                     g.DrawString(L.T(r[0]), Draw.fBodyB, ink, new RectangleF(x + 34 * S, ry, w * 0.30f, 22 * S), nowrap);
-                    g.DrawString(L.T(r[1]), Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
+                    g.DrawString(LinkVal(r[0], r[1]), Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
                     ry += rh;
                 }
             }
@@ -129,7 +136,7 @@ namespace AdeeboMeter
         {
             var card = new RectangleF(x, y, w, switchInfo != null ? 150 * S : 86 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY")), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
             bool can = LiveCapture.Available && !switchBusy && !Policy.NoCapture;
@@ -173,7 +180,7 @@ namespace AdeeboMeter
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("WHO ELSE IS ON THE AIR  ·  ")) + band + "  ·  " + inBand.Count + " " + L.T(inBand.Count == 1 ? "access point nearby" : "access points nearby"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent("WHO ELSE IS ON THE AIR  ·  ") + band + "  ·  " + inBand.Count + " " + L.T(inBand.Count == 1 ? "access point nearby" : "access points nearby"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
             using (var axis = new Pen(Theme.Line)) g.DrawLine(axis, plotX, base0, plotX + plotW, base0);
@@ -215,7 +222,7 @@ namespace AdeeboMeter
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
             Kit.Box(g, card2);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("STRONGEST NEIGHBOURS")), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.NEIGHBOURS");
             float ry = y + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
@@ -250,7 +257,7 @@ namespace AdeeboMeter
                 warsBusy = true; warsAt = DateTime.UtcNow;
                 Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; wars = r; linkCanvas.Invalidate(); }); } catch (InvalidOperationException) { warsBusy = false; } });
             }
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR")), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
             Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;
             var wr = wars;
             if (!Cfg.History) return Lead(g, AdeeboMeter.L.T("Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC."), x, y, w, true);

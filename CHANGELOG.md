@@ -10,7 +10,7 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - Languages: the whole app in French (Canada), Spanish, Arabic (right to left) and Bengali. The globe button beside VIEW opens a card with each language and a preview; Restart finishes the switch. The buddy's personas speak Spanish, Arabic and Bengali too (French personas still speak English).
 - AdeeboShell: the app from the keyboard, Linux style. Every Toolbox tool is a command with the same checks and answers; pages are folders; ls, cd, cat, grep, sed, awk, cut, tr, sort, xargs; pipes and redirects; variables, $( ), $(( )), if/for/while/until/case, functions with local, arrays; scripts with source and ./run.sh; parallel; jobs; nano and vim; iperf3 with its real flags; df, du, free, ps, top, uptime, lsblk, ip, ss and /proc as files. Nothing in it starts another program; a script's test traffic needs a --yes typed at the prompt.
 - AdeeboLab: draw a network, see a packet's path, break one thing and watch where it fails - from your own LAN, path, Wi-Fi, phone or VPN.
-- Home as a gateway: one verdict with the path, the four live numbers, watch warnings, big icon tiles, Toolbox by topic, and a NOW line (router, internet, Wi-Fi, PC load) on Gamer, Streaming and Markets.
+- Home as a gateway: one verdict with the path, the four live numbers, watch warnings, big icon tiles, Toolbox by topic, and a NOW line (router, internet, Wi-Fi, PC load) on Streaming and Markets.
 - Markets, Sports and Outlook as newspaper pages: any Bank of Canada currency, commodities, world exchange hours, stock movers once a day for everyone (or your own key at your own pace), live scores, your teams, the weather with your network's slow hours.
 - Gamer Zone HUD: ping as a gauge with its grade, the last minute with spikes and losses, one verdict.
 - Time machine: open any minute from a red result, a spike or a buffering dip; pin a minute and compare it with now.
@@ -49,6 +49,7 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - First-run setup resumes at the same question if the window closed halfway.
 - Site and phone: the More menu carries How it works, Learn and Blog on narrow screens; the phone's privacy line is on Home too; the phone's Bengali is complete, and the measure buttons and pairing steps follow your language.
 - From a result on What's wrong?: open it as a script in AdeeboShell, or as your network in AdeeboLab.
+- 24 Nov, final review: "What's wrong?" buttons work in every language; memory budget 99 MB; the replay bonus is +2; the language button is back at the top of the window, and every page of the site has the language picker at the top (a picked language is remembered, a visited one isn't); AdeeboShell leaves with Esc, Ctrl+Tab or Shift+Tab, never follows a broken link out of /data, masks secrets in every echo, keeps the scrollback on Ctrl+L and keeps a line typed while a command runs; dialogs and the install card fit small screens at 200%; the phone's calculators read 1,5 as one and a half, like the PC's.
 
 ## 1.1.5 (2026-11-17)
 

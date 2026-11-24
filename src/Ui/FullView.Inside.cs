@@ -273,7 +273,7 @@ namespace AdeeboMeter
             if (t["pic"] != "") y = MoneyPic(g, t["pic"], x, y, w);   // the money topics draw their own picture (FullView.Money.cs)
             if (t["more"] != "")   // the deeper topics (provider networks, the mobile core): how it works, a paragraph
             {
-                y += 8 * S; using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("HOW IT WORKS")), Draw.fTiny, mb, x, y); y += 20 * S;
+                y += 8 * S; using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("HOW IT WORKS"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Lead2(g, t["more"], x, y, w);
             }
             if (t["breaks"] != "")

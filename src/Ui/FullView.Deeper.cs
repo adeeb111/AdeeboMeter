@@ -26,7 +26,7 @@ namespace AdeeboMeter
         {
             Begin(deeperCanvas);
             float x = 14 * S, w = deeperCanvas.ClientSize.Width - 28 * S, y = 4 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("LOOK DEEPER")), Draw.fTiny, mb, x + 2 * S, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("LOOK DEEPER"), Draw.fTiny, mb, x + 2 * S, y);
             y += 22 * S;
             int cols = DeeperCols(); float tw = (w - (cols - 1) * 10 * S) / cols, th = 56 * S;
             if (deeperRect.Length != Deeper.Length) deeperRect = new RectangleF[Deeper.Length];

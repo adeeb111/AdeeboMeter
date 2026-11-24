@@ -57,9 +57,10 @@ namespace AdeeboMeter
             else if (it != "" && (double.IsNaN(First(it)) || First(it) < 2)) return Need("Split into", "type /56, /64 or a count like 256");   // FRESH-003: only a blank picks the default
             else { double n = First(it); if (double.IsNaN(n)) { q = p <= 56 ? 64 : Math.Min(128, p + 8); } else { int bits = (int)Math.Ceiling(Math.Log(n, 2) - 1e-9); q = p + bits; } }
             if (q <= p || q > 128) return Need("Split into", "has to be longer than /" + p + " and at most /128");
-            int extra = q - p; var b = ip.GetAddressBytes(); ClearFrom(b, p);
+            int extra = q - p; var b = ip.GetAddressBytes(); var typedB = ip.GetAddressBytes(); ClearFrom(b, p);
             var rows = new List<string[]>();
             rows.Add(R(0, "Pieces", (extra >= 63 ? "2^" + extra : I(1L << extra)) + " × /" + q, "", "i"));
+            if (!b.SequenceEqual(typedB)) rows.Add(R(1, "Moved", "what you typed isn't the start of a /" + p + " - the pieces start at its first address", "", "i"));   /* hunters11 lab L-6 */
             if (q <= 64) rows.Add(R(3, "Each one holds", (64 - q >= 63 ? "2^" + (64 - q) : I(1L << (64 - q))) + " LAN-sized /64" + (q == 64 ? "" : "s"), "A /64 is one LAN (SLAAC needs exactly /64).", "i"));
             else rows.Add(R(1, "Smaller than /64", "SLAAC and most LANs need a /64; /" + q + " fits point-to-point links (/127) or loopbacks (/128)", "", "i"));
             int show = (int)Math.Min(4, 1L << Math.Min(extra, 20));
@@ -162,6 +163,7 @@ namespace AdeeboMeter
         public static List<string[]> LinkBudget(string txText, string gainText, string distText, string sensText)
         {
             double tx = First(txText); if (double.IsNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
+            if (Regex.IsMatch(txText ?? "", @"(?<![A-Za-z])M[wW]\b")) return Need("Transmit power", "MW is megawatts - type mW for milliwatts");   /* hunters11 lab L-4 */
             if (Regex.IsMatch(txText ?? "", @"(?<![a-z])m?W\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(txText, "dbm", RegexOptions.IgnoreCase))   // bug-hunt ML-61: "100mW" and "1W" with no space
             {
                 if (tx <= 0) return Need("Transmit power", "has to be more than 0 W");   // FRESH-013
@@ -246,7 +248,7 @@ namespace AdeeboMeter
             if (wh <= 0) return Need("Battery", "has to be more than 0 Wh");
             double load = First(loadText); if (Regex.IsMatch(loadText ?? "", @"(?<![a-z])kw\b", RegexOptions.IgnoreCase)) load *= 1000;   // FRESH-073; bug-hunt ML-100: "1.5kW" with no space too
             if (double.IsNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
-            double eff = First(effText); eff = double.IsNaN(eff) ? 0.85 : (effText ?? "").Contains("%") || eff > 1 ? eff / 100 : eff;   // FRESH-019: 1% is 1%
+            double eff = First(effText); eff = double.IsNaN(eff) ? 0.85 : (effText ?? "").Contains("%") || eff > 1 || (eff == 1 && !(effText ?? "").Contains(".")) ? eff / 100 : eff;   // FRESH-019: 1% is 1%; hunters11 L-2: a bare 1 too (0.85 and 1.0 stay fractions)
             if (eff <= 0 || eff > 1) return Need("Efficiency", "0 to 100% - most inverters are 80-90%");   // FRESH-018
             double hours = wh * eff / load, real = hours * (load > wh ? 0.6 : 0.8);
             return new List<string[]> {
@@ -261,6 +263,7 @@ namespace AdeeboMeter
             string t = Regex.Replace((text ?? "").Trim().ToLowerInvariant(), @"\s*(per\s*cent|percent|pct)\b", "%"); double up;   // bug-hunt L-127: "99.9 percent"
             double n = First(t); if (double.IsNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
             const double Year = 365.25 * 86400;
+            if (!t.Contains("%") && !Regex.IsMatch(t, "[a-z]") && n > 100) return Need("Uptime", "a percentage is 0 to 100 - for a downtime add its unit, e.g. 2 h a year");   /* hunters11 lab L-3 */
             if (t.Contains("%") || (n > 0 && n <= 100 && !Regex.IsMatch(t, "[a-z]"))) up = n / 100;   // bug-hunt ML-62: a bare number is a percentage (a downtime needs its unit: 4 h)
             else
             {
@@ -305,9 +308,9 @@ namespace AdeeboMeter
         public static List<string[]> Stream(string resText, string codecText, string upText)
         {
             string r = (resText ?? "").ToLowerInvariant(); var m = Regex.Match(r, @"(\d{3,4})\s*p\s*(\d{2,3})?"); int h, fps;
-            if (r.Contains("4k") || r.Contains("2160")) h = 2160; else if (r.Contains("1440") || r.Contains("2k")) h = 1440; else if (m.Success) h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
+            if (r.Contains("8k") || r.Contains("4320")) h = 4320; else if (r.Contains("4k") || r.Contains("2160")) h = 2160;   /* hunters11 lab L-5: 8K */ else if (r.Contains("1440") || r.Contains("2k")) h = 1440; else if (m.Success) h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
             // FRESH-022: 5fps is read, then refused
-            var fm = Regex.Match(r, @"p\s*(\d{1,3})|(\d{1,3})\s*fps|4k\s*(\d{1,3})"); fps = fm.Success ? int.Parse(fm.Groups.Cast<Group>().Skip(1).First(gg => gg.Success).Value, CultureInfo.InvariantCulture) : 30;
+            var fm = Regex.Match(r, @"p\s*(\d{1,3})|(\d{1,3})\s*fps|[48]k\s*(\d{1,3})"); fps = fm.Success ? int.Parse(fm.Groups.Cast<Group>().Skip(1).First(gg => gg.Success).Value, CultureInfo.InvariantCulture) : 30;
             if (h < 240 || h > 4320) return Need("Resolution", "type e.g. 1080p60");
             if (fps < 10 || fps > 240) return Need("Frame rate", "10 to 240 fps - e.g. 1080p60");
             double w = h * 16.0 / 9; string c = (codecText ?? "").ToLowerInvariant();

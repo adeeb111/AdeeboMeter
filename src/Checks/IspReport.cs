@@ -29,6 +29,8 @@ namespace AdeeboMeter
             return b[0] == 10 || b[0] == 127 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
         }
         static double Avg(PathTools.Hop h) { int got = h.Sent - h.Lost; return got > 0 ? h.Sum / got : double.NaN; }
+        // hunters11 core L-3: a grey loss figure says why it is grey - the summary and the chips, not only the hop table
+        static string LossNote(double l, bool real) { return l >= 1 && !real ? "doesn't carry on past this hop - a router ignoring probes, not real loss" : ""; }
         static double Loss(PathTools.Hop h) { return h.Sent > 0 ? 100.0 * h.Lost / h.Sent : double.NaN; }
 
         sealed class Route { public bool V6Only; public string Label, Host; public IPAddress Ip; public List<PathTools.Hop> Hops = new List<PathTools.Hop>(); }
@@ -116,12 +118,12 @@ namespace AdeeboMeter
 
             // each part of the path
             rows.Add(R(-1, "EACH PART OF THE PATH", main.Label + " · " + main.Hops.Sum(h => h.Sent) + " probes", "", "m"));
-            if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
+            if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), LossNote(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "m"));
             // bug-hunt ML-95: with a VPN on, a private first hop is the tunnel's far end, not the provider
             IPAddress fa; bool viaTunnel = firstIsp >= 0 && vpnOn && IPAddress.TryParse(main.Hops[firstIsp].Ip, out fa) && Private(fa);
-            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), (viaTunnel ? "First hop through the VPN tunnel (" : "Provider, first hop (") + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
+            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), (viaTunnel ? "First hop through the VPN tunnel (" : "Provider, first hop (") + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), LossNote(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "m")); }
             if (start >= 0) { var h = main.Hops[start]; rows.Add(R(2, "Where loss starts (hop " + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
-            if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
+            if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), LossNote(Loss(end), start >= 0 && end.N >= main.Hops[start].N), "m"));
 
             // hop by hop
             // who owns each public hop: only with online lookups switched on (public addresses go to RIPEstat) - otherwise said

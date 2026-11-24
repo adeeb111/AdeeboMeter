@@ -3818,7 +3818,7 @@ Data that minute	Données de cette minute
 Each Group in Detail	Chaque groupe en détail
 Energy and the Loonie	L’énergie et le huard
 Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.	Échap, réduire, le X ou Retour au coin vous ramènent au widget du coin, qui continue de surveiller. Pour quitter, faites un clic droit sur l’icône de la barre des tâches et choisissez Quitter.
-Every device on your network, grouped - with how fast each answers	Chaque appareil de votre réseau, regroupés - avec la vitesse de réponse de chacun
+Every device on your network, grouped - with how fast each answers	Chaque appareil de votre réseau, regroupé - avec la vitesse de réponse de chacun
 Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.	Chaque programme de votre PC est un ou plusieurs « processus » - une copie en cours avec sa propre mémoire. Windows lui-même en compte des dizaines, chacun avec une tâche.
 Find my match server	Trouver le serveur de mon match
 Find my switch port	Trouver mon port de commutateur
@@ -3898,7 +3898,7 @@ Wi-Fi roamed to another access point	Le Wi-Fi est passé à un autre point d’a
 Just woke up - waiting for Windows to join the network.	Je viens de me réveiller - j’attends que Windows rejoigne le réseau.
 Starting - waiting for Windows to join the network.	Démarrage - en attente que Windows rejoigne le réseau.
 You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.	Vous n’êtes connecté à aucun réseau, patron - le Wi-Fi est éteint, le câble est débranché ou le mode avion est activé.
-Not connected to any network (no Wi-Fi, no cable, or airplane mode).	Connecté à aucun réseau (pas de Wi-Fi, pas de câble ou mode avion).
+Not connected to any network (no Wi-Fi, no cable, or airplane mode).	Non connecté à un réseau (pas de Wi-Fi, pas de câble ou mode avion).
 Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.	L’appel devient instable (gigue {0}). Si les visages figent, coupez la vidéo - l’audio tiendra.
 Call quality dropping (jitter {0}). Turn video off if it stutters.	La qualité de l’appel baisse (gigue {0}). Coupez la vidéo si ça saccade.
 The internet isn't answering at all - your router is fine, so it's the line or your provider.	Internet ne répond pas du tout - votre routeur va bien, c’est donc la ligne ou votre fournisseur.
@@ -4173,3 +4173,10 @@ exact	exact
 Not measured yet.	Pas encore mesuré.
 up to 1 GB to the speed server you picked	jusqu'à 1 Go vers le serveur de vitesse choisi
 Same network twice	Même réseau deux fois
+The internet past your router / VPN is slow. Your PC and {0} are fine.	L'Internet au-delà de votre routeur / VPN est lent. Votre PC et {0} vont bien.
+The internet past your router is slow. Your PC and {0} are fine.	L'Internet au-delà de votre routeur est lent. Votre PC et {0} vont bien.
+start game monitoring on its own when a game opens	lancer la surveillance d'un jeu tout seul quand il s'ouvre
+Only inside a check you start (What's wrong? and the full checkup): one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	Seulement pendant une vérification que vous lancez (Qu'est-ce qui ne va pas ? et le bilan complet) : une toute petite requête à la page de test qu'utilise Windows, pour repérer les pages de connexion des hôtels et aéroports.
+Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	Seulement pendant une vérification que vous lancez (Qu'est-ce qui ne va pas ? et le bilan complet) : une requête à la page de test qu'utilise Windows lui-même (msftconnecttest.com).
+Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	Les vérifications utilisent TLS avec la validation de certificats de Windows (Windows choisit TLS 1.2 ou 1.3). Une exception : quand vous demandez un autre nom à l'inspecteur TLS, il accepte un certificat émis pour un autre nom et l'indique sur sa page. Les saisies sont validées ; aucun shell n'est jamais utilisé.
+and {0} more - Open a file... in the lab lists them all	et {0} de plus - Ouvrir un fichier... dans le lab les liste tous

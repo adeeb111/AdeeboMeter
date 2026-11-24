@@ -295,7 +295,7 @@ namespace AdeeboMeter
                     float plh = Draw.Measure(plain, Draw.fBig, (int)iw).Height;
                     Func<double, string, string> dayOf = (m0, u) => double.IsNaN(m0) ? "" : L.T("usually") + " " + m0.ToString("0", CultureInfo.CurrentCulture) + u;   // review L-4: the day's middle value, said as such
                     var tiles = new[] {
-                        new[] { "This PC", double.IsNaN(cpu) ? L.T("not measured") : cpu.ToString("0", CultureInfo.CurrentCulture) + "% " + Kit.Sent(L.T("CPU")), dayOf(replayMed[2], "%"), pcLv.ToString(CultureInfo.InvariantCulture), "path.PC" },
+                        new[] { "This PC", double.IsNaN(cpu) ? L.T("not measured") : cpu.ToString("0", CultureInfo.CurrentCulture) + "% " + Kit.Sent("CPU"), dayOf(replayMed[2], "%"), pcLv.ToString(CultureInfo.InvariantCulture), "path.PC" },
                         new[] { "Your router", L.T(ms(gw)), dayOf(replayMed[5], " ms"), lanLv.ToString(CultureInfo.InvariantCulture), "path.LAN" },
                         new[] { "The internet", L.T(ms(net)), dayOf(replayMed[6], " ms"), netLv.ToString(CultureInfo.InvariantCulture), "path.Internet" },
                         new[] { "Lost replies", double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "%", dayOf(replayMed[11], "%"), (double.IsNaN(loss) ? 3 : loss > 5 ? 2 : loss > 1 ? 1 : 0).ToString(CultureInfo.InvariantCulture), "" },
@@ -314,7 +314,7 @@ namespace AdeeboMeter
                 if (Cfg.Details)
                 {
                 // the numbers, each with where it came from; compared with the rest of that day
-                g.DrawString(Kit.Sent(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE")), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE"), Draw.fTiny, muted, x, y); y += 22 * S;
                 var rows = new List<object[]> {
                     new object[] { L.T("Router answered in"), ms(gw) + (Cfg.Details && !double.IsNaN(gwMax) ? " (worst " + ms(gwMax) + ")" : ""), "m", replayMed[5], gw, " ms" },
                     new object[] { L.T("Internet answered in"), ms(net) + (Cfg.Details && !double.IsNaN(netMax) ? " (worst " + ms(netMax) + ")" : ""), "m", replayMed[6], net, " ms" },
@@ -350,7 +350,7 @@ namespace AdeeboMeter
                 var near = data.E.Where(e => Math.Abs((e.T - at).TotalMinutes) <= 15).OrderBy(e => e.T).ToList();
                 // in a card, like the two above (24 Nov mockup)
                 float ex0 = x, ew0 = w; Kit.Box(g, new RectangleF(x, y, w, 14 * S + 22 * S + Math.Max(1, near.Count) * 26 * S + 10 * S), 14 * S); x += 16 * S; w -= 32 * S; y += 14 * S;
-                g.DrawString(Kit.Sent(L.T("WHAT CHANGED 15 MINUTES EITHER SIDE")), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("WHAT CHANGED 15 MINUTES EITHER SIDE"), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (near.Count == 0) { g.DrawString(Voice.P("Nothing changed around then. Quiet minute.", "No changes within 15 minutes."), Draw.fBody, muted, x, y); y += 26 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in near)

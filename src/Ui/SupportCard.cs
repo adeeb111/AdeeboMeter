@@ -93,7 +93,7 @@ namespace AdeeboMeter
 
             // ---- what a donation pays for (no prices - the real bills, named)
             {
-                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent(L.T("WHAT YOUR SUPPORT PAYS FOR")), Draw.fTiny, b, x, y);
+                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent("WHAT YOUR SUPPORT PAYS FOR"), Draw.fTiny, b, x, y);
                 y += 20 * S;
                 string[][] items = { new[] { "shield", "Code signing", "so Windows trusts the download instead of warning you" }, new[] { "windows", "Microsoft Store", "one-click installs and updates" }, new[] { "learn", "The website", "the guides, Learn and the phone app" } };
                 float cw = (w - 2 * 10 * S) / 3, ch = 0;
@@ -115,7 +115,7 @@ namespace AdeeboMeter
 
             // ---- the amounts: pick one, then one big button
             {
-                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent(L.T("CHIP IN - ONCE, ANY AMOUNT")), Draw.fTiny, b, x, y);
+                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent("CHIP IN - ONCE, ANY AMOUNT"), Draw.fTiny, b, x, y);
                 y += 20 * S;
                 float aw = (w - 4 * 8 * S) / 5, ah = 64 * S;
                 for (int i = 0; i <= Amounts.Length; i++)
@@ -155,7 +155,7 @@ namespace AdeeboMeter
             {
                 if (draw) using (var b = new SolidBrush(Theme.Dark ? Theme.Line : Theme.Line2)) g.FillRectangle(b, x, y, w, 1);
                 y += 18 * S;
-                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent(L.T("OR HELP FOR FREE")), Draw.fTiny, b, x, y);
+                if (draw) using (var b = new SolidBrush(mut)) g.DrawString(Kit.Sent("OR HELP FOR FREE"), Draw.fTiny, b, x, y);
                 y += 22 * S;
                 string[][] ways = { new[] { "star", "Star it on GitHub", "gh" }, new[] { "link", "Tell a friend", "share" }, new[] { "question", "Share an idea", "idea" }, new[] { "report", "Report a bug", "bug" } };
                 float ww = (w - 3 * 8 * S) / 4;

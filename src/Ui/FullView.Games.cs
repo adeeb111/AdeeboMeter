@@ -128,13 +128,13 @@ namespace AdeeboMeter
                 float hb2 = Button(learnInfo, g, roomHints == 0 ? "Hint (-1 min)" : roomHints == 1 ? "Another hint (-1 min)" : "No more hints", false, delegate { if (roomHints < 2) { roomOut.Add("HINT: " + L.T(roomHints == 0 ? room.F.Hint1 : room.F.Hint2)); roomHints++; learnInfo.Invalidate(); } }, x, y);
                 Button(learnInfo, g, "New scenario", false, delegate { NewRoom(); learnInfo.Invalidate(); }, x + hb2 + 10 * S, y);
                 y += 46 * S;
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("WHAT'S BROKEN?")), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("WHAT'S BROKEN?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FaultChoices, x, y, w, o => 0, o => { if (o == room.F.Name) { roomStage = 1; roomMsg = L.T("Right. Now - how do you fix it?"); } else { roomMiss++; roomMsg = L.T("Not that - it costs a minute. Look again."); } learnInfo.Invalidate(); });
             }
             else if (roomStage == 1)
             {
                 y = Say(g, room.F.Name, 0, x, y, w);
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("THE FIX?")), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("THE FIX?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FixChoices, x, y, w, o => 0, o =>
                 {
                     if (o == room.F.Fix) { roomStage = 2; if (roomMiss >= 3) Points.Me.MarkTried("game.room." + room.F.Id); string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)((LearnGames.Mono.ElapsedMilliseconds - roomStartMs) / 1000)) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
@@ -161,7 +161,7 @@ namespace AdeeboMeter
             using (var mb = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
             using (var nw = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
-                g.DrawString(Kit.Sent(L.T("DEVICES ON THE NETWORK  ·  CLICK ONE TO ACCUSE IT")), Draw.fTiny, mb, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("DEVICES ON THE NETWORK  ·  CLICK ONE TO ACCUSE IT"), Draw.fTiny, mb, x, y); y += 22 * S;
                 float[] cols = { 0, 0.22f, 0.37f, 0.60f, 0.75f, 0.89f }; string[] heads = { "Name", "Address", "Hardware address", "Maker", "First seen", "Data" };
                 for (int i = 0; i < heads.Length; i++) g.DrawString(L.T(heads[i]), Draw.fSmall, mb, x + cols[i] * w, y); y += 22 * S;
                 foreach (var d in thief.Devices)
@@ -178,11 +178,11 @@ namespace AdeeboMeter
                 y += 10 * S;
                 if (thief.Log.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("THE ROUTER'S LOG")), Draw.fTiny, mb, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent("THE ROUTER'S LOG"), Draw.fTiny, mb, x, y); y += 20 * S;
                     foreach (var l in thief.Log) { g.DrawString(l, Draw.fMono, sub, new RectangleF(x, y, w, 18 * S), nw); y += 19 * S; }
                     y += 10 * S;
                 }
-                g.DrawString(Kit.Sent(L.T("CLUES")), Draw.fTiny, mb, x, y); y += 20 * S;
+                g.DrawString(Kit.Sent("CLUES"), Draw.fTiny, mb, x, y); y += 20 * S;
                 for (int i = 0; i < thiefClues && i < thief.Clues.Length; i++) y = Lead2(g, (i + 1) + ". " + L.T(thief.Clues[i]), x, y, w);
             }
             if (thiefPick == "")
@@ -204,7 +204,7 @@ namespace AdeeboMeter
         {
             GameTick(false); int pi = DetAt(); var p = LearnGames.Detective[pi]; int wrong = int.Parse(p[2], CultureInfo.InvariantCulture);
             y = Say(g, (detIdx % LearnGames.Detective.Length + 1) + " / " + LearnGames.Detective.Length + "  ·  " + L.T(p[0]), 1, x, y, w);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("ONE OF THESE PACKETS IS WRONG - CLICK IT")), Draw.fTiny, mb, x, y); y += 22 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("ONE OF THESE PACKETS IS WRONG - CLICK IT"), Draw.fTiny, mb, x, y); y += 22 * S;
             var pk = p[1].Split('~');
             using (var sub = new SolidBrush(Theme.Sub)) using (var ink = new SolidBrush(Theme.Ink))
                 for (int i = 0; i < pk.Length; i++)

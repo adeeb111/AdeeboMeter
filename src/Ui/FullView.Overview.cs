@@ -161,8 +161,8 @@ namespace AdeeboMeter
                 // no boxes inside the card, no badges; where each number comes from is in the line under them
                 var s0 = snap; int lvPc = s0.Path.Length > 0 && s0.Path[0] >= 0 && s0.Path[0] <= 2 ? s0.Path[0] : 3;
                 bool memHot = !double.IsNaN(s0.Mem) && s0.Mem >= 85 && (double.IsNaN(s0.Cpu) || s0.Mem - 85 >= s0.Cpu - 85);
-                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + Kit.Sent(L.T("CPU"));
-                string pcSub = memHot ? Kit.Sent(L.T("CPU")) + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
+                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + Kit.Sent("CPU");
+                string pcSub = memHot ? Kit.Sent("CPU") + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
                                       : L.T("memory") + " " + Draw.Fmt(s0.Mem, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%");
                 if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
                 var tiles = new[] {
@@ -290,7 +290,7 @@ namespace AdeeboMeter
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
                 {
-                    g.DrawString(Kit.Sent(L.T("HOW WOULD YOU LIKE ADEEBOMETER?")), Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(Kit.Sent("HOW WOULD YOU LIKE ADEEBOMETER?"), Draw.fTiny, muted, x, y); y += 22 * S;
                     var opts = new[] {
                         new[] { "simple", "Simple", L.T("Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.") },
                         new[] { "pro", "Pro", L.T("All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.") } };
@@ -329,7 +329,7 @@ namespace AdeeboMeter
                 }
                 // needs attention
                 var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
-                g.DrawString(Kit.Sent(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS")), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
                 int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");   // a board host down 3 checks in a row, a certificate inside 30 days
                 if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -363,7 +363,7 @@ namespace AdeeboMeter
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
                 string lastCall = ""; lock (Calls.Summaries) if (Calls.Summaries.Count > 0) lastCall = "Last call (" + Calls.Summaries[0][0] + "): " + Calls.Summaries[0][1];
-                g.DrawString(Kit.Sent(L.T("TODAY")), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("TODAY"), Draw.fTiny, muted, x, y); y += 22 * S;
                 g.DrawString(today, Draw.fBody, sub, x, y); y += 24 * S;
                 if (lastCall != "") { float lh = Draw.Measure(lastCall, Draw.fBody, (int)w).Height; g.DrawString(lastCall, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S; }
                 y += 14 * S;

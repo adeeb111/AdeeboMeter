@@ -98,6 +98,17 @@ namespace AdeeboMeter
             {
                 langSheet = new DB { Name = "langSheet", BackColor = Theme.Bg, Visible = false, TabStop = true };
                 langSheet.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintLangSheet(e.Graphics); }; Wire(langSheet);
+                /* hunters11 core R-2: one cursor on screen - after an arrow key the keyboard outline sits on the arrow's tile,
+                   after Tab the highlight follows the outline */
+                var tabMark = langSheet.Mark;
+                if (tabMark != null) langSheet.Mark = delegate
+                {
+                    RectangleF tr;
+                    if (langArrow && langHover != null && langTiles.TryGetValue(langHover, out tr)) return tr;
+                    var m = tabMark();
+                    if (!langArrow) foreach (var kv in langTiles) if (kv.Value.IntersectsWith(m)) { if (langHover != kv.Key) { langHover = kv.Key; langSheet.Invalidate(); } break; }
+                    return m;
+                };
                 langSheet.MouseMove += delegate(object s, MouseEventArgs e) { string h = TileAt(e.Location); if (h != langHover) { langHover = h; langSheet.Invalidate(); } };
                 langSheet.MouseLeave += delegate { if (langHover != null) { langHover = null; langSheet.Invalidate(); } };
                 langSheet.PreviewKeyDown += delegate(object s, PreviewKeyDownEventArgs e) { if (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right || e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) e.IsInputKey = true; if (e.KeyCode == Keys.Tab) langArrow = false; };
@@ -209,7 +220,7 @@ namespace AdeeboMeter
                 string pv = hov ?? L.Code; var look = LookOfLang(pv);
                 using (var lg = new LinearGradientBrush(pr, Hex(look[2], Theme.Dark ? 40 : 22), Hex(look[3], Theme.Dark ? 40 : 22), 0f)) using (var path = Theme.Round(pr, 14 * S)) g.FillPath(lg, path);
                 float cx = pr.X + 18 * S;
-                string k = hov != null && hov != L.Code ? Kit.Sent(L.T("PREVIEW OF")) + " " + NativeName(pv) : Kit.Sent(L.T("POINT AT A LANGUAGE TO PREVIEW IT"));
+                string k = hov != null && hov != L.Code ? Kit.Sent("PREVIEW OF") + " " + NativeName(pv) : Kit.Sent("POINT AT A LANGUAGE TO PREVIEW IT");
                 var kf = LangFont(L.Code == "bn" || pv == "bn" ? "bn" : L.Code == "ar" || pv == "ar" ? "ar" : "en", 10.5f * S, true);
                 using (var kb = new SolidBrush(Kit.Mix(Hex(look[2], 255), Theme.Ink, Theme.Dark ? 0.35f : 0.1f))) { var ks = g.MeasureString(k, kf); g.DrawString(k, kf, kb, cx, pr.Y + (pr.Height - ks.Height) / 2); cx += ks.Width + 14 * S; }
                 if (hov != null && hov != L.Code)

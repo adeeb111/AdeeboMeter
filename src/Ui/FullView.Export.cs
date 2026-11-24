@@ -283,7 +283,7 @@ namespace AdeeboMeter
             }
             // the result rows, as a column of cards
             var rows = ResRows(); double ry = y0 + 10;
-            if (rows.Count > 0) box(Kit.Sent(L.T("THE RESULT")), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
+            if (rows.Count > 0) box(Kit.Sent("THE RESULT"), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
             if (rows.Count > 40) { box((rows.Count - 40) + " " + L.T("more rows not drawn - every row is in the JSON and CSV"), Txt + "fontColor=#6B7685;", 20, ry, 700, 20); ry += 24; }
             foreach (var o in rows.Take(40))
             {
@@ -412,7 +412,7 @@ namespace AdeeboMeter
                 // bug-hunt ML-173: the picture's own data (an exchange's actors and steps, a race's lanes, bars) is in the link too - so it's shown
                 if (f.Length > 6 && (f[4] == "x" || f[4] == "r" || f[4] == "b"))
                 {
-                    lines.Add("\n" + Kit.Sent(L.T("THE PICTURE")));
+                    lines.Add("\n" + Kit.Sent("THE PICTURE"));
                     foreach (var part in new[] { f[5], f[6] }) foreach (var it in part.Split('~').Where(z => z != "")) lines.Add("• " + string.Join(" · ", it.Split(',').Select(D).Where(z => z != "")));
                 }
                 if (f.Length > 7) foreach (var it in f[7].Split('~').Where(z => z != "")) { var p = it.Split(','); if (p.Length < 2) continue; lines.Add(p[0] == "-1" ? "\n" + D(p[1]).ToUpperInvariant() : "• " + D(p[1]) + (p.Length > 2 && p[2] != "" ? ": " + D(p[2]) : "") + (p.Length > 3 && p[3] != "" ? " (" + D(p[3]) + ")" : "")); }

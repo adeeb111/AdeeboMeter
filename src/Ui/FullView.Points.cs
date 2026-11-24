@@ -253,7 +253,7 @@ namespace AdeeboMeter
         float PaintBadges(Graphics g, float x, float y, float w)
         {
             var groups = PtAll().Where(i => i.Group != "").GroupBy(i => i.Group).ToList(); if (groups.Count == 0) return y;
-            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("BADGES")), Draw.fTiny, muted, x, y); y += 22 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("BADGES"), Draw.fTiny, muted, x, y); y += 22 * S;
             float bw = 104 * S, bh = 128 * S; int per = Math.Max(1, (int)((w + 10 * S) / (bw + 10 * S))); int k = 0;   // two lines for a name: "Hardware nerds" was cut to "Hardware ner…" (1.1.6 walk)
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var center = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisWord })
@@ -311,14 +311,14 @@ namespace AdeeboMeter
                     if (award && awardFile != "") y = PaintAwardSent(g, x, y, w, ink, sub, blue);
                     y = PaintBadges(g, x, y, w);
                     // how to earn
-                    g.DrawString(Kit.Sent(L.T("HOW TO EARN")), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent("HOW TO EARN"), Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var h in new[] { new[] { "Open a tool's Example, then run it for real", "+2, or +4 for the longer tests" }, new[] { "Run a tool marked replay again, 10 minutes or more later", "+3, once" }, new[] { "Read a Learn topic to the end", "+2" }, new[] { "Answer its Check yourself question right first time", "+2" }, new[] { "Meet a lab's challenge", "+4" }, new[] { "Subnetting practice: 5 in a row, then 10 in a row", "+3, then +5" }, new[] { "Explain a packet journey of your own", "+3" }, new[] { "Use a page for the first time", "+2" }, new[] { "Finish a learning path", "+10" }, new[] { "Reach " + Points.AwardAt, "the Adeebo Award" } })
                     {
                         g.DrawString(L.T(h[0]), Draw.fBody, ink, x, y); g.DrawString(L.T(h[1]), Draw.fBodyB, green, x + Math.Min(420 * S, w * 0.6f), y); y += 24 * S;
                     }
                     g.DrawString(L.T("Kept on this PC only. Every feature is below - Go takes you straight there."), Draw.fSmall, muted, x, y + 4 * S); y += 34 * S;
                     // learning paths: progress for each
-                    g.DrawString(Kit.Sent(L.T("LEARNING PATHS")), Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(Kit.Sent("LEARNING PATHS"), Draw.fTiny, muted, x, y); y += 22 * S;
                     var byKey = PtAll().GroupBy(i => i.Key).ToDictionary(gr => gr.Key, gr => gr.First());
                     float pw = Math.Max(220 * S, (w - 28 * S) / 3);
                     for (int i = 0; i < Paths.Length; i++)

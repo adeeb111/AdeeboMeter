@@ -156,7 +156,7 @@ namespace AdeeboMeter
                             var checks = Security.All.Where(c => c.Group == grp[0]).ToList();
                             int fine = checks.Count(c => { List<string[]> r0; return res.TryGetValue(c.Id, out r0) && SecLevel(r0) == 0; }), cant = checks.Count(c => { List<string[]> r0; return res.TryGetValue(c.Id, out r0) && SecLevel(r0) == 3; });
                             Glyphs.Tile(g, grp[0] == "pc" ? "pc" : grp[0] == "net" ? "cpe" : "lock", new RectangleF(x + 16 * S, y + 14 * S, 34 * S, 34 * S), Kit.Accent("security"), 9 * S);
-                            string gname = Kit.Sent(L.T(grp[1])); var gs = g.MeasureString(gname, Draw.fBodyB); g.DrawString(gname, Draw.fBodyB, ink, x + 62 * S, y + 21 * S);
+                            string gname = Kit.Sent(grp[1]); var gs = g.MeasureString(gname, Draw.fBodyB); g.DrawString(gname, Draw.fBodyB, ink, x + 62 * S, y + 21 * S);
                             string gsub = checks.Count + " " + L.T("checks") + (res.Count > 0 ? " · " + fine + " " + L.T("fine") + (cant > 0 ? ", " + cant + " " + L.T("couldn't check") : "") : "");
                             g.DrawString(gsub, Draw.fSmall, muted, x + 62 * S + gs.Width + 6 * S, y + 23 * S);
                             // the chevron: open or close the group

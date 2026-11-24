@@ -148,8 +148,8 @@ namespace AdeeboMeter
             using (var line = new Pen(Theme.Line2)) g.DrawLine(line, x, hh - 1, x + w, hh - 1);
             using (var muted = new SolidBrush(Theme.Muted)) using (var on = new SolidBrush(Theme.Ink))
             {
-                g.DrawString(Kit.Sent(L.T("APP")), Draw.fTiny, muted, x + 20 * S, 9 * S);
-                string mh = Kit.Sent(L.T("MEMORY")) + (procByCpu ? "" : " ▼"), ch = Kit.Sent(L.T("CPU")) + (procByCpu ? " ▼" : "");
+                g.DrawString(Kit.Sent("APP"), Draw.fTiny, muted, x + 20 * S, 9 * S);
+                string mh = Kit.Sent("MEMORY") + (procByCpu ? "" : " ▼"), ch = Kit.Sent("CPU") + (procByCpu ? " ▼" : "");
                 var mz = g.MeasureString(mh, Draw.fTiny); var cz = g.MeasureString(ch, Draw.fTiny);
                 float mx = x + w - 64 * S - mz.Width, cx = x + w - cz.Width;
                 g.DrawString(mh, Draw.fTiny, procByCpu ? muted : on, mx, 9 * S); g.DrawString(ch, Draw.fTiny, procByCpu ? on : muted, cx, 9 * S);

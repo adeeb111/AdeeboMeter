@@ -40,7 +40,7 @@ namespace AdeeboMeter
             sb.Append("<div class=\"chips\">");
             Action<string, string, string, int> chip = (k, val, sub, l) => sb.Append("<div class=\"chip\" style=\"background:" + (l == 2 ? "#FDE7E9" : l == 1 ? "#FFF4D6" : l == 0 ? "#E6F4EA" : "#F6F8FB") + "\"><span>" + X(k) + "</span><b>" + X(val) + "</b><span>" + X(sub) + "</span></div>");
             chip(("Connection"), v.Wifi ? "Wi-Fi" : ("Cable"), v.Wifi ? ("a cable test rules Wi-Fi out") : ("Wi-Fi not involved"), v.Wifi ? 1 : 0);
-            if (router != null) chip(("Home router"), N1(Avg(router)) + " ms", ("loss") + " " + N1(Loss(router)) + "%", Loss(router) < 1 ? 0 : from != null && router.N >= from.N ? 1 : 3);   /* loss that stops there: the router ignoring probes */
+            if (router != null) chip(("Home router"), N1(Avg(router)) + " ms", ("loss") + " " + N1(Loss(router)) + "%" + (Loss(router) >= 1 && !(from != null && router.N >= from.N) ? " · ignores probes - not real loss" : ""), Loss(router) < 1 ? 0 : from != null && router.N >= from.N ? 1 : 3);   /* loss that stops there: the router ignoring probes */
             if (isp != null) chip(("Provider's first hop"), N1(Avg(isp)) + " ms", ("loss") + " " + N1(Loss(isp)) + "%" + (from != null && isp.N >= from.N ? " · " + ("carries on") : ""), from != null && isp.N >= from.N ? 2 : 0);
             if (from != null) chip(("Loss starts"), ("hop") + " " + from.N, v.Nm(from.Ip), 2);
             // bug-hunt ML-96/97: the destination's own loss, always - and named for what it is when the destination itself never answered

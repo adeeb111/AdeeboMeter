@@ -148,7 +148,7 @@ A full-screen window, built only when you open it and destroyed when you leave.
 - **Details** shows raw values, sources and the exact time each was read, on every page that has them.
 - **The path strip:** five dots. **Click a dot** to jump to the page that explains it (PC → What's running, Wi-Fi/LAN → Your Wi-Fi, the rest → Check a destination).
 - **Side panel:** TCP/IP health, CPU/memory/disk/download bars, top apps by memory and CPU. It shows fewer rows on small screens instead of cutting them off.
-- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 332 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
+- **Hover explanations:** wherever the mouse turns into a **?** cursor, a card explains it — 407 terms and 72 programs. Each page records "hot spots" while it paints; the mouse just looks them up.
 - **Small screens / high scaling:** page buttons switch to short names, extra filter chips hide, and the side panel shrinks to 30% of the width.
 - **Footer:** AdeeboMeter's own CPU and memory, against an 99 MB budget.
 
@@ -278,7 +278,7 @@ Only if Wireshark (tshark + Npcap) is installed, and **only while you press Star
 - **About** tells this whole story in short, and lists **live** exactly what leaves your PC with your current settings.
 
 ### 5.20 `SelfTest` — proof, not promises
-`AdeeboMeter.exe --selftest` runs 104 checks and writes `AdeeboMeter-selftest.txt`. Among them:
+`AdeeboMeter.exe --selftest` runs 100 checks and writes `AdeeboMeter-selftest.txt`. Among them:
 - the counters, socket tables and DNS reading work
 - **never listens**
 - input validation rejects bad destinations
@@ -486,8 +486,9 @@ from your faith, or *Common to all* when none is chosen.
 ### 13.1 Five languages (`L`, `knowledge/lang-xx.txt`, `FullView.Lang`)
 Every text the app shows goes through `L.T("English")`. Each language is a plain table in `knowledge/lang-fr.txt` (`-es`,
 `-ar`, `-bn`): the English, a TAB, the translation; a missing line stays in English. `tools/langcheck.py fr` lists what a
-table still needs and writes the `#coverage` line shown on the language card (100% for all four in 1.1.6). Arabic turns
-the whole window right to left. The switch happens at once; a restart finishes the screens that were already built.
+table still needs and writes the `#coverage` line shown on the language card (it counts the screens' own text; Learn
+content reached through variables is not counted, and French still has some of it in English). Arabic text reads right
+to left; the window's layout itself is not mirrored. The switch happens at once; a restart finishes the screens that were already built.
 Engineering text that names commands and programs (AdeeboShell's hints, the "waiting on" note) stays English on purpose.
 
 ### 13.2 AdeeboShell (`FullView.Shell`, `FullView.ShellSys`, `ShellAwk`, `TermView`, `TermEditor`)
@@ -553,8 +554,8 @@ a remembered phone comes back with Face ID or a fingerprint instead of a code.
 Markets, Sports and Outlook are drawn as newspaper pages by `Paper` (masthead, laurels, columns). The masthead's side
 blocks appear only when they fit between the page edge and the laurels, the last item moving to its own line before
 giving up. The Gamer HUD shows ping as a gauge with its grade and the last minute with spikes and losses. Home is one
-verdict with the path, four live numbers and big tiles; a NOW line (router, internet, Wi-Fi, PC load) sits on Gamer,
-Streaming and Markets.
+verdict with the path, four live numbers and big tiles; a NOW line (router, internet, Wi-Fi, PC load) sits on
+Streaming and Markets; Gamer has its own HUD instead.
 
 ### 13.6 Saying what it's waiting on (`Busy` in `Program.cs`)
 `Busy.Begin("what")` marks work in progress and `End()` removes it. Every Windows program AdeeboMeter starts (`Job.Run`:

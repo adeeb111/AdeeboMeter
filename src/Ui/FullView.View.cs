@@ -103,7 +103,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T(v[2]), Draw.fSmall, sb, new RectangleF(cx + 50 * S, cy + 24 * S, r.Right - cx - 68 * S, 34 * S), nf);   // two lines at most
             if (cur)
             {
-                string t = Kit.Sent(L.T("IN USE")); var ts = g.MeasureString(t, Draw.fTiny); var tr = new RectangleF(r.Right - ts.Width - 30 * S, r.Y + 16 * S, ts.Width + 14 * S, 20 * S);
+                string t = Kit.Sent("IN USE"); var ts = g.MeasureString(t, Draw.fTiny); var tr = new RectangleF(r.Right - ts.Width - 30 * S, r.Y + 16 * S, ts.Width + 14 * S, 20 * S);
                 Theme.Fill(g, tr, 10 * S, Kit.Accent(a1)); using (var tb = new SolidBrush(Theme.OnBlue)) g.DrawString(t, Draw.fTiny, tb, tr.X + 7 * S, tr.Y + (20 * S - ts.Height) / 2);
             }
             // the points: pages, pace, corner
@@ -235,7 +235,7 @@ namespace AdeeboMeter
         {
             name = n ?? ""; a1 = acc1; a2 = acc2; icon = ic; AccessibleName = L.T("View: ") + name;
             float S = Draw.S; var f = Draw.fBodyB ?? Font;
-            Width = (int)(Math.Max(Draw.Measure(name, f, 0).Width, Draw.Measure(Kit.Sent(L.T("VIEW")), Draw.fTiny ?? Font, 0).Width) + 74 * S); Height = (int)(38 * S);
+            Width = (int)(Math.Max(Draw.Measure(name, f, 0).Width, Draw.Measure(Kit.Sent("VIEW"), Draw.fTiny ?? Font, 0).Width) + 74 * S); Height = (int)(38 * S);
             Invalidate();
         }
         protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
@@ -255,7 +255,7 @@ namespace AdeeboMeter
             using (var cb = new SolidBrush(Theme.Blue)) g.FillEllipse(cb, ic);
             Kit.Icon(g, icon, new RectangleF(ic.X + 6 * S, ic.Y + 6 * S, 14 * S, 14 * S), Theme.OnBlue);
             float tx = ic.Right + 8 * S;
-            using (var mb = new SolidBrush(Theme.BlueText)) g.DrawString(Kit.Sent(L.T("VIEW")), Draw.fTiny, mb, tx, 3 * S);
+            using (var mb = new SolidBrush(Theme.BlueText)) g.DrawString(Kit.Sent("VIEW"), Draw.fTiny, mb, tx, 3 * S);
             using (var nb = new SolidBrush(Theme.Ink)) g.DrawString(name, Draw.fBodyB, nb, tx - 1 * S, 14 * S);
             // the chevron, drawn (no font glyph needed)
             float cx = Width - 18 * S, cy = Height / 2f + (sel ? -1 : 1) * 1.5f * S, d = 4 * S;

@@ -55,8 +55,8 @@ namespace AdeeboMeter
             int vlv = none ? 3 : verdict.StartsWith("READY", StringComparison.Ordinal) ? 0 : verdict.StartsWith("NO", StringComparison.Ordinal) ? 2 : 1;
             // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
             // sentence case like the rest of the app (review 24 Nov); the program's own name keeps its spelling
-            string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? Kit.Sent(L.T("WAIT - ")) + verdict.Substring(7)
-                : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? Kit.Sent(L.T("EXPECT LAG - ") + L.T(verdict.Substring(13))) : Kit.Sent(L.T(verdict));
+            string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? Kit.Sent("WAIT - ") + verdict.Substring(7)
+                : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? Kit.Sent(L.T("EXPECT LAG - ") + L.T(verdict.Substring(13))) : Kit.Sent(verdict);
             float px = x + 22 * S;
             using (var sub = new SolidBrush(Theme.Sub)) using (var ink = new SolidBrush(plv == 0 ? Theme.Ink : Theme.LvText(plv)))
             {

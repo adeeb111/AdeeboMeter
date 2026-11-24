@@ -131,8 +131,8 @@ namespace AdeeboMeter
             var need = new List<int>(); foreach (var w in (sizes ?? "").Split(new[] { ',', ' ', ';', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)) { int n; if (!int.TryParse(w, NumberStyles.None, CultureInfo.InvariantCulture, out n) || n < 1 || n > 16777214) { rows.Add(R(2, "Sizes", "\"" + w + "\" isn't a host count - type e.g. 200, 60, 12, 2", "", "u")); return rows; } need.Add(n); }
             if (need.Count == 0) { rows.Add(R(2, "Sizes", "type how many hosts each subnet needs, e.g. 200, 60, 12, 2", "", "u")); return rows; }
             if (need.Count > 64) { rows.Add(R(2, "Sizes", "64 subnets at most", "", "u")); return rows; }
-            uint start = Be(ip.GetAddressBytes()); uint bmask = pre == 0 ? 0 : 0xFFFFFFFFu << (32 - pre); start &= bmask; ulong end = (ulong)start + (1UL << (32 - pre));
-            rows.Add(R(3, "Block", U(start) + "/" + pre + "  (" + I(1L << (32 - pre)) + " addresses)", "Biggest first, so every subnet lands on its own boundary.", "i"));
+            uint start = Be(ip.GetAddressBytes()); uint bmask = pre == 0 ? 0 : 0xFFFFFFFFu << (32 - pre); uint typed = start; start &= bmask; ulong end = (ulong)start + (1UL << (32 - pre));
+            rows.Add(R(3, "Block", U(start) + "/" + pre + "  (" + I(1L << (32 - pre)) + " addresses)", (typed != start ? U(typed) + " isn't the network address - the block starts at " + U(start) + ". " : "") + "Biggest first, so every subnet lands on its own boundary.", "i"));   /* hunters11 lab L-6 */
             var order = need.Select((n, i) => new { n, i }).OrderByDescending(x => x.n).ThenBy(x => x.i).ToList();
             ulong at = start; long used = 0; bool full = false;
             foreach (var x in order)

@@ -10,7 +10,7 @@
 <meta property="og:description" content="الإشارات للشركات الصغيرة والمتوسطة، البوابات تحمل بياناتك.">
 <meta property="og:type" content="article">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
@@ -62,7 +62,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"The 4G core: MME, SGW, PGW, HSS","description":"The MME signals; the gateways carry your data. The MME authenticates you and tracks which area you're in. The SGW carries your data from the tower; the PGW…","url":"https://adeebometer.com/learn/epc.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"Mobile, LTE and 5G","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"النواة 4G: MME، SGW، PGW، HSS","description":"الإشارات للشركات الصغيرة والمتوسطة، البوابات تحمل بياناتك.","url":"https://adeebometer.com/ar/learn/epc.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"ar","isAccessibleForFree":true,"about":"الهاتف المحمول، LTE و 5G","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
 <script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><meta property="og:locale" content="ar_AR">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/epc.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/epc.html">
@@ -88,7 +88,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </ol></div>
 <h2>عندما تحدث مشكلة</h2>
 <div class="card warn"><p>مشكلة الشركات الصغيرة تعني أن الهواتف لا تستطيع توصيلها على الإطلاق مشكلة PGW أو APN تعني ملحق ولكن لا توجد بيانات - الشريط تبدو بخير.</p></div>
-<h2>إذهب أعمق</h2>
+<h2>اذهب أعمق</h2>
 <p>تسير إشارات التحكّم من eNodeB إلى MME عبر S1-MME، ببروتوكول S1AP الذي يحمل NAS. أما البيانات فتسير داخل أنفاق GTP-U: من eNodeB إلى SGW عبر S1-U، ثم إلى PGW عبر S5/S8، ثم إلى الإنترنت عبر SGi. لكل نفق معرّف TEID؛ لذا يظهر التقاط S1-U حزمك داخل أغلفة GTP. يطلب MME مفاتيحك وملفك من HSS عبر S6a وبروتوكول Diameter، ويحدّد PCRF السياسات وQoS لحوامل البيانات. عند التجوال قد تكون PGW في شبكتك الأصلية، فتمرّ البيانات بها أولًا، وهو أحد أسباب بطء التجوال.</p>
 <h2>تحقق سريع</h2>
 <div class="quiz" data-id="epc"><p>في جوهر 4G، أي جزء يتعامل مع الإشارات والتنقل (لا البيانات الخاصة بك) ؟</p>

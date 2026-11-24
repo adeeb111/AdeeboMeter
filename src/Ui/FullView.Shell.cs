@@ -26,7 +26,7 @@ namespace AdeeboMeter
         Panel shellPage; TermView term;
         static readonly Color ShBg = Color.FromArgb(12, 16, 22), ShFg = Color.FromArgb(201, 209, 217), ShDim = Color.FromArgb(125, 133, 144),
             ShGreen = Color.FromArgb(63, 220, 110), ShAmber = Color.FromArgb(230, 170, 50), ShRed = Color.FromArgb(248, 81, 73), ShCyan = Color.FromArgb(57, 207, 220), ShBlue = Color.FromArgb(88, 166, 255), ShPurple = Color.FromArgb(188, 140, 255);
-        readonly List<string> shHist = new List<string>(); int shHi = -1; string shDraft; string shLast = "";
+        readonly List<string> shHist = new List<string>(); readonly Dictionary<string, string> shHistRaw = new Dictionary<string, string>(); int shHi = -1; string shDraft; string shLast = "";
         List<Tool> shTools;
         volatile ShJob shFg; readonly List<ShJob> shJobs = new List<ShJob>(); int shJobN; readonly Dictionary<int, int> shDone = new Dictionary<int, int>();
         volatile ManualResetEvent shAskWait; string shAskAnswer; bool shTabTwice; string shPasteBlock;
@@ -65,6 +65,8 @@ namespace AdeeboMeter
         sealed class ShCtx { public ShJob Job; public ShOut Out; public ShIn In; public string Stdin { get { return In == null ? null : In.Rest; } set { In = value == null ? null : new ShIn { Rest = value }; } } public List<string> Args = new List<string>(); public bool Yes, Script, Sub; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, In = ReferenceEquals(stdin, Stdin) ? In : stdin == null ? null : new ShIn { Rest = stdin }, Args = Args, Yes = Yes, Script = Script, Sub = Sub, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
+        // hunters11 shell ML-6: Ctrl+C stops the text tools too - the next line they write ends them
+        sealed class ShCancel : Exception { public ShCancel() : base("stopped") { } }
         sealed class ShTooBig : Exception { public ShTooBig() : base("more than 16 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
         const int ShMaxCap = 8 * 1024 * 1024;   // characters (2 bytes each): 16 MB, inside the app's 99 MB budget (review 24 Nov - 64 M characters was 128 MB)
 
@@ -74,6 +76,7 @@ namespace AdeeboMeter
             var mono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : IsFont("Consolas") ? "Consolas" : FontFamily.GenericMonospace.Name, 10.5f);
             term = new TermView(mono) { Dock = DockStyle.Fill, Bg = ShBg, Fg = ShFg };
             term.TermKey += ShKey; term.TermChar += ShChar; term.Paste = ShPaste;
+            term.CopyScrub = ShScrub;
             term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(ShScrub(t).Replace("\n", "\r\n"));   /* round 6: Copy hides secrets too, like history and Save-log */ term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
             term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Path.Combine(Path.GetDirectoryName(f), Path.GetFileNameWithoutExtension(f).Split(new[] { " (" }, StringSplitOptions.None)[0] + " (" + k + ").txt");   /* review UI-5: never over an earlier save */ File.WriteAllText(f, ShScrub(t).Replace("\n", "\r\n"));   /* L-1: output lines too (env, echo $TOKEN) */ term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
             shellPage.Controls.Add(term);
@@ -134,6 +137,7 @@ namespace AdeeboMeter
         void O(ShCtx c, string s, Color col)
         {
             if (c.Job != null && c.Job.Abandoned) return;   // let go of with ^C^C: nothing more from it (#34)
+            if (shTextCmd && c.Job != null && c.Job.Cancel) throw new ShCancel();   // only inside a text tool - a network tool still prints its summary after ^C
             if (c.Out.Screen) { if (c.Job != null && c.Job.Bg) { lock (c.Job.Saved) if (c.Job.Saved.Length < 4 * 1024 * 1024) c.Job.Saved.Append(s); } else SW(s, col); }
             else { lock (c.Out.Cap) { if (c.Out.Cap.Length + s.Length > ShMaxCap) throw new ShTooBig(); c.Out.Cap.Append(s); } if (c.Out.Tee) { c.Out.LastTee = DateTime.UtcNow.Ticks; SW(s, col); } }
         }
@@ -164,7 +168,7 @@ namespace AdeeboMeter
             if (lines.Count <= 1 || shAskWait != null || shFg != null) { string one = string.Join(" ", lines).Replace("\t", " "); term.Input = term.Input.Insert(term.Caret, one); term.Caret += one.Length; term.Invalidate(); return; }
             shPasteBlock = (term.Input.Trim() != "" ? term.Input + "\n" : "") + string.Join("\n", lines); term.Input = ""; term.Caret = 0;
             term.Write("\n", ShFg);
-            foreach (var l in lines.Take(14)) term.Write("  │ " + l + "\n", ShDim);
+            foreach (var l in lines.Take(14)) term.Write("  │ " + ShScrub(ShMasked(l)) + "\n", ShDim);   /* hunters11 shell ML-2 */
             if (lines.Count > 14) term.Write("  │ … " + (lines.Count - 14) + " more lines\n", ShDim);
             term.Write("Pasted " + lines.Count + " lines. Enter runs them · Esc cancels\n", ShAmber);
             ShPrompt();
@@ -183,7 +187,7 @@ namespace AdeeboMeter
             if (k != Keys.Tab) shTabTwice = false;
             if (e.Control && k == Keys.C) { e.SuppressKeyPress = true; if (term.Copy()) return; ShInterrupt(); return; }
             if (e.Control && k == Keys.V) { e.SuppressKeyPress = true; ShPaste(); return; }
-            if (e.Control && k == Keys.L) { e.SuppressKeyPress = true; term.Clear(); ShPrompt(); return; }
+            if (e.Control && k == Keys.L) { e.SuppressKeyPress = true; term.ClearScreen(); ShPrompt(); return; }
             if (e.Control && k == Keys.U) { e.SuppressKeyPress = true; term.Input = inp.Substring(c); term.Caret = 0; term.Invalidate(); return; }
             if (e.Control && k == Keys.K) { e.SuppressKeyPress = true; term.Input = inp.Substring(0, c); term.Invalidate(); return; }
             if (e.Control && k == Keys.A) { e.SuppressKeyPress = true; term.Caret = 0; term.Invalidate(); return; }
@@ -199,27 +203,27 @@ namespace AdeeboMeter
                 case Keys.Right: e.SuppressKeyPress = true; if (c < inp.Length) { if (e.Control) { int n = inp.IndexOf(' ', c + 1); term.Caret = n < 0 ? inp.Length : n; } else term.Caret = c + 1; term.Invalidate(); } return;
                 case Keys.Home: e.SuppressKeyPress = true; term.Caret = 0; term.Invalidate(); return;
                 case Keys.End: e.SuppressKeyPress = true; term.Caret = inp.Length; term.Invalidate(); return;
-                case Keys.Escape: e.SuppressKeyPress = true; if (inp == "" && !ShBusy) { SelectNextControl(term, true, true, true, true); return; } term.Input = ""; term.Caret = 0; term.Invalidate(); return;   // hunters10 H-1: Esc on an empty line leaves the shell (a second Esc then works as everywhere else)
+                case Keys.Escape: e.SuppressKeyPress = true; if (inp == "" && shFg == null) { SelectNextControl(term, true, true, true, true); return; }   /* hunters11 ML-8: a background job no longer holds Esc */ term.Input = ""; term.Caret = 0; term.Invalidate(); return;   // hunters10 H-1: Esc on an empty line leaves the shell (a second Esc then works as everywhere else)
                 case Keys.Tab: e.SuppressKeyPress = true; if (shAskWait == null) ShComplete(); return;
                 case Keys.Up: case Keys.Down:
                     e.SuppressKeyPress = true; if (shAskWait != null || shHist.Count == 0) return;
                     if (shHi < 0 && k == Keys.Up) shDraft = inp;
                     shHi = k == Keys.Up ? (shHi < 0 ? shHist.Count - 1 : Math.Max(0, shHi - 1)) : (shHi < 0 ? -1 : shHi + 1);
-                    if (shHi >= shHist.Count || shHi < 0) { shHi = -1; term.Input = shDraft ?? ""; shDraft = null; } else term.Input = shHist[shHi];
+                    if (shHi >= shHist.Count || shHi < 0) { shHi = -1; term.Input = shDraft ?? ""; shDraft = null; } else { string raw; term.Input = shHistRaw.TryGetValue(shHist[shHi], out raw) ? raw : shHist[shHi]; }   /* hunters11 shell ML-3: Up brings back what you typed, the screen and `history` keep the masked form */
                     term.Caret = term.Input.Length; term.Invalidate(); return;
             }
         }
         void ShInterrupt()
         {
             var fg = shFg;
-            if (shAskWait != null) { shAskAnswer = null; var w = shAskWait; shAskWait = null; term.Write(term.Input + "^C\n", ShDim); term.Input = ""; term.Caret = 0; w.Set(); return; }
+            if (shAskWait != null) { shAskAnswer = null; var w = shAskWait; shAskWait = null; term.Write((term.Secret ? new string('*', term.Input.Length) : ShMasked(term.Input)) + "^C\n", ShDim); term.Input = ""; term.Caret = 0; w.Set(); return; }
             if (fg != null)
             {
                 // #34: let go means let go - nothing more from it reaches the screen or a file
                 if (fg.Cancel && (DateTime.UtcNow - fg.CancelAt).TotalSeconds > 2) { fg.Abandoned = true; term.EndLive(); term.Write("^C again - let go of it: it may still finish out of sight, but nothing more from it is shown or written\n", ShAmber); ShFinishFg(fg, 130); return; }
                 fg.Cancel = true; fg.CancelAt = DateTime.UtcNow; lock (fg.Runs) foreach (var r in fg.Runs) r.Stop = true; term.Write("^C\n", ShAmber); return;
             }
-            term.Write(term.Input + "^C\n", ShDim); term.Input = ""; term.Caret = 0; ShPrompt();
+            term.Write(ShMasked(term.Input) + "^C\n", ShDim); term.Input = ""; term.Caret = 0; ShPrompt();   /* hunters11 shell ML-1 */
         }
         void ShEnter()
         {
@@ -230,19 +234,22 @@ namespace AdeeboMeter
         {
             term.Follow(); term.ClearSel();
             if (shAskWait != null) { term.Write(term.Secret ? new string('*', line.Length) + "\n" : line + "\n", ShFg); shAskAnswer = line; var w = shAskWait; shAskWait = null; term.Secret = false; term.ShowInput = false; term.Invalidate(); w.Set(); return; }
-            if (shFg != null) return;   // a command is running: Ctrl+C first
+            if (shFg != null) { if (line.Trim() != "") { term.Input = line; term.Caret = line.Length; term.Flash("still running - your line waits here; Ctrl+C stops the command"); } return; }   /* hunters11 shell ML-5: never lost */
             // the line as typed goes on the screen right after the prompt (secrets as ****)
             var p = term.PromptSegs; foreach (var sg in p) term.Write(sg.T, sg.C);
             string shown = ShMasked(line); term.Write(shown.Replace("\n", "\n> ") + "\n", ShFg);
             line = line.Trim(); shHi = -1; shDraft = null;
             if (line == "") { ShPrompt(); return; }
             string hist = shown.Replace("\n", " ; ").Replace("do ;", "do").Replace("then ;", "then").Replace("else ;", "else");   // history keeps it on one line
-            shHist.Remove(hist); shHist.Add(hist); if (shHist.Count > 500) shHist.RemoveAt(0);
+            shHist.Remove(hist); shHist.Add(hist); if (shHist.Count > 500) { shHistRaw.Remove(shHist[0]); shHist.RemoveAt(0); }
+            string rawOne = line.Replace("\n", " ; ").Replace("do ;", "do").Replace("then ;", "then").Replace("else ;", "else");   // memory only, never saved
+            if (rawOne != hist) shHistRaw[hist] = rawOne; else shHistRaw.Remove(hist);
             var job = new ShJob { Id = 0, Cmd = hist, Started = DateTime.UtcNow }; shNow = null; shNowAt = DateTime.UtcNow; shFg = job; term.ShowInput = false; term.Invalidate();
             var t = new Thread(() =>
             {
                 int ex = 0;
                 try { ex = ShRunText(line, new ShCtx { Job = job, Out = new ShOut { Job = job } }); }
+                catch (ShCancel) { ex = 130; }
                 catch (OutOfMemoryException) { GC.Collect(); SW("shell: ran out of memory - that command was stopped (AdeeboMeter carries on)\n", ShRed); ex = 2; }   // #10: never the whole app
                 catch (Exception e2) { Program.Log("shell: " + e2); SW("shell: " + e2.Message + "\n", ShRed); ex = 2; }
                 Ui(delegate { if (shFg == job) ShFinishFg(job, ex); });
@@ -632,7 +639,7 @@ namespace AdeeboMeter
         int Stage(Node n, ShCtx c) { var cmd = n as NCmd; return cmd != null ? RunCmd(cmd, c) : Exec(n, c); }
         int ShBackground(NPipe p, ShCtx c)
         {
-            var job = new ShJob { Id = Interlocked.Increment(ref shJobN), Bg = true, Cmd = p.Text ?? "(job)" }; lock (shJobs) shJobs.Add(job);
+            var job = new ShJob { Id = Interlocked.Increment(ref shJobN), Bg = true, Cmd = ShMasked(p.Text ?? "(job)") };   /* hunters11 shell ML-1: started, done and jobs show it masked */ lock (shJobs) shJobs.Add(job);
             Node body = p.Cmds.Count == 1 ? p.Cmds[0] : new NPipe { Cmds = p.Cmds, Text = p.Text };
             var env = Env.Clone(); var args = c.Args; bool yes = c.Yes;
             OL(c, "[" + job.Id + "] started  " + job.Cmd, ShDim);
@@ -1043,8 +1050,9 @@ namespace AdeeboMeter
                 foreach (var part in f.Substring(d.Length).Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     if (part.EndsWith(".", StringComparison.Ordinal) || part.EndsWith(" ", StringComparison.Ordinal)) return false;
+                    if (Regex.IsMatch(part, @"^(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])(\..*)?$", RegexOptions.IgnoreCase)) return false;   /* hunters11 shell L-20: a device name, not a file */
                     walk = Path.Combine(walk, part);
-                    if ((File.Exists(walk) || Directory.Exists(walk)) && IsLink(walk)) return false;
+                    if (LinkAt(walk)) return false;   /* hunters11 shell M-1: a link whose target is missing is still a link - it is checked too */
                 }
                 string ff = f.TrimEnd('\\'); if (File.Exists(ff) && LinkId(ff) != null) return false;   // a hard link: writing it changes the same file under its other name, maybe outside /data
                 return true;
@@ -1259,11 +1267,19 @@ namespace AdeeboMeter
                 Err(c, "adeeboshell: " + cmd + ": command not found - AdeeboShell runs AdeeboMeter's tools and its own commands, never other programs (no cmd, PowerShell or .exe)" + (near.Count > 0 ? " - did you mean: " + string.Join(", ", near) + "?" : "  (help lists them)"));
                 return 127;
             }
+            catch (ShCancel) { return 130; }
             catch (Exception e) { if (e is OutOfMemoryException || e is ThreadAbortException || e is ShFlow) throw; Err(c, cmd + ": " + e.Message); if (!(e is ShTooBig)) Program.Log("shell " + cmd + ": " + e); return 2; }
         }
         static readonly string[] ShCmds = { "help", "man", "tools", "ls", "ll", "cd", "home", "pwd", "cat", "head", "tail", "grep", "sort", "uniq", "wc", "cp", "mv", "mkdir", "rm", "touch", "find", "tree", "echo", "printf", "open", "pages", "status", "debug", "log", "history", "clear", "copy", "save", "exit", "lab", "source", "alltools", "parallel", "jobs", "wait", "kill", "sleep", "seq", "date", "whoami", "hostname", "uname", "env", "export", "unset", "set", "read", "test", "[", "true", "false", "time", "basename", "dirname", "which", "type", "tee", "du", "stat", "hash", "nano", "vim", "vi", "iperf3", "df", "du", "free", "uptime", "ps", "top", "htop", "ip", "ifconfig", "route", "ss", "netstat", "lsblk", "lscpu", "nproc", "id", "who", "w", "watch", "cut", "tr", "sed", "awk", "xargs", "less", "more", "rev", "nl", "shuf", "base64", "md5sum", "sha1sum", "sha256sum", "traceroute", "tracert", "nslookup", "host", "curl", "wget", "rmdir", "realpath", "egrep", "fgrep", "printenv", "declare", "sha512sum", "gawk", "return", "break", "continue", "until", "most", "local", "typeset", "readonly" };
 
+        [ThreadStatic] static bool shTextCmd;
+        static readonly HashSet<string> ShTextCmds = new HashSet<string> { "seq", "sort", "grep", "egrep", "fgrep", "sed", "cut", "rev", "nl", "shuf", "uniq", "tr", "awk", "head", "tail", "cat", "tac", "wc", "paste", "column", "fold", "expand", "base64", "xxd", "od", "find", "ls", "tree", "du" };
         int Builtin(string cmd, List<string> args, ShCtx c)
+        {
+            bool was = shTextCmd; shTextCmd = ShTextCmds.Contains(cmd);
+            try { return Builtin0(cmd, args, c); } finally { shTextCmd = was; }
+        }
+        int Builtin0(string cmd, List<string> args, ShCtx c)
         {
             switch (cmd)
             {
@@ -1365,9 +1381,9 @@ namespace AdeeboMeter
                 case "debug": Debug(c); return 0;
                 case "log": Log(args.Count > 0 ? args[0] : "20", c); return 0;
                 case "history": for (int k = 0; k < shHist.Count; k++) OL(c, (k + 1).ToString(CultureInfo.InvariantCulture).PadLeft(5) + "  " + shHist[k], ShDim); return 0;
-                case "clear": case "cls": Ui(delegate { term.Clear(); }); return 0;
+                case "clear": case "cls": Ui(delegate { if (args.Contains("-x")) term.Clear(); else term.ClearScreen(); }); return 0;   /* hunters11 shell ML-7: clear -x wipes the scrollback too */
                 case "copy": if (shLast == "") { Err(c, "nothing to copy yet - run a tool first (or select text and press Ctrl+C)"); return 1; } Ui(delegate { try { Clipboard.SetText(shLast); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is ThreadStateException)) throw; } }); OL(c, "copied the last result", ShGreen); return 0;
-                case "save": { if (shLast == "") { Err(c, "nothing to save yet - or run it with  > file.txt"); return 1; } string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); File.WriteAllText(f, shLast); OL(c, "saved: " + f, ShGreen); return 0; }
+                case "save": { if (shLast == "") { Err(c, "nothing to save yet - or run it with  > file.txt"); return 1; } string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Regex.Replace(f, @"(-\d+)?\.txt$", "-" + k + ".txt");   /* hunters11 shell L-18 */ File.WriteAllText(f, shLast); OL(c, "saved: " + f, ShGreen); return 0; }
                 // #6: exit / return stop the script (with their code); typed at the prompt, exit also leaves the shell page
                 case "exit": case "quit": case "logout": case "return":
                     {
@@ -1378,7 +1394,7 @@ namespace AdeeboMeter
                 case "break": case "continue":   // #23
                     {
                         int lv = 1; if (args.Count > 0 && (!int.TryParse(args[0], out lv) || lv < 1)) { Err(c, cmd + ": " + args[0] + ": a loop count is needed"); return 1; }
-                        if (loopDepth == 0) { Err(c, cmd + ": only meaningful in a for, while or until loop"); return 0; }
+                        if (loopDepth == 0) { Err(c, cmd + ": only meaningful in a for, while or until loop"); return 1; }   /* hunters11 shell L-11: an error, so a script sees it */
                         throw new ShFlow(cmd, 0, Math.Min(lv, loopDepth));
                     }
                 case "lab": return ShLab(args, c);
@@ -1412,7 +1428,7 @@ namespace AdeeboMeter
                         }
                         return ex0;
                     }
-                case "sleep": { double s = 0; if (args.Count == 0) { Err(c, "sleep: missing operand"); return 1; } foreach (var sa in args) { var sm = Regex.Match(sa, @"^([0-9.]+)([smhd]?)$"); double one; if (!sm.Success || !double.TryParse(sm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out one)) { Err(c, "sleep: " + sa + ": a number of seconds (or 2m, 1h)"); return 1; } s += one * (sm.Groups[2].Value == "m" ? 60 : sm.Groups[2].Value == "h" ? 3600 : sm.Groups[2].Value == "d" ? 86400 : 1); }   /* round 6 D2-22: every argument counts, as GNU */ var until = DateTime.UtcNow.AddSeconds(Math.Min(3600, s)); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50); return c.Job.Cancel ? 130 : 0; }
+                case "sleep": { double s = 0; if (args.Count == 0) { Err(c, "sleep: missing operand"); return 1; } foreach (var sa in args) { var sm = Regex.Match(sa, @"^([0-9.]+)([smhd]?)$"); double one; if (!sm.Success || !double.TryParse(sm.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out one)) { Err(c, "sleep: " + sa + ": a number of seconds (or 2m, 1h)"); return 1; } s += one * (sm.Groups[2].Value == "m" ? 60 : sm.Groups[2].Value == "h" ? 3600 : sm.Groups[2].Value == "d" ? 86400 : 1); }   /* round 6 D2-22: every argument counts, as GNU */ if (s > 3600) Err(c, "sleep: at most 1 hour here - sleeping 1h");   /* hunters11 shell L-15 */ var until = DateTime.UtcNow.AddSeconds(Math.Min(3600, s)); while (!c.Job.Cancel && DateTime.UtcNow < until) Thread.Sleep(50); return c.Job.Cancel ? 130 : 0; }
                 case "seq":   // round 6 D2-22: fractions (0 0.5 2) with as many decimals as the inputs have; -w pads with zeros
                     {
                         bool pad = args.Contains("-w"); var raw = args.Where(z => z != "-w" && (!z.StartsWith("-", StringComparison.Ordinal) || Regex.IsMatch(z, @"^-[\d.]"))).ToList();
@@ -1466,7 +1482,7 @@ namespace AdeeboMeter
                             var em = Regex.Match(w, @"^([A-Za-z_][A-Za-z0-9_]*)\[(-?\d+)\]$"); List<string> arr;
                             if (Env.RO.Contains(em.Success ? em.Groups[1].Value : w)) { Err(c, "unset: " + w + ": readonly variable"); unsetBad = true; continue; }
                             if (em.Success) { if (Env.Arrs.TryGetValue(em.Groups[1].Value, out arr)) { int k = int.Parse(em.Groups[2].Value, CultureInfo.InvariantCulture); if (k < 0) k += arr.Count; if (k >= 0 && k < arr.Count) arr[k] = null; } continue; }   // review NH-8: a[-1] is the last one
-                            if (args.Contains("-f")) Env.Funcs.Remove(w); else { Env.Vars.Remove(w); Env.Arrs.Remove(w); if (!args.Contains("-v")) Env.Funcs.Remove(w); }
+                            if (args.Contains("-f")) Env.Funcs.Remove(w); else { bool hadVar = Env.Vars.Remove(w) | Env.Arrs.Remove(w); if (!args.Contains("-v") && !hadVar) Env.Funcs.Remove(w); }   /* hunters11 shell L-13: as bash - a variable goes first, the function only when there is none */
                         }
                     return unsetBad ? 1 : 0; }   // round 6 D2-11
                 case "read": return Read(args, c);
@@ -1686,10 +1702,11 @@ namespace AdeeboMeter
             foreach (var pt in parts) { string fixd = Fix(Path.Combine(acc, pt)); string name = Path.GetFileName(fixd); outp += "/" + name; acc = Path.Combine(acc, name); }
             return outp;
         }
+        [ThreadStatic] static int lsMore;
         int Ls(List<string> args, bool longForm, ShCtx c)
         {
             string fl = Flags(args); bool all = fl.Contains('a'); longForm |= fl.Contains('l');
-            bool byTime = fl.Contains('t'), bySize = fl.Contains('S'), rev = fl.Contains('r');
+            bool byTime = fl.Contains('t'), bySize = fl.Contains('S'), rev = fl.Contains('r'), selfOnly = fl.Contains('d'), onePer = fl.Contains('1');   /* hunters11 shell L-1 */
             { var odd = fl.Where(ch => "alhtrS1d".IndexOf(ch) < 0).ToList(); if (odd.Count > 0) { Err(c, "ls: -" + odd[0] + ": not an option this ls knows (-a -l -h -t -S -r)"); return 2; } }
             var targets = Files(args); if (targets.Count == 0) targets.Add(".");
             int ex = 0;
@@ -1707,6 +1724,7 @@ namespace AdeeboMeter
                     continue;
                 }
                 if (File.Exists(real)) { var fi = new FileInfo(real); OL(c, longForm ? FmtLs(fi) : fi.Name); continue; }
+                if (selfOnly && Directory.Exists(real)) { var dd = new DirectoryInfo(real); OL(c, longForm ? FmtLs(dd) : tg, ShBlue); continue; }
                 if (!Directory.Exists(real)) { Err(c, "ls: " + tg + ": no such file or folder"); ex = 1; continue; }
                 try
                 {
@@ -1714,8 +1732,8 @@ namespace AdeeboMeter
                     var ents = di.EnumerateFileSystemInfos().Where(z => all || ((z.Attributes & FileAttributes.Hidden) == 0 && !z.Name.StartsWith(".", StringComparison.Ordinal))).ToList();
                     // round 6 D2-13: -t newest first, -S biggest first, -r reverses (any of them); plain ls keeps folders first, by name
                     IEnumerable<FileSystemInfo> ord = byTime ? ents.OrderByDescending(z => z.LastWriteTimeUtc).ThenBy(z => z.Name, StringComparer.OrdinalIgnoreCase) : bySize ? ents.OrderByDescending(z => z is FileInfo ? ((FileInfo)z).Length : 0).ThenBy(z => z.Name, StringComparer.OrdinalIgnoreCase) : ents.OrderBy(z => !(z is DirectoryInfo)).ThenBy(z => z.Name, StringComparer.OrdinalIgnoreCase);
-                    if (rev) ord = ord.Reverse(); ents = ord.Take(5000).ToList();
-                    if (longForm) { foreach (var e in ents) OL(c, FmtLs(e), e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); if (c.Out.Screen) OL(c, ents.Count + " entries", ShDim); }
+                    if (rev) ord = ord.Reverse(); int allN = ents.Count; ents = ord.Take(5000).ToList(); if (allN > 5000) lsMore += allN - 5000;
+                    if (longForm || onePer) { foreach (var e in ents) OL(c, longForm ? FmtLs(e) : e.Name + (e is DirectoryInfo && c.Out.Screen ? "/" : ""), e is DirectoryInfo ? ShBlue : IsScript(e.Name) ? ShGreen : ShFg); if (c.Out.Screen && longForm) OL(c, ents.Count + " entries", ShDim); }
                     else
                     {
                         // columns, like ls on a terminal (one name per line into a pipe or a file)
@@ -1725,6 +1743,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "ls: " + tg + ": " + e.Message); ex = 1; }
             }
+            if (lsMore > 0) { Err(c, "ls: showed the first 5,000 - " + lsMore.ToString("N0", CultureInfo.InvariantCulture) + " more (narrow it with a name, or use find)"); lsMore = 0; }   /* hunters11 shell L-2 */
             return ex;
         }
         static bool IsScript(string n) { return n.EndsWith(".sh", StringComparison.OrdinalIgnoreCase); }
@@ -1733,6 +1752,14 @@ namespace AdeeboMeter
             var fi = e as FileInfo; string size = fi == null ? "-" : fi.Length < 1024 ? fi.Length + " B" : fi.Length < 1048576 ? (fi.Length / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " K" : (fi.Length / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " M";
             return (e is DirectoryInfo ? "d" : "-") + ((e.Attributes & FileAttributes.ReadOnly) != 0 || !InData(e.FullName) ? "r-" : "rw") + "  " + size.PadLeft(9) + "  " + e.LastWriteTime.ToString("dd MMM HH:mm", CultureInfo.CurrentCulture) + "  " + e.Name + (e is DirectoryInfo ? "/" : "");
         }
+        // hunters11 shell M-1: the link itself, whether its target exists or not (GetAttributes reads the link, not its target);
+        // a name that isn't there yet is no link
+        static bool LinkAt(string path)
+        {
+            try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; }
+            catch (FileNotFoundException) { return false; } catch (DirectoryNotFoundException) { return false; }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return true; }
+        }
         static bool IsLink(string path) { try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return true; } }
         int Tree(string p, ShCtx c)
         {
@@ -1740,11 +1767,12 @@ namespace AdeeboMeter
             int n = 0; Action<string, string, int> walk = null;
             walk = (dir, pre, depth) =>
             {
-                if (depth > 3 || n > 400 || c.Job.Cancel) return; string[] ents; try { ents = Directory.GetFileSystemEntries(dir).Where(z => !Path.GetFileName(z).StartsWith(".", StringComparison.Ordinal)).OrderBy(z => !Directory.Exists(z)).ThenBy(z => z, StringComparer.OrdinalIgnoreCase).ToArray(); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return; }
+                if (depth > 3) { treeDeep = true; return; } if (n > 400 || c.Job.Cancel) return; string[] ents; try { ents = Directory.GetFileSystemEntries(dir).Where(z => !Path.GetFileName(z).StartsWith(".", StringComparison.Ordinal)).OrderBy(z => !Directory.Exists(z)).ThenBy(z => z, StringComparer.OrdinalIgnoreCase).ToArray(); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return; }
                 for (int i = 0; i < ents.Length && n <= 400; i++) { bool last = i == ents.Length - 1, d = Directory.Exists(ents[i]); n++; O(c, pre + (last ? "└── " : "├── "), ShDim); OL(c, Path.GetFileName(ents[i]) + (d ? "/" : ""), d ? ShBlue : ShFg); if (d && !IsLink(ents[i])) walk(ents[i], pre + (last ? "    " : "│   "), depth + 1); }
             };
-            OL(c, ShShort(Abs(p)), ShBlue); walk(real, "", 1); if (n > 400) OL(c, "... (stopped at 400)", ShDim); return 0;
+            OL(c, ShShort(Abs(p)), ShBlue); treeDeep = false; walk(real, "", 1); if (n > 400) OL(c, "... (stopped at 400)", ShDim); if (treeDeep) OL(c, "... (3 levels shown - deeper folders aren't listed; use find for all of it)", ShDim); return 0;   /* hunters11 shell L-3 */
         }
+        [ThreadStatic] static bool treeDeep;
         const long ShReadCap = 20L * 1048576;
         // review F6: what ls lists under /pages and /tools reads as a short note, not "no such file"
         string VirtualNote(string av)
@@ -1947,6 +1975,7 @@ namespace AdeeboMeter
             {
                 string src = Real(Abs(s)); if (src == null || (!File.Exists(src) && !Directory.Exists(src))) { Err(c, s + ": no such file"); ex = 1; continue; } if (move && !Writable(src, s, "mv", c)) { ex = 1; continue; }   // mv takes the file away from where it was
                 string to = Directory.Exists(dst) ? Path.Combine(dst, Path.GetFileName(src.TrimEnd('\\'))) : dst;
+                if (!InData(to)) { Err(c, (move ? "mv: " : "cp: ") + p[p.Count - 1] + "/" + Path.GetFileName(src.TrimEnd('\\')) + ReadOnlyNote); ex = 1; continue; }   /* hunters11 shell M-2: the real target, not only the folder */
                 if (string.Equals(Path.GetFullPath(src).TrimEnd('\\'), Path.GetFullPath(to).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) { Err(c, s + " and " + p[p.Count - 1] + " are the same file"); ex = 1; continue; }
                 if (noClobber && (File.Exists(to) || Directory.Exists(to))) continue;
                 bool sameVol = string.Equals(Path.GetPathRoot(Path.GetFullPath(src)), Path.GetPathRoot(Path.GetFullPath(to)), StringComparison.OrdinalIgnoreCase);
@@ -1964,7 +1993,8 @@ namespace AdeeboMeter
                 if (!move && !rec) { Err(c, "cp: " + s + " is a folder - use cp -r"); ex = 1; continue; }
                 if (move && sameVol && !Directory.Exists(to)) { Directory.Move(src, to); continue; }
                 if (move && Directory.Exists(to)) { Err(c, "mv: " + p[p.Count - 1] + "/" + Path.GetFileName(src) + " already exists"); ex = 1; continue; }
-                CopyDir(src, to, c); if (c.Job.Cancel) return 130;
+                try { CopyDir(src, to, c); } catch (UnauthorizedAccessException ue) { Err(c, (move ? "mv: " : "cp: ") + ue.Message); ex = 1; continue; }
+                if (c.Job.Cancel) return 130;
                 if (move && HasLinkInside(src)) { Err(c, "mv: " + s + " has a link (junction or symlink) inside - copied, but the original is kept"); ex = 1; continue; }
                 if (move) Directory.Delete(src, true);
             }
@@ -1972,8 +2002,9 @@ namespace AdeeboMeter
         }
         static void CopyDir(string a, string b, ShCtx c)
         {
+            if (!InData(b)) throw new UnauthorizedAccessException(b.Replace(Program.DataDir, "/data").Replace('\\', '/') + ReadOnlyNote);   /* hunters11 shell M-2 */
             Directory.CreateDirectory(b);
-            foreach (var f in Directory.GetFiles(a)) { if (c.Job.Cancel) return; File.Copy(f, Path.Combine(b, Path.GetFileName(f)), true); }
+            foreach (var f in Directory.GetFiles(a)) { if (c.Job.Cancel) return; string t = Path.Combine(b, Path.GetFileName(f)); if (!InData(t)) throw new UnauthorizedAccessException(t.Replace(Program.DataDir, "/data").Replace('\\', '/') + ReadOnlyNote); File.Copy(f, t, true); }
             foreach (var d in Directory.GetDirectories(a)) { if (IsLink(d)) continue; CopyDir(d, Path.Combine(b, Path.GetFileName(d)), c); }
         }
         int Rm(List<string> args, ShCtx c)
@@ -1983,7 +2014,17 @@ namespace AdeeboMeter
             bool bad = false;
             foreach (var s in p)
             {
-                string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; } if (!Writable(r, s, "rm", c)) return 1;
+                string v = Abs(s), r = Real(v); if (r == null) { Err(c, "rm: " + s + ": not on a disk"); return 1; }
+                /* hunters11 shell L-19: removing a link inside /data removes only the link - what it points to is never touched */
+                string rp = Path.GetDirectoryName(r.TrimEnd('\\'));
+                if (LinkAt(r) && rp != null && InData(rp))
+                {
+                    if (!force && (c.Job.Bg || c.Script)) { Err(c, "rm: " + s + " - add -f in a script (it can't ask you)"); return 1; }
+                    if (!force && !(ShAsk("remove the link " + s + " (only the link)? [y/N] ", false) ?? "").Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase)) continue;
+                    if ((File.GetAttributes(r) & FileAttributes.Directory) != 0) Directory.Delete(r, false); else File.Delete(r);
+                    continue;
+                }
+                if (!Writable(r, s, "rm", c)) return 1;
                 if (v.Count(ch => ch == '/') <= 1 || string.Equals(r.TrimEnd('\\'), Home.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase) || r.TrimEnd('\\').Length <= 3) { Err(c, "rm: won't remove " + s + " - a top folder or a whole drive"); return 1; }
                 bool dir = Directory.Exists(r); if (!dir && !File.Exists(r)) { if (!force) { Err(c, "rm: " + s + ": no such file"); bad = true; } continue; }   /* hunt-5: a missing file is exit 1 (rm -f stays quiet and 0) */
                 if (dir && !rec) { Err(c, "rm: " + s + " is a folder - rm -r"); return 1; }
@@ -2001,13 +2042,17 @@ namespace AdeeboMeter
             string real = Real(Abs(start)); if (real == null || !Directory.Exists(real)) { Err(c, "find: " + start + ": not a folder on a disk"); return 1; }
             var rx = new Regex("^" + GlobRx(pat) + "$", ni >= 0 ? RegexOptions.None : RegexOptions.IgnoreCase); int n = 0, denied = 0;   /* hunt-5: -name is exact case, -iname isn't */
             var stack = new Stack<KeyValuePair<string, int>>(); stack.Push(new KeyValuePair<string, int>(real, 0)); string baseV = start.TrimEnd('/');
+            /* hunters11 shell L-4: -type takes f, d or l; the start point is printed first, and -maxdepth 0 is just it */
+            if (type != "" && type != "f" && type != "d" && type != "l") { Err(c, "find: -type " + type + ": this find knows f (file), d (folder) and l (link)"); return 1; }
+            if (type != "f" && type != "l" && rx.IsMatch(Path.GetFileName(real.TrimEnd('\\')) ?? "")) { n++; OL(c, baseV == "" ? "/" : baseV, ShBlue); }
+            if (maxDepth <= 0) return 0;
             while (stack.Count > 0 && n < 5000 && !c.Job.Cancel)
             {
                 var d = stack.Pop(); string[] fs, ds;
                 try { fs = Directory.GetFiles(d.Key); ds = Directory.GetDirectories(d.Key); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; denied++; continue; }
                 foreach (var x in ds.Concat(fs))
                 {
-                    bool isD = Directory.Exists(x); if ((type == "f" && isD) || (type == "d" && !isD)) continue;
+                    bool isD = Directory.Exists(x); if ((type == "f" && isD) || (type == "d" && !isD) || (type == "l" && !LinkAt(x))) continue;
                     if (rx.IsMatch(Path.GetFileName(x))) { n++; OL(c, baseV + x.Substring(real.TrimEnd('\\').Length).Replace('\\', '/'), isD ? ShBlue : ShFg); }
                 }
                 if (d.Value + 1 < maxDepth) foreach (var x in ds.Reverse()) if (!IsLink(x)) stack.Push(new KeyValuePair<string, int>(x, d.Value + 1));   // #88: never round a junction
@@ -2105,16 +2150,16 @@ namespace AdeeboMeter
         void Help(ShCtx c)
         {
             Action<string, string> h = (a, b) => { O(c, "  " + a.PadRight(34), ShCyan); OL(c, b, ShDim); };
-            OL(c, Kit.Sent(L.T("FOLDERS")), ShBlue);
+            OL(c, Kit.Sent("FOLDERS"), ShBlue);
             h("ls [-l -a] [folder]", L.T("what's here (ll = ls -l) · cd /data/scripts for ready-made scripts")); h("cd <folder> · cd ~ · cd - · cd ..", L.T("home = your folder, data, mnt/c, pages, tools")); h("pwd · tree · find . -name '*.csv'", L.T("where you are, what's below, find by name"));
             h("cat · head -n 20 · tail · grep -i x", L.T("read files or what a pipe sends")); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", L.T("files - rm asks first") + " · only inside /data"); h("home · open /data", "back to AdeeboMeter's folders · AdeeboMeter's folder in File Explorer"); h("du · stat · hash <file>", L.T("sizes, details, SHA-256"));
             OL(c, L.T("THIS PC (read only)"), ShBlue);
             h("df -h · du -sh * · lsblk · free -h", L.T("disks, folder sizes, drives, memory")); h("ps --sort=cpu · top · uptime · lscpu", L.T("what's running and what it costs (nothing is stopped from here)"));
             h("ip a · ip route · ss -tlp · ifconfig", L.T("addresses, routes, connections and listeners")); h("cat /proc/meminfo · watch -n 2 df -h", L.T("/proc as files; re-run anything every few seconds"));
-            OL(c, Kit.Sent(L.T("TOOLS AND PAGES")), ShBlue);
+            OL(c, Kit.Sent("TOOLS AND PAGES"), ShBlue);
             h("<tool> [args]", L.T("every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX"));
             h("iperf3 -c 10.0.0.5 -R -t 10 -P 4", L.T("iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client")); h("tools [word] · man <tool>", L.T("list them, or what one does")); h("open <page> · cd pages/markets; open", L.T("go to a page")); h("lab [lan|path|wifi|phone|vpn|new]", L.T("AdeeboLab")); h("status · debug · log [n]", L.T("the NOW line · raw values · the app's log"));
-            OL(c, Kit.Sent(L.T("POWER")), ShBlue);
+            OL(c, Kit.Sent("POWER"), ShBlue);
             h("cmd | grep x | sort | head", L.T("pipes; > file, >> file, < file, 2>/dev/null, &> file"));
             h("x=$(cmd) · $((n * 2)) · cut sed awk tr xargs", L.T("command output and sums in a line; the text tools")); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", L.T("and / or / in the background (jobs, wait, kill %1)"));
             h("parallel -j 5 ping {} 4 ::: a b c", L.T("run together, merge as each finishes; cat hosts.txt | parallel ping {} 4")); h("case $x in a|b) ... ;; *) ... ;; esac", L.T("choose by pattern (* ? [abc])"));
@@ -2324,7 +2369,7 @@ namespace AdeeboMeter
                     catch (OutOfMemoryException) { GC.Collect(); lock (cap.Cap) cap.Cap.Append("ran out of memory - stopped\n"); ex = 2; }
                     catch (Exception e) { lock (cap.Cap) cap.Cap.Append("error: " + e.Message + "\n"); ex = 2; }
                     finally { Interlocked.Decrement(ref running); sem.Release(); }
-                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); try { if (c.Out.Screen) OL(c, "── " + shown + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); else if (ex != 0) ErrRaw(c, "parallel: " + shown + " (exit " + ex + ")\n", ShAmber); O(c, cap.Cap.ToString(), ShFg); } catch (ShTooBig) { } }   // 1.1.6 PC test: into a pipe or a file, only the jobs' own output - like GNU parallel
+                    lock (outLock) { doneN++; worst = Math.Max(worst, ex); try { if (c.Out.Screen) OL(c, "── " + ShMasked(shown) + (ex == 0 ? "" : "   (exit " + ex + ")"), ex == 0 ? ShCyan : ShAmber); else if (ex != 0) ErrRaw(c, "parallel: " + shown + " (exit " + ex + ")\n", ShAmber); O(c, cap.Cap.ToString(), ShFg); } catch (ShTooBig) { } }   // 1.1.6 PC test: into a pipe or a file, only the jobs' own output - like GNU parallel
                 }) { IsBackground = true, Name = "parallel" };
                 threads.Add(th); th.Start();
                 if (c.Out.Screen && !c.Job.Bg) Ui(delegate { term.Live(new List<List<TermView.Seg>> { new List<TermView.Seg> { new TermView.Seg("parallel  ", ShCyan), new TermView.Seg(doneN + " / " + items.Count + " done · " + running + " running · " + sw.Elapsed.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s", ShDim) } }); });
@@ -2371,7 +2416,7 @@ namespace AdeeboMeter
             }
             string tail = (c.Job.Cancel ? "== STOPPED " : "== DONE ") + DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + " · " + ran + " run · " + failed + " failed · " + skipped + " left out" + (yes ? "" : " (test-traffic tools need --yes, typed at the prompt)") + " · " + pictures + " pictures (Toolbox only)";
             log.AppendLine(tail); OL(c, tail, failed > 0 || c.Job.Cancel ? ShAmber : ShGreen);
-            string f = Path.Combine(Program.WriteDir, "alltools.out.txt"); try { File.WriteAllText(f, log.ToString()); OL(c, "transcript: " + f, ShDim); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            string f = Path.Combine(Program.WriteDir, "alltools.out.txt"); try { if (File.Exists(f)) File.Copy(f, Path.Combine(Program.WriteDir, "alltools.out.previous.txt"), true);   /* hunters11 shell L-18: the run before is kept */ File.WriteAllText(f, log.ToString()); OL(c, "transcript: " + f, ShDim); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             return failed > 0 ? 1 : 0;
         }
 
@@ -2433,7 +2478,7 @@ namespace AdeeboMeter
                 }
             }
             if (string.IsNullOrEmpty(host)) { Err(c, "iperf3: which server? -c <address>   (on that machine: iperf3 -s)"); return 2; }
-            if (!string.IsNullOrEmpty(port)) host = host.Contains(":") && !host.StartsWith("[", StringComparison.Ordinal) ? "[" + host + "]:" + port : host + ":" + port;
+            if (!string.IsNullOrEmpty(port)) { if (Regex.IsMatch(host, @"^[^:]+:[0-9]+$")) host = host.Substring(0, host.LastIndexOf(':'));   /* hunters11 shell L-16: -p wins over a host:port */ host = host.Contains(":") && !host.StartsWith("[", StringComparison.Ordinal) ? "[" + host + "]:" + port : host + ":" + port; }
             var t = shTools.FirstOrDefault(x => x.Id == "iperf"); if (t == null) { Err(c, "iperf3: the iperf tool isn't in this build"); return 2; }
             var args = new List<string> { host, dir, secs == "" ? "-" : secs, adv.Count == 0 ? "-" : string.Join(" ", adv) }; args.AddRange(keep);
             O(c, "iperf3 → " + host + " · " + dir + (secs != "" ? " · " + secs + " s" : "") + (adv.Count > 0 ? " · " + string.Join(" ", adv) : "") + "\n", ShDim);
@@ -2506,7 +2551,14 @@ namespace AdeeboMeter
         {
             if (c.Script || c.Job.Bg || !c.Out.Screen) return Cat(args, c);
             var files = Files(args); string name = files.Count == 0 ? "(pipe)" : files[0], text;
-            if (files.Count == 0 || files[0] == "-") text = c.Stdin ?? ""; else { text = ReadAll(files[0], c); if (text == null) return 1; }
+            if (files.Count == 0 || files[0] == "-") text = c.Stdin ?? "";
+            else if (files.Count == 1) { text = ReadAll(files[0], c); if (text == null) return 1; }
+            else
+            {
+                /* hunters11 shell L-5: several files page one after the other, each under its name */
+                var sb = new StringBuilder(); foreach (var f in files) { string t1 = ReadAll(f, c); if (t1 == null) continue; sb.Append("==> " + f + " <==\n").Append(t1); if (!t1.EndsWith("\n", StringComparison.Ordinal)) sb.Append('\n'); sb.Append('\n'); }
+                text = sb.ToString(); name = files.Count + " files"; if (text == "") return 1;
+            }
             var done = new ManualResetEvent(false); string title0 = null;
             var ed = new TermEditor(true, null, name, text) { ReadOnly = true };
             ed.Closed = () => { term.Editor = null; if (title0 != null) term.Title = title0; term.Invalidate(); done.Set(); };

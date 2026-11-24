@@ -778,7 +778,7 @@ namespace AdeeboMeter
             tbViewL = new PillButton("All tools", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewL.Click += delegate { SetTbView("list"); };
             tbViewQ.Margin = new Padding(0, Sc(3), Sc(4), 0); topBar.Controls.Add(tbViewL); topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.SetFlowBreak(tbViewT, true);   // All tools first (22 Nov)
             // one click to the tools people reach for most - from any section
-            var quick = new Label { Text = Kit.Sent(L.T("QUICK")), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
+            var quick = new Label { Text = Kit.Sent("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)
             {
                 var qb = new PillButton(q[1], PillButton.K.Chip) { Tag = q[0], Margin = new Padding(0, Sc(6), Sc(8), 0) };
@@ -1303,7 +1303,7 @@ namespace AdeeboMeter
                 cx += br.Width + 8 * S;
             }
             y += 46 * S;
-            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT")), Draw.fTiny, muted, x, y);
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT"), Draw.fTiny, muted, x, y);
             y += 22 * S; int prev = 99999; float barX = x + w * 0.45f, barW = w * 0.25f;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
                 foreach (var h in hops)
@@ -1341,7 +1341,7 @@ namespace AdeeboMeter
             float c0 = x + Math.Max(300 * S, w * 0.38f), cw = (x + w - c0) / head.Length;
             using (var muted = new SolidBrush(Theme.Muted)) using (var right = new StringFormat { Alignment = StringAlignment.Far })
             {
-                g.DrawString(Kit.Sent(L.T("HOP")), Draw.fTiny, muted, x, y); g.DrawString(Kit.Sent(L.T("ROUTER")), Draw.fTiny, muted, x + 40 * S, y);
+                g.DrawString(Kit.Sent("HOP"), Draw.fTiny, muted, x, y); g.DrawString(Kit.Sent("ROUTER"), Draw.fTiny, muted, x + 40 * S, y);
                 for (int i = 0; i < head.Length; i++) g.DrawString(head[i] + (i >= 2 ? " ms" : ""), Draw.fTiny, muted, new RectangleF(c0 + i * cw, y, cw - 8 * S, 16 * S), right);
                 y += 22 * S;
                 using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))

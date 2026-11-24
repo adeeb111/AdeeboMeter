@@ -17,6 +17,7 @@ namespace AdeeboMeter
             {
                 if (f.FormBorderStyle == FormBorderStyle.FixedDialog || f.FormBorderStyle == FormBorderStyle.FixedSingle) f.FormBorderStyle = FormBorderStyle.Sizable;
                 f.Size = new Size(Math.Min(f.Width, wa.Width), Math.Min(f.Height, wa.Height));
+                f.AutoScroll = true;   /* hunters11: what no longer fits scrolls, rather than being cut */
             }
             int x = Math.Max(wa.Left, Math.Min(f.Left, wa.Right - f.Width)), y = Math.Max(wa.Top, Math.Min(f.Top, wa.Bottom - f.Height));
             if (x != f.Left || y != f.Top) f.Location = new Point(x, y);

@@ -333,6 +333,33 @@ textarea.in{resize:vertical;min-height:120px}
     return '<span class="where' + (w === "off" ? " off" : w === "pc" ? "" : " ph") + '">' + mark + esc(tr(label)) + '</span>';
   }
   function tr(label) { return window.AdeeboMeterLocale ? AdeeboMeterLocale.t(label) : label; }
+  // hunters11 phone ML-1 and others: sentences built from live values ("Not live · 5 min ago") match a template key;
+  // the values inside are translated too (units, names that have a key)
+  var PATS = [
+    [/^Not live · last reading (.+) ago$/, "Not live · last reading {t} ago", ["t"]], [/^Not live - from (.+) ago$/, "Not live - from {t} ago", ["t"]],
+    [/^Not live · (.+) ago$/, "Not live · {t} ago", ["t"]], [/^NOT LIVE · no reading for (.+)$/, "NOT LIVE · no reading for {t}", ["t"]],
+    [/^(\d+) here now · (\d+) watched · from your PC · (.+) ago$/, "{n} here now · {m} watched · from your PC · {t} ago", ["n", "m", "t"]],
+    [/^(.+) ago$/, "{t} ago", ["t"]], [/^(\d+) (s|min|h)$/, null, ["n", "u"]],
+    [/^Normally open · closes in (.+)$/, "Normally open · closes in {t}", ["t"]], [/^Opens 9:30 · in (.+)$/, "Opens 9:30 · in {t}", ["t"]],
+    [/^(\d+) of (\d+): low, steady delay$/, "{a} of {b}: low, steady delay", ["a", "b"]], [/^This phone · (.+) · 5 tries each$/, "This phone · {t} · 5 tries each", ["t"]],
+    [/^(\d+) ms · steady$/, "{v} ms · steady", ["v"]], [/^(\d+) ms · jumpy$/, "{v} ms · jumpy", ["v"]],
+    [/^(.+) · the same maths as the PC$/, "{g} · the same maths as the PC", ["g"]], [/^(\d+) of (\d+) shown - the List has them all$/, "{a} of {b} shown - the List has them all", ["a", "b"]],
+    [/^Results · (\d+)$/, "Results · {n}", ["n"]], [/^Map of your network: (\d+) devices\. The List shows the same devices\.$/, "Map of your network: {n} devices. The List shows the same devices.", ["n"]],
+    [/^(.+), here now$/, "{x}, here now", ["x"]], [/^(.+), away$/, "{x}, away", ["x"]], [/^Your router, (.+)$/, "Your router, {x}", ["x"]],
+    [/^Link rate (.+) Mb\/s$/, "Link rate {v} Mb/s", ["v"]], [/^(.+) works; (.+) doesn't$/, "{a} works; {b} doesn't", ["a", "b"]],
+    [/^(.+) is (\d+) ms quicker$/, "{a} is {n} ms quicker", ["a", "n"]], [/^Your PC asked this phone to run (.+)$/, "Your PC asked this phone to run {x}", ["x"]],
+    [/^(\d+) CHECKS$/, "{n} CHECKS", ["n"]], [/^🔒 encrypted · (.+) left$/, "🔒 encrypted · {t} left", ["t"]], [/^🔒 (.+) left$/, "🔒 {t} left", ["t"]]
+  ];
+  function trAny(key) {
+    var t = tr(key); if (t !== key) return t;
+    for (var i = 0; i < PATS.length; i++) {
+      var m = PATS[i][0].exec(key); if (!m) continue;
+      if (PATS[i][1] === null) return trFormat("{n} " + m[2], { n: m[1] });
+      var vals = {}; PATS[i][2].forEach(function (n, j) { var v = m[j + 1]; vals[n] = /^\d+([.,]\d+)?$/.test(v) ? v : trAny(v); });
+      var out = trFormat(PATS[i][1], vals); return out;
+    }
+    return key;
+  }
   function heading(label) {
     var translated = tr(label);
     return label === translated ? label : esc(translated);
@@ -1110,7 +1137,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.widget = function () {
     var L = live || {}, lv = L.lv >= 0 && L.lv <= 2 ? L.lv : 3, g = L.game, s = Math.max(0, Math.round(L.left || 0)), stale = !isLive();
     document.body.classList.toggle("stale", stale);
-    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
+    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:44px;padding:8px 14px">Done</button></div><div class="wgm">';
     a += '<div class="wgc"><div class="k">↓ Download</div><div class="v">' + bigv(L.down, "Mb/s") + '</div>' + area(hD, "var(--blue)") + '</div><div class="wgc"><div class="k">↑ Upload</div><div class="v">' + bigv(L.up, "Mb/s") + '</div>' + area(hU, "var(--purple)") + '</div>';
     if (g) a += '<div class="wgc full"><div class="k">🎮 ' + esc(g.name) + ' · ' + esc(g.srv) + ' · ' + esc(g.grade) + '</div><div class="v">' + bigv(g.now, "ms") + '</div>' + area(g.hist || [], "var(--green)") + '</div>';
     else a += '<div class="wgc full"><div class="k">Ping' + (L.gw != null ? ' · router ' + Math.round(L.gw) + ' ms' : '') + (L.loss ? ' · ' + Math.round(L.loss * 10) / 10 + '% lost' : '') + '</div><div class="v" style="color:' + (lvOf(L.ping, 80, 200) === 0 ? "var(--green)" : lvOf(L.ping, 80, 200) === 1 ? "var(--amber)" : "var(--red)") + '">' + bigv(L.ping, "ms") + '</div>' + area(hP, "var(--cyan)") + '</div>';
@@ -1423,9 +1450,9 @@ textarea.in{resize:vertical;min-height:120px}
   };
   TOOLV.restart = function () {
     var a = '<div class="card list">' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : tr("Before you touch anything")) + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : tr("Before you touch anything")) + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:44px;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
       '<div class="row" style="cursor:default"><span class="vdot sm off">2</span><div class="tx"><b>' + esc(tr("Restart the router")) + '</b><span>' + esc(tr("Unplug it, count to 30, plug it back in. Wait until its lights settle (about 2 minutes) and the phone is back on Wi-Fi.")) + '</span></div></div>' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : tr("After the restart")) + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : tr("After the restart")) + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:44px;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
     if (BA.before && BA.after) a += sideBySide(BA.before, BA.after, "BEFORE", "AFTER") + '<div class="card vcard"><div class="vh">' + esc(better(BA.before, BA.after, "Before", "After")) + '</div><p class="fine">' + (!BA.after.err && !BA.before.err && BA.before.med > BA.after.med + 30 ? tr("The restart helped. If it keeps coming back, the router may be overheating or need a firmware update - or ask your provider.") : tr("No real change - the router wasn't the problem. Try Wi-Fi vs mobile data next.")) + '</p><button class="btn ghost" data-ba="reset">Start over</button></div>';
     return hdr("Before and after", "Did restarting the router help?", "tools") + a;
   };
@@ -2198,20 +2225,25 @@ textarea.in{resize:vertical;min-height:120px}
       node.dir = "auto";
     });
     if (locale !== "en") {
+      // hunters11 phone: SVG text (the network map) is walked too, and so are the attributes people and screen readers meet
       var walker = document.createTreeWalker(template, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
         acceptNode: function (node) {
           if (node.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
-          return node.matches("script, style, svg, code, pre, textarea, [data-i18n], [data-raw], [data-say]")
+          return node.matches("script, style, code, pre, textarea, [data-i18n], [data-raw], [data-say]")
             ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
         }
       });
       for (var node; (node = walker.nextNode());) {
         var value = node.nodeValue, key = value.trim();
         if (key) {
-          var translated = tr(key);
+          var translated = trAny(key);
           if (translated !== key) node.nodeValue = value.replace(key, function () { return translated; });
         }
       }
+      template.querySelectorAll("[placeholder], [aria-label], [alt], [title]").forEach(function (el) {
+        if (el.closest("[data-raw], code, pre")) return;
+        ["placeholder", "aria-label", "alt", "title"].forEach(function (an) { var v = el.getAttribute(an); if (v) { var t2 = trAny(v.trim()); if (t2 !== v.trim()) el.setAttribute(an, t2); } });
+      });
     }
     // headings and small labels written in capitals read in sentence case (any language: the translation is in by now)
     template.querySelectorAll("h2, .qh > span").forEach(function (h) {
@@ -2223,7 +2255,7 @@ textarea.in{resize:vertical;min-height:120px}
       while ((n = w.nextNode())) {
         if (n.parentNode.closest && n.parentNode.closest(".keep")) { first = false; continue; }
         var v = n.nodeValue; if (v !== v.toUpperCase() || v === v.toLowerCase()) { if (/[a-z]/i.test(v)) first = false; continue; }
-        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }[x] || x.toUpperCase(); });
+        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu|cloudflare|google|quad9)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi", "cloudflare": "Cloudflare", "google": "Google", "quad9": "Quad9" }[x] || x.toUpperCase(); });   /* hunters11 phone L-3 */
         if (first) { v = v.replace(/[a-z]/, function (c) { return c.toUpperCase(); }); if (/[a-z]/i.test(v)) first = false; }
         n.nodeValue = v;
       }
@@ -2273,6 +2305,14 @@ textarea.in{resize:vertical;min-height:120px}
     if (!hasPc() && (t === "devices" || t === "pc" || t === "send")) { S.from2 = S.tab === "web" ? "home" : S.tab; t = "addpc"; } if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); var was = (drafts[open] || T.in.map(function (y) { return y[2] || ""; }))[k]; return e ? (e.value.trim() || (/^@(broker|gw)$/.test(was) ? was : "")) : ""; }); }
 
+  // hunters11 phone ML-4: an open sheet keeps the keyboard inside it (aria-modal promises that)
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Tab" || !S.sheet) return; var sh = document.querySelector(".sheet"); if (!sh) return;
+    var f = [].slice.call(sh.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(function (x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return; var first = f[0], last = f[f.length - 1], at = document.activeElement;
+    if (!sh.contains(at)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+    if (e.shiftKey && at === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
+  });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.sheet) { e.preventDefault(); closeSheet(); draw(); return; }   /* hunters10 ML-7: Esc closes a sheet */ if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt],[data-peek]");
@@ -2345,7 +2385,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (act === "install") { if (bip) { var b = bip; bip = null; b.prompt(); b.userChoice.then(function (r) { if (r && r.outcome === "accepted") inst = true; draw(); }, function () { draw(); }); } return; }
     if (act === "noinst") { store("am-noinst", "1"); draw(); return; }
     if (act === "reconnect") { reconnect(); return; }
-    if (act === "forget") { if (confirm("Forget this PC on this phone" + (phase === "live" ? " and on the PC" : "") + "?")) forgetPc(); return; }
+    if (act === "forget") { if (confirm(tr(phase === "live" ? "Forget this PC on this phone and on the PC?" : "Forget this PC on this phone?"))) forgetPc();   /* hunters11 phone ML-7 */ return; }
     if (act === "remember") { if (!bioOk()) { toast("This browser has no Face ID / fingerprint support"); return; } send({ t: "remember" }); toast("Answer the question on your PC"); return; }
     if (act === "checkup") { if (sure !== "checkup") { sure = "checkup"; toast("Tap again to run the full checkup - about a minute"); return; } sure = ""; run("checkup", []); draw(); return; }
     if (act === "stop") { if (curRid) send({ t: "stop", rid: curRid }); return; }

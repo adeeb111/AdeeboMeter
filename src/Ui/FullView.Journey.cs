@@ -59,7 +59,7 @@ namespace AdeeboMeter
         {
             var f = JFlowFromStory();
             float top = y, ox = x, ow = w; x += 18 * S; w -= 36 * S; y += 16 * S;   // 24 Nov: the journey is a card like the rest of the page
-            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.JOURNEY");
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(AdeeboMeter.Kit.Sent("PACKET JOURNEY"), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.JOURNEY");
             y += 26 * S;
             if (f != null) using (var mb = new SolidBrush(Theme.Muted)) using (var nw0 = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 { g.DrawString((f.App != "" ? f.App + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : L.T("UDP port") + " " + f.LocalPort), Draw.fSmall, mb, new RectangleF(x, y, w, 20 * S), nw0); y += 30 * S; }
@@ -137,7 +137,7 @@ namespace AdeeboMeter
         // ---------- 2. where the time goes: latency split by leg, and what jitter is
         float PaintJTime(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("WHERE THE TIME GOES")), x, y, w, "travel.JTIME");
+            y = Head(g, AdeeboMeter.Kit.Sent("WHERE THE TIME GOES"), x, y, w, "travel.JTIME");
             double gwMin = MinOf(M.GwPing), netMin = MinOf(M.NetPing); string kind; lock (M.L) kind = M.AdapterKind;
             if (jPing == null)
             {
@@ -202,7 +202,7 @@ namespace AdeeboMeter
         // ---------- 3. the real packets: capture, play along the path, translate, explain
         float PaintJCapture(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("THE REAL PACKETS")), x, y, w, "travel.JREAL");
+            y = Head(g, AdeeboMeter.Kit.Sent("THE REAL PACKETS"), x, y, w, "travel.JREAL");
             bool rec = jSess != null && !jSess.Done, can = LiveCapture.Available && !Policy.NoCapture;
             if (jNoIface && !rec) { y = Lead(g, AdeeboMeter.L.T("No network adapter is up right now - connect, then capture again."), x, y, w, true); }
             if (!can && (jSess == null || jSess.Snapshot().Count == 0)) return Lead(g, Policy.NoCapture ? "Capturing packets is turned off by your IT team (AdeeboMeter.policy). The stack and the timing above still work." : "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
@@ -354,7 +354,7 @@ namespace AdeeboMeter
         // the running translation: one plain line per packet, newest last
         float PaintJTranslate(Graphics g, float x, float y, float w, List<Journey.Rec> recs, bool rec)
         {
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("IN PLAIN WORDS")) + (rec ? "  ·  " + L.T("Live") : ""), x, y, w, "travel.JSAY");
+            y = Head(g, AdeeboMeter.Kit.Sent("IN PLAIN WORDS") + (rec ? "  ·  " + L.T("Live") : ""), x, y, w, "travel.JSAY");
             int upto = recs.FindLastIndex(r => r.T <= jPlay + 1e-6); if (upto < 0) upto = rec ? recs.Count - 1 : Math.Min(recs.Count - 1, 9);
             var shown = recs.Skip(Math.Max(0, upto - 9)).Take(Math.Min(10, upto + 1)).ToList();
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -380,7 +380,7 @@ namespace AdeeboMeter
                 y += 42 * S;
                 return Lead(g, AdeeboMeter.L.T("Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show."), x, y, w, true);
             }
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("WHAT THESE PACKETS SHOW")), x, y, w, "travel.JEXPLAIN");
+            y = Head(g, AdeeboMeter.Kit.Sent("WHAT THESE PACKETS SHOW"), x, y, w, "travel.JEXPLAIN");
             foreach (var n in jNotes)
             {
                 float th = Draw.Measure(n.Text, Draw.fBody, (int)(w - 40 * S)).Height; var card = new RectangleF(x, y, w, th + 40 * S);

@@ -5109,7 +5109,7 @@ Game pings are turned off by your IT team (AdeeboMeter.policy).	আপনার 
 Getting Valve's server list (one request to api.steampowered.com)...	Valve-এর সার্ভার তালিকা আনা হচ্ছে (api.steampowered.com-এ একটি অনুরোধ)...
 History is on - the first day appears here after a few minutes.	ইতিহাস চালু - কয়েক মিনিট পরে প্রথম দিনটি এখানে দেখা যাবে।
 If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.	এটা যদি আপনার খোলা কোনো অ্যাপ হয়, বন্ধ করা নিরাপদ। চিনতে না পারলে এবং Program Files বা Windows ফোল্ডারে না থাকলে, হাত দেওয়ার আগে আইটিকে জিজ্ঞেস করুন।
-Internet answered in	ইন্টারনেট সাড়া দিয়েছে
+Internet answered in	ইন্টারনেট সাড়া দিয়েছে, সময়
 Keep this capture	এই ক্যাপচার রাখুন
 Kept on this PC for 90 days; about 2 KB a stream	এই পিসিতে 90 দিন রাখা হয়; প্রতি স্ট্রিমে প্রায় 2 KB
 Listing this program's connections	এই প্রোগ্রামের সংযোগগুলোর তালিকা হচ্ছে
@@ -5137,7 +5137,7 @@ Rates and Prices in Canada	কানাডায় হার ও দাম
 Reading that day...	সেই দিনটি পড়া হচ্ছে...
 Reading this program's details	এই প্রোগ্রামের বিস্তারিত পড়া হচ্ছে
 Refresh Valve list	Valve তালিকা রিফ্রেশ
-Router answered in	রাউটার সাড়া দিয়েছে
+Router answered in	রাউটার সাড়া দিয়েছে, সময়
 Running the health check	স্বাস্থ্য পরীক্ষা চলছে
 Running the security checkup	নিরাপত্তা পরীক্ষা চলছে
 Same name, different lock	একই নাম, ভিন্ন তালা
@@ -5167,8 +5167,8 @@ local network	লোকাল নেটওয়ার্ক
 {0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} সংযুক্ত, কিন্তু রাউটার থেকে কোনো ঠিকানা পায়নি (169.254.x.x - DHCP সাড়া দেয়নি)। রাউটার রিস্টার্ট করুন বা আবার সংযোগ করুন।
 Every network connection just dropped.	সব নেটওয়ার্ক সংযোগ এইমাত্র চলে গেল।
 All network connections dropped.	সব নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।
-Lost the network - you're offline, boss.	নেটওয়ার্ক হারিয়েছে - আপনি অফলাইন, বস।
-Network connection lost.	নেটওয়ার্ক সংযোগ হারিয়েছে।
+Lost the network - you're offline, boss.	নেটওয়ার্ক হারিয়ে গেছে - আপনি অফলাইন, বস।
+Network connection lost.	নেটওয়ার্ক সংযোগ হারিয়ে গেছে।
 VPN dropped.	VPN পড়ে গেছে।
 VPN disconnected.	VPN বিচ্ছিন্ন।
 Wi-Fi dropped.	Wi-Fi পড়ে গেছে।
@@ -5448,3 +5448,10 @@ exact	নির্ভুল
 Not measured yet.	এখনো মাপা হয়নি।
 up to 1 GB to the speed server you picked	আপনার বেছে নেওয়া স্পিড সার্ভারে সর্বোচ্চ 1 GB
 Same network twice	একই নেটওয়ার্ক দুবার
+The internet past your router / VPN is slow. Your PC and {0} are fine.	আপনার রাউটার / VPN-এর ওপারের ইন্টারনেট ধীর। আপনার পিসি ও {0} ঠিক আছে।
+The internet past your router is slow. Your PC and {0} are fine.	আপনার রাউটারের ওপারের ইন্টারনেট ধীর। আপনার পিসি ও {0} ঠিক আছে।
+start game monitoring on its own when a game opens	কোনো গেম খুললে নিজে থেকেই গেম নজরদারি শুরু করা
+Only inside a check you start (What's wrong? and the full checkup): one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	শুধু আপনার শুরু করা যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা): হোটেল ও বিমানবন্দরের সাইন-ইন পেজ ধরতে Windows যে পরীক্ষার পেজ ব্যবহার করে সেখানে একটি ছোট অনুরোধ।
+Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	শুধু আপনার শুরু করা যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা): Windows নিজে যে পরীক্ষার পেজ ব্যবহার করে সেখানে একটি অনুরোধ (msftconnecttest.com)।
+Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	যাচাইগুলো Windows-এর নিজস্ব সার্টিফিকেট যাচাইসহ TLS ব্যবহার করে (Windows TLS 1.2 বা 1.3 বেছে নেয়)। একটি ব্যতিক্রম: TLS ইন্সপেক্টরে অন্য নাম চাইলে সেটি অন্য নামের সার্টিফিকেট গ্রহণ করে এবং তার পেজে তা জানায়। ইনপুট যাচাই করা হয়; কখনো কোনো শেল ব্যবহার হয় না।
+and {0} more - Open a file... in the lab lists them all	আরও {0}টি - ল্যাবে Open a file... সবগুলো দেখায়

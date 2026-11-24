@@ -63,7 +63,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < items.Count; i++)
                     {
                         var it = items[i]; bool on = tbFilter == "" && tbQ == it[0];
-                        if (i == 2) { g.DrawString(Kit.Sent(L.T("BY QUESTION")), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
+                        if (i == 2) { g.DrawString(Kit.Sent("BY QUESTION"), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
                         var rr = new RectangleF(x, ry, rw, 38 * S);
                         if (on) { Theme.Fill(g, rr, 10 * S, Theme.BlueSoft); }   // v8: the picked row in the app's one selection colour (was each group's tint - brown in dark)
                         using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
@@ -258,14 +258,14 @@ namespace AdeeboMeter
                     return y;
                 };
                 var all = Tools2();
-                y = grid(Kit.Sent(L.T("READY-MADE")), StarterPins.Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null).ToList(), false);
-                y = grid(Kit.Sent(L.T("YOURS")), MyPins().Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null && !StarterPins.Contains(t.Id)).ToList(), true);
+                y = grid(Kit.Sent("READY-MADE"), StarterPins.Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null).ToList(), false);
+                y = grid(Kit.Sent("YOURS"), MyPins().Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null && !StarterPins.Contains(t.Id)).ToList(), true);
                 string how = L.T("Add your own: press ☆ on any tool in a question on the left - it shows up here and above that question's tools. Up to 12.");
                 float hh = Draw.Measure(how, Draw.fBody, (int)w).Height; g.DrawString(how, Draw.fBody, sub, new RectangleF(x, y, w, hh + 4)); y += hh + 16 * S;
                 var recent = tbRecent.Select(id => all.FirstOrDefault(z => z.Id == id)).Where(t => t != null).Take(8).ToList();
                 if (recent.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("RECENT")), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
+                    g.DrawString(Kit.Sent("RECENT"), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
                     int shownR = 0;
                     foreach (var t in recent) { if (px + 60 * S > x + w) break; if (px + Kit.ChipWidth(g, ToolName(t), null) > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); shownR++; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
                     More(g, recent.Count - shownR, px, y, x + w);

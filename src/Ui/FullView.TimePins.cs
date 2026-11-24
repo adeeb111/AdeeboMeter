@@ -54,7 +54,7 @@ namespace AdeeboMeter
         {
             if (replayExample) return y;
             var ps = TmPins(); var m = TmMinute(at); bool pinned = ps.Contains(m);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("PINNED MOMENTS")), Draw.fTiny, mb, x, y + 8 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("PINNED MOMENTS"), Draw.fTiny, mb, x, y + 8 * S);
             float cx = x + 140 * S;
             // pin / unpin this minute
             string pt = pinned ? L.T("Unpin") + " " + m.ToString("HH:mm", CultureInfo.CurrentCulture) : L.T("Pin this minute");
@@ -90,7 +90,7 @@ namespace AdeeboMeter
                 new[] { "Wi-Fi link rate", F(V(row, 12), " Mb/s"), F(V(now, 12), " Mb/s"), TmWorse(V(row, 12), V(now, 12), 50, false) },
                 new[] { "Processor", F(V(row, 2), "%"), F(V(now, 2), "%"), TmWorse(V(row, 2), V(now, 2), 20, true) } };
             if (Cfg.Details) rows.Add(new[] { "Network", Draw.Trunc(netName ?? "", 22), Draw.Trunc(netNow, 22), (netName ?? "") != netNow && netName != "" && netNow != "" ? "c" : "" });
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("PINNED")) + " " + m.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + "  ·  " + Kit.Sent(L.T("NOW")) + " " + nowAt.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x, y); y += 22 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("PINNED") + " " + m.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + "  ·  " + Kit.Sent("NOW") + " " + nowAt.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x, y); y += 22 * S;
             Kit.Box(g, new RectangleF(x, y, w, rows.Count * 28 * S + 10 * S)); y += 5 * S;
             float c1 = x + 16 * S, c2 = x + Math.Min(260 * S, w * 0.4f), c3 = c2 + Math.Min(170 * S, w * 0.25f), c4 = c3 + Math.Min(170 * S, w * 0.25f);
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))

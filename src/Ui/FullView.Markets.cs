@@ -40,7 +40,7 @@ namespace AdeeboMeter
             g.TranslateTransform(tradeCanvas.AutoScrollPosition.X, tradeCanvas.AutoScrollPosition.Y);
             Begin(tradeCanvas); Paper.Fonts(); MarketsFetch();
             float x = 22 * S, y = 16 * S, w = tradeCanvas.ClientSize.Width - 44 * S;
-            y = Paper.Masthead(g, x, y, w, Kit.Sent(L.T("THE MARKETS PAGE")), L.T("AdeeboMeter Daily Financial Edition"), L.T("Your PC · Your Network · Your Markets"), L.T("All in One Place"), mkTab != "overview");
+            y = Paper.Masthead(g, x, y, w, Kit.Sent("THE MARKETS PAGE"), L.T("AdeeboMeter Daily Financial Edition"), L.T("Your PC · Your Network · Your Markets"), L.T("All in One Place"), mkTab != "overview");
             List<Tuple<string, RectangleF>> hits; y = Paper.TabBar(g, x, y, w, MkTabs, mkTab, out hits);
             foreach (var h in hits) { string id = h.Item1; Act(tradeCanvas, h.Item2, delegate { mkTab = id; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); }); }
             y = TryThis(g, tradeCanvas, "trade", x, y + 6 * S, w, true);
@@ -75,7 +75,7 @@ namespace AdeeboMeter
         {
             var r = LineCheck.Now(MkMon); int lv = r.Score < 0 ? 3 : r.Score >= 80 ? 0 : r.Score >= 55 ? 1 : 2;
             var tip = r.Tips.FirstOrDefault(t => !t.Title.StartsWith("This PC is ready", StringComparison.Ordinal));
-            Paper.StripHits sh; y = Paper.Strip(g, x, y, w, Kit.Sent(L.T("LINE CHECK")), true, LineCheck.Checking ? L.T("Checking your line...") : L.T(r.Verdict), r.Line, tip == null ? null : L.T(tip.Title), L.T("Check my line"), LineCheck.Checking ? 3 : lv, out sh);
+            Paper.StripHits sh; y = Paper.Strip(g, x, y, w, Kit.Sent("LINE CHECK"), true, LineCheck.Checking ? L.T("Checking your line...") : L.T(r.Verdict), r.Line, tip == null ? null : L.T(tip.Title), L.T("Check my line"), LineCheck.Checking ? 3 : lv, out sh);
             Act(tradeCanvas, sh.Button, delegate { if (Cfg.TradeHost == "") { mkTab = "line"; tradeCanvas.Invalidate(); return; } LineCheck.Check(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { tradeCanvas.Invalidate(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; } }); tradeCanvas.Invalidate(); });
             Act(tradeCanvas, sh.Details, delegate { mkTab = "line"; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); });
             return y;
@@ -158,6 +158,8 @@ namespace AdeeboMeter
                 Action done = () => { if (lb.SelectedItem == null) return; var c = lb.SelectedItem.ToString().Substring(0, 3); if (ex.Contains(c)) return; picked = c; f.DialogResult = DialogResult.OK; f.Close(); };
                 ok.Click += delegate { done(); }; lb.DoubleClick += delegate { done(); }; tb.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { done(); e.SuppressKeyPress = true; } if (e.KeyCode == Keys.Down && lb.Items.Count > 0) { lb.Focus(); } };
                 f.Controls.Add(tb); f.Controls.Add(lb); f.Controls.Add(ok); f.AcceptButton = null; f.Shown += delegate { tb.Focus(); };
+                f.KeyPreview = true; f.KeyDown += (s2, e2) => { if (e2.KeyCode == Keys.Escape) { e2.Handled = true; f.Close(); } };   /* hunters11 core L-1: Esc closes, and it fits the screen */
+                Draw.FitOnShow(f, true);
                 f.ShowDialog(this);
                 return picked;
             }
@@ -208,7 +210,7 @@ namespace AdeeboMeter
         {
             // the lead: ribbon, headline, standfirst | At a Glance
             float lw = w * 0.58f, gx = x + lw + 18 * S, gw = w - lw - 18 * S;
-            float ly = Paper.Ribbon(g, Kit.Sent(L.T("THIS WEEK'S MARKET BRIEFING")), x, y) + 10 * S;
+            float ly = Paper.Ribbon(g, Kit.Sent("THIS WEEK'S MARKET BRIEFING"), x, y) + 10 * S;
             var head = MkHeadline(); var hs = g.MeasureString(head, Paper.Head1, (int)lw);
             MkText(g, "", Paper.Head1, Paper.Head, x, ly); using (var hb = new SolidBrush(Paper.Head)) g.DrawString(head, Paper.Head1, hb, new RectangleF(x, ly, lw, hs.Height + 4)); ly += hs.Height + 6 * S;
             var et = Trading.EasternNow(); bool open = Trading.MarketOpen(et);
@@ -645,7 +647,7 @@ namespace AdeeboMeter
         float MkCasual(Graphics g, float x, float y, float w)
         {
             float lw = w * 0.56f, rx = x + lw + 16 * S, rw = w - lw - 16 * S;
-            float ly = Paper.Ribbon(g, Kit.Sent(L.T("YOUR WEEK IN TWO MINUTES")), x, y) + 10 * S;
+            float ly = Paper.Ribbon(g, Kit.Sent("YOUR WEEK IN TWO MINUTES"), x, y) + 10 * S;
             var head = MkHeadline(); var hs = g.MeasureString(head, Paper.Head1, (int)lw); using (var hb = new SolidBrush(Paper.Head)) g.DrawString(head, Paper.Head1, hb, new RectangleF(x, ly, lw, hs.Height + 4)); ly += hs.Height + 8 * S;
             foreach (var f in MkWeekFacts()) { using (var b = new SolidBrush(Paper.Ink)) { g.FillEllipse(b, x + 4 * S, ly + 8 * S, 6 * S, 6 * S); g.DrawString(f.Item2, Paper.Body, b, new RectangleF(x + 18 * S, ly, lw - 18 * S, 24 * S)); } ly += 26 * S; }
             // Canada

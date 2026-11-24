@@ -569,7 +569,7 @@ Learning paths	مسارات التعلم
 Home user	مستخدم منزلي
 Network engineer	مهندس شبكة
 why the internet feels slow, and what to do about it	لماذا يبدوا الإنترنت بطيئًا، وما الذي يجب فعله حيال ذلك
-ping, jitter and lag - where every millisecond goes	التنبر والهزاوة والتأخير حيث تذهب كل ميل ثانية
+ping, jitter and lag - where every millisecond goes	زمن الاستجابة والتذبذب والتأخير - أين تذهب كل ميلي ثانية
 TCP, MTU, routing and subnets - from the packets up	TCP، MTU ، التوجيه والشبكات الفرعية - من الحزم إلى الأعلى
 Check yourself	اختبر فهمك
 CHECK YOURSELF	تحقق من نفسك
@@ -1193,7 +1193,7 @@ See your traffic, live	شاهد حركة المرور، على الهواء مب
 Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.	اضغط على "بدء" وسأضع دماغ (وايرشارك) على حركة المرور الخاصة بك لا شيء يطير حتى تفعل.
 Press Start live capture. Nothing runs until you do.	اضغط على البدء في التقاط المباشر لا شيء يعمل حتى تفعل.
 Which apps and conversations use the most traffic	أي التطبيقات والمحادثات تستخدم أكثر حركة المرور
-Call quality (loss, jitter, MOS) and Wireshark's own warnings	جودة المكالمات (الخسارة والقلق، MOS) وحذيرات Wireshark الخاصة
+Call quality (loss, jitter, MOS) and Wireshark's own warnings	جودة المكالمات (الفقد والتذبذب وMOS) وتحذيرات Wireshark نفسه
 Stays on this PC - nothing is uploaded	يبقى على هذا الجهاز — لا يُرفع أي شيء
 Follow one connection, box by box	اتبع اتصال واحد، مربع بعد مربع
 Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.	اختر تطبيق فوق، أو اكتب موقعًا، وسوف أتابع حركة المرور من هذا الكمبيوتر إلى الطرف الآخر - سبعة صناديق، كل منها قابل للنقر.
@@ -1582,7 +1582,7 @@ One click changes the pages, how hard it watches and what sits in the corner. Ea
 One contract	عقد واحد
 One file at a time - wait for the last one.	ملف واحد في كل مرة - إنتظر آخر واحد.
 One tap opens your result	ضغط واحد يفتح النتيجة
-Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key.	فقط قل نعم إذا قرأت بصمة الأصابع معهم (المكالمة أو شخصياً). الملفات التي تشفرها لهم بعد ذلك استخدام المفتاح الجديد.
+Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key.	لا تقل نعم إلا إذا قرأت هذه البصمة معهم (المكالمة أو شخصياً). الملفات التي تشفرها لهم بعد ذلك استخدام المفتاح الجديد.
 Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates.	فقط الاسم الذي تكتبيه يذهب إلى Open-Meteo (حرة، لا حساب) للعثور عليه - ثم فقط إحداثياتها.
 Open it now	افتحه الآن
 Open link	فتح الرابط
@@ -2437,9 +2437,9 @@ Follows my view: the Streamer view names what's playing, the Trader view the bro
 Quiet + moments: calm all day; the buddy's face changes for a few seconds when something good happens (a clean game session, a stream with no dips, the internet back, a new speed record...). Hover to see why.	لحظة هادئة: هدوء طوال اليوم؛ يغير وجه الرفيق لبضع ثوان عندما يحدث شيء جيد (جلسة لعبة نظيفة، تدفق بدون غوصات، إنترنت مرة أخرى، سجل سرعة جديد...). إلتقطي لرى لماذا
 A little bigger (1.3x) - easier to read at a glance.	أكبر قليلاً (1.3x) - أسهل القراءة في نظرة واحدة.
 Small - out of the way.	صغير - بعيدا عن الطريق.
-Always the gamer card: your game's ping, jitter, loss and grade.	دائماً بطاقة اللاعب: لعبة اللعب الخاصة بك هي النقر، القلق، الخسارة والدرجة.
+Always the gamer card: your game's ping, jitter, loss and grade.	بطاقة اللاعب دائمًا: زمن استجابة لعبتك والتذبذب والفقد والتقييم.
 Always the everyday card: the verdict, the five dots, CPU, memory and speed.	دائماً بطاقة اليومية: الحكم، النقاط الخمسة، CPU، الذاكرة والسرعة.
-Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up.	دائماً بطاقة المكالمات: القلق، الخسارة والتأخير - ما يهم فريقات، زوم و واتس أب - و VPN عندما يكون.
+Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up.	بطاقة المكالمات دائمًا: التذبذب والفقد والتأخير - ما يهمّ Teams وZoom وWhatsApp - وVPN حين يعمل.
 Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.	بطاقة المختصين دائمًا: زمن استجابة الراوتر والإنترنت وDNS، والتذبذب وفقد الحزم، وإعادة إرسال TCP وإعادة ضبطه، ومعدل النقل وCPU والذاكرة.
 Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.	يتبع ما تفعله: بطاقة اللاعب بينما تكون اللعبة التي أضفتها مفتوحة (إذا كان عرض اللعبة على) ، بطاقة المكالمات أثناء المكالمة، بطاقة اليومية في باقي الوقت.
 A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip.	وجهه صغير على الويجيت الذي يشعر بما تشعر به شبكتك: متفرغ عندما يكون كل شيء أخضر، متعرق عندما يكون جهاز الكمبيوتر مشغولًا، مشوشًا عندما يكون Wi-Fi سيئاً، وخائنًا عندما يخيبك مقدمك. نَامُ على رقاقة مُثبتة.
@@ -2537,7 +2537,7 @@ Just the speeds, like DU Meter.	فقط السرعات، مثل مترو DU.
 Speeds plus OK / Busy / Problem.	السرعات بالإضافة OK / مشغول / مشكلة.
 Speeds plus the busiest apps.	السرعات بالإضافة إلى أكثر التطبيقات ازدحاماً
 The verdict, five dots, CPU, memory, speed.	الحكم، خمسة نقاط، CPU، الذاكرة، السرعة.
-Your game's ping, jitter, loss and grade.	لعبتك هي النزاع والقلق والخسارة والدرجة
+Your game's ping, jitter, loss and grade.	زمن استجابة لعبتك والتذبذب والفقد والتقييم.
 Jitter, loss and delay for calls.	التركيز، الخسارة والتأخير في المكالمات.
 Router, internet, DNS, retransmits (Pro).	راوتر، الإنترنت، DNS، إرسال إعادة الإرسال (Pro).
 Follows what you're doing.	يتبع ما تفعله
@@ -3264,14 +3264,14 @@ Your PC (51834)	جهازك (51834)
 here you go	تفضّل
 Open a secure website.	افتح موقعًا آمنًا.
 Speed isn't one number	السرعة ليست رقم واحد
-Bandwidth, delay, jitter and loss - four different things that all feel like "slow".	عرض النطاق، التأخير، القلق والخسارة -- أربعة أشياء مختلفة التي تبدو "بطيئة".
+Bandwidth, delay, jitter and loss - four different things that all feel like "slow".	عرض النطاق والتأخير والتذبذب والفقد - أربعة أشياء مختلفة تبدو كلها "بطئًا".
 Which can feel 'slow' even on a fast plan?	والتي يمكن أن تشعر "ببطء" حتى على خطة سريعة؟
 High delay, jitter or loss	تأخير أو تذبذب أو فقد حزم مرتفع
 A big hard disk	قرص صلب كبير
 A bright screen	شاشة مشرقة
 A long password	كلمة مرور طويلة
-Bandwidth is how much; delay is how long; jitter is how uneven; loss is how much goes missing.	عرض النطاق هو كم؛ التأخير هو كم؛ القلق هو كم غير متساوية؛ الخسارة هو كم يفقد.
-Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.	اختبارات السرعة تظهر عرض النطاق، ولكن المكالمات والتنصف يعانون من تأخير، القلق والخسارة.
+Bandwidth is how much; delay is how long; jitter is how uneven; loss is how much goes missing.	عرض النطاق هو الكمية؛ التأخير هو المدة؛ التذبذب هو عدم الانتظام؛ الفقد هو ما يضيع.
+Speed tests show bandwidth, but calls and browsing suffer from delay, jitter and loss.	اختبارات السرعة تُظهر عرض النطاق، لكن المكالمات والتصفح تتأثر بالتأخير والتذبذب والفقد.
 ping (3 ms)	(3 ms)
 ping (+18 ms)	طلب Ping (‎+18 ms)
 reply after 21 ms, jitter 2 ms, 0% lost	ردّ بعد 21 ms، وتذبذب 2 ms، وفقد حزم 0%
@@ -3625,15 +3625,15 @@ add a 5G leg for this phone (EN-DC)	أضف مسار اتصال 5G لهذا ال�
 extra capacity	سعة إضافية
 4G core	الشبكة الأساسية 4G
 all signalling stays here	تبقى كل إشارات التحكّم هنا
-A hash - a file's fingerprint	البصمة الإصبعية في ملف
-Change one bit, get a completely different fingerprint.	تغيير قليلاً، الحصول على بصمة إصبع مختلفة تماماً.
-You change one letter in a 2 GB file. What happens to its SHA-256 fingerprint?	تغير حرف واحد في ملف 2 GB ماذا سيحدث لخطابات أصابع SHA-256؟
+A hash - a file's fingerprint	الهاش: بصمة الملف
+Change one bit, get a completely different fingerprint.	غيّر بتًا واحدًا تحصل على بصمة مختلفة تمامًا.
+You change one letter in a 2 GB file. What happens to its SHA-256 fingerprint?	غيّرت حرفًا واحدًا في ملف حجمه 2 GB. ماذا يحدث لبصمة SHA-256 الخاصة به؟
 It changes completely	إنه يتغير تماما
 It changes by one letter too	يتغير حرف واحد أيضاً
 It stays the same	لا تزال نفسها
 It gets shorter	يزداد قصيراً
-A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always gives the same one.	يضغط الهاش أي ملف إلى بصمة أصابع قصيرة (SHA-256: 64 أرقام ستة أرقام). نفس الملف دائماً يعطي نفسها
-A download whose hash doesn't match the published one is damaged or not the real file - get it again.	تحميل لا يطابق الجهاز المطبوع أو غير الملف الحقيقي - احصل عليه مرة أخرى.
+A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always gives the same one.	يضغط الهاش أي ملف في بصمة قصيرة (SHA-256: ‏64 رقمًا ست عشريًا). الملف نفسه يعطي دائمًا البصمة نفسها.
+A download whose hash doesn't match the published one is damaged or not the real file - get it again.	التنزيل الذي لا تطابق بصمته البصمة المنشورة تالف أو ليس الملف الحقيقي - نزّله مرة أخرى.
 You can't turn a fingerprint back into the file, and nobody can make two different files with the same fingerprint (with SHA-256 - MD5 and SHA-1 are broken for that: someone can make a matching pair, though not a match for a file that already exists). Certificates, Windows Update and package managers all lean on this.	لا يمكن استعادة الملف من بصمته، ولا إنشاء ملفين مختلفين ببصمة واحدة عند استخدام SHA-256. أما MD5 وSHA-1 فلم يعودا آمنين لهذا الغرض؛ إذ يمكن إنشاء زوج من الملفات المتطابقة في البصمة، وإن لم يكن مطابقًا لبصمة ملف موجود مسبقًا. تعتمد الشهادات وWindows Update ومديرو الحزم على هذه الخاصية.
 Download page	صفحة التنزيل
 setup.exe is 3f2a...9c1d	بصمة setup.exe هي 3f2a...9c1d
@@ -5278,7 +5278,7 @@ TLS handshake failed: the server likely supports only TLS 1.0/1.1.	فشلت مص
 TCP is fine, TLS fails. The two sides can't agree on how to talk securely.	TCP بخير، وTLS يفشل. الطرفان لا يتفقان على طريقة للتحدث بأمان.
 TLS handshake failed.	فشلت مصافحة TLS.
 Asking Windows about your connection...	جارٍ سؤال Windows عن اتصالك...
-Reading...	جارٍ القراءة...
+Reading...	جارٍ قراءة البيانات...
 Not a single drop. Rock solid.	ولا انقطاع واحد. ثابت كالصخر.
 No drops in 24 h.	لا انقطاعات خلال 24 h.
 Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.	الكابل هو المعيار الذهبي: لا تداخل ولا تجوال ولا جيران. إن ظلت المكالمات تتقطع فالمشكلة أبعد - افحص وجهة.
@@ -5448,3 +5448,10 @@ exact	دقيق
 Not measured yet.	لم يُقَس بعد.
 up to 1 GB to the speed server you picked	حتى 1 GB إلى خادم السرعة الذي اخترته
 Same network twice	الشبكة نفسها مرتين
+The internet past your router / VPN is slow. Your PC and {0} are fine.	الإنترنت بعد الموجّه / VPN بطيء. حاسوبك و{0} بخير.
+The internet past your router is slow. Your PC and {0} are fine.	الإنترنت بعد الموجّه بطيء. حاسوبك و{0} بخير.
+start game monitoring on its own when a game opens	بدء مراقبة اللعبة تلقائيًا عند فتحها
+Only inside a check you start (What's wrong? and the full checkup): one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	فقط ضمن فحص تبدؤه أنت (ما المشكلة؟ والفحص الكامل): طلب صغير إلى صفحة الاختبار نفسها التي يستخدمها Windows، لاكتشاف صفحات تسجيل الدخول في الفنادق والمطارات.
+Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	فقط ضمن فحص تبدؤه أنت (ما المشكلة؟ والفحص الكامل): طلب واحد إلى صفحة الاختبار نفسها التي يستخدمها Windows ‏(msftconnecttest.com).
+Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	تستخدم الفحوص TLS مع تحقق Windows من الشهادات (يختار Windows ‏TLS 1.2 أو 1.3). استثناء واحد: عندما تطلب من فاحص TLS اسمًا مختلفًا، يقبل شهادة لاسم آخر ويذكر ذلك في صفحته. المدخلات يُتحقق منها؛ ولا يُستخدم أي shell أبدًا.
+and {0} more - Open a file... in the lab lists them all	و{0} أخرى - فتح ملف... في المختبر يعرضها كلها

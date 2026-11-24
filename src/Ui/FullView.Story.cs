@@ -96,7 +96,7 @@ namespace AdeeboMeter
                     .Select(gr => gr.First()).OrderByDescending(c => c.State == "ESTABLISHED").ThenBy(c => c.Host == "" ? c.RemoteIp : c.Host).ToList();
                 if (its.Count > 1)
                 {
-                    using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(Kit.Sent(L.T("ITS CONNECTIONS")) + " (" + its.Count + ")", Draw.fBodyB, mb, x, y);
+                    using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(Kit.Sent("ITS CONNECTIONS") + " (" + its.Count + ")", Draw.fBodyB, mb, x, y);
                     y += 26 * S; float kx = x; int shown = 0;
                     foreach (var c in its)
                     {
@@ -228,7 +228,7 @@ namespace AdeeboMeter
 
             // the timed handshake - its own card
             cardTop = y; x += 18 * S; w -= 36 * S; y += 16 * S;
-            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(L.T("HOW LONG EACH STEP TAKES")), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.LADDER");
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent("HOW LONG EACH STEP TAKES"), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.LADDER");
             y += 34 * S;
             if (r == null || (!r.Done && !travelBusy))
             {

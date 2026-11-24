@@ -55,7 +55,7 @@ namespace AdeeboMeter
             foreach (Control c in pinBar.Controls.Cast<Control>().ToList()) { pinBar.Controls.Remove(c); c.Dispose(); }   // no leaked handles
             if (Cfg.Pins.Count > 0)
             {
-                pinBar.Controls.Add(new Label { Text = AdeeboMeter.Kit.Sent(L.T("SAVED")), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(8), 0) });
+                pinBar.Controls.Add(new Label { Text = AdeeboMeter.Kit.Sent("SAVED"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(0, Sc(10), Sc(8), 0) });
                 foreach (var p in Cfg.Pins)
                 {
                     var b = new PillButton(Draw.Trunc(p, 28), PillButton.K.Chip) { Tag = p, Margin = new Padding(0, Sc(2), Sc(6), 0) };
@@ -89,7 +89,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                g.DrawString(AdeeboMeter.Kit.Sent(L.T("SAVED DESTINATIONS")) + (pinRunning ? "  ·  CHECKING ALL AT ONCE..." : "  ·  CHECKED " + pr[0].At.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, muted, x + 14 * S, y + 12 * S);
+                g.DrawString(AdeeboMeter.Kit.Sent("SAVED DESTINATIONS") + (pinRunning ? "  ·  CHECKING ALL AT ONCE..." : "  ·  CHECKED " + pr[0].At.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, muted, x + 14 * S, y + 12 * S);
                 float yy = y + 32 * S, dotsW = 8 * 14 * S;
                 foreach (var r in pr)
                 {

@@ -28,6 +28,7 @@ namespace AdeeboMeter
         static List<double> Ps(string t)
         {
             t = t ?? ""; bool spaced = Regex.IsMatch(t, @"\d\s*;\s*\d|\d\s+\d|\d,\s+\d");
+            if (!spaced && Regex.IsMatch(t.Trim(), @"^-?[0-9]+,[0-9]{1,2}$")) return new List<double> { P(t) };   /* hunters11 lab L-1: one price with a decimal comma */
             if (spaced) return Regex.Split(t.Replace(", ", " "), @"[\s;]+").Where(z => z.Trim() != "").Select(P).Where(z => !double.IsNaN(z)).ToList();
             return Regex.Matches(Regex.Replace(t, @"(?<=\d),(?=\d{3}(?!\d))", ""), @"-?[0-9]+(?:\.[0-9]+)?").Cast<Match>().Select(m => { double x; return double.TryParse(m.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out x) && !double.IsInfinity(x) ? x : double.NaN; }).Where(z => !double.IsNaN(z)).ToList();   // review 1.1.6 P2 #6: a 310-digit number is skipped, not a crash
         }

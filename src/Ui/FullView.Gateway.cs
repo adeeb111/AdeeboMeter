@@ -123,7 +123,7 @@ namespace AdeeboMeter
         // ---------- the go-to tiles: a big icon, a name, one live line
         float PaintGateway(Graphics g, float x, float y, float w)
         {
-            using (var gb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("GO TO")), Draw.fTiny, gb, x, y); y += 24 * S;
+            using (var gb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("GO TO"), Draw.fTiny, gb, x, y); y += 24 * S;
             var down = Sectors.DownNow(3); DateTime certAt; var certs = Sectors.CertsDue(30, out certAt);
             int done = LabLink.Faults.Count(f => Points.Me.Has("nlab." + f[0]));
             // id, icon, accent, name, live line, go
@@ -195,7 +195,7 @@ namespace AdeeboMeter
             var bar = new RectangleF(x, y, w, 40 * S); Theme.Fill(g, bar, 12 * S, Theme.Soft);
             LiveSpot(c, "now", bar);   // kept live on its own by NowTick, the page around it isn't redrawn
             float cx = x + 12 * S;
-            using (var mb = new SolidBrush(Theme.Sub)) { g.DrawString(Kit.Sent(L.T("NOW")), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(Kit.Sent(L.T("NOW")), Draw.fTiny).Width + 10 * S; }
+            using (var mb = new SolidBrush(Theme.Sub)) { g.DrawString(Kit.Sent("NOW"), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(Kit.Sent("NOW"), Draw.fTiny).Width + 10 * S; }
             string hm = L.T("Home") + "  ›"; var hs = g.MeasureString(hm, Draw.fBodyB); var hr = new RectangleF(bar.Right - hs.Width - 16 * S, y, hs.Width + 8 * S, 40 * S);
             foreach (var it in items)
             {

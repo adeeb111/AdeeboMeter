@@ -67,10 +67,10 @@ namespace AdeeboMeter
                 var mine = games.Where(Sports.Mine).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ToList();
                 if (mine.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("YOUR TEAMS")), Draw.fTiny, muted, x, y); y += 18 * S; float cx = x;
+                    g.DrawString(Kit.Sent("YOUR TEAMS"), Draw.fTiny, muted, x, y); y += 18 * S; float cx = x;
                     foreach (var m in mine.Take(6))
                     {
-                        string t = m.Away + " " + Or(m.AwayScore, "") + "  ·  " + m.Home + " " + Or(m.HomeScore, "") + (m.State == "live" ? "  " + Kit.Sent(L.T("LIVE")) : m.State == "soon" ? "  " + m.StartUtc.ToLocalTime().ToString("t", CultureInfo.CurrentCulture) : "  " + m.Detail);
+                        string t = m.Away + " " + Or(m.AwayScore, "") + "  ·  " + m.Home + " " + Or(m.HomeScore, "") + (m.State == "live" ? "  " + Kit.Sent("LIVE") : m.State == "soon" ? "  " + m.StartUtc.ToLocalTime().ToString("t", CultureInfo.CurrentCulture) : "  " + m.Detail);
                         var ts = g.MeasureString(t, Draw.fBodyB); if (cx + ts.Width + 30 * S > x + w) { cx = x; y += 40 * S; }
                         var rr = new RectangleF(cx, y, ts.Width + 26 * S, 32 * S); Theme.Fill(g, rr, 16 * S, m.State == "live" ? Theme.LvSoft(2) : Theme.Soft);
                         using (var b = new SolidBrush(m.State == "live" ? Theme.LvText(2) : Theme.Ink)) g.DrawString(t, Draw.fBodyB, b, rr.X + 13 * S, rr.Y + (32 * S - ts.Height) / 2);
@@ -122,7 +122,7 @@ namespace AdeeboMeter
                             g.DrawString(m.Away, Draw.fBodyB, ink, new RectangleF(cx + 14 * S, cy, colW * 0.62f, 18 * S), nf); g.DrawString(m.Home, Draw.fBodyB, ink, new RectangleF(cx + 14 * S, cy + 18 * S, colW * 0.62f, 18 * S), nf);
                             using (var sb = new SolidBrush(live ? Theme.LvText(2) : Theme.Ink)) { g.DrawString(Or(m.AwayScore, "-"), Draw.fBodyB, sb, new RectangleF(cx + colW * 0.64f, cy, colW * 0.36f, 18 * S), nf); g.DrawString(Or(m.HomeScore, "-"), Draw.fBodyB, sb, new RectangleF(cx + colW * 0.64f, cy + 18 * S, colW * 0.36f, 18 * S), nf); }
                         }
-                        string st = live ? Kit.Sent(L.T("LIVE")) + (m.Detail != "" ? " · " + Cut(m.Detail, 50) : "") : m.State == "off" ? OffWord(m) : m.State == "soon" ? m.StartUtc == DateTime.MinValue ? "" : m.StartUtc.ToLocalTime().ToString("ddd t", CultureInfo.CurrentCulture) : Cut(m.Detail, 60);
+                        string st = live ? Kit.Sent("LIVE") + (m.Detail != "" ? " · " + Cut(m.Detail, 50) : "") : m.State == "off" ? OffWord(m) : m.State == "soon" ? m.StartUtc == DateTime.MinValue ? "" : m.StartUtc.ToLocalTime().ToString("ddd t", CultureInfo.CurrentCulture) : Cut(m.Detail, 60);
                         if (m.League != "") st = m.League + (st != "" ? " · " + st : "");
                         using (var sb = new SolidBrush(live ? Theme.LvText(2) : Theme.Muted)) g.DrawString(Cut(st, 70), Draw.fTiny, sb, cx + 14 * S, cy + 37 * S);
                         cy += 58 * S;

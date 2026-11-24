@@ -317,6 +317,9 @@ namespace AdeeboMeter
         {
 
             using (var g = Graphics.FromHwnd(IntPtr.Zero)) S = g.DpiX / 96f;
+            /* hunters11 core ML-1: the card has no title bar to drag, so it must fit - at 200% on a 768-high screen the whole card scales down */
+            var wa = Screen.FromPoint(Cursor.Position).WorkingArea;
+            S = Math.Max(0.8f, Math.Min(S, Math.Min((wa.Height - 16) / (float)(remove ? 400 : 540), (wa.Width - 16) / 460f)));
             Theme.Apply(Program.WantDark());
             string disp = Draw.Fam("Segoe UI Variable Display", "Segoe UI"), text = Draw.Fam("Segoe UI Variable Text", "Segoe UI"), semi = Draw.Fam("Segoe UI Semibold", "Segoe UI");
             FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;

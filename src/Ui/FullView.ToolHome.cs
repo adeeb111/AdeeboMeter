@@ -217,7 +217,7 @@ namespace AdeeboMeter
                     // "Right now": only when something is off - the headline and the question that fits it
                     string fit = sn.Path != null && sn.Path.Length > 1 && sn.Path[1] == 2 ? "join" : "slow"; var fq = Questions.First(z => z[0] == fit);
                     var rr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, rr, 12 * S, Theme.LvSoft(sn.Level));
-                    using (var lb2 = new SolidBrush(Theme.LvText(sn.Level))) { g.DrawString(Kit.Sent(L.T("RIGHT NOW")), Draw.fTiny, lb2, x + 16 * S, y + 10 * S); g.DrawString(sn.Headline, Draw.fBodyB, lb2, new RectangleF(x + 16 * S, y + 27 * S, w - 230 * S, 22 * S), nowrap); }
+                    using (var lb2 = new SolidBrush(Theme.LvText(sn.Level))) { g.DrawString(Kit.Sent("RIGHT NOW"), Draw.fTiny, lb2, x + 16 * S, y + 10 * S); g.DrawString(sn.Headline, Draw.fBodyB, lb2, new RectangleF(x + 16 * S, y + 27 * S, w - 230 * S, 22 * S), nowrap); }
                     string go = L.T(fq[1]) + "  ›"; var gz = g.MeasureString(go, Draw.fBtn);
                     var gr = new RectangleF(rr.Right - gz.Width - 32 * S, y + 13 * S, gz.Width + 20 * S, 32 * S);
                     Theme.Fill(g, gr, 10 * S, Kit.Accent(QAccent(fit))); using (var wb = new SolidBrush(Color.White)) g.DrawString(go, Draw.fBtn, wb, gr.X + 10 * S, gr.Y + (gr.Height - gz.Height) / 2);
@@ -232,7 +232,7 @@ namespace AdeeboMeter
                 var recent = tbRecent.Select(id => Tools2().FirstOrDefault(z => z.Id == id)).Where(t => t != null).ToList();
                 if (recent.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("RECENT")), Draw.fTiny, muted, x, y + 9 * S); float rx = x + g.MeasureString(Kit.Sent(L.T("RECENT")), Draw.fTiny).Width + 14 * S;
+                    g.DrawString(Kit.Sent("RECENT"), Draw.fTiny, muted, x, y + 9 * S); float rx = x + g.MeasureString(Kit.Sent("RECENT"), Draw.fTiny).Width + 14 * S;
                     foreach (var t in recent)
                     {
                         string tt = L.T(t.Title); var ts = g.MeasureString(tt, Draw.fBody); var pr = new RectangleF(rx, y, ts.Width + 28 * S, 32 * S); if (pr.Right > x + w) break;

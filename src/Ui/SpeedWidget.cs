@@ -125,7 +125,7 @@ namespace AdeeboMeter
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
-                string tag = Kit.Sent(L.T("SPEED")); float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width; var tr = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tag, fTiny, 0).Width + 10 * S, 15 * S);
+                string tag = Kit.Sent("SPEED"); float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width; var tr = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tag, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tr, tr.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tag, fTiny, tb, tr.X + 5 * S, tr.Y + 1 * S);
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 22 * S, y - 2 * S, 22 * S, 22 * S), s, false);
                 y += 24 * S;
@@ -158,7 +158,7 @@ namespace AdeeboMeter
                 if (wtx != null) { WeatherCardDraw(g, pad, y, inner, wtx); y += 22 * S; }
                 if (apps)
                 {
-                    using (var hb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("BUSIEST APPS (CPU)")), fTiny, hb, pad, y + 4 * S); y += 22 * S;
+                    using (var hb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("BUSIEST APPS (CPU)"), fTiny, hb, pad, y + 4 * S); y += 22 * S;
                     if (top.Count == 0) { g.DrawString(L.T("Nothing busy."), fSmall, muted, pad, y); y += 19 * S; }
                     foreach (var a in top)
                     {

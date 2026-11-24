@@ -69,7 +69,7 @@ namespace AdeeboMeter
                 var past = WatchKit.Recent("trade").Take(10).ToList();
                 if (past.Count > 0)
                 {
-                    g.DrawString(Kit.Sent(L.T("YOUR BROKER CONNECTION · PAST TRADING DAYS")), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent("YOUR BROKER CONNECTION · PAST TRADING DAYS"), Draw.fTiny, muted, x, y); y += 20 * S;
                     float rh = 34 * S; var card = new RectangleF(x, y, w, past.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     foreach (var s in past)
                     {
@@ -123,7 +123,7 @@ namespace AdeeboMeter
                 float cx2 = x + 22 * S, cy2 = y + 18 * S;
                 Draw.LvDot(g, live ? lv : 3, cx2, cy2 + 8 * S, 14 * S, 14 * S);
                 g.DrawString(live ? (head.Contains("answering in") ? L.T(head.Split('·')[0].Trim()) + " · " + BrokerName(Cfg.TradeHost) + head.Substring(head.IndexOf("answering", StringComparison.Ordinal) - 1) : L.T(head)) : BrokerName(Cfg.TradeHost) + (open || Cfg.TradeCrypto ? L.T(" · starting...") : L.T(" · market closed - the live check sleeps until 9:30 Eastern")), Draw.fTitle, ink, cx2 + 24 * S, cy2);
-                string tag = open ? Kit.Sent(L.T("LIVE")) + " · " + L.T(Trading.VenueName) + " " + Kit.Sent(L.T("OPEN")) : Cfg.TradeCrypto ? Kit.Sent(L.T("LIVE · CRYPTO 24/7")) : L.T(Trading.VenueName) + " " + Kit.Sent(L.T("CLOSED")); var tgs = g.MeasureString(tag, Draw.fTiny);
+                string tag = open ? Kit.Sent("LIVE") + " · " + L.T(Trading.VenueName) + " " + Kit.Sent("OPEN") : Cfg.TradeCrypto ? Kit.Sent("LIVE · CRYPTO 24/7") : L.T(Trading.VenueName) + " " + Kit.Sent("CLOSED"); var tgs = g.MeasureString(tag, Draw.fTiny);
                 var tgr = new RectangleF(x + w - tgs.Width - 40 * S, cy2 + 2 * S, tgs.Width + 18 * S, 22 * S); Theme.Fill(g, tgr, 11 * S, open || Cfg.TradeCrypto ? Theme.Red : Theme.Soft);
                 using (var tb = new SolidBrush(open || Cfg.TradeCrypto ? Color.White : Theme.Sub)) g.DrawString(tag, Draw.fTiny, tb, tgr.X + 9 * S, tgr.Y + (22 * S - tgs.Height) / 2);
                 // which market "open" means (AM-CG-108): a US-only trader picks US, a Toronto-only trader Toronto
@@ -159,7 +159,7 @@ namespace AdeeboMeter
                         if (tiles[i][2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(tiles[i][2], Draw.fSmall, sub, new RectangleF(tr.X + 12 * S, tr.Y + 47 * S, tw - 20 * S, 18 * S), nf);
                     }
                     cy2 += 80 * S;
-                    g.DrawString(Kit.Sent(L.T("LAST 10 MINUTES")) + " · " + L.T("one check every") + " " + Trading.Sec + " s · " + L.T("dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
+                    g.DrawString(Kit.Sent("LAST 10 MINUTES") + " · " + L.T("one check every") + " " + Trading.Sec + " s · " + L.T("dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
                     var ch = new RectangleF(cx2, cy2, w - 44 * S, 70 * S); double mx = Math.Max(150, far.DefaultIfEmpty(0).Max() * 1.1);
                     using (var dp = new Pen(Theme.Amber, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }) { float ly = ch.Bottom - (float)(100 / mx) * ch.Height; g.DrawLine(dp, ch.X, ly, ch.Right, ly); }
                     if (samples.Count >= 2)

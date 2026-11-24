@@ -70,7 +70,7 @@ namespace AdeeboMeter
             float bx = face.Right + 16 * S, bw = w - (face.Right - x) - 16 * S - 120 * S;
             var bubble = new RectangleF(bx, y, bw, 60 * S); Theme.Fill(g, bubble, 14 * S, Theme.Soft);
             using (var tri = new SolidBrush(Theme.Soft)) g.FillPolygon(tri, new[] { new PointF(bx, y + 22 * S), new PointF(bx - 8 * S, y + 29 * S), new PointF(bx, y + 36 * S) });
-            string tag = plain ? Kit.Sent(L.T("PLAIN")) : (L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T("talks like: ") + L.T(Lines.PersonaName(buddyHover != "" ? buddyHover : Lines.Persona)));
+            string tag = plain ? Kit.Sent("PLAIN") : (L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T("talks like: ") + L.T(Lines.PersonaName(buddyHover != "" ? buddyHover : Lines.Persona)));
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(tag, Draw.fTiny, mb, bx + 14 * S, y + 9 * S);
             using (var ib = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.NoWrap }) { string ty = Typing.Show("sheet", line, buddySheet); g.DrawString("“" + ty + (ty == line ? "”" : ""), Draw.fBody, ib, new RectangleF(bx + 14 * S, y + 28 * S, bw - 24 * S, 24 * S), sf); }
             // Fun lines switch
@@ -85,7 +85,7 @@ namespace AdeeboMeter
             if (Lines.Faith != "off") y = PaintComfortBar(g, x, y, w) + 14 * S;   // Adeeb, 22 Nov: no religion choice on show by default - it lives in Settings › Companion; the bar only appears once you turned it on there
 
             // moods: chips with their faces
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("MOOD - HOW IT FEELS ABOUT THINGS")), Draw.fTiny, mb, x, y); y += 20 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("MOOD - HOW IT FEELS ABOUT THINGS"), Draw.fTiny, mb, x, y); y += 20 * S;
             float cx = x;
             for (int i = 0; i < Lines.Moods.Length; i++)
             {
@@ -101,7 +101,7 @@ namespace AdeeboMeter
             y += 48 * S;
 
             // voices: coloured cards with a sample line
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("TALKS LIKE - A SAMPLE ON EACH CARD")), Draw.fTiny, mb, x, y); y += 20 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("TALKS LIKE - A SAMPLE ON EACH CARD"), Draw.fTiny, mb, x, y); y += 20 * S;
             var ids = new System.Collections.Generic.List<string> { "surprise" }; ids.AddRange(Lines.Personas.Take(Lines.Featured).Select(p => p[0]));
             if (buddyMore) ids.AddRange(Lines.Personas.Skip(Lines.Featured).Select(p => p[0]));
             int cols = w > 560 * S ? 3 : 2; float gap = 8 * S, cw = (w - (cols - 1) * gap) / cols, chh = 60 * S;
@@ -117,8 +117,8 @@ namespace AdeeboMeter
                 string letter = id == "surprise" ? "?" : L.T(Lines.PersonaName(id)).Substring(0, 1).ToUpperInvariant();
                 using (var lb = new SolidBrush(Color.White)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(letter, Draw.fTiny, lb, bd, sf);
                 using (var tb = new SolidBrush(Theme.Ink)) using (var tf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                    g.DrawString(L.T(Lines.PersonaName(id)), Draw.fBodyB, tb, new RectangleF(bd.Right + 8 * S, r.Y + 12 * S, r.Right - bd.Right - 8 * S - (on ? g.MeasureString(Kit.Sent(L.T("IN USE")), Draw.fTiny).Width + 30 * S : 8 * S), 20 * S), tf);   // AM-CG-179
-                if (on) { string iu = Kit.Sent(L.T("IN USE")); var iz = g.MeasureString(iu, Draw.fTiny); var ir = new RectangleF(r.Right - iz.Width - 22 * S, r.Y + 11 * S, iz.Width + 12 * S, 18 * S); Theme.Fill(g, ir, 6 * S, c); using (var wb = new SolidBrush(Color.White)) g.DrawString(iu, Draw.fTiny, wb, ir.X + 6 * S, ir.Y + (18 * S - iz.Height) / 2); }
+                    g.DrawString(L.T(Lines.PersonaName(id)), Draw.fBodyB, tb, new RectangleF(bd.Right + 8 * S, r.Y + 12 * S, r.Right - bd.Right - 8 * S - (on ? g.MeasureString(Kit.Sent("IN USE"), Draw.fTiny).Width + 30 * S : 8 * S), 20 * S), tf);   // AM-CG-179
+                if (on) { string iu = Kit.Sent("IN USE"); var iz = g.MeasureString(iu, Draw.fTiny); var ir = new RectangleF(r.Right - iz.Width - 22 * S, r.Y + 11 * S, iz.Width + 12 * S, 18 * S); Theme.Fill(g, ir, 6 * S, c); using (var wb = new SolidBrush(Color.White)) g.DrawString(iu, Draw.fTiny, wb, ir.X + 6 * S, ir.Y + (18 * S - iz.Height) / 2); }
                 string sample = id == "surprise" ? L.T("A different voice every day") : "“" + (Lines.SteadyAs("all.good", null, id) ?? "") + "”";
                 using (var sb = new SolidBrush(Theme.Sub)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(sample, Draw.fSmall, sb, new RectangleF(r.X + 14 * S, r.Y + 37 * S, r.Width - 26 * S, 18 * S), sf);
                 voiceRects.Add(Tuple.Create(r, id));
@@ -143,12 +143,12 @@ namespace AdeeboMeter
         float PaintComfortBar(Graphics g, float x, float y, float w)
         {
             bool on = Lines.Faith != "off"; Color warm = Color.FromArgb(Theme.Dark ? 0x3A : 0xFF, Theme.Dark ? 0x30 : 0xF6, Theme.Dark ? 0x1C : 0xE0);
-            int chipRows = 1; { float mx = x + 14 * S + g.MeasureString(Kit.Sent(L.T("WORDS OF COMFORT")), Draw.fTiny).Width + 60 * S; for (int i = 1; i < Lines.Faiths.Length; i++) { float cw0 = g.MeasureString(L.T(Lines.FaithNames[i]), Draw.fSmall).Width + 24 * S; if (mx + cw0 > x + w - 10 * S) { chipRows++; mx = x + 14 * S; } mx += cw0; } }
+            int chipRows = 1; { float mx = x + 14 * S + g.MeasureString(Kit.Sent("WORDS OF COMFORT"), Draw.fTiny).Width + 60 * S; for (int i = 1; i < Lines.Faiths.Length; i++) { float cw0 = g.MeasureString(L.T(Lines.FaithNames[i]), Draw.fSmall).Width + 24 * S; if (mx + cw0 > x + w - 10 * S) { chipRows++; mx = x + 14 * S; } mx += cw0; } }
             var bar = new RectangleF(x, y, w, 88 * S + chipRows * 30 * S); Theme.Fill(g, bar, 14 * S, on ? warm : Theme.Soft);   /* AM-CG-179: as tall as its chips need */ if (on) Theme.Stroke(g, bar, 14 * S, Theme.Amber, 1);   // room for two rows of faiths
             float bx = bar.X + 14 * S, by = bar.Y + 10 * S;
-            using (var hb = new SolidBrush(on ? (Theme.Dark ? Color.FromArgb(0xF2, 0xC9, 0x6B) : Color.FromArgb(0x8A, 0x5A, 0x00)) : Theme.Muted)) g.DrawString(Kit.Sent(L.T("WORDS OF COMFORT")), Draw.fTiny, hb, bx, by + 3 * S);
+            using (var hb = new SolidBrush(on ? (Theme.Dark ? Color.FromArgb(0xF2, 0xC9, 0x6B) : Color.FromArgb(0x8A, 0x5A, 0x00)) : Theme.Muted)) g.DrawString(Kit.Sent("WORDS OF COMFORT"), Draw.fTiny, hb, bx, by + 3 * S);
             // the switch: on picks the last faith chosen (what they share, if none)
-            var k = new RectangleF(bx + g.MeasureString(Kit.Sent(L.T("WORDS OF COMFORT")), Draw.fTiny).Width + 10 * S, by, 34 * S, 20 * S); Theme.Fill(g, k, 10 * S, on ? Theme.Amber : Theme.Track);
+            var k = new RectangleF(bx + g.MeasureString(Kit.Sent("WORDS OF COMFORT"), Draw.fTiny).Width + 10 * S, by, 34 * S, 20 * S); Theme.Fill(g, k, 10 * S, on ? Theme.Amber : Theme.Track);
             using (var kb = new SolidBrush(Color.White)) g.FillEllipse(kb, on ? k.Right - 18 * S : k.X + 2 * S, k.Y + 2 * S, 16 * S, 16 * S);
             Act(buddySheet, new RectangleF(bx, by - 2 * S, k.Right - bx + 4 * S, 24 * S), delegate { if (Lines.Faith == "off") Lines.Faith = Lines.LastFaith; else { Lines.LastFaith = Lines.Faith; Lines.Faith = "off"; } Cfg.Save(); Invalidate(true); buddySheet.Invalidate(); });
             // the faiths, as small chips ("Common to all" first)

@@ -124,7 +124,7 @@ namespace AdeeboMeter
             using (var b = new SolidBrush(kind == 0 ? Theme.Ink : Color.White)) g.DrawString(t, Draw.fBodyB, b, r.X + 16 * S, r.Y + (40 * S - ts.Height) / 2);
             Act(phoneCanvas, r, a); return r;
         }
-        float PhHead(Graphics g, string t, float x, float y) { using (var m = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(L.T(t)), Draw.fBodyB, m, x, y); return y + 26 * S; }
+        float PhHead(Graphics g, string t, float x, float y) { using (var m = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(t), Draw.fBodyB, m, x, y); return y + 26 * S; }
         float PhText(Graphics g, string t, Font f, Color c, float x, float y, float w) { var h = Draw.Measure(t, f, (int)w).Height; using (var b = new SolidBrush(c)) g.DrawString(t, f, b, new RectangleF(x, y, w, h + 4)); return y + h + 6 * S; }
         static string Mmss(TimeSpan l) { return ((int)l.TotalMinutes).ToString(CultureInfo.CurrentCulture) + ":" + l.Seconds.ToString("00", CultureInfo.InvariantCulture); }
 

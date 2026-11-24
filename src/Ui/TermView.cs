@@ -42,7 +42,7 @@ namespace AdeeboMeter
             blink = new Timer { Interval = 530 }; blink.Tick += delegate { if (!Visible || !Focused) return;   /* review 1.1.6 U4 #6: unfocused, the caret is a still outline - nothing to repaint */ caretOn = !caretOn || (DateTime.UtcNow - typedAt).TotalMilliseconds < 500; InvalidateCaret(); }; blink.Start();
         }
         protected override void Dispose(bool disposing) { if (disposing) blink.Dispose(); base.Dispose(disposing); }
-        protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return (b == Keys.Tab && (k & Keys.Control) == 0) || b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }
+        protected override bool IsInputKey(Keys k) { var b = k & Keys.KeyCode; return (b == Keys.Tab && (k & Keys.Control) == 0 && ((k & Keys.Shift) == 0 || Editor != null)) ||   /* hunters11 shell ML-8: Shift+Tab steps back out of the shell, as everywhere else */ b == Keys.Escape || b == Keys.Enter || b == Keys.Up || b == Keys.Down || b == Keys.Left || b == Keys.Right || b == Keys.Home || b == Keys.End || b == Keys.PageUp || b == Keys.PageDown || base.IsInputKey(k); }
         protected override void OnKeyDown(KeyEventArgs e) { typedAt = DateTime.UtcNow; caretOn = true; if (Editor != null) { Editor.Key(e); Invalidate(); base.OnKeyDown(e); return; } if (TermKey != null) TermKey(this, e); base.OnKeyDown(e); }
         protected override void OnKeyPress(KeyPressEventArgs e) { if (Editor != null) { Editor.Char(e.KeyChar); e.Handled = true; Invalidate(); return; } if (TermChar != null) TermChar(this, e); base.OnKeyPress(e); }
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
@@ -66,6 +66,8 @@ namespace AdeeboMeter
             }
             Trim(); Changed();
         }
+        // hunters11 shell ML-7: Ctrl+L as in bash - the screen is cleared by scrolling, the scrollback stays (scroll up, Copy All, Save log)
+        public void ClearScreen() { int n = VisibleRows - 1; if (!AtLineStart) n++; Write(new string('\n', Math.Max(1, n)), Color.Empty); scroll = 0; Invalidate(); }
         public void Clear() { lines.Clear(); lines.Add(new Line()); liveAt = -1; scroll = 0; ClearSel(); ResetCache(); Changed(); }
         // a live region: these lines replace the last live ones (a status line, a hop table) until EndLive
         // a passing status line ("running: ping 1.1.1.1 · 12 s"): shown only while nothing else is live and the line is empty,
@@ -303,6 +305,7 @@ namespace AdeeboMeter
             }
             return sb.ToString();
         }
-        public bool Copy() { string t = SelectedText(); if (t == "") return false; try { Clipboard.SetText(t); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } ClearSel(); Invalidate(); return true; }
+        public Func<string, string> CopyScrub;   /* hunters11 shell ML-4: the selection is scrubbed like Copy All */
+        public bool Copy() { string t = SelectedText(); if (t == "") return false; if (CopyScrub != null) t = CopyScrub(t); try { Clipboard.SetText(t); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } ClearSel(); Invalidate(); return true; }
     }
 }

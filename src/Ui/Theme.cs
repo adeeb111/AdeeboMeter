@@ -751,8 +751,8 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
-                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent(L.T("GAME")), fTiny, 0).Width + 10 * S, 15 * S);
-                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent(L.T("GAME")), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
+                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent("GAME"), fTiny, 0).Width + 10 * S, 15 * S);
+                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
@@ -890,7 +890,7 @@ namespace AdeeboMeter
                     bool memHot = !double.IsNaN(s.Mem) && s.Mem >= 85 && (double.IsNaN(s.Cpu) || s.Mem - 85 >= s.Cpu - 85);
                     int pcLv = s.Path.Length > 0 ? s.Path[0] : 3, gwLv = s.Path.Length > 1 ? s.Path[1] : 3, netLv = s.Path.Length > 4 ? s.Path[4] : 3;
                     var rows = new[] {
-                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : Fmt(s.Cpu, "0", "% ") + Kit.Sent(L.T("CPU")), pcLv),
+                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : Fmt(s.Cpu, "0", "% ") + Kit.Sent("CPU"), pcLv),
                         Tuple.Create("path", L.T("Router"), Fmt(s.GwMs, "0", " ms"), gwLv),
                         Tuple.Create("inet", L.T("Internet"), Fmt(s.Ping, "0", " ms"), netLv),
                         Tuple.Create("net", L.T("Traffic"), "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true), 3) };
@@ -912,7 +912,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 7 * S, bad ? Theme.LvSoft(1) : Theme.BlueSoft);
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
-                        g.DrawString(Kit.Sent(L.T("MEETING MODE · TEAMS CALL")), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
+                        g.DrawString(Kit.Sent("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
                         g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   " + AdeeboMeter.L.T("jitter") + " " + Fmt(s.Jitter, "0", " ms") + "   " + AdeeboMeter.L.T("loss") + " " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;

@@ -350,7 +350,7 @@ namespace AdeeboMeter
         {
             string fl = Flags(a); bool sum = fl.Contains('s'), h = fl.Contains('h'), mb = fl.Contains('m'), apparent = a.Contains("--apparent-size") || fl.Contains('b'), allLinks = fl.Contains('l') || a.Contains("--count-links"); int depth = sum ? 0 : int.MaxValue;
             foreach (var x in a) { var m = Regex.Match(x, @"^(?:--max-depth=|-d)(\d+)$"); if (m.Success) depth = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); }
-            int di = a.IndexOf("-d"); if (di >= 0 && di + 1 < a.Count) int.TryParse(a[di + 1], out depth);
+            int di = a.IndexOf("-d"); if (di >= 0) { if (di + 1 >= a.Count || !int.TryParse(a[di + 1], out depth) || depth < 0) { Err(c, "du: -d needs a number of levels, like -d 1"); return 1; } }   /* hunters11 shell L-22 */
             var paths = a.Where((z, i) => !z.StartsWith("-", StringComparison.Ordinal) && !(i > 0 && a[i - 1] == "-d")).DefaultIfEmpty(".").ToList();
             int files = 0, denied = 0; var sw = Stopwatch.StartNew(); bool ex1 = false;
             Func<long, string> unit = v => h ? Human(v) : mb ? ((v + 1048575) / 1048576).ToString(CultureInfo.InvariantCulture) : ((v + 1023) / 1024).ToString(CultureInfo.InvariantCulture);
@@ -675,6 +675,13 @@ namespace AdeeboMeter
             }
             if (f == null && ch == null) { Err(c, "usage: cut -d ',' -f 1,3   or   cut -c 1-10"); return 2; }
             if (d.Length != 1) { Err(c, "cut: the delimiter must be one character"); return 2; }
+            /* hunters11 shell L-8: GNU's errors, not empty lines */
+            foreach (var part in (f ?? ch).Split(','))
+            {
+                var mm = Regex.Match(part, @"^([0-9]*)-?([0-9]*)$"); int x0, y0;
+                if (part == "0" || part.StartsWith("0-", StringComparison.Ordinal)) { Err(c, "cut: fields and characters are numbered from 1"); return 2; }
+                if (mm.Success && int.TryParse(mm.Groups[1].Value, out x0) && int.TryParse(mm.Groups[2].Value, out y0) && part.Contains("-") && y0 < x0) { Err(c, "cut: invalid decreasing range " + part); return 2; }
+            }
             var l = InLines(files, c); if (l == null) return 1;
             Func<string, int, List<int>> pick = (spec, max) => { var r = new SortedSet<int>(); foreach (var part in spec.Split(',')) { var m = Regex.Match(part, @"^(\d*)-(\d*)$"); int x, y; if (m.Success) { x = m.Groups[1].Value == "" ? 1 : int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); y = m.Groups[2].Value == "" ? max : int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture); for (int k = x; k <= Math.Min(y, max); k++) r.Add(k); } else if (int.TryParse(part, out x)) r.Add(x); } return r.ToList(); };
             foreach (var x in l)

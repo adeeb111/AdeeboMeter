@@ -261,7 +261,7 @@ namespace AdeeboMeter
             Theme.Fill(g, dr, 7 * S, maxData > 0 ? Theme.LvSoft(0) : Theme.LvSoft(2));
             using (var tb = new SolidBrush(maxData > 0 ? Theme.LvText(0) : Theme.LvText(2))) using (var c = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                g.DrawString(maxData > 0 ? Kit.Sent(L.T("YOUR DATA")) : Kit.Sent(L.T("NO ROOM LEFT")), Draw.fSmall, tb, new RectangleF(dr.X, by + 8 * S, dr.Width, 18 * S), c);
+                g.DrawString(maxData > 0 ? Kit.Sent("YOUR DATA") : Kit.Sent("NO ROOM LEFT"), Draw.fSmall, tb, new RectangleF(dr.X, by + 8 * S, dr.Width, 18 * S), c);
                 g.DrawString(maxData > 0 ? "up to " + maxData.ToString("N0", CultureInfo.CurrentCulture) + " bytes" + (tls ? " · TLS adds 22 B a record" : "") : "the headers fill the MTU", Draw.fTiny, tb, new RectangleF(dr.X, by + 28 * S, dr.Width, 16 * S), c);
             }
             // what the link's MTU covers, and what rides outside it
@@ -482,7 +482,7 @@ namespace AdeeboMeter
             float bx = r.X + 16 * S + colW * 2 + 10 * S, bw = colW - 20 * S, by = r.Y + 48 * S;
             using (var ib = new SolidBrush(Theme.Ink)) using (var sb = new SolidBrush(Theme.Sub)) using (var mb = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(Kit.Sent(L.T("PING")), Draw.fTiny, mb, bx, by); by += 20 * S;
+                g.DrawString(Kit.Sent("PING"), Draw.fTiny, mb, bx, by); by += 20 * S;
                 double max = Math.Max(50, Math.Max(double.IsNaN(idle) ? 0 : idle, double.IsNaN(busy) ? 0 : busy) * 1.2);
                 foreach (var row in new[] { new object[] { L.T("quiet"), idle, Theme.Blue }, new object[] { L.T("busy"), busy, Theme.Orange } })
                 {
