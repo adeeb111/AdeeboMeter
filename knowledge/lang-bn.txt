@@ -5472,3 +5472,6 @@ On: the widget disappears as the mouse comes near, so it never covers what you p
 Off: it brightens when you point at it.	বন্ধ: পয়েন্ট করলে উজ্জ্বল হয়।
 Drag to move · click opens AdeeboMeter · fades again when you leave	সরাতে টেনে আনুন · ক্লিক করলে AdeeboMeter খোলে · সরে গেলে আবার মিলিয়ে যায়
 Keep resting to move it, or hold Ctrl	সরাতে আরেকটু ধরে রাখুন, বা Ctrl চেপে ধরুন
+Move hints on the widget	উইজেটে সরানোর টিপস
+On: a blue line on the card says how to move it while you rest on it or it's unlocked.	চালু: আপনি ওপরে মাউস রাখলে বা আনলক থাকলে কার্ডে একটা নীল লাইন বলে কীভাবে সরাবেন।
+Off: no hint line. Moving still works the same way.	বন্ধ: কোনো টিপস লাইন নেই। সরানো আগের মতোই কাজ করে।

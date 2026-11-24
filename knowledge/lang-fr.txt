@@ -4197,3 +4197,6 @@ On: the widget disappears as the mouse comes near, so it never covers what you p
 Off: it brightens when you point at it.	Désactivé : il s'éclaircit quand vous le pointez.
 Drag to move · click opens AdeeboMeter · fades again when you leave	Faites glisser pour déplacer · un clic ouvre AdeeboMeter · il disparaît de nouveau quand vous vous éloignez
 Keep resting to move it, or hold Ctrl	Restez encore pour le déplacer, ou maintenez Ctrl
+Move hints on the widget	Conseils de déplacement sur le widget
+On: a blue line on the card says how to move it while you rest on it or it's unlocked.	Activé : une ligne bleue sur la carte indique comment le déplacer quand vous restez dessus ou qu'il est déverrouillé.
+Off: no hint line. Moving still works the same way.	Désactivé : pas de ligne de conseil. Le déplacement fonctionne toujours de la même façon.

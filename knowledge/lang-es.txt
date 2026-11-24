@@ -5472,3 +5472,6 @@ On: the widget disappears as the mouse comes near, so it never covers what you p
 Off: it brightens when you point at it.	Desactivado: se ilumina cuando lo señalas.
 Drag to move · click opens AdeeboMeter · fades again when you leave	Arrastra para mover · un clic abre AdeeboMeter · vuelve a desaparecer cuando te alejas
 Keep resting to move it, or hold Ctrl	Sigue encima para moverlo, o mantén Ctrl
+Move hints on the widget	Consejos para mover el widget
+On: a blue line on the card says how to move it while you rest on it or it's unlocked.	Activado: una línea azul en la tarjeta explica cómo moverlo mientras te quedas encima o está desbloqueado.
+Off: no hint line. Moving still works the same way.	Desactivado: sin línea de consejo. Moverlo sigue funcionando igual.

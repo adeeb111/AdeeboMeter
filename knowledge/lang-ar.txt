@@ -5472,3 +5472,6 @@ On: the widget disappears as the mouse comes near, so it never covers what you p
 Off: it brightens when you point at it.	معطّل: تزداد وضوحًا عندما تشير إليها.
 Drag to move · click opens AdeeboMeter · fades again when you leave	اسحب للنقل · النقر يفتح AdeeboMeter · تختفي مجددًا عندما تبتعد
 Keep resting to move it, or hold Ctrl	أبقِ الفأرة لنقلها، أو اضغط Ctrl
+Move hints on the widget	تلميحات النقل على الأداة
+On: a blue line on the card says how to move it while you rest on it or it's unlocked.	مفعّل: سطر أزرق على البطاقة يشرح كيفية نقلها حين تُبقي الفأرة فوقها أو تكون غير مقفلة.
+Off: no hint line. Moving still works the same way.	معطّل: لا سطر تلميح. النقل يعمل بالطريقة نفسها.
