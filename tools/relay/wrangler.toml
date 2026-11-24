@@ -10,7 +10,7 @@ preview_urls = false
 # (Cloudflare > Storage & Databases > KV), or make one with:  npx wrangler kv namespace create RL
 [[kv_namespaces]]
 binding = "RL"
-id = "PASTE-THE-RL-NAMESPACE-ID"
+id = "d13767edc12941368bbfcda671377029"
 
 # LIMITER: Cloudflare's atomic rate limit - it decides before the KV counts, which two requests at once can both pass
 [[ratelimits]]
