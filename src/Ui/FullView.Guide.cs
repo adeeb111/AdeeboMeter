@@ -52,8 +52,8 @@ namespace AdeeboMeter
         {
             var r = guideRun; bool running = guideBusy && r != null && r.Id == "full";
             var cr = new RectangleF(x, y, w, 74 * S); Kit.Card(g, cr, "home", false);
-            using (var cb = new SolidBrush(Kit.Soft("home"))) g.FillEllipse(cb, cr.X + 16 * S, cr.Y + 19 * S, 38 * S, 38 * S);
-            Kit.Icon(g, "check", new RectangleF(cr.X + 25 * S, cr.Y + 28 * S, 20 * S, 20 * S), Kit.Accent("home"));
+            using (var cb = new SolidBrush(Theme.Soft)) g.FillEllipse(cb, cr.X + 16 * S, cr.Y + 19 * S, 38 * S, 38 * S);
+            Kit.Icon(g, "check", new RectangleF(cr.X + 25 * S, cr.Y + 28 * S, 20 * S, 20 * S), Theme.Sub);
             float tx = cr.X + 66 * S, bw = 190 * S;
             // the tick's label measured, so it always ends before the button and the description ends before the tick (Adeeb, 22 Nov: they overlapped)
             string tlab = L.T("Include a speed test (up to 500 MB)"); float tlw = (float)Math.Ceiling(g.MeasureString(tlab, Draw.fSmall).Width), tkw = 22 * S + tlw;
@@ -163,21 +163,22 @@ namespace AdeeboMeter
                     y += bk.Height + 14 * S;
                     if ((guideBusy || reportBusy) && guideNote != "") { using (var gb = new SolidBrush(Theme.LvText(1))) g.DrawString(guideNote, Draw.fBodyB, gb, x, y); y += 30 * S; }   // L-327: the "already running" note shows here too
                     if (CaseShowing) y = PaintCaseHead(g, x, y, w);   // a case: what, when, from where, how sure, the minutes around it (FullView.Case.cs)
-                    g.DrawString(r.Title.ToUpperInvariant() + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input.ToUpperInvariant() : "") + "  ·  " + (r.Done ? "DONE " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : "WORKING...")), Draw.fTiny, muted, x, y);
+                    // 24 Nov (the approved result mockup): what was checked and when, in plain words - no capitals
+                    g.DrawString(r.Title + (r.Input != "" && r.Id == "site" ? "  ·  " + r.Input : "") + "  ·  " + (r.Done ? L.T("checked at") + " " + r.Started.ToString("HH:mm", CultureInfo.CurrentCulture) : (r.Status != "" ? r.Status : L.T("checking..."))), Draw.fSmall, sub, x, y);
                     y += 26 * S;
                     // the finding
                     string fin = r.Done ? r.Finding : Voice.P("Looking...", "Running...");
-                    float fh = Draw.Measure(fin, Draw.fName, (int)(w - 40 * S)).Height;
-                    var frc = new RectangleF(x, y, w, fh + 44 * S);
-                    Theme.Fill(g, frc, 12 * S, Theme.LvSoft(r.Done ? r.Lv : 3));
-                    using (var tb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("FINDING")), Draw.fTiny, tb, x + 18 * S, y + 10 * S);
-                    using (var fb = new SolidBrush(r.Done ? (r.Lv == 0 ? Theme.Ink : Theme.LvText(r.Lv)) : Theme.Muted)) g.DrawString(fin, Draw.fName, fb, new RectangleF(x + 18 * S, y + 28 * S, w - 36 * S, fh + 6));
-                    y += frc.Height + 18 * S;
+                    // the answer on a white card in big ink type, a dot in its level beside it (no tinted wash, no label above it)
+                    float fh = Draw.Measure(fin, Draw.fBig, (int)(w - 64 * S)).Height;
+                    var frc = new RectangleF(x, y, w, fh + 40 * S); Kit.Box(g, frc, 14 * S);
+                    Draw.LvDot(g, r.Done ? r.Lv : 3, x + 20 * S, y + 20 * S + Draw.fBig.GetHeight(g) / 2 - 5 * S, 10 * S, 10 * S);
+                    using (var fb = new SolidBrush(r.Done ? Theme.Ink : Theme.Muted)) g.DrawString(fin, Draw.fBig, fb, new RectangleF(x + 40 * S, y + 20 * S, w - 64 * S, fh + 6));
+                    y += frc.Height + 16 * S;
                     // observed
                     var obs = r.ObservedCopy();
                     if (obs.Count > 0)
                     {
-                        g.DrawString(Kit.Sent(L.T("WHAT I OBSERVED")), Draw.fTiny, muted, x, y); y += 22 * S;
+                        g.DrawString(L.T("What I measured"), Draw.fHead, ink, x, y); y += 28 * S;
                         float nameW = Math.Min(280 * S, w * 0.34f), pillW = Cfg.Details ? 170 * S : 120 * S;
                         float ox = x, ow = w; x += 16 * S; w -= 32 * S;   // rows sit inside a raised card
                         float oh = 12 * S;
@@ -203,12 +204,23 @@ namespace AdeeboMeter
                         Func<string, System.Collections.Generic.List<string>, float> list = delegate(string head, System.Collections.Generic.List<string> items)
                         {
                             if (items.Count == 0) return y;
-                            g.DrawString(head, Draw.fTiny, muted, x, y); y += 22 * S;
-                            foreach (var it in items) { float ih = Draw.Measure(it, Draw.fBody, (int)(w - 24 * S)).Height; g.DrawString(L.T("-"), Draw.fBody, sub, x + 2 * S, y); g.DrawString(it, Draw.fBody, sub, new RectangleF(x + 18 * S, y, w - 24 * S, ih + 4)); y += ih + 8 * S; }
+                            // a card per list (24 Nov mockup): numbered steps for what to do, plain dots for what couldn't be told
+                            bool steps = head == "WHAT TO TRY NEXT"; float ch0 = 16 * S + 30 * S;
+                            foreach (var it in items) ch0 += Math.Max(26 * S, Draw.Measure(it, Draw.fBody, (int)(w - 76 * S)).Height + 10 * S);
+                            Kit.Box(g, new RectangleF(x, y, w, ch0), 14 * S); float lx0 = x + 20 * S; y += 16 * S;
+                            g.DrawString(L.T(steps ? "What to do" : "What I couldn't tell"), Draw.fHead, ink, lx0, y); y += 30 * S; int k = 0;
+                            foreach (var it in items)
+                            {
+                                k++; float ih = Draw.Measure(it, Draw.fBody, (int)(w - 76 * S)).Height;
+                                if (steps) { var nr = new RectangleF(lx0, y, 22 * S, 22 * S); Theme.Fill(g, nr, 11 * S, Theme.Soft); string ns = k.ToString(CultureInfo.CurrentCulture); var nsz = g.MeasureString(ns, Draw.fSmall); g.DrawString(ns, Draw.fSmall, sub, nr.X + (nr.Width - nsz.Width) / 2, nr.Y + (nr.Height - nsz.Height) / 2); }
+                                else Draw.LvDot(g, 3, lx0 + 7 * S, y + 7 * S, 8 * S, 8 * S);
+                                g.DrawString(it, Draw.fBody, ink, new RectangleF(lx0 + 34 * S, y + 1 * S, w - 76 * S, ih + 4)); y += Math.Max(26 * S, ih + 10 * S);
+                            }
+                            y += 14 * S;
                             return y + 10 * S;
                         };
-                        y = list("NOT ESTABLISHED", r.NotEst);
                         y = list("WHAT TO TRY NEXT", r.Next);
+                        y = list("NOT ESTABLISHED", r.NotEst);
                         if (r.GoTab != "")
                         {
                             var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);

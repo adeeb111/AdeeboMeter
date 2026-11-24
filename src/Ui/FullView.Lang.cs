@@ -16,7 +16,7 @@ namespace AdeeboMeter
     // what was built before the switch catches up at a restart, so a Restart button shows in the top bar until then.
     sealed partial class FullView
     {
-        LangButton langBtn; PillButton restartBtn; DB langSheet; LangFilter langFilter; string langHover, langDebug; int langKey = -1;
+        LangButton langBtn; PillButton restartBtn; bool restartShown; DB langSheet; LangFilter langFilter; string langHover, langDebug; int langKey = -1;
         static string runLang;
         static readonly Dictionary<string, Bitmap> langArt = new Dictionary<string, Bitmap>();   // the tile patterns, drawn once   // the language this run started in: a different one now = a restart finishes the switch
 
@@ -63,7 +63,7 @@ namespace AdeeboMeter
             if (restartBtn == null) return;
             bool need = runLang != null && L.Code != runLang;
             restartBtn.Text = "Restart";
-            if (restartBtn.Visible != need) { restartBtn.Visible = need; PlaceTop(); }
+            bool was = restartShown; restartShown = need; restartBtn.Visible = need; if (was != need) PlaceTop();   // set every time: Visible reads false while the window opens
         }
         // called by both pickers (the top button and Settings)
         internal void PickLanguage(string code)

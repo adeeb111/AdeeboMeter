@@ -29,6 +29,15 @@ namespace AdeeboMeter
                 var found = new List<Weather.Place>(); string status = ""; int hot = -1;
                 var list = new ListBox { DrawMode = DrawMode.OwnerDrawFixed, ItemHeight = Sc(46), Size = new Size(cw, Sc(46) * 5 + 2), BorderStyle = BorderStyle.None, BackColor = Theme.Card, IntegralHeight = false };
                 var note = new Label { Text = L.T("Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates."), Font = Draw.fSmall, ForeColor = Theme.Muted, AutoSize = true, MaximumSize = new Size(cw, 0), BackColor = Theme.Card };
+                // the servers: Open-Meteo filled in; any host that answers the same API can replace it
+                var geoBox = new RoundBox((cw - Sc(10)) / 2, Draw.fBody, Weather.GeoDefault) { Label = L.T("Place search server") };
+                var apiBox = new RoundBox((cw - Sc(10)) / 2, Draw.fBody, Weather.ApiDefault) { Label = L.T("Forecast server") };
+                geoBox.Box.Text = Weather.GeoHost; apiBox.Box.Text = Weather.ApiHost;
+                Action keepServers = delegate
+                {
+                    string gv = Weather.CleanServer(geoBox.Box.Text), av = Weather.CleanServer(apiBox.Box.Text);
+                    Cfg.WeatherGeo = gv == Weather.GeoDefault ? "" : gv; Cfg.WeatherApi = av == Weather.ApiDefault ? "" : av;
+                };
                 var ok = new PillButton(L.T("Use this place"), PillButton.K.Primary) { Enabled = false };
                 var no = new PillButton(L.T("Cancel"), PillButton.K.Chip);
                 Weather.Place picked = null;
@@ -56,7 +65,7 @@ namespace AdeeboMeter
                 Action go = delegate
                 {
                     string q = box.Box.Text.Trim(); if (q.Length < 2 || !find.Enabled) return;   // AM-CG-166: one search at a time
-                    found.Clear(); list.Items.Clear(); say(L.T("Looking..."), false); find.Enabled = false; ok.Enabled = false;
+                    keepServers(); found.Clear(); list.Items.Clear(); say(L.T("Looking..."), false); find.Enabled = false; ok.Enabled = false;
                     Weather.Find(q, r =>
                     {
                         try
@@ -85,17 +94,19 @@ namespace AdeeboMeter
                 ok.Click += delegate { if (ok.Enabled) f.DialogResult = DialogResult.OK; };
                 no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
                 // AM-CG-167: laid out from what each piece needs (long translations, 150-200 % scaling) - nothing fixed-height
-                f.Controls.AddRange(new Control[] { title, hint, box, find, state, list, note, ok, no });
+                f.Controls.AddRange(new Control[] { title, hint, box, find, state, list, note, geoBox, apiBox, ok, no });
                 hint.Location = new Point(Sc(20), title.Bottom + Sc(4));
                 box.Location = new Point(Sc(20), hint.Bottom + Sc(12)); find.Location = new Point(box.Right + Sc(10), box.Top + (box.Height - find.Height) / 2);
                 state.Location = new Point(Sc(20), box.Bottom + Sc(14)); list.Location = new Point(Sc(20), box.Bottom + Sc(10));
                 note.Location = new Point(Sc(20), list.Bottom + Sc(10));
-                int by = note.Bottom + Sc(16); ok.Location = new Point(Sc(20) + cw - ok.Width, by); no.Location = new Point(ok.Left - no.Width - Sc(10), by + (ok.Height - no.Height) / 2);
+                geoBox.Location = new Point(Sc(20), note.Bottom + Sc(14)); apiBox.Location = new Point(geoBox.Right + Sc(10), geoBox.Top);
+                int by = Math.Max(geoBox.Bottom, apiBox.Bottom) + Sc(18); ok.Location = new Point(Sc(20) + cw - ok.Width, by); no.Location = new Point(ok.Left - no.Width - Sc(10), by + (ok.Height - no.Height) / 2);
                 f.ClientSize = new Size(cw + Sc(40), ok.Bottom + Sc(18));
                 say(L.T("Type a place and press Enter."), false);
                 var cur = Weather.Current; if (cur != null) box.Box.Text = cur.Name.Split(',')[0];
                 f.Shown += delegate { box.Box.Focus(); box.Box.SelectAll(); };
                 if (f.ShowDialog(this) != DialogResult.OK) return null;
+                keepServers(); Cfg.Save();
                 if (list.SelectedIndex >= 0 && list.SelectedIndex < found.Count) picked = found[list.SelectedIndex];
                 return picked;
             }

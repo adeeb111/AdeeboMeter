@@ -412,7 +412,7 @@ namespace AdeeboMeter
         void SyncOnlineChip()
         {
             bool on = Online.On; string t = on ? "Online · " + Math.Max(1, (int)Math.Ceiling(Online.Left.TotalMinutes)) + " min left" : "";
-            if (onlineChip.Visible != on) onlineChip.Visible = on;
+            onlineChip.Visible = on;
             if (on && onlineChip.Text != t) onlineChip.Text = t;
         }
         // ---- self-test hooks (the sitting test): pretend the PC just slept, read the Time machine's "Opened from"
@@ -926,8 +926,9 @@ namespace AdeeboMeter
                 using (var cg = c.CreateGraphics())
                 using (var buf = BufferedGraphicsManager.Current.Allocate(cg, area))
                 {
-                    var g = buf.Graphics; Prep(g); g.SetClip(area);
-                    using (var b = new SolidBrush(bg)) g.FillRectangle(b, area);
+                    // Clear, not an anti-aliased fill: the fill left a half-pixel dark seam round the spot (24 Nov: a line down the left
+                    // of Home's readings and along their top, the same thing the problem tiles once had)
+                    var g = buf.Graphics; g.Clear(bg); Prep(g); g.SetClip(area);
                     var sp = ScrollOf(c); g.TranslateTransform(sp.X, sp.Y);
                     spotOnly = true; try { paint(g); } finally { spotOnly = false; }
                     buf.Render();
@@ -1044,12 +1045,12 @@ namespace AdeeboMeter
                 tipPoint = null;
                 List<KeyValuePair<RectangleF, Action>> l; bool click = acts.TryGetValue(c, out l) && l.Any(kv => kv.Key.Contains(e.Location));
                 List<KeyValuePair<RectangleF, string>> h; string key = null;
-                if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { key = h[i].Value; break; }
+                if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { key = h[i].Value; tipArea = c.RectangleToScreen(Rectangle.Round(h[i].Key)); break; }
                 if (key != null && TipEntry(key) == null) key = null;
                 c.Cursor = click ? Cursors.Hand : key != null ? Cursors.Help : Cursors.Default;
                 SetTipKey(key);
             };
-            c.MouseLeave += delegate { SetTipKey(null); };
+            c.MouseLeave += delegate { if (!tip.Visible) SetTipKey(null); };   // an open card stays while the pointer moves onto it (the watch below closes it)
             c.MouseClick += delegate(object s, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left) return;
@@ -1063,21 +1064,31 @@ namespace AdeeboMeter
         void SetTipKey(string key)
         {
             if (key == tipKey) return;
+            // 24 Nov (Adeeb: "it opens and closes within a second - looks like a bug"): a card opens only when the pointer rests on
+            // the ? for 1.2 s, then stays while the pointer is on that spot or on the card, with a short grace when it slips off
+            if (key == null && tip.Visible && tipWatch) return;   // the watch decides, with its grace
             tipKey = key; tipTimer.Stop();
             if (key == null) { if (tip.Visible) tip.Hide(); return; }
-            tipTimer.Interval = tip.Visible ? 60 : 350; tipTimer.Start();
+            tipTimer.Interval = tip.Visible ? 60 : 1200; tipTimer.Start();
         }
         void ShowTip()
         {
             if (IsDisposed || tipKey == null || !Visible || WindowState == FormWindowState.Minimized) return;
             var e = TipEntry(tipKey); if (e == null) return;
             var at = tipPoint ?? Cursor.Position; tip.ShowAt(e, at, this); tipOver = tipPoint != null ? WindowFromPoint(Cursor.Position) : WindowFromPoint(at);
-            tipWatch = true; tipTimer.Interval = 400; tipTimer.Start();   // keep checking: a theme flip or a page change never fires MouseLeave
+            tipWatch = true; tipAway = 0; tipTimer.Interval = 400; tipTimer.Start();   // keep checking: a theme flip or a page change never fires MouseLeave
         }
         // V02 (r1 visual pass): the "Day or night" card stayed over What's running and Time machine - the pointer had left
         bool tipWatch; IntPtr tipOver;
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr WindowFromPoint(Point p);
-        bool TipStillWanted() { var w = WindowFromPoint(Cursor.Position); return w == tipOver || w == tip.Handle; }
+        Rectangle tipArea; int tipAway;
+        bool TipStillWanted()
+        {
+            var p = Cursor.Position;
+            bool on = tipPoint != null ? WindowFromPoint(p) == tipOver : Rectangle.Inflate(tipArea, (int)(6 * S), (int)(6 * S)).Contains(p) || tip.Bounds.Contains(p);
+            if (on) { tipAway = 0; return true; }
+            return ++tipAway < 2;   // ~0.8 s off it before it closes
+        }
         static Explain.Entry TipEntry(string key)
         {
             if (key.StartsWith("proc:", StringComparison.Ordinal)) return ProcEntry(key.Substring(5), null, null);

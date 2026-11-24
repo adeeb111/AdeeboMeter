@@ -5129,3 +5129,23 @@ Type a place and press Enter.	Escribe un lugar y pulsa Intro.
 Where should the weather be for?	¿De dónde quieres el tiempo?
 day	día
 not on Wi-Fi	sin Wi-Fi
+Forecast server	Servidor de pronóstico
+Nothing to fix on this PC.	Nada que arreglar en este PC.
+Off: the plain readings only.	Desactivado: solo las lecturas simples.
+On: worst values, where each number comes from and link rates, in the Time machine and the tools.	Activado: peores valores, de dónde sale cada número y velocidades de enlace, en la máquina del tiempo y las herramientas.
+Open setting	Abrir el ajuste
+Open the router	Abrir el router
+Place search server	Servidor de búsqueda de lugares
+What I measured	Lo que medí
+checked at	comprobado a las
+checks	comprobaciones
+checks of this PC, your network and your sites. Nothing is changed - each fix opens the Windows screen where you change it.	comprobaciones de este PC, tu red y tus sitios. No se cambia nada: cada arreglo abre la pantalla de Windows donde lo cambias.
+connections	conexiones
+couldn't check	sin comprobar
+nothing was changed - each fix opens the Windows screen where you change it.	no se cambió nada: cada arreglo abre la pantalla de Windows donde lo cambias.
+to fix	por arreglar
+{0} things to fix on this PC.	{0} cosas que arreglar en este PC.
+{0} thing to fix on this PC.	{0} cosa que arreglar en este PC.
+What to do	Qué hacer
+What I couldn't tell	Lo que no pude saber
+Extra numbers for engineers	Números extra para ingenieros

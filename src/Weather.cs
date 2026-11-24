@@ -56,11 +56,22 @@ namespace AdeeboMeter
         public static bool Active { get { return Cfg.WeatherOn && Current != null && !Policy.NoOnline; } }
 
         // ---------- finding a place by name ("Ottawa", "Dhaka, Bangladesh", "Ottawa, Illinois")
+        // the servers (24 Nov, Adeeb: "give me an option to change the server"): any host that answers Open-Meteo's API -
+        // a mirror or a self-hosted copy. Only a bare host name (and port) is kept; HTTPS always.
+        public const string GeoDefault = "geocoding-api.open-meteo.com", ApiDefault = "api.open-meteo.com";
+        public static string GeoHost { get { var h = Cfg.WeatherGeo; return string.IsNullOrEmpty(h) ? GeoDefault : h; } }
+        public static string ApiHost { get { var h = Cfg.WeatherApi; return string.IsNullOrEmpty(h) ? ApiDefault : h; } }
+        public static string CleanServer(string v)
+        {
+            v = (v ?? "").Trim(); if (v.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(8); else if (v.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(7);
+            int sl = v.IndexOf('/'); if (sl >= 0) v = v.Substring(0, sl);
+            return Regex.IsMatch(v, @"^[A-Za-z0-9.-]{1,120}(:[0-9]{1,5})?$") ? v.ToLowerInvariant() : "";
+        }
         public static string SearchUrl(string typed)
         {
             string q = (typed ?? "").Split(',')[0].Trim(); if (q.Length > 60) q = q.Substring(0, 60);
             bool qualified = (typed ?? "").IndexOf(',') >= 0;   // AM-CG-154: "Springfield, Illinois" - 10 Springfields may not include Illinois
-            return "https://geocoding-api.open-meteo.com/v1/search?count=" + (qualified ? "100" : "10") + "&language=en&format=json&name=" + Uri.EscapeDataString(q);
+            return "https://" + GeoHost + "/v1/search?count=" + (qualified ? "100" : "10") + "&language=en&format=json&name=" + Uri.EscapeDataString(q);
         }
         static readonly Regex objRx = new Regex("\\{[^{}]*\"latitude\"[^{}]*\\}"), strRx = new Regex("\"(name|country|admin1)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""), numRx = new Regex("\"(latitude|longitude)\"\\s*:\\s*(-?[0-9.]+)");
         public static List<Place> ParsePlaces(string json, string typed)
@@ -91,7 +102,7 @@ namespace AdeeboMeter
             {
                 List<Place> r = null;
                 try { r = ParsePlaces(Get(SearchUrl(typed)), typed); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach Open-Meteo: " + HttpSmall.Why(e) + "."; Program.Log("weather find: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach " + GeoHost + ": " + HttpSmall.Why(e).TrimEnd('.') + "."; Program.Log("weather find: " + e.Message); }
                 done(r);
             }) { IsBackground = true, Name = "weather find" }.Start();
         }
@@ -99,7 +110,7 @@ namespace AdeeboMeter
         // ---------- the forecast
         public static string ForecastUrl(Place p)
         {
-            return "https://api.open-meteo.com/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
+            return "https://" + ApiHost + "/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
                 + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,relative_humidity_2m,wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=auto&timeformat=unixtime";
         }
         static double[] Nums(string json, string key)

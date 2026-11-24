@@ -3847,3 +3847,23 @@ Type a place and press Enter.	Saisissez un lieu et appuyez sur Entrée.
 Where should the weather be for?	La météo pour quel endroit ?
 day	jour
 not on Wi-Fi	pas en Wi-Fi
+Forecast server	Serveur de prévisions
+Nothing to fix on this PC.	Rien à corriger sur ce PC.
+Off: the plain readings only.	Désactivé : les mesures simples seulement.
+On: worst values, where each number comes from and link rates, in the Time machine and the tools.	Activé : pires valeurs, origine de chaque chiffre et débits de liaison, dans la machine à remonter le temps et les outils.
+Open setting	Ouvrir le réglage
+Open the router	Ouvrir le routeur
+Place search server	Serveur de recherche de lieux
+What I measured	Ce que j’ai mesuré
+checked at	vérifié à
+checks	vérifications
+checks of this PC, your network and your sites. Nothing is changed - each fix opens the Windows screen where you change it.	vérifications de ce PC, de votre réseau et de vos sites. Rien n’est modifié : chaque correction ouvre l’écran Windows où vous la faites.
+connections	connexions
+couldn't check	non vérifiés
+nothing was changed - each fix opens the Windows screen where you change it.	rien n’a été modifié : chaque correction ouvre l’écran Windows où vous la faites.
+to fix	à corriger
+{0} things to fix on this PC.	{0} choses à corriger sur ce PC.
+{0} thing to fix on this PC.	{0} chose à corriger sur ce PC.
+What to do	Que faire
+What I couldn't tell	Ce que je n’ai pas pu établir
+Extra numbers for engineers	Chiffres supplémentaires pour les ingénieurs

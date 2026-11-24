@@ -30,10 +30,16 @@ namespace AdeeboMeter
             }
             throw new InvalidDataException("too many redirects");
         }
+        // a compressed answer this Windows can't unpack (a filter or proxy re-encoding it) gets one more try, uncompressed (24 Nov)
         public static string Get(string url, int maxKb, string header, string value)
         {
+            try { return Get1(url, maxKb, header, value, false); }
+            catch (InvalidDataException e) { if (e.Message.IndexOf("decod", StringComparison.OrdinalIgnoreCase) < 0 && e.Message.IndexOf("magic number", StringComparison.OrdinalIgnoreCase) < 0) throw; return Get1(url, maxKb, header, value, true); }
+        }
+        static string Get1(string url, int maxKb, string header, string value, bool plain)
+        {
             var deadline = DateTime.UtcNow.AddSeconds(20);
-            using (var r = SameSite(new Uri(url), x => { var q = (HttpWebRequest)WebRequest.Create(x); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate; if (header != null) q.Headers[header] = value; return q; }))
+            using (var r = SameSite(new Uri(url), x => { var q = (HttpWebRequest)WebRequest.Create(x); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy(); if (plain) q.Headers[HttpRequestHeader.AcceptEncoding] = "identity"; else q.AutomaticDecompression = DecompressionMethods.GZip;   /* gzip only: .NET Framework reads "deflate" as raw deflate, so a server sending zlib-wrapped deflate failed with "Found invalid data while decoding" (the weather search, 24 Nov) */ if (header != null) q.Headers[header] = value; return q; }))
             using (var s = r.GetResponseStream())
             {
                 var buf = new byte[maxKb * 1024]; int got = 0, n;

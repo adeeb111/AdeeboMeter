@@ -20,15 +20,17 @@ namespace AdeeboMeter
             xr -= backBtn.Width; backBtn.Location = new Point(xr, my(backBtn)); xr -= Sc(12);
             xr -= dotsBtn.Width; dotsBtn.Location = new Point(xr, my(dotsBtn)); xr -= Sc(8);
             gearBtn.Visible = false;   // 24 Nov: no gear in either layout - Settings is in the ⋯ menu (it sat over the logo in Classic)
-            if (linkBtn != null && linkBtn.Visible) linkBtn.Visible = false;   // Your phone: in the ⋯ menu and the side bar
+            // hidden for good, whatever Visible reads: it reads false while the window is still opening, so "if (x.Visible) x.Visible = false"
+            // never ran and the buttons showed up later at their first position, over the logo (24 Nov, Adeeb's screenshot)
+            if (linkBtn != null) linkBtn.Visible = false;   // Your phone: in the ⋯ menu and the side bar
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);
-            if (langBtn != null) { langBtn.Location = new Point(dotsBtn.Left + dotsBtn.Width / 2 - langBtn.Width / 2, my(langBtn)); if (langBtn.Visible) langBtn.Visible = false; }   // hidden: Language is in the ⋯ menu; centred under ⋯ so the sheet's pointer points at it
-            if (restartBtn != null && restartBtn.Visible) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
+            if (langBtn != null) { langBtn.Location = new Point(dotsBtn.Left + dotsBtn.Width / 2 - langBtn.Width / 2, my(langBtn)); langBtn.Visible = false; }   // hidden: Language is in the ⋯ menu; centred under ⋯ so the sheet's pointer points at it
+            if (restartBtn != null && restartShown) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
             int room = xr - xl;
             bool show = room >= Sc(40);   // the one search, in both layouts (the side bar's own box is gone)
-            if (headSearch.Visible != show) headSearch.Visible = show;
+            headSearch.Visible = show;
             int sw = room >= Sc(140) ? Math.Min(Sc(300), room) : Sc(36);   // bug-hunt ML-78: a usable box down to 140 px; only narrower than that the icon alone
             headSearch.Size = new Size(sw, Sc(36)); headSearch.Location = new Point(xr - sw, (header.Height - headSearch.Height) / 2);
             header.Invalidate();
@@ -52,7 +54,7 @@ namespace AdeeboMeter
                 Controls.Add(topMenu);
                 Deactivate += delegate { HideTopMenu(); };
             }
-            int w = Sc(300), h = Sc(Cfg.Points ? 384 : 346);
+            int w = Sc(300), h = Sc(Cfg.Points ? 346 : 308);
             var at = PointToClient(dotsBtn.Parent.PointToScreen(new Point(dotsBtn.Right, dotsBtn.Bottom)));
             topMenu.Bounds = new Rectangle(Math.Max(Sc(8), at.X - w + Sc(6)), at.Y + Sc(6), w, h);
             topMenu.BackColor = header.BackColor;
@@ -111,7 +113,6 @@ namespace AdeeboMeter
             row(L.T("Language"), NativeName(L.Code), null, delegate { HideTopMenu(); LangMenu(); });
             row(L.T("Settings"), null, null, delegate { HideTopMenu(); tab = "settings"; ShowTab(); SyncNav(); });
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
-            row(L.T("Details"), null, Cfg.Details, delegate { SetDetails(!Cfg.Details); topMenu.Invalidate(); });
             row(L.T("Sidebar layout"), null, Cfg.Layout == "sidebar", delegate { HideTopMenu(); SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); PlaceTop(); });
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
             if (Cfg.Points) row(L.T("Adeebo points"), Points.Me.Total.ToString(CultureInfo.CurrentCulture) + " · " + L.T(Points.Rank(Points.Me.Total)), null, delegate { HideTopMenu(); tab = "points"; ShowTab(); });

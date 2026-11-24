@@ -5129,3 +5129,23 @@ Type a place and press Enter.	اكتب مكانًا واضغط Enter.
 Where should the weather be for?	الطقس لأي مكان؟
 day	اليوم
 not on Wi-Fi	ليس على Wi-Fi
+Forecast server	خادم التوقعات
+Nothing to fix on this PC.	لا شيء يحتاج إلى إصلاح في هذا الحاسوب.
+Off: the plain readings only.	إيقاف: القراءات البسيطة فقط.
+On: worst values, where each number comes from and link rates, in the Time machine and the tools.	تشغيل: أسوأ القيم ومصدر كل رقم وسرعات الوصلة، في آلة الزمن والأدوات.
+Open setting	فتح الإعداد
+Open the router	فتح الموجّه
+Place search server	خادم البحث عن الأماكن
+What I measured	ما قِسته
+checked at	فُحص عند
+checks	فحوصات
+checks of this PC, your network and your sites. Nothing is changed - each fix opens the Windows screen where you change it.	فحوصات لهذا الحاسوب وشبكتك ومواقعك. لا يُغيَّر شيء - كل إصلاح يفتح شاشة Windows التي تغيّره منها.
+connections	اتصالات
+couldn't check	تعذّر فحصها
+nothing was changed - each fix opens the Windows screen where you change it.	لم يُغيَّر شيء - كل إصلاح يفتح شاشة Windows التي تغيّره منها.
+to fix	للإصلاح
+{0} things to fix on this PC.	{0} أمور تحتاج إلى إصلاح في هذا الحاسوب.
+{0} thing to fix on this PC.	أمر واحد يحتاج إلى إصلاح في هذا الحاسوب.
+What to do	ما العمل
+What I couldn't tell	ما لم أستطع تحديده
+Extra numbers for engineers	أرقام إضافية للمهندسين

@@ -190,12 +190,7 @@ namespace AdeeboMeter
                 using (var p = Theme.Round(new RectangleF(r.X - 1.5f * S, r.Y - 1.5f * S, r.Width + 3 * S, r.Height + 3 * S), rad + 1.5f * S)) using (var pen = new Pen(Color.FromArgb(40, Accent(accent)), 3 * S)) g.DrawPath(pen, p);
                 Theme.Stroke(g, r, rad, Color.FromArgb(150, Accent(accent)), 1);
             }
-            if (accent != null)
-            {
-                var st = g.Save();
-                using (var clip = Theme.Round(r, rad)) { g.SetClip(clip); using (var b = new SolidBrush(Accent(accent))) g.FillRectangle(b, r.X, r.Y, r.Width, 5 * S); }
-                g.Restore(st);
-            }
+            // 24 Nov: no coloured band along the top any more (Adeeb: "remove the blue") - the section colour stays for the hover edge
         }
 
         // ---------- chips: a rounded pill with optional icon. Returns the chip's rectangle so the page can make it clickable.

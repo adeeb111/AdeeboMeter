@@ -521,11 +521,19 @@ namespace AdeeboMeter
                     if (bg != Theme.Card) Theme.Fill(g, new RectangleF(4 * S, y + 2 * S, w - 8 * S, RowH - 4 * S), 10 * S, bg);   // rounded row tint
                     else if (i + 1 < view.Count) g.DrawLine(line, x0, y + RowH - 1, w - x0, y + RowH - 1);
                     x = x0; float cy = y + RowH / 2f;
-                    var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
-                    Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
-                    using (var wb = new SolidBrush(Color.White)) g.DrawString(c.Proc.Length > 0 ? c.Proc.Substring(0, 1).ToUpperInvariant() : "?", Draw.fPill, wb, badge, center);
-                    x += cols[0] + 8 * S;
-                    Text2(g, c.Proc, c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
+                    // grouped by app (24 Nov mockup): the badge and the name on an app's first row, with how many it has; its
+                    // other rows leave that column empty so the app reads as one block
+                    bool firstOfApp = i == 0 || !string.Equals(view[i - 1].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase);
+                    if (firstOfApp)
+                    {
+                        int many = 1; for (int j = i + 1; j < view.Count && string.Equals(view[j].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase); j++) many++;
+                        var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
+                        Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
+                        using (var wb = new SolidBrush(Color.White)) g.DrawString(c.Proc.Length > 0 ? c.Proc.Substring(0, 1).ToUpperInvariant() : "?", Draw.fPill, wb, badge, center);
+                        x += cols[0] + 8 * S;
+                        Text2(g, c.Proc, many > 1 ? many + " " + AdeeboMeter.L.T("connections") : c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
+                    }
+                    else x += cols[0] + 8 * S;
                     x += cols[1] + 8 * S;
                     var ps = g.MeasureString(c.Proto, Draw.fMonoS); Theme.Fill(g, new RectangleF(x, cy - ps.Height / 2 - 2 * S, ps.Width + 6 * S, ps.Height + 4 * S), 5 * S, Theme.Line2);
                     g.DrawString(c.Proto, Draw.fMonoS, sub, x + 3 * S, cy - ps.Height / 2);
@@ -764,7 +772,6 @@ namespace AdeeboMeter
             var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, ClientRectangle);
             using (var p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
-            using (var a = new SolidBrush(Theme.Blue)) g.FillRectangle(a, 0, 0, 4 * Draw.S, Height);
             if (e != null) ExplainPaint.Paint(g, e, 16 * Draw.S, 14 * Draw.S, Width - 32 * Draw.S, true);
         }
     }

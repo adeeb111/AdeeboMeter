@@ -123,37 +123,60 @@ namespace AdeeboMeter
                 // tiles, like Home's "Go to" (Adeeb, 22 Nov: "copy the homepage go-to style, hover for the details, in sections") -
                 // an icon in the section's colour, the name and one short line; the card with everything shows on hover
                 idxTiles.Clear();
-                int cols = Math.Max(1, Math.Min(4, (int)(cw / (240 * S)))); float tw = (cw - (cols - 1) * 12 * S) / cols, th = 70 * S;
+                // 24 Nov (the approved mockup): a list in two columns - name, one line on what it does, the last result - instead of
+                // a wall of same-size cards; a question's heading in plain words with its count
+                int cols = cw > 760 * S ? 2 : 1; float tw = (cw - (cols - 1) * 24 * S) / cols, th = 58 * S;
                 foreach (var grp in groups)
                 {
-                    py += 16 * S;
-                    g.DrawString(grp.Key.ToUpperInvariant() + "  ·  " + grp.Count().ToString(CultureInfo.CurrentCulture), Draw.fTiny, muted, cx, py);
-                    py += 24 * S; int n = 0;
+                    py += 18 * S;
+                    g.DrawString(grp.Key, Draw.fHead, ink, cx, py); var gk = g.MeasureString(grp.Key, Draw.fHead);
+                    g.DrawString(grp.Count().ToString(CultureInfo.CurrentCulture), Draw.fSmall, muted, cx + gk.Width + 4 * S, py + (gk.Height - Draw.fSmall.GetHeight(g)) / 2);
+                    py += gk.Height + 8 * S; int n = 0;
                     foreach (var t in grp)
                     {
-                        var r = new RectangleF(cx + (n % cols) * (tw + 12 * S), py + (n / cols) * (th + 12 * S), tw, th); n++;
+                        var r = new RectangleF(cx + (n % cols) * (tw + 24 * S), py + (n / cols) * th, tw, th); n++;
                         idxTiles.Add(new KeyValuePair<RectangleF, string>(r, t.Id));
                         if (!Kit.Off(g, r)) ToolTile(g, t, r, t.Id == idxHot);
                         string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, r, "tb." + id);
                     }
-                    py += ((n + cols - 1) / cols) * (th + 12 * S);
+                    py += ((n + cols - 1) / cols) * th;
                 }
                 Need(tbCanvas, Math.Max(railEnd, py + 30 * S));
             }
         }
         float railEnd; bool idxSeen;
         readonly List<KeyValuePair<RectangleF, string>> idxTiles = new List<KeyValuePair<RectangleF, string>>(); string idxHot;
+        // one row of the tool list: a small icon in the question's colour, the name, one line on what it does, and the last
+        // result from this session (a dot and the time) with a chevron; a soft fill under the mouse, a line under each row
         void ToolTile(Graphics g, Tool t, RectangleF r, bool hot)
         {
             string q = QuestionOf(t), acc = QAccent(q), gk; Color c = Kit.Accent(acc);
-            Kit.Card(g, r, null, hot); if (hot) Theme.Stroke(g, Kit.Edge(r), Kit.CardRad, c, 1.5f * S);
-            float ic = 40 * S; var ir = new RectangleF(r.X + 14 * S, r.Y + (r.Height - ic) / 2, ic, ic);
-            if (BigGlyph.TryGetValue("q:" + q, out gk) && Glyphs.Has(gk)) Glyphs.Tile(g, gk, ir, c, 10 * S); else Kit.Icon(g, "tool", ir, c);
-            // the name only, up to two lines - what it does is in the card on hover (no wall of text)
-            float tx = ir.Right + 12 * S, tw = r.Right - tx - 10 * S; string name = ToolName(t);
-            float nh = Math.Min(2 * Draw.fBodyB.GetHeight(g) + 2, Draw.Measure(name, Draw.fBodyB, (int)tw).Height + 2);
-            using (var two = new StringFormat { FormatFlags = StringFormatFlags.LineLimit, Trimming = StringTrimming.EllipsisWord })
-            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(name, Draw.fBodyB, ink, new RectangleF(tx, r.Y + (r.Height - nh) / 2, tw, nh), two);
+            using (var p = new Pen(Theme.Line2)) g.DrawLine(p, r.X, r.Bottom - 0.5f, r.Right, r.Bottom - 0.5f);
+            if (hot) Theme.Fill(g, new RectangleF(r.X, r.Y + 2 * S, r.Width, r.Height - 4 * S), 10 * S, Theme.Soft);
+            float ic = 32 * S; var ir = new RectangleF(r.X + 8 * S, r.Y + (r.Height - ic) / 2, ic, ic);
+            if (BigGlyph.TryGetValue("q:" + q, out gk) && Glyphs.Has(gk)) Glyphs.Tile(g, gk, ir, c, 8 * S); else Kit.Icon(g, "tool", ir, c);
+            // the right side: the last run here, then the chevron
+            float right = r.Right - 12 * S; PrevRun last;
+            using (var mp = new Pen(Theme.Muted, 1.6f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+            { float ax = right - 4 * S, ay = r.Y + r.Height / 2; g.DrawLines(mp, new[] { new PointF(ax - 4 * S, ay - 5 * S), new PointF(ax + 1 * S, ay), new PointF(ax - 4 * S, ay + 5 * S) }); }
+            right -= 22 * S;
+            if (tbLast.TryGetValue(t.Id, out last) && last.Rows != null && last.Rows.Count > 0)
+            {
+                int lv = 0; foreach (var row in last.Rows) { int l; if (row.Length > 0 && int.TryParse(row[0], out l) && (l == 1 || l == 2) && l > lv) lv = l; }
+                string lt = last.At.ToString("HH:mm", CultureInfo.CurrentCulture); var ls = g.MeasureString(lt, Draw.fSmall);
+                using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(lt, Draw.fSmall, mb, right - ls.Width, r.Y + (r.Height - ls.Height) / 2);
+                Draw.LvDot(g, lv, right - ls.Width - 12 * S, r.Y + r.Height / 2 - 4 * S, 8 * S, 8 * S); right -= ls.Width + 22 * S;
+            }
+            float tx = ir.Right + 12 * S, tw = Math.Max(40 * S, right - tx); string name = ToolName(t);
+            var te = Explain.Term("tb." + t.Id); string line = te != null ? (te.Tag ?? te.What ?? "") : "";
+            if (line.Length > 0) { int dot = line.IndexOf(". ", StringComparison.Ordinal); if (dot > 0) line = line.Substring(0, dot); }
+            using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
+            {
+                float nh = Draw.fBodyB.GetHeight(g), lh = line != "" ? Draw.fSmall.GetHeight(g) : 0, ty = r.Y + (r.Height - nh - lh - (lh > 0 ? 2 * S : 0)) / 2;
+                g.DrawString(name, Draw.fBodyB, ink, new RectangleF(tx, ty, tw, nh + 2), nf);
+                if (line != "") g.DrawString(L.T(line), Draw.fSmall, sub, new RectangleF(tx, ty + nh + 2 * S, tw, lh + 2), nf);
+            }
         }
         // the tile under the mouse gets its edge in the section's colour (only that tile and the one before are drawn again)
         void IdxHover(Point client)

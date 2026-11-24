@@ -327,7 +327,7 @@ namespace AdeeboMeter
             }
             PaintVerdict(g, pathPanel, x + 10 * S, r.Height / 2f, r.Width - (onlineChip.Visible ? onlineChip.Width + 40 * S : 20 * S));
         }
-        static int PathHeight { get { return Cfg.Details ? Sc(128) : Sc(58); } }
+        static int PathHeight { get { return Sc(58); } }   // 24 Nov (Adeeb: "details feel spamming"): the big path strip repeated Home's card - the status strip only, always
         void OpenSettingsAt(string sec)
         {
             tab = "settings"; ShowTab(); SyncNav();

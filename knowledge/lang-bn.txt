@@ -5129,3 +5129,23 @@ Type a place and press Enter.	জায়গার নাম লিখে Enter
 Where should the weather be for?	কোন জায়গার আবহাওয়া দেখাবে?
 day	দিনে
 not on Wi-Fi	Wi-Fi-তে নয়
+Forecast server	পূর্বাভাসের সার্ভার
+Nothing to fix on this PC.	এই পিসিতে ঠিক করার কিছু নেই।
+Off: the plain readings only.	বন্ধ: শুধু সাধারণ রিডিং।
+On: worst values, where each number comes from and link rates, in the Time machine and the tools.	চালু: সবচেয়ে খারাপ মান, প্রতিটি সংখ্যা কোথা থেকে এবং লিংক রেট—টাইম মেশিন ও টুলসে।
+Open setting	সেটিং খুলুন
+Open the router	রাউটার খুলুন
+Place search server	জায়গা খোঁজার সার্ভার
+What I measured	আমি যা মেপেছি
+checked at	পরীক্ষা করা হয়েছে
+checks	পরীক্ষা
+checks of this PC, your network and your sites. Nothing is changed - each fix opens the Windows screen where you change it.	এই পিসি, আপনার নেটওয়ার্ক ও সাইটগুলোর পরীক্ষা। কিছুই বদলানো হয় না—প্রতিটি সমাধান Windows-এর সেই স্ক্রিন খোলে যেখানে আপনি বদলান।
+connections	সংযোগ
+couldn't check	পরীক্ষা করা যায়নি
+nothing was changed - each fix opens the Windows screen where you change it.	কিছুই বদলানো হয়নি—প্রতিটি সমাধান Windows-এর সেই স্ক্রিন খোলে যেখানে আপনি বদলান।
+to fix	ঠিক করতে হবে
+{0} things to fix on this PC.	এই পিসিতে {0}টি জিনিস ঠিক করতে হবে।
+{0} thing to fix on this PC.	এই পিসিতে {0}টি জিনিস ঠিক করতে হবে।
+What to do	কী করবেন
+What I couldn't tell	যা বোঝা যায়নি
+Extra numbers for engineers	প্রকৌশলীদের জন্য বাড়তি সংখ্যা

@@ -171,7 +171,7 @@ namespace AdeeboMeter
             {
                 if (!Allowed(u)) throw new WebException("the stream pointed to " + u.Host + " - a private or local address the link didn't name; not fetched", WebExceptionStatus.TrustFailure);
                 var q = (HttpWebRequest)WebRequest.Create(u); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AdeeboMeter/" + Program.Version;
-                q.AllowAutoRedirect = false; q.Proxy = HttpSmall.Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                q.AllowAutoRedirect = false; q.Proxy = HttpSmall.Proxy(); q.AutomaticDecompression = DecompressionMethods.GZip;
                 bool foreign = !string.Equals(u.Host, origin, StringComparison.OrdinalIgnoreCase); Uri via = null; try { via = q.Proxy != null ? q.Proxy.GetProxy(u) : null; } catch (Exception e) { if (!(e is WebException || e is InvalidOperationException)) throw; }
                 bool direct = via == null || via == u;
                 if (foreign && direct) { string host = u.Host; q.ServicePoint.BindIPEndPointDelegate = (sp, remote, retry) => { if (remote != null && !SpeedTest.Reachable(remote.Address)) throw new WebException(host + " points to a private address - refused"); return null; }; }
