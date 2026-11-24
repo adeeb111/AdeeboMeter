@@ -187,7 +187,7 @@ a{text-underline-offset:.18em}
 .site-language{position:relative;display:inline-flex;align-items:center}
 .site-language .lang-face{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:9px;font-size:14px;color:var(--ink);pointer-events:none}
 .site-language .lang-face svg{width:18px;height:18px}.site-language .lang-face b{font-weight:600;letter-spacing:.02em}
-.site-language select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+.site-language select,.top .site-language [data-language-picker]{position:absolute;inset:0;width:100%;min-width:0;max-width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
 
 .site-language:has(select[hidden]) .lang-face{display:none}
 .site-language:focus-within .lang-face{outline:2px solid var(--blue);outline-offset:2px}
@@ -221,9 +221,6 @@ a{text-underline-offset:.18em}
 .fbopen .v4btn{flex:none;height:46px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;border:1px solid transparent}
 .fbopen .v4btn.line{border-color:var(--line)}
 #fb-form .seg{display:none}
-/* donate: one line under the final download */
-.final .give{margin:18px 0 0;color:var(--sub);font-size:15px}
-.final .give a{color:var(--blue);font-weight:600;text-underline-offset:3px}
 /* phone: one-row header; the meter right under the headline */
 @media (max-width:760px){
   header.top .wrap{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:8px;padding-block:.4rem}
