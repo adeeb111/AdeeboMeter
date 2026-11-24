@@ -67,7 +67,7 @@ namespace AdeeboMeter
                 float ty = cy - ts.Height / 2, tx = x + (ts.Width - g.MeasureString("AdeeboMeter", Draw.fBig, PointF.Empty, tf).Width) / 2;
                 g.DrawString(AdeeboMeter.L.T("Adeebo"), Draw.fBig, b, tx, ty, tf); g.DrawString(AdeeboMeter.L.T("Meter"), Draw.fBig, mb, tx + aw, ty, tf);
             }
-            PaintMood(g, gearBtn.Left - 8 * S, cy);
+            // 23 Nov: the companion's face moved into the ⋯ menu - the top line keeps the logo and the controls
         }
         // the verdict, beside the path it explains: "Not connected to any network · ...   Investigate ›" - returns where it ends
         float PaintVerdict(Graphics g, Control on, float x, float cy, float right)
@@ -113,10 +113,10 @@ namespace AdeeboMeter
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
                 string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
-                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Ink)) g.DrawString(st, Draw.fMono, b, x, y);
+                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
                 // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
-                float left = x + g.MeasureString(st, Draw.fMono).Width + 24 * S;
+                float left = x + g.MeasureString(st, Draw.fSmall).Width + 24 * S;
                 // anything AdeeboMeter has waited on for 5 s or more: named here with its seconds, gone when it ends (1.1.6 test day)
                 int more; var bz = Busy.Oldest(out more);
                 if (bz != null)
@@ -128,8 +128,7 @@ namespace AdeeboMeter
                         g.DrawString(note, Draw.fSmall, ab, new RectangleF(left, y, Math.Max(1, r.Width - 20 * S - left), 20 * S), sf);
                     return;
                 }
-                foreach (var right in new[] { Program.Version + " · no cloud · no telemetry · never listens · hover the ? cursor to learn · Esc = back to the corner",
-                                              Program.Version + " · no cloud · no telemetry · never listens", Program.Version + " · no cloud · no telemetry", Program.Version })
+                foreach (var right in new[] { Program.Version })
                 {
                     var rs = g.MeasureString(right, Draw.fSmall); float rx = r.Width - rs.Width - 20 * S;
                     if (rx >= left) { g.DrawString(right, Draw.fSmall, muted, rx, y); break; }

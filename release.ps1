@@ -40,7 +40,7 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
     }
-    # the Inter font (assets\fonts, SIL Open Font License - assets\fonts\OFL.txt) rides compressed the same way
+    # the Barlow fonts (assets\fonts, SIL Open Font License - assets\fonts\OFL-Barlow.txt) ride compressed the same way
     foreach ($k in Get-ChildItem assets\fonts\*.ttf) {
         $b = [IO.File]::ReadAllBytes($k.FullName); $gz = "obj\$($k.BaseName).ttf.gz"
         $o = [IO.File]::Create($gz); $z = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal)

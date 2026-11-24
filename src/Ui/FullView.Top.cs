@@ -7,8 +7,9 @@ using System.Windows.Forms;
 namespace AdeeboMeter
 {
     // ================================================================== the top line (Adeeb, 14 Nov: "crowded - simplify")
-    // logo · your view · search · theme · buddy · Settings · ⋯ · Back to corner. The ⋯ menu holds Details, the layout,
-    // Adeebo points and About; it closes on a click anywhere else, on Esc, or when the window loses focus.
+    // 23 Nov polish: logo · your view · search · theme · ⋯ · Back to corner. The ⋯ menu holds your phone, the companion,
+    // the language, Details, the layout, Adeebo points and About; it closes on a click anywhere else, on Esc, or when the
+    // window loses focus. The gear shows only in the classic layout - with the side bar, Settings is already at its foot.
     sealed partial class FullView
     {
         void PlaceTop()
@@ -18,16 +19,16 @@ namespace AdeeboMeter
             int xr = header.Width - Sc(20);
             xr -= backBtn.Width; backBtn.Location = new Point(xr, my(backBtn)); xr -= Sc(12);
             xr -= dotsBtn.Width; dotsBtn.Location = new Point(xr, my(dotsBtn)); xr -= Sc(8);
-            xr -= gearBtn.Width; gearBtn.Location = new Point(xr, my(gearBtn)); xr -= Sc(8);
-            xr -= Sc(30) + Sc(12);   // the buddy's face, painted
-            if (linkBtn != null) { xr -= linkBtn.Width; linkBtn.Location = new Point(xr, my(linkBtn)); xr -= Sc(12); }   // Your phone (16 Nov)
+            bool gear = Cfg.Layout != "sidebar"; if (gearBtn.Visible != gear) gearBtn.Visible = gear;
+            if (gear) { xr -= gearBtn.Width; gearBtn.Location = new Point(xr, my(gearBtn)); xr -= Sc(8); }
+            if (linkBtn != null && linkBtn.Visible) linkBtn.Visible = false;   // Your phone: in the ⋯ menu and the side bar
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);
-            if (langBtn != null) { langBtn.Location = new Point(xl - Sc(10), my(langBtn)); xl = langBtn.Right + Sc(20); }   // the language, right beside the view
+            if (langBtn != null) { langBtn.Location = new Point(xr - langBtn.Width, my(langBtn)); if (langBtn.Visible) langBtn.Visible = false; }   // the language is in the ⋯ menu; the button stays as the sheet's anchor
             if (restartBtn != null && restartBtn.Visible) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
             int room = xr - xl;
-            bool show = Cfg.Layout != "sidebar" && room >= Sc(40);   // the sidebar has its own search at the top
+            bool show = room >= Sc(40);   // the one search, in both layouts (the side bar's own box is gone)
             if (headSearch.Visible != show) headSearch.Visible = show;
             int sw = room >= Sc(140) ? Math.Min(Sc(300), room) : Sc(36);   // bug-hunt ML-78: a usable box down to 140 px; only narrower than that the icon alone
             headSearch.Size = new Size(sw, Sc(36)); headSearch.Location = new Point(xr - sw, (header.Height - headSearch.Height) / 2);
@@ -52,7 +53,7 @@ namespace AdeeboMeter
                 Controls.Add(topMenu);
                 Deactivate += delegate { HideTopMenu(); };
             }
-            int w = Sc(290), h = Sc(Cfg.Points ? 216 : 178);
+            int w = Sc(300), h = Sc(Cfg.Points ? 346 : 308);
             var at = PointToClient(dotsBtn.Parent.PointToScreen(new Point(dotsBtn.Right, dotsBtn.Bottom)));
             topMenu.Bounds = new Rectangle(Math.Max(Sc(8), at.X - w + Sc(6)), at.Y + Sc(6), w, h);
             topMenu.BackColor = header.BackColor;
@@ -105,6 +106,11 @@ namespace AdeeboMeter
                 else if (right != null) { var rs = g.MeasureString(right, Draw.fSmall); using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(right, Draw.fSmall, mb, r.Right - rs.Width - 12 * S, r.Y + (rh - rs.Height) / 2); }
                 Act(topMenu, r, a); y += rh;
             };
+            string phoneLabel; PhoneHub.StateOf(out phoneLabel);
+            row(L.T("Your phone"), phoneLabel, null, delegate { HideTopMenu(); LinkClicked(); });
+            row(L.T("Companion"), Voice.Serious ? L.T("Plain") : L.T(Lines.Persona == "none" ? Lines.MoodName(Lines.Mood) : Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona)), null, delegate { HideTopMenu(); BuddySheet(); });
+            row(L.T("Language"), NativeName(L.Code), null, delegate { HideTopMenu(); LangMenu(); });
+            using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
             row(L.T("Details"), null, Cfg.Details, delegate { SetDetails(!Cfg.Details); topMenu.Invalidate(); });
             row(L.T("Sidebar layout"), null, Cfg.Layout == "sidebar", delegate { HideTopMenu(); SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); PlaceTop(); });
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;

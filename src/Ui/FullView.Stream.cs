@@ -181,7 +181,7 @@ namespace AdeeboMeter
         }
         void AskWatching(Point at)
         {
-            var menu = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
+            var menu = Menus.Make(); menu.ShowImageMargin = false;
             var box = new ToolStripTextBox { AutoSize = false, Width = Sc(260), Font = Draw.fBody };
             menu.Items.Add(new ToolStripLabel(L.T("What are you watching? (only for your own records)")));
             menu.Items.Add(box);

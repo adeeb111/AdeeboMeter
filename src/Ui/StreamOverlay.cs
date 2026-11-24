@@ -40,7 +40,7 @@ namespace AdeeboMeter
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
             MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) down = e.Location; };
             MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) Location = new Point(Location.X + e.X - down.X, Location.Y + e.Y - down.Y); };
-            var menu = new ContextMenuStrip { ShowImageMargin = false };
+            var menu = Menus.Make(); menu.ShowImageMargin = false;
             var g = new ToolStripMenuItem("Green background (for OBS Chroma Key)") { CheckOnClick = true }; g.CheckedChanged += delegate { green = g.Checked; Invalidate(); };
             var p = new ToolStripMenuItem("Write a PNG for OBS (overlay.png)") { CheckOnClick = true }; p.CheckedChanged += delegate { png = p.Checked; lastKey = ""; if (png) Program.Log("lag graph png: " + PngPath); };
             var f = new ToolStripMenuItem("Show the PNG in its folder"); f.Click += delegate { if (File.Exists(PngPath)) try { System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + PngPath + "\""); } catch (System.ComponentModel.Win32Exception) { } };

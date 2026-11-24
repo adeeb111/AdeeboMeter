@@ -188,22 +188,36 @@ namespace AdeeboMeter
             Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
             using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
             {
+                // 23 Nov polish: one row of readings, This PC first - the same order as the chain (PC, router, internet, names) -
+                // no boxes inside the card, no badges; where each number comes from is in the line under them
+                var s0 = snap; int lvPc = s0.Path.Length > 0 && s0.Path[0] >= 0 && s0.Path[0] <= 2 ? s0.Path[0] : 3;
+                bool memHot = !double.IsNaN(s0.Mem) && s0.Mem >= 85 && (double.IsNaN(s0.Cpu) || s0.Mem - 85 >= s0.Cpu - 85);
+                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + L.T("CPU");
+                string pcSub = memHot ? L.T("CPU") + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
+                                      : L.T("memory") + " " + Draw.Fmt(s0.Mem, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%");
+                if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
                 var tiles = new[] {
-                    new[] { "Your router", ms(gw), "m", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
-                    new[] { "The internet", ms(net), "m", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
-                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
-                    new[] { "Your traffic", Draw.Pair(down, up), "w", "3", "ov.TRAFFIC" } };
-                for (int i = 0; i < tiles.Length; i++)
+                    new[] { "This PC", pcMain, pcSub, lvPc.ToString(CultureInfo.InvariantCulture), "path.PC" },
+                    new[] { "Your router", ms(gw), "", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
+                    new[] { "The internet", ms(net), "", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
+                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), "", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
+                    new[] { "Your traffic", Draw.Pair(down, up), "", "3", "ov.TRAFFIC" } };
+                int n = tiles.Length, per = cols >= 4 ? n : 3; float cw = iw / per;
+                using (var div = new Pen(Theme.Line))
+                for (int i = 0; i < n; i++)
                 {
-                    var t = tiles[i]; var tr = new RectangleF(ix + (i % cols) * (tw + 12 * S), ty + (i / cols) * (th + 12 * S), tw, th);
-                    Kit.Box(g, tr);
+                    var t = tiles[i]; int rI = i / per, cI = i % per;
+                    var tr = new RectangleF(ix + cI * cw, ty + rI * (th + 8 * S), cw, th);
+                    if (cI > 0) g.DrawLine(div, tr.X, tr.Y + 6 * S, tr.X, tr.Bottom - 6 * S);
+                    float px = tr.X + (cI > 0 ? 16 * S : 0);
                     int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
-                    Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
-                    Glyphs.Tile(g, new[] { "cpe", "internet", "dns", "chart" }[i], new RectangleF(tr.Right - 54 * S, tr.Y + 12 * S, 42 * S, 42 * S), lv == 1 || lv == 2 ? Theme.LvText(lv) : Kit.Accent("home"), 10 * S);
-                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(t[0]).ToUpper(CultureInfo.CurrentCulture), Draw.fTiny, muted, new RectangleF(tr.X + 30 * S, tr.Y + 14 * S, tr.Width - 92 * S, 18 * S), nf);
-                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
-                    Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
+                    Draw.LvDot(g, lv, px, tr.Y + 10 * S, 8 * S, 8 * S);
+                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(t[0]), Draw.fSmall, sub, new RectangleF(px + 14 * S, tr.Y + 5 * S, cw - 34 * S, 20 * S), nf);
+                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                        g.DrawString(t[1], Draw.fBig, vb, new RectangleF(px, tr.Y + 26 * S, cw - 20 * S, 32 * S), nf);
+                    if (t[2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(t[2], Draw.fSmall, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf);
                     Hint(overviewCanvas, tr, t[4]);
+                    if (i == 0) { var pr = tr; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
                 }
                 string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
                 using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fBody, sub, new RectangleF(ix, ny, iw, 22 * S), nf);
@@ -248,21 +262,29 @@ namespace AdeeboMeter
                 Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
                 {
                     float ix = x + 20 * S, iw = w - 40 * S;
-                    float hh = Draw.Measure(s.Headline, Draw.fName, (int)iw).Height;
+                    // 23 Nov polish: the same card in every state - only the headline and the buttons change. A problem hidden
+                    // with Hide leaves the card saying how the network is; the This PC reading still shows it in red.
+                    bool hid = ProblemHidden(s); bool problem = (s.Level == 1 || s.Level == 2) && !hid;
+                    string head = hid ? L.T("The network is fine.") : s.Headline;
+                    float aw = problem ? PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, true) : 0;
+                    float hw0 = Math.Max(120 * S, iw - aw - (aw > 0 ? 16 * S : 0));
+                    float hh = Draw.Measure(head, Draw.fName, (int)hw0).Height;
                     string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
                     float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)iw).Height + 4 * S : 0;
-                    int cols = iw > 700 * S ? 4 : 2; float tw = (iw - (cols - 1) * 12 * S) / cols, th = 92 * S;
-                    float tilesH = 4 / cols * (th + 12 * S) - 12 * S;
+                    int cols = iw > 700 * S ? 5 : 3; float tw = iw / cols, th = 80 * S;
+                    float tilesH = (cols >= 5 ? 1 : 2) * (th + 8 * S) - 8 * S;
                     var vr = new RectangleF(x, y, w, 15 * S + hh + 6 * S + wh + 10 * S + tilesH + 12 * S + 22 * S + 12 * S);
-                    Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
-                    using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(ix, y + 15 * S, iw, hh + 6));
-                    if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, iw, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, iw, wh), "ov.WEATHER"); }
+                    Kit.Box(g, vr, 14 * S);
+                    if (problem) PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, false);
+                    using (var hb = new SolidBrush(!problem ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, Draw.fName, hb, new RectangleF(ix, y + 15 * S, hw0, hh + 6));
+                    if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, hw0, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, hw0, wh), "ov.WEATHER"); }
+                    using (var dl = new Pen(Theme.Line2)) g.DrawLine(dl, ix, y + 15 * S + hh + 6 * S + wh + 4 * S, ix + iw, y + 15 * S + hh + 6 * S + wh + 4 * S);
                     float ty = y + 15 * S + hh + 6 * S + wh + 10 * S;
                     float ny = ty + tilesH + 12 * S;
                     PaintOvNow(g, ix, ty, iw, cols, tw, th, ny);
                     // the four live numbers and the Wi-Fi line: redrawn alone (OverviewTick), straight from their own painter - the rest of
                     // Home is not walked again for them (motion review, 23 Nov: a narrow redraw still ran the whole page's drawing, ~100-300 ms on a slow PC)
-                    Color nowBg = Theme.LvSoft(s.Level); float nX = ix, nY = ty, nW = iw, nTw = tw, nTh = th, nNy = ny; int nCols = cols;
+                    Color nowBg = Theme.Card; float nX = ix, nY = ty, nW = iw, nTw = tw, nTh = th, nNy = ny; int nCols = cols;
                     LiveSpot(overviewCanvas, "ov.now", new RectangleF(ix, ty, iw, ny + 22 * S - ty), nowBg, gg => PaintOvNow(gg, nX, nY, nW, nCols, nTw, nTh, nNy));
                     y += vr.Height + 18 * S; OvLap("verdict");
                 }

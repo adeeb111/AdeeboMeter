@@ -393,7 +393,7 @@ namespace AdeeboMeter
             // Minimising means "get out of my way": same as Esc / Back to corner - the view closes, frees its memory, the widget keeps watching.
             // ...except while a tool or a capture runs: then it just stays minimised (a 60-minute MTR mustn't end because of Win+D)
             Resize += delegate { if (WindowState == FormWindowState.Minimized && Visible && !tbBusy && !sniffing) BeginInvoke((Action)Close); };
-            if (!Cfg.SeenTip) BuildTipBar();
+            if (!Cfg.SeenTip && Cfg.SetupDone) BuildTipBar();   // 23 Nov: first open shows the setup card alone; the tip waits for the next open
             Deactivate += delegate { SetTipKey(null); };
             FormClosed += delegate
             {

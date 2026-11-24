@@ -161,7 +161,7 @@ namespace AdeeboMeter
         }
         void PickFrom(RectangleF at, IEnumerable<string> codes, Action<string> pick)
         {
-            var m = new ContextMenuStrip(); foreach (var c in codes) { string cc = c; m.Items.Add(cc + "  " + (cc == "CAD" ? L.T("Canadian dollar") : L.T(MarketData.FxName(cc))), null, delegate { pick(cc); tradeCanvas.Invalidate(); }); }
+            var m = Menus.Make(); foreach (var c in codes) { string cc = c; m.Items.Add(cc + "  " + (cc == "CAD" ? L.T("Canadian dollar") : L.T(MarketData.FxName(cc))), null, delegate { pick(cc); tradeCanvas.Invalidate(); }); }
             m.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
         }
         double? AskNumber(string title, double now)

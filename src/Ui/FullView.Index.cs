@@ -215,7 +215,7 @@ namespace AdeeboMeter
         }
         void ViewsMenu(List<Tool> views, RectangleF at)
         {
-            var m = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
+            var m = Menus.Make(); m.ShowImageMargin = false;
             foreach (var v in views) { string id = v.Id; m.Items.Add(L.T(v.Title), null, delegate { OpenFromIndex(id); }); }
             var sp = tbCanvas.AutoScrollPosition; m.Show(tbCanvas, new Point((int)at.X + sp.X, (int)at.Bottom + sp.Y));
         }

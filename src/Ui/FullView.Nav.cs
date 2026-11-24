@@ -92,7 +92,7 @@ namespace AdeeboMeter
         // the More menu: everything not on the bar, with its icon; and a way to the Navigation settings
         void ShowMoreMenu(Control at, Point p)
         {
-            var m = new ContextMenuStrip { ShowImageMargin = true, Font = Draw.fBody, ImageScalingSize = new Size(Sc(18), Sc(18)) };
+            var m = Menus.Make();
             foreach (var id in NavMore())
             {
                 string nid = id; var it = new ToolStripMenuItem(L.T(NavName(id)), NavBitmap(NavIcon(id), Kit.Accent(NavAccent(id))));
@@ -114,12 +114,13 @@ namespace AdeeboMeter
 
         // ---------- Sidebar: the navy column (topogram's look: faint highlight + a 3 px aqua bar, never a solid block)
         DB sideNav;
-        // the rail: navy for the standard themes; the colour themes get a deep shade of their own so it doesn't clash (Sunset was navy-on-plum)
+        // the rail: graphite for the standard themes (23 Nov polish - the website's #15181C, not navy); the colour themes get a
+        // deep shade of their own so it doesn't clash (Sunset was navy-on-plum)
         static bool StdRail { get { return Theme.Palette == "standard" || Theme.Palette == ""; } }
-        static Color Navy { get { return StdRail ? Theme.C("#0B1B3A") : Theme.Dark ? Kit.Mix(Kit.Mix(Theme.Bg, Color.Black, 0.35f), Theme.Blue, 0.05f) : Kit.Mix(Theme.Blue, Color.Black, 0.78f); } }
-        static Color Navy2 { get { return StdRail ? Theme.C("#13284D") : Kit.Mix(Navy, Color.White, 0.08f); } }
-        static Color Aqua { get { return StdRail ? Theme.C("#3DE0C2") : Theme.Blue; } }
-        static Color NavyText { get { return StdRail ? Theme.C("#B5C6E0") : Kit.Mix(Navy, Color.White, 0.72f); } }
+        static Color Navy { get { return StdRail ? Theme.C(Theme.Dark ? "#0C0E10" : "#15181C") : Theme.Dark ? Kit.Mix(Kit.Mix(Theme.Bg, Color.Black, 0.35f), Theme.Blue, 0.05f) : Kit.Mix(Theme.Blue, Color.Black, 0.78f); } }
+        static Color Navy2 { get { return Kit.Mix(Navy, Color.White, 0.08f); } }
+        static Color Aqua { get { return StdRail ? Theme.C("#7FA6F8") : Theme.Blue; } }
+        static Color NavyText { get { return StdRail ? Theme.C("#C9CED6") : Kit.Mix(Navy, Color.White, 0.72f); } }
         DB BuildSideNav()
         {
             sideNav = new DB { Name = "sideNav", Dock = DockStyle.Left, Width = Sc(214), BackColor = Navy, Visible = false };
@@ -134,11 +135,7 @@ namespace AdeeboMeter
             if (!hc && sideNav.BackColor != bg) sideNav.BackColor = bg;
             using (var b = new SolidBrush(bg)) g.FillRectangle(b, r);
             float x = 10 * S, y = 14 * S, w = r.Width - 20 * S; string cur = NavOf(tab);
-            var sr = new RectangleF(x, y, w, 34 * S);
-            Theme.Fill(g, sr, 17 * S, hc ? SystemColors.Window : Navy2);
-            Kit.Icon(g, "search", new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, 16 * S, 16 * S), sub);
-            using (var b = new SolidBrush(sub)) g.DrawString(L.T("Search anything..."), Draw.fBody, b, sr.X + 34 * S, sr.Y + 8 * S);
-            Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); sideNav.Acc.Add(Tuple.Create(L.T("Search anything"), Rectangle.Round(sr), (Action)OpenPalette)); y += 48 * S;
+            // 23 Nov: no search box here - the top bar's search (Ctrl K) is the one way to search everything
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
             var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 6 * S - 18 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
@@ -151,7 +148,7 @@ namespace AdeeboMeter
             Action<string, bool> row = (id, small) =>
             {
                 float h = (small ? smallH : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
-                if (sel) { using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, rr); using (var b = new SolidBrush(hc ? SystemColors.Highlight : Aqua)) g.FillRectangle(b, rr.X, rr.Y + 6 * S, 3 * S, h - 12 * S); }
+                if (sel) { if (hc) Theme.Stroke(g, rr, 9 * S, SystemColors.Highlight, 2 * S); else Theme.Fill(g, rr, 9 * S, Color.FromArgb(24, 255, 255, 255)); }
                 Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
                 string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id); sideNav.Acc.Add(Tuple.Create(L.T(NavName(id)), Rectangle.Round(rr), (Action)delegate { OpenNav(nid); }));
@@ -159,7 +156,7 @@ namespace AdeeboMeter
             };
             foreach (var id in bar) row(id, false);
             y += 6 * S;
-            using (var b = new SolidBrush(sub)) g.DrawString(L.T("MORE"), Draw.fTiny, b, x + 14 * S, y); y += 18 * S;
+            using (var b = new SolidBrush(Kit.Mix(sub, bg, 0.3f))) g.DrawString(L.T("More"), Draw.fTiny, b, x + 14 * S, y); y += 18 * S;
             foreach (var id in more.Take(fitMore)) row(id, true);
             if (fitMore < more.Count)
             {
@@ -183,7 +180,7 @@ namespace AdeeboMeter
                 // Your phone, the second way in (Adeeb, 16 Nov: "connect option should also be in the left bar") - its state on the right
                 {
                     var prr = new RectangleF(x, srr.Y - 40 * S, w, 38 * S); bool psel = tab == "phone"; string plb; string pst = PhoneHub.StateOf(out plb);
-                    if (psel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, prr);
+                    if (psel) Theme.Fill(g, prr, 9 * S, hc ? SystemColors.Highlight : Color.FromArgb(24, 255, 255, 255));
                     Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                     Kit.Icon(g, "link", new RectangleF(x + 14 * S, prr.Y + 10 * S, 18 * S, 18 * S), pc);
                     using (var b = new SolidBrush(psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
@@ -191,7 +188,7 @@ namespace AdeeboMeter
                         g.DrawString(plb, Draw.fSmall, b, new RectangleF(prr.X + 120 * S, prr.Y + (38 * S - Draw.fSmall.GetHeight(g)) / 2, prr.Width - 128 * S, 20 * S), nf);
                     Act(sideNav, prr, LinkClicked); sideNav.Acc.Add(Tuple.Create(L.T("Your phone"), Rectangle.Round(prr), (Action)LinkClicked));
                 }
-                if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
+                if (ssel) Theme.Fill(g, srr, 9 * S, hc ? SystemColors.Highlight : Color.FromArgb(24, 255, 255, 255));
                 Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
                 using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings"); sideNav.Acc.Add(Tuple.Create(L.T("Settings"), Rectangle.Round(srr), (Action)delegate { tab = "settings"; ShowTab(); SyncNav(); }));
@@ -302,21 +299,6 @@ namespace AdeeboMeter
 
         // ---------- the header: the layout switch (Classic tabs <-> Sidebar). The big search sits at the end of the tab row
         // (Classic) or the top of the sidebar, where there's room - the header keeps its width for the headline.
-        // the buddy's face (the Mood button) in its slot left of the gear; the layout switch moved to the ⋯ menu
-        float PaintMood(Graphics g, float right, float cy)
-        {
-            var lr = new RectangleF(right + 8 * S, cy, 0, 0);
-            // the Mood button (PLAN 11.7): the face of the current mood and who's talking; one click opens the menu
-            string who = Voice.Serious ? L.T("Plain") : Lines.Persona == "none" ? L.T(Lines.MoodName(Lines.Mood)) : L.T(Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona));
-            who = "";   // the face alone: the top line stays calm (the name is in the menu)
-            var ws = who == "" ? SizeF.Empty : g.MeasureString(who, Draw.fBtn); var mr = new RectangleF(lr.X - 8 * S - ws.Width - (who == "" ? 30 : 40) * S, cy - 15 * S, ws.Width + (who == "" ? 30 : 40) * S, 30 * S);
-            Theme.Fill(g, mr, 15 * S, Voice.Serious ? Theme.Soft : Kit.Soft("mine"));
-            Kit.Icon(g, Voice.Serious ? "check" : "mood", new RectangleF(mr.X + (who == "" ? 7 : 10) * S, mr.Y + 7 * S, 16 * S, 16 * S), Voice.Serious ? Theme.Muted : Kit.Accent("mine"));
-            using (var b = new SolidBrush(Voice.Serious ? Theme.Sub : Kit.Ink("mine"))) g.DrawString(who, Draw.fBtn, b, mr.X + 31 * S, mr.Y + (mr.Height - ws.Height) / 2);
-            Act(header, mr, delegate { BuddySheet(); }); Hint(header, mr, "buddy.mood");
-            return mr.X - 8 * S;
-        }
-
         // ---------- Details off: the plain path - three chips instead of the five-dot strip (11.4)
         void PaintPlainPath(Graphics g, Rectangle r)
         {

@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,7 +34,8 @@ namespace AdeeboMeter
         public static Color Ink, Muted, Sub, Line, Line2, Track, Soft, Card, Bg, Rail, UpText, BlueSoft, BlueDark, RowNew, RowGone, RowSel, RowHot, Grey;
         // declared before the colours below: static fields start in the order they're written, and C() needs this one
         static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Color> parsed = new System.Collections.Concurrent.ConcurrentDictionary<string, Color>(StringComparer.Ordinal);
-        public static Color Blue = C("#1F6FEB"), BlueHot = C("#1A5FCC"); public static readonly Color Orange = C("#E36209"), Green = C("#2DA44E"), Amber = C("#BF8700"), Red = C("#CF222E");
+        // 23 Nov polish: the website's colours - the faceplate blue, and the logo's three arcs as the status colours (deeper on light)
+        public static Color Blue = C("#1155E0"), BlueHot = C("#0E47BD"); public static readonly Color Orange = C("#E36209"); public static Color Green = C("#1F9E6B"), Amber = C("#B7791F"), Red = C("#D9473A");
         static readonly Color[] lvText = new Color[4], lvSoft = new Color[4];
         static Theme() { Apply(false); }
         // bug-hunt L-261: each hex is parsed once - paints call this often
@@ -84,21 +85,24 @@ namespace AdeeboMeter
             Dark = dark; AppliedContrast = SystemInformation.HighContrast; AppliedSig = ContrastSig();
             if (!dark)
             {
-                Ink = C("#1B2330"); Muted = C("#4A5867"); Sub = C("#334150"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
-                Card = C("#FFFFFF"); Bg = C("#F2F5F9"); Rail = C("#C5CED8"); UpText = C("#9A4A00"); BlueSoft = C("#EEF4FF"); BlueDark = C("#0B4FB3");
-                RowNew = C("#E6F7EC"); RowGone = C("#FFEFEF"); RowSel = C("#E8F0FE"); RowHot = C("#F7FAFF"); Grey = C("#AEB8C2");
-                lvText[0] = C("#116329"); lvText[1] = C("#7D4E00"); lvText[2] = C("#B42318");
-                lvSoft[0] = C("#DAFBE1"); lvSoft[1] = C("#FFF8C5"); lvSoft[2] = C("#FFEBE9");
+                Ink = C("#16191E"); Muted = C("#5A6270"); Sub = C("#4B5360"); Line = C("#E1E4E9"); Line2 = C("#EEF0F3"); Track = C("#E6E9ED"); Soft = C("#F1F3F6");
+                Card = C("#FFFFFF"); Bg = C("#F4F5F7"); Rail = C("#C9CED6"); UpText = C("#9A4A00"); BlueSoft = C("#EAF0FD"); BlueDark = C("#0E47BD");
+                RowNew = C("#E6F4EC"); RowGone = C("#FCEBE8"); RowSel = C("#E8EEFC"); RowHot = C("#F6F8FB"); Grey = C("#B3B9C2");
+                lvText[0] = C("#17794F"); lvText[1] = C("#875A00"); lvText[2] = C("#B42318");
+                lvSoft[0] = C("#E6F4EC"); lvSoft[1] = C("#FCF1DC"); lvSoft[2] = C("#FCEBE8");
+                Green = C("#1F9E6B"); Amber = C("#B7791F"); Red = C("#D9473A");
             }
             else
             {
-                Ink = C("#E6EDF3"); Muted = C("#9AA7B4"); Sub = C("#C2CCD6"); Line = C("#2E3A46"); Line2 = C("#222B35"); Track = C("#2A3542"); Soft = C("#1B232D");
-                Card = C("#161D26"); Bg = C("#0E1319"); Rail = C("#3A4757"); UpText = C("#F0A060"); BlueSoft = C("#13284A"); BlueDark = C("#9CC2FF");
-                RowNew = C("#11301D"); RowGone = C("#3B1B1E"); RowSel = C("#1B2B44"); RowHot = C("#1A222C"); Grey = C("#4A5868");
-                lvText[0] = C("#7EE2A8"); lvText[1] = C("#F2CC60"); lvText[2] = C("#FFA198");
-                lvSoft[0] = C("#12301C"); lvSoft[1] = C("#3A2F0B"); lvSoft[2] = C("#3A1A1D");
+                // graphite, not navy (23 Nov): the website's dark
+                Ink = C("#EEF1F5"); Muted = C("#8A93A0"); Sub = C("#B3BAC5"); Line = C("#2A2E35"); Line2 = C("#202329"); Track = C("#262A31"); Soft = C("#1F2329");
+                Card = C("#181B20"); Bg = C("#111316"); Rail = C("#3A3F47"); UpText = C("#F0A060"); BlueSoft = C("#16233D"); BlueDark = C("#9CB9FA");
+                RowNew = C("#14271F"); RowGone = C("#3A1E1C"); RowSel = C("#1C2638"); RowHot = C("#1C1F24"); Grey = C("#4A5058");
+                lvText[0] = C("#5EF2B0"); lvText[1] = C("#FCD34D"); lvText[2] = C("#FF8F80");
+                lvSoft[0] = C("#14271F"); lvSoft[1] = C("#3A2E14"); lvSoft[2] = C("#3A1E1C");
+                Green = C("#3DDC97"); Amber = C("#F5C445"); Red = C("#FF7A6B");
             }
-            Blue = C("#1F6FEB"); BlueHot = C("#1A5FCC"); Palette = "standard";
+            Blue = C("#1155E0"); BlueHot = C("#0E47BD"); Palette = "standard";
             // 1.1.5 themes on top of Light / Dark: their own background, cards, lines and main accent. Green, amber and red
             // keep their meaning in every one (only their shades move), and the text stays readable (self-tested).
             string pal = Program.ForceTheme >= 2 && Program.ForceTheme < Palettes.Length + 2 ? Palettes[Program.ForceTheme - 2] : "standard";
@@ -279,20 +283,21 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("fonts: " + e.Message); }
             return names[names.Length - 1];
         }
-        // Inter (assets\fonts, SIL Open Font License): the UI font for titles, headings, buttons and big numbers - the look
-        // the drawing kit is built around (PLAN 11.2). Loaded once from the exe into this process only (nothing installed);
-        // body text stays on Windows' own font so names in any script (a Chinese Wi-Fi name...) still get Windows' fallback.
-        static System.Drawing.Text.PrivateFontCollection inter;
-        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", SmallFam = "", UiMedium = "";
-        public static FontStyle UiSemiStyle = FontStyle.Bold;
-        static void LoadInter()
+        // Barlow (assets\fonts, SIL Open Font License - OFL-Barlow.txt): the same type as the website and the phone app (23 Nov).
+        // Barlow Medium for the writing, Barlow SemiBold for labels and buttons, Barlow Semi Condensed Bold for headings and big
+        // numbers. Their digits are the fixed-width ones (remapped when the fonts were made), so live numbers never jitter.
+        // Loaded once from the exe into this process only (nothing installed); Arabic and Bengali keep Windows' own faces.
+        static System.Drawing.Text.PrivateFontCollection brand;
+        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", UiDisp = "Segoe UI";
+        public static FontStyle UiFamStyle = FontStyle.Regular, UiSemiStyle = FontStyle.Bold, UiDispStyle = FontStyle.Bold;
+        static void LoadBrand()
         {
+            if (brand != null) return;   // once per process: a zoom change makes new sizes, not new copies of the font files
             try
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
-                // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
-                foreach (var w in new[] { "Inter-Regular", "Inter-Medium", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold", "PlayfairDisplay-Bold", "PlayfairDisplay-Black" })   // Playfair (OFL): the Sports and Markets newspaper mastheads (1.1.6)
-                    // R2-080: each font on its own - a damaged masthead font never takes Inter with it
+                foreach (var w in new[] { "Barlow-Medium", "Barlow-SemiBold", "BarlowSemiCondensed-SemiBold", "BarlowSemiCondensed-Bold" })
+                    // R2-080: each font on its own - a damaged one never takes the others with it
                     try
                     {
                         using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
@@ -305,33 +310,34 @@ namespace AdeeboMeter
                         }
                     }
                     catch (Exception fe) { Program.Log("font " + w + ": " + fe.Message); }   // GDI+ reports a bad font file as OutOfMemoryException too
-                inter = pfc;
-                foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter Medium") UiMedium = f.Name; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
-                if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
+                brand = pfc;
+                foreach (var f in pfc.Families)
+                {
+                    if (f.Name == "Barlow Medium") { UiFam = f.Name; UiFamStyle = FontStyle.Regular; }
+                    else if (f.Name == "Barlow SemiBold") { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; }
+                    else if (f.Name == "Barlow Semi Condensed" && f.IsStyleAvailable(FontStyle.Bold)) { UiDisp = f.Name; UiDispStyle = FontStyle.Bold; }
+                }
+                // one missing weight borrows its neighbour, so the type stays one family
+                if (UiSemi == "Segoe UI" && UiFam != "Segoe UI") { UiSemi = UiFam; UiSemiStyle = FontStyle.Bold; }
+                if (UiDisp == "Segoe UI" && UiSemi != "Segoe UI") { UiDisp = UiSemi; UiDispStyle = UiSemiStyle; }
             }
-            catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
+            catch (Exception e) { Program.Log("Barlow font: " + e.Message); UiFam = UiSemi = UiDisp = "Segoe UI"; UiFamStyle = FontStyle.Regular; UiSemiStyle = UiDispStyle = FontStyle.Bold; }
         }
-        // the newspaper serif: Playfair Display from the exe, Georgia when it couldn't load (and for scripts it lacks)
+        // the newspaper mastheads (Sports, Markets): Windows' Georgia - a serif every PC has, no extra font in the exe
         public static Font Serif(float px, bool black)
         {
-            if (inter != null && !L.IsRtl && L.Code != "bn" && L.Code != "zh")
-                foreach (var f in inter.Families)
-                {
-                    if (black && f.Name == "Playfair Display Black") return new Font(f, px, FontStyle.Regular, GraphicsUnit.Pixel);
-                    if (!black && f.Name == "Playfair Display") return new Font(f, px, FontStyle.Bold, GraphicsUnit.Pixel);
-                }
             return new Font(L.IsRtl ? "Segoe UI" : L.Code == "bn" ? BengaliFontFamily : "Georgia", px, FontStyle.Bold, GraphicsUnit.Pixel);
         }
         public static FontFamily UiFamilyName() { return UiFamily(UiFam); }
         static FontFamily UiFamily(string name)
         {
-            if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;
+            if (brand != null) foreach (var f in brand.Families) if (f.Name == name) return f;
             return new FontFamily(name);
         }
         static string bengaliFontFamily;
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
         static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
-        // Inter/Nunito do not contain Arabic glyphs. Use Windows' Arabic-capable
+        // Barlow has no Arabic or Bengali glyphs. Use Windows' own capable
         // UI face after loading the saved language, before creating controls.
         public static void UseArabicFonts()
         {
@@ -363,32 +369,26 @@ namespace AdeeboMeter
         public static void Init(float s)
         {
             if (fName != null) return;
-            S = s; LoadInter();
-            // Windows 11 type (Segoe UI Variable, Cascadia Mono) when it's there; Windows 10 falls back to Segoe UI / Consolas.
-            string text = Fam("Segoe UI Variable Text", "Segoe UI"), disp = Fam("Segoe UI Variable Display", "Segoe UI"), semi = Fam("Segoe UI Semibold", "Segoe UI"), mono = Fam("Cascadia Mono", "Consolas");
-            FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
-            // GDI+ can't pick a variable font's real bold - it smears the regular one. Bold text uses Segoe UI's true bold.
-            if (disp.IndexOf("Variable", StringComparison.Ordinal) >= 0) disp = "Segoe UI";
-            string tb = text.IndexOf("Variable", StringComparison.Ordinal) >= 0 ? "Segoe UI" : text;
-            fName = Ui(UiFam, 12.5f * S, FontStyle.Bold);
-            fHead = Ui(UiSemi, 13.5f * S, UiSemiStyle);
-            // 1.1.5: the writing is Inter too - one modern typeface from headline to footnote (Segoe UI only if Inter failed to load)
-            fBody = Ui(UiMedium != "" ? UiMedium : UiFam, 13f * S, FontStyle.Regular);   // 21 Nov (Adeeb): medium, not deep bold - the writing in Inter Medium, in step with the headings
-            fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
-            // Adeeb, 14 Nov: "the small writing is not even sharp" - Inter has no hinting, so below 12 px it goes soft on Windows.
-            // The small sizes use Windows' own text face (hinted for exactly these sizes); headings and body stay Inter.
-            // Adeeb, 16 Nov (option D): the small writing is Nunito Bold - round, thick, easy to read; Windows' own face if it didn't load
-            fSmall = UiMedium != "" ? Ui(UiMedium, 13f * S, FontStyle.Regular) : SmallFam != "" ? Ui(SmallFam, 13 * S, FontStyle.Bold) : new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);   // 21 Nov: small writing Inter Medium too (one family; Nunito only if Medium failed)
+            S = s; LoadBrand();
+            string mono = Fam("Cascadia Mono", "Consolas"), tb = "Segoe UI";
+            // one family, three weights, the same roles as the website: headings and big numbers in Barlow Semi Condensed Bold,
+            // labels and buttons in Barlow SemiBold, the writing in Barlow Medium. Barlow is narrower than Inter, so the
+            // sizes are half a pixel up to keep the same reading size. Monospace is for code and captures only.
+            fName = Ui(UiDisp, 13.5f * S, UiDispStyle);
+            fHead = Ui(UiSemi, 14f * S, UiSemiStyle);
+            fBody = Ui(UiFam, 13.5f * S, UiFamStyle);
+            fBodyB = Ui(UiSemi, 13f * S, UiSemiStyle);
+            fSmall = Ui(UiFam, 13f * S, UiFamStyle);
             fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
             fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = UiMedium != "" ? Ui(UiSemi, 11.5f * S, UiSemiStyle) : SmallFam != "" ? Ui(SmallFam, 11.5f * S, FontStyle.Bold) : new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals
-            fPill = new Font(semi, 11 * S, semiStyle, GraphicsUnit.Pixel);
-            fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
-            fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);
-            fHero = Ui(UiFam, 30 * S, FontStyle.Bold);
-            fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
-            fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fInput = Ui(UiFam, 13 * S, FontStyle.Regular);
+            fTiny = Ui(UiSemi, 12f * S, UiSemiStyle);
+            fPill = Ui(UiSemi, 11.5f * S, UiSemiStyle);
+            fBig = Ui(UiDisp, 21 * S, UiDispStyle);
+            fTitle = Ui(UiDisp, 17 * S, UiDispStyle);
+            fHero = Ui(UiDisp, 31 * S, UiDispStyle);
+            fValue = Ui(UiDisp, 15 * S, UiDispStyle);
+            fCardNum = Ui(UiDisp, 27 * S, UiDispStyle); fBtn = Ui(UiSemi, 13f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fInput = Ui(UiFam, 13.5f * S, UiFamStyle);
             measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; measureG.TextContrast = Contrast;   /* measured as the windows draw */
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)

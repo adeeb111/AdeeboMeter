@@ -204,7 +204,7 @@ namespace AdeeboMeter
         }
         void AskBroker(Point at)
         {
-            var menu = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
+            var menu = Menus.Make(); menu.ShowImageMargin = false;
             var box = new ToolStripTextBox { AutoSize = false, Width = Sc(260), Font = Draw.fBody };
             menu.Items.Add(new ToolStripLabel(L.T("Your broker's web address (e.g. mybroker.com)"))); menu.Items.Add(box);
             Action go = () => { string h = Cfg.CleanHost(box.Text); if (h == "") return; Cfg.TradeHost = h; Cfg.TradeLive = true; Cfg.Save(); tradeCanvas.Invalidate(); };

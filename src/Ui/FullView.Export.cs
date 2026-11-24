@@ -173,7 +173,7 @@ namespace AdeeboMeter
         void SaveMenu() { SaveMenuAt(Cursor.Position); }
         void SaveMenuAt(Point at)
         {
-            var m = new ContextMenuStrip { Font = Draw.fBody };
+            var m = Menus.Make();
             m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
             m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo); });
             m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json); });

@@ -144,7 +144,7 @@ namespace AdeeboMeter
         }
         void PickRunning(Control at)
         {
-            var menu = new ContextMenuStrip();
+            var menu = Menus.Make();
             try
             {
                 // read the name while the process object is still open, then dispose it (one step - reading after Dispose throws)
