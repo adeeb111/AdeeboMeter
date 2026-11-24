@@ -1237,7 +1237,6 @@ namespace AdeeboMeter
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Err(c, "adeeboshell: " + e.Message); return 1; }
             return ex;
         }
-        bool SameFile(string a, string b) { if (a == "/dev/null" || b == "/dev/null") return false; string x = Real(Abs(a)), y = Real(Abs(b)); return x != null && y != null && string.Equals(Path.GetFullPath(x), Path.GetFullPath(y), StringComparison.OrdinalIgnoreCase); }
         int Dispatch(List<string> a, ShCtx c)
         {
             string cmd = a[0], low = cmd.ToLowerInvariant(); var args = a.Skip(1).ToList();
@@ -2100,16 +2099,16 @@ namespace AdeeboMeter
         void Help(ShCtx c)
         {
             Action<string, string> h = (a, b) => { O(c, "  " + a.PadRight(34), ShCyan); OL(c, b, ShDim); };
-            OL(c, L.T("FOLDERS"), ShBlue);
+            OL(c, Kit.Sent(L.T("FOLDERS")), ShBlue);
             h("ls [-l -a] [folder]", L.T("what's here (ll = ls -l) · cd /data/scripts for ready-made scripts")); h("cd <folder> · cd ~ · cd - · cd ..", L.T("home = your folder, data, mnt/c, pages, tools")); h("pwd · tree · find . -name '*.csv'", L.T("where you are, what's below, find by name"));
             h("cat · head -n 20 · tail · grep -i x", L.T("read files or what a pipe sends")); h("cp [-r] · mv · mkdir · touch · rm [-r -f]", L.T("files - rm asks first") + " · only inside /data"); h("home · open /data", "back to AdeeboMeter's folders · AdeeboMeter's folder in File Explorer"); h("du · stat · hash <file>", L.T("sizes, details, SHA-256"));
             OL(c, L.T("THIS PC (read only)"), ShBlue);
             h("df -h · du -sh * · lsblk · free -h", L.T("disks, folder sizes, drives, memory")); h("ps --sort=cpu · top · uptime · lscpu", L.T("what's running and what it costs (nothing is stopped from here)"));
             h("ip a · ip route · ss -tlp · ifconfig", L.T("addresses, routes, connections and listeners")); h("cat /proc/meminfo · watch -n 2 df -h", L.T("/proc as files; re-run anything every few seconds"));
-            OL(c, L.T("TOOLS AND PAGES"), ShBlue);
+            OL(c, Kit.Sent(L.T("TOOLS AND PAGES")), ShBlue);
             h("<tool> [args]", L.T("every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX"));
             h("iperf3 -c 10.0.0.5 -R -t 10 -P 4", L.T("iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client")); h("tools [word] · man <tool>", L.T("list them, or what one does")); h("open <page> · cd pages/markets; open", L.T("go to a page")); h("lab [lan|path|wifi|phone|vpn|new]", L.T("AdeeboLab")); h("status · debug · log [n]", L.T("the NOW line · raw values · the app's log"));
-            OL(c, L.T("POWER"), ShBlue);
+            OL(c, Kit.Sent(L.T("POWER")), ShBlue);
             h("cmd | grep x | sort | head", L.T("pipes; > file, >> file, < file, 2>/dev/null, &> file"));
             h("x=$(cmd) · $((n * 2)) · cut sed awk tr xargs", L.T("command output and sums in a line; the text tools")); h("cmd1 && cmd2 · cmd1 || cmd2 · cmd &", L.T("and / or / in the background (jobs, wait, kill %1)"));
             h("parallel -j 5 ping {} 4 ::: a b c", L.T("run together, merge as each finishes; cat hosts.txt | parallel ping {} 4")); h("case $x in a|b) ... ;; *) ... ;; esac", L.T("choose by pattern (* ? [abc])"));

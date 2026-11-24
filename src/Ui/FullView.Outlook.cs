@@ -51,7 +51,7 @@ namespace AdeeboMeter
         {
             int days = 0; double[] byHour = null; if (Cfg.History) byHour = LineHours.ByHour(out days);
             // the header: title, place, updated, refresh
-            if (own) OlText(g, L.T("Outlook"), Draw.fTitle, Theme.Ink, x, y); else using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("OUTLOOK  ·  NOW AND NEXT"), Draw.fTiny, mb, x, y + 18 * S);
+            if (own) OlText(g, L.T("Outlook"), Draw.fTitle, Theme.Ink, x, y); else using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("OUTLOOK  ·  NOW AND NEXT")), Draw.fTiny, mb, x, y + 18 * S);
             if (own) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T("The weather, your network and this PC: how things are now, and what the last few days say about the next one."), Draw.fBody, sb, new RectangleF(x, y + 36 * S, w * 0.62f, 40 * S));
             string place = Weather.Active ? Weather.PlaceName() : L.T("Choose a place for the weather");
             var ps = g.MeasureString(place, Draw.fBtn); var pr = new RectangleF(x + w - ps.Width - 40 * S - 120 * S, y + 8 * S, ps.Width + 40 * S, 40 * S); Kit.Box(g, pr, 10 * S);

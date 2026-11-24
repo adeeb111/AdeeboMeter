@@ -561,11 +561,6 @@ namespace AdeeboMeter
             else if (r.Contains("success") || r.Contains("accept")) { from = 2; to = 0; }
             var s = X(from, to, label, detail, double.NaN); if (r.Contains("tls") || r.Contains("peap")) s.Sealed = true; return Rd(s, lv);
         }
-        static string OptNo(string o)
-        {
-            string l = o.Trim().ToLowerInvariant();
-            return l.StartsWith("router", StringComparison.Ordinal) ? "option 3" : l.StartsWith("dns", StringComparison.Ordinal) ? "option 6" : l.StartsWith("domain", StringComparison.Ordinal) ? "option 15" : l.StartsWith("lease", StringComparison.Ordinal) ? "option 51" : l.StartsWith("ntp", StringComparison.Ordinal) ? "option 42" : l.StartsWith("tftp", StringComparison.Ordinal) || l.StartsWith("boot", StringComparison.Ordinal) ? "option 66/67" : "";
-        }
         static readonly Dictionary<string, string[]> SnmpAsk = new Dictionary<string, string[]> {
             { "snmp", new[] { "sysDescr, sysName, sysUpTime", "what are you?" } }, { "snmpif", new[] { "ifOperStatus, ifInErrors", "how are your ports?" } },
             { "snmptraffic", new[] { "ifHCInOctets, ifHCOutOctets", "how many bytes so far?" } }, { "snmpcpu", new[] { "hrProcessorLoad, hrStorageUsed", "how busy are you?" } },

@@ -94,7 +94,7 @@ namespace AdeeboMeter
         // one setting as big cards: its options side by side, the chosen one marked, its help underneath
         float PaintBigChoice(Graphics g, float x, float y, float w, SetItem it, string acc)
         {
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(it.Label).ToUpperInvariant(), Draw.fTiny, m, x, y + 2 * S); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(it.Label), Draw.fTiny, m, x, y + 2 * S); y += 22 * S;
             int n = it.Opts.Length, cur = it.Cur(), cols = Math.Max(1, Math.Min(n, Math.Min(4, (int)(w / (150 * S))))); float cw = (w - (cols - 1) * 10 * S) / cols, ch = 58 * S;
             for (int i = 0; i < n; i++)
             {
@@ -142,7 +142,7 @@ namespace AdeeboMeter
             int st = Math.Max(0, Math.Min(2, setupStep - 1)); string sugg = SuggestedPreset(setupUses);
             var card = new RectangleF(x, y, w, 10); float top = y;
             y += 16 * S;
-            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  " + (st + 2) + " / 4", Draw.fTiny, m, x + 18 * S, y);
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), st + 2), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
             Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
@@ -178,7 +178,7 @@ namespace AdeeboMeter
         float PaintSetupUses(Graphics g, float x, float y, float w)
         {
             var card = new RectangleF(x, y, w, 10); float top = y; y += 16 * S;
-            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  1 / 4", Draw.fTiny, m, x + 18 * S, y);
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), 1), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
             Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });

@@ -5090,3 +5090,25 @@ Abandoned	Abandonado
 of them inside SNMP	de ellas dentro de SNMP
 Not fetched yet	Aún sin datos
 Toronto keeps the same hours	Toronto tiene el mismo horario
+Check now	Comprobar ahora
+Comes back if it gets worse or something new breaks	Vuelve si empeora o si falla algo nuevo
+Comes back tomorrow, or sooner if it gets worse	Vuelve mañana, o antes si empeora
+Corner widget	Widget de esquina
+Hide	Ocultar
+Hide for today	Ocultar por hoy
+Hide while it stays like this	Ocultar mientras siga así
+Never show	No mostrar nunca
+Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.	Solo cuando hay un teléfono recordado: una sala de espera en el relé de AdeeboMeter para que el teléfono encuentre este PC (sellada: el relé no puede leerla), y una vez por hora una petición de la hora al relé, para que ambos lados elijan la misma sala.
+See what's running	Ver qué se está ejecutando
+Send to my ISP	Enviar a mi proveedor
+Step {0} of 4	Paso {0} de 4
+Still in the status strip and the corner widget	Sigue en la barra de estado y el widget de esquina
+The network is fine.	La red está bien.
+a waiting room for your phone, and a clock check once an hour	una sala de espera para tu teléfono y una comprobación de la hora cada hora
+disk	disco
+here	aquí
+hidden while it stays like this	oculto mientras siga así
+memory	memoria
+memory warnings	avisos de memoria
+processor warnings	avisos del procesador
+this kind of warning	este tipo de aviso

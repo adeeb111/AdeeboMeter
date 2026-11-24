@@ -69,7 +69,7 @@ namespace AdeeboMeter
                 var past = WatchKit.Recent("trade").Take(10).ToList();
                 if (past.Count > 0)
                 {
-                    g.DrawString(L.T("YOUR BROKER CONNECTION · PAST TRADING DAYS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent(L.T("YOUR BROKER CONNECTION · PAST TRADING DAYS")), Draw.fTiny, muted, x, y); y += 20 * S;
                     float rh = 34 * S; var card = new RectangleF(x, y, w, past.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     foreach (var s in past)
                     {
@@ -123,7 +123,7 @@ namespace AdeeboMeter
                 float cx2 = x + 22 * S, cy2 = y + 18 * S;
                 Draw.LvDot(g, live ? lv : 3, cx2, cy2 + 8 * S, 14 * S, 14 * S);
                 g.DrawString(live ? (head.Contains("answering in") ? L.T(head.Split('·')[0].Trim()) + " · " + BrokerName(Cfg.TradeHost) + head.Substring(head.IndexOf("answering", StringComparison.Ordinal) - 1) : L.T(head)) : BrokerName(Cfg.TradeHost) + (open || Cfg.TradeCrypto ? L.T(" · starting...") : L.T(" · market closed - the live check sleeps until 9:30 Eastern")), Draw.fTitle, ink, cx2 + 24 * S, cy2);
-                string tag = open ? L.T("LIVE") + " · " + L.T(Trading.VenueName) + " " + L.T("OPEN") : Cfg.TradeCrypto ? L.T("LIVE · CRYPTO 24/7") : L.T(Trading.VenueName) + " " + L.T("CLOSED"); var tgs = g.MeasureString(tag, Draw.fTiny);
+                string tag = open ? Kit.Sent(L.T("LIVE")) + " · " + L.T(Trading.VenueName) + " " + Kit.Sent(L.T("OPEN")) : Cfg.TradeCrypto ? Kit.Sent(L.T("LIVE · CRYPTO 24/7")) : L.T(Trading.VenueName) + " " + Kit.Sent(L.T("CLOSED")); var tgs = g.MeasureString(tag, Draw.fTiny);
                 var tgr = new RectangleF(x + w - tgs.Width - 40 * S, cy2 + 2 * S, tgs.Width + 18 * S, 22 * S); Theme.Fill(g, tgr, 11 * S, open || Cfg.TradeCrypto ? Theme.Red : Theme.Soft);
                 using (var tb = new SolidBrush(open || Cfg.TradeCrypto ? Color.White : Theme.Sub)) g.DrawString(tag, Draw.fTiny, tb, tgr.X + 9 * S, tgr.Y + (22 * S - tgs.Height) / 2);
                 // which market "open" means (AM-CG-108): a US-only trader picks US, a Toronto-only trader Toronto
@@ -159,7 +159,7 @@ namespace AdeeboMeter
                         if (tiles[i][2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(tiles[i][2], Draw.fSmall, sub, new RectangleF(tr.X + 12 * S, tr.Y + 47 * S, tw - 20 * S, 18 * S), nf);
                     }
                     cy2 += 80 * S;
-                    g.DrawString(L.T("LAST 10 MINUTES") + " · " + L.T("one check every") + " " + Trading.Sec + " s · " + L.T("dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
+                    g.DrawString(Kit.Sent(L.T("LAST 10 MINUTES")) + " · " + L.T("one check every") + " " + Trading.Sec + " s · " + L.T("dashed = 100 ms, the \"wait\" line"), Draw.fTiny, muted, cx2, cy2); cy2 += 18 * S;
                     var ch = new RectangleF(cx2, cy2, w - 44 * S, 70 * S); double mx = Math.Max(150, far.DefaultIfEmpty(0).Max() * 1.1);
                     using (var dp = new Pen(Theme.Amber, 1) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }) { float ly = ch.Bottom - (float)(100 / mx) * ch.Height; g.DrawLine(dp, ch.X, ly, ch.Right, ly); }
                     if (samples.Count >= 2)
@@ -214,91 +214,6 @@ namespace AdeeboMeter
             menu.Show(tradeCanvas, at); box.Focus();
         }
 
-        // weekly commodities: one card per group - this week's change, four weeks' change, and the five-week line
-        static float PaintCommodities(Graphics g, float x, float y, float w)
-        {
-            if (!Cfg.TradeFx) return y;
-            List<Trading.Index> idx; lock (Trading.k) idx = Trading.Indexes.ToList();
-            if (idx.Count == 0) return y;   // first visit: the rates' card already says it's fetching
-            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
-            {
-                g.DrawString(L.T("COMMODITIES · WEEKLY · CHANGE IN PRICE"), Draw.fTiny, muted, x, y); y += 20 * S;
-                int cols = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 10 * S) / cols, chh = 112 * S;
-                for (int i = 0; i < idx.Count; i++)
-                {
-                    var it = idx[i]; var rr = new RectangleF(x + (i % cols) * (cw + 10 * S), y + (i / cols) * (chh + 10 * S), cw, chh); Kit.Box(g, rr, 14 * S);
-                    string nm, what; Trading.IdxNames.TryGetValue(it.Code, out nm); Trading.IdxWhat.TryGetValue(it.Code, out what);
-                    g.DrawString(L.T(nm ?? it.Code), Draw.fBodyB, ink, rr.X + 14 * S, rr.Y + 10 * S);
-                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(what ?? ""), Draw.fSmall, muted, new RectangleF(rr.X + 14 * S, rr.Y + 30 * S, cw - 24 * S, 18 * S), nf);
-                    double wk = Trading.Change(it, 1), mo = Trading.Change(it, 4);
-                    string wt = double.IsNaN(wk) ? "-" : (wk > 0.005 ? "▲ " : wk < -0.005 ? "▼ " : "") + Math.Abs(wk).ToString("0.0", CultureInfo.CurrentCulture) + "%";
-                    using (var cb = new SolidBrush(double.IsNaN(wk) || Math.Abs(wk) < 0.05 ? Theme.Ink : Theme.LvText(wk > 0 ? 0 : 2))) g.DrawString(wt, Draw.fName, cb, rr.X + 14 * S, rr.Y + 52 * S);
-                    g.DrawString(L.T("week") + (double.IsNaN(mo) ? "" : " · " + L.T("4 weeks ") + (mo > 0 ? "+" : "") + mo.ToString("0.0", CultureInfo.CurrentCulture) + "%"), Draw.fSmall, sub, rr.X + 14 * S, rr.Y + 84 * S);
-                    // the five-week line, scaled to its own range so a small move still shows
-                    if (it.V.Length >= 2)
-                    {
-                        var sr = new RectangleF(rr.Right - 74 * S, rr.Y + 54 * S, 60 * S, 26 * S); double lo = it.V.Min(), hi = it.V.Max(), span = Math.Max(hi - lo, hi * 0.002);
-                        var pts = it.V.Select((v, j) => new PointF(sr.X + j * sr.Width / (it.V.Length - 1), sr.Bottom - (float)((v - lo) / span) * sr.Height)).ToArray();
-                        using (var p = new Pen(Kit.Accent("trade"), 2 * S)) g.DrawLines(p, pts);
-                    }
-                }
-                y += ((idx.Count + cols - 1) / cols) * (chh + 10 * S);
-                g.DrawString(L.T("Source: Bank of Canada commodity price index, week of ") + idx.Max(z => z.Day).ToString("d MMM", CultureInfo.CurrentCulture) + L.T(" (posted about a week later). An index of world prices in US dollars - the change is what to read. ▲ = prices went up."), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
-                return y + 44 * S;
-            }
-        }
 
-        float PaintFx(Graphics g, float x, float y, float w)
-        {
-            if (!Cfg.TradeFx)
-            {
-                // off by default (nothing is fetched until you say so): one click turns the day's numbers on
-                var cr = new RectangleF(x, y, w, 70 * S); Kit.Box(g, cr, 14 * S);
-                Kit.Icon(g, "speed", new RectangleF(cr.X + 16 * S, cr.Y + 24 * S, 20 * S, 20 * S), Kit.Accent("trade"));
-                using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Currency rates and commodity prices"), Draw.fBodyB, ib, cr.X + 48 * S, cr.Y + 14 * S);
-                using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on."), Draw.fSmall, sb, new RectangleF(cr.X + 48 * S, cr.Y + 36 * S, cr.Width - 220 * S, 30 * S));
-                if (!Policy.NoOnline)
-                {
-                    string bt = L.T("Turn on"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(cr.Right - bs.Width - 40 * S, cr.Y + 19 * S, bs.Width + 24 * S, 32 * S);
-                    Theme.Fill(g, br, 10 * S, Kit.Accent("trade")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(bt, Draw.fBtn, wb, br.X + 12 * S, br.Y + (32 * S - bs.Height) / 2);
-                    Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); });
-                }
-                return cr.Bottom + 22 * S;
-            }
-            Trading.LoadFx(); if (Trading.FxStale() || Trading.IdxStale()) Trading.FetchFx(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (tradeCanvas != null) tradeCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
-            List<Trading.Rate> rates; string note; lock (Trading.k) { rates = Trading.Rates.ToList(); note = Trading.FxNote; }
-            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
-            {
-                g.DrawString(L.T("CURRENCIES · END OF DAY · 1 UNIT IN CANADIAN DOLLARS"), Draw.fTiny, muted, x, y); y += 20 * S;
-                int cols = w > 900 * S ? 5 : 3; float cw = (w - (cols - 1) * 10 * S) / cols, chh = 74 * S;
-                if (rates.Count == 0) { var e = new RectangleF(x, y, w, 50 * S); Kit.Box(g, e); g.DrawString(note != "" ? note : Policy.NoOnline ? L.T("Online lookups are turned off by your IT team.") : L.T("Getting today's rates from the Bank of Canada..."), Draw.fBody, sub, x + 18 * S, y + 15 * S); return e.Bottom + 22 * S; }
-                for (int i = 0; i < rates.Count; i++)
-                {
-                    var r = rates[i]; var rr = new RectangleF(x + (i % cols) * (cw + 10 * S), y + (i / cols) * (chh + 10 * S), cw, chh); Kit.Box(g, rr, 14 * S);
-                    string nm; Trading.FxNames.TryGetValue(r.Code, out nm);
-                    g.DrawString(r.Code + " · " + L.T(nm ?? ""), Draw.fSmall, sub, rr.X + 14 * S, rr.Y + 10 * S);
-                    g.DrawString(r.Cad.ToString(r.Cad < 0.1 ? "0.00000" : "0.0000", CultureInfo.CurrentCulture), Draw.fName, ink, rr.X + 14 * S, rr.Y + 30 * S);
-                    if (!double.IsNaN(r.Prev) && r.Prev > 0)
-                    {
-                        double ch = (r.Cad - r.Prev) / r.Prev * 100; int lv = Math.Abs(ch) < 0.005 ? 3 : ch > 0 ? 0 : 2;
-                        string t = (ch > 0 ? "▲ " : ch < 0 ? "▼ " : "") + Math.Abs(ch).ToString("0.00", CultureInfo.CurrentCulture) + "%"; var ts = g.MeasureString(t, Draw.fSmall);
-                        using (var cb = new SolidBrush(Theme.LvText(lv))) g.DrawString(t, Draw.fSmall, cb, rr.Right - ts.Width - 12 * S, rr.Y + 36 * S);
-                    }
-                }
-                y += ((rates.Count + cols - 1) / cols) * (chh + 10 * S);
-                var day = rates.Max(z => z.Day); var oldOnes = rates.Where(z => z.Day < day).ToList();
-                // AM-CG-111: any currency from an older day is named with its own date - one fresh series can't hide a stale one
-                if (oldOnes.Count > 0) note = (note != "" ? note + " " : "") + L.T("Older:") + " " + string.Join(", ", oldOnes.Select(z => z.Code + " " + z.Day.ToString("d MMM", CultureInfo.CurrentCulture)).ToArray()) + ".";
-                g.DrawString(L.T("Source: Bank of Canada daily exchange rates, ") + day.ToString("ddd d MMM", CultureInfo.CurrentCulture) + L.T(" - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.") + (note != "" ? " " + note : ""), Draw.fSmall, muted, new RectangleF(x, y, w, 40 * S));
-                y += 44 * S;
-                // opt-in: the corner widget shows the close for a while each weekday evening, then goes back by itself
-                string et = L.T("Evening summary in the widget, 17:30-19:00: ") + (Cfg.TradeEvening ? L.T("on") : L.T("off")); var es = g.MeasureString(et, Draw.fSmall);
-                var er = new RectangleF(x, y - 6 * S, es.Width + 22 * S, 28 * S); Theme.Fill(g, er, 14 * S, Cfg.TradeEvening ? Kit.Accent("trade") : Theme.Soft);
-                using (var eb = new SolidBrush(Cfg.TradeEvening ? Theme.OnBlue : Theme.Ink)) g.DrawString(et, Draw.fSmall, eb, er.X + 11 * S, er.Y + (28 * S - es.Height) / 2);
-                Act(tradeCanvas, er, delegate { Cfg.TradeEvening = !Cfg.TradeEvening; Cfg.Save(); tradeCanvas.Invalidate(); });
-                g.DrawString(L.T("Shows the US dollar and energy's week instead of \"All quiet\". A problem always takes the spot back."), Draw.fSmall, muted, er.Right + 10 * S, er.Y + 6 * S);
-                return y + 36 * S;
-            }
-        }
     }
 }

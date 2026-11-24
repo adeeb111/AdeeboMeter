@@ -59,7 +59,7 @@ namespace AdeeboMeter
         {
             var f = JFlowFromStory();
             y += 10 * S; float top = y;
-            y = Head(g, AdeeboMeter.L.T("PACKET JOURNEY") + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")) + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
             if (f == null) return Lead(g, AdeeboMeter.L.T("Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything)."), x, y, w, true);
             if (jHeld != null) using (var hb = new SolidBrush(Theme.LvText(1))) { string ht = L.T("Still recording the conversation above. You picked") + " " + jHeld + " - " + L.T("stop the recording to follow it."); float hh = Draw.Measure(ht, Draw.fSmall, (int)w).Height; g.DrawString(ht, Draw.fSmall, hb, new RectangleF(x, y, w, hh + 2)); y += hh + 8 * S; }
             if (jScrollTo) { jScrollTo = false; int want = (int)top - Sc(20); BeginInvoke((Action)delegate { travelCanvas.AutoScrollPosition = new Point(0, Math.Max(0, want)); }); }
@@ -134,7 +134,7 @@ namespace AdeeboMeter
         // ---------- 2. where the time goes: latency split by leg, and what jitter is
         float PaintJTime(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, AdeeboMeter.L.T("WHERE THE TIME GOES"), x, y, w, "travel.JTIME");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("WHERE THE TIME GOES")), x, y, w, "travel.JTIME");
             double gwMin = MinOf(M.GwPing), netMin = MinOf(M.NetPing); string kind; lock (M.L) kind = M.AdapterKind;
             if (jPing == null)
             {
@@ -199,7 +199,7 @@ namespace AdeeboMeter
         // ---------- 3. the real packets: capture, play along the path, translate, explain
         float PaintJCapture(Graphics g, float x, float y, float w, Journey.Flow f)
         {
-            y = Head(g, AdeeboMeter.L.T("THE REAL PACKETS"), x, y, w, "travel.JREAL");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("THE REAL PACKETS")), x, y, w, "travel.JREAL");
             bool rec = jSess != null && !jSess.Done, can = LiveCapture.Available && !Policy.NoCapture;
             if (jNoIface && !rec) { y = Lead(g, AdeeboMeter.L.T("No network adapter is up right now - connect, then capture again."), x, y, w, true); }
             if (!can && (jSess == null || jSess.Snapshot().Count == 0)) return Lead(g, Policy.NoCapture ? "Capturing packets is turned off by your IT team (AdeeboMeter.policy). The stack and the timing above still work." : "Recording the real packets needs Wireshark (with Npcap). The stack and the timing above work without it.", x, y, w, true);
@@ -281,8 +281,8 @@ namespace AdeeboMeter
             // long silences (an idle connection) are skipped, not watched in slow motion: jump to just before the next packet
             if (!recs.Any(r => r.T <= jPlay && jPlay - r.T <= JTrip())) { var nx = recs.FirstOrDefault(r => r.T > jPlay); if (nx != null && nx.T - jPlay > JTrip()) jPlay = nx.T - JTrip() * 0.1; }
             if (jPlay > end + JTrip()) { jPlay = end; jPlaying = false; JTimer(false); travelCanvas.Invalidate(); return; }
-            // the lane every frame; the whole page (the timeline's play head, "In plain words") four times a second
-            if ((now - jFullAt).TotalMilliseconds >= 250) { jFullAt = now; travelCanvas.Invalidate(); }
+            // the lane every frame; the whole page (the timeline's play head, "In plain words") once a second
+            if ((now - jFullAt).TotalMilliseconds >= 1000) { jFullAt = now; travelCanvas.Invalidate(); }   // 23 Nov: the whole page once a second, not four times
             else if (jLane.Width > 0) { var r = jLane; r.Offset(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y); travelCanvas.Invalidate(Rectangle.Ceiling(r)); }
         }
         DateTime jFullAt;
@@ -351,7 +351,7 @@ namespace AdeeboMeter
         // the running translation: one plain line per packet, newest last
         float PaintJTranslate(Graphics g, float x, float y, float w, List<Journey.Rec> recs, bool rec)
         {
-            y = Head(g, AdeeboMeter.L.T("IN PLAIN WORDS") + (rec ? "  ·  LIVE" : ""), x, y, w, "travel.JSAY");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("IN PLAIN WORDS")) + (rec ? "  ·  LIVE" : ""), x, y, w, "travel.JSAY");
             int upto = recs.FindLastIndex(r => r.T <= jPlay + 1e-6); if (upto < 0) upto = rec ? recs.Count - 1 : Math.Min(recs.Count - 1, 9);
             var shown = recs.Skip(Math.Max(0, upto - 9)).Take(Math.Min(10, upto + 1)).ToList();
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -377,7 +377,7 @@ namespace AdeeboMeter
                 y += 42 * S;
                 return Lead(g, AdeeboMeter.L.T("Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show."), x, y, w, true);
             }
-            y = Head(g, AdeeboMeter.L.T("WHAT THESE PACKETS SHOW"), x, y, w, "travel.JEXPLAIN");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("WHAT THESE PACKETS SHOW")), x, y, w, "travel.JEXPLAIN");
             foreach (var n in jNotes)
             {
                 float th = Draw.Measure(n.Text, Draw.fBody, (int)(w - 40 * S)).Height; var card = new RectangleF(x, y, w, th + 40 * S);

@@ -5090,3 +5090,25 @@ Abandoned	أُوقفت
 of them inside SNMP	منها داخل SNMP
 Not fetched yet	لم يُجلب بعد
 Toronto keeps the same hours	تورونتو بالمواعيد نفسها
+Check now	افحص الآن
+Comes back if it gets worse or something new breaks	يعود إذا ساء الوضع أو تعطل شيء جديد
+Comes back tomorrow, or sooner if it gets worse	يعود غدًا، أو قبل ذلك إذا ساء الوضع
+Corner widget	أداة الزاوية
+Hide	إخفاء
+Hide for today	إخفاء لليوم
+Hide while it stays like this	إخفاء ما دام الوضع هكذا
+Never show	عدم الإظهار أبدًا
+Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.	فقط بعد تذكّر هاتف: غرفة انتظار على مُرحِّل AdeeboMeter ليجد الهاتف هذا الحاسوب (مختومة - لا يستطيع المُرحِّل قراءتها)، ومرة كل ساعة طلب واحد للوقت من المُرحِّل، ليختار الطرفان الغرفة نفسها.
+See what's running	عرض ما يعمل الآن
+Send to my ISP	أرسل إلى مزوّد الإنترنت
+Step {0} of 4	الخطوة {0} من 4
+Still in the status strip and the corner widget	يبقى في شريط الحالة وأداة الزاوية
+The network is fine.	الشبكة بخير.
+a waiting room for your phone, and a clock check once an hour	غرفة انتظار لهاتفك، وفحص للوقت مرة كل ساعة
+disk	القرص
+here	هنا
+hidden while it stays like this	مخفي ما دام الوضع هكذا
+memory	الذاكرة
+memory warnings	تحذيرات الذاكرة
+processor warnings	تحذيرات المعالج
+this kind of warning	هذا النوع من التحذيرات

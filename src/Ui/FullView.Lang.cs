@@ -203,7 +203,7 @@ namespace AdeeboMeter
                 string pv = hov ?? L.Code; var look = LookOfLang(pv);
                 using (var lg = new LinearGradientBrush(pr, Hex(look[2], Theme.Dark ? 40 : 22), Hex(look[3], Theme.Dark ? 40 : 22), 0f)) using (var path = Theme.Round(pr, 14 * S)) g.FillPath(lg, path);
                 float cx = pr.X + 18 * S;
-                string k = hov != null && hov != L.Code ? L.T("PREVIEW OF") + " " + NativeName(pv) : L.T("POINT AT A LANGUAGE TO PREVIEW IT");
+                string k = hov != null && hov != L.Code ? Kit.Sent(L.T("PREVIEW OF")) + " " + NativeName(pv) : Kit.Sent(L.T("POINT AT A LANGUAGE TO PREVIEW IT"));
                 var kf = LangFont(L.Code == "bn" || pv == "bn" ? "bn" : L.Code == "ar" || pv == "ar" ? "ar" : "en", 10.5f * S, true);
                 using (var kb = new SolidBrush(Kit.Mix(Hex(look[2], 255), Theme.Ink, Theme.Dark ? 0.35f : 0.1f))) { var ks = g.MeasureString(k, kf); g.DrawString(k, kf, kb, cx, pr.Y + (pr.Height - ks.Height) / 2); cx += ks.Width + 14 * S; }
                 if (hov != null && hov != L.Code)

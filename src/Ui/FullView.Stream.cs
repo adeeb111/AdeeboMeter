@@ -100,7 +100,7 @@ namespace AdeeboMeter
                 // the records
                 if (all.Count > 0)
                 {
-                    g.DrawString(L.T("WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent(L.T("WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS")), Draw.fTiny, muted, x, y); y += 20 * S;
                     var rows = all.Take(12).ToList(); float rh = 38 * S;
                     var card = new RectangleF(x, y, w, rows.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))
@@ -146,7 +146,7 @@ namespace AdeeboMeter
                 int lv = s.Dips.Count == 0 ? 0 : 1; float h = 236 * S;
                 var c2 = new RectangleF(x, y, w, h); Kit.Box(g, c2); Theme.Stroke(g, c2, 16 * S, Theme.Lv(lv), 2);
                 float cx = x + 22 * S, cy = y + 16 * S;
-                g.DrawString(L.T("NOW STREAMING") + (s.Via != "" ? " · " + L.T("in") + " " + s.Via : "") + (s.Via != "you said so" ? " · " + L.T("recognised by its servers, not by reading your tabs") : ""), Draw.fTiny, muted, cx, cy); cy += 20 * S;
+                g.DrawString(Kit.Sent(L.T("NOW STREAMING")) + (s.Via != "" ? " · " + L.T("in") + " " + s.Via : "") + (s.Via != "you said so" ? " · " + L.T("recognised by its servers, not by reading your tabs") : ""), Draw.fTiny, muted, cx, cy); cy += 20 * S;
                 g.DrawString(s.What + " · " + Dur(DateTime.Now - s.Start) + " · " + (s.Dips.Count == 0 ? L.T("smooth so far") : s.Dips.Count + (s.Dips.Count == 1 ? L.T(" dip so far") : L.T(" dips so far"))), Draw.fTitle, ink, cx, cy); cy += 34 * S;
                 if (s.Dips.Count > 0) { var ld = s.Dips.Last(); using (var ab = new SolidBrush(Theme.LvText(1))) g.DrawString(ld.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + WatchKit.BlameName(ld.Blame, Streams.FarName) + ": " + ld.Evidence, Draw.fBody, ab, new RectangleF(cx, cy, w - 44 * S, 22 * S)); }
                 cy += 28 * S;
@@ -200,7 +200,7 @@ namespace AdeeboMeter
                 double gw; int sig; bool wifi; lock (M.L) { gw = M.GwPing.Avg(5); sig = M.WifiSignal; wifi = M.AdapterKind == "Wi-Fi"; }
                 float h = busy || res == null ? 70 * S : 200 * S; var card = new RectangleF(x, y, w, h); Kit.Box(g, card);
                 float cx = x + 22 * S, cy = y + 16 * S;
-                g.DrawString(L.T("CAN I STREAM 4K RIGHT NOW?"), Draw.fTiny, muted, cx, cy); cy += 20 * S;
+                g.DrawString(Kit.Sent(L.T("CAN I STREAM 4K RIGHT NOW?")), Draw.fTiny, muted, cx, cy); cy += 20 * S;
                 if (busy || res == null) { g.DrawString(busy ? speedRun.Status : L.T("Starting the speed test..."), Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
                 if (res.Error != "") { g.DrawString(L.T("The speed test didn't finish: ") + res.Error, Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
                 double age = (DateTime.Now - res.T).TotalMinutes;   // AM-CG-149: a test from earlier (or another network) isn't "right now"
@@ -230,7 +230,7 @@ namespace AdeeboMeter
                 // when do your streams dip
                 var a = new RectangleF(x, y, half, h); Kit.Box(g, a);
                 float ax = a.X + 20 * S, ay = a.Y + 16 * S;
-                g.DrawString(L.T("WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS"), Draw.fTiny, muted, ax, ay); ay += 24 * S;
+                g.DrawString(Kit.Sent(L.T("WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS")), Draw.fTiny, muted, ax, ay); ay += 24 * S;
                 int h0 = 16, h1 = 24; float cw = (half - 40 * S - 40 * S) / (h1 - h0), ch = 20 * S; int max = 1; for (int d = 0; d < 7; d++) for (int hh = h0; hh < h1; hh++) max = Math.Max(max, grid[d, hh]);
                 string[] days = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
                 for (int hh = h0; hh < h1; hh++) g.DrawString(hh.ToString(CultureInfo.InvariantCulture), Draw.fTiny, muted, ax + 40 * S + (hh - h0) * cw, ay);
@@ -251,7 +251,7 @@ namespace AdeeboMeter
                 var b = new RectangleF(x + half + 16 * S, y, half, h); Kit.Box(g, b);
                 float bx = b.X + 20 * S, by = b.Y + 16 * S; var month = DateTime.Now.Day <= 3 ? DateTime.Now.AddMonths(-1) : DateTime.Now;
                 var ms = all.Where(s => s.Start.Year == month.Year && s.Start.Month == month.Month).ToList(); var dips = ms.SelectMany(s => s.Dips).ToList();
-                g.DrawString(L.T("FOR YOUR PROVIDER · ") + month.ToString("MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, bx, by); by += 26 * S;
+                g.DrawString(Kit.Sent(L.T("FOR YOUR PROVIDER · ")) + month.ToString("MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, bx, by); by += 26 * S;
                 string[][] nums = { new[] { "HOURS WATCHED", ms.Sum(s => s.Length.TotalHours).ToString("0.#", CultureInfo.CurrentCulture) }, new[] { "DIPS", dips.Count.ToString(CultureInfo.CurrentCulture) }, new[] { "PAST YOUR ROUTER", dips.Count(d => d.Blame == "provider").ToString(CultureInfo.CurrentCulture) } };
                 float nw = (half - 40 * S - 20 * S) / 3;
                 for (int i = 0; i < 3; i++)
@@ -315,7 +315,7 @@ namespace AdeeboMeter
                 // each dip and the evidence
                 if (s.Dips.Count > 0)
                 {
-                    g.DrawString(L.T("EACH DIP AND THE EVIDENCE"), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent(L.T("EACH DIP AND THE EVIDENCE")), Draw.fTiny, muted, x, y); y += 20 * S;
                     float rows = 0; foreach (var d in s.Dips) rows += Math.Max(36 * S, Draw.Measure(d.Evidence, Draw.fBody, (int)(w - 420 * S)).Height + 16 * S);
                     var dc = new RectangleF(x, y, w, rows + 12 * S); Kit.Box(g, dc); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))

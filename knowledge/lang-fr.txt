@@ -3807,3 +3807,26 @@ Abandoned	Abandonné
 of them inside SNMP	dans SNMP
 Not fetched yet	Pas encore récupéré
 Toronto keeps the same hours	Toronto a les mêmes heures
+Check now	Vérifier maintenant
+Comes back if it gets worse or something new breaks	Revient si ça empire ou si autre chose casse
+Comes back tomorrow, or sooner if it gets worse	Revient demain, ou plus tôt si ça empire
+Corner widget	Widget d'angle
+Hide	Masquer
+Hide for today	Masquer pour aujourd'hui
+Hide while it stays like this	Masquer tant que ça ne change pas
+Never show	Ne plus jamais afficher
+Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.	Seulement une fois un téléphone mémorisé : une salle d'attente sur le relais d'AdeeboMeter pour que le téléphone trouve ce PC (scellée - le relais ne peut pas la lire), et une fois par heure une demande de l'heure au relais, pour que les deux côtés choisissent la même salle.
+Open AdeeboMeter	Ouvrir AdeeboMeter
+See what's running	Voir ce qui tourne
+Send to my ISP	Envoyer à mon FAI
+Step {0} of 4	Étape {0} sur 4
+Still in the status strip and the corner widget	Toujours dans la barre d'état et le widget d'angle
+The network is fine.	Le réseau va bien.
+a waiting room for your phone, and a clock check once an hour	une salle d'attente pour votre téléphone, et une vérification de l'heure une fois par heure
+disk	disque
+here	ici
+hidden while it stays like this	masqué tant que ça ne change pas
+memory	mémoire
+memory warnings	alertes mémoire
+processor warnings	alertes processeur
+this kind of warning	ce type d'alerte

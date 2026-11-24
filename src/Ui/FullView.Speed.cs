@@ -33,11 +33,11 @@ namespace AdeeboMeter
             var now = SpeedTest.Now; int st = SpeedTest.Stage;
             if (SpeedTest.Busy)
             {
-                if (st == 3) { label = L.T("UPLOAD"); return SpeedTest.LiveMbps; }
-                if (st == 2) { label = L.T("DOWNLOAD"); return SpeedTest.LiveMbps; }
-                label = L.T("PING"); return double.NaN;
+                if (st == 3) { label = Kit.Sent(L.T("UPLOAD")); return SpeedTest.LiveMbps; }
+                if (st == 2) { label = Kit.Sent(L.T("DOWNLOAD")); return SpeedTest.LiveMbps; }
+                label = Kit.Sent(L.T("PING")); return double.NaN;
             }
-            var last = SpeedTest.Last; label = last != null ? L.T("DOWNLOAD") : L.T("NOT TESTED YET");
+            var last = SpeedTest.Last; label = last != null ? Kit.Sent(L.T("DOWNLOAD")) : Kit.Sent(L.T("NOT TESTED YET"));
             return last != null ? last.Down : double.NaN;
         }
 
@@ -82,7 +82,7 @@ namespace AdeeboMeter
                     bool live = stats[i][3] == "1";
                     Theme.Fill(g, sr, 12 * S, live ? Theme.BlueSoft : Theme.Soft);
                     if (live) Theme.Stroke(g, Kit.Edge(sr), 12 * S, Theme.Blue, 1);
-                    g.DrawString(L.T(stats[i][0]).ToUpper(CultureInfo.CurrentCulture), Draw.fTiny, mut, new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, sr.Width - 16 * S, 16 * S), nf);
+                    g.DrawString(L.T(stats[i][0]), Draw.fTiny, mut, new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, sr.Width - 16 * S, 16 * S), nf);
                     var vs = g.MeasureString(stats[i][1], Draw.fName);
                     g.DrawString(stats[i][1], Draw.fName, ink, sr.X + 12 * S, sr.Y + 25 * S);
                     g.DrawString(L.T(stats[i][2]), Draw.fSmall, mut, new RectangleF(sr.X + 12 * S + (stats[i][2].Length <= 4 ? vs.Width : 0), stats[i][2].Length <= 4 ? sr.Y + 25 * S + (vs.Height - Draw.fSmall.GetHeight(g)) - 2 * S : sr.Y + 46 * S, sr.Width - 16 * S - (stats[i][2].Length <= 4 ? vs.Width : 0), 18 * S), nf);
@@ -254,7 +254,7 @@ namespace AdeeboMeter
             Color acc = Kit.Accent("home");
             using (var ink = new SolidBrush(Theme.Ink)) using (var mut = new SolidBrush(Theme.Muted)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
-                if (draw) g.DrawString(L.T("TEST TO"), Draw.fTiny, mut, x, y); y += 22 * S;
+                if (draw) g.DrawString(Kit.Sent(L.T("TEST TO")), Draw.fTiny, mut, x, y); y += 22 * S;
 
                 // Automatic
                 var ar = new RectangleF(x, y, w, 58 * S); bool asel = cur == "cloudflare";
@@ -286,7 +286,7 @@ namespace AdeeboMeter
                 foreach (var grp in SpeedTest.All().Where(s => s.Id != "cloudflare").GroupBy(s => s.Provider))
                 {
                     bool downOnly = grp.All(s => s.Up == "");
-                    if (draw) g.DrawString(grp.Key.ToUpper(CultureInfo.CurrentCulture) + (downOnly ? "  ·  " + L.T("DOWNLOAD ONLY") : ""), Draw.fTiny, mut, x, y);
+                    if (draw) g.DrawString(grp.Key.ToUpper(CultureInfo.CurrentCulture) + (downOnly ? "  ·  " + Kit.Sent(L.T("DOWNLOAD ONLY")) : ""), Draw.fTiny, mut, x, y);
                     y += 22 * S;
                     float cx = x, ch = 30 * S;
                     foreach (var sv in grp)

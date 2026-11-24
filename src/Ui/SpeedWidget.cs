@@ -67,7 +67,6 @@ namespace AdeeboMeter
             if (h == null || h.Length == 0) return ""; var v = h.Skip(Math.Max(0, h.Length - 30)).ToArray(); double cap = 1; foreach (var q in v) if (!double.IsNaN(q) && q > cap) cap = q;
             return Math.Round(cap, 1).ToString(CultureInfo.InvariantCulture) + ":" + string.Join(",", v.Select(q => double.IsNaN(q) ? "-" : ((int)(q / (cap * 1.1) * 16)).ToString(CultureInfo.InvariantCulture)));
         }
-        static string Spark5(double[] h) { if (h == null || h.Length == 0) return ""; return string.Join(",", h.Skip(Math.Max(0, h.Length - 12)).Select(v => double.IsNaN(v) ? "-" : ((int)(v * 2)).ToString(CultureInfo.InvariantCulture))); }
 
         static Bitmap SpeedChip(Snap s) { return SpeedChip(s, 0); }
         static Bitmap SpeedChip(Snap s, double dwell)
@@ -126,7 +125,7 @@ namespace AdeeboMeter
                 float y = pad;
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
-                string tag = L.T("SPEED"); float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width; var tr = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tag, fTiny, 0).Width + 10 * S, 15 * S);
+                string tag = Kit.Sent(L.T("SPEED")); float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width; var tr = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tag, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tr, tr.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tag, fTiny, tb, tr.X + 5 * S, tr.Y + 1 * S);
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 22 * S, y - 2 * S, 22 * S, 22 * S), s, false);
                 y += 24 * S;
@@ -159,7 +158,7 @@ namespace AdeeboMeter
                 if (wtx != null) { WeatherCardDraw(g, pad, y, inner, wtx); y += 22 * S; }
                 if (apps)
                 {
-                    using (var hb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("BUSIEST APPS (CPU)"), fTiny, hb, pad, y + 4 * S); y += 22 * S;
+                    using (var hb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("BUSIEST APPS (CPU)")), fTiny, hb, pad, y + 4 * S); y += 22 * S;
                     if (top.Count == 0) { g.DrawString(L.T("Nothing busy."), fSmall, muted, pad, y); y += 19 * S; }
                     foreach (var a in top)
                     {

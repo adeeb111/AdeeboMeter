@@ -503,7 +503,7 @@ namespace AdeeboMeter
             using (var line = new Pen(Theme.Line2))
             using (var center = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             {
-                string[] heads = { "", "APP", "PROTO", "REMOTE", "STATE", "SEEN", "" };
+                string[] heads = { "", "App", "Proto", "Remote", "State", "Seen", "" };
                 float x = x0; for (int i = 0; i < heads.Length; i++) { g.DrawString(heads[i], Draw.fTiny, muted, x, 8 * S); x += cols[i] + 8 * S; }
                 g.DrawLine(line, 0, HeadH - 1, w, HeadH - 1);
                 g.SetClip(new Rectangle(0, HeadH, w, Height - HeadH));
@@ -539,6 +539,7 @@ namespace AdeeboMeter
                     x += cols[4] + 8 * S;
                     g.DrawString(Age(r, now), Draw.fMonoS, sub, x, cy - 7 * S);
                     x += cols[5] + 8 * S;
+                    if (i != hover && c.Key != selKey) continue;   // row actions only on the hovered or selected row
                     bool can = CanSniff && c.State != "BOUND";
                     bool jn = Journeyable(c); var jr = new RectangleF(x, cy - 13 * S, 66 * S, 26 * S);
                     Theme.Fill(g, jr, 13 * S, jn ? Theme.BlueSoft : Theme.Line2);

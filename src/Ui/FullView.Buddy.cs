@@ -109,11 +109,11 @@ namespace AdeeboMeter
             Kit.Icon(g, "mood", new RectangleF(pr.X + 14 * S, pr.Y + 17 * S, 20 * S, 20 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var m = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("PREVIEW") + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)).ToUpperInvariant(), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
+                g.DrawString(Kit.Sent(L.T("PREVIEW")) + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
                 g.DrawString(Voice.Serious ? L.T("Fun lines are off - plain words everywhere.") : sample, Draw.fBody, b, new RectangleF(pr.X + 46 * S, pr.Y + 26 * S, pr.Width - 56 * S, 22 * S));
             }
             y = pr.Bottom + 18 * S;
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("TALK LIKE..."), Draw.fTiny, m, x, y); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("TALK LIKE...")), Draw.fTiny, m, x, y); y += 22 * S;
             var ids = new List<string> { "surprise" }; ids.AddRange(Lines.Personas.Select(p => p[0])); ids.Add("none");
             int cols = w > 820 * S ? 4 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 10 * S) / cols, ch = 50 * S; int k = 0;
             foreach (var id0 in ids)
@@ -142,7 +142,7 @@ namespace AdeeboMeter
             y += 44 * S;
             // your own lines: import (checked and fixed, never silent), export to share, clear
             int own = Lines.MineCount; float bx = x;
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR OWN LINES") + "  ·  " + own, Draw.fTiny, m, x, y); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("YOUR OWN LINES")) + "  ·  " + own, Draw.fTiny, m, x, y); y += 22 * S;
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 foreach (var a in new[] { "Import...", "Export...", "Clear" })
                 {

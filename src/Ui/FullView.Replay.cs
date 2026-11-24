@@ -282,7 +282,7 @@ namespace AdeeboMeter
                 if (replayIdx >= 0 && replayIdx < data.M.Count) y = PaintTmPins(g, x, y, w, at, data.M[replayIdx], netName);   // pin this minute, compare a pin with now (FullView.TimePins.cs)
 
                 // the numbers, each with where it came from; compared with the rest of that day
-                g.DrawString(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 var rows = new List<object[]> {
                     new object[] { "Router answered in", ms(gw) + (Cfg.Details && !double.IsNaN(gwMax) ? " (worst " + ms(gwMax) + ")" : ""), "m", replayMed[5], gw, " ms" },
                     new object[] { "Internet answered in", ms(net) + (Cfg.Details && !double.IsNaN(netMax) ? " (worst " + ms(netMax) + ")" : ""), "m", replayMed[6], net, " ms" },
@@ -316,7 +316,7 @@ namespace AdeeboMeter
 
                 // what changed around then
                 var near = data.E.Where(e => Math.Abs((e.T - at).TotalMinutes) <= 15).OrderBy(e => e.T).ToList();
-                g.DrawString(L.T("WHAT CHANGED 15 MINUTES EITHER SIDE"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("WHAT CHANGED 15 MINUTES EITHER SIDE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (near.Count == 0) { g.DrawString(Voice.P("Nothing changed around then. Quiet minute.", "No changes within 15 minutes."), Draw.fBody, muted, x, y); y += 26 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in near)

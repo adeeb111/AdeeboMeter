@@ -287,7 +287,7 @@ namespace AdeeboMeter
         static bool AnimHolding { get { return Math.Max(0, AnimSince) % (AnimPlay + AnimHold) > AnimPlay + 0.3; } }   // the last frame drawn, then still
         static void AnimRestart() { animStart = Environment.TickCount; }
         static readonly HashSet<string> Animated = new HashSet<string> { "cellular", "wifirate", "tdm", "plan", "bandwidth", "backup", "bdp", "jitterbuf", "ups", "tradelat", "tickrate" };
-        static bool WindowsAnimates() { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }
+        static bool WindowsAnimates() { try { return Motion.On; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }
         void AnimTick()
         {
             bool on = tab == "toolbox" && Visible && WindowState != FormWindowState.Minimized && Form.ActiveForm == this && (Animated.Contains(tbSel) || Animates3(tbSel)) && !tbHome && !tbBusy && visRect.Height > 0 && WindowsAnimates();

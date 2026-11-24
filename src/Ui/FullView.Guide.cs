@@ -170,14 +170,14 @@ namespace AdeeboMeter
                     float fh = Draw.Measure(fin, Draw.fName, (int)(w - 40 * S)).Height;
                     var frc = new RectangleF(x, y, w, fh + 44 * S);
                     Theme.Fill(g, frc, 12 * S, Theme.LvSoft(r.Done ? r.Lv : 3));
-                    using (var tb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("FINDING"), Draw.fTiny, tb, x + 18 * S, y + 10 * S);
+                    using (var tb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("FINDING")), Draw.fTiny, tb, x + 18 * S, y + 10 * S);
                     using (var fb = new SolidBrush(r.Done ? (r.Lv == 0 ? Theme.Ink : Theme.LvText(r.Lv)) : Theme.Muted)) g.DrawString(fin, Draw.fName, fb, new RectangleF(x + 18 * S, y + 28 * S, w - 36 * S, fh + 6));
                     y += frc.Height + 18 * S;
                     // observed
                     var obs = r.ObservedCopy();
                     if (obs.Count > 0)
                     {
-                        g.DrawString(L.T("WHAT I OBSERVED"), Draw.fTiny, muted, x, y); y += 22 * S;
+                        g.DrawString(Kit.Sent(L.T("WHAT I OBSERVED")), Draw.fTiny, muted, x, y); y += 22 * S;
                         float nameW = Math.Min(280 * S, w * 0.34f), pillW = Cfg.Details ? 170 * S : 120 * S;
                         float ox = x, ow = w; x += 16 * S; w -= 32 * S;   // rows sit inside a raised card
                         float oh = 12 * S;

@@ -65,7 +65,7 @@ namespace AdeeboMeter
             int moreApps = storyAllApps ? 0 : Math.Max(0, apps.Count - 7); if (!storyAllApps) apps = apps.Take(7).ToList();
             if (storyApp != null && !apps.Contains(storyApp) && connSnap.Any(c => c.Proc == storyApp)) apps.Add(storyApp);   // the one you picked stays visible
             if (storyApp == null && storyTarget == "" && apps.Count > 0) StoryPick(apps[0]);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("FOLLOW"), Draw.fTiny, mb, x, y + 8 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("FOLLOW")), Draw.fTiny, mb, x, y + 8 * S);
             float cx = x + 60 * S;
             foreach (var a in apps)
             {
@@ -98,7 +98,7 @@ namespace AdeeboMeter
                     .Select(gr => gr.First()).OrderByDescending(c => c.State == "ESTABLISHED").ThenBy(c => c.Host == "" ? c.RemoteIp : c.Host).ToList();
                 if (its.Count > 1)
                 {
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("ITS CONNECTIONS") + " (" + its.Count + ")", Draw.fTiny, mb, x, y + 8 * S);
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("ITS CONNECTIONS")) + " (" + its.Count + ")", Draw.fTiny, mb, x, y + 8 * S);
                     float kx = x + 150 * S; int shown = 0;
                     foreach (var c in its)
                     {
@@ -213,7 +213,7 @@ namespace AdeeboMeter
             }
 
             // the timed handshake
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOW LONG EACH STEP TAKES"), Draw.fTiny, mb, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "travel.LADDER");
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("HOW LONG EACH STEP TAKES")), Draw.fTiny, mb, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "travel.LADDER");
             y += 22 * S;
             if (r == null || (!r.Done && !travelBusy))
             {

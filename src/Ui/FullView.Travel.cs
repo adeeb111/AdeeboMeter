@@ -93,7 +93,7 @@ namespace AdeeboMeter
         static readonly Color[] LayerCol = { Theme.C("#8250DF"), Theme.C("#1F6FEB"), Theme.C("#0E8A9E"), Theme.C("#2DA44E"), Theme.C("#BF8700"), Theme.C("#CF222E"), Theme.C("#57606A") };
         float PaintAnatomy(Graphics g, float x, float y, float w, int mtu, bool vpn, int vpnMtu)
         {
-            y = Head(g, AdeeboMeter.L.T("PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK"), x, y, w, "travel.ANATOMY");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK")), x, y, w, "travel.ANATOMY");
             int payload = Math.Max(0, mtu - 20 - 20 - 5);
             var parts = new List<Tuple<string, int, Color>> { Tuple.Create("Ethernet 14", 14, LayerCol[4]), Tuple.Create("IP 20", 20, LayerCol[3]), Tuple.Create("TCP 20", 20, LayerCol[2]), Tuple.Create("TLS 5", 5, LayerCol[1]), Tuple.Create("your data " + payload, payload, LayerCol[0]) };
             float total = parts.Sum(p => p.Item2), bx = x, bh = 30 * S, min = 54 * S;
@@ -215,10 +215,10 @@ namespace AdeeboMeter
             y = InfoCardOn(travelCanvas, g, "WHAT THEY'RE TALKING TO  ·  BY ROLE", roles, "travel.ROLES", x, y, w);
             y = InfoCardOn(travelCanvas, g, "TEAMS CALLS: UDP OR TCP?", new List<string[]> { new[] { "Right now", m365Fallback, m365Fallback.StartsWith("Teams seems", StringComparison.Ordinal) ? "1" : "3" } }, "travel.FALLBACK", x, y, w);
             var call = Knowledge.Topic("teams-call");
-            if (call != null && call["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW A TEAMS CALL CONNECTS"), x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
+            if (call != null && call["ladder"] != "") { y = Head(g, AdeeboMeter.Kit.Sent(L.T("HOW A TEAMS CALL CONNECTS")), x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
             if (outlookRows != null) y = InfoCardOn(travelCanvas, g, "WHY IS OUTLOOK SLOW?  ·  THE USUAL SUSPECTS, CHECKED", outlookRows.Select(r => new[] { r[1], r[2] + (r[3] != "" ? " - " + r[3] : ""), r[0] }).ToList(), "travel.OUTLOOK", x, y, w);
             var o = Knowledge.Topic("outlook-flow");
-            if (o != null && o["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW OUTLOOK GETS YOUR MAIL"), x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
+            if (o != null && o["ladder"] != "") { y = Head(g, AdeeboMeter.Kit.Sent(L.T("HOW OUTLOOK GETS YOUR MAIL")), x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
             var refresh = new RectangleF(x, y, 120 * S, 22 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Refresh  ↻"), Draw.fBodyB, lb, refresh.X, refresh.Y);
             Act(travelCanvas, refresh, delegate { m365Rows = null; travelCanvas.Invalidate(); });
@@ -252,7 +252,7 @@ namespace AdeeboMeter
             if (realErr != "") y = Lead(g, realErr, x, y, w, true);
             if (realPkts == null) return y;
             var shown = realPkts.Take(40).ToList();
-            y = Head(g, AdeeboMeter.L.T("THE REAL PACKETS  ·  ") + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("THE REAL PACKETS  ·  ")) + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
             float colA = x + 90 * S, colB = x + w - 90 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -274,7 +274,7 @@ namespace AdeeboMeter
             }
             if (realDecode != null)
             {
-                y += 14 * S; y = Head(g, AdeeboMeter.L.T("PACKET ") + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
+                y += 14 * S; y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET ")) + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
                 foreach (var layer in realDecode)
                 {
                     string story = Packets.LayerStory(layer.Key);

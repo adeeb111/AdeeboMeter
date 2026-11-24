@@ -767,7 +767,7 @@ namespace AdeeboMeter
             tbViewL = new PillButton("All tools", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewL.Click += delegate { SetTbView("list"); };
             tbViewQ.Margin = new Padding(0, Sc(3), Sc(4), 0); topBar.Controls.Add(tbViewL); topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.SetFlowBreak(tbViewT, true);   // All tools first (22 Nov)
             // one click to the tools people reach for most - from any section
-            var quick = new Label { Text = L.T("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
+            var quick = new Label { Text = Kit.Sent(L.T("QUICK")), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)
             {
                 var qb = new PillButton(q[1], PillButton.K.Chip) { Tag = q[0], Margin = new Padding(0, Sc(6), Sc(8), 0) };
@@ -849,7 +849,7 @@ namespace AdeeboMeter
             if ((t.Id == "rlisten" || t.Id == "discover") && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "60";
             if (IsSnmp(t.Id) && tbBoxes.Count > 1) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = snmpDev != "" ? snmpDev : gw; tbBoxes[1].Box.Text = snmpCred; }
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
-            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
+            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = null;   // Run is always app blue tbEx.Visible = Examples.Get(t.Id) != null;
             tbBar.ResumeLayout();
             AnimRestart(); EnsureAnim();   // the picture timer: plays once from here, then rests (CalcForm.cs AnimT)
             if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)
@@ -1138,10 +1138,10 @@ namespace AdeeboMeter
                         y += 46 * S; g.DrawLine(line, x, y - 6 * S, x + w, y - 6 * S);
                     }
                 }
-                g.DrawString(L.T(tbTitle).ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("EXAMPLE") : "  ·  " + L.T("DONE") + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
+                g.DrawString(L.T(tbTitle) + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + Kit.Sent(L.T("EXAMPLE")) : "  ·  " + Kit.Sent(L.T("DONE")) + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
                 if (tbAward != "" && tbRows != null && !tbBusy)
                 {
-                    float hw = g.MeasureString(L.T(tbTitle).ToUpperInvariant() + "  ·  " + L.T("DONE") + " 00:00", Draw.fTiny).Width;   // the title as drawn (French too)
+                    float hw = g.MeasureString(L.T(tbTitle) + "  ·  " + Kit.Sent(L.T("DONE")) + " 00:00", Draw.fTiny).Width;   // the title as drawn (French too)
                     using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
                 }
                 bool isEx = Examples.IsExample(tbRows);   // an example is never saved, copied or compared
@@ -1261,7 +1261,7 @@ namespace AdeeboMeter
                 cx += br.Width + 8 * S;
             }
             y += 46 * S;
-            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT"), Draw.fTiny, muted, x, y);
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT")), Draw.fTiny, muted, x, y);
             y += 22 * S; int prev = 99999; float barX = x + w * 0.45f, barW = w * 0.25f;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
                 foreach (var h in hops)
@@ -1299,7 +1299,7 @@ namespace AdeeboMeter
             float c0 = x + Math.Max(300 * S, w * 0.38f), cw = (x + w - c0) / head.Length;
             using (var muted = new SolidBrush(Theme.Muted)) using (var right = new StringFormat { Alignment = StringAlignment.Far })
             {
-                g.DrawString(L.T("HOP"), Draw.fTiny, muted, x, y); g.DrawString(L.T("ROUTER"), Draw.fTiny, muted, x + 40 * S, y);
+                g.DrawString(Kit.Sent(L.T("HOP")), Draw.fTiny, muted, x, y); g.DrawString(Kit.Sent(L.T("ROUTER")), Draw.fTiny, muted, x + 40 * S, y);
                 for (int i = 0; i < head.Length; i++) g.DrawString(head[i] + (i >= 2 ? " ms" : ""), Draw.fTiny, muted, new RectangleF(c0 + i * cw, y, cw - 8 * S, 16 * S), right);
                 y += 22 * S;
                 using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))

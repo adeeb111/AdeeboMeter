@@ -337,12 +337,6 @@ namespace AdeeboMeter
         static string bengaliFontFamily;
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
         static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
-        // Barlow has no Arabic or Bengali glyphs. Use Windows' own capable
-        // UI face after loading the saved language, before creating controls.
-        public static void UseArabicFonts()
-        {
-            UseLanguageFonts();
-        }
         // the self-test's language pass switches fonts for bn / ar and back: it keeps the set it started with and puts it back
         public static object SaveFonts() { return new object[] { Grab(), S }; }
         public static void RestoreFonts(object saved) { var o = (object[])saved; Put((Font[])o[0]); S = (float)o[1]; sets.Clear(); }
@@ -723,7 +717,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure("GAME", fTiny, 0).Width + 10 * S, 15 * S);
-                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(L.T("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
+                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent(L.T("GAME")), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
@@ -852,7 +846,7 @@ namespace AdeeboMeter
                 if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
                 y += 10 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);
-                g.DrawString(L.T("IS IT ME OR THE NETWORK?"), fTiny, muted, pad, y);
+                g.DrawString(Kit.Sent(L.T("IS IT ME OR THE NETWORK?")), fTiny, muted, pad, y);
                 y += 15 * S;
                 PathStrip(g, s, new RectangleF(pad, y, inner, 32 * S), false);
                 y += 37 * S;
@@ -863,7 +857,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 7 * S, bad ? Theme.LvSoft(1) : Theme.BlueSoft);
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
-                        g.DrawString(L.T("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
+                        g.DrawString(Kit.Sent(L.T("MEETING MODE · TEAMS CALL")), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
                         g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;
@@ -873,9 +867,9 @@ namespace AdeeboMeter
                 Bar(g, "disk", "Disk", s.Disk, Fmt(s.Disk, "0", "%"), 60, 90, pad, ref y, inner, hits);
                 y += 6 * S;
                 hits["net"] = new RectangleF(pad - 4 * S, y - 3 * S, inner + 8 * S, 56 * S);
-                using (var b = new SolidBrush(Theme.BlueText)) g.DrawString("↓ " + Rate(s.Down, true), fMono, b, pad, y);
-                string up = "↑ " + Rate(s.Up, true); var us = Measure(up, fMono, 0);
-                using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fMono, b, W - pad - us.Width, y);
+                using (var b = new SolidBrush(Theme.BlueText)) g.DrawString("↓ " + Rate(s.Down, true), fBodyB, b, pad, y);
+                string up = "↑ " + Rate(s.Up, true); var us = Measure(up, fBodyB, 0);
+                using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fBodyB, b, W - pad - us.Width, y);
                 y += 17 * S;
                 var gr = new RectangleF(pad, y, inner, 34 * S);
                 Theme.Fill(g, gr, 9 * S, Theme.Soft);
@@ -901,12 +895,12 @@ namespace AdeeboMeter
             if (hits != null) hits[key] = new RectangleF(x - 4 * S, y - 2 * S, inner + 8 * S, 19 * S);
             int lv = double.IsNaN(v) ? 3 : v >= rl ? 2 : v >= yl ? 1 : 0;
             using (var b = new SolidBrush(Theme.Muted)) g.DrawString(label, fBody, b, x, y);
-            var ts = Measure(txt, fMono, 0);
+            var ts = Measure(txt, fBodyB, 0);   // 23 Nov: numbers in Barlow's fixed-width digits, not monospace
             float tw = Math.Max(44 * S, ts.Width + 6 * S);
             var tr = new RectangleF(x + 66 * S, y + 6 * S, Math.Max(10, inner - 66 * S - tw), 7 * S);
             Theme.Fill(g, tr, 3.5f * S, Theme.Track);
             if (!double.IsNaN(v)) Theme.Fill(g, new RectangleF(tr.X, tr.Y, Math.Max(7 * S, tr.Width * (float)Math.Min(100, v) / 100f), tr.Height), 3.5f * S, Theme.Lv(lv));
-            using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.Lv(lv) : Theme.Ink)) g.DrawString(txt, fMono, b, x + inner - ts.Width, y);
+            using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(txt, fBodyB, b, x + inner - ts.Width, y);
             y += 20 * S;
         }
 
@@ -918,9 +912,7 @@ namespace AdeeboMeter
             for (int i = 0; i < n; i++)
             {
                 float cx = r.X + slot * i + slot / 2; int lv = s.Path[i];
-                using (var halo = new SolidBrush(Color.FromArgb(lv == 2 ? 70 : 38, Theme.Lv(lv)))) g.FillEllipse(halo, cx - dot / 2 - 5 * S, r.Y - 5 * S, dot + 10 * S, dot + 10 * S);
                 Draw.LvDot(g, lv, cx - dot / 2, r.Y, dot, dot);
-                if (big) using (var hi = new SolidBrush(Color.FromArgb(90, Color.White))) g.FillEllipse(hi, cx - dot / 4, r.Y + dot / 5, dot / 2, dot / 3);
                 string lab = s.PathLabel[i] ?? ""; var ls = Measure(lab, lf, 0);
                 using (var b = new SolidBrush(lv == 2 ? Theme.LvText(2) : Theme.Ink)) g.DrawString(lab, lf, b, cx - ls.Width / 2, r.Y + dot + 3 * S);
                 if (big)

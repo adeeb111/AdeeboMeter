@@ -51,7 +51,7 @@ namespace AdeeboMeter
         float PaintLabList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
             var list = Labs.Where(l => hit(l[1]) || hit(l[2]) || hit("lab")).ToList(); if (list.Count == 0) return y;
-            g.DrawString(L.T("LABS - PLAY WITH IT"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+            g.DrawString(Kit.Sent(L.T("LABS - PLAY WITH IT")), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
             if (hit("AdeeboLab") || hit("Network Lab") || hit("lab") || hit("break") || hit("path")) y = LearnRow(g, "lab:netlab", L.T("AdeeboLab"), L.T("Draw your network, see the path, break one thing."), x, y, w, ink, muted, nowrap);   // 1.1.6
             foreach (var l in list) y = LearnRow(g, "lab:" + l[0], L.T(l[1]), L.T(l[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
@@ -204,7 +204,7 @@ namespace AdeeboMeter
             bool met = id != "quiz" && LabGoalMet(id);
             if (met && Cfg.Points) EarnPts("lab." + id, true, true);
             bool done = id == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + id) || met;
-            string head = (done ? "✓ " : "") + L.T("CHALLENGE") + (Cfg.Points ? "  ·  " + (id == "quiz" ? "+" + Points.Value("quiz.5") + " / +" + Points.Value("quiz.10") : "+" + Points.Value("lab." + id)) : "");
+            string head = (done ? "✓ " : "") + Kit.Sent(L.T("CHALLENGE")) + (Cfg.Points ? "  ·  " + (id == "quiz" ? "+" + Points.Value("quiz.5") + " / +" + Points.Value("quiz.10") : "+" + Points.Value("lab." + id)) : "");
             float th = Draw.Measure(L.T(goal), Draw.fBody, (int)(w - 32 * S)).Height;
             var card = new RectangleF(x, y, w, th + 44 * S); Theme.Fill(g, card, 12 * S, done ? Theme.LvSoft(0) : Theme.BlueSoft);
             using (var hb = new SolidBrush(done ? Theme.LvText(0) : Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(head, Draw.fTiny, hb, x + 16 * S, y + 10 * S);

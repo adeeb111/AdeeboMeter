@@ -45,7 +45,7 @@ namespace AdeeboMeter
                         else { s.Add(X(1, 2, L.T("who knows") + " " + name + "?", L.T("only if not remembered: the root, then") + " " + zone, double.NaN)); s.Add(X(2, 1, L.T("ask its own servers"), L.T("a referral"), double.NaN)); s.Add(X(1, 3, type + " " + name + "?", "", double.NaN)); }
                         if (answers.Count == 0 && trace.Count == 0) { var st0 = RRow("Status"); var an0 = RRow("Answer"); var show = an0 ?? st0 ?? res.FirstOrDefault(); s.Add(Rd(X(1, 0, show != null ? Cut(show[2], 44) : L.T("the answer"), L.T("with how long to keep it (TTL)"), msOf(asked)), show != null ? Lv(show) : -1)); }
                         foreach (var o in answers.Take(5)) { var z = X(1, 0, o[1] + "  " + Cut(P(o[2], 0), 40), Or(P(o[2], 1), "") + (signed ? " · " + L.T("signature checks out") : ""), s.Count == (trace.Count > 0 ? 1 + Math.Min(4, trace.Count) * 2 : 4) ? msOf(asked) : double.NaN);   /* R2-208: the first answer carries the time */ z.Sealed = signed; s.Add(Rd(z, Lv(o))); }
-                        cap = L.T("WHO ASKS WHOM -") + " " + name.ToUpperInvariant(); foot = (asked != "" ? Cut(asked, 80) + ". " : "") + L.T("A server that remembers the answer skips the middle steps - repeat lookups take 1-2 ms.");
+                        cap = Kit.Sent(L.T("WHO ASKS WHOM -")) + " " + name.ToUpperInvariant(); foot = (asked != "" ? Cut(asked, 80) + ". " : "") + L.T("A server that remembers the answer skips the middle steps - repeat lookups take 1-2 ms.");
                     }
                     break;
                 case "doh":
@@ -58,7 +58,7 @@ namespace AdeeboMeter
                         if (on) { s.Add(Lk(X(0, 2, L.T("(sealed question)"), how, double.NaN))); s.Add(Lk(X(2, 0, L.T("(sealed answer)"), L.T("nobody on the way can read or change it"), double.NaN))); }
                         else { s.Add(Rd(X(0, 2, L.T("where is example.com?"), L.T("plain DNS · UDP 53 - readable on the way"), double.NaN), 1)); s.Add(Rd(X(2, 0, L.T("its address"), L.T("readable - and changeable - on the way"), double.NaN), 1)); }
                         if (br != "") { var b = X(0, 2, L.T("the browser asks too"), Cut(br, 70), double.NaN); b.Sealed = br.IndexOf(L.T("works"), StringComparison.OrdinalIgnoreCase) >= 0;   /* R2-209 */ s.Add(b); }
-                        cap = on ? L.T("YOUR PC ASKS IN A SEALED ENVELOPE") : L.T("YOUR PC ASKS ON A POSTCARD"); foot = Or(enc, "Plain DNS shows every name you look up to anyone on the way; encrypted DNS (DoH/DoT) seals it.");
+                        cap = on ? Kit.Sent(L.T("YOUR PC ASKS IN A SEALED ENVELOPE")) : Kit.Sent(L.T("YOUR PC ASKS ON A POSTCARD")); foot = Or(enc, "Plain DNS shows every name you look up to anyone on the way; encrypted DNS (DoH/DoT) seals it.");
                     }
                     break;
                 case "dhcp":
@@ -67,14 +67,14 @@ namespace AdeeboMeter
                         string addr = RV("Address"), ip = Or(Regex.Match(addr, @"^[\d.]+").Value, ran ? "" : "192.168.1.20"), srv = Or(RV("DHCP server"), L.T("DHCP server (your router)")), gw = RV("Router (option 3)"), dns = RV("DNS (option 6)"), exp = RV("Expires"), got = RV("Obtained");
                         bool stat = RV("IPv4").StartsWith("set by hand", StringComparison.Ordinal), self = ip.StartsWith("169.254", StringComparison.Ordinal);
                         who = new[] { L.T("This PC"), srv };
-                        if (stat) { s.Add(X(0, 0, L.T("(no DHCP - the address is set by hand)"), "", double.NaN)); cap = L.T("THIS PC'S ADDRESS IS FIXED"); foot = "A fixed address never asks a DHCP server - nothing to renew."; break; }
+                        if (stat) { s.Add(X(0, 0, L.T("(no DHCP - the address is set by hand)"), "", double.NaN)); cap = Kit.Sent(L.T("THIS PC'S ADDRESS IS FIXED")); foot = "A fixed address never asks a DHCP server - nothing to renew."; break; }
                         s.Add(Bc(0, 1, L.T("Discover: can anyone give me an address?"), L.T("broadcast to everyone · UDP 68 → 67")));
-                        if (ran && ip == "") { s.Add(Rd(X(1, 0, L.T("(no Offer)"), Cut(Or(addr, L.T("no address from DHCP")), 60), double.NaN), 2)); cap = L.T("NO ADDRESS FROM DHCP"); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }   // R2-210
-                        if (self) { s.Add(Rd(X(1, 0, L.T("(no Offer)"), L.T("no DHCP server answered - Windows made up a 169.254 address"), double.NaN), 2)); cap = L.T("NO ADDRESS FROM DHCP"); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }
+                        if (ran && ip == "") { s.Add(Rd(X(1, 0, L.T("(no Offer)"), Cut(Or(addr, L.T("no address from DHCP")), 60), double.NaN), 2)); cap = Kit.Sent(L.T("NO ADDRESS FROM DHCP")); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }   // R2-210
+                        if (self) { s.Add(Rd(X(1, 0, L.T("(no Offer)"), L.T("no DHCP server answered - Windows made up a 169.254 address"), double.NaN), 2)); cap = Kit.Sent(L.T("NO ADDRESS FROM DHCP")); foot = "No DHCP answer: wrong VLAN, a missing relay, or the server is down."; break; }
                         s.Add(X(1, 0, L.T("Offer") + ": " + ip, Cut(Or((gw != "" ? L.T("gateway") + " " + gw + " · " : "") + (dns != "" ? "DNS " + dns : ""), L.T("with a mask, a gateway and DNS servers")), 70), double.NaN));
                         s.Add(X(0, 1, L.T("Request: yes please,") + " " + ip, L.T("still broadcast - other servers learn it's taken"), double.NaN));
                         s.Add(Rd(X(1, 0, L.T("Ack: it's yours"), Cut(Or((got != "" ? L.T("since") + " " + got : "") + (exp != "" ? " · " + L.T("until") + " " + exp : ""), L.T("for a lease time - renewed at half time")), 70), double.NaN), RLv("Expires")));
-                        cap = L.T("HOW THIS PC GOT") + " " + ip; foot = "Halfway through the lease the PC quietly asks to keep it. No answer by the end, and it falls back to a 169.254 address - no internet.";
+                        cap = Kit.Sent(L.T("HOW THIS PC GOT")) + " " + ip; foot = "Halfway through the lease the PC quietly asks to keep it. No answer by the end, and it falls back to a 169.254 address - no internet.";
                     }
                     break;
                 case "ntp":
@@ -87,7 +87,7 @@ namespace AdeeboMeter
                         s.Add(X(1, 2, L.T("it follows a better clock"), Or(strat, "stratum") + " = " + L.T("steps from an atomic clock"), double.NaN));
                         s.Add(Rd(X(1, 0, arow != null && arow[0] == "2" ? L.T("(no usable answer)") : L.T("got it at T2, answered at T3"), Cut(Or(ans, ""), 60), VNum(ans, @"round trip ([0-9.]+)")), arow != null ? Lv(arow) : -1));
                         s.Add(Rd(X(0, 0, Cut(Or(clock, L.T("arrived at T4 - offset worked out")), 44), L.T("offset = ((T2-T1) + (T3-T4)) / 2 - the trip cancels out"), double.NaN), RLv("Your clock")));
-                        cap = L.T("ASKING") + " " + srv.ToUpperInvariant() + " " + L.T("THE TIME"); foot = "Sign-ins, certificates and logs break when the clock is more than a few minutes off - Kerberos allows 5.";
+                        cap = Kit.Sent(L.T("ASKING")) + " " + srv.ToUpperInvariant() + " " + Kit.Sent(L.T("THE TIME")); foot = "Sign-ins, certificates and logs break when the clock is more than a few minutes off - Kerberos allows 5.";
                     }
                     break;
                 case "radius": case "tacacs":
@@ -108,7 +108,7 @@ namespace AdeeboMeter
                             s.Add(Rd(X(1, 0, none ? L.T("(no answer)") : L.T("hello back (SYN-ACK)"), Cut(Or(v, L.T("it accepts connections - the server is there")), 60), RowMs(v)), none ? 2 : Lv(row)));
                             if (!none) s.Add(X(0, 1, L.T("(no sign-in sent)"), L.T("AdeeboMeter stops here - no password"), double.NaN));
                         }
-                        cap = rad ? L.T("A RADIUS SERVER, ASKED") : L.T("A TACACS+ SERVER, KNOCKED ON");
+                        cap = rad ? Kit.Sent(L.T("A RADIUS SERVER, ASKED")) : Kit.Sent(L.T("A TACACS+ SERVER, KNOCKED ON"));
                         foot = rad ? "No answer at all usually means a wrong shared secret (the server ignores you) or a firewall - not a down server." : "TACACS+ runs over TCP, so 'is it there' is just a handshake.";
                     }
                     break;
@@ -132,7 +132,7 @@ namespace AdeeboMeter
                         }
                         else if (noArp) s.Add(Rd(X(1, 0, L.T("(no answer)"), ans.Length > 3 ? Cut(ans[3], 60) : "", double.NaN), 2));
                         else s.Add(Rd(X(1, 0, L.T("me - at") + " " + Or(Regex.Match(ans != null ? ans[2] : "", @"([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}").Value, "00:11:32:ab:cd:ef"), Or(maker, "ARP reply"), ans != null ? VNum(ans[2], @"\((\d+) ms\)") : double.NaN), Lv(ans)));
-                        cap = clash ? L.T("TWO DEVICES, ONE ADDRESS") + " (" + me + ")" : L.T("ASKING THE NETWORK WHO HAS AN ADDRESS");
+                        cap = clash ? Kit.Sent(L.T("TWO DEVICES, ONE ADDRESS")) + " (" + me + ")" : Kit.Sent(L.T("ASKING THE NETWORK WHO HAS AN ADDRESS"));
                         foot = clash ? "Give the other device an address outside the router's DHCP range, or a reservation." : "ARP turns an IP address into a MAC address - only on your own network; beyond the router it's the router's job.";
                     }
                     break;
@@ -146,7 +146,7 @@ namespace AdeeboMeter
                         s.Add(Lk(X(0, 2, L.T("TLS hello - name") + ": " + host, "ClientHello", double.NaN))); s.Add(Rd(Lk(X(2, 0, L.T("certificate + keys"), "ServerHello · TLS", tls)), RLv("TLS")));
                         s.Add(Lk(X(0, 2, "GET /", L.T("sealed from here on"), double.NaN))); s.Add(Rd(Lk(X(2, 0, L.T("first byte of the page"), L.T("after the server thought about it"), fb)), RLv("First byte")));
                         double sum = new[] { dns, con, tls, fb }.Where(z => !double.IsNaN(z)).Sum(); string biggest = sum <= 0 ? "" : new[] { Tuple.Create(L.T("the name"), dns), Tuple.Create(L.T("the connection"), con), Tuple.Create(L.T("the lock"), tls), Tuple.Create(L.T("the server thinking"), fb) }.Where(z => !double.IsNaN(z.Item2)).OrderByDescending(z => z.Item2).First().Item1;
-                        cap = L.T("ONE PAGE LOAD, PACKET BY PACKET") + " · " + tries + " " + L.T("tries");
+                        cap = Kit.Sent(L.T("ONE PAGE LOAD, PACKET BY PACKET")) + " · " + tries + " " + L.T("tries");
                         foot = (tot != "" ? L.T("Total") + ": " + tot + ". " : "") + (biggest != "" ? L.T("The biggest share is") + " " + biggest + "." : "A slow first byte is the server thinking, not your line.");
                     }
                     break;
@@ -263,7 +263,7 @@ namespace AdeeboMeter
                     {
                         // bug-hunt ML-217: WhyFails.DnsRules' rows - "Made-up name" (level 2 = hijacked, "x → addresses") and "Name rule" = "corp.example.com → 10.0.0.53"
                         string hj = RV("Made-up name"), nr = RV("Name rule"); bool hijack = RLv("Made-up name") == 2;
-                        var rm = Regex.Match(nr, @"^([^,→]+?)(?:,[^→]*)?\s*→\s*([\w.:]+)"); who = rm.Success ? new[] { L.T("This PC"), L.T("your DNS server"), L.T("VPN DNS") + " " + rm.Groups[2].Value } : new[] { L.T("This PC"), L.T("your DNS server") };
+                        var rm = Regex.Match(nr, @"^([^,→]+?)(?:,[^→]*)?\s*→\s*([\w.:]+)"); who = rm.Success ? new[] { L.T("This PC"), L.T("your DNS server"), Kit.Sent(L.T("VPN DNS")) + " " + rm.Groups[2].Value } : new[] { L.T("This PC"), L.T("your DNS server") };
                         s.Add(X(0, 1, L.T("where is") + " no-such-name-7f3a.example?", L.T("a made-up name, on purpose"), double.NaN));
                         s.Add(Rd(X(1, 0, hijack ? L.T("an address! (it shouldn't have one)") : L.T("no such name"), Cut(Or(hj, L.T("empty - as it should be")), 60), double.NaN), hijack ? 2 : RLv("Made-up name")));
                         if (rm.Success) { s.Add(X(0, 2, L.T("where is") + " " + rm.Groups[1].Value.Replace("*.", "intranet.") + "?", L.T("matches a VPN name rule"), double.NaN)); s.Add(X(2, 0, L.T("the company's own answer"), L.T("Name Resolution Policy"), double.NaN)); }
@@ -277,7 +277,7 @@ namespace AdeeboMeter
                         s.Add(X(0, 1, L.T("your packet"), "", double.NaN));
                         s.Add(Rd(X(1, 0, "ICMP " + code + " - " + Cut(Regex.Replace(text, @"\s*-.*$", ""), 34), Cut(Regex.Match(text, @"-\s*(.*?)(\.|$)").Groups[1].Value, 70), double.NaN), row != null ? Lv(row) : 1));
                         if (code.StartsWith("3/4", StringComparison.Ordinal)) { s.Add(X(0, 2, L.T("the same, smaller"), L.T("fits the size the router named"), double.NaN)); s.Add(X(2, 0, L.T("answer"), "", double.NaN)); }
-                        cap = "ICMP " + code + ": " + L.T("WHAT THE ROUTER WAS TELLING YOU"); foot = Cut(text, 200);
+                        cap = "ICMP " + code + ": " + Kit.Sent(L.T("WHAT THE ROUTER WAS TELLING YOU")); foot = Cut(text, 200);
                     }
                     break;
                 case "dc":
@@ -285,7 +285,7 @@ namespace AdeeboMeter
                         // bug-hunt ML-218: SysTools.DomainControllers' rows - "Domain", "Windows found" = "dc01.corp.x (10.0.0.5) · site HQ", "DNS record for domain controllers"
                         string dom = RV("Domain"), found = RV("Windows found"), srvRec = RV("DNS record for domain controllers"); bool none = dom.StartsWith("this PC isn't joined", StringComparison.Ordinal);
                         string dname = none || dom == "" ? "example.net" : dom, dc = Or(Regex.Match(found, @"^[\w.-]+").Value, "dc01." + dname), site = Regex.Match(found, @"site ([^\s·]+)").Groups[1].Value;
-                        who = new[] { L.T("This PC"), L.T("DNS"), dc };
+                        who = new[] { L.T("This PC"), Kit.Sent(L.T("DNS")), dc };
                         if (none) { s.Add(X(0, 0, L.T("(not joined to a domain)"), Cut(dom, 60), double.NaN)); cap = "NO DOMAIN TO FIND"; foot = "Home and cloud-only PCs have no domain controller."; break; }
                         s.Add(X(0, 1, "_ldap._tcp." + (site != "" ? site + "._sites." : "") + "dc._msdcs." + dname + "?", L.T("DCs in my site first"), double.NaN));
                         s.Add(Rd(X(1, 0, Cut(Or(srvRec, dc), 50), "", double.NaN), RLv("DNS record for domain controllers")));
@@ -426,7 +426,7 @@ namespace AdeeboMeter
             bool csr = tbSel == "csr", match = tbSel == "certmatch", pfx = tbSel == "pfx";
             var r = VisCard(g, x, y, w, 250 * S, csr ? "THE REQUEST - WHAT YOU'RE ASKING A CA TO SIGN" : match ? "DOES THIS CERTIFICATE BELONG TO YOUR KEY?" : pfx ? "INSIDE THE PFX" : "THE CERTIFICATE AS AN ID CARD", st);
             var card = new RectangleF(r.X + 18 * S, r.Y + 40 * S, r.Width * 0.55f, 150 * S); Theme.Fill(g, card, 12 * S, Theme.Soft); Theme.Fill(g, new RectangleF(card.X, card.Y, card.Width, 30 * S), 12 * S, csr ? VSlate : VPurple);
-            VText(g, csr ? L.T("REQUEST (not signed yet)") : L.T("CERTIFICATE"), Draw.fBodyB, Color.White, card.X + 14 * S, card.Y + 6 * S);
+            VText(g, csr ? L.T("REQUEST (not signed yet)") : Kit.Sent(L.T("CERTIFICATE")), Draw.fBodyB, Color.White, card.X + 14 * S, card.Y + 6 * S);
             Kit.Icon(g, "lock", new RectangleF(card.Right - 30 * S, card.Y + 6 * S, 18 * S, 18 * S), Color.White);
             float ly = card.Y + 38 * S; Action<string, string> line = (k, v) => { if (v == "") return; VText(g, k, Draw.fTiny, Theme.Sub, card.X + 14 * S, ly + 2 * S); using (var b = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(v, Draw.fSmall, b, new RectangleF(card.X + 90 * S, ly, card.Width - 100 * S, 18 * S), sf); ly += 21 * S; };
             line(L.T("for"), subj); line(L.T("names"), san); line(L.T("vouched by"), iss != "" ? iss : csr ? L.T("nobody yet - a CA signs it") : ""); line(L.T("key"), key);

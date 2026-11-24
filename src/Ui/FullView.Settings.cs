@@ -253,7 +253,7 @@ namespace AdeeboMeter
                     string last = null;
                     foreach (var it in hits)
                     {
-                        if (it.Sec != last) { y = SetHead(g, L.T(it.Sec).ToUpperInvariant(), x, y, w); last = it.Sec; }
+                        if (it.Sec != last) { y = SetHead(g, L.T(it.Sec), x, y, w); last = it.Sec; }
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     }
                 }
@@ -286,7 +286,7 @@ namespace AdeeboMeter
                         var ch = Draw.Measure(cnt, Draw.fSmall, (int)w).Height; g.DrawString(cnt, Draw.fSmall, muted, new RectangleF(x, y, w, ch + 4)); y += ch + 18 * S;
                     }
                     var fine = items.Where(i2 => i2.Sec == setSec && i2.Label != "Widget style" && !BigOnes(setSec).Contains(i2.Label)).ToList();   // the big ones are above (all still turn up in a search)
-                    if (fine.Count > 0 && (BigOnes(setSec).Length > 0 || setSec == "Widget" || setSec == "Background checks")) y = SetHead(g, L.T("FINE-TUNE"), x, y + 6 * S, w);
+                    if (fine.Count > 0 && (BigOnes(setSec).Length > 0 || setSec == "Widget" || setSec == "Background checks")) y = SetHead(g, Kit.Sent(L.T("FINE-TUNE")), x, y + 6 * S, w);
                     foreach (var it in fine)
                         y = SetRow(g, x, y, w, L.T(it.Label), L.T(it.Help()), it.Opts.Select(L.T).ToArray(), it.Cur(), it.Set, it.Tag);
                     if (setSec == "Navigation") y = PaintNavSettings(g, x, y + 6 * S, w);
@@ -592,7 +592,7 @@ namespace AdeeboMeter
         float PaintStory(Graphics g, DestResult d, float x, float y, float w)
         {
             var seg = d.Story ?? new List<string[]>(); var find = d.Findings ?? new List<string[]>();
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(seg.Count > 0 ? AdeeboMeter.L.T("THE PATH STORY  ·  WHO CARRIES YOUR TRAFFIC, FROM ROUTER NAMES") : "WHAT WE FOUND", Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(seg.Count > 0 ? AdeeboMeter.Kit.Sent(L.T("THE PATH STORY  ·  WHO CARRIES YOUR TRAFFIC, FROM ROUTER NAMES")) : "WHAT WE FOUND", Draw.fTiny, mb, x, y);
             Hint(destCanvas, new RectangleF(x, y, w, 16 * S), "card.PATH STORY"); y += 22 * S;
             // chain of boxes, wrapping to the next line when needed
             float bx = x, bh = seg.Count > 0 ? 52 * S : -14 * S, gap = 26 * S;

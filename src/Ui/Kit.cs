@@ -13,6 +13,43 @@ namespace AdeeboMeter
     // their own boxes, so a change of look is made once. All of it is plain GDI+ - drawn only when a page repaints.
     static class Kit
     {
+        // 23 Nov polish: labels in sentence case, never shouting capitals ("YOUR ROUTER" -> "Your router"). Only text that has
+        // no lower-case letters at all is changed, so translations and names typed in mixed case pass through untouched;
+        // acronyms and product names keep their own spelling.
+        static readonly string[] Keep = { "PC", "PCs", "ISP", "DNS", "VPN", "TV", "NAT", "IP", "IPv4", "IPv6", "Wi-Fi", "LAN", "WAN", "QR", "US", "EU", "UK", "CPU", "RAM", "GPU",
+            "MTU", "TCP", "UDP", "HTTP", "HTTPS", "TLS", "SSL", "SNMP", "DHCP", "ARP", "ICMP", "BGP", "OSPF", "MAC", "SSID", "CAD", "USD", "EUR", "FX", "AI", "OK", "ID", "URL",
+            "SMB", "SMBv1", "RDP", "UPnP", "LLMNR", "mDNS", "WPAD", "MX", "SPF", "DMARC", "DKIM", "NTP", "SSH", "RADIUS", "TACACS", "LTE", "5G", "4G", "ms", "MB", "GB", "KB",
+            "Mb/s", "kb/s", "Gb/s", "AdeeboMeter", "Adeebo", "Windows", "Microsoft", "Teams", "Zoom", "Meet", "Outlook", "Edge", "Chrome", "Firefox", "Steam", "Netflix",
+            "YouTube", "Xbox", "PlayStation", "Discord", "Twitch", "OBS", "Cloudflare", "Google", "Starlink", "Rogers", "Bell", "NHL", "NBA", "NFL", "MLB", "TSX", "NYSE",
+            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT" };
+        // worked out once per text (paints call this every frame): the acronym pass is ~100 small regexes
+        static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> sent = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+        public static string Sent(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return t;
+            string done; if (sent.TryGetValue(t, out done)) return done;
+            if (sent.Count > 4000) sent.Clear();
+            return sent[t] = Sent1(t);
+        }
+        static string Sent1(string t)
+        {
+            bool lower = false, letters = false; foreach (char c in t) { if (char.IsLower(c)) { lower = true; break; } if (char.IsLetter(c)) letters = true; }
+            if (lower || !letters) return t;
+            var sb = new System.Text.StringBuilder(t.ToLower(System.Globalization.CultureInfo.CurrentCulture)); bool start = true;
+            for (int i = 0; i < sb.Length; i++)
+            {
+                char c = sb[i];
+                if (start && char.IsLetter(c)) { sb[i] = char.ToUpper(c, System.Globalization.CultureInfo.CurrentCulture); start = false; }
+                else if (c == '.' || c == '?' || c == '!') start = true;
+            }
+            string r = sb.ToString();
+            foreach (var k in Keep)
+                r = System.Text.RegularExpressions.Regex.Replace(r, @"(?<![\p{L}\d])" + System.Text.RegularExpressions.Regex.Escape(k) + @"(?![\p{L}\d])", k, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            // a sentence still starts with a capital after the acronyms are put back
+            if (r.Length > 0 && char.IsLower(r[0]) && !(r.StartsWith("ms", StringComparison.Ordinal) || r.StartsWith("mDNS", StringComparison.Ordinal) || r.StartsWith("kb/s", StringComparison.Ordinal))) r = char.ToUpper(r[0], System.Globalization.CultureInfo.CurrentCulture) + r.Substring(1);
+            return r;
+        }
+
         // ---------- colours: one accent per section, the same everywhere it appears (tab, card stripe, tool header, back button)
         public static readonly Dictionary<string, Color> Accents = new Dictionary<string, Color>(StringComparer.Ordinal)
         {

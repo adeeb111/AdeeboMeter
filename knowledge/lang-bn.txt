@@ -5090,3 +5090,25 @@ Abandoned	পরিত্যক্ত
 of them inside SNMP	টি SNMP-এর ভেতরে
 Not fetched yet	এখনও আনা হয়নি
 Toronto keeps the same hours	টরন্টোর সময়ও একই
+Check now	এখনই দেখুন
+Comes back if it gets worse or something new breaks	অবস্থা খারাপ হলে বা নতুন কিছু বিগড়ালে আবার দেখাবে
+Comes back tomorrow, or sooner if it gets worse	কাল আবার দেখাবে, খারাপ হলে তার আগেই
+Corner widget	কোণের উইজেট
+Hide	লুকান
+Hide for today	আজকের জন্য লুকান
+Hide while it stays like this	এরকম থাকা পর্যন্ত লুকান
+Never show	আর কখনো দেখাবেন না
+Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.	শুধু একটি ফোন মনে রাখা হলে: AdeeboMeter-এর রিলেতে একটি অপেক্ষার ঘর, যাতে ফোন এই পিসি খুঁজে পায় (সিল করা - রিলে পড়তে পারে না), আর ঘণ্টায় একবার রিলের কাছে সময় জানতে একটি অনুরোধ, যাতে দুই দিক একই ঘর বেছে নেয়।
+See what's running	কী চলছে দেখুন
+Send to my ISP	আমার ISP-কে পাঠান
+Step {0} of 4	ধাপ {0} / 4
+Still in the status strip and the corner widget	স্ট্যাটাস স্ট্রিপ ও কোণের উইজেটে এখনও দেখা যাবে
+The network is fine.	নেটওয়ার্ক ঠিক আছে।
+a waiting room for your phone, and a clock check once an hour	আপনার ফোনের জন্য একটি অপেক্ষার ঘর, আর ঘণ্টায় একবার সময় যাচাই
+disk	ডিস্ক
+here	এখানে
+hidden while it stays like this	এরকম থাকা পর্যন্ত লুকানো
+memory	মেমরি
+memory warnings	মেমরির সতর্কবার্তা
+processor warnings	প্রসেসরের সতর্কবার্তা
+this kind of warning	এই ধরনের সতর্কবার্তা

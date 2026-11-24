@@ -128,7 +128,7 @@ namespace AdeeboMeter
         {
             var card = new RectangleF(x, y, w, switchInfo != null ? 150 * S : 86 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY")), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
             bool can = LiveCapture.Available && !switchBusy;
@@ -172,7 +172,7 @@ namespace AdeeboMeter
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.L.T("WHO ELSE IS ON THE AIR  ·  ") + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("WHO ELSE IS ON THE AIR  ·  ")) + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
             using (var axis = new Pen(Theme.Line)) g.DrawLine(axis, plotX, base0, plotX + plotW, base0);
@@ -214,7 +214,7 @@ namespace AdeeboMeter
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
             Kit.Box(g, card2);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("STRONGEST NEIGHBOURS")), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.NEIGHBOURS");
             float ry = y + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
@@ -249,7 +249,7 @@ namespace AdeeboMeter
                 warsBusy = true; warsAt = DateTime.UtcNow;
                 Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; wars = r; linkCanvas.Invalidate(); }); } catch (InvalidOperationException) { warsBusy = false; } });
             }
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR")), Draw.fTiny, mb, x, y);
             Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;
             var wr = wars;
             if (!Cfg.History) return Lead(g, AdeeboMeter.L.T("Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC."), x, y, w, true);

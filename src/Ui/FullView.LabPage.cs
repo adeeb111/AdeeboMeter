@@ -120,7 +120,7 @@ namespace AdeeboMeter
                 y += ((starts.Length + sc - 1) / sc) * (sh + 12 * S) + 16 * S;
 
                 // AdeeboMeter's own drawings of your network
-                g.DrawString(L.T("YOUR NETWORK, AS ADEEBOMETER SEES IT"), Draw.fTiny, mut, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("YOUR NETWORK, AS ADEEBOMETER SEES IT")), Draw.fTiny, mut, x, y); y += 22 * S;
                 bool hasPath = LabViews.Path(M) != null;
                 int vc = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float vw = (w - (vc - 1) * 12 * S) / vc, vh = 118 * S;
                 // 1.1.6 test day: the descriptions were cut off mid-word ("how fast each an") - the tiles grow to fit the longest one
@@ -144,7 +144,7 @@ namespace AdeeboMeter
                 y += ((LabViewTiles.Length + vc - 1) / vc) * (vh + 12 * S) + 16 * S;
 
                 // your diagrams
-                g.DrawString(L.T("YOUR DIAGRAMS"), Draw.fTiny, mut, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("YOUR DIAGRAMS")), Draw.fTiny, mut, x, y); y += 22 * S;
                 if (labSaved == null) { g.DrawString(L.T("Looking..."), Draw.fBody, mut, x, y); y += 30 * S; }
                 else if (labSaved.Count == 0) { g.DrawString(L.T("None yet - every drawing you change in the lab is kept here (on this PC)."), Draw.fBody, mut, x, y); y += 30 * S; }
                 else
@@ -167,7 +167,7 @@ namespace AdeeboMeter
                 }
 
                 // examples
-                g.DrawString(L.T("EXAMPLES - A TYPICAL HOME, READY TO BREAK"), Draw.fTiny, mut, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("EXAMPLES - A TYPICAL HOME, READY TO BREAK")), Draw.fTiny, mut, x, y); y += 22 * S;
                 float cx = x;
                 foreach (var ex in LabExamples)
                 {

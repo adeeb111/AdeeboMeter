@@ -124,15 +124,6 @@ namespace AdeeboMeter
             new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" },
             // last: only when nothing more specific was said ("Wi-Fi works but nothing loads" is a no-internet problem, not the link)
             new[] { "wifi|wi fi|wireless|signal|router|modem|ethernet|cable|lan|network card|adapter", "link", "it's the link to your router", "your Wi-Fi or cable: signal, speed, channel and the neighbours" } };
-        RoundBox fixBox; string fixHint = "", fixGo;
-        void EnsureFixBox()
-        {
-            if (fixBox != null) return;
-            fixBox = new RoundBox(Sc(400), Draw.fInput, "Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot");
-            fixBox.Box.AccessibleName = "Describe the problem"; fixBox.Box.MaxLength = 200;
-            fixBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; FixFind(); } };
-            overviewCanvas.Controls.Add(fixBox);
-        }
         // the first rule whose word appears wins (most specific rules first); nothing found -> suggest checking everything
         internal static string[] FixMatch(string text)
         {
@@ -144,18 +135,6 @@ namespace AdeeboMeter
                 foreach (var wd in r[0].Split('|'))
                     if (t.Contains(" " + wd + " ") || (wd.Length >= 6 && t.Contains(" " + wd))) return r;
             return null;
-        }
-        void FixFind()
-        {
-            string q = fixBox == null ? "" : fixBox.Box.Text.Trim();
-            if (q.Length == 0) { fixHint = "Type what you notice, or press Find what's wrong."; fixGo = null; }
-            else
-            {
-                var r = FixMatch(q);
-                if (r == null) { fixHint = "I didn't recognise that - press here and I'll check everything, layer by layer."; fixGo = "guide:whats"; }
-                else { fixHint = "Sounds like " + r[2] + ". I'll check " + r[3] + ".   Start  >"; fixGo = r[1]; }
-            }
-            overviewCanvas.Invalidate();
         }
         void FixGo(string go)
         {
@@ -192,8 +171,8 @@ namespace AdeeboMeter
                 // no boxes inside the card, no badges; where each number comes from is in the line under them
                 var s0 = snap; int lvPc = s0.Path.Length > 0 && s0.Path[0] >= 0 && s0.Path[0] <= 2 ? s0.Path[0] : 3;
                 bool memHot = !double.IsNaN(s0.Mem) && s0.Mem >= 85 && (double.IsNaN(s0.Cpu) || s0.Mem - 85 >= s0.Cpu - 85);
-                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + L.T("CPU");
-                string pcSub = memHot ? L.T("CPU") + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
+                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + Kit.Sent(L.T("CPU"));
+                string pcSub = memHot ? Kit.Sent(L.T("CPU")) + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
                                       : L.T("memory") + " " + Draw.Fmt(s0.Mem, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%");
                 if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
                 var tiles = new[] {
@@ -240,8 +219,9 @@ namespace AdeeboMeter
             {
                 // once, after updating to 1.1.5: the sidebar is the new default; "Prefer the Classic tabs?" - kept or switched,
                 // never shown again (PLAN 11.7d)
-                if (!Cfg.SetupDone) y = PaintSetup(g, x, y, w);
-                else if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
+                // first open: the setup card alone, nothing else competing with it (23 Nov)
+                if (!Cfg.SetupDone) { y = PaintSetup(g, x, y, w); SetNeed(overviewCanvas, new Size(0, (int)(y + 20 * S))); return; }
+                if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
                 {
                     var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
                     Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));
@@ -295,7 +275,7 @@ namespace AdeeboMeter
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
                 {
-                    g.DrawString(L.T("HOW WOULD YOU LIKE ADEEBOMETER?"), Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(Kit.Sent(L.T("HOW WOULD YOU LIKE ADEEBOMETER?")), Draw.fTiny, muted, x, y); y += 22 * S;
                     var opts = new[] {
                         new[] { "simple", "Simple", "Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone." },
                         new[] { "pro", "Pro", "All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn." } };
@@ -334,7 +314,7 @@ namespace AdeeboMeter
                 }
                 // needs attention
                 var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
-                g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS")), Draw.fTiny, muted, x, y); y += 22 * S;
                 int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");   // a board host down 3 checks in a row, a certificate inside 30 days
                 if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -368,7 +348,7 @@ namespace AdeeboMeter
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
                 string lastCall = ""; lock (Calls.Summaries) if (Calls.Summaries.Count > 0) lastCall = "Last call (" + Calls.Summaries[0][0] + "): " + Calls.Summaries[0][1];
-                g.DrawString(L.T("TODAY"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("TODAY")), Draw.fTiny, muted, x, y); y += 22 * S;
                 g.DrawString(today, Draw.fBody, sub, x, y); y += 24 * S;
                 if (lastCall != "") { float lh = Draw.Measure(lastCall, Draw.fBody, (int)w).Height; g.DrawString(lastCall, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S; }
                 y += 14 * S;

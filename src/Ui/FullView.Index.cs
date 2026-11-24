@@ -63,9 +63,9 @@ namespace AdeeboMeter
                     for (int i = 0; i < items.Count; i++)
                     {
                         var it = items[i]; bool on = tbFilter == "" && tbQ == it[0];
-                        if (i == 2) { g.DrawString(L.T("BY QUESTION"), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
+                        if (i == 2) { g.DrawString(Kit.Sent(L.T("BY QUESTION")), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
                         var rr = new RectangleF(x, ry, rw, 38 * S);
-                        if (on) { Theme.Fill(g, rr, 10 * S, Kit.Soft(it[0] == "" ? "mine" : QAccent(it[0]))); using (var ab = new SolidBrush(Kit.Accent(it[0] == "" ? "mine" : QAccent(it[0])))) g.FillRectangle(ab, rr.X, rr.Y + 6 * S, 3 * S, rr.Height - 12 * S); }
+                        if (on) { Theme.Fill(g, rr, 10 * S, Kit.Soft(it[0] == "" ? "mine" : QAccent(it[0]))); }
                         using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                             g.DrawString(it[1], on ? Draw.fBodyB : Draw.fBody, on ? ink : sub, new RectangleF(rr.X + 14 * S, rr.Y + 9 * S, rr.Width - 60 * S, 22 * S), nf);
                         var cs = g.MeasureString(it[2], Draw.fSmall); g.DrawString(it[2], Draw.fSmall, muted, rr.Right - cs.Width - 12 * S, rr.Y + 10 * S);
@@ -165,60 +165,6 @@ namespace AdeeboMeter
             foreach (var r in new[] { was, hr }) if (r.Width > 0) tbCanvas.Invalidate(Rectangle.Round(RectangleF.Inflate(new RectangleF(r.X + sp.X, r.Y + sp.Y, r.Width, r.Height), 4, 4)));
         }
 
-        // one tool: name + what it answers (two lines before a cut), its state, a pin, Open; a family shows its views
-        float IndexRow(Graphics g, Tool t, float x, float y, float w)
-        {
-            string desc = Answers(t); float right = 200 * S, tw = w - right - 12 * S;
-            float dh = desc == "" ? 0 : Math.Min(2 * Draw.fSmall.GetHeight(g) + 1, Draw.Measure(desc, Draw.fSmall, (int)tw).Height);
-            float h = 16 * S + 22 * S + dh + 12 * S; var r = new RectangleF(x, y, w, h);
-            if (Kit.Off(g, r)) { string id0 = t.Id; Act(tbCanvas, new RectangleF(x, y, w - right, h), delegate { OpenFromIndex(id0); }); return y + h; }
-            string acc = QAccent(QuestionOf(t));
-            using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
-            {
-                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                    g.DrawString(ToolName(t), Draw.fBodyB, ink, new RectangleF(x + 4 * S, y + 14 * S, tw, 22 * S), nf);
-                if (desc != "") using (var two = new StringFormat { FormatFlags = StringFormatFlags.LineLimit, Trimming = StringTrimming.EllipsisWord })
-                    g.DrawString(desc, Draw.fSmall, sub, new RectangleF(x + 4 * S, y + 38 * S, tw, dh), two);
-                // right side, from the edge in: Open · pin · state (or the family's views)
-                float bx = x + w, cy = y + (h - 36 * S) / 2;
-                string ot = L.T("Open"); var os = g.MeasureString(ot, Draw.fBodyB); var orr = new RectangleF(bx - os.Width - 28 * S, cy, os.Width + 28 * S, 36 * S);
-                Theme.Fill(g, orr, 10 * S, Kit.Soft(acc)); Theme.Stroke(g, orr, 10 * S, Kit.Accent(acc), 1);
-                using (var ob = new SolidBrush(Kit.Ink(acc))) g.DrawString(ot, Draw.fBodyB, ob, orr.X + 14 * S, orr.Y + (36 * S - os.Height) / 2);
-                string id = t.Id; Act(tbCanvas, orr, delegate { OpenFromIndex(id); });
-                bx = orr.X - 10 * S;
-                bool pinned = MyPins().Contains(t.Id) || StarterPins.Contains(t.Id);
-                var pr = new RectangleF(bx - 30 * S, cy + 3 * S, 30 * S, 30 * S);
-                using (var pb = new SolidBrush(pinned ? Kit.Accent("mine") : Theme.Muted)) { string st = pinned ? "★" : "☆"; var ss = g.MeasureString(st, Draw.fHead); g.DrawString(st, Draw.fHead, pb, pr.X + (pr.Width - ss.Width) / 2, pr.Y + (pr.Height - ss.Height) / 2); }
-                if (!StarterPins.Contains(t.Id)) Act(tbCanvas, pr, delegate { SetPin(id, !MyPins().Contains(id)); tbCanvas.Invalidate(); });
-                bx = pr.X - 10 * S;
-                if (t.Id == "snmp")
-                {
-                    var views = Tools2().Where(z => SnmpView(z.Id) && z.Id != "snmp").ToList();
-                    string vt = views.Count + " " + L.T("views"); var vs = g.MeasureString(vt, Draw.fBody); var vr = new RectangleF(bx - vs.Width - 40 * S, cy, vs.Width + 40 * S, 36 * S);
-                    Theme.Stroke(g, vr, 10 * S, Theme.Line, 1); g.DrawString(vt, Draw.fBody, ink, vr.X + 12 * S, vr.Y + (36 * S - vs.Height) / 2);
-                    float ax = vr.Right - 20 * S, ay = vr.Y + 16 * S; g.FillPolygon(ink, new[] { new PointF(ax - 5 * S, ay), new PointF(ax + 5 * S, ay), new PointF(ax, ay + 6 * S) });
-                    Act(tbCanvas, vr, delegate { ViewsMenu(views, vr); });
-                }
-                else
-                {
-                    PrevRun last; string state; Color sc;
-                    if (tbLast.TryGetValue(t.Id, out last)) { state = L.T("ran") + " " + last.At.ToString("t", CultureInfo.CurrentCulture); sc = Theme.Green; }
-                    else if (Cfg.Points && Points.Value(t.Id) > 0 && !Points.NoEarn.Contains(t.Id)) { bool got = Points.Me.Has(t.Id); state = got ? "✓" : "+" + Points.Value(t.Id).ToString(CultureInfo.InvariantCulture); sc = got ? Theme.Muted : Theme.Amber; }
-                    else { state = ""; sc = Theme.Muted; }
-                    if (state != "") using (var stb = new SolidBrush(sc)) { var ss = g.MeasureString(state, Draw.fSmall); g.DrawString(state, Draw.fSmall, stb, bx - ss.Width, y + (h - ss.Height) / 2); }
-                }
-                Act(tbCanvas, new RectangleF(x, y, w - right, h), delegate { OpenFromIndex(id); });
-                Hint(tbCanvas, new RectangleF(x, y, w - right, h), "tb." + t.Id);
-            }
-            using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x, y + h, x + w, y + h);
-            return y + h;
-        }
-        void ViewsMenu(List<Tool> views, RectangleF at)
-        {
-            var m = Menus.Make(); m.ShowImageMargin = false;
-            foreach (var v in views) { string id = v.Id; m.Items.Add(L.T(v.Title), null, delegate { OpenFromIndex(id); }); }
-            var sp = tbCanvas.AutoScrollPosition; m.Show(tbCanvas, new Point((int)at.X + sp.X, (int)at.Bottom + sp.Y));
-        }
         // the pins as a row of small chips above a question's tools (GPT's "Pinned tools")
         void More(Graphics g, int n, float px, float y, float right)
         {
@@ -277,14 +223,14 @@ namespace AdeeboMeter
                     return y;
                 };
                 var all = Tools2();
-                y = grid(L.T("READY-MADE"), StarterPins.Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null).ToList(), false);
-                y = grid(L.T("YOURS"), MyPins().Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null && !StarterPins.Contains(t.Id)).ToList(), true);
+                y = grid(Kit.Sent(L.T("READY-MADE")), StarterPins.Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null).ToList(), false);
+                y = grid(Kit.Sent(L.T("YOURS")), MyPins().Select(id => all.FirstOrDefault(t => t.Id == id)).Where(t => t != null && !StarterPins.Contains(t.Id)).ToList(), true);
                 string how = L.T("Add your own: press ☆ on any tool in a question on the left - it shows up here and above that question's tools. Up to 12.");
                 float hh = Draw.Measure(how, Draw.fBody, (int)w).Height; g.DrawString(how, Draw.fBody, sub, new RectangleF(x, y, w, hh + 4)); y += hh + 16 * S;
                 var recent = tbRecent.Select(id => all.FirstOrDefault(z => z.Id == id)).Where(t => t != null).Take(8).ToList();
                 if (recent.Count > 0)
                 {
-                    g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
+                    g.DrawString(Kit.Sent(L.T("RECENT")), Draw.fTiny, muted, x, y); y += 22 * S; float px = x;
                     int shownR = 0;
                     foreach (var t in recent) { if (px + 60 * S > x + w) break; if (px + Kit.ChipWidth(g, ToolName(t), null) > x + w) break; var r = Kit.Chip(g, ToolName(t), px, y, QAccent(QuestionOf(t)), false, null); shownR++; string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); px = r.Right + 8 * S; }
                     More(g, recent.Count - shownR, px, y, x + w);

@@ -45,7 +45,7 @@ namespace AdeeboMeter
             add(L.T("Actual size") + (Cfg.Zoom != 100 ? "  (" + L.T("now") + " " + Cfg.Zoom + "%)" : ""), "Ctrl 0", () => ZoomTo(100));   // bug-hunt L-177: "now 125%" - the size you're at, not what this item gives
             add("-", "", null);
             add(L.T("Search"), "Ctrl K", OpenPalette);
-            add(L.T("Check again now"), "", () => { if (M != null) M.Nudge(); RefreshConns(true); Invalidate(true); });
+            add(L.T("Check now"), "", () => { if (M != null) M.Nudge(); RefreshConns(true); Invalidate(true); });
             add(L.T("Save a picture of this window"), "", SaveWindowPicture);
             add("-", "", null);
             add(L.T("Report a bug"), "", () => ReportDialog("bug", ""));

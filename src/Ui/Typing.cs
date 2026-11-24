@@ -20,7 +20,7 @@ namespace AdeeboMeter
         const double Calm = 15;   // seconds a slot must stay unchanged before its next new line types again
         static Timer t;
         public static bool Hold;   // screen peek: draw every line whole, so a still picture never shows half a sentence
-        public static bool On { get { try { return SystemInformation.UIEffectsEnabled; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } } }
+        public static bool On { get { return Motion.On; } }
         // what to draw now for this slot's text (UI thread only)
         public static string Show(string slot, string text, Control c) { return Show(slot, text, c, RectangleF.Empty); }
         // area: where on c the line is drawn (client coordinates) - only that part is redrawn while it types (21 Nov: tool page flicker)

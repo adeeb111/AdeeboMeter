@@ -93,7 +93,7 @@ namespace AdeeboMeter
             tbAssist.SuspendLayout(); int n = 0;
             if (browse)
             {
-                var b = tbAssistPool[n++]; b.Text = AdeeboMeter.L.T("Browse..."); b.Accent = QAccent(QuestionOf(Tools2().FirstOrDefault(z => z.Id == tbSel) ?? Tools2()[0]));
+                var b = tbAssistPool[n++]; b.Text = AdeeboMeter.L.T("Browse..."); b.Accent = null;
                 b.Tag = (Action)delegate { using (var d = new OpenFileDialog { CheckFileExists = true, Title = L.T("Pick a file") }) if (d.ShowDialog(this) == DialogResult.OK) { rb.Box.Text = d.FileName; rb.Box.Focus(); } };
                 b.Visible = true;
             }

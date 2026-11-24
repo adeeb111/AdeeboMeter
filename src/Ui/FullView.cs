@@ -583,7 +583,7 @@ namespace AdeeboMeter
         {
             if (header == null || snap == null) return;
             if (snap.Level != logoLv) { logoLv = snap.Level; header.Invalidate(new Rectangle(0, 0, Sc(60), header.Height)); }
-            if (Visible && WindowState != FormWindowState.Minimized && (DateTime.UtcNow - logoBreath).TotalMinutes >= 5) { logoBreath = DateTime.UtcNow; LogoAnim(1); }
+            // 23 Nov (motion review): no 5-minute "breath" - a loop on a window that stays open is decoration; the needle still moves to the new level
         }
         // a health row's history in a few numbers - one pass for its low and high (bug-hunt ML-147: it was two scans per row)
         static string HistKey(double[] h)

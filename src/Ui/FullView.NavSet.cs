@@ -39,7 +39,7 @@ namespace AdeeboMeter
             };
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
-                g.DrawString(L.T("ON YOUR BAR") + "  ·  " + bar.Count + " / 7", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("ON YOUR BAR")) + "  ·  " + bar.Count + " / 7", Draw.fTiny, muted, x, y); y += 22 * S;
                 for (int i = 0; i < bar.Count; i++)
                 {
                     string id = bar[i]; int k = i; rowFace(id, y); float right = x + rw - 8 * S;
@@ -53,7 +53,7 @@ namespace AdeeboMeter
                     y += rh;
                 }
                 y += 10 * S;
-                g.DrawString(L.T("IN MORE"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("IN MORE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (more.Count == 0) { g.DrawString(L.T("Everything is on the bar."), Draw.fSmall, muted, x, y); y += 26 * S; }
                 foreach (var id0 in more)
                 {
@@ -62,7 +62,7 @@ namespace AdeeboMeter
                     y += rh;
                 }
                 y += 10 * S;
-                g.DrawString(L.T("YOUR OWN TABS") + "  ·  " + mine.Count + " / 3", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent(L.T("YOUR OWN TABS")) + "  ·  " + mine.Count + " / 3", Draw.fTiny, muted, x, y); y += 22 * S;
                 foreach (var t0 in mine)
                 {
                     var t = t0; rowFace(t.Id, y);

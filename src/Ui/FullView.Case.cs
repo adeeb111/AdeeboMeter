@@ -49,7 +49,7 @@ namespace AdeeboMeter
         // ---------- the front door on Home: "What's going on?" - one tap per common problem, plus your recent cases
         float PaintFrontDoor(Graphics g, float x, float y, float w)
         {
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S GOING ON?  ·  TAP WHAT YOU SEE"), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("WHAT'S GOING ON?  ·  TAP WHAT YOU SEE")), Draw.fTiny, mb, x, y);
             y += 24 * S;
             int sc = Math.Max(1, Math.Min(3, (int)(w / (300 * S)))); float sbh = 70 * S, sbw = (w - (sc - 1) * 10 * S) / sc;
             if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
@@ -72,7 +72,7 @@ namespace AdeeboMeter
             var rec = Cases.Recent().Where(c => c.Run != null && c.Run.Done).Take(3).ToList();
             if (rec.Count > 0)
             {
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR RECENT CASES"), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("YOUR RECENT CASES")), Draw.fTiny, mb, x, y); y += 20 * S;
                 foreach (var c in rec)
                 {
                     string t = c.Opened.ToString("HH:mm", CultureInfo.CurrentCulture) + "  ·  " + c.Title + "  ·  " + Draw.Trunc(c.Run.Finding, 90);
@@ -90,7 +90,7 @@ namespace AdeeboMeter
         {
             var c = guideCase; var r = guideRun; int sure = Cases.Sure(r);
             var card = new RectangleF(x, y, w, 132 * S); Kit.Card(g, card, "home", false);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("CASE") + "  ·  " + L.T("from") + " " + L.T(Cases.SourceName(c.Source)) + "  ·  " + c.From.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + c.To.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x + 18 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("CASE")) + "  ·  " + L.T("from") + " " + L.T(Cases.SourceName(c.Source)) + "  ·  " + c.From.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + c.To.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x + 18 * S, y + 12 * S);
             // bug-hunt L-329: the title stops before the "how sure" dots, with "…" if it's longer
             float titleRoom = w - 36 * S - (sure > 0 ? g.MeasureString(L.T(Cases.SureWords(sure)), Draw.fSmall).Width + 4 * 14 * S + 12 * S : 0);
             using (var ib = new SolidBrush(Theme.Ink)) using (var tf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(c.Title, Draw.fHead, ib, new RectangleF(x + 18 * S, y + 30 * S, Math.Max(60 * S, titleRoom), 26 * S), tf);
@@ -186,14 +186,14 @@ namespace AdeeboMeter
             {
                 var box = new RectangleF(50, y, W, fh + 60); using (var fb = new SolidBrush(RSoft(r.Lv))) g.FillRectangle(fb, box);
                 using (var lb = new SolidBrush(RText(r.Lv))) g.FillRectangle(lb, box.X, box.Y, 6, box.Height);
-                using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("FINDING") + "   ·   " + L.T(Cases.SureWords(sure)).ToUpperInvariant(), F["tiny"], sb, 70, y + 12);
+                using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent(L.T("FINDING")) + "   ·   " + L.T(Cases.SureWords(sure)), F["tiny"], sb, 70, y + 12);
                 for (int i = 0; i < 4; i++) using (var db = new SolidBrush(i < sure ? RBlue : RLine)) g.FillEllipse(db, box.Right - 80 + i * 16, y + 14, 10, 10);
                 using (var tb = new SolidBrush(r.Lv == 0 ? RInk : RText(r.Lv))) g.DrawString(fin, F["fin"], tb, new RectangleF(70, y + 34, W - 40, fh + 6));
             } });
             // the path, as it is now
             b.Add(new RBlock { H = 92, Draw = (g, y) =>
             {
-                using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("THE PATH, AS IT IS NOW"), F["tiny"], sb, 50, y);
+                using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent(L.T("THE PATH, AS IT IS NOW")), F["tiny"], sb, 50, y);
                 float slot = W / 5;
                 for (int i = 0; i < 5; i++)
                 {
@@ -206,7 +206,7 @@ namespace AdeeboMeter
             } });
             // the minutes around it
             var series = Cases.Minutes(c.From, c.To);
-            b.Add(new RBlock { H = 170, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("THE MINUTES AROUND IT"), F["tiny"], sb, 50, y); CaseChart(g, new RectangleF(50, y + 20, W, 130), series, true); } });
+            b.Add(new RBlock { H = 170, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent(L.T("THE MINUTES AROUND IT")), F["tiny"], sb, 50, y); CaseChart(g, new RectangleF(50, y + 20, W, 130), series, true); } });
             // lists: what was ruled out, what isn't proven, what to try
             var obs = r.ObservedCopy();
             Action<string, IEnumerable<string>, Color> list = (head, items, col) =>
@@ -215,9 +215,9 @@ namespace AdeeboMeter
                 b.Add(new RBlock { H = 30, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(head, F["tiny"], sb, 50, y + 8); } });
                 foreach (var it in its) { string t = it; float h = hgt(t, F["body"], W - 24) + 6; b.Add(new RBlock { H = h, Draw = (g, y) => { using (var db = new SolidBrush(col)) g.FillEllipse(db, 52, y + 6, 7, 7); using (var tb = new SolidBrush(RInk)) g.DrawString(t, F["body"], tb, new RectangleF(68, y, W - 24, h)); } }); }
             };
-            list(L.T("RULED OUT - LOOKED FINE"), obs.Where(o => o[1] == "0").Select(o => o[2] + ": " + o[3]).Take(8), Theme.Green);
-            list(L.T("NOT ESTABLISHED"), r.NotEst, Theme.Amber);
-            list(L.T("WHAT TO TRY NEXT"), r.Next, RBlue);
+            list(Kit.Sent(L.T("RULED OUT - LOOKED FINE")), obs.Where(o => o[1] == "0").Select(o => o[2] + ": " + o[3]).Take(8), Theme.Green);
+            list(Kit.Sent(L.T("NOT ESTABLISHED")), r.NotEst, Theme.Amber);
+            list(Kit.Sent(L.T("WHAT TO TRY NEXT")), r.Next, RBlue);
             // the evidence, every line with where it came from
             b.Add(new RBlock { H = 40, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("EVERYTHING AdeeboMeter OBSERVED"), F["tiny"], sb, 50, y + 16); } });
             foreach (var o in obs)

@@ -383,12 +383,6 @@ namespace AdeeboMeter
             try { File.WriteAllBytes(LinksFile, ProtectedData.Protect(Encoding.UTF8.GetBytes(string.Join("\n", l.Take(12).Select(p => p[0] + "\t" + p[1]))), null, DataProtectionScope.CurrentUser)); }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; }
         }
-        public static void ForgetLink(string url)
-        {
-            var l = Links().Where(p => p[1] != url).ToList();
-            try { if (l.Count == 0) File.Delete(LinksFile); else File.WriteAllBytes(LinksFile, ProtectedData.Protect(Encoding.UTF8.GetBytes(string.Join("\n", l.Select(p => p[0] + "\t" + p[1]))), null, DataProtectionScope.CurrentUser)); }
-            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; }
-        }
         // a label for a link: the file name or the host, never the query (which can hold a token)
         public static string LabelFor(string url)
         {

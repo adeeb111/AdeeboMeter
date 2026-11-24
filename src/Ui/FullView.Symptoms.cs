@@ -54,7 +54,7 @@ namespace AdeeboMeter
             for (int i = 0; i < rs.Length && i < symHot.Length; i++)
             {
                 float want = i == symHover ? 1f : 0f, was = symHot[i]; if (was == want) continue;
-                float now = !Typing.On ? want : want > was ? Math.Min(1f, was + 0.1f) : Math.Max(0f, was - 0.1f);   /* Windows' animations off: straight to the end */ symHot[i] = now; moving = true;
+                float now = want;   // 23 Nov motion review: a hover seen tens of times a day changes at once - no ramp counted in timer ticks   /* Windows' animations off: straight to the end */ symHot[i] = now; moving = true;
                 SymPaintOne(i, now);
             }
             if (!moving) symAnim.Stop();

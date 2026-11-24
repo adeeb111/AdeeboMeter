@@ -25,7 +25,7 @@ namespace AdeeboMeter
             g.TranslateTransform(sportsCanvas.AutoScrollPosition.X, sportsCanvas.AutoScrollPosition.Y);
             Begin(sportsCanvas); Paper.Fonts();
             float x = 22 * S, y = 16 * S, w = sportsCanvas.ClientSize.Width - 44 * S;
-            y = Paper.Masthead(g, x, y, w, L.T("THE SPORTS PAGE"), L.T("AdeeboMeter Matchday Edition"), L.T("Your PC · Your Network · Your Streaming"), L.T("All in One Place"), spTab != "overview");
+            y = Paper.Masthead(g, x, y, w, Kit.Sent(L.T("THE SPORTS PAGE")), L.T("AdeeboMeter Matchday Edition"), L.T("Your PC · Your Network · Your Streaming"), L.T("All in One Place"), spTab != "overview");
             List<Tuple<string, RectangleF>> hits; y = Paper.TabBar(g, x, y, w, SpTabs, spTab, out hits);
             foreach (var h in hits) { string id = h.Item1; Act(sportsCanvas, h.Item2, delegate { spTab = id; sportsCanvas.AutoScrollPosition = Point.Empty; sportsCanvas.Invalidate(); }); }
             bool linkShown = false;
@@ -67,7 +67,7 @@ namespace AdeeboMeter
                 sub = L.T("Tested") + " " + r.When.ToString("t", CultureInfo.CurrentCulture) + (double.IsNaN(r.Mbps) ? "" : " · " + L.T("video came in at") + " " + r.Mbps.ToString("0.0", CultureInfo.CurrentCulture) + " Mb/s") + (r.Best != null ? " · " + StreamCheck.Short(r.Best) + " " + L.T("needs") + " " + (r.Best.Bw / 1e6).ToString("0.0", CultureInfo.CurrentCulture) : "");
                 var t = r.Tips.FirstOrDefault(); if (t != null) tip = L.T(t.Title);
             }
-            Paper.StripHits sh; y = Paper.Strip(g, x, y, w, L.T("STREAM CHECK"), false, verdict, sub, tip, L.T("Test my stream"), lv, out sh);
+            Paper.StripHits sh; y = Paper.Strip(g, x, y, w, Kit.Sent(L.T("STREAM CHECK")), false, verdict, sub, tip, L.T("Test my stream"), lv, out sh);
             Act(sportsCanvas, sh.Button, delegate { spTab = "stream"; sportsCanvas.AutoScrollPosition = Point.Empty; sportsCanvas.Invalidate(); var links = StreamCheck.Links(); if (links.Count > 0 && !StreamCheck.Running) StreamCheck.Start(links[0][1], M, SpRepaint()); });
             Act(sportsCanvas, sh.Details, delegate { spTab = "stream"; sportsCanvas.AutoScrollPosition = Point.Empty; sportsCanvas.Invalidate(); });
             return y;
@@ -131,7 +131,7 @@ namespace AdeeboMeter
             List<Sports.Game> games; lock (Sports.k) games = Sports.Games.ToList();
             var next = Cfg.Sports ? SpNext(games) : null;
             float lw = w * 0.56f, rx = x + lw + 16 * S, rw = w - lw - 16 * S;
-            float ly = Paper.Ribbon(g, L.T("MATCHDAY BRIEFING"), x, y) + 10 * S;
+            float ly = Paper.Ribbon(g, Kit.Sent(L.T("MATCHDAY BRIEFING")), x, y) + 10 * S;
             using (var hb = new SolidBrush(Paper.Head)) using (var ib = new SolidBrush(Paper.Ink))
             {
                 if (next != null)
@@ -232,7 +232,7 @@ namespace AdeeboMeter
             int lv = double.IsNaN(cpu) ? 3 : cpu > 85 || mem > 92 ? 2 : cpu > 60 || mem > 85 ? 1 : 0;
             Paper.Pill(g, lv == 0 ? L.T("Healthy") : lv == 1 ? L.T("Busy") : lv == 2 ? L.T("Struggling") : L.T("Checking"), x + w / 2, y + 50 * S, lv == 0 ? Paper.Green : Paper.Lv(lv));
             float dy = y + 88 * S;
-            foreach (var kv in new[] { new[] { "CPU:", double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%" }, new[] { L.T("RAM:"), double.IsNaN(mem) ? "-" : mem.ToString("0", CultureInfo.CurrentCulture) + "%" }, new[] { L.T("Storage:"), snap == null || snap.DiskText == "" ? "-" : snap.DiskText } }) { MkSpText(g, kv[0], Paper.BodyB, Paper.Head, x + 16 * S, dy); MkSpText(g, kv[1], Paper.Body, Paper.Ink, x + 120 * S, dy); dy += 24 * S; }
+            foreach (var kv in new[] { new[] { "CPU:", double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%" }, new[] { Kit.Sent(L.T("RAM:")), double.IsNaN(mem) ? "-" : mem.ToString("0", CultureInfo.CurrentCulture) + "%" }, new[] { L.T("Storage:"), snap == null || snap.DiskText == "" ? "-" : snap.DiskText } }) { MkSpText(g, kv[0], Paper.BodyB, Paper.Head, x + 16 * S, dy); MkSpText(g, kv[1], Paper.Body, Paper.Ink, x + 120 * S, dy); dy += 24 * S; }
             var band = new RectangleF(x + 12 * S, r.Bottom - 40 * S, w - 24 * S, 28 * S); Theme.Fill(g, band, 4 * S, lv == 0 ? Paper.GoodSoft : Paper.Soft);
             MkSpText(g, lv == 0 ? L.T("Resources are in good shape for streaming.") : lv == 3 ? L.T("Measuring...") : L.T("Close heavy apps before kick-off."), Paper.Small, Paper.Ink, band.X + 10 * S, band.Y + 6 * S);
             return r.Bottom + 16 * S;
