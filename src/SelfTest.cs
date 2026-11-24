@@ -94,7 +94,7 @@ namespace AdeeboMeter
                     return s;
                 };
                 var states = new[] { Tuple.Create("checking", -1, false), Tuple.Create("ok", 0, false), Tuple.Create("busy", 1, false), Tuple.Create("problem", 2, false), Tuple.Create("ok+lines", 0, true) };
-                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL\nYour team is playing - back to yours 5 min after the end\nKeep resting to move it, or hold Ctrl";
+                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL\nYour team is playing - back to yours 5 min after the end\nKeep resting to move it";
                 var styles = Corner.AllStyles.ToList(); styles.Add("recap");
                 var csv = new List<string> { "theme,scale,style,state,chip_w,chip_h,card_w,card_h" };
                 foreach (bool dark in new[] { false, true })

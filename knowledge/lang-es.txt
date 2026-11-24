@@ -5629,3 +5629,6 @@ Where the widget sits while a game you added is open - away from your minimap, s
 forecast from	previsión de las
 tray › Stop holding lets it go	bandeja › Dejar de mantener lo suelta
 New year, same old internet hiccups.	Año nuevo, los mismos hipos de internet.
+Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	Abajo a la derecha, por defecto. Para moverlo, deja el ratón quieto sobre él un momento y arrastra - o bandeja › Widget de esquina › Mover widget. Un clic abre AdeeboMeter.
+Keep resting to move it	Sigue quieto para moverlo
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	Activado: el widget desaparece cuando el ratón se acerca, para no tapar lo que señalas - salvo cuando una ventana cubre su esquina, donde quedarte encima aún lo abre. Para moverlo, usa la bandeja: Widget de esquina > Mover widget.

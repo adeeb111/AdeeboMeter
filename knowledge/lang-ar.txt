@@ -5629,3 +5629,6 @@ Where the widget sits while a game you added is open - away from your minimap, s
 forecast from	توقعات من
 tray › Stop holding lets it go	شريط المهام › إيقاف التثبيت يحررها
 New year, same old internet hiccups.	عام جديد، نفس عثرات الإنترنت القديمة.
+Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	أسفل اليمين، الافتراضي. لنقلها، أبقِ الفأرة ثابتة عليها لحظة ثم اسحب - أو شريط المهام › أداة الزاوية › نقل الأداة. النقر يفتح AdeeboMeter.
+Keep resting to move it	ابقَ ثابتًا لنقلها
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	مفعّل: تختفي الأداة عند اقتراب الفأرة، فلا تغطي ما تشير إليه أبدًا - إلا عندما تغطي نافذة زاويتها، حيث يفتحها البقاء عليها. لنقلها، استخدم شريط المهام: أداة الزاوية > نقل الأداة.

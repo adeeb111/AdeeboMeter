@@ -5641,3 +5641,6 @@ Where the widget sits while a game you added is open - away from your minimap, s
 forecast from	prévision de
 tray › Stop holding lets it go	zone de notification › Arrêter de garder le libère
 New year, same old internet hiccups.	Nouvelle année, mêmes petits hoquets d'internet.
+Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	En bas à droite, par défaut. Pour le déplacer, laissez la souris immobile dessus un instant, puis faites glisser - ou zone de notification › Widget de coin › Déplacer le widget. Un clic ouvre AdeeboMeter.
+Keep resting to move it	Restez immobile pour le déplacer
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	Activé : le widget disparaît quand la souris approche, pour ne jamais couvrir ce que vous pointez - sauf quand une fenêtre couvre son coin, où rester dessus l'ouvre encore. Pour le déplacer, utilisez la zone de notification : Widget de coin > Déplacer le widget.

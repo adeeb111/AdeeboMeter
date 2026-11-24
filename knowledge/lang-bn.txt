@@ -5629,3 +5629,6 @@ Where the widget sits while a game you added is open - away from your minimap, s
 forecast from	পূর্বাভাস
 tray › Stop holding lets it go	ট্রে › ধরে রাখা বন্ধ দিলে ছেড়ে দেয়
 New year, same old internet hiccups.	নতুন বছর, ইন্টারনেটের সেই পুরোনো হেঁচকি।
+Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	নিচে ডানে, ডিফল্ট। সরাতে, মাউস কিছুক্ষণ এর ওপর স্থির রাখুন, তারপর টানুন - অথবা ট্রে › কোণের উইজেট › উইজেট সরান। ক্লিক করলে AdeeboMeter খোলে।
+Keep resting to move it	সরাতে স্থির থাকুন
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে দেখাচ্ছেন তা কখনো ঢাকে না - তবে কোনো উইন্ডো এর কোণ ঢাকলে, এর ওপর স্থির থাকলে এখনও খোলে। সরাতে ট্রে ব্যবহার করুন: কোণের উইজেট > উইজেট সরান।

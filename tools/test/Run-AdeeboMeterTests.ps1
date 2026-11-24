@@ -7,12 +7,13 @@
       powershell -ExecutionPolicy Bypass -File .\Run-AdeeboMeterTests.ps1
 
   What it does (about 6 minutes, no admin needed, nothing installed):
+    0. Asks Windows Defender to scan AdeeboMeter.exe first (scan only - nothing is moved); a detection stops the run.
     1. The app's own self-test (every check it has, the shell's commands included).
     2. Pictures of every corner-widget style, folded and open, in four network states, light and dark, 100% and 150%.
     3. A live widget run: it starts a separate test copy of AdeeboMeter and moves your mouse and presses keys to check
-       resting, Ctrl, Esc, dragging, clicks going through, a right-click / wheel passed on, and (on a touchscreen PC) taps.
+       resting, Esc, dragging, clicks going through, a right-click / wheel passed on, and (on a touchscreen PC) taps.
        Hands off the mouse and keyboard during step 3 - about 3 minutes. It minimises your windows and puts them back.
-  Your own AdeeboMeter, settings and history are never touched: the test copy keeps everything in a temporary folder.
+  Your own AdeeboMeter, settings and history are never touched: the test copies keep everything in a _test folder here.
   If your AdeeboMeter is running, the script asks before closing it and starts it again at the end.
 
   At the end you get one zip on your Desktop: AdeeboMeter-test-results-<date>.zip. Send that zip back.
@@ -26,7 +27,7 @@ $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $exeSrc = Join-Path $here 'AdeeboMeter.exe'
 if (-not (Test-Path $exeSrc)) { Write-Host "AdeeboMeter.exe isn't next to this script ($here)." -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$work = Join-Path $env:TEMP "AdeeboMeter-test-$stamp"
+$work = Join-Path $here "_test-$stamp"   # next to the script, not in %TEMP% - new programs started from %TEMP% look suspicious to antivirus
 $out = Join-Path $work 'results'
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 $logFile = Join-Path $out 'results.txt'
@@ -90,12 +91,29 @@ Say "AdeeboMeter test run $stamp"
 Say ("Windows " + [Environment]::OSVersion.Version + ", PowerShell " + $PSVersionTable.PSVersion + ", scaling " + [math]::Round($dpi / 96 * 100) + "%, screens: " + (([System.Windows.Forms.Screen]::AllScreens | ForEach-Object { $_.Bounds.Width.ToString() + 'x' + $_.Bounds.Height + $(if ($_.Primary) { ' (main)' } else { '' }) }) -join ', ') + ", touch: " + $(if (([W]::GetSystemMetrics(94) -band 0x40) -ne 0) { 'yes' } else { 'no' }))
 Say ("AdeeboMeter.exe " + (Get-Item $exeSrc).VersionInfo.FileVersion + ", " + [math]::Round((Get-Item $exeSrc).Length / 1MB, 1) + " MB, SHA-256 " + (Get-FileHash $exeSrc -Algorithm SHA256).Hash)
 
+# ---------------------------------------------------------------- 0. Defender's opinion of the exe, before anything runs
+$mp = Join-Path $env:ProgramFiles 'Windows Defender\MpCmdRun.exe'
+if (Test-Path $mp) {
+    Say 'Step 0: Windows Defender scans AdeeboMeter.exe (scan only)...' 'Yellow'
+    $scan = & $mp -Scan -ScanType 3 -File $exeSrc -DisableRemediation 2>&1 | Out-String
+    Set-Content -Path (Join-Path $out 'defender-scan.txt') -Value $scan -Encoding UTF8
+    if ($LASTEXITCODE -eq 2) {
+        Result 'Windows Defender scan' $false (($scan -split "`n" | Where-Object { $_ -match 'Threat|found' } | Select-Object -First 3) -join ' ')
+        Say 'Defender flags this exe - stopping here (nothing was run). Send the zip from your Desktop.' 'Red'
+        $results | Export-Csv -Path (Join-Path $out 'results.csv') -NoTypeInformation -Encoding UTF8
+        $zip0 = Join-Path ([Environment]::GetFolderPath('Desktop')) "AdeeboMeter-test-results-$stamp.zip"; Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip0 -Force
+        Write-Host "Results: $zip0" -ForegroundColor Green; Read-Host 'Press Enter to close'; exit 2
+    }
+    Result 'Windows Defender scan' ($LASTEXITCODE -eq 0) $(if ($LASTEXITCODE -ne 0) { "MpCmdRun exit $LASTEXITCODE" } else { 'no threats' })
+} else { Note 'Windows Defender scan' 'MpCmdRun.exe not found - another antivirus may be in charge' }
+
 # ---------------------------------------------------------------- 1. the self-test
 if (-not $SkipSelfTest) {
     Say 'Step 1 of 3: the self-test (up to 10 minutes)...' 'Yellow'
     $st = New-TestCopy (Join-Path $work 'selftest') $null
     $rc = Run-Timed $st '--selftest' 600
-    $rep = Get-ChildItem (Split-Path $st) -Recurse -Filter 'AdeeboMeter-selftest.txt' -ErrorAction SilentlyContinue | Select-Object -First 1
+    $rep = Get-ChildItem (Split-Path $st), (Join-Path $env:LOCALAPPDATA 'AdeeboMeter') -Recurse -Filter 'AdeeboMeter-selftest.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-15) } | Select-Object -First 1
+    if (-not (Test-Path $st)) { Result 'Self-test copy' $false 'the test copy of AdeeboMeter.exe is gone - antivirus removed it?' }
     if ($rep) { Copy-Item $rep.FullName (Join-Path $out 'selftest.txt'); $fails = @(Select-String -Path $rep.FullName -Pattern '^FAIL' ).Count; Result 'Self-test' ($fails -eq 0) ("$fails failed" + $(if ($rc -eq -999) { ', stopped after 10 minutes' } else { '' })) }
     else { Result 'Self-test' $false "no report (exit code $rc)" }
     Get-ChildItem (Split-Path $st) -Filter 'AdeeboMeter.log*' -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName (Join-Path $out ('selftest-' + $_.Name)) }
@@ -203,17 +221,6 @@ if (-not $SkipLive) {
             Result 'Two finger taps do not unlock it' (-not (Seen $m 'unlock')) $(if (Seen $m 'touch cursor True') { 'Windows flagged the pointer as touch' } else { 'touch flag not seen - the two-step rule held it' })
             GoHome
         } else { Note 'Finger taps' 'Windows did not allow simulated touch here - test by hand on a touchscreen' }
-
-        # --- Ctrl held alone unlocks; Ctrl with another key doesn't (small moves keep resting from unlocking it first)
-        $sink.Activate(); $r = Rect; $m = Mark; Arrive $r; Key 0x11 $true
-        for ($i = 0; $i -lt 4; $i++) { [void][W]::SetCursorPos($r.CX + 8 * ($i % 2), $r.CY); Pump 300 }
-        Key 0x11 $false; Result 'Ctrl held alone on it unlocks it (0.7 s)' (Seen $m 'unlock ctrl') ''
-        GoHome
-        $sink.Activate(); $r = Rect; $m = Mark; Arrive $r; Key 0x11 $true; Pump 200; Tap 0x43; Pump 60; Tap 0x56
-        for ($i = 0; $i -lt 4; $i++) { [void][W]::SetCursorPos($r.CX + 8 * ($i % 2), $r.CY); Pump 300 }
-        Key 0x11 $false
-        Result 'Ctrl+C, Ctrl+V over it do not unlock it' (-not (Seen $m 'unlock ctrl')) $(if (Seen $m 'ctrl spoiled') { 'seen as a shortcut' } else { '' })
-        GoHome
 
         # --- Esc locks
         $sink.Activate(); $m = Mark; Arrive (Rect)
