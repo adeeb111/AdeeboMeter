@@ -23,17 +23,34 @@ namespace AdeeboMeter
         public static readonly string[] TileStyles = { "markets", "sports", "data", "weather", "mine" };
         public static bool IsTile(string st) { return Array.IndexOf(TileStyles, st) >= 0 || st == "recap"; }
         static volatile string style = "", why = "", held = "";
-        static string backKey = "", curKey = "";
+        static string backKey = "", curKey = ""; static DateTime backSeen = DateTime.MinValue; static bool loaded;
         // what the corner shows now: a takeover's preset, else yours
         public static string Effective { get { var h = held; if (h != "") return h; var s = style; return s == "" ? Cfg.WidgetStyle : s; } }
         public static string Why { get { return held != "" ? "held" : why; } }
         public static bool Holding { get { return held != ""; } }
         public static bool TakenOver { get { return style != ""; } }
-        public static bool UseGamePos { get { return (why == "game" || why == "recap") && Cfg.WPosGame != ""; } }
+        // the gaming spot is for the game card only - not its recap, not a hold of something else (hunters12 M-3, ML-4)
+        public static bool UseGamePos { get { return why == "game" && (held == "" || held == "gamer") && Cfg.WPosGame != ""; } }
 
-        public static void Hold() { held = Effective; }
-        public static void Release() { held = ""; }
-        public static void Back() { if (curKey != "") backKey = curKey; held = ""; }
+        // Hold pins the card you see: on Auto it's the card Auto is showing right now (M-3), and a held recap keeps its own
+        // game (M-7). A hold and a "Back to my widget" are kept in the settings, so a restart keeps them.
+        public static void Hold(bool call) { var e = Effective; held = e == "auto" ? Draw.Layout(call) : e; Save(); }
+        public static void Release() { held = ""; Save(); }
+        public static void Back() { if (curKey != "") { backKey = curKey; backSeen = DateTime.UtcNow; } held = ""; Save(); }
+        static void Save() { Cfg.WHeld = held == "recap" ? "" : held; Cfg.WBack = backKey; Cfg.Save(); }
+        // one short line for the card: why this isn't your own preset right now (hunters12 ML-3 / ML-5)
+        public static string WhyLine()
+        {
+            switch (Why)
+            {
+                case "held": return L.T("Held - tray › Stop holding lets it go");
+                case "plan": return L.T("Day plan") + " · " + L.T(SlotOf(DateTime.Now) == "m" ? "morning" : SlotOf(DateTime.Now) == "w" ? "working hours" : SlotOf(DateTime.Now) == "e" ? "evening" : "night") + " - " + L.T("tray › Back to my widget");
+                case "match": return L.T("Your team is playing - back to yours 5 min after the end");
+                case "weather": return L.T("Rain or snow within the hour - back to yours once it starts");
+                case "recap": return L.T("Back to yours in a minute");
+            }
+            return "";
+        }
 
         // ---------- the ladder (UI thread, each tick: cheap - the heavy looks are throttled)
         static string lastPlaying; static DateTime recapLook = DateTime.MinValue, recapUntil = DateTime.MinValue, nextLook = DateTime.MinValue, battAt = DateTime.MinValue;
@@ -43,25 +60,29 @@ namespace AdeeboMeter
         public static void Tick(Snap s)
         {
             var now = DateTime.UtcNow;
+            if (!loaded) { loaded = true; held = Known(Cfg.WHeld) && Cfg.WHeld != "auto" ? Cfg.WHeld : ""; backKey = Cfg.WBack ?? ""; backSeen = now; }
             if ((now - battAt).TotalSeconds > 30) { battAt = now; try { onBattery = SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline; } catch (Exception e) { if (e is OutOfMemoryException) throw; onBattery = false; } }
             // a game: from any preset; when it closes, its recap for a minute
             string playing = Cfg.GameWidget ? GamePing.Me.Playing : null; bool game = playing != null && Draw.HasGamerTarget();
             // the recap: the session that just closed (it may be filed a moment after the game goes - looked for 15 s)
             if (lastPlaying != null && GamePing.Me.Playing == null) recapLook = now.AddSeconds(15);
-            if (now < recapLook) { var ls = GamePing.Me.LastSession; if (ls != null && !ls.Open && ls != RecapOf && (DateTime.Now - ls.End).TotalSeconds < 60 && (ls.End - ls.Start).TotalMinutes >= 2) { RecapOf = ls; recapUntil = now.AddSeconds(60); recapLook = DateTime.MinValue; } }
+            if (now < recapLook && held != "recap") { var ls = GamePing.Me.LastSession; if (ls != null && !ls.Open && ls != RecapOf && (DateTime.Now - ls.End).TotalSeconds < 60 && (ls.End - ls.Start).TotalMinutes >= 2) { RecapOf = ls; recapUntil = now.AddSeconds(60); recapLook = DateTime.MinValue; } }
             lastPlaying = playing;
-            if (now >= nextLook) { nextLook = now.AddSeconds(5); cMatch = MatchNow(now); cWeather = RainSoon(now) ? "weather" : ""; }
-            string st = "", w = "", key = "";
-            if (game) { st = "gamer"; w = "game"; key = "game|" + playing; }
-            else if (now < recapUntil && RecapOf != null) { st = "recap"; w = "recap"; key = "recap|" + RecapOf.Start.Ticks; }
-            else if (!onBattery && cMatch != "") { st = "sports"; w = "match"; key = "match|" + cMatch; }
-            else if (!onBattery && cWeather != "") { st = "weather"; w = "weather"; key = "weather|" + DateTime.Now.ToString("yyyyMMddHH", CultureInfo.InvariantCulture); }
-            else if (!onBattery) { var p = PlanNow(DateTime.Now); if (p != "" && p != Cfg.WidgetStyle) { st = p; w = "plan"; key = "plan|" + p; } }
-            if (key != "" && key == backKey) { st = ""; w = ""; }   // sent away: until this takeover ends
-            if (key != backKey && backKey != "" && !SameKind(key, backKey)) backKey = "";
-            curKey = st == "" ? "" : key; style = st; why = w;
+            if (now >= nextLook) { nextLook = now.AddSeconds(5); cMatch = MatchNow(now); var wet = RainSoon(now); cWeather = wet == DateTime.MinValue ? "" : wet.Ticks.ToString(CultureInfo.InvariantCulture); }
+            // every rung that wants the corner, best first; one sent away is skipped (and the next one down gets it) until its own
+            // event is over - not until something else happens to show (hunters12 M-2 / L-5: the weather's key is its rain, not the hour)
+            var rungs = new List<string[]>();
+            if (game) rungs.Add(new[] { "gamer", "game", "game|" + playing });
+            if (now < recapUntil && RecapOf != null) rungs.Add(new[] { "recap", "recap", "recap|" + RecapOf.Start.Ticks });
+            if (!onBattery && cMatch != "") rungs.Add(new[] { "sports", "match", "match|" + cMatch });
+            if (!onBattery && cWeather != "") rungs.Add(new[] { "weather", "weather", "weather|" + cWeather });
+            if (!onBattery) { var p = PlanNow(DateTime.Now); if (p != "") rungs.Add(new[] { p, "plan", "plan|" + SlotOf(DateTime.Now) + "|" + p }); }
+            if (backKey != "") { if (rungs.Any(r => r[2] == backKey)) backSeen = now; else if ((now - backSeen).TotalSeconds > 20) { backKey = ""; Save(); } }   // gone for 20 s (a feed gap is shorter): forgotten
+            var win = rungs.FirstOrDefault(r => r[2] != backKey && r[0] != Cfg.WidgetStyle);   // L-1: a takeover that is your own preset changes nothing
+            string st = win == null ? "" : win[0], w = win == null ? "" : win[1], key = win == null ? "" : win[2];
+            if (win == null && game) w = "game";   // your own preset is Gamer: still the gaming spot
+            curKey = key; style = st; why = w;
         }
-        static bool SameKind(string a, string b) { return a != "" && b != "" && a == b; }
 
         // ---------- sports: the pinned game, else a followed team live in a ticked sport; the final stays 5 minutes
         public static string PinKey(Sports.Game g) { return g.Sport + "|" + g.Home + "|" + g.Away + "|" + g.StartUtc.Ticks.ToString(CultureInfo.InvariantCulture); }
@@ -75,6 +96,7 @@ namespace AdeeboMeter
         {
             List<Sports.Game> gs; lock (Sports.k) gs = Sports.Games.ToList();
             var pin = Cfg.WPinGame == "" ? null : gs.FirstOrDefault(g => PinKey(g) == Cfg.WPinGame && (g.State == "live" || g.State == "done"));
+            if (pin != null && pin.State == "done" && matchKey == "" && (DateTime.UtcNow - pin.StartUtc).TotalHours < 6) matchKey = PinKey(pin);   // ML-7: started after the whistle - its final still shows once
             if (pin != null && (pin.State == "live" || PinKey(pin) == matchKey)) return pin;
             var live = gs.Where(g => g.State == "live" && Wanted(g)).OrderBy(g => g.StartUtc).FirstOrDefault();
             if (live != null) return live;
@@ -95,11 +117,13 @@ namespace AdeeboMeter
             matchKey = ""; return "";
         }
         // ---------- weather: rain, snow or a storm starting within the hour (forecast hours), while it isn't already
-        public static bool RainSoon(DateTime now)
+        // the hour the rain starts (UTC), or MinValue - the same rain keeps the same key across the clock's hour
+        public static DateTime RainSoon(DateTime now)
         {
-            if (!Cfg.WRainSoon || !Weather.Active) return false;
-            var cur = Weather.Now(now); string ck = Weather.Kind(cur); if (ck == "rain" || ck == "snow" || ck == "storm") return false;
-            return Weather.Ahead(now, 3).Any(h => h.Utc > now && (h.Utc - now).TotalMinutes <= 60 && (Weather.Kind(h) == "rain" || Weather.Kind(h) == "snow" || Weather.Kind(h) == "storm"));
+            if (!Cfg.WRainSoon || !Weather.Active) return DateTime.MinValue;
+            var cur = Weather.Now(now); string ck = Weather.Kind(cur); if (ck == "rain" || ck == "snow" || ck == "storm") return DateTime.MinValue;
+            var h = Weather.Ahead(now, 3).FirstOrDefault(z => z.Utc > now && (z.Utc - now).TotalMinutes <= 60 && (Weather.Kind(z) == "rain" || Weather.Kind(z) == "snow" || Weather.Kind(z) == "storm"));
+            return h == null ? DateTime.MinValue : h.Utc;
         }
         // ---------- the day plan: four slots, each a preset or nothing - "m=weather;w=;e=sports;n="
         public static readonly string[] Slots = { "m", "w", "e", "n" };
@@ -127,9 +151,10 @@ namespace AdeeboMeter
         public static void Feeds()
         {
             var now = DateTime.UtcNow; if ((now - feedsAt).TotalSeconds < 15) return; feedsAt = now;
-            string st = Effective;
-            var tiles = st == "mine" ? Mine() : new List<string>();
-            bool marketsUp = st == "markets" || tiles.Any(t => t.StartsWith("market", StringComparison.Ordinal));
+            // ML-3: what shows now and your own preset both stay fresh - a long takeover doesn't leave your card hours old
+            string st = Effective, mineSt = Cfg.WidgetStyle;
+            var tiles = st == "mine" || mineSt == "mine" ? Mine() : new List<string>();
+            bool marketsUp = st == "markets" || mineSt == "markets" || tiles.Any(t => t.StartsWith("market", StringComparison.Ordinal));
             if (marketsUp && !Policy.NoOnline)
             {
                 var syms = Syms(); var et = Trading.EasternNow();
@@ -139,9 +164,9 @@ namespace AdeeboMeter
                 if (fmp.Count > 0 && (open || !haveAll)) MarketData.FetchWidget(fmp, null);   // closed: one look for the last price, then nothing
                 foreach (var fx in syms.Where(z => z.StartsWith("FX:", StringComparison.Ordinal))) { MarketData.Load(fx); if (MarketData.Stale(fx)) MarketData.Fetch(fx, null); }
             }
-            if ((Cfg.WPinGame != "" || Kinds().Count > 0 || st == "sports" || tiles.Contains("team")) && Sports.Teams().Count + (Cfg.WPinGame != "" ? 1 : 0) > 0)
-                Sports.WidgetTick(g => Wanted(g) || ((st == "sports" || tiles.Contains("team")) && Sports.Mine(g)));
-            Weather.Hourly = st == "weather" || Cfg.WRainSoon || tiles.Contains("weather") || Slots.Any(z => PlanGet(z) == "weather");
+            if ((Cfg.WPinGame != "" || Kinds().Count > 0 || st == "sports" || mineSt == "sports" || tiles.Contains("team")) && Sports.Teams().Count + (Cfg.WPinGame != "" ? 1 : 0) > 0)
+                Sports.WidgetTick(g => Wanted(g) || ((st == "sports" || mineSt == "sports" || tiles.Contains("team")) && Sports.Mine(g)));
+            Weather.Hourly = st == "weather" || mineSt == "weather" || Cfg.WRainSoon || tiles.Contains("weather") || Slots.Any(z => PlanGet(z) == "weather");
         }
         public static List<string> Syms() { return (Cfg.WSyms ?? "").Split(',').Select(z => z.Trim()).Where(z => z != "" && (z.StartsWith("FX:", StringComparison.Ordinal) ? MarketData.KnownFx(z.Substring(3)) : MarketData.ValidSym(z))).Distinct().Take(4).ToList(); }
         public static string CleanSyms(string v)
@@ -157,8 +182,9 @@ namespace AdeeboMeter
             new[] { "cpu", "CPU" }, new[] { "mem", "Memory" }, new[] { "disk", "Disk" }, new[] { "apps", "Busiest app" },
             new[] { "today", "Data today" }, new[] { "month", "Data this month" }, new[] { "game", "Game ping" }, new[] { "weather", "Weather" },
             new[] { "market1", "First market" }, new[] { "market2", "Second market" }, new[] { "team", "My team" }, new[] { "clock", "Time" } };
-        public static List<string> Mine() { return (Cfg.WMine ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); }
-        public static string CleanMine(string v) { var l = (v ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); return l.Count == 0 ? "down,ping,weather,market1" : string.Join(",", l); }
+        // "none": every row set to (nothing) - an empty My widget, not the defaults back (hunters12 ML-2)
+        public static List<string> Mine() { if (Cfg.WMine == "none") return new List<string>(); return (Cfg.WMine ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); }
+        public static string CleanMine(string v) { if (v == "none") return "none"; var l = (v ?? "").Split(',').Select(z => z.Trim()).Where(z => Fields.Any(f => f[0] == z)).Distinct().Take(6).ToList(); return l.Count == 0 ? "down,ping,weather,market1" : string.Join(",", l); }
 
         // ---------- "since you looked": what changed while you weren't hovering (built when a hover starts)
         static DateTime lookAt = DateTime.MinValue; static Dictionary<string, double> lookPx = new Dictionary<string, double>(); static Dictionary<string, string> lookScore = new Dictionary<string, string>(); static string lookWx = "";
@@ -212,7 +238,7 @@ namespace AdeeboMeter
                         var main = Corner.MatchGame(); List<Sports.Game> gs; lock (Sports.k) gs = Sports.Games.Where(Sports.Mine).ToList();
                         if (main != null) tiles.Add(GameTile(main, true));
                         foreach (var g in gs.Where(z => main == null || Corner.PinKey(z) != Corner.PinKey(main)).OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.State == "done" ? -z.StartUtc.Ticks : z.StartUtc.Ticks).Take(main == null ? 4 : 3)) tiles.Add(GameTile(g, false));
-                        if (tiles.Count == 0) tiles.Add(new Tile { Label = Sports.Teams().Count == 0 ? L.T("No teams followed yet") : L.T("No games today"), Sub = Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : "" });
+                        if (tiles.Count == 0) tiles.Add(!Cfg.Sports ? new Tile { Label = L.T("Sports is off"), Sub = L.T("Sports is off - turn it on from the Sports page") } : new Tile { Label = Sports.Teams().Count == 0 ? L.T("No teams followed yet") : L.T("No games today"), Sub = Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : "" });   // lifecycle L-6
                         return L.T("My teams");
                     }
                 case "data":
@@ -232,7 +258,7 @@ namespace AdeeboMeter
                         var now = DateTime.UtcNow; var h = Weather.Active ? Weather.Now(now) : null;
                         if (h == null) { tiles.Add(new Tile { Label = L.T("No forecast yet"), Sub = Cfg.WeatherOn ? L.T("It comes with the next look") : L.T("Turn Weather on in Settings › Weather") }); return L.T("Weather"); }
                         tiles.Add(new Tile { Label = Weather.PlaceName(), Value = Weather.Temp(h.Temp), Sub = L.T(Weather.Words(h.Code)), Big = true });
-                        var t = Weather.Text(now); int i = t == null ? -1 : t.IndexOf(" · ", StringComparison.Ordinal); if (i > 0) tiles.Add(new Tile { Label = L.T("Next"), Value = t.Substring(i + 3), Lv = Corner.RainSoon(now) ? 1 : 3 });
+                        var t = Weather.Text(now); int i = t == null ? -1 : t.IndexOf(" · ", StringComparison.Ordinal); if (i > 0) tiles.Add(new Tile { Label = L.T("Next"), Value = t.Substring(i + 3), Lv = Corner.RainSoon(now) != DateTime.MinValue ? 1 : 3 });
                         foreach (var a in Weather.Ahead(now, 12).Where(z => z.Utc > now).Where((z, k) => k % 3 == 2).Take(3))
                             tiles.Add(new Tile { Label = a.Utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h tt"), CultureInfo.CurrentCulture).ToLowerInvariant(), Value = Weather.TempShort(a.Temp) + (Weather.Words(a.Code) != "" ? " " + L.T(Weather.Words(a.Code)) : "") });
                         return L.T("Weather");
@@ -254,13 +280,16 @@ namespace AdeeboMeter
                     }
                 default:   // mine
                     foreach (var f in Corner.Mine()) { var t = FieldTile(f, s); if (t != null) tiles.Add(t); }
+                    if (tiles.Count == 0) tiles.Add(new Tile { Label = L.T("No readings picked"), Sub = L.T("Pick up to six in Settings › Widget") });
                     return L.T("My widget");
             }
         }
         static string AsOf()
         {
             DateTime last = DateTime.MinValue; lock (MarketData.k) foreach (var sym in Corner.Syms()) { MarketData.Quote q; if (MarketData.Quotes.TryGetValue(sym, out q) && q.When > last) last = q.When; }
-            return last == DateTime.MinValue ? "" : " · " + L.T("as of") + " " + last.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture);
+            if (last == DateTime.MinValue) return "";
+            var lt = last.ToLocalTime(); string tm = lt.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture);
+            return " · " + L.T("as of") + " " + (lt.Date == DateTime.Today ? tm : lt.ToString("ddd", CultureInfo.CurrentCulture) + " " + tm);   // display L-3: Friday's close says Friday
         }
         static Tile MarketTile(string sym, bool graph)
         {
@@ -278,7 +307,7 @@ namespace AdeeboMeter
             }
             MarketData.Quote q; List<double> h; lock (MarketData.k) { MarketData.Quotes.TryGetValue(sym, out q); MarketData.Hist.TryGetValue(sym, out h); h = h == null ? null : h.ToList(); }
             var tq = new Tile { Label = q != null && !string.IsNullOrEmpty(q.Name) ? Trunc(q.Name, 22) : sym.TrimStart('^') };
-            if (q == null) { tq.Value = "-"; tq.Sub = MarketData.HasQuoteKey() ? L.T("Waiting for the first price") : L.T("Needs your Financial Modeling Prep key (Settings › Markets)"); return tq; }
+            if (q == null) { tq.Value = "-"; tq.Sub = Policy.NoOnline ? L.T("Online lookups are off on this PC (your IT team's policy)") : MarketData.HasQuoteKey() ? L.T("Waiting for the first price") : L.T("Needs your Financial Modeling Prep key (Settings › Markets)"); return tq; }   // lifecycle L-5
             tq.Value = q.Price.ToString(q.Price >= 1000 ? "#,0" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(q.Pct) ? "" : "  " + Signed(q.Pct));
             tq.Tint = double.IsNaN(q.Pct) ? (Color?)null : q.Pct >= 0 ? Theme.LvText(0) : Theme.LvText(2);
             if (graph && h != null && h.Count >= 2) tq.Series = h.ToArray();
@@ -319,13 +348,13 @@ namespace AdeeboMeter
                         var v = GamePing.Me.Stat(t.Item1.Id, t.Item2).Window(60, 3600); double now = v.Length > 0 ? v[v.Length - 1] : double.NaN;
                         return new Tile { Label = t.Item1.Name, Value = Fmt(now, "0", " ms") };
                     }
-                case "weather": { var w = Weather.Active ? Weather.Text(DateTime.UtcNow) : null; return new Tile { Label = L.T("Weather"), Value = w ?? "-" }; }
+                case "weather": { var w = Weather.Active ? Weather.Text(DateTime.UtcNow) : null; return new Tile { Label = L.T("Weather"), Value = w ?? "-", Sub = w != null ? "" : Cfg.WeatherOn ? L.T("It comes with the next look") : L.T("Turn Weather on in Settings › Weather") }; }   // L-7
                 case "market1": case "market2": { var l = Corner.Syms(); int i = f == "market1" ? 0 : 1; return i < l.Count ? MarketTile(l[i], false) : new Tile { Label = L.T("Market"), Value = "-", Sub = L.T("Pick one in Settings › Widget") }; }
                 case "team":
                     {
                         List<Sports.Game> gs; lock (Sports.k) gs = Sports.Games.Where(Sports.Mine).ToList();
                         var g = gs.OrderBy(z => z.State == "live" ? 0 : z.State == "soon" ? 1 : 2).ThenBy(z => z.StartUtc).FirstOrDefault();
-                        return g == null ? new Tile { Label = L.T("My team"), Value = "-" } : GameTile(g, false);
+                        return g == null ? new Tile { Label = L.T("My team"), Value = "-", Sub = !Cfg.Sports ? L.T("Sports is off - turn it on from the Sports page") : Sports.Teams().Count == 0 ? L.T("Add your teams on the Sports page") : L.T("No games today") } : GameTile(g, false);   // L-7
                     }
                 case "clock": return new Tile { Label = DateTime.Now.ToString("ddd d MMM", CultureInfo.CurrentCulture), Value = DateTime.Now.ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : Tt("h:mm tt"), CultureInfo.CurrentCulture) };
             }
@@ -373,6 +402,10 @@ namespace AdeeboMeter
             string head = problem ? s.Headline : title;
             float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
             float subH = problem ? Measure(title, fSmall, (int)inner).Height + 2 * S : 0;
+            // hunters12 display ML-1: a value too wide for its row (a long forecast, a far place's "(your PC's time)") goes on its own
+            // line under the label, where it can wrap - never off the card's left edge over the label
+            foreach (var t in tiles)
+                if (t.Value != "" && Measure(t.Value, t.Big ? fName : fMono, 0).Width > inner * 0.62f) { t.Sub = t.Value + (string.IsNullOrEmpty(t.Sub) ? "" : " · " + t.Sub); t.Value = ""; }
             var hs = new List<float>();
             foreach (var t in tiles)
             {
@@ -405,6 +438,7 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(problem ? Theme.LvText(2) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), sf);
                 y += headH;
                 if (subH > 0) { g.DrawString(title, fSmall, muted, new RectangleF(pad, y + 2 * S, inner, subH), sf); y += subH; }
+                HintLine(g, pad, y, inner, wh); y += wh;   // L-6: under the heading, where the other cards have it
                 y += 8 * S;
                 using (var lp = new Pen(Theme.Line2))
                     for (int i = 0; i < tiles.Count; i++)
@@ -437,7 +471,6 @@ namespace AdeeboMeter
                     using (var nb = new SolidBrush(s.Level >= 1 && s.Level <= 2 ? Theme.LvText(s.Level) : Theme.Muted)) g.DrawString(net, fSmall, nb, new RectangleF(pad + 12 * S, y, inner - 12 * S, 18 * S), sf);
                     y += 18 * S;
                 }
-                HintLine(g, pad, y, inner, wh);
             }
             return bmp;
         }

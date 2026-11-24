@@ -685,7 +685,7 @@ namespace AdeeboMeter
         public static string ChipWords(Snap s)
         {
             string st = Style;
-            if (Corner.IsTile(st)) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            if (Corner.IsTile(st) && !(s.Level == 2 && !s.Waiting)) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }   // hunters12 display M-1: a network problem folds to the verdict, not a price
             if (!SpeedStyle && Layout(s.Call) == "gamer") { var w = GamerChip(); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
             return s.Chip;
         }
@@ -693,12 +693,12 @@ namespace AdeeboMeter
         {
             if (SpeedStyle) return SpeedChip(s, dwell);
             string words = ChipWords(s); var ts = Measure(words, fSmall, 0);
-            float ww = Layout(s.Call) == "everyday" ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
+            float ww = Layout(s.Call) == "everyday" && !Corner.IsTile(Style) ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); Theme.Stroke(g, r, H / 2f, Theme.Line, 1);
+                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); bool bad = s.Level == 2 && !s.Waiting; Theme.Stroke(g, r, H / 2f, bad ? Theme.Red : Theme.Line, bad ? 1.5f : 1);   /* hunters12 display M-1: a problem shows on the folded strip, not only in its 8 px dot */
                 float x = 9 * S;
                 if (Cfg.Buddy) { Buddy(g, new RectangleF(x - 2 * S, (H - 20 * S) / 2, 20 * S, 20 * S), s, s.Level == 0 && !s.Call); x += 36 * S; }   // folded and all quiet: asleep
                 else
@@ -744,6 +744,7 @@ namespace AdeeboMeter
             double now = v.Length > 0 ? v[v.Length - 1] : double.NaN, avg = GameStat.Avg(v), jit = GameStat.Jitter(v), loss = GameStat.Loss(v);
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;
+            Color gt = grade == "Competitive" ? Theme.LvText(0) : grade == "Casual" ? Theme.LvText(1) : grade == "Laggy" ? Theme.LvText(2) : Theme.Muted;   // H6-ML3: text in the grade's readable shade (4.5:1), the raw colour only for the wash and the graph
             Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.FirstOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);
             string head = last != null ? L.T("Spike") + " " + Math.Round(last.Ms) + " ms: " + L.T(last.Blame) + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? L.T(" is steady.") : grade == "Casual" ? L.T(" is playable.") : grade == "Laggy" ? L.T(" is laggy.") : "...");
             string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
@@ -765,13 +766,13 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, y, inner, wh); y += wh + 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
-                var bf = fCardNum; using (var bb = new SolidBrush(gc))
+                var bf = fCardNum; using (var bb = new SolidBrush(gt))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
                 var gp = new RectangleF(W - pad - Measure(gradeW, fTiny, 0).Width - 12 * S, y + 12 * S, Measure(gradeW, fTiny, 0).Width + 12 * S, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(gradeW, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gt)) g.DrawString(gradeW, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
@@ -870,7 +871,7 @@ namespace AdeeboMeter
             // words, in the verdict's place and colour; Fun lines off, or nothing to say, it's the plain verdict ("All quiet")
             bool replay = ReferenceEquals(s, AppCtx.Rewind);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */
             string quip = replay ? "" : Mood.Quip(s), season = replay ? "" : Mood.SeasonLine(s);
-            string head = quip != "" ? quip : season != "" ? season : s.Headline;
+            string head = s.Level == 2 && !s.Waiting ? s.Headline : quip != "" ? quip : season != "" ? season : s.Headline;   // hunters12 display L-1: a problem keeps the plain verdict
             float headH = Measure(head, fHead, (int)inner).Height, quipH = HintLineH(inner);
             float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure(L.T("Why: ") + s.Hint, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();

@@ -112,9 +112,10 @@ namespace AdeeboMeter
             int lv, at = Worst(s, out lv);
             switch (Season())
             {
-                case "halloween": return at < 0 ? "🎃 No packet ghosts tonight." : "👻 Packet ghosts detected - " + (at == 1 ? "haunting your Wi-Fi." : at == 0 ? "possessing your PC." : "lurking past your router.");
-                case "winter": return at < 0 ? "❄ Warm and cosy on the network." : "❄ Cold start latency - " + (at == 1 ? "your Wi-Fi needs a scarf." : "something's frozen up the line.");
-                case "newyear": return at < 0 ? "🎆 A clean network to start the year." : "🎆 New year, same " + (at == 1 ? "Wi-Fi" : "provider") + ".";
+                // hunters12 display ML-2: whole sentences, translated, and no emoji in the text (the app's font has none - they drew as a gap)
+                case "halloween": return L.T(at < 0 ? "No packet ghosts tonight." : at == 1 ? "Packet ghosts detected - haunting your Wi-Fi." : at == 0 ? "Packet ghosts detected - possessing your PC." : "Packet ghosts detected - lurking past your router.");
+                case "winter": return L.T(at < 0 ? "Warm and cosy on the network." : at == 1 ? "Cold start latency - your Wi-Fi needs a scarf." : "Cold start latency - something's frozen up the line.");
+                case "newyear": return L.T(at < 0 ? "A clean network to start the year." : at == 1 ? "New year, same Wi-Fi." : "New year, same provider.");
                 default: return "";
             }
         }

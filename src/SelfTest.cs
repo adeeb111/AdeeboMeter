@@ -848,6 +848,8 @@ namespace AdeeboMeter
                 if (Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft") != "AAPL,SHOP.TO,^GSPC,FX:USD") bad.Add("symbols: " + Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft"));
                 if (Corner.CleanMine("cpu,nope,cpu,ping") != "cpu,ping") bad.Add("readings: " + Corner.CleanMine("cpu,nope,cpu,ping"));
                 if (Corner.CleanMine("") != "down,ping,weather,market1") bad.Add("empty readings have no default");
+                if (Corner.CleanMine("none") != "none") bad.Add("an emptied My widget came back with the defaults");   // hunters12 ML-2
+                { string kp = Cfg.WPos; try { Cfg.WPos = "tr|40|30"; if (WidgetPos.Pick(2) != "tr|40|30") bad.Add("picking its own corner lost the distance"); if (WidgetPos.Pick(3) != "tl|0|0") bad.Add("another corner kept the distance"); if (WidgetPos.NormalCornerIndex != 2) bad.Add("normal corner index"); } finally { Cfg.WPos = kp; } }   // hunters12 L-1 / M-6
                 if (Corner.CleanPlan("e=sports;m=bogus;w=weather") != "m=;w=weather;e=sports;n=") bad.Add("plan: " + Corner.CleanPlan("e=sports;m=bogus;w=weather"));
                 if (Corner.SlotOf(new DateTime(2026, 1, 1, 8, 0, 0)) != "m" || Corner.SlotOf(new DateTime(2026, 1, 1, 12, 0, 0)) != "w" || Corner.SlotOf(new DateTime(2026, 1, 1, 20, 0, 0)) != "e" || Corner.SlotOf(new DateTime(2026, 1, 1, 2, 0, 0)) != "n") bad.Add("day slots");
                 if (Corner.AllStyles.Length != 13) bad.Add("not 13 presets");

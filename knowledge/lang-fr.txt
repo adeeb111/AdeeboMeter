@@ -5592,3 +5592,34 @@ your card + its code	votre carte + son code
 the card	la carte
 same mix, same key - same code? You're in	même mélange, même clé - même code? Vous y êtes
 Hall of Fame	Temple de la renommée
+Back to yours in a minute	Retour au vôtre dans une minute
+Bottom right, the default. To move it, rest the mouse still on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	En bas à droite, par défaut. Pour le déplacer, laissez la souris immobile dessus un instant ou maintenez Ctrl au-dessus, puis faites-le glisser. Un clic ouvre AdeeboMeter.
+Day plan	Plan de la journée
+Held - tray › Stop holding lets it go	Gardé - zone de notification › Arrêter de garder le libère
+Moved by you. Picking the corner it's in keeps the distance; another corner puts it right in that corner. Reset puts it back in the bottom-right corner of the main screen.	Déplacé par vous. Choisir le coin où il est garde la distance; un autre coin le place tout au bord de ce coin. Réinitialiser le remet en bas à droite de l'écran principal.
+No readings picked	Aucune mesure choisie
+Off: no move hints. Moving still works the same way; Since you looked has its own switch.	Désactivé : pas de conseils de déplacement. Le déplacement fonctionne toujours pareil; Depuis votre dernier coup d'œil a son propre interrupteur.
+On another screen - see Widget on screen.	Sur un autre écran - voyez Widget sur l'écran.
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	Activé : le widget disparaît quand la souris approche, il ne cache donc jamais ce que vous pointez - sauf quand une fenêtre couvre son coin, où rester dessus l'ouvre toujours. Pour le déplacer, maintenez Ctrl au-dessus de son emplacement, ou passez par la zone de notification : Widget d'angle > Déplacer le widget.
+Online lookups are off on this PC (your IT team's policy)	Les recherches en ligne sont désactivées sur ce PC (politique de votre service informatique)
+Phone linked	Téléphone lié
+Pick up to six in Settings › Widget	Choisissez-en jusqu'à six dans Paramètres › Widget
+Rain or snow within the hour - back to yours once it starts	Pluie ou neige dans l'heure - retour au vôtre une fois commencée
+Sports is off	Les sports sont désactivés
+Sports is off - turn it on from the Sports page	Les sports sont désactivés - activez-les depuis la page Sports
+Which screen the corner widget sits on. If that screen is unplugged, it goes back to the main one.	L'écran où se trouve le widget d'angle. Si cet écran est débranché, il revient sur l'écran principal.
+Your team is playing - back to yours 5 min after the end	Votre équipe joue - retour au vôtre 5 min après la fin
+tray › Back to my widget	zone de notification › Revenir à mon widget
+morning	matin
+working hours	heures de travail
+night	nuit
+No packet ghosts tonight.	Aucun fantôme de paquet ce soir.
+Packet ghosts detected - haunting your Wi-Fi.	Fantômes de paquets détectés - ils hantent votre Wi-Fi.
+Packet ghosts detected - possessing your PC.	Fantômes de paquets détectés - ils possèdent votre PC.
+Packet ghosts detected - lurking past your router.	Fantômes de paquets détectés - ils rôdent après votre routeur.
+Warm and cosy on the network.	Bien au chaud sur le réseau.
+Cold start latency - your Wi-Fi needs a scarf.	Latence de démarrage à froid - votre Wi-Fi a besoin d'un foulard.
+Cold start latency - something's frozen up the line.	Latence de démarrage à froid - quelque chose a gelé sur la ligne.
+A clean network to start the year.	Un réseau propre pour commencer l'année.
+New year, same Wi-Fi.	Nouvelle année, même Wi-Fi.
+New year, same provider.	Nouvelle année, même fournisseur.

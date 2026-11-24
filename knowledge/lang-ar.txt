@@ -5580,3 +5580,34 @@ Day plan: working hours (9-17)	خطة اليوم: ساعات العمل (9-17)
 Day plan: evening (17-23)	خطة اليوم: المساء (17-23)
 Day plan: night (23-7)	خطة اليوم: الليل (23-7)
 Since you looked	منذ آخر نظرة
+Back to yours in a minute	العودة إلى أداتك خلال دقيقة
+Bottom right, the default. To move it, rest the mouse still on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	أسفل اليمين، وهو الافتراضي. لنقلها، أبقِ الفأرة ثابتة فوقها لحظة أو اضغط Ctrl مع وضع الفأرة فوقها، ثم اسحبها. النقر يفتح AdeeboMeter.
+Day plan	خطة اليوم
+Held - tray › Stop holding lets it go	مثبّتة - شريط المهام › إيقاف التثبيت يحررها
+Moved by you. Picking the corner it's in keeps the distance; another corner puts it right in that corner. Reset puts it back in the bottom-right corner of the main screen.	نقلتَها بنفسك. اختيار الزاوية التي هي فيها يحافظ على المسافة؛ وزاوية أخرى تضعها في تلك الزاوية تمامًا. إعادة الضبط تعيدها إلى أسفل يمين الشاشة الرئيسية.
+No readings picked	لم تُختر قراءات
+Off: no move hints. Moving still works the same way; Since you looked has its own switch.	معطّل: لا تلميحات للنقل. النقل يعمل بالطريقة نفسها؛ ولـ«منذ آخر نظرة» مفتاحه الخاص.
+On another screen - see Widget on screen.	على شاشة أخرى - انظر الأداة على الشاشة.
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	مفعّل: تختفي الأداة عند اقتراب الفأرة، فلا تغطي أبدًا ما تشير إليه - إلا عندما تغطي نافذة زاويتها، حيث يفتحها البقاء فوقها. لنقلها، اضغط Ctrl مع وضع الفأرة فوق مكانها، أو استخدم أيقونة شريط المهام: أداة الزاوية > نقل الأداة.
+Online lookups are off on this PC (your IT team's policy)	عمليات البحث عبر الإنترنت معطّلة على هذا الحاسوب (سياسة فريق تقنية المعلومات)
+Phone linked	الهاتف مرتبط
+Pick up to six in Settings › Widget	اختر حتى ست في الإعدادات › الأداة
+Rain or snow within the hour - back to yours once it starts	مطر أو ثلج خلال الساعة - العودة إلى أداتك عند بدئه
+Sports is off	الرياضة معطّلة
+Sports is off - turn it on from the Sports page	الرياضة معطّلة - فعّلها من صفحة الرياضة
+Which screen the corner widget sits on. If that screen is unplugged, it goes back to the main one.	الشاشة التي توجد عليها أداة الزاوية. إن فُصلت تلك الشاشة، تعود إلى الشاشة الرئيسية.
+Your team is playing - back to yours 5 min after the end	فريقك يلعب - العودة إلى أداتك بعد 5 دقائق من النهاية
+tray › Back to my widget	شريط المهام › العودة إلى أداتي
+morning	الصباح
+working hours	ساعات العمل
+night	الليل
+No packet ghosts tonight.	لا أشباح حزم الليلة.
+Packet ghosts detected - haunting your Wi-Fi.	رُصدت أشباح حزم - تسكن شبكة Wi-Fi لديك.
+Packet ghosts detected - possessing your PC.	رُصدت أشباح حزم - تتلبّس حاسوبك.
+Packet ghosts detected - lurking past your router.	رُصدت أشباح حزم - تتربص بعد الراوتر.
+Warm and cosy on the network.	دافئ ومريح على الشبكة.
+Cold start latency - your Wi-Fi needs a scarf.	تأخر البداية الباردة - شبكة Wi-Fi تحتاج إلى وشاح.
+Cold start latency - something's frozen up the line.	تأخر البداية الباردة - شيء ما تجمّد على الخط.
+A clean network to start the year.	شبكة نظيفة لبداية العام.
+New year, same Wi-Fi.	عام جديد، نفس Wi-Fi.
+New year, same provider.	عام جديد، نفس المزوّد.

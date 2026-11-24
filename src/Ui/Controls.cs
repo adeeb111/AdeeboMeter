@@ -76,6 +76,7 @@ namespace AdeeboMeter
             if (!IsHandleCreated || TakesClicks == !through) return;
             int ex = Native.GetWindowLong(Handle, -20);
             Native.SetWindowLong(Handle, -20, through ? ex | 0x20 : ex & ~0x20);
+            Native.SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020);   /* hunters12 L-10: NOSIZE NOMOVE NOZORDER NOACTIVATE FRAMECHANGED - the new style takes now */
             TakesClicks = !through;
         }
         // a drag: move the window without drawing it again

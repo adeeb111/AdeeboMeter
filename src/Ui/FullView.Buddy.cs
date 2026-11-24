@@ -201,7 +201,7 @@ namespace AdeeboMeter
         {
             // bug-hunt L-146: "example" or live is decided now, not by the last picture drawn - live numbers replace the example at once
             var snapNow = snap; bool exampleNow = snapNow == null || double.IsNaN(snapNow.Down) || snapNow.DownHist == null || snapNow.DownHist.Length < 5;
-            string key = exampleNow + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
+            string key = exampleNow + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious + "|" + Cfg.WSyms + "|" + Cfg.WMine + "|" + Cfg.WSportKinds + "|" + Cfg.WPinGame + "|" + Cfg.WPlan;   // AM-CG-200; hunters12 L-7: the new presets' choices too
             if (key != wpicsKey || (DateTime.Now - wpicsAt).TotalSeconds > 10) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); wpicsKey = key; wpicsAt = DateTime.Now; }
             Bitmap bm; string k = style + (card ? "|c" : "|s");
             if (!wpics.TryGetValue(k, out bm)) { try { bm = Draw.Preview(PreviewSnap(), style, card); } catch (Exception e) { Program.Log("widget preview " + style + ": " + e.Message); bm = null; } wpics[k] = bm; }

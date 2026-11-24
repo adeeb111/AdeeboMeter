@@ -5580,3 +5580,34 @@ Day plan: working hours (9-17)	Plan del día: horario laboral (9-17)
 Day plan: evening (17-23)	Plan del día: tarde (17-23)
 Day plan: night (23-7)	Plan del día: noche (23-7)
 Since you looked	Desde la última vez que miraste
+Back to yours in a minute	Vuelve al tuyo en un minuto
+Bottom right, the default. To move it, rest the mouse still on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	Abajo a la derecha, la opción predeterminada. Para moverlo, deja el ratón quieto encima un momento o mantén Ctrl sobre él y arrástralo. Un clic abre AdeeboMeter.
+Day plan	Plan del día
+Held - tray › Stop holding lets it go	Mantenido - bandeja › Dejar de mantener lo suelta
+Moved by you. Picking the corner it's in keeps the distance; another corner puts it right in that corner. Reset puts it back in the bottom-right corner of the main screen.	Movido por ti. Elegir la esquina en la que está mantiene la distancia; otra esquina lo pone justo en esa esquina. Restablecer lo devuelve abajo a la derecha de la pantalla principal.
+No readings picked	No hay lecturas elegidas
+Off: no move hints. Moving still works the same way; Since you looked has its own switch.	Desactivado: sin consejos para mover. Moverlo sigue funcionando igual; Desde la última vez que miraste tiene su propio interruptor.
+On another screen - see Widget on screen.	En otra pantalla - mira Widget en la pantalla.
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	Activado: el widget desaparece cuando se acerca el ratón, así nunca tapa lo que señalas - salvo cuando una ventana cubre su esquina, donde quedarse encima aún lo abre. Para moverlo, mantén Ctrl sobre su sitio o usa la bandeja: Widget de esquina > Mover el widget.
+Online lookups are off on this PC (your IT team's policy)	Las búsquedas en línea están desactivadas en este PC (política de tu equipo de TI)
+Phone linked	Teléfono vinculado
+Pick up to six in Settings › Widget	Elige hasta seis en Ajustes › Widget
+Rain or snow within the hour - back to yours once it starts	Lluvia o nieve en la próxima hora - vuelve al tuyo cuando empiece
+Sports is off	Los deportes están desactivados
+Sports is off - turn it on from the Sports page	Los deportes están desactivados - actívalos desde la página Deportes
+Which screen the corner widget sits on. If that screen is unplugged, it goes back to the main one.	En qué pantalla está el widget de esquina. Si esa pantalla se desconecta, vuelve a la principal.
+Your team is playing - back to yours 5 min after the end	Tu equipo está jugando - vuelve al tuyo 5 min después del final
+tray › Back to my widget	bandeja › Volver a mi widget
+morning	mañana
+working hours	horario laboral
+night	noche
+No packet ghosts tonight.	Esta noche no hay fantasmas de paquetes.
+Packet ghosts detected - haunting your Wi-Fi.	Fantasmas de paquetes detectados - rondan tu Wi-Fi.
+Packet ghosts detected - possessing your PC.	Fantasmas de paquetes detectados - poseen tu PC.
+Packet ghosts detected - lurking past your router.	Fantasmas de paquetes detectados - acechan más allá de tu router.
+Warm and cosy on the network.	Calentito en la red.
+Cold start latency - your Wi-Fi needs a scarf.	Latencia de arranque en frío - tu Wi-Fi necesita una bufanda.
+Cold start latency - something's frozen up the line.	Latencia de arranque en frío - algo se congeló en la línea.
+A clean network to start the year.	Una red limpia para empezar el año.
+New year, same Wi-Fi.	Año nuevo, mismo Wi-Fi.
+New year, same provider.	Año nuevo, mismo proveedor.

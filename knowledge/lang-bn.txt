@@ -5580,3 +5580,34 @@ Day plan: working hours (9-17)	দিনের পরিকল্পনা: অ�
 Day plan: evening (17-23)	দিনের পরিকল্পনা: সন্ধ্যা (17-23)
 Day plan: night (23-7)	দিনের পরিকল্পনা: রাত (23-7)
 Since you looked	শেষবার দেখার পর
+Back to yours in a minute	এক মিনিটে আপনারটায় ফিরবে
+Bottom right, the default. To move it, rest the mouse still on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	নিচে ডানে, এটাই ডিফল্ট। সরাতে মাউস কিছুক্ষণ এর ওপর স্থির রাখুন বা ওপরে রেখে Ctrl চেপে ধরুন, তারপর টেনে আনুন। ক্লিক করলে AdeeboMeter খোলে।
+Day plan	দিনের পরিকল্পনা
+Held - tray › Stop holding lets it go	ধরে রাখা - ট্রে › ধরে রাখা বন্ধ দিলে ছেড়ে দেয়
+Moved by you. Picking the corner it's in keeps the distance; another corner puts it right in that corner. Reset puts it back in the bottom-right corner of the main screen.	আপনি সরিয়েছেন। যে কোণে আছে সেটা বাছলে দূরত্ব থাকে; অন্য কোণ বাছলে ঠিক সেই কোণে বসে। আগের মতো করুন বাছলে মূল স্ক্রিনের নিচে ডানে ফেরে।
+No readings picked	কোনো রিডিং বাছা হয়নি
+Off: no move hints. Moving still works the same way; Since you looked has its own switch.	বন্ধ: সরানোর টিপস নেই। সরানো আগের মতোই কাজ করে; শেষবার দেখার পর-এর নিজস্ব সুইচ আছে।
+On another screen - see Widget on screen.	অন্য স্ক্রিনে - স্ক্রিনে উইজেট দেখুন।
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে পয়েন্ট করছেন তা কখনো ঢাকে না - তবে কোনো উইন্ডো এর কোণ ঢাকলে, ওপরে মাউস রাখলে এটা খোলে। সরাতে এর জায়গার ওপর মাউস রেখে Ctrl চেপে ধরুন, বা ট্রে থেকে: কোণের উইজেট > উইজেট সরান।
+Online lookups are off on this PC (your IT team's policy)	এই পিসিতে অনলাইন খোঁজ বন্ধ (আপনার আইটি টিমের নীতি)
+Phone linked	ফোন যুক্ত
+Pick up to six in Settings › Widget	সেটিংস › উইজেট থেকে সর্বোচ্চ ছয়টি বাছুন
+Rain or snow within the hour - back to yours once it starts	এক ঘণ্টার মধ্যে বৃষ্টি বা তুষার - শুরু হলে আপনারটায় ফিরবে
+Sports is off	স্পোর্টস বন্ধ
+Sports is off - turn it on from the Sports page	স্পোর্টস বন্ধ - স্পোর্টস পেজ থেকে চালু করুন
+Which screen the corner widget sits on. If that screen is unplugged, it goes back to the main one.	কোণের উইজেট কোন স্ক্রিনে থাকবে। সেই স্ক্রিন খুলে ফেললে মূল স্ক্রিনে ফেরে।
+Your team is playing - back to yours 5 min after the end	আপনার দল খেলছে - শেষ হওয়ার 5 মিনিট পর আপনারটায় ফিরবে
+tray › Back to my widget	ট্রে › আমার উইজেটে ফিরুন
+morning	সকাল
+working hours	অফিসের সময়
+night	রাত
+No packet ghosts tonight.	আজ রাতে কোনো প্যাকেট ভূত নেই।
+Packet ghosts detected - haunting your Wi-Fi.	প্যাকেট ভূত ধরা পড়েছে - আপনার Wi-Fi-তে ভর করেছে।
+Packet ghosts detected - possessing your PC.	প্যাকেট ভূত ধরা পড়েছে - আপনার পিসিতে ভর করেছে।
+Packet ghosts detected - lurking past your router.	প্যাকেট ভূত ধরা পড়েছে - রাউটারের ওপারে ঘুরছে।
+Warm and cosy on the network.	নেটওয়ার্কে বেশ উষ্ণ আর আরামদায়ক।
+Cold start latency - your Wi-Fi needs a scarf.	ঠান্ডায় চালুর দেরি - আপনার Wi-Fi-এর একটা মাফলার দরকার।
+Cold start latency - something's frozen up the line.	ঠান্ডায় চালুর দেরি - লাইনের কোথাও কিছু জমে গেছে।
+A clean network to start the year.	বছর শুরুর জন্য একটা পরিষ্কার নেটওয়ার্ক।
+New year, same Wi-Fi.	নতুন বছর, সেই একই Wi-Fi।
+New year, same provider.	নতুন বছর, সেই একই সেবাদাতা।
