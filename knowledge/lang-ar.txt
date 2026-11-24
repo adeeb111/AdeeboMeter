@@ -219,7 +219,6 @@ DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one
 HOP	(هوب)
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	أمل روتر أكبر حزمة التي تصل هناك · انقر على توقيف لقياسها
 Needs a newer Wireshark (3.0 or later).	يحتاج إلى Wireshark أحدث (3.0 أو لاحقاً).
-No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	لا سحابة، لا حساب، لا قياسات متريّة، لا تحديثات، لا إعلانات، لا تقارير حادث. لا يستمع أبداً إلى المنفذ ويتحقق من ذلك بنفسه كلما بدأ
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	يرسل فقط عناوين IP عامة إلى RIPEstat و PeeringDB، ثم يطفئ نفسه. الإعدادات > البحث على الإنترنت لديه التوقيت.
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	تلك الدقيقة · مقارنة مع متوسط قيمة اليوم
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	اليوم في المظهر · الفرق = الإشارة ، الأزرق = تأخير الجهاز (MS) ، الخضراء = إشارة ويفاي (%)
@@ -2587,7 +2586,6 @@ everything AdeeboMeter does can be read there	كل ما يفعله AdeeboMeter �
 Copied - paste it into the page that opened	نسخة - ضعه في الصفحة التي فتحت
 Found a bug? Report it	وجدت خللًا؟ أبلغ عنه
 When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	عندما يبدوا الإنترنت بطيئًا، أغلبنا نفتح مدير المهام، ثم عرض إرشادي، ثم النقاش، ثم تخمين. يقوم AdeeboMeter بكل هذا من أجلك - بهدوء، كل ثانية - ويقول لك في جملة واحدة واضحة ما هو الخطأ وما يجب فعله حيال ذلك.
-No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	لا سحابة. لا جمع بيانات عن بُعد. لا يستمع أبدًا. كل حزمة يرسلها مذكورة أدناه - ويمكنك إيقاف كل واحدة منها.
 The corner widget	أداة الزاوية
 A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	بطاقة صغيرة في الزاوية اليمنى السفلى، تُهلك إلى 30% حتى لا يشتت. يظهر الشيء الوحيد الذي يهم - هو كل شيء OK - بالإضافة إلى CPU، الذاكرة، القرص والشبكة في نظرة واحدة. لا يستغرق النقر أبداً، لذا أيّ شيء من تحتها يظل يعمل عندما تغطي النافذة الزاوية فإنها تطويق إلى رقاقة صغيرة؛ ركز فأرك عليها لمدة نصف ثانية وتفتح.
 Getting around	التنقّل
@@ -5080,3 +5078,8 @@ access points nearby	نقاط وصول قريبة
 Everything AdeeboMeter observed	كل ما لاحظه AdeeboMeter
 The whole session · download (green) · stream server delay (purple) · dips shaded	الجلسة كاملة · التنزيل (أخضر) · تأخير خادم البث (بنفسجي) · الانخفاضات مظللة
 tool	أداة
+No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	لا حساب، لا قياسات عن بُعد، لا تحديثات، لا إعلانات، لا تقارير أعطال. لا يستمع أبدًا على أي منفذ، ويتحقق من ذلك بنفسه في كل تشغيل.
+No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	لا حساب. لا جمع بيانات عن بُعد. لا يستمع أبدًا. كل حزمة يرسلها مذكورة أدناه - ويمكنك إيقاف كل واحدة منها.
+Open as script	افتح كسكربت
+Open in AdeeboLab	افتح في AdeeboLab
+Monitor, diagnose, automate, visualize, learn.	راقب، شخّص، أتمت، اعرض، تعلّم.

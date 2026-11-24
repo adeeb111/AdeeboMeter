@@ -1,5 +1,6 @@
 window.AdeeboMeterMessages = {
   "fr": {
+    "Monitor, diagnose, automate, visualize, learn.": "Surveiller, diagnostiquer, automatiser, visualiser, apprendre.",
     "Measure now": "Mesurer maintenant",
     "Same as my PC": "Comme mon PC",
     "Surprise me daily": "Surprise chaque jour",
@@ -3825,6 +3826,7 @@ window.AdeeboMeterMessages = {
     "Volatility": "Volatilité"
   },
   "es": {
+    "Monitor, diagnose, automate, visualize, learn.": "Vigila, diagnostica, automatiza, visualiza, aprende.",
     "Measure now": "Medir ahora",
     "Same as my PC": "Igual que mi PC",
     "Surprise me daily": "Sorpresa cada día",
@@ -7789,6 +7791,7 @@ window.AdeeboMeterMessages = {
     "Volatility": "Volatilidad"
   },
   "ar": {
+    "Monitor, diagnose, automate, visualize, learn.": "راقب، شخّص، أتمت، اعرض، تعلّم.",
     "Measure now": "قِس الآن",
     "Same as my PC": "مثل حاسوبي",
     "Surprise me daily": "مفاجأة كل يوم",
@@ -11753,6 +11756,7 @@ window.AdeeboMeterMessages = {
     "Volatility": "التقلّب"
   },
   "bn": {
+    "Monitor, diagnose, automate, visualize, learn.": "নজর রাখুন, নির্ণয় করুন, স্বয়ংক্রিয় করুন, দেখুন, শিখুন।",
     "AdeeboMeter": "AdeeboMeter",
     "CPU": "CPU",
     "ipconfig": "ipconfig",

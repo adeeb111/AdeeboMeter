@@ -219,7 +219,6 @@ DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one
 HOP	হপ
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	হপ · রাউটার · সেখানে পৌঁছানো সবচেয়ে বড় প্যাকেট · মাপতে হপে ক্লিক করুন
 Needs a newer Wireshark (3.0 or later).	নতুন Wireshark দরকার (3.0 বা পরের সংস্করণ)।
-No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	ক্লাউড, অ্যাকাউন্ট, টেলিমেট্রি, আপডেট, বিজ্ঞাপন বা ক্র্যাশ রিপোর্ট নেই। কোনো পোর্টে সংযোগের অপেক্ষায় থাকে না—প্রতিবার চালু হয়ে নিজেই তা পরীক্ষা করে।
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	শুধু পাবলিক IP ঠিকানা RIPEstat ও PeeringDB-তে পাঠায়, তারপর নিজে থেকে বন্ধ হয়। সেটিংস > অনলাইন অনুসন্ধানে সময়সীমা পাবেন।
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	সেই মিনিট · দিনের মধ্যম মানের সঙ্গে তুলনা
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	এক নজরে দিনটি · রঙের ফিতা = ফলাফল, নীল = রাউটারের দেরি (MS), সবুজ = WI-FI সিগন্যাল (%)
@@ -2587,7 +2586,6 @@ everything AdeeboMeter does can be read there	AdeeboMeter কী করে, স�
 Copied - paste it into the page that opened	কপি হয়েছে, খোলা পাতায় পেস্ট করুন
 Found a bug? Report it	ত্রুটি পেয়েছেন? জানান
 When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	ইন্টারনেট ধীর লাগলে আমরা Task Manager খুলি, কমান্ড প্রম্পট চালাই, পিং করি, তারপর আন্দাজ করি। AdeeboMeter প্রতি সেকেন্ডে চুপচাপ এই কাজগুলো করে। সহজ এক বাক্যে জানায় কী সমস্যা ও কী করতে পারেন।
-No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	ক্লাউড নেই। টেলিমেট্রি নেই। আড়ি পাতে না। পাঠানো প্রতিটি প্যাকেট নিচে লেখা আছে, প্রতিটিই বন্ধ করতে পারেন।
 The corner widget	কোণার উইজেট
 A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	স্ক্রিনের ডান নিচে ছোট কার্ড, মনোযোগ না সরাতে 30% উজ্জ্বলতায় থাকে। সব ঠিক আছে কি না, CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক এক নজরে দেখায়। ক্লিক আটকে দেয় না, নিচের কাজ চালু থাকে। কোনো উইন্ডো কোণা ঢাকলে ছোট বারে গুটিয়ে যায়। আধা সেকেন্ড মাউস রাখলে খোলে।
 Getting around	কোথায় কী পাবেন
@@ -5080,3 +5078,8 @@ access points nearby	কাছাকাছি অ্যাক্সেস পয
 Everything AdeeboMeter observed	AdeeboMeter যা যা দেখেছে
 The whole session · download (green) · stream server delay (purple) · dips shaded	পুরো সেশন · ডাউনলোড (সবুজ) · স্ট্রিম সার্ভারের দেরি (বেগুনি) · পতনগুলো ছায়া করা
 tool	টুল
+No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	অ্যাকাউন্ট, টেলিমেট্রি, আপডেট, বিজ্ঞাপন বা ক্র্যাশ রিপোর্ট নেই। কখনো কোনো পোর্টে শোনে না - আর প্রতিবার চালু হলে নিজেই তা যাচাই করে।
+No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	অ্যাকাউন্ট নেই। টেলিমেট্রি নেই। আড়ি পাতে না। পাঠানো প্রতিটি প্যাকেট নিচে লেখা আছে, প্রতিটিই বন্ধ করতে পারেন।
+Open as script	স্ক্রিপ্ট হিসেবে খুলুন
+Open in AdeeboLab	AdeeboLab-এ খুলুন
+Monitor, diagnose, automate, visualize, learn.	নজর রাখুন, নির্ণয় করুন, স্বয়ংক্রিয় করুন, দেখুন, শিখুন।

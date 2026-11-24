@@ -156,6 +156,7 @@ namespace AdeeboMeter
         // ================================================================== Path to anywhere: the last trace or MTR the app ran
         sealed class Run { public string Target; public DateTime At; public List<PathTools.Hop> Hops; }
         static Run lastRun; static readonly object rk = new object();
+        public static bool HasPath() { lock (rk) return lastRun != null; }
         public static void Remember(string target, List<PathTools.Hop> hops) { if (hops == null || hops.Count == 0) return; lock (rk) lastRun = new Run { Target = target, At = DateTime.Now, Hops = hops.ToList() }; }
         public static string Path(Monitor m)
         {

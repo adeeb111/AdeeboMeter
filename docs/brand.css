@@ -267,3 +267,5 @@ a{text-underline-offset:.18em}
 .meter{border-radius:var(--r-xl)}
 .btn,.v3btn,.v4btn,.sh .btn,.v3chip,.seg,.fld textarea,.v3eg .in,.tile .ic,.sample .sx,.v4phone .qr,.meter .acts button{border-radius:var(--r-md)}
 .v4btn.sm,.seg button,.iconbtn,.top select,.site-language .lang-face,.v5words span,.v5chips span,.v4tag,.v5tag,.v3tag{border-radius:var(--r-sm)}
+/* the line under the headline (24 Nov): what the app does, in five verbs */
+.v4verbs{margin:.3em 0 .7em;font-family:"Barlow SC","Barlow",sans-serif;font-weight:600;font-size:clamp(17px,1.6vw,21px);color:var(--blue-d);letter-spacing:0}

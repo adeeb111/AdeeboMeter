@@ -409,7 +409,7 @@ namespace AdeeboMeter
         static readonly string[] LeaveIsp = { "Report for my ISP", AdeeboMeter.L.T("Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes."), "1" };
         static readonly string[] LeaveChecks = { "Checks you start", AdeeboMeter.L.T("Check a destination sends only what you ask for, to where you ask, when you press Check - plus one DNS question for the same name to 1.1.1.1 (8.8.8.8 if that fails) - or, when an IT policy turns online lookups off, to your own DNS server, the second opinion that spots a filter. An IT policy with online_lookups = off sends it to your own DNS server instead."), "1" };
         static readonly string[] LeaveLive = { "Live capture", AdeeboMeter.L.T("Listens to your own adapter only while you press Start. Nothing is sent; captures are deleted when AdeeboMeter exits."), "-1" };
-        static readonly string[] LeaveNever = { "Never", "No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.", "0" };
+        static readonly string[] LeaveNever = { "Never", "No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.", "0" };
         static readonly string[][] AboutNav = {
                     new[] { "Open this view", AdeeboMeter.L.T("Click the tray icon, or press Ctrl+Alt+A from anywhere.") },
                     new[] { "Back to the corner", AdeeboMeter.L.T("Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.") },
@@ -465,6 +465,7 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(x, y, 56 * S, 56 * S), true);
                 g.DrawString(L.T("AdeeboMeter"), Draw.fHero, ink, x + 70 * S, y - 2 * S);
                 g.DrawString(L.T("Know what's wrong. Show anyone."), Draw.fHead, blue, x + 72 * S, y + 38 * S);
+                using (var sb0 = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Monitor, diagnose, automate, visualize, learn."), Draw.fBody, sb0, x + 72 * S, y + 62 * S);   // 24 Nov: what it does, under the promise
                 // found a bug? the report is put on the clipboard, the person pastes and sends it themselves
                 {
                     string bt = L.T((DateTime.Now - bugCopied).TotalSeconds < 6 ? "Copied - paste it into the page that opened" : "Found a bug? Report it"); var bs = g.MeasureString(bt, Draw.fBodyB);
@@ -475,9 +476,9 @@ namespace AdeeboMeter
                         ReportDialog("bug", "");
                     });
                 }
-                y += 84 * S;
+                y += 100 * S;
                 y = Para(g, AdeeboMeter.L.T("When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it."), x, y, w, sub, Draw.fBody);
-                y = Para(g, AdeeboMeter.L.T("No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off."), x, y, w, ink, Draw.fBodyB);
+                y = Para(g, AdeeboMeter.L.T("No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off."), x, y, w, ink, Draw.fBodyB);
 
                 y = Sec(y); y = AboutHead(g, "1", "The corner widget", x, y, w);
                 y = Para(g, AdeeboMeter.L.T("A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens."), x, y, w, sub, Draw.fBody);

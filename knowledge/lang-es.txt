@@ -219,7 +219,6 @@ DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one
 HOP	SALTO
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	SALTO   ROUTER                                     MAYOR PAQUETE QUE LLEGA · PULSA UN SALTO PARA MEDIR
 Needs a newer Wireshark (3.0 or later).	Necesita una versión más reciente de Wireshark (3.0 o posterior).
-No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	Sin nube, cuenta, telemetría, actualizaciones, anuncios ni informes de fallos. Nunca escucha en un puerto y lo comprueba al iniciarse.
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	Solo envía IP públicas a RIPEstat y PeeringDB y luego se desactiva. El temporizador está en Ajustes > Consultas en línea.
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	ESE MINUTO · COMPARADO CON LA MEDIANA DEL DÍA
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	EL DÍA DE UN VISTAZO · FRANJA = RESULTADO, AZUL = RETRASO DEL ROUTER (MS), VERDE = SEÑAL WI-FI (%)
@@ -2587,7 +2586,6 @@ everything AdeeboMeter does can be read there	allí puedes leer todo lo que hace
 Copied - paste it into the page that opened	Copiado: pégalo en la página que se abrió
 Found a bug? Report it	¿Encontraste un error? Repórtalo
 When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	Cuando internet va lento, solemos abrir el Administrador de tareas, una consola, hacer ping y luego adivinar. AdeeboMeter hace eso por ti cada segundo, discretamente, y explica en una frase sencilla qué falla y qué puedes hacer.
-No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	Sin nube ni telemetría. No escucha conexiones entrantes. Cada paquete que envía se detalla abajo y puedes desactivarlos por separado.
 The corner widget	El widget de la esquina
 A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	Una tarjeta pequeña abajo a la derecha, atenuada al 30% para no distraer. Muestra si todo va bien, CPU, memoria, disco y red de un vistazo. Los clics pasan a lo que hay debajo. Si una ventana cubre la esquina, se pliega en una barra. Deja el puntero medio segundo para abrirla.
 Getting around	Cómo moverte
@@ -5080,3 +5078,8 @@ access points nearby	puntos de acceso cercanos
 Everything AdeeboMeter observed	Todo lo que AdeeboMeter observó
 The whole session · download (green) · stream server delay (purple) · dips shaded	Toda la sesión · descarga (verde) · retardo del servidor del stream (morado) · caídas sombreadas
 tool	herramienta
+No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	Sin cuenta, telemetría, actualizaciones, anuncios ni informes de fallos. Nunca escucha en un puerto y lo comprueba al iniciarse.
+No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	Sin cuenta ni telemetría. No escucha conexiones entrantes. Cada paquete que envía se detalla abajo y puedes desactivarlos por separado.
+Open as script	Abrir como script
+Open in AdeeboLab	Abrir en AdeeboLab
+Monitor, diagnose, automate, visualize, learn.	Vigila, diagnostica, automatiza, visualiza, aprende.

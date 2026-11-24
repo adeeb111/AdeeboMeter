@@ -65,8 +65,8 @@ namespace AdeeboMeter
         sealed class ShCtx { public ShJob Job; public ShOut Out; public ShIn In; public string Stdin { get { return In == null ? null : In.Rest; } set { In = value == null ? null : new ShIn { Rest = value }; } } public List<string> Args = new List<string>(); public bool Yes, Script, Sub; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, In = ReferenceEquals(stdin, Stdin) ? In : stdin == null ? null : new ShIn { Rest = stdin }, Args = Args, Yes = Yes, Script = Script, Sub = Sub, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
-        sealed class ShTooBig : Exception { public ShTooBig() : base("more than 64 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
-        const int ShMaxCap = 64 * 1024 * 1024;
+        sealed class ShTooBig : Exception { public ShTooBig() : base("more than 16 MB of output in one go - stopped (write it to a file, or narrow it with grep / head)") { } }
+        const int ShMaxCap = 8 * 1024 * 1024;   // characters (2 bytes each): 16 MB, inside the app's 80 MB budget (review 24 Nov - 64 M characters was 128 MB)
 
         Panel BuildShellPage()
         {

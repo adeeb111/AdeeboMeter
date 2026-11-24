@@ -391,7 +391,7 @@ namespace AdeeboMeter
                 Center(g, "Know what's wrong. Show anyone.", fTag, Theme.Blue, y, W); y += fTag.Height + 26 * S;
                 string[] lines = {
                     "Lives quietly in the corner of your screen.",
-                    "No cloud. No telemetry. Never listens.",
+                    "No account. No telemetry. Never listens.",
                     "Installs just for you — no administrator rights." };
                 Color[] dots = { Theme.Green, Theme.Blue, Theme.Amber };
                 float bx = 58 * S;

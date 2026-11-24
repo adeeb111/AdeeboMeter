@@ -1,6 +1,6 @@
 // AdeeboMeter - a small, quiet Windows companion for "is it me or the network?". Created by Adeeb Khan.
 // .NET Framework 4.x, C# 5: builds with the csc.exe that ships with Windows (build_exe.cmd), no admin.
-// No cloud. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
+// No account. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
 // each background one off. (It never listens on any port, never updates itself, never downloads anything.)
 // In the background (Balanced, the default - Settings changes the pace): a ping to your gateway every 2 s; a ping to 1.1.1.1 every 15 s and
 // one DNS lookup a minute at most (TCP 443 to it instead when ping never answers); once per network a 6-hop trace toward 1.1.1.1 with
