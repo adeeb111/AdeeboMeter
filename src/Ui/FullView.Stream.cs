@@ -46,7 +46,8 @@ namespace AdeeboMeter
             g.TranslateTransform(streamCanvas.AutoScrollPosition.X, streamCanvas.AutoScrollPosition.Y);
             Begin(streamCanvas);
             float x = 18 * S, y = 16 * S, w = streamCanvas.ClientSize.Width - 36 * S;
-            y = TryThis(g, streamCanvas, "stream", x, y, w, false);   // 24 Nov: no NOW line - the status chips at the top already say it (the approved mockup has none)
+            y = TryThis(g, streamCanvas, "stream", x, y, w, false);
+            y = NowLine(g, streamCanvas, x, y, w);   // back 24 Nov (Adeeb): the router ping and a busy PC are what spoil a stream
             var all = WatchKit.Recent("stream");
             if (streamSel != "")
             {

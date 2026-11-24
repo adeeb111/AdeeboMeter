@@ -1,5 +1,9 @@
 window.AdeeboMeterMessages = {
   "fr": {
+    "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} est sorti - vous avez la {mine}. Téléchargez-le ci-dessous et choisissez Mettre à jour.",
+    "You’re ahead - {mine} is newer than the latest release ({v}).": "Vous êtes en avance - la {mine} est plus récente que la dernière version publiée ({v}).",
+    "You’re up to date - {mine} is the latest version.": "Vous êtes à jour - la {mine} est la dernière version.",
+    "Couldn’t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have {mine}).": "Impossible de vérifier s’il existe une version plus récente pour le moment - réessayez dans quelques minutes, ou téléchargez la plus récente avec le bouton ci-dessus (vous avez la {mine}).",
     "Monitor, diagnose, automate, visualize, learn.": "Surveiller, diagnostiquer, automatiser, visualiser, apprendre.",
     "Measure now": "Mesurer maintenant",
     "Same as my PC": "Comme mon PC",
@@ -3826,6 +3830,10 @@ window.AdeeboMeterMessages = {
     "Volatility": "Volatilité"
   },
   "es": {
+    "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} ya está disponible - tienes la {mine}. Descárgala abajo y elige Actualizar.",
+    "You’re ahead - {mine} is newer than the latest release ({v}).": "Vas por delante - la {mine} es más nueva que la última versión publicada ({v}).",
+    "You’re up to date - {mine} is the latest version.": "Estás al día - la {mine} es la última versión.",
+    "Couldn’t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have {mine}).": "No se pudo comprobar si hay una versión más nueva ahora mismo - inténtalo de nuevo en unos minutos o descarga la más reciente con el botón de arriba (tienes la {mine}).",
     "Monitor, diagnose, automate, visualize, learn.": "Vigila, diagnostica, automatiza, visualiza, aprende.",
     "Measure now": "Medir ahora",
     "Same as my PC": "Igual que mi PC",
@@ -7791,6 +7799,10 @@ window.AdeeboMeterMessages = {
     "Volatility": "Volatilidad"
   },
   "ar": {
+    "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "صدر AdeeboMeter {v} - لديك {mine}. نزّله من الأسفل واختر تحديث.",
+    "You’re ahead - {mine} is newer than the latest release ({v}).": "أنت متقدّم - الإصدار {mine} أحدث من آخر إصدار منشور ({v}).",
+    "You’re up to date - {mine} is the latest version.": "لديك أحدث إصدار - {mine} هو الإصدار الأخير.",
+    "Couldn’t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have {mine}).": "تعذّر التحقق من وجود إصدار أحدث الآن - حاول مجددًا بعد بضع دقائق، أو نزّل الأحدث من الزر أعلاه (لديك {mine}).",
     "Monitor, diagnose, automate, visualize, learn.": "راقب، شخّص، أتمت، اعرض، تعلّم.",
     "Measure now": "قِس الآن",
     "Same as my PC": "مثل حاسوبي",
@@ -11756,6 +11768,10 @@ window.AdeeboMeterMessages = {
     "Volatility": "التقلّب"
   },
   "bn": {
+    "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} এসেছে - আপনার কাছে আছে {mine}। নিচ থেকে ডাউনলোড করে আপডেট বেছে নিন।",
+    "You’re ahead - {mine} is newer than the latest release ({v}).": "আপনি এগিয়ে আছেন - {mine} সর্বশেষ প্রকাশিত সংস্করণের ({v}) চেয়ে নতুন।",
+    "You’re up to date - {mine} is the latest version.": "আপনি হালনাগাদ আছেন - {mine} সর্বশেষ সংস্করণ।",
+    "Couldn’t check for a newer version right now - try again in a few minutes, or download the newest from the button above (you have {mine}).": "এই মুহূর্তে নতুন সংস্করণ আছে কি না দেখা গেল না - কয়েক মিনিট পরে আবার চেষ্টা করুন, অথবা ওপরের বোতাম থেকে নতুনটি ডাউনলোড করুন (আপনার কাছে আছে {mine})।",
     "Monitor, diagnose, automate, visualize, learn.": "নজর রাখুন, নির্ণয় করুন, স্বয়ংক্রিয় করুন, দেখুন, শিখুন।",
     "AdeeboMeter": "AdeeboMeter",
     "CPU": "CPU",

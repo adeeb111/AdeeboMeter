@@ -73,7 +73,6 @@ namespace AdeeboMeter
             }
             return list;
         }
-        public static IEnumerable<string> LayerKeys { get { return Known.Select(k => k.Key); } }
 
         public static List<string[]> Stack(string layers, string mtuText, string payloadText)
         {

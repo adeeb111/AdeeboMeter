@@ -27,7 +27,6 @@ namespace AdeeboMeter
         public static void Stop() { stopAll = true; wake.Set(); }
         // bug-hunt ML-42: only the Monitor starting again lifts a Stop - a probe tick racing the quit can't restart the watch
         public static void Resume() { stopAll = false; }
-        public static bool Stopping { get { return stopAll; } }
         static IPAddress hostIp; static DateTime resolvedAt = DateTime.MinValue; static string resolvedFor = "";
         public static string Status = "";
         public const string FarName = "your broker";
@@ -242,7 +241,6 @@ namespace AdeeboMeter
         // An index, not a price per barrel: what matters is the change - this week against last, and over four weeks.
         public static readonly string[] Idx = { "ENER", "MTLS", "FOPR", "AGRI", "BCPI" };
         public static readonly Dictionary<string, string> IdxNames = new Dictionary<string, string> { { "ENER", "Energy" }, { "MTLS", "Metals and minerals" }, { "FOPR", "Forestry" }, { "AGRI", "Farm goods" }, { "BCPI", "All commodities" } };
-        public static readonly Dictionary<string, string> IdxWhat = new Dictionary<string, string> { { "ENER", "oil, natural gas, coal" }, { "MTLS", "gold, copper, nickel, potash..." }, { "FOPR", "lumber, pulp, newsprint" }, { "AGRI", "wheat, canola, cattle..." }, { "BCPI", "the whole basket" } };
         public sealed class Index { public string Code; public DateTime Day; public double[] V; }   // V: oldest to newest (up to 5 weeks)
         public static List<Index> Indexes = new List<Index>(); static DateTime idxTried = DateTime.MinValue;
         static string IdxFile { get { return Path.Combine(Program.DataDir, "bcpi.txt"); } }

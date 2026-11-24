@@ -346,7 +346,7 @@ namespace AdeeboMeter
                 // what changed around then
                 var near = data.E.Where(e => Math.Abs((e.T - at).TotalMinutes) <= 15).OrderBy(e => e.T).ToList();
                 // in a card, like the two above (24 Nov mockup)
-                float evY = y, ex0 = x, ew0 = w; Kit.Box(g, new RectangleF(x, y, w, 14 * S + 22 * S + Math.Max(1, near.Count) * 26 * S + 10 * S), 14 * S); x += 16 * S; w -= 32 * S; y += 14 * S;
+                float ex0 = x, ew0 = w; Kit.Box(g, new RectangleF(x, y, w, 14 * S + 22 * S + Math.Max(1, near.Count) * 26 * S + 10 * S), 14 * S); x += 16 * S; w -= 32 * S; y += 14 * S;
                 g.DrawString(Kit.Sent(L.T("WHAT CHANGED 15 MINUTES EITHER SIDE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (near.Count == 0) { g.DrawString(Voice.P("Nothing changed around then. Quiet minute.", "No changes within 15 minutes."), Draw.fBody, muted, x, y); y += 26 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

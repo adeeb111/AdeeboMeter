@@ -123,7 +123,7 @@ namespace AdeeboMeter
         // ---------- the go-to tiles: a big icon, a name, one live line
         float PaintGateway(Graphics g, float x, float y, float w)
         {
-            g.DrawString(Kit.Sent(L.T("GO TO")), Draw.fTiny, new SolidBrush(Theme.Muted), x, y); y += 24 * S;
+            using (var gb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("GO TO")), Draw.fTiny, gb, x, y); y += 24 * S;
             var down = Sectors.DownNow(3); DateTime certAt; var certs = Sectors.CertsDue(30, out certAt);
             int done = LabLink.Faults.Count(f => Points.Me.Has("nlab." + f[0]));
             // id, icon, accent, name, live line, go
@@ -167,6 +167,49 @@ namespace AdeeboMeter
         }
 
         // the NOW line's numbers, checked twice a second: only the line itself is redrawn when they move
+
+        // the NOW line's numbers, checked twice a second: only the line itself is redrawn when they move
+        string nowKey = "";
+        void NowTick()
+        {
+            Control c = tab == "stream" ? (Control)streamCanvas : tab == "trade" ? (Control)tradeCanvas : null;
+            if (c == null) return;
+            int sig; lock (M.L) sig = M.WifiSignal;
+            Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
+            string k = tab + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + sig + "|" + r(M.Cpu.Avg(3));
+            if (k == nowKey) return; bool same = nowKey.StartsWith(tab + "|", StringComparison.Ordinal); nowKey = k;
+            if (same) RedrawSpots(c, "now");   // a page not painted yet has no spot: it draws the line when it paints
+        }
+        // ---------- the NOW line on Streaming and Markets (back 24 Nov, Adeeb: their only live network numbers; Gamer has its HUD): your end of the path in one row, Home one click away
+        float NowLine(Graphics g, Control c, float x, float y, float w)
+        {
+            string kind, link; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; link = M.LinkSpeed ?? ""; }
+            double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), cpu = M.Cpu.Avg(3);
+            Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+            var items = new List<object[]> {
+                new object[] { "cpe", L.T("Router") + " " + ms(gw), LvMs(M.GwPing, gw, 15, 50) },
+                new object[] { "internet", L.T("Internet") + " " + ms(net), LvMs(M.NetPing, net, 80, 150) } };
+            if (kind == "Wi-Fi") items.Add(new object[] { "wifi", "Wi-Fi " + (sig >= 0 ? sig + "%" : L.T("on")), sig >= 0 && sig < 40 ? 1 : 0 });
+            else items.Add(new object[] { "switch", L.T("Cable"), 0 });
+            items.Add(new object[] { "pc", L.T("PC busy") + " " + (double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "%"), double.IsNaN(cpu) ? 3 : cpu > 90 ? 2 : cpu > 75 ? 1 : 0 });
+            var bar = new RectangleF(x, y, w, 40 * S); Theme.Fill(g, bar, 12 * S, Theme.Soft);
+            LiveSpot(c, "now", bar);   // kept live on its own by NowTick, the page around it isn't redrawn
+            float cx = x + 12 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(Kit.Sent(L.T("NOW")), Draw.fTiny, mb, cx, y + 13 * S); cx += g.MeasureString(Kit.Sent(L.T("NOW")), Draw.fTiny).Width + 10 * S; }
+            string hm = L.T("Home") + "  ›"; var hs = g.MeasureString(hm, Draw.fBodyB); var hr = new RectangleF(bar.Right - hs.Width - 16 * S, y, hs.Width + 8 * S, 40 * S);
+            foreach (var it in items)
+            {
+                int lv = (int)it[2]; string t = (string)it[1]; var ts = g.MeasureString(t, Draw.fBody);
+                if (cx + 44 * S + ts.Width > hr.X) break;   // a narrow window keeps what fits, Home always shows
+                Glyphs.Draw(g, (string)it[0], new RectangleF(cx, y + 9 * S, 22 * S, 22 * S), lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Sub, 1.7f);
+                Draw.LvDot(g, lv, cx + 26 * S, y + 16 * S, 8 * S, 8 * S);
+                using (var tb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t, Draw.fBody, tb, cx + 38 * S, y + (40 * S - ts.Height) / 2);
+                cx += 38 * S + ts.Width + 18 * S;
+            }
+            using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(hm, Draw.fBodyB, bl, hr.X + 4 * S, y + (40 * S - hs.Height) / 2);
+            Act(c, hr, delegate { tab = "overview"; ShowTab(); SyncNav(); });
+            return y + 52 * S;
+        }
 
         // ---------- the big icon for a Toolbox question or a Learn card (falls back to the small line icon)
         static readonly Dictionary<string, string> BigGlyph = new Dictionary<string, string>(StringComparer.Ordinal) {

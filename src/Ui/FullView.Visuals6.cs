@@ -20,7 +20,6 @@ namespace AdeeboMeter
             "capfc", "month", "svcfail", "events", "winev", "drivers", "bluetooth", "prematch", "tonight", "keys", "newkey", "recipients", "selfsigned", "csrmake",
             "hashf", "certconv", "certcmp", "beforeafter", "twopc", "ispreport", "qr", "marketopen", "board", "golive", "srvchange", "tradetape", "afterstream", "uptime", "certcal", "obs" };
         static readonly HashSet<string> Moving6 = new HashSet<string> { "board", "srvchange", "tradetape", "afterstream", "timeline", "winupdate", "changed", "usb", "tonight", "ispreport", "keys", "newkey", "recipients", "selfsigned", "csrmake" };
-        static readonly string[] DotSep6 = { " · " };
 
         static double Or2(double a, double b) { return double.IsNaN(a) ? b : a; }
         float Wave6(Graphics g, float x, float y, float w, string st)

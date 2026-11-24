@@ -14,10 +14,11 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         Panel sportsPage; DB sportsCanvas; long sportsVer = -1; int sportsMin = -1; string spTab = "";
-        static Font serifHead, serifLead, serifBody, serifSmall;
+        static Font serifHead, serifLead, serifBody, serifSmall; static float serifAt;
         static void SerifFonts()
         {
-            if (serifHead != null) return;
+            if (serifHead != null && serifAt == S) return;   /* rebuilt when the window moves to a screen with another scale */
+            foreach (var f in new[] { serifHead, serifLead, serifBody, serifSmall }) if (f != null) f.Dispose(); serifAt = S;
             // Georgia ships with Windows; if a PC lacks it, Windows picks its own serif
             serifHead = new Font("Georgia", 26 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifLead = new Font("Georgia", 22 * S, FontStyle.Bold, GraphicsUnit.Pixel);
             serifBody = new Font("Georgia", 15 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifSmall = new Font("Georgia", 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);

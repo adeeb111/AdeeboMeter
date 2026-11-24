@@ -208,7 +208,7 @@ namespace AdeeboMeter
             connSum = new DB { Name = "connSum", Dock = DockStyle.Top, Height = Sc(96), BackColor = Theme.Card };
             connSum.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintConnSum(e.Graphics); };
             list.Changed += delegate { connSum.Invalidate(); };
-            connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(chips); connPage.Controls.Add(connSum);
+            connPage.Controls.Add(list); connPage.Controls.Add(connStatus); connPage.Controls.Add(connSum); connPage.Controls.Add(chips);   /* filters on top, then the bar that sums what they show (review L-3) */
             StyleChips();
 
             // Destination page
@@ -621,7 +621,7 @@ namespace AdeeboMeter
                     if (skH != sideH) due.Add("side.health"); if (skP != sideP) due.Add("side.pc"); if (skT != sideT) due.Add("side.top");
                     sideH = skH; sideP = skP; sideT = skT; sideKey = skH + skP + skT;
                     if (due.Count > 0 && !RedrawSpots(side, due.ToArray())) side.Invalidate();
-                } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
+                } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown

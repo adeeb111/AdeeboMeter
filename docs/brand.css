@@ -6,7 +6,6 @@ h1,h2,h3,.amword,.brand{font-family:"Barlow SC","Barlow","Segoe UI",system-ui,sa
 
 /* ---------------- hero: the headline on the left, the instrument on the right */
 .v4hero{background:none}
-.v4pill,.v4phone,.v4hero h1 .hero-accent{display:none}
 .v4hero h1{font-weight:700;font-size:clamp(44px,6vw,76px);line-height:.98;letter-spacing:-.01em;margin:0 0 22px;max-width:11ch}
 .v4lead{font-size:19px;line-height:1.5;max-width:34em;color:var(--sub)}
 .v4trust{gap:6px 20px;font-size:15px}
@@ -158,7 +157,9 @@ a{text-underline-offset:.18em}
 .sample .sbar{position:absolute;left:20px;right:20px;bottom:12px;height:4px;border-radius:4px;background:rgba(255,255,255,.2);overflow:hidden}
 .sample .sbar i{display:block;height:100%;background:#fff;transform-origin:0 50%;animation:amCount 10s linear forwards}
 [dir="rtl"] .sample .sbar i{transform-origin:100% 50%}
-.sample:hover .sbar i,.sample:focus-within .sbar i,.sample[data-paused] .sbar i{animation-play-state:paused}
+.sample:focus-within .sbar i,.sample[data-paused] .sbar i{animation-play-state:paused}
+/* hover pauses only where there is a real pointer: on iPhone a tap leaves :hover stuck and the example never closed */
+@media (hover:hover){.sample:hover .sbar i{animation-play-state:paused}}
 @keyframes amCount{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.sample,.sample[data-open]{transform:none}}
 /* the picture: a white card like the one the app saves */
@@ -229,7 +230,7 @@ a{text-underline-offset:.18em}
   .v4l h1{align-self:flex-start}
   .v4l{display:contents}
   .v4l>*{margin-block:0}
-  .v4pill{order:0}.v4l h1{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
+  .v4l h1{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
 }
 
 /* ---- review 24 Nov ---------------------------------------------------------------------------------------------------- */

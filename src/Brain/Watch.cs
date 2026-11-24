@@ -95,7 +95,6 @@ namespace AdeeboMeter
             }
             if (lv > 0) Alerts.Raise("call", "After your call: " + s, 5);
         }
-        public static bool InCall { get { lock (k) return inCall; } }
     }
 
     // ================================================================== watch and suggest (never blocks - that needs admin)

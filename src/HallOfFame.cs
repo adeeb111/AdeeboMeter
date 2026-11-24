@@ -30,7 +30,6 @@ namespace AdeeboMeter
 
         static partial void BuildKey(ref string key);   // only the official build has a body for this (obj/HofKey.cs)
         public static string Key { get { string k = null; BuildKey(ref k); return k ?? ""; } }
-        public static bool Official { get { return Key != ""; } }
         // the generated file holds the key masked, so it isn't a readable string in the exe (a speed bump, not a lock)
         internal static string Unmask(byte[] b) { var o = new byte[b.Length]; for (int i = 0; i < b.Length; i++) o[i] = (byte)(b[i] ^ ((i * 73 + 41) & 0xFF)); return Encoding.UTF8.GetString(o); }
 

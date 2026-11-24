@@ -113,7 +113,7 @@ namespace AdeeboMeter
         }
         static Color TeamColor(string name)
         {
-            var pal = new[] { Color.FromArgb(200, 16, 46), Color.FromArgb(3, 70, 148), Color.FromArgb(0, 106, 78), Color.FromArgb(108, 29, 69), Color.FromArgb(241, 120, 0), Color.FromArgb(40, 40, 40), Color.FromArgb(0, 122, 194), Color.FromArgb(122, 38, 58) };
+            var pal = new[] { Color.FromArgb(200, 16, 46), Color.FromArgb(3, 70, 148), Color.FromArgb(0, 106, 78), Color.FromArgb(108, 29, 69), Color.FromArgb(184, 86, 0), Color.FromArgb(40, 40, 40), Color.FromArgb(0, 122, 194), Color.FromArgb(122, 38, 58) };
             int h = 0; foreach (char c in name ?? "") h = h * 31 + c; return pal[Math.Abs(h) % pal.Length];
         }
         static string Code(string name) { var n = new string((name ?? "").Where(char.IsLetter).ToArray()).ToUpperInvariant(); return n.Length <= 3 ? n : n.Substring(0, 3); }

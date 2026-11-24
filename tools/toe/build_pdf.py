@@ -79,6 +79,7 @@ async def main():
         b = await p.chromium.launch(); pg = await b.new_page(viewport={"width": 1280, "height": 720})
         await pg.goto(tmp.as_uri(), wait_until="load"); await pg.wait_for_timeout(800)
         await pg.add_style_tag(content='body,.slide{font-family:"Inter",system-ui,sans-serif!important}')
+        await pg.evaluate("document.querySelectorAll('details').forEach(function(d){d.open=true})")   # the slides sit in the Theory fold on the site (closed by default)
         await pg.emulate_media(media="print")
         await pg.pdf(path=str(DOCS / "AdeeboMeter-Theory-of-Everything.pdf"), width="1280px", height="720px", print_background=True)
         await b.close()

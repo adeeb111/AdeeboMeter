@@ -78,16 +78,6 @@ namespace AdeeboMeter
         }
 
         void GoGuide(string id) { tab = "guide"; ShowTab(); if (id != null) StartGuide(id, false); }
-        // Fix a problem (home screen): { where it goes, what the button says }. "I can't name it" stays first - it's the catch-all.
-        static readonly string[][] FixProblems = {
-            new[] { "guide:whats", "Not sure what's wrong" },
-            new[] { "guide:pc", "My PC is slow" },
-            new[] { "guide:drops", "My Wi-Fi keeps dropping" },
-            new[] { "guide:site", "A website or app won't open" },
-            new[] { "gamer", "My game is lagging" },
-            new[] { "guide:calls", "My calls keep freezing" },
-            new[] { "guide:slow", "The internet is slow" },
-            new[] { "tool:tidy", "I'm running out of storage" } };
         // the symptoms people notice: { where it goes, what they see, a few words more }
         static readonly string[][] Symptoms = {
             new[] { "guide:whats", "I have no internet", "nothing opens - works even when you can't google it" },

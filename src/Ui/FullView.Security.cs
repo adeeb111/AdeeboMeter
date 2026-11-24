@@ -144,7 +144,7 @@ namespace AdeeboMeter
                 }
                 // the groups: one line each, the checks as chips with their dot; open a group to see every chip
                 {
-                    float gy0 = y; var rowsH = new List<float>();
+                    var rowsH = new List<float>();
                     // measure first, so the card can be drawn under them
                     Func<string, bool, float> groupH = (gid, open) => { int cnt = Security.All.Count(c => c.Group == gid); int shown = open ? cnt : Math.Min(cnt, 6); float rowsOf = 1 + (open ? (float)Math.Ceiling(cnt / Math.Max(1f, (float)Math.Floor((w - 80 * S) / (170 * S)))) - 1 : 0); return 58 * S + rowsOf * 32 * S + 12 * S; };
                     float total = SecGroups.Sum(gr => groupH(gr[0], secOpen.Contains(gr[0])));

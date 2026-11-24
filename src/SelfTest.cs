@@ -141,6 +141,27 @@ namespace AdeeboMeter
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
             T("sentence case keeps acronyms, names and \"I\" (review 24 Nov)", () => { foreach (var c in new[] { new[] { "CAN I STREAM 4K RIGHT NOW?", "Can I stream 4K right now?" }, new[] { "YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY", "Your switch port  ·  LLDP / CDP, listened for passively" }, new[] { "EXPERT INFO (WIRESHARK)", "Expert info (Wireshark)" }, new[] { "WHAT I OBSERVED", "What I observed" }, new[] { "YOUR ROUTER", "Your router" }, new[] { "Mixed Case Stays", "Mixed Case Stays" }, new[] { "PING (MS)", "Ping (ms)" } }) { string got = Kit.Sent(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
+            T("review 24 Nov: weather servers kept or refused, app-look pills and cards readable in light and dark", () =>
+            {
+                foreach (var c in new[] { new[] { "https://api.example.com/v1/forecast", "api.example.com" }, new[] { "Host.Example.com:8443", "host.example.com:8443" }, new[] { "host:99999", "" }, new[] { "host:0", "" }, new[] { "two words", "" }, new[] { "", "" } })
+                    if (Weather.CleanServer(c[0]) != c[1]) throw new InvalidOperationException("CleanServer(\"" + c[0] + "\") = \"" + Weather.CleanServer(c[0]) + "\", wanted \"" + c[1] + "\"");
+                string paper0 = Cfg.Paper; bool dark0 = Theme.Dark;
+                try
+                {
+                    Cfg.Paper = "app";
+                    foreach (bool dark in new[] { false, true })
+                    {
+                        Theme.Apply(dark); string tag = dark ? "dark" : "light";
+                        if (Theme.Ratio(Paper.Ink, Paper.CardBg) < 4.5) throw new InvalidOperationException("Markets/Sports card text in " + tag + ": " + Theme.Ratio(Paper.Ink, Paper.CardBg).ToString("0.00", CultureInfo.InvariantCulture));
+                        foreach (var lv in new[] { Tuple.Create("green", Paper.Green), Tuple.Create("red", Paper.Red), Tuple.Create("amber", Paper.Amber), Tuple.Create("muted", Paper.Muted) })
+                        {
+                            var f = Paper.FillOf(lv.Item2); var bg = Kit.Mix(Theme.Card, Color.FromArgb(255, f), f.A / 255f); double r = Theme.Ratio(Paper.OnFill(lv.Item2), bg);
+                            if (r < 4.5) throw new InvalidOperationException(lv.Item1 + " pill in " + tag + ": " + r.ToString("0.00", CultureInfo.InvariantCulture) + ":1");
+                        }
+                    }
+                }
+                finally { Cfg.Paper = paper0; Theme.Apply(dark0); }
+            });
             T("shell masks secrets for other programs (security recheck L-1)", () => { foreach (var c in new[] { new[] { "curl -H \"Authorization: Bearer abcdef123\" https://x", "curl -H \"Authorization: Bearer ****\" https://x" }, new[] { "export GITHUB_TOKEN=abc123", "export GITHUB_TOKEN=****" }, new[] { "mytool --password hunter22", "mytool --password ****" }, new[] { "curl https://bob:s3cret@host/p", "curl https://bob:****@host/p" }, new[] { "AUTHOR=adeeb", "AUTHOR=adeeb" } }) { string got = FullView.ShScrub(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
 
             // hunt-5 coverage: the feeds and verdicts that had no fixture
