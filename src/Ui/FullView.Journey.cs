@@ -59,7 +59,7 @@ namespace AdeeboMeter
         {
             var f = JFlowFromStory();
             y += 10 * S; float top = y;
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")) + (f != null ? "  ·  " + (f.App != "" ? f.App.ToUpperInvariant() + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : "UDP PORT " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")) + (f != null ? "  ·  " + (f.App != "" ? f.App + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : L.T("UDP port") + " " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
             if (f == null) return Lead(g, AdeeboMeter.L.T("Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything)."), x, y, w, true);
             if (jHeld != null) using (var hb = new SolidBrush(Theme.LvText(1))) { string ht = L.T("Still recording the conversation above. You picked") + " " + jHeld + " - " + L.T("stop the recording to follow it."); float hh = Draw.Measure(ht, Draw.fSmall, (int)w).Height; g.DrawString(ht, Draw.fSmall, hb, new RectangleF(x, y, w, hh + 2)); y += hh + 8 * S; }
             if (jScrollTo) { jScrollTo = false; int want = (int)top - Sc(20); BeginInvoke((Action)delegate { travelCanvas.AutoScrollPosition = new Point(0, Math.Max(0, want)); }); }
@@ -99,7 +99,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < stops.Count; i++)
                 {
                     float cx = x + i * (colW + 10 * S), cy = y; string err; var layers = Calc.Parse(stops[i][1], out err);
-                    g.DrawString(stops[i][0].ToUpperInvariant(), Draw.fTiny, muted, cx, cy); cy += 18 * S;
+                    g.DrawString(L.T(stops[i][0]), Draw.fTiny, muted, cx, cy); cy += 18 * S;
                     foreach (var l in layers)
                     {
                         var cr = new RectangleF(cx, cy, colW, chipH); var col = LayerColor(l.Key);
@@ -351,7 +351,7 @@ namespace AdeeboMeter
         // the running translation: one plain line per packet, newest last
         float PaintJTranslate(Graphics g, float x, float y, float w, List<Journey.Rec> recs, bool rec)
         {
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("IN PLAIN WORDS")) + (rec ? "  ·  LIVE" : ""), x, y, w, "travel.JSAY");
+            y = Head(g, AdeeboMeter.Kit.Sent(L.T("IN PLAIN WORDS")) + (rec ? "  ·  " + L.T("Live") : ""), x, y, w, "travel.JSAY");
             int upto = recs.FindLastIndex(r => r.T <= jPlay + 1e-6); if (upto < 0) upto = rec ? recs.Count - 1 : Math.Min(recs.Count - 1, 9);
             var shown = recs.Skip(Math.Max(0, upto - 9)).Take(Math.Min(10, upto + 1)).ToList();
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

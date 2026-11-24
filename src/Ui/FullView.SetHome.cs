@@ -80,9 +80,9 @@ namespace AdeeboMeter
         {
             string[] bg, card, acc, ink;
             if (theme >= 2 && theme - 2 < Theme.Palettes.Length) { var v = Theme.PaletteColors[Theme.Palettes[theme - 2]]; bg = new[] { v[0] }; card = new[] { v[1] }; acc = new[] { v[12] }; ink = new[] { v[6] }; }
-            else if (theme == 1) { bg = new[] { "#0E1319" }; card = new[] { "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#E6EDF3" }; }
-            else if (theme == 0) { bg = new[] { "#F2F5F9" }; card = new[] { "#FFFFFF" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
-            else { bg = new[] { "#F2F5F9", "#0E1319" }; card = new[] { "#FFFFFF", "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
+            else if (theme == 1) { bg = new[] { "#111316" }; card = new[] { "#181B20" }; acc = new[] { "#1155E0" }; ink = new[] { "#EEF1F5" }; }
+            else if (theme == 0) { bg = new[] { "#F1F3F6" }; card = new[] { "#FFFFFF" }; acc = new[] { "#1155E0" }; ink = new[] { "#16191E" }; }
+            else { bg = new[] { "#F1F3F6", "#111316" }; card = new[] { "#FFFFFF", "#181B20" }; acc = new[] { "#1155E0" }; ink = new[] { "#16191E" }; }
             Theme.Fill(g, r, r.Height / 2, Theme.C(bg[0]));
             if (bg.Length > 1) { var st = g.Save(); g.SetClip(new RectangleF(r.X + r.Width / 2, r.Y, r.Width / 2, r.Height)); Theme.Fill(g, r, r.Height / 2, Theme.C(bg[1])); g.Restore(st); }
             Theme.Stroke(g, r, r.Height / 2, Theme.Line, 1);
@@ -145,7 +145,7 @@ namespace AdeeboMeter
             using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), st + 2), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
-            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; Cfg.Save(); overviewCanvas.Invalidate(); });   // no fifth question after the four (review 24 Nov)
             y += 22 * S;
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T(qs[st]), Draw.fTitle, ink, x + 18 * S, y); y += 38 * S;
             var o = opts[st]; int cols = Math.Min(o.Length, w > 760 * S ? 4 : 2); float cw = (w - 36 * S - (cols - 1) * 10 * S) / cols, ch = st == 0 ? 112 * S : 70 * S;
@@ -166,7 +166,7 @@ namespace AdeeboMeter
                     if (step == 0) Cfg.WidgetStyle = id;
                     else if (step == 1) { Cfg.ApplyPreset(id); Policy.Apply(); M.Nudge(); }
                     else { if (id == "plain") Voice.Serious = true; else { Voice.Serious = false; Lines.Persona = id; Lines.Mood = "chill"; } }
-                    if (step == 2) Cfg.SetupDone = true; else setupStep = step + 2;
+                    if (step == 2) { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; } else setupStep = step + 2;   // Simple unless step 1 chose Troubleshooting: no fifth question
                     Cfg.Save(); Invalidate(true);
                 });
             }

@@ -129,7 +129,7 @@ a{text-underline-offset:.18em}
 .v3act .lab{text-transform:lowercase;letter-spacing:0;font-size:13px;font-weight:600}
 .v3act .lab span{display:inline-block}.v3act .lab span::first-letter{text-transform:uppercase}
 /* the gauge colours for every little measurement on the page */
-:root{--amber:#B7791F;--red:#D9473A;--green:#1F9E6B}
+:root{--amber:#875A00;--red:#B42318;--green:#17794F}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}}
 :root[data-theme="dark"]{--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}
 #feedback .community{justify-content:flex-start;text-align:left}
@@ -169,7 +169,7 @@ a{text-underline-offset:.18em}
 .spic .sw{margin:0 0 14px;color:#4B5360;font-size:14px}
 .schain{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);margin:0;padding:10px 0 0;border-top:1px solid #DDE1E7;font-size:12.5px;color:#4B5360}
 .schain b{display:block;color:#16191E;font-weight:600;font-size:14px}
-.schain .ok span:last-child{color:#1F9E6B}.schain .wa span:last-child{color:#B7791F}
+.schain .ok span:last-child{color:#17794F}.schain .wa span:last-child{color:#875A00}
 .spic .sm{margin:12px 0 0;font-size:12px;color:#6B7380}
 /* the ISP report: the same order as the real one - the answer, the numbers, what's ruled out, what to check */
 .sisp{padding:14px 16px;font-size:13.5px}
@@ -231,3 +231,24 @@ a{text-underline-offset:.18em}
   .v4l>*{margin-block:0}
   .v4pill{order:0}.v4l h1{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
 }
+
+/* ---- review 24 Nov ---------------------------------------------------------------------------------------------------- */
+/* the Theory slides: the brand palette instead of the old one */
+.slide{--blue:#1155E0;--blue-d:#0D47BD;--blue-s:#EAF0FD;--green:#17794F;--green-s:#E6F4EC;--amber:#875A00;--amber-s:#FCF1DC;--red:#B42318;--red-s:#FCEBE8;
+  --purple:#6D4BD8;--purple-s:#EFEAFD;--ink:#16191E;--sub:#4B5360;--muted:#5A6270;--line:#DDE1E7;--card:#FFFFFF;--page:#F1F3F6;--soft:#F4F6F9}
+/* dark mode keeps the slides as light paper on purpose: many slides paint their own light backgrounds and diagrams */
+/* solid buttons are the logo blue in both themes: white on the dark theme's lighter link blue was 3.9:1 */
+.pill,.btn.primary,.v3btn:not(.line){background:var(--face)}
+.pill:hover,.btn.primary:hover,.v3btn:not(.line):hover{background:#0D47BD}
+.upd.new{color:var(--ink)}
+/* the folded Theory deck: room to read on phones */
+@media (max-width:520px){.sh.wrap{padding-left:16px;padding-right:16px}}
+/* narrow phones: the logo alone in the header, so Download keeps its room */
+@media (max-width:380px){header.top .brand span{display:none}}
+/* right-to-left: ticks, arrows and the close button sit on the right side, and Arabic headings keep their letters joined */
+.v4trust li:before{margin-right:0;margin-inline-end:7px}
+[dir="rtl"] .sample .sx{margin:-8px 0 -8px -8px}
+[dir="rtl"] .arrow.prev{left:auto;right:0}[dir="rtl"] .arrow.next{right:auto;left:0}
+[dir="rtl"] .arrow svg,[dir="rtl"] .v3tile .go{transform:scaleX(-1)}
+[dir="rtl"] .v3tile .go{right:auto;left:18px}
+[dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3{letter-spacing:0}

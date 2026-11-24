@@ -42,12 +42,11 @@ namespace AdeeboMeter
         DateTime dwellStart = DateTime.MinValue; double dwell;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
-        ToolStripMenuItem miWidget, miAuto, miSerious, miBig;
+        ToolStripMenuItem miWidget, miBig;
         readonly string settingsPath;
         EventWaitHandle openEvt, ackEvt, quitEvt;
         HotKey hotkey; UserPreferenceChangedEventHandler prefHandler;
         readonly bool forcedByArgs = Program.ForceTheme >= 0;
-        ToolStripMenuItem miThemeAuto, miThemeLight, miThemeDark;
         static byte FADE { get { return (byte)Cfg.Fade; } }      // 30 % by default (Settings)
         static int DWELL_MS { get { return Cfg.DwellMs; } }     // rest the mouse this long on the folded chip to open it
 
@@ -77,7 +76,6 @@ namespace AdeeboMeter
             var miSettings = new ToolStripMenuItem(L.T("Settings...")); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
             miWidget = new ToolStripMenuItem(L.T("Hide widget (keep tray icon)")); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
             miBig = new ToolStripMenuItem(L.T("Bigger widget")); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
-            miSerious = new ToolStripMenuItem(L.T("Serious mode (no jokes)")); miSerious.Click += delegate { Voice.Serious = !Voice.Serious; SaveSettings(); drawnKey = ""; };
             var miScreen = new ToolStripMenuItem(L.T("Widget on screen"));
             miScreen.DropDownOpening += delegate
             {
@@ -99,24 +97,14 @@ namespace AdeeboMeter
                 miStyle.DropDownItems.Add(it);
             }
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
-            var miSlow = new ToolStripMenuItem(L.T("Check now")) { ShortcutKeyDisplayString = "Ctrl+Alt+S", ShowShortcutKeys = true }; miSlow.Click += delegate { FeltSlow(); };
+            // "Check now" is the full checkup everywhere (review 24 Nov: it named three different actions); Ctrl+Alt+S stays the
+            // "it feels slow right now" recorder
+            var miSlow = new ToolStripMenuItem(L.T("Check now")); miSlow.Click += delegate { OpenFull(); if (full != null && !full.IsDisposed) full.StartCheckup(); };
             var miIsp = new ToolStripMenuItem(L.T("Send to my ISP")); miIsp.Click += delegate { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("ispreport", false); };
             var miPhone = new ToolStripMenuItem(L.T("Your phone...")); miPhone.Click += delegate { OpenRemote(); };
             PhoneHub.Start = delegate { try { marshal.BeginInvoke((Action)OpenRemote); } catch (InvalidOperationException) { } };
             PhoneHub.Show = kind => { try { marshal.BeginInvoke((Action)ShowPhonePage); } catch (InvalidOperationException) { } };
             try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
-            var miTheme = new ToolStripMenuItem(L.T("Theme"));
-            miThemeAuto = new ToolStripMenuItem(L.T("Follow Windows")); miThemeLight = new ToolStripMenuItem(L.T("Light")); miThemeDark = new ToolStripMenuItem(L.T("Dark"));
-            miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
-            miTheme.DropDownItems.Add(miThemeAuto); miTheme.DropDownItems.Add(miThemeLight); miTheme.DropDownItems.Add(miThemeDark);
-            miTheme.DropDownItems.Add(new ToolStripSeparator());
-            for (int pi = 0; pi < Theme.Palettes.Length; pi++)
-            {
-                int th = pi + 2; string nm = Theme.Palettes[pi]; var it = new ToolStripMenuItem(L.T(char.ToUpperInvariant(nm[0]) + nm.Substring(1))) { Tag = th }; it.Click += delegate { SetTheme(th); };
-                miTheme.DropDownItems.Add(it);
-            }
-            miTheme.DropDownOpening += delegate { foreach (ToolStripItem ti in miTheme.DropDownItems) { var mi = ti as ToolStripMenuItem; if (mi != null && mi.Tag is int) mi.Checked = Program.ForceTheme == (int)mi.Tag; } };   // AM-CG-202
-            miAuto = new ToolStripMenuItem(L.T("Start with Windows")); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
             var miRemove = new ToolStripMenuItem(L.T("Uninstall AdeeboMeter..."));
             miRemove.Click += delegate { try { using (Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--uninstall") { UseShellExecute = false })) { } } catch (Exception e) { Program.Log("uninstall: " + e.Message); } };
             var miExit = new ToolStripMenuItem(L.T("Exit AdeeboMeter")) { Tag = "exit" }; miExit.Click += delegate { Quit(); };
@@ -127,13 +115,10 @@ namespace AdeeboMeter
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miIsp); menu.Items.Add(miPhone); menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(miCorner); menu.Items.Add(miSettings); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
-            // the theme, serious-mode and start-with-Windows items stay built (their state is read on open) but live in Settings now
-            GC.KeepAlive(miTheme); GC.KeepAlive(miSerious); GC.KeepAlive(miAuto);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
             menu.Opening += delegate { var ls = M.Latest; miState.Text = "AdeeboMeter " + Program.Version; ((Menus.Row)miState).Line = ls == null ? "" : (ls.Level == 1 || ls.Level == 2 ? "● " : "") + ls.Headline;
                 bool past = ls != null && ls.Path.Length > 2 && (ls.Path[0] == 0 || ls.Path[0] == 3) && ls.Path.Skip(2).Any(p => p == 1 || p == 2); miIsp.Visible = past;
-                miWidget.Text = widgetOn ? L.T("Hide widget (keep tray icon)") : L.T("Show widget"); miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
-                miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
+                miWidget.Text = widgetOn ? L.T("Hide widget (keep tray icon)") : L.T("Show widget"); miBig.Checked = Cfg.BigWidget; };
 
             tray.Icon = Theme.MakeIcon(Math.Max(16, (int)(16 * sc)));
             tray.Text = "AdeeboMeter"; tray.ContextMenuStrip = menu;

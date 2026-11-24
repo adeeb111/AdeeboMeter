@@ -11,7 +11,8 @@ namespace AdeeboMeter
     // always problematic"). Hiding only quiets Home's card: the status strip and the corner widget always tell the truth.
     //   for today            - back tomorrow, or sooner if it gets worse
     //   while it stays like this - back when it gets about 5 points worse, the level rises, or something new breaks
-    //   never for this kind  - Home never leads with this kind again (Settings › Alerts turns it back on)
+    //   never for this kind  - Home never leads with this kind again
+    // While a problem is hidden, Home's card carries one "Show again" button - the way back for every mode (review 24 Nov).
     sealed partial class FullView
     {
         // the problem Home leads with, as a kind and the number that measures it (NaN when there's no single number)
@@ -30,7 +31,13 @@ namespace AdeeboMeter
         }
         static string KindName(string kind)
         {
-            switch (kind) { case "pc.mem": return L.T("memory warnings"); case "pc.cpu": return L.T("processor warnings"); default: return L.T("this kind of warning"); }
+            switch (kind)
+            {
+                case "pc.mem": return L.T("memory warnings"); case "pc.cpu": return L.T("processor warnings");
+                case "net.1": return L.T("router and Wi-Fi warnings"); case "net.2": return L.T("VPN and provider warnings");
+                case "net.3": return L.T("DNS warnings"); case "net.4": return L.T("internet warnings");
+                default: return L.T("this kind of warning");
+            }
         }
         // is Home's lead problem hidden right now?
         static bool ProblemHidden(Snap s)
@@ -63,9 +70,14 @@ namespace AdeeboMeter
         float PaintVerdictActs(Graphics g, float right, float y, bool measure)
         {
             double v; string k = ProblemKind(snap, out v); bool pc = k != null && k.StartsWith("pc.", StringComparison.Ordinal);
-            var items = new System.Collections.Generic.List<Tuple<string, int>> { Tuple.Create(L.T("Hide") + "  ▾", 0) };
-            if (pc) items.Add(Tuple.Create(L.T("See what's running"), 1));
-            if (snap.Flow != "" || pc) items.Add(Tuple.Create(L.T("Investigate"), 2));
+            var items = new System.Collections.Generic.List<Tuple<string, int>>();
+            if (ProblemHidden(snap)) items.Add(Tuple.Create(L.T("Show again"), 3));   // the way back from every Hide, "never" included
+            else
+            {
+                items.Add(Tuple.Create(L.T("Hide") + "  ▾", 0));
+                if (pc) items.Add(Tuple.Create(L.T("See what's running"), 1));
+                if (snap.Flow != "" || pc) items.Add(Tuple.Create(L.T("Investigate"), 2));
+            }
             float x = right, h = 34 * Draw.S, total = 0;
             for (int i = items.Count - 1; i >= 0; i--)
             {
@@ -80,6 +92,7 @@ namespace AdeeboMeter
                     {
                         if (kind == 0) ShowHideMenu(overviewCanvas, new Point((int)rr.X, (int)(rr.Bottom + 4 * Draw.S) + overviewCanvas.AutoScrollPosition.Y));
                         else if (kind == 1) { tab = "procs"; ShowTab(); }
+                        else if (kind == 3) UnhideProblem();
                         else { string fl = snap.Flow; tab = "guide"; ShowTab(); if (fl != "") StartGuide(fl, false); }
                     });
                 }
@@ -94,7 +107,7 @@ namespace AdeeboMeter
             Menus.Add(m, L.T("Hide for today"), L.T("Comes back tomorrow, or sooner if it gets worse"), delegate { HideProblemFor("day"); });
             Menus.Add(m, L.T("Hide while it stays like this"), L.T("Comes back if it gets worse or something new breaks"), delegate { HideProblemFor("while"); });
             m.Items.Add(new ToolStripSeparator());
-            Menus.Add(m, L.T("Never show") + " " + KindName(k) + " " + L.T("here"), L.T("Still in the status strip and the corner widget"), delegate { HideProblemFor("never"); });
+            Menus.Add(m, L.T("Never show") + " " + KindName(k) + " " + L.T("here"), L.T("The widget still shows it. Show again undoes this."), delegate { HideProblemFor("never"); });
             m.Show(on, at);
         }
     }

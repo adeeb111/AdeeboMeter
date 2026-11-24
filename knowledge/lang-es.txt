@@ -5112,3 +5112,12 @@ memory	memoria
 memory warnings	avisos de memoria
 processor warnings	avisos del procesador
 this kind of warning	este tipo de aviso
+DNS warnings	avisos de DNS
+Refresh readings	Actualizar lecturas
+Show again	Mostrar de nuevo
+The widget still shows it. Show again undoes this.	El widget lo sigue mostrando. «Mostrar de nuevo» lo deshace.
+UDP port	puerto UDP
+VPN and provider warnings	avisos de VPN y proveedor
+internet warnings	avisos de internet
+router and Wi-Fi warnings	avisos del router y Wi-Fi
+{0} hidden. Everything else looks fine.	{0} ocultos. Todo lo demás está bien.

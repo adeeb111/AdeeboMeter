@@ -70,7 +70,7 @@ namespace AdeeboMeter
             float bx = face.Right + 16 * S, bw = w - (face.Right - x) - 16 * S - 120 * S;
             var bubble = new RectangleF(bx, y, bw, 60 * S); Theme.Fill(g, bubble, 14 * S, Theme.Soft);
             using (var tri = new SolidBrush(Theme.Soft)) g.FillPolygon(tri, new[] { new PointF(bx, y + 22 * S), new PointF(bx - 8 * S, y + 29 * S), new PointF(bx, y + 36 * S) });
-            string tag = plain ? Kit.Sent(L.T("PLAIN")) : (L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T("talks like: ") + L.T(Lines.PersonaName(buddyHover != "" ? buddyHover : Lines.Persona))).ToUpperInvariant();
+            string tag = plain ? Kit.Sent(L.T("PLAIN")) : (L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T("talks like: ") + L.T(Lines.PersonaName(buddyHover != "" ? buddyHover : Lines.Persona)));
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(tag, Draw.fTiny, mb, bx + 14 * S, y + 9 * S);
             using (var ib = new SolidBrush(Theme.Ink)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.NoWrap }) { string ty = Typing.Show("sheet", line, buddySheet); g.DrawString("“" + ty + (ty == line ? "”" : ""), Draw.fBody, ib, new RectangleF(bx + 14 * S, y + 28 * S, bw - 24 * S, 24 * S), sf); }
             // Fun lines switch

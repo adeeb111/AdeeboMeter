@@ -140,6 +140,7 @@ namespace AdeeboMeter
                 foreach (var c in odd.Take(5)) sb.AppendLine("      odd: " + c.State + "  " + c.Proto + " " + c.Local + " -> " + c.Remote + "  pid " + c.Pid);
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
+            T("sentence case keeps acronyms, names and \"I\" (review 24 Nov)", () => { foreach (var c in new[] { new[] { "CAN I STREAM 4K RIGHT NOW?", "Can I stream 4K right now?" }, new[] { "YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY", "Your switch port  ·  LLDP / CDP, listened for passively" }, new[] { "EXPERT INFO (WIRESHARK)", "Expert info (Wireshark)" }, new[] { "WHAT I OBSERVED", "What I observed" }, new[] { "YOUR ROUTER", "Your router" }, new[] { "Mixed Case Stays", "Mixed Case Stays" }, new[] { "PING (MS)", "Ping (ms)" } }) { string got = Kit.Sent(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
             T("shell masks secrets for other programs (security recheck L-1)", () => { foreach (var c in new[] { new[] { "curl -H \"Authorization: Bearer abcdef123\" https://x", "curl -H \"Authorization: Bearer ****\" https://x" }, new[] { "export GITHUB_TOKEN=abc123", "export GITHUB_TOKEN=****" }, new[] { "mytool --password hunter22", "mytool --password ****" }, new[] { "curl https://bob:s3cret@host/p", "curl https://bob:****@host/p" }, new[] { "AUTHOR=adeeb", "AUTHOR=adeeb" } }) { string got = FullView.ShScrub(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
 
             // hunt-5 coverage: the feeds and verdicts that had no fixture
@@ -190,7 +191,7 @@ namespace AdeeboMeter
 
             T("money calculators: decimal commas, and junk never throws (round 6 CN-1/CN-2)", () =>
             {
-                foreach (var c in new[] { new object[] { "1,5", 1.5 }, new object[] { "10,25", 10.25 }, new object[] { "0,99", 0.99 }, new object[] { "1,234.5", 1234.5 }, new object[] { "1.234,5", 1234.5 }, new object[] { "1,000", 1000.0 }, new object[] { "1 000,5", 1000.5 }, new object[] { "$12.40", 12.4 }, new object[] { "1.000.000", 1000000.0 }, new object[] { "-3,5", -3.5 } })
+                foreach (var c in new[] { new object[] { "1,5", 1.5 }, new object[] { "10,25", 10.25 }, new object[] { "0,99", 0.99 }, new object[] { "1,234.5", 1234.5 }, new object[] { "1.234,5", 1234.5 }, new object[] { "1,000", 1000.0 }, new object[] { "1 000,5", 1000.5 }, new object[] { "$12.40", 12.4 }, new object[] { "1.000.000", 1000000.0 }, new object[] { "-3,5", -3.5 }, new object[] { "50, 45", 50.0 } })
                 { double v = Calc.P((string)c[0]); if (Math.Abs(v - (double)c[1]) > 1e-9) throw new InvalidOperationException((string)c[0] + " read as " + v); }
                 string a = string.Join("|", Calc.Pnl("10,5", "12", "100", "0,5%").Select(r => r[2])), b = string.Join("|", Calc.Pnl("10.5", "12", "100", "0.5%").Select(r => r[2]));
                 if (a != b) throw new InvalidOperationException("Pnl with commas differs: " + a + " vs " + b);

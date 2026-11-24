@@ -41,20 +41,20 @@ header h1{font-size:28px;line-height:1.08;margin:0;font-weight:800;letter-spacin
 svg.i{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .card{background:var(--card);box-shadow:var(--glow);border-radius:22px;padding:16px;margin:0 0 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-width:0}
 .card h3{margin:6px 0 4px;font-size:18px;overflow-wrap:anywhere}
-.hero{background:linear-gradient(135deg,rgba(31,111,235,.55),rgba(20,50,110,.6));box-shadow:0 0 0 1px var(--edge2),0 12px 40px rgba(31,111,235,.25);display:flex;align-items:center;gap:14px;cursor:pointer;border:0;width:100%;text-align:left;color:inherit;font:inherit}
+.hero{background:linear-gradient(135deg,rgba(31,111,235,.55),rgba(20,50,110,.6));box-shadow:0 0 0 1px var(--edge2),0 12px 40px rgba(31,111,235,.25);display:flex;align-items:center;gap:14px;cursor:pointer;border:0;width:100%;text-align:start;color:inherit;font:inherit}
 :root[data-theme="light"] .hero{background:linear-gradient(135deg,#2F7BF5,#1C5FD6);color:#fff}
 .hero .m{color:#C9DAF7;font-size:13px}:root[data-theme="light"] .hero .m{color:#DCE8FF}.hero b{font-size:19px;display:block;margin:2px 0}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
 .led{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);flex:none}.led.off{background:var(--mut);box-shadow:none}.led.warn{background:var(--amber);box-shadow:0 0 10px var(--amber)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
-.tile{background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:15px;min-height:116px;cursor:pointer;border:0;text-align:left;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px;text-decoration:none}
+.tile{background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:15px;min-height:116px;cursor:pointer;border:0;text-align:start;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px;text-decoration:none}
 .tile b{font-size:18px}.tile span{color:var(--sub);font-size:13px;line-height:1.3}
 .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none}
 .c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-purple{color:var(--purple)}.c-amber{color:var(--amber)}.c-cyan{color:var(--cyan)}.c-red{color:var(--red)}
 .bg-blue{background:rgba(59,139,255,.12)}.bg-cyan{background:rgba(63,208,224,.10)}.bg-amber{background:rgba(242,184,75,.12)}
 .where{display:inline-flex;gap:4px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.03em;border-radius:99px;padding:2px 8px;background:rgba(59,139,255,.16);color:var(--blue);white-space:nowrap}
 .where.ph{background:rgba(63,208,122,.15);color:var(--green)}.where.off{background:rgba(164,123,255,.16);color:var(--purple)}
-.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:start}
 .list>.row:first-child,.card>.row:first-of-type{border-top:0}
 .row .tx{flex:1;min-width:0}.row .tx b{display:block;font-size:16px;overflow-wrap:anywhere}.row .tx span{display:block;color:var(--sub);font-size:13px;overflow-wrap:anywhere}.row .tx span.where{display:inline-flex;margin-top:3px}
 .chev{color:var(--mut)}
@@ -198,7 +198,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb #web{bottom:cal
 .pre{background:var(--well,rgba(127,127,127,.12));border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;margin:8px 0 0;overflow:auto;max-height:340px}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:150px;margin-top:14px}.wk>div{display:flex;flex-direction:column;align-items:center;min-width:0}.wk .bar{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}.wk i{display:block;width:70%;border-radius:6px 6px 2px 2px}.wk b{font-size:12px;margin-top:4px}.wk small{font-size:11px;color:var(--sub)}
 textarea.in{resize:vertical;min-height:120px}
-.pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:left;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
+.pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:start;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
 .tog.on{background:var(--blue)}#qrbox svg{width:100%;height:auto;border-radius:8px}
 /* themes (16 Nov): the desktop app's palettes - Neon, Midnight, Sunset, Mint - over Dark/Light; text on the accent by contrast */
 :root[data-pal="neon"]{--bg:#07080D;--bg2:#10121A;--card:#10121A;--card2:#161925;--edge:#262B3D;--edge2:#00E5FF;--ink:#EEF4FF;--sub:#9AA2BA;--mut:#4C536C;--blue:#00E5FF;--green:#5CFFB0;--amber:#FFE066;--red:#FF7A99;--well:#07080D;--onblue:#04121A}
@@ -207,10 +207,10 @@ textarea.in{resize:vertical;min-height:120px}
 :root[data-pal="mint"]{--bg:#EEF7F4;--bg2:#FFFFFF;--card:#FFFFFF;--card2:#F2FAF7;--edge:#CBE3DA;--edge2:#0E9C78;--ink:#14302A;--sub:#4F6A62;--mut:#9FBAB1;--blue:#0E9C78;--green:#116329;--amber:#7D4E00;--red:#B42318;--well:#EEF7F4;--onblue:#FFFFFF}
 :root[data-pal] body{background:var(--bg)}:root[data-pal] nav.tabs{background:var(--bg2)}
 :root[data-pal] .seg button.on,:root[data-pal] .act.main i,:root[data-pal] .btn:not(.ghost),:root[data-pal] nav.tabs button.on,:root[data-pal] .voices button.on,:root[data-pal] .mini button.on{color:var(--onblue,#fff)}
-.thg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.thb{border:2px solid var(--edge);border-radius:14px;padding:8px;text-align:left;font:inherit;cursor:pointer}.thb.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}.thb b{display:block;font-size:14px;margin-top:6px}.thb i{display:block;border-radius:10px;padding:8px}.thb i u{display:block;height:6px;border-radius:3px;margin-bottom:5px}.thb i em{display:block;height:14px;width:45%;border-radius:7px;margin-top:7px}
+.thg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.thb{border:2px solid var(--edge);border-radius:14px;padding:8px;text-align:start;font:inherit;cursor:pointer}.thb.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}.thb b{display:block;font-size:14px;margin-top:6px}.thb i{display:block;border-radius:10px;padding:8px}.thb i u{display:block;height:6px;border-radius:3px;margin-bottom:5px}.thb i em{display:block;height:14px;width:45%;border-radius:7px;margin-top:7px}
 /* views (v4): the View chip and companion button, one result per view, game and service cards, quick buttons, activity, sheets */
 .vrow{display:flex;gap:8px;align-items:center;margin:0 0 12px}
-.vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:left}
+.vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:start}
 .vchip small{color:var(--sub);font-weight:600;font-size:14px;margin-right:auto}.vchip b{white-space:nowrap}
 .cbtn{width:46px;height:46px;flex:none;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;display:grid;place-items:center;cursor:pointer;padding:0}.cbtn svg{width:30px!important;height:30px!important}
 .say2{display:flex;gap:8px;align-items:flex-end;margin:0 2px 12px}.say2>span:last-child{background:var(--card2);border-radius:14px 14px 14px 4px;padding:8px 12px;font-style:italic;color:var(--sub);font-size:14px;line-height:1.35}.say2>span:first-child svg{width:32px!important;height:32px!important}
@@ -221,7 +221,7 @@ textarea.in{resize:vertical;min-height:120px}
 .hrow{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 8px}.hrow b{font-size:17px}
 .lnk{background:none;border:0;color:var(--blue);font:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:0}
 .gscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:2px 16px}.gscroll::-webkit-scrollbar{display:none}
-.gcard{flex:none;width:126px;background:var(--card);border:1.5px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gcard{flex:none;width:126px;background:var(--card);border:1.5px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink);font:inherit;text-align:start;cursor:pointer}
 .gcard.on{border-color:var(--blue)}.gcard .gtop{height:50px;margin:-10px -10px 8px;background:linear-gradient(135deg,color-mix(in srgb,var(--g) 85%,#000),color-mix(in srgb,var(--g) 45%,#0B1426));display:grid;place-items:center;color:#fff}
 .gcard b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gcard small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gst{margin-top:6px;align-self:flex-start;font-size:12px;font-weight:800;border-radius:7px;padding:2px 8px}.gst.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}.gst.warn{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}.gst.bad{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.gst.off{background:var(--card2);color:var(--sub)}
@@ -236,7 +236,7 @@ textarea.in{resize:vertical;min-height:120px}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:86vh;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -1px 0 var(--edge);padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
 @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
 .sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:0 auto 12px}.sheet h3{font-size:20px;margin:0 0 4px}
-.vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:left;cursor:pointer}.vopt:first-of-type{border-top:0}
+.vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:start;cursor:pointer}.vopt:first-of-type{border-top:0}
 .vopt .tx{flex:1;min-width:0}.vopt .tx b{display:block}.vopt .tx span{color:var(--sub);font-size:13px}.vopt .ic{width:40px;height:40px;border-radius:12px}
 .tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--edge);display:grid;place-items:center;flex:none}.tick.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .voices{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:8px;margin:8px -18px 4px;padding:2px 18px;overflow-x:auto;scrollbar-width:none;justify-content:start}.voices::-webkit-scrollbar{display:none}
@@ -256,7 +256,7 @@ textarea.in{resize:vertical;min-height:120px}
 <link rel="stylesheet" href="/locale.css">
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <link rel="stylesheet" href="/brand-app.css">
 </head>
 <body>
@@ -886,7 +886,7 @@ textarea.in{resize:vertical;min-height:120px}
     return '<div class="card vcard face"><div class="tag2"><span class="lc">' + esc(tr("THIS PHONE")) + '</span>' + (ty ? " · " + (ty === "WI-FI" ? '<span class="keep">Wi-Fi</span>' : esc(tr(ty))) : "") + (me.org ? ' · <span class="keep">' + esc(me.org) + '</span>' : "") + ' · ' + hm(me.at) + '</div>' + dialSvg(me.err ? 62 : lv <= 0 ? -48 : lv === 1 ? 0 : 46) + '<div class="vh">'  + esc(tr(me.err ? "Couldn't reach the internet" : lv <= 0 ? "Low, steady delay" : lv === 1 ? "A bit slow or uneven" : "Slow or uneven")) + '</div>' +
       (me.err ? '<div style="color:var(--sub)">' + esc(phoneRows(me, true)[0][3]) + '</div>' : '<div class="big3"><div><small><span data-i18n="Delay">Delay</span></small><b>' + ms(Math.round(me.med)) + '</b></div><div><small><span data-i18n="Spread">Spread</span></small><b>' + ms(Math.round(me.jit)) + '</b></div><div><small>IPv6</small><b>' + (me.v6 == null ? "–" : esc(tr(me.v6 ? "Yes" : "No"))) + '</b></div></div>' +
         (S.mode !== "advanced" && S.mode !== "engineer" ? "" : '<p class="fine" style="margin:8px 0 0">' + esc(tr("Timed to the nearest internet edge server")) + (me.colo ? " (" + esc(me.colo) + ")" : "") + ' at ' + hm(me.at)  + '. ' + esc(tr("Other screens time other servers, so their numbers differ.")) + '</p>') +
-        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › This phone shows which step is slow.">check again closer to the router. Still uneven? Tools › This phone shows which step is slow.</span></p>' : '')) +
+        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › My connection shows which step is slow.">check again closer to the router. Still uneven? Tools › My connection shows which step is slow.</span></p>' : '')) +
       '<button class="btn" data-act="phone2"' + (phoneBusy ? " disabled" : "") + '>' + ic("refresh", 18) + (' ' + esc(tr(phoneBusy ? "Measuring..." : "Check this phone again"))) + '</button></div>';
   }
   function gameCards() {
@@ -936,7 +936,7 @@ textarea.in{resize:vertical;min-height:120px}
   function quick() {
     var on = phase === "live", q = function (go, icn, k, t, act) { return '<button ' + (act ? 'data-act="' + act + '"' : 'data-go="' + go + '"') + '><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + esc(tr(t)) + '</button>'; };
     var w = function (url, icn, k, t) { return '<button data-web="' + url + '" data-title="' + t + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; }, tl = function (id, icn, k, t) { return '<button data-tool="' + id + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + esc(tr(t)) + '</button>'; };
-    var more = '<div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + (hasPc() ? w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live data") : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
+    var more = '<div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live data") + (hasPc() ? "" : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
     if (!hasPc()) return '<div class="qa2"><div class="qh"><span data-i18n="Quick tools">Quick tools</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "ISP report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' + more + '</div>';
     return '<div class="qa2"><div class="qh"><span data-i18n="Quick tools">Quick tools</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' +
       '<div class="qh">' + (on ? "<span>YOUR PC</span>" : '<span>WITH YOUR PC</span> <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
@@ -953,14 +953,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (!S.sheet) return "";
     var h = '<div class="dim" data-act="closesheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>';
     if (S.sheet === "view") h += '<div class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></div><h3 dir="auto">' + esc(tr("What do you use the internet for?")) + '</h3><p dir="auto" class="fine" style="margin:0 0 6px">' + esc(tr("Home shows what fits. Change it any time.")) + '</p>' + VIEWDEF.map(function (v) { var on = (S.view || "everyday") === v[0]; return '<button class="vopt" data-setview="' + v[0] + '"><span class="ic">' + ic(v[1], 20) + '</span><span class="tx"><b dir="auto">' + esc(tr(v[2])) + '</b><span dir="auto">' + esc(tr(v[3])) + '</span></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
-    else if (S.sheet === "comp") {
-      var st = window.AMV && AMV.state ? AMV.state() : { mine: null, chat: "normal" };
-      if (!vlist && window.AMV && AMV.voices) AMV.voices().then(function (j) { vlist = j; if (S.sheet === "comp") draw(); });
-      var vs = [["", "Surprise me"], ["plain", "Plain"]].concat(vlist ? vlist.moods.filter(function (m) { return m[0] !== "plain"; }).concat(vlist.personas) : []);
-      h += '<h3>Your companion</h3><div class="voices">' + vs.map(function (v) { var on = (st.mine || "") === v[0]; return '<button class="' + (on ? "on" : "") + '" data-voice="' + v[0] + '">' + esc(v[1]) + '</button>'; }).join("") + '</div>' +
-        '<div class="tag2" style="margin:12px 0 6px">HOW MUCH IT TALKS</div><div class="mini">' + [["face", "Face only"], ["quiet", "Quiet"], ["normal", "Normal"], ["chatty", "Chatty"]].map(function (c) { return '<button class="' + (st.chat === c[0] ? "on" : "") + '" data-talk="' + c[0] + '">' + c[1] + '</button>'; }).join("") + '</div>' +
-        '<div class="tag2" style="margin:14px 0 6px">SOUNDS LIKE</div>' + bubble(V("app.open") || "(the face only - no words)") + '<p class="fine"><button class="lnk" data-go="companion">What it calls you, and more ›</button></p>';
-    } else {
+    else {
       var L = S.sheet === "games" ? GAMES : S.sheet === "svc" ? SVC : CALL, mine = S.sheet === "games" ? myGames : S.sheet === "svc" ? mySvc : myCalls;
       h += '<h3>' + (S.sheet === "games" ? "Your games" : S.sheet === "svc" ? "Your services" : "Your call apps") + '</h3><p class="fine" style="margin:0 0 6px">Pick the ones you use. Kept on this phone.</p>' + L.map(function (x, k) { var on = mine.indexOf(x[0]) >= 0, hd = S.sheet !== "games" ? "" : k === 0 ? '<div class="tag2" style="margin:10px 0 4px">ON PHONES</div>' : x[5] == null && L[k - 1][5] != null ? '<div class="tag2" style="margin:14px 0 4px">ON PC AND CONSOLE</div>' : ""; return hd + '<button class="vopt" data-pickone="' + x[0] + '"><span class="ic" style="--k:' + x[2] + '">' + ic(S.sheet === "games" ? "game" : S.sheet === "svc" ? "play" : "headset", 18) + '</span><span class="tx"><b>' + esc(x[1]) + '</b></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
     }
@@ -983,7 +976,7 @@ textarea.in{resize:vertical;min-height:120px}
   }
   function glance() {
     var L = live || {}, on = phase === "live" && liveAt;
-    return '<button class="card" data-go="pc" style="display:block;width:100%;text-align:left;color:inherit;font:inherit;border:0;cursor:pointer"><h2><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)"><span class="led' + (isLive() ? '' : on ? ' warn' : ' off') + '"></span>Live at a glance</span>' + ic("chev", 20) + '</h2><p style="margin:-6px 2px 10px;color:var(--sub);font-size:13px">' + (isLive() ? 'Last update: now' : on ? 'Not live - from ' + ago(age()) + ' ago' : 'Connect your PC to see this') + '</p>' +
+    return '<button class="card" data-go="pc" style="display:block;width:100%;text-align:start;color:inherit;font:inherit;border:0;cursor:pointer"><h2><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)"><span class="led' + (isLive() ? '' : on ? ' warn' : ' off') + '"></span>Live at a glance</span>' + ic("chev", 20) + '</h2><p style="margin:-6px 2px 10px;color:var(--sub);font-size:13px">' + (isLive() ? 'Last update: now' : on ? 'Not live - from ' + ago(age()) + ' ago' : 'Connect your PC to see this') + '</p>' +
       '<div class="stats">' + stat("wifi", "c-cyan", "Devices", devs ? devs.filter(function (d) { return d.here; }).length : "–") + stat("signal", "c-green", "Ping", on ? ms(L.ping) : "–", on ? lvOf(L.ping, 80, 200) : 3) + stat("cpu", "c-purple", "PC CPU", on ? pct(L.cpu) : "–", on ? lvOf(L.cpu, 80, 95) : 3) + '</div></button>';
   }
   function say() {
@@ -999,7 +992,7 @@ textarea.in{resize:vertical;min-height:120px}
   var sayT = { line: "", at: 0 }, sayRun = false;
   function sayTick() {
     var sp = document.querySelector('[data-say]'); if (!sp || !sayT.line) { sayRun = false; return; }
-    var line = sayT.line, dur = Math.min(2000, line.length * 28), el = Date.now() - sayT.at;
+    var line = sayT.line, dur = Math.min(600, line.length * 12), el = Date.now() - sayT.at;   // the same pace as say()
     if (el >= dur) { sp.textContent = line; sayRun = false; return; }
     sp.innerHTML = esc(line.slice(0, Math.ceil(line.length * el / dur))) + '<i class="caret">▏</i>'; requestAnimationFrame(sayTick);
   }
@@ -2114,13 +2107,13 @@ textarea.in{resize:vertical;min-height:120px}
     else a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">Remember this PC</span></b><span><span data-i18n="Connect with the code first, then turn this on here.">Connect with the code first, then turn this on here.</span></span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC"></button></div>';
     return a + '</div>';
   }
-  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? tr("It follows your PC's voice unless you pick one here.") : "") + '</p>'; };
+  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || tr("(the face only - no words)")) + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? tr("It follows your PC's voice unless you pick one here.") : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
       // the app reads the code itself (Adeeb, 16 Nov): scanning with the Camera app opens the browser, which has none of this app's setup
       '<button class="btn" data-act="scanqr" style="font-size:18px;padding:18px">' + ic("pc", 22) + ' Scan the code on your PC</button>' +
       '<p class="note" style="margin-top:8px">Asks for your camera each time you scan - only to read the code. Nothing is recorded, sent or kept. Rather not? Point your phone\'s Camera app at the code instead - it then opens in the browser, which keeps its own separate setup.</p>' +
-      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Click the link button at the top of AdeeboMeter (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Press Scan the code on your PC, and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
+      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>In AdeeboMeter, open ⋯ › Your phone (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Press Scan the code on your PC, and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
       '<p class="note">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a>.</p>';
   };
   // ---- the code reader: the camera, asked for each time; jsQR (vendor/jsqr, loaded on first use) reads the frames on the phone
@@ -2173,7 +2166,7 @@ textarea.in{resize:vertical;min-height:120px}
   // ---------------------------------------------------------------- frame
   var PALS = ["neon", "midnight", "sunset", "mint"];
   // [id, name, background, card, text, sub text, accent] - the desktop's colours (src/Ui/Theme.cs)
-  var LOOKS = [["dark", "Dark", "#0B1426", "#121F38", "#E8EEF9", "#93A6C6", "#2F7BF6"], ["light", "Light", "#F3F6FB", "#FFFFFF", "#13223D", "#4A5C7A", "#1F6FEB"], ["neon", "Neon", "#07080D", "#10121A", "#EEF4FF", "#9AA2BA", "#00E5FF"],
+  var LOOKS = [["dark", "Dark", "#111316", "#181B20", "#EEF1F5", "#A9B1BD", "#3B7BF5"], ["light", "Light", "#F1F3F6", "#FFFFFF", "#16191E", "#4B5360", "#1155E0"], ["neon", "Neon", "#07080D", "#10121A", "#EEF4FF", "#9AA2BA", "#00E5FF"],
     ["midnight", "Midnight", "#08142B", "#0E1F3D", "#E8F1FF", "#9DB0CF", "#3DE0C2"], ["sunset", "Sunset", "#1A1016", "#241720", "#FBEFF2", "#C9AEBA", "#FF7A59"], ["mint", "Mint", "#EEF7F4", "#FFFFFF", "#14302A", "#4F6A62", "#0E9C78"]];
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
   var TABS0 = [["home", "home", "Home"], ["tools", "tools", "Tools"], ["@/learn/", "book", "Learn"], ["@/live.html", "chart", "Live data"], ["more", "more", "More"]];   // no PC: every tab works on its own
@@ -2221,14 +2214,14 @@ textarea.in{resize:vertical;min-height:120px}
     // headings and small labels written in capitals read in sentence case (any language: the translation is in by now)
     template.querySelectorAll("h2, .qh > span").forEach(function (h) {
       var t = h.firstChild; if (!t || t.nodeType !== 3) return; var v = t.nodeValue, k = v.trim();
-      if (k.length > 2 && k === k.toUpperCase() && k !== k.toLowerCase()) t.nodeValue = v.replace(k, (k.charAt(0) + k.slice(1).toLowerCase()).replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr)\b/gi, function (w) { var m = { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }; return m[w.toLowerCase()] || w.toUpperCase(); }));
+      if (k.length > 2 && k === k.toUpperCase() && k !== k.toLowerCase()) t.nodeValue = v.replace(k, (k.charAt(0) + k.slice(1).toLowerCase()).replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu|isp)\b/gi, function (w) { var m = { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }; return m[w.toLowerCase()] || w.toUpperCase(); }));
     });
     template.querySelectorAll(".tag2").forEach(function (tg) {
       var w = document.createTreeWalker(tg, NodeFilter.SHOW_TEXT), first = true, n;
       while ((n = w.nextNode())) {
         if (n.parentNode.closest && n.parentNode.closest(".keep")) { first = false; continue; }
         var v = n.nodeValue; if (v !== v.toUpperCase() || v === v.toLowerCase()) { if (/[a-z]/i.test(v)) first = false; continue; }
-        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }[x] || x.toUpperCase(); });
+        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }[x] || x.toUpperCase(); });
         if (first) { v = v.replace(/[a-z]/, function (c) { return c.toUpperCase(); }); if (/[a-z]/i.test(v)) first = false; }
         n.nodeValue = v;
       }
@@ -2266,7 +2259,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
     else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand">' + amLogo(34) + '<span class="amword shine">Adeebo<span class="m">Meter</span></span></div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + '<span dir="auto">' + esc(tr(t[2])) + '</span>' + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
-    if ((S.sheet === "view" || S.tab === "settings") && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
+    if ((S.sheet === "view" || S.tab === "settings" || S.tab === "web") && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
   }

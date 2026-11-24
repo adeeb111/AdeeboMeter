@@ -21,7 +21,7 @@ namespace AdeeboMeter
             "SMB", "SMBv1", "RDP", "UPnP", "LLMNR", "mDNS", "WPAD", "MX", "SPF", "DMARC", "DKIM", "NTP", "SSH", "RADIUS", "TACACS", "LTE", "5G", "4G", "ms", "MB", "GB", "KB",
             "Mb/s", "kb/s", "Gb/s", "AdeeboMeter", "Adeebo", "Windows", "Microsoft", "Teams", "Zoom", "Meet", "Outlook", "Edge", "Chrome", "Firefox", "Steam", "Netflix",
             "YouTube", "Xbox", "PlayStation", "Discord", "Twitch", "OBS", "Cloudflare", "Google", "Starlink", "Rogers", "Bell", "NHL", "NBA", "NFL", "MLB", "TSX", "NYSE",
-            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT" };
+            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT", "I", "LLDP", "CDP", "Wireshark", "STUN", "JWT", "GG", "VLAN", "PoE", "UPS", "QoS" };
         // worked out once per text (paints call this every frame): the acronym pass is ~100 small regexes
         static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> sent = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.Ordinal);
         public static string Sent(string t)
@@ -35,18 +35,18 @@ namespace AdeeboMeter
         {
             bool lower = false, letters = false; foreach (char c in t) { if (char.IsLower(c)) { lower = true; break; } if (char.IsLetter(c)) letters = true; }
             if (lower || !letters) return t;
-            var sb = new System.Text.StringBuilder(t.ToLower(System.Globalization.CultureInfo.CurrentCulture)); bool start = true;
+            var sb = new System.Text.StringBuilder(t.ToLower(System.Globalization.CultureInfo.InvariantCulture)); bool start = true;
             for (int i = 0; i < sb.Length; i++)
             {
                 char c = sb[i];
-                if (start && char.IsLetter(c)) { sb[i] = char.ToUpper(c, System.Globalization.CultureInfo.CurrentCulture); start = false; }
+                if (start && char.IsLetter(c)) { sb[i] = char.ToUpper(c, System.Globalization.CultureInfo.InvariantCulture); start = false; }
                 else if (c == '.' || c == '?' || c == '!') start = true;
             }
             string r = sb.ToString();
             foreach (var k in Keep)
                 r = System.Text.RegularExpressions.Regex.Replace(r, @"(?<![\p{L}\d])" + System.Text.RegularExpressions.Regex.Escape(k) + @"(?![\p{L}\d])", k, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
             // a sentence still starts with a capital after the acronyms are put back
-            if (r.Length > 0 && char.IsLower(r[0]) && !(r.StartsWith("ms", StringComparison.Ordinal) || r.StartsWith("mDNS", StringComparison.Ordinal) || r.StartsWith("kb/s", StringComparison.Ordinal))) r = char.ToUpper(r[0], System.Globalization.CultureInfo.CurrentCulture) + r.Substring(1);
+            if (r.Length > 0 && char.IsLower(r[0]) && !(r.StartsWith("ms", StringComparison.Ordinal) || r.StartsWith("mDNS", StringComparison.Ordinal) || r.StartsWith("kb/s", StringComparison.Ordinal))) r = char.ToUpper(r[0], System.Globalization.CultureInfo.InvariantCulture) + r.Substring(1);
             return r;
         }
 

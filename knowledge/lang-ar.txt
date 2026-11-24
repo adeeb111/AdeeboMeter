@@ -5112,3 +5112,12 @@ memory	الذاكرة
 memory warnings	تحذيرات الذاكرة
 processor warnings	تحذيرات المعالج
 this kind of warning	هذا النوع من التحذيرات
+DNS warnings	تحذيرات DNS
+Refresh readings	تحديث القراءات
+Show again	إظهار مجددًا
+The widget still shows it. Show again undoes this.	تبقى الأداة تُظهره. «إظهار مجددًا» يلغي ذلك.
+UDP port	منفذ UDP
+VPN and provider warnings	تحذيرات VPN ومزوّد الخدمة
+internet warnings	تحذيرات الإنترنت
+router and Wi-Fi warnings	تحذيرات الموجّه والواي فاي
+{0} hidden. Everything else looks fine.	{0} مخفية. كل ما عدا ذلك سليم.

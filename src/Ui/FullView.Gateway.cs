@@ -86,7 +86,7 @@ namespace AdeeboMeter
                     string t = host + " " + L.T("is down") + " - " + d.Item3 + " " + L.T("checks in a row since") + " " + since.ToString(since.Date == DateTime.Today ? "HH:mm" : "d MMM HH:mm", CultureInfo.CurrentCulture);
                     g.DrawString(t, Draw.fBodyB, ink, new RectangleF(x + 62 * S, y + 9 * S, w - 72 * S, 20 * S), nowrap);
                     float lx = x + 62 * S, ly = y + 36 * S;
-                    using (var bl = new SolidBrush(Theme.Blue))
+                    using (var bl = new SolidBrush(Theme.BlueText))
                     {
                         string sp = L.T("Show my path") + "  ›"; g.DrawString(sp, Draw.fSmall, bl, lx, ly);
                         var sz = g.MeasureString(sp, Draw.fSmall); string h = host;
@@ -94,7 +94,7 @@ namespace AdeeboMeter
                         lx += sz.Width + 18 * S;
                     }
                     lx = TimeLink(g, overviewCanvas, since, L.T("Home") + " - " + host + " " + L.T("down"), lx, ly) + 18 * S;
-                    using (var bl = new SolidBrush(Theme.Blue))
+                    using (var bl = new SolidBrush(Theme.BlueText))
                     {
                         string ob = L.T("Service board") + "  ›"; g.DrawString(ob, Draw.fSmall, bl, lx, ly);
                         Act(overviewCanvas, new RectangleF(lx, ly - 2 * S, g.MeasureString(ob, Draw.fSmall).Width, 22 * S), delegate { OpenToolFromHome("board"); });

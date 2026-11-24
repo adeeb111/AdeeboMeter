@@ -176,7 +176,7 @@ namespace AdeeboMeter
                         g.DrawString(hrow[0], Draw.fBody, sub, new RectangleF(xx, yy, ww - 170 * S, 20 * S), sf);
                     Theme.Spark(g, snap.HealthHist[i], new RectangleF(xx + ww - 160 * S, yy + 2 * S, 84 * S, 16 * S), Theme.Lv(lv), 0, false);
                     var vs = g.MeasureString(hrow[1], Draw.fMono);
-                    using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.Lv(lv) : Theme.Ink)) g.DrawString(hrow[1], Draw.fMono, b, xx + ww - vs.Width, yy);
+                    using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(hrow[1], Draw.fMono, b, xx + ww - vs.Width, yy);
                     yy += 24 * S;
                 }
             }

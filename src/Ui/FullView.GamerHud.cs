@@ -90,11 +90,12 @@ namespace AdeeboMeter
                     using (var vb = new SolidBrush((Color)stats[i][2])) using (var rf = new StringFormat { Alignment = StringAlignment.Far }) g.DrawString(L.T((string)stats[i][1]), Draw.fBodyB, vb, new RectangleF(sx, yy + 3 * S, sw, sh), rf);
                 }
             // the verdict
-            string verdict = double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg.ToUpperInvariant() : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
+            string verdict = double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
             Color vc = verdict.StartsWith("READY", StringComparison.Ordinal) ? HudGreen : verdict.StartsWith("NO", StringComparison.Ordinal) ? HudRed : HudAmber;
             // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
+            // sentence case like the rest of the app (review 24 Nov); the program's own name keeps its spelling
             string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? Kit.Sent(L.T("WAIT - ")) + verdict.Substring(7)
-                : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? Kit.Sent(L.T("EXPECT LAG - ")) + L.T(verdict.Substring(13)) : L.T(verdict);
+                : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? Kit.Sent(L.T("EXPECT LAG - ") + L.T(verdict.Substring(13))) : Kit.Sent(L.T(verdict));
             using (var vb = new SolidBrush(vc)) using (var ef = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString("▶ " + shown, Draw.fBodyB, vb, new RectangleF(lx, ly + lh + 16 * S, x + w - 20 * S - lx, 24 * S), ef);   // R2-156: kept inside the panel
             LiveSpot(gamerCanvas, "gm.hud", r);
             return y + h + 16 * S;

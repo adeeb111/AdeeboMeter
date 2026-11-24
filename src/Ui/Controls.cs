@@ -644,7 +644,7 @@ namespace AdeeboMeter
     {
         protected override AccessibleObject CreateAccessibilityInstance() { return new SwitchAccess(this, () => on); }
         bool on; float knob; readonly System.Windows.Forms.Timer anim = new System.Windows.Forms.Timer { Interval = 15 };
-        public bool On { get { return on; } set { if (on != value) { on = value; anim.Start(); Invalidate(); AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); } } }
+        public bool On { get { return on; } set { if (on != value) { on = value; if (Motion.On) anim.Start(); else knob = on ? 1 : 0; Invalidate(); AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); } } }
         public SlideSwitch(string label, bool start)
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);

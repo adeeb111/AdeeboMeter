@@ -3830,3 +3830,12 @@ memory	mémoire
 memory warnings	alertes mémoire
 processor warnings	alertes processeur
 this kind of warning	ce type d'alerte
+DNS warnings	alertes DNS
+Refresh readings	Actualiser les mesures
+Show again	Afficher de nouveau
+The widget still shows it. Show again undoes this.	Le widget l’affiche toujours. « Afficher de nouveau » annule ceci.
+UDP port	port UDP
+VPN and provider warnings	alertes VPN et fournisseur
+internet warnings	alertes Internet
+router and Wi-Fi warnings	alertes routeur et Wi-Fi
+{0} hidden. Everything else looks fine.	{0} masquées. Tout le reste va bien.

@@ -85,8 +85,8 @@ namespace AdeeboMeter
             Dark = dark; AppliedContrast = SystemInformation.HighContrast; AppliedSig = ContrastSig();
             if (!dark)
             {
-                Ink = C("#16191E"); Muted = C("#5A6270"); Sub = C("#4B5360"); Line = C("#E1E4E9"); Line2 = C("#EEF0F3"); Track = C("#E6E9ED"); Soft = C("#F1F3F6");
-                Card = C("#FFFFFF"); Bg = C("#F4F5F7"); Rail = C("#C9CED6"); UpText = C("#9A4A00"); BlueSoft = C("#EAF0FD"); BlueDark = C("#0E47BD");
+                Ink = C("#16191E"); Muted = C("#5A6270"); Sub = C("#4B5360"); Line = C("#DDE1E7"); Line2 = C("#EEF0F3"); Track = C("#E6E9ED"); Soft = C("#F1F3F6");
+                Card = C("#FFFFFF"); Bg = C("#F1F3F6"); Rail = C("#C9CED6"); UpText = C("#9A4A00"); BlueSoft = C("#EAF0FD"); BlueDark = C("#0D47BD");
                 RowNew = C("#E6F4EC"); RowGone = C("#FCEBE8"); RowSel = C("#E8EEFC"); RowHot = C("#F6F8FB"); Grey = C("#B3B9C2");
                 lvText[0] = C("#17794F"); lvText[1] = C("#875A00"); lvText[2] = C("#B42318");
                 lvSoft[0] = C("#E6F4EC"); lvSoft[1] = C("#FCF1DC"); lvSoft[2] = C("#FCEBE8");
@@ -95,14 +95,14 @@ namespace AdeeboMeter
             else
             {
                 // graphite, not navy (23 Nov): the website's dark
-                Ink = C("#EEF1F5"); Muted = C("#8A93A0"); Sub = C("#B3BAC5"); Line = C("#2A2E35"); Line2 = C("#202329"); Track = C("#262A31"); Soft = C("#1F2329");
+                Ink = C("#EEF1F5"); Muted = C("#7E8794"); Sub = C("#A9B1BD"); Line = C("#262A31"); Line2 = C("#202329"); Track = C("#262A31"); Soft = C("#1F2329");
                 Card = C("#181B20"); Bg = C("#111316"); Rail = C("#3A3F47"); UpText = C("#F0A060"); BlueSoft = C("#16233D"); BlueDark = C("#9CB9FA");
                 RowNew = C("#14271F"); RowGone = C("#3A1E1C"); RowSel = C("#1C2638"); RowHot = C("#1C1F24"); Grey = C("#4A5058");
-                lvText[0] = C("#5EF2B0"); lvText[1] = C("#FCD34D"); lvText[2] = C("#FF8F80");
+                lvText[0] = C("#5EF2B0"); lvText[1] = C("#FCD34D"); lvText[2] = C("#FF7A6B");
                 lvSoft[0] = C("#14271F"); lvSoft[1] = C("#3A2E14"); lvSoft[2] = C("#3A1E1C");
-                Green = C("#3DDC97"); Amber = C("#F5C445"); Red = C("#FF7A6B");
+                Green = C("#5EF2B0"); Amber = C("#FCD34D"); Red = C("#FF7A6B");   // the logo's gauge colours, as on the website and phone
             }
-            Blue = C("#1155E0"); BlueHot = C("#0E47BD"); Palette = "standard";
+            Blue = C("#1155E0"); BlueHot = C("#0D47BD"); Palette = "standard";
             // 1.1.5 themes on top of Light / Dark: their own background, cards, lines and main accent. Green, amber and red
             // keep their meaning in every one (only their shades move), and the text stays readable (self-tested).
             string pal = Program.ForceTheme >= 2 && Program.ForceTheme < Palettes.Length + 2 ? Palettes[Program.ForceTheme - 2] : "standard";
@@ -716,7 +716,7 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
-                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure("GAME", fTiny, 0).Width + 10 * S, 15 * S);
+                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent(L.T("GAME")), fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent(L.T("GAME")), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
                 using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;

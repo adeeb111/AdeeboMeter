@@ -8,7 +8,8 @@ namespace AdeeboMeter
 {
     // ================================================================== menus in AdeeboMeter's own colours (23 Nov polish)
     // The tray menu, the Hide menu, Save/Copy and the More menus all use one renderer: the card colour, a rounded hover, the
-    // app's fonts, one line under a heading - instead of Windows' grey default. High contrast keeps Windows' own look.
+    // app's fonts, a short line under a heading - instead of Windows' grey default. High contrast uses the user's own colours
+    // (Theme maps them) and keeps the lines under the headings.
     static class Menus
     {
         public static ContextMenuStrip Make()
@@ -17,7 +18,6 @@ namespace AdeeboMeter
         }
         public static void Style(ToolStrip m)
         {
-            if (SystemInformation.HighContrast) return;
             m.Renderer = new Look(); m.Font = Draw.fBody; m.ShowItemToolTips = true;
             m.Padding = new Padding(Sc(6), Sc(6), Sc(6), Sc(6));
             var cm = m as ContextMenuStrip;
@@ -38,7 +38,24 @@ namespace AdeeboMeter
             string sub;
             public string Sub { get { return sub; } }
             // the line under the heading can change while the menu is built (the tray's verdict, read on open)
-            public string Line { set { sub = value ?? ""; Size = new Size(Sc(320), Sc(sub == "" ? 34 : 50)); } }
+            // the row grows to fit: wider first (up to 440 px), then a second line; anything longer ends in "..." (review 24 Nov:
+            // "Comes back if it gets worse or something new breaks" and long tray verdicts were cut mid-word)
+            public string Line
+            {
+                set
+                {
+                    sub = value ?? ""; int w = Sc(320); float lineH = Draw.fSmall.GetHeight(), lines = 1;
+                    if (sub != "")
+                    {
+                        float tw = Math.Max(Draw.Measure(Text ?? "", Draw.fBodyB, 0).Width, Draw.Measure(sub, Draw.fSmall, 0).Width) + Sc(56);
+                        if (tw > w) w = Math.Min(Sc(440), (int)Math.Ceiling(tw));
+                        if (Draw.Measure(sub, Draw.fSmall, w - Sc(56)).Height > lineH * 1.5f) lines = 2;
+                    }
+                    SubLines = (int)lines;
+                    Size = new Size(w, sub == "" ? Sc(34) : (int)Math.Ceiling(Sc(30) + lineH * lines + Sc(6)));
+                }
+            }
+            public int SubLines;
             public Row(string title, string sub) : base(title) { AutoSize = false; Line = sub; }
         }
         sealed class Look : ToolStripRenderer
@@ -59,7 +76,7 @@ namespace AdeeboMeter
                 if (!e.Item.Selected || !e.Item.Enabled) return;
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 var r = new RectangleF(2 * Draw.S, 1, e.Item.Width - 4 * Draw.S, e.Item.Height - 2);
-                Theme.Fill(e.Graphics, r, 8 * Draw.S, Theme.Soft);
+                Theme.Fill(e.Graphics, r, 8 * Draw.S, Theme.HighContrast ? SystemColors.Highlight : Theme.Soft);
             }
             protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
             {
@@ -69,12 +86,15 @@ namespace AdeeboMeter
             {
                 var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                 var row = e.Item as Row; bool red = e.Item.Tag as string == "exit";
-                Color ink = !e.Item.Enabled && row == null ? Theme.Muted : red ? Theme.LvText(2) : Theme.Ink;
+                bool hcSel = Theme.HighContrast && e.Item.Selected && e.Item.Enabled;
+                Color ink = hcSel ? SystemColors.HighlightText : !e.Item.Enabled && row == null ? Theme.Muted : red ? Theme.LvText(2) : Theme.Ink;
                 float x = e.TextRectangle.X;
                 if (row != null && row.Sub != "")
                 {
                     using (var b = new SolidBrush(ink)) g.DrawString(e.Text, Draw.fBodyB, b, x, 7 * Draw.S);
-                    using (var b = new SolidBrush(Theme.Muted)) g.DrawString(row.Sub, Draw.fSmall, b, new RectangleF(x, 26 * Draw.S, e.Item.Width - x - 10 * Draw.S, 20 * Draw.S));
+                    using (var b = new SolidBrush(hcSel ? SystemColors.HighlightText : Theme.Muted))
+                    using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisWord })
+                        g.DrawString(row.Sub, Draw.fSmall, b, new RectangleF(x, 26 * Draw.S, e.Item.Width - x - 10 * Draw.S, Draw.fSmall.GetHeight(g) * row.SubLines + 2), sf);
                     return;
                 }
                 var f = e.Item.Font ?? Draw.fBody;

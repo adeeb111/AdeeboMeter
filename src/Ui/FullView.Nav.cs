@@ -148,9 +148,9 @@ namespace AdeeboMeter
             Action<string, bool> row = (id, small) =>
             {
                 float h = (small ? smallH : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
-                if (sel) { if (hc) Theme.Stroke(g, rr, 9 * S, SystemColors.Highlight, 2 * S); else Theme.Fill(g, rr, 9 * S, Color.FromArgb(24, 255, 255, 255)); }
-                Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
-                using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
+                if (sel) { if (hc) Theme.Stroke(g, rr, 9 * S, SystemColors.Highlight, 2 * S); else Theme.Fill(g, rr, 9 * S, Theme.Blue); }   // the current page: a solid logo-blue row (review 24 Nov: the faint wash was 1.3:1)
+                Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
+                using (var b = new SolidBrush(sel ? (hc ? ink : Theme.OnBlue) : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
                 string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id); sideNav.Acc.Add(Tuple.Create(L.T(NavName(id)), Rectangle.Round(rr), (Action)delegate { OpenNav(nid); }));
                 y += h + 1 * S;
             };
@@ -180,17 +180,17 @@ namespace AdeeboMeter
                 // Your phone, the second way in (Adeeb, 16 Nov: "connect option should also be in the left bar") - its state on the right
                 {
                     var prr = new RectangleF(x, srr.Y - 40 * S, w, 38 * S); bool psel = tab == "phone"; string plb; string pst = PhoneHub.StateOf(out plb);
-                    if (psel) Theme.Fill(g, prr, 9 * S, hc ? SystemColors.Highlight : Color.FromArgb(24, 255, 255, 255));
-                    Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Aqua) : sub);
+                    if (psel) Theme.Fill(g, prr, 9 * S, hc ? SystemColors.Highlight : Theme.Blue);
+                    Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
                     Kit.Icon(g, "link", new RectangleF(x + 14 * S, prr.Y + 10 * S, 18 * S, 18 * S), pc);
-                    using (var b = new SolidBrush(psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                    using (var b = new SolidBrush(psel && !hc ? Theme.OnBlue : psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                     if (plb != "") using (var b = new SolidBrush(pc)) using (var nf = new StringFormat { Alignment = StringAlignment.Far, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                         g.DrawString(plb, Draw.fSmall, b, new RectangleF(prr.X + 120 * S, prr.Y + (38 * S - Draw.fSmall.GetHeight(g)) / 2, prr.Width - 128 * S, 20 * S), nf);
                     Act(sideNav, prr, LinkClicked); sideNav.Acc.Add(Tuple.Create(L.T("Your phone"), Rectangle.Round(prr), (Action)LinkClicked));
                 }
-                if (ssel) Theme.Fill(g, srr, 9 * S, hc ? SystemColors.Highlight : Color.FromArgb(24, 255, 255, 255));
-                Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
-                using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                if (ssel) Theme.Fill(g, srr, 9 * S, hc ? SystemColors.Highlight : Theme.Blue);
+                Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
+                using (var b = new SolidBrush(ssel && !hc ? Theme.OnBlue : ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings"); sideNav.Acc.Add(Tuple.Create(L.T("Settings"), Rectangle.Round(srr), (Action)delegate { tab = "settings"; ShowTab(); SyncNav(); }));
             }
             if (meter)
@@ -223,6 +223,7 @@ namespace AdeeboMeter
         {
             if (heartSeen || heartGlowAt != DateTime.MinValue || sideNav == null || !sideNav.Visible || WindowState == FormWindowState.Minimized || !Visible) return;
             heartOpenSec += 0.5; if (heartOpenSec < HeartAfterSec) return;
+            if (!Motion.On) { heartSeen = true; return; }   // no pulse when Windows animations are off or in Penny
             heartGlowAt = DateTime.Now;
             heartTimer = new System.Windows.Forms.Timer { Interval = 33 };
             heartTimer.Tick += delegate

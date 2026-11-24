@@ -5112,3 +5112,12 @@ memory	মেমরি
 memory warnings	মেমরির সতর্কবার্তা
 processor warnings	প্রসেসরের সতর্কবার্তা
 this kind of warning	এই ধরনের সতর্কবার্তা
+DNS warnings	DNS সতর্কবার্তা
+Refresh readings	রিডিং রিফ্রেশ করুন
+Show again	আবার দেখান
+The widget still shows it. Show again undoes this.	উইজেটে এটি দেখাবেই। ‘আবার দেখান’ চাপলে এটি ফিরে আসে।
+UDP port	UDP পোর্ট
+VPN and provider warnings	VPN ও প্রোভাইডারের সতর্কবার্তা
+internet warnings	ইন্টারনেট সতর্কবার্তা
+router and Wi-Fi warnings	রাউটার ও Wi-Fi সতর্কবার্তা
+{0} hidden. Everything else looks fine.	{0} লুকানো আছে। বাকি সব ঠিক আছে।

@@ -73,7 +73,7 @@ namespace AdeeboMeter
         // ---------- why the PC struggles: symptom → what that does → the maths → why → the fixes, like a network diagnosis
         float WhyPic(Graphics g, float x, float y, float w, string st)
         {
-            var steps = new[] { Tuple.Create("1. Symptom", "WHAT'S FULL", Theme.Red), Tuple.Create("2. What that does", "WHAT THAT DOES", Theme.Amber), Tuple.Create("3. The maths", "THE MATHS", VPurple), Tuple.Create("4. Why it's full", "WHY", Theme.Blue) };
+            var steps = new[] { Tuple.Create("1. Symptom", "WHAT'S FULL", Theme.LvText(2)), Tuple.Create("2. What that does", "WHAT THAT DOES", Theme.LvText(1)), Tuple.Create("3. The maths", "THE MATHS", Theme.Sub), Tuple.Create("4. Why it's full", "WHY", Theme.BlueText) };
             var have = steps.Where(t => RRow(t.Item1) != null).ToList(); bool idle = have.Count == 0;
             if (idle) have = steps.ToList();
             var fixes = Res().Where(o => o[1].StartsWith("Fix ", StringComparison.Ordinal)).Take(4).ToList();
@@ -83,7 +83,7 @@ namespace AdeeboMeter
             {
                 var t = have[i]; var b = new RectangleF(r.X + 18 * S + i * (bw + 26 * S), r.Y + 44 * S, bw, bh);
                 Theme.Fill(g, b, 10 * S, Theme.Soft); Theme.Fill(g, new RectangleF(b.X, b.Y, 4 * S, b.Height), 2 * S, t.Item3);
-                VText(g, L.T(t.Item2), Draw.fTiny, t.Item3, b.X + 12 * S, b.Y + 8 * S);
+                VText(g, Kit.Sent(L.T(t.Item2)), Draw.fTiny, t.Item3, b.X + 12 * S, b.Y + 8 * S);
                 string txt = idle ? (i == 0 ? L.T("what is full or busy - memory, processor, disk, drivers") : i == 1 ? L.T("what that does to every click") : i == 2 ? L.T("the numbers behind the feeling") : L.T("the reason it's full: the apps, too little memory, a leak, heat")) : RV(t.Item1);
                 using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(Cut(txt, 260), Draw.fSmall, sb, new RectangleF(b.X + 12 * S, b.Y + 26 * S, b.Width - 20 * S, b.Height - 30 * S));
                 if (i < have.Count - 1) VArrow(g, b.Right + 4 * S, b.Y + bh / 2, b.Right + 22 * S, b.Y + bh / 2, Theme.Muted, false);

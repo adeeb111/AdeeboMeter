@@ -28,6 +28,7 @@ namespace AdeeboMeter
                 l.Add(new PalItem { Group = grp, Title = title ?? "", Sub = sub ?? "", Icon = icon, Acc = acc, Pin = pin, Go = go, Words = ((title ?? "") + " " + L.T(title ?? "") + " " + (sub ?? "")).ToLowerInvariant() });
             foreach (var id in NavIds())
             {
+                if (Cfg.Off(id)) continue;   // a section first-run setup (or Settings) hid stays out of search too (review 24 Nov)
                 string nid = id; add("Pages", L.T(NavName(id)), "", NavIcon(id), NavAccent(id), "nav:" + id, delegate { OpenNav(nid); });
             }
             foreach (var kv in tabNames)

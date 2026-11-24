@@ -243,10 +243,11 @@ namespace AdeeboMeter
                 {
                     float ix = x + 20 * S, iw = w - 40 * S;
                     // 23 Nov polish: the same card in every state - only the headline and the buttons change. A problem hidden
-                    // with Hide leaves the card saying how the network is; the This PC reading still shows it in red.
+                    // with Hide says what it hid and carries a Show again button; the reading still shows it in colour.
                     bool hid = ProblemHidden(s); bool problem = (s.Level == 1 || s.Level == 2) && !hid;
-                    string head = hid ? L.T("The network is fine.") : s.Headline;
-                    float aw = problem ? PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, true) : 0;
+                    double hv; string hk = hid ? ProblemKind(s, out hv) : null, kn = hid ? KindName(hk) : "";
+                    string head = !hid ? s.Headline : string.Format(L.T("{0} hidden. Everything else looks fine."), kn.Substring(0, 1).ToUpper(CultureInfo.CurrentCulture) + kn.Substring(1));
+                    float aw = problem || hid ? PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, true) : 0;
                     float hw0 = Math.Max(120 * S, iw - aw - (aw > 0 ? 16 * S : 0));
                     float hh = Draw.Measure(head, Draw.fName, (int)hw0).Height;
                     string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
@@ -255,7 +256,7 @@ namespace AdeeboMeter
                     float tilesH = (cols >= 5 ? 1 : 2) * (th + 8 * S) - 8 * S;
                     var vr = new RectangleF(x, y, w, 15 * S + hh + 6 * S + wh + 10 * S + tilesH + 12 * S + 22 * S + 12 * S);
                     Kit.Box(g, vr, 14 * S);
-                    if (problem) PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, false);
+                    if (problem || hid) PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, false);
                     using (var hb = new SolidBrush(!problem ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, Draw.fName, hb, new RectangleF(ix, y + 15 * S, hw0, hh + 6));
                     if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, hw0, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, hw0, wh), "ov.WEATHER"); }
                     using (var dl = new Pen(Theme.Line2)) g.DrawLine(dl, ix, y + 15 * S + hh + 6 * S + wh + 4 * S, ix + iw, y + 15 * S + hh + 6 * S + wh + 4 * S);

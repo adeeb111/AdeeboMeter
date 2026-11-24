@@ -7,6 +7,12 @@
   opens.forEach(function (b) {
     b.addEventListener("click", function () {
       var k = b.getAttribute("data-fb");
+      // the open kind's button closes the form again (review 24 Nov: it could not be closed)
+      if (!form.hidden && b.getAttribute("aria-expanded") === "true") {
+        form.hidden = true;
+        opens.forEach(function (x, i) { x.setAttribute("aria-expanded", "false"); x.classList.toggle("line", i > 0); });   // back to how the page opened
+        return;
+      }
       var first = form.hidden;
       form.hidden = false;
       var seg = form.querySelector('.seg button[data-k="' + k + '"]');

@@ -25,7 +25,7 @@ namespace AdeeboMeter
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
             viewBtn.Location = new Point(xl, my(viewBtn)); xl = viewBtn.Right + Sc(20);
-            if (langBtn != null) { langBtn.Location = new Point(xr - langBtn.Width, my(langBtn)); if (langBtn.Visible) langBtn.Visible = false; }   // the language is in the ⋯ menu; the button stays as the sheet's anchor
+            if (langBtn != null) { langBtn.Location = new Point(dotsBtn.Left + dotsBtn.Width / 2 - langBtn.Width / 2, my(langBtn)); if (langBtn.Visible) langBtn.Visible = false; }   // hidden: Language is in the ⋯ menu; centred under ⋯ so the sheet's pointer points at it
             if (restartBtn != null && restartBtn.Visible) { restartBtn.Location = new Point(xl - Sc(10), my(restartBtn)); xl = restartBtn.Right + Sc(20); }
             int room = xr - xl;
             bool show = room >= Sc(40);   // the one search, in both layouts (the side bar's own box is gone)

@@ -15,7 +15,8 @@ namespace AdeeboMeter
         // digits after it (1,5 · 10,25 · 0,99) is a decimal comma, never a thousands mark (it used to make 1,5 into 15)
         internal static double P(string t)
         {
-            var m = Regex.Match(t ?? "", @"-?[0-9][0-9.,\u00A0\u202F ]*[0-9]|-?[0-9]"); if (!m.Success) return double.NaN;
+            // a mark counts only when a digit follows: "50, 45" is 50, not 50.45 (review 24 Nov)
+            var m = Regex.Match(t ?? "", @"-?[0-9](?:[0-9]|[.,\u00A0\u202F ](?=[0-9]))*"); if (!m.Success) return double.NaN;
             string x = Regex.Replace(m.Value, @"[\u00A0\u202F ]", ""); int lc = x.LastIndexOf(','), ld = x.LastIndexOf('.');
             if (lc >= 0 && ld >= 0) x = lc > ld ? x.Replace(".", "").Replace(',', '.') : x.Replace(",", "");
             else if (lc >= 0) x = Regex.IsMatch(x, @"^-?\d{1,3}(,\d{3})+$") ? x.Replace(",", "") : x.IndexOf(',') == lc ? x.Replace(',', '.') : x.Replace(",", "");
