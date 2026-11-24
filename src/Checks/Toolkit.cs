@@ -881,8 +881,9 @@ namespace AdeeboMeter
             var arp = new Dictionary<string, string>(); try { foreach (var a in Arp.Table()) arp[a.Ip] = a.Mac; } catch (Exception e) { Program.Log("sweep arp: " + e.Message); }
             foreach (var x in up.OrderBy(x => BitConverter.ToUInt32(x.Item1.GetAddressBytes().Reverse().ToArray(), 0)))
             {
-                string mac; arp.TryGetValue(x.Item1.ToString(), out mac);
-                rows.Add(R(3, x.Item1.ToString(), (mac != null ? mac + "  " + Vendor(mac) : "") + (x.Item1.ToString() == u.Address.ToString() ? "  (this PC)" : "") + " · " + x.Item2 + " ms", "", "m"));
+                string mac; arp.TryGetValue(x.Item1.ToString(), out mac); bool me = x.Item1.ToString() == u.Address.ToString();
+                if (mac == null && me) mac = OwnMac(u.Address);   // the PC isn't in its own ARP table: its adapter's address (release check: the row was blank)
+                rows.Add(R(3, x.Item1.ToString(), ((mac != null ? mac + "  " + Vendor(mac) : "") + (me ? "  (this PC)" : "")).Trim() + " · " + x.Item2 + " ms", "", "m"));
             }
             rows.Insert(0, R(0, "Answered", up.Count + " of " + targets.Count + (wide ? " (your /24 only - the network is bigger)" : ""), "Devices that ignore ping (many phones, printers in sleep) don't show - the ARP table on Your Wi-Fi may know more.", "m"));
             return rows;
@@ -897,6 +898,17 @@ namespace AdeeboMeter
             { "00:21:5A", "HP" }, { "3C:D9:2B", "HP" }, { "00:80:77", "Brother" }, { "00:00:48", "Epson" }, { "5C:AA:FD", "Sonos" }, { "00:0E:58", "Sonos" }, { "D0:52:A8", "SmartThings" },
             { "18:B4:30", "Nest" }, { "64:16:66", "Nest" }, { "B4:7C:9C", "Amazon" }, { "8C:85:90", "Apple" }, { "28:6C:07", "Xiaomi" }, { "7C:49:EB", "Xiaomi" }, { "00:E0:4C", "Realtek" },
             { "E8:6F:38", "Hitron (Rogers modem)" }, { "00:FC:8D", "Hitron" }, { "CC:03:FA", "Technicolor" }, { "10:56:11", "Arris" }, { "00:1D:D0", "Arris" }, { "BC:30:7D", "Wistron" } };
+        static string OwnMac(System.Net.IPAddress a)
+        {
+            try
+            {
+                foreach (var n in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+                    if (n.GetIPProperties().UnicastAddresses.Any(z => z.Address.Equals(a)))
+                    { var b = n.GetPhysicalAddress().GetAddressBytes(); if (b.Length == 6) return string.Join(":", b.Select(z => z.ToString("x2", CultureInfo.InvariantCulture))); }
+            }
+            catch (Exception e) { Program.Log("own mac: " + e.Message); }
+            return null;
+        }
         public static string Vendor(string mac)
         {
             if (string.IsNullOrEmpty(mac) || mac.Length < 8) return ""; string p = mac.Substring(0, 8).Replace('-', ':').ToUpperInvariant();

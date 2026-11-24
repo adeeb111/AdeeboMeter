@@ -4067,7 +4067,6 @@ PREVIEW OF	প্রিভিউ:
 POINT AT A LANGUAGE TO PREVIEW IT	প্রিভিউ দেখতে একটি ভাষার ওপর মাউস রাখুন
 Nothing changes until you click a card.	কোনো কার্ডে ক্লিক না করা পর্যন্ত কিছুই বদলাবে না।
 Arrow keys move, Enter picks, Esc closes	তীর চিহ্নে সরান, Enter-এ বাছুন, Esc-এ বন্ধ করুন
-Arabic reads right to left - the whole window turns around.	আরবি ডান থেকে বাঁয়ে পড়া হয় - পুরো উইন্ডো উল্টে যায়।
 The original	মূল ভাষা
 French (Canada)	ফরাসি (কানাডা)
 Spanish	স্প্যানিশ
@@ -5085,3 +5084,4 @@ Open in AdeeboLab	AdeeboLab-এ খুলুন
 Monitor, diagnose, automate, visualize, learn.	নজর রাখুন, নির্ণয় করুন, স্বয়ংক্রিয় করুন, দেখুন, শিখুন।
 Finish	শেষ করুন
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows কিবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন।
+Arabic text reads right to left.	আরবি লেখা ডান থেকে বামে পড়া হয়।

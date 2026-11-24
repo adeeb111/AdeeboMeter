@@ -25,6 +25,7 @@ namespace AdeeboMeter
             }
         }
 
+        static bool PrivIp(string h) { System.Net.IPAddress a; return System.Net.IPAddress.TryParse(h, out a) && IspReport.Private(a); }
         // what a box wants, from its English label and hint
         internal static List<string> AssistFor(string input, string gateway, string target, IEnumerable<string> pins, out bool browse)
         {
@@ -38,7 +39,9 @@ namespace AdeeboMeter
             // a short menu in the hint: "443 or 53", "A, AAAA, MX, TXT" - but never examples ("e.g. 200, 60, 12") or anything with a dot
             bool eg = Regex.IsMatch(cue, @"^(e\.g\.|eg\b|like\b|for example)");
             var parts = ChoiceSplit.Split(cue).Select(p => p.Trim().Trim('.', '(', ')', '"')).Where(p => p != "").ToList();
-            if (!eg && !cue.Contains("://") && parts.Count >= 2 && parts.Count <= 6 && parts.All(p => Regex.IsMatch(p, @"^[a-z0-9+_-]{1,12}$")) && Regex.IsMatch(cue, @",|/|\bor\b"))
+            /* release check 24 Nov: "0-63" is a range, and "IPv4 or IPv6" under a Target says what it takes - neither is a menu */
+            if (!eg && !cue.Contains("://") && parts.Count >= 2 && parts.Count <= 6 && parts.All(p => Regex.IsMatch(p, @"^[a-z0-9+_-]{1,12}$") && !Regex.IsMatch(p, @"^\d+-\d+$")) && Regex.IsMatch(cue, @",|/|\bor\b")
+                && !parts.All(p => p == "ipv4" || p == "ipv6"))
             {
                 // keep the hint's own capitals (A, AAAA) - cut from the original at its own " - " (bug-hunt L-364: lower-casing can change
                 // the length, "İ" becomes two characters, so the lower-cased length isn't used to cut the original)
@@ -52,14 +55,47 @@ namespace AdeeboMeter
                 // 21 Nov sitting test: a plain "Name" box whose example isn't a site (a key's name: "e.g. Adeeb work") gets no host chips
                 && !(Regex.IsMatch(lab, @"^name$") && !cue.Contains(".")))
             {
+                /* release check 24 Nov (the self-test's chip list): the chips must be things this box can use.
+                   - a box named only by a soft word ("Name", "Which device") whose examples aren't hosts (a key's name, "headset") gets none
+                   - a box for something on your own network (a device, an iperf3 server, "IP on your network") gets only local addresses
+                   - a server box gets the real servers its own hint names (time.windows.com, 1.1.1.1), not your pinned websites
+                   - the SNI box takes a name, never an IP */
+                string plain = Regex.Replace(cue, @"\b(e\.g|i\.e)\.", " ");
+                bool hosty = Regex.IsMatch(plain, @"[a-z0-9-]+\.[a-z0-9-]+|:\d{2,5}\b");
+                bool strong = Regex.IsMatch(lab, @"\b(host|target|address|server|ip|site|router|destination|url)\b|^name:port");
+                if (!strong && !hosty) return l;
+                bool local = Regex.IsMatch(s, @"on your network|\biperf3?\b|\bconsole\b") || Regex.IsMatch(lab, @"\bdevice\b");
+                // a host box whose own examples are all local (10.0.0.1, nas01, dc01) is for something inside your network
+                var ips = Regex.Matches(plain, @"\b\d{1,3}(?:\.\d{1,3}){3}\b").Cast<Match>().Select(z => z.Value).ToList();
+                var names = Regex.Matches(plain, @"\b[a-z]+\d+\b").Cast<Match>().Select(z => z.Value).Where(z => !Regex.IsMatch(z, @"^(ipv|sha|md|v)\d")).ToList();
+                if (!Regex.IsMatch(lab, @"\b(destination|target|site|url)\b") && (ips.Count > 0 || names.Count > 0) && ips.All(PrivIp)
+                    && !Regex.IsMatch(plain, @"(?<![\w-])(?![a-z0-9-]*example\.)[a-z0-9-]+\.[a-z]{2,}\b")) local = true;
+                bool service = (Regex.IsMatch(lab, @"\bserver\b") || Regex.IsMatch(cue, @"\d+\s*/\s*\d+[^,]*\b(smtp|imap|pop)\b")) && !local;
+                bool nameOnly = Regex.IsMatch(lab, @"\bsni\b|name to ask");
+                var examples = new List<string>();
+                foreach (Match em in Regex.Matches(plain, @"(?<![\w./:-])((?:[a-z0-9-]+\.)+[a-z]{2,}|\d{1,3}(?:\.\d{1,3}){3})(?![\w.-])"))
+                {
+                    string ex = em.Groups[1].Value; System.Net.IPAddress eip;
+                    if (ex.Contains("example.") || ex.StartsWith("e.g", StringComparison.Ordinal)) continue;   // illustrations, not places
+                    if (System.Net.IPAddress.TryParse(ex, out eip) && (PrivIp(ex) || ex.StartsWith("203.0.113.", StringComparison.Ordinal) || ex.StartsWith("198.51.100.", StringComparison.Ordinal) || ex.StartsWith("192.0.2.", StringComparison.Ordinal))) continue;
+                    examples.Add(ex);
+                }
+                Func<string, bool> fits = h =>
+                {
+                    System.Net.IPAddress hip; bool isIp = System.Net.IPAddress.TryParse(h, out hip);
+                    if (nameOnly && isIp) return false;
+                    if (local) return isIp ? PrivIp(h) : h.IndexOf('.') < 0;
+                    return true;
+                };
+                var pool = service ? new[] { target }.Concat(examples) : new[] { target, gateway }.Concat(examples).Concat(pins ?? Enumerable.Empty<string>()).Concat(Fallback);
                 // a box that wants an IP address (and not a name) gets only IP addresses - never example.com
                 bool ipOnly = Regex.IsMatch(lab, @"\bip\b") && !Regex.IsMatch(lab, @"\b(host|name|site|url|domain|destination|target|server|device)\b");
                 // a box that wants host:port gets the port its hint names (":587", "(1812)") - 443 when it names none
                 string port = null;
                 if (Regex.IsMatch(lab, @"^(host|name):port")) { var m = Regex.Match(cue, @":(\d{2,5})\b"); if (!m.Success) m = Regex.Match(cue, @"\b(\d{2,5})\b"); port = m.Success ? m.Groups[1].Value : "443"; }
-                foreach (var h in new[] { target, gateway }.Concat(pins ?? Enumerable.Empty<string>()).Concat(Fallback))
+                foreach (var h in pool)
                 {
-                    if (string.IsNullOrEmpty(h)) continue;
+                    if (string.IsNullOrEmpty(h) || !fits(h)) continue;
                     string v = port != null && h.IndexOf(':') < 0 ? h + ":" + port : h;
                     System.Net.IPAddress ipa; if (ipOnly && !System.Net.IPAddress.TryParse(h, out ipa)) continue;
                     if (!l.Contains(v) && l.Count < 5) l.Add(v);
@@ -80,6 +116,10 @@ namespace AdeeboMeter
                     if (br || c.Count > 0) log.AppendLine("      chips " + t.Id + " [" + inp + "] " + (br ? "Browse " : "") + string.Join(" | ", c));
                     if (SecretInput(inp) && (br || c.Count > 0)) bad.Add(t.Id + ": chips on a secret box");
                     if (c.Any(z => z.EndsWith(":", StringComparison.Ordinal) || z.Contains("//") || z.Length > 60)) bad.Add(t.Id + ": odd chip in " + inp);
+                    // release check 24 Nov: chips the box can't use - a range, a format word, a public address for a local box, hosts for a name
+                    if (c.Any(z => Regex.IsMatch(z, @"^\d+-\d+$") || z == "IPv4" || z == "IPv6")) bad.Add(t.Id + ": a range or a format offered as a value in " + inp);
+                    if (Regex.IsMatch(inp, @"on your network|iperf", RegexOptions.IgnoreCase) && c.Any(z => { var h = z.Split(':')[0]; System.Net.IPAddress a; return !System.Net.IPAddress.TryParse(h, out a) || !IspReport.Private(a); })) bad.Add(t.Id + ": a public address offered for a box on your own network");
+                    if (Regex.IsMatch(inp, @"^(Name - e\.g\. [A-Z][a-z]+( [a-z]+)?|Which device)") && c.Count > 0) bad.Add(t.Id + ": host chips in a box for a name (" + inp + ")");
                 }
             return string.Join("; ", bad);
         }

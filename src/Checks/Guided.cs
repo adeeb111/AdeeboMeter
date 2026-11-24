@@ -118,7 +118,7 @@ namespace AdeeboMeter
             if (gwUnknown) { gLost = 0; nLost = net.Count(double.IsNaN); }
             int lvHome = gwUnknown ? 3 : double.IsNaN(gA) ? 2 : (gA > 50 || gJ > 30 || gLost >= 3) ? 2 : (gA > 20 || gJ > 10 || gLost == 2) ? 1 : 0;
             double ispA = double.IsNaN(nA) ? double.NaN : gwUnknown || double.IsNaN(gA) ? nA : Math.Max(0, nA - gA);
-            double ispJ = gwUnknown || double.IsNaN(gJ) ? nJ : nJ - gJ;
+            double ispJ = gwUnknown || double.IsNaN(gJ) ? nJ : Math.Max(0, nJ - gJ);   // the release check showed "jitter -1 ms": a share can't be negative
             // no internet probes at all (the internet check is off by policy) is "can't tell" too
             int lvIsp = net.Length == 0 ? 3 : double.IsNaN(nA) ? 2 : (ispA > (gwUnknown ? 80 : 60) || ispJ > 20 || nLost >= 3) ? 2 : (ispA > (gwUnknown ? 45 : 30) || ispJ > 10 || nLost == 2) ? 1 : 0;
             int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sJ > 25 || (sL > 3 && sLost >= 3)) ? 2 : (sA > 70 || sJ > 12 || (sL > 1 && sLost >= 2)) ? 1 : 0;

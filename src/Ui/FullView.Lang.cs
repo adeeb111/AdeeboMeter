@@ -223,7 +223,7 @@ namespace AdeeboMeter
                 string right = L.T("Nothing changes until you click a card."); var rs = g.MeasureString(right, Draw.fSmall);
                 if (cx + rs.Width + 24 * S < pr.Right) g.DrawString(right, Draw.fSmall, sub, pr.Right - rs.Width - 18 * S, pr.Y + (pr.Height - rs.Height) / 2);
                 y = pr.Bottom + 12 * S;
-                g.DrawString(L.T("Arrow keys move, Enter picks, Esc closes") + "   ·   " + L.T("Arabic reads right to left - the whole window turns around."), Draw.fSmall, muted, new RectangleF(x, y, w, 22 * S));
+                g.DrawString(L.T("Arrow keys move, Enter picks, Esc closes") + "   ·   " + L.T("Arabic text reads right to left.")   /* release check 24 Nov: the window itself doesn't mirror, so it no longer says it does */, Draw.fSmall, muted, new RectangleF(x, y, w, 22 * S));
             }
         }
 

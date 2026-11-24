@@ -95,7 +95,11 @@ namespace AdeeboMeter
                 // ---- the page: a search, Pinned, or one question
                 float py = top;
                 List<Tool> rows; string title, count;
-                if (tbFilter != "")
+                /* release check 24 Nov (perf: 17% of a Toolbox draw was list copying, 7% string splits): what's listed is worked out
+                   once per question / search / language, not on every repaint (opening the page starts it afresh) */
+                string listKey = tbQ + "\n" + tbFilter + "\n" + navOwn + "\n" + L.Code + "\n" + Tools2().Count;
+                if (listKey == idxListKey && idxRows != null) { rows = idxRows; title = idxTitle; count = idxCount; }
+                else if (tbFilter != "")
                 {
                     var allHits = Matches().Where(t => !SnmpView(t.Id) || t.Id == "snmp" || tbFilter.IndexOf("snmp", StringComparison.OrdinalIgnoreCase) >= 0).ToList(); rows = allHits.Take(80).ToList();
                     // bug-hunt L-142: the real count, and "the first 80 shown" when there are more
@@ -116,13 +120,14 @@ namespace AdeeboMeter
                     var qd = Questions.First(z => z[0] == tbQ); rows = ToolsOf(tbQ).Where(t => !SnmpView(t.Id) || t.Id == "snmp").ToList();
                     title = own ? L.T(navOwn == "calc" ? "Calculators" : "Reports") : L.T(qd[1]); count = rows.Count + " " + L.T(rows.Count == 1 ? "tool shown" : "tools shown");
                 }
+                if (listKey != idxListKey) { idxListKey = listKey; idxRows = rows; idxTitle = title; idxCount = count; idxGroups = null; }
                 var tsz = g.MeasureString(title, Draw.fTitle); g.DrawString(title, Draw.fTitle, ink, new RectangleF(cx, py, cw - 200 * S, tsz.Height + 4));
                 var csz = g.MeasureString(count, Draw.fBody); g.DrawString(count, Draw.fBody, sub, cx + cw - csz.Width, py + 8 * S);
                 py += tsz.Height + 12 * S;
                 if (tbFilter == "") py = PinRow(g, cx, py, cw);
                 // grouped: by the tool's group inside a question (by question in a search)
-                var groups = tbFilter != "" || tbQ == "*" ? rows.GroupBy(t => { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); return qn != null ? L.T(qn[1]) : GroupName(t.Group); }).ToList()
-                                            : rows.GroupBy(t => GroupName(t.Group)).ToList();
+                var groups = idxGroups ?? (idxGroups = tbFilter != "" || tbQ == "*" ? rows.GroupBy(t => { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); return qn != null ? L.T(qn[1]) : GroupName(t.Group); }).ToList()
+                                            : rows.GroupBy(t => GroupName(t.Group)).ToList());
                 // tiles, like Home's "Go to" (Adeeb, 22 Nov: "copy the homepage go-to style, hover for the details, in sections") -
                 // an icon in the section's colour, the name and one short line; the card with everything shows on hover
                 idxTiles.Clear();
@@ -140,7 +145,7 @@ namespace AdeeboMeter
                         var r = new RectangleF(cx + (n % cols) * (tw + 24 * S), py + (n / cols) * th, tw, th); n++;
                         idxTiles.Add(new KeyValuePair<RectangleF, string>(r, t.Id));
                         if (!Kit.Off(g, r)) ToolTile(g, t, r, t.Id == idxHot);
-                        string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, r, "tb." + id);
+                        string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, new RectangleF(r.X, r.Y, r.Width - 28 * S, r.Height), "tb." + id);   /* the ? clear of the row's › (release check screenshots) */
                     }
                     py += ((n + cols - 1) / cols) * th;
                 }
@@ -237,7 +242,7 @@ namespace AdeeboMeter
                             string d = Answers(t);
                             if (d != "") g.DrawString(d, Draw.fSmall, sub, new RectangleF(r.X + 50 * S, r.Y + 33 * S, r.Width - 60 * S, 18 * S), nf);
                         }
-                        string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, r, "tb." + id);
+                        string id = t.Id; Act(tbCanvas, r, delegate { OpenFromIndex(id); }); Hint(tbCanvas, new RectangleF(r.X, r.Y, r.Width - 28 * S, r.Height), "tb." + id);   /* the ? clear of the row's › (release check screenshots) */
                         if (mine)
                         {
                             var xr = new RectangleF(r.Right - 26 * S, r.Y + 6 * S, 20 * S, 20 * S);

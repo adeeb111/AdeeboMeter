@@ -4067,7 +4067,6 @@ PREVIEW OF	معاينة:
 POINT AT A LANGUAGE TO PREVIEW IT	أشر إلى لغة لمعاينتها
 Nothing changes until you click a card.	لا يتغيّر شيء حتى تنقر على بطاقة.
 Arrow keys move, Enter picks, Esc closes	الأسهم للتنقل، Enter للاختيار، Esc للإغلاق
-Arabic reads right to left - the whole window turns around.	العربية تُقرأ من اليمين إلى اليسار - تنقلب النافذة كلها.
 The original	الأصل
 French (Canada)	الفرنسية (كندا)
 Spanish	الإسبانية
@@ -5085,3 +5084,4 @@ Open in AdeeboLab	افتح في AdeeboLab
 Monitor, diagnose, automate, visualize, learn.	راقب، شخّص، أتمت، اعرض، تعلّم.
 Finish	إنهاء
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	أخذ Windows لوحة المفاتيح (Win أو Alt+Tab أو إشعار) - انقر هنا للمتابعة.
+Arabic text reads right to left.	النص العربي يُقرأ من اليمين إلى اليسار.

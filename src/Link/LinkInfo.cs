@@ -683,7 +683,7 @@ namespace AdeeboMeter
                     var mine = s.Aps.FirstOrDefault(a => string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
                     int strong = same.Count(a => a.Signal >= 50);
                     s.Radio.Add(new[] { "Sharing your channel", same.Count == 0 ? "nobody - clean air" : same.Count + " other access point" + (same.Count > 1 ? "s" : "") + (strong > 0 ? " (" + strong + " strong)" : ""), strong >= 3 ? "2" : same.Count >= 3 ? "1" : "0" });
-                    if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + " devices on this AP" : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
+                    if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + (mine.Stations == 1 ? " device on this AP" : " devices on this AP") : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
                     if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
                     if (me != null)
                     {

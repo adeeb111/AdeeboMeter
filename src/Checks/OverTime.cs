@@ -87,7 +87,7 @@ namespace AdeeboMeter
         static void PeriodRows(Period p, List<string[]> rows)
         {
             var c = CultureInfo.CurrentCulture; double online = 100.0 * (p.Minutes - p.BadMinutes) / Math.Max(1, p.Minutes);
-            rows.Add(R(online >= 99 ? 0 : online >= 95 ? 1 : 2, "Smooth", online.ToString("0.#", c) + "% of the minutes measured (" + N0(p.Minutes / 60.0) + " hours over " + p.Days + " days)", "A minute counts as rough when AdeeboMeter's verdict was a problem.", "m"));
+            rows.Add(R(online >= 99 ? 0 : online >= 95 ? 1 : 2, "Smooth", online.ToString("0.#", c) + "% of the minutes measured (" + N0(p.Minutes / 60.0) + " hours over " + p.Days + (p.Days == 1 ? " day)" : " days)"), "A minute counts as rough when AdeeboMeter's verdict was a problem.", "m"));
             rows.Add(R(p.OutageCount == 0 ? 0 : 1, "Outages", p.OutageCount == 0 ? "none" : p.OutageCount + " · " + N0(p.OutageMin) + " minutes without internet", "The internet check got no answer at all.", "m"));
             rows.Add(R(3, "Usual delay", "router " + N1(p.GwAvg) + " ms · internet " + N1(p.NetAvg) + " ms · loss " + N1(p.LossAvg) + "%", "", "m"));
             rows.Add(R(3, "Data", N1(p.GBDown) + " GB down · " + N1(p.GBUp) + " GB up", "Counted from Windows' own counters, all networks.", "w"));

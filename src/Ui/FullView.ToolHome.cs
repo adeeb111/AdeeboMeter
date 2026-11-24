@@ -48,7 +48,14 @@ namespace AdeeboMeter
         // both views now use the roomy layout (a tool across the whole width); Every tool only changes the home page (FullView.Index.cs)
         static bool ByQuestion { get { return true; } }
 
-        static string QuestionOf(Tool t) { var q = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); return q != null ? q[0] : ""; }
+        string idxListKey; List<Tool> idxRows; string idxTitle, idxCount; List<IGrouping<string, Tool>> idxGroups;
+        static readonly Dictionary<string, string> qOfGroup = new Dictionary<string, string>();   // a group's question, worked out once (perf, 24 Nov)
+        static string QuestionOf(Tool t)
+        {
+            string q, gk = t.Group ?? ""; lock (qOfGroup) if (qOfGroup.TryGetValue(gk, out q)) return q;
+            var qd = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); q = qd != null ? qd[0] : "";
+            lock (qOfGroup) qOfGroup[gk] = q; return q;
+        }
         List<Tool> ToolsOf(string q)
         {
             var qd = Questions.First(z => z[0] == q); var groups = qd[2].Split('|'); var feat = qd[3].Split('|');

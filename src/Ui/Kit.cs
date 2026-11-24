@@ -21,7 +21,11 @@ namespace AdeeboMeter
             "SMB", "SMBv1", "RDP", "UPnP", "LLMNR", "mDNS", "WPAD", "MX", "SPF", "DMARC", "DKIM", "NTP", "SSH", "RADIUS", "TACACS", "LTE", "5G", "4G", "ms", "MB", "GB", "KB",
             "Mb/s", "kb/s", "Gb/s", "AdeeboMeter", "Adeebo", "Windows", "Microsoft", "Teams", "Zoom", "Meet", "Outlook", "Edge", "Chrome", "Firefox", "Steam", "Netflix",
             "YouTube", "Xbox", "PlayStation", "Discord", "Twitch", "OBS", "Cloudflare", "Google", "Starlink", "Rogers", "Bell", "NHL", "NBA", "NFL", "MLB", "TSX", "NYSE",
-            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT", "I", "LLDP", "CDP", "Wireshark", "STUN", "JWT", "GG", "VLAN", "PoE", "UPS", "QoS" };
+            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT", "I", "LLDP", "CDP", "Wireshark", "STUN", "JWT", "GG", "VLAN", "PoE", "UPS", "QoS",
+            /* release check 24 Nov: "canada's rates" - places, languages, days and months keep their capital too */
+            "Canada", "Canadian", "Ottawa", "Toronto", "Montreal", "Bangladesh", "English", "French", "Spanish", "Arabic", "Bengali", "Europe", "Asia", "America", "Ireland", "Virginia", "Oregon",
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "January", "February", "March", "April", "June", "July", "August", "September", "October", "November", "December",
+            "AWS", "Azure", "Apple", "Android", "iPhone", "macOS", "Linux", "Valorant", "Fortnite", "Roblox", "Minecraft", "Ethernet", "Bluetooth" };
         // worked out once per text (paints call this every frame): the acronym pass is ~100 small regexes
         static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> sent = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.Ordinal);
         public static string Sent(string t)

@@ -221,6 +221,10 @@ namespace AdeeboMeter
                 try { if (!mtx.WaitOne(5000)) return 0; } catch (AbandonedMutexException) { }
             }
             Log("Start " + Version);
+            // release check 24 Nov: the first paint of Home took 250-750 ms cold and 20-40 ms warm - .NET compiling the drawing code
+            // on first use. Multicore JIT remembers what start-up compiles and does it ahead on a spare core next time (a few KB
+            // file beside the settings; method names only)
+            try { System.Runtime.ProfileOptimization.SetProfileRoot(WriteDir); System.Runtime.ProfileOptimization.StartProfile("AdeeboMeter-start.jit"); } catch (Exception e) { Log("jit profile: " + e.Message); }
             TouchPan.Install();   // a finger drag scrolls the pages (Touch.cs)
             Application.Run(new AppCtx());
             Log("Exit");

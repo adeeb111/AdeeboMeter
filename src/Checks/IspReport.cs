@@ -132,7 +132,7 @@ namespace AdeeboMeter
             foreach (var h in main.Hops)
             {
                 double l = Loss(h); bool real = start >= 0 && h.N >= main.Hops[start].N; string own; owners.TryGetValue(h.Ip, out own);
-                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 3 ? 1 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + (own != null ? " · " + own : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
+                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 1 ? 3 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + (own != null ? " · " + own : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
             }
 
             // the same moment over two routes
@@ -232,7 +232,7 @@ namespace AdeeboMeter
             return rows;
         }
         // loss at a hop that doesn't carry on is that router ignoring probes: amber at most, never red
-        static int Shown(double loss, bool real) { int l = Lv(loss); return real || l < 2 ? l : 1; }
+        static int Shown(double loss, bool real) { int l = Lv(loss); return real || l == 0 ? l : 3; }   // release check 24 Nov: loss that stops at that hop is a router ignoring probes - said, not coloured (a report for the provider said "loss 47%" in amber on the home router)
         static int Lv(double loss) { return double.IsNaN(loss) ? 3 : loss >= 3 ? 2 : loss >= 1 ? 1 : 0; }
         // the first hop whose loss carries on to the end (the same rule as MtrVerdict)
         public static int StartOfLoss(List<PathTools.Hop> hops) { return PathTools.LossStart(hops); }

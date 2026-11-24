@@ -64,8 +64,10 @@ namespace AdeeboMeter
         static float S { get { return Draw.S; } }
         static int Sc(float v) { return (int)(v * Draw.S); }
 
+        static bool jitWindow;
         public FullView(Icon icon, Monitor m)
         {
+            if (!jitWindow) { jitWindow = true; try { System.Runtime.ProfileOptimization.StartProfile("AdeeboMeter-window.jit"); } catch (Exception) { } }   // the window's own first-open compile, remembered too (Program.cs)
             Draw.Use(Draw.ViewScale);   // the window's zoom (the corner widget keeps the screen's own scale)
             M = m; snap = m.Latest; Knowledge.Hold = true;
             // freeze watchdog: the window answers a ping every second; if it doesn't for 2 s, the log says what it was doing
@@ -447,7 +449,7 @@ namespace AdeeboMeter
         string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
         {
-            UiActivity.Doing = "switching to " + tab; if (tab != "replay") replayFrom = ""; if (tab != "about") bugPage = tab;   // leaving the Time machine ends an "Opened from" visit (review 21 Nov)
+            UiActivity.Doing = "switching to " + tab; idxListKey = null; if (tab != "replay") replayFrom = ""; if (tab != "about") bugPage = tab;   // leaving the Time machine ends an "Opened from" visit (review 21 Nov)
             if (tab == "points" || tab == "learn") System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { LabLink.Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.Message); } });   // Network Lab faults watched since (a folder check when nothing changed)
             SetTipKey(null); tipClosed.Clear();   // the old page's help card goes with it; closed cards may come back on the next page
             learnSeen = "";    // AM-CG-254: reading time restarts when you come back - time away isn't reading
@@ -624,7 +626,7 @@ namespace AdeeboMeter
                 } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
-            if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
+            if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" && procSel != null ? 2 : 10)) RefreshConns(false);   /* What's running needs the table only for the program picked (release check: the busiest idle page) */   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0 || selfMem == 0) { SelfStats();   /* v8: "0 MB" until the second tick - read at once */ string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
             if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = (rr == null ? "" : rr.Status + "|" + rr.Count) + "|" + HopsPrint(mtrHops) + "|" + HopsPrint(mtuHops);   /* 21 Nov: no more "every 2 s anyway" (the page flickered) - MTR's and MTU's hop tables are part of the key instead */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
@@ -700,7 +702,7 @@ namespace AdeeboMeter
         {
             if (refreshing || IsDisposed) return;
             refreshing = true; lastConns = DateTime.UtcNow;
-            bool names = force || (DateTime.UtcNow - lastNames).TotalSeconds > (tab == "conn" || tab == "travel" || tab == "procs" ? 15 : 60);   // every 15 s where names are shown, every minute for the rest (Calls, Connections() users)
+            bool names = force || (DateTime.UtcNow - lastNames).TotalSeconds > (tab == "conn" || tab == "travel" || tab == "procs" && procSel != null ? 15 : 60);   // every 15 s where names are shown, every minute for the rest (Calls, Connections() users)
             if (names) lastNames = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
             { var __bz = Busy.Begin("Listing connections"); try { 

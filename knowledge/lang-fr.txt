@@ -2688,7 +2688,6 @@ PREVIEW OF	APERÇU :
 POINT AT A LANGUAGE TO PREVIEW IT	POINTEZ UNE LANGUE POUR UN APERÇU
 Nothing changes until you click a card.	Rien ne change avant que vous cliquiez sur une carte.
 Arrow keys move, Enter picks, Esc closes	Flèches pour bouger, Entrée pour choisir, Échap pour fermer
-Arabic reads right to left - the whole window turns around.	L'arabe se lit de droite à gauche - toute la fenêtre s'inverse.
 The original	L'original
 French (Canada)	Français (Canada)
 Spanish	Espagnol
@@ -3804,3 +3803,4 @@ Open in AdeeboLab	Ouvrir dans AdeeboLab
 Monitor, diagnose, automate, visualize, learn.	Surveiller, diagnostiquer, automatiser, visualiser, apprendre.
 Finish	Terminer
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici pour continuer.
+Arabic text reads right to left.	L’arabe se lit de droite à gauche.
