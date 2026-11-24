@@ -1205,8 +1205,13 @@ namespace AdeeboMeter
                 if (tbRows != null)
                 {
                     float nameW = Math.Min(260 * S, w * 0.32f), pillW = Cfg.Details ? 170 * S : 120 * S;
-                    foreach (var o in tbRows)
+                    // deep test 23 Nov: a 5000-letter answer with no spaces froze the window for 16 s - GDI+ wraps it letter by letter.
+                    // A row shows its first 400 characters (Copy as text keeps all of it), and rows off screen are measured, not drawn.
+                    Func<string, string> cap = z => z != null && z.Length > 400 ? z.Substring(0, 400) + "…" : z ?? "";
+                    var clip = g.ClipBounds;
+                    foreach (var o0 in tbRows)
                     {
+                        var o = (string[])o0.Clone(); if (o.Length > 1) o[1] = cap(o[1]); if (o.Length > 2) o[2] = cap(o[2]); if (o.Length > 3) o[3] = cap(o[3]);
                         int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                         if (lv == 8) continue;   // Copy as text only
                         if (lv == 6 || lv == 7)
@@ -1223,6 +1228,7 @@ namespace AdeeboMeter
                         if (tbCompare && prev != null) { var pr = prev.Rows.FirstOrDefault(z => z.Length > 2 && z[1] == o[1]); was = pr == null ? "new since " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) : pr[2] != o[2] ? "at " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + pr[2] : ""; }
                         if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
                         float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
+                        if (y > clip.Bottom || y + rh < clip.Top) { if (o.Length > 5 && o[5] != "") { var act0 = o[5]; Act(tbCanvas, new RectangleF(x, y, w, rh), delegate { RowAction(act0); }); } y += rh; continue; }
                         if (lv == 4) Theme.Fill(g, new RectangleF(x - 4 * S, y, w + 8 * S, rh), 10 * S, Theme.BlueSoft); else if (lv == 1 || lv == 2) Theme.Fill(g, new RectangleF(x - 6 * S, y, w + 12 * S, rh), 10 * S, Theme.LvSoft(lv));   // problem rows stand out, rounded
                         Draw.LvDot(g, lv == 4 ? 3 : lv, x, y + 9 * S, 10 * S, 10 * S);
                         g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));

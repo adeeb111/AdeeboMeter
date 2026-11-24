@@ -91,7 +91,8 @@ namespace AdeeboMeter
                 using (var icon = Theme.MakeIcon(32))
                 {
                     var fv = new FullView(icon, M); fv.Show(); Application.DoEvents();
-                    sb.Append(fv.DeepTest(net, minutes));
+                    string headText = sb.ToString();   // the report so far is on disk after every section, so a run stopped from outside still says how far it got
+                    sb.Append(fv.DeepTest(net, minutes, soFar => File.WriteAllText(path, headText + soFar + Environment.NewLine + "(still running - this is the report so far)" + Environment.NewLine)));
                     fv.Close(); fv.Dispose();
                 }
             }

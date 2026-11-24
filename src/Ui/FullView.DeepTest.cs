@@ -51,12 +51,17 @@ namespace AdeeboMeter
         static string Line(string what, Probe p) { return (p.Status == "OK" ? "ok    " : "FAIL  ") + what.PadRight(44) + p.Ms.ToString(CultureInfo.InvariantCulture).PadLeft(6) + " ms  " + p.Rows.ToString(CultureInfo.InvariantCulture).PadLeft(3) + " rows  mem " + p.MemMb.ToString("+0.0;-0.0", CultureInfo.InvariantCulture).PadLeft(6) + " MB  handles " + p.Handles.ToString("+0;-0", CultureInfo.InvariantCulture).PadLeft(4) + "  gdi " + p.Gdi.ToString("+0;-0", CultureInfo.InvariantCulture).PadLeft(3) + (p.Status == "OK" ? "" : "   " + p.Status); }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1861", Justification = "one-shot test data")]
-        public string DeepTest(bool net, int capMinutes)
+        public string DeepTest(bool net, int capMinutes, Action<string> saveSoFar = null)
         {
             var sb = new StringBuilder(); var all = Stopwatch.StartNew(); int fails = 0;
             bool skipped = false;
-            Func<bool> late = () => { if (all.Elapsed.TotalMinutes > capMinutes) skipped = true; return skipped; };
-            Action<string> head = s => { sb.AppendLine(); sb.AppendLine("== " + s + "   (" + (int)all.Elapsed.TotalSeconds + " s)"); };
+            // rc-check 23 Nov: the tool runs used the whole cap and the Toolbox checks after them ran on past it, so the run was
+            // stopped from outside before it wrote anything. The tool runs now stop early enough to leave the UI checks their time,
+            // the UI checks and the Penny check stop at the cap itself, and the report is saved after every section.
+            double toolCap = capMinutes - Math.Min(8.0, capMinutes / 4.0);
+            Func<bool> late = () => { if (all.Elapsed.TotalMinutes > toolCap) skipped = true; return skipped; };
+            Func<bool> over = () => { if (all.Elapsed.TotalMinutes > capMinutes) skipped = true; return all.Elapsed.TotalMinutes > capMinutes; };
+            Action<string> head = s => { if (saveSoFar != null) try { saveSoFar(sb.ToString()); } catch (Exception) { } sb.AppendLine(); sb.AppendLine("== " + s + "   (" + (int)all.Elapsed.TotalSeconds + " s)"); };
             Action<string, Probe> rec = (w, p) => { if (p.Status != "OK") fails++; sb.AppendLine(Line(w, p)); };
             var me = Process.GetCurrentProcess(); me.Refresh(); long mStart = me.PrivateMemorySize64; int hStart = me.HandleCount, gStart = Native.GetGuiResources(Native.GetCurrentProcess(), 0), tStart = me.Threads.Count;
             tab = "toolbox"; ShowTab(); EnsureToolbox(); Application.DoEvents();
@@ -127,6 +132,7 @@ namespace AdeeboMeter
             head("4. Toolbox and sections under stress");
             Action<string, Action, long> ui = (w, act, limit) =>
             {
+                if (over()) { sb.AppendLine("skip  " + w + "  (time cap reached)"); return; }
                 var p = new Probe(); var sw = Stopwatch.StartNew();
                 try { act(); } catch (Exception e) { var frames = (e.StackTrace ?? "").Split('\n').Select(z => z.Trim()).Where(z => z != "").ToList(); string mine = frames.FirstOrDefault(z => z.Contains("AdeeboMeter.")) ?? frames.FirstOrDefault() ?? ""; p.Status = "THREW " + e.GetType().Name + ": " + Draw.Trunc(e.Message, 80) + " at " + Draw.Trunc(mine, 160); }   /* 23 Nov: the app's own frame, not WinForms' */
                 p.Ms = sw.ElapsedMilliseconds; if (p.Status == "OK" && p.Ms > limit) p.Status = "SLOW (over " + limit + " ms)"; rec(w, p);
@@ -196,7 +202,7 @@ namespace AdeeboMeter
             onScreen(); ui("every section 3 times", () => { for (int i = 0; i < 3; i++) foreach (var sc in Secs) { tab = sc[2]; ShowTab(); Refresh(); Application.DoEvents(); } tab = "toolbox"; ShowTab(); }, 3 * Secs.Length * 400);
 
             // penny rule (PLAN 11.8a): 60 s sitting on the busiest page - own CPU over 1% of the PC, or memory over 80 MB, fails
-            if (!skipped)
+            if (!over())
             {
                 head("Penny check: 60 s on Home, idle");
                 tab = "overview"; ShowTab(); Application.DoEvents(); GC.Collect(); me.Refresh();
