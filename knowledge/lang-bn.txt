@@ -5475,3 +5475,108 @@ Keep resting to move it, or hold Ctrl	সরাতে আরেকটু ধর�
 Move hints on the widget	উইজেটে সরানোর টিপস
 On: a blue line on the card says how to move it while you rest on it or it's unlocked.	চালু: আপনি ওপরে মাউস রাখলে বা আনলক থাকলে কার্ডে একটা নীল লাইন বলে কীভাবে সরাবেন।
 Off: no hint line. Moving still works the same way.	বন্ধ: কোনো টিপস লাইন নেই। সরানো আগের মতোই কাজ করে।
+ Any symbol your key covers (AAPL, SHOP.TO, ^GSPC), or FX:USD for a currency - up to four.	 আপনার কি যেসব সিম্বল কভার করে (AAPL, SHOP.TO, ^GSPC), বা মুদ্রার জন্য FX:USD - সর্বোচ্চ চারটি।
+ calls today.	 কল আজ।
+ of 90 (the free key allows 100).	 / 90 (ফ্রি কি 100টি দেয়)।
+A preset the widget switches to for this part of the day, then back to yours. Not on battery.	দিনের এই সময়ে উইজেট যে প্রিসেটে যায়, তারপর আপনারটায় ফেরে। ব্যাটারিতে নয়।
+Add a game in the Gamer Zone	গেমার জোনে একটা গেম যোগ করুন
+Add your teams on the Sports page	স্পোর্টস পেজে আপনার দল যোগ করুন
+At this pace	এই হারে
+Back to my widget	আমার উইজেটে ফিরুন
+Bank of Canada, daily	ব্যাংক অব কানাডা, প্রতিদিন
+Busiest app	সবচেয়ে ব্যস্ত অ্যাপ
+DNS lookup	DNS খোঁজা
+Data this month	এই মাসের ডেটা
+Data today	আজকের ডেটা
+Data use	ডেটা ব্যবহার
+Final	শেষ
+Game ping	গেম পিং
+Gold	সোনা
+Grade	গ্রেড
+Hold this	এটা ধরে রাখুন
+How much you used today and this month, against your cap if you set one, and where this pace ends the month.	আজ আর এই মাসে কত ব্যবহার করেছেন, সীমা দিলে তার তুলনায়, আর এই হারে মাস শেষে কোথায় দাঁড়াবে।
+It comes with the next look	পরের বার দেখার সময় আসবে
+Market	মার্কেট
+Match	ম্যাচ
+Match recap	ম্যাচের সারাংশ
+My team	আমার দল
+My teams	আমার দলগুলো
+My widget	আমার উইজেট
+Needs your Financial Modeling Prep key (Settings › Markets)	আপনার Financial Modeling Prep কি লাগবে (সেটিংস › মার্কেট)
+Network fine	নেটওয়ার্ক ঠিক আছে
+No forecast yet	এখনো পূর্বাভাস নেই
+No games today	আজ কোনো খেলা নেই
+No markets picked	কোনো মার্কেট বাছা হয়নি
+No teams followed yet	এখনো কোনো দল অনুসরণ করছেন না
+None of those look like a symbol. Try AAPL, SHOP.TO, ^GSPC or FX:USD.	এগুলোর কোনোটাই সিম্বলের মতো নয়। AAPL, SHOP.TO, ^GSPC বা FX:USD চেষ্টা করুন।
+Now, next and the hours ahead.	এখন, এরপর আর সামনের ঘণ্টাগুলো।
+Now, what's next ("rain from 3 pm") and the hours ahead - refreshed hourly while it shows.	এখন, এরপর ("বিকেল 3টা থেকে বৃষ্টি") আর সামনের ঘণ্টাগুলো - দেখানো অবস্থায় প্রতি ঘণ্টায় আপডেট।
+Now: 	এখন: 
+Off.	বন্ধ।
+Off. A single game can still go on the widget: Show on widget, on the Sports page.	বন্ধ। একটা খেলা তবুও উইজেটে রাখা যায়: স্পোর্টস পেজে উইজেটে দেখান।
+Off: the widget keeps your style while you play.	বন্ধ: খেলার সময় উইজেট আপনার স্টাইলেই থাকে।
+Oil	তেল
+On the widget	উইজেটে আছে
+On: an hour before rain, snow or a storm (by the forecast), the widget shows the weather, and goes back once it has started. It's a forecast from Open-Meteo - not radar or official warnings.	চালু: বৃষ্টি, তুষার বা ঝড়ের (পূর্বাভাস অনুযায়ী) এক ঘণ্টা আগে উইজেট আবহাওয়া দেখায়, শুরু হলে ফিরে যায়। এটা Open-Meteo-র পূর্বাভাস - রাডার বা সরকারি সতর্কতা নয়।
+On: when you point at the widget after a while, a blue line says what changed - a goal, a price move, the rain moving, a network event.	চালু: কিছুক্ষণ পর উইজেটে পয়েন্ট করলে একটা নীল লাইন বলে কী বদলেছে - একটা গোল, দামের ওঠানামা, বৃষ্টির সময় সরে যাওয়া, নেটওয়ার্কের কোনো ঘটনা।
+Packet loss	প্যাকেট লস
+Pick one in Settings › Widget	সেটিংস › উইজেট থেকে একটা বেছে নিন
+Prices with your Financial Modeling Prep key, at its pace (Settings › Markets), in market hours only - 	আপনার Financial Modeling Prep কি দিয়ে দাম, তার গতিতে (সেটিংস › মার্কেট), শুধু বাজার খোলা থাকলে - 
+Right now	এই মুহূর্তে
+Settings › Widget › Markets on the widget	সেটিংস › উইজেট › উইজেটে মার্কেট
+Show on widget	উইজেটে দেখান
+Since you looked:	শেষবার দেখার পর:
+Spikes	স্পাইক
+Stop holding	ধরে রাখা বন্ধ
+Symbols, separated by commas (up to four)	সিম্বল, কমা দিয়ে আলাদা (সর্বোচ্চ চারটি)
+The teams you follow: a live score at the top, then what's next and the last results.	আপনি যে দলগুলো অনুসরণ করেন: ওপরে লাইভ স্কোর, তারপর পরের খেলা আর শেষ ফলাফল।
+This month	এই মাস
+Today, this month and your cap.	আজ, এই মাস আর আপনার সীমা।
+Turn Weather on in Settings › Weather	সেটিংস › আবহাওয়ায় আবহাওয়া চালু করুন
+Up to four prices - an index, a stock, a commodity or a currency - with a little graph. Not live: the time they're from is on the card.	সর্বোচ্চ চারটি দাম - একটা সূচক, শেয়ার, পণ্য বা মুদ্রা - ছোট গ্রাফসহ। লাইভ নয়: কখনকার দাম তা কার্ডে লেখা থাকে।
+Up to four prices with a little graph.	ছোট গ্রাফসহ সর্বোচ্চ চারটি দাম।
+Up to six readings you pick below - speeds, pings, CPU, data, game ping, weather, a market, your team, the time.	নিচে বাছা সর্বোচ্চ ছয়টি রিডিং - স্পিড, পিং, CPU, ডেটা, গেম পিং, আবহাওয়া, একটা মার্কেট, আপনার দল, সময়।
+Up to six readings you pick.	আপনার বাছা সর্বোচ্চ ছয়টি রিডিং।
+Waiting for the first price	প্রথম দামের অপেক্ষায়
+What this row of My widget shows.	আমার উইজেটের এই সারি কী দেখায়।
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one.	আপনার যোগ করা গেম খোলা থাকলে উইজেট কোথায় বসবে - যেমন মিনিম্যাপ থেকে দূরে। খেলার সময় টেনে সরালে এটাই বদলায়।
+While a game you added is open, the widget becomes the gamer card whatever style it's on, stays over the game in borderless full screen, and shows a one-minute match recap when the game closes.	আপনার যোগ করা গেম খোলা থাকলে উইজেট যেকোনো স্টাইলেই গেমার কার্ড হয়ে যায়, বর্ডারলেস ফুল স্ক্রিনে গেমের ওপর থাকে, আর গেম বন্ধ হলে এক মিনিটের ম্যাচ সারাংশ দেখায়।
+While a game you follow is live (and only then). Hockey needs no key. Football and cricket use your own keys: every 2 minutes or every minute needs a paid plan. Cricket calls today: 	আপনার অনুসরণ করা খেলা লাইভ থাকলে (শুধু তখনই)। হকির কি লাগে না। ফুটবল আর ক্রিকেট আপনার নিজের কি ব্যবহার করে: প্রতি 2 মিনিট বা প্রতি মিনিটের জন্য পেইড প্ল্যান লাগে। আজ ক্রিকেট কল: 
+While a team you follow plays, the widget shows the score; 5 minutes after the final it goes back to yours. Not on battery.	আপনার দল খেললে উইজেট স্কোর দেখায়; শেষ হওয়ার 5 মিনিট পর আপনারটায় ফেরে। ব্যাটারিতে নয়।
+Without a Financial Modeling Prep key only currencies show (Bank of Canada, once a day).	Financial Modeling Prep কি ছাড়া শুধু মুদ্রা দেখায় (ব্যাংক অব কানাডা, দিনে একবার)।
+Worst	সবচেয়ে খারাপ
+Your teams: live scores and what's next.	আপনার দল: লাইভ স্কোর আর পরের খেলা।
+as of	সময়
+avg	গড়
+by the end of the month	মাস শেষে
+Markets on the widget	উইজেটে মার্কেট
+My widget: reading 1	আমার উইজেট: রিডিং 1
+My widget: reading 2	আমার উইজেট: রিডিং 2
+My widget: reading 3	আমার উইজেট: রিডিং 3
+My widget: reading 4	আমার উইজেট: রিডিং 4
+My widget: reading 5	আমার উইজেট: রিডিং 5
+My widget: reading 6	আমার উইজেট: রিডিং 6
+S&P 500, US dollar, gold	S&P 500, মার্কিন ডলার, সোনা
+My symbols...	আমার সিম্বল...
+Same as usual	আগের মতোই
+Hockey	হকি
+Football	ফুটবল
+Cricket	ক্রিকেট
+All three	তিনটাই
+Every 5 minutes	প্রতি 5 মিনিটে
+Every 2 minutes	প্রতি 2 মিনিটে
+Every minute	প্রতি মিনিটে
+(nothing)	(কিছু না)
+The verdict	রায়
+First market	প্রথম মার্কেট
+Second market	দ্বিতীয় মার্কেট
+Time	সময়
+Widget position while gaming	গেম খেলার সময় উইজেটের জায়গা
+Switch to sports for live games of	এই খেলাগুলো লাইভ হলে স্পোর্টসে যান
+Scores: how often	স্কোর: কত ঘনঘন
+Weather before rain or snow	বৃষ্টি বা তুষারের আগে আবহাওয়া
+Day plan: morning (7-9)	দিনের পরিকল্পনা: সকাল (7-9)
+Day plan: working hours (9-17)	দিনের পরিকল্পনা: অফিসের সময় (9-17)
+Day plan: evening (17-23)	দিনের পরিকল্পনা: সন্ধ্যা (17-23)
+Day plan: night (23-7)	দিনের পরিকল্পনা: রাত (23-7)
+Since you looked	শেষবার দেখার পর

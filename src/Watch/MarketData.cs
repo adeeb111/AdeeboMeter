@@ -296,8 +296,8 @@ namespace AdeeboMeter
             new[] { "CLUSD", "WTI crude oil", "USD per barrel" }, new[] { "BZUSD", "Brent crude oil", "USD per barrel" }, new[] { "NGUSD", "Natural gas", "USD per MMBtu" },
             new[] { "GCUSD", "Gold", "USD per ounce" }, new[] { "SIUSD", "Silver", "USD per ounce" }, new[] { "HGUSD", "Copper", "USD per pound" } };
         public static Dictionary<string, Quote> Quotes = new Dictionary<string, Quote>(); public static string QuoteNote = "";
-        static volatile bool qBusy; static readonly DateTime[] qTried = { DateTime.MinValue, DateTime.MinValue };   // R2-066: the indexes and the futures each keep their own clock
-        public static void QuoteKeyChanged() { qTried[0] = qTried[1] = DateTime.MinValue; }   // R2-067: a new key is tried at once
+        static volatile bool qBusy; static readonly DateTime[] qTried = { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue };   // R2-066: the indexes and the futures each keep their own clock
+        public static void QuoteKeyChanged() { qTried[0] = qTried[1] = qTried[2] = DateTime.MinValue; }   // R2-067: a new key is tried at once
         public static bool HasQuoteKey() { return Sports.Key("fmp") != ""; }
         // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
         public static int EveryMin { get { int m; return int.TryParse(Cfg.FmpEvery, out m) && m >= 1 ? m : 15; } }
@@ -310,13 +310,17 @@ namespace AdeeboMeter
             return 0;
         }
         static void Call() { try { File.WriteAllText(CallsFile, DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
-        public static void FetchQuotes(bool futures, Action done)
+        public static void FetchQuotes(bool futures, Action done) { FetchList(futures ? 1 : 0, futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList(), done); }
+        // the corner widget's own symbols (24 Nov): any the person typed (AAPL, SHOP.TO) plus the listed ones, at the key's pace
+        public static int CallsUsedToday { get { return CallsToday(); } }
+        public static readonly Dictionary<string, List<double>> Hist = new Dictionary<string, List<double>>();   // the widget's little graph: the last 40 prices seen
+        public static void FetchWidget(List<string> syms, Action done) { if (syms.Count > 0) FetchList(2, syms.Take(6).ToList(), done); }
+        public static bool ValidSym(string s) { return !string.IsNullOrEmpty(s) && s.Length <= 20 && Regex.IsMatch(s, @"^[\^A-Za-z0-9.=\-]{1,20}$"); }
+        static void FetchList(int qi, List<string> list, Action done)
         {
-            int qi = futures ? 1 : 0;
             if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried[qi]).TotalMinutes < EveryMin) return;
             string key = Sports.Key("fmp"); if (key == "") return;
             qBusy = true; qTried[qi] = DateTime.UtcNow;
-            var list = futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList();
             new Thread(() =>
             {
                 int got = 0, fails = 0; bool capped = false;
@@ -332,7 +336,7 @@ namespace AdeeboMeter
                         try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; Call(); }
                         catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null) Call(); if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
                         var q = ParseFmp(body, sym); if (q == null) continue;
-                        lock (k) { Quotes[sym] = q; Ver++; } got++;
+                        lock (k) { Quotes[sym] = q; Ver++; List<double> h; if (!Hist.TryGetValue(sym, out h)) Hist[sym] = h = new List<double>(); if (h.Count == 0 || h[h.Count - 1] != q.Price) h.Add(q.Price); if (h.Count > 40) h.RemoveAt(0); } got++;
                     }
                     if (got > 0 && !capped) lock (k) QuoteNote = "";   // R2-065: the cap note stays when the cap is why the rest are old
                 }
@@ -359,6 +363,7 @@ namespace AdeeboMeter
             var ix = IndexList.FirstOrDefault(i => i[0] == sym); var fu = FuturesList.FirstOrDefault(f => f[0] == sym);
             if (ix != null) { q.Name = ix[1]; q.Region = ix[2]; q.Ccy = ix[3]; }
             if (fu != null) { q.Name = fu[1]; q.Unit = fu[2]; q.Ccy = "USD"; }
+            if (ix == null && fu == null) { var nm = Regex.Match(json, "\"name\"\\s*:\\s*\"([^\"]{1,60})\""); q.Name = nm.Success ? nm.Groups[1].Value : sym; }   // a typed symbol: the company's name
             return q;
         }
     }

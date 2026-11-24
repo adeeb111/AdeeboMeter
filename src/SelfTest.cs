@@ -842,6 +842,33 @@ namespace AdeeboMeter
                 if (!Program.CanWrite(Path.GetTempPath())) bad.Add("temp not writable?");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("Widget presets and the corner ladder: symbols, readings, day plan, pinned game, tile cards draw", () =>
+            {
+                var bad = new List<string>();
+                if (Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft") != "AAPL,SHOP.TO,^GSPC,FX:USD") bad.Add("symbols: " + Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft"));
+                if (Corner.CleanMine("cpu,nope,cpu,ping") != "cpu,ping") bad.Add("readings: " + Corner.CleanMine("cpu,nope,cpu,ping"));
+                if (Corner.CleanMine("") != "down,ping,weather,market1") bad.Add("empty readings have no default");
+                if (Corner.CleanPlan("e=sports;m=bogus;w=weather") != "m=;w=weather;e=sports;n=") bad.Add("plan: " + Corner.CleanPlan("e=sports;m=bogus;w=weather"));
+                if (Corner.SlotOf(new DateTime(2026, 1, 1, 8, 0, 0)) != "m" || Corner.SlotOf(new DateTime(2026, 1, 1, 12, 0, 0)) != "w" || Corner.SlotOf(new DateTime(2026, 1, 1, 20, 0, 0)) != "e" || Corner.SlotOf(new DateTime(2026, 1, 1, 2, 0, 0)) != "n") bad.Add("day slots");
+                if (Corner.AllStyles.Length != 13) bad.Add("not 13 presets");
+                var q = MarketData.ParseFmp("[{\"symbol\":\"AAPL\",\"name\":\"Apple Inc.\",\"price\":231.5,\"changePercentage\":-0.8}]", "AAPL");
+                if (q == null || q.Name != "Apple Inc." || Math.Abs(q.Price - 231.5) > 1e-9) bad.Add("a typed symbol's quote");
+                string keepPin = Cfg.WPinGame, keepK = Cfg.WSportKinds, keepT = Cfg.SportTeams;
+                try
+                {
+                    var g = new Sports.Game { Sport = "hockey", Home = "TOR", Away = "MTL", State = "live", StartUtc = new DateTime(2026, 11, 24, 0, 0, 0, DateTimeKind.Utc) };
+                    Cfg.SportTeams = "TOR"; Cfg.WSportKinds = ""; Cfg.WPinGame = "";
+                    if (Corner.Wanted(g)) bad.Add("a followed game took over with no sport ticked and nothing pinned");
+                    Cfg.WSportKinds = "hockey"; if (!Corner.Wanted(g)) bad.Add("a ticked sport's live followed game was not wanted");
+                    Cfg.WSportKinds = ""; Cfg.WPinGame = Corner.PinKey(g); if (!Corner.Wanted(g)) bad.Add("the pinned game was not wanted");
+                }
+                finally { Cfg.WPinGame = keepPin; Cfg.WSportKinds = keepK; Cfg.SportTeams = keepT; }
+                var s = new Snap { Level = 2, Waiting = false, Headline = "Internet is down", Chip = "Internet down", Down = 1, Up = 1, Ping = double.NaN };
+                foreach (var st in new[] { "markets", "sports", "data", "weather", "mine" })
+                    try { using (var b = Draw.Preview(s, st, true)) if (b.Width < 50 || b.Height < 50) bad.Add(st + " card is tiny"); using (var c = Draw.Preview(s, st, false)) { } }
+                    catch (Exception e) { bad.Add(st + ": " + e.GetType().Name + " " + e.Message); }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("Widget position: corners, snapping, the default and a gone screen", () =>
             {
                 var bad = new List<string>(); string keepPos = Cfg.WPos, keepScr = Cfg.WidgetScreen;

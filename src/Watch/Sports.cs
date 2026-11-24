@@ -117,7 +117,22 @@ namespace AdeeboMeter
         static void Hit() { try { File.WriteAllText(HitsFile, DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + " " + (HitsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
 
         // ---------- fetching: one background pass for every sport and the headlines, at most every 5 minutes
-        public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= 5; } }
+        public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= EveryMin; } }
+        // 24 Nov (Adeeb): your keys, your pace - every 5 minutes (free keys), 2 or 1 (a paid key); the widget follows it during a game
+        public static int EveryMin { get { return Cfg.SportsEvery == "1" ? 1 : Cfg.SportsEvery == "2" ? 2 : 5; } }
+        public static bool PaidPace { get { return EveryMin < 5; } }
+        public static int CricketCallsToday { get { return HitsToday(); } }
+        // the corner widget wants scores: a followed (or pinned) game is live or starts within 20 minutes - fixtures and scores only,
+        // no headlines; cricket at the key's pace. Nothing at all otherwise (ReminderTick keeps its 30-minute pace).
+        static DateTime lastLive = DateTime.MinValue;
+        public static void WidgetTick(Func<Game, bool> wanted)
+        {
+            if (!Cfg.Sports || Policy.NoOnline) return;
+            bool hot; lock (k) hot = Games.Any(g => wanted(g) && (g.State == "live" || (g.State == "soon" && (g.StartUtc - DateTime.UtcNow).TotalMinutes < 20)));
+            if (!hot) return;
+            if ((DateTime.UtcNow - lastLive).TotalMinutes < EveryMin) return;
+            lastLive = DateTime.UtcNow; Fetch(null, true, true);
+        }
         // round 6 M-1: the kick-off reminder runs whether the window is open or not (AppCtx calls this once a minute or so), and
         // looks at every followed game - a live one no longer hides the next kick-off. With the window closed the feed is
         // refreshed every 30 minutes, and only while a reminder is on and a team is followed.
@@ -139,8 +154,9 @@ namespace AdeeboMeter
                 Alerts.Raise("kickoff|" + gk, g.Home + " " + L.T("vs") + " " + g.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0);
             }
         }
-        public static void Fetch(Action done) { Fetch(done, false); }
-        static void Fetch(Action done, bool background)
+        public static void Fetch(Action done) { Fetch(done, false, false); }
+        static void Fetch(Action done, bool background) { Fetch(done, background, false); }
+        static void Fetch(Action done, bool background, bool live)
         {
             if (!Cfg.Sports || Policy.NoOnline || !Due || Interlocked.CompareExchange(ref busy, 1, 0) != 0) return;
             new Thread(() =>
@@ -164,9 +180,9 @@ namespace AdeeboMeter
                     sport("hockey", Hockey);
                     // no key of your own: ESPN's free scoreboards (no key, read once a day - the page says so); your own key turns ESPN off
                     if (Key("football") == "") sport("football", EspnFootball); else { FromEspn = false; sport("football", () => Football(Key("football"))); }   /* bug-hunt R2-010: a failure keeps what was on screen, with the real reason; hunt-5 H-1: the else was inside the comment - a key turned football off */
-                    if (background) { }   // the kick-off pass: no cricket key calls
+                    if (background && !live) { }   // the kick-off pass: no cricket key calls
                     else if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
-                    else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
+                    else if (HitsToday() >= 90 && !PaidPace) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
                     if (!background) foreach (var f in new[] { Tuple.Create("top", "https://feeds.bbci.co.uk/sport/rss.xml"), Tuple.Create("football", "https://feeds.bbci.co.uk/sport/football/rss.xml"), Tuple.Create("cricket", "https://feeds.bbci.co.uk/sport/cricket/rss.xml") })
                     {

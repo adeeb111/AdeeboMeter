@@ -158,12 +158,14 @@ namespace AdeeboMeter
             if (have == null || have.Count == 0) return true;
             if ((have.Max(h => h.Utc) - nowUtc).TotalHours < 24) return true;                       // less than a day of forecast left
             if (have.Count(h => h.Utc > nowUtc && h.Utc <= nowUtc.AddHours(24) && h.Code >= 0 && !double.IsNaN(h.Temp)) < 18) return true;   // AM-CG-163: holes or unknown hours in the next day
+            if (acc == "hourly") return (nowUtc - fetched).TotalMinutes >= 60;                          // 24 Nov: the Weather widget is showing - once an hour
             return acc == "better" && (nowUtc - fetched).TotalHours >= BetterHours;                  // Better: every 6 hours while the PC is on
         }
         // only the last day and what's ahead: 3-4 days at most
         public static List<Hour> Trim(List<Hour> l, DateTime nowUtc) { return l.Where(h => h.Utc >= nowUtc.AddHours(-24) && h.Utc <= nowUtc.AddDays(4)).OrderBy(h => h.Utc).ToList(); }
 
         // called from the widget's tick: cheap - looks once a minute, asks the internet only when NeedFetch says so
+        public static volatile bool Hourly;   // set by the corner while the Weather widget shows or could take over
         public static void Tick()
         {
             if (!Active || busy) return;
@@ -171,7 +173,7 @@ namespace AdeeboMeter
             if ((now - checkedUtc).TotalSeconds < 60 || (now - started).TotalSeconds < 45) return;   // not in the first moments after start
             checkedUtc = now; Load();
             List<Hour> have; DateTime f; lock (k) { have = forPlace == Cfg.WeatherPlace ? hours.ToList() : new List<Hour>(); f = fetchedUtc; }
-            if (!NeedFetch(have, f, now, Cfg.WeatherAcc) || (triedFor == Cfg.WeatherPlace && (now - triedUtc).TotalMinutes < 30)) return;   // a failed try waits half an hour (for that place only)
+            if (!NeedFetch(have, f, now, Hourly ? "hourly" : Cfg.WeatherAcc) || (triedFor == Cfg.WeatherPlace && (now - triedUtc).TotalMinutes < 30)) return;   // a failed try waits half an hour (for that place only)
             Fetch();
         }
         static string triedFor = ""; static int gen; static volatile bool again;

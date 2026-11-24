@@ -190,6 +190,16 @@ namespace AdeeboMeter
             return Math.Max(c1, c2);
         }
         static string SpUntil(DateTime t) { var s = t - DateTime.Now; if (s.TotalMinutes < 1) return L.T("now"); return (s.Days > 0 ? s.Days + " " + L.T("d") + " " : "") + (s.Hours > 0 ? s.Hours + " " + L.T("h") + " " : "") + s.Minutes + " " + L.T("min"); }
+        // 24 Nov (Adeeb): this one game on the corner widget - it switches when the game starts and comes back 5 minutes after the end
+        void PinPill(Graphics g, Sports.Game m, float right, float y)
+        {
+            string key = Corner.PinKey(m); bool on = Cfg.WPinGame == key;
+            string t = on ? L.T("On the widget") : L.T("Show on widget"); var sz = g.MeasureString(t, Paper.Small);
+            var r = new RectangleF(right - sz.Width - 16 * S, y, sz.Width + 16 * S, 22 * S);
+            Theme.Fill(g, r, 11 * S, on ? Paper.Act : Paper.CardBg); Theme.Stroke(g, r, 11 * S, on ? Paper.Act : Paper.Line2, 1);
+            MkSpText(g, t, Paper.Small, on ? Theme.OnColor(Paper.Act) : Paper.Ink, r.X + 8 * S, r.Y + (r.Height - sz.Height) / 2);
+            Act(sportsCanvas, r, delegate { Cfg.WPinGame = on ? "" : key; Cfg.Save(); sportsCanvas.Invalidate(); });
+        }
         void MkSpText(Graphics g, string t, Font f, Color c, float x, float y) { using (var b = new SolidBrush(c)) g.DrawString(t, f, b, x, y); }
         RectangleF MkSpButton(Graphics g, string t, float x, float y, bool primary)
         {
@@ -360,6 +370,7 @@ namespace AdeeboMeter
                     MkSpText(g, m.Home, Paper.BodyB, Paper.Head, gr.X + 14 * S, gr.Y + 10 * S); MkSpText(g, m.Away, Paper.BodyB, Paper.Head, gr.X + 14 * S, gr.Y + 36 * S);
                     var hs = g.MeasureString(Or(m.HomeScore, "-"), Paper.NumS); MkSpText(g, Or(m.HomeScore, "-"), Paper.NumS, Paper.Head, gr.Right - hs.Width - 12 * S, gr.Y + 8 * S); var as2 = g.MeasureString(Or(m.AwayScore, "-"), Paper.NumS); MkSpText(g, Or(m.AwayScore, "-"), Paper.NumS, Paper.Head, gr.Right - as2.Width - 12 * S, gr.Y + 34 * S);
                     MkSpText(g, (m.League != "" ? m.League : L.T(Sports.Name(m.Sport))) + (m.Detail != "" ? " · " + Cut(m.Detail, 40) : ""), Paper.Small, Paper.Down, gr.X + 14 * S, gr.Bottom - 26 * S);
+                    PinPill(g, m, gr.Right - 10 * S, gr.Bottom - 30 * S);
                 }
                 y = lr.Bottom + 16 * S;
                 var done = pick.Where(z => z.State == "done").OrderByDescending(z => z.StartUtc).Take(12).ToList();
@@ -379,6 +390,7 @@ namespace AdeeboMeter
                 MkSpText(g, m.State == "off" ? OffWord(m) : m.StartUtc == DateTime.MinValue ? "-" : m.StartUtc.ToLocalTime().ToString(AdeeboMeter.Draw.Tt("ddd h:mm tt"), CultureInfo.CurrentCulture), Paper.BodyB, m.State == "off" ? Paper.Muted : Paper.Head, x + 20 * S, fy);
                 MkSpText(g, m.Home + " " + L.T("vs") + " " + m.Away + (mine ? "  · " + L.T("your team") : ""), mine ? Paper.BodyB : Paper.Body, Paper.Ink, x + w * 0.22f, fy);
                 var lg = m.League != "" ? m.League : L.T(Sports.Name(m.Sport)); var ls = g.MeasureString(lg, Paper.Small); MkSpText(g, lg, Paper.Small, Paper.Muted, x + w - ls.Width - 16 * S, fy + 2 * S);
+                if (m.State == "soon") PinPill(g, m, x + w - ls.Width - 28 * S, fy - 2 * S);
                 fy += 36 * S;
             }
             return fr.Bottom + 16 * S;

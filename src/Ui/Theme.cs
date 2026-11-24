@@ -681,10 +681,18 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(c)) g.FillPath(b, gp);
             }
         }
+        // the folded chip's words: a tile preset's own, the game's ping while the gamer card is up, else the verdict's
+        public static string ChipWords(Snap s)
+        {
+            string st = Style;
+            if (Corner.IsTile(st)) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            if (!SpeedStyle && Layout(s.Call) == "gamer") { var w = GamerChip(); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            return s.Chip;
+        }
         public static Bitmap Chip(Snap s, double dwell)
         {
             if (SpeedStyle) return SpeedChip(s, dwell);
-            var ts = Measure(s.Chip, fSmall, 0);
+            string words = ChipWords(s); var ts = Measure(words, fSmall, 0);
             float ww = Layout(s.Call) == "everyday" ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
@@ -698,7 +706,7 @@ namespace AdeeboMeter
                     Theme.Logo(g, new RectangleF(x, (H - 16 * S) / 2, 16 * S, 16 * S), false); x += 22 * S;
                     using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S;
                 }
-                using (var b = new SolidBrush(Theme.Ink)) g.DrawString(s.Chip, fSmall, b, x, (H - ts.Height) / 2);
+                using (var b = new SolidBrush(Theme.Ink)) g.DrawString(words, fSmall, b, x, (H - ts.Height) / 2);
                 if (ww > 0) WeatherChipDraw(g, x + ts.Width + 6 * S, H);
                 if (dwell > 0)
                 {
@@ -851,6 +859,7 @@ namespace AdeeboMeter
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
             if (SpeedStyle) return SpeedCard(s, hits);
+            if (Corner.IsTile(Style)) return TileCard(s, hits, Style);
             string lay = Layout(s.Call);
             if (lay == "gamer") return GamerCard(s, hits);
             if (lay == "calls") return CallsCard(s, hits);

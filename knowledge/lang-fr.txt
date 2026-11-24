@@ -4200,3 +4200,110 @@ Keep resting to move it, or hold Ctrl	Restez encore pour le déplacer, ou mainte
 Move hints on the widget	Conseils de déplacement sur le widget
 On: a blue line on the card says how to move it while you rest on it or it's unlocked.	Activé : une ligne bleue sur la carte indique comment le déplacer quand vous restez dessus ou qu'il est déverrouillé.
 Off: no hint line. Moving still works the same way.	Désactivé : pas de ligne de conseil. Le déplacement fonctionne toujours de la même façon.
+ Any symbol your key covers (AAPL, SHOP.TO, ^GSPC), or FX:USD for a currency - up to four.	 Tout symbole couvert par votre clé (AAPL, SHOP.TO, ^GSPC), ou FX:USD pour une devise - quatre au plus.
+ calls today.	 appels aujourd'hui.
+ of 90 (the free key allows 100).	 sur 90 (la clé gratuite en permet 100).
+A preset the widget switches to for this part of the day, then back to yours. Not on battery.	Un préréglage vers lequel le widget bascule pendant cette partie de la journée, puis revient au vôtre. Pas sur batterie.
+Add a game in the Gamer Zone	Ajoutez un jeu dans la Zone Gamer
+Add your teams on the Sports page	Ajoutez vos équipes sur la page Sports
+At this pace	À ce rythme
+Back to my widget	Revenir à mon widget
+Bank of Canada, daily	Banque du Canada, quotidien
+Busiest app	Appli la plus occupée
+DNS lookup	Résolution DNS
+Data this month	Données ce mois-ci
+Data today	Données aujourd'hui
+Data use	Consommation de données
+Final	Terminé
+Game ping	Ping du jeu
+Gold	Or
+Grade	Note
+Hold this	Garder celui-ci
+How much you used today and this month, against your cap if you set one, and where this pace ends the month.	Ce que vous avez utilisé aujourd'hui et ce mois-ci, par rapport à votre plafond si vous en avez fixé un, et où ce rythme mène en fin de mois.
+It comes with the next look	Elle arrive au prochain relevé
+Market	Marché
+Match	Match
+Match recap	Bilan du match
+My team	Mon équipe
+My teams	Mes équipes
+My widget	Mon widget
+Needs your Financial Modeling Prep key (Settings › Markets)	Nécessite votre clé Financial Modeling Prep (Paramètres › Marchés)
+Network fine	Réseau OK
+No forecast yet	Pas encore de prévisions
+No games today	Aucun match aujourd'hui
+No markets picked	Aucun marché choisi
+No teams followed yet	Aucune équipe suivie pour l'instant
+None of those look like a symbol. Try AAPL, SHOP.TO, ^GSPC or FX:USD.	Aucun de ces éléments ne ressemble à un symbole. Essayez AAPL, SHOP.TO, ^GSPC ou FX:USD.
+Now, next and the hours ahead.	Maintenant, la suite et les heures à venir.
+Now, what's next ("rain from 3 pm") and the hours ahead - refreshed hourly while it shows.	Maintenant, la suite (« pluie dès 3 h de l'après-midi ») et les heures à venir - actualisé toutes les heures tant qu'il s'affiche.
+Now: 	Actuellement : 
+Off.	Désactivé.
+Off. A single game can still go on the widget: Show on widget, on the Sports page.	Désactivé. Un seul match peut quand même aller sur le widget : Afficher sur le widget, sur la page Sports.
+Off: the widget keeps your style while you play.	Désactivé : le widget garde votre style pendant que vous jouez.
+Oil	Pétrole
+On the widget	Sur le widget
+On: an hour before rain, snow or a storm (by the forecast), the widget shows the weather, and goes back once it has started. It's a forecast from Open-Meteo - not radar or official warnings.	Activé : une heure avant la pluie, la neige ou un orage (selon les prévisions), le widget affiche la météo, puis revient une fois que c'est commencé. Ce sont des prévisions d'Open-Meteo - pas un radar ni des alertes officielles.
+On: when you point at the widget after a while, a blue line says what changed - a goal, a price move, the rain moving, a network event.	Activé : quand vous pointez le widget après un moment, une ligne bleue indique ce qui a changé - un but, un mouvement de prix, la pluie qui se décale, un événement réseau.
+Packet loss	Perte de paquets
+Pick one in Settings › Widget	Choisissez-en un dans Paramètres › Widget
+Prices with your Financial Modeling Prep key, at its pace (Settings › Markets), in market hours only - 	Cours avec votre clé Financial Modeling Prep, à son rythme (Paramètres › Marchés), pendant les heures de marché seulement - 
+Right now	En ce moment
+Settings › Widget › Markets on the widget	Paramètres › Widget › Marchés sur le widget
+Show on widget	Afficher sur le widget
+Since you looked:	Depuis votre dernier coup d'œil :
+Spikes	Pics
+Stop holding	Arrêter de garder
+Symbols, separated by commas (up to four)	Symboles, séparés par des virgules (quatre au plus)
+The teams you follow: a live score at the top, then what's next and the last results.	Les équipes que vous suivez : un score en direct en haut, puis la suite et les derniers résultats.
+This month	Ce mois-ci
+Today, this month and your cap.	Aujourd'hui, ce mois-ci et votre plafond.
+Turn Weather on in Settings › Weather	Activez la météo dans Paramètres › Météo
+Up to four prices - an index, a stock, a commodity or a currency - with a little graph. Not live: the time they're from is on the card.	Jusqu'à quatre cours - un indice, une action, une matière première ou une devise - avec un petit graphique. Pas en direct : leur heure est indiquée sur la carte.
+Up to four prices with a little graph.	Jusqu'à quatre cours avec un petit graphique.
+Up to six readings you pick below - speeds, pings, CPU, data, game ping, weather, a market, your team, the time.	Jusqu'à six mesures choisies ci-dessous - débits, pings, CPU, données, ping du jeu, météo, un marché, votre équipe, l'heure.
+Up to six readings you pick.	Jusqu'à six mesures de votre choix.
+Waiting for the first price	En attente du premier cours
+What this row of My widget shows.	Ce qu'affiche cette ligne de Mon widget.
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one.	Où se place le widget quand un jeu ajouté est ouvert - loin de votre minicarte, par exemple. Le déplacer pendant que vous jouez change celui-ci.
+While a game you added is open, the widget becomes the gamer card whatever style it's on, stays over the game in borderless full screen, and shows a one-minute match recap when the game closes.	Quand un jeu ajouté est ouvert, le widget devient la carte gamer quel que soit son style, reste par-dessus le jeu en plein écran fenêtré et affiche un bilan d'une minute à la fermeture du jeu.
+While a game you follow is live (and only then). Hockey needs no key. Football and cricket use your own keys: every 2 minutes or every minute needs a paid plan. Cricket calls today: 	Seulement quand un match suivi est en direct. Le hockey n'a pas besoin de clé. Le football et le cricket utilisent vos propres clés : toutes les 2 minutes ou chaque minute demande un forfait payant. Appels cricket aujourd'hui : 
+While a team you follow plays, the widget shows the score; 5 minutes after the final it goes back to yours. Not on battery.	Quand une équipe suivie joue, le widget affiche le score ; 5 minutes après la fin, il revient au vôtre. Pas sur batterie.
+Without a Financial Modeling Prep key only currencies show (Bank of Canada, once a day).	Sans clé Financial Modeling Prep, seules les devises s'affichent (Banque du Canada, une fois par jour).
+Worst	Pire
+Your teams: live scores and what's next.	Vos équipes : scores en direct et la suite.
+as of	à
+avg	moy.
+by the end of the month	d'ici la fin du mois
+Markets on the widget	Marchés sur le widget
+My widget: reading 1	Mon widget : mesure 1
+My widget: reading 2	Mon widget : mesure 2
+My widget: reading 3	Mon widget : mesure 3
+My widget: reading 4	Mon widget : mesure 4
+My widget: reading 5	Mon widget : mesure 5
+My widget: reading 6	Mon widget : mesure 6
+S&P 500, US dollar, gold	S&P 500, dollar américain, or
+My symbols...	Mes symboles...
+Same as usual	Comme d'habitude
+Hockey	Hockey
+Football	Football
+Cricket	Cricket
+All three	Les trois
+Every 5 minutes	Toutes les 5 minutes
+Every 2 minutes	Toutes les 2 minutes
+Every minute	Chaque minute
+(nothing)	(rien)
+Nothing	Rien
+The verdict	Le verdict
+First market	Premier marché
+Second market	Deuxième marché
+Time	Heure
+Sports	Sports
+Widget position while gaming	Position du widget en jeu
+Switch to sports for live games of	Passer aux sports pour les matchs en direct de
+Scores: how often	Scores : à quelle fréquence
+Weather before rain or snow	Météo avant la pluie ou la neige
+Day plan: morning (7-9)	Plan de la journée : matin (7-9)
+Day plan: working hours (9-17)	Plan de la journée : heures de travail (9-17)
+Day plan: evening (17-23)	Plan de la journée : soirée (17-23)
+Day plan: night (23-7)	Plan de la journée : nuit (23-7)
+Since you looked	Depuis votre dernier coup d'œil

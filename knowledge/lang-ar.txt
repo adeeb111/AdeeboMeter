@@ -5475,3 +5475,108 @@ Keep resting to move it, or hold Ctrl	أبقِ الفأرة لنقلها، أو 
 Move hints on the widget	تلميحات النقل على الأداة
 On: a blue line on the card says how to move it while you rest on it or it's unlocked.	مفعّل: سطر أزرق على البطاقة يشرح كيفية نقلها حين تُبقي الفأرة فوقها أو تكون غير مقفلة.
 Off: no hint line. Moving still works the same way.	معطّل: لا سطر تلميح. النقل يعمل بالطريقة نفسها.
+ Any symbol your key covers (AAPL, SHOP.TO, ^GSPC), or FX:USD for a currency - up to four.	 أي رمز يغطيه مفتاحك (AAPL، SHOP.TO، ^GSPC)، أو FX:USD لعملة - أربعة كحد أقصى.
+ calls today.	 طلبات اليوم.
+ of 90 (the free key allows 100).	 من 90 (المفتاح المجاني يسمح بـ 100).
+A preset the widget switches to for this part of the day, then back to yours. Not on battery.	إعداد تنتقل إليه الأداة في هذا الجزء من اليوم، ثم تعود إلى إعدادك. ليس أثناء العمل على البطارية.
+Add a game in the Gamer Zone	أضف لعبة في منطقة الألعاب
+Add your teams on the Sports page	أضف فرقك في صفحة الرياضة
+At this pace	بهذه الوتيرة
+Back to my widget	العودة إلى أداتي
+Bank of Canada, daily	بنك كندا، يوميًا
+Busiest app	التطبيق الأكثر انشغالًا
+DNS lookup	استعلام DNS
+Data this month	البيانات هذا الشهر
+Data today	البيانات اليوم
+Data use	استهلاك البيانات
+Final	انتهت
+Game ping	زمن استجابة اللعبة
+Gold	الذهب
+Grade	التقييم
+Hold this	تثبيت هذا
+How much you used today and this month, against your cap if you set one, and where this pace ends the month.	ما استهلكته اليوم وهذا الشهر، مقارنةً بالحد إن وضعت واحدًا، وأين تنتهي هذه الوتيرة في آخر الشهر.
+It comes with the next look	تصل مع النظرة التالية
+Market	سوق
+Match	مباراة
+Match recap	ملخص المباراة
+My team	فريقي
+My teams	فرقي
+My widget	أداتي
+Needs your Financial Modeling Prep key (Settings › Markets)	تحتاج إلى مفتاح Financial Modeling Prep الخاص بك (الإعدادات › الأسواق)
+Network fine	الشبكة بخير
+No forecast yet	لا توقعات بعد
+No games today	لا مباريات اليوم
+No markets picked	لم تُختر أسواق
+No teams followed yet	لا تتابع أي فريق بعد
+None of those look like a symbol. Try AAPL, SHOP.TO, ^GSPC or FX:USD.	لا يبدو أي منها رمزًا. جرّب AAPL أو SHOP.TO أو ^GSPC أو FX:USD.
+Now, next and the hours ahead.	الآن، وما بعده، والساعات القادمة.
+Now, what's next ("rain from 3 pm") and the hours ahead - refreshed hourly while it shows.	الآن، وما بعده («مطر من 3 مساءً»)، والساعات القادمة - يتحدث كل ساعة أثناء ظهوره.
+Now: 	الآن: 
+Off.	معطّل.
+Off. A single game can still go on the widget: Show on widget, on the Sports page.	معطّل. لا يزال بإمكانك وضع مباراة واحدة على الأداة: اعرض على الأداة، في صفحة الرياضة.
+Off: the widget keeps your style while you play.	معطّل: تحتفظ الأداة بنمطك أثناء اللعب.
+Oil	النفط
+On the widget	على الأداة
+On: an hour before rain, snow or a storm (by the forecast), the widget shows the weather, and goes back once it has started. It's a forecast from Open-Meteo - not radar or official warnings.	مفعّل: قبل ساعة من المطر أو الثلج أو العاصفة (حسب التوقعات)، تعرض الأداة الطقس، وتعود بعد أن يبدأ. إنها توقعات من Open-Meteo - ليست رادارًا ولا تحذيرات رسمية.
+On: when you point at the widget after a while, a blue line says what changed - a goal, a price move, the rain moving, a network event.	مفعّل: عندما تشير إلى الأداة بعد مدة، يقول سطر أزرق ما الذي تغيّر - هدف، تحرك سعر، تأخر المطر، حدث في الشبكة.
+Packet loss	فقدان الحزم
+Pick one in Settings › Widget	اختر واحدًا في الإعدادات › الأداة
+Prices with your Financial Modeling Prep key, at its pace (Settings › Markets), in market hours only - 	أسعار بمفتاح Financial Modeling Prep الخاص بك، بوتيرته (الإعدادات › الأسواق)، في ساعات السوق فقط - 
+Right now	الآن
+Settings › Widget › Markets on the widget	الإعدادات › الأداة › الأسواق على الأداة
+Show on widget	اعرض على الأداة
+Since you looked:	منذ آخر نظرة:
+Spikes	القفزات
+Stop holding	إيقاف التثبيت
+Symbols, separated by commas (up to four)	الرموز، مفصولة بفواصل (أربعة كحد أقصى)
+The teams you follow: a live score at the top, then what's next and the last results.	الفرق التي تتابعها: نتيجة مباشرة في الأعلى، ثم ما بعدها وآخر النتائج.
+This month	هذا الشهر
+Today, this month and your cap.	اليوم، وهذا الشهر، وحدّك.
+Turn Weather on in Settings › Weather	فعّل الطقس في الإعدادات › الطقس
+Up to four prices - an index, a stock, a commodity or a currency - with a little graph. Not live: the time they're from is on the card.	حتى أربعة أسعار - مؤشر أو سهم أو سلعة أو عملة - مع رسم صغير. ليست مباشرة: وقتها مكتوب على البطاقة.
+Up to four prices with a little graph.	حتى أربعة أسعار مع رسم صغير.
+Up to six readings you pick below - speeds, pings, CPU, data, game ping, weather, a market, your team, the time.	حتى ست قراءات تختارها أدناه - السرعات، زمن الاستجابة، المعالج، البيانات، زمن استجابة اللعبة، الطقس، سوق، فريقك، الوقت.
+Up to six readings you pick.	حتى ست قراءات تختارها.
+Waiting for the first price	بانتظار السعر الأول
+What this row of My widget shows.	ما يعرضه هذا السطر من أداتي.
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one.	مكان الأداة أثناء فتح لعبة أضفتها - بعيدًا عن الخريطة المصغرة مثلًا. سحبها أثناء اللعب ينقل هذا المكان.
+While a game you added is open, the widget becomes the gamer card whatever style it's on, stays over the game in borderless full screen, and shows a one-minute match recap when the game closes.	أثناء فتح لعبة أضفتها، تصبح الأداة بطاقة الألعاب أيًا كان نمطها، وتبقى فوق اللعبة في ملء الشاشة بلا حواف، وتعرض ملخص مباراة لدقيقة عند إغلاق اللعبة.
+While a game you follow is live (and only then). Hockey needs no key. Football and cricket use your own keys: every 2 minutes or every minute needs a paid plan. Cricket calls today: 	أثناء بث مباشر لمباراة تتابعها (وفقط عندها). الهوكي لا يحتاج إلى مفتاح. كرة القدم والكريكيت تستخدمان مفاتيحك: كل دقيقتين أو كل دقيقة يحتاج إلى خطة مدفوعة. طلبات الكريكيت اليوم: 
+While a team you follow plays, the widget shows the score; 5 minutes after the final it goes back to yours. Not on battery.	أثناء لعب فريق تتابعه، تعرض الأداة النتيجة؛ وبعد 5 دقائق من النهاية تعود إلى أداتك. ليس أثناء العمل على البطارية.
+Without a Financial Modeling Prep key only currencies show (Bank of Canada, once a day).	بدون مفتاح Financial Modeling Prep تظهر العملات فقط (بنك كندا، مرة في اليوم).
+Worst	الأسوأ
+Your teams: live scores and what's next.	فرقك: نتائج مباشرة وما بعدها.
+as of	حتى
+avg	متوسط
+by the end of the month	بحلول نهاية الشهر
+Markets on the widget	الأسواق على الأداة
+My widget: reading 1	أداتي: القراءة 1
+My widget: reading 2	أداتي: القراءة 2
+My widget: reading 3	أداتي: القراءة 3
+My widget: reading 4	أداتي: القراءة 4
+My widget: reading 5	أداتي: القراءة 5
+My widget: reading 6	أداتي: القراءة 6
+S&P 500, US dollar, gold	S&P 500، الدولار الأمريكي، الذهب
+My symbols...	رموزي...
+Same as usual	كالمعتاد
+Hockey	الهوكي
+Football	كرة القدم
+Cricket	الكريكيت
+All three	الثلاثة
+Every 5 minutes	كل 5 دقائق
+Every 2 minutes	كل دقيقتين
+Every minute	كل دقيقة
+(nothing)	(لا شيء)
+The verdict	الحكم
+First market	السوق الأولى
+Second market	السوق الثانية
+Time	الوقت
+Widget position while gaming	موضع الأداة أثناء اللعب
+Switch to sports for live games of	الانتقال إلى الرياضة في المباريات المباشرة لـ
+Scores: how often	النتائج: كم مرة
+Weather before rain or snow	الطقس قبل المطر أو الثلج
+Day plan: morning (7-9)	خطة اليوم: الصباح (7-9)
+Day plan: working hours (9-17)	خطة اليوم: ساعات العمل (9-17)
+Day plan: evening (17-23)	خطة اليوم: المساء (17-23)
+Day plan: night (23-7)	خطة اليوم: الليل (23-7)
+Since you looked	منذ آخر نظرة

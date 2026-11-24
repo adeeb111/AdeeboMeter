@@ -256,6 +256,13 @@ namespace AdeeboMeter
         }
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        // 24 Nov: the game being played is the window in front - the widget may stay over it (borderless full screen)
+        public static bool PlayingInFront()
+        {
+            var id = GamePing.Me.Playing; if (id == null) return false;
+            var g = Games.All.FirstOrDefault(z => z.Id == id); if (g == null) return false;
+            string f = Front(); return f != "" && g.Exes.Any(x => string.Equals(x, f, StringComparison.OrdinalIgnoreCase));
+        }
         static string Front()
         {
             try { uint pid; var h = GetForegroundWindow(); if (h == IntPtr.Zero || GetWindowThreadProcessId(h, out pid) == 0) return ""; using (var p = Process.GetProcessById((int)pid)) return p.ProcessName; }

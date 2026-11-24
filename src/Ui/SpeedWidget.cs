@@ -14,7 +14,7 @@ namespace AdeeboMeter
     static partial class Draw
     {
         [ThreadStatic] static string styleOverride;   // the Settings preview draws every style without changing yours
-        public static string Style { get { return styleOverride ?? Cfg.WidgetStyle; } }
+        public static string Style { get { return styleOverride ?? Corner.Effective; } }   // 24 Nov: a takeover (a game, a match, the weather, the day plan) can stand in for yours
         public static bool SpeedStyle { get { string st = Style; return st == "speed" || st == "speedstatus" || st == "speedapps"; } }
         public static Bitmap Preview(Snap s, string style, bool card)
         {
@@ -44,13 +44,13 @@ namespace AdeeboMeter
         public static string ChipSpeedKey(Snap s) { return SpeedStyle ? SpeedText(s) : ""; }
         public static string ChipOtherKey(Snap s)
         {
-            if (!SpeedStyle) return s.Chip + WeatherKeyPart();
+            if (!SpeedStyle) return ChipWords(s) + WeatherKeyPart();
             return (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark30(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
         }
         // what the folded strip shows: it's redrawn only when this changes
         public static string ChipKey(Snap s)
         {
-            if (!SpeedStyle) return s.Chip + WeatherKeyPart();
+            if (!SpeedStyle) return ChipWords(s) + WeatherKeyPart();
             return SpeedText(s) + "|" + (Style == "speed" ? "" : s.Chip) + "|" + (Cfg.WGraph ? Spark30(Cfg.WDir == "up" ? s.UpHist : s.DownHist) : "") + WeatherKeyPart();
         }
         static string SpeedText(Snap s)

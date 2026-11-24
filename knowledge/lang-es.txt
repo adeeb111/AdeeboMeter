@@ -5475,3 +5475,108 @@ Keep resting to move it, or hold Ctrl	Sigue encima para moverlo, o mantén Ctrl
 Move hints on the widget	Consejos para mover el widget
 On: a blue line on the card says how to move it while you rest on it or it's unlocked.	Activado: una línea azul en la tarjeta explica cómo moverlo mientras te quedas encima o está desbloqueado.
 Off: no hint line. Moving still works the same way.	Desactivado: sin línea de consejo. Moverlo sigue funcionando igual.
+ Any symbol your key covers (AAPL, SHOP.TO, ^GSPC), or FX:USD for a currency - up to four.	 Cualquier símbolo que cubra tu clave (AAPL, SHOP.TO, ^GSPC), o FX:USD para una divisa - cuatro como máximo.
+ calls today.	 llamadas hoy.
+ of 90 (the free key allows 100).	 de 90 (la clave gratuita permite 100).
+A preset the widget switches to for this part of the day, then back to yours. Not on battery.	Un ajuste al que cambia el widget durante esta parte del día, y luego vuelve al tuyo. No con batería.
+Add a game in the Gamer Zone	Añade un juego en la Zona Gamer
+Add your teams on the Sports page	Añade tus equipos en la página Deportes
+At this pace	A este ritmo
+Back to my widget	Volver a mi widget
+Bank of Canada, daily	Banco de Canadá, diario
+Busiest app	App más ocupada
+DNS lookup	Búsqueda DNS
+Data this month	Datos este mes
+Data today	Datos hoy
+Data use	Uso de datos
+Final	Final
+Game ping	Ping del juego
+Gold	Oro
+Grade	Nota
+Hold this	Mantener este
+How much you used today and this month, against your cap if you set one, and where this pace ends the month.	Lo que usaste hoy y este mes, frente a tu límite si pusiste uno, y dónde termina el mes a este ritmo.
+It comes with the next look	Llega con la próxima consulta
+Market	Mercado
+Match	Partido
+Match recap	Resumen del partido
+My team	Mi equipo
+My teams	Mis equipos
+My widget	Mi widget
+Needs your Financial Modeling Prep key (Settings › Markets)	Necesita tu clave de Financial Modeling Prep (Ajustes › Mercados)
+Network fine	Red bien
+No forecast yet	Aún no hay pronóstico
+No games today	No hay partidos hoy
+No markets picked	No hay mercados elegidos
+No teams followed yet	Aún no sigues ningún equipo
+None of those look like a symbol. Try AAPL, SHOP.TO, ^GSPC or FX:USD.	Ninguno parece un símbolo. Prueba AAPL, SHOP.TO, ^GSPC o FX:USD.
+Now, next and the hours ahead.	Ahora, lo siguiente y las próximas horas.
+Now, what's next ("rain from 3 pm") and the hours ahead - refreshed hourly while it shows.	Ahora, lo siguiente («lluvia desde las 3 de la tarde») y las próximas horas - se actualiza cada hora mientras se muestra.
+Now: 	Ahora: 
+Off.	Desactivado.
+Off. A single game can still go on the widget: Show on widget, on the Sports page.	Desactivado. Un solo partido puede ir igualmente al widget: Mostrar en el widget, en la página Deportes.
+Off: the widget keeps your style while you play.	Desactivado: el widget mantiene tu estilo mientras juegas.
+Oil	Petróleo
+On the widget	En el widget
+On: an hour before rain, snow or a storm (by the forecast), the widget shows the weather, and goes back once it has started. It's a forecast from Open-Meteo - not radar or official warnings.	Activado: una hora antes de lluvia, nieve o tormenta (según el pronóstico), el widget muestra el tiempo y vuelve cuando ya ha empezado. Es un pronóstico de Open-Meteo - no un radar ni avisos oficiales.
+On: when you point at the widget after a while, a blue line says what changed - a goal, a price move, the rain moving, a network event.	Activado: cuando señalas el widget después de un rato, una línea azul dice qué cambió - un gol, un movimiento de precio, la lluvia que se mueve, un evento de red.
+Packet loss	Pérdida de paquetes
+Pick one in Settings › Widget	Elige uno en Ajustes › Widget
+Prices with your Financial Modeling Prep key, at its pace (Settings › Markets), in market hours only - 	Precios con tu clave de Financial Modeling Prep, a su ritmo (Ajustes › Mercados), solo en horario de mercado - 
+Right now	Ahora mismo
+Settings › Widget › Markets on the widget	Ajustes › Widget › Mercados en el widget
+Show on widget	Mostrar en el widget
+Since you looked:	Desde la última vez que miraste:
+Spikes	Picos
+Stop holding	Dejar de mantener
+Symbols, separated by commas (up to four)	Símbolos, separados por comas (cuatro como máximo)
+The teams you follow: a live score at the top, then what's next and the last results.	Los equipos que sigues: un marcador en directo arriba, luego lo siguiente y los últimos resultados.
+This month	Este mes
+Today, this month and your cap.	Hoy, este mes y tu límite.
+Turn Weather on in Settings › Weather	Activa el tiempo en Ajustes › Tiempo
+Up to four prices - an index, a stock, a commodity or a currency - with a little graph. Not live: the time they're from is on the card.	Hasta cuatro precios - un índice, una acción, una materia prima o una divisa - con un pequeño gráfico. No en directo: su hora aparece en la tarjeta.
+Up to four prices with a little graph.	Hasta cuatro precios con un pequeño gráfico.
+Up to six readings you pick below - speeds, pings, CPU, data, game ping, weather, a market, your team, the time.	Hasta seis lecturas que eliges abajo - velocidades, pings, CPU, datos, ping del juego, tiempo, un mercado, tu equipo, la hora.
+Up to six readings you pick.	Hasta seis lecturas que eliges.
+Waiting for the first price	Esperando el primer precio
+What this row of My widget shows.	Lo que muestra esta fila de Mi widget.
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one.	Dónde se coloca el widget mientras un juego que añadiste está abierto - lejos de tu minimapa, por ejemplo. Arrastrarlo mientras juegas mueve este.
+While a game you added is open, the widget becomes the gamer card whatever style it's on, stays over the game in borderless full screen, and shows a one-minute match recap when the game closes.	Mientras un juego que añadiste está abierto, el widget se convierte en la tarjeta gamer sea cual sea su estilo, se queda sobre el juego en pantalla completa sin bordes y muestra un resumen de un minuto al cerrar el juego.
+While a game you follow is live (and only then). Hockey needs no key. Football and cricket use your own keys: every 2 minutes or every minute needs a paid plan. Cricket calls today: 	Mientras un partido que sigues está en directo (y solo entonces). El hockey no necesita clave. El fútbol y el críquet usan tus propias claves: cada 2 minutos o cada minuto necesita un plan de pago. Llamadas de críquet hoy: 
+While a team you follow plays, the widget shows the score; 5 minutes after the final it goes back to yours. Not on battery.	Mientras juega un equipo que sigues, el widget muestra el marcador; 5 minutos después del final vuelve al tuyo. No con batería.
+Without a Financial Modeling Prep key only currencies show (Bank of Canada, once a day).	Sin clave de Financial Modeling Prep solo se muestran divisas (Banco de Canadá, una vez al día).
+Worst	Peor
+Your teams: live scores and what's next.	Tus equipos: marcadores en directo y lo siguiente.
+as of	a las
+avg	media
+by the end of the month	a final de mes
+Markets on the widget	Mercados en el widget
+My widget: reading 1	Mi widget: lectura 1
+My widget: reading 2	Mi widget: lectura 2
+My widget: reading 3	Mi widget: lectura 3
+My widget: reading 4	Mi widget: lectura 4
+My widget: reading 5	Mi widget: lectura 5
+My widget: reading 6	Mi widget: lectura 6
+S&P 500, US dollar, gold	S&P 500, dólar estadounidense, oro
+My symbols...	Mis símbolos...
+Same as usual	Igual que siempre
+Hockey	Hockey
+Football	Fútbol
+Cricket	Críquet
+All three	Los tres
+Every 5 minutes	Cada 5 minutos
+Every 2 minutes	Cada 2 minutos
+Every minute	Cada minuto
+(nothing)	(nada)
+The verdict	El veredicto
+First market	Primer mercado
+Second market	Segundo mercado
+Time	Hora
+Widget position while gaming	Posición del widget al jugar
+Switch to sports for live games of	Cambiar a deportes en partidos en directo de
+Scores: how often	Marcadores: con qué frecuencia
+Weather before rain or snow	Tiempo antes de lluvia o nieve
+Day plan: morning (7-9)	Plan del día: mañana (7-9)
+Day plan: working hours (9-17)	Plan del día: horario laboral (9-17)
+Day plan: evening (17-23)	Plan del día: tarde (17-23)
+Day plan: night (23-7)	Plan del día: noche (23-7)
+Since you looked	Desde la última vez que miraste
