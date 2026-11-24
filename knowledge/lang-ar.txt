@@ -5470,3 +5470,5 @@ Bottom right, the default. To move it, rest the mouse on it for a moment or hold
 Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	نقلتَها بنفسك. اختر زاوية، أو إعادة الضبط لإرجاعها إلى الزاوية السفلية اليمنى من الشاشة الرئيسية.
 On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	مفعّل: تختفي الأداة عند اقتراب الفأرة، فلا تغطي أبدًا ما تشير إليه. لنقلها، اضغط Ctrl مع وضع الفأرة فوق مكانها، أو استخدم أيقونة شريط المهام: أداة الزاوية > نقل الأداة.
 Off: it brightens when you point at it.	معطّل: تزداد وضوحًا عندما تشير إليها.
+Drag to move · click opens AdeeboMeter · fades again when you leave	اسحب للنقل · النقر يفتح AdeeboMeter · تختفي مجددًا عندما تبتعد
+Keep resting to move it, or hold Ctrl	أبقِ الفأرة لنقلها، أو اضغط Ctrl

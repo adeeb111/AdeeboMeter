@@ -5470,3 +5470,5 @@ Bottom right, the default. To move it, rest the mouse on it for a moment or hold
 Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	আপনি সরিয়েছেন। একটা কোণ বেছে নিন, বা আগের মতো করুন বেছে মূল স্ক্রিনের নিচে ডান কোণে ফিরিয়ে দিন।
 On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে পয়েন্ট করছেন তা কখনো ঢাকে না। সরাতে এর জায়গার ওপর মাউস রেখে Ctrl চেপে ধরুন, বা ট্রে থেকে: কোণের উইজেট > উইজেট সরান।
 Off: it brightens when you point at it.	বন্ধ: পয়েন্ট করলে উজ্জ্বল হয়।
+Drag to move · click opens AdeeboMeter · fades again when you leave	সরাতে টেনে আনুন · ক্লিক করলে AdeeboMeter খোলে · সরে গেলে আবার মিলিয়ে যায়
+Keep resting to move it, or hold Ctrl	সরাতে আরেকটু ধরে রাখুন, বা Ctrl চেপে ধরুন

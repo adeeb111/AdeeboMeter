@@ -740,8 +740,8 @@ namespace AdeeboMeter
             string head = last != null ? L.T("Spike") + " " + Math.Round(last.Ms) + " ms: " + L.T(last.Blame) + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? L.T(" is steady.") : grade == "Casual" ? L.T(" is playable.") : grade == "Laggy" ? L.T(" is laggy.") : "...");
             string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 12 * S + pad);   // bug-hunt L-147: the path strip is 12 high
+            float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 12 * S + pad);   // bug-hunt L-147: the path strip is 12 high
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -754,7 +754,7 @@ namespace AdeeboMeter
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent("GAME"), fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
+                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, y, inner, wh); y += wh + 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
                 var bf = fCardNum; using (var bb = new SolidBrush(gc))
@@ -807,8 +807,8 @@ namespace AdeeboMeter
             var lines = rows.Where(r => !string.IsNullOrEmpty(r)).ToArray();
             Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 12 * S + pad);   // L-147
+            float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 12 * S + pad);   // L-147
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -821,7 +821,7 @@ namespace AdeeboMeter
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
+                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, y, inner, wh); y += wh + 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 var bf = fCardNum; using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
                 {
@@ -844,6 +844,10 @@ namespace AdeeboMeter
             return bmp;
         }
         public static volatile bool CardHovered = true;   // set by the widget before it draws the card
+        // the hint line (24 Nov): where the second, grey fun line used to be - how to move the widget, by its settings; "" = none
+        public static volatile string WidgetHint = "";
+        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 4 * S; }
+        static void HintLine(Graphics g, float pad, float y, float inner, float h) { if (h <= 0) return; using (var sf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0)) using (var b = new SolidBrush(Theme.BlueText)) g.DrawString(WidgetHint, fSmall, b, new RectangleF(pad, y + 4 * S, inner, h), sf); }
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
             if (SpeedStyle) return SpeedCard(s, hits);
@@ -858,10 +862,10 @@ namespace AdeeboMeter
             bool replay = ReferenceEquals(s, AppCtx.Rewind);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */
             string quip = replay ? "" : Mood.Quip(s), season = replay ? "" : Mood.SeasonLine(s);
             string head = quip != "" ? quip : season != "" ? season : s.Headline;
-            float headH = Measure(head, fHead, (int)inner).Height;
+            float headH = Measure(head, fHead, (int)inner).Height, quipH = HintLineH(inner);
             float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure(L.T("Why: ") + s.Hint, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();
-            float h = pad + 24 * S + headH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
+            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
             var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
@@ -884,6 +888,7 @@ namespace AdeeboMeter
                     using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
                     y += headH;
                     if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH), rsf); y += hintH; }
+                    HintLine(g, pad, y, inner, quipH); y += quipH;   // the move hint, by the settings - after the verdict and its Why
                 }
                 y += 10 * S;
                 // 24 Nov (widget mockup): the same four readings as Home, in the same order - this PC, the router, the internet,

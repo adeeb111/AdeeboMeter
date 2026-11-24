@@ -5470,3 +5470,5 @@ Bottom right, the default. To move it, rest the mouse on it for a moment or hold
 Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	Movido por ti. Elige una esquina, o Restablecer para devolverlo a la esquina inferior derecha de la pantalla principal.
 On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	Activado: el widget desaparece cuando se acerca el ratón, así nunca tapa lo que señalas. Para moverlo, mantén Ctrl sobre su sitio o usa la bandeja: Widget de esquina > Mover el widget.
 Off: it brightens when you point at it.	Desactivado: se ilumina cuando lo señalas.
+Drag to move · click opens AdeeboMeter · fades again when you leave	Arrastra para mover · un clic abre AdeeboMeter · vuelve a desaparecer cuando te alejas
+Keep resting to move it, or hold Ctrl	Sigue encima para moverlo, o mantén Ctrl

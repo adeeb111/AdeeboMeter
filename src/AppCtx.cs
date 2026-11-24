@@ -645,6 +645,10 @@ namespace AdeeboMeter
                 }
                 else { hovered = inside; dwell = 0; }
                 MoveMode(cur, inside);
+                // the hint line on the card, by the settings: unlocked - what a drag and a click do; resting on it - that it will unlock
+                string wh = moveOn ? (Cfg.WHideNear ? L.T("Drag to move · click opens AdeeboMeter · fades again when you leave") : L.T("Drag to move · click opens AdeeboMeter"))
+                    : hovered && hoverSince != DateTime.MinValue && (DateTime.UtcNow - hoverSince).TotalMilliseconds >= 400 ? L.T("Keep resting to move it, or hold Ctrl") : "";
+                if (wh != Draw.WidgetHint) { Draw.WidgetHint = wh; drawnKey = ""; }
                 M.HoverOpen = hovered;
                 string key = "";
                 if (hovered && !moveOn) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
@@ -687,8 +691,7 @@ namespace AdeeboMeter
             if (sk != lastSpeed) { lastSpeed = sk; speedAt = Clock.Mono; }
             if (ok != lastOther) { lastOther = ok; otherAt = Clock.Mono; }
             Detail d = null;
-            if (moveOn) d = new Detail { Title = L.T("Move the widget"), Note = L.T("Drag to move · click opens AdeeboMeter") };
-            else if (!compact && hovered && hoverKey != "") s.Details.TryGetValue(hoverKey, out d);
+            if (!moveOn && !compact && hovered && hoverKey != "") s.Details.TryGetValue(hoverKey, out d);
             if (d != null)
                 using (var db = Draw.DetailCard(d))
                 {
