@@ -9,7 +9,7 @@ namespace AdeeboMeter
     // ================================================================== the top line (Adeeb, 14 Nov: "crowded - simplify")
     // 23 Nov polish: logo · your view · search · theme · ⋯ · Back to corner. The ⋯ menu holds your phone, the companion,
     // the language, Details, the layout, Adeebo points and About; it closes on a click anywhere else, on Esc, or when the
-    // window loses focus. The gear shows only in the classic layout - with the side bar, Settings is already at its foot.
+    // window loses focus. Settings is in the ⋯ menu (and at the foot of the side bar).
     sealed partial class FullView
     {
         void PlaceTop()
@@ -19,8 +19,7 @@ namespace AdeeboMeter
             int xr = header.Width - Sc(20);
             xr -= backBtn.Width; backBtn.Location = new Point(xr, my(backBtn)); xr -= Sc(12);
             xr -= dotsBtn.Width; dotsBtn.Location = new Point(xr, my(dotsBtn)); xr -= Sc(8);
-            bool gear = Cfg.Layout != "sidebar"; if (gearBtn.Visible != gear) gearBtn.Visible = gear;
-            if (gear) { xr -= gearBtn.Width; gearBtn.Location = new Point(xr, my(gearBtn)); xr -= Sc(8); }
+            gearBtn.Visible = false;   // 24 Nov: no gear in either layout - Settings is in the ⋯ menu (it sat over the logo in Classic)
             if (linkBtn != null && linkBtn.Visible) linkBtn.Visible = false;   // Your phone: in the ⋯ menu and the side bar
             xr -= themeSw.Width; themeSw.Location = new Point(xr, my(themeSw)); xr -= Sc(18);
             int xl = Sc(18) + Sc(40) + (int)Math.Ceiling(Draw.Measure(L.T("AdeeboMeter"), Draw.fBig, 0).Width) + Sc(16);
@@ -53,7 +52,7 @@ namespace AdeeboMeter
                 Controls.Add(topMenu);
                 Deactivate += delegate { HideTopMenu(); };
             }
-            int w = Sc(300), h = Sc(Cfg.Points ? 346 : 308);
+            int w = Sc(300), h = Sc(Cfg.Points ? 384 : 346);
             var at = PointToClient(dotsBtn.Parent.PointToScreen(new Point(dotsBtn.Right, dotsBtn.Bottom)));
             topMenu.Bounds = new Rectangle(Math.Max(Sc(8), at.X - w + Sc(6)), at.Y + Sc(6), w, h);
             topMenu.BackColor = header.BackColor;
@@ -110,6 +109,7 @@ namespace AdeeboMeter
             row(L.T("Your phone"), phoneLabel, null, delegate { HideTopMenu(); LinkClicked(); });
             row(L.T("Companion"), Voice.Serious ? L.T("Plain") : L.T(Lines.Persona == "none" ? Lines.MoodName(Lines.Mood) : Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona)), null, delegate { HideTopMenu(); BuddySheet(); });
             row(L.T("Language"), NativeName(L.Code), null, delegate { HideTopMenu(); LangMenu(); });
+            row(L.T("Settings"), null, null, delegate { HideTopMenu(); tab = "settings"; ShowTab(); SyncNav(); });
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
             row(L.T("Details"), null, Cfg.Details, delegate { SetDetails(!Cfg.Details); topMenu.Invalidate(); });
             row(L.T("Sidebar layout"), null, Cfg.Layout == "sidebar", delegate { HideTopMenu(); SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); PlaceTop(); });

@@ -5121,3 +5121,11 @@ VPN and provider warnings	تحذيرات VPN ومزوّد الخدمة
 internet warnings	تحذيرات الإنترنت
 router and Wi-Fi warnings	تحذيرات الموجّه والواي فاي
 {0} hidden. Everything else looks fine.	{0} مخفية. كل ما عدا ذلك سليم.
+Next problem	المشكلة التالية
+Previous problem	المشكلة السابقة
+Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.	الموجّه والإنترنت والأسماء يقيسها AdeeboMeter؛ وحركة البيانات كما يُبلغ عنها Windows.
+Type a place	اكتب مكانًا
+Type a place and press Enter.	اكتب مكانًا واضغط Enter.
+Where should the weather be for?	الطقس لأي مكان؟
+day	اليوم
+not on Wi-Fi	ليس على Wi-Fi

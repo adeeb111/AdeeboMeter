@@ -23,7 +23,7 @@ namespace AdeeboMeter
             Color c = i < SymColor.Length ? SymColor[i] : Theme.Blue; string icon = i < SymIcon.Length ? SymIcon[i] : "star";
             var r = br; r.Offset(0, -2 * S * t); r = Kit.Crisp(r); float rad = Kit.CardRad;
             Theme.Fill(g, r, rad, Theme.Card);
-            Theme.Fill(g, r, rad, Color.FromArgb((int)((Theme.Dark ? 22 : 16) + 14 * t), c));
+            if (t > 0.01f) Theme.Fill(g, r, rad, Color.FromArgb(Theme.Dark ? 22 : 14, c));   // white at rest; a faint tint of its colour only under the mouse (24 Nov)
             if (t > 0.01f) Theme.Stroke(g, Kit.Edge(r), rad, Color.FromArgb((int)(255 * t), c), 1); else Theme.Stroke(g, Kit.Edge(r), rad, Theme.Dark ? Theme.Line : Theme.Line2, 1);
             float ic = 38 * S, grow = 3 * S * t; var ir = new RectangleF(r.X + 14 * S - grow / 2, r.Y + (r.Height - ic) / 2 - grow / 2, ic + grow, ic + grow);
             Glyphs.Tile(g, icon, ir, c, 10 * S);
@@ -54,7 +54,9 @@ namespace AdeeboMeter
             for (int i = 0; i < rs.Length && i < symHot.Length; i++)
             {
                 float want = i == symHover ? 1f : 0f, was = symHot[i]; if (was == want) continue;
-                float now = want;   // 23 Nov motion review: a hover seen tens of times a day changes at once - no ramp counted in timer ticks   /* Windows' animations off: straight to the end */ symHot[i] = now; moving = true;
+                // 23 Nov motion review: a hover seen tens of times a day changes at once - no ramp counted in timer ticks
+                // (24 Nov: this line used to end in a comment that swallowed the two statements after it, so the hover never cleared)
+                float now = want; symHot[i] = now; moving = true;
                 SymPaintOne(i, now);
             }
             if (!moving) symAnim.Stop();

@@ -32,14 +32,14 @@ namespace AdeeboMeter
             buddyMore = false; buddyHover = "";
             SizeBuddySheet();
             buddySheet.BackColor = header.BackColor; buddySheet.Visible = true; buddySheet.BringToFront(); buddySheet.Invalidate();
-            if (buddyFilter == null) buddyFilter = new PopFilter(this, () => buddySheet, () => RectangleToScreen(new Rectangle(gearBtn.Left - Sc(52), header.Top, Sc(48), header.Height)), HideBuddySheet);
+            if (buddyFilter == null) buddyFilter = new PopFilter(this, () => buddySheet, () => RectangleToScreen(new Rectangle(dotsBtn.Left - Sc(52), header.Top, Sc(48), header.Height)), HideBuddySheet);
             Application.AddMessageFilter(buddyFilter);
         }
         void SizeBuddySheet()
         {
             int rows = 3 + (buddyMore ? (Lines.Personas.Length - Lines.Featured + 2) / 3 : 0);
             int w = Math.Min(Sc(720), ClientSize.Width - Sc(24)), h = Sc(240) + (Lines.Faith != "off" ? Sc(130) : 0) + rows * Sc(68);   // + the words-of-comfort bar   // the bubble, the moods, the voices, the footer
-            int right = gearBtn.Left + Sc(4);   // under the face, ending near the gear
+            int right = dotsBtn.Right;   // under the ⋯ menu button
             buddySheet.Bounds = new Rectangle(Math.Max(Sc(12), right - w), header.Bottom + Sc(6), w, Math.Min(h, ClientSize.Height - header.Bottom - Sc(20)));
             buddySheet.AutoScroll = true; buddySheet.AutoScrollMinSize = new Size(0, h > buddySheet.Height ? h : 0);   // AM-CG-178
         }

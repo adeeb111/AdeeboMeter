@@ -849,7 +849,7 @@ namespace AdeeboMeter
             if ((t.Id == "rlisten" || t.Id == "discover") && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "60";
             if (IsSnmp(t.Id) && tbBoxes.Count > 1) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = snmpDev != "" ? snmpDev : gw; tbBoxes[1].Box.Text = snmpCred; }
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
-            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = null;   // Run is always app blue tbEx.Visible = Examples.Get(t.Id) != null;
+            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = null; tbEx.Visible = Examples.Get(t.Id) != null;   // Run is always app blue
             tbBar.ResumeLayout();
             AnimRestart(); EnsureAnim();   // the picture timer: plays once from here, then rests (CalcForm.cs AnimT)
             if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)

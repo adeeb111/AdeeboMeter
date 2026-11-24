@@ -5121,3 +5121,11 @@ VPN and provider warnings	VPN ও প্রোভাইডারের সতর
 internet warnings	ইন্টারনেট সতর্কবার্তা
 router and Wi-Fi warnings	রাউটার ও Wi-Fi সতর্কবার্তা
 {0} hidden. Everything else looks fine.	{0} লুকানো আছে। বাকি সব ঠিক আছে।
+Next problem	পরের সমস্যা
+Previous problem	আগের সমস্যা
+Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.	রাউটার, ইন্টারনেট ও নাম AdeeboMeter মাপে; ট্রাফিক Windows যেমন জানায়।
+Type a place	একটি জায়গার নাম লিখুন
+Type a place and press Enter.	জায়গার নাম লিখে Enter চাপুন।
+Where should the weather be for?	কোন জায়গার আবহাওয়া দেখাবে?
+day	দিনে
+not on Wi-Fi	Wi-Fi-তে নয়

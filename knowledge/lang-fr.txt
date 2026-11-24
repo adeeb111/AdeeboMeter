@@ -3839,3 +3839,11 @@ VPN and provider warnings	alertes VPN et fournisseur
 internet warnings	alertes Internet
 router and Wi-Fi warnings	alertes routeur et Wi-Fi
 {0} hidden. Everything else looks fine.	{0} masquées. Tout le reste va bien.
+Next problem	Problème suivant
+Previous problem	Problème précédent
+Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.	Routeur, Internet et noms mesurés par AdeeboMeter ; le trafic tel que Windows l’indique.
+Type a place	Saisissez un lieu
+Type a place and press Enter.	Saisissez un lieu et appuyez sur Entrée.
+Where should the weather be for?	La météo pour quel endroit ?
+day	jour
+not on Wi-Fi	pas en Wi-Fi

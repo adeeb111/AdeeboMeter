@@ -197,7 +197,10 @@ namespace AdeeboMeter
                 var row = data.M[replayIdx]; double sec = row[0];
                 var at = replayDay.Value.Date.AddSeconds(sec);
 
-                // the day chart with a cursor
+                // 24 Nov (the approved mockup): the day in one card - the chart, the slider, the steps and the minute's time
+                float cardY = y, ox = x, ow = w; x += 16 * S; w -= 32 * S; y += 12 * S;
+                float chartCardH = 12 * S + 196 * S + 4 * S + 32 * S + 30 * S + 14 * S;
+                Kit.Box(g, new RectangleF(ox, cardY, ow, chartCardH), 14 * S);
                 float chh = 196 * S; string key = replayDay.Value.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "|" + (int)w + "|" + Theme.Dark + "|" + data.M.Count;
                 if (replayBmp == null || replayKey != key)
                 {
@@ -217,25 +220,25 @@ namespace AdeeboMeter
                 using (var kb = new SolidBrush(Theme.Card)) using (var kp = new Pen(Theme.Blue, 2.5f * S)) { g.FillEllipse(kb, cxr - 9 * S, y + 2 * S, 18 * S, 18 * S); g.DrawEllipse(kp, cxr - 9 * S, y + 2 * S, 18 * S, 18 * S); }
                 Hint(replayCanvas, new RectangleF(px, y - 4 * S, pw, 30 * S), "replay.SLIDER");
                 y += 32 * S;
-                // step buttons
+                // step buttons, and the minute shown at the right
                 cx = x;
-                foreach (var b in new[] { new object[] { "< problem", 0 }, new object[] { "< 10 min", -10 }, new object[] { "< 1 min", -1 }, new object[] { "1 min >", 1 }, new object[] { "10 min >", 10 }, new object[] { "problem >", 0 } })
+                foreach (var b in new[] { Tuple.Create("‹ " + L.T("Previous problem"), -999), Tuple.Create("−10 min", -10), Tuple.Create("−1 min", -1), Tuple.Create("+1 min", 1), Tuple.Create("+10 min", 10), Tuple.Create(L.T("Next problem") + " ›", 999) })
                 {
-                    string t = (string)b[0]; int by = (int)b[1]; var ts = g.MeasureString(t, Draw.fSmall); var br = new RectangleF(cx, y, ts.Width + 18 * S, 26 * S);
-                    Kit.Box(g, br, br.Height / 2); g.DrawString(t, Draw.fSmall, ink, cx + 9 * S, y + (26 * S - ts.Height) / 2);
-                    if (t.EndsWith("problem", StringComparison.Ordinal)) Act(replayCanvas, br, delegate { ReplayNextProblem(-1); });
-                    else if (t.StartsWith("problem", StringComparison.Ordinal)) Act(replayCanvas, br, delegate { ReplayNextProblem(1); });
+                    string t = b.Item1; int by = b.Item2; var ts = g.MeasureString(t, Draw.fSmall); var br = new RectangleF(cx, y, ts.Width + 20 * S, 30 * S);
+                    Theme.Fill(g, br, 8 * S, Theme.Card); Theme.Stroke(g, br, 8 * S, Theme.Line, 1); g.DrawString(t, Draw.fSmall, ink, cx + 10 * S, y + (30 * S - ts.Height) / 2);
+                    if (by == -999) Act(replayCanvas, br, delegate { ReplayNextProblem(-1); });
+                    else if (by == 999) Act(replayCanvas, br, delegate { ReplayNextProblem(1); });
                     else Act(replayCanvas, br, delegate { ReplayStep(by); });
                     cx += br.Width + 6 * S;
                 }
-                y += 42 * S;
+                { string hm = at.ToString("HH:mm", CultureInfo.CurrentCulture); var hs = g.MeasureString(hm, Draw.fHead); g.DrawString(hm, Draw.fHead, ink, x + w - hs.Width, y + (30 * S - hs.Height) / 2); }
+                x = ox; w = ow; y = cardY + chartCardH + 16 * S;
 
-                // the minute itself
+                // the minute itself: one card - what it was in a sentence, then the readings beside the day's usual values
                 Func<int, double> V = c => c < row.Length ? row[c] : double.NaN;
                 int lvAll = double.IsNaN(V(1)) ? 3 : (int)V(1);
                 double cpu = V(2), mem = V(3), down = V(4), gw = V(5), net = V(6), wifi = V(7), up = V(8), gwMax = V(9), netMax = V(10), loss = V(11), rx = V(12), mbD = V(13), mbU = V(14);
                 string netName = replayIdx < data.Net.Count ? data.Net[replayIdx] : "";
-                g.DrawString(AdeeboMeter.L.T("AT ") + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " ON " + at.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant() + (netName != "" && Cfg.Details ? "  ·  ROUTER " + Draw.Trunc(netName, 24).ToUpperInvariant() : ""), Draw.fTiny, muted, x, y); y += 22 * S;
                 // no sample in that minute (Penny checks the internet every 5 min; a check switched off; a router that ignores ping) is
                 // "not measured" - grey, never a red outage
                 Func<double, string> ms = v => double.IsNaN(v) ? "not measured" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
@@ -248,8 +251,6 @@ namespace AdeeboMeter
                 snapAt.PathMain = new[] { double.IsNaN(cpu) ? "-" : cpu.ToString("0", CultureInfo.CurrentCulture) + "% CPU", ms(gw), double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "% lost", "not kept", ms(net) };
                 snapAt.PathSub = new[] { double.IsNaN(mem) ? "" : mem.ToString("0", CultureInfo.CurrentCulture) + "% memory", wifi >= 0 ? "Wi-Fi " + wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : "router", "provider", "in history", "internet" };
                 snapAt.Headline = Voice.P("Time travelling: ", "Replaying ") + at.ToString("ddd HH:mm", CultureInfo.CurrentCulture); snapAt.Chip = "⏪ " + at.ToString("HH:mm", CultureInfo.CurrentCulture);
-                Draw.PathStrip(g, snapAt, new RectangleF(x, y + 6 * S, w - (Cfg.Buddy ? 70 * S : 0), 80 * S), true);
-                if (Cfg.Buddy) Draw.Buddy(g, new RectangleF(x + w - 56 * S, y + 2 * S, 52 * S, 52 * S), snapAt, false);
                 // the widget on the desktop travels with you while you drag (and for a few seconds after), then comes back to now
                 if (!replayExample && (replayDrag || (rewindIdx >= 0 && replayIdx != rewindIdx))) { AppCtx.Rewind = snapAt; AppCtx.RewindUntil = Clock.Mono.AddSeconds(5); }
                 rewindIdx = replayIdx;   // opening the page isn't time travel - only moving the cursor is
@@ -260,8 +261,6 @@ namespace AdeeboMeter
                     var hit = data.E.FirstOrDefault(e => Math.Abs((e.T - at).TotalSeconds) <= 60 && ((e.Kind == "lan" && e.Text.StartsWith("New on", StringComparison.Ordinal)) || (e.Kind == "wifi" && e.Text.IndexOf("access point", StringComparison.Ordinal) >= 0)));
                     if (hit != null && !first) Spark(new PointF(x + (w - (Cfg.Buddy ? 70 * S : 0)) * 0.3f, y + 6 * S + 9 * S), hit.Kind == "lan" ? Voice.P("✨ New device!", "New device") : Voice.P("🦘 Wi-Fi hop!", "Wi-Fi roamed"));
                 }
-                y += 100 * S;
-
                 // in plain words
                 // AM-CG-265: only what was measured is vouched for, and more than one cause can be named
                 bool known = !double.IsNaN(gw) && !double.IsNaN(net);
@@ -275,12 +274,29 @@ namespace AdeeboMeter
                 if (replayGap >= 0) plain = "No recording at " + replayDay.Value.Date.AddSeconds(replayGap).ToString("HH:mm", CultureInfo.CurrentCulture) + " - AdeeboMeter wasn't running or history was off. The nearest reading, " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + plain;
                 // AM-CG-269: the hour the clocks go back happens twice - the second one says so
                 if (replayIdx < data.Off.Count && data.Off[replayIdx] != int.MinValue) { int oi = data.Off[replayIdx]; if (Enumerable.Range(0, replayIdx).Any(j => j < data.Off.Count && data.Off[j] != int.MinValue && data.Off[j] != oi && Math.Abs(data.M[j][0] - sec) < 60)) plain = "(" + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " for the second time - the clocks went back) " + plain; }
-                float plh = Draw.Measure(plain, Draw.fName, (int)(w - 36 * S)).Height;
-                var pr = new RectangleF(x, y, w, plh + 24 * S); Theme.Fill(g, pr, 12 * S, Theme.LvSoft(lvAll));
-                using (var pb = new SolidBrush(lvAll == 0 || lvAll == 3 ? Theme.Ink : Theme.LvText(lvAll))) g.DrawString(plain, Draw.fName, pb, new RectangleF(x + 18 * S, y + 12 * S, w - 36 * S, plh + 6));
-                y += pr.Height + 16 * S;
+                {
+                    float mY = y, ix = x + 20 * S, iw = w - 40 * S, th = 80 * S;
+                    float plh = Draw.Measure(plain, Draw.fBig, (int)iw).Height;
+                    Func<double, string, string> dayOf = (m0, u) => double.IsNaN(m0) ? "" : L.T("day") + " " + m0.ToString("0", CultureInfo.CurrentCulture) + u;
+                    var tiles = new[] {
+                        new[] { "This PC", double.IsNaN(cpu) ? L.T("not measured") : cpu.ToString("0", CultureInfo.CurrentCulture) + "% " + Kit.Sent(L.T("CPU")), dayOf(replayMed[2], "%"), pcLv.ToString(CultureInfo.InvariantCulture), "path.PC" },
+                        new[] { "Your router", L.T(ms(gw)), dayOf(replayMed[5], " ms"), lanLv.ToString(CultureInfo.InvariantCulture), "path.LAN" },
+                        new[] { "The internet", L.T(ms(net)), dayOf(replayMed[6], " ms"), netLv.ToString(CultureInfo.InvariantCulture), "path.Internet" },
+                        new[] { "Lost replies", double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.CurrentCulture) + "%", dayOf(replayMed[11], "%"), (double.IsNaN(loss) ? 3 : loss > 5 ? 2 : loss > 1 ? 1 : 0).ToString(CultureInfo.InvariantCulture), "" },
+                        new[] { "Wi-Fi signal", wifi >= 0 ? wifi.ToString("0", CultureInfo.CurrentCulture) + "%" : L.T("not on Wi-Fi"), wifi >= 0 ? dayOf(replayMed[7], "%") : "", (wifi < 0 ? 3 : wifi < 35 ? 1 : 0).ToString(CultureInfo.InvariantCulture), "" } };
+                    int cols = iw > 700 * S ? 5 : 3; float tilesH = (cols >= 5 ? 1 : 2) * (th + 8 * S) - 8 * S;
+                    var mr = new RectangleF(x, mY, w, 18 * S + plh + 14 * S + tilesH + 14 * S);
+                    Kit.Box(g, mr, 14 * S);
+                    using (var pb = new SolidBrush(Theme.Ink)) g.DrawString(plain, Draw.fBig, pb, new RectangleF(ix, mY + 18 * S, iw, plh + 6));
+                    using (var dl = new Pen(Theme.Line2)) g.DrawLine(dl, ix, mY + 18 * S + plh + 7 * S, ix + iw, mY + 18 * S + plh + 7 * S);
+                    PaintReadings(g, replayCanvas, tiles, ix, mY + 18 * S + plh + 14 * S, iw, cols, th);
+                    y = mr.Bottom + 14 * S;
+                }
                 if (replayIdx >= 0 && replayIdx < data.M.Count) y = PaintTmPins(g, x, y, w, at, data.M[replayIdx], netName);   // pin this minute, compare a pin with now (FullView.TimePins.cs)
 
+                // every number with where it came from - for engineers (Details on); the readings above cover everyone else
+                if (Cfg.Details)
+                {
                 // the numbers, each with where it came from; compared with the rest of that day
                 g.DrawString(Kit.Sent(L.T("THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 var rows = new List<object[]> {
@@ -313,9 +329,11 @@ namespace AdeeboMeter
                     y += 30 * S; if (++ri < rows.Count) g.DrawLine(line, x, y, x + w, y);
                 }
                 x = rx0; w = rw0; y += 22 * S;
-
+                }
                 // what changed around then
                 var near = data.E.Where(e => Math.Abs((e.T - at).TotalMinutes) <= 15).OrderBy(e => e.T).ToList();
+                // in a card, like the two above (24 Nov mockup)
+                float evY = y, ex0 = x, ew0 = w; Kit.Box(g, new RectangleF(x, y, w, 14 * S + 22 * S + Math.Max(1, near.Count) * 26 * S + 10 * S), 14 * S); x += 16 * S; w -= 32 * S; y += 14 * S;
                 g.DrawString(Kit.Sent(L.T("WHAT CHANGED 15 MINUTES EITHER SIDE")), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (near.Count == 0) { g.DrawString(Voice.P("Nothing changed around then. Quiet minute.", "No changes within 15 minutes."), Draw.fBody, muted, x, y); y += 26 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -328,7 +346,7 @@ namespace AdeeboMeter
                         var te = e.T; Act(replayCanvas, new RectangleF(x, y, 70 * S, 26 * S), delegate { ReplayAt(te.TimeOfDay.TotalSeconds / 86400.0); });
                         y += 26 * S; g.DrawLine(line, x, y, x + w, y);
                     }
-                y += 14 * S;
+                x = ex0; w = ew0; y += 24 * S;
                 g.DrawString(L.T("DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC."), Draw.fSmall, muted, new RectangleF(x, y, w, 36 * S));
                 y += 40 * S;
             }

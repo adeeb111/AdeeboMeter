@@ -163,6 +163,21 @@ namespace AdeeboMeter
                 for (int i = 0; i < 3; i++) { float gl = glow != null && i < glow.Length ? Math.Max(0, Math.Min(1, glow[i])) : 0, dd = d * (1 + 0.35f * gl); g.FillEllipse(gl > 0.5f ? hb : db, X(xs[i] - dd), Y(42.6f - dd), 2 * dd * k, 2 * dd * k); }
             }
         }
+        // Home's gauge (24 Nov mockup): the logo's three arcs without the blue plate, an ink needle that points at the level
+        // (0 = the green side, 1 = straight up, 2 = the red side). Drawn still - nothing animates it.
+        public static void Gauge(Graphics g, RectangleF r, int level)
+        {
+            var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
+            float d = Math.Min(r.Width, r.Height * 1.55f), w = d * 0.085f;
+            var arc = new RectangleF(r.X + (r.Width - d) / 2 + w, r.Y + w, d - 2 * w, d - 2 * w);
+            float cx = arc.X + arc.Width / 2, cy = arc.Y + arc.Height / 2, rad = arc.Width / 2;
+            foreach (var seg in new[] { new { a = 184f, c = "#5EF2B0" }, new { a = 248f, c = "#FCD34D" }, new { a = 312f, c = "#FF7A6B" } })
+                using (var p = new Pen(C(seg.c), w)) { p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; g.DrawArc(p, arc, seg.a, 44); }
+            double a = (level == 2 ? 48 : level == 1 ? 0 : -48) * Math.PI / 180;
+            using (var pn = new Pen(Ink, Math.Max(1.5f, d * 0.035f))) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, cx, cy, cx + (float)(rad * 0.78 * Math.Sin(a)), cy - (float)(rad * 0.78 * Math.Cos(a))); }
+            using (var hb = new SolidBrush(Ink)) { float h = d * 0.05f; g.FillEllipse(hb, cx - h, cy - h, 2 * h, 2 * h); }
+            g.SmoothingMode = sm;
+        }
         // one copy of the logo for every window that can show in the taskbar - a window without it showed Windows' plain default icon (1.1.6 test)
         static Icon appIcon; public static Icon AppIcon { get { if (appIcon == null) appIcon = MakeIcon(32); return appIcon; } }
         public static Icon MakeIcon(int size)
@@ -269,7 +284,7 @@ namespace AdeeboMeter
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
         static Graphics measureG;
-        public static Font fHero, fValue, fCardNum, fZ, fBtn;   // fBtn: buttons and tabs (Inter SemiBold)   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
+        public static Font fHero, fValue, fCardNum, fZ, fBtn;   // fBtn: buttons and tabs (Barlow Bold)   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
         public static string Fam(params string[] names)
         {
             try
@@ -284,7 +299,8 @@ namespace AdeeboMeter
             return names[names.Length - 1];
         }
         // Barlow (assets\fonts, SIL Open Font License - OFL-Barlow.txt): the same type as the website and the phone app (23 Nov).
-        // Barlow Medium for the writing, Barlow SemiBold for labels and buttons, Barlow Semi Condensed Bold for headings and big
+        // 24 Nov: one step heavier than the website - Windows draws Barlow thinner than a browser does (Adeeb: "looks thinner on my
+        // PC"): Barlow SemiBold for the writing, Barlow Bold for labels and buttons, Barlow Semi Condensed Bold for headings and big
         // numbers. Their digits are the fixed-width ones (remapped when the fonts were made), so live numbers never jitter.
         // Loaded once from the exe into this process only (nothing installed); Arabic and Bengali keep Windows' own faces.
         static System.Drawing.Text.PrivateFontCollection brand;
@@ -296,7 +312,7 @@ namespace AdeeboMeter
             try
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
-                foreach (var w in new[] { "Barlow-Medium", "Barlow-SemiBold", "BarlowSemiCondensed-SemiBold", "BarlowSemiCondensed-Bold" })
+                foreach (var w in new[] { "Barlow-SemiBold", "Barlow-Bold", "BarlowSemiCondensed-SemiBold", "BarlowSemiCondensed-Bold" })
                     // R2-080: each font on its own - a damaged one never takes the others with it
                     try
                     {
@@ -313,8 +329,8 @@ namespace AdeeboMeter
                 brand = pfc;
                 foreach (var f in pfc.Families)
                 {
-                    if (f.Name == "Barlow Medium") { UiFam = f.Name; UiFamStyle = FontStyle.Regular; }
-                    else if (f.Name == "Barlow SemiBold") { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; }
+                    if (f.Name == "Barlow SemiBold") { UiFam = f.Name; UiFamStyle = FontStyle.Regular; }
+                    else if (f.Name == "Barlow Bold") { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; }
                     else if (f.Name == "Barlow Semi Condensed" && f.IsStyleAvailable(FontStyle.Bold)) { UiDisp = f.Name; UiDispStyle = FontStyle.Bold; }
                 }
                 // one missing weight borrows its neighbour, so the type stays one family
@@ -366,7 +382,7 @@ namespace AdeeboMeter
             S = s; LoadBrand();
             string mono = Fam("Cascadia Mono", "Consolas"), tb = "Segoe UI";
             // one family, three weights, the same roles as the website: headings and big numbers in Barlow Semi Condensed Bold,
-            // labels and buttons in Barlow SemiBold, the writing in Barlow Medium. Barlow is narrower than Inter, so the
+            // labels and buttons in Barlow Bold, the writing in Barlow SemiBold (24 Nov). Barlow is narrower than Inter, so the
             // sizes are half a pixel up to keep the same reading size. Monospace is for code and captures only.
             fName = Ui(UiDisp, 13.5f * S, UiDispStyle);
             fHead = Ui(UiSemi, 14f * S, UiSemiStyle);

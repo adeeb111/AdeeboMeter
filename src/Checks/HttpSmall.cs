@@ -59,6 +59,7 @@ namespace AdeeboMeter
                     case WebExceptionStatus.ConnectFailure: return "the connection was refused or blocked";
                     default: return we.Status.ToString();
                 }
+            if (e is InvalidDataException) return e.Message;   // our own reasons ("redirected somewhere else", "answer too large") - not just the type (24 Nov: the weather search said only "InvalidDataException")
             return e.GetType().Name;
         }
     }

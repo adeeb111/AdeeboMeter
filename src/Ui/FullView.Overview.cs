@@ -181,26 +181,42 @@ namespace AdeeboMeter
                     new[] { "The internet", ms(net), "", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
                     new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), "", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
                     new[] { "Your traffic", Draw.Pair(down, up), "", "3", "ov.TRAFFIC" } };
-                int n = tiles.Length, per = cols >= 4 ? n : 3; float cw = iw / per;
-                using (var div = new Pen(Theme.Line))
+                var rects = PaintReadings(g, overviewCanvas, tiles, ix, ty, iw, cols, th);
+                if (rects.Length > 0) { var pr = rects[0]; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
+                string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
+                netLine += ". " + L.T("Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.");
+                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fSmall, muted, new RectangleF(ix, ny + 4 * S, iw, 22 * S), nf);
+            }
+        }
+        // a row of readings (Home's card, the Time machine's minute): a dot and a label, the number big with its unit small beside
+        // it, an optional line under it; thin dividers between. tiles: { label, value, sub, level, hint key }. Returns each reading's box.
+        RectangleF[] PaintReadings(Graphics g, Control on, string[][] tiles, float ix, float ty, float iw, int cols, float th)
+        {
+            int n = tiles.Length, per = cols >= 4 ? n : 3; float cw = iw / per; var rects = new RectangleF[n];
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var div = new Pen(Theme.Line))
+            using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 for (int i = 0; i < n; i++)
                 {
                     var t = tiles[i]; int rI = i / per, cI = i % per;
-                    var tr = new RectangleF(ix + cI * cw, ty + rI * (th + 8 * S), cw, th);
+                    var tr = new RectangleF(ix + cI * cw, ty + rI * (th + 8 * S), cw, th); rects[i] = tr;
                     if (cI > 0) g.DrawLine(div, tr.X, tr.Y + 6 * S, tr.X, tr.Bottom - 6 * S);
                     float px = tr.X + (cI > 0 ? 16 * S : 0);
                     int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
                     Draw.LvDot(g, lv, px, tr.Y + 10 * S, 8 * S, 8 * S);
-                    using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(L.T(t[0]), Draw.fSmall, sub, new RectangleF(px + 14 * S, tr.Y + 5 * S, cw - 34 * S, 20 * S), nf);
-                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                        g.DrawString(t[1], Draw.fBig, vb, new RectangleF(px, tr.Y + 26 * S, cw - 20 * S, 32 * S), nf);
-                    if (t[2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(t[2], Draw.fSmall, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf);
-                    Hint(overviewCanvas, tr, t[4]);
-                    if (i == 0) { var pr = tr; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
+                    g.DrawString(L.T(t[0]), Draw.fSmall, sub, new RectangleF(px + 14 * S, tr.Y + 5 * S, cw - 34 * S, 20 * S), nf);
+                    // the number big, its unit small beside it (24 Nov mockup: "23 ms", "12 % CPU")
+                    string num = t[1], unit = ""; int last = -1; for (int c = num.Length - 1; c >= 0; c--) if (char.IsDigit(num[c])) { last = c; break; }
+                    if (last >= 0 && last < num.Length - 1) { unit = num.Substring(last + 1).Trim(); num = num.Substring(0, last + 1); }
+                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink))
+                    {
+                        var nfont = last >= 0 ? Draw.fCardNum : Draw.fBig; float nw = Math.Min(cw - 20 * S, g.MeasureString(num, nfont).Width);
+                        g.DrawString(num, nfont, vb, new RectangleF(px, tr.Y + 22 * S, cw - 20 * S, 36 * S), nf);
+                        if (unit != "") g.DrawString(unit, Draw.fSmall, sub, new RectangleF(px + nw - 2 * S, tr.Y + 22 * S + nfont.GetHeight(g) - Draw.fSmall.GetHeight(g) - 3 * S, Math.Max(10, cw - 20 * S - nw), 20 * S), nf);
+                    }
+                    if (t[2] != "") g.DrawString(t[2], Draw.fSmall, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf);
+                    if (t.Length > 4 && t[4] != "") Hint(on, tr, t[4]);
                 }
-                string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
-                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fBody, sub, new RectangleF(ix, ny, iw, 22 * S), nf);
-            }
+            return rects;
         }
         void PaintOverview(Graphics g)
 
@@ -241,7 +257,8 @@ namespace AdeeboMeter
                 lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; adapter = M.Adapter; ip = M.LocalIp; gate = M.Gateway; dnsSrv = M.DnsServer; speed = M.LinkSpeed; vpn = M.VpnUp; vpnName = M.VpnName; sig = M.WifiSignal; mtu = M.PrimaryMtu; }
                 Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
                 {
-                    float ix = x + 20 * S, iw = w - 40 * S;
+                    // 24 Nov (the approved mockup): the gauge on the left, the answer in big type beside it
+                    float gaugeW = w > 760 * S ? 150 * S : 0, ix = x + 20 * S + gaugeW, iw = w - 40 * S - gaugeW;
                     // 23 Nov polish: the same card in every state - only the headline and the buttons change. A problem hidden
                     // with Hide says what it hid and carries a Show again button; the reading still shows it in colour.
                     bool hid = ProblemHidden(s); bool problem = (s.Level == 1 || s.Level == 2) && !hid;
@@ -249,15 +266,16 @@ namespace AdeeboMeter
                     string head = !hid ? s.Headline : string.Format(L.T("{0} hidden. Everything else looks fine."), kn.Substring(0, 1).ToUpper(CultureInfo.CurrentCulture) + kn.Substring(1));
                     float aw = problem || hid ? PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, true) : 0;
                     float hw0 = Math.Max(120 * S, iw - aw - (aw > 0 ? 16 * S : 0));
-                    float hh = Draw.Measure(head, Draw.fName, (int)hw0).Height;
+                    float hh = Draw.Measure(head, Draw.fBig, (int)hw0).Height;
                     string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
                     float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)iw).Height + 4 * S : 0;
                     int cols = iw > 700 * S ? 5 : 3; float tw = iw / cols, th = 80 * S;
                     float tilesH = (cols >= 5 ? 1 : 2) * (th + 8 * S) - 8 * S;
                     var vr = new RectangleF(x, y, w, 15 * S + hh + 6 * S + wh + 10 * S + tilesH + 12 * S + 22 * S + 12 * S);
                     Kit.Box(g, vr, 14 * S);
+                    if (gaugeW > 0) Theme.Gauge(g, new RectangleF(x + 28 * S, y + 22 * S, gaugeW - 40 * S, 64 * S), problem ? s.Level : 0);
                     if (problem || hid) PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, false);
-                    using (var hb = new SolidBrush(!problem ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, Draw.fName, hb, new RectangleF(ix, y + 15 * S, hw0, hh + 6));
+                    using (var hb = new SolidBrush(Theme.Ink)) g.DrawString(head, Draw.fBig, hb, new RectangleF(ix, y + 15 * S, hw0, hh + 6));   // ink: the gauge and the reading carry the colour
                     if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, hw0, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, hw0, wh), "ov.WEATHER"); }
                     using (var dl = new Pen(Theme.Line2)) g.DrawLine(dl, ix, y + 15 * S + hh + 6 * S + wh + 4 * S, ix + iw, y + 15 * S + hh + 6 * S + wh + 4 * S);
                     float ty = y + 15 * S + hh + 6 * S + wh + 10 * S;

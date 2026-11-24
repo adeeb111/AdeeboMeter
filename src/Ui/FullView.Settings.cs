@@ -553,7 +553,7 @@ namespace AdeeboMeter
                 Act(aboutCanvas, upd, delegate { Crash.OpenUrl("https://adeebometer.com/?v=" + Uri.EscapeDataString(Program.Version) + "#update"); });
                 y += 30 * S;
                 // credits the licences ask for
-                string cred = L.T("Credits") + ":  Inter typeface, (c) The Inter Project Authors, SIL Open Font License 1.1  ·  Twemoji faces, (c) Twitter, Inc and other contributors, CC-BY 4.0  ·  Weather data by Open-Meteo.com, CC BY 4.0  ·  "
+                string cred = L.T("Credits") + ":  Barlow typeface, (c) The Barlow Project Authors, SIL Open Font License 1.1  ·  Twemoji faces, (c) Twitter, Inc and other contributors, CC-BY 4.0  ·  Weather data by Open-Meteo.com, CC BY 4.0  ·  "
                     + L.T("Words of comfort: King James Version, Pickthall (1930), JPS (1917), Max Muller (1881), Edwin Arnold (1885), Macauliffe (1909) - all public domain.");
                 float chh = Draw.Measure(cred, Draw.fSmall, (int)w).Height; g.DrawString(cred, Draw.fSmall, muted, new RectangleF(x, y, w, chh + 4)); y += chh + 10 * S;
             }
