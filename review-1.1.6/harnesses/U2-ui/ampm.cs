@@ -1,0 +1,2 @@
+using System; using System.Globalization;
+class P{static void Main(){var t=new DateTime(2026,11,24,16,0,0);foreach(var c in new[]{"en-US","en-CA","fr-FR","fr-CA","de-DE","es-ES","ar-SA","bn-BD"}){var ci=new CultureInfo(c);Console.WriteLine(c+" AM='"+ci.DateTimeFormat.AMDesignator+"' PM='"+ci.DateTimeFormat.PMDesignator+"' h tt => '"+t.ToString("h tt",ci)+"' dddd h:mm tt => '"+t.ToString("dddd h:mm tt",ci)+"'");}}}

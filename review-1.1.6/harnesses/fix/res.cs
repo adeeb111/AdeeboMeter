@@ -1,0 +1,1 @@
+using System; using System.Reflection; class R{ static void Main(string[] a){ var A=Assembly.LoadFrom(a[0]); foreach(var n in A.GetManifestResourceNames()) Console.WriteLine(n); foreach(var r in A.GetReferencedAssemblies()) Console.WriteLine("ref "+r.Name); }}

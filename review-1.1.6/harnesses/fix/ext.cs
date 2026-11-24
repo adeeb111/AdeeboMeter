@@ -1,0 +1,1 @@
+using System; using System.IO; using System.Reflection; class R{ static void Main(string[] a){ var A=Assembly.LoadFrom(a[0]); foreach(var n in A.GetManifestResourceNames()){ using(var s=A.GetManifestResourceStream(n)) using(var o=File.Create(Path.Combine(a[1],n))) s.CopyTo(o);} }}

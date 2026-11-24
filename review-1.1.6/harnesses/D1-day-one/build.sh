@@ -1,0 +1,2 @@
+cd /tmp/claude-0/-home-user-AdeeboMeter/c27bf091-9be3-567e-be11-8336f7c19f2a/scratchpad/review5/D1-day-one
+mcs -target:winexe -out:d1.exe -unsafe -nowarn:618,612,414,169,649,219,162,168,67,1998,4014 -r:System.Windows.Forms -r:System.Drawing -r:System.Management -r:System.Security -r:System.Net.Http -r:System.Core -r:System.Xml -r:System.IO.Compression -r:System.Numerics -r:Microsoft.CSharp -r:Accessibility $(cat resargs.txt) $(find bsrc -name '*.cs') 2>&1 | grep -v warning | tail -5

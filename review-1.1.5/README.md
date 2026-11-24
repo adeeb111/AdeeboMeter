@@ -1,3 +1,5 @@
+> **Latest: the 1.1.6 release review is in [`../review-1.1.6/`](../review-1.1.6/README.md)**. Start with RELEASE-VERDICT.md.
+
 # AdeeboMeter 1.1.5 review
 
 Independent review. Findings only; nothing in the product was changed.

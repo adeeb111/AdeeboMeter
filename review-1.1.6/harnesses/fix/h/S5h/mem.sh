@@ -1,0 +1,1 @@
+"$@" & P=$!; peak=0; while kill -0 $P 2>/dev/null; do r=$(awk '/VmRSS/{print $2}' /proc/$P/status 2>/dev/null); [ -n "$r" ] && [ "$r" -gt "$peak" ] && peak=$r; sleep 0.2; done; echo "PEAK RSS ${peak} kB"
