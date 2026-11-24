@@ -3802,3 +3802,5 @@ No account. No telemetry. Never listens. Every packet it sends is listed below -
 Open as script	Ouvrir en script
 Open in AdeeboLab	Ouvrir dans AdeeboLab
 Monitor, diagnose, automate, visualize, learn.	Surveiller, diagnostiquer, automatiser, visualiser, apprendre.
+Finish	Terminer
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici pour continuer.

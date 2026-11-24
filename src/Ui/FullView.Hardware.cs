@@ -402,7 +402,17 @@ namespace AdeeboMeter
         sealed class KeyForm : Form
         {
             public readonly HashSet<string> Hit = new HashSet<string>(); public int Presses;
-            public KeyForm() { KeyPreview = true; DoubleBuffered = true; Icon = Theme.AppIcon; }
+            public KeyForm() { KeyPreview = true; DoubleBuffered = true; Icon = Theme.AppIcon; Activated += delegate { Away = false; Invalidate(); }; Deactivate += delegate { Away = true; Invalidate(); }; MouseClick += (s, e) => { if (Done.Contains(e.Location)) Close(); }; }
+            /* 24 Nov (Adeeb: "got stuck"): Alt or F10 put the window in menu mode, so the next keys went to the hidden system menu;
+               the Win key's Start menu took the keyboard away with no sign of it; a broken Esc left no way out. Now the menu never
+               opens, losing the keyboard says "click here", and Finish is a drawn button (Space or Enter can't press it) */
+            public bool Away; public RectangleF Done;
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == 0x112 && ((long)m.WParam & 0xFFF0) == 0xF100) return;   // SC_KEYMENU: Alt / F10 menu mode
+                if ((m.Msg == 0x101 || m.Msg == 0x105) && (int)m.WParam == 0x2C) { Hit.Add("PrtSc"); Presses++; Invalidate(); }   // Print Screen only sends key-up
+                base.WndProc(ref m);
+            }
             [DllImport("user32.dll")] static extern short GetKeyState(int k);
             protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
             {
@@ -419,7 +429,7 @@ namespace AdeeboMeter
         }
         int KeyTest(List<string> missing)
         {
-            using (var f = new KeyForm { Text = AdeeboMeter.L.T("AdeeboMeter - keyboard test (press Esc twice to finish)"), StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(360 * S)), BackColor = Theme.Bg })
+            using (var f = new KeyForm { Text = AdeeboMeter.L.T("AdeeboMeter - keyboard test (press Esc twice to finish)"), StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(410 * S)), BackColor = Theme.Bg })
             {
                 f.Paint += delegate(object s, PaintEventArgs e)
                 {
@@ -435,6 +445,9 @@ namespace AdeeboMeter
                         }
                         yy += 48 * S;
                     }
+                    var cs = f.ClientSize; var dn = new RectangleF(cs.Width - 136 * S, cs.Height - 48 * S, 120 * S, 34 * S); f.Done = dn;
+                    Theme.Fill(g, dn, dn.Height / 2, Theme.Blue); VTextC(g, L.T("Finish"), Draw.fBtn, Theme.OnBlue, dn.X + dn.Width / 2, dn.Y + 8 * S, dn.Width);
+                    VText(g, f.Away ? L.T("Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.") : f.Hit.Count + " / " + KeyRows.Sum(r => r.Split(' ').Length), Draw.fSmall, f.Away ? Theme.LvText(1) : Theme.Sub, 16 * S, cs.Height - 40 * S);
                 };
                 f.ShowDialog(this);
                 foreach (var row in KeyRows) foreach (var k in row.Split(' ')) if (!f.Hit.Contains(k)) missing.Add(k);

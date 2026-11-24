@@ -5083,3 +5083,5 @@ No account. No telemetry. Never listens. Every packet it sends is listed below -
 Open as script	افتح كسكربت
 Open in AdeeboLab	افتح في AdeeboLab
 Monitor, diagnose, automate, visualize, learn.	راقب، شخّص، أتمت، اعرض، تعلّم.
+Finish	إنهاء
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	أخذ Windows لوحة المفاتيح (Win أو Alt+Tab أو إشعار) - انقر هنا للمتابعة.
