@@ -22,7 +22,7 @@ namespace AdeeboMeter
         static readonly string[] Hostile = { "", " ", "x;rm -rf /", "$(calc)", "&calc&", "'\"<>|%n%s", new string('a', 5000), "999.999.999.999", "::::::", "-1", "http://", "a\u0000b", "😀.example", "../../windows/win.ini", "127.0.0.1:99999" };
         // tools that act on the network the moment their input is valid, or need gear only you have - checked by hand (LIVE-TESTS.md).
         // dc talks to the company's domain controllers; friend writes an encrypted file to Documents whose code nobody would see
-        static readonly HashSet<string> ByHand = new HashSet<string> { "dc", "friend", "ldapcheck", "shares", "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certcmp", "radiuslab", "smtppath", "samplelab" };
+        static readonly HashSet<string> ByHand = new HashSet<string> { "screentest", "keytest", "soundtest", /* release check 24 Nov: full-screen tests that wait for a person - the night run sat on the Screen test for an hour */ "dc", "friend", "ldapcheck", "shares", "mtu", "sweep", "wol", "iperf", "twamp", "snmp", "syslog", "radius", "tacacs", "ssh", "mail", "owners", "rlisten", "mtr", "bloat", "dscp", "discover", "ispreport", "speedtest", "udpmtu", "vpn", "gamecompare", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certcmp", "radiuslab", "smtppath", "samplelab" };
 
         Probe RunOne(Tool t, string[] a, int limitMs)
         {
@@ -62,7 +62,8 @@ namespace AdeeboMeter
             Func<bool> late = () => { if (all.Elapsed.TotalMinutes > toolCap) skipped = true; return skipped; };
             Func<bool> over = () => { if (all.Elapsed.TotalMinutes > capMinutes) skipped = true; return all.Elapsed.TotalMinutes > capMinutes; };
             Action<string> head = s => { if (saveSoFar != null) try { saveSoFar(sb.ToString()); } catch (Exception) { } sb.AppendLine(); sb.AppendLine("== " + s + "   (" + (int)all.Elapsed.TotalSeconds + " s)"); };
-            Action<string, Probe> rec = (w, p) => { if (p.Status != "OK") fails++; sb.AppendLine(Line(w, p)); };
+            int recN = 0;
+            Action<string, Probe> rec = (w, p) => { if (p.Status != "OK") fails++; sb.AppendLine(Line(w, p)); if (++recN % 10 == 0 && saveSoFar != null) try { saveSoFar(sb.ToString()); } catch (Exception) { } };   /* saved every 10 lines too: a stuck tool shows where it stuck */
             var me = Process.GetCurrentProcess(); me.Refresh(); long mStart = me.PrivateMemorySize64; int hStart = me.HandleCount, gStart = Native.GetGuiResources(Native.GetCurrentProcess(), 0), tStart = me.Threads.Count;
             tab = "toolbox"; ShowTab(); EnsureToolbox(); Application.DoEvents();
             string gw; lock (M.L) gw = M.Gateway; if (gw == "") gw = "127.0.0.1";
