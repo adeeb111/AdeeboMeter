@@ -219,7 +219,7 @@ namespace AdeeboMeter
             list(Kit.Sent(L.T("NOT ESTABLISHED")), r.NotEst, Theme.Amber);
             list(Kit.Sent(L.T("WHAT TO TRY NEXT")), r.Next, RBlue);
             // the evidence, every line with where it came from
-            b.Add(new RBlock { H = 40, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("EVERYTHING AdeeboMeter OBSERVED"), F["tiny"], sb, 50, y + 16); } });
+            b.Add(new RBlock { H = 40, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("Everything AdeeboMeter observed"), F["tiny"], sb, 50, y + 16); } });
             foreach (var o in obs)
             {
                 int lv; int.TryParse(o[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv); string what = clean(o[2]), val = clean(o[3]), ev = Evidence.Label(o[0]);

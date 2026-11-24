@@ -67,7 +67,7 @@ namespace AdeeboMeter
             g.TranslateTransform(gamerCanvas.AutoScrollPosition.X, gamerCanvas.AutoScrollPosition.Y);
             Begin(gamerCanvas);
             float x = 18 * S, y = 16 * S, w = gamerCanvas.ClientSize.Width - 36 * S;
-            y = NowLine(g, gamerCanvas, x, y, w); y = PaintGamerHud(g, x, y, w); y = TryThis(g, gamerCanvas, "gamer", x, y, w, false);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
+            y = PaintGamerHud(g, x, y, w); y = TryThis(g, gamerCanvas, "gamer", x, y, w, false);   // 24 Nov: no NOW line - the status chips at the top already say it
             var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games);
             string playing = GamePing.Me.Playing;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
@@ -75,7 +75,7 @@ namespace AdeeboMeter
             using (var nowrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
                 var pg = playing == null ? null : games.FirstOrDefault(z => z.Id == playing);
-                string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? "Your games" : "Your games · watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
+                string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? "Pick a game to watch" : "Watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
                 g.DrawString(head, Draw.fTitle, ink, x, y); y += 32 * S;
                 // Review-2: say what was found - "already here" read as detected when none were
                 string lead = mon.Count == 0 ? (inst.Count > 0 ? inst.Count + (inst.Count == 1 ? " game was" : " games were") + " found on this PC (marked \"Detected on this PC\"). Click one to start monitoring it - nothing is sent to a game company's servers until you do." : "No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.") : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
@@ -88,13 +88,14 @@ namespace AdeeboMeter
                 if (mon.Count > 0) { y = PaintSession(g, games, x, y, w); PageUsed("gamer"); }
 
                 // 24 Nov (Gamer mockup): your games as a list on one card - the game's letter in its colour, the name and where or
-                // what state, its ping now, how steady, a chevron - monitored first, then the ones found here, then the rest
+                // what state, its ping now (the dot: how good that ping is), a chevron - monitored first, then the ones found here, then the rest
                 var order = games.OrderBy(z => mon.Contains(z.Id) ? 0 : inst.Contains(z.Id) ? 1 : z.Soon ? 3 : 2).ToList();
                 int gcols = w > 900 * S ? 2 : 1; float gw = (w - 32 * S - (gcols - 1) * 24 * S) / gcols, grh = 52 * S;
                 int nrows = (order.Count + gcols - 1) / gcols; float cardTop = y;
                 Kit.Box(g, new RectangleF(x, y, w, 50 * S + nrows * grh + 10 * S), 14 * S);
                 g.DrawString(L.T("Your games"), Draw.fHead, ink, x + 18 * S, y + 16 * S);
-                { var yg = g.MeasureString(L.T("Your games"), Draw.fHead); g.DrawString(L.T("ping to each game's nearest server"), Draw.fSmall, sub, x + 18 * S + yg.Width + 8 * S, y + 18 * S); }
+                { string at0 = L.T("Add your own game"); var yg = g.MeasureString(L.T("Your games"), Draw.fHead); float room = w - 36 * S - yg.Width - 8 * S - g.MeasureString(at0, Draw.fSmall).Width - 16 * S;   // review ML-10: the sub-line gives way, never runs under the link
+                  if (room > 40 * S) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T("ping to each game's nearest server"), Draw.fSmall, sub, new RectangleF(x + 18 * S + yg.Width + 8 * S, y + 18 * S, room, 20 * S), nw); }
                 { string at = L.T("Add your own game"); var az = g.MeasureString(at, Draw.fSmall); var ar = new RectangleF(x + w - 18 * S - az.Width, y + 18 * S, az.Width, az.Height); g.DrawString(at, Draw.fSmall, blue, ar.X, ar.Y); Act(gamerCanvas, ar, delegate { EditGame(new Game { Name = "", Custom = true }, true); }); }
                 y += 50 * S;
                 using (var lp = new Pen(Theme.Line2))
@@ -106,9 +107,9 @@ namespace AdeeboMeter
                     if (row > 0) g.DrawLine(lp, r.X, r.Y, r.Right, r.Y);
                     var gc = gm.Soon ? Theme.Grey : Hex(gm.Color);
                     var ic = new RectangleF(r.X + 2 * S, r.Y + (grh - 30 * S) / 2, 30 * S, 30 * S); Theme.Fill(g, ic, 8 * S, gc);
-                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(gm.Name.Length > 0 ? gm.Name.Substring(0, 1).ToUpperInvariant() : "?", Draw.fBodyB, wb, ic, c);
+                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(gm.Name.Length > 0 ? System.Globalization.StringInfo.GetNextTextElement(gm.Name).ToUpperInvariant() : "?", Draw.fBodyB, wb, ic, c);   /* review ML-5: a whole character, emoji included */
                     string state, ping = ""; int lv = -1;
-                    if (gm.Soon) state = "PC version not announced yet";
+                    if (gm.Soon) state = L.T("PC version not announced yet");
                     else if (on)
                     {
                         var best = GamePing.Me.Best(gm); double now = double.NaN;
@@ -303,7 +304,7 @@ namespace AdeeboMeter
             using (var right = new StringFormat { Alignment = StringAlignment.Far, FormatFlags = StringFormatFlags.NoWrap })
             {
                 float cx = x + pad, cy = y + pad, cw = w - 2 * pad;
-                g.DrawString(gm.Name + (playing ? "  ·  PLAYING NOW" : ""), Draw.fHead, ink, cx, cy);
+                g.DrawString(gm.Name + (playing ? "  ·  " + L.T("Playing now") : ""), Draw.fHead, ink, cx, cy);
                 // best region over 7 days
                 string bt = "";
                 if (best != null)

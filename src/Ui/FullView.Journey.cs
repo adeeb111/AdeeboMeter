@@ -58,15 +58,19 @@ namespace AdeeboMeter
         float PaintJourney(Graphics g, float x, float y, float w)
         {
             var f = JFlowFromStory();
-            y += 10 * S; float top = y;
-            y = Head(g, AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")) + (f != null ? "  ·  " + (f.App != "" ? f.App + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : L.T("UDP port") + " " + f.LocalPort) : ""), x, y, w, "travel.JOURNEY");
-            if (f == null) return Lead(g, AdeeboMeter.L.T("Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything)."), x, y, w, true);
+            float top = y, ox = x, ow = w; x += 18 * S; w -= 36 * S; y += 16 * S;   // 24 Nov: the journey is a card like the rest of the page
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("PACKET JOURNEY")), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.JOURNEY");
+            y += 26 * S;
+            if (f != null) using (var mb = new SolidBrush(Theme.Muted)) using (var nw0 = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+                { g.DrawString((f.App != "" ? f.App + "  ·  " : "") + (f.Remote != "" ? f.Remote + (f.RemotePort > 0 ? ":" + f.RemotePort : "") : L.T("UDP port") + " " + f.LocalPort), Draw.fSmall, mb, new RectangleF(x, y, w, 20 * S), nw0); y += 30 * S; }
+            if (f == null) { y = Lead(g, AdeeboMeter.L.T("Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything)."), x, y, w, true); y += 6 * S; Kit.Frame(g, new RectangleF(ox, top, ow, y - top), 14 * S); return y + 20 * S; }
             if (jHeld != null) using (var hb = new SolidBrush(Theme.LvText(1))) { string ht = L.T("Still recording the conversation above. You picked") + " " + jHeld + " - " + L.T("stop the recording to follow it."); float hh = Draw.Measure(ht, Draw.fSmall, (int)w).Height; g.DrawString(ht, Draw.fSmall, hb, new RectangleF(x, y, w, hh + 2)); y += hh + 8 * S; }
             if (jScrollTo) { jScrollTo = false; int want = (int)top - Sc(20); BeginInvoke((Action)delegate { travelCanvas.AutoScrollPosition = new Point(0, Math.Max(0, want)); }); }
             y = PaintJStack(g, x, y, w, f);
             y = PaintJTime(g, x, y, w, f);
             y = PaintJCapture(g, x, y, w, f);
-            return y;
+            y += 10 * S; Kit.Frame(g, new RectangleF(ox, top, ow, y - top), 14 * S);
+            return y + 20 * S;
         }
 
         // a device on your own network (a printer, a NAS): the packet never reaches the router's internet side, the provider
@@ -93,30 +97,29 @@ namespace AdeeboMeter
                 new[] { "This PC", top + l4 + " " + ip + " " + link, "Windows wraps the app's data: " + (f.Udp ? "UDP" : "TCP") + " ports, then IP addresses, then the " + (kind == "Wi-Fi" ? "Wi-Fi" : "Ethernet") + " frame addressed to the device's own hardware address." },
                 new[] { "Your network", top + l4 + " " + ip + " ethernet", (kind == "Wi-Fi" ? "The Wi-Fi access point turns the Wi-Fi frame into an Ethernet one; " : "") + "switches pass the frame on by its hardware address. Nothing is translated - no NAT, no provider, the addresses stay yours." },
                 new[] { "Device", top + l4 + " " + ip + " ethernet", "The device takes off each layer in reverse and hands the data to its own app." } };
-            float colW = (w - 4 * 10 * S) / 5, chipH = 20 * S; float maxY = y;
+            float colW = (w - 4 * 12 * S) / 5, chipH = 24 * S; float maxY = y;
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap, Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
                 for (int i = 0; i < stops.Count; i++)
                 {
-                    float cx = x + i * (colW + 10 * S), cy = y; string err; var layers = Calc.Parse(stops[i][1], out err);
-                    g.DrawString(L.T(stops[i][0]), Draw.fTiny, muted, cx, cy); cy += 18 * S;
+                    float cx = x + i * (colW + 12 * S), cy = y; string err; var layers = Calc.Parse(stops[i][1], out err);
+                    using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(L.T(stops[i][0]), Draw.fBodyB, sb, cx, cy); cy += 24 * S;
                     foreach (var l in layers)
                     {
                         var cr = new RectangleF(cx, cy, colW, chipH); var col = LayerColor(l.Key);
-                        using (var b = new SolidBrush(Color.FromArgb(Theme.Dark ? 90 : 40, col))) g.FillRectangle(b, cr);
-                        using (var p = new Pen(col, 1)) g.DrawRectangle(p, cr.X, cr.Y, cr.Width, cr.Height);
+                        Theme.Fill(g, cr, 6 * S, Color.FromArgb(Theme.Dark ? 48 : 34, col)); Theme.Stroke(g, cr, 6 * S, Color.FromArgb(Theme.Dark ? 120 : 110, col), 1);   // v8 dark: a tint, not a slab
                         g.DrawString(l.Name + "  " + (l.Approx ? "~" : "") + l.Bytes, Draw.fSmall, ink, cr, nowrap);
-                        cy += chipH + 2 * S;
+                        cy += chipH + 4 * S;
                     }
                     int over = layers.Where(l => l.Kind != "f").Sum(l => l.Bytes);
-                    g.DrawString((over > 0 ? "~" + over + " bytes of headers" : ""), Draw.fSmall, muted, new RectangleF(cx, cy, colW, 18 * S), nowrap); cy += 20 * S;
+                    cy += 4 * S; g.DrawString((over > 0 ? "~" + over + " bytes of headers" : ""), Draw.fSmall, muted, new RectangleF(cx, cy, colW, 20 * S), nowrap); cy += 24 * S;
                     var tr = new RectangleF(cx, y, colW, cy - y); string tip = stops[i][2]; Act(travelCanvas, tr, delegate { jStackTip = jStackTip == tip ? null : tip; travelCanvas.Invalidate(); });
                     maxY = Math.Max(maxY, cy);
                 }
-            y = maxY + 4 * S;
+            y = maxY + 6 * S;
             if (jStackTip != null) y = Lead(g, jStackTip, x, y, w, false);
-            else { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Click a stop to see how the packet's labels change along the way. Sizes shown are typical; Packet stack in the Toolbox works out any combination."), Draw.fSmall, mb, x, y); y += 22 * S; }
-            return y + 6 * S;
+            else { string ct = L.T("Click a stop to see how the packet's labels change along the way. Sizes shown are typical; Packet stack in the Toolbox works out any combination."); float chh = Draw.Measure(ct, Draw.fSmall, (int)w).Height; using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(ct, Draw.fSmall, mb, new RectangleF(x, y, w, chh + 2)); y += chh + 10 * S; }
+            return y + 12 * S;
         }
         string jStackTip;
         static Color LayerColor(string key)

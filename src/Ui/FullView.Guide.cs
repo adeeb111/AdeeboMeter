@@ -168,7 +168,7 @@ namespace AdeeboMeter
                     y += 26 * S;
                     // the finding
                     // 24 Nov (result mockup): on a wide window the answer and what was measured on the left, what to do in a column on the right
-                    bool side = r.Done && w > 1150 * S && r.Next.Count > 0; float sideW = side ? 360 * S : 0, top0 = y, fullW = w;
+                    bool side = r.Done && w / S > 1150 && r.Next.Count > 0;   /* review L-8: the window's width, not scaled by zoom */ float sideW = side ? 360 * S : 0, top0 = y, fullW = w;
                     if (side) w -= sideW + 16 * S;
                     string fin = r.Done ? r.Finding : Voice.P("Looking...", "Running...");
                     // the answer on a white card in big ink type, a dot in its level beside it (no tinted wash, no label above it)

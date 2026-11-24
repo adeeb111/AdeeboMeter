@@ -26,7 +26,7 @@ namespace AdeeboMeter
         Panel BuildTravelPage()
         {
             travelPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
+            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(68), BackColor = Theme.Card, Padding = new Padding(Sc(20), Sc(16), 0, 0), WrapContents = false };
             travelBox = new RoundBox(Sc(320), Draw.fInput, "Or type a site - e.g. github.com");
             travelBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; StorySite(); } };
             travelGo = new PillButton("Follow", PillButton.K.Primary); travelGo.Click += delegate { StorySite(); };
@@ -68,7 +68,7 @@ namespace AdeeboMeter
         {
             g.TranslateTransform(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y);
             Begin(travelCanvas);
-            float x = 14 * S, y = 8 * S, w = travelCanvas.ClientSize.Width - 28 * S;
+            float x = 20 * S, y = 6 * S, w = travelCanvas.ClientSize.Width - 40 * S;
             y = PaintStory(g, x, y, w);
             if (storyTarget != "" || jFlow != null) y = PaintJourney(g, x, y, w);
             var need = new Size(0, (int)(y + 30 * S)); SetNeed(travelCanvas, need);
@@ -83,9 +83,10 @@ namespace AdeeboMeter
         float Head(Graphics g, string t, float x, float y, float w, string key)
         {
             t = L.T(t);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(t, Draw.fTiny, mb, x, y);
-            if (key != null) Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), key);
-            return y + 22 * S;
+            // 24 Nov: a sub-heading in the card's own type (was tiny grey capitals), with room under it
+            using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(t, Draw.fBodyB, mb, x, y);
+            if (key != null) Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 22 * S), key);
+            return y + 28 * S;
         }
 
         // ---------- layer by layer
@@ -360,21 +361,22 @@ namespace AdeeboMeter
         // InfoCard drawn on any canvas (rows: { label, text, level })
         float InfoCardOn(Control host, Graphics g, string title, List<string[]> rows, string key, float x, float y, float w)
         {
-            float lw = 190 * S, tw = w - lw - 28 * S; var hs = rows.Select(r => Math.Max(22 * S, Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 6 * S)).ToList();
-            var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            if (key != null) Hint(host, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            // 24 Nov: the card's title in heading type (was tiny grey capitals) and rows with room between them
+            float lw = 190 * S, tw = w - lw - 36 * S; var hs = rows.Select(r => Math.Max(30 * S, Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 10 * S)).ToList();
+            var card = new RectangleF(x, y, w, 16 * S + 36 * S + hs.Sum() + 10 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fHead, ib, x + 18 * S, y + 16 * S);
+            if (key != null) Hint(host, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 36 * S;
             using (var muted = new SolidBrush(Theme.Muted))
                 for (int i = 0; i < rows.Count; i++)
                 {
                     int l = 3; if (rows[i].Length > 2) int.TryParse(rows[i][2], NumberStyles.Integer, CultureInfo.InvariantCulture, out l);
-                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 14 * S, ry, lw - 8 * S, 20 * S));
-                    using (var tb = new SolidBrush(l == 1 || l == 2 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 14 * S + lw, ry, tw, hs[i]));
+                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 18 * S, ry, lw - 8 * S, 22 * S));
+                    using (var tb = new SolidBrush(l == 1 || l == 2 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 18 * S + lw, ry, tw, hs[i]));
                     ry += hs[i];
                 }
-            return y + card.Height + 16 * S;
+            return y + card.Height + 20 * S;
         }
     }
 }

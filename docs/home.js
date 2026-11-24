@@ -30,4 +30,7 @@
   if (fold) fold.addEventListener("toggle", function () {
     if (fold.open) requestAnimationFrame(function () { window.dispatchEvent(new Event("resize")); });
   });
+  // review 24 Nov: "How it works" goes to the explanation (#theory) and opens it, instead of landing on the install steps
+  function openTheory() { if (fold && location.hash === "#theory" && !fold.open) fold.open = true; }
+  window.addEventListener("hashchange", openTheory); openTheory();
 })();

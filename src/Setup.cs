@@ -305,11 +305,11 @@ namespace AdeeboMeter
             Theme.Apply(Program.WantDark());
             string disp = Draw.Fam("Segoe UI Variable Display", "Segoe UI"), text = Draw.Fam("Segoe UI Variable Text", "Segoe UI"), semi = Draw.Fam("Segoe UI Semibold", "Segoe UI");
             FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
-            fTitle = new Font(disp, 30 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fTag = new Font(semi, 16 * S, semiStyle, GraphicsUnit.Pixel);
-            fBody = new Font(text, 13.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fBtn = new Font(semi, 14 * S, semiStyle, GraphicsUnit.Pixel);
-            fSmall = new Font(text, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            fTitle = new Font(disp, Draw.Px(30 * S), FontStyle.Bold, GraphicsUnit.Pixel);
+            fTag = new Font(semi, Draw.Px(16 * S), semiStyle, GraphicsUnit.Pixel);
+            fBody = new Font(text, Draw.Px(13.5f * S), FontStyle.Regular, GraphicsUnit.Pixel);
+            fBtn = new Font(semi, Draw.Px(14 * S), semiStyle, GraphicsUnit.Pixel);
+            fSmall = new Font(text, Draw.Px(11.5f * S), FontStyle.Regular, GraphicsUnit.Pixel);
             Setup.Installed(out instVer, out instExe);
             autoStart = Setup.InstalledAutoStart(instExe);   // an update keeps your choice; a first install starts on
             st = remove ? St.AskRemove : St.Offer;

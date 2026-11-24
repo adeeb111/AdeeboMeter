@@ -28,15 +28,22 @@ namespace AdeeboMeter
                 var box = new RoundBox(cw - find.Width - Sc(10), Draw.fInput, L.T("Type a place"));
                 var found = new List<Weather.Place>(); string status = ""; int hot = -1;
                 var list = new ListBox { DrawMode = DrawMode.OwnerDrawFixed, ItemHeight = Sc(46), Size = new Size(cw, Sc(46) * 5 + 2), BorderStyle = BorderStyle.None, BackColor = Theme.Card, IntegralHeight = false };
-                var note = new Label { Text = L.T("Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates."), Font = Draw.fSmall, ForeColor = Theme.Muted, AutoSize = true, MaximumSize = new Size(cw, 0), BackColor = Theme.Card };
+                var note = new Label { Text = WeatherPrivacy(), Font = Draw.fSmall, ForeColor = Theme.Muted, AutoSize = true, MaximumSize = new Size(cw, 0), BackColor = Theme.Card };
                 // the servers: Open-Meteo filled in; any host that answers the same API can replace it
-                var geoBox = new RoundBox((cw - Sc(10)) / 2, Draw.fBody, Weather.GeoDefault) { Label = L.T("Place search server") };
-                var apiBox = new RoundBox((cw - Sc(10)) / 2, Draw.fBody, Weather.ApiDefault) { Label = L.T("Forecast server") };
+                var geoBox = new RoundBox(cw, Draw.fBody, Weather.GeoDefault) { Label = L.T("Place search server") };
+                var apiBox = new RoundBox(cw, Draw.fBody, Weather.ApiDefault) { Label = L.T("Forecast server") };
                 geoBox.Box.Text = Weather.GeoHost; apiBox.Box.Text = Weather.ApiHost;
-                Action keepServers = delegate
+                geoBox.Box.AccessibleName = L.T("Place search server"); apiBox.Box.AccessibleName = L.T("Forecast server");   // review L-11: the field's name, not the host
+                // review 24 Nov (M-2): the servers apply for this search, Cancel puts back what was there, a name that isn't a
+                // host says so instead of quietly turning back into Open-Meteo, and the privacy line names the real hosts
+                string geo0 = Cfg.WeatherGeo, api0 = Cfg.WeatherApi;
+                Func<string> keepServers = delegate
                 {
-                    string gv = Weather.CleanServer(geoBox.Box.Text), av = Weather.CleanServer(apiBox.Box.Text);
+                    string gt = geoBox.Box.Text.Trim(), at = apiBox.Box.Text.Trim();
+                    string gv = Weather.CleanServer(gt), av = Weather.CleanServer(at);
+                    if ((gt != "" && gv == "") || (at != "" && av == "")) return L.T("That server isn't a host name - use one like api.example.com, or host:port.");
                     Cfg.WeatherGeo = gv == Weather.GeoDefault ? "" : gv; Cfg.WeatherApi = av == Weather.ApiDefault ? "" : av;
+                    note.Text = WeatherPrivacy(); return "";
                 };
                 var ok = new PillButton(L.T("Use this place"), PillButton.K.Primary) { Enabled = false };
                 var no = new PillButton(L.T("Cancel"), PillButton.K.Chip);
@@ -65,7 +72,8 @@ namespace AdeeboMeter
                 Action go = delegate
                 {
                     string q = box.Box.Text.Trim(); if (q.Length < 2 || !find.Enabled) return;   // AM-CG-166: one search at a time
-                    keepServers(); found.Clear(); list.Items.Clear(); say(L.T("Looking..."), false); find.Enabled = false; ok.Enabled = false;
+                    { string bad = keepServers(); if (bad != "") { say(bad, true); return; } }
+                    found.Clear(); list.Items.Clear(); say(L.T("Looking..."), false); find.Enabled = false; ok.Enabled = false;
                     Weather.Find(q, r =>
                     {
                         try
@@ -84,6 +92,8 @@ namespace AdeeboMeter
                     });
                 };
                 find.Click += delegate { go(); };
+                KeyEventHandler enterFinds = delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; go(); } };
+                geoBox.Box.KeyDown += enterFinds; apiBox.Box.KeyDown += enterFinds;   // review L-11: Enter searches from the server boxes too
                 box.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; go(); } else if (e.KeyCode == Keys.Down && list.Items.Count > 0) { e.SuppressKeyPress = true; list.Focus(); } };
                 f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; f.DialogResult = DialogResult.Cancel; } };
                 list.MouseMove += delegate(object s, MouseEventArgs e) { int i = list.IndexFromPoint(e.Location); if (i != hot) { hot = i; list.Invalidate(); } };
@@ -99,14 +109,19 @@ namespace AdeeboMeter
                 box.Location = new Point(Sc(20), hint.Bottom + Sc(12)); find.Location = new Point(box.Right + Sc(10), box.Top + (box.Height - find.Height) / 2);
                 state.Location = new Point(Sc(20), box.Bottom + Sc(14)); list.Location = new Point(Sc(20), box.Bottom + Sc(10));
                 note.Location = new Point(Sc(20), list.Bottom + Sc(10));
-                geoBox.Location = new Point(Sc(20), note.Bottom + Sc(14)); apiBox.Location = new Point(geoBox.Right + Sc(10), geoBox.Top);
-                int by = Math.Max(geoBox.Bottom, apiBox.Bottom) + Sc(18); ok.Location = new Point(Sc(20) + cw - ok.Width, by); no.Location = new Point(ok.Left - no.Width - Sc(10), by + (ok.Height - no.Height) / 2);
-                f.ClientSize = new Size(cw + Sc(40), ok.Bottom + Sc(18));
+                Action lowerPart = delegate   // again when the privacy line changes length (another server named in it)
+                {
+                    geoBox.Location = new Point(Sc(20), note.Bottom + Sc(14)); apiBox.Location = new Point(Sc(20), geoBox.Bottom + Sc(12));   /* 24 Nov: one under the other - side by side cut the host names off */
+                    int by = Math.Max(geoBox.Bottom, apiBox.Bottom) + Sc(18); ok.Location = new Point(Sc(20) + cw - ok.Width, by); no.Location = new Point(ok.Left - no.Width - Sc(10), by + (ok.Height - no.Height) / 2);
+                    f.ClientSize = new Size(cw + Sc(40), ok.Bottom + Sc(18));
+                };
+                lowerPart(); note.SizeChanged += delegate { lowerPart(); };
                 say(L.T("Type a place and press Enter."), false);
                 var cur = Weather.Current; if (cur != null) box.Box.Text = cur.Name.Split(',')[0];
                 f.Shown += delegate { box.Box.Focus(); box.Box.SelectAll(); };
-                if (f.ShowDialog(this) != DialogResult.OK) return null;
-                keepServers(); Cfg.Save();
+                if (f.ShowDialog(this) != DialogResult.OK) { Cfg.WeatherGeo = geo0; Cfg.WeatherApi = api0; return null; }   // Cancel: the servers go back too
+                if (keepServers() != "") { Cfg.WeatherGeo = geo0; Cfg.WeatherApi = api0; }
+                Cfg.Save();
                 if (list.SelectedIndex >= 0 && list.SelectedIndex < found.Count) picked = found[list.SelectedIndex];
                 return picked;
             }
@@ -128,7 +143,13 @@ namespace AdeeboMeter
             if (Policy.NoOnline) return "Off - your IT team turned online lookups off (AdeeboMeter.policy).";
             var p = Weather.Current;
             if (!Cfg.WeatherOn || p == null) return "Off. When on: the buddy shows hot, cold, rain, snow or a storm for 2-3 minutes a few times an hour, and the widget can show one line. You type the place - your PC's location is never used.";
-            return "On for " + p.Name + ".\n" + Weather.Status() + "\nOnly its coordinates go to Open-Meteo (free, no account). Kept on this PC: the coming days and the last one - no history.";
+            return "On for " + p.Name + ".\n" + Weather.Status() + "\nOnly its coordinates go to " + (Weather.ApiHost == Weather.ApiDefault ? "Open-Meteo (free, no account)" : Weather.ApiHost) + ". Kept on this PC: the coming days and the last one - no history.";
+        }
+        // what leaves the PC, naming the servers actually set
+        static string WeatherPrivacy()
+        {
+            if (Weather.GeoHost == Weather.GeoDefault && Weather.ApiHost == Weather.ApiDefault) return L.T("Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates.");
+            return string.Format(L.T("Only the name you type goes to {0} to find it - then only its coordinates, to {1}."), Weather.GeoHost, Weather.ApiHost);
         }
     }
 }

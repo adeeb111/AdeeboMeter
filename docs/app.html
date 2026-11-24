@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#0B1426">
+<meta name="theme-color" content="#1155E0">
 <title data-i18n="AdeeboMeter - your network, devices and PC in your pocket">AdeeboMeter - your network, devices and PC in your pocket</title>
 <meta name="description" content="AdeeboMeter on your phone: your PC's live numbers, the devices on your network, guided checks, encrypted file transfer, and lessons and games that work offline.">
 <link rel="canonical" href="https://adeebometer.com/app.html">
@@ -904,7 +904,7 @@ textarea.in{resize:vertical;min-height:120px}
         '<div class="bars">' + r.regs.slice(0, 4).map(function (x) { var ll = lvOf({ med: x[2], jit: x[3] }, 60, 120); return '<div><span>' + esc(x[0]) + '</span><i style="--w:' + Math.round(100 * (x[2] || mx) / (mx * 1.15)) + '%;--c:var(' + (ll === 0 ? "--green" : ll === 1 ? "--amber" : "--red") + ')"></i><b>' + (x[2] == null ? "–" : x[2]) + '</b></div>'; }).join("") + '</div>' +
         (g[5] === "m" ? '<p class="fine">To the big cloud city nearest each of ' + esc(g[1]) + '\'s server regions - an estimate of distance.' + (g[4] && g[0] !== "freefire" ? ' If the game lets you pick a server, pick the lowest.' : g[0] === "freefire" ? ' Free Fire puts you in your account\'s region.' : ' The game picks the server for you.') + '</p>' : g[3] ? '<p class="fine">' + esc(g[1]) + ' uses its own relays, which a browser can\'t reach - these are the nearby cloud regions.</p>' : '<p class="fine">To the cloud region next to the servers - an estimate. Real game ping and whose lag it is: on your PC.</p>') + '</div>';
     }
-    return a + '<div class="btns"><button class="btn" data-act="measure" data-k="game"' + (measuring ? " disabled" : "") + '>' + ic("game", 18) + (measuring === "game" ? " Checking..." : " Check now") + '</button><button class="btn ghost" data-go="walk">' + ic("walk", 18) + ' Wi-Fi walk</button></div>';
+    return a + '<div class="btns"><button class="btn" data-act="measure" data-k="game"' + (measuring ? " disabled" : "") + '>' + ic("game", 18) + (measuring === "game" ? " Checking..." : " Measure now") + '</button><button class="btn ghost" data-go="walk">' + ic("walk", 18) + ' Wi-Fi walk</button></div>';
   }
   function svcCards(list, store, kind) {
     var good = 0, done = 0, at = 0;
@@ -919,7 +919,7 @@ textarea.in{resize:vertical;min-height:120px}
       (!c.done ? "Not checked yet today" : c.good + " of " + c.done + ": low, steady delay") + '</div><div style="color:var(--sub);font-size:13px">' + (c.done ? "This phone · " + hm(c.at) + " · 5 tries each" : kind === "svc" ? "Delay and steadiness to each service - no speed test" : "Delay and steadiness to each service, before you join") + '</div></div></div>';
     a += '<div class="hrow"><b>' + (kind === "svc" ? "Your services" : "Your call apps") + '</b><button class="lnk" data-act="sheet" data-s="' + kind + '">Edit</button></div><div class="sgrid">' + c.cards + '</div>';
     a += '<p class="fine">' + (kind === "svc" ? "Steady delay helps a stream start fast and keep going; it can't promise a picture quality. Why it buffered last night: on your PC." : "Calls want under 100 ms and little spread. It times each app's front door, not a real call.") + '</p>';
-    return a + '<button class="btn" data-act="measure" data-k="' + kind + '"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === kind ? " Checking..." : " Check now") + '</button>';
+    return a + '<button class="btn" data-act="measure" data-k="' + kind + '"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === kind ? " Checking..." : " Measure now") + '</button>';
   }
   function etNow() { var p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()), o = {}; p.forEach(function (x) { o[x.type] = x.value; }); return { d: o.weekday, m: (+o.hour) * 60 + (+o.minute) }; }
   function verdictTrade() {
@@ -2176,7 +2176,7 @@ textarea.in{resize:vertical;min-height:120px}
   // what AdeeboMeter says at the foot of every page - the phone's version of the PC's status line
   function footHtml() {
     var st = phase === "live" ? '<span class="led" style="display:inline-block;margin-right:6px"></span>' + esc(tr("Linked to your PC")) : recLoad() ? esc(tr("PC remembered, not linked now")) : esc(tr("No PC linked"));
-    if (S.tab !== "more" && S.tab !== "how") return ""; return '<p class="foot">' + st + ' · ' + esc(tr("no account · no tracking · nothing kept online · runs on this phone")) + '</p>';
+    if (S.tab !== "more" && S.tab !== "how" && S.tab !== "home") return "";   // 24 Nov (Adeeb): the privacy line on Home too return '<p class="foot">' + st + ' · ' + esc(tr("no account · no tracking · nothing kept online · runs on this phone")) + '</p>';
   }
   var lastHtml = "", lastTab = null, lastLocale = "";
   function entrance(tabNow) {

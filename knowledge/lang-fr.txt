@@ -1,7 +1,6 @@
 # AdeeboMeter - French (Canada). English text, a TAB, the French. Missing lines stay in English.
 #coverage 100
 + Add server	+ Ajouter un serveur
-+ Add your own game	+ Ajouter votre jeu
 1 day	1 jour
 10 GB	10 Go
 100 GB	100 Go
@@ -19,7 +18,6 @@ A website or app won't open	Un site ou une appli ne s'ouvre pas
 About	À propos
 AdeeboMeter itself	AdeeboMeter lui-même
 Alerts	Alertes
-An app freezes	Une appli se fige
 App and connection watch	Surveillance des applis et connexions
 Auto	Auto
 BGP and who owns the network	BGP et propriétaire du réseau
@@ -56,9 +54,7 @@ Everyday	Quotidien
 Export settings...	Exporter les paramètres...
 Export...	Exporter...
 FINDING	CONSTAT
-FOLLOW	SUIVRE
 Fan is loud or it's hot	Le ventilateur souffle ou ça chauffe
-Find it	Trouver
 Finish walk test	Terminer le test de pièces
 Follow	Suivre
 Follow Windows	Comme Windows
@@ -74,17 +70,12 @@ HOW WOULD YOU LIKE ADEEBOMETER?	COMMENT VOULEZ-VOUS ADEEBOMETER ?
 Health	Santé
 History	Historique
 History & data	Historique et données
-Home networks only	Réseaux domestiques seulement
 Hover wait on the folded chip	Délai de survol sur la pastille
 How long a row's Sniff button captures before opening Wireshark.	Durée de capture du bouton Sniff avant d'ouvrir Wireshark.
-How long to rest the mouse on the folded chip before the card opens.	Temps de survol de la pastille avant que la carte s'ouvre.
 How strongly the corner widget shows when you're not hovering it.	Visibilité du widget quand la souris n'est pas dessus.
 How visible	Visibilité
-I KNOW WHAT IT IS	JE SAIS CE QUE C'EST
 I have no internet	Je n'ai pas Internet
 I'm running out of storage	Je manque d'espace disque
-IS IT ME OR THE NETWORK?	EST-CE MOI OU LE RÉSEAU ?
-IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS	EST-CE MOI OU LE RÉSEAU ?   ·   CLIQUEZ UN POINT POUR LES DÉTAILS
 Import settings...	Importer des paramètres...
 Import...	Importer...
 Inside Windows	Dans Windows
@@ -92,7 +83,6 @@ Internet and DNS check	Vérification Internet et DNS
 Internet stops and starts	Internet coupe et revient
 Investigate	Enquêter
 Investigate a problem	Enquêter sur un problème
-Is it me or the network? One glance tells you.	Est-ce moi ou le réseau ? Un coup d'œil suffit.
 It was fine yesterday	Ça marchait hier
 Keep game history for	Garder l'historique des jeux
 Keep history for	Garder l'historique
@@ -120,8 +110,6 @@ Names for IP addresses	Noms des adresses IP
 Network story	Récit réseau
 Never	Jamais
 Not sure what's wrong	Je ne sais pas ce qui cloche
-Not sure what's wrong?	Vous ne savez pas ce qui cloche ?
-OR TAP WHAT YOU SEE	OU TOUCHEZ CE QUE VOUS VOYEZ
 Off	Désactivé
 On	Activé
 Online lookups on	Recherches en ligne activées
@@ -171,7 +159,6 @@ Start with Windows	Démarrer avec Windows
 Stop monitoring	Arrêter la surveillance
 Stop session	Arrêter la session
 Story	Histoire
-Support AdeeboMeter  >	Soutenir AdeeboMeter  >
 Switch them off by themselves after	Les désactiver d'eux-mêmes après
 TCP / IP HEALTH	SANTÉ TCP / IP
 TERMS USED IN ADEEBOMETER	TERMES UTILISÉS DANS ADEEBOMETER
@@ -181,10 +168,8 @@ TOP BY CPU	TOP PROCESSEUR
 TOP BY MEMORY	TOP MÉMOIRE
 Teams call detection	Détection des appels Teams
 Teams, Zoom, WhatsApp cut out	Teams, Zoom, WhatsApp coupent
-Tell me when a new device joins	Me prévenir quand un appareil arrive
 Test these now	Tester maintenant
 Test under load...	Tester sous charge...
-That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	Pas de souci. Dites-moi ce que vous remarquez, ou touchez le plus proche. Tout fonctionne hors ligne - même quand vous ne pouvez pas chercher sur Google.
 The default - every check close. Router every 2 s, internet every 15 s: notices trouble within seconds.	Par défaut - chaque contrôle de près. Routeur toutes les 2 s, internet toutes les 15 s : repère un problème en quelques secondes.
 The internet is slow	Internet est lent
 Theme	Thème
@@ -197,14 +182,11 @@ Voice	Ton
 WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T	TEST DE PIÈCES  ·  LESQUELLES SONT BONNES, LESQUELLES NON
 WHAT CHANGED 15 MINUTES EITHER SIDE	CE QUI A CHANGÉ 15 MINUTES AVANT ET APRÈS
 WHAT I OBSERVED	CE QUE J'AI OBSERVÉ
-WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
-WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
 Watch and suggest	Surveiller et suggérer
 Watch my first pinned destination all day	Surveiller ma première destination épinglée toute la journée
 What changed	Ce qui a changé
 What's running	Ce qui tourne
 Wi-Fi	Wi-Fi
-Wi-Fi says "No internet"	Le Wi-Fi dit « Pas d'Internet »
 Wi-Fi vs cable...	Wi-Fi ou câble...
 Wi-Fi watch	Surveillance du Wi-Fi
 Widget	Widget
@@ -215,22 +197,16 @@ You can switch any time in Settings › General.	Vous pouvez changer à tout mom
 YouTube, Netflix stop and spin	YouTube, Netflix s'arrêtent et tournent
 Your PC	Votre PC
 Your Wi-Fi	Votre Wi-Fi
-any game, any server IP	n'importe quel jeu, n'importe quel serveur
-connected, but nothing works	connecté, mais rien ne marche
 everything else works	tout le reste fonctionne
 everything takes a long time	tout prend du temps
-free for everyone - a donation helps cover signing and the Store	gratuit pour tous - un don aide à payer la signature et le Store
-it stops responding	elle ne répond plus
 measure	mesurer
 nothing opens - works even when you can't google it	rien ne s'ouvre - fonctionne même sans Google
 opens the website in your browser - AdeeboMeter itself never checks	ouvre le site dans votre navigateur - AdeeboMeter ne vérifie jamais lui-même
-pages take ages, videos buffer	les pages traînent, les vidéos chargent
 something is working hard	quelque chose travaille fort
 the network isn't in the list	le réseau n'est pas dans la liste
 tshark is the heaviest thing AdeeboMeter can run, so it always stops by itself.	tshark est ce qu'AdeeboMeter peut lancer de plus lourd, alors il s'arrête toujours tout seul.
 what changed since then?	qu'est-ce qui a changé depuis ?
 works, then doesn't, then works	ça marche, puis non, puis oui
-Check everything for me	Tout vérifier pour moi
 Test my speed	Tester ma vitesse
 Stop	Arrêter
 Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.	Dites-moi juste ce qui cloche. Les points, Qu'est-ce qui cloche ?, un test de vitesse, l'historique et la Zone joueur.
@@ -238,26 +214,17 @@ All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.
 Network	Réseau
 Devices	Appareils
 Traffic Lab	Labo de trafic
-Find any tool (mtu, dns, wifi, slow...)	Trouver un outil (mtu, dns, wifi, lent...)
-Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot	Décrivez-le - ex. YouTube s'arrête, les appels figent, le portable chauffe
-Check a destination sends only what you ask for, to where you ask, when you press Check.	Vérifier une destination n'envoie que ce que vous demandez, là où vous le demandez, quand vous appuyez sur Vérifier.
 Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.	Ctrl+K mène à tout.   Détails (en haut à droite) montre les valeurs brutes, les sources et les heures.
 DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	Le DNS n'est pas gardé dans l'historique (le point gris). Chaque nombre est la moyenne d'une minute d'AdeeboMeter, tirée du fichier du jour sur ce PC.
-Each added game's best region, up to this many. Never more than 10 probes a second in total.	La meilleure région de chaque jeu ajouté, jusqu'à ce nombre. Jamais plus de 10 sondes par seconde au total.
-Every night anything older goes (rolling). 90 days is still only about 1.5 MB.	Chaque nuit, ce qui est plus vieux disparaît (en continu). 90 jours, c'est à peine 1,5 Mo.
 HOP	SAUT
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	SAUT   ROUTEUR                                    PLUS GROS PAQUET QUI PASSE  ·  CLIQUEZ UN SAUT POUR LE MESURER
 Needs a newer Wireshark (3.0 or later).	Il faut un Wireshark plus récent (3.0 ou plus).
 No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	Pas de nuage, pas de compte, pas de télémétrie, pas de mises à jour, pas de pubs, pas de rapports de plantage. Il n'écoute jamais sur un port - et le vérifie lui-même à chaque démarrage.
-Nothing is talking to the internet right now - type a site above.	Rien ne parle à Internet en ce moment - tapez un site ci-dessus.
-Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	Vérification avant appel : 20 pings au routeur et 20 à 1.1.1.1. Test de vitesse DNS : environ 40 recherches de noms vers votre DNS, 1.1.1.1, 8.8.8.8 et 9.9.9.9. Test de pièces : 20 pings au routeur par pièce. Seulement quand vous les lancez.
-Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent.	Fait la même vérification que Vérifier une destination : nom, connexion, cadenas, premier octet et le chemin. Rien d'autre n'est envoyé.
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	N'envoie que des adresses IP publiques à RIPEstat et PeeringDB, puis se désactive tout seul. La minuterie est dans Paramètres > Recherches en ligne.
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	CETTE MINUTE  ·  COMPARÉE À LA VALEUR MÉDIANE DU JOUR
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	LA JOURNÉE EN UN COUP D'ŒIL  ·  BANDE = VERDICT, BLEU = DÉLAI DU ROUTEUR (MS), VERT = SIGNAL WI-FI (%)
 TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC	PRINCIPALES CONVERSATIONS · NOMMÉES SELON LE NOM DE SERVEUR TLS / DNS DU TRAFIC
 Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.	Tapez une destination et appuyez sur Lancer : AdeeboMeter trace le chemin, puis vous mesurez saut par saut.
-WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR	QUAND MON RÉSEAU VA-T-IL MAL ?  ·  7 DERNIERS JOURS × 24 HEURES  ·  PIRE MOMENT DE CHAQUE HEURE
 WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)	SANTÉ DU WI-FI  ·  À PARTIR DE CE QUE WINDOWS NE CACHE JAMAIS (MARCHE SANS LA LOCALISATION)
 Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so.	Windows n'a listé aucun réseau voisin cette fois - il refait son balayage environ chaque minute.
 YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY	VOTRE PORT DE COMMUTATEUR  ·  LLDP / CDP, ÉCOUTÉS PASSIVEMENT
@@ -281,25 +248,17 @@ Press Run to see your own.	Appuyez sur Lancer pour voir le vôtre.
 See an example	Voir un exemple
 Hide the example	Masquer l'exemple
 See an example day	Voir une journée d'exemple
-+1 Adeebo Point	+1 point Adeebo
-+2 replay bonus	+2 bonus de relance
 Adeebo Point	point Adeebo
 Adeebo Points	points Adeebo
-examples done	exemples faits
 of	sur
 Beginner	Débutant
 Learner	Apprenti
 Troubleshooter	Dépanneur
 Expert	Expert
-Earn Adeebo Points	Gagner des points Adeebo
-Replay bonus · +2	Bonus de relance · +2
 Already earned.	Déjà gagné.
-Run it for real: +1 Adeebo Point.	Lancez-le pour de vrai : +1 point Adeebo.
 Doesn't earn Adeebo Points - it sends test traffic.	Ne rapporte pas de points Adeebo - il envoie du trafic de test.
-Replay bonus · +2 - run it again at least 10 minutes after your first run.	Bonus de relance · +2 - relancez-le au moins 10 minutes après la première fois.
 HOW TO EARN	COMMENT GAGNER
 Open a tool's Example, then run it for real	Ouvrez l'exemple d'un outil, puis lancez-le pour de vrai
-+1, or +2 for the longer tests	+1, ou +2 pour les tests longs
 Run a tool marked replay again, 10 minutes or more later	Relancez un outil marqué relance, 10 minutes ou plus après
 +2, once	+2, une fois
 Read a Learn topic to the end	Lisez un sujet d'Apprendre jusqu'au bout
@@ -312,13 +271,10 @@ done	faits
 to	avant
 Pages	Pages
 Nothing matches - try another word.	Aucun résultat - essayez un autre mot.
-Top rank - every feature you tried taught you something.	Rang maximal - chaque fonction essayée vous a appris quelque chose.
 Earning is off (Settings › Adeebo Points) - your points are kept.	Les gains sont coupés (Paramètres › Points Adeebo) - vos points sont gardés.
 Community and support	Communauté et soutien
-AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing.	AdeeboMeter est gratuit et open source. Ces liens s'ouvrent dans votre navigateur - AdeeboMeter n'envoie rien.
 Ask a question or share an idea	Poser une question ou proposer une idée
 Report a bug	Signaler un bug
-Source code and releases	Code source et versions
 Donate	Faire un don
 Other amount	Autre montant
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal, en dollars canadiens. AdeeboMeter n'envoie rien sur vous.
@@ -328,7 +284,6 @@ days of history are deleted for good - this can't be undone. The Neighbour wars 
  tools match	 outils correspondent
 All	Tout
 All tools	Tous les outils
-Ask the question - the right tool comes up. Type in the box above, or pick a question.	Posez la question - le bon outil apparaît. Tapez dans la case ci-dessus, ou choisissez une question.
 Did you mean	Vouliez-vous dire
 Enter opens the first	Entrée ouvre le premier
 Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free.	Gratuit pour tous. S'il vous a fait gagner du temps, un don aide à payer la signature du code et le Microsoft Store, et garde AdeeboMeter gratuit.
@@ -466,7 +421,6 @@ Why is it slow?	Pourquoi c'est lent?
 Where does it break?	Où ça casse?
 What's on my network?	Qu'y a-t-il sur mon réseau?
 Why can't it join?	Pourquoi ça ne se connecte pas?
-Windows and certificates	Windows et certificats
 Build test traffic	Construire du trafic de test
 Is it this PC?	Est-ce ce PC?
 VPN and company proxy - is it the slow part?	VPN et proxy d'entreprise - est-ce la partie lente?
@@ -532,7 +486,6 @@ airtime fairness	équité du temps d'antenne
 nothing	rien
 on (TCP, most traffic)	activé (TCP, la plupart du trafic)
 off	désactivé
-says "too big"	dit « trop gros »
 is blocked from saying it	ne peut pas le dire (bloqué)
 First come, first served (most home routers)	Premier arrivé, premier servi (la plupart des routeurs à domicile)
 Fair queuing (each flow takes turns)	File équitable (chaque flux à son tour)
@@ -541,7 +494,6 @@ Clear my losses	Effacer mes pertes
 Test my line under load  ›	Tester ma ligne sous charge  ›
 Find the real MTU of my path  ›	Trouver le vrai MTU de mon chemin  ›
 Next question  ›	Question suivante  ›
-Click a stop to see what happens to the labels there. Sizes are the usual ones; Packet stack in the Toolbox works out any mix.	Cliquez sur une étape pour voir ce qui arrive aux étiquettes. Les tailles sont les valeurs habituelles; Pile de paquets dans la Boîte à outils calcule n'importe quel mélange.
 Measure again	Mesurer de nouveau
 Block width = packet size · amber = sent again · red = an error from the network · a red mark = a stall	Largeur du bloc = taille du paquet · ambre = renvoyé · rouge = erreur du réseau · marque rouge = arrêt
 stall	arrêt
@@ -561,7 +513,6 @@ Decimal, hex and binary	Décimal, hexadécimal et binaire
 What changed when it broke?	Qu'est-ce qui a changé quand ça a planté?
 Is this Wi-Fi OK to use? (hotel, cafe)	Ce Wi-Fi est-il sûr? (hôtel, café)
 DNS race - which server is fastest here	Course DNS - quel serveur est le plus rapide ici
-Devices on this network (kept over time)	Appareils de ce réseau (gardés dans le temps)
 Drivers, device problems and USB history	Pilotes, problèmes d'appareils et historique USB
 Why isn't my USB device working?	Pourquoi mon appareil USB ne fonctionne-t-il pas?
 Why is my game lagging?	Pourquoi mon jeu lague-t-il?
@@ -648,18 +599,15 @@ Look up three different destinations in your own route table.	Cherchez trois des
 Keep the ping at 30 ms or more and get the whole budget under 60 ms.	Gardez le ping à 30 ms ou plus et faites passer le budget total sous 60 ms.
 Find an upload where even first come, first served keeps the call's wait under 10 ms.	Trouvez un débit montant où même premier arrivé, premier servi garde l'attente de l'appel sous 10 ms.
 Get 5 right in a row, then 10 in a row.	5 justes d'affilée, puis 10 d'affilée.
-A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	Une simulation avec les valeurs que vous choisissez - pas une mesure de votre ligne (seules les lignes qui disent « votre » le sont).
 Save your Adeebo Award card	Enregistrer votre carte Prix Adeebo
 Couldn't save the card	Impossible d'enregistrer la carte
 Your card is saved	Votre carte est enregistrée
-Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.	Envoyez-la au Temple de la renommée : le formulaire GitHub vérifie le code et vous ajoute automatiquement. Son texte est copié, prêt à coller.
 This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can.	Cette copie d'AdeeboMeter a été compilée depuis le code source : la carte n'a pas de code et ne peut pas entrer au Temple de la renommée. Le téléchargement du site, oui.
 Your Adeebo Award card	Votre carte Prix Adeebo
 Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32.	Votre nom tel qu'il doit apparaître au Temple de la renommée. Lettres, chiffres, espaces et . - _ ' - 32 au plus.
 Make the card	Créer la carte
 Make my award card	Créer ma carte de prix
 Make it again	La recréer
-Send it with the GitHub form ›	L'envoyer avec le formulaire GitHub ›
 The Hall of Fame page ›	La page du Temple de la renommée ›
 Show the picture	Montrer l'image
 NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR	GUERRE DES VOISINS  ·  7 JOURS SUR VOS ONDES
@@ -670,7 +618,6 @@ filled = strongest on your channel that day · ring = on your channel · dot = h
 Journey	Trajet
 What did Windows Update break?	Qu'est-ce que Windows Update a cassé ?
 Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	Contrôles rapprochés. En arrière-plan, les meilleures régions de vos jeux toutes les 10 s (5 serveurs) ; pendant que vous jouez, jusqu'à 16 serveurs chaque seconde.
-The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	La touche la plus légère. Routeur toutes les 30 s, internet toutes les 5 min, Wi-Fi toutes les 2 min, pas de suivi des appels.
 By goal	Par objectif
 Everything	Tout
 Games	Jeux
@@ -759,8 +706,6 @@ QR code to read it on your phone	Code QR à lire sur votre téléphone
 Help-a-friend bundle (encrypted file)	Colis pour aider un ami (fichier chiffré)
 My Bluetooth devices	Mes appareils Bluetooth
 Is another device using my address?	Un autre appareil utilise-t-il mon adresse ?
-Scan with your phone	Scannez avec votre téléphone
-Your phone's camera reads it - nothing is sent.	L'appareil photo de votre téléphone le lit - rien n'est envoyé.
 not on the map	pas sur la carte
 green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server	vert sous 50 ms · orange sous 100 · rouge au-dessus · gris : pas encore de ping · anneau = une région estimée (la région cloud du jeu), point = un vrai serveur
 6 months	6 mois
@@ -863,7 +808,6 @@ SYN - let's talk, my sequence starts at 1000	SYN - parlons, ma séquence commenc
 ACK 1001 - got it	ACK 1001 - bien reçu
 SYN-ACK - fine, mine starts at 5000, ack 1001	SYN-ACK - d'accord, la mienne commence à 5000, ack 1001
 Getting an address (DHCP)	Obtenir une adresse (DHCP)
-The order is Discover, Offer, Request, Ack. The PC asked for an address before anyone offered one.	L'ordre est Discover, Offer, Request, Ack. Le PC a demandé une adresse avant que quiconque en offre une.
 DISCOVER - any DHCP server?	DISCOVER - un serveur DHCP ?
 REQUEST - I'll take 192.168.1.37	REQUEST - je prends 192.168.1.37
 OFFER - you can have 192.168.1.37	OFFER - vous pouvez avoir 192.168.1.37
@@ -882,7 +826,6 @@ Certificate, Finished	Certificat, Finished
 A traceroute	Un traceroute
 With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it.	Avec un TTL de 2, le paquet meurt au deuxième routeur, qui dit « délai dépassé ». 1.1.1.1 ne peut pas répondre à un paquet qui ne l'a jamais atteint.
 Time exceeded (TTL ran out here)	Délai dépassé (le TTL s'est épuisé ici)
-ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64	ping, TTL 2 - réponse directe de 1.1.1.1, TTL 64
 Time exceeded	Délai dépassé
 A big packet, don't fragment	Un gros paquet, ne pas fragmenter
 A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	Un routeur n'envoie « fragmentation nécessaire » que si le lien suivant est plus petit que le paquet. Un MTU de 1600 aurait transporté 1500 octets.
@@ -1057,7 +1000,6 @@ Find a process or app	Trouver un processus ou une appli
 Site, app or server - e.g. outlook.office.com	Site, appli ou serveur - ex. outlook.office.com
 Find a process	Trouver un processus
 Search: DNS, TCP, svchost, jitter...	Rechercher : DNS, TCP, svchost, gigue...
-Jump to a tab, program, term or protocol...	Aller à un onglet, un programme, un terme ou un protocole...
 Find a feature... mtr, dns, wifi, certificate	Trouver une fonction... mtr, dns, wifi, certificat
 Your website or mail domain (optional)	Votre site ou domaine de messagerie (facultatif)
 Or type a site - e.g. github.com	Ou tapez un site - ex. github.com
@@ -1090,7 +1032,6 @@ Arrange tabs...	Organiser les onglets...
 My tab	Mon onglet
 Your own tab - one click to what you use most.	Votre onglet - un clic vers ce que vous utilisez le plus.
 Nothing pinned yet. Open a tool and press the pin, or pin a search result.	Rien d'épinglé pour l'instant. Ouvrez un outil et appuyez sur l'épingle, ou épinglez un résultat de recherche.
-Details on for the full path	Activez Détails pour le chemin complet
 Pinned	Épinglé
 Pinned to your tab	Épinglé à votre onglet
 Earned	Gagné
@@ -1112,7 +1053,6 @@ Browse...	Parcourir...
 Make a report	Faire un rapport
 ↑↓ move · Enter open · Ctrl+P pin to your tab · Esc close	↑↓ se déplacer · Entrée ouvrir · Ctrl+P épingler à votre onglet · Échap fermer
 Nothing here by that name. Fewer words usually find it.	Rien sous ce nom. Moins de mots, ça trouve souvent.
-Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	Rien trouvé. Cherchez la chose, pas le symptôme : « dns », « wifi », « port ».
 Not a thing I have. Yet. Try another word?	Je n'ai pas ça. Pas encore. Un autre mot ?
 Searched every drawer. Try a shorter word.	J'ai fouillé tous les tiroirs. Essayez un mot plus court.
 Pick a question - the right tool comes up.	Choisissez une question - le bon outil apparaît.
@@ -1183,7 +1123,6 @@ Normal	Normal
 Chatty	Bavard
 Talk like...	Parler comme...
 More personas	Autres personnages
-Companion settings...	Réglages du compagnon...
 Surprise me	Surprends-moi
 PREVIEW	APERÇU
 TALK LIKE...	PARLER COMME...
@@ -1207,11 +1146,7 @@ Import lines	Importer des répliques
 Add these lines to yours?	Ajouter ces répliques aux vôtres ?
 Couldn't save your lines.	Impossible d'enregistrer vos répliques.
 Credits	Crédits
-New: the Sidebar layout - sections down the left, search on top, a live meter.	Nouveau : la barre latérale - les sections à gauche, la recherche en haut, un compteur en direct.
 Try it	Essayer
-No thanks	Non merci
-Find what's wrong	Trouver le problème
-Type what you notice, or press Find what's wrong.	Écrivez ce que vous remarquez, ou appuyez sur Trouver le problème.
 Full checkup	Bilan complet
 Run full checkup	Lancer le bilan complet
 Include a speed test (up to 500 MB)	Inclure un test de vitesse (jusqu'à 500 Mo)
@@ -1241,7 +1176,6 @@ When should it tell you?	Quand doit-il vous prévenir ?
 What should it remember?	Que doit-il retenir ?
 What may it ask the internet?	Que peut-il demander à internet ?
 For engineers: capture limits	Pour les ingénieurs : limites de capture
-QUICK SETUP	CONFIGURATION RAPIDE
 Skip	Passer
 All of this can be changed any time in Settings.	Tout ceci peut être changé à tout moment dans les Réglages.
 Plain - no jokes	Neutre - sans blagues
@@ -1306,9 +1240,7 @@ not measured	non mesuré
 reply	réponse
 
 # French completion pass
- (posted about a week later). An index of world prices in US dollars - the change is what to read. ▲ = prices went up.	 (publié environ une semaine plus tard). Indice des prix mondiaux en dollars américains : lisez la variation. ▲ = hausse.
  (stop)	 (arrêter)
- - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.	 — taux indicatifs. ▲ = devise plus chère en CAD depuis hier.
  - not a single dip.	 — aucune baisse.
  Mb/s down (was 	 Mb/s descendants (avant : 
  ago - too old to say what you can stream right now. Press the button for a fresh one.	 trop ancien pour évaluer la vidéo actuelle. Lancez une nouvelle mesure.
@@ -1327,10 +1259,6 @@ reply	réponse
  without a dip	 sans baisse
  · market closed - the live check sleeps until 9:30 Eastern	 · marché fermé, reprise du test à 9:30, heure de l’Est
  · starting...	 · démarrage...
-"are you there?" (echo request)	« êtes-vous là? » (requête d’écho)
-"can I connect?" (SYN)	« puis-je me connecter? » (SYN)
-"yes, come in" (SYN-ACK) - the time is this round trip	« oui, entrez » (SYN-ACK), temps de cet aller-retour
-"yes, here" (echo reply) - the time is this round trip	« oui, ici » (réponse d’écho), temps de cet aller-retour
 % against the Canadian dollar today.	% face au dollar canadien aujourd’hui.
 % this week.	% cette semaine.
 'please treat me as voice'	« traiter comme de la voix »
@@ -1344,7 +1272,6 @@ reply	réponse
 (no reply - this protocol never answers)	(sans réponse, ce protocole n’en envoie pas)
 (no sign-in sent)	(aucune authentification envoyée)
 (no snapshot yet)	(aucun instantané)
-(not compared)	(non comparé)
 (nothing - the router won't turn it around)	(rien, le routeur ne renvoie pas le trafic)
 (run it to compare)	(lancer pour comparer)
 (run it to see the race)	(lancer pour voir la course)
@@ -1370,7 +1297,6 @@ reply	réponse
 3-6 months of costs	3-6 mois de dépenses
 3. Address	3. Adresse
 3389 open	3389 ouvert
-4 weeks 	4 semaines 
 4. Router	4. Routeur
 407 here = the proxy wants a sign-in	407 signifie que le proxy demande une authentification
 4K streams at once	flux 4K simultanés
@@ -1424,7 +1350,6 @@ Allow	Autoriser
 Allow this phone?	Autoriser ce téléphone?
 Allow?	Autoriser?
 Already uploading	Téléversement déjà en cours
-Apple/Linux-style name	Nom de style Apple/Linux
 Asked	Demandé
 At a bank	À la banque
 Average cost of buying in steps	Coût moyen d’achats échelonnés
@@ -1436,7 +1361,6 @@ Back. That lasted 	De retour. Durée :
 Background checks: 	Vérifications en arrière-plan : 
 Backup way out:	Sortie de secours :
 Balanced - trouble seen in seconds	Balanced : problèmes vus en quelques secondes
-Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on.	Moyennes quotidiennes de la Banque du Canada, demandées une fois par jour pendant la consultation. Désactivé au départ.
 Binding request	Requête Binding
 Broker 	Courtier 
 Broker steady all day	Courtier stable toute la journée
@@ -1446,15 +1370,11 @@ CAN I STREAM 4K RIGHT NOW?	PUIS-JE LIRE EN 4K MAINTENANT?
 CASE	CAS
 CERTS	CERTIFICATS
 CLOSED	FERMÉ
-COMMODITIES · WEEKLY · CHANGE IN PRICE	PRODUITS DE BASE · SEMAINE · VARIATION DES PRIX
 CPU	CPU
-CURRENCIES · END OF DAY · 1 UNIT IN CANADIAN DOLLARS	DEVISES · CLÔTURE · 1 UNITÉ EN DOLLARS CANADIENS
 Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.	Carte envoyée. Si le code est valide, votre nom apparaîtra dans quelques minutes.
 Certificate calendar	Calendrier des certificats
 Change my keys...	Modifier mes clés...
 Changed: Fun lines off · Details on · How chatty: face only.	Modifié : blagues désactivées, détails activés, visage seulement.
-Check again now	Revérifier maintenant
-Check your phone shows the same words:	Vérifiez que le téléphone affiche les mêmes mots :
 Choose your view	Choisir votre vue
 Classic tabs	Onglets classiques
 Clean session	Session propre
@@ -1486,7 +1406,6 @@ Couldn't start Quick Share	Impossible de lancer Quick Share
 Crashes, a recession, inflation and surprise bills - where does your money go?	Krach, récession, inflation, imprévus : où va votre argent?
 Cricket key (cricketdata.org)...	Clé cricket (cricketdata.org)...
 Currency converter	Convertisseur de devises
-Currency rates and commodity prices	Taux de change et prix des produits de base
 DCs in my site first	Contrôleurs de mon site d’abord
 DHCP server	Serveur DHCP
 DHCP server (your router)	Serveur DHCP du routeur
@@ -1505,7 +1424,6 @@ Destination	Destination
 Devices on this network	Appareils du réseau
 Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box	Diagramme draw.io / diagrams.net (.drawio), cases modifiables
 Didn't open: a wrong code, the wrong key - or the file was changed after it was locked. The seal can't be faked.	Ouverture refusée : code ou clé incorrects, ou fichier modifié. Le contrôle d’intégrité a échoué.
-Different words, or no words on your phone? Press Don't allow - it isn't your phone.	Mots différents ou absents sur le téléphone? Refusez l’association.
 Discover: can anyone give me an address?	Discover : qui peut me donner une adresse?
 Disk speed vs its ceiling	Débit du disque et limite théorique
 Don't accept	Refuser le fichier
@@ -1525,7 +1443,6 @@ End now	Terminer maintenant
 Energy	Énergie
 Errors on my line and port (signal levels, uncorrectable errors, retrains) over the last 7 days.	Erreurs de ligne et de port sur 7 jours : signal, erreurs incorrigibles et resynchronisations.
 Esc closes this menu	Esc ferme ce menu
-Evening summary in the widget, 17:30-19:00: 	Résumé du soir dans le widget, 17:30-19:00 : 
 Everything this PC does with your phone, in one place. Sealed end to end: the relay passes on messages it can't read.	Toutes les interactions avec le téléphone. Chiffrement de bout en bout; le relais ne peut pas lire les messages.
 Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):	Contenu exact du lien, lisible par son destinataire. Tout reste dans le lien, sans stockage serveur :
 FOR YOUR PROVIDER · 	POUR VOTRE FOURNISSEUR · 
@@ -1546,7 +1463,6 @@ Game server	Serveur de jeu
 Gamer - game servers every 	Gamer : serveurs testés toutes les 
 Gathering the first minute...	Collecte de la première minute...
 Gathering the first seconds...	Collecte des premières secondes...
-Getting today's rates from the Bank of Canada...	Taux du jour de la Banque du Canada...
 Graphics: own vs borrowed memory, link, apps	Graphique : mémoire dédiée et partagée, liaison et applications
 HARDWARE NERDS	PASSIONNÉS DE MATÉRIEL
 HD streams at once	flux HD simultanés
@@ -1562,7 +1478,6 @@ IN USE	UTILISÉ
 IPv4 - into the tunnel	IPv4 dans le tunnel
 IPv6 or DNS outside the tunnel?	IPv6 ou DNS hors du tunnel?
 IPv6's version of ARP	L’équivalent IPv6 d’ARP
-IPv6: Router Solicitation	IPv6 : Router Solicitation
 Identity?	Identité?
 If even one byte was changed on the way, the seal doesn't match and nothing is opened.	Une modification d’un seul octet fait échouer l’intégrité et empêche l’ouverture.
 In one line: 	En une ligne : 
@@ -1574,10 +1489,8 @@ Is my connection fast enough to trade?	Ma connexion suffit-elle pour les transac
 It can watch this PC and start checks - never change Windows settings.	Peut surveiller le PC et lancer des tests, sans modifier Windows.
 It felt slow - this PC, the internet or the app?	C’était lent : PC, Internet ou application?
 It opens adeebometer.com/r. Your numbers ride in the link after the # - that part never leaves the phone, so the site never sees them. Names and addresses are left out.	Ouvre adeebometer.com/r. Les données après # restent sur le téléphone; le site ne les reçoit pas. Noms et adresses exclus.
-It will be saved in Downloads\AdeeboMeter.	Enregistré dans Downloads\AdeeboMeter.
 KEYS	CLÉS
 Keep this	Garder ceci
-Kerberos: sign me in	Kerberos : me connecter
 Keyboard test - press every key	Test du clavier : appuyez sur chaque touche
 Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	Ctrl+Shift+S : enregistrer · Ctrl+Shift+C : copier · Ctrl+Shift+Q : téléphone
 LAB	LABO
@@ -1642,7 +1555,6 @@ No moves - this PC stayed on one access point.	Aucun changement; même point d�
 No seal	Sans contrôle d’intégrité
 None - the mood talks on its own	Aucune, l’humeur choisit ses paroles
 None yet. Once linked, a phone can ask to be remembered (Face ID or a fingerprint) and come back without a code.	Aucun téléphone. Une fois associé, il peut être mémorisé avec Face ID ou empreinte et revenir sans code.
-Not advice - just the numbers.	Des chiffres à des fins éducatives.
 Not listed? Tell it what you're watching	Service absent? Indiquez ce que vous regardez
 Not quite - it's: 	Pas tout à fait. Réponse : 
 Not shown in Roast - pick another mood to see it.	Masqué en mode Roast. Choisissez une autre humeur.
@@ -1650,7 +1562,6 @@ Not shown with Fun lines off (Plain).	Masqué quand les blagues sont désactivé
 Nothing found - check the spelling, or try the nearest bigger city.	Aucun résultat. Vérifiez l’orthographe ou essayez une plus grande ville proche.
 Nothing matches	Aucune correspondance
 Nothing streaming right now	Aucune vidéo en cours
-Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	Aucun fichier. Téléphone : PC › Fichiers › Envoyer au PC. Après acceptation, les fichiers arrivent dans Downloads\AdeeboMeter.
 Now:	Maintenant :
 OBS link - why frames drop	OBS : pourquoi des images se perdent
 ON YOUR NETWORK	SUR VOTRE RÉSEAU
@@ -1658,12 +1569,10 @@ ONE PAGE LOAD, PACKET BY PACKET	UNE PAGE, PAQUET PAR PAQUET
 OPEN	OUVERT
 OVER TIME	DANS LE TEMPS
 Off - your IT team turned online lookups off.	Désactivé par votre service TI.
-Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines, every 5 minutes at most.	Désactivé au départ. Une fois activé, pendant la consultation ou la vidéo d’une équipe suivie : résultats NHL, soccer et cricket avec vos clés, manchettes BBC Sport, au plus toutes les 5 minutes.
 Off. Turn it on for one calm line a day - from your faith, word for word, or what all of them share.	Désactivé. Activez une pensée quotidienne de votre tradition ou de ce qu’elles partagent.
 Offer	Offre
 Official rate	Taux officiel
 Older...	Plus ancien...
-Older:	Avant :
 On my phone: DNS lookup	Téléphone : recherche DNS
 On my phone: VPN leak check	Téléphone : fuite VPN
 On my phone: a website from outside	Téléphone : site vu de l’extérieur
@@ -1684,7 +1593,6 @@ One click changes the pages, how hard it watches and what sits in the corner. Ea
 One contract	Un contrat
 One file at a time - wait for the last one.	Un fichier à la fois. Attendez la fin.
 One tap opens your result	Un toucher ouvre le résultat
-Online lookups are turned off by your IT team.	Recherches en ligne désactivées par les TI.
 Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key.	Acceptez seulement après avoir vérifié l’empreinte ensemble, par appel ou en personne. Les prochains fichiers utiliseront cette clé.
 Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates.	Seul le nom saisi va à Open-Meteo pour trouver le lieu, puis seulement ses coordonnées.
 Open it now	Ouvrir maintenant
@@ -1749,11 +1657,9 @@ SNMP	SNMP
 SNMP - switches & routers	SNMP : commutateurs et routeurs
 SNMP test trap	Trap SNMP de test
 Safe bitrate	Débit vidéo prudent
-Same answer:	Même réponse :
 Save a picture of this window	Enregistrer l’image de cette fenêtre
 Saved	Enregistré
 Saved - in the Bluetooth window pick the device and Browse to the selected file. On Android, tap Accept - it lands in Downloads	Enregistré. Dans Bluetooth, choisissez l’appareil et le fichier. Sur Android, Accepter le place dans Téléchargements.
-Saved to Pictures\AdeeboMeter	Enregistré dans Pictures\AdeeboMeter
 Saved. Your lines are limited to 600, so the oldest	Enregistré. Maximum 600 lignes; les plus anciennes
 Savings-only ghost	Scénario épargne seulement
 Scores need your own free key from 	Les résultats exigent votre clé gratuite de 
@@ -1779,23 +1685,18 @@ Show me everything	Tout afficher
 Show the QR code	Afficher le code QR
 Show the code?	Afficher le code?
 Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections	Applications ayant une connexion TCP à Internet. UDP, appareils locaux et connexions fermées sont dans Connexions.
-Shows the US dollar and energy's week instead of "All quiet". A problem always takes the spot back.	Affiche USD et énergie sur la semaine à la place de « Tout est calme ». Les problèmes restent prioritaires.
 Sidebar layout	Disposition de la barre latérale
 Signal journey lives on the phone (Tools › Signal journey): record its field-test screen while you move. Copy the report there and Send to PC - it lands under From the phone.	Parcours du signal se trouve sur le téléphone : Outils › Parcours du signal. Enregistrez l’écran de test en déplacement, copiez le rapport, puis envoyez-le au PC.
 Slow PC, fine internet - the hidden reasons	PC lent, Internet correct : les causes cachées
 Slow moments today: 	Moments lents aujourd’hui : 
 Smooth all the way - 	Stable tout le long : 
 Something failed here.	Un échec est survenu ici.
-Source: Bank of Canada commodity price index, week of 	Source : indice des produits de base de la Banque du Canada, semaine du 
-Source: Bank of Canada daily exchange rates, 	Source : taux quotidiens de la Banque du Canada, 
 Speakers, microphone and camera	Haut-parleurs, micro et caméra
 Sports ›	Sports ›
 Start watching my stream	Surveiller ma diffusion
 Started from	Démarré depuis
 Starting the speed test...	Démarrage du test de débit...
 Still recording the conversation above. You picked	Capture encore active. Vous avez choisi
-Still watching your broker in the background	Surveillance du courtier en arrière-plan
-Stock lists and market movers arrive once their free data sources are confirmed.	Listes et variations boursières à venir après validation des sources gratuites.
 Stop watching	Arrêter la surveillance
 Stopped.	Arrêté.
 Suits you	Adapté à vous
@@ -1877,10 +1778,8 @@ Turn Sports off	Désactiver Sports
 Turn it on	Activer
 Type a number, an IPv4 address or a mask.	Entrez un nombre, une IPv4 ou un masque.
 Type an address - see which road Windows picks for it.	Entrez une adresse pour voir la route choisie par Windows.
-Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	Entrez le code ou le nom dans Pour, lancez, puis envoyez le .adeebo. Le PNG reste dans Documents\AdeeboMeter.
 Type your plan's download	Débit descendant du forfait
 UDP 1812 · password hidden with the shared secret	UDP 1812 · mot de passe masqué par le secret partagé
-UDP 1812 · signed with the shared secret	UDP 1812 · signé avec le secret partagé
 US markets close early today, 13:00 Eastern	Marchés américains fermés à 13:00, heure de l’Est
 US markets closed today	Marchés américains fermés aujourd’hui
 US markets open	Marchés américains ouverts
@@ -1905,8 +1804,6 @@ WHAT FIXES IT	SOLUTION
 WHAT HAPPENED BEFORE IT BROKE AT	ÉVÉNEMENTS AVANT L’ÉCHEC À
 WHAT THE ROUTER WAS TELLING YOU	CE QUE LE ROUTEUR INDIQUAIT
 WHAT TO TRY NEXT	PROCHAINE ÉTAPE
-WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS	VIDÉOS · 90 JOURS SUR CE PC · CLIQUEZ POUR VOIR L’ORIGINE DES BAISSES
-WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)	QUE SE PASSE-T-IL? CLIQUEZ OU CHERCHEZ AVEC CTRL+K
 WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS	QUAND LES VIDÉOS RALENTISSENT · 30 JOURS
 WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE	PROBLÈMES SUR 7 JOURS × 24 HEURES · SURVOLEZ POUR LA CAUSE
 WHO ASKS WHOM -	QUI INTERROGE QUI —
@@ -2001,13 +1898,10 @@ and wakes the PC	et réveille le PC
 another device	un autre appareil
 another device answers for YOUR address	un autre appareil répond pour VOTRE adresse
 answer	réponse
-answer, back through the router	réponse par le routeur
 answers	réponses
 any answer means it's alive - a Reject for a made-up name is right	toute réponse confirme son fonctionnement; rejeter le nom inventé est normal
 anyone who encrypts a file for you	toute personne qui chiffre un fichier pour vous
 anything for	quoi que ce soit pour
-around the clock (crypto)	en continu pour les cryptos
-arrived T4 - offset worked out	arrivé à T4, décalage calculé
 arrived at T4 - offset worked out	arrivé à T4, décalage calculé
 as fast as the line allows	au débit maximal permis
 ask	demander
@@ -2062,7 +1956,6 @@ conflict - Windows warns and may stop using it	conflit; Windows avertit et peut 
 connected	connecté
 connected (remembered phone). The link button at the top shows it; Your phone > End now stops it.	téléphone mémorisé connecté. Votre téléphone > Terminer arrête la session.
 control: test for	contrôle : test pour
-dashed = 100 ms, the "wait" line	tirets : 100 ms, ligne d’attente
 days left	jours restants
 default route 0.0.0.0/0	route par défaut 0.0.0.0/0
 destination	destination
@@ -2077,7 +1970,6 @@ download at full speed	téléchargement au débit maximal
 drop	coupure
 each fix with what it gives back (memory freed, processor returned)	chaque correction avec mémoire et processeur libérés
 each square is a core; its halves are its two threads - lit = working now	chaque carré est un cœur, ses moitiés sont ses fils; éclairé signifie actif
-earlier report(s) waiting to send when you're online - Read · Delete	rapports en attente de connexion : lire ou supprimer
 echo - UDP gets through	écho, UDP passe
 empty - as it should be	vide, comme prévu
 empty: half speed	vide, demi-vitesse
@@ -2105,7 +1997,6 @@ for a lease time - renewed at half time	pour un bail renouvelé à mi-parcours
 for comparison	pour comparer
 for the computer (at start-up)	pour l’ordinateur au démarrage
 for you (at sign-in)	pour vous à la connexion
-forwarded to	transmis à
 from	depuis
 from inside your own network	depuis votre réseau
 from local port	depuis le port local
@@ -2114,9 +2005,7 @@ from your real address	depuis votre vraie adresse
 full	plein
 game ping while a game you added is open, call quality in a call, else speed + status	ping du jeu ouvert, qualité pendant un appel, sinon débit et état
 gateway	passerelle
-good for 10 h	valide 10 h
 goodbye	au revoir
-got it T2, answered T3	reçu à T2, répondu à T3
 got it at T2, answered at T3	reçu à T2, répondu à T3
 green: bull years	vert : années haussières
 halfway - and narrowing in	à mi-chemin, recherche affinée
@@ -2207,14 +2096,12 @@ network part	partie réseau
 never heard back	aucune réponse reçue
 new	nouveau
 next check	prochain test
-no NAT loopback / hairpin	sans retour NAT local
 no answer to probes	aucune réponse aux sondes
 no dip was clearly on your home network (some couldn't be pinned on anyone). 	aucune baisse clairement liée à votre réseau local; certaines restent inexpliquées. 
 no dip was on your home network. 	aucune baisse sur votre réseau local. 
 no drops	aucune coupure
 no overlap	aucun chevauchement
 no reply	sans réponse
-no reply would mean filtered - or it ignores this question	sans réponse : filtrage possible ou question ignorée
 no sign-in, no password	sans authentification ni mot de passe
 no slow moments	aucun moment lent
 no such name	nom inexistant
@@ -2248,7 +2135,6 @@ open - something answered	ouvert, une réponse reçue
 open now	ouvert actuellement
 open to the network	ouvert sur le réseau
 opens it in AdeeboMeter	ouvre dans AdeeboMeter
-or 'Time exceeded' if the TTL ran out	ou délai dépassé si le TTL est épuisé
 or 'fragmentation needed' from a router	ou fragmentation nécessaire depuis un routeur
 our version + key exchange	notre version et échange de clés
 out from the VPN's exit	depuis la sortie VPN
@@ -2295,7 +2181,6 @@ refused - nothing listens there	refusé, aucun service en écoute
 remembered?	mémorisé?
 results	résultats
 retransmits = packets sent twice	retransmissions : paquets envoyés deux fois
-reverse name?	nom inverse?
 root	racine
 root and	racine et
 round trip = (T4-T1) - (T3-T2)	aller-retour = (T4-T1) - (T3-T2)
@@ -2303,11 +2188,9 @@ router	routeur
 safe to share	partageable
 same packet, new return address	même paquet, nouvelle adresse de retour
 same ping, unmarked	même ping sans marquage
-same service, its inside address	même service, adresse interne
 save one	enregistrer un résultat
 saved next to it	enregistré à côté
 savings-only ghost	scénario épargne seulement
-scores: NHL, football-data.org, CricketData  ·  headlines: BBC Sport	résultats : NHL, football-data.org, CricketData · manchettes : BBC Sport
 sealed	protégé
 sealed from here	chiffré dès ici
 sealed from here - no password is sent	chiffré dès ici, sans mot de passe envoyé
@@ -2320,7 +2203,6 @@ server	serveur
 server inside	serveur interne
 showing	affichage
 showing the last ones	derniers résultats affichés
-sign-in tickets come from here	source des tickets de connexion
 signature checks out	signature valide
 signed by	signé par
 signed by the root	signé par la racine
@@ -2329,7 +2211,6 @@ site	site
 smooth	fluide
 smooth so far	stable jusqu’ici
 something dropped it here - or at theirs	filtrage ici ou chez le destinataire
-something listens on 3389	service en écoute sur 3389
 speed + status	débit et état
 speed under full load	débit sous charge maximale
 speeds	débits
@@ -2344,9 +2225,7 @@ still broadcast	encore diffusé
 still broadcast - other servers learn it's taken	encore diffusé; les autres serveurs apprennent l’attribution
 stop	arrêter
 stop the recording to follow it.	arrêtez la capture pour suivre ce parcours.
-straight across your network	directement sur votre réseau
 straight to the site	directement vers le site
-stratum: steps away from an atomic clock	strate : distance d’une horloge atomique
 streams	flux
 switch / access point	commutateur / point d’accès
 talks like: 	parle comme : 
@@ -2367,7 +2246,6 @@ the connection	la connexion
 the connection is open	la connexion est ouverte
 the destination	la destination
 the difference is the speed	la différence est le débit
-the directory is reachable	l’annuaire est accessible
 the engineer's card	la fiche ingénieur
 the everyday card	la fiche simple
 the far end	l’autre extrémité
@@ -2403,7 +2281,6 @@ the saved run	le test enregistré
 the server says its version first	le serveur annonce sa version d’abord
 the server thinking	traitement du serveur
 the server's greeting - its name and software	la bannière : nom et logiciel du serveur
-the servers that run the directory	les serveurs de l’annuaire
 the service you're trying	le service visé
 the site's own, signed by the middle	le certificat du site signé par l’intermédiaire
 the size, DF and TTL you chose	la taille, DF et TTL choisis
@@ -2418,7 +2295,6 @@ through the VPN	par le VPN
 tight	limité
 tight for streaming yourself	limité pour diffuser vous-même
 to get back to $100	pour revenir à 100 $
-to your public address	vers votre adresse publique
 today	aujourd’hui
 today:	aujourd’hui :
 too big - Fragmentation needed	trop grand, fragmentation nécessaire
@@ -2475,7 +2351,6 @@ with how long to keep it (TTL)	avec durée de conservation TTL
 without the VPN	sans VPN
 wk	sem.
 workgroup	groupe de travail
-write it down - if it ever changes, ask why	notez-la; demandez pourquoi si elle change
 write speed, every ½ second	débit d’écriture toutes les ½ seconde
 wrong shared secret, not a known client, or a firewall	secret incorrect, client inconnu ou pare-feu
 years	ans
@@ -2488,7 +2363,6 @@ you see	vous voyez
 your CA (signs it)	votre autorité de certification
 your DNS	votre DNS
 your DNS server	votre serveur DNS
-your bytes	vos octets
 your file	votre fichier
 your key	votre clé
 your message	votre message
@@ -2535,7 +2409,6 @@ Normal: one request for today and the next 2 days, then quiet until less than a 
 Temperature in	Température en
 How temperatures show in the widget and here.	Unités de température ici et dans le widget.
 Weather in the widget	Météo dans le widget
-On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	Activée : température dans la barre et résumé, p. ex. « 4°C · pluie dès 3 h », sur la fiche.
 Off: only the buddy's face shows the weather.	Désactivée : seul le visage reflète la météo.
 Off: plain words everywhere, the buddy's face stays.	Désactivé : langage direct, visage conservé.
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	Activé : paroles selon humeur et personnage. Faits, chiffres et rapports identiques.
@@ -2643,7 +2516,6 @@ Off - your IT team turned online lookups off (AdeeboMeter.policy).	Désactivé p
 On: currencies (daily) and commodity prices (weekly) from the Bank of Canada - free, official, no account. Fetched only when the Trading page or the evening summary needs newer numbers.	Activé : devises quotidiennes et produits hebdomadaires de la Banque du Canada, sans compte. Chargés si la page ou le résumé attend de nouvelles données.
 Off: no currencies or commodities.	Désactivé : aucune devise ni produit de base.
 Evening summary in the widget	Résumé du soir dans le widget
-On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	Activé : en semaine 17:30-19:00, affiche clôture USD et énergie puis revient. Les problèmes restent prioritaires.
 Off: the widget never changes by itself.	Désactivé : aucun changement automatique du widget.
 One line a minute per server, on this PC only, with the rest of the history	Une ligne par minute et serveur, sur ce PC avec l’historique
  - history is off in History & data, so nothing is kept.	 — historique désactivé, aucune conservation.
@@ -2673,9 +2545,6 @@ Off: connections show bare IP addresses.	Désactivé : adresses IP seules dans l
 Wi-Fi keeps dropping	Le Wi-Fi coupe souvent
 Saved in your AppData folder. Nothing leaves this PC.	Enregistré dans AppData, sur ce PC seulement.
 Saved next to AdeeboMeter.exe. Nothing leaves this PC.	Enregistré près d’AdeeboMeter.exe, sur ce PC seulement.
-Nothing matches "	Aucune correspondance pour «
- setting matches "	 paramètre correspondant à «
- settings match "	 paramètres correspondant à «
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min (every 10 s while this window is open), no call watching.	Le plus léger : routeur 30 s, Internet 5 min, Wi-Fi 2 min ou 10 s dans la fenêtre, sans suivi des appels.
 Just the speeds, like DU Meter.	Débits seulement, comme DU Meter.
 Speeds plus OK / Busy / Problem.	Débits et état : correct, occupé ou problème.
@@ -2697,7 +2566,6 @@ Esc, minimise, the X or the Back to corner button - they all do the same thing: 
 Quit completely	Quitter complètement
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	Clic droit sur l’icône, puis Quitter. Tous les processus auxiliaires s’arrêtent.
 Learn anything	Tout apprendre
-When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.	Survolez le curseur ? pour lire une explication.
 Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	Les paramètres contrôlent la surveillance, de Penny à Gamer.
 Readable source	Code source lisible
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	Tout le code est lisible avant exécution et compilé avec le compilateur Windows.
@@ -2816,7 +2684,6 @@ shown	premiers affichés
 earlier report(s) waiting to send when you're online	rapports en attente de connexion
 not watched - only the best	non surveillé - seuls les
 servers are checked	meilleurs serveurs sont mesurés
-Restart to finish	Redémarrer pour terminer
 Pick your language	Choisissez votre langue
 AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter change tout de suite. Un redémarrage termine les derniers écrans.
 PREVIEW OF	APERÇU :
@@ -3024,7 +2891,6 @@ Nothing to fix: every check came back fine.	Rien à réparer : toutes les vérif
 Now	Maintenant
 Numbers only - AdeeboMeter never tells you what to buy or sell.	Des chiffres seulement : AdeeboMeter ne vous dit jamais quoi acheter ou vendre.
 OUTLOOK  ·  NOW AND NEXT	PERSPECTIVES  ·  MAINTENANT ET ENSUITE
-Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most.	Désactivé jusqu'à ce que vous l'activiez. Ensuite, pendant que cette page est ouverte : les pointages de hockey de la LNH, le soccer et le cricket avec vos propres clés gratuites, et les manchettes de BBC Sport, au plus toutes les 5 minutes.
 One of the row buys this much of the column.	Une unité de la ligne achète cette quantité de la colonne.
 Online checks are turned off by your IT team.	Votre équipe TI a désactivé les vérifications en ligne.
 Only my teams	Seulement mes équipes
@@ -3304,13 +3170,11 @@ Fix for a black hole: lower the MTU of the VPN adapter (or the router's MSS clam
 HOW A TEAMS CALL CONNECTS	COMMENT UN APPEL TEAMS SE CONNECTE
 HOW OUTLOOK GETS YOUR MAIL	COMMENT OUTLOOK REÇOIT VOS COURRIELS
 Hide widget (keep tray icon)	Masquer le widget (garder l'icône de la barre)
-How long one voice packet waits behind 	Combien de temps un paquet de voix attend derrière 
 IN PLAIN WORDS	EN MOTS SIMPLES
 INTERNET OUTAGES · LAST 7 DAYS	PANNES INTERNET · 7 DERNIERS JOURS
 If it goes wrong:	Si ça tourne mal :
 Internet back to normal (16 ms)	Internet revenu à la normale (16 ms)
 Internet slow: 70-130 ms and 2-6% loss past your router - your home network was fine	Internet lent : 70-130 ms et 2-6 % de perte après votre routeur - votre réseau domestique allait bien
-It feels slow right now   Ctrl+Alt+S	Ça semble lent en ce moment   Ctrl+Alt+S
 LOOK DEEPER	VOIR PLUS EN DÉTAIL
 Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.	Les labos en haut : jouez avec le comportement des réseaux, avec vos propres chiffres. En dessous, deux lignes et une image chacun - nouveau en réseautique? Commencez par Les couches, en mots simples.
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	Écoute le trafic de votre PC pendant 10 secondes et vous dit de quoi il est fait : protocoles modernes ou anciens, IPv4 ou IPv6, et le bavardage de fond que Windows envoie à votre réseau local. Rien n'est gardé.
@@ -3325,7 +3189,6 @@ Nothing of that kind happened in those 10 seconds. 	Rien de ce genre ne s'est pr
 Nothing recorded yet - the first reading comes within the hour (Windows' location permission for desktop apps is needed to see neighbours).	Rien d'enregistré pour l'instant : la première lecture arrive dans l'heure (il faut l'autorisation de localisation de Windows pour les applis de bureau pour voir les voisins).
 On your Wi-Fi right now: 	Sur votre Wi-Fi en ce moment : 
 One TCP connection can't go faster than about MSS ÷ round trip × 1.22 ÷ √loss, however fast your plan is - every loss halves its window and it climbs back one packet per round trip. Farther servers suffer more, which is why the same loss hurts a far download more than a near one.	Une connexion TCP ne peut pas aller plus vite qu'environ MSS ÷ aller-retour × 1,22 ÷ √perte, peu importe la vitesse de votre forfait : chaque perte réduit sa fenêtre de moitié, et elle remonte d'un paquet par aller-retour. Les serveurs éloignés en souffrent plus, c'est pourquoi la même perte nuit plus à un téléchargement lointain qu'à un proche.
-Open engineer view	Ouvrir la vue ingénieur
 Outlook	Perspectives
 PACKET 	PAQUET 
 PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK	ANATOMIE D'UN PAQUET  ·  CE QU'IL Y A DANS UN PAQUET PLEINE TAILLE SUR VOTRE LIEN
@@ -3348,7 +3211,6 @@ SAVED DESTINATIONS	DESTINATIONS ENREGISTRÉES
 SERVERS  ·  name  ·  location  ·  host name or IP  ·  how to measure	SERVEURS  ·  nom  ·  lieu  ·  nom d'hôte ou IP  ·  comment mesurer
 Save the new name	Enregistrer le nouveau nom
 Screen 	Écran 
-Serious mode (no jokes)	Mode sérieux (pas de blagues)
 Settings...	Paramètres...
 Show widget	Afficher le widget
 THE REAL PACKETS	LES VRAIS PAQUETS
@@ -3452,13 +3314,11 @@ Why it lags	Pourquoi ça lag
 Before a ranked match: one check of Wi-Fi, background downloads and the line.	Avant une partie classée : une vérification du Wi-Fi, des téléchargements en arrière-plan et de la ligne.
 Ready to play?	Prêt à jouer?
 Would a ping booster (GPN) actually help you? Measure it instead of guessing.	Un accélérateur de ping (GPN) vous aiderait-il vraiment? Mesurez au lieu de deviner.
-warming up...	réchauffement...
 NO CONNECTION - check Home first	AUCUNE CONNEXION : vérifiez d'abord Accueil
 the first 80 shown	les 80 premiers affichés
 Go to	Aller à
 Pinned tools	Outils épinglés
 find the closest	trouver le plus proche
-Auto - Cloudflare, its nearest data centre (download and upload)	Auto : Cloudflare, son centre de données le plus proche (téléchargement et envoi)
 Find the closest server for me	Trouver le serveur le plus proche pour moi
 Add my own server...	Ajouter mon propre serveur...
 closest speed server	serveur de vitesse le plus proche
@@ -3495,16 +3355,12 @@ what changed on this PC and network since then	ce qui a changé sur ce PC et le 
 Wi-Fi works but nothing loads	Le Wi-Fi marche mais rien ne charge
 it's the link to your router	c'est le lien avec votre routeur
 your Wi-Fi or cable: signal, speed, channel and the neighbours	votre Wi-Fi ou câble : signal, vitesse, canal et voisins
-Describe the problem	Décrivez le problème
-I didn't recognise that - press here and I'll check everything, layer by layer.	Je n'ai pas reconnu ça : appuyez ici et je vérifie tout, couche par couche.
-Sounds like 	Ça ressemble à 
 Prefer the Classic tabs?	Vous préférez les onglets classiques?
 Name lookups	Résolution de noms
 not yet	pas encore
 Your traffic	Votre trafic
 On Wi-Fi	Sur le Wi-Fi
 Finding the closest...	Recherche du plus proche...
- MB. Never runs by itself.	 Mo. Ne se lance jamais tout seul.
 Nothing. Boring is good.	Rien. Ennuyeux, c'est bien.
 Nothing in the last 2 hours.	Rien dans les 2 dernières heures.
 Used today on this network: 	Utilisé aujourd'hui sur ce réseau : 
@@ -3528,7 +3384,6 @@ Your tab	Votre onglet
 Pin tools here from any tool page or search result.	Épinglez des outils ici depuis n'importe quelle page d'outil ou résultat de recherche.
 Open the AdeeboLab  ›	Ouvrir l'AdeeboLab  ›
 Break it	Brisez-le
-Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	Votre propre chemin : dans Voyage du paquet, Gamer, Trading, Diffusion ou le Tableau des services, appuyez sur « Montrer mon chemin » : les arrêts mesurés par AdeeboMeter sont en blanc, l'équipement du fournisseur qu'il ne voit pas est en gris pointillé.
 Break it: 	Brisez-le : 
  faults watched to the end · +	 pannes vues jusqu'au bout · +
  Adeebo Points each, the first time.	 Adeebo Points chacune, la première fois.
@@ -3582,12 +3437,6 @@ Safe	Sûr
 Starting...	Démarrage...
 Stopping...	Arrêt...
 Calculators	Calculatrices
-NO SIGNAL	AUCUN SIGNAL
-COMPETITIVE	COMPÉTITIF
-CASUAL	DÉCONTRACTÉ
-LAGGY	ÇA LAG
-ms PING	ms PING
-LAST 60 SECONDS	60 DERNIÈRES SECONDES
 JITTER	GIGUE
 LOSS	PERTE
 LINK	LIEN
@@ -3768,7 +3617,6 @@ every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	chaque ou
 every tool is a command, every page is a folder	chaque outil est une commande, chaque page est un dossier
 every tool with its example	chaque outil avec son exemple
 files - rm asks first	fichiers - rm demande d'abord
-functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	fonctions avec local et return ; tableaux : ${a[1]} "${a[@]}" ${#a[@]}
 go to a page	aller à une page
 help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help pour tout · Tab complète · Ctrl+C arrête · rien ici ne lance un autre programme
 home = your folder, data, mnt/c, pages, tools	home = votre dossier, data, mnt/c, pages, tools
@@ -3820,7 +3668,6 @@ Open AdeeboMeter	Ouvrir AdeeboMeter
 See what's running	Voir ce qui tourne
 Send to my ISP	Envoyer à mon FAI
 Step {0} of 4	Étape {0} sur 4
-Still in the status strip and the corner widget	Toujours dans la barre d'état et le widget d'angle
 The network is fine.	Le réseau va bien.
 a waiting room for your phone, and a clock check once an hour	une salle d'attente pour votre téléphone, et une vérification de l'heure une fois par heure
 disk	disque
@@ -3891,3 +3738,64 @@ starting...	démarrage...
 Markets and Sports look	Apparence Marchés et Sports
 App	Appli
 Newspaper	Journal
+Click the step again to close it.	Cliquez à nouveau sur l'étape pour la fermer.
+Follow an app	Suivre une appli
+The way to	Le chemin vers
+Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.	Activez-le et AdeeboMeter remarque quand quelque chose joue et le surveille. Rien de plus ne passe sur le réseau avant le début d'un flux.
+Point at anything with a small ? beside it, then at the ? - a short explanation opens. The × closes it.	Pointez un élément qui a un petit ? à côté, puis le ? : une courte explication s'ouvre. Le × la ferme.
+Only the name you type goes to {0} to find it - then only its coordinates, to {1}.	Seul le nom que vous tapez part vers {0} pour le trouver - puis seulement ses coordonnées, vers {1}.
+PC version not announced yet	Version PC pas encore annoncée
+That server isn't a host name - use one like api.example.com, or host:port.	Ce serveur n'est pas un nom d'hôte - utilisez par exemple api.example.com, ou hôte:port.
+usually	d'habitude
+Newspaper, white	Journal, blanc
+Newspaper, app colours	Journal, couleurs de l'appli
+The answer from {0} didn't make sense - trying again in half an hour.	La réponse de {0} était incompréhensible - nouvel essai dans une demi-heure.
+Couldn't reach {0} - trying again in half an hour.	Impossible de joindre {0} - nouvel essai dans une demi-heure.
+Your ping right now	Votre ping en ce moment
+signal hidden	signal masqué
+ setting matches "	 paramètre correspondant à «
+ settings match "	 paramètres correspondant à «
+"are you there?" (echo request)	« êtes-vous là? » (requête d’écho)
+"can I connect?" (SYN)	« puis-je me connecter? » (SYN)
+"yes, come in" (SYN-ACK) - the time is this round trip	« oui, entrez » (SYN-ACK), temps de cet aller-retour
+"yes, here" (echo reply) - the time is this round trip	« oui, ici » (réponse d’écho), temps de cet aller-retour
+A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	Une simulation avec les valeurs que vous choisissez - pas une mesure de votre ligne (seules les lignes qui disent « votre » le sont).
+It will be saved in Downloads\AdeeboMeter.	Enregistré dans Downloads\AdeeboMeter.
+Nothing matches "	Aucune correspondance pour «
+Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	Aucun fichier. Téléphone : PC › Fichiers › Envoyer au PC. Après acceptation, les fichiers arrivent dans Downloads\AdeeboMeter.
+On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	Activée : température dans la barre et résumé, p. ex. « 4°C · pluie dès 3 h », sur la fiche.
+On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	Activé : en semaine 17:30-19:00, affiche clôture USD et énergie puis revient. Les problèmes restent prioritaires.
+Saved to Pictures\AdeeboMeter	Enregistré dans Pictures\AdeeboMeter
+Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	Entrez le code ou le nom dans Pour, lancez, puis envoyez le .adeebo. Le PNG reste dans Documents\AdeeboMeter.
+dashed = 100 ms, the "wait" line	tirets : 100 ms, ligne d’attente
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	fonctions avec local et return ; tableaux : ${a[1]} "${a[@]}" ${#a[@]}
+Wi-Fi says "No internet"	Le Wi-Fi dit « Pas d'Internet »
+says "too big"	dit « trop gros »
+Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	Rien trouvé. Cherchez la chose, pas le symptôme : « dns », « wifi », « port ».
+Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	Votre propre chemin : dans Voyage du paquet, Gamer, Trading, Diffusion ou le Tableau des services, appuyez sur « Montrer mon chemin » : les arrêts mesurés par AdeeboMeter sont en blanc, l'équipement du fournisseur qu'il ne voit pas est en gris pointillé.
+FOLLOW	SUIVRE
+Find it	Trouver
+IS IT ME OR THE NETWORK?	EST-CE MOI OU LE RÉSEAU ?
+OR TAP WHAT YOU SEE	OU TOUCHEZ CE QUE VOUS VOYEZ
+WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
+WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
+connected, but nothing works	connecté, mais rien ne marche
+Earn Adeebo Points	Gagner des points Adeebo
+Scan with your phone	Scannez avec votre téléphone
+Older:	Avant :
+Open engineer view	Ouvrir la vue ingénieur
+Sounds like 	Ça ressemble à 
+NO SIGNAL	AUCUN SIGNAL
+COMPETITIVE	COMPÉTITIF
+CASUAL	DÉCONTRACTÉ
+LAGGY	ÇA LAG
+ms PING	ms PING
+LAST 60 SECONDS	60 DERNIÈRES SECONDES
+Esc takes you back to the corner	Échap vous ramène au coin
+Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	Toutes les connexions du PC : application, destinataire, port et état. Nouvelles mises en évidence, fermées estompées. Pointez le ? à côté d'un état pour comprendre ; Sniff enregistre une connexion pour Wireshark.
+updated	mis à jour
+access point nearby	point d'accès à proximité
+access points nearby	points d'accès à proximité
+Everything AdeeboMeter observed	Tout ce qu'AdeeboMeter a observé
+The whole session · download (green) · stream server delay (purple) · dips shaded	Toute la session · téléchargement (vert) · délai du serveur de stream (violet) · creux grisés
+tool	outil

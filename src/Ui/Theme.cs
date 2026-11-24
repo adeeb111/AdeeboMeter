@@ -89,6 +89,8 @@ namespace AdeeboMeter
                 Card = C("#FFFFFF"); Bg = C("#F1F3F6"); Rail = C("#C9CED6"); UpText = C("#9A4A00"); BlueSoft = C("#EAF0FD"); BlueDark = C("#0D47BD");
                 RowNew = C("#E6F4EC"); RowGone = C("#FCEBE8"); RowSel = C("#E8EEFC"); RowHot = C("#F6F8FB"); Grey = C("#B3B9C2");
                 lvText[0] = C("#17794F"); lvText[1] = C("#875A00"); lvText[2] = C("#B42318");
+                // the light level-text colours are a step darker than the website's (#17794F / #875A00 / #B42318): small text on
+                // Windows needs 5:1 or more, the website draws them larger (review L-10, kept on purpose)
                 lvSoft[0] = C("#E6F4EC"); lvSoft[1] = C("#FCF1DC"); lvSoft[2] = C("#FCEBE8");
                 Green = C("#1F9E6B"); Amber = C("#B7791F"); Red = C("#D9473A");
             }
@@ -96,6 +98,9 @@ namespace AdeeboMeter
             {
                 // graphite, not navy (23 Nov): the website's dark
                 Ink = C("#EEF1F5"); Muted = C("#7E8794"); Sub = C("#A9B1BD"); Line = C("#262A31"); Line2 = C("#202329"); Track = C("#262A31"); Soft = C("#1F2329");
+                // review 24 Nov (design ML-4 / L-10), kept on purpose: dark link text is #9CB9FA here, #5B91F7 on the website. Windows
+                // draws text thinner than a browser, so the app's links take the lighter blue (8.8:1 on the card); the website's
+                // value also serves as a button fill, where a lighter blue would fail under white text.
                 Card = C("#181B20"); Bg = C("#111316"); Rail = C("#3A3F47"); UpText = C("#F0A060"); BlueSoft = C("#16233D"); BlueDark = C("#9CB9FA");
                 RowNew = C("#14271F"); RowGone = C("#3A1E1C"); RowSel = C("#1C2638"); RowHot = C("#1C1F24"); Grey = C("#4A5058");
                 lvText[0] = C("#5EF2B0"); lvText[1] = C("#FCD34D"); lvText[2] = C("#FF7A6B");
@@ -352,7 +357,11 @@ namespace AdeeboMeter
         }
         static string bengaliFontFamily;
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
-        static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        // 24 Nov (Adeeb: "very small fonts still have the pixelated issue"): ClearType grid-fitting snaps each letter to whole
+        // pixels, and a size like 11.5 or 13.75 px (half sizes times 125%) leaves the strokes landing between pixels - the small
+        // text came out uneven. Every size is now a whole pixel, and nothing goes under 12 px.
+        public static float Px(float px) { return Math.Max(12f, (float)Math.Round(px)); }
+        static Font Ui(string fam, float px, FontStyle st) { px = Px(px); return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
         // the self-test's language pass switches fonts for bn / ar and back: it keeps the set it started with and puts it back
         public static object SaveFonts() { return new object[] { Grab(), S }; }
         public static void RestoreFonts(object saved) { var o = (object[])saved; Put((Font[])o[0]); S = (float)o[1]; sets.Clear(); }
@@ -389,8 +398,8 @@ namespace AdeeboMeter
             fBody = Ui(UiFam, 13.5f * S, UiFamStyle);
             fBodyB = Ui(UiSemi, 13f * S, UiSemiStyle);
             fSmall = Ui(UiFam, 13f * S, UiFamStyle);
-            fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            fMono = new Font(mono, Px(12f * S), FontStyle.Regular, GraphicsUnit.Pixel);
+            fMonoS = new Font(mono, Px(11f * S), FontStyle.Regular, GraphicsUnit.Pixel);
             fTiny = Ui(UiSemi, 12f * S, UiSemiStyle);
             fPill = Ui(UiSemi, 11.5f * S, UiSemiStyle);
             fBig = Ui(UiDisp, 21 * S, UiDispStyle);
@@ -743,8 +752,8 @@ namespace AdeeboMeter
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
-                var gp = new RectangleF(W - pad - Measure(grade.ToUpperInvariant(), fTiny, 0).Width - 12 * S, y + 12 * S, Measure(grade.ToUpperInvariant(), fTiny, 0).Width + 12 * S, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade.ToUpperInvariant(), fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                var gp = new RectangleF(W - pad - Measure(grade, fTiny, 0).Width - 12 * S, y + 12 * S, Measure(grade, fTiny, 0).Width + 12 * S, 17 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;

@@ -124,12 +124,12 @@ namespace AdeeboMeter
             if (e.Close >= 0 && e.Close < Explain.CloseText.Length) rows.Add(new[] { "CAN I CLOSE IT?", Explain.CloseText[e.Close], e.Close == 0 ? "0" : e.Close == 2 ? "2" : "1" });
             foreach (var r in rows)
             {
-                using (var mb = new SolidBrush(Theme.Muted)) if (g != null) g.DrawString(L.T(r[0]), Draw.fTiny, mb, x, y);   // R2-023
-                y += 16 * S;
+                using (var mb = new SolidBrush(Theme.Ink)) if (g != null) g.DrawString(Kit.Sent(L.T(r[0])), Draw.fBodyB, mb, x, y);   // R2-023; 24 Nov: sentence case, a real label
+                y += 22 * S;
                 var font = compact ? Draw.fSmall : Draw.fBody;
                 var h = Draw.Measure(r[1], font, (int)w).Height;
                 using (var b = new SolidBrush(r.Length > 2 ? Theme.LvText(int.Parse(r[2], CultureInfo.InvariantCulture)) : Theme.Sub)) if (g != null) g.DrawString(r[1], font, b, new RectangleF(x, y, w, h + 4));
-                y += h + (compact ? 6 : 10) * S;
+                y += h + (compact ? 10 : 16) * S;
             }
             return y;
         }

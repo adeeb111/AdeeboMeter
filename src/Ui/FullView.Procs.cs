@@ -121,7 +121,7 @@ namespace AdeeboMeter
                     List<ProcRow> rows; if (!procRowsByCat.TryGetValue(cat, out rows)) rows = new List<ProcRow>();
                     if (rows.Count == 0) continue;
                     y += 8 * S;
-                    g.DrawString(cat.ToUpperInvariant() + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(cat + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var i in rows)
                     {
                         var a = i.A; var rr = new RectangleF(0, y, w + 8 * S, rh);

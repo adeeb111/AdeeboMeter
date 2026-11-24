@@ -28,15 +28,15 @@ namespace AdeeboMeter
             var tip = tips[(int)(DateTime.Now.Ticks / TimeSpan.TicksPerMinute / 4 % tips.Length)];   // a new one every 4 minutes
             var f = Draw.fBody; var bf = Draw.fBtn; var bs = g.MeasureString(L.T(tip[2]) + "  ›", bf);
             float h = 48 * S; var r = new RectangleF(x, y, w, h);
-            Color acc = paper ? Paper.Navy : Kit.Accent(page == "trade" ? "trade" : page);
+            Color acc = paper ? Paper.Navy : Theme.BlueText;   // 24 Nov (v8): one calm blue, not the section's colour - the row is a hint, not an alarm
             if (paper) { Theme.Fill(g, r, 6 * S, Paper.DeskBg); Theme.Stroke(g, r, 6 * S, Paper.Line, 1); }
             else { Theme.Fill(g, r, 12 * S, Theme.Card); Theme.Stroke(g, r, 12 * S, Theme.Line, 1); }   // a plain card; the icon carries the colour (24 Nov)
             var ir = new RectangleF(x + 14 * S, y + (h - 26 * S) / 2, 26 * S, 26 * S);
             using (var ib = new SolidBrush(Color.FromArgb(Theme.Dark && !paper ? 50 : 30, acc))) g.FillEllipse(ib, ir);
             Kit.Icon(g, "question", new RectangleF(ir.X + 5 * S, ir.Y + 5 * S, 16 * S, 16 * S), acc);
             var br = new RectangleF(r.Right - bs.Width - 34 * S, y + (h - 32 * S) / 2, bs.Width + 22 * S, 32 * S);
-            Theme.Fill(g, br, paper ? 6 * S : 10 * S, acc);
-            using (var wb = new SolidBrush(Color.White)) g.DrawString(L.T(tip[2]) + "  ›", bf, wb, br.X + 11 * S, br.Y + (32 * S - bs.Height) / 2);
+            Theme.Fill(g, br, paper ? 6 * S : 10 * S, paper ? Paper.DeskBg : Theme.Card); Theme.Stroke(g, br, paper ? 6 * S : 10 * S, paper ? Paper.Line : Theme.Line, 1);
+            using (var wb = new SolidBrush(acc)) g.DrawString(L.T(tip[2]) + "  ›", bf, wb, br.X + 11 * S, br.Y + (32 * S - bs.Height) / 2);
             using (var tb = new SolidBrush(paper ? Paper.Ink : Theme.Ink)) using (var one = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisWord })
             {
                 var lab = (paper ? "" : L.T("Try this") + ":  ") + L.T(tip[1]); float tx = ir.Right + 12 * S;

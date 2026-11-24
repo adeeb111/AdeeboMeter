@@ -32,7 +32,7 @@ namespace AdeeboMeter
         readonly DB header, pathPanel, side, footer, destCanvas, healthCanvas;
         readonly LiveCapture live = new LiveCapture(); LiveCapture.View liveView; readonly DB liveCanvas; readonly PillButton liveBtn; readonly Panel livePage; int liveTick;
         readonly DB changesCanvas; readonly Panel changesPage;
-        readonly ConnList list; readonly Panel connPage, destPage, healthPage; readonly RoundBox search, destBox; readonly Label connStatus;
+        readonly ConnList list; readonly Panel connPage, destPage, healthPage; readonly RoundBox search, destBox; readonly Control connStatus;
         readonly FlowLayoutPanel tabs, chips; readonly PillButton idle, checkBtn, healthBtn;
         readonly System.Windows.Forms.Timer timer;
         Snap snap; int lastVersion = -1;
@@ -195,8 +195,14 @@ namespace AdeeboMeter
                 if (search.Width != wanted) search.Width = wanted;
             };
             list = new ConnList { Dock = DockStyle.Fill, CanSniff = npcap };
-            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += k => { if (k == null) SetTipKey(null); };   // rows explain themselves on What's running; no card from a plain hover (24 Nov)
-            connStatus = new OneLineLabel { Dock = DockStyle.Bottom, Height = Sc(32), ForeColor = Theme.Muted, Padding = new Padding(Sc(14), Sc(8), 0, 0), BackColor = Theme.Card, Font = Draw.fSmall, AutoEllipsis = true };
+            list.SniffRequested += Sniff; list.JourneyRequested += OpenJourney; list.Changed += UpdateConnStatus; list.HoverKey += k => { if (k != null) tipArea = list.RectangleToScreen(Rectangle.Round(list.BadgeAt)); SetTipKey(k); };   /* review 24 Nov (ML-2): the state's ? explains TIME_WAIT and friends again - only the ?, never a plain hover */   // rows explain themselves on What's running; no card from a plain hover (24 Nov)
+            // the footer line is painted here (a Label still cut it to "26 sho…" on Windows, v8 walk): full width, "…" only at the end
+            connStatus = new DB { Name = "connStatus", Dock = DockStyle.Bottom, Height = Sc(32), BackColor = Theme.Card };
+            connStatus.Paint += delegate(object s, PaintEventArgs e)
+            {
+                var r = new Rectangle(Sc(14), 0, Math.Max(1, connStatus.ClientSize.Width - Sc(28)), connStatus.ClientSize.Height);
+                TextRenderer.DrawText(e.Graphics, connStatus.Text, Draw.fSmall, r, Theme.Muted, TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+            };
             connStatus.Click += delegate { if (Program.LastCapture != "") KeepCapture(); };
             // 24 Nov (Connections mockup): who this PC talks to, by app - one bar on top of the list
             connSum = new DB { Name = "connSum", Dock = DockStyle.Top, Height = Sc(96), BackColor = Theme.Card };
@@ -388,7 +394,7 @@ namespace AdeeboMeter
                 warm.Tick += delegate { warm.Stop(); warm.Dispose(); if (!IsDisposed && tab != "toolbox") EnsureToolbox(); };
                 warm.Start();
             };
-            tip.Dismissed += delegate { tipDismissed = tipKey; tipKey = null; tipWatch = false; tipTimer.Stop(); };
+            tip.Dismissed += delegate { if (tipKey != null) tipClosed.Add(tipKey); tipKey = null; tipWatch = false; tipTimer.Stop(); };   // review 24 Nov (ML-7): closed stays closed until the page changes
             tipTimer.Tick += delegate
             {
                 tipTimer.Stop();
@@ -443,7 +449,7 @@ namespace AdeeboMeter
         {
             UiActivity.Doing = "switching to " + tab; if (tab != "replay") replayFrom = ""; if (tab != "about") bugPage = tab;   // leaving the Time machine ends an "Opened from" visit (review 21 Nov)
             if (tab == "points" || tab == "learn") System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { LabLink.Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.Message); } });   // Network Lab faults watched since (a folder check when nothing changed)
-            SetTipKey(null);   // the old page's help card goes with it
+            SetTipKey(null); tipClosed.Clear();   // the old page's help card goes with it; closed cards may come back on the next page
             learnSeen = "";    // AM-CG-254: reading time restarts when you come back - time away isn't reading
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             if (tab != "stream" && tab != "trade") WatchKit.Drop();   // the 90 days of records only live while their page is open
@@ -615,11 +621,11 @@ namespace AdeeboMeter
                     if (skH != sideH) due.Add("side.health"); if (skP != sideP) due.Add("side.pc"); if (skT != sideT) due.Add("side.top");
                     sideH = skH; sideP = skP; sideT = skT; sideKey = skH + skP + skT;
                     if (due.Count > 0 && !RedrawSpots(side, due.ToArray())) side.Invalidate();
-                } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
+                } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
             if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" ? 2 : 10)) RefreshConns(false);   // the full connection list only refreshes fast where it is shown
-            if (++footTick % 2 == 0) { SelfStats(); string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
+            if (++footTick % 2 == 0 || selfMem == 0) { SelfStats();   /* v8: "0 MB" until the second tick - read at once */ string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
             if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = (rr == null ? "" : rr.Status + "|" + rr.Count) + "|" + HopsPrint(mtrHops) + "|" + HopsPrint(mtuHops);   /* 21 Nov: no more "every 2 s anyway" (the page flickered) - MTR's and MTU's hop tables are part of the key instead */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless
             StreamTick(); SportsTick(); TradeTick(); OutlookTick(); GamerHudTick(); HeartTick();
@@ -714,7 +720,7 @@ namespace AdeeboMeter
             else s += "    |    Sniff: a row's Sniff button captures it for " + Cfg.SniffSec + " s and opens Wireshark";
             bool keep = Program.LastCapture != "" && File.Exists(Program.LastCapture);
             if (keep) s += "    ·    Keep this capture (click)";
-            connStatus.Text = s; connStatus.Cursor = keep ? Cursors.Hand : Cursors.Default;
+            connStatus.Text = s; connStatus.Cursor = keep ? Cursors.Hand : Cursors.Default; connStatus.Invalidate();
         }
         // copies the newest capture to where you choose - the original is still deleted when AdeeboMeter exits
         void KeepCapture()
@@ -984,15 +990,18 @@ namespace AdeeboMeter
                 var top = apps.Take(5).ToList(); int rest = total - top.Sum(a => a.Value);
                 var segs = top.Select(a => Tuple.Create(a.Key, a.Value, ConnList.AppColor(a.Key))).ToList(); if (rest > 0) segs.Add(Tuple.Create(L.T("Other"), rest, Theme.Grey));
                 float bx = x;
-                foreach (var sg in segs) { float sw = Math.Max(4 * S, w * sg.Item2 / total - 3 * S); Theme.Fill(g, new RectangleF(bx, y, sw, 8 * S), 4 * S, sg.Item3); bx += sw + 3 * S; }
+                // the widths are scaled to the card, so a few tiny segments can't push the last one past its edge
+                var sws = segs.Select(sg => Math.Max(4 * S, w * sg.Item2 / total - 3 * S)).ToList(); float k = Math.Min(1f, (w - 3 * S * (segs.Count - 1)) / Math.Max(1f, sws.Sum()));
+                for (int si = 0; si < segs.Count; si++) { float sw = sws[si] * k; Theme.Fill(g, new RectangleF(bx, y, sw, 8 * S), 4 * S, segs[si].Item3); bx += sw + 3 * S; }
                 y += 16 * S; float lx = x;
-                foreach (var sg in segs)
+                for (int si = 0; si < segs.Count; si++)
                 {
-                    string lt = sg.Item1, ln = sg.Item2.ToString(CultureInfo.CurrentCulture); var lsz = g.MeasureString(lt, Draw.fSmall); var nsz = g.MeasureString(ln, Draw.fSmall);
-                    if (lx + lsz.Width + nsz.Width + 30 * S > x + w) break;
+                    var sg = segs[si]; string lt = sg.Item1, ln = sg.Item2.ToString(CultureInfo.CurrentCulture); var lsz = g.MeasureString(lt, Draw.fSmall); var nsz = g.MeasureString(ln, Draw.fSmall);
+                    string more = "+" + (segs.Count - si) + " " + L.T("more"); float mw = si < segs.Count - 1 ? g.MeasureString(more, Draw.fSmall).Width + 8 * S : 0;
+                    if (lx + 12 * S + lsz.Width + 4 * S + nsz.Width + mw > x + w) { g.DrawString(more, Draw.fSmall, sub, lx, y); break; }   // review L-1: say what didn't fit
                     using (var cb = new SolidBrush(sg.Item3)) g.FillEllipse(cb, lx, y + 5 * S, 8 * S, 8 * S);
-                    g.DrawString(lt, Draw.fSmall, sub, lx + 12 * S, y); g.DrawString(ln, Draw.fSmall, ink, lx + 12 * S + lsz.Width, y);
-                    lx += 12 * S + lsz.Width + nsz.Width + 16 * S;
+                    g.DrawString(lt, Draw.fSmall, sub, lx + 12 * S, y); g.DrawString(ln, Draw.fSmall, ink, lx + 12 * S + lsz.Width + 4 * S, y);   // review L-1: a gap, not "chrome.exe12"
+                    lx += 12 * S + lsz.Width + 4 * S + nsz.Width + 16 * S;
                 }
             }
         }
@@ -1081,18 +1090,20 @@ namespace AdeeboMeter
                 // opens when the pointer rests on that ?, and has its own close button
                 List<KeyValuePair<RectangleF, string>> h; string key = null; RectangleF badge = RectangleF.Empty;
                 if (hints.TryGetValue(c, out h)) for (int i = h.Count - 1; i >= 0; i--) if (h[i].Key.Contains(e.Location)) { if (TipEntry(h[i].Value) != null) { key = h[i].Value; badge = BadgeRect(h[i].Key); } break; }
-                SetBadge(c, badge);
+                SetBadge(c, badge); badgeKey = key;
                 bool onBadge = key != null && RectangleF.Inflate(badge, 3 * S, 3 * S).Contains(e.Location);
                 if (onBadge) tipArea = c.RectangleToScreen(Rectangle.Round(badge));
                 c.Cursor = onBadge ? Cursors.Help : click ? Cursors.Hand : Cursors.Default;
-                if (key != tipDismissed) tipDismissed = null;
-                SetTipKey(onBadge && key != tipDismissed ? key : null);
+                SetTipKey(onBadge && key != null && !tipClosed.Contains(key) ? key : null);
             };
             c.MouseLeave += delegate { if (!tip.Visible) SetTipKey(null); if (!tip.Visible) SetBadge(c, RectangleF.Empty); };
             c.Paint += delegate(object s, PaintEventArgs pe) { if (badgeOn == c && badgeAt.Width > 0) { pe.Graphics.ResetTransform(); DrawBadge(pe.Graphics, badgeAt); } };   // an open card stays while the pointer moves onto it (the watch below closes it)
             c.MouseClick += delegate(object s, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left) return;
+                // review 24 Nov (ML-9): a click on the ? is for the explanation - it opens the card (a closed one again) and
+                // doesn't also press the tile or row underneath
+                if (badgeOn == c && badgeKey != null && RectangleF.Inflate(badgeAt, 3 * S, 3 * S).Contains(e.Location)) { tipClosed.Remove(badgeKey); SetTipKey(null); SetTipKey(badgeKey); return; }
                 List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return;
                 for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* Adeebo Points: a page counts as used when something on it was really clicked */
             };
@@ -1100,7 +1111,7 @@ namespace AdeeboMeter
             c.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Right && !IsPopup(c)) PageMenu(c, e.Location); };
         }
         // the small ? that says "there's an explanation here": top-right corner of the hovered item, drawn after the page
-        Control badgeOn; RectangleF badgeAt; string tipDismissed;
+        Control badgeOn; RectangleF badgeAt; string badgeKey; readonly HashSet<string> tipClosed = new HashSet<string>();
         RectangleF BadgeRect(RectangleF r) { float d = 18 * S; return new RectangleF(r.Right - d - 6 * S, r.Y + Math.Min(6 * S, Math.Max(0, (r.Height - d) / 2)), d, d); }
         void SetBadge(Control c, RectangleF r)
         {
@@ -1109,7 +1120,7 @@ namespace AdeeboMeter
             badgeOn = r.Width > 0 ? c : null; badgeAt = r;
             if (badgeOn != null) c.Invalidate(Rectangle.Round(RectangleF.Inflate(r, 3, 3)));
         }
-        static void DrawBadge(Graphics g, RectangleF r)
+        internal static void DrawBadge(Graphics g, RectangleF r)
         {
             var sm = g.SmoothingMode; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using (var b = new SolidBrush(Theme.Card)) g.FillEllipse(b, r);
@@ -1122,7 +1133,7 @@ namespace AdeeboMeter
         {
             if (key == tipKey) return;
             // 24 Nov (Adeeb: "it opens and closes within a second - looks like a bug"): a card opens only when the pointer rests on
-            // the ? for 1.2 s, then stays while the pointer is on that spot or on the card, with a short grace when it slips off
+            // the ? for 0.3 s, then stays while the pointer is on that spot or on the card, with a short grace when it slips off
             if (key == null && tip.Visible && tipWatch) return;   // the watch decides, with its grace
             tipKey = key; tipTimer.Stop();
             if (key == null) { if (tip.Visible) tip.Hide(); return; }

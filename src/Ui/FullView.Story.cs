@@ -65,32 +65,30 @@ namespace AdeeboMeter
             int moreApps = storyAllApps ? 0 : Math.Max(0, apps.Count - 7); if (!storyAllApps) apps = apps.Take(7).ToList();
             if (storyApp != null && !apps.Contains(storyApp) && connSnap.Any(c => c.Proc == storyApp)) apps.Add(storyApp);   // the one you picked stays visible
             if (storyApp == null && storyTarget == "" && apps.Count > 0) StoryPick(apps[0]);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("FOLLOW")), Draw.fTiny, mb, x, y + 8 * S);
-            float cx = x + 60 * S;
+            // 24 Nov (Adeeb: "Network story page looks same old"): the page in cards like every other one - what to follow,
+            // the way there, the timing and the packet's labels - with room between them
+            float cardTop = y, ox = x, ow = w; x += 18 * S; w -= 36 * S; y += 16 * S;
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Follow an app"), Draw.fHead, ib, x, y);
+            y += 30 * S;
+            float cx = x;
             foreach (var a in apps)
             {
-                string an = a.Length > 28 ? a.Substring(0, 27) + "…" : a; var ts = g.MeasureString(an, Draw.fBody); if (cx > x + 60 * S && cx + ts.Width + 22 * S > x + w) { cx = x + 60 * S; y += 36 * S; }   // AM-CG-262: wraps, never silently drops an app
-                var cr = new RectangleF(cx, y, ts.Width + 22 * S, 28 * S);
-                bool on = a == storyApp; Theme.Fill(g, cr, 14 * S, on ? Theme.Blue : Theme.Soft);
-                using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(an, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ts.Height) / 2);
+                string an = a.Length > 28 ? a.Substring(0, 27) + "…" : a; var ts = g.MeasureString(an, Draw.fBody); if (cx > x && cx + ts.Width + 24 * S > x + w) { cx = x; y += 40 * S; }   // AM-CG-262: wraps, never silently drops an app
+                var cr = new RectangleF(cx, y, ts.Width + 24 * S, 30 * S);
+                bool on = a == storyApp; Theme.Fill(g, cr, 15 * S, on ? Theme.Blue : Theme.Soft);
+                using (var tb = new SolidBrush(on ? Theme.OnBlue : Theme.Ink)) g.DrawString(an, Draw.fBody, tb, cx + 12 * S, y + (30 * S - ts.Height) / 2);
                 string aa = a; Act(travelCanvas, cr, delegate { StoryPick(aa); }); cx += cr.Width + 8 * S;
             }
             if (moreApps > 0 || storyAllApps)   // every app, not only the busiest seven
             {
                 string mt = storyAllApps ? L.T("Fewer") : "+" + moreApps + " " + L.T("more"); var ms0 = g.MeasureString(mt, Draw.fBody);
-                if (cx > x + 60 * S && cx + ms0.Width + 22 * S > x + w) { cx = x + 60 * S; y += 36 * S; }
-                var mr = new RectangleF(cx, y, ms0.Width + 22 * S, 28 * S); Theme.Stroke(g, mr, 14 * S, Theme.Line, 1);
-                using (var tb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(mt, Draw.fBody, tb, cx + 11 * S, y + (28 * S - ms0.Height) / 2);
+                if (cx > x && cx + ms0.Width + 24 * S > x + w) { cx = x; y += 40 * S; }
+                var mr = new RectangleF(cx, y, ms0.Width + 24 * S, 30 * S); Theme.Stroke(g, mr, 15 * S, Theme.Line, 1);
+                using (var tb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(mt, Draw.fBody, tb, cx + 12 * S, y + (30 * S - ms0.Height) / 2);
                 Act(travelCanvas, mr, delegate { storyAllApps = !storyAllApps; travelCanvas.Invalidate(); }); cx += mr.Width + 8 * S;
             }
-            if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("No app has an open TCP connection to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 4 * S);
-            y += 36 * S;
-            // AM-CG-259: what this picker can see, and where the rest is
-            string seen = L.T("Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections") + "  ›"; var ss = g.MeasureString(seen, Draw.fSmall);
-            using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(seen, Draw.fSmall, lb, x, y);
-            Act(travelCanvas, new RectangleF(x, y, Math.Min(ss.Width, w), ss.Height), delegate { ShowPage("conn"); });
-            y += 24 * S;
-            if (storyNote != "") using (var nb = new SolidBrush(Theme.Sub)) { g.DrawString(L.T(storyNote), Draw.fSmall, nb, x, y); y += 20 * S; }
+            if (apps.Count == 0) using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("No app has an open TCP connection to the internet right now - type a site above."), Draw.fBody, mb, cx, y + 5 * S);
+            y += 30 * S + 18 * S;
             // the picked app's connections: each one can be the story (chips, the followed one highlighted)
             if (storyApp != null)
             {
@@ -98,21 +96,31 @@ namespace AdeeboMeter
                     .Select(gr => gr.First()).OrderByDescending(c => c.State == "ESTABLISHED").ThenBy(c => c.Host == "" ? c.RemoteIp : c.Host).ToList();
                 if (its.Count > 1)
                 {
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("ITS CONNECTIONS")) + " (" + its.Count + ")", Draw.fTiny, mb, x, y + 8 * S);
-                    float kx = x + 150 * S; int shown = 0;
+                    using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(Kit.Sent(L.T("ITS CONNECTIONS")) + " (" + its.Count + ")", Draw.fBodyB, mb, x, y);
+                    y += 26 * S; float kx = x; int shown = 0;
                     foreach (var c in its)
                     {
                         if (shown == 12) { using (var mb = new SolidBrush(Theme.Sub)) g.DrawString("+" + (its.Count - 12) + " " + L.T("in Connections"), Draw.fSmall, mb, kx, y + 6 * S); break; }
                         string ct = Draw.Trunc(c.Host != "" ? c.Host : c.RemoteIp, 30) + (c.RemotePort != 443 ? ":" + c.RemotePort : "") + (c.State == "ESTABLISHED" || c.State == "" ? "" : " · " + c.State.ToLowerInvariant());
-                        var cs = g.MeasureString(ct, Draw.fSmall); if (kx > x + 150 * S && kx + cs.Width + 18 * S > x + w) { kx = x + 150 * S; y += 30 * S; }
-                        var kr = new RectangleF(kx, y + 2 * S, cs.Width + 18 * S, 24 * S); bool on = c.RemoteIp == storyIp && c.RemotePort == storyPort;
-                        Theme.Fill(g, kr, 12 * S, on ? Theme.BlueSoft : Theme.Soft);
-                        using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Ink)) g.DrawString(ct, Draw.fSmall, tb, kx + 9 * S, y + 2 * S + (24 * S - cs.Height) / 2);
-                        var cc = c; Act(travelCanvas, kr, delegate { StoryFollow(cc); }); kx += kr.Width + 6 * S; shown++;
+                        var cs = g.MeasureString(ct, Draw.fSmall); if (kx > x && kx + cs.Width + 20 * S > x + w) { kx = x; y += 36 * S; }
+                        var kr = new RectangleF(kx, y, cs.Width + 20 * S, 28 * S); bool on = c.RemoteIp == storyIp && c.RemotePort == storyPort;
+                        Theme.Fill(g, kr, 14 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, kr, 14 * S, Theme.Blue, 1);
+                        using (var tb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Ink)) g.DrawString(ct, Draw.fSmall, tb, kx + 10 * S, y + (28 * S - cs.Height) / 2);
+                        var cc = c; Act(travelCanvas, kr, delegate { StoryFollow(cc); }); kx += kr.Width + 8 * S; shown++;
                     }
-                    y += 36 * S;
+                    y += 28 * S + 18 * S;
                 }
             }
+            if (storyNote != "") using (var nb = new SolidBrush(Theme.Sub)) { float nh = Draw.Measure(L.T(storyNote), Draw.fSmall, (int)w).Height; g.DrawString(L.T(storyNote), Draw.fSmall, nb, new RectangleF(x, y, w, nh + 2)); y += nh + 10 * S; }
+            // AM-CG-259: what this picker can see, and where the rest is - the card's footnote
+            {
+                string seen = L.T("Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections") + "  ›"; float sh = Draw.Measure(seen, Draw.fSmall, (int)w).Height;
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(seen, Draw.fSmall, lb, new RectangleF(x, y, w, sh + 2));
+                Act(travelCanvas, new RectangleF(x, y, w, sh), delegate { ShowPage("conn"); });
+                y += sh + 16 * S;
+            }
+            Kit.Frame(g, new RectangleF(ox, cardTop, ow, y - cardTop), 14 * S);
+            x = ox; w = ow; y += 20 * S;
             if (storyTarget == "") return Kit.Empty(g, x, y, Math.Min(w, 760 * S), "story", "home", "Follow one connection, box by box", "Pick an app above, or type a site, and I'll walk its traffic from this PC out to the far end - seven boxes, each one clickable.", StoryPoints);
 
             // the seven boxes
@@ -134,19 +142,23 @@ namespace AdeeboMeter
                 new[] { double.IsNaN(nms) || double.IsNaN(gms) ? "-" : "+" + Math.Max(0, nms - gms).ToString("0", CultureInfo.CurrentCulture) + " ms", vpn ? "VPN" : "router → internet gap", double.IsNaN(nms) ? "2" : nms - gms > 120 ? "1" : "0" },
                 new[] { hops > 0 ? hops + " networks" : ms(nms), hops > 0 ? "on the way" : "to the internet", "3" },
                 new[] { ShortIp(conv != null && conv.Host != "" ? conv.Host : storyTarget, 22), role != "" ? Draw.Trunc(role, 24) : storyIp != "" ? ShortIp(storyIp, 24) : "", r != null && r.Level >= 0 ? r.Level.ToString(CultureInfo.InvariantCulture) : "3" } };
+            cardTop = y; x += 18 * S; w -= 36 * S; y += 16 * S;
+            using (var ib = new SolidBrush(Theme.Ink)) using (var nw0 = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T("The way to") + " " + (storyApp ?? Draw.Trunc(storyTarget, 40)), Draw.fHead, ib, new RectangleF(x, y, w, 24 * S), nw0);
+            y += 34 * S;
             // narrow window or large text: two rows of boxes (4 + 3) instead of seven squeezed ones
             int per = (w - 6 * 14 * S) / 7 < 96 * S ? 4 : 7;
-            float bw = (w - (per - 1) * 14 * S) / per, bh = 84 * S;
+            float bw = (w - (per - 1) * 14 * S) / per, bh = 88 * S;
             for (int i = 0; i < 7; i++)
             {
                 var br = new RectangleF(x + (i % per) * (bw + 14 * S), y + (i / per) * (bh + 14 * S), bw, bh); bool on = storyBox == i; int lv = int.Parse(box[i][2], CultureInfo.InvariantCulture);
-                Kit.Box(g, br, 14 * S); if (on) { Theme.Fill(g, br, 14 * S, Theme.BlueSoft); Theme.Stroke(g, br, 14 * S, Theme.Blue, 2); }
-                Draw.LvDot(g, lv, br.X + 10 * S, br.Y + 12 * S, 9 * S, 9 * S);
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString((i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]).ToUpperInvariant(), Draw.fTiny, mb, br.X + 24 * S, br.Y + 9 * S);
+                // tiles inside the card (a card in a card is one box too many): soft fill, the picked one blue
+                Theme.Fill(g, br, 12 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, br, 12 * S, Theme.Blue, 2);
+                Draw.LvDot(g, lv, br.X + 12 * S, br.Y + 15 * S, 9 * S, 9 * S);
+                using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(L.T(i == 2 && kind != "Wi-Fi" ? "Cable" : BoxName[i]), Draw.fSmall, mb, br.X + 27 * S, br.Y + 11 * S);
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 {
-                    using (var ib = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(box[i][0], Draw.fBodyB, ib, new RectangleF(br.X + 10 * S, br.Y + 32 * S, bw - 16 * S, 20 * S), nowrap);
-                    using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(box[i][1], Draw.fSmall, sb, new RectangleF(br.X + 10 * S, br.Y + 54 * S, bw - 16 * S, 18 * S), nowrap);
+                    using (var ib = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(box[i][0], Draw.fBodyB, ib, new RectangleF(br.X + 12 * S, br.Y + 36 * S, bw - 20 * S, 22 * S), nowrap);
+                    using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(box[i][1], Draw.fSmall, sb, new RectangleF(br.X + 12 * S, br.Y + 60 * S, bw - 20 * S, 20 * S), nowrap);
                 }
                 if (i < 6 && (i + 1) % per != 0) using (var ap = new Pen(Theme.Rail, 2 * S)) { ap.CustomEndCap = Cap34; g.DrawLine(ap, br.Right + 2 * S, br.Y + bh / 2, br.Right + 12 * S, br.Y + bh / 2); }
                 int ii = i; Act(travelCanvas, br, delegate { storyBox = storyBox == ii ? -1 : ii; if (ii == 3 && routeTable == null) LoadRoutes(); if (ii == 0 && m365Rows == null) LoadApps(); travelCanvas.Invalidate(); });
@@ -159,17 +171,19 @@ namespace AdeeboMeter
                     Act(travelCanvas, cr, delegate { try { System.Windows.Forms.Clipboard.SetText(full); storyNote = L.T("Copied") + " " + full; } catch (System.Runtime.InteropServices.ExternalException) { } travelCanvas.Invalidate(); });
                 }
             }
-            y += bh + 8 * S + (per < 7 ? bh + 14 * S : 0);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? L.T("Click any step to see what happens to your data there.") : "", Draw.fSmall, mb, x, y);
-            y += 28 * S;
+            y += bh + 12 * S + (per < 7 ? bh + 14 * S : 0);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(storyBox < 0 ? L.T("Click any step to see what happens to your data there.") : L.T("Click the step again to close it."), Draw.fSmall, mb, x, y);
+            y += 26 * S;
             if (storyApp != null && storyIp != "")
             {
                 // AM-CG-260: the app's own connection and the separate test are two different things - both shown
                 string ep = (storyIp.Contains(":") ? "[" + storyIp + "]" : storyIp) + ":" + storyPort;
                 string tested = r != null ? r.Ip ?? "" : "";
                 string two = L.T("The app's own connection:") + " " + ep + (storyLocal > 0 ? " (" + L.T("from local port") + " " + storyLocal + ")" : "") + ".  " + L.T("The trace and timing test reach") + " " + storyTarget + (tested != "" && tested != storyIp ? " = " + tested + " - " + L.T("a different server than the app's") : " " + L.T("on their own - they can land on a different server"));
-                float th = Draw.Measure(two, Draw.fSmall, (int)w).Height; using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString(two, Draw.fSmall, sb2, new RectangleF(x, y, w, th + 2)); y += th + 8 * S;
+                float th = Draw.Measure(two, Draw.fSmall, (int)w).Height; using (var sb2 = new SolidBrush(Theme.Muted)) g.DrawString(two, Draw.fSmall, sb2, new RectangleF(x, y, w, th + 2)); y += th + 8 * S;
             }
+            y += 8 * S; Kit.Frame(g, new RectangleF(ox, cardTop, ow, y - cardTop), 14 * S);
+            x = ox; w = ow; y += 20 * S;
 
             // what happens in the chosen box: two lines, then what's behind it
             if (storyBox >= 0)
@@ -185,7 +199,7 @@ namespace AdeeboMeter
                 float th = Draw.Measure(two[storyBox], Draw.fBody, (int)(w - 28 * S)).Height;
                 var tr = new RectangleF(x, y, w, th + 22 * S); Theme.Fill(g, tr, 10 * S, Theme.Soft);
                 using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(two[storyBox], Draw.fBody, ib, new RectangleF(x + 14 * S, y + 11 * S, w - 28 * S, th + 4));
-                y += tr.Height + 14 * S;
+                y += tr.Height + 16 * S;
                 switch (storyBox)
                 {
                     case 0:
@@ -209,22 +223,25 @@ namespace AdeeboMeter
                         if (r != null && r.TlsProto != "") y = InfoCardOn(travelCanvas, g, "THE LOCK (TLS)", new List<string[]> { new[] { "Version", r.TlsProto, "3" }, new[] { "Certificate from", r.TlsIssuer, "3" }, new[] { "Inspected on the way?", r.Inspected != "" ? "yes - re-signed by " + r.Inspected : "no", r.Inspected != "" ? "1" : "0" } }, "travel.L6·5", x, y, w);
                         break;
                 }
-                y += 6 * S;
+                y += 20 * S;
             }
 
-            // the timed handshake
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent(L.T("HOW LONG EACH STEP TAKES")), Draw.fTiny, mb, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "travel.LADDER");
-            y += 22 * S;
+            // the timed handshake - its own card
+            cardTop = y; x += 18 * S; w -= 36 * S; y += 16 * S;
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(L.T("HOW LONG EACH STEP TAKES")), Draw.fHead, ib, x, y); Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 24 * S), "travel.LADDER");
+            y += 34 * S;
             if (r == null || (!r.Done && !travelBusy))
             {
                 string lab = (storyApp != null ? L.T("Time each step to") + " " + storyApp + L.T("'s server") : L.T("Time each step to") + " " + Draw.Trunc(storyTarget, 40)) + "  >"; var ls = g.MeasureString(lab, Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(lab, Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
                 Act(travelCanvas, lr, delegate { travelBox.Box.Text = storyTarget; FollowPacket(); travelBox.Box.Text = ""; });
-                y += 42 * S;
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("This runs the same check as Check a destination: it looks up the name, connects, secures the connection and waits for the first reply. Nothing else is sent."), Draw.fSmall, mb, new RectangleF(x, y, w, 34 * S));
-                return y + 34 * S;
+                y += 46 * S;
+                string why = L.T("This runs the same check as Check a destination: it looks up the name, connects, secures the connection and waits for the first reply. Nothing else is sent."); float wh = Draw.Measure(why, Draw.fSmall, (int)w).Height;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(why, Draw.fSmall, mb, new RectangleF(x, y, w, wh + 2));
+                y += wh + 16 * S; Kit.Frame(g, new RectangleF(ox, cardTop, ow, y - cardTop), 14 * S);
+                return y + 20 * S;
             }
-            if (travelBusy && !r.Done) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(travelStatus, Draw.fBody, mb, x, y); y += 26 * S; }
+            if (travelBusy && !r.Done) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(travelStatus, Draw.fBody, mb, x, y); y += 30 * S; }
             var parts = new[] { Tuple.Create("Name (DNS)", r.DnsMs, Theme.C("#8250DF")), Tuple.Create("Connect (TCP)", r.TcpMs, Theme.C("#1F6FEB")), Tuple.Create("Lock (TLS)", r.TlsMs, Theme.C("#0E8A9E")), Tuple.Create("First byte", r.TtfbMs, Theme.C("#2DA44E")) }.Where(p => !double.IsNaN(p.Item2) && p.Item2 >= 0).ToList();
             double total = parts.Sum(p => p.Item2);
             if (parts.Count > 0 && total > 0)
@@ -236,7 +253,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(p.Item3)) g.FillRectangle(b, pr);
                     bx += pw;
                 }
-                y += barH + 8 * S;
+                y += barH + 12 * S;
                 float lx = x;   // legend under the bar, so tiny steps stay readable
                 foreach (var p in parts)
                 {
@@ -245,12 +262,14 @@ namespace AdeeboMeter
                     using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(t, Draw.fSmall, mb, lx + 14 * S, y);
                     lx += ts.Width + 30 * S;
                 }
-                y += 26 * S;
+                y += 30 * S;
                 var slow = parts.OrderByDescending(p => p.Item2).First();
                 using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(ms(total) + " from name to first byte. Most of it: " + slow.Item1 + (slow.Item1.StartsWith("Connect", StringComparison.Ordinal) ? " - that's distance to the server." : slow.Item1.StartsWith("First", StringComparison.Ordinal) ? " - the server thinking." : "."), Draw.fBody, ib, new RectangleF(x, y, w, 40 * S));
                 y += 30 * S;
             }
-            if (r.Done && LiveCapture.Available) { y += 6 * S; y = PaintReal(g, x, y, w); }
+            y += 10 * S; Kit.Frame(g, new RectangleF(ox, cardTop, ow, y - cardTop), 14 * S);
+            x = ox; w = ow; y += 20 * S;
+            if (r.Done && LiveCapture.Available) { y = PaintReal(g, x, y, w); y += 10 * S; }
             return y;
         }
     }

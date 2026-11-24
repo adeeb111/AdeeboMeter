@@ -115,7 +115,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < pts.Length; i++)
                 {
                     using (var db = new SolidBrush(Kit.Accent(i == 1 ? a2 : a1))) g.FillEllipse(db, cx + 2 * S, cy + 5 * S, 7 * S, 7 * S);
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(pts[i][0].TrimEnd(' ', ':').ToUpperInvariant(), Draw.fTiny, mb, cx + 16 * S, cy);
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(pts[i][0].TrimEnd(' ', ':'), Draw.fTiny, mb, cx + 16 * S, cy);
                     cy += Draw.fTiny.GetHeight(g) + 1 * S;
                     var vr = new RectangleF(cx + 16 * S, cy, r.Right - cx - 34 * S, 2 * lh + 1); float vh = Math.Min(vr.Height, g.MeasureString(pts[i][1], Draw.fSmall, (int)vr.Width).Height);
                     using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(pts[i][1], Draw.fSmall, sb, vr, nf);

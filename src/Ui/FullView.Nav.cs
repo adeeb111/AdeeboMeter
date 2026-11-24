@@ -202,7 +202,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(hc ? SystemColors.GrayText : NavyText))
                 {
                     float ly = mr.Y + 34 * S;
-                    foreach (var kv in new[] { new[] { "CPU", Draw.Fmt(snap.Cpu, "0", "%") }, new[] { "RAM", Draw.Fmt(snap.Mem, "0", "%") }, new[] { L.T("Me"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB" } })
+                    if (selfMem == 0) SelfStats(); foreach (var kv in new[] { new[] { "CPU", Draw.Fmt(snap.Cpu, "0", "%") }, new[] { "RAM", Draw.Fmt(snap.Mem, "0", "%") }, new[] { L.T("Me"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB" } })
                     {
                         g.DrawString(kv[0], Draw.fBody, b, mr.X + 12 * S, ly); var vs = g.MeasureString(kv[1], Draw.fBody);
                         g.DrawString(kv[1], Draw.fBody, b, mr.Right - 12 * S - vs.Width, ly); ly += 19 * S;

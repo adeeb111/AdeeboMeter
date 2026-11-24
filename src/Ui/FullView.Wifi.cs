@@ -177,7 +177,7 @@ namespace AdeeboMeter
             float tw = w - 160 * S; var hs = rows.Select(r => Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 10 * S).ToList();
             var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fBodyB, mb, x + 14 * S, y + 12 * S);   /* 24 Nov: sentence case */
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), key);
             float ry = y + 34 * S;
             for (int i = 0; i < rows.Count; i++)

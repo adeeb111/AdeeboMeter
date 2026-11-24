@@ -17,7 +17,7 @@ namespace AdeeboMeter
         int rewindIdx = -1; RectangleF replayTrack; bool replayDrag, replayLoading; double pendingAt = -1; double[] replayMed = new double[History.Cols];
         // a little celebration when the cursor crosses a new device or a Wi-Fi hop: a burst of dots from the LAN dot, about a
         // second long; the timer runs only while there are dots to move
-        readonly List<float[]> sparks = new List<float[]>(); System.Windows.Forms.Timer sparkT; Rectangle sparkLast = Rectangle.Empty; int sparkIdx = -1; string sparkLabel = ""; PointF sparkAt; DateTime sparkUntil;
+        readonly List<float[]> sparks = new List<float[]>(); System.Windows.Forms.Timer sparkT; PointF knobAt; Rectangle sparkLast = Rectangle.Empty; int sparkIdx = -1; string sparkLabel = ""; PointF sparkAt; DateTime sparkUntil;
         static readonly Color[] SparkCol = { Color.FromArgb(255, 196, 60), Color.FromArgb(70, 200, 120), Color.FromArgb(90, 160, 230), Color.FromArgb(230, 90, 160) };
         void Spark(PointF at, string label)
         {
@@ -112,11 +112,14 @@ namespace AdeeboMeter
             if (best != replayIdx || gap != replayGap) { replayIdx = best; replayGap = gap; replayCanvas.Invalidate(); }
         }
         void ReplayStep(int by) { var d = replayData; if (d == null || d.M.Count == 0) return; replayGap = -1; replayIdx = Math.Max(0, Math.Min(d.M.Count - 1, replayIdx + by)); replayCanvas.Invalidate(); }
-        void ReplayNextProblem(int dir)
+        void ReplayNextProblem(int dir) { int i = ProblemFrom(dir); if (i >= 0) { replayIdx = i; replayGap = -1; replayCanvas.Invalidate(); } }
+        // the next (dir 1) or previous (dir -1) minute where a problem starts, or -1 - the buttons show disabled at the ends (review ML-3)
+        int ProblemFrom(int dir)
         {
-            var d = replayData; if (d == null) return;
+            var d = replayData; if (d == null) return -1;
             for (int i = replayIdx + dir; i >= 0 && i < d.M.Count; i += dir)
-                if (!double.IsNaN(d.M[i][1]) && d.M[i][1] >= 1 && (i - dir < 0 || i - dir >= d.M.Count || double.IsNaN(d.M[i - dir][1]) || d.M[i - dir][1] < 1)) { replayIdx = i; replayCanvas.Invalidate(); return; }
+                if (!double.IsNaN(d.M[i][1]) && d.M[i][1] >= 1 && (i - dir < 0 || i - dir >= d.M.Count || double.IsNaN(d.M[i - dir][1]) || d.M[i - dir][1] < 1)) return i;
+            return -1;
         }
 
         static double Median(History.Day d, int col) { var v = d.M.Select(r => r[col]).Where(x => !double.IsNaN(x) && x >= 0).OrderBy(x => x).ToList(); return v.Count == 0 ? double.NaN : v.Count % 2 == 1 ? v[v.Count / 2] : (v[v.Count / 2 - 1] + v[v.Count / 2]) / 2; }   // AM-CG-263: an even count averages the two middle values
@@ -218,15 +221,25 @@ namespace AdeeboMeter
                 Theme.Fill(g, replayTrack, 3 * S, Theme.Track);
                 Theme.Fill(g, new RectangleF(px, y + 8 * S, cxr - px, 6 * S), 3 * S, Theme.Blue);
                 using (var kb = new SolidBrush(Theme.Card)) using (var kp = new Pen(Theme.Blue, 2.5f * S)) { g.FillEllipse(kb, cxr - 9 * S, y + 2 * S, 18 * S, 18 * S); g.DrawEllipse(kp, cxr - 9 * S, y + 2 * S, 18 * S, 18 * S); }
-                Hint(replayCanvas, new RectangleF(px, y - 4 * S, pw, 30 * S), "replay.SLIDER");
+                knobAt = new PointF(cxr, y + 11 * S);   // review L-9: a new device or a Wi-Fi hop bursts from the minute on the slider
+                Hint(replayCanvas, new RectangleF(px, y - 4 * S, Math.Max(60 * S, cxr - px - 14 * S), 30 * S), "replay.SLIDER");   // review L-12: its ? sits left of the knob, never on it
                 y += 32 * S;
                 // step buttons, and the minute shown at the right
                 cx = x;
-                foreach (var b in new[] { Tuple.Create("‹ " + L.T("Previous problem"), -999), Tuple.Create("−10 min", -10), Tuple.Create("−1 min", -1), Tuple.Create("+1 min", 1), Tuple.Create("+10 min", 10), Tuple.Create(L.T("Next problem") + " ›", 999) })
+                // review ML-4 / L-10: translated step labels, and short ones when the full row would run into the time
+                string mn = " " + L.T("min"); string hmT = at.ToString("HH:mm", CultureInfo.CurrentCulture); float hmW = g.MeasureString(hmT, Draw.fHead).Width + 16 * S;
+                var steps = new[] { Tuple.Create("‹ " + L.T("Previous problem"), -999), Tuple.Create("−10" + mn, -10), Tuple.Create("−1" + mn, -1), Tuple.Create("+1" + mn, 1), Tuple.Create("+10" + mn, 10), Tuple.Create(L.T("Next problem") + " ›", 999) };
+                if (steps.Sum(b => g.MeasureString(b.Item1, Draw.fSmall).Width + 26 * S) > w - hmW)
+                    steps = new[] { Tuple.Create("‹", -999), Tuple.Create("−10", -10), Tuple.Create("−1", -1), Tuple.Create("+1", 1), Tuple.Create("+10", 10), Tuple.Create("›", 999) };
+                int prevP = ProblemFrom(-1), nextP = ProblemFrom(1);
+                foreach (var b in steps)
                 {
                     string t = b.Item1; int by = b.Item2; var ts = g.MeasureString(t, Draw.fSmall); var br = new RectangleF(cx, y, ts.Width + 20 * S, 30 * S);
-                    Theme.Fill(g, br, 8 * S, Theme.Card); Theme.Stroke(g, br, 8 * S, Theme.Line, 1); g.DrawString(t, Draw.fSmall, ink, cx + 10 * S, y + (30 * S - ts.Height) / 2);
-                    if (by == -999) Act(replayCanvas, br, delegate { ReplayNextProblem(-1); });
+                    bool off = (by == -999 && prevP < 0) || (by == 999 && nextP < 0);   // no problem that way: shown off, not a button that does nothing
+                    Theme.Fill(g, br, 8 * S, off ? Theme.Soft : Theme.Card); if (!off) Theme.Stroke(g, br, 8 * S, Theme.Line, 1);
+                    using (var tb = new SolidBrush(off ? Theme.Muted : Theme.Ink)) g.DrawString(t, Draw.fSmall, tb, cx + 10 * S, y + (30 * S - ts.Height) / 2);
+                    if (off) { }
+                    else if (by == -999) Act(replayCanvas, br, delegate { ReplayNextProblem(-1); });
                     else if (by == 999) Act(replayCanvas, br, delegate { ReplayNextProblem(1); });
                     else Act(replayCanvas, br, delegate { ReplayStep(by); });
                     cx += br.Width + 6 * S;
@@ -259,7 +272,7 @@ namespace AdeeboMeter
                 {
                     bool first = sparkIdx < 0; sparkIdx = replayIdx;
                     var hit = data.E.FirstOrDefault(e => Math.Abs((e.T - at).TotalSeconds) <= 60 && ((e.Kind == "lan" && e.Text.StartsWith("New on", StringComparison.Ordinal)) || (e.Kind == "wifi" && e.Text.IndexOf("access point", StringComparison.Ordinal) >= 0)));
-                    if (hit != null && !first) Spark(new PointF(x + (w - (Cfg.Buddy ? 70 * S : 0)) * 0.3f, y + 6 * S + 9 * S), hit.Kind == "lan" ? Voice.P("✨ New device!", "New device") : Voice.P("🦘 Wi-Fi hop!", "Wi-Fi roamed"));
+                    if (hit != null && !first) Spark(knobAt, hit.Kind == "lan" ? Voice.P("✨ New device!", "New device") : Voice.P("🦘 Wi-Fi hop!", "Wi-Fi roamed"));
                 }
                 // in plain words
                 // AM-CG-265: only what was measured is vouched for, and more than one cause can be named
@@ -277,7 +290,7 @@ namespace AdeeboMeter
                 {
                     float mY = y, ix = x + 20 * S, iw = w - 40 * S, th = 80 * S;
                     float plh = Draw.Measure(plain, Draw.fBig, (int)iw).Height;
-                    Func<double, string, string> dayOf = (m0, u) => double.IsNaN(m0) ? "" : L.T("day") + " " + m0.ToString("0", CultureInfo.CurrentCulture) + u;
+                    Func<double, string, string> dayOf = (m0, u) => double.IsNaN(m0) ? "" : L.T("usually") + " " + m0.ToString("0", CultureInfo.CurrentCulture) + u;   // review L-4: the day's middle value, said as such
                     var tiles = new[] {
                         new[] { "This PC", double.IsNaN(cpu) ? L.T("not measured") : cpu.ToString("0", CultureInfo.CurrentCulture) + "% " + Kit.Sent(L.T("CPU")), dayOf(replayMed[2], "%"), pcLv.ToString(CultureInfo.InvariantCulture), "path.PC" },
                         new[] { "Your router", L.T(ms(gw)), dayOf(replayMed[5], " ms"), lanLv.ToString(CultureInfo.InvariantCulture), "path.LAN" },

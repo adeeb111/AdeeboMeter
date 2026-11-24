@@ -2,7 +2,6 @@
 # Product names, technical identifiers, units and keys intentionally retain their spelling.
 #coverage 100
 + Add server	+ সার্ভার যোগ করুন
-+ Add your own game	+ নিজের গেম যোগ করুন
 1 day	1 দিন
 10 GB	10 GB
 100 GB	100 GB
@@ -20,7 +19,6 @@ A website or app won't open	ওয়েবসাইট বা অ্যাপ �
 About	সম্পর্কে
 AdeeboMeter itself	AdeeboMeter সম্পর্কে
 Alerts	সতর্কতা
-An app freezes	অ্যাপ আটকে যায়
 App and connection watch	অ্যাপ ও সংযোগ নজরদারি
 Auto	স্বয়ংক্রিয়
 BGP and who owns the network	BGP ও নেটওয়ার্কের মালিক
@@ -57,9 +55,7 @@ Everyday	দৈনন্দিন
 Export settings...	সেটিংস এক্সপোর্ট করুন...
 Export...	এক্সপোর্ট করুন...
 FINDING	যা পাওয়া গেছে
-FOLLOW	অনুসরণ করুন
 Fan is loud or it's hot	ফ্যান জোরে চলছে বা ডিভাইস গরম
-Find it	খুঁজুন
 Finish walk test	হেঁটে পরীক্ষা শেষ করুন
 Follow	অনুসরণ করুন
 Follow Windows	Windows অনুযায়ী
@@ -74,17 +70,12 @@ HOW LONG EACH STEP TAKES	কোন ধাপে কত সময় লাগে
 HOW WOULD YOU LIKE ADEEBOMETER?	ADEEBOMETER কীভাবে ব্যবহার করতে চান?
 History	ইতিহাস
 History & data	ইতিহাস ও ডেটা
-Home networks only	শুধু বাড়ির নেটওয়ার্কে
 Hover wait on the folded chip	ভাঁজ করা চিপের ওপর কার্সর রাখার সময়
 How long a row's Sniff button captures before opening Wireshark.	Wireshark খোলার আগে সারির Sniff বোতাম কতক্ষণ ডেটা ধরবে।
-How long to rest the mouse on the folded chip before the card opens.	ভাঁজ করা ছোট আইকনের ওপর কতক্ষণ মাউস রাখলে কার্ড খুলবে।
 How strongly the corner widget shows when you're not hovering it.	মাউস সরিয়ে রাখলে কোণের উইজেট কতটা স্পষ্ট দেখাবে।
 How visible	দৃশ্যমানতা
-I KNOW WHAT IT IS	সমস্যাটা জানি
 I have no internet	ইন্টারনেট চলছে না
 I'm running out of storage	স্টোরেজ ফুরিয়ে আসছে
-IS IT ME OR THE NETWORK?	সমস্যা আমার ডিভাইসে, নাকি নেটওয়ার্কে?
-IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS	সমস্যা আমার ডিভাইসে, না নেটওয়ার্কে? · বিস্তারিত দেখতে বিন্দুতে ক্লিক করুন
 Import settings...	সেটিংস ইম্পোর্ট করুন...
 Import...	ইম্পোর্ট করুন...
 Inside Windows	Windows-এর ভেতরে
@@ -92,7 +83,6 @@ Internet and DNS check	ইন্টারনেট ও DNS পরীক্ষা
 Internet stops and starts	ইন্টারনেট বারবার বন্ধ হচ্ছে, আবার চলছে
 Investigate	সমস্যা খুঁজুন
 Investigate a problem	সমস্যা খুঁজে দেখুন
-Is it me or the network? One glance tells you.	সমস্যা ডিভাইসে, না নেটওয়ার্কে? এক নজরেই জানুন।
 It was fine yesterday	গতকালও ঠিক ছিল
 Keep game history for	গেমের ইতিহাস রাখা হবে
 Keep history for	ইতিহাস রাখা হবে
@@ -120,8 +110,6 @@ Names for IP addresses	IP ঠিকানার নাম
 Network story	নেটওয়ার্কের গল্প
 Never	কখনো নয়
 Not sure what's wrong	কী সমস্যা বুঝতে পারছি না
-Not sure what's wrong?	সমস্যাটা কী বুঝতে পারছেন না?
-OR TAP WHAT YOU SEE	অথবা যা দেখছেন, সেটি বেছে নিন
 Off	বন্ধ
 On	চালু
 Online lookups on	অনলাইন অনুসন্ধান চালু
@@ -171,7 +159,6 @@ Start with Windows	Windows-এর সঙ্গে চালু করুন
 Stop monitoring	নজর রাখা বন্ধ করুন
 Stop session	সেশন থামান
 Story	গল্প
-Support AdeeboMeter  >	AdeeboMeter-কে সহায়তা করুন  >
 Switch them off by themselves after	এই সময় পর নিজে থেকে বন্ধ হবে
 TCP / IP HEALTH	TCP / IP-এর অবস্থা
 TERMS USED IN ADEEBOMETER	ADEEBOMETER-এ ব্যবহৃত পরিভাষা
@@ -181,10 +168,8 @@ TOP BY CPU	CPU সবচেয়ে বেশি ব্যবহার কর�
 TOP BY MEMORY	মেমরি সবচেয়ে বেশি ব্যবহার করছে
 Teams call detection	Teams কল শনাক্ত করা
 Teams, Zoom, WhatsApp cut out	Teams, Zoom, WhatsApp-এ কল কেটে যায়
-Tell me when a new device joins	নতুন ডিভাইস যুক্ত হলে জানান
 Test these now	এগুলো এখন পরীক্ষা করুন
 Test under load...	ব্যস্ত সংযোগে পরীক্ষা করুন...
-That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	ঠিক আছে। কী লক্ষ করছেন বলুন, অথবা কাছাকাছি সমস্যাটি বাছুন। সবকিছু অফলাইনেও কাজ করে—যখন গুগলেও খুঁজতে পারছেন না।
 The default - every check close. Router every 2 s, internet every 15 s: notices trouble within seconds.	ডিফল্ট—ঘন ঘন পরীক্ষা। রাউটার প্রতি 2 s, ইন্টারনেট প্রতি 15 s: কয়েক সেকেন্ডেই সমস্যা ধরে।
 The internet is slow	ইন্টারনেট ধীর
 Theme	থিম
@@ -197,14 +182,11 @@ Voice	কথার ধরন
 WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T	হেঁটে পরীক্ষা · কোন ঘরে সংযোগ ভালো, কোন ঘরে নয়
 WHAT CHANGED 15 MINUTES EITHER SIDE	আগের ও পরের 15 মিনিটে কী বদলেছে
 WHAT I OBSERVED	যা লক্ষ করেছি
-WHAT'S WRONG?	কী সমস্যা?
-WHERE EVERYTHING LIVES	কোন জিনিস কোথায় আছে
 Watch and suggest	নজর রাখুন ও পরামর্শ দিন
 Watch my first pinned destination all day	প্রথম পিন করা গন্তব্যটি সারা দিন দেখুন
 What changed	কী বদলেছে
 What's running	কী চলছে
 Wi-Fi	Wi-Fi
-Wi-Fi says "No internet"	Wi-Fi-এ "No internet" দেখায়
 Wi-Fi vs cable...	Wi-Fi আর কেবল তুলনা করুন...
 Wi-Fi watch	Wi-Fi নজরদারি
 Widget	উইজেট
@@ -215,22 +197,16 @@ You can switch any time in Settings › General.	সেটিংস › সা�
 YouTube, Netflix stop and spin	YouTube, Netflix থেমে লোড হতে থাকে
 Your PC	আপনার পিসি
 Your Wi-Fi	আপনার Wi-Fi
-any game, any server IP	যেকোনো গেম, যেকোনো সার্ভারের IP
-connected, but nothing works	সংযুক্ত আছে, কিন্তু কিছুই চলছে না
 everything else works	বাকি সব ঠিকমতো চলছে
 everything takes a long time	সবকিছুতে অনেক সময় লাগছে
-free for everyone - a donation helps cover signing and the Store	সবার জন্য ফ্রি—অনুদান কোড সাইনিং ও Store-এর খরচে সাহায্য করে
-it stops responding	এটি আর সাড়া দেয় না
 measure	মাপুন
 nothing opens - works even when you can't google it	কিছুই খুলছে না—গুগল ব্যবহার করতে না পারলেও এটি কাজ করে
 opens the website in your browser - AdeeboMeter itself never checks	ব্রাউজারে ওয়েবসাইট খোলে—AdeeboMeter নিজে পরীক্ষা করে না
-pages take ages, videos buffer	পেজ খুলতে দেরি হয়, ভিডিও বাফার করে
 something is working hard	কোনো কিছু অনেক রিসোর্স ব্যবহার করছে
 the network isn't in the list	নেটওয়ার্কটি তালিকায় নেই
 tshark is the heaviest thing AdeeboMeter can run, so it always stops by itself.	tshark হলো AdeeboMeter-এর সবচেয়ে বেশি রিসোর্স ব্যবহার করা টুল, তাই এটি নিজে থেকেই থেমে যায়।
 what changed since then?	এরপর কী বদলেছে?
 works, then doesn't, then works	কখনো চলে, কখনো চলে না
-Check everything for me	আমার জন্য সব পরীক্ষা করুন
 Test my speed	আমার গতি পরীক্ষা করুন
 Stop	থামান
 Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.	শুধু সমস্যাটা বলুন। বিন্দুগুলো, «কী সমস্যা?», গতি পরীক্ষা, ইতিহাস আর গেমার জোন।
@@ -238,26 +214,17 @@ All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.
 Network	নেটওয়ার্ক
 Devices	ডিভাইস
 Traffic Lab	ট্রাফিক ল্যাব
-Find any tool (mtu, dns, wifi, slow...)	যেকোনো টুল খুঁজুন (mtu, dns, wifi, ধীর...)
-Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot	সমস্যা লিখুন—যেমন YouTube বারবার থামে, কল আটকে যায়, ল্যাপটপ গরম
-Check a destination sends only what you ask for, to where you ask, when you press Check.	গন্তব্য পরীক্ষা শুধু আপনার চাওয়া পরীক্ষাই, আপনার নির্ধারিত গন্তব্যে পাঠায়—যখন পরীক্ষা বোতামে চাপেন।
 Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.	Ctrl+K দিয়ে যেকোনো কিছুতে যান। ওপরের ডানে «বিস্তারিত» থেকে মূল মান, উৎস ও সময় দেখুন।
 DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	DNS-এর ইতিহাস রাখা হয় না (ধূসর বিন্দু)। প্রতিটি সংখ্যা এই পিসিতে সেই দিনের ফাইল থেকে নেওয়া AdeeboMeter-এর নিজস্ব এক মিনিটের গড়।
-Each added game's best region, up to this many. Never more than 10 probes a second in total.	প্রতিটি যোগ করা গেমের সেরা অঞ্চল, এই সীমা পর্যন্ত। সব মিলিয়ে সেকেন্ডে 10টির বেশি পরীক্ষার অনুরোধ যায় না।
-Every night anything older goes (rolling). 90 days is still only about 1.5 MB.	নির্ধারিত সময়ের চেয়ে পুরোনো তথ্য প্রতি রাতে মুছে যায়। 90 দিনের তথ্যও প্রায় 1.5 MB মাত্র।
 HOP	হপ
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	হপ · রাউটার · সেখানে পৌঁছানো সবচেয়ে বড় প্যাকেট · মাপতে হপে ক্লিক করুন
 Needs a newer Wireshark (3.0 or later).	নতুন Wireshark দরকার (3.0 বা পরের সংস্করণ)।
 No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	ক্লাউড, অ্যাকাউন্ট, টেলিমেট্রি, আপডেট, বিজ্ঞাপন বা ক্র্যাশ রিপোর্ট নেই। কোনো পোর্টে সংযোগের অপেক্ষায় থাকে না—প্রতিবার চালু হয়ে নিজেই তা পরীক্ষা করে।
-Nothing is talking to the internet right now - type a site above.	এখন কোনো কিছু ইন্টারনেটের সঙ্গে যোগাযোগ করছে না—ওপরে একটি সাইট লিখুন।
-Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	কলের আগে পরীক্ষা: রাউটারে 20টি ও 1.1.1.1-এ 20টি পিং। DNS গতি পরীক্ষা: আপনার DNS, 1.1.1.1, 8.8.8.8 ও 9.9.9.9-এ প্রায় 40টি নামের অনুসন্ধান। হেঁটে পরীক্ষা: প্রতি ঘরে রাউটারে 20টি পিং। আপনি চালু করলেই শুধু চলে।
-Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent.	গন্তব্য পরীক্ষার মতোই নাম, সংযোগ, নিরাপত্তা, প্রথম বাইট ও পৌঁছানোর পথ পরীক্ষা করে। অন্য কিছু পাঠায় না।
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	শুধু পাবলিক IP ঠিকানা RIPEstat ও PeeringDB-তে পাঠায়, তারপর নিজে থেকে বন্ধ হয়। সেটিংস > অনলাইন অনুসন্ধানে সময়সীমা পাবেন।
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	সেই মিনিট · দিনের মধ্যম মানের সঙ্গে তুলনা
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	এক নজরে দিনটি · রঙের ফিতা = ফলাফল, নীল = রাউটারের দেরি (MS), সবুজ = WI-FI সিগন্যাল (%)
 TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC	বেশি ডেটার সংযোগ · ট্রাফিকের TLS সার্ভার নাম / DNS থেকে নাম নেওয়া
 Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.	গন্তব্য লিখে চালু করুন: AdeeboMeter পথ বের করবে, তারপর আপনি প্রতিটি হপ মাপতে পারবেন।
-WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR	আমার নেটওয়ার্ক কখন খারাপ থাকে? · গত 7 দিন × 24 ঘণ্টা · প্রতি ঘণ্টার সবচেয়ে খারাপ মুহূর্ত
 WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)	WI-FI-এর অবস্থা · Windows যে তথ্য সবসময় দেয় (লোকেশন বন্ধ থাকলেও চলে)
 Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so.	Windows এবার আশপাশের কোনো নেটওয়ার্ক দেখায়নি—প্রায় প্রতি মিনিটে তালিকা নতুন করে খোঁজে।
 YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY	আপনার সুইচ পোর্ট · LLDP / CDP, শুধু শোনা হয়
@@ -281,25 +248,17 @@ Press Run to see your own.	আপনার ফল দেখতে চালু �
 See an example	একটি নমুনা দেখুন
 Hide the example	উদাহরণ লুকান
 See an example day	একটি নমুনা দিন দেখুন
-+1 Adeebo Point	+1 Adeebo Point
-+2 replay bonus	আবার চালানোর বোনাস +2
 Adeebo Point	Adeebo Point
 Adeebo Points	Adeebo Points
-examples done	নমুনা দেখা হয়েছে
 of	এর মধ্যে
 Beginner	শুরু করছেন
 Learner	শিখছেন
 Troubleshooter	সমস্যা সমাধানকারী
 Expert	দক্ষ
-Earn Adeebo Points	Adeebo Points অর্জন করুন
-Replay bonus · +2	আবার চালানোর বোনাস · +2
 Already earned.	আগেই পেয়েছেন।
-Run it for real: +1 Adeebo Point.	সত্যি চালিয়ে দেখুন: +1 Adeebo Point।
 Doesn't earn Adeebo Points - it sends test traffic.	এতে Adeebo Points পাওয়া যায় না—এটি পরীক্ষার ট্রাফিক পাঠায়।
-Replay bonus · +2 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +2 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
 HOW TO EARN	যেভাবে পয়েন্ট পাবেন
 Open a tool's Example, then run it for real	টুলের নমুনা খুলুন, তারপর সত্যি চালিয়ে দেখুন
-+1, or +2 for the longer tests	+1, লম্বা পরীক্ষায় +2
 Run a tool marked replay again, 10 minutes or more later	আবার চালানোর চিহ্ন থাকা টুল অন্তত 10 মিনিট পরে চালান
 +2, once	+2, একবার
 Read a Learn topic to the end	শেখার একটি বিষয় শেষ পর্যন্ত পড়ুন
@@ -312,13 +271,10 @@ done	সম্পন্ন
 to	পর্যন্ত
 Pages	পাতা
 Nothing matches - try another word.	কিছু মেলেনি—অন্য শব্দ দিয়ে খুঁজুন।
-Top rank - every feature you tried taught you something.	সর্বোচ্চ স্তর—ব্যবহার করা প্রতিটি সুবিধা থেকেই কিছু শিখেছেন।
 Earning is off (Settings › Adeebo Points) - your points are kept.	পয়েন্ট অর্জন বন্ধ (সেটিংস › Adeebo Points)—আপনার পয়েন্ট থাকবে।
 Community and support	কমিউনিটি ও সহায়তা
-AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing.	AdeeboMeter ফ্রি ও ওপেনসোর্স। এগুলো ব্রাউজারে খুলবে—AdeeboMeter নিজে কিছু পাঠায় না।
 Ask a question or share an idea	প্রশ্ন করুন বা নতুন ধারণা জানান
 Report a bug	ত্রুটি জানান
-Source code and releases	সোর্স কোড ও রিলিজ
 Donate	দান করুন
 Other amount	অন্য পরিমাণ
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal-এ কানাডীয় ডলারে। AdeeboMeter আপনার কোনো তথ্য পাঠায় না।
@@ -328,7 +284,6 @@ days of history are deleted for good - this can't be undone. The Neighbour wars 
  tools match	 টুল মিলেছে
 All	সব
 All tools	সব টুল
-Ask the question - the right tool comes up. Type in the box above, or pick a question.	প্রশ্ন লিখুন—সঠিক টুল পেয়ে যাবেন। ওপরের ঘরে লিখুন, অথবা একটি প্রশ্ন বাছুন।
 Did you mean	আপনি কি এটি বোঝাতে চেয়েছেন
 Enter opens the first	Enter চাপলে প্রথমটি খুলবে
 Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free.	সবার জন্য ফ্রি। আপনার সময় বাঁচালে, অনুদান কোড সাইনিং ও Microsoft Store-এর খরচ মেটাতে এবং AdeeboMeter ফ্রি রাখতে সাহায্য করে।
@@ -466,7 +421,6 @@ Why is it slow?	ধীর হচ্ছে কেন?
 Where does it break?	কোন ধাপে সমস্যা?
 What's on my network?	আমার নেটওয়ার্কে কী আছে?
 Why can't it join?	যুক্ত হতে পারছে না কেন?
-Windows and certificates	Windows ও সার্টিফিকেট
 Build test traffic	পরীক্ষার ট্রাফিক তৈরি করুন
 Is it this PC?	সমস্যা কি এই পিসিতে?
 VPN and company proxy - is it the slow part?	VPN বা কোম্পানির প্রক্সি কি ধীর করছে?
@@ -532,7 +486,6 @@ airtime fairness	এয়ারটাইমের সমান ভাগ
 nothing	কিছুই করে না
 on (TCP, most traffic)	চালু (TCP ও বেশির ভাগ ট্রাফিক)
 off	বন্ধ
-says "too big"	জানায় «আকার বেশি»
 is blocked from saying it	সেই বার্তাটি আটকে দেওয়া হয়
 First come, first served (most home routers)	আগে এলে আগে যাবে (বেশির ভাগ বাড়ির রাউটার)
 Fair queuing (each flow takes turns)	সুষম কিউ (প্রতি ডেটাপ্রবাহ পালা পায়)
@@ -541,7 +494,6 @@ Clear my losses	আমার ভুলের হিসাব মুছুন
 Test my line under load  ›	ব্যস্ত অবস্থায় আমার লাইন পরীক্ষা করুন  ›
 Find the real MTU of my path  ›	আমার পথের আসল MTU বের করুন  ›
 Next question  ›	পরের প্রশ্ন  ›
-Click a stop to see what happens to the labels there. Sizes are the usual ones; Packet stack in the Toolbox works out any mix.	কোনো ধাপে ক্লিক করে দেখুন, সেখানে লেবেল কীভাবে বদলায়। এখানে প্রচলিত আকার দেখানো হয়েছে; টুলবক্সের প্যাকেট স্ট্যাক দিয়ে যেকোনো সমন্বয় হিসাব করতে পারেন।
 Measure again	আবার মাপুন
 Block width = packet size · amber = sent again · red = an error from the network · a red mark = a stall	ব্লকের প্রস্থ = প্যাকেটের আকার · হলুদ = আবার পাঠানো · লাল = নেটওয়ার্কের ত্রুটি · লাল দাগ = আটকে যাওয়া
 stall	আটকে যাওয়া
@@ -561,7 +513,6 @@ Decimal, hex and binary	দশমিক, হেক্স ও বাইনার�
 What changed when it broke?	সমস্যা শুরুর সময় কী বদলেছিল?
 Is this Wi-Fi OK to use? (hotel, cafe)	এই Wi-Fi ব্যবহার করা নিরাপদ? (হোটেল, ক্যাফে)
 DNS race - which server is fastest here	DNS তুলনা—এখানে কোন সার্ভার দ্রুততম
-Devices on this network (kept over time)	এই নেটওয়ার্কের ডিভাইস (আগের তথ্যসহ)
 Drivers, device problems and USB history	ড্রাইভার, ডিভাইসের সমস্যা ও USB ইতিহাস
 Why isn't my USB device working?	আমার USB ডিভাইস কাজ করছে না কেন?
 Why is my game lagging?	আমার গেমে ল্যাগ হচ্ছে কেন?
@@ -648,18 +599,15 @@ Look up three different destinations in your own route table.	নিজের �
 Keep the ping at 30 ms or more and get the whole budget under 60 ms.	পিং 30 ms বা তার বেশি রেখেও মোট বিলম্ব 60 ms-এর নিচে আনুন।
 Find an upload where even first come, first served keeps the call's wait under 10 ms.	এমন আপলোড খুঁজুন যেখানে আগে আসলে আগে পাঠানোর নিয়মেও কলের অপেক্ষা 10 ms-এর নিচে থাকে।
 Get 5 right in a row, then 10 in a row.	টানা 5টি, তারপর টানা 10টি সঠিক উত্তর দিন।
-A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	আপনার বেছে নেওয়া সংখ্যা দিয়ে সিমুলেশন—আপনার লাইনের মাপ নয়। শুধু «আপনার» লেখা সারিগুলো আসল মাপ।
 Save your Adeebo Award card	আপনার Adeebo Award কার্ড সেভ করুন
 Couldn't save the card	কার্ড সেভ করা যায়নি
 Your card is saved	আপনার কার্ড সেভ হয়েছে
-Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.	হল অব ফেমে পাঠান: GitHub ফর্ম কোড যাচাই করে নিজে থেকেই আপনাকে যোগ করে। লেখাটি কপি করা আছে, পেস্ট করলেই হবে।
 This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can.	AdeeboMeter-এর এই কপি সোর্স কোড থেকে বানানো, তাই কার্ডে দাবির কোড নেই এবং হল অব ফেমে পাঠানো যাবে না। ওয়েবসাইট থেকে নামানো কপিতে তা পারবেন।
 Your Adeebo Award card	আপনার Adeebo Award কার্ড
 Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32.	হল অব ফেমে যে নামে দেখাতে চান। অক্ষর, সংখ্যা, স্পেস ও . - _ ' ব্যবহার করুন—সর্বোচ্চ 32টি অক্ষর।
 Make the card	কার্ড বানান
 Make my award card	আমার পুরস্কারের কার্ড বানান
 Make it again	আবার বানান
-Send it with the GitHub form ›	GitHub ফর্ম দিয়ে পাঠান ›
 The Hall of Fame page ›	হল অব ফেমের পাতা ›
 Show the picture	ছবি দেখুন
 NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR	আশপাশের Wi-Fi-এর প্রতিযোগিতা · গত 7 দিন
@@ -670,7 +618,6 @@ filled = strongest on your channel that day · ring = on your channel · dot = h
 Journey	যাত্রা
 What did Windows Update break?	Windows Update কী বদলে সমস্যা করেছে?
 Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন পরীক্ষা। পেছনে, আপনার গেমগুলোর সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময়, প্রতি সেকেন্ডে 16টি পর্যন্ত সার্ভার।
-The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	সবচেয়ে হালকা। রাউটার প্রতি 30 s, ইন্টারনেট প্রতি 5 min, Wi-Fi প্রতি 2 min; কল নজরদারি বন্ধ।
 By goal	লক্ষ্য অনুযায়ী
 Everything	সবকিছু
 Games	গেম
@@ -759,8 +706,6 @@ QR code to read it on your phone	ফোনে পড়ার জন্য QR �
 Help-a-friend bundle (encrypted file)	বন্ধুকে সাহায্যের প্যাকেজ (এনক্রিপ্ট করা ফাইল)
 My Bluetooth devices	আমার Bluetooth ডিভাইস
 Is another device using my address?	অন্য ডিভাইস কি আমার ঠিকানা ব্যবহার করছে?
-Scan with your phone	ফোন দিয়ে স্ক্যান করুন
-Your phone's camera reads it - nothing is sent.	আপনার ফোনের ক্যামেরা পড়বে—কিছু পাঠানো হয় না।
 not on the map	মানচিত্রে নেই
 green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server	50 ms-এর নিচে সবুজ · 100-এর নিচে হলুদ · বেশি হলে লাল · ধূসর: এখনো পিং হয়নি · বলয় = গেমের ক্লাউড অঞ্চলের আনুমানিক ফল, বিন্দু = আসল সার্ভার
 6 months	6 মাস
@@ -862,7 +807,6 @@ SYN - let's talk, my sequence starts at 1000	SYN — যোগাযোগ ক�
 ACK 1001 - got it	ACK 1001 — পেয়েছি
 SYN-ACK - fine, mine starts at 5000, ack 1001	SYN-ACK — ঠিক আছে, আমারটা 5000 থেকে, ack 1001
 Getting an address (DHCP)	ঠিকানা পাওয়া (DHCP)
-The order is Discover, Offer, Request, Ack. The PC asked for an address before anyone offered one.	ক্রম হলো Discover, Offer, Request, Ack। কোনো সার্ভার প্রস্তাব দেওয়ার আগেই পিসি ঠিকানা চেয়ে বসেছে।
 DISCOVER - any DHCP server?	DISCOVER — কোনো DHCP সার্ভার আছে?
 REQUEST - I'll take 192.168.1.37	REQUEST — আমি 192.168.1.37 নেব
 OFFER - you can have 192.168.1.37	OFFER: আপনি 192.168.1.37 নিতে পারেন।
@@ -881,7 +825,6 @@ Certificate, Finished	সার্টিফিকেট, Finished
 A traceroute	একটি traceroute
 With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it.	TTL 2 হলে প্যাকেট দ্বিতীয় রাউটারেই শেষ হয়, সেটি «সময় শেষ» জানায়। না পৌঁছানো প্যাকেটের উত্তর 1.1.1.1 দিতে পারে না।
 Time exceeded (TTL ran out here)	সময় শেষ (TTL এখানে ফুরিয়েছে)
-ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64	ping, TTL 2 — সরাসরি 1.1.1.1 থেকে উত্তর, TTL 64
 Time exceeded	সময় শেষ
 A big packet, don't fragment	বড় প্যাকেট, ভাগ করবেন না
 A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	পরের লিঙ্ক প্যাকেটের চেয়ে ছোট হলেই রাউটার «ভাগ করা দরকার» জানায়। MTU 1600 হলে 1500 বাইট যাওয়ার কথা।
@@ -1054,7 +997,6 @@ Find a process or app	প্রক্রিয়া বা অ্যাপ খ�
 Site, app or server - e.g. outlook.office.com	সাইট, অ্যাপ বা সার্ভার—যেমন outlook.office.com
 Find a process	প্রক্রিয়া খুঁজুন
 Search: DNS, TCP, svchost, jitter...	খুঁজুন: DNS, TCP, svchost, jitter...
-Jump to a tab, program, term or protocol...	ট্যাব, প্রোগ্রাম, পরিভাষা বা প্রোটোকলে যান...
 Find a feature... mtr, dns, wifi, certificate	সুবিধা খুঁজুন... mtr, dns, wifi, certificate
 Your website or mail domain (optional)	আপনার সাইট বা ইমেইলের ডোমেইন (ইচ্ছাধীন)
 Or type a site - e.g. github.com	অথবা সাইট লিখুন—যেমন github.com
@@ -1086,7 +1028,6 @@ Arrange tabs...	ট্যাব সাজান...
 My tab	আমার ট্যাব
 Your own tab - one click to what you use most.	নিজের ট্যাব—বেশি ব্যবহার করা জিনিস এক ক্লিকেই।
 Nothing pinned yet. Open a tool and press the pin, or pin a search result.	এখনো কিছু পিন করেননি। টুল খুলে পিন চাপুন, অথবা অনুসন্ধানের ফল পিন করুন।
-Details on for the full path	পুরো পথ দেখতে বিস্তারিত চালু করুন
 Pinned	পিন করা
 Pinned to your tab	আপনার ট্যাবে পিন হয়েছে
 Earned	অর্জিত
@@ -1108,7 +1049,6 @@ Browse...	খুঁজে নিন...
 Make a report	রিপোর্ট তৈরি করুন
 ↑↓ move · Enter open · Ctrl+P pin to your tab · Esc close	↑↓ দিয়ে বাছুন · Enter দিয়ে খুলুন · Ctrl+P দিয়ে ট্যাবে পিন করুন · Esc দিয়ে বন্ধ করুন
 Nothing here by that name. Fewer words usually find it.	এই নামে কিছু নেই। সাধারণত কম শব্দে ভালো মেলে।
-Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	কিছু পাইনি। লক্ষণের বদলে বিষয়টি খুঁজুন: "dns", "wifi", "port"।
 Not a thing I have. Yet. Try another word?	এটি এখনো আমার তালিকায় নেই। অন্য শব্দ চেষ্টা করবেন?
 Searched every drawer. Try a shorter word.	সবখানে খুঁজেছি। ছোট কোনো শব্দ দিয়ে দেখুন।
 Pick a question - the right tool comes up.	প্রশ্ন বাছুন—সঠিক টুল পেয়ে যাবেন।
@@ -1179,7 +1119,6 @@ Normal	স্বাভাবিক
 Chatty	গল্পপ্রিয়
 Talk like...	এভাবে বলুন...
 More personas	আরও ব্যক্তিত্ব
-Companion settings...	সঙ্গীর সেটিংস...
 Surprise me	নিজেই বেছে দিন
 PREVIEW	নমুনা
 TALK LIKE...	কথার ধরন...
@@ -1203,11 +1142,7 @@ Import lines	কথার তালিকা ইম্পোর্ট করু�
 Add these lines to yours?	এই কথাগুলো আপনার তালিকায় যোগ করবেন?
 Couldn't save your lines.	আপনার কথাগুলো সেভ করা যায়নি।
 Credits	কৃতজ্ঞতা
-New: the Sidebar layout - sections down the left, search on top, a live meter.	নতুন: পাশের বার—বাঁয়ে বিভাগ, ওপরে অনুসন্ধান আর লাইভ মিটার।
 Try it	চেষ্টা করুন
-No thanks	না, ধন্যবাদ
-Find what's wrong	সমস্যার কারণ খুঁজুন
-Type what you notice, or press Find what's wrong.	কী লক্ষ করছেন লিখুন, অথবা «সমস্যা খুঁজুন» চাপুন।
 Full checkup	পুরো পরীক্ষা
 Run full checkup	পুরো পরীক্ষা চালান
 Include a speed test (up to 500 MB)	গতি পরীক্ষাও করুন (500 MB পর্যন্ত)
@@ -1237,7 +1172,6 @@ When should it tell you?	কখন আপনাকে জানাবে?
 What should it remember?	কী মনে রাখবে?
 What may it ask the internet?	ইন্টারনেট থেকে কী তথ্য আনতে পারবে?
 For engineers: capture limits	বিশেষজ্ঞদের জন্য: ক্যাপচারের সীমা
-QUICK SETUP	দ্রুত সেটআপ
 Skip	এড়িয়ে যান
 All of this can be changed any time in Settings.	সেটিংস থেকে যেকোনো সময় সব বদলাতে পারবেন।
 Plain - no jokes	সোজাসাপটা—রসিকতা ছাড়া
@@ -1297,9 +1231,7 @@ Your provider	আপনার ইন্টারনেট সেবাদাত�
 no answer	উত্তর নেই
 not measured	মাপা হয়নি
 reply	উত্তর
- (posted about a week later). An index of world prices in US dollars - the change is what to read. ▲ = prices went up.	 (প্রায় এক সপ্তাহ পরে প্রকাশিত)। মার্কিন ডলারে বিশ্ববাজারের দামের সূচক—পরিবর্তনটি দেখুন। ▲ মানে দাম বেড়েছে।
  (stop)	 (থামান)
- - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.	 —আনুমানিক দর, ট্রেডিংয়ের জন্য নয়। ▲ মানে আগের দিনের তুলনায় CAD-এ মুদ্রাটির দাম বেড়েছে।
  - not a single dip.	 —একবারও গতি কমেনি।
  Mb/s down (was 	 Mb/s ডাউনলোড (আগে ছিল 
  ago - too old to say what you can stream right now. Press the button for a fresh one.	 আগের—এখন কী স্ট্রিম করতে পারবেন বলার জন্য পুরোনো। নতুন পরীক্ষার জন্য বোতাম চাপুন।
@@ -1318,10 +1250,6 @@ reply	উত্তর
  without a dip	 একবারও গতি না কমে
  · market closed - the live check sleeps until 9:30 Eastern	 · বাজার বন্ধ—পূর্বাঞ্চলীয় সময় 9:30 পর্যন্ত লাইভ পরীক্ষা বন্ধ থাকে
  · starting...	 · শুরু হচ্ছে...
-"are you there?" (echo request)	"আছেন?" (echo request)
-"can I connect?" (SYN)	"সংযোগ করতে পারি?" (SYN)
-"yes, come in" (SYN-ACK) - the time is this round trip	"হ্যাঁ, আসুন" (SYN-ACK)—এই যাওয়া-আসার সময় মাপা হয়
-"yes, here" (echo reply) - the time is this round trip	"হ্যাঁ, আছি" (echo reply)—এই যাওয়া-আসার সময় মাপা হয়
 % against the Canadian dollar today.	% আজ কানাডীয় ডলারের তুলনায়।
 % this week.	% এই সপ্তাহে।
 'please treat me as voice'	'আমাকে ভয়েস ট্রাফিক হিসেবে অগ্রাধিকার দিন'
@@ -1335,7 +1263,6 @@ reply	উত্তর
 (no reply - this protocol never answers)	(উত্তর নেই—এই প্রোটোকল কখনো উত্তর দেয় না)
 (no sign-in sent)	(সাইন-ইন পাঠানো হয়নি)
 (no snapshot yet)	(এখনো তথ্য সেভ করা নেই)
-(not compared)	(তুলনা করা হয়নি)
 (nothing - the router won't turn it around)	(কিছুই নেই—রাউটার ঘুরিয়ে পাঠাবে না)
 (run it to compare)	(তুলনা করতে চালান)
 (run it to see the race)	(সার্ভারের তুলনা দেখতে চালান)
@@ -1361,7 +1288,6 @@ reply	উত্তর
 3-6 months of costs	3-6 মাসের খরচ
 3. Address	3. ঠিকানা
 3389 open	3389 খোলা
-4 weeks 	4 সপ্তাহ 
 4. Router	4. রাউটার
 407 here = the proxy wants a sign-in	এখানে 407 মানে প্রক্সি সাইন-ইন চাইছে
 4K streams at once	একসঙ্গে 4K স্ট্রিম
@@ -1415,7 +1341,6 @@ Allow	অনুমতি দিন
 Allow this phone?	এই ফোনকে অনুমতি দেবেন?
 Allow?	অনুমতি দেবেন?
 Already uploading	আপলোড চলছে
-Apple/Linux-style name	Apple/Linux ধরনের নাম
 Asked	জিজ্ঞেস করা হয়েছে
 At a bank	ব্যাংকে
 Average cost of buying in steps	ধাপে ধাপে কেনার গড় খরচ
@@ -1427,7 +1352,6 @@ Back. That lasted 	ফিরেছে। বিচ্ছিন্ন ছিল
 Background checks: 	ব্যাকগ্রাউন্ড পরীক্ষা: 
 Backup way out:	ফিরে আসার বিকল্প পথ:
 Balanced - trouble seen in seconds	Balanced—কয়েক সেকেন্ডেই সমস্যা ধরা পড়ে
-Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on.	Bank of Canada-এর দৈনিক গড়। এই পাতা খোলা থাকলে দিনে একবার আনা হয়। আপনি চালু না করলে বন্ধ থাকে।
 Binding request	বাইন্ডিং অনুরোধ
 Broker 	ব্রোকার 
 Broker steady all day	ব্রোকার সারা দিন স্থির ছিল
@@ -1437,15 +1361,11 @@ CAN I STREAM 4K RIGHT NOW?	এখন 4K স্ট্রিম করতে প�
 CASE	ঘটনা
 CERTS	সার্টিফিকেট
 CLOSED	বন্ধ
-COMMODITIES · WEEKLY · CHANGE IN PRICE	পণ্যবাজার · সাপ্তাহিক · দামের পরিবর্তন
 CPU	CPU
-CURRENCIES · END OF DAY · 1 UNIT IN CANADIAN DOLLARS	মুদ্রা · দিনের শেষে · কানাডীয় ডলারে 1 এককের দাম
 Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.	কার্ড পাঠানো হয়েছে—কোড ঠিক থাকলে কয়েক মিনিটের মধ্যে হল অব ফেমে দেখা যাবে।
 Certificate calendar	সার্টিফিকেটের ক্যালেন্ডার
 Change my keys...	আমার চাবি বদলান...
 Changed: Fun lines off · Details on · How chatty: face only.	বদলেছে: মজার কথা বন্ধ · বিস্তারিত চালু · কথার পরিমাণ: শুধু মুখ।
-Check again now	এখন আবার পরীক্ষা করুন
-Check your phone shows the same words:	ফোনেও একই শব্দগুলো দেখা যাচ্ছে কি না মিলিয়ে নিন:
 Choose your view	আপনার ভিউ বাছুন
 Classic tabs	ক্লাসিক ট্যাব
 Clean session	নতুন সেশন
@@ -1477,7 +1397,6 @@ Couldn't start Quick Share	Quick Share চালু করা যায়নি
 Crashes, a recession, inflation and surprise bills - where does your money go?	বাজারধস, মন্দা, মূল্যস্ফীতি আর হঠাৎ বিল—আপনার টাকা কোথায় যায়?
 Cricket key (cricketdata.org)...	ক্রিকেটের চাবি (cricketdata.org)...
 Currency converter	মুদ্রা রূপান্তর
-Currency rates and commodity prices	মুদ্রার দর ও পণ্যের দাম
 DCs in my site first	আগে আমার সাইটের DC
 DHCP server	DHCP সার্ভার
 DHCP server (your router)	DHCP সার্ভার (আপনার রাউটার)
@@ -1496,7 +1415,6 @@ Destination	গন্তব্য
 Devices on this network	এই নেটওয়ার্কের ডিভাইস
 Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box	draw.io / diagrams.net-এর ডায়াগ্রাম (.drawio)—প্রতিটি বাক্স সরান ও সাজান
 Didn't open: a wrong code, the wrong key - or the file was changed after it was locked. The seal can't be faked.	খোলেনি: কোড বা চাবি ভুল, অথবা লক করার পর ফাইল বদলেছে। সিল নকল করা যায় না।
-Different words, or no words on your phone? Press Don't allow - it isn't your phone.	ফোনে আলাদা শব্দ, বা কোনো শব্দই নেই? «অনুমতি দেবেন না» চাপুন—এটি আপনার ফোন নয়।
 Discover: can anyone give me an address?	Discover: কেউ কি আমাকে ঠিকানা দিতে পারবেন?
 Disk speed vs its ceiling	ডিস্কের গতি বনাম সর্বোচ্চ ক্ষমতা
 Don't accept	গ্রহণ করবেন না
@@ -1516,7 +1434,6 @@ End now	এখন শেষ করুন
 Energy	শক্তি
 Errors on my line and port (signal levels, uncorrectable errors, retrains) over the last 7 days.	গত 7 দিনে আমার লাইন ও পোর্টের ত্রুটি (সিগন্যালের মাত্রা, ঠিক না হওয়া ত্রুটি, সংযোগ নতুন করে স্থাপন)।
 Esc closes this menu	Esc দিয়ে মেনু বন্ধ করুন
-Evening summary in the widget, 17:30-19:00: 	উইজেটে সন্ধ্যার সারাংশ, 17:30-19:00: 
 Everything this PC does with your phone, in one place. Sealed end to end: the relay passes on messages it can't read.	এই পিসি আর ফোন মিলে যা করে, সব এক জায়গায়। দুই প্রান্তেই সুরক্ষিত: রিলে শুধু এমন বার্তা পৌঁছায়, যা সে পড়তে পারে না।
 Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):	লিঙ্কে ঠিক যে তথ্য আছে—যাকে দেবেন, তিনি পড়তে পারবেন। সার্ভারে কিছু যায় না; সব লিঙ্কেই থাকে:
 FOR YOUR PROVIDER · 	আপনার সেবাদাতার জন্য · 
@@ -1537,7 +1454,6 @@ Game server	গেম সার্ভার
 Gamer - game servers every 	Gamer—গেম সার্ভার পরীক্ষা প্রতি 
 Gathering the first minute...	প্রথম মিনিটের তথ্য নেওয়া হচ্ছে...
 Gathering the first seconds...	প্রথম কয়েক সেকেন্ডের তথ্য নেওয়া হচ্ছে...
-Getting today's rates from the Bank of Canada...	Bank of Canada থেকে আজকের দর আনা হচ্ছে...
 Graphics: own vs borrowed memory, link, apps	গ্রাফিক্স: নিজের ও ধার করা মেমরি, লিঙ্ক, অ্যাপ
 HARDWARE NERDS	হার্ডওয়্যারের খুঁটিনাটি
 HD streams at once	একসঙ্গে HD স্ট্রিম
@@ -1553,7 +1469,6 @@ IN USE	ব্যবহার হচ্ছে
 IPv4 - into the tunnel	IPv4 — টানেলের ভেতরে
 IPv6 or DNS outside the tunnel?	IPv6 বা DNS কি টানেলের বাইরে?
 IPv6's version of ARP	IPv6-এ ARP-এর সমতুল্য
-IPv6: Router Solicitation	IPv6: রাউটার খোঁজার অনুরোধ
 Identity?	পরিচয়?
 If even one byte was changed on the way, the seal doesn't match and nothing is opened.	পথে এক বাইটও বদলালে সিল মিলবে না, কিছুই খোলা হবে না।
 In one line: 	এক কথায়: 
@@ -1565,10 +1480,8 @@ Is my connection fast enough to trade?	ট্রেডিংয়ের জন�
 It can watch this PC and start checks - never change Windows settings.	এই পিসির অবস্থা দেখতে ও পরীক্ষা চালাতে পারে—Windows সেটিংস বদলাতে পারে না।
 It felt slow - this PC, the internet or the app?	ধীর লাগছিল—এই পিসি, ইন্টারনেট না অ্যাপ?
 It opens adeebometer.com/r. Your numbers ride in the link after the # - that part never leaves the phone, so the site never sees them. Names and addresses are left out.	adeebometer.com/r খোলে। আপনার তথ্য লিঙ্কের # চিহ্নের পরে থাকে—সেই অংশ ফোন ছাড়ে না, সাইটও পায় না। নাম ও ঠিকানা বাদ থাকে।
-It will be saved in Downloads\AdeeboMeter.	Downloads\AdeeboMeter-এ সেভ হবে।
 KEYS	চাবি
 Keep this	এটি রাখুন
-Kerberos: sign me in	Kerberos: আমাকে সাইন-ইন করান
 Keyboard test - press every key	কিবোর্ড পরীক্ষা—প্রতিটি কী চাপুন
 Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	কী: Ctrl+Shift+S সেভ · Ctrl+Shift+C কপি · Ctrl+Shift+Q ফোন
 LAB	ল্যাব
@@ -1633,7 +1546,6 @@ No moves - this PC stayed on one access point.	বদলায়নি—এই
 No seal	সিল নেই
 None - the mood talks on its own	কোনোটিই নয়—মেজাজ অনুযায়ী নিজে কথা বলে
 None yet. Once linked, a phone can ask to be remembered (Face ID or a fingerprint) and come back without a code.	এখনো নেই। যুক্ত হলে ফোন Face ID বা আঙুলের ছাপ দিয়ে মনে রাখার অনুরোধ করতে পারে; পরে কোড ছাড়াই আসতে পারবে।
-Not advice - just the numbers.	পরামর্শ নয়—শুধু হিসাব।
 Not listed? Tell it what you're watching	তালিকায় নেই? কী দেখছেন জানান
 Not quite - it's: 	পুরোটা ঠিক নয়—সঠিকটি: 
 Not shown in Roast - pick another mood to see it.	ঠাট্টার মেজাজে দেখা যায় না—দেখতে অন্য মেজাজ বাছুন।
@@ -1641,7 +1553,6 @@ Not shown with Fun lines off (Plain).	মজার কথা বন্ধ থা
 Nothing found - check the spelling, or try the nearest bigger city.	কিছু পাওয়া যায়নি—বানান দেখুন, অথবা কাছের বড় শহর লিখুন।
 Nothing matches	কিছু মেলেনি
 Nothing streaming right now	এখন কিছু স্ট্রিম হচ্ছে না
-Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	এখনো কিছু নেই। ফোনে: পিসি › ফাইল › পিসিতে পাঠান। গ্রহণ করলে Downloads\AdeeboMeter-এ ফাইল আসবে।
 Now:	এখন:
 OBS link - why frames drop	OBS সংযোগ—ফ্রেম বাদ যায় কেন
 ON YOUR NETWORK	আপনার নেটওয়ার্কে
@@ -1649,12 +1560,10 @@ ONE PAGE LOAD, PACKET BY PACKET	একটি পেজ লোড, প্যা�
 OPEN	খুলুন
 OVER TIME	সময়ের সঙ্গে
 Off - your IT team turned online lookups off.	বন্ধ—আপনার আইটি দল অনলাইন অনুসন্ধান বন্ধ করেছে।
-Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines, every 5 minutes at most.	আপনি চালু না করলে বন্ধ। চালু হলে এই পাতা খোলা থাকা অবস্থায়, বা দল অনুসরণ করলে স্ট্রিমিং পাতায় দেখার সময়, NHL হকির স্কোর, আপনার ফ্রি চাবিতে ফুটবল ও ক্রিকেট, আর BBC Sport-এর খবর আসে। সর্বোচ্চ প্রতি 5 মিনিটে একবার।
 Off. Turn it on for one calm line a day - from your faith, word for word, or what all of them share.	বন্ধ। দিনে একটি শান্তির কথা পেতে চালু করুন—আপনার ধর্মের বাণী হুবহু, অথবা সবার মিলিত কথা।
 Offer	প্রস্তাব
 Official rate	অফিসিয়াল দর
 Older...	পুরোনো...
-Older:	পুরোনো:
 On my phone: DNS lookup	ফোনে: DNS অনুসন্ধান
 On my phone: VPN leak check	ফোনে: VPN লিক পরীক্ষা
 On my phone: a website from outside	ফোনে: বাইরে থেকে ওয়েবসাইট পরীক্ষা
@@ -1675,7 +1584,6 @@ One click changes the pages, how hard it watches and what sits in the corner. Ea
 One contract	একটি চুক্তি
 One file at a time - wait for the last one.	একবারে একটি ফাইল—আগেরটি শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
 One tap opens your result	এক চাপেই আপনার ফল খুলবে
-Online lookups are turned off by your IT team.	আপনার আইটি দল অনলাইন অনুসন্ধান বন্ধ রেখেছে।
 Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key.	ফোনে বা সামনে বসে একসঙ্গে এই ফিঙ্গারপ্রিন্ট মিলিয়ে নিলেই শুধু হ্যাঁ বলুন। এরপর তাদের জন্য এনক্রিপ্ট করা ফাইল নতুন চাবি ব্যবহার করবে।
 Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates.	জায়গা খুঁজতে শুধু আপনার লেখা নাম Open-Meteo-তে যায় (ফ্রি, অ্যাকাউন্ট লাগে না); তারপর শুধু স্থানাঙ্ক।
 Open it now	এখন খুলুন
@@ -1740,11 +1648,9 @@ SNMP	SNMP
 SNMP - switches & routers	SNMP — সুইচ ও রাউটার
 SNMP test trap	SNMP পরীক্ষার ট্র্যাপ
 Safe bitrate	নিরাপদ বিটরেট
-Same answer:	একই উত্তর:
 Save a picture of this window	এই উইন্ডোর ছবি সেভ করুন
 Saved	সেভ হয়েছে
 Saved - in the Bluetooth window pick the device and Browse to the selected file. On Android, tap Accept - it lands in Downloads	সেভ হয়েছে—Bluetooth উইন্ডোতে ডিভাইস বেছে Browse দিয়ে ফাইল নিন। Android-এ Accept চাপুন; Downloads-এ আসবে
-Saved to Pictures\AdeeboMeter	Pictures\AdeeboMeter-এ সেভ হয়েছে
 Saved. Your lines are limited to 600, so the oldest	সেভ হয়েছে। আপনার কথার তালিকায় সর্বোচ্চ 600টি রাখা যায়, তাই সবচেয়ে পুরোনো
 Savings-only ghost	শুধু সঞ্চয় করা প্রতিদ্বন্দ্বী
 Scores need your own free key from 	স্কোরের জন্য নিজের ফ্রি চাবি লাগবে, এখান থেকে 
@@ -1770,23 +1676,18 @@ Show me everything	সব দেখান
 Show the QR code	QR কোড দেখান
 Show the code?	কোড দেখাব?
 Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections	ইন্টারনেটের ঠিকানায় খোলা TCP সংযোগ থাকা অ্যাপ দেখায়। UDP কল ও গেম, লোকাল ডিভাইস ও বন্ধ সংযোগ «সংযোগ» পাতায় আছে
-Shows the US dollar and energy's week instead of "All quiet". A problem always takes the spot back.	«সব শান্ত»-এর বদলে মার্কিন ডলার ও জ্বালানির সপ্তাহ দেখায়। সমস্যা হলে সেটিই আগে দেখানো হয়।
 Sidebar layout	পাশের বারের বিন্যাস
 Signal journey lives on the phone (Tools › Signal journey): record its field-test screen while you move. Copy the report there and Send to PC - it lands under From the phone.	সিগন্যালের যাত্রা ফোনে আছে (টুল › সিগন্যালের যাত্রা): চলার সময় ফোনের Field Test স্ক্রিন রেকর্ড করুন। রিপোর্ট কপি করে «পিসিতে পাঠান» দিলে «ফোন থেকে» অংশে পাবেন।
 Slow PC, fine internet - the hidden reasons	পিসি ধীর, ইন্টারনেট ঠিক—লুকানো কারণ
 Slow moments today: 	আজ ধীর হওয়ার মুহূর্ত: 
 Smooth all the way - 	পুরোটা মসৃণ ছিল— 
 Something failed here.	এখানে কিছু ব্যর্থ হয়েছে।
-Source: Bank of Canada commodity price index, week of 	উৎস: Bank of Canada-এর পণ্যদাম সূচক, যে সপ্তাহের 
-Source: Bank of Canada daily exchange rates, 	উৎস: Bank of Canada-এর দৈনিক মুদ্রার দর, 
 Speakers, microphone and camera	স্পিকার, মাইক্রোফোন ও ক্যামেরা
 Sports ›	খেলাধুলা ›
 Start watching my stream	আমার স্ট্রিমের ওপর নজর রাখা শুরু করুন
 Started from	যেখান থেকে শুরু
 Starting the speed test...	গতি পরীক্ষা শুরু হচ্ছে...
 Still recording the conversation above. You picked	ওপরের সংযোগ এখনো রেকর্ড হচ্ছে। আপনি বেছেছেন
-Still watching your broker in the background	আপনার ব্রোকারকে এখনো ব্যাকগ্রাউন্ডে দেখা হচ্ছে
-Stock lists and market movers arrive once their free data sources are confirmed.	ফ্রি তথ্যের উৎস নিশ্চিত হলে শেয়ারের তালিকা ও বাজারে বেশি বদলানো শেয়ার আসবে।
 Stop watching	নজর রাখা বন্ধ করুন
 Stopped.	থেমেছে।
 Suits you	আপনার উপযোগী
@@ -1868,10 +1769,8 @@ Turn Sports off	খেলাধুলা বন্ধ করুন
 Turn it on	চালু করুন
 Type a number, an IPv4 address or a mask.	সংখ্যা, IPv4 ঠিকানা বা মাস্ক লিখুন।
 Type an address - see which road Windows picks for it.	ঠিকানা লিখে দেখুন Windows কোন পথ বেছে নেয়।
-Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	প্রাপকের ঘরে কোড বা ব্যক্তির নাম লিখে চালু করুন, তারপর .adeebo ফাইল পাঠান—PNG থাকবে Documents\AdeeboMeter-এ
 Type your plan's download	আপনার প্যাকেজের ডাউনলোড গতি লিখুন
 UDP 1812 · password hidden with the shared secret	UDP 1812 · শেয়ার করা গোপন চাবি দিয়ে পাসওয়ার্ড আড়াল করা
-UDP 1812 · signed with the shared secret	UDP 1812 · শেয়ার করা গোপন চাবি দিয়ে স্বাক্ষর করা
 US markets close early today, 13:00 Eastern	আজ মার্কিন বাজার আগে বন্ধ, পূর্বাঞ্চলীয় সময় 13:00
 US markets closed today	আজ মার্কিন বাজার বন্ধ
 US markets open	মার্কিন বাজার খুলেছে
@@ -1896,8 +1795,6 @@ WHAT FIXES IT	কী করলে ঠিক হবে
 WHAT HAPPENED BEFORE IT BROKE AT	সমস্যার আগে কী হয়েছিল, সময়
 WHAT THE ROUTER WAS TELLING YOU	রাউটার কী জানাচ্ছিল
 WHAT TO TRY NEXT	এরপর যা করে দেখবেন
-WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS	যা দেখেছেন · এই পিসিতে 90 দিন থাকে · গতি কমার কারণ দেখতে ক্লিক করুন
-WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)	কী হচ্ছে? · বাছুন, অথবা অনুসন্ধানে লিখুন (CTRL+K)
 WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS	স্ট্রিম কখন খারাপ হয়? · গত 30 দিন
 WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE	কখন সমস্যা ছিল? · গত 7 দিন × 24 ঘণ্টা · কারণ জানতে ঘরে মাউস রাখুন
 WHO ASKS WHOM -	কে কাকে জিজ্ঞেস করে—
@@ -1992,13 +1889,10 @@ and wakes the PC	এবং পিসি জাগায়
 another device	অন্য ডিভাইস
 another device answers for YOUR address	অন্য ডিভাইস আপনার ঠিকানার উত্তর দিচ্ছে
 answer	উত্তর
-answer, back through the router	রাউটারের মধ্য দিয়ে ফিরে আসা উত্তর
 answers	উত্তর দেয়
 any answer means it's alive - a Reject for a made-up name is right	যেকোনো উত্তর মানে সচল—বানানো নামের জন্য Reject-ই সঠিক
 anyone who encrypts a file for you	আপনার জন্য ফাইল এনক্রিপ্ট করেন এমন যে কেউ
 anything for	যার জন্য কিছু
-around the clock (crypto)	সারা দিনরাত (ক্রিপ্টো)
-arrived T4 - offset worked out	T4-এ এসেছে—সময়ের পার্থক্য বের হয়েছে
 arrived at T4 - offset worked out	T4-এ এসেছে—সময়ের পার্থক্য বের হয়েছে
 as fast as the line allows	লাইন যতটা পারে, তত দ্রুত
 ask	জিজ্ঞেস করুন
@@ -2053,7 +1947,6 @@ conflict - Windows warns and may stop using it	ঠিকানায় দ্�
 connected	সংযোগ আছে
 connected (remembered phone). The link button at the top shows it; Your phone > End now stops it.	যুক্ত হয়েছে (মনে রাখা ফোন)। ওপরের লিঙ্ক বোতামে দেখা যায়; আপনার ফোন > এখন শেষ করুন দিয়ে থামাতে পারবেন।
 control: test for	কন্ট্রোল: যার পরীক্ষা
-dashed = 100 ms, the "wait" line	দাগকাটা লাইন = 100 ms, অপেক্ষার সীমা
 days left	দিন বাকি
 default route 0.0.0.0/0	ডিফল্ট রুট 0.0.0.0/0
 destination	গন্তব্য
@@ -2068,7 +1961,6 @@ download at full speed	পুরো গতিতে ডাউনলোড
 drop	কমে যাওয়া
 each fix with what it gives back (memory freed, processor returned)	প্রতিটি সমাধানে কী ফিরে পাবেন (খালি মেমরি, CPU-এর সময়)
 each square is a core; its halves are its two threads - lit = working now	প্রতি ঘর একটি কোর, দুই অর্ধেক তার দুই থ্রেড—আলো জ্বললে এখন কাজ করছে
-earlier report(s) waiting to send when you're online - Read · Delete	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট—পড়ুন · মুছুন
 echo - UDP gets through	echo — UDP যেতে পারছে
 empty - as it should be	খালি—যেমন থাকার কথা
 empty: half speed	খালি: অর্ধেক গতি
@@ -2096,7 +1988,6 @@ for a lease time - renewed at half time	লিজের মেয়াদের
 for comparison	তুলনার জন্য
 for the computer (at start-up)	কম্পিউটারের জন্য (চালুর সময়)
 for you (at sign-in)	আপনার জন্য (সাইন-ইনের সময়)
-forwarded to	পাঠিয়ে দেওয়া হয়েছে
 from	থেকে
 from inside your own network	আপনার নেটওয়ার্কের ভেতর থেকে
 from local port	লোকাল পোর্ট থেকে
@@ -2105,9 +1996,7 @@ from your real address	আপনার আসল ঠিকানা থেকে
 full	পূর্ণ
 game ping while a game you added is open, call quality in a call, else speed + status	যোগ করা গেম খোলা থাকলে গেম পিং, কলে থাকলে কলের মান, নইলে গতি ও অবস্থা
 gateway	গেটওয়ে
-good for 10 h	10 h পর্যন্ত চলে
 goodbye	বিদায়
-got it T2, answered T3	T2-এ পেয়েছে, T3-এ উত্তর দিয়েছে
 got it at T2, answered at T3	T2-এ পেয়েছে, T3-এ উত্তর দিয়েছে
 green: bull years	সবুজ: বাজার বাড়ার বছর
 halfway - and narrowing in	অর্ধেক পথ—আরও কাছে আসছে
@@ -2198,14 +2087,12 @@ network part	নেটওয়ার্ক অংশ
 never heard back	আর উত্তর আসেনি
 new	নতুন
 next check	পরের পরীক্ষা
-no NAT loopback / hairpin	NAT loopback / hairpin নেই
 no answer to probes	পরীক্ষার অনুরোধে উত্তর নেই
 no dip was clearly on your home network (some couldn't be pinned on anyone). 	কোনো ঘটনাই নিশ্চিতভাবে বাড়ির নেটওয়ার্কের ছিল না; কিছু ঘটনার কারণ নির্দিষ্ট করা যায়নি। 
 no dip was on your home network. 	গতি কমার কোনো ঘটনাই বাড়ির নেটওয়ার্কে ছিল না। 
 no drops	সংযোগ বিচ্ছিন্ন হয়নি
 no overlap	ওভারল্যাপ নেই
 no reply	সাড়া নেই
-no reply would mean filtered - or it ignores this question	উত্তর না এলে ফিল্টার করা হতে পারে, অথবা এই প্রশ্নের উত্তর দেয় না
 no sign-in, no password	সাইন-ইন বা পাসওয়ার্ড লাগে না
 no slow moments	সংযোগ ধীর হয়নি
 no such name	এই নামে কিছু পাওয়া যায়নি
@@ -2239,7 +2126,6 @@ open - something answered	খোলা—কিছু সাড়া দিয�
 open now	এখন খোলা
 open to the network	নেটওয়ার্ক থেকে সংযোগ নেওয়া যায়
 opens it in AdeeboMeter	AdeeboMeter-এ খোলে
-or 'Time exceeded' if the TTL ran out	অথবা TTL ফুরালে 'Time exceeded'
 or 'fragmentation needed' from a router	অথবা রাউটার থেকে 'fragmentation needed'
 our version + key exchange	আমাদের সংস্করণ ও চাবি বিনিময়
 out from the VPN's exit	VPN-এর বেরোনোর ঠিকানা থেকে
@@ -2286,7 +2172,6 @@ refused - nothing listens there	প্রত্যাখ্যাত—ওখা
 remembered?	মনে রাখা হয়েছে?
 results	ফল
 retransmits = packets sent twice	পুনরায় পাঠানো = একই প্যাকেট দুবার পাঠানো
-reverse name?	ঠিকানা থেকে নাম?
 root	রুট
 root and	রুট ও
 round trip = (T4-T1) - (T3-T2)	যাওয়া-আসার সময় = (T4-T1) - (T3-T2)
@@ -2294,11 +2179,9 @@ router	রাউটার
 safe to share	শেয়ার করা নিরাপদ
 same packet, new return address	একই প্যাকেট, নতুন ফেরত ঠিকানা
 same ping, unmarked	একই পিং, চিহ্ন ছাড়া
-same service, its inside address	একই পরিষেবা, ভেতরের ঠিকানা
 save one	একটি সেভ করুন
 saved next to it	এর পাশেই সেভ হয়েছে
 savings-only ghost	শুধু সঞ্চয় করা প্রতিদ্বন্দ্বী
-scores: NHL, football-data.org, CricketData  ·  headlines: BBC Sport	স্কোর: NHL, football-data.org, CricketData · খবর: BBC Sport
 sealed	সিল করা
 sealed from here	এখান থেকে সিল করা
 sealed from here - no password is sent	এখান থেকেই সুরক্ষিত—পাসওয়ার্ড পাঠানো হয় না
@@ -2311,7 +2194,6 @@ server	সার্ভার
 server inside	ভেতরের সার্ভার
 showing	দেখানো হচ্ছে
 showing the last ones	শেষেরগুলো দেখানো হচ্ছে
-sign-in tickets come from here	সাইন-ইনের টিকিট এখান থেকে আসে
 signature checks out	স্বাক্ষর ঠিক আছে
 signed by	স্বাক্ষর করেছেন
 signed by the root	রুটের স্বাক্ষর করা
@@ -2320,7 +2202,6 @@ site	সাইট
 smooth	মসৃণ
 smooth so far	এখন পর্যন্ত মসৃণ
 something dropped it here - or at theirs	এখানে বা তাদের প্রান্তে কিছু বাদ দিয়েছে
-something listens on 3389	3389-এ কোনো পরিষেবা আছে
 speed + status	গতি ও অবস্থা
 speed under full load	পুরো চাপের সময় গতি
 speeds	গতি
@@ -2335,9 +2216,7 @@ still broadcast	এখনো ব্রডকাস্ট
 still broadcast - other servers learn it's taken	এখনো ব্রডকাস্ট—অন্য সার্ভার জানে ঠিকানাটি নেওয়া হয়েছে
 stop	থামান
 stop the recording to follow it.	এটি অনুসরণ করতে আগে রেকর্ডিং থামান।
-straight across your network	আপনার নেটওয়ার্কের মধ্য দিয়ে সরাসরি
 straight to the site	সরাসরি সাইটে
-stratum: steps away from an atomic clock	stratum: পারমাণবিক ঘড়ি থেকে কত ধাপ দূরে
 streams	স্ট্রিম
 switch / access point	সুইচ / অ্যাকসেস পয়েন্ট
 talks like: 	কথার ধরন: 
@@ -2358,7 +2237,6 @@ the connection	সংযোগ
 the connection is open	সংযোগ খোলা
 the destination	গন্তব্য
 the difference is the speed	পার্থক্য হলো গতি
-the directory is reachable	ডিরেক্টরিতে পৌঁছানো যায়
 the engineer's card	বিশেষজ্ঞের কার্ড
 the everyday card	দৈনন্দিন কার্ড
 the far end	শেষ প্রান্ত
@@ -2394,7 +2272,6 @@ the saved run	সেভ করা পরীক্ষা
 the server says its version first	সার্ভার আগে নিজের সংস্করণ জানায়
 the server thinking	সার্ভারের কাজের সময়
 the server's greeting - its name and software	সার্ভারের শুরুর বার্তা—নাম ও সফটওয়্যার
-the servers that run the directory	ডিরেক্টরি চালানো সার্ভারগুলো
 the service you're trying	যে পরিষেবায় পৌঁছাতে চাইছেন
 the site's own, signed by the middle	সাইটের নিজস্ব, মাঝের CA-এর স্বাক্ষর করা
 the size, DF and TTL you chose	আপনার বেছে নেওয়া আকার, DF ও TTL
@@ -2409,7 +2286,6 @@ through the VPN	VPN দিয়ে
 tight	টানাটানি
 tight for streaming yourself	নিজে স্ট্রিম করতে টানাটানি
 to get back to $100	আবার $100 হতে
-to your public address	আপনার পাবলিক ঠিকানায়
 today	আজ
 today:	আজ:
 too big - Fragmentation needed	বেশি বড়—ভাগ করা দরকার
@@ -2466,7 +2342,6 @@ with how long to keep it (TTL)	কতক্ষণ রাখতে হবে স�
 without the VPN	VPN ছাড়া
 wk	সপ্তাহ
 workgroup	ওয়ার্কগ্রুপ
-write it down - if it ever changes, ask why	লিখে রাখুন—বদলালে কারণ জানুন
 write speed, every ½ second	প্রতি ½ সেকেন্ডে লেখার গতি
 wrong shared secret, not a known client, or a firewall	শেয়ার করা গোপন চাবি ভুল, পরিচিত ক্লায়েন্ট নয়, অথবা ফায়ারওয়াল
 years	বছর
@@ -2479,7 +2354,6 @@ you see	আপনি দেখেন
 your CA (signs it)	আপনার CA (স্বাক্ষর করে)
 your DNS	আপনার DNS
 your DNS server	আপনার DNS সার্ভার
-your bytes	আপনার বাইট
 your file	আপনার ফাইল
 your key	আপনার চাবি
 your message	আপনার বার্তা
@@ -2524,7 +2398,6 @@ Normal: one request for today and the next 2 days, then quiet until less than a 
 Temperature in	তাপমাত্রার একক
 How temperatures show in the widget and here.	উইজেট ও এখানে তাপমাত্রা যেভাবে দেখাবে।
 Weather in the widget	উইজেটে আবহাওয়া
-On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	চালু: গুটিয়ে থাকা বারে তাপমাত্রা ও কার্ডে এমন একটি লাইন দেখায়: “4°C · দুপুর 3টা থেকে বৃষ্টি”।
 Off: only the buddy's face shows the weather.	বন্ধ: শুধু সঙ্গীর মুখে আবহাওয়া বোঝায়।
 Off: plain words everywhere, the buddy's face stays.	বন্ধ: সবখানে সরল ভাষা, সঙ্গীর মুখ থাকে।
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	চালু: নিচের মেজাজ ও ব্যক্তিত্ব অনুযায়ী সঙ্গী কথা বলে। তথ্য, সংখ্যা ও রিপোর্ট বদলায় না।
@@ -2632,7 +2505,6 @@ Off - your IT team turned online lookups off (AdeeboMeter.policy).	বন্ধ:
 On: currencies (daily) and commodity prices (weekly) from the Bank of Canada - free, official, no account. Fetched only when the Trading page or the evening summary needs newer numbers.	চালু: Bank of Canada থেকে মুদ্রার হার (দৈনিক) ও পণ্যমূল্য (সাপ্তাহিক)। ফ্রি, সরকারি তথ্য, অ্যাকাউন্ট লাগে না। ট্রেডিং পাতা বা সন্ধ্যার সারাংশে নতুন সংখ্যা দরকার হলেই আনে।
 Off: no currencies or commodities.	বন্ধ: মুদ্রা বা পণ্যমূল্য দেখায় না।
 Evening summary in the widget	উইজেটে সন্ধ্যার সামারি
-On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	চালু: কর্মদিবসে 17:30-19:00 গুটিয়ে থাকা উইজেটে “সব শান্ত”-এর বদলে দিনের শেষ বাজারদর (মার্কিন ডলার ও জ্বালানির সপ্তাহ) দেখায়, পরে নিজে থেকেই ফিরে যায়। সমস্যা হলে সেটিই আগে দেখায়।
 Off: the widget never changes by itself.	বন্ধ: উইজেট নিজে থেকে বদলায় না।
 One line a minute per server, on this PC only, with the rest of the history	প্রতি সার্ভারের জন্য মিনিটে এক লাইন, শুধু এই পিসিতে, বাকি ইতিহাসের সঙ্গে
  - history is off in History & data, so nothing is kept.	 — ইতিহাস ও ডেটা অংশে ইতিহাস বন্ধ, তাই কিছু রাখা হয় না।
@@ -2662,9 +2534,6 @@ Off: connections show bare IP addresses.	বন্ধ: সংযোগে শু
 Wi-Fi keeps dropping	Wi-Fi বারবার বিচ্ছিন্ন হচ্ছে
 Saved in your AppData folder. Nothing leaves this PC.	আপনার AppData ফোল্ডারে সেভ হয়। এই পিসির বাইরে কিছু যায় না।
 Saved next to AdeeboMeter.exe. Nothing leaves this PC.	AdeeboMeter.exe-এর পাশে সেভ হয়। এই পিসির বাইরে কিছু যায় না।
-Nothing matches "	কিছু মেলেনি: “
- setting matches "	 টি সেটিং মিলেছে: “
- settings match "	 টি সেটিং মিলেছে: “
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min (every 10 s while this window is open), no call watching.	সবচেয়ে হালকা ব্যবহার। রাউটার প্রতি 30 s, ইন্টারনেট প্রতি 5 মিনিট, Wi-Fi প্রতি 2 মিনিট (এই উইন্ডো খোলা থাকলে প্রতি 10 s)। কলের ওপর নজর রাখে না।
 Just the speeds, like DU Meter.	শুধু গতি, DU Meter-এর মতো।
 Speeds plus OK / Busy / Problem.	গতি ও ঠিক আছে / ব্যস্ত / সমস্যা।
@@ -2686,7 +2555,6 @@ Esc, minimise, the X or the Back to corner button - they all do the same thing: 
 Quit completely	পুরোপুরি বন্ধ করুন
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	ট্রে আইকনে ডান ক্লিক করে বেরিয়ে যান বাছুন। কোনো সহায়ক প্রোগ্রামও চালু থাকে না।
 Learn anything	যেকোনো কিছু শিখুন
-When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.	মাউসের কার্সর ? হলে একটু থামুন, ব্যাখ্যা দেখাবে।
 Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	AdeeboMeter ব্যাকগ্রাউন্ডে কতটা নজর রাখবে তা সেটিংসে ঠিক করুন, Penny থেকে Gamer পর্যন্ত।
 Readable source	পড়া যায় এমন সোর্স কোড
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	পুরো অ্যাপের সোর্স কোড চালানোর আগেই পড়তে পারেন। Windows-এর সঙ্গে থাকা কম্পাইলার দিয়েই এটি তৈরি।
@@ -2819,13 +2687,10 @@ WHY DOES IT FAIL?	কেন কাজ করছে না?
 Weather	আবহাওয়া
 What's wrong?	কী সমস্যা?
 Yes	হ্যাঁ
-Open engineer view	ইঞ্জিনিয়ার ভিউ খুলুন
 Settings...	সেটিংস...
 Hide widget (keep tray icon)	উইজেট লুকান (ট্রে আইকন রাখুন)
 Bigger widget	বড় উইজেট
-Serious mode (no jokes)	সিরিয়াস মোড (মজা ছাড়া)
 Widget on screen	স্ক্রিনে উইজেট
-It feels slow right now   Ctrl+Alt+S	এখন ধীর লাগছে   Ctrl+Alt+S
 Your phone...	আপনার ফোন...
 Uninstall AdeeboMeter...	AdeeboMeter আনইনস্টল করুন...
 Exit AdeeboMeter	AdeeboMeter বন্ধ করুন
@@ -4178,7 +4043,6 @@ Fix for a black hole: lower the MTU of the VPN adapter (or the router's MSS clam
 Reading your route table...	আপনার রুট টেবিল পড়ছে...
 Every route that covers 	যে রুটগুলো এই ঠিকানায় প্রযোজ্য: 
 The ping is only part of it. The server works in ticks (64 a second = every 15.6 ms), your game shows the world a couple of ticks in the past to keep movement smooth, then your PC draws it and the screen shows it.	পিং কেবল একটি অংশ। সার্ভার টিক ধরে কাজ করে (সেকেন্ডে 64টি = প্রতি 15.6 ms)। নড়াচড়া মসৃণ রাখতে গেম দু-এক টিক আগের দৃশ্য দেখায়, তারপর পিসি আঁকে ও স্ক্রিন দেখায়।
-How long one voice packet waits behind 	একটি ভয়েস প্যাকেট এর পেছনে যতক্ষণ অপেক্ষা করে: 
 Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.	ওপরের ল্যাবে নিজের সংখ্যা দিয়ে নেটওয়ার্কের আচরণ দেখুন। নিচে প্রতিটি বিষয়ে দুই লাইন ও একটি ছবি। নেটওয়ার্কে নতুন হলে “স্তরগুলো সহজ কথায়” দিয়ে শুরু করুন।
 Records this lesson's traffic (	এই পাঠের ট্রাফিক রেকর্ড করে (
 While it records: 	রেকর্ডের সময়: 
@@ -4199,7 +4063,6 @@ PACKET 	প্যাকেট
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	এটির জন্য Wireshark (Npcap-সহ) লাগে। নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে।
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে জানায় কী আছে: আধুনিক না পুরোনো প্রোটোকল, IPv4 না IPv6 ও Windows-এর ব্যাকগ্রাউন্ডে স্থানীয় নেটওয়ার্কে পাঠানো বার্তা। কিছু রেখে দেয় না।
 earlier report(s) waiting to send when you're online	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট
-Restart to finish	শেষ করতে রিস্টার্ট করুন
 Pick your language	আপনার ভাষা বেছে নিন
 AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter সঙ্গে সঙ্গে বদলে যায়। রিস্টার্ট করলে বাকি কয়েকটি স্ক্রিনও বদলাবে।
 PREVIEW OF	প্রিভিউ:
@@ -4409,7 +4272,6 @@ Nothing to fix: every check came back fine.	ঠিক করার কিছু 
 Now	এখন
 Numbers only - AdeeboMeter never tells you what to buy or sell.	শুধু সংখ্যা—AdeeboMeter কখনো বলে না কী কিনবেন বা বেচবেন।
 OUTLOOK  ·  NOW AND NEXT	আউটলুক  ·  এখন ও পরে
-Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines - every 5 minutes at most.	আপনি চালু না করা পর্যন্ত বন্ধ। তারপর এই পেজ খোলা থাকলে: NHL থেকে হকির স্কোর, নিজের ফ্রি কী দিয়ে ফুটবল ও ক্রিকেট, আর BBC Sport-এর শিরোনাম—বড়জোর প্রতি 5 মিনিটে।
 One of the row buys this much of the column.	সারির একটি একক দিয়ে কলামের এতটা কেনা যায়।
 Online checks are turned off by your IT team.	আপনার আইটি টিম অনলাইন পরীক্ষা বন্ধ রেখেছে।
 Only my teams	শুধু আমার দল
@@ -4735,13 +4597,11 @@ Why it lags	কেন ল্যাগ হয়
 Before a ranked match: one check of Wi-Fi, background downloads and the line.	র‍্যাঙ্কড ম্যাচের আগে: Wi-Fi, পেছনের ডাউনলোড আর লাইনের এক পরীক্ষা।
 Ready to play?	খেলার জন্য তৈরি?
 Would a ping booster (GPN) actually help you? Measure it instead of guessing.	পিং বুস্টার (GPN) কি সত্যিই সাহায্য করবে? আন্দাজ না করে মেপে দেখুন।
-warming up...	প্রস্তুত হচ্ছে...
 NO CONNECTION - check Home first	সংযোগ নেই—আগে হোম দেখুন
 the first 80 shown	প্রথম 80টি দেখানো হলো
 Go to	যান
 Pinned tools	পিন করা টুল
 find the closest	সবচেয়ে কাছেরটি খুঁজুন
-Auto - Cloudflare, its nearest data centre (download and upload)	অটো—Cloudflare, এর সবচেয়ে কাছের ডেটা সেন্টার (ডাউনলোড ও আপলোড)
 Find the closest server for me	আমার জন্য সবচেয়ে কাছের সার্ভার খুঁজুন
 Add my own server...	আমার নিজের সার্ভার যোগ করুন...
 closest speed server	সবচেয়ে কাছের স্পিড সার্ভার
@@ -4778,16 +4638,12 @@ what changed on this PC and network since then	তারপর থেকে এ�
 Wi-Fi works but nothing loads	Wi-Fi চলে কিন্তু কিছুই লোড হয় না
 it's the link to your router	সমস্যা রাউটারের সঙ্গে সংযোগে
 your Wi-Fi or cable: signal, speed, channel and the neighbours	আপনার Wi-Fi বা কেবল: সিগন্যাল, গতি, চ্যানেল আর প্রতিবেশীরা
-Describe the problem	সমস্যাটি বর্ণনা করুন
-I didn't recognise that - press here and I'll check everything, layer by layer.	বুঝতে পারিনি—এখানে চাপুন, আমি স্তর ধরে সব পরীক্ষা করব।
-Sounds like 	শুনে মনে হচ্ছে 
 Prefer the Classic tabs?	ক্লাসিক ট্যাব পছন্দ?
 Name lookups	নাম খোঁজা
 not yet	এখনো না
 Your traffic	আপনার ট্রাফিক
 On Wi-Fi	Wi-Fi-তে
 Finding the closest...	সবচেয়ে কাছেরটি খুঁজছি...
- MB. Never runs by itself.	 MB। কখনো নিজে থেকে চলে না।
 Nothing. Boring is good.	কিছুই না। একঘেয়েমিই ভালো।
 Nothing in the last 2 hours.	গত 2 ঘণ্টায় কিছু নেই।
 Used today on this network: 	আজ এই নেটওয়ার্কে ব্যবহার: 
@@ -4811,7 +4667,6 @@ Your tab	আপনার ট্যাব
 Pin tools here from any tool page or search result.	যেকোনো টুল পেজ বা সার্চ ফল থেকে এখানে টুল পিন করুন।
 Open the AdeeboLab  ›	AdeeboLab খুলুন  ›
 Break it	ভেঙে দেখুন
-Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	আপনার নিজের পথ: প্যাকেটের যাত্রা, গেমার, ট্রেডিং, স্ট্রিমিং বা সার্ভিস বোর্ডে «আমার পথ দেখান» চাপুন—AdeeboMeter যে থামাগুলো মেপেছে তা সাদায় আঁকা, আর প্রোভাইডারের যে যন্ত্র দেখা যায় না তা ধূসর ও ড্যাশ দিয়ে।
 Break it: 	ভেঙে দেখুন: 
  faults watched to the end · +	 টি ত্রুটি শেষ পর্যন্ত দেখা · +
  Adeebo Points each, the first time.	 Adeebo Points প্রতিটিতে, প্রথমবার।
@@ -4866,12 +4721,6 @@ Safe	নিরাপদ
 Starting...	শুরু হচ্ছে...
 Stopping...	থামানো হচ্ছে...
 Calculators	ক্যালকুলেটর
-NO SIGNAL	সিগন্যাল নেই
-COMPETITIVE	কম্পিটিটিভ
-CASUAL	ক্যাজুয়াল
-LAGGY	ল্যাগি
-ms PING	ms পিং
-LAST 60 SECONDS	গত 60 সেকেন্ড
 JITTER	জিটার
 LOSS	লস
 LINK	লিংক
@@ -5051,7 +4900,6 @@ every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	টুল
 every tool is a command, every page is a folder	প্রতিটি টুল একটি কমান্ড, প্রতিটি পেজ একটি ফোল্ডার
 every tool with its example	প্রতিটি টুল তার উদাহরণসহ
 files - rm asks first	ফাইল - rm আগে জিজ্ঞেস করে
-functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	local ও return সহ ফাংশন; অ্যারে: ${a[1]} "${a[@]}" ${#a[@]}
 go to a page	একটি পেজে যান
 help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help-এ সবকিছু · Tab পূরণ করে · Ctrl+C থামায় · এখান থেকে অন্য কোনো প্রোগ্রাম চালু হয় না
 home = your folder, data, mnt/c, pages, tools	home = আপনার ফোল্ডার, data, mnt/c, pages, tools
@@ -5102,7 +4950,6 @@ Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the ph
 See what's running	কী চলছে দেখুন
 Send to my ISP	আমার ISP-কে পাঠান
 Step {0} of 4	ধাপ {0} / 4
-Still in the status strip and the corner widget	স্ট্যাটাস স্ট্রিপ ও কোণের উইজেটে এখনও দেখা যাবে
 The network is fine.	নেটওয়ার্ক ঠিক আছে।
 a waiting room for your phone, and a clock check once an hour	আপনার ফোনের জন্য একটি অপেক্ষার ঘর, আর ঘণ্টায় একবার সময় যাচাই
 disk	ডিস্ক
@@ -5172,3 +5019,64 @@ ping to each game's nearest server	প্রতিটি গেমের কা�
 starting...	শুরু হচ্ছে...
 Markets and Sports look	মার্কেট ও খেলার চেহারা
 Newspaper	সংবাদপত্র
+Click the step again to close it.	বন্ধ করতে ধাপটিতে আবার ক্লিক করুন।
+Follow an app	একটি অ্যাপ অনুসরণ করুন
+The way to	যাওয়ার পথ:
+Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.	চালু করুন, কিছু চললে AdeeboMeter টের পাবে আর নজর রাখবে। স্ট্রিম শুরু না হওয়া পর্যন্ত নেটওয়ার্কে বাড়তি কিছু যায় না।
+Point at anything with a small ? beside it, then at the ? - a short explanation opens. The × closes it.	পাশে ছোট ? আছে এমন কিছুর ওপর পয়েন্টার রাখুন, তারপর ?-এর ওপর - ছোট একটি ব্যাখ্যা খুলবে। × চাপলে বন্ধ হবে।
+Only the name you type goes to {0} to find it - then only its coordinates, to {1}.	আপনি যে নাম লেখেন শুধু সেটিই খুঁজতে {0}-এ যায় - তারপর শুধু তার স্থানাঙ্ক, {1}-এ।
+PC version not announced yet	পিসি সংস্করণ এখনও ঘোষণা হয়নি
+That server isn't a host name - use one like api.example.com, or host:port.	এটি কোনো হোস্টের নাম নয় - api.example.com বা host:port-এর মতো লিখুন।
+usually	সাধারণত
+Newspaper, white	সংবাদপত্র, সাদা
+Newspaper, app colours	সংবাদপত্র, অ্যাপের রঙে
+The answer from {0} didn't make sense - trying again in half an hour.	{0} থেকে আসা উত্তর বোঝা গেল না - আধ ঘণ্টা পরে আবার চেষ্টা হবে।
+Couldn't reach {0} - trying again in half an hour.	{0}-এ পৌঁছানো গেল না - আধ ঘণ্টা পরে আবার চেষ্টা হবে।
+Your ping right now	এই মুহূর্তে আপনার পিং
+signal hidden	সিগন্যাল লুকানো
+ setting matches "	 টি সেটিং মিলেছে: “
+ settings match "	 টি সেটিং মিলেছে: “
+"are you there?" (echo request)	"আছেন?" (echo request)
+"can I connect?" (SYN)	"সংযোগ করতে পারি?" (SYN)
+"yes, come in" (SYN-ACK) - the time is this round trip	"হ্যাঁ, আসুন" (SYN-ACK)—এই যাওয়া-আসার সময় মাপা হয়
+"yes, here" (echo reply) - the time is this round trip	"হ্যাঁ, আছি" (echo reply)—এই যাওয়া-আসার সময় মাপা হয়
+A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	আপনার বেছে নেওয়া সংখ্যা দিয়ে সিমুলেশন—আপনার লাইনের মাপ নয়। শুধু «আপনার» লেখা সারিগুলো আসল মাপ।
+It will be saved in Downloads\AdeeboMeter.	Downloads\AdeeboMeter-এ সেভ হবে।
+Nothing matches "	কিছু মেলেনি: “
+Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	এখনো কিছু নেই। ফোনে: পিসি › ফাইল › পিসিতে পাঠান। গ্রহণ করলে Downloads\AdeeboMeter-এ ফাইল আসবে।
+On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	চালু: গুটিয়ে থাকা বারে তাপমাত্রা ও কার্ডে এমন একটি লাইন দেখায়: “4°C · দুপুর 3টা থেকে বৃষ্টি”।
+On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	চালু: কর্মদিবসে 17:30-19:00 গুটিয়ে থাকা উইজেটে “সব শান্ত”-এর বদলে দিনের শেষ বাজারদর (মার্কিন ডলার ও জ্বালানির সপ্তাহ) দেখায়, পরে নিজে থেকেই ফিরে যায়। সমস্যা হলে সেটিই আগে দেখায়।
+Saved to Pictures\AdeeboMeter	Pictures\AdeeboMeter-এ সেভ হয়েছে
+Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	প্রাপকের ঘরে কোড বা ব্যক্তির নাম লিখে চালু করুন, তারপর .adeebo ফাইল পাঠান—PNG থাকবে Documents\AdeeboMeter-এ
+dashed = 100 ms, the "wait" line	দাগকাটা লাইন = 100 ms, অপেক্ষার সীমা
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	local ও return সহ ফাংশন; অ্যারে: ${a[1]} "${a[@]}" ${#a[@]}
+Wi-Fi says "No internet"	Wi-Fi-এ "No internet" দেখায়
+says "too big"	জানায় «আকার বেশি»
+Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	কিছু পাইনি। লক্ষণের বদলে বিষয়টি খুঁজুন: "dns", "wifi", "port"।
+Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	আপনার নিজের পথ: প্যাকেটের যাত্রা, গেমার, ট্রেডিং, স্ট্রিমিং বা সার্ভিস বোর্ডে «আমার পথ দেখান» চাপুন—AdeeboMeter যে থামাগুলো মেপেছে তা সাদায় আঁকা, আর প্রোভাইডারের যে যন্ত্র দেখা যায় না তা ধূসর ও ড্যাশ দিয়ে।
+FOLLOW	অনুসরণ করুন
+Find it	খুঁজুন
+IS IT ME OR THE NETWORK?	সমস্যা আমার ডিভাইসে, নাকি নেটওয়ার্কে?
+OR TAP WHAT YOU SEE	অথবা যা দেখছেন, সেটি বেছে নিন
+WHAT'S WRONG?	কী সমস্যা?
+WHERE EVERYTHING LIVES	কোন জিনিস কোথায় আছে
+connected, but nothing works	সংযুক্ত আছে, কিন্তু কিছুই চলছে না
+Earn Adeebo Points	Adeebo Points অর্জন করুন
+Scan with your phone	ফোন দিয়ে স্ক্যান করুন
+Older:	পুরোনো:
+Open engineer view	ইঞ্জিনিয়ার ভিউ খুলুন
+Sounds like 	শুনে মনে হচ্ছে 
+NO SIGNAL	সিগন্যাল নেই
+COMPETITIVE	কম্পিটিটিভ
+CASUAL	ক্যাজুয়াল
+LAGGY	ল্যাগি
+ms PING	ms পিং
+LAST 60 SECONDS	গত 60 সেকেন্ড
+Esc takes you back to the corner	Esc চাপলে কোণে ফিরে যাবেন
+Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	পিসির চলমান সব যোগাযোগ: কোন অ্যাপ, কার সঙ্গে, কোন পোর্টে, কী অবস্থায়। নতুন সংযোগ ভেসে ওঠে, বন্ধগুলো মিলিয়ে যায়। অবস্থার মানে জানতে পাশের ?-এর ওপর পয়েন্টার রাখুন। কোনো লাইনে Sniff চাপলে শুধু সেই যোগাযোগ Wireshark-এর জন্য রেকর্ড হয়।
+updated	হালনাগাদ
+access point nearby	কাছাকাছি অ্যাক্সেস পয়েন্ট
+access points nearby	কাছাকাছি অ্যাক্সেস পয়েন্ট
+Everything AdeeboMeter observed	AdeeboMeter যা যা দেখেছে
+The whole session · download (green) · stream server delay (purple) · dips shaded	পুরো সেশন · ডাউনলোড (সবুজ) · স্ট্রিম সার্ভারের দেরি (বেগুনি) · পতনগুলো ছায়া করা
+tool	টুল

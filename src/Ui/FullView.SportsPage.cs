@@ -50,7 +50,7 @@ namespace AdeeboMeter
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 18 * S, y + 14 * S, "Scores and headlines", null);
             using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most."), Paper.Body, ib, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
-            if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Green); Act(sportsCanvas, br, delegate { Cfg.Sports = true; Cfg.Save(); sportsCanvas.Invalidate(); }); }
+            if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(sportsCanvas, br, delegate { Cfg.Sports = true; Cfg.Save(); sportsCanvas.Invalidate(); }); }
             return false;
         }
         Action SpRepaint() { return () => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (sportsCanvas != null) sportsCanvas.Invalidate(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; } }; }
@@ -87,11 +87,11 @@ namespace AdeeboMeter
             float bw = 150 * S, pw = 90 * S; var box = new Rectangle((int)x, (int)(y + sportsCanvas.AutoScrollPosition.Y), (int)(w - bw - pw - 20 * S), spLink.PreferredHeight);
             if (spLink.Bounds != box) spLink.Bounds = box;
             if (!spLink.Visible) spLink.Visible = true;
-            spLink.BackColor = Paper.Dark ? Paper.Soft : Color.White; spLink.ForeColor = Paper.Ink;
+            spLink.BackColor = Paper.CardBg; spLink.ForeColor = Paper.Ink;
             var pr = new RectangleF(x + w - bw - pw - 10 * S, y - 2 * S, pw, box.Height + 4 * S); Theme.Fill(g, pr, 6 * S, Paper.DeskBg); Theme.Stroke(g, pr, 6 * S, Paper.Line, 1);
             var ps = g.MeasureString(L.T("Paste"), Draw.fBtn); using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Paste"), Draw.fBtn, ib, pr.X + (pr.Width - ps.Width) / 2, pr.Y + (pr.Height - ps.Height) / 2);
             Act(sportsCanvas, pr, delegate { try { if (Clipboard.ContainsText()) spLink.Text = Clipboard.GetText().Trim(); } catch (System.Runtime.InteropServices.ExternalException) { } });
-            var tr = new RectangleF(x + w - bw, y - 2 * S, bw, box.Height + 4 * S); Theme.Fill(g, tr, 6 * S, StreamCheck.Running ? Paper.Muted : Paper.Green);
+            var tr = new RectangleF(x + w - bw, y - 2 * S, bw, box.Height + 4 * S); Theme.Fill(g, tr, 6 * S, StreamCheck.Running ? Paper.Muted : Paper.Act);
             string tt = StreamCheck.Running ? L.T("Testing...") : L.T("Test my stream"); var ts = g.MeasureString(tt, Draw.fBtn); using (var wb = new SolidBrush(Color.White)) g.DrawString(tt, Draw.fBtn, wb, tr.X + (tr.Width - ts.Width) / 2, tr.Y + (tr.Height - ts.Height) / 2);
             Act(sportsCanvas, tr, SpTest);
             return y + box.Height + 14 * S;
@@ -279,7 +279,7 @@ namespace AdeeboMeter
             foreach (var it in items)
             {
                 var box = new RectangleF(x + 16 * S, ty, 22 * S, 22 * S);
-                if (it.Item1 == 1) Paper.Tick(g, box, Paper.Green); else { Theme.Fill(g, box, 4 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, box, 4 * S, it.Item1 < 0 ? Paper.Line2 : Paper.Line, 1.4f); }
+                if (it.Item1 == 1) Paper.Tick(g, box, Paper.Act); else { Theme.Fill(g, box, 4 * S, Paper.CardBg); Theme.Stroke(g, box, 4 * S, it.Item1 < 0 ? Paper.Line2 : Paper.Line, 1.4f); }
                 using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(it.Item2, it.Item1 == 0 && it.Item3 != null && !it.Item2.Contains(L.T("Remind")) ? Paper.BodyB : Paper.Body, ib, new RectangleF(x + 48 * S, ty + 1 * S, w - 64 * S, 44 * S));
                 if (it.Item3 != null) Act(sportsCanvas, new RectangleF(x + 12 * S, ty - 4 * S, w - 24 * S, 34 * S), it.Item3);
                 ty += 44 * S;
@@ -340,7 +340,7 @@ namespace AdeeboMeter
                 if (on) Theme.Fill(g, r, 16 * S, Paper.Navy); else { Theme.Fill(g, r, 16 * S, Paper.DeskBg); Theme.Stroke(g, r, 16 * S, Paper.Line, 1); }
                 MkSpText(g, L.T(f[1]), Draw.fSmall, on ? Color.White : Paper.Ink, r.X + 13 * S, r.Y + (r.Height - s.Height) / 2); string id = f[0]; Act(sportsCanvas, r, delegate { spFilter = id; sportsCanvas.Invalidate(); }); cx = r.Right + 8 * S;
             }
-            var mb = new RectangleF(cx + 16 * S, y + 5 * S, 22 * S, 22 * S); if (spMineOnly) Paper.Tick(g, mb, Paper.Navy); else { Theme.Fill(g, mb, 4 * S, Color.White); Theme.Stroke(g, mb, 4 * S, Paper.Line, 1.4f); }
+            var mb = new RectangleF(cx + 16 * S, y + 5 * S, 22 * S, 22 * S); if (spMineOnly) Paper.Tick(g, mb, Paper.Act); else { Theme.Fill(g, mb, 4 * S, Paper.CardBg); Theme.Stroke(g, mb, 4 * S, Paper.Line, 1.4f); }
             MkSpText(g, L.T("Only my teams"), Paper.Body, Paper.Ink, mb.Right + 8 * S, y + 5 * S); Act(sportsCanvas, new RectangleF(mb.X, y, 160 * S, 32 * S), delegate { spMineOnly = !spMineOnly; sportsCanvas.Invalidate(); });
             if (at != DateTime.MinValue) { var us = L.T("Updated") + " " + at.ToLocalTime().ToString("t", CultureInfo.CurrentCulture); var uz = g.MeasureString(us, Paper.Small); MkSpText(g, us, Paper.Small, Paper.Muted, x + w - uz.Width, y + 8 * S); }
             y += 46 * S;
@@ -355,7 +355,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < live.Count; i++)
                 {
                     var m = live[i]; var gr = new RectangleF(x + 16 * S + (i % per) * (cw + 12 * S), ly + (i / per) * 112 * S, cw, 100 * S);
-                    Theme.Fill(g, gr, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, gr, 6 * S, Paper.Line2, 1); if (Sports.Mine(m)) using (var mp = new Pen(Color.FromArgb(31, 111, 235), 4 * S)) g.DrawLine(mp, gr.X + 2 * S, gr.Y + 4 * S, gr.X + 2 * S, gr.Bottom - 4 * S);
+                    Theme.Fill(g, gr, 6 * S, Paper.CardBg); Theme.Stroke(g, gr, 6 * S, Paper.Line2, 1); if (Sports.Mine(m)) using (var mp = new Pen(Color.FromArgb(31, 111, 235), 4 * S)) g.DrawLine(mp, gr.X + 2 * S, gr.Y + 4 * S, gr.X + 2 * S, gr.Bottom - 4 * S);
                     MkSpText(g, m.Home, Paper.BodyB, Paper.Head, gr.X + 14 * S, gr.Y + 10 * S); MkSpText(g, m.Away, Paper.BodyB, Paper.Head, gr.X + 14 * S, gr.Y + 36 * S);
                     var hs = g.MeasureString(Or(m.HomeScore, "-"), Paper.NumS); MkSpText(g, Or(m.HomeScore, "-"), Paper.NumS, Paper.Head, gr.Right - hs.Width - 12 * S, gr.Y + 8 * S); var as2 = g.MeasureString(Or(m.AwayScore, "-"), Paper.NumS); MkSpText(g, Or(m.AwayScore, "-"), Paper.NumS, Paper.Head, gr.Right - as2.Width - 12 * S, gr.Y + 34 * S);
                     MkSpText(g, (m.League != "" ? m.League : L.T(Sports.Name(m.Sport))) + (m.Detail != "" ? " · " + Cut(m.Detail, 40) : ""), Paper.Small, Paper.Down, gr.X + 14 * S, gr.Bottom - 26 * S);
@@ -395,7 +395,7 @@ namespace AdeeboMeter
             foreach (var l in StreamCheck.Links().Take(4))
             {
                 var s = g.MeasureString(l[0], Draw.fSmall); var r = new RectangleF(cx, iy, s.Width + 24 * S, 28 * S); if (r.Right > x + w - 16 * S) break;
-                Theme.Fill(g, r, 14 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, r, 14 * S, Paper.Line, 1); MkSpText(g, l[0], Draw.fSmall, Paper.Ink, r.X + 12 * S, r.Y + (r.Height - s.Height) / 2);
+                Theme.Fill(g, r, 14 * S, Paper.CardBg); Theme.Stroke(g, r, 14 * S, Paper.Line, 1); MkSpText(g, l[0], Draw.fSmall, Paper.Ink, r.X + 12 * S, r.Y + (r.Height - s.Height) / 2);
                 string url = l[1]; Act(sportsCanvas, r, delegate { spLink.Text = url; }); cx = r.Right + 8 * S;
             }
             y = ir.Bottom + 16 * S;
@@ -444,7 +444,7 @@ namespace AdeeboMeter
             float hw = (w - 32 * S - 4 * 10 * S) / 5;
             for (int i = 0; i < 5; i++)
             {
-                var hr = new RectangleF(x + 16 * S + i * (hw + 10 * S), y + 52 * S, hw, 72 * S); Theme.Fill(g, hr, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, hr, 6 * S, res.HopLv[i] == 1 ? Paper.Amber : res.HopLv[i] == 2 ? Paper.Down : Paper.Line2, res.HopLv[i] >= 1 && res.HopLv[i] <= 2 ? 1.6f : 1);
+                var hr = new RectangleF(x + 16 * S + i * (hw + 10 * S), y + 52 * S, hw, 72 * S); Theme.Fill(g, hr, 6 * S, Paper.CardBg); Theme.Stroke(g, hr, 6 * S, res.HopLv[i] == 1 ? Paper.Amber : res.HopLv[i] == 2 ? Paper.Down : Paper.Line2, res.HopLv[i] >= 1 && res.HopLv[i] <= 2 ? 1.6f : 1);
                 using (var db = new SolidBrush(res.HopLv[i] == 0 ? Paper.Green : res.HopLv[i] == 1 ? Paper.Amber : res.HopLv[i] == 2 ? Paper.Down : Paper.Muted)) g.FillEllipse(db, hr.X + hr.Width / 2 - 6 * S, hr.Y + 10 * S, 12 * S, 12 * S);
                 var hn = L.T(res.Hops[i] ?? ""); var hz = g.MeasureString(hn, Paper.BodyB); MkSpText(g, hn, Paper.BodyB, Paper.Head, hr.X + (hr.Width - hz.Width) / 2, hr.Y + 26 * S);
                 var nn = res.HopNote[i] ?? ""; var nz = g.MeasureString(nn, Paper.Small); MkSpText(g, nn, Paper.Small, Paper.Muted, hr.X + Math.Max(4 * S, (hr.Width - nz.Width) / 2), hr.Y + 48 * S);
@@ -477,8 +477,8 @@ namespace AdeeboMeter
             foreach (var t in tips)
             {
                 using (var lp = new Pen(Paper.Line2, 1)) g.DrawLine(lp, tx + 12 * S, ty, tx + tw - 12 * S, ty);
-                var nr = new RectangleF(tx + 16 * S, ty + 12 * S, 28 * S, 28 * S); using (var nb = new SolidBrush(t.Rank == 1 && tips.Count > 1 ? Paper.Down : t.Rank == 2 && tips.Count > 2 ? Paper.Amber : Paper.Navy)) g.FillEllipse(nb, nr);
-                var ns = g.MeasureString(t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn); MkSpText(g, t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn, Color.White, nr.X + (nr.Width - ns.Width) / 2, nr.Y + (nr.Height - ns.Height) / 2);
+                var nr = new RectangleF(tx + 16 * S, ty + 12 * S, 28 * S, 28 * S); var rc = t.Rank == 1 && tips.Count > 1 ? Paper.Down : t.Rank == 2 && tips.Count > 2 ? Paper.Amber : Paper.Navy; using (var nb = new SolidBrush(Paper.FillOf(rc))) g.FillEllipse(nb, nr);
+                var ns = g.MeasureString(t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn); MkSpText(g, t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn, Paper.OnFill(rc), nr.X + (nr.Width - ns.Width) / 2, nr.Y + (nr.Height - ns.Height) / 2);
                 MkSpText(g, L.T(t.Title), Paper.BodyB, Paper.Head, tx + 56 * S, ty + 10 * S);
                 using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T(t.Body), Paper.Small, ib, new RectangleF(tx + 56 * S, ty + 30 * S, tw - 72 * S, 20 * S));
                 MkSpText(g, L.T("seen:") + " " + t.Seen, Draw.fTiny, Paper.Muted, tx + 56 * S, ty + 48 * S);

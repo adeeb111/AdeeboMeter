@@ -65,7 +65,9 @@ namespace AdeeboMeter
         {
             v = (v ?? "").Trim(); if (v.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(8); else if (v.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(7);
             int sl = v.IndexOf('/'); if (sl >= 0) v = v.Substring(0, sl);
-            return Regex.IsMatch(v, @"^[A-Za-z0-9.-]{1,120}(:[0-9]{1,5})?$") ? v.ToLowerInvariant() : "";
+            if (!Regex.IsMatch(v, @"^[A-Za-z0-9.-]{1,120}(:[0-9]{1,5})?$")) return "";
+            int c = v.IndexOf(':'); if (c > 0) { int port = int.Parse(v.Substring(c + 1), System.Globalization.CultureInfo.InvariantCulture); if (port < 1 || port > 65535) return ""; }   // review 24 Nov: :99999 is no port
+            return v.ToLowerInvariant();
         }
         public static string SearchUrl(string typed)
         {
@@ -189,8 +191,8 @@ namespace AdeeboMeter
                     lock (k) { hours = l; fetchedUtc = DateTime.UtcNow; forPlace = place; } Note = ""; Save();
                     Program.Log("weather: " + l.Count + " hours");   // AM-CG-164: never the place's name in the log
                 }
-                catch (InvalidDataException e) { if (g0 == gen) Note = "Open-Meteo's answer didn't make sense - trying again in half an hour."; Program.Log("weather: " + e.Message); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; if (g0 == gen) Note = "Couldn't reach Open-Meteo - trying again in half an hour."; Program.Log("weather: " + e.GetType().Name); }
+                catch (InvalidDataException e) { if (g0 == gen) Note = string.Format(L.T("The answer from {0} didn't make sense - trying again in half an hour."), ApiHost); Program.Log("weather: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; if (g0 == gen) Note = string.Format(L.T("Couldn't reach {0} - trying again in half an hour."), ApiHost); Program.Log("weather: " + e.GetType().Name); }
                 finally { busy = false; if (again) { again = false; if (Cfg.WeatherPlace != place) Fetch(); } }
             }) { IsBackground = true, Name = "weather" }.Start();
         }

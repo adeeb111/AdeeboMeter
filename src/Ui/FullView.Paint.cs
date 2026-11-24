@@ -112,7 +112,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
-                string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
+                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
                 using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
                 // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 80 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
@@ -128,7 +128,7 @@ namespace AdeeboMeter
                         g.DrawString(note, Draw.fSmall, ab, new RectangleF(left, y, Math.Max(1, r.Width - 20 * S - left), 20 * S), sf);
                     return;
                 }
-                foreach (var right in new[] { Program.Version })
+                foreach (var right in new[] { L.T("Esc takes you back to the corner") + "     " + Program.Version, Program.Version })   // review CD-L4: the shortcut said once, where there's room
                 {
                     var rs = g.MeasureString(right, Draw.fSmall); float rx = r.Width - rs.Width - 20 * S;
                     if (rx >= left) { g.DrawString(right, Draw.fSmall, muted, rx, y); break; }
@@ -234,11 +234,12 @@ namespace AdeeboMeter
             string verdict = d == null ? Voice.P("Give me a host, an IP or a URL and press Check. Nothing runs until you do.", "Type a host, IP or URL and press Check.")
                                            + (Cfg.Pins.Count == 0 ? Voice.P("\nTip: press Pin to save places you check often - the VPN head-end, Jira, the lab jump host - then run them all at once.", "\nTip: Pin saves a destination; Run all checks every saved one.") : "")
                            : done ? d.Verdict : (d.Note ?? Voice.P("Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...", "Checking..."));
-            float vh = Draw.Measure(verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
-            var vb = new RectangleF(x, y, w, vh + 38 * S);
+            var vf = d == null ? Draw.fBody : Draw.fTitle;   /* v8: the ready-state instructions in body type - a verdict earns the big type */
+            float vh = Draw.Measure(verdict, vf, (int)(w - 32 * S)).Height;
+            var vb = new RectangleF(x, y, w, vh + 48 * S);
             Color bg = lv == -2 ? Theme.BlueSoft : lv == 3 ? Theme.Soft : Theme.LvSoft(lv), fg = lv == -2 ? Theme.BlueDark : lv == 3 ? Theme.Sub : Theme.LvText(lv);
             Theme.Fill(g, vb, 10 * S, bg);
-            using (var b = new SolidBrush(fg)) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
+            using (var b = new SolidBrush(fg)) { g.DrawString(Kit.Sent(title), Draw.fBodyB, b, x + 16 * S, y + 12 * S); g.DrawString(verdict, vf, b, new RectangleF(x + 16 * S, y + 34 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 20 * S;
             if (d == null)
             {
@@ -421,7 +422,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                g.DrawString(histDay == null ? "LAST 2 HOURS · NEWEST FIRST · ONLY CHANGES ARE RECORDED" + (Cfg.History ? " · ALSO SAVED TO HISTORY" : ", IN MEMORY ONLY") : "EVERYTHING THAT CHANGED ON " + histDay.Value.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(histDay == null ? "Last 2 hours · newest first · only changes are recorded" + (Cfg.History ? " · also saved to history" : ", in memory only") : "Everything that changed on " + histDay.Value.ToString("dddd d MMMM", CultureInfo.CurrentCulture), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (evs.Count <= (histDay == null ? 1 : 0)) g.DrawString(Voice.P("Nothing has changed yet. Boring is good.", "No changes recorded yet."), Draw.fBody, muted, x, y + 4 * S);
                 foreach (var e in evs)
                 {

@@ -111,7 +111,9 @@ namespace AdeeboMeter
             { var vs = Views.All(); add("General", "View", TagPc, () => { var cur = vs.FirstOrDefault(v => v[0] == Cfg.View); return (cur != null ? AdeeboMeter.L.T(cur[2]) + ". " : "") + AdeeboMeter.L.T("Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view."); }, vs.Select(v => v[1]).ToArray(), () => vs.FindIndex(v => v[0] == Cfg.View), i => SwitchView(vs[i][0]), null, "view mode simple pro engineer gamer streamer trader everyday advanced beginner tabs"); }
             add("General", "Language", TagPc, () => Cfg.Lang == "en" ? AdeeboMeter.L.T("English. A change takes full effect after a restart.") : AdeeboMeter.L.T("Preview: some text is still in English. Restart AdeeboMeter to apply the language everywhere."), AdeeboMeter.L.Languages.Select(l => l[1]).ToArray(), () => Math.Max(0, Array.FindIndex(AdeeboMeter.L.Languages, l => l[0] == Cfg.Lang)), i => PickLanguage(AdeeboMeter.L.Languages[i][0]), null, "language french français español spanish arabic العربية bengali বাংলা");
             add("General", "Theme", TagPc, () => { int th = Cfg.GetTheme(); return th == 2 ? AdeeboMeter.L.T("Neon: near-black with electric cyan - accents glow softly.") : th == 3 ? AdeeboMeter.L.T("Midnight: deep navy with aqua - calm for long nights.") : th == 4 ? "Sunset: warm plum with coral." : th == 5 ? "Mint: light and fresh, soft green." : th == 1 ? "Dark: always dark, whatever Windows uses." : th == 0 ? "Light: always light, whatever Windows uses." : "Follow Windows switches light and dark with your Windows setting."; }, SetS18, () => { int th = Cfg.GetTheme(); return th < 0 ? 0 : Math.Min(SetS18.Length - 1, th + 1); }, i => Cfg.SetTheme(i - 1), null, "dark light colour color theme neon midnight sunset mint");
-            add("General", "Markets and Sports look", TagPc, () => Paper.App ? AdeeboMeter.L.T("App: the same cards and type as every other page.") : AdeeboMeter.L.T("Newspaper: a masthead, serif headlines and cream paper."), SetPaperOpts, () => Paper.App ? 0 : 1, i => { Cfg.Paper = i == 0 ? "app" : "cream"; Cfg.Save(); Invalidate(true); }, null, "newspaper paper markets sports look style cream");
+            // review 24 Nov (ML-6): all four papers the settings file can hold can be picked and kept - white and the app's colours
+            // were loaded but showed as "Newspaper" and were overwritten by either choice
+            add("General", "Markets and Sports look", TagPc, () => Paper.App ? AdeeboMeter.L.T("App: the same cards and type as every other page.") : AdeeboMeter.L.T("Newspaper: a masthead, serif headlines and cream paper."), SetPaperOpts, () => Paper.App ? 0 : Cfg.Paper == "white" ? 2 : Cfg.Paper == "theme" ? 3 : 1, i => { Cfg.Paper = i == 0 ? "app" : i == 2 ? "white" : i == 3 ? "theme" : "cream"; Cfg.Save(); Invalidate(true); }, null, "newspaper paper markets sports look style cream");
             // 24 Nov: the Details switch left the ⋯ menu - it only adds engineers' extra numbers now (worst values, sources, link rates)
             add("General", "Extra numbers for engineers", TagPc, () => Cfg.Details ? AdeeboMeter.L.T("On: worst values, where each number comes from and link rates, in the Time machine and the tools.") : AdeeboMeter.L.T("Off: the plain readings only."), SetOnOff, () => Cfg.Details ? 0 : 1, i => SetDetails(i == 0), null, "details raw values engineer worst sources");
             // Weather (Adeeb, 14 Nov): off until turned on; the place is typed, never located (Weather.cs)
@@ -313,7 +315,7 @@ namespace AdeeboMeter
             }
             var need = new Size(0, (int)(Math.Max(y, my) + 20 * S)); SetNeed(settingsCanvas, need);
         }
-        static readonly string[] SetPaperOpts = { "App", "Newspaper" };
+        static readonly string[] SetPaperOpts = { "App", "Newspaper", "Newspaper, white", "Newspaper, app colours" };
         static readonly string[] SetOnOff = { "On", "Off" }, SetLayoutOpts = { "Classic", "Sidebar" }, SetFace = { "Drawn", "Emoji" };
         static readonly string[] SetHat = { "None", "Cap", "Party hat", "Crown" };
         static readonly string[] WStyle = { "Speed only", "Speed + status", "Speed + apps", "Everyday", "Gamer", "Calls", "Engineer", "Auto" }, WStyleIds = { "speed", "speedstatus", "speedapps", "everyday", "gamer", "calls", "engineer", "auto" };
@@ -331,8 +333,8 @@ namespace AdeeboMeter
         static float SetHead(Graphics g, string t, float x, float y, float w)
         {
             y += 8 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(t, Draw.fTiny, mb, x, y);
-            using (var line = new Pen(Theme.Line)) g.DrawLine(line, x, y + 20 * S, x + w, y + 20 * S);
+            using (var mb = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(t), Draw.fBodyB, mb, x, y);
+            using (var line = new Pen(Theme.Line)) g.DrawLine(line, x, y + 22 * S, x + w, y + 22 * S);
             return y + 28 * S;
         }
         float SetRow(Graphics g, float x, float y, float w, string label, string help, string[] opts, int cur, Action<int> set) { return SetRow(g, x, y, w, label, help, opts, cur, set, null); }
@@ -412,7 +414,7 @@ namespace AdeeboMeter
                     new[] { "Open this view", AdeeboMeter.L.T("Click the tray icon, or press Ctrl+Alt+A from anywhere.") },
                     new[] { "Back to the corner", AdeeboMeter.L.T("Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.") },
                     new[] { "Quit completely", AdeeboMeter.L.T("Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.") },
-                    new[] { "Learn anything", AdeeboMeter.L.T("When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.") },
+                    new[] { "Learn anything", AdeeboMeter.L.T("Point at anything with a small ? beside it, then at the ? - a short explanation opens. The × closes it.") },
                     new[] { "Tune it", AdeeboMeter.L.T("Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.") } };
         static readonly string[][] AboutTrust = {
                     new[] { "Readable source", AdeeboMeter.L.T("The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.") },
@@ -422,7 +424,7 @@ namespace AdeeboMeter
                     new[] { "Leaves no trace", AdeeboMeter.L.T("Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.") } };
         static readonly string[][] AboutTabs =
         {
-            new[] { "Connections", AdeeboMeter.L.T("Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.") },
+            new[] { "Connections", AdeeboMeter.L.T("Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.") },
             new[] { "Your Wi-Fi / cable", AdeeboMeter.L.T("Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.") },
             new[] { "What's running", AdeeboMeter.L.T("Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.") },
             new[] { "Check a destination", AdeeboMeter.L.T("Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.") },

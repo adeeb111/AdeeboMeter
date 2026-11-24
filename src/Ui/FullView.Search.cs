@@ -185,7 +185,7 @@ namespace AdeeboMeter
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, b0);
             if (it.Header)
             {
-                using (var m = new SolidBrush(it.Acc == "" ? Theme.Muted : Kit.Ink(it.Acc))) g.DrawString(it.Title.ToUpperInvariant(), Draw.fTiny, m, b0.X + 6 * S, b0.Bottom - 20 * S);
+                using (var m = new SolidBrush(it.Acc == "" ? Theme.Muted : Kit.Ink(it.Acc))) g.DrawString(it.Title, Draw.fTiny, m, b0.X + 6 * S, b0.Bottom - 20 * S);
                 return;
             }
             bool sel = (e.State & DrawItemState.Selected) != 0;

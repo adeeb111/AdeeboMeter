@@ -2,7 +2,8 @@
    One family (Barlow; its semi-condensed cut for headings and readouts), the logo's own colours:
    faceplate blue #1155E0 and the gauge's three arcs - mint #5EF2B0, amber #FCD34D, coral #FF7A6B. */
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
-@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 800;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 
@@ -33,3 +34,7 @@ h1,h2,h3{font-family:"Barlow SC","Barlow","Segoe UI",system-ui,sans-serif}
 html{scrollbar-color:var(--line) var(--page);caret-color:var(--blue)}
 a{text-underline-offset:.18em}
 a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+/* one corner scale for the website, the phone app and the PC app (24 Nov, Adeeb: unify now):
+   sm 8 - tags, small chips, inner segments · md 12 - buttons, fields, icon tiles · lg 16 - cards and boxes ·
+   xl 24 - the meter faceplate and sheets · pill - pills, toggles, status chips */
+:root{--r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:999px}

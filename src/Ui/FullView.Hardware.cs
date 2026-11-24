@@ -88,7 +88,7 @@ namespace AdeeboMeter
                 using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(Cut(txt, 260), Draw.fSmall, sb, new RectangleF(b.X + 12 * S, b.Y + 26 * S, b.Width - 20 * S, b.Height - 30 * S));
                 if (i < have.Count - 1) VArrow(g, b.Right + 4 * S, b.Y + bh / 2, b.Right + 22 * S, b.Y + bh / 2, Theme.Muted, false);
             }
-            float fy = r.Y + 44 * S + bh + 18 * S; VText(g, Kit.Sent(L.T("WHAT FIXES IT")), Draw.fTiny, Theme.Green, r.X + 18 * S, fy); fy += 18 * S;
+            float fy = r.Y + 44 * S + bh + 18 * S; VText(g, Kit.Sent(L.T("WHAT FIXES IT")), Draw.fTiny, Theme.LvText(0), r.X + 18 * S, fy); fy += 18 * S;
             if (fixes.Count == 0) VText(g, L.T("each fix with what it gives back (memory freed, processor returned)"), Draw.fSmall, Theme.Sub, r.X + 18 * S, fy);
             foreach (var f in fixes) { Theme.Fill(g, new RectangleF(r.X + 18 * S, fy + 5 * S, 8 * S, 8 * S), 4 * S, Theme.Green); VText(g, Cut(f[2], 150), Draw.fSmall, Theme.Ink, r.X + 32 * S, fy); fy += 26 * S; }
             VFoot(g, r, "The same depth as a network diagnosis: not just who uses the most, but what's full, what that does, the maths, and what each fix gives back.");

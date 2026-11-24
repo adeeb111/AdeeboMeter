@@ -1,7 +1,8 @@
 /* AdeeboMeter phone app - brand layer (prototype, 23 Nov). Same instrument as the website:
    graphite page, the logo's blue faceplate for the verdict, the gauge's three arcs for status. */
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
-@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 800;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 
@@ -150,3 +151,14 @@ input.search:focus{box-shadow:0 0 0 1px var(--blue),0 0 0 4px color-mix(in srgb,
 [dir="rtl"] .bars i:after{inset:0 0 0 auto}[dir="rtl"] .bars b{text-align:left}
 [dir="rtl"] .chev{display:inline-block;transform:scaleX(-1)}
 .pre{text-align:left;direction:ltr}
+/* review 24 Nov: the toggle keeps its look but takes a 44 px tall tap; the language picker shows its label at 320 px */
+.tog:before{content:"";position:absolute;inset:-6px -2px}
+.card.langrow .phone-locale select{max-width:60vw;text-overflow:ellipsis}
+/* the shared corner scale - same steps as the website and the PC app (24 Nov) */
+:root{--r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:999px}
+.card,.tile,.wgc,.gcard,.pcrow2,.qa2,.sc-box{border-radius:var(--r-lg)}
+.card.face{border-radius:var(--r-xl)}
+.sheet{border-top-left-radius:var(--r-xl);border-top-right-radius:var(--r-xl)}
+.btn,.in,.seg,.cbtn,.ibtn,.tabs button,.thb,.vchip,.row.sel,.st,.card.face .btn,.card.face .big3>div,.ic,.ic.qc,.vopt .ic,.qa .qc,.peekbox,.pwords span,.sc-in{border-radius:var(--r-md)}
+.seg button,.mini button,.pre,.card.langrow .phone-locale select{border-radius:var(--r-sm)}
+.voices button{border-radius:var(--r-pill)}

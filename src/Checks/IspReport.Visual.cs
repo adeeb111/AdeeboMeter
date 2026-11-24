@@ -113,8 +113,8 @@ namespace AdeeboMeter
                 string band = home ? "#E6F4EA" : prov ? "#E8F0FE" : "#F1EAFE";
                 sb.Append("<rect x=\"0\" y=\"" + y + "\" width=\"" + W + "\" height=\"" + (rowH - 2) + "\" fill=\"" + band + "\" rx=\"4\"/>");
                 if (i == 0 || (home != (v.FirstIsp < 0 ? i - 1 == 0 : v.Main.Hops.IndexOf(hops[i - 1]) < v.FirstIsp)))
-                    sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#4A5568\" font-weight=\"700\">" + (home ? L.T("YOUR HOME") : L.T("YOUR PROVIDER")) + "</text>");
-                else if (!home && !prov && i > 0) { var pi = hops[i - 1]; string po; v.Owners.TryGetValue(pi.Ip, out po); int pidx = v.Main.Hops.IndexOf(pi); bool pprov = !(pidx < v.FirstIsp) && (po == null || ispOwner == "" ? pidx < v.FirstIsp + 3 : po == ispOwner); if (pprov) sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#8250DF\" font-weight=\"700\">" + L.T("BEYOND") + "</text>"); }
+                    sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#4A5568\" font-weight=\"700\">" + (home ? Kit.Sent(L.T("YOUR HOME")) : Kit.Sent(L.T("YOUR PROVIDER"))) + "</text>");
+                else if (!home && !prov && i > 0) { var pi = hops[i - 1]; string po; v.Owners.TryGetValue(pi.Ip, out po); int pidx = v.Main.Hops.IndexOf(pi); bool pprov = !(pidx < v.FirstIsp) && (po == null || ispOwner == "" ? pidx < v.FirstIsp + 3 : po == ispOwner); if (pprov) sb.Append("<text x=\"" + (W - 6) + "\" y=\"" + (y + 19) + "\" text-anchor=\"end\" fill=\"#8250DF\" font-weight=\"700\">" + Kit.Sent(L.T("BEYOND")) + "</text>"); }
                 double a = Avg(h), l = Loss(h), wst = h.Worst; bool real = v.Start >= 0 && idx >= v.Start;
                 sb.Append("<text x=\"8\" y=\"" + (y + 19) + "\" font-weight=\"700\">" + h.N + "</text><text x=\"32\" y=\"" + (y + 19) + "\">" + X(Cut(v.Nm(h.Ip), 34) + (own != null ? " · " + Cut(own, 22) : "")) + "</text>");
                 if (!double.IsNaN(a))

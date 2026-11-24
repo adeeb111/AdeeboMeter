@@ -53,7 +53,7 @@ namespace AdeeboMeter
             // ---- the questions: a rail, or a chip row on a narrow window
             if (!idxSeen) { idxSeen = true; if (tbQ == "") tbQ = "*"; }   // the first look is every tool (22 Nov)
             int every = Tools2().Count;   // Adeeb, 23 Nov: the same number as the docs and the site (232) - SNMP's views count, though they live in one card
-            var items = new List<string[]> { new[] { "*", L.T("All tools"), every.ToString(CultureInfo.CurrentCulture) }, new[] { "", "★ " + L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
+            var items = new List<string[]> { new[] { "*", L.T("All tools"), every.ToString(CultureInfo.CurrentCulture) }, new[] { "", L.T("Pinned"), StarterPins.Union(MyPins()).Count().ToString(CultureInfo.CurrentCulture) } };   // bug-hunt L-152: a starter you also pinned counts once
             foreach (var qd in Questions) items.Add(new[] { qd[0], L.T(qd[1]), ToolsOf(qd[0]).Count(t => !SnmpView(t.Id) || t.Id == "snmp").ToString(CultureInfo.CurrentCulture) });
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -65,9 +65,12 @@ namespace AdeeboMeter
                         var it = items[i]; bool on = tbFilter == "" && tbQ == it[0];
                         if (i == 2) { g.DrawString(Kit.Sent(L.T("BY QUESTION")), Draw.fTiny, muted, x + 12 * S, ry + 8 * S); ry += 28 * S; }
                         var rr = new RectangleF(x, ry, rw, 38 * S);
-                        if (on) { Theme.Fill(g, rr, 10 * S, Kit.Soft(it[0] == "" ? "mine" : QAccent(it[0]))); }
+                        if (on) { Theme.Fill(g, rr, 10 * S, Theme.BlueSoft); }   // v8: the picked row in the app's one selection colour (was each group's tint - brown in dark)
                         using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                            g.DrawString(it[1], on ? Draw.fBodyB : Draw.fBody, on ? ink : sub, new RectangleF(rr.X + 14 * S, rr.Y + 9 * S, rr.Width - 60 * S, 22 * S), nf);
+                        {   // Pinned carries a drawn star (was a ★ character), the other rows line up after it
+                            float tx = rr.X + 14 * S; if (it[0] == "") { Kit.Icon(g, "star", new RectangleF(tx, rr.Y + 11 * S, 16 * S, 16 * S), on ? Theme.Ink : Theme.Sub); tx += 22 * S; }
+                            g.DrawString(it[1], on ? Draw.fBodyB : Draw.fBody, on ? ink : sub, new RectangleF(tx, rr.Y + 9 * S, rr.Right - 46 * S - tx, 22 * S), nf);
+                        }
                         var cs = g.MeasureString(it[2], Draw.fSmall); g.DrawString(it[2], Draw.fSmall, muted, rr.Right - cs.Width - 12 * S, rr.Y + 10 * S);
                         string q = it[0]; Act(tbCanvas, rr, delegate { tbSearch.Box.Text = ""; tbQ = q; tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate(); });
                         ry += 40 * S;

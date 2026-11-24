@@ -120,21 +120,22 @@ namespace AdeeboMeter
         // { label, text, [level] } rows; the text wraps
         float InfoCard(Graphics g, string title, List<string[]> rows, string key, float x, float y, float w)
         {
-            float lw = 170 * S, tw = w - lw - 28 * S; var hs = rows.Select(r => Math.Max(22 * S, Math.Max(Draw.Measure(r[1], Draw.fBody, (int)tw).Height, Draw.Measure(r[0], Draw.fBody, (int)(lw - 8 * S)).Height) + 6 * S)).ToList();
-            var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            Hint(changesCanvas, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            float lw = 170 * S, tw = w - lw - 36 * S; var hs = rows.Select(r => Math.Max(28 * S, Math.Max(Draw.Measure(r[1], Draw.fBody, (int)tw).Height, Draw.Measure(r[0], Draw.fBody, (int)(lw - 8 * S)).Height) + 10 * S)).ToList();
+            // 24 Nov (v8 screenshots): the title in heading type and sentence case, like the other cards - was tiny grey capitals
+            var card = new RectangleF(x, y, w, 16 * S + 34 * S + hs.Sum() + 12 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fHead, ib, x + 18 * S, y + 16 * S);
+            Hint(changesCanvas, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 34 * S;
             using (var muted = new SolidBrush(Theme.Muted))
                 for (int i = 0; i < rows.Count; i++)
                 {
                     int l = 3; if (rows[i].Length > 2) int.TryParse(rows[i][2], NumberStyles.Integer, CultureInfo.InvariantCulture, out l);
-                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 14 * S, ry, lw - 8 * S, hs[i]));
-                    using (var tb = new SolidBrush(l >= 0 && l <= 2 && l != 0 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 14 * S + lw, ry, tw, hs[i]));
+                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 18 * S, ry, lw - 8 * S, hs[i]));
+                    using (var tb = new SolidBrush(l >= 0 && l <= 2 && l != 0 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 18 * S + lw, ry, tw, hs[i]));
                     ry += hs[i];
                 }
-            return y + card.Height + 16 * S;
+            return y + card.Height + 20 * S;
         }
     }
 }

@@ -6,13 +6,10 @@ using System.Linq;
 
 namespace AdeeboMeter
 {
-    // Gamer Zone's HUD (Adeeb, 22 Nov: "it doesn't show enough - not the gamer vibe"): a dark, neon panel on top - your ping as a
-    // big gauge with its grade, the last minute as a line with the spikes marked, jitter / loss / link / background, and one
-    // verdict: ready to queue, or what to fix first. Redrawn on its own each second (only the panel).
+    // Gamer Zone's panel on top: your ping, jitter / lost / link / background, and one verdict - ready to queue, or what to
+    // fix first. Redrawn on its own each second (only the panel).
     sealed partial class FullView
     {
-        static readonly Color HudBg = Color.FromArgb(11, 15, 26), HudLine = Color.FromArgb(36, 44, 66), HudInk = Color.FromArgb(230, 237, 247), HudDim = Color.FromArgb(128, 140, 168),
-            HudCyan = Color.FromArgb(0, 229, 255), HudPink = Color.FromArgb(255, 61, 165), HudGreen = Color.FromArgb(57, 255, 136), HudAmber = Color.FromArgb(255, 196, 0), HudRed = Color.FromArgb(255, 77, 77);
         string hudKey = "";
         void GamerHudTick()
         {
@@ -41,62 +38,51 @@ namespace AdeeboMeter
             });
             return hudBg;
         }
+        // 24 Nov (Adeeb, v8: "the black screen doesn't go well with the flow"): the panel is a card like every other one, laid
+        // out as the approved mockup - your ping big on the left with the verdict under it, then jitter, lost, link and
+        // background in columns. No gauge, no neon, no line chart: the numbers and one coloured word say it.
         float PaintGamerHud(System.Drawing.Graphics g, float x, float y, float w)
         {
-            var s = snap; float h = 168 * S; var r = new RectangleF(x, y, w, h);
-            Theme.Fill(g, r, 16 * S, HudBg);
-            using (var p = Theme.Round(r, 16 * S)) using (var lg = new LinearGradientBrush(new PointF(r.X, r.Y), new PointF(r.Right, r.Y), Color.FromArgb(60, HudPink), Color.FromArgb(60, HudCyan))) using (var pen = new Pen(lg, 1.5f * S)) g.DrawPath(pen, p);
-            double ping = s.Ping; string grade = double.IsNaN(ping) ? "NO SIGNAL" : ping < 40 ? "COMPETITIVE" : ping < 80 ? "CASUAL" : "LAGGY";
-            Color gc = double.IsNaN(ping) ? HudDim : ping < 40 ? HudGreen : ping < 80 ? HudAmber : HudRed;
-            // the gauge: 0-150 ms on a 240° arc
-            float gd = 120 * S; var gr = new RectangleF(x + 22 * S, y + 22 * S, gd, gd);
-            using (var bp = new Pen(HudLine, 10 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawArc(bp, gr, 150, 240);
-            float frac = double.IsNaN(ping) ? 0 : (float)Math.Min(1, ping / 150.0);
-            if (frac > 0) using (var vp = new Pen(gc, 10 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawArc(vp, gr, 150, Math.Max(2, 240 * frac));
-            using (var cf = new StringFormat { Alignment = StringAlignment.Center }) using (var ib = new SolidBrush(HudInk)) using (var db = new SolidBrush(HudDim)) using (var gb = new SolidBrush(gc))
-            {
-                g.DrawString(double.IsNaN(ping) ? "--" : Ms(ping), Draw.fCardNum, ib, new RectangleF(gr.X, gr.Y + gd * 0.30f, gd, 40 * S), cf);
-                g.DrawString(L.T("ms PING"), Draw.fTiny, db, new RectangleF(gr.X, gr.Y + gd * 0.62f, gd, 16 * S), cf);
-                g.DrawString(L.T(grade), Draw.fTiny, gb, new RectangleF(gr.X - 10 * S, gr.Bottom - 6 * S, gd + 20 * S, 16 * S), cf);
-            }
-            // the last minute, spikes marked
-            float lx = gr.Right + 28 * S, lw = Math.Max(120 * S, w * 0.42f), ly = y + 26 * S, lh = 86 * S; var hist = s.NetHist ?? new double[0];
-            using (var db = new SolidBrush(HudDim)) g.DrawString(Kit.Sent(L.T("LAST 60 SECONDS")), Draw.fTiny, db, lx, y + 12 * S);
-            using (var gp = new Pen(HudLine, 1)) { g.DrawLine(gp, lx, ly + lh, lx + lw, ly + lh); g.DrawLine(gp, lx, ly + lh / 2, lx + lw, ly + lh / 2); }
-            var ok = hist.Where(v => !double.IsNaN(v)).ToList();
-            if (ok.Count > 1)
-            {
-                double top = Math.Max(60, ok.Max() * 1.15), med = ok.OrderBy(v => v).ElementAt(ok.Count / 2);
-                var pts = hist.Select((v, i) => double.IsNaN(v) ? PointF.Empty : new PointF(lx + lw * i / Math.Max(1, hist.Length - 1), ly + lh - (float)(lh * Math.Min(1, v / top)))).ToArray();
-                using (var lp = new Pen(HudCyan, 2 * S) { LineJoin = LineJoin.Round })
-                    for (int i = 1; i < pts.Length; i++) if (!pts[i].IsEmpty && !pts[i - 1].IsEmpty) g.DrawLine(lp, pts[i - 1], pts[i]);
-                using (var sb = new SolidBrush(HudPink)) for (int i = 0; i < hist.Length; i++) { if (double.IsNaN(hist[i])) { g.FillRectangle(sb, pts.Length > i ? lx + lw * i / Math.Max(1, hist.Length - 1) - 1.5f * S : lx, ly + lh - 8 * S, 3 * S, 8 * S); continue; } if (hist[i] > med * 2 && hist[i] > med + 25) g.FillEllipse(sb, pts[i].X - 3.5f * S, pts[i].Y - 3.5f * S, 7 * S, 7 * S); }
-            }
-            else using (var db = new SolidBrush(HudDim)) g.DrawString(L.T("warming up..."), Draw.fSmall, db, lx, ly + lh / 2 - 8 * S);
-            // stats
+            var s = snap; float h = 112 * S; var r = new RectangleF(x, y, w, h);
+            Kit.Box(g, r, 14 * S);
+            double ping = s.Ping;
+            int plv = double.IsNaN(ping) ? 2 : ping < 40 ? 0 : ping < 80 ? 1 : 2;
             string kind; int sig; lock (M.L) { kind = M.AdapterKind; sig = M.WifiSignal; }
             string bg = HudBackground(); bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5;
-            var stats = new[] {
-                new object[] { "JITTER", double.IsNaN(s.Jitter) ? "-" : Ms(s.Jitter) + " ms", double.IsNaN(s.Jitter) ? HudDim : s.Jitter > 20 ? HudRed : s.Jitter > 8 ? HudAmber : HudGreen },
-                new object[] { "LOSS", double.IsNaN(s.LossPct) ? "-" : s.LossPct.ToString("0.#", CultureInfo.InvariantCulture) + "%", double.IsNaN(s.LossPct) ? HudDim : s.LossPct > 2 ? HudRed : s.LossPct > 0 ? HudAmber : HudGreen },   /* R2-155: unknown is grey */
-                new object[] { "LINK", kind == "Wi-Fi" ? "Wi-Fi " + (sig >= 0 ? sig + "%" : "") : kind == "LAN" ? "Cable" : kind, string.IsNullOrEmpty(kind) ? HudDim : kind == "Wi-Fi" && sig >= 0 && sig < 60 ? HudAmber : HudGreen },
-                new object[] { "BACKGROUND", bg != "" ? "updating" : busy ? "busy line" : "quiet", bg != "" || busy ? HudAmber : HudGreen } };
-            float sx = lx + lw + 26 * S, sw = x + w - 20 * S - sx, sh = 30 * S;
-            if (sw > 120 * S)
-                for (int i = 0; i < stats.Length; i++)
-                {
-                    float yy = y + 16 * S + i * (sh + 4 * S);
-                    using (var db = new SolidBrush(HudDim)) g.DrawString(L.T((string)stats[i][0]), Draw.fTiny, db, sx, yy + 7 * S);
-                    using (var vb = new SolidBrush((Color)stats[i][2])) using (var rf = new StringFormat { Alignment = StringAlignment.Far }) g.DrawString(L.T((string)stats[i][1]), Draw.fBodyB, vb, new RectangleF(sx, yy + 3 * S, sw, sh), rf);
-                }
             // the verdict
             string verdict = double.IsNaN(ping) ? "NO CONNECTION - check Home first" : bg != "" ? "WAIT - " + bg : busy ? "WAIT - SOMETHING IS USING YOUR LINE" : ping >= 80 || s.LossPct > 2 ? "EXPECT LAG - " + (s.LossPct > 2 ? "PACKETS ARE BEING LOST" : "THE LINE IS SLOW RIGHT NOW") : "READY TO QUEUE · GG";
-            Color vc = verdict.StartsWith("READY", StringComparison.Ordinal) ? HudGreen : verdict.StartsWith("NO", StringComparison.Ordinal) ? HudRed : HudAmber;
+            int vlv = verdict.StartsWith("READY", StringComparison.Ordinal) ? 0 : verdict.StartsWith("NO", StringComparison.Ordinal) ? 2 : 1;
             // shown in the app's language: each part translated on its own ("WAIT - " + a program's name stays a program's name)
             // sentence case like the rest of the app (review 24 Nov); the program's own name keeps its spelling
             string shown = verdict.StartsWith("WAIT - ", StringComparison.Ordinal) && verdict != "WAIT - SOMETHING IS USING YOUR LINE" ? Kit.Sent(L.T("WAIT - ")) + verdict.Substring(7)
                 : verdict.StartsWith("EXPECT LAG - ", StringComparison.Ordinal) ? Kit.Sent(L.T("EXPECT LAG - ") + L.T(verdict.Substring(13))) : Kit.Sent(L.T(verdict));
-            using (var vb = new SolidBrush(vc)) using (var ef = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString("▶ " + shown, Draw.fBodyB, vb, new RectangleF(lx, ly + lh + 16 * S, x + w - 20 * S - lx, 24 * S), ef);   // R2-156: kept inside the panel
+            float px = x + 22 * S;
+            using (var sub = new SolidBrush(Theme.Sub)) using (var ink = new SolidBrush(plv == 0 ? Theme.Ink : Theme.LvText(plv)))
+            {
+                g.DrawString(L.T("Your ping right now"), Draw.fSmall, sub, px, y + 16 * S);
+                string pv = double.IsNaN(ping) ? "--" : Ms(ping); var ps = g.MeasureString(pv, Draw.fHero);
+                g.DrawString(pv, Draw.fHero, ink, px - 2 * S, y + 32 * S);
+                g.DrawString(L.T("ms"), Draw.fBody, sub, px + ps.Width - 4 * S, y + 32 * S + ps.Height - g.MeasureString("ms", Draw.fBody).Height - 6 * S);
+            }
+            float leftW = 230 * S;
+            Draw.LvDot(g, vlv, px, y + h - 26 * S, 8 * S, 8 * S);
+            using (var vb = new SolidBrush(Theme.LvText(vlv))) using (var ef = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                g.DrawString(shown, Draw.fBodyB, vb, new RectangleF(px + 14 * S, y + h - 31 * S, leftW - 14 * S, 20 * S), ef);
+            // the four readings in columns, each a label over its value; a value is coloured only when it isn't fine
+            var stats = new[] {
+                Tuple.Create("Jitter", double.IsNaN(s.Jitter) ? "-" : Ms(s.Jitter) + " ms", double.IsNaN(s.Jitter) ? 3 : s.Jitter > 20 ? 2 : s.Jitter > 8 ? 1 : 0),
+                Tuple.Create("Lost", double.IsNaN(s.LossPct) ? "-" : s.LossPct.ToString("0.#", CultureInfo.InvariantCulture) + "%", double.IsNaN(s.LossPct) ? 3 : s.LossPct > 2 ? 2 : s.LossPct > 0 ? 1 : 0),
+                Tuple.Create(kind == "Wi-Fi" ? "Wi-Fi" : "Link", kind == "Wi-Fi" ? (sig >= 0 ? sig + "%" : L.T("signal hidden")) : kind == "LAN" ? L.T("Cable") : (string.IsNullOrEmpty(kind) ? "-" : kind), string.IsNullOrEmpty(kind) ? 3 : kind == "Wi-Fi" && sig >= 0 && sig < 60 ? 1 : 0),
+                Tuple.Create("Background", bg != "" ? L.T("updating") : busy ? L.T("busy line") : L.T("quiet"), bg != "" || busy ? 1 : 0) };
+            float sx = x + leftW + 24 * S, sw = (x + w - 22 * S - sx) / stats.Length;
+            if (sw > 70 * S)
+                using (var sub = new SolidBrush(Theme.Sub)) using (var nw = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                    for (int i = 0; i < stats.Length; i++)
+                    {
+                        float cx = sx + i * sw;
+                        g.DrawString(L.T(stats[i].Item1), Draw.fSmall, sub, new RectangleF(cx, y + 30 * S, sw - 10 * S, 20 * S), nw);
+                        using (var vb = new SolidBrush(stats[i].Item3 == 1 || stats[i].Item3 == 2 ? Theme.LvText(stats[i].Item3) : Theme.Ink)) g.DrawString(stats[i].Item2, Draw.fTitle, vb, new RectangleF(cx, y + 50 * S, sw - 10 * S, 28 * S), nw);
+                    }
             LiveSpot(gamerCanvas, "gm.hud", r);
             return y + h + 16 * S;
         }

@@ -1049,7 +1049,7 @@ namespace AdeeboMeter
                 if (searching)
                 {
                     var found = Matches();
-                    g.DrawString(found.Count == 0 ? "NOTHING MATCHES - TRY ANOTHER WORD" : found.Count + (found.Count == 1 ? " TOOL" : " TOOLS") + "  ·  ENTER OPENS THE FIRST", Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
+                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + " " + L.T(found.Count == 1 ? "tool" : "tools") + "  ·  " + L.T("Enter opens the first"), Draw.fSmall, muted, x, y + 4 * S); y += 24 * S;
                     if (found.Count == 0)
                     {
                         // did you mean: the closest tool name or everyday word, one or two letters off

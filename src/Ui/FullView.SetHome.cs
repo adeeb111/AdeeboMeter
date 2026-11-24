@@ -113,7 +113,7 @@ namespace AdeeboMeter
         }
         // ---------- first run: four questions on Home, big cards, Skip any time (new installs only). The first one - what the
         // internet is for - shows only the pages that person needs (the rest stay one switch away in Settings › Navigation).
-        int setupStep; readonly HashSet<string> setupUses = new HashSet<string>(StringComparer.Ordinal);
+        int setupStep { get { return Cfg.SetupStep; } set { Cfg.SetupStep = value; } }   /* kept in the settings file: closing mid-setup comes back to the same question */ readonly HashSet<string> setupUses = new HashSet<string>(StringComparer.Ordinal);
         internal static readonly string[][] SetupUses = {
             new[] { "calls", "Work calls", "Teams, Zoom, Meet - notices a call and watches closer", "dest" },
             new[] { "game", "Gaming", "Your game servers' ping and whose lag it is", "gamer" },
@@ -166,7 +166,7 @@ namespace AdeeboMeter
                     if (step == 0) Cfg.WidgetStyle = id;
                     else if (step == 1) { Cfg.ApplyPreset(id); Policy.Apply(); M.Nudge(); }
                     else { if (id == "plain") Voice.Serious = true; else { Voice.Serious = false; Lines.Persona = id; Lines.Mood = "chill"; } }
-                    if (step == 2) { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; } else setupStep = step + 2;   // Simple unless step 1 chose Troubleshooting: no fifth question
+                    if (step == 2) { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; } else { setupStep = step + 2; Cfg.Save(); }   // Simple unless step 1 chose Troubleshooting: no fifth question
                     Cfg.Save(); Invalidate(true);
                 });
             }

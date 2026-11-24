@@ -43,7 +43,7 @@ namespace AdeeboMeter
             y = Paper.Masthead(g, x, y, w, Kit.Sent(L.T("THE MARKETS PAGE")), L.T("AdeeboMeter Daily Financial Edition"), L.T("Your PC · Your Network · Your Markets"), L.T("All in One Place"), mkTab != "overview");
             List<Tuple<string, RectangleF>> hits; y = Paper.TabBar(g, x, y, w, MkTabs, mkTab, out hits);
             foreach (var h in hits) { string id = h.Item1; Act(tradeCanvas, h.Item2, delegate { mkTab = id; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); }); }
-            y = NowLine(g, tradeCanvas, x, y + 6 * S, w); y = TryThis(g, tradeCanvas, "trade", x, y, w, true);   // the NOW line (FullView.Gateway.cs)
+            y = TryThis(g, tradeCanvas, "trade", x, y + 6 * S, w, true);   // 24 Nov: no NOW line - the status chips at the top already say it
             if (mkTab != "line") y = LineStrip(g, x, y, w);
             bool need = mkTab != "line" && mkTab != "world";
             if (need && (!Cfg.TradeFx || Policy.NoOnline)) y = MkTurnOn(g, x, y, w);
@@ -65,7 +65,7 @@ namespace AdeeboMeter
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 18 * S, y + 14 * S, "Currencies, commodities and Canada's rates", null);
             using (var ink = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on."), Paper.Body, ink, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
-            if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Green); Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); }); }
+            if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); }); }
             return r.Bottom + 16 * S;
         }
 
@@ -294,7 +294,7 @@ namespace AdeeboMeter
             for (int i = 0; i < groups.Length; i++)
             {
                 var s = MarketData.Get(groups[i]); var cr = new RectangleF(x + 16 * S + (i % per) * (cw + 12 * S), y + 56 * S + (i / per) * (ch + 12 * S), cw, ch);
-                Theme.Fill(g, cr, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, cr, 6 * S, Paper.Line2, 1);
+                Theme.Fill(g, cr, 6 * S, Paper.CardBg); Theme.Stroke(g, cr, 6 * S, Paper.Line2, 1);
                 MkText(g, L.T(MarketData.GroupInfo[groups[i]][0]), Paper.Head3, Paper.Head, cr.X + 12 * S, cr.Y + 8 * S);
                 Paper.Change(g, MarketData.ChangeOver(s, TimeSpan.FromDays(7)), Paper.Small, cr.Right - 10 * S, cr.Y + 12 * S, "0.00");
                 using (var mb = new SolidBrush(Paper.Muted)) using (var nf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T(MarketData.GroupInfo[groups[i]][1]), Paper.Small, mb, new RectangleF(cr.X + 12 * S, cr.Y + 32 * S, cr.Width - 24 * S, 18 * S), nf);
@@ -476,7 +476,7 @@ namespace AdeeboMeter
                 double big = 0; DateTime bigD = DateTime.MinValue; for (int i = 1; i < win.Count; i++) { double p = Math.Abs(MarketData.Pct(win.V[i], win.V[i - 1])); if (p > big) { big = p; bigD = win.D[i]; } }
                 var stats = new[] { new[] { L.T("High"), F4(win.V[hiI]), win.D[hiI].ToString("MMM d", CultureInfo.CurrentCulture) }, new[] { L.T("Low"), F4(win.V[loI]), win.D[loI].ToString("MMM d", CultureInfo.CurrentCulture) }, new[] { L.T("Average"), F4(avg), "" }, new[] { L.T("Change"), (chg >= 0 ? "+" : "−") + Math.Abs(chg).ToString("0.0", CultureInfo.CurrentCulture) + "%", chg < 0 ? L.T("loonie stronger") : L.T("loonie weaker") }, new[] { L.T("Biggest day"), big.ToString("0.00", CultureInfo.CurrentCulture) + "%", bigD == DateTime.MinValue ? "" : bigD.ToString("MMM d", CultureInfo.CurrentCulture) } };
                 float sw = (w - 32 * S - 4 * 10 * S) / 5;
-                for (int i = 0; i < 5; i++) { var sr = new RectangleF(x + 16 * S + i * (sw + 10 * S), ch.Bottom + 30 * S, sw, 64 * S); Theme.Fill(g, sr, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, stats[i][0], Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, stats[i][1], Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 26 * S); if (stats[i][2] != "") MkTextR(g, stats[i][2], Paper.Small, Paper.Muted, sr.Right - 8 * S, sr.Y + 30 * S); }
+                for (int i = 0; i < 5; i++) { var sr = new RectangleF(x + 16 * S + i * (sw + 10 * S), ch.Bottom + 30 * S, sw, 64 * S); Theme.Fill(g, sr, 6 * S, Paper.CardBg); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, stats[i][0], Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, stats[i][1], Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 26 * S); if (stats[i][2] != "") MkTextR(g, stats[i][2], Paper.Small, Paper.Muted, sr.Right - 8 * S, sr.Y + 30 * S); }
             }
             else MkText(g, L.T("The history arrives from the Bank of Canada in a moment."), Paper.Body, Paper.Muted, ch.X, ch.Y + 60 * S);
             y = r.Bottom + 16 * S;
@@ -612,7 +612,7 @@ namespace AdeeboMeter
             if (Cfg.TradeHost != "")
             {
                 string bt = L.T("Check my line now (20 s)"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(x + (lw - bs.Width - 36 * S) / 2, vr.Bottom - 58 * S, bs.Width + 36 * S, 42 * S);
-                Theme.Fill(g, br, 6 * S, LineCheck.Checking ? Paper.Muted : Paper.Green); MkText(g, bt, Draw.fBtn, Color.White, br.X + 18 * S, br.Y + (br.Height - bs.Height) / 2);
+                Theme.Fill(g, br, 6 * S, LineCheck.Checking ? Paper.Muted : Paper.Act); MkText(g, bt, Draw.fBtn, Color.White, br.X + 18 * S, br.Y + (br.Height - bs.Height) / 2);
                 Act(tradeCanvas, br, delegate { LineCheck.Check(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { tradeCanvas.Invalidate(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; } }); tradeCanvas.Invalidate(); });
             }
             float tx = x + lw + 16 * S, tw = w - lw - 16 * S; var tr = new RectangleF(tx, y, tw, h); Paper.Desk(g, tr);
@@ -627,8 +627,8 @@ namespace AdeeboMeter
             foreach (var t in tips)
             {
                 using (var lp = new Pen(Paper.Line2, 1)) g.DrawLine(lp, tx + 12 * S, ty, tx + tw - 12 * S, ty);
-                var nr = new RectangleF(tx + 16 * S, ty + 12 * S, 28 * S, 28 * S); using (var nb = new SolidBrush(t.Rank == 1 && tips.Count > 1 ? Paper.Down : t.Rank == 2 && tips.Count > 2 ? Paper.Amber : Paper.Navy)) g.FillEllipse(nb, nr);
-                var ns = g.MeasureString(t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn); MkText(g, t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn, Color.White, nr.X + (nr.Width - ns.Width) / 2, nr.Y + (nr.Height - ns.Height) / 2);
+                var nr = new RectangleF(tx + 16 * S, ty + 12 * S, 28 * S, 28 * S); var rc = t.Rank == 1 && tips.Count > 1 ? Paper.Down : t.Rank == 2 && tips.Count > 2 ? Paper.Amber : Paper.Navy; using (var nb = new SolidBrush(Paper.FillOf(rc))) g.FillEllipse(nb, nr);
+                var ns = g.MeasureString(t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn); MkText(g, t.Rank.ToString(CultureInfo.CurrentCulture), Draw.fBtn, Paper.OnFill(rc), nr.X + (nr.Width - ns.Width) / 2, nr.Y + (nr.Height - ns.Height) / 2);
                 MkText(g, L.T(t.Title), Paper.BodyB, Paper.Head, tx + 56 * S, ty + 10 * S);
                 using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T(t.Body), Paper.Small, ib, new RectangleF(tx + 56 * S, ty + 30 * S, tw - 72 * S, 20 * S));
                 MkText(g, L.T("seen:") + " " + t.Seen, Draw.fTiny, Paper.Muted, tx + 56 * S, ty + 48 * S);
@@ -649,7 +649,7 @@ namespace AdeeboMeter
             var cr = new RectangleF(rx, y, rw, 250 * S); Paper.Desk(g, cr);
             Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, "Rates and Prices in Canada", null);
             float sw = (rw - 42 * S) / 2;
-            Action<float, float, string, string, string> stat = (sx, sy, a, b, c) => { var sr = new RectangleF(sx, sy, sw, 84 * S); Theme.Fill(g, sr, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, a, Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, b, Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 30 * S); MkText(g, c, Draw.fTiny, Paper.Muted, sr.X + 10 * S, sr.Y + 62 * S); };
+            Action<float, float, string, string, string> stat = (sx, sy, a, b, c) => { var sr = new RectangleF(sx, sy, sw, 84 * S); Theme.Fill(g, sr, 6 * S, Paper.CardBg); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, a, Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, b, Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 30 * S); MkText(g, c, Draw.fTiny, Paper.Muted, sr.X + 10 * S, sr.Y + 62 * S); };
             var since = MarketData.RateSince(rate);
             stat(rx + 16 * S, y + 54 * S, L.T("Bank of Canada policy rate"), rate == null ? "-" : rate.Last.ToString("0.00", CultureInfo.CurrentCulture) + "%", since == DateTime.MinValue ? "" : L.T("unchanged since") + " " + since.ToString("MMM d, yyyy", CultureInfo.CurrentCulture));
             stat(rx + 26 * S + sw, y + 54 * S, L.T("Inflation, past 12 months"), cpi == null ? "-" : cpi.Last.ToString("0.0", CultureInfo.CurrentCulture) + "%", cpi == null ? "" : cpi.LastDay.ToString("MMMM yyyy", CultureInfo.CurrentCulture) + " · " + L.T("Statistics Canada"));
@@ -687,7 +687,7 @@ namespace AdeeboMeter
             float bw3 = (hw - 52 * S) / 3; var labels = new[] { L.T("Today"), L.T("A month ago"), L.T("A year ago") }; var vals = new[] { now, mo, yr };
             for (int i = 0; i < 3; i++)
             {
-                var br2 = new RectangleF(ax + 16 * S + i * (bw3 + 10 * S), y + 130 * S, bw3, 100 * S); Theme.Fill(g, br2, 6 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, br2, 6 * S, Paper.Line2, 1);
+                var br2 = new RectangleF(ax + 16 * S + i * (bw3 + 10 * S), y + 130 * S, bw3, 100 * S); Theme.Fill(g, br2, 6 * S, Paper.CardBg); Theme.Stroke(g, br2, 6 * S, Paper.Line2, 1);
                 MkText(g, labels[i], Paper.Small, Paper.Muted, br2.X + 10 * S, br2.Y + 8 * S);
                 MkText(g, double.IsNaN(vals[i]) ? "-" : "$" + (abAmt * vals[i]).ToString("N0", CultureInfo.CurrentCulture), Paper.NumS, Paper.Head, br2.X + 10 * S, br2.Y + 30 * S);
                 if (i > 0 && !double.IsNaN(vals[i]) && !double.IsNaN(now)) { double d = abAmt * (now - vals[i]); MkText(g, "$" + Math.Abs(d).ToString("N0", CultureInfo.CurrentCulture) + " " + (d >= 0 ? L.T("more now") : L.T("less now")), Paper.Small, d > 0 ? Paper.Down : Paper.Up, br2.X + 10 * S, br2.Y + 62 * S); }
@@ -702,7 +702,7 @@ namespace AdeeboMeter
             foreach (var o in opts)
             {
                 var box = new RectangleF(x + 16 * S, oy, 22 * S, 22 * S); bool on = (bool)o[1];
-                if (on) Paper.Tick(g, box, Paper.Green); else { Theme.Fill(g, box, 4 * S, Paper.Dark ? Paper.Soft : Color.White); Theme.Stroke(g, box, 4 * S, Paper.Line, 1.4f); }
+                if (on) Paper.Tick(g, box, Paper.Act); else { Theme.Fill(g, box, 4 * S, Paper.CardBg); Theme.Stroke(g, box, 4 * S, Paper.Line, 1.4f); }
                 MkText(g, (string)o[0] + (on ? "" : "  " + L.T("(off)")), Paper.Body, Paper.Ink, x + 48 * S, oy + 1 * S);
                 var act = (Action)o[2]; Act(tradeCanvas, new RectangleF(x + 12 * S, oy - 4 * S, w * 0.7f, 30 * S), delegate { act(); Cfg.Save(); tradeCanvas.Invalidate(); });
                 oy += 34 * S;

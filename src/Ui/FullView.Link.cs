@@ -46,7 +46,7 @@ namespace AdeeboMeter
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
         {
             Kit.Box(g, cr);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, cr.X + 14 * S, cr.Y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fBodyB, mb, cr.X + 14 * S, cr.Y + 12 * S);   /* 24 Nov: sentence case */
             Hint(linkCanvas, new RectangleF(cr.X, cr.Y, cr.Width, 26 * S), keyPrefix + title);
             float ry = cr.Y + 34 * S, lw = Math.Min(170 * S, cr.Width * 0.42f);
             using (var muted = new SolidBrush(Theme.Muted))
@@ -69,12 +69,12 @@ namespace AdeeboMeter
             var ls = linkSnap;
             if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) { int secs = (int)(DateTime.UtcNow - lastLink).TotalSeconds; g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading...") + (secs >= 2 ? "  " + secs + " s" : ""), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 30 * S));
                   if (linkErr == null && secs >= 2) using (var db = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel."), Draw.fSmall, db, new RectangleF(x, y + 40 * S, w, 40 * S)); } return; }   // 1.1.6 test: a still line read as stuck
-            string title = (ls.Wifi ? "YOUR WI-FI" : "YOUR CABLE") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  UPDATED " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+            string title = L.T(ls.Wifi ? "Your Wi-Fi" : "Your cable") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  " + L.T("updated") + " " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);   // v8: sentence case
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
             var vb = new RectangleF(x, y, w, vh + 44 * S);
             int blv = ls.Level == 0 && ls.Advice && ls.Verdict.StartsWith("Driver update", StringComparison.Ordinal) ? 1 : ls.Level;   // advice leads: amber, never green
             Theme.Fill(g, vb, 12 * S, Theme.LvSoft(blv));
-            using (var b = new SolidBrush(Theme.LvText(blv))) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
+            using (var b = new SolidBrush(Theme.LvText(blv))) { g.DrawString(title, Draw.fSmall, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 16 * S;
             if (ls.Radio.Count + ls.Address.Count + ls.Traffic.Count == 0) return;   // nothing connected: the message says it all
             float cw = (w - 14 * S) / 2;
@@ -104,25 +104,26 @@ namespace AdeeboMeter
         }
         float ListCard(Graphics g, string title, List<string[]> rows, string empty, string key, float x, float y, float w)
         {
-            float rh = 22 * S; var card = new RectangleF(x, y, w, 40 * S + Math.Max(1, rows.Count) * rh);
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            // 24 Nov (v8 screenshots): heading-type, sentence-case title and roomier rows, like the other cards
+            float rh = 28 * S; var card = new RectangleF(x, y, w, 16 * S + 34 * S + Math.Max(1, rows.Count) * rh + 10 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) using (var nw0 = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(Kit.Sent(title), Draw.fHead, ib, new RectangleF(x + 18 * S, y + 16 * S, w - 36 * S, 24 * S), nw0);
+            Hint(linkCanvas, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (rows.Count == 0) g.DrawString(empty, Draw.fBody, muted, new RectangleF(x + 14 * S, ry, w - 28 * S, 20 * S), nowrap);
+                if (rows.Count == 0) g.DrawString(empty, Draw.fBody, muted, new RectangleF(x + 18 * S, ry, w - 36 * S, 22 * S), nowrap);
                 foreach (var r in rows)
                 {
                     int lv = r.Length > 2 ? int.Parse(r[2], CultureInfo.InvariantCulture) : 0;
-                    using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 14 * S, ry + 6 * S, 8 * S, 8 * S);
-                    g.DrawString(r[0], Draw.fBodyB, ink, new RectangleF(x + 30 * S, ry, w * 0.30f, 20 * S), nowrap);
-                    g.DrawString(r[1], Draw.fBody, muted, new RectangleF(x + 30 * S + w * 0.31f, ry, w * 0.69f - 44 * S, 20 * S), nowrap);
+                    using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 18 * S, ry + 7 * S, 8 * S, 8 * S);
+                    g.DrawString(r[0], Draw.fBodyB, ink, new RectangleF(x + 34 * S, ry, w * 0.30f, 22 * S), nowrap);
+                    g.DrawString(r[1], Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
                     ry += rh;
                 }
             }
-            return y + card.Height + 14 * S;
+            return y + card.Height + 20 * S;
         }
         float PaintSwitch(Graphics g, float x, float y, float w)
         {
@@ -172,7 +173,7 @@ namespace AdeeboMeter
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("WHO ELSE IS ON THE AIR  ·  ")) + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent(L.T("WHO ELSE IS ON THE AIR  ·  ")) + band + "  ·  " + inBand.Count + " " + L.T(inBand.Count == 1 ? "access point nearby" : "access points nearby"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
             using (var axis = new Pen(Theme.Line)) g.DrawLine(axis, plotX, base0, plotX + plotW, base0);

@@ -406,7 +406,7 @@ namespace AdeeboMeter
             if (pAdapter == null && adapter == "" && InJoinGrace) return;   // not decided yet: the first event waits for the network or the grace's end
             if (pAdapter == null)
             {
-                Events.Add(adapter == "" ? 2 : 3, "net", adapter == "" ? "No network connection" : "On " + kind + " (" + adapter + ")" + (gw != "" ? ", gateway " + gw : "") + (vpn ? ", VPN up" : ""));
+                Events.Add(adapter == "" ? 2 : 3, "net", adapter == "" ? "No network connection" : "On " + kind + (adapter != kind ? " (" + adapter + ")" : "") + (gw != "" ? ", gateway " + gw : "") + (vpn ? ", VPN up" : ""));
             }
             else
             {

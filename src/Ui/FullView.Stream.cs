@@ -46,7 +46,7 @@ namespace AdeeboMeter
             g.TranslateTransform(streamCanvas.AutoScrollPosition.X, streamCanvas.AutoScrollPosition.Y);
             Begin(streamCanvas);
             float x = 18 * S, y = 16 * S, w = streamCanvas.ClientSize.Width - 36 * S;
-            y = NowLine(g, streamCanvas, x, y, w); y = TryThis(g, streamCanvas, "stream", x, y, w, false);   // the NOW line: router, internet, Wi-Fi, PC (FullView.Gateway.cs)
+            y = TryThis(g, streamCanvas, "stream", x, y, w, false);   // 24 Nov: no NOW line - the status chips at the top already say it (the approved mockup has none)
             var all = WatchKit.Recent("stream");
             if (streamSel != "")
             {
@@ -61,18 +61,26 @@ namespace AdeeboMeter
                 WatchKit.Session ns0 = null; lock (Streams.k) if (Streams.Now != null) ns0 = Streams.Now.S;
                 string head = !Cfg.Streams ? L.T("Streaming is switched off.") : ns0 != null ? L.T("Playing now") + ": " + ns0.What : L.T("Nothing is playing right now.");
                 string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
-                string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBtn);
+                if (!Cfg.Streams) lead = L.T("Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.");   /* v8: said once, in the top card */
+                string tb = L.T(!Cfg.Streams ? "Turn it on" : SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBtn);
                 float cardH = 0;
                 {
-                    var tbr0 = new RectangleF(0, 0, tbs.Width + 28 * S, 38 * S); float tw = w - 40 * S - tbr0.Width - 16 * S;
+                    var tbr0 = new RectangleF(0, 0, tbs.Width + 28 * S, 38 * S); float tw = Math.Max(120 * S, w - 40 * S - tbr0.Width - 16 * S);   /* review L-13: never a negative width */
                     float hh = Draw.Measure(head, Draw.fBig, (int)tw).Height, lh = Draw.Measure(lead, Draw.fSmall, (int)tw).Height; cardH = Math.Max(78 * S, 16 * S + hh + 4 * S + lh + 16 * S);
                     Kit.Box(g, new RectangleF(x, y, w, cardH), 14 * S);
                     g.DrawString(head, Draw.fBig, ink, new RectangleF(x + 20 * S, y + 16 * S, tw, hh + 4));
                     g.DrawString(lead, Draw.fSmall, sub, new RectangleF(x + 20 * S, y + 20 * S + hh, tw, lh + 4));
                     var tbr = new RectangleF(x + w - 20 * S - tbr0.Width, y + (cardH - 38 * S) / 2, tbr0.Width, 38 * S);
+                    if (!Cfg.Streams)
+                    {   // switched off: the card's one button turns it on (was a second "switched off" card under this one)
+                        Theme.Fill(g, tbr, 10 * S, Theme.Blue);
+                        using (var bb = new SolidBrush(Theme.OnBlue)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
+                        Act(streamCanvas, tbr, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
+                    }
+                    else {
                     Theme.Fill(g, tbr, 10 * S, Theme.Card); Theme.Stroke(g, tbr, 10 * S, Theme.Line, 1);
                     using (var bb = new SolidBrush(Theme.BlueText)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
-                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
+                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 500 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); }); }
                 }
                 y += cardH + 12 * S;
                 var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
@@ -89,11 +97,7 @@ namespace AdeeboMeter
                 if (streamNote != "") { using (var nb = new SolidBrush(Kit.Ink("stream"))) g.DrawString(streamNote, Draw.fSmall, nb, x, y); y += 22 * S; }
                 if (!Cfg.Streams)
                 {
-                    y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "app", "stream", "Streaming is switched off", "Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.", null);
-                    var on = new RectangleF(x, y, 150 * S, 38 * S); Theme.Fill(g, on, 10 * S, Theme.Blue);
-                    using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Turn it on"), Draw.fBodyB, wb, on, c);
-                    Act(streamCanvas, on, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
-                    Need(streamCanvas, on.Bottom + 20 * S); return;
+                    Need(streamCanvas, y + 20 * S); return;   // the top card already says it's off and carries Turn it on
                 }
                 {
                     WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null) ns = Streams.Now.S;
@@ -106,7 +110,7 @@ namespace AdeeboMeter
                 // the records
                 if (all.Count > 0)
                 {
-                    g.DrawString(L.T("What you watched"), Draw.fHead, ink, x, y); g.DrawString(L.T("kept 90 days on this PC - click one to see who caused the dips"), Draw.fSmall, sub, x + g.MeasureString(L.T("What you watched"), Draw.fHead).Width + 8 * S, y + 2 * S); y += 28 * S;
+                    g.DrawString(L.T("What you watched"), Draw.fHead, ink, x, y); { float hw0 = g.MeasureString(L.T("What you watched"), Draw.fHead).Width + 8 * S; if (w - hw0 > 40 * S) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T("kept 90 days on this PC - click one to see who caused the dips"), Draw.fSmall, sub, new RectangleF(x + hw0, y + 2 * S, w - hw0, 20 * S), nw); }   /* review ML-10 */ y += 28 * S;
                     var rows = all.Take(12).ToList(); float rh = 38 * S;
                     var card = new RectangleF(x, y, w, rows.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))
@@ -304,7 +308,7 @@ namespace AdeeboMeter
                 y += 80 * S;
                 // the whole session: download (green), the stream server's delay (purple), dips shaded
                 var card = new RectangleF(x, y, w, 170 * S); Kit.Box(g, card);
-                g.DrawString(L.T("THE WHOLE SESSION · download (green) · stream server delay (purple) · dips shaded"), Draw.fTiny, muted, x + 18 * S, y + 12 * S);
+                g.DrawString(L.T("The whole session · download (green) · stream server delay (purple) · dips shaded"), Draw.fTiny, muted, x + 18 * S, y + 12 * S);
                 var ch = new RectangleF(x + 18 * S, y + 36 * S, w - 36 * S, 110 * S); double span = Math.Max(1, s.Length.TotalMinutes);
                 foreach (var d in s.Dips) using (var db = new SolidBrush(Theme.LvSoft(d.Blame == "provider" ? 2 : 1))) g.FillRectangle(db, ch.X + (float)((d.T - s.Start).TotalMinutes / span) * ch.Width, ch.Y, Math.Max(4 * S, (float)(d.Secs / 60.0 / span) * ch.Width), ch.Height);
                 if (s.Line.Count >= 2)

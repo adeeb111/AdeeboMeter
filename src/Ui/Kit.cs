@@ -125,11 +125,16 @@ namespace AdeeboMeter
 
 
         // a raised card: theme card colour, soft shadow, hairline edge, rounded
-        public static void Box(Graphics g, RectangleF r) { Box(g, r, 20 * S); }
-        public static void Box(Graphics g, RectangleF r, float rad) { if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
-        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, 20 * S); }
+        // the shared corner scale (24 Nov, the same steps as the website and the phone): sm 8, md 12 (buttons, fields, tiles
+        // inside a card), lg 16 (cards), xl 24 (sheets); pills stay pills. Every card is lg, whatever radius a caller passes.
+        public const float RSm = 8, RMd = 12, RLg = 16, RXl = 24;
+        static float CardR(float rad) { return rad >= RMd * S ? RLg * S : rad; }
+        public static void Box(Graphics g, RectangleF r) { Box(g, r, RLg * S); }
+        public static void Box(Graphics g, RectangleF r, float rad) { rad = CardR(rad); if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
+        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, RLg * S); }
         public static void Frame(Graphics g, RectangleF r, float rad)
         {
+            rad = CardR(rad);
             if (Off(g, r)) return;
             var st = g.Save();
             using (var inside = Theme.Round(r, rad)) using (var rg = new Region(inside)) { g.ExcludeClip(rg); Shadow(g, r, rad); }

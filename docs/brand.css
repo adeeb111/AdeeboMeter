@@ -252,3 +252,18 @@ a{text-underline-offset:.18em}
 [dir="rtl"] .arrow svg,[dir="rtl"] .v3tile .go{transform:scaleX(-1)}
 [dir="rtl"] .v3tile .go{right:auto;left:18px}
 [dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3{letter-spacing:0}
+/* review 24 Nov (500 px header): on narrow screens the More menu stays and carries How it works, Learn and Blog -
+   before, the three links and the whole More menu were hidden at 860 px and below, with nothing to reach them */
+.links .navmore a.nm-narrow{display:none}
+@media (max-width:860px){
+  .links details.navmore{display:block}
+  .links .navmore>div a:not(.pill):not(.donate-top){display:block}
+}
+@media (max-width:460px){header.top .brand span{display:none}}   /* the More menu needs the room the wordmark took */
+/* review 24 Nov: the ghost button (Theory PDF) used --blue on its tint - 3.99:1 in dark; the darker-text blue is 5.1:1 */
+.btn.ghost{color:var(--blue-d)}
+/* the shared corner scale (base.css) */
+.box,.donate-box,.v3card,.v4card,.v5box,.v5l,.v5lcard,.v5t,.tile,.step,.stage,.scene,.sisp,.v4sig,.upd,.v5chips{border-radius:var(--r-lg)}
+.meter{border-radius:var(--r-xl)}
+.btn,.v3btn,.v4btn,.sh .btn,.v3chip,.seg,.fld textarea,.v3eg .in,.tile .ic,.sample .sx,.v4phone .qr,.meter .acts button{border-radius:var(--r-md)}
+.v4btn.sm,.seg button,.iconbtn,.top select,.site-language .lang-face,.v5words span,.v5chips span,.v4tag,.v5tag,.v3tag{border-radius:var(--r-sm)}

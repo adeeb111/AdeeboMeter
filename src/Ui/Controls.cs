@@ -27,18 +27,6 @@ using Microsoft.Win32;
 namespace AdeeboMeter
 {
     // A window drawn with per-pixel alpha that never takes the mouse (clicks go to whatever is below).
-    // one line, full width, "…" only at the real end - WinForms' AutoEllipsis cut the Connections footer to "36 sho…" (1.1.6 walk, twice)
-    sealed class OneLineLabel : Label
-    {
-        public OneLineLabel() { DoubleBuffered = true; }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            using (var b = new SolidBrush(BackColor)) e.Graphics.FillRectangle(b, ClientRectangle);
-            var r = new Rectangle(Padding.Left, 0, Math.Max(1, Width - Padding.Horizontal), Height);
-            TextRenderer.DrawText(e.Graphics, Text, Font, r, ForeColor, TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
-        }
-        protected override void OnResize(EventArgs e) { base.OnResize(e); Invalidate(); }
-    }
     sealed class LayeredForm : Form
     {
         public LayeredForm() { FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual; TopMost = true; }
@@ -390,8 +378,8 @@ namespace AdeeboMeter
             float lh = label != "" ? 18 * Draw.S : 0;
             if (lh > 0) using (var lb = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(label, Draw.fSmall, lb, new RectangleF(2, 0, Width - 4, lh), nf);
             var r = new RectangleF(0.5f, 0.5f + lh, Width - 2, Height - 2 - lh);
-            Theme.Fill(g, r, 8 * Draw.S, Theme.Card);
-            Theme.Stroke(g, r, 8 * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
+            Theme.Fill(g, r, Kit.RMd * Draw.S, Theme.Card);   // fields: md on the shared corner scale
+            Theme.Stroke(g, r, Kit.RMd * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
         }
     }
 
@@ -407,16 +395,15 @@ namespace AdeeboMeter
         public bool CanSniff;
         public event Action<Conn> SniffRequested, JourneyRequested;
         public event Action Changed;
-        public event Action<string> HoverKey;   // "proc:<app>" or "state.<STATE>" under the mouse, null when none
-        string lastKey;
+        public event Action<string> HoverKey;   // "state.<STATE>" while the pointer is on the hovered row's ?, null otherwise
+        string lastKey; RectangleF stateBadge; string stateBadgeKey;
+        public RectangleF BadgeAt { get { return stateBadge; } }
         string KeyAt(Point p)
         {
             int i = RowAt(p.Y); var cols = Cols(Width); float x = 14 * S;
             if (i < 0) return null;
-            float appX = x + cols[0] + 8 * S, stX = appX + cols[1] + 8 * S + cols[2] + 8 * S + cols[3] + 8 * S;
-            if (p.X >= x && p.X < appX + cols[1]) return "proc:" + view[i].C.Proc;
-            if (p.X >= stX && p.X < stX + cols[4]) return "state." + view[i].C.State;
-            return null;
+            // review 24 Nov: like the rest of the app, a card only from the small ? beside the hovered row's state
+            return stateBadge.Width > 0 && RectangleF.Inflate(stateBadge, 3 * S, 3 * S).Contains(p) ? stateBadgeKey : null;
         }
         bool loaded;
         static readonly HashSet<string> named = new HashSet<string> { "Teams", "Chrome", "Edge", "Outlook", "OneDrive" };
@@ -457,7 +444,7 @@ namespace AdeeboMeter
                 if (Filter != "All" && (Filter == "Other" ? named.Contains(c.Proc) : c.Proc != Filter)) return false;
                 if (q != "" && (c.Proc + " " + c.Host + " " + c.Remote + " " + c.Local + " " + c.Pid).ToLowerInvariant().IndexOf(q, StringComparison.Ordinal) < 0) return false;
                 return true;
-            }).OrderBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.C.State == "ESTABLISHED" ? 0 : 1).ThenBy(r => r.C.Host).ToList();
+            }).OrderBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.C.Pid).ThenBy(r => r.C.State == "ESTABLISHED" ? 0 : 1).ThenBy(r => r.C.Host).ToList();
             int content = view.Count * RowH, visible = Math.Max(1, Height - HeadH);
             sb.Maximum = Math.Max(0, content); sb.LargeChange = visible; sb.SmallChange = RowH; sb.Enabled = content > visible;
             int maxV = Math.Max(0, content - visible); if (sb.Value > maxV) sb.Value = maxV;
@@ -478,7 +465,15 @@ namespace AdeeboMeter
         static readonly Color[] palette = { Theme.C("#0B7A75"), Theme.C("#C2410C"), Theme.C("#4F46E5"), Theme.C("#DC2626"), Theme.C("#2563EB"), Theme.C("#B91C1C"), Theme.C("#0369A1"), Theme.C("#15803D"), Theme.C("#A16207"), Theme.C("#7C3AED") };
         // how many connections each app has right now (the summary bar above the list), busiest first
         public List<KeyValuePair<string, int>> ByApp() { return view.Where(r => r.Gone == DateTime.MinValue).GroupBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).Select(gr => new KeyValuePair<string, int>(gr.Key, gr.Count())).OrderByDescending(kv => kv.Value).ToList(); }
-        public static Color AppColor(string n) { int h = 0; foreach (char ch in n) h = unchecked(h * 31 + ch); return palette[(h & 0x7fffffff) % palette.Length]; }
+        // review 24 Nov (L-2): each app gets the next unused colour the first time it shows up, so the first ten apps never
+        // share one (a hash put svchost, Steam, OneDrive, SearchHost and dwm on the same teal); the same app keeps its colour
+        static readonly Dictionary<string, int> appSlot = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        public static Color AppColor(string n)
+        {
+            n = n ?? ""; int i;
+            lock (appSlot) { if (!appSlot.TryGetValue(n, out i)) { i = appSlot.Count % palette.Length; if (appSlot.Count < 500) appSlot[n] = i; } }
+            return palette[i];
+        }
         static Color[] StateColors(string st)
         {
             switch (st)
@@ -525,15 +520,16 @@ namespace AdeeboMeter
                     x = x0; float cy = y + RowH / 2f;
                     // grouped by app (24 Nov mockup): the badge and the name on an app's first row, with how many it has; its
                     // other rows leave that column empty so the app reads as one block
-                    bool firstOfApp = i == 0 || !string.Equals(view[i - 1].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase);
+                    // review 24 Nov (ML-1): one block per running copy - two chrome.exe processes are two blocks, each with its PID
+                    bool firstOfApp = i == 0 || !string.Equals(view[i - 1].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase) || view[i - 1].C.Pid != c.Pid;
                     if (firstOfApp)
                     {
-                        int many = 1; for (int j = i + 1; j < view.Count && string.Equals(view[j].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase); j++) many++;
+                        int many = 1; for (int j = i + 1; j < view.Count && string.Equals(view[j].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase) && view[j].C.Pid == c.Pid; j++) many++;
                         var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
                         Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
                         using (var wb = new SolidBrush(Color.White)) g.DrawString(c.Proc.Length > 0 ? c.Proc.Substring(0, 1).ToUpperInvariant() : "?", Draw.fPill, wb, badge, center);
                         x += cols[0] + 8 * S;
-                        Text2(g, c.Proc, many > 1 ? many + " " + AdeeboMeter.L.T("connections") : c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
+                        Text2(g, c.Proc, many > 1 ? many + " " + AdeeboMeter.L.T("connections") + (c.Pid > 0 ? " · PID " + c.Pid : "") : c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
                     }
                     else x += cols[0] + 8 * S;
                     x += cols[1] + 8 * S;
@@ -546,6 +542,7 @@ namespace AdeeboMeter
                     var sc = StateColors(c.State); var ss = g.MeasureString(c.State, Draw.fMonoS);
                     Theme.Fill(g, new RectangleF(x, cy - ss.Height / 2 - 3 * S, ss.Width + 14 * S, ss.Height + 6 * S), (ss.Height + 6 * S) / 2, sc[0]);
                     using (var b = new SolidBrush(sc[1])) g.DrawString(c.State, Draw.fMonoS, b, x + 7 * S, cy - ss.Height / 2);
+                    if (i == hover && !string.IsNullOrEmpty(c.State)) { stateBadge = new RectangleF(x + ss.Width + 20 * S, cy - 9 * S, 18 * S, 18 * S); stateBadgeKey = "state." + c.State; FullView.DrawBadge(g, stateBadge); }
                     x += cols[4] + 8 * S;
                     g.DrawString(Age(r, now), Draw.fMonoS, sub, x, cy - 7 * S);
                     x += cols[5] + 8 * S;
@@ -585,12 +582,12 @@ namespace AdeeboMeter
         static bool Journeyable(Conn c) { return c.State != "LISTEN" && ((!string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0) || (c.Proto.StartsWith("UDP", StringComparison.Ordinal) && c.LocalPort > 0)); }
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            int h = RowAt(e.Y); if (h != hover) { hover = h; Invalidate(); }
+            int h = RowAt(e.Y); if (h != hover) { hover = h; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); }
             string k = KeyAt(e.Location);
-            Cursor = h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : Cursors.Default;
+            Cursor = k != null ? Cursors.Help : h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : Cursors.Default;
             if (k != lastKey) { lastKey = k; if (HoverKey != null) HoverKey(k); }
         }
-        protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
+        protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
         protected override void OnMouseDown(MouseEventArgs e)
         {
             Focus(); int i = RowAt(e.Y); if (i < 0) return;
