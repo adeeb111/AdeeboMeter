@@ -18,9 +18,9 @@
 
   At the end you get one zip on your Desktop: AdeeboMeter-test-results-<date>.zip. Send that zip back.
 
-  Options:  -SkipLive  (steps 1 and 2 only)    -SkipSelfTest    -SkipGallery
+  Options:  -SkipLive  (no live widget run)    -SkipSelfTest    -SkipGallery    -SkipShots (no website pictures)
 #>
-param([switch]$SkipLive, [switch]$SkipSelfTest, [switch]$SkipGallery)
+param([switch]$SkipLive, [switch]$SkipSelfTest, [switch]$SkipGallery, [switch]$SkipShots)
 $ErrorActionPreference = 'Stop'
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -79,6 +79,15 @@ public static class W {
         var t = new POINTER_TOUCH_INFO(); t.pointerInfo.pointerType = 2; t.pointerInfo.pointerId = 0;
         t.pointerInfo.ptPixelLocation.X = x; t.pointerInfo.ptPixelLocation.Y = y;
         t.pointerInfo.pointerFlags = down ? (0x10000 | 0x2 | 0x4) : 0x40000;
+        return Send(t, x, y);
+    }
+    public static bool TouchMove(int x, int y) {   // the finger moving while down (hunters14 LAB-ML3: the touch drag)
+        var t = new POINTER_TOUCH_INFO(); t.pointerInfo.pointerType = 2; t.pointerInfo.pointerId = 0;
+        t.pointerInfo.ptPixelLocation.X = x; t.pointerInfo.ptPixelLocation.Y = y;
+        t.pointerInfo.pointerFlags = 0x20000 | 0x2 | 0x4;
+        return Send(t, x, y);
+    }
+    static bool Send(POINTER_TOUCH_INFO t, int x, int y) {
         t.touchMask = 1 | 2 | 4; t.orientation = 90; t.pressure = 32000;
         t.rcContact.L = x - 2; t.rcContact.R = x + 2; t.rcContact.T = y - 2; t.rcContact.B = y + 2;
         return InjectTouchInput(1, new[] { t });
@@ -109,24 +118,28 @@ if (Test-Path $mp) {
 
 # ---------------------------------------------------------------- 1. the self-test
 if (-not $SkipSelfTest) {
-    Say 'Step 1 of 3: the self-test (up to 25 minutes)...' 'Yellow'
+    Say 'Step 1 of 4: the self-test (up to 25 minutes)...' 'Yellow'
     $st = New-TestCopy (Join-Path $work 'selftest') $null
     $rc = Run-Timed $st '--selftest' 1500
-    $rep = Get-ChildItem (Split-Path $st), (Join-Path $env:LOCALAPPDATA 'AdeeboMeter') -Recurse -Filter 'AdeeboMeter-selftest.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-15) } | Select-Object -First 1
+    $rep = Get-ChildItem (Split-Path $st) -Recurse -Filter 'AdeeboMeter-selftest.txt' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-30) } | Sort-Object LastWriteTime | Select-Object -Last 1   # hunters14 LAB-L2: the test copy's own report only - never one from your installed AdeeboMeter
     if (-not (Test-Path $st)) { Result 'Self-test copy' $false 'the test copy of AdeeboMeter.exe is gone - antivirus removed it?' }
     if ($rep) { Copy-Item $rep.FullName (Join-Path $out 'selftest.txt'); $fails = @(Select-String -Path $rep.FullName -Pattern '^FAIL' ).Count; Result 'Self-test' ($fails -eq 0) ("$fails failed" + $(if ($rc -eq -999) { ', stopped after 25 minutes' } else { '' })) }
     else { Result 'Self-test' $false "no report (exit code $rc)" }
     Get-ChildItem (Split-Path $st) -Filter 'AdeeboMeter.log*' -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName (Join-Path $out ('selftest-' + $_.Name)) }
+    # the sample ISP report the self-test draws (made-up numbers) - so the new report can be checked as Windows renders it
+    $isp = Get-ChildItem (Split-Path $st) -Recurse -Filter 'ISP-report-*.html' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
+    if ($isp) { Copy-Item $isp.FullName (Join-Path $out 'sample-isp-report.html'); Result 'Sample ISP report' ((Get-Content $isp.FullName -Raw) -match '<svg') 'drawn by the self-test' } else { Note 'Sample ISP report' 'not found next to the self-test copy' }
 }
 
 # ---------------------------------------------------------------- 2. the widget pictures
 if (-not $SkipGallery) {
-    Say 'Step 2 of 3: drawing every widget style (about a minute)...' 'Yellow'
+    Say 'Step 2 of 4: drawing every widget style (about a minute)...' 'Yellow'
     $gx = New-TestCopy (Join-Path $work 'gallery') @('setupdone=1', 'lang=en', 'buddy=0')
     $gout = Join-Path $out 'widgets'
     $rc = Run-Timed $gx ('--widget-gallery "' + $gout + '"') 300
     $sheets = @(Get-ChildItem $gout -Filter '*.png' -ErrorAction SilentlyContinue).Count
-    Result 'Widget pictures' ($rc -eq 0 -and $sheets -eq 4) "exit $rc, $sheets of 4 sheets"
+    $cards = @(Get-ChildItem (Join-Path $gout 'cards') -Filter '*.png' -ErrorAction SilentlyContinue).Count
+    Result 'Widget pictures' ($rc -eq 0 -and $sheets -eq 6 -and $cards -gt 0) "exit $rc, $sheets of 6 sheets, $cards single cards at 200%"
     if (Test-Path (Join-Path $gout 'widget-sizes.csv')) {
         $tall = @(Import-Csv (Join-Path $gout 'widget-sizes.csv') | Where-Object { $_.card_h -and [int]$_.card_h -ge 900 })
         Result 'No card hits the 900 px cap' ($tall.Count -eq 0) $(if ($tall.Count) { ($tall | Select-Object -First 6 | ForEach-Object { $_.theme + ' ' + $_.scale + ' ' + $_.style + ' ' + $_.state }) -join '; ' } else { '' })
@@ -136,7 +149,7 @@ if (-not $SkipGallery) {
 # ---------------------------------------------------------------- 3. the live widget
 if ($SkipLive) { Say 'Live widget run skipped (-SkipLive).' }
 else {
-    Say 'Step 3 of 3: the live widget run.' 'Yellow'
+    Say 'Step 3 of 4: the live widget run.' 'Yellow'
     $mine = @(Get-Process -Name 'AdeeboMeter' -ErrorAction SilentlyContinue)
     $restart = @()
     if ($mine.Count -gt 0) {
@@ -151,7 +164,7 @@ if (-not $SkipLive) {
     Write-Host '(Your windows are minimised for the test and come back at the end.)' -ForegroundColor Yellow
     Start-Sleep -Seconds 5
     $live = Join-Path $work 'live'
-    $lx = New-TestCopy $live @('autostart=0', 'widget=1', 'serious=0', 'theme=light', 'setupdone=1', 'setupstep=3', 'wstyle=everyday', 'whint=1', 'whidenear=0', 'gwidget=0', 'lang=en', 'dwell=300', 'buddy=0', 'wsince=1', 'fade=77')
+    $lx = New-TestCopy $live @('autostart=0', 'widget=1', 'serious=0', 'theme=light', 'setupdone=1', 'setupstep=3', 'wstyle=everyday', 'whint=1', 'whidenear=0', 'gwidget=0', 'lang=en', 'dwell2=450', 'buddy=0', 'wsince=1', 'fade=77')
     $trace = Join-Path $live 'widget-trace.txt'
     $shell = New-Object -ComObject Shell.Application
     $app = $null; $sink = $null; $target = $null
@@ -203,12 +216,12 @@ if (-not $SkipLive) {
 
         # --- resting unlocks; leaving locks
         $sink.Activate(); $m = Mark; Arrive (Rect); Shot 'open'
-        $ok = WaitFor $m 'unlock rest' 3500; Result 'Resting still on it unlocks it (1.5 s)' $ok ''
+        $ok = WaitFor $m 'unlock rest' 5000; Result 'Resting still on it unlocks it (2.5 s)' $ok ''
         if ($ok) { Shot 'unlocked' }
         $m = Mark; GoHome; Result 'Leaving it locks it again' (Seen $m 'lock gone') ''
 
         # --- a jump onto it, then a small one (what two finger taps do to the pointer): no unlock
-        $r = Rect; $m = Mark; [void][W]::SetCursorPos($r.CX, $r.CY); Pump 600; [void][W]::SetCursorPos($r.CX + 6, $r.CY + 4); Pump 2800
+        $r = Rect; $m = Mark; [void][W]::SetCursorPos($r.CX, $r.CY); Pump 600; [void][W]::SetCursorPos($r.CX + 6, $r.CY + 4); Pump 3600
         Result 'Two jumps onto it (like two taps) do not unlock it' (-not (Seen $m ' unlock \w')) ''
         GoHome
 
@@ -217,7 +230,7 @@ if (-not $SkipLive) {
         if ([W]::TouchReady) {
             $r = Rect; $m = Mark
             [void][W]::Touch($r.CX, $r.CY, $true); Pump 80; [void][W]::Touch($r.CX, $r.CY, $false); Pump 500
-            [void][W]::Touch($r.CX + 6, $r.CY + 4, $true); Pump 80; [void][W]::Touch($r.CX + 6, $r.CY + 4, $false); Pump 2800
+            [void][W]::Touch($r.CX + 6, $r.CY + 4, $true); Pump 80; [void][W]::Touch($r.CX + 6, $r.CY + 4, $false); Pump 3600
             Result 'Two finger taps do not unlock it' (-not (Seen $m ' unlock \w')) $(if (Seen $m 'touch cursor True') { 'Windows flagged the pointer as touch' } else { 'touch flag not seen - the two-step rule held it' })
             Mouse 0x1 0; Mouse 0x0001 0; for ($i = 0; $i -lt 6; $i++) { [W]::mouse_event(0x0001, 3, 0, 0, [IntPtr]::Zero); Pump 30; [W]::mouse_event(0x0001, -3, 0, 0, [IntPtr]::Zero); Pump 30 }   # a mouse move: Windows shows the pointer again
             GoHome
@@ -225,20 +238,21 @@ if (-not $SkipLive) {
 
         # --- Esc locks
         $sink.Activate(); $m = Mark; Arrive (Rect)
-        if (WaitFor $m 'unlock rest' 3500) { $m2 = Mark; Tap 0x1B; Result 'Esc locks it' (WaitFor $m2 'lock esc' 1500) '' } else { Result 'Esc locks it' $false 'could not unlock it first' }
+        if (WaitFor $m 'unlock rest' 5000) { $m2 = Mark; Tap 0x1B; Result 'Esc locks it' (WaitFor $m2 'lock esc' 1500) '' } else { Result 'Esc locks it' $false 'could not unlock it first' }
         GoHome
 
         # --- a drag moves it and the place is kept; Esc mid-drag puts it back
         $m = Mark; $r = Rect; Arrive $r
-        if (WaitFor $m 'unlock rest' 3500) {
-            $before = Rect; $m2 = Mark; Mouse 0x2 0; Pump 120; Glide ($before.CX - 200) ($before.CY - 120) 20 25; Pump 150; Mouse 0x4 0; Pump 600
+        if (WaitFor $m 'unlock rest' 5000) {
+            $before = Rect; $p0 = Pos; $m2 = Mark; Mouse 0x2 0; Pump 120; Glide ($p0.X - 200) ($p0.Y - 120) 20 25;   # from where the pointer is (test5: it measured from the card's middle, but the pointer sat lower, where the chip was)
+            Pump 150; Mouse 0x4 0; Pump 600
             $after = Rect; $moved = $after -and [math]::Abs(($before.X - $after.X) - 200) -le 30 -and [math]::Abs(($before.Y - $after.Y) - 120) -le 30
             Result 'Dragging moves it and keeps the place' ((Seen $m2 'drag saved') -and $moved) $(if ($after) { 'from ' + $before.X + ',' + $before.Y + ' to ' + $after.X + ',' + $after.Y } else { '' })
             Shot 'dragged'
         } else { Result 'Dragging moves it and keeps the place' $false 'could not unlock it first' }
         GoHome
         $m = Mark; Arrive (Rect)
-        if (WaitFor $m 'unlock rest' 3500) {
+        if (WaitFor $m 'unlock rest' 5000) {
             $before = Rect; $m2 = Mark; Mouse 0x2 0; Pump 120; Glide ($before.CX + 150) ($before.CY) 15 25; Pump 200; Tap 0x1B; Pump 300; Mouse 0x4 0; Pump 800
             $after = Rect; Result 'Esc mid-drag puts it back and locks it' ((Seen $m2 'drag cancelled by Esc') -and (Seen $m2 'lock esc') -and $after -and [math]::Abs($after.X - $before.X) -le 8) $(if ($after) { 'back at ' + $after.X + ',' + $after.Y + ' (was ' + $before.X + ',' + $before.Y + ')' } else { '' })
         } else { Result 'Esc mid-drag puts it back and locks it' $false 'could not unlock it first' }
@@ -254,27 +268,44 @@ if (-not $SkipLive) {
         Result 'Locked: a click goes through to the app underneath' (($script:got -contains 'down Left') -and -not (Seen $m 'open full')) ('the app got: ' + ($script:got -join ', '))
         GoHome
         $script:got.Clear(); $m = Mark; Arrive (Rect)
-        if (WaitFor $m 'unlock rest' 4500) {
+        if (WaitFor $m 'unlock rest' 5000) {
             $m2 = Mark; Mouse 0x8 0; Pump 100; Mouse 0x10 0; Pump 600
             Result 'Unlocked: a right-click locks it and reaches the app underneath' ((Seen $m2 'replay Right') -and ($script:got -contains 'down Right') -and ($script:got -contains 'up Right')) ('the app got: ' + ($script:got -join ', '))
         } else { Result 'Unlocked: a right-click locks it and reaches the app underneath' $false 'could not unlock it over a window (covered corner)' }
         GoHome
         $script:got.Clear(); $m = Mark; Arrive (Rect)
-        if (WaitFor $m 'unlock rest' 4500) {
+        if (WaitFor $m 'unlock rest' 5000) {
             $m2 = Mark; Mouse 0x800 -120; Pump 600
             Result 'Unlocked: the wheel locks it and scrolls the app underneath' ((Seen $m2 'replay wheel') -and (@($script:got | Where-Object { $_ -like 'wheel*' }).Count -gt 0)) ('the app got: ' + ($script:got -join ', '))
         } else { Result 'Unlocked: the wheel locks it and scrolls the app underneath' $false 'could not unlock it first' }
         GoHome
-        $r = Rect; $m = Mark; [void][W]::SetCursorPos($tb.X + 20, $tb.Y + 20); Pump 300; Mouse 0x2 0; Pump 100; Glide $r.CX $r.CY 30 40; Pump 2800
+        $r = Rect; $m = Mark; [void][W]::SetCursorPos($tb.X + 20, $tb.Y + 20); Pump 300; Mouse 0x2 0; Pump 100; Glide $r.CX $r.CY 30 40; Pump 3600
         Result 'Resting with a button held (a drag in the app underneath) does not unlock it' (-not (Seen $m ' unlock \w')) ''
         Mouse 0x4 0; Pump 200
         $target.Close(); $target = $null; GoHome
 
         # --- an unlocked click opens AdeeboMeter (last: it opens the full window)
         $m = Mark; Arrive (Rect)
-        if (WaitFor $m 'unlock rest' 3500) { $m2 = Mark; Mouse 0x2 0; Pump 60; Mouse 0x4 0; Result 'Unlocked: a click opens AdeeboMeter' (WaitFor $m2 'open full' 1500) '' }
+        if (WaitFor $m 'unlock rest' 5000) { $m2 = Mark; Mouse 0x2 0; Pump 60; Mouse 0x4 0; Result 'Unlocked: a click opens AdeeboMeter' (WaitFor $m2 'open full' 1500) '' }
         else { Result 'Unlocked: a click opens AdeeboMeter' $false 'could not unlock it first' }
-        Pump 2500
+        Pump 2500; Tap 0x1B; Pump 2000   # Esc: the full window goes back to the corner
+
+        # --- tray > Move widget (the only unlock for touch) - asked for through the trace's file hook, the menu item's own code
+        GoHome; $m = Mark; Set-Content -Path (Join-Path $live 'move-widget.now') -Value '' -Encoding ASCII
+        Result 'Tray: Move widget unlocks it' (WaitFor $m 'unlock tray' 4000) ''
+        # --- a finger drag on the unlocked widget moves it, and a finger tap on it opens AdeeboMeter
+        if ([W]::TouchReady -and (Seen $m 'unlock tray')) {
+            $r = Rect; $m = Mark
+            [void][W]::Touch($r.CX, $r.CY, $true); Pump 80
+            for ($i = 1; $i -le 15; $i++) { [void][W]::TouchMove($r.CX - 10 * $i, $r.CY - 6 * $i); Pump 30 }
+            [void][W]::Touch($r.CX - 150, $r.CY - 90, $false); Pump 800
+            Result 'A finger drag moves it' ((Seen $m 'touch grab') -and (Seen $m 'drag saved')) ''
+            $m = Mark; Set-Content -Path (Join-Path $live 'move-widget.now') -Value '' -Encoding ASCII
+            if (WaitFor $m 'unlock tray' 4000) { $r = Rect; $m2 = Mark; [void][W]::Touch($r.CX, $r.CY, $true); Pump 80; [void][W]::Touch($r.CX, $r.CY, $false); Result 'A finger tap on the unlocked widget opens AdeeboMeter' (WaitFor $m2 'open full' 2000) ''; Pump 2000; Tap 0x1B; Pump 1500 }
+            else { Result 'A finger tap on the unlocked widget opens AdeeboMeter' $false 'could not unlock it first' }
+            Mouse 0x1 0; for ($i = 0; $i -lt 6; $i++) { [W]::mouse_event(0x0001, 3, 0, 0, [IntPtr]::Zero); Pump 30; [W]::mouse_event(0x0001, -3, 0, 0, [IntPtr]::Zero); Pump 30 }
+        } elseif (-not [W]::TouchReady) { Note 'Finger drag and tap' 'Windows did not allow simulated touch here - test by hand on a touchscreen' }
+        Note 'First run' 'the first-run card and setup are not driven by this script - check them by hand on a fresh install'
     }
     catch { Result 'Live widget run' $false $_.Exception.Message }
     finally {
@@ -284,9 +315,32 @@ if (-not $SkipLive) {
         Pump 500; try { $shell.UndoMinimizeALL() } catch { }
         try { [Console]::TreatControlCAsInput = $false } catch { }
         foreach ($f in 'widget-trace.txt', 'AdeeboMeter.log', 'AdeeboMeter.settings') { $p = Join-Path $live $f; if (Test-Path $p) { Copy-Item $p (Join-Path $out ('live-' + $f)) } }
-        foreach ($p in $restart) { if ($p -and (Test-Path $p)) { try { Start-Process -FilePath $p; Say "Started your AdeeboMeter again ($p)." } catch { } } }
     }
 }
+
+# ---------------------------------------------------------------- 4. pictures for the website (your own data - they stay on your Desktop)
+# The pages are drawn from this PC's real history (Gamer, Streaming, Markets), so they are NOT put in the results zip: look at them
+# first and send only what you're happy to share. Needs AdeeboMeter closed (one copy at a time).
+if (-not $SkipShots) {
+    Write-Host ''
+    $a = Read-Host 'Step 4: take 3 pictures of AdeeboMeter for the website, with your real data, in the dark theme? They go to a folder on your Desktop, not in the zip. [y/N]'
+    if ($a -match '^[Yy]') {
+        foreach ($p in @(Get-Process -Name 'AdeeboMeter' -ErrorAction SilentlyContinue)) { try { if (-not ($restart -contains $p.Path)) { $restart += $p.Path }; Stop-Process -Id $p.Id -Force } catch { } }
+        Start-Sleep -Seconds 2
+        $shotDir = Join-Path ([Environment]::GetFolderPath('Desktop')) "AdeeboMeter-website-pictures-$stamp"; New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
+        $sx = Join-Path $work 'shots'; New-Item -ItemType Directory -Force -Path $sx | Out-Null; Copy-Item $exeSrc (Join-Path $sx 'AdeeboMeter.exe') -Force   # no portable marker: it reads your real history
+        foreach ($pg in 'gamer', 'stream', 'trade') {
+            $f = Join-Path $sx "shot-$pg.png"; if (Test-Path $f) { Remove-Item $f -Force }
+            $sp = Start-Process -FilePath (Join-Path $sx 'AdeeboMeter.exe') -ArgumentList "--dark --view shot:$pg" -WorkingDirectory $sx -PassThru
+            $t0 = Get-Date; while (-not (Test-Path $f) -and ((Get-Date) - $t0).TotalSeconds -lt 40) { Start-Sleep -Milliseconds 500 }
+            Start-Sleep -Milliseconds 800; try { Stop-Process -Id $sp.Id -Force } catch { }; Start-Sleep -Seconds 2
+            if (Test-Path $f) { Copy-Item $f (Join-Path $shotDir "shot-$pg.png") -Force; $img = [System.Drawing.Image]::FromFile($f); Result ("Website picture: " + $pg) ($img.Width -ge 1200) ("" + $img.Width + 'x' + $img.Height + ' px'); $img.Dispose() }
+            else { Result ("Website picture: " + $pg) $false 'no picture after 40 s' }
+        }
+        Say "Website pictures: $shotDir - look at them before you send any." 'Green'
+    } else { Note 'Website pictures' 'skipped' }
+}
+foreach ($p in $restart) { if ($p -and (Test-Path $p)) { try { Start-Process -FilePath $p; Say "Started your AdeeboMeter again ($p)." } catch { } } }
 
 # ---------------------------------------------------------------- the zip
 $pass = @($results | Where-Object { $_.Result -eq 'PASS' }).Count; $fail = @($results | Where-Object { $_.Result -eq 'FAIL' }).Count

@@ -90,8 +90,10 @@ export default {
       body: JSON.stringify({ title, body, labels: [KINDS[kind], "from-" + from] })
     }); } catch (e) { return out(503, { ok: false, why: "couldn't reach GitHub just now - it will try again" }); }
     if (!gh.ok) return out(502, { ok: false, why: "couldn't file it just now - please send it again in a few minutes" });
+    // hunters14 SEC-L1: read GitHub's answer before counting - an unreadable body still means it was filed (200), so it's a
+    // success without a number, never a 500 that makes the app send it again
+    let made = null; try { made = await gh.json(); } catch (e) { made = null; }
     await Promise.all([env.RL.put(hourKey, String((+hn || 0) + 1), { expirationTtl: 3700 }), env.RL.put(dayKey, String((+dn || 0) + 1), { expirationTtl: 90000 })]);
-    const made = await gh.json();
-    return out(200, { ok: true, number: made.number });
+    return out(200, { ok: true, number: made && made.number ? made.number : null });
   }
 };
