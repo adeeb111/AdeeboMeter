@@ -1,28 +1,100 @@
 # AdeeboMeter - handover to the next Claude chat
 
-Written 17 Nov 2026, 19:15 Toronto, at the end of a long chat. Read this whole file first, then `PLAN-1.1.6.md`.
+Written 21 Nov 2026, Toronto (updated 10:40): after the 637-finding bug hunt, the 55 carry-overs and the new language picker. Read this whole file first, then `PLAN-1.1.6.md`. **Next steps: "Adeeb's decisions" near the end.**
 Owner: Adeeb Khan (adeeb111). Repo: github.com/adeeb111/AdeeboMeter. Website: adeebometer.com.
 
 ## Where things stand
 ```
-v1.1.5  released 17 Nov, code-signed (tag v1.1.5 = 03703a5, protected - tags can't be moved or deleted)
-main    = the live website (GitHub Pages from /docs) + release source; app code on main = 1.1.5
-dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is the to-do list
+v1.1.5      released 17 Nov, code-signed (tag v1.1.5 = 03703a5, protected)
+main        = the live website (GitHub Pages from /docs) + release source; app code on main = 1.1.5
+dev-1.1.6   = next version. Bug hunt done here, pushed; nothing released. Head: see git log.
+              (Program.Version still says "1.1.5" - bump at release)
 ```
-- **Live on the web**: new home top (navy default, "Find out why your internet or PC is slow. And much more.", motto pill),
-  phone app (/app.html), Live, Learn (91), Games, Files.
-- **Cloudflare workers (Adeeb deploys them with `npx.cmd wrangler deploy` from his PC):**
-  - `adeebometer-remote` (phone relay, `tools/remote`) - hibernation + 6 rooms/min per address. Deployed 17 Nov.
-  - `adeebometer-live` (Live data, `tools/live`) - key leak fixed (provider text never passed on), stock movers fetched
-    once a day on a schedule (21:30 UTC weekdays, retry 23:30) into KV `MOVERS` (id in wrangler.toml). Deployed 17 Nov.
-    **Checked 17 Nov 19:15 Toronto:** Alpha Vantage refused even the single scheduled call and its retry ("daily limit
-    used up") - Cloudflare's shared outgoing addresses. Next: PLAN-1.1.6 step 2, a different free source for US movers
-    (design it, show Adeeb first). The Live card meanwhile says "the daily limit is used up" - no key shown.
-  - `adeebometer-relay` (website/app reports -> GitHub issues).
-  - On his PC: `Documents\AdeboMeter\live-relay` (Live) and `...\remote-relay` (relay) - check `name =` in wrangler.toml
-    before deploying; he once deployed into the wrong one.
-- **Done on dev-1.1.6, not released:** Every tool blink fix (306b9a6), smooth wheel scrolling (3a32a10), handovers,
-  tools/langcheck.py, tools/sign.ps1 + tools/finish-release.ps1.
+Bug hunt (report: 5 High, 31 Medium, 236 Medium-Low, 365 Low = 637), all on dev-1.1.6:
+```
+ High + Medium + ML-1..213 ─► fe910e1 and earlier
+ ML-214..236               ─► 82c2230
+ L-1..365                  ─► c730785
+ self-test 93/93 under Wine after each batch
+```
+Since the handover commit (31ef361), all on dev-1.1.6, all pushed, self-test 93/93 after each:
+```
+ 979f416  55 carry-overs: 44 fixed, 6 already fixed, 5 left/pushed back (section C)
+ 440897b  language button beside VIEW + language card + Restart; Chinese not offered
+ 790f656  after a real-Windows run on Adeeb's PC: short "Restart" label, tile patterns cached
+```
+- A dozen findings were answered with a comment instead of a code change (by design or already fixed): L-2, L-24, L-44,
+  L-76, L-119, L-210, L-226, L-234, L-235, L-249/250/251/254 (code had moved on), L-252, L-256, L-260, L-276, L-313, L-324.
+- Fixed from code reading only, needs a real Windows run to confirm: L-200 (ChaCha20 name on TLS 1.3), L-287 (process
+  names for SonicWall / Sophos / Citrix VPN clients - a wrong name only leaves the product name blank), L-289 (Bluetooth
+  code 45 = not around), L-267 (driver status 0x00000000), L-214 (infinite DHCP lease value).
+
+## Open items (in order)
+
+### A. Adeeb's steps (his PC)
+1. Deploy the three workers again (`npx.cmd wrangler deploy`, check `name =` first):
+   - `tools/remote` (phone relay): "finished" mark survives hibernation, byte-counted message size, sliding per-minute +
+     hourly room limits, failed rate-counter write ends the room. Also LIMITER binding (M-14 / ML-126).
+   - `tools/live`: keyed URLs never cached, movers stale after 5 days (not 4), store read/write errors logged, 0 stays 0,
+     NHL "now" keyed by date, MLB season rule, $15+ five-letter W/U/R tickers kept, `/site` rate limit (M-14).
+   - `tools/relay`: 502 wording; `tools/relay/wrangler.toml` needs the rate-limit namespace id pasted in.
+2. 1.1.6 release flow, first real run of `tools/finish-release.ps1` together. It's stricter now: refuses a malformed
+   SHA256SUMS line, refuses notes without "from this exact source."; `store/pack.ps1` refuses a "-beta" or a 4th version
+   number and an exe whose version doesn't match `Program.cs`; the zip's own SHA256SUMS lists every file.
+
+### B. Release-time drift (deferred on purpose - do at the version bump, not before)
+- M-8 tool count (232 in code; README/CHANGELOG/site say 158), M-9 six Toolbox sections (docs say five), ML-76 90 Learn
+  topics (docs say 59), ML-88 HOW-TO-USE section 10 ("190 tools in four sections"). (Self-test count is fixed: docs say 86.)
+- Translations still to do (of 2,414 texts): French ~507, Spanish / Arabic / Bangla ~406 each. French M-11 (tool titles),
+  ML-86 (About page), ML-87 (palette "Investigate"). `python3 tools/langcheck.py <code>` lists them in lang-<code>-todo.txt
+  (don't commit that file) AND now rewrites the `#coverage NN` line in the table - run it for each language after adding
+  translations, or the picker shows an old percentage.
+- (docs/kb/r1.json is done - the 8 tools are in it.)
+
+### C. Carry-overs from earlier review rounds - worked through (commit after 31ef361)
+All 55 were gone through. 44 fixed in code or docs, 6 were already fixed by earlier commits (checked at HEAD), 5 left on purpose:
+- Left for Adeeb (product/design): **website** (`docs/index.html` names none of the 1.1.5 features - Gamer Zone, Points, packet journey, Your phone, French, Labs, Report for my ISP, ARM; needs a design pass he approves).
+- **Points cap: no change needed** - the report was stale. `Points.Max` is already 1,200 (raised 15 Nov); about 1,020 is earnable; the example check fails the self-test if a release ever goes past it. Adeeb said "raise the cap, new features later" - it is already raised; raise it again only when that check fails.
+- Pushed back: **Engineer preset** (merged into Balanced by design, no longer offered; the self-test pins it), **certcmp ungated** (one TLS handshake, the same traffic as the ungated certlive/port/httpreq - gating only it would be inconsistent), **Setup per-monitor DPI** (the process is system-DPI-aware, so primary-monitor DPI is correct there; real per-monitor DPI is an app-wide switch that needs a real-Windows test).
+- Already fixed before this pass: History in Portable mode (History.Dir uses DataDir), timers disposed (ReleaseExtras / FormClosed), Gamer preset differs from Balanced (Wi-Fi 10 s, 5 game regions every 10 s), "printer" opens the SNMP printer view, Lab gate (radius in SenderGate, SecondDhcp checks Policy.NoLab and company networks), r1.json has the 8 tools, Inspection reads Windows' own root list for new public CAs.
+- Need a real Windows run: IPv6 UDP receives, CertKeys.Live timeout, Hotel Stop, speed-test abort, EvLog big events, DHCP infinite lease, game-ping Stop wake.
+
+### D. Language picker (21 Nov) - built, tested on Adeeb's PC
+```
+top bar: [VIEW My setup v] [(globe) বাংলা v] [Restart]     <- Restart only while the language differs from the start one
+           click -> card: one tile per language ("Welcome" in its script, own colours + pattern, % translated),
+                    preview strip of real app words for the tile under the mouse / keyboard focus, arrows/Enter/Esc
+           pick  -> switches at once (PickLanguage, also used by Settings) -> Restart: --restart copy waits for the
+                    mutex, old copy quits via Local\AdeeboMeter.quit, new one opens the big window
+```
+- Code: `src/Ui/FullView.Lang.cs` (LangButton, card, LangFont: Nirmala UI for Bangla, Segoe UI for Arabic - Inter has
+  neither), `L.In` / `L.Coverage` in `src/Lang.cs`, `--restart` in Program.cs + AppCtx.cs, `--view lang[:bn]` for screenshots.
+- Chinese (lang-zh.txt, 4%) is not offered; the file stays. A saved "zh" opens in English.
+- Tested on his PC (computer use, test copy in `Documents\AdeboMeter\test-1.1.6-lang` with run-test.bat /
+  back-to-installed.bat, portable so its data stays there): picker, Bangla/Arabic text, keyboard preview, pick, Restart
+  (reopened in 1 s, fully Bangla) all worked. **Not confirmed:** the preview on mouse hover (computer-use mouse moves
+  didn't reach the app; arrow keys showed the same preview). Adeeb to try with his own mouse.
+- Wine can't draw Bangla/Arabic (no fonts) - screenshots from the container show boxes; that's Wine, not the app.
+
+### E. Queued work (agreed earlier, after the bug hunt)
+- Network Lab Suite (PR #29, four features) - design first.
+- Finance Learn lessons (numbers and education only, never advice).
+- Real-Windows test pass: the code-reading-only fixes (L-200, L-287, L-289, L-267, L-214) and the carry-overs that need
+  Windows (section C). His PC can be used through computer use when he's away - he said so on 21 Nov.
+- FMP key verification (Adeeb types the key himself).
+- `docs/app.html` goes live with 1.1.6 (it now writes Dark as "dark" so Learn/Games/Live/Files pages follow it - L-361).
+- PLAN-1.1.6.md items: a different free source for US stock movers (design + show options first), website refresh.
+
+## Behaviour changes in 1.1.6 worth telling testers
+- A phone with an old cached page (no matching words) is turned away and told to reload (L-41).
+- `--remove-folder` only deletes the install folder right after a real uninstall (L-311).
+- Settings import refuses a file with a line over 2,000 characters; an invalid "keep history" value is ignored (L-161/162).
+- Remembered phones that can't be read are reported on the phone page instead of vanishing (L-239).
+- Moments' "once a day" survives a restart (moments-seen.txt beside the settings) (L-122).
+- Language button next to VIEW, the language card, and a Restart button after a switch; Chinese no longer offered.
+- A standard .p7m is now made up to 12 MB (was 25) and opened up to 20 MB (was 50) - memory budget; .adeebo has no limit change.
+- Speed calculator: all-capital units (MBPS, GBPS) read as bits; speeds over 1 Pbps refused.
+- Gamer card lists servers past the cap as "not watched"; DNS race "new" time = made-up names only.
 
 ## Adeeb's standing rules (follow exactly)
 - **Commits as Adeeb Khan** (plain `git commit`, his git config), **no Claude co-author line**. A stop hook keeps asking
@@ -35,8 +107,8 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
 - **Push back** when something's wrong or there's a better way. Short, plain explanations; he's a network engineer, not
   a crypto person.
 - **Never:** commit `secrets/hof.key` or `HALL-OF-FAME-SETUP.txt`, print the key, handle his passwords/tokens/API keys
-  (he types them himself, e.g. `wrangler secret put`), repeat his phone number (it's in old screenshots), copy Topogram
-  code, use alerts/pop-ups in the product, mention his employer anywhere, add tracking.
+  (he types them himself, e.g. `wrangler secret put`), repeat his phone number (it's in old screenshots), bring anything that names his employer or its products into
+  AdeeboMeter (21 Nov: copying Topogram's code and ideas is allowed now - both are his projects - but no employer/product names), use alerts/pop-ups in the product, mention his employer anywhere, add tracking.
 - Phone/web save nothing ("we're just passthru"). Timeouts on long work.
 
 ## How to work (cloud container)
@@ -44,7 +116,8 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
   `secrets/hof.key` isn't in git (on purpose) - builds without it are "unofficial" (Hall of Fame cards marked so); fine
   for testing. The official build happens in GitHub Actions on release.
 - **Build** (C# 5 / .NET 4.8, Roslyn against Mono's 4.8 reference assemblies): `session-tools/b48.sh /tmp/amNN.exe`
-  (needs `dotnet` SDK 8 and `mono` reference assemblies; paths inside). Every new setting must be in `Cfg.Known`; every new
+  (needs `dotnet` SDK 8 and `mono` reference assemblies; paths inside; references System.Numerics since 1.1.6).
+  The three helpers are in the repo now (`session-tools/`): b48.sh, runwine13.sh (copy the exe to /tmp/amt13 first), pat.py. Every new setting must be in `Cfg.Known`; every new
   tool needs a `knowledge/examples.txt` entry - the self-test checks both.
 - **Self-test** under Wine (`--selftest`, ~8 min): `session-tools/runwine13.sh` (Xvfb + wine64, prefix /tmp/wpfx).
   GitHub's real-Windows self-test runs on every push - check it with `gh api repos/adeeb111/AdeeboMeter/actions/runs`.
@@ -53,7 +126,8 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
 - **Phone/web tests**: Playwright scripts in `session-tools/` against `python3 -m http.server 8794` in `docs/`.
   After changing site pages run `python3 tools/learnsite.py` (refreshes sw.js so returning visitors update).
 - **Edits:** `session-tools/pat.py` (`patch(path, [(old, new)])`, old must occur once). Never put a `//` comment mid-line
-  before code in C# (it has swallowed code twice).
+  before code in C# or JS - it has swallowed code 5+ times (twice more in the bug hunt). Use `/* */` inline.
+- Run the self-test in the background and **don't build while it runs** - CPU contention fails the paint-timing check.
 - GitHub from the container: pushing branches and reading the API works; **creating/editing releases and pushing tags is
   blocked** - Adeeb does those in the browser.
 - His PC (when the chat is linked): connected folders `Documents\AdeboMeter`, `AppData\Local\Programs\AdeeboMeter`.
@@ -70,11 +144,19 @@ dev-1.1.6  = next version (planning + a few finished fixes); PLAN-1.1.6.md is th
    30 more opens before failing.
 5. Microsoft Store: package is the `AdeeboMeter-store` artifact of the release run; Adeeb submits it.
 
-## Open questions waiting for Adeeb
+## Adeeb's decisions (21 Nov, 10:43) - the next session starts here
+1. **Restart button: only after a language switch** - as built. Done; nothing to change.
+2. **Website design: yes.** Make a design for the website refresh (docs/index.html and the feature pages) that shows the
+   1.1.5 and 1.1.6 features - Gamer Zone, Adeebo Points, packet journey, Your phone, the languages and the new language
+   picker, Labs, Report for my ISP, ARM, Hardware nerds. Show mockups first and wait for his go; nothing goes live
+   without his say-so (publishing = copying only the changed docs/ files to main).
+3. **Next work: the queued features (section E)**, before the translation backlog. Order to propose to him:
+   Network Lab Suite (PR #29, design first) -> Finance Learn lessons (education only, never advice) -> US stock movers
+   source (show 2-3 options with their limits first) -> FMP key check (he types the key) -> app.html with 1.1.6.
+
+## Still open questions
 - Replace "Is it me or the network?" with the motto in the home page `og:title`/link preview and release-notes header?
 - Install `gh` on his PC for one-step signed releases?
-- Stock movers: which replacement source (step 2) - propose 2-3 options with their limits.
-- His company network blocks adeebometer.com as a newly registered domain (~30-90 days, or ask IT / categorisation sites).
 
 ## Handovers for people
 `HANDOVER-SEO.md`, `HANDOVER-TRANSLATOR.md`, `HANDOVER-UIUX.md`, `HANDOVER-TESTERS-1.1.5.md` - keep them in step when

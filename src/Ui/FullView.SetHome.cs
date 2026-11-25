@@ -47,11 +47,11 @@ namespace AdeeboMeter
         static string SecSummary(string sec, List<SetItem> items)
         {
             if (sec == "Widget") { int i = Array.IndexOf(WStyleIds, Cfg.WidgetStyle); return L.T(i >= 0 ? WStyle[i] : "Auto") + (Draw.SpeedStyle ? " · " + (Cfg.WUnits == "bytes" ? "MB/s" : "Mb/s") : ""); }
-            if (sec == "Background checks") return L.T(Cfg.Preset == "penny" ? "Penny" : Cfg.Preset == "custom" ? "Your own mix" : Cfg.Preset == "gamer" ? "Gamer" : "Balanced") + " · ~" + Cfg.JobsPerMinute() + " " + L.T("checks a minute");
+            if (sec == "Background checks") return L.T(Cfg.Preset == "penny" ? "Penny" : Cfg.Preset == "custom" ? "Your own mix" : Cfg.Preset == "gamer" ? "Gamer" : "Balanced") + " · ~" + (Cfg.JobsPerMinute() + Cfg.GameJobsPerMinute()) + " " + L.T("checks a minute");   /* carry-over: the game pings count too, as the Settings page says */
             if (sec == "Companion") return Voice.Serious ? L.T("Plain - no jokes") : L.T(Lines.MoodName(Lines.Mood)) + " · " + L.T(Lines.PersonaName(Lines.Persona));
             // Review-1: "Sidebar · Off" read as the sidebar being off - the layout, then how many pages are hidden
             if (sec == "Navigation") { int hid = items.Count(i => i.Sec == sec && i.Label.StartsWith("Show ", StringComparison.Ordinal) && i.Cur() == 1); return L.T("Layout") + ": " + L.T(Cfg.Layout == "sidebar" ? "Sidebar" : "Classic") + (hid > 0 ? " · " + hid + " " + L.T(hid == 1 ? "page hidden" : "pages hidden") : ""); }
-            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? (sec == "General" ? "" : L.T(i.Label) + ": ") + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On"
+            var l = items.Where(i => i.Sec == sec).Take(2).Select(i => { int c = i.Cur(); return c >= 0 && c < i.Opts.Length ? L.T(i.Label) + ": " + L.T(i.Opts[c]) : ""; }).Where(t => t != "").ToList();   // "Alerts: On", not a bare "On" - General too (bug-hunt L-334: "View: Everyday · Language: English")
             return string.Join(" · ", l);
         }
         float PaintSettingsHome(Graphics g, float x, float y, float w, List<SetItem> items)
@@ -80,9 +80,9 @@ namespace AdeeboMeter
         {
             string[] bg, card, acc, ink;
             if (theme >= 2 && theme - 2 < Theme.Palettes.Length) { var v = Theme.PaletteColors[Theme.Palettes[theme - 2]]; bg = new[] { v[0] }; card = new[] { v[1] }; acc = new[] { v[12] }; ink = new[] { v[6] }; }
-            else if (theme == 1) { bg = new[] { "#0E1319" }; card = new[] { "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#E6EDF3" }; }
-            else if (theme == 0) { bg = new[] { "#F2F5F9" }; card = new[] { "#FFFFFF" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
-            else { bg = new[] { "#F2F5F9", "#0E1319" }; card = new[] { "#FFFFFF", "#161D26" }; acc = new[] { "#1F6FEB" }; ink = new[] { "#1B2330" }; }
+            else if (theme == 1) { bg = new[] { "#111316" }; card = new[] { "#181B20" }; acc = new[] { "#1155E0" }; ink = new[] { "#EEF1F5" }; }
+            else if (theme == 0) { bg = new[] { "#F1F3F6" }; card = new[] { "#FFFFFF" }; acc = new[] { "#1155E0" }; ink = new[] { "#16191E" }; }
+            else { bg = new[] { "#F1F3F6", "#111316" }; card = new[] { "#FFFFFF", "#181B20" }; acc = new[] { "#1155E0" }; ink = new[] { "#16191E" }; }
             Theme.Fill(g, r, r.Height / 2, Theme.C(bg[0]));
             if (bg.Length > 1) { var st = g.Save(); g.SetClip(new RectangleF(r.X + r.Width / 2, r.Y, r.Width / 2, r.Height)); Theme.Fill(g, r, r.Height / 2, Theme.C(bg[1])); g.Restore(st); }
             Theme.Stroke(g, r, r.Height / 2, Theme.Line, 1);
@@ -94,7 +94,7 @@ namespace AdeeboMeter
         // one setting as big cards: its options side by side, the chosen one marked, its help underneath
         float PaintBigChoice(Graphics g, float x, float y, float w, SetItem it, string acc)
         {
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(it.Label).ToUpperInvariant(), Draw.fTiny, m, x, y + 2 * S); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(it.Label), Draw.fTiny, m, x, y + 2 * S); y += 22 * S;
             int n = it.Opts.Length, cur = it.Cur(), cols = Math.Max(1, Math.Min(n, Math.Min(4, (int)(w / (150 * S))))); float cw = (w - (cols - 1) * 10 * S) / cols, ch = 58 * S;
             for (int i = 0; i < n; i++)
             {
@@ -113,12 +113,12 @@ namespace AdeeboMeter
         }
         // ---------- first run: four questions on Home, big cards, Skip any time (new installs only). The first one - what the
         // internet is for - shows only the pages that person needs (the rest stay one switch away in Settings › Navigation).
-        int setupStep; readonly HashSet<string> setupUses = new HashSet<string>(StringComparer.Ordinal);
+        int setupStep { get { return Cfg.SetupStep; } set { Cfg.SetupStep = value; } }   /* kept in the settings file: closing mid-setup comes back to the same question */ readonly HashSet<string> setupUses = new HashSet<string>(StringComparer.Ordinal);
         internal static readonly string[][] SetupUses = {
             new[] { "calls", "Work calls", "Teams, Zoom, Meet - notices a call and watches closer", "dest" },
             new[] { "game", "Gaming", "Your game servers' ping and whose lag it is", "gamer" },
             new[] { "stream", "Streaming", "Netflix, YouTube, IPTV - why it buffered", "stream" },
-            new[] { "trade", "Trading", "Your line to your broker, the day's numbers", "trade" },
+            new[] { "trade", "Markets", "Currencies, commodities, world markets, your broker line", "trade" },
             new[] { "fix", "Troubleshooting", "Every tool: ping, trace, DNS, Wi-Fi, certificates", "toolbox" },
             new[] { "check", "Just checking", "Is it me or the network? - the light version", "home" } };
         // what the first answer does: the sections that fit, calls on if chosen, every tool for troubleshooters
@@ -142,10 +142,10 @@ namespace AdeeboMeter
             int st = Math.Max(0, Math.Min(2, setupStep - 1)); string sugg = SuggestedPreset(setupUses);
             var card = new RectangleF(x, y, w, 10); float top = y;
             y += 16 * S;
-            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  " + (st + 2) + " / 4", Draw.fTiny, m, x + 18 * S, y);
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), st + 2), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
-            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Cfg.Save(); overviewCanvas.Invalidate(); });
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; Cfg.Save(); overviewCanvas.Invalidate(); });   // no fifth question after the four (review 24 Nov)
             y += 22 * S;
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T(qs[st]), Draw.fTitle, ink, x + 18 * S, y); y += 38 * S;
             var o = opts[st]; int cols = Math.Min(o.Length, w > 760 * S ? 4 : 2); float cw = (w - 36 * S - (cols - 1) * 10 * S) / cols, ch = st == 0 ? 112 * S : 70 * S;
@@ -166,7 +166,7 @@ namespace AdeeboMeter
                     if (step == 0) Cfg.WidgetStyle = id;
                     else if (step == 1) { Cfg.ApplyPreset(id); Policy.Apply(); M.Nudge(); }
                     else { if (id == "plain") Voice.Serious = true; else { Voice.Serious = false; Lines.Persona = id; Lines.Mood = "chill"; } }
-                    if (step == 2) Cfg.SetupDone = true; else setupStep = step + 2;
+                    if (step == 2) { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; } else { setupStep = step + 2; Cfg.Save(); }   // Simple unless step 1 chose Troubleshooting: no fifth question
                     Cfg.Save(); Invalidate(true);
                 });
             }
@@ -178,10 +178,10 @@ namespace AdeeboMeter
         float PaintSetupUses(Graphics g, float x, float y, float w)
         {
             var card = new RectangleF(x, y, w, 10); float top = y; y += 16 * S;
-            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("QUICK SETUP") + "  ·  1 / 4", Draw.fTiny, m, x + 18 * S, y);
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Step {0} of 4"), 1), Draw.fTiny, m, x + 18 * S, y);
             string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - 20 * S, y - 4 * S, ss.Width + 4, 24 * S);
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
-            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });
+            Act(overviewCanvas, skr, delegate { Cfg.SetupDone = true; if (Cfg.Mode == "") Cfg.Mode = "simple"; /* review 1.1.6 U2 #8 */ Views.EnsureStarted(); Cfg.Save(); AfterView(); overviewCanvas.Invalidate(); });
             y += 22 * S;
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("What do you use your internet for?"), Draw.fTitle, ink, x + 18 * S, y); y += 34 * S;
             using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings."), Draw.fBody, m, x + 18 * S, y); y += 30 * S;

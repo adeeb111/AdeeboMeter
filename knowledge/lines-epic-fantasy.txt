@@ -122,3 +122,17 @@ game.streak|{v} victories in a row - songs will be sung!
 game.timeup|The sands of the hourglass have run out.
 market.open|The great markets open their gates.
 storm.near|A tempest gathers over your realm.
+stream.on|{v} flows true across the realm.
+stream.on|The tale plays on, unbroken.
+stream.dip|The tale faltered. {v}
+stream.dip|A shadow crossed the stream. {v}
+stream.none|No tale is told tonight.
+stream.none|The storyteller rests.
+trade.ok|The road to the guild of coin is swift.
+trade.ok|Swift ravens to your broker.
+trade.slow|The ravens fly slow. Hold your hand.
+trade.slow|The broker's road is long today. {v}
+trade.closed|The guild of coin is closed till 9:30.
+trade.closed|The market gates are shut for the night.
+view.switch|Into the {v} hall we stride.
+view.switch|The {v} banner is raised.

@@ -1,0 +1,114 @@
+# AdeeboMeter buddy lines - Chill (the default mood). key|text. {addr} = how you like to be called, {v} = the measured value.
+app.open|Hola {addr}. Yo me encargo de la red, tú a lo tuyo.
+app.open|Todo listo. Vigilando en silencio desde la esquina.
+app.open|De vuelta en guardia. Primeras lecturas en unos segundos.
+all.good|Todo en calma. Nada te necesita.
+all.good|Todo tranquilo. PC, Wi-Fi e internet bien.
+all.good|Todo relajado. Sigue con lo tuyo.
+pc.busy|Tu PC está trabajando duro. La red está bien.
+pc.busy|CPU al {v}. Quizá cierra algo pesado.
+pc.busy|La lentitud es tu PC, no internet.
+wifi.drops|El Wi-Fi se cayó {v} veces hoy. Vale la pena mirarlo.
+wifi.drops|Tu Wi-Fi se apagó {v} veces. La señal es la sospechosa habitual.
+wifi.drops|Algunos cortes de Wi-Fi hoy. Anoté lo que pasó antes.
+net.none|Sin red por ahora. ¿Cable o Wi-Fi?
+net.none|Estás sin conexión. Elige un Wi-Fi o conecta el cable.
+net.none|Sin conexión. Esperaré.
+inet.slow|La red de casa está bien. Lo lento está después del router.
+inet.slow|Tu router es rápido. Internet allá afuera es lo lento.
+inet.slow|El retraso empieza en tu proveedor, no en casa.
+busy|En ello... {v}
+busy|Trabajando en ello. Sigue haciendo clic.
+busy|Midiendo. No tardará.
+idle|Sigo aquí. Todo tranquilo.
+idle|Nada nuevo. Todo estable.
+idle|Hora tranquila. Vigilo de todos modos.
+search.empty|¿Qué quieres revisar?
+search.empty|Escribe un problema, como «lento» o «wifi».
+search.empty|Busca, o elige una pregunta abajo.
+freeze|Un segundo, poniéndome al día ({v}).
+freeze|Sigo aquí. La ventana se pone al día ({v}).
+freeze|Trabajo pesado. Vuelvo en un momento ({v}).
+speedrunner|Tranquilo, sigo con la anterior.
+speedrunner|Una a la vez. Terminando tu último clic.
+speedrunner|Dame un segundo para ponerme al día.
+back.again|Bienvenido de vuelta. Esto es lo que cambió.
+back.again|Hola de nuevo. {v} cambios mientras no estabas.
+back.again|De vuelta. Todo se mantuvo tranquilo.
+dns.slow|Las búsquedas de nombres son lentas, {v}. Tu servidor DNS va atrasado.
+dns.slow|El DNS tarda {v}. Los sitios se sienten lentos al abrir.
+speed.great|{v} de descarga. Rápido y bien.
+speed.great|Descarga {v}. Tu línea va genial.
+speed.bloat|Rápido, pero el retraso sube {v} cuando la línea está ocupada.
+speed.bloat|La velocidad es buena. Las llamadas pueden entrecortarse con descargas grandes.
+game.lag|El lag empieza en tu Wi-Fi, no en el servidor del juego.
+game.lag|El servidor del juego está bien. Tu Wi-Fi es la parte irregular.
+game.good|Ping estable en {v}. Que te diviertas.
+game.good|La conexión del juego se ve fluida.
+vpn.on|La VPN está encendida. También la vigilo.
+vpn.on|Conectado por la VPN.
+vpn.slow|La VPN añade {v} de retraso.
+vpn.slow|La VPN es lo lento ahora, añade {v}.
+portal|Este Wi-Fi quiere una página de inicio de sesión primero.
+portal|Wi-Fi estilo hotel. Inicia sesión en la página y ya estás en línea.
+gw.down|Tu router no responde. ¿Le das un reinicio?
+gw.down|No puedo llegar a tu router. Revisa sus luces.
+isp.down|El router está bien. Internet después de él está caído.
+isp.down|La red de casa bien. Tu proveedor parece estar caído.
+mtu.small|Los paquetes grandes se pierden en el camino. MTU {v}.
+mtu.small|Los paquetes grandes no caben. La MTU de la ruta es {v}.
+port.open|{v} está abierto y responde.
+port.open|{v} saludó. Está abierto.
+port.closed|{v} no respondió.
+port.closed|{v} está cerrado o bloqueado.
+cert.ok|El candado está bien. El certificado es válido.
+cert.ok|Certificado válido y confiable.
+cert.expired|Ese certificado venció el {v}.
+cert.expired|Certificado vencido, desde {v}. Los navegadores se quejarán.
+sec.ok|La revisión de seguridad pasó. Bien.
+sec.ok|Nada riesgoso. Todo bien.
+sec.issue|{v} cosas que vale la pena revisar.
+sec.issue|La revisión encontró {v} cosas para ordenar.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.lossy|Los paquetes empiezan a perderse en el salto {v}.
+mtr.clean|Cada salto está limpio. Sin pérdida.
+mtr.clean|Ruta limpia, de principio a fin.
+devices.found|{v} dispositivos en tu red.
+devices.found|Encontré {v} dispositivos a tu alrededor.
+encrypt.done|Bloqueado. Solo tu destinatario puede abrirlo.
+encrypt.done|Archivo cifrado.
+decrypt.done|Abierto. Nadie lo cambió.
+decrypt.done|Archivo abierto y revisado. Intacto.
+points.earned|+{v} puntos Adeebo.
+points.earned|Bien, +{v} puntos.
+award|500 puntos. El Premio Adeebo es tuyo.
+award|Llegaste al Premio Adeebo.
+late.night|Qué tarde. Sigo vigilando.
+late.night|Turno de noche. Todo tranquilo aquí.
+morning|Buenos días. Noche tranquila en la red.
+morning|Buenos días. Nada se rompió anoche.
+update.suspect|Las cosas empeoraron tras la actualización de Windows de {v}.
+update.suspect|El problema empezó tras una actualización de {v}.
+call.on|En una llamada. Vigilando la calidad.
+call.on|Llamada detectada. La vigilaré.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} va fluido. Prepara las palomitas.
+stream.on|Transmisión fluida, tarde tranquila. La vigilo.
+stream.dip|Un pequeño tropiezo. {v}
+stream.dip|Pequeño bache en la transmisión. {v}
+stream.none|No hay transmisión. Disfruta el silencio.
+stream.none|Nada sonando. Notaré cuando le des a reproducir.
+trade.ok|La línea al bróker está tranquila y rápida.
+trade.ok|Todo estable hacia tu bróker. Sin prisa.
+trade.slow|La línea al bróker es lenta. Respira y luego haz clic.
+trade.slow|Tramo lento hacia el bróker. {v}
+trade.closed|El mercado está cerrado. Todos descansan.
+trade.closed|Mercado cerrado. Nos vemos a las 9:30.
+view.switch|Cambiando al modo {v}. Con calma.
+view.switch|Vista {v}, enseguida. Sin prisa.
+quiz.right|Bien, eso es correcto.
+quiz.wrong|Casi, tranquilo, míralo de nuevo.
+game.streak|En racha, {addr}.
+game.timeup|Se acabó el tiempo. Todo bien.
+market.open|Los mercados están abiertos. Con calma.
+storm.near|Tormenta cerca: la conexión podría fallar un poco.

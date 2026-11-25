@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Shakespeare persona (our own lines in the style; no quotations). key|text.
+app.open|صباح الخير يا {addr}. أحرس شبكتك.
+app.open|بدأت الحراسة. حزمك في عهدتي.
+all.good|كل شيء بخير يا {addr}. وطقس جميل على كل سلك.
+all.good|حاسوبك وواي فاي وإنترنتك: كلها سليمة.
+all.good|لا اضطراب يتحرك الليلة.
+pc.busy|حاسوبك يعمل بجهد شديد. المعالج عند {v}.
+pc.busy|الخلل في حاسوبك، لا في الشبكة.
+pc.busy|مهام كثيرة تثقل جهازك. أطلق واحدة.
+wifi.drops|واي فاي هرب {v} مرات اليوم.
+wifi.drops|{v} انقطاعات. اقترب من راوترك يا {addr}.
+net.none|لا شبكة، واحسرتاه. أنت منقطع.
+net.none|دون اتصال. التمس الكابل أو الواي فاي.
+inet.slow|راوترك سريع. والبطء وراءه.
+inet.slow|بيتك سليم. ومزودك يتباطأ.
+inet.slow|التأخير ولد بعد راوترك.
+busy|أعمل... {v}
+busy|صبرا. العمل جار.
+busy|قريبا، قريبا.
+idle|ساعات هادئة. وما زلت أراقب.
+idle|لا جديد أرويه.
+idle|كل شيء يستريح.
+search.empty|تحدث يا {addr}. ما الذي يقلقك؟
+search.empty|سم شكواك.
+freeze|لحظة ({v}). الحمل ثقيل.
+freeze|أمهلني ({v}). ألحق بالركب.
+speedrunner|مهلا، مهلا! ما زلت في الأمر السابق.
+speedrunner|عمل واحد في كل مرة يا {addr}.
+back.again|عدت. وقعت {v} أمور.
+back.again|أهلا بعودتك. إليك الحكاية.
+dns.slow|الأسماء تأتي ببطء: DNS عند {v}.
+dns.slow|عمليات البحث تتباطأ {v}. سيرفر كسول.
+speed.great|{v} تحميل. سريع كالخاطر.
+speed.great|تحميل {v}. سرعة نبيلة.
+speed.bloat|سريع، لكنه يتعثر حين يزدحم {v}.
+speed.bloat|سريع وحده، بطيء في صحبة. {v} تأخير.
+game.lag|التأخير ينبع من واي فاي، لا من السيرفر.
+game.lag|السيرفر بريء. وواي فاي يتعثر.
+game.good|بينق {v}. انطلق.
+game.good|خط ثابت. الحظ معك.
+vpn.on|بياناتك تسافر متنكرة. VPN يعمل.
+vpn.on|تسافر متخفيا.
+vpn.slow|التنكر يكلف {v}.
+vpn.slow|VPN يضيف {v} إلى رحلتك.
+portal|هذا الواي فاي يطلب اسمك عند البوابة.
+portal|سجل دخولك قبل أن تعبر.
+gw.down|راوترك لا يتكلم. أعد تشغيله.
+gw.down|لا كلمة من الراوتر.
+isp.down|بيتك قائم. والإنترنت ساقط.
+isp.down|مزودك أظلم.
+mtu.small|الحزم الكبيرة لا تعبر. MTU {v}.
+mtu.small|المسار ضيق: {v}.
+port.open|{v} يجيب.
+port.open|الباب {v} مفتوح.
+port.closed|{v} لا يجيب.
+port.closed|الباب {v} موصد.
+cert.ok|الختم صحيح. الشهادة صالحة.
+cert.ok|قفل صادق.
+cert.expired|ختمهم انتهى في {v}.
+cert.expired|منته منذ {v}. وهذا إهمالهم.
+sec.ok|جدرانك قوية. الفحص ناجح.
+sec.ok|لا ثغرة في دفاعاتك.
+sec.issue|وجدنا {v} نقاط ضعف. أصلحها.
+sec.issue|الفحص يكشف {v} عيوب.
+mtr.lossy|عند القفزة {v}، تضيع حزمك.
+mtr.lossy|الفقدان يبدأ عند القفزة {v}.
+mtr.clean|لا فقدان على الطريق كله.
+mtr.clean|كل قفزة وفية.
+devices.found|{v} أجهزة تسكن شبكتك.
+devices.found|أعدها: {v}.
+encrypt.done|مختوم. لا يقرؤه إلا صديقك.
+encrypt.done|مغلق بإحكام.
+decrypt.done|فتح. لم تمسسه يد.
+decrypt.done|فك الختم دون تغيير.
+points.earned|+{v} نقاط. أحسنت.
+points.earned|+{v}. وعلمك ينمو.
+award|خمسمئة نقطة! جائزة Adeebo لك.
+award|شرف لك: جائزة Adeebo.
+late.night|تأخرت الساعة. وأنا أحرس.
+late.night|ليل. استرح؛ وأنا أراقب.
+morning|صباح الخير. مر الليل هادئا.
+morning|فجر، ولا خلل.
+update.suspect|منذ تحديث {v}، سوء حظ.
+update.suspect|جاءت المتاعب مع تحديث {v}.
+call.on|أنت في مجلس. أراقب المكالمة.
+call.on|مكالمة جارية. أصغي لأي خلل.
+quiz.right|أحسنت القول يا {addr}!
+quiz.wrong|واأسفاه، ليس كذلك.
+game.streak|{v} على التوالي - انتصار!
+game.timeup|انتهى الوقت.
+market.open|أبواب السوق مفتوحة.
+storm.near|عاصفة تقترب - وقد يتعثر اتصالك.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} يُعرض، ويُعرض بإتقان.
+stream.on|الممثلون يؤدون، ولا أحد يتعثر.
+stream.dip|البث قد وهن. {v}
+stream.dip|عثرة على المسرح. {v}
+stream.none|لا ممثلين على الخشبة الليلة.
+stream.none|المسرح خالٍ. لا بث.
+trade.ok|خط وسيطك يجري سريعًا صادقًا.
+trade.ok|الوسيط يجيب بإنصاف وسرعة.
+trade.slow|الوسيط يتمهل. كفّ يدك.
+trade.slow|بطيء هو الطريق إلى وسيطك. {v}
+trade.closed|السوق مغلق حتى التاسعة والنصف.
+trade.closed|السوق نائم. استرح حتى الصباح.
+view.switch|إلى واجهة {v}، في الحال!
+view.switch|انظر، واجهة {v}.

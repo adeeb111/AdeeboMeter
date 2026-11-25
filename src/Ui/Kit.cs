@@ -13,10 +13,84 @@ namespace AdeeboMeter
     // their own boxes, so a change of look is made once. All of it is plain GDI+ - drawn only when a page repaints.
     static class Kit
     {
+        // ---------- one look for every small window (24 Nov, Adeeb: "make the pop-ups go with our flow"): the card colour, a dark
+        // title bar in the dark theme, calm text boxes, one blue button (the window's OK) and quiet outlined ones for the rest.
+        // Called just before ShowDialog; the window's own layout is kept.
+        public static void Polish(Form f)
+        {
+            if (f == null) return;
+            f.BackColor = Theme.Card; f.ForeColor = Theme.Ink;
+            f.HandleCreated += delegate { try { int on = Theme.Dark ? 1 : 0; Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
+            PolishAll(f, f);
+        }
+        static void PolishAll(Control parent, Form f)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                var tb = c as TextBox; var lb = c as ListBox; var cb = c as ComboBox; var bt = c as Button; var la = c as Label; var ck = c as CheckBox; var rb = c as RadioButton;
+                if (tb != null) { tb.BackColor = Theme.Dark ? Theme.Soft : Color.White; tb.ForeColor = Theme.Ink; tb.BorderStyle = BorderStyle.FixedSingle; }
+                else if (lb != null) { lb.BackColor = Theme.Card; lb.ForeColor = Theme.Ink; lb.BorderStyle = BorderStyle.FixedSingle; }
+                else if (cb != null) { cb.BackColor = Theme.Dark ? Theme.Soft : Color.White; cb.ForeColor = Theme.Ink; cb.FlatStyle = FlatStyle.Flat; }
+                else if (bt != null)
+                {
+                    bool main = ReferenceEquals(f.AcceptButton, bt) || (f.AcceptButton == null && bt.DialogResult == DialogResult.OK);
+                    bt.FlatStyle = FlatStyle.Flat; bt.Cursor = Cursors.Hand; bt.UseVisualStyleBackColor = false;
+                    bt.BackColor = main ? Theme.Blue : Theme.Card; bt.ForeColor = main ? Color.White : Theme.Ink;
+                    bt.FlatAppearance.BorderSize = main ? 0 : 1; bt.FlatAppearance.BorderColor = Theme.Line;
+                    bt.FlatAppearance.MouseOverBackColor = main ? Theme.BlueHot : Theme.Soft; bt.FlatAppearance.MouseDownBackColor = main ? Theme.BlueHot : Theme.Line;
+                    if (main) bt.Font = new Font(bt.Font, FontStyle.Bold);
+                }
+                else if (la != null) { if (la.ForeColor == SystemColors.ControlText || la.ForeColor.ToArgb() == Color.Black.ToArgb()) la.ForeColor = Theme.Ink; }
+                else if (ck != null || rb != null) { c.ForeColor = Theme.Ink; }
+                if (c.HasChildren && !(c is PillButton)) PolishAll(c, f);
+            }
+        }
+        // 23 Nov polish: labels in sentence case, never shouting capitals ("YOUR ROUTER" -> "Your router"). Only text that has
+        // no lower-case letters at all is changed, so translations and names typed in mixed case pass through untouched;
+        // acronyms and product names keep their own spelling.
+        static readonly string[] Keep = { "PC", "PCs", "ISP", "DNS", "VPN", "TV", "NAT", "IP", "IPv4", "IPv6", "Wi-Fi", "LAN", "WAN", "QR", "US", "EU", "UK", "CPU", "RAM", "GPU",
+            "MTU", "TCP", "UDP", "HTTP", "HTTPS", "TLS", "SSL", "SNMP", "DHCP", "ARP", "ICMP", "BGP", "OSPF", "MAC", "SSID", "CAD", "USD", "EUR", "FX", "AI", "OK", "ID", "URL",
+            "SMB", "SMBv1", "RDP", "UPnP", "LLMNR", "mDNS", "WPAD", "MX", "SPF", "DMARC", "DKIM", "NTP", "SSH", "RADIUS", "TACACS", "LTE", "5G", "4G", "ms", "MB", "GB", "KB",
+            "Mb/s", "kb/s", "Gb/s", "AdeeboMeter", "Adeebo", "Windows", "Microsoft", "Teams", "Zoom", "Meet", "Outlook", "Edge", "Chrome", "Firefox", "Steam", "Netflix",
+            "YouTube", "Xbox", "PlayStation", "Discord", "Twitch", "OBS", "Cloudflare", "Google", "Starlink", "Rogers", "Bell", "NHL", "NBA", "NFL", "MLB", "TSX", "NYSE",
+            "S&P", "ETF", "IPTV", "HDR", "4K", "USB", "BIOS", "SSD", "HDD", "OS", "API", "Gamer Zone", "Ctrl", "Alt", "Esc", "CTRL", "ALT", "I", "LLDP", "CDP", "Wireshark", "STUN", "JWT", "GG", "VLAN", "PoE", "UPS", "QoS",
+            /* release check 24 Nov: "canada's rates" - places, languages, days and months keep their capital too */
+            "Canada", "Canadian", "Ottawa", "Toronto", "Montreal", "Bangladesh", "English", "French", "Spanish", "Arabic", "Bengali", "Europe", "Asia", "America", "Ireland", "Virginia", "Oregon",
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "January", "February", "March", "April", "June", "July", "August", "September", "October", "November", "December",
+            "AWS", "Azure", "Apple", "Android", "iPhone", "macOS", "Linux", "Valorant", "Fortnite", "Roblox", "Minecraft", "Ethernet", "Bluetooth" };
+        // worked out once per text (paints call this every frame): the acronym pass is ~100 small regexes
+        static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> sent = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.Ordinal);
+        public static string Sent(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return t;
+            t = L.T(t);   /* 24 Nov: every title painted through here is in your language (a translated one comes back unchanged) */
+            string done; if (sent.TryGetValue(t, out done)) return done;
+            if (sent.Count > 4000) sent.Clear();
+            return sent[t] = Sent1(t);
+        }
+        static string Sent1(string t)
+        {
+            bool lower = false, letters = false; foreach (char c in t) { if (char.IsLower(c)) { lower = true; break; } if (char.IsLetter(c)) letters = true; }
+            if (lower || !letters) return t;
+            var sb = new System.Text.StringBuilder(t.ToLower(System.Globalization.CultureInfo.InvariantCulture)); bool start = true;
+            for (int i = 0; i < sb.Length; i++)
+            {
+                char c = sb[i];
+                if (start && char.IsLetter(c)) { sb[i] = char.ToUpper(c, System.Globalization.CultureInfo.InvariantCulture); start = false; }
+                else if (c == '.' || c == '?' || c == '!') start = true;
+            }
+            string r = sb.ToString();
+            foreach (var k in Keep)
+                r = System.Text.RegularExpressions.Regex.Replace(r, @"(?<![\p{L}\d])" + System.Text.RegularExpressions.Regex.Escape(k) + @"(?![\p{L}\d])", k, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            // a sentence still starts with a capital after the acronyms are put back
+            if (r.Length > 0 && char.IsLower(r[0]) && !(r.StartsWith("ms", StringComparison.Ordinal) || r.StartsWith("mDNS", StringComparison.Ordinal) || r.StartsWith("kb/s", StringComparison.Ordinal))) r = char.ToUpper(r[0], System.Globalization.CultureInfo.InvariantCulture) + r.Substring(1);
+            return r;
+        }
+
         // ---------- colours: one accent per section, the same everywhere it appears (tab, card stripe, tool header, back button)
         public static readonly Dictionary<string, Color> Accents = new Dictionary<string, Color>(StringComparer.Ordinal)
         {
-            { "home", Theme.C("#1F6FEB") }, { "toolbox", Theme.C("#B7791F") }, { "gamer", Theme.C("#E0484A") }, { "stream", Theme.C("#5B8C0A") }, { "trade", Theme.C("#0F766E") },
+            { "home", Theme.C("#1155E0") }, { "toolbox", Theme.C("#B7791F") }, { "gamer", Theme.C("#E0484A") }, { "stream", Theme.C("#5B8C0A") }, { "sports", Theme.C("#C2410C") }, { "trade", Theme.C("#0F766E") },
             { "time", Theme.C("#16967A") }, { "learn", Theme.C("#7A6FD8") }, { "story", Theme.C("#3A86D8") },
             { "security", Theme.C("#CF4F7C") }, { "dest", Theme.C("#0E95A2") }, { "calc", Theme.C("#D0582E") },
             { "reports", Theme.C("#5F6B7A") }, { "mine", Theme.C("#8A5CD6") },
@@ -64,12 +138,11 @@ namespace AdeeboMeter
         public static float Empty(Graphics g, float x, float y, float w, string icon, string accent, string title, string body, string[] points)
         {
             title = L.T(title); body = L.T(body);
-            bool art = w >= 640 * S; float artW = art ? 210 * S : 0;   // wide enough: a faint sketch of what will land here
-            float tw = w - 104 * S - (art ? artW + 16 * S : 0), bh = Draw.Measure(body, Draw.fBody, (int)tw).Height;
+            // 24 Nov: no ghost sketch beside it any more - a placeholder picture read as content; the card says it in words
+            float tw = w - 104 * S, bh = Draw.Measure(body, Draw.fBody, (int)tw).Height;
             float ph = 0; if (points != null) foreach (var p in points) ph += Draw.Measure(L.T(p), Draw.fBody, (int)(tw - 20 * S)).Height + 6 * S;
             var r = new RectangleF(x, y, w, Math.Max(108 * S, 58 * S + bh + (ph > 0 ? ph + 12 * S : 0) + 22 * S));
             Box(g, r);
-            if (art) EmptyArt(g, new RectangleF(r.Right - artW - 20 * S, r.Y + 20 * S, artW, Math.Min(96 * S, r.Height - 40 * S)), icon, Accent(accent));
             var ic = new RectangleF(r.X + 24 * S, r.Y + 24 * S, 56 * S, 56 * S); Theme.Fill(g, ic, 16 * S, Soft(accent));
             Icon(g, icon, new RectangleF(ic.X + 14 * S, ic.Y + 14 * S, 28 * S, 28 * S), Accent(accent));
             float tx = r.X + 104 * S, ty = r.Y + 24 * S;
@@ -87,47 +160,18 @@ namespace AdeeboMeter
             return r.Bottom + 12 * S;
         }
 
-        // the empty state's sketch: a ghost of the picture that fills in once there's something to show - never real data
-        static void EmptyArt(Graphics g, RectangleF r, string icon, Color accent)
-        {
-            Theme.Fill(g, r, 12 * S, Mix(Theme.Card, accent, Theme.Dark ? 0.10f : 0.06f));
-            var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
-            Color ghost = Mix(Theme.Card, accent, 0.55f), faint = Mix(Theme.Card, Theme.Muted, 0.45f);
-            float x0 = r.X + 14 * S, x1 = r.Right - 14 * S, base0 = r.Bottom - 18 * S, top = r.Y + 16 * S, h = base0 - top;
-            using (var bl = new Pen(faint, 1.5f * S) { DashStyle = DashStyle.Dot }) g.DrawLine(bl, x0, base0, x1, base0);
-            using (var p = new Pen(ghost, 2.5f * S) { LineJoin = LineJoin.Round, StartCap = LineCap.Round, EndCap = LineCap.Round })
-            using (var dip = new SolidBrush(Mix(Theme.Card, Theme.Amber, 0.45f)))
-            {
-                int n = 24; var pts = new List<PointF>(); var rnd = new[] { 0.62, 0.66, 0.64, 0.7, 0.68, 0.71, 0.69, 0.3, 0.25, 0.6, 0.67, 0.7, 0.72, 0.69, 0.7, 0.66, 0.68, 0.35, 0.62, 0.7, 0.71, 0.69, 0.72, 0.7 };
-                switch (icon)
-                {
-                    case "time": case "app":   // a stream's record: steady, with two dips marked
-                        for (int i = 0; i < n; i++) pts.Add(new PointF(x0 + (x1 - x0) * i / (n - 1), base0 - h * (float)rnd[i]));
-                        g.FillRectangle(dip, pts[7].X - 4 * S, top, pts[8].X - pts[7].X + 8 * S, h); g.FillRectangle(dip, pts[17].X - 4 * S, top, 8 * S, h);
-                        g.DrawLines(p, pts.ToArray()); break;
-                    case "traffic":   // bars of who's using what
-                        float bw = (x1 - x0) / 9f; var hs = new[] { 0.9f, 0.62f, 0.45f, 0.3f, 0.22f, 0.15f, 0.1f };
-                        for (int i = 0; i < hs.Length; i++) Theme.Fill(g, new RectangleF(x0 + i * bw * 1.25f, base0 - h * hs[i], bw, h * hs[i]), 3 * S, ghost);
-                        break;
-                    case "story":   // a connection, box by box
-                        for (int i = 0; i < 4; i++) { float cx = x0 + 12 * S + (x1 - x0 - 24 * S) * i / 3f; Theme.Stroke(g, new RectangleF(cx - 12 * S, top + h / 2 - 12 * S, 24 * S, 24 * S), 6 * S, ghost, 2 * S); if (i < 3) g.DrawLine(p, cx + 16 * S, top + h / 2, cx + (x1 - x0 - 24 * S) / 3f - 16 * S, top + h / 2); }
-                        break;
-                    default:   // a health ring and a few lines
-                        float d = Math.Min(h, 64 * S); var ring = new RectangleF(x0, top + (h - d) / 2, d, d);
-                        using (var rp = new Pen(faint, 6 * S)) g.DrawEllipse(rp, ring); using (var rp = new Pen(ghost, 6 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawArc(rp, ring, -90, 250);
-                        for (int i = 0; i < 3; i++) Theme.Fill(g, new RectangleF(x0 + d + 16 * S, top + (h - d) / 2 + 8 * S + i * 18 * S, (x1 - x0 - d - 16 * S) * (i == 0 ? 0.9f : i == 1 ? 0.7f : 0.5f), 7 * S), 3.5f * S, faint);
-                        break;
-                }
-            }
-            g.SmoothingMode = sm;
-        }
 
         // a raised card: theme card colour, soft shadow, hairline edge, rounded
-        public static void Box(Graphics g, RectangleF r) { Box(g, r, 16 * S); }
-        public static void Box(Graphics g, RectangleF r, float rad) { if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
-        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, 16 * S); }
+        // the shared corner scale (24 Nov, the same steps as the website and the phone): sm 8, md 12 (buttons, fields, tiles
+        // inside a card), lg 16 (cards), xl 24 (sheets); pills stay pills. Every card is lg, whatever radius a caller passes.
+        public const float RSm = 8, RMd = 12, RLg = 16, RXl = 24;
+        internal static float CardR(float rad) { return rad >= RMd * S ? RLg * S : rad; }
+        public static void Box(Graphics g, RectangleF r) { Box(g, r, RLg * S); }
+        public static void Box(Graphics g, RectangleF r, float rad) { rad = CardR(rad); if (Off(g, r)) return; Theme.Fill(g, r, rad, Theme.Card); Frame(g, r, rad); }
+        public static void Frame(Graphics g, RectangleF r) { Frame(g, r, RLg * S); }
         public static void Frame(Graphics g, RectangleF r, float rad)
         {
+            rad = CardR(rad);
             if (Off(g, r)) return;
             var st = g.Save();
             using (var inside = Theme.Round(r, rad)) using (var rg = new Region(inside)) { g.ExcludeClip(rg); Shadow(g, r, rad); }
@@ -136,27 +180,29 @@ namespace AdeeboMeter
         }
         // off screen (scrolled away): nothing to draw
         public static bool Off(Graphics g, RectangleF r) { var c = g.ClipBounds; return r.Bottom + 8 * S < c.Top || r.Top - 8 * S > c.Bottom || r.Right + 8 * S < c.Left || r.Left - 8 * S > c.Right; }
+        // 22 Nov (Adeeb: "can it be more sharper"): cards sit on whole pixels, a tighter corner, a hairline edge on the half pixel and a
+        // short crisp lift instead of the soft blurred shadow - the soft halo made every tile look out of focus
+        public static float CardRad { get { return 12 * S; } }
+        public static RectangleF Crisp(RectangleF r) { return new RectangleF((float)Math.Round(r.X), (float)Math.Round(r.Y), (float)Math.Round(r.Width), (float)Math.Round(r.Height)); }
+        public static RectangleF Edge(RectangleF r) { r = Crisp(r); return new RectangleF(r.X + 0.5f, r.Y + 0.5f, r.Width - 1, r.Height - 1); }
         public static void Card(Graphics g, RectangleF r, string accent, bool hot)
         {
             if (Off(g, r)) return;
-            float rad = 16 * S;
-            Shadow(g, r, rad);
+            float rad = CardRad; r = Crisp(r);
+            if (!Theme.HighContrast) Theme.Fill(g, new RectangleF(r.X, r.Y + 2 * S, r.Width, r.Height), rad, Color.FromArgb(Theme.Dark ? 90 : 20, 0, 0, 0));   // the lift: a crisp step under the card
             Theme.Fill(g, r, rad, Theme.Card);
-            Theme.Stroke(g, r, rad, hot && accent != null ? Accent(accent) : Theme.Dark ? Theme.Line : Theme.Line2, hot ? 1.5f * S : 1);
+            Theme.Stroke(g, Edge(r), rad, hot && accent != null ? Accent(accent) : Theme.Dark ? Theme.Line : Theme.Line2, hot ? 1.5f * S : 1);
             if (accent != null && Theme.Palette == "neon" && !Theme.HighContrast)   // Neon: the accent edge glows a little - two faint strokes, drawn once
             {
                 using (var p = Theme.Round(new RectangleF(r.X - 1.5f * S, r.Y - 1.5f * S, r.Width + 3 * S, r.Height + 3 * S), rad + 1.5f * S)) using (var pen = new Pen(Color.FromArgb(40, Accent(accent)), 3 * S)) g.DrawPath(pen, p);
                 Theme.Stroke(g, r, rad, Color.FromArgb(150, Accent(accent)), 1);
             }
-            if (accent != null)
-            {
-                var st = g.Save();
-                using (var clip = Theme.Round(r, rad)) { g.SetClip(clip); using (var b = new SolidBrush(Accent(accent))) g.FillRectangle(b, r.X, r.Y, r.Width, 5 * S); }
-                g.Restore(st);
-            }
+            // 24 Nov: no coloured band along the top any more (Adeeb: "remove the blue") - the section colour stays for the hover edge
         }
 
         // ---------- chips: a rounded pill with optional icon. Returns the chip's rectangle so the page can make it clickable.
+        // the width a chip will take, without drawing it (so a row can wrap before the chip is drawn)
+        public static float ChipWidth(Graphics g, string text, string icon) { return g.MeasureString(text, Draw.fPill).Width + 22 * S + (icon != null ? 16 * S : 0); }
         public static RectangleF Chip(Graphics g, string text, float x, float y, string accent, bool on, string icon)
         {
             var f = Draw.fPill; var sz = g.MeasureString(text, f);
@@ -176,7 +222,7 @@ namespace AdeeboMeter
         {
             if (Off(g, r)) return;
             Card(g, r, null, hot);
-            if (hot) Theme.Stroke(g, r, 16 * S, Accent(accent), 1.5f * S);
+            if (hot) Theme.Stroke(g, Edge(r), CardRad, Accent(accent), 1.5f * S);
             float d = Math.Min(38 * S, r.Height - 20 * S), cx = L.IsRtl ? r.Right - 14 * S - d : r.X + 14 * S, cy = r.Y + (r.Height - d) / 2;
             Color ring = level >= 0 && level <= 2 ? Theme.LvSoft(level) : Soft(accent), ic = level >= 0 && level <= 2 ? Theme.Lv(level) : Accent(accent);
             using (var b = new SolidBrush(ring)) g.FillEllipse(b, cx, cy, d, d);
@@ -237,6 +283,7 @@ namespace AdeeboMeter
                     case "home": g.DrawLines(p, new[] { new PointF(X(4), Y(11)), new PointF(X(12), Y(4)), new PointF(X(20), Y(11)) }); g.DrawLines(p, new[] { new PointF(X(6), Y(9.5f)), new PointF(X(6), Y(20)), new PointF(X(18), Y(20)), new PointF(X(18), Y(9.5f)) }); g.DrawRectangle(p, X(10), Y(14), 4 * u, 6 * u); break;
                     case "tool": g.DrawLine(p, X(5), Y(19), X(14), Y(10)); g.DrawArc(p, X(12), Y(3), 9 * u, 9 * u, 100, 290); break;
                     case "game": g.DrawArc(p, X(3), Y(7), 18 * u, 11 * u, 0, 360); g.DrawLine(p, X(8), Y(10.5f), X(8), Y(14.5f)); g.DrawLine(p, X(6), Y(12.5f), X(10), Y(12.5f)); g.FillEllipse(b, X(15), Y(10), 2 * u, 2 * u); g.FillEllipse(b, X(17), Y(13), 2 * u, 2 * u); break;
+                    case "outlook": g.DrawEllipse(p, X(3), Y(3), 9 * u, 9 * u); g.DrawLines(p, new[] { new PointF(X(9), Y(20)), new PointF(X(19), Y(20)) }); g.DrawArc(p, X(13), Y(11), 8 * u, 9 * u, 180, 270); g.DrawArc(p, X(7), Y(13), 8 * u, 7 * u, 90, 180); break;   // a sun behind a cloud (1.1.6 Outlook)
                     case "time": g.DrawEllipse(p, X(4), Y(4), 16 * u, 16 * u); g.DrawLines(p, new[] { new PointF(X(12), Y(8)), new PointF(X(12), Y(12)), new PointF(X(15), Y(14)) }); break;
                     case "learn": g.DrawLines(p, new[] { new PointF(X(2), Y(9)), new PointF(X(12), Y(5)), new PointF(X(22), Y(9)), new PointF(X(12), Y(13)), new PointF(X(2), Y(9)) }); g.DrawArc(p, X(6), Y(8), 12 * u, 10 * u, 0, 180); break;
                     case "more": for (int i = 0; i < 3; i++) g.FillEllipse(b, X(5 + i * 6), Y(10.5f), 3 * u, 3 * u); break;

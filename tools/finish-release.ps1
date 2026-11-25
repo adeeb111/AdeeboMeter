@@ -32,7 +32,10 @@ Write-Host "1/6 Downloading $tag's files ..."
 gh release download $tag -R adeeb111/AdeeboMeter -D $work -p "AdeeboMeter.exe" -p $win -p $src -p "SHA256SUMS"
 if ($LASTEXITCODE -ne 0) { throw "couldn't download $tag - is it published, and are its files attached yet?" }
 # the files must be GitHub's own (their SHA256SUMS), not a half-finished earlier run
-foreach ($l in Get-Content (Join-Path $work "SHA256SUMS")) { $h, $n = $l -split "  ", 2; if ($n -and (Sha (Join-Path $work $n)) -ne $h) { throw "$n doesn't match the release's SHA256SUMS - stop" } }
+# L-22: every non-blank line must be "<64 hex>  <name>", and every file downloaded must be listed
+$listed = @()
+foreach ($l in Get-Content (Join-Path $work "SHA256SUMS")) { if ($l.Trim() -eq "") { continue }; if ($l -notmatch '^([0-9a-fA-F]{64})  (\S.*)$') { throw "SHA256SUMS has a line that isn't a checksum: '$l' - stop" }; $h = $Matches[1].ToLowerInvariant(); $n = $Matches[2]; $p = Join-Path $work $n; if (-not (Test-Path $p)) { continue }; if ((Sha $p) -ne $h) { throw "$n doesn't match the release's SHA256SUMS - stop" }; $listed += $n }
+foreach ($f in @("AdeeboMeter.exe", $win, $src)) { if ($listed -notcontains $f) { throw "$f isn't in the release's SHA256SUMS - stop" } }
 $exe = Join-Path $work "AdeeboMeter.exe"
 if ((Get-AuthenticodeSignature $exe).Status -eq "Valid") { Write-Host "$tag's exe is already signed - nothing to do."; exit 0 }
 $built = Sha $exe
@@ -45,7 +48,8 @@ $signed = Sha $exe
 Write-Host "3/6 Rebuilding $win around the signed exe ..."
 $un = Join-Path $work "unzip"; Expand-Archive (Join-Path $work $win) $un
 Copy-Item $exe (Join-Path $un "AdeeboMeter\AdeeboMeter.exe") -Force
-[IO.File]::WriteAllText((Join-Path $un "AdeeboMeter\SHA256SUMS"), "$signed  AdeeboMeter.exe`n")
+$inner = Get-ChildItem (Join-Path $un "AdeeboMeter") -File | Where-Object { $_.Name -ne "SHA256SUMS" } | Sort-Object Name | ForEach-Object { "$(Sha $_.FullName)  $($_.Name)" }   # every file, as release.ps1 writes it (L-166)
+[IO.File]::WriteAllText((Join-Path $un "AdeeboMeter\SHA256SUMS"), (($inner -join "`n") + "`n"))
 $out = Join-Path $work "out"; New-Item -ItemType Directory -Force $out | Out-Null
 Compress-Archive -Path (Join-Path $un "AdeeboMeter") -DestinationPath (Join-Path $out $win) -CompressionLevel Optimal
 Copy-Item $exe $out
@@ -57,7 +61,9 @@ $body = gh release view $tag -R adeeb111/AdeeboMeter --json body --jq .body | Ou
 $oldWin = (Get-Content (Join-Path $work "SHA256SUMS") | Where-Object { $_ -like "*  $win" }) -replace "  .*", ""
 if ($body.IndexOf($built) -lt 0) { throw "the notes don't carry GitHub's exe fingerprint - edit them by hand" }
 $body = $body.Replace($built, $signed).Replace($oldWin, $winSum)
+if ($body.IndexOf("from this exact source.") -lt 0) { throw "the notes no longer have the sentence 'from this exact source.' - add the signing line by hand" }   # bug-hunt L-165: never a silent no-op
 $body = $body.Replace("from this exact source.", "from this exact source, then code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum, timestamped). Signing adds only the signature: the exe exactly as GitHub built it - the file GitHub's build provenance covers - had SHA256 ``$built``.")
+$body = $body.Replace("> Not code-signed yet: the signed files replace these within the day (review 1.1.6 P5 #2 - the signing line is only written once the signature is really on them).", "> Code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum). While the certificate is new, Windows may still show *`"Windows protected your PC`"* - choose **More info → Run anyway**.")
 $notes = Join-Path $out "notes.md"; [IO.File]::WriteAllText($notes, $body.TrimEnd() + "`n")
 
 Write-Host "5/6 Uploading ..."
@@ -72,6 +78,7 @@ gh release download $tag -R adeeb111/AdeeboMeter -D $chk -p "AdeeboMeter.exe" -p
 $bad = 0
 foreach ($l in Get-Content (Join-Path $chk "SHA256SUMS")) { $h, $n = $l -split "  ", 2; if ($n) { $ok = (Sha (Join-Path $chk $n)) -eq $h; Write-Host ("  " + $(if ($ok) { "OK  " } else { "BAD " }) + $n); if (-not $ok) { $bad++ } } }
 $sig = Get-AuthenticodeSignature (Join-Path $chk "AdeeboMeter.exe")
-Write-Host "  signature: $($sig.Status) - $($sig.SignerCertificate.Subject.Split(',')[0])"
+$who = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject.Split(',')[0] } else { "no signer" }   # bug-hunt ML-90: an unsigned or broken file has no certificate to name
+Write-Host "  signature: $($sig.Status) - $who"
 if ($bad -or $sig.Status -ne "Valid") { throw "something doesn't match - look before announcing the release" }
 Write-Host "Done: $tag is signed. GitHub built $built, signed $signed."

@@ -25,6 +25,10 @@ if ($i -lt 0) { throw "CHANGELOG.md has no section '## $ver (date)' - add it fir
 $j = $log.IndexOf("`n## ", $i + 3)
 $section = if ($j -gt 0) { $log.Substring($i, $j - $i) } else { $log.Substring($i) }
 
+# bug-hunt ML-23: the exe is built from the files on disk and the source zip from HEAD - they must be the same files
+$dirty = git status --porcelain --untracked-files=no -- src knowledge assets build_exe.cmd release.ps1
+if ($dirty) { throw "Uncommitted changes in the source - commit or stash them first, so the exe and the source zip match:`n$dirty" }
+
 if (-not $NoBuild) {
     $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
     # the knowledge (knowledge\*.txt) rides compressed inside the exe and is unpacked only when needed
@@ -36,13 +40,14 @@ if (-not $NoBuild) {
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.knowledge.$($k.BaseName).gz"
     }
-    # the Inter font (assets\fonts, SIL Open Font License - assets\fonts\OFL.txt) rides compressed the same way
+    # the Barlow fonts (assets\fonts, SIL Open Font License - assets\fonts\OFL-Barlow.txt) ride compressed the same way
     foreach ($k in Get-ChildItem assets\fonts\*.ttf) {
         $b = [IO.File]::ReadAllBytes($k.FullName); $gz = "obj\$($k.BaseName).ttf.gz"
         $o = [IO.File]::Create($gz); $z = New-Object IO.Compression.GZipStream($o, [IO.Compression.CompressionLevel]::Optimal)
         $z.Write($b, 0, $b.Length); $z.Close(); $o.Close()
         $res += "/resource:$gz,AdeeboMeter.font.$($k.BaseName).gz"
     }
+    $res += "/resource:$((Resolve-Path docs\lab.html).Path),AdeeboMeter.lab.html"   # the Network Lab page (LabLink.cs)
     # the emoji faces (assets\emoji, Twemoji, CC-BY 4.0 - assets\emoji\CREDIT.txt): small PNGs, already compressed
     foreach ($k in Get-ChildItem assets\emoji\*.png) { $res += "/resource:$($k.FullName),AdeeboMeter.emoji.$($k.BaseName).png" }
     # the Hall of Fame key (the Adeebo Award's claim code): from the HOF_KEY secret on GitHub's build, or secrets\hof.key
@@ -54,7 +59,7 @@ if (-not $NoBuild) {
         "namespace AdeeboMeter { static partial class HallOfFame { static partial void BuildKey(ref string key) { key = Unmask(new byte[] { $($m -join ',') }); } } }" | Set-Content -Encoding ASCII obj\HofKey.cs
         $extra += "obj\HofKey.cs"
     } else { Write-Host "No Hall of Fame key: award cards from this build say 'unofficial build'" }
-    & $csc /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /recurse:src\*.cs @extra @res
+    & $csc /nologo /target:winexe /platform:anycpu /optimize+ /win32icon:assets\AdeeboMeter.ico /out:AdeeboMeter.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Management.dll /r:System.Security.dll /r:System.Numerics.dll /recurse:src\*.cs @extra @res
     $rc = $LASTEXITCODE; if (Test-Path obj\HofKey.cs) { Remove-Item obj\HofKey.cs }
     if ($rc -ne 0) { throw "build failed" }
 }
@@ -70,7 +75,9 @@ $t = (Get-Content -Raw "assets\READ ME.txt").Replace("__VERSION__", $ver) -repla
 Copy-Item "LICENSE" (Join-Path $stage "LICENSE.txt")
 Copy-Item "docs\AdeeboMeter-Theory-of-Everything.pdf" (Join-Path $stage "AdeeboMeter - Theory of Everything.pdf")
 $exeSum = Sha (Join-Path $stage "AdeeboMeter.exe")
-[IO.File]::WriteAllText((Join-Path $stage "SHA256SUMS"), "$exeSum  AdeeboMeter.exe`n")   # LF, like dist\SHA256SUMS: sha256sum -c works on Linux, Git Bash and WSL
+# bug-hunt L-166: every file in the folder, not only the exe
+$inner = Get-ChildItem $stage -File | Where-Object { $_.Name -ne "SHA256SUMS" } | Sort-Object Name | ForEach-Object { "$(Sha $_.FullName)  $($_.Name)" }
+[IO.File]::WriteAllText((Join-Path $stage "SHA256SUMS"), (($inner -join "`n") + "`n"))   # LF, like dist\SHA256SUMS: sha256sum -c works on Linux, Git Bash and WSL
 
 $win = Join-Path $dist "AdeeboMeter-$ver-win64.zip"
 Compress-Archive -Path $stage -DestinationPath $win -CompressionLevel Optimal
@@ -102,7 +109,7 @@ $notes = @"
 **Install in ten seconds:** open the zip → double-click **AdeeboMeter.exe** → **Install**. It installs just for you — no administrator rights — and starts in the bottom-right corner of your screen.
 **Update:** run the new exe and choose **Update**; your settings come along. **Remove:** Settings › Apps › AdeeboMeter.
 
-> Code-signed by **Open Source Developer MdAhasanul Adeeb Khan** (Certum). While the certificate is new, Windows may still show *"Windows protected your PC"* - choose **More info → Run anyway**.
+> Not code-signed yet: the signed files replace these within the day (review 1.1.6 P5 #2 - the signing line is only written once the signature is really on them).
 
 **Requirements:** Windows 10 or 11 (64-bit), .NET Framework 4.8 (built into Windows). Optional: Wireshark for live capture and *Find my switch port*.
 

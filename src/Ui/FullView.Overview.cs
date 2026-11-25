@@ -23,33 +23,6 @@ namespace AdeeboMeter
             new System.Threading.Thread(() => { var res = SpeedTest.Measure(run, srv); speedErr = res.Error; run.Status = ""; }) { IsBackground = true, Name = "speed test" }.Start();
             overviewCanvas.Invalidate();
         }
-        // the server menu: Auto (Cloudflare picks its nearest data centre), every city by provider, and "find the closest"
-        // (one ping - or a timed connection - to each server, on this click only)
-        void SpeedMenu(Point at)
-        {
-            var menu = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
-            Action<ToolStripItemCollection, SpeedTest.Server, string> item = (into, sv, text) =>
-            {
-                var it = new ToolStripMenuItem(text) { Checked = Cfg.SpeedServer == sv.Id || (sv.Id == "cloudflare" && Cfg.SpeedServer == "auto") };
-                string id = sv.Id; it.Click += delegate { Cfg.SpeedServer = id == "cloudflare" ? "auto" : id; Cfg.Save(); speedErr = ""; speedNote = ""; overviewCanvas.Invalidate(); };
-                into.Add(it);
-            };
-            var l = SpeedTest.All();
-            item(menu.Items, l[0], "Auto - Cloudflare, its nearest data centre (download and upload)");
-            var find = new ToolStripMenuItem("Find the closest server for me"); find.Click += delegate { FindClosestSpeed(); }; menu.Items.Add(find);
-            menu.Items.Add(new ToolStripSeparator());
-            foreach (var g in l.Skip(1).GroupBy(z => z.Provider))
-            {
-                var sub = new ToolStripMenuItem(g.Key + (g.First().Up == "" ? "  (download only)" : ""));
-                ((ToolStripDropDownMenu)sub.DropDown).ShowImageMargin = false;
-                foreach (var sv in g) item(sub.DropDownItems, sv, sv.Where);
-                menu.Items.Add(sub);
-            }
-            menu.Items.Add(new ToolStripSeparator());
-            var more = new ToolStripMenuItem("Add my own server..."); more.Click += delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); if (tbBusy) { BusyNote(); return; } OpenTool("speedtest"); if (tbSel == "speedtest" && tbBoxes.Count > 0) tbBoxes[0].Box.Text = AdeeboMeter.L.T("list"); };   // never into a running tool's boxes menu.Items.Add(more);
-            menu.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)menu.Dispose); else menu.Dispose(); } catch (InvalidOperationException) { menu.Dispose(); } };
-            menu.Show(overviewCanvas, at);
-        }
         void FindClosestSpeed()
         {
             if (SpeedTest.Busy || speedFinding) return;
@@ -73,7 +46,7 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         speedFinding = false;
-                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); var bs = SpeedTest.Pick(best); speedNote = L.T("Closest:") + " " + (best == "cloudflare" ? "Cloudflare" : bs != null ? bs.Label : best) + " (" + Math.Round(bestMs).ToString(CultureInfo.CurrentCulture) + " ms) - " + L.T("picked. Press Test my speed."); } else speedErr = "no server answered - is the internet down?";
+                        if (best != null) { Cfg.SpeedServer = best == "cloudflare" ? "auto" : best; Cfg.Save(); var bs = SpeedTest.Pick(best); speedNote = L.T("Closest:") + " " + (best == "cloudflare" ? "Cloudflare" : bs != null ? bs.Label : best) + " (" + Math.Round(bestMs).ToString(CultureInfo.CurrentCulture) + " ms) - " + L.T("picked. Press Test my speed."); } else speedErr = L.T("no server answered - is the internet down?");
                         overviewCanvas.Invalidate();
                     });
                 }
@@ -82,11 +55,16 @@ namespace AdeeboMeter
         }
         volatile bool speedFinding;
         // repaint only when something on the page would look different (not every second)
+        string ovFast = "";
         void OverviewTick()
         {
             var s = snap; Func<double, string> r = v => double.IsNaN(v) ? "-" : Math.Round(v).ToString(CultureInfo.InvariantCulture);
-            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + r(M.Down.Last * 10) + "|" + r(M.Up.Last * 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
-            if (k != ovKey) { ovKey = k; overviewCanvas.Invalidate(); }
+            int sig; lock (M.L) sig = M.WifiSignal;
+            // what moves every second (the four numbers, the path) redraws only its own spots; anything else redraws the page
+            string lsp; lock (M.L) lsp = M.LinkSpeed; string fast = r(M.GwPing.Avg(6)) + "|" + r(M.NetPing.Avg(6)) + "|" + r(M.Dns.Avg(6)) + "|" + Draw.Pair(M.Down.Last, M.Up.Last) + "|" + sig + "|" + lsp + "|" + r(s.Cpu / 10);
+            string k = s.Headline + "|" + s.Level + "|" + weather + "|" + (DateTime.Now.Minute / 10) + "|" + M.Events.Recent(1).Select(e => e.T.Ticks).FirstOrDefault() + "|" + Cfg.Details + "|" + speedRun.Status + "|" + speedFinding + "|" + Cfg.SpeedServer + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            if (k != ovKey) { ovKey = k; ovFast = fast; overviewCanvas.Invalidate(); }
+            else if (fast != ovFast) { ovFast = fast; if (!RedrawSpots(overviewCanvas, "ov.now")) overviewCanvas.Invalidate(); }
         }
 
         Panel BuildOverviewPage()
@@ -94,35 +72,26 @@ namespace AdeeboMeter
             overviewPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
             overviewCanvas = new DB { Name = "overviewCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
             overviewCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintOverview(e.Graphics); }; Wire(overviewCanvas);
+            overviewCanvas.MouseMove += delegate(object s, MouseEventArgs e) { SymMouse(e.Location); }; overviewCanvas.MouseLeave += delegate { SymMouse(new Point(-9999, -9999)); };
             overviewPage.Controls.Add(overviewCanvas);
             return overviewPage;
         }
 
         void GoGuide(string id) { tab = "guide"; ShowTab(); if (id != null) StartGuide(id, false); }
-        // Fix a problem (home screen): { where it goes, what the button says }. "I can't name it" stays first - it's the catch-all.
-        static readonly string[][] FixProblems = {
-            new[] { "guide:whats", "Not sure what's wrong" },
-            new[] { "guide:pc", "My PC is slow" },
-            new[] { "guide:drops", "My Wi-Fi keeps dropping" },
-            new[] { "guide:site", "A website or app won't open" },
-            new[] { "gamer", "My game is lagging" },
-            new[] { "guide:calls", "My calls keep freezing" },
-            new[] { "guide:slow", "The internet is slow" },
-            new[] { "tool:tidy", "I'm running out of storage" } };
         // the symptoms people notice: { where it goes, what they see, a few words more }
         static readonly string[][] Symptoms = {
-            new[] { "guide:whats", "I have no internet", "nothing opens - works even when you can't google it" },
-            new[] { "guide:slow", "My internet is slow", "pages take ages, videos buffer" },
-            new[] { "guide:whats", "Wi-Fi says \"No internet\"", "connected, but nothing works" },
-            new[] { "guide:drops", "Internet stops and starts", "works, then doesn't, then works" },
-            new[] { "guide:slow", "Videos keep buffering", "YouTube, Netflix stop and spin" },
-            new[] { "link", "Can't find my Wi-Fi", "the network isn't in the list" },
-            new[] { "guide:calls", "Calls are choppy", "Teams, Zoom, WhatsApp cut out" },
-            new[] { "guide:pc", "Computer feels slow", "everything takes a long time" },
-            new[] { "guide:pc", "An app freezes", "it stops responding" },
-            new[] { "guide:pc", "Fan is loud or it's hot", "something is working hard" },
-            new[] { "changes", "It was fine yesterday", "what changed since then?" },
-            new[] { "guide:site", "Only one website is broken", "everything else works" } };
+            new[] { "guide:whats", L.T("I have no internet"), "nothing opens - works even when you can't google it" },
+            new[] { "case:slow", L.T("My internet is slow"), "pages take ages" },
+            new[] { "case:drops", L.T("Internet stops and starts"), "works, then doesn't, then works" },
+            new[] { "case:buffer", L.T("Videos keep buffering"), "YouTube, Netflix stop and spin" },
+            new[] { "link", L.T("Can't find my Wi-Fi"), "the network isn't in the list" },
+            new[] { "case:site", L.T("Only one website is broken"), "everything else works" },
+            new[] { "case:calls", L.T("Calls are choppy"), L.T("Teams, Zoom, WhatsApp cut out") },
+            new[] { "case:game", L.T("My game lags"), "ping spikes, rubber-banding" },
+            new[] { "case:pc", L.T("Computer feels slow"), "everything takes a long time" },
+            new[] { "tool:tidy", L.T("Running out of space"), "the disk is full, Windows nags" },
+            new[] { "guide:pc", L.T("Fan is loud or it's hot"), "something is working hard" },
+            new[] { "changes", L.T("It was fine yesterday"), "what changed since then?" } };
         // words people type -> { where to go, "sounds like ...", what I'll check }. Offline: common words, not sentences.
         // Whole words only ("work" never matches "working"); a word of 6+ letters also matches what starts with it
         // ("disconnect" -> "disconnecting"). What's wrong (a symptom) beats where it happens ("at work", "work laptop"): the
@@ -138,18 +107,13 @@ namespace AdeeboMeter
             new[] { "storage|disk full|space|full|gigabytes", "tool:tidy", "you're running out of storage", "temp files, the Recycle Bin and what takes the space" },
             new[] { "website|websites|site|sites|page|pages|link|url|won't open|wont open|can't open|cant open|can't get to|cant get to|email|outlook|mail|error", "guide:site", "a website or app won't open", "the name, the route, the door, the lock and the answer" },
             new[] { "slow|slowly|loading|takes ages|speed|high ping|ping is high|latency", "guide:slow", "the internet is slow", "where the delay starts: your PC, Wi-Fi, router, provider or DNS" },
+            // bug-hunt ML-85: the words people type about the link itself
+            new[] { "dns|nameserver|name server|resolve|resolving", "guide:site", "names aren't turning into addresses (DNS)", "the DNS servers, how fast they answer and whether a site's name resolves" },
             new[] { "work laptop|office network|company network|at work|at the office", "guide:vpn", "it works at home but not on VPN or at work", "overlapping networks, proxy, the VPN and the port" },
             new[] { "no internet|offline|nothing works|nothing opens|nothing loads|not connected|can't connect|cannot connect|won't connect|doesn't work|does not work|not working|isn't working|stopped working|hotspot|printer", "guide:whats", "there's no internet", "every layer, from this PC to the internet" },
-            new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" } };
-        RoundBox fixBox; string fixHint = "", fixGo;
-        void EnsureFixBox()
-        {
-            if (fixBox != null) return;
-            fixBox = new RoundBox(Sc(400), Draw.fInput, "Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot");
-            fixBox.Box.AccessibleName = "Describe the problem"; fixBox.Box.MaxLength = 200;
-            fixBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; FixFind(); } };
-            overviewCanvas.Controls.Add(fixBox);
-        }
+            new[] { "yesterday|suddenly|since|changed|update", "changes", "something changed", "what changed on this PC and network since then" },
+            // last: only when nothing more specific was said ("Wi-Fi works but nothing loads" is a no-internet problem, not the link)
+            new[] { "wifi|wi fi|wireless|signal|router|modem|ethernet|cable|lan|network card|adapter", "link", "it's the link to your router", "your Wi-Fi or cable: signal, speed, channel and the neighbours" } };
         // the first rule whose word appears wins (most specific rules first); nothing found -> suggest checking everything
         internal static string[] FixMatch(string text)
         {
@@ -162,20 +126,9 @@ namespace AdeeboMeter
                     if (t.Contains(" " + wd + " ") || (wd.Length >= 6 && t.Contains(" " + wd))) return r;
             return null;
         }
-        void FixFind()
-        {
-            string q = fixBox == null ? "" : fixBox.Box.Text.Trim();
-            if (q.Length == 0) { fixHint = "Type what you notice, or press Find what's wrong."; fixGo = null; }
-            else
-            {
-                var r = FixMatch(q);
-                if (r == null) { fixHint = "I didn't recognise that - press here and I'll check everything, layer by layer."; fixGo = "guide:whats"; }
-                else { fixHint = "Sounds like " + r[2] + ". I'll check " + r[3] + ".   Start  >"; fixGo = r[1]; }
-            }
-            overviewCanvas.Invalidate();
-        }
         void FixGo(string go)
         {
+            if (go.StartsWith("case:", StringComparison.Ordinal)) { OpenCase(go.Substring(5), "home", "", null, null); return; }
             if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
             else if (go == "gamer" || go == "link" || go == "changes") { tab = go; ShowTab(); }
             else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
@@ -192,8 +145,79 @@ namespace AdeeboMeter
             }
             return weather;
         }
-        void PaintOverview(Graphics g)
+        // the first Home paint after a start, timed part by part and written to the log once (a real PC: 250-690 ms cold, 20-40 warm)
+        System.Diagnostics.Stopwatch ovLap; System.Text.StringBuilder ovLaps; bool ovTimed;
+        void OvLap(string part) { if (ovLaps == null) return; ovLaps.Append(part).Append(' ').Append(ovLap.ElapsedMilliseconds).Append(" · "); ovLap.Restart(); }
+        // Home's live part: the four tiles and the connection line (drawn by the page, and alone by its live spot)
+        void PaintOvNow(Graphics g, float ix, float ty, float iw, int cols, float tw, float th, float ny)
         {
+            double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
+            string kind, ssid, speed; bool vpn; int sig;
+            lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; speed = M.LinkSpeed; vpn = M.VpnUp; sig = M.WifiSignal; }
+            Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
+            {
+                // 23 Nov polish: one row of readings, This PC first - the same order as the chain (PC, router, internet, names) -
+                // no boxes inside the card, no badges; where each number comes from is in the line under them
+                var s0 = snap; int lvPc = s0.Path.Length > 0 && s0.Path[0] >= 0 && s0.Path[0] <= 2 ? s0.Path[0] : 3;
+                bool memHot = !double.IsNaN(s0.Mem) && s0.Mem >= 85 && (double.IsNaN(s0.Cpu) || s0.Mem - 85 >= s0.Cpu - 85);
+                string pcMain = memHot ? Draw.Fmt(s0.Mem, "0", "% ") + L.T("memory") : Draw.Fmt(s0.Cpu, "0", "% ") + Kit.Sent("CPU");
+                string pcSub = memHot ? Kit.Sent("CPU") + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
+                                      : L.T("memory") + " " + Draw.Fmt(s0.Mem, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%");
+                if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
+                var tiles = new[] {
+                    new[] { "This PC", pcMain, pcSub, lvPc.ToString(CultureInfo.InvariantCulture), "path.PC" },
+                    // hunters10 M-1 (R2-076): nothing measured yet (or the check is off) is grey "not yet" - red "no answer" only after pings came back empty
+                    new[] { "Your router", M.GwPing.Values(6).Length == 0 ? L.T("not yet") : ms(gw), "", LvMs(M.GwPing, gw, 15, 50).ToString(CultureInfo.InvariantCulture), "path.LAN" },
+                    new[] { "The internet", M.NetPing.Values(6).Length == 0 ? L.T("not yet") : ms(net), "", LvMs(M.NetPing, net, 80, 150).ToString(CultureInfo.InvariantCulture), "path.Internet" },
+                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), "", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
+                    new[] { "Your traffic", Draw.Pair(down, up), "", "3", "ov.TRAFFIC" } };
+                var rects = PaintReadings(g, overviewCanvas, tiles, ix, ty, iw, cols, th);
+                if (rects.Length > 0) { var pr = rects[0]; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
+                string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
+                netLine += ". " + L.T("Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.");
+                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fSmall, muted, new RectangleF(ix, ny + 4 * S, iw, 22 * S), nf);
+            }
+        }
+        // a row of readings (Home's card, the Time machine's minute): a dot and a label, the number big with its unit small beside
+        // it, an optional line under it; thin dividers between. tiles: { label, value, sub, level, hint key }. Returns each reading's box.
+        RectangleF[] PaintReadings(Graphics g, Control on, string[][] tiles, float ix, float ty, float iw, int cols, float th)
+        {
+            int n = tiles.Length, per = cols >= 4 ? n : 3; float cw = iw / per; var rects = new RectangleF[n];
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var div = new Pen(Theme.Line))
+            using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
+                for (int i = 0; i < n; i++)
+                {
+                    var t = tiles[i]; int rI = i / per, cI = i % per;
+                    var tr = new RectangleF(ix + cI * cw, ty + rI * (th + 8 * S), cw, th); rects[i] = tr;
+                    if (cI > 0) g.DrawLine(div, tr.X, tr.Y + 6 * S, tr.X, tr.Bottom - 6 * S);
+                    float px = tr.X + (cI > 0 ? 16 * S : 0);
+                    int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
+                    Draw.LvDot(g, lv, px, tr.Y + 10 * S, 8 * S, 8 * S);
+                    g.DrawString(L.T(t[0]), Draw.fSmall, sub, new RectangleF(px + 14 * S, tr.Y + 5 * S, cw - 34 * S, 20 * S), nf);
+                    // the number big, its unit small beside it (24 Nov mockup: "23 ms", "12 % CPU")
+                    string num = t[1], unit = ""; int last = -1; for (int c = num.Length - 1; c >= 0; c--) if (char.IsDigit(num[c])) { last = c; break; }
+                    if (last >= 0 && last < num.Length - 1) { unit = num.Substring(last + 1).Trim(); num = num.Substring(0, last + 1); }
+                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink))
+                    {
+                        var nfont = last >= 0 ? Draw.fCardNum : Draw.fBig; float nw = Math.Min(cw - 20 * S, g.MeasureString(num, nfont).Width);
+                        g.DrawString(num, nfont, vb, new RectangleF(px, tr.Y + 22 * S, cw - 20 * S, 36 * S), nf);
+                        if (unit != "") g.DrawString(unit, Draw.fSmall, sub, new RectangleF(px + nw - 2 * S, tr.Y + 22 * S + nfont.GetHeight(g) - Draw.fSmall.GetHeight(g) - 3 * S, Math.Max(10, cw - 20 * S - nw), 20 * S), nf);
+                    }
+                    if (t[2] != "") g.DrawString(t[2], Draw.fSmall, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf);
+                    if (t.Length > 4 && t[4] != "") Hint(on, tr, t[4]);
+                }
+            return rects;
+        }
+        void PaintOverview(Graphics g)
+
+        {
+            if (!ovTimed && overviewCanvas.Width > 300) { ovTimed = true; ovLap = System.Diagnostics.Stopwatch.StartNew(); ovLaps = new System.Text.StringBuilder(); try { PaintOverview1(g); } finally { OvLap("rest"); double up = -1; try { using (var me = System.Diagnostics.Process.GetCurrentProcess()) up = (DateTime.Now - me.StartTime).TotalMilliseconds; } catch (Exception) { } Program.Log("first Home paint (ms): " + ovLaps.ToString().TrimEnd(' ', '·') + "  ·  " + (up / 1000).ToString("0.0", CultureInfo.InvariantCulture) + " s after start"); ovLaps = null; } return; }
+            PaintOverview1(g);
+        }
+        void PaintOverview1(Graphics g)
+        {
+            symRect = null;   // set again where the tiles are drawn; a page without them gets no hover
             g.TranslateTransform(overviewCanvas.AutoScrollPosition.X, overviewCanvas.AutoScrollPosition.Y);
             float x = 18 * S, y = 16 * S, w = overviewCanvas.ClientSize.Width - 36 * S;
             Begin(overviewCanvas);
@@ -202,39 +226,74 @@ namespace AdeeboMeter
             {
                 // once, after updating to 1.1.5: the sidebar is the new default; "Prefer the Classic tabs?" - kept or switched,
                 // never shown again (PLAN 11.7d)
-                if (!Cfg.SetupDone) y = PaintSetup(g, x, y, w);
-                else if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
+                // first open: the setup card alone, nothing else competing with it (23 Nov)
+                if (!Cfg.SetupDone) { y = PaintSetup(g, x, y, w); SetNeed(overviewCanvas, new Size(0, (int)(y + 20 * S))); return; }
+                if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
                 {
-                    var cr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
-                    Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + 19 * S, 20 * S, 20 * S), Kit.Accent("home"));
-                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(L.T("New look: sections down the left, search on top, a live meter. Prefer the Classic tabs?"), Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + 19 * S, cr.Width - 300 * S, 22 * S));
-                    string tt = L.T("Keep this"), nt = L.T("Classic tabs"); var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
-                    var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + 13 * S, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
+                    // hunters10 (display ML-1): the buttons are measured first and the question wraps into the room left, the card growing to fit -
+                    // at the smallest window the second half of the sentence was cut off
+                    string tt = L.T("Keep this"), nt = L.T("Classic tabs"), q = L.T("New look: sections down the left, search on top, a live meter. Prefer the Classic tabs?");
+                    var ts = g.MeasureString(tt, Draw.fBtn); var ns = g.MeasureString(nt, Draw.fBtn);
+                    float bw = ns.Width + 16 * S + ts.Width + 20 * S + 14 * S + 30 * S, qw = Math.Max(120 * S, w - 48 * S - bw - 12 * S);
+                    float qh = g.MeasureString(q, Draw.fBodyB, (int)qw).Height, chh = Math.Max(58 * S, qh + 26 * S);
+                    var cr = new RectangleF(x, y, w, chh); Theme.Fill(g, cr, 12 * S, Kit.Soft("home"));
+                    Kit.Icon(g, "layout", new RectangleF(cr.X + 16 * S, cr.Y + (chh - 20 * S) / 2, 20 * S, 20 * S), Kit.Accent("home"));
+                    using (var hb = new SolidBrush(Kit.Ink("home"))) g.DrawString(q, Draw.fBodyB, hb, new RectangleF(cr.X + 48 * S, cr.Y + (chh - qh) / 2, qw, qh + 2));
+                    var nr = new RectangleF(cr.Right - ns.Width - 30 * S, cr.Y + (chh - 32 * S) / 2, ns.Width + 16 * S, 32 * S); var tr = new RectangleF(nr.X - ts.Width - 30 * S, nr.Y, ts.Width + 20 * S, 32 * S);
                     Theme.Fill(g, tr, 10 * S, Kit.Accent("home")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tt, Draw.fBtn, wb, tr.X + 10 * S, tr.Y + (32 * S - ts.Height) / 2);
                     using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(nt, Draw.fBtn, mb, nr.X + 8 * S, nr.Y + (32 * S - ns.Height) / 2);
                     Act(overviewCanvas, tr, delegate { Cfg.SidebarTried = true; Cfg.Save(); overviewCanvas.Invalidate(); });
                     Act(overviewCanvas, nr, delegate { SetLayout("classic"); });
                     y += cr.Height + 14 * S;
                 }
-                y = PaintFrontDoor(g, x, y, w);   // the front door: "What's going on?" (FullView.Case.cs)
-                y = PaintCheckupCard(g, x, y, w);
-                // the verdict
-                float hh = Draw.Measure(s.Headline, Draw.fName, (int)(w - 40 * S)).Height;
-                string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
-                float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)(w - 40 * S)).Height + 4 * S : 0;
-                var vr = new RectangleF(x, y, w, hh + 30 * S + wh);
-                Theme.Fill(g, vr, 14 * S, Theme.LvSoft(s.Level));
-                using (var hb = new SolidBrush(s.Level == 0 || s.Level == 3 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, Draw.fName, hb, new RectangleF(x + 20 * S, y + 15 * S, w - 40 * S, hh + 6));
-                if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh)); Hint(overviewCanvas, new RectangleF(x + 20 * S, y + 17 * S + hh, w - 40 * S, wh), "ov.WEATHER"); }
-                y += vr.Height + 18 * S;
+                // the verdict, and right under it the four numbers (Adeeb, 22 Nov: the path strip and a separate "Right now" row said the
+                // same thing twice - one card now: the headline, the weather sentence, the four live tiles, the connection line)
+                double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
+                string kind, ssid, adapter, ip, gate, dnsSrv, speed, vpnName; bool vpn; int sig, mtu;
+                lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; adapter = M.Adapter; ip = M.LocalIp; gate = M.Gateway; dnsSrv = M.DnsServer; speed = M.LinkSpeed; vpn = M.VpnUp; vpnName = M.VpnName; sig = M.WifiSignal; mtu = M.PrimaryMtu; }
+                Func<double, string> ms = v => double.IsNaN(v) ? L.T("no answer") : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
+                {
+                    // 24 Nov (the approved mockup): the gauge on the left, the answer in big type beside it
+                    float gaugeW = w > 760 * S ? 150 * S : 0, ix = x + 20 * S + gaugeW, iw = w - 40 * S - gaugeW;
+                    // 23 Nov polish: the same card in every state - only the headline and the buttons change. A problem hidden
+                    // with Hide says what it hid and carries a Show again button; the reading still shows it in colour.
+                    bool hid = ProblemHidden(s); bool problem = (s.Level == 1 || s.Level == 2) && !hid;
+                    double hv; string hk = hid ? ProblemKind(s, out hv) : null, kn = hid ? KindName(hk) : "";
+                    string head = !hid ? s.Headline : string.Format(L.T("{0} hidden. Everything else looks fine."), kn.Substring(0, 1).ToUpper(CultureInfo.CurrentCulture) + kn.Substring(1));
+                    float aw = problem || hid ? PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, true) : 0;
+                    float hw0 = Math.Max(120 * S, iw - aw - (aw > 0 ? 16 * S : 0));
+                    float hh = Draw.Measure(head, Draw.fBig, (int)hw0).Height;
+                    string wx = WeatherLine();   // the internet weather, one sentence - worked out off the paint, at most every 30 s
+                    float wh = wx != "" ? Draw.Measure(wx, Draw.fBody, (int)iw).Height + 4 * S : 0;
+                    int cols = iw > 700 * S ? 5 : 3; float tw = iw / cols, th = 80 * S;
+                    float tilesH = (cols >= 5 ? 1 : 2) * (th + 8 * S) - 8 * S;
+                    var vr = new RectangleF(x, y, w, 15 * S + hh + 6 * S + wh + 10 * S + tilesH + 12 * S + 22 * S + 12 * S);
+                    Kit.Box(g, vr, 14 * S);
+                    if (gaugeW > 0) Theme.Gauge(g, new RectangleF(x + 28 * S, y + 22 * S, gaugeW - 40 * S, 64 * S), problem ? s.Level : 0);
+                    if (problem || hid) PaintVerdictActs(g, x + w - 20 * S, y + 14 * S, false);
+                    using (var hb = new SolidBrush(Theme.Ink)) g.DrawString(head, Draw.fBig, hb, new RectangleF(ix, y + 15 * S, hw0, hh + 6));   // ink: the gauge and the reading carry the colour
+                    if (wx != "") { g.DrawString(wx, Draw.fBody, sub, new RectangleF(ix, y + 21 * S + hh, hw0, wh)); Hint(overviewCanvas, new RectangleF(ix, y + 21 * S + hh, hw0, wh), "ov.WEATHER"); }
+                    using (var dl = new Pen(Theme.Line2)) g.DrawLine(dl, ix, y + 15 * S + hh + 6 * S + wh + 4 * S, ix + iw, y + 15 * S + hh + 6 * S + wh + 4 * S);
+                    float ty = y + 15 * S + hh + 6 * S + wh + 10 * S;
+                    float ny = ty + tilesH + 12 * S;
+                    PaintOvNow(g, ix, ty, iw, cols, tw, th, ny);
+                    // the four live numbers and the Wi-Fi line: redrawn alone (OverviewTick), straight from their own painter - the rest of
+                    // Home is not walked again for them (motion review, 23 Nov: a narrow redraw still ran the whole page's drawing, ~100-300 ms on a slow PC)
+                    Color nowBg = Theme.Card; float nX = ix, nY = ty, nW = iw, nTw = tw, nTh = th, nNy = ny; int nCols = cols;
+                    LiveSpot(overviewCanvas, "ov.now", new RectangleF(ix, ty, iw, ny + 22 * S - ty), nowBg, gg => PaintOvNow(gg, nX, nY, nW, nCols, nTw, nTh, nNy));
+                    y += vr.Height + 18 * S; OvLap("verdict");
+                }
+                // then the do-everything button, then the front door (Adeeb, 22 Nov: verdict on top, Full checkup, then "What's going on?")
+                y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
+                y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the problem tiles (FullView.Case.cs)
 
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)
                 if (Cfg.Mode == "")
                 {
-                    g.DrawString(L.T("HOW WOULD YOU LIKE ADEEBOMETER?"), Draw.fTiny, muted, x, y); y += 22 * S;
+                    g.DrawString(Kit.Sent("HOW WOULD YOU LIKE ADEEBOMETER?"), Draw.fTiny, muted, x, y); y += 22 * S;
                     var opts = new[] {
-                        new[] { "simple", "Simple", "Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone." },
-                        new[] { "pro", "Pro", "All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn." } };
+                        new[] { "simple", "Simple", L.T("Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.") },
+                        new[] { "pro", "Pro", L.T("All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.") } };
                     float ow = (w - 12 * S) / 2, oh = 84 * S;
                     for (int i = 0; i < 2; i++)
                     {
@@ -248,51 +307,7 @@ namespace AdeeboMeter
                     g.DrawString(L.T("You can switch any time in Settings › General."), Draw.fSmall, muted, x, y); y += 30 * S;
                 }
 
-                // the four numbers
-                g.DrawString(L.T("RIGHT NOW"), Draw.fTiny, muted, x, y); y += 22 * S;
-                double gw = M.GwPing.Avg(6), net = M.NetPing.Avg(6), down = M.Down.Last, up = M.Up.Last, dns = M.Dns.Avg(6);
-                string kind, ssid, adapter, ip, gate, dnsSrv, speed, vpnName; bool vpn; int sig, mtu;
-                lock (M.L) { kind = M.AdapterKind; ssid = M.Ssid; adapter = M.Adapter; ip = M.LocalIp; gate = M.Gateway; dnsSrv = M.DnsServer; speed = M.LinkSpeed; vpn = M.VpnUp; vpnName = M.VpnName; sig = M.WifiSignal; mtu = M.PrimaryMtu; }
-                Func<double, string> ms = v => double.IsNaN(v) ? "no answer" : v.ToString("0", CultureInfo.CurrentCulture) + " ms";
-                var tiles = new[] {
-                    new[] { "Your router", ms(gw), "m", double.IsNaN(gw) ? "2" : gw > 50 ? "2" : gw > 15 ? "1" : "0", "path.LAN" },
-                    new[] { "The internet", ms(net), "m", double.IsNaN(net) ? "2" : net > 150 ? "2" : net > 80 ? "1" : "0", "path.Internet" },
-                    new[] { "Name lookups", double.IsNaN(dns) ? "not yet" : ms(dns), double.IsNaN(dns) ? "u" : "m", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
-                    new[] { "Your traffic", (double.IsNaN(down) ? "-" : down.ToString("0.0", CultureInfo.CurrentCulture)) + " / " + (double.IsNaN(up) ? "-" : up.ToString("0.0", CultureInfo.CurrentCulture)) + " Mb/s", "w", "3", "ov.TRAFFIC" } };
-                int cols = w > 760 * S ? 4 : 2; float tw = (w - (cols - 1) * 12 * S) / cols, th = 92 * S;
-                for (int i = 0; i < tiles.Length; i++)
-                {
-                    var t = tiles[i]; var tr = new RectangleF(x + (i % cols) * (tw + 12 * S), y + (i / cols) * (th + 12 * S), tw, th);
-                    Kit.Box(g, tr);
-                    int lv = int.Parse(t[3], CultureInfo.InvariantCulture);
-                    Draw.LvDot(g, lv, tr.X + 14 * S, tr.Y + 17 * S, 9 * S, 9 * S);
-                    g.DrawString(t[0].ToUpperInvariant(), Draw.fTiny, muted, tr.X + 30 * S, tr.Y + 14 * S);
-                    using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(t[1], Draw.fName, vb, tr.X + 14 * S, tr.Y + 34 * S);
-                    Evidence.Pill(g, t[2], tr.X + 14 * S, tr.Bottom - 26 * S, DateTime.Now);
-                    Hint(overviewCanvas, tr, t[4]);
-                }
-                y += ((tiles.Length + cols - 1) / cols) * (th + 12 * S) + 8 * S;
-                string netLine = (kind == "Wi-Fi" ? "On Wi-Fi" + (ssid != "" ? " \"" + ssid + "\"" : " (name hidden - location is off)") + (sig >= 0 ? " · signal " + sig + "%" : "") : "On " + kind) + (speed != "" ? " · link " + speed : "") + (vpn ? " · VPN on" : "");
-                g.DrawString(netLine, Draw.fBody, sub, x, y); y += 24 * S;
-                // speed: only when you press the button (it talks to Cloudflare's speed server; the line says so)
-                {
-                    var last = SpeedTest.Last; bool busy = SpeedTest.Busy;
-                    string bt = L.T(busy ? "Stop" : "Test my speed"); var bsz2 = g.MeasureString(bt, Draw.fBodyB); var sb2 = new RectangleF(x, y + 2 * S, bsz2.Width + 28 * S, 32 * S);
-                    Theme.Fill(g, sb2, 16 * S, busy ? Theme.Soft : Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(bt, Draw.fBodyB, tb, sb2.X + 14 * S, sb2.Y + (32 * S - bsz2.Height) / 2);
-                    Act(overviewCanvas, sb2, delegate { if (SpeedTest.Busy) speedRun.Stop = true; else StartSpeed(); });
-                    Hint(overviewCanvas, sb2, "tb.speedtest");
-                    // which server - shown, and a click to change it
-                    var cur = SpeedTest.Pick(Cfg.SpeedServer) ?? SpeedTest.Pick("auto");
-                    string ct = speedFinding ? "Finding the closest..." : "Server: " + (cur.Id == "cloudflare" ? "Cloudflare, nearest" : cur.Label) + "  ·  change"; var csz = g.MeasureString(ct, Draw.fBody);
-                    var cr = new RectangleF(sb2.Right + 8 * S, sb2.Y, csz.Width + 24 * S, 32 * S);
-                    Kit.Box(g, cr, cr.Height / 2); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(ct, Draw.fBody, tb, cr.X + 12 * S, cr.Y + (32 * S - csz.Height) / 2);
-                    Act(overviewCanvas, cr, delegate { if (!SpeedTest.Busy) SpeedMenu(new Point((int)cr.X, (int)(cr.Bottom + overviewCanvas.AutoScrollPosition.Y))); });
-                    sb2 = new RectangleF(sb2.X, sb2.Y, cr.Right - sb2.X, sb2.Height);
-                    string st = busy ? speedRun.Status : speedErr != "" ? "Speed test: " + speedErr : speedNote != "" ? speedNote : last != null ? last.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + (last.Where != "" && last.Where.StartsWith("data centre", StringComparison.Ordinal) ? last.Where.Substring(12) + " · " : "") + SpeedTest.Mbps(last.Down) + " down" + (last.NoUpload ? "" : " / " + SpeedTest.Mbps(last.Up) + " up") + " Mb/s · ping " + (double.IsNaN(last.Idle) ? "-" : Math.Round(last.Idle).ToString(CultureInfo.CurrentCulture) + " ms") + (last.Grade != "" ? " · when busy " + last.Grade : "")
-                        : "About 20 seconds, up to " + (SpeedTest.MaxDownMB + SpeedTest.MaxUpMB) + " MB. Never runs by itself.";
-                    using (var stb = new SolidBrush(speedErr != "" && !busy ? Theme.LvText(1) : Theme.Sub)) g.DrawString(st, Draw.fBody, stb, new RectangleF(sb2.Right + 12 * S, sb2.Y + 6 * S, w - sb2.Width - 12 * S, 24 * S));
-                    y += 44 * S;
-                }
+                y = PaintSpeedCard(g, x, y, w); OvLap("speed");   // the speed test: a gauge, the last result and the server (FullView.Speed.cs)
                 string normal = Baseline.Normal(Brain.NetKey);
                 if (normal != "") { g.DrawString(normal, Draw.fSmall, muted, new RectangleF(x, y, w, 36 * S)); y += Draw.Measure(normal, Draw.fSmall, (int)w).Height + 8 * S; }
                 if (Cfg.Details)
@@ -303,72 +318,9 @@ namespace AdeeboMeter
                 }
                 y += 10 * S;
 
-                // Fix a problem. First "Not sure what's wrong?" - big, in everyday words: one button that checks everything, a box to
-                // describe it in your own words, and the symptoms people actually notice. Then the named problems, smaller.
-                {
-                    float cx0 = x + 20 * S, cw = w - 40 * S, cy = y + 20 * S;
-                    var card = new RectangleF(x, y, w, 0);
-                    int sc = Math.Max(1, Math.Min(3, (int)(cw / (240 * S)))); int sr = (Symptoms.Length + sc - 1) / sc; float sbh = 58 * S, sbw = (cw - (sc - 1) * 10 * S) / sc;
-                    card.Height = 20 * S + 62 * S + 56 * S + (fixHint != "" ? 40 * S : 0) + 26 * S + sr * (sbh + 10 * S) + 10 * S;
-                    Theme.Fill(g, card, 16 * S, Theme.Card); Kit.Frame(g, card);
-                    // the big button, right
-                    string big = L.T("Find what's wrong");   /* the quick network walk; "Full checkup" at the top checks everything */ var bsz = g.MeasureString(big, Draw.fName); var bbr = new RectangleF(x + w - 20 * S - bsz.Width - 40 * S, cy + 4 * S, bsz.Width + 40 * S, 50 * S);
-                    Theme.Fill(g, bbr, 12 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(big, Draw.fName, wb, bbr.X + 20 * S, bbr.Y + (bbr.Height - bsz.Height) / 2);
-                    Act(overviewCanvas, bbr, delegate { GoGuide("whats"); });
-                    float tw0 = bbr.X - cx0 - 16 * S;
-                    g.DrawString(L.T("Not sure what's wrong?"), Draw.fTitle, ink, new RectangleF(cx0, cy, tw0, 30 * S));
-                    g.DrawString(L.T("That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it."), Draw.fBody, muted, new RectangleF(cx0, cy + 32 * S, tw0, 40 * S));
-                    cy += 62 * S;
-                    // the describe-it box is a real text box, kept in place under the heading
-                    EnsureFixBox();
-                    var want = new Point((int)cx0, (int)(cy + overviewCanvas.AutoScrollPosition.Y)); int wantW = (int)(cw - 120 * S);
-                    if (fixBox.Location != want) fixBox.Location = want; if (fixBox.Width != wantW) fixBox.Width = wantW;
-                    var fb = new RectangleF(cx0 + wantW + 10 * S, cy, 110 * S, 40 * S);
-                    Theme.Fill(g, fb, 10 * S, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Find it"), Draw.fBodyB, tb, fb, c);
-                    Act(overviewCanvas, fb, delegate { FixFind(); });
-                    cy += 56 * S;
-                    if (fixHint != "")
-                    {
-                        var hr = new RectangleF(cx0, cy - 6 * S, cw, 34 * S); Theme.Fill(g, hr, 8 * S, Theme.BlueSoft);
-                        using (var tb = new SolidBrush(Theme.Ink)) using (var nf = new StringFormat { LineAlignment = StringAlignment.Center, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(fixHint, Draw.fBody, tb, new RectangleF(hr.X + 12 * S, hr.Y, hr.Width - 24 * S, hr.Height), nf);
-                        if (fixGo != null) { string go = fixGo; Act(overviewCanvas, hr, delegate { FixGo(go); }); }
-                        cy += 40 * S;
-                    }
-                    g.DrawString(L.T("OR TAP WHAT YOU SEE"), Draw.fTiny, muted, cx0, cy); cy += 22 * S;
-                    for (int i = 0; i < Symptoms.Length; i++)
-                    {
-                        var br = new RectangleF(cx0 + (i % sc) * (sbw + 10 * S), cy + (i / sc) * (sbh + 10 * S), sbw, sbh);
-                        Theme.Fill(g, br, 16 * S, Theme.Card); Kit.Frame(g, br);
-                        g.DrawString(L.T(Symptoms[i][1]), Draw.fBodyB, ink, new RectangleF(br.X + 14 * S, br.Y + 9 * S, br.Width - 20 * S, 20 * S));
-                        g.DrawString(L.T(Symptoms[i][2]), Draw.fSmall, muted, new RectangleF(br.X + 14 * S, br.Y + 31 * S, br.Width - 20 * S, 18 * S));
-                        string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
-                    }
-                    y = card.Bottom + 14 * S;
-
-                    // I know what it is
-                    g.DrawString(L.T("I KNOW WHAT IT IS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                    float kx = x; var probs = FixProblems;
-                    for (int i = 1; i < probs.Length; i++)
-                    {
-                        var ks = g.MeasureString(L.T(probs[i][1]), Draw.fBody); var kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S);
-                        if (kr.Right > x + w && kx > x) { kx = x; y += 42 * S; kr = new RectangleF(kx, y, ks.Width + 26 * S, 34 * S); }
-                        Kit.Box(g, kr, kr.Height / 2); g.DrawString(L.T(probs[i][1]), Draw.fBody, ink, kr.X + 13 * S, kr.Y + (34 * S - ks.Height) / 2);
-                        string go = probs[i][0]; Act(overviewCanvas, kr, delegate { FixGo(go); });
-                        if (go.StartsWith("guide:", StringComparison.Ordinal)) Hint(overviewCanvas, kr, "guide." + go.Substring(6));
-                        kx += kr.Width + 8 * S;
-                    }
-                    using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
-                    {
-                        string all = "See all problems  >"; var asz = g.MeasureString(all, Draw.fBodyB);
-                        if (kx + asz.Width > x + w) { kx = x; y += 42 * S; }
-                        var ar = new RectangleF(kx + 6 * S, y + (34 * S - asz.Height) / 2, asz.Width, asz.Height); g.DrawString(all, Draw.fBodyB, bl, ar.X, ar.Y);
-                        Act(overviewCanvas, ar, delegate { GoGuide(null); });
-                    }
-                    y += 52 * S;
-                }
 
                 // a Windows update that lines up with a lasting slowdown (only when strong and still there)
-                string ub = UpdateBreak.Strong;
+                string ub = UpdateBreak.Strong; OvLap("fix");
                 if (ub != "")
                 {
                     var ur = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, ur, 10 * S, Theme.LvSoft(1));
@@ -376,50 +328,50 @@ namespace AdeeboMeter
                     Act(overviewCanvas, ur, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("winupdate"); }); y += 44 * S;
                 }
                 // needs attention
-                var att = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).Take(4).ToList();
-                g.DrawString(L.T("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                if (att.Count == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
+                var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
+                g.DrawString(Kit.Sent("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
+                int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");   // a board host down 3 checks in a row, a certificate inside 30 days
+                if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
                 using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                     foreach (var e in att)
                     {
-                        g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fMonoS, muted, x, y + 4 * S);
+                        g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fSmall, muted, x, y + 4 * S);
                         Draw.LvDot(g, e.Lv, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
-                        g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S, 20 * S), nowrap);
-                        var er = new RectangleF(x, y, w, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
+                        float tmw = Cfg.History ? 150 * S : 0;   // "See 14:05 ›" on every event: the Time machine at that minute
+                        g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S - tmw, 20 * S), nowrap);
+                        if (Cfg.History)
+                        {
+                            var ev = e; string tl = L.T("See") + " " + e.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
+                            var tlr = new RectangleF(x + w - tsz.Width, y + 4 * S, tsz.Width, 20 * S);
+                            using (var bl = new SolidBrush(Theme.BlueText)) g.DrawString(tl, Draw.fSmall, bl, tlr.X, tlr.Y);
+                            Act(overviewCanvas, tlr, delegate { OpenTimeAt(ev.T, L.T("Home") + " - " + ev.Text); });
+                        }
+                        var er = new RectangleF(x, y, w - tmw, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
                         y += 26 * S; g.DrawLine(line, x, y, x + w, y);
                     }
+                if (attAll.Count > att.Count)   // bug-hunt L-169: the rest are counted, one click away
+                {
+                    string more = L.T("and") + " " + (attAll.Count - att.Count) + " " + L.T("more in What changed");
+                    using (var lb = new SolidBrush(Theme.BlueText)) g.DrawString(more, Draw.fSmall, lb, x, y + 6 * S);
+                    var mr2 = new RectangleF(x, y + 2 * S, g.MeasureString(more, Draw.fSmall).Width, 22 * S); Act(overviewCanvas, mr2, delegate { tab = "changes"; ShowTab(); }); y += 26 * S;
+                }
                 y += 14 * S;
 
                 // your week, everything together (only once there's a record)
-                y = PaintWeek(g, x, y, w);
+                y = PaintWeek(g, x, y, w); OvLap("week");
 
                 // today
                 string today = "Used today on this network: " + Usage.Mb(Usage.Today(Brain.NetKey));
                 string lastCall = ""; lock (Calls.Summaries) if (Calls.Summaries.Count > 0) lastCall = "Last call (" + Calls.Summaries[0][0] + "): " + Calls.Summaries[0][1];
-                g.DrawString(L.T("TODAY"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("TODAY"), Draw.fTiny, muted, x, y); y += 22 * S;
                 g.DrawString(today, Draw.fBody, sub, x, y); y += 24 * S;
                 if (lastCall != "") { float lh = Draw.Measure(lastCall, Draw.fBody, (int)w).Height; g.DrawString(lastCall, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S; }
                 y += 14 * S;
 
-                // where things live
-                g.DrawString(L.T("WHERE EVERYTHING LIVES"), Draw.fTiny, muted, x, y); y += 24 * S;
-                var map = new[] {
-                    new[] { "toolbox", "Toolbox", "Every tool by question, the calculators and search." },
-                    new[] { "dest", "Check a destination", "Name, route, door, lock and answer for any site or app." },
-                    new[] { "story", "Network story", "Your traffic layer by layer, routing, Teams & Office, real packets." },
-                    new[] { "time", "Time machine", "Replay any minute, what changed, the week, usage, calls." },
-                    new[] { "learn", "Learn", "Protocols, Teams and Office, inside Windows, every term." } };
-                int mc = w > 900 * S ? 5 : w > 560 * S ? 3 : 2; float mw = (w - (mc - 1) * 10 * S) / mc, mh = 92 * S;
-                for (int i = 0; i < map.Length; i++)
-                {
-                    var m = map[i]; var mr = new RectangleF(x + (i % mc) * (mw + 10 * S), y + (i / mc) * (mh + 10 * S), mw, mh);
-                    Theme.Fill(g, mr, 12 * S, Theme.Soft);
-                    g.DrawString(m[1], Draw.fBodyB, ink, mr.X + 14 * S, mr.Y + 12 * S);
-                    g.DrawString(m[2], Draw.fSmall, sub, new RectangleF(mr.X + 14 * S, mr.Y + 34 * S, mr.Width - 24 * S, mr.Height - 38 * S));
-                    string id = m[0]; Act(overviewCanvas, mr, delegate { OpenNav(id); });
-                }
-                y += ((map.Length + mc - 1) / mc) * (mh + 10 * S) + 10 * S;
-                g.DrawString(L.T("Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times."), Draw.fSmall, muted, x, y); y += 30 * S;
+                // where things live: big-icon tiles with a live line (FullView.Gateway.cs)
+                y = PaintOutlookBody(g, overviewCanvas, x, y, w, false) + 10 * S; OvLap("outlook");   // the Outlook lives on Home now (22 Nov)
+                y = PaintGateway(g, x, y, w); OvLap("gateway");
+                g.DrawString(L.T("Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General."), Draw.fSmall, muted, x, y); y += 30 * S;
             }
             var need = new Size(0, (int)(y + 20 * S));
             SetNeed(overviewCanvas, need);

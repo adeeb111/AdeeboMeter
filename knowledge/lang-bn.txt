@@ -1,7 +1,7 @@
 # AdeeboMeter — Bengali Windows catalog. English TAB Bengali.
 # Product names, technical identifiers, units and keys intentionally retain their spelling.
+#coverage 100
 + Add server	+ সার্ভার যোগ করুন
-+ Add your own game	+ নিজের গেম যোগ করুন
 1 day	1 দিন
 10 GB	10 GB
 100 GB	100 GB
@@ -19,14 +19,13 @@ A website or app won't open	ওয়েবসাইট বা অ্যাপ �
 About	সম্পর্কে
 AdeeboMeter itself	AdeeboMeter সম্পর্কে
 Alerts	সতর্কতা
-An app freezes	অ্যাপ আটকে যায়
 App and connection watch	অ্যাপ ও সংযোগ নজরদারি
 Auto	স্বয়ংক্রিয়
 BGP and who owns the network	BGP ও নেটওয়ার্কের মালিক
 BYTES PER APP (SINCE START)	প্রতি অ্যাপের ডেটা ব্যবহার (চালুর পর থেকে)
 Back to corner	কোণায় ফিরে যান
 Background checks	ব্যাকগ্রাউন্ড চেক
-Balanced	ব্যালান্সড
+Balanced	Balanced
 Bigger	আরও বড়
 Bound / listening	বাঁধা / সংযোগের অপেক্ষায়
 CALL QUALITY (TEAMS AND OTHER CALLS)	কলের মান (TEAMS ও অন্য কল)
@@ -45,7 +44,7 @@ Companion	বন্ধু
 Computer feels slow	কম্পিউটার ধীর লাগছে
 Connections	কানেকশনস
 Corner widget size	কোণার উইজেটের সাইজ
-Dark	ডার্ক
+Dark	Dark
 Delete all saved history now	সব সংরক্ষিত ইতিহাস মুছুন
 Details	বিস্তারিত
 EXPERT INFO (WIRESHARK)	বিশেষজ্ঞের তথ্য (WIRESHARK)
@@ -56,35 +55,27 @@ Everyday	দৈনন্দিন
 Export settings...	সেটিংস এক্সপোর্ট করুন...
 Export...	এক্সপোর্ট করুন...
 FINDING	যা পাওয়া গেছে
-FOLLOW	অনুসরণ করুন
 Fan is loud or it's hot	ফ্যান জোরে চলছে বা ডিভাইস গরম
-Find it	খুঁজুন
 Finish walk test	হেঁটে পরীক্ষা শেষ করুন
 Follow	অনুসরণ করুন
 Follow Windows	Windows অনুযায়ী
 Follow Windows switches light and dark with your Windows setting.	Windows-এর সেটিং অনুযায়ী হালকা ও গাঢ় থিম বদলাবে।
 GAME	গেম
 Game ping in the background	ব্যাকগ্রাউন্ড গেম পিং
-Gamer	গেমার
+Gamer	Gamer
 Gamer Zone	গেমিং জোন
 General	সাধারণ
 Got it	বুঝেছি
 HOW LONG EACH STEP TAKES	কোন ধাপে কত সময় লাগে
 HOW WOULD YOU LIKE ADEEBOMETER?	ADEEBOMETER কীভাবে ব্যবহার করতে চান?
-Health	স্বাস্থ্য
 History	ইতিহাস
 History & data	ইতিহাস ও ডেটা
-Home networks only	শুধু বাড়ির নেটওয়ার্কে
 Hover wait on the folded chip	ভাঁজ করা চিপের ওপর কার্সর রাখার সময়
 How long a row's Sniff button captures before opening Wireshark.	Wireshark খোলার আগে সারির Sniff বোতাম কতক্ষণ ডেটা ধরবে।
-How long to rest the mouse on the folded chip before the card opens.	ভাঁজ করা ছোট আইকনের ওপর কতক্ষণ মাউস রাখলে কার্ড খুলবে।
 How strongly the corner widget shows when you're not hovering it.	মাউস সরিয়ে রাখলে কোণের উইজেট কতটা স্পষ্ট দেখাবে।
 How visible	দৃশ্যমানতা
-I KNOW WHAT IT IS	সমস্যাটা জানি
 I have no internet	ইন্টারনেট চলছে না
 I'm running out of storage	স্টোরেজ ফুরিয়ে আসছে
-IS IT ME OR THE NETWORK?	সমস্যা আমার ডিভাইসে, নাকি নেটওয়ার্কে?
-IS IT ME OR THE NETWORK?   ·   CLICK A DOT FOR DETAILS	সমস্যা আমার ডিভাইসে, না নেটওয়ার্কে? · বিস্তারিত দেখতে বিন্দুতে ক্লিক করুন
 Import settings...	সেটিংস ইম্পোর্ট করুন...
 Import...	ইম্পোর্ট করুন...
 Inside Windows	Windows-এর ভেতরে
@@ -92,14 +83,13 @@ Internet and DNS check	ইন্টারনেট ও DNS পরীক্ষা
 Internet stops and starts	ইন্টারনেট বারবার বন্ধ হচ্ছে, আবার চলছে
 Investigate	সমস্যা খুঁজুন
 Investigate a problem	সমস্যা খুঁজে দেখুন
-Is it me or the network? One glance tells you.	সমস্যা ডিভাইসে, না নেটওয়ার্কে? এক নজরেই জানুন।
 It was fine yesterday	গতকালও ঠিক ছিল
 Keep game history for	গেমের ইতিহাস রাখা হবে
 Keep history for	ইতিহাস রাখা হবে
 Lag graph for streaming	স্ট্রিমিংয়ের ল্যাগ গ্রাফ
 Language	ভাষা
 Learn	শিখুন
-Light	লাইট
+Light	Light
 Live	লাইভ
 Live capture	লাইভ ক্যাপচার
 Live capture stops after	লাইভ ক্যাপচার চলবে
@@ -120,8 +110,6 @@ Names for IP addresses	IP ঠিকানার নাম
 Network story	নেটওয়ার্কের গল্প
 Never	কখনো নয়
 Not sure what's wrong	কী সমস্যা বুঝতে পারছি না
-Not sure what's wrong?	সমস্যাটা কী বুঝতে পারছেন না?
-OR TAP WHAT YOU SEE	অথবা যা দেখছেন, সেটি বেছে নিন
 Off	বন্ধ
 On	চালু
 Online lookups on	অনলাইন অনুসন্ধান চালু
@@ -171,7 +159,6 @@ Start with Windows	Windows-এর সঙ্গে চালু করুন
 Stop monitoring	নজর রাখা বন্ধ করুন
 Stop session	সেশন থামান
 Story	গল্প
-Support AdeeboMeter  >	AdeeboMeter-কে সহায়তা করুন  >
 Switch them off by themselves after	এই সময় পর নিজে থেকে বন্ধ হবে
 TCP / IP HEALTH	TCP / IP-এর অবস্থা
 TERMS USED IN ADEEBOMETER	ADEEBOMETER-এ ব্যবহৃত পরিভাষা
@@ -181,10 +168,8 @@ TOP BY CPU	CPU সবচেয়ে বেশি ব্যবহার কর�
 TOP BY MEMORY	মেমরি সবচেয়ে বেশি ব্যবহার করছে
 Teams call detection	Teams কল শনাক্ত করা
 Teams, Zoom, WhatsApp cut out	Teams, Zoom, WhatsApp-এ কল কেটে যায়
-Tell me when a new device joins	নতুন ডিভাইস যুক্ত হলে জানান
 Test these now	এগুলো এখন পরীক্ষা করুন
 Test under load...	ব্যস্ত সংযোগে পরীক্ষা করুন...
-That's fine. Tell me what you notice, or tap the closest one. All of this works offline - even when you can't google it.	ঠিক আছে। কী লক্ষ করছেন বলুন, অথবা কাছাকাছি সমস্যাটি বাছুন। সবকিছু অফলাইনেও কাজ করে—যখন গুগলেও খুঁজতে পারছেন না।
 The default - every check close. Router every 2 s, internet every 15 s: notices trouble within seconds.	ডিফল্ট—ঘন ঘন পরীক্ষা। রাউটার প্রতি 2 s, ইন্টারনেট প্রতি 15 s: কয়েক সেকেন্ডেই সমস্যা ধরে।
 The internet is slow	ইন্টারনেট ধীর
 Theme	থিম
@@ -197,14 +182,11 @@ Voice	কথার ধরন
 WALK TEST  ·  WHICH ROOMS ARE GOOD, WHICH AREN'T	হেঁটে পরীক্ষা · কোন ঘরে সংযোগ ভালো, কোন ঘরে নয়
 WHAT CHANGED 15 MINUTES EITHER SIDE	আগের ও পরের 15 মিনিটে কী বদলেছে
 WHAT I OBSERVED	যা লক্ষ করেছি
-WHAT'S WRONG?	কী সমস্যা?
-WHERE EVERYTHING LIVES	কোন জিনিস কোথায় আছে
 Watch and suggest	নজর রাখুন ও পরামর্শ দিন
 Watch my first pinned destination all day	প্রথম পিন করা গন্তব্যটি সারা দিন দেখুন
 What changed	কী বদলেছে
 What's running	কী চলছে
 Wi-Fi	Wi-Fi
-Wi-Fi says "No internet"	Wi-Fi-এ "No internet" দেখায়
 Wi-Fi vs cable...	Wi-Fi আর কেবল তুলনা করুন...
 Wi-Fi watch	Wi-Fi নজরদারি
 Widget	উইজেট
@@ -215,22 +197,16 @@ You can switch any time in Settings › General.	সেটিংস › সা�
 YouTube, Netflix stop and spin	YouTube, Netflix থেমে লোড হতে থাকে
 Your PC	আপনার পিসি
 Your Wi-Fi	আপনার Wi-Fi
-any game, any server IP	যেকোনো গেম, যেকোনো সার্ভারের IP
-connected, but nothing works	সংযুক্ত আছে, কিন্তু কিছুই চলছে না
 everything else works	বাকি সব ঠিকমতো চলছে
 everything takes a long time	সবকিছুতে অনেক সময় লাগছে
-free for everyone - a donation helps cover signing and the Store	সবার জন্য ফ্রি—অনুদান কোড সাইনিং ও Store-এর খরচে সাহায্য করে
-it stops responding	এটি আর সাড়া দেয় না
 measure	মাপুন
 nothing opens - works even when you can't google it	কিছুই খুলছে না—গুগল ব্যবহার করতে না পারলেও এটি কাজ করে
 opens the website in your browser - AdeeboMeter itself never checks	ব্রাউজারে ওয়েবসাইট খোলে—AdeeboMeter নিজে পরীক্ষা করে না
-pages take ages, videos buffer	পেজ খুলতে দেরি হয়, ভিডিও বাফার করে
 something is working hard	কোনো কিছু অনেক রিসোর্স ব্যবহার করছে
 the network isn't in the list	নেটওয়ার্কটি তালিকায় নেই
 tshark is the heaviest thing AdeeboMeter can run, so it always stops by itself.	tshark হলো AdeeboMeter-এর সবচেয়ে বেশি রিসোর্স ব্যবহার করা টুল, তাই এটি নিজে থেকেই থেমে যায়।
 what changed since then?	এরপর কী বদলেছে?
 works, then doesn't, then works	কখনো চলে, কখনো চলে না
-Check everything for me	আমার জন্য সব পরীক্ষা করুন
 Test my speed	আমার গতি পরীক্ষা করুন
 Stop	থামান
 Just tell me what's wrong. The dots, What's wrong?, a speed test, history and the Gamer Zone.	শুধু সমস্যাটা বলুন। বিন্দুগুলো, «কী সমস্যা?», গতি পরীক্ষা, ইতিহাস আর গেমার জোন।
@@ -238,26 +214,16 @@ All the engineer tools too: Monitor, Security, Toolbox, Network story and Learn.
 Network	নেটওয়ার্ক
 Devices	ডিভাইস
 Traffic Lab	ট্রাফিক ল্যাব
-Find any tool (mtu, dns, wifi, slow...)	যেকোনো টুল খুঁজুন (mtu, dns, wifi, ধীর...)
-Describe it - e.g. youtube keeps stopping, calls freeze, laptop is hot	সমস্যা লিখুন—যেমন YouTube বারবার থামে, কল আটকে যায়, ল্যাপটপ গরম
-Check a destination sends only what you ask for, to where you ask, when you press Check.	গন্তব্য পরীক্ষা শুধু আপনার চাওয়া পরীক্ষাই, আপনার নির্ধারিত গন্তব্যে পাঠায়—যখন পরীক্ষা বোতামে চাপেন।
 Ctrl+K jumps to anything.   Details (top right) shows raw values, sources and times.	Ctrl+K দিয়ে যেকোনো কিছুতে যান। ওপরের ডানে «বিস্তারিত» থেকে মূল মান, উৎস ও সময় দেখুন।
 DNS is not kept in history (the grey dot). Every number is AdeeboMeter's own one-minute average from that day's file on this PC.	DNS-এর ইতিহাস রাখা হয় না (ধূসর বিন্দু)। প্রতিটি সংখ্যা এই পিসিতে সেই দিনের ফাইল থেকে নেওয়া AdeeboMeter-এর নিজস্ব এক মিনিটের গড়।
-Each added game's best region, up to this many. Never more than 10 probes a second in total.	প্রতিটি যোগ করা গেমের সেরা অঞ্চল, এই সীমা পর্যন্ত। সব মিলিয়ে সেকেন্ডে 10টির বেশি পরীক্ষার অনুরোধ যায় না।
-Every night anything older goes (rolling). 90 days is still only about 1.5 MB.	নির্ধারিত সময়ের চেয়ে পুরোনো তথ্য প্রতি রাতে মুছে যায়। 90 দিনের তথ্যও প্রায় 1.5 MB মাত্র।
 HOP	হপ
 HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT	হপ · রাউটার · সেখানে পৌঁছানো সবচেয়ে বড় প্যাকেট · মাপতে হপে ক্লিক করুন
 Needs a newer Wireshark (3.0 or later).	নতুন Wireshark দরকার (3.0 বা পরের সংস্করণ)।
-No cloud, no account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	ক্লাউড, অ্যাকাউন্ট, টেলিমেট্রি, আপডেট, বিজ্ঞাপন বা ক্র্যাশ রিপোর্ট নেই। কোনো পোর্টে সংযোগের অপেক্ষায় থাকে না—প্রতিবার চালু হয়ে নিজেই তা পরীক্ষা করে।
-Nothing is talking to the internet right now - type a site above.	এখন কোনো কিছু ইন্টারনেটের সঙ্গে যোগাযোগ করছে না—ওপরে একটি সাইট লিখুন।
-Pre-call check: 20 pings to your router and 20 to 1.1.1.1. DNS speed test: about 40 name lookups to your DNS, 1.1.1.1, 8.8.8.8 and 9.9.9.9. Walk test: 20 pings to your router per room. Only when you press them.	কলের আগে পরীক্ষা: রাউটারে 20টি ও 1.1.1.1-এ 20টি পিং। DNS গতি পরীক্ষা: আপনার DNS, 1.1.1.1, 8.8.8.8 ও 9.9.9.9-এ প্রায় 40টি নামের অনুসন্ধান। হেঁটে পরীক্ষা: প্রতি ঘরে রাউটারে 20টি পিং। আপনি চালু করলেই শুধু চলে।
-Runs the same check as Check a destination: name, connect, lock, first byte and the way there. Nothing else is sent.	গন্তব্য পরীক্ষার মতোই নাম, সংযোগ, নিরাপত্তা, প্রথম বাইট ও পৌঁছানোর পথ পরীক্ষা করে। অন্য কিছু পাঠায় না।
 Sends only public IP addresses to RIPEstat and PeeringDB, then switches itself off. Settings > Online lookups has the timer.	শুধু পাবলিক IP ঠিকানা RIPEstat ও PeeringDB-তে পাঠায়, তারপর নিজে থেকে বন্ধ হয়। সেটিংস > অনলাইন অনুসন্ধানে সময়সীমা পাবেন।
 THAT MINUTE  ·  COMPARED WITH THE DAY'S MIDDLE VALUE	সেই মিনিট · দিনের মধ্যম মানের সঙ্গে তুলনা
 THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)	এক নজরে দিনটি · রঙের ফিতা = ফলাফল, নীল = রাউটারের দেরি (MS), সবুজ = WI-FI সিগন্যাল (%)
 TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC	বেশি ডেটার সংযোগ · ট্রাফিকের TLS সার্ভার নাম / DNS থেকে নাম নেওয়া
 Type a destination and press Run: AdeeboMeter traces the path, then you measure hop by hop.	গন্তব্য লিখে চালু করুন: AdeeboMeter পথ বের করবে, তারপর আপনি প্রতিটি হপ মাপতে পারবেন।
-WHEN IS MY NETWORK BAD?  ·  LAST 7 DAYS × 24 HOURS  ·  WORST MOMENT IN EACH HOUR	আমার নেটওয়ার্ক কখন খারাপ থাকে? · গত 7 দিন × 24 ঘণ্টা · প্রতি ঘণ্টার সবচেয়ে খারাপ মুহূর্ত
 WI-FI HEALTH  ·  FROM WHAT WINDOWS NEVER HIDES (WORKS WITH LOCATION OFF)	WI-FI-এর অবস্থা · Windows যে তথ্য সবসময় দেয় (লোকেশন বন্ধ থাকলেও চলে)
 Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so.	Windows এবার আশপাশের কোনো নেটওয়ার্ক দেখায়নি—প্রায় প্রতি মিনিটে তালিকা নতুন করে খোঁজে।
 YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY	আপনার সুইচ পোর্ট · LLDP / CDP, শুধু শোনা হয়
@@ -281,25 +247,17 @@ Press Run to see your own.	আপনার ফল দেখতে চালু �
 See an example	একটি নমুনা দেখুন
 Hide the example	উদাহরণ লুকান
 See an example day	একটি নমুনা দিন দেখুন
-+1 Adeebo Point	+1 Adeebo Point
-+2 replay bonus	আবার চালানোর বোনাস +2
 Adeebo Point	Adeebo Point
 Adeebo Points	Adeebo Points
-examples done	নমুনা দেখা হয়েছে
 of	এর মধ্যে
 Beginner	শুরু করছেন
 Learner	শিখছেন
 Troubleshooter	সমস্যা সমাধানকারী
 Expert	দক্ষ
-Earn Adeebo Points	Adeebo Points অর্জন করুন
-Replay bonus · +2	আবার চালানোর বোনাস · +2
 Already earned.	আগেই পেয়েছেন।
-Run it for real: +1 Adeebo Point.	সত্যি চালিয়ে দেখুন: +1 Adeebo Point।
 Doesn't earn Adeebo Points - it sends test traffic.	এতে Adeebo Points পাওয়া যায় না—এটি পরীক্ষার ট্রাফিক পাঠায়।
-Replay bonus · +2 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +2 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
 HOW TO EARN	যেভাবে পয়েন্ট পাবেন
 Open a tool's Example, then run it for real	টুলের নমুনা খুলুন, তারপর সত্যি চালিয়ে দেখুন
-+1, or +2 for the longer tests	+1, লম্বা পরীক্ষায় +2
 Run a tool marked replay again, 10 minutes or more later	আবার চালানোর চিহ্ন থাকা টুল অন্তত 10 মিনিট পরে চালান
 +2, once	+2, একবার
 Read a Learn topic to the end	শেখার একটি বিষয় শেষ পর্যন্ত পড়ুন
@@ -312,23 +270,19 @@ done	সম্পন্ন
 to	পর্যন্ত
 Pages	পাতা
 Nothing matches - try another word.	কিছু মেলেনি—অন্য শব্দ দিয়ে খুঁজুন।
-Top rank - every feature you tried taught you something.	সর্বোচ্চ স্তর—ব্যবহার করা প্রতিটি সুবিধা থেকেই কিছু শিখেছেন।
 Earning is off (Settings › Adeebo Points) - your points are kept.	পয়েন্ট অর্জন বন্ধ (সেটিংস › Adeebo Points)—আপনার পয়েন্ট থাকবে।
 Community and support	কমিউনিটি ও সহায়তা
-AdeeboMeter is free and open source. These open in your browser - AdeeboMeter itself sends nothing.	AdeeboMeter ফ্রি ও ওপেনসোর্স। এগুলো ব্রাউজারে খুলবে—AdeeboMeter নিজে কিছু পাঠায় না।
 Ask a question or share an idea	প্রশ্ন করুন বা নতুন ধারণা জানান
 Report a bug	ত্রুটি জানান
-Source code and releases	সোর্স কোড ও রিলিজ
 Donate	দান করুন
 Other amount	অন্য পরিমাণ
 PayPal, in Canadian dollars. Nothing about you is sent by AdeeboMeter.	PayPal-এ কানাডীয় ডলারে। AdeeboMeter আপনার কোনো তথ্য পাঠায় না।
 Delete all saved history?	সব সংরক্ষিত ইতিহাস মুছবেন?
-days of history are deleted for good - this can't be undone.	দিনের সংরক্ষিত ইতিহাস চিরতরে মুছে যাবে। আর ফেরানো যাবে না।
+days of history are deleted for good - this can't be undone. The Neighbour wars log and saved replays go too.	দিনের সংরক্ষিত ইতিহাস চিরতরে মুছে যাবে। আর ফেরানো যাবে না। Neighbour wars লগ আর সংরক্ষিত রিপ্লেও মুছে যাবে।
  tool matches	 টুল মিলেছে
  tools match	 টুল মিলেছে
 All	সব
 All tools	সব টুল
-Ask the question - the right tool comes up. Type in the box above, or pick a question.	প্রশ্ন লিখুন—সঠিক টুল পেয়ে যাবেন। ওপরের ঘরে লিখুন, অথবা একটি প্রশ্ন বাছুন।
 Did you mean	আপনি কি এটি বোঝাতে চেয়েছেন
 Enter opens the first	Enter চাপলে প্রথমটি খুলবে
 Free for everyone. If it saved you time, a donation helps cover code signing and the Microsoft Store, and keeps AdeeboMeter free.	সবার জন্য ফ্রি। আপনার সময় বাঁচালে, অনুদান কোড সাইনিং ও Microsoft Store-এর খরচ মেটাতে এবং AdeeboMeter ফ্রি রাখতে সাহায্য করে।
@@ -466,7 +420,6 @@ Why is it slow?	ধীর হচ্ছে কেন?
 Where does it break?	কোন ধাপে সমস্যা?
 What's on my network?	আমার নেটওয়ার্কে কী আছে?
 Why can't it join?	যুক্ত হতে পারছে না কেন?
-Windows and certificates	Windows ও সার্টিফিকেট
 Build test traffic	পরীক্ষার ট্রাফিক তৈরি করুন
 Is it this PC?	সমস্যা কি এই পিসিতে?
 VPN and company proxy - is it the slow part?	VPN বা কোম্পানির প্রক্সি কি ধীর করছে?
@@ -532,7 +485,6 @@ airtime fairness	এয়ারটাইমের সমান ভাগ
 nothing	কিছুই করে না
 on (TCP, most traffic)	চালু (TCP ও বেশির ভাগ ট্রাফিক)
 off	বন্ধ
-says "too big"	জানায় «আকার বেশি»
 is blocked from saying it	সেই বার্তাটি আটকে দেওয়া হয়
 First come, first served (most home routers)	আগে এলে আগে যাবে (বেশির ভাগ বাড়ির রাউটার)
 Fair queuing (each flow takes turns)	সুষম কিউ (প্রতি ডেটাপ্রবাহ পালা পায়)
@@ -541,7 +493,6 @@ Clear my losses	আমার ভুলের হিসাব মুছুন
 Test my line under load  ›	ব্যস্ত অবস্থায় আমার লাইন পরীক্ষা করুন  ›
 Find the real MTU of my path  ›	আমার পথের আসল MTU বের করুন  ›
 Next question  ›	পরের প্রশ্ন  ›
-Click a stop to see what happens to the labels there. Sizes are the usual ones; Packet stack in the Toolbox works out any mix.	কোনো ধাপে ক্লিক করে দেখুন, সেখানে লেবেল কীভাবে বদলায়। এখানে প্রচলিত আকার দেখানো হয়েছে; টুলবক্সের প্যাকেট স্ট্যাক দিয়ে যেকোনো সমন্বয় হিসাব করতে পারেন।
 Measure again	আবার মাপুন
 Block width = packet size · amber = sent again · red = an error from the network · a red mark = a stall	ব্লকের প্রস্থ = প্যাকেটের আকার · হলুদ = আবার পাঠানো · লাল = নেটওয়ার্কের ত্রুটি · লাল দাগ = আটকে যাওয়া
 stall	আটকে যাওয়া
@@ -561,7 +512,6 @@ Decimal, hex and binary	দশমিক, হেক্স ও বাইনার�
 What changed when it broke?	সমস্যা শুরুর সময় কী বদলেছিল?
 Is this Wi-Fi OK to use? (hotel, cafe)	এই Wi-Fi ব্যবহার করা নিরাপদ? (হোটেল, ক্যাফে)
 DNS race - which server is fastest here	DNS তুলনা—এখানে কোন সার্ভার দ্রুততম
-Devices on this network (kept over time)	এই নেটওয়ার্কের ডিভাইস (আগের তথ্যসহ)
 Drivers, device problems and USB history	ড্রাইভার, ডিভাইসের সমস্যা ও USB ইতিহাস
 Why isn't my USB device working?	আমার USB ডিভাইস কাজ করছে না কেন?
 Why is my game lagging?	আমার গেমে ল্যাগ হচ্ছে কেন?
@@ -594,8 +544,8 @@ Full screen	পুরো স্ক্রিনে দেখুন
 Play	খেলুন
 Show all	সব দেখান
 Run it for real:	এবার আসল পরীক্ষা চালান:
-Replay bonus · +3	আবার চালানোর বোনাস · +3
-Replay bonus · +3 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +3 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
+Replay bonus · +2	আবার চালানোর বোনাস · +2
+Replay bonus · +2 - run it again at least 10 minutes after your first run.	আবার চালানোর বোনাস · +2 — প্রথমবারের অন্তত 10 মিনিট পরে আবার চালান।
 replay bonus	আবার চালানোর বোনাস
 path finished	পথ শেষ হয়েছে
 You got the Adeebo Award!	আপনি Adeebo Award পেয়েছেন!
@@ -603,7 +553,6 @@ You got the Adeebo Award	আপনি Adeebo Award পেয়েছেন
 Adeebo Award	Adeebo Award
 Network detective	নেটওয়ার্ক গোয়েন্দা
 Packet whisperer	প্যাকেট বিশেষজ্ঞ
-Nearly everything AdeeboMeter can teach, tried and understood. Well done.	AdeeboMeter থেকে শেখার প্রায় সবকিছুই চেষ্টা করেছেন ও বুঝেছেন। চমৎকার।
 +2, or +4 for the longer tests	+2, লম্বা পরীক্ষায় +4
 +3, once	+3, একবার
 +2	+2
@@ -648,18 +597,15 @@ Look up three different destinations in your own route table.	নিজের �
 Keep the ping at 30 ms or more and get the whole budget under 60 ms.	পিং 30 ms বা তার বেশি রেখেও মোট বিলম্ব 60 ms-এর নিচে আনুন।
 Find an upload where even first come, first served keeps the call's wait under 10 ms.	এমন আপলোড খুঁজুন যেখানে আগে আসলে আগে পাঠানোর নিয়মেও কলের অপেক্ষা 10 ms-এর নিচে থাকে।
 Get 5 right in a row, then 10 in a row.	টানা 5টি, তারপর টানা 10টি সঠিক উত্তর দিন।
-A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	আপনার বেছে নেওয়া সংখ্যা দিয়ে সিমুলেশন—আপনার লাইনের মাপ নয়। শুধু «আপনার» লেখা সারিগুলো আসল মাপ।
 Save your Adeebo Award card	আপনার Adeebo Award কার্ড সেভ করুন
 Couldn't save the card	কার্ড সেভ করা যায়নি
 Your card is saved	আপনার কার্ড সেভ হয়েছে
-Send it to the Hall of Fame: the GitHub form checks the claim code and adds you automatically. Its text is copied, ready to paste.	হল অব ফেমে পাঠান: GitHub ফর্ম কোড যাচাই করে নিজে থেকেই আপনাকে যোগ করে। লেখাটি কপি করা আছে, পেস্ট করলেই হবে।
 This copy of AdeeboMeter was built from the source, so the card has no claim code and can't go in the Hall of Fame. The download from the website can.	AdeeboMeter-এর এই কপি সোর্স কোড থেকে বানানো, তাই কার্ডে দাবির কোড নেই এবং হল অব ফেমে পাঠানো যাবে না। ওয়েবসাইট থেকে নামানো কপিতে তা পারবেন।
 Your Adeebo Award card	আপনার Adeebo Award কার্ড
 Your name as it should appear in the Hall of Fame. Letters, numbers, spaces and . - _ ' - up to 32.	হল অব ফেমে যে নামে দেখাতে চান। অক্ষর, সংখ্যা, স্পেস ও . - _ ' ব্যবহার করুন—সর্বোচ্চ 32টি অক্ষর।
 Make the card	কার্ড বানান
 Make my award card	আমার পুরস্কারের কার্ড বানান
 Make it again	আবার বানান
-Send it with the GitHub form ›	GitHub ফর্ম দিয়ে পাঠান ›
 The Hall of Fame page ›	হল অব ফেমের পাতা ›
 Show the picture	ছবি দেখুন
 NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR	আশপাশের Wi-Fi-এর প্রতিযোগিতা · গত 7 দিন
@@ -669,8 +615,7 @@ Crowding on your channel	আপনার চ্যানেলে ভিড়
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	ভরা বৃত্ত = সেদিন আপনার চ্যানেলে সবচেয়ে জোরালো · বলয় = আপনার চ্যানেলে · বিন্দু = এখানে পাওয়া গেছে
 Journey	যাত্রা
 What did Windows Update break?	Windows Update কী বদলে সমস্যা করেছে?
-Every check close, plus up to 16 game servers and your best regions every 10 s.	ঘন ঘন সব পরীক্ষা, সঙ্গে সর্বোচ্চ 16টি গেম সার্ভার এবং প্রতি 10 s-এ সেরা অঞ্চল।
-The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min, no call watching.	সবচেয়ে হালকা। রাউটার প্রতি 30 s, ইন্টারনেট প্রতি 5 min, Wi-Fi প্রতি 2 min; কল নজরদারি বন্ধ।
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন পরীক্ষা। পেছনে, আপনার গেমগুলোর সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময়, প্রতি সেকেন্ডে 16টি পর্যন্ত সার্ভার।
 By goal	লক্ষ্য অনুযায়ী
 Everything	সবকিছু
 Games	গেম
@@ -759,8 +704,6 @@ QR code to read it on your phone	ফোনে পড়ার জন্য QR �
 Help-a-friend bundle (encrypted file)	বন্ধুকে সাহায্যের প্যাকেজ (এনক্রিপ্ট করা ফাইল)
 My Bluetooth devices	আমার Bluetooth ডিভাইস
 Is another device using my address?	অন্য ডিভাইস কি আমার ঠিকানা ব্যবহার করছে?
-Scan with your phone	ফোন দিয়ে স্ক্যান করুন
-Your phone's camera reads it - nothing is sent.	আপনার ফোনের ক্যামেরা পড়বে—কিছু পাঠানো হয় না।
 not on the map	মানচিত্রে নেই
 green under 50 ms · amber under 100 · red above · grey: no ping yet · ring = a region estimate (the cloud region the game runs in), dot = a real server	50 ms-এর নিচে সবুজ · 100-এর নিচে হলুদ · বেশি হলে লাল · ধূসর: এখনো পিং হয়নি · বলয় = গেমের ক্লাউড অঞ্চলের আনুমানিক ফল, বিন্দু = আসল সার্ভার
 6 months	6 মাস
@@ -771,7 +714,7 @@ BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football r
 Towers, the 4G and 5G cores (MME, AMF, SMF, UPF), attach, sessions, NSA vs SA.	টাওয়ার, 4G ও 5G কোর (MME, AMF, SMF, UPF), যুক্ত হওয়া, সেশন, NSA ও SA-এর তুলনা।
 INSIDE THE INTERNET - PROVIDERS, TV AND STREAMING	ইন্টারনেটের ভেতরে—সেবাদাতা, টিভি ও স্ট্রিমিং
 INSIDE THE MOBILE NETWORK - 4G AND 5G	মোবাইল নেটওয়ার্কের ভেতরে—4G ও 5G
-Penny	অতি হালকা
+Penny	Penny
 PING MAP	পিং মানচিত্র
 and	ও
 more	আরও
@@ -782,7 +725,7 @@ your own mix	আপনার নিজস্ব সেটিং
 plus about	সঙ্গে প্রায়
 game pings a minute for the games you watch (one a second per server while you play)	নজরদারিতে রাখা গেমের জন্য প্রতি মিনিটে গেম পিং (খেলার সময় সার্ভারপ্রতি সেকেন্ডে একটি)
 on top of the widget's once-a-second read of Windows' own counters.	সঙ্গে উইজেট প্রতি সেকেন্ডে Windows-এর নিজস্ব কাউন্টার পড়ে।
-The widget is always a penny app. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	উইজেট সবসময়ই হালকা। ভারী কাজ—সরাসরি ক্যাপচার, পুরো সংযোগ তালিকা, পথ পরীক্ষা—শুধু এই উইন্ডো খোলা থাকলে চলে। এখানে ঠিক করবেন ব্যাকগ্রাউন্ডে কতটা নজরদারি হবে: প্রতি মিনিটে পরীক্ষা ও বেছে রাখা গেমের পিং।
+The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	উইজেট সবসময়ই হালকা। ভারী কাজ—সরাসরি ক্যাপচার, পুরো সংযোগ তালিকা, পথ পরীক্ষা—শুধু এই উইন্ডো খোলা থাকলে চলে। এখানে ঠিক করবেন ব্যাকগ্রাউন্ডে কতটা নজরদারি হবে: প্রতি মিনিটে পরীক্ষা ও বেছে রাখা গেমের পিং।
 The DNS server is down	DNS সার্ভার চলছে না
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	অন্য DNS সার্ভার ব্যবহার করুন, যেমন 1.1.1.1, অথবা এখানকার DNS সার্ভার হিসেবে কাজ করা রাউটারটি রিস্টার্ট করুন
 Addresses work. Names don't.	IP ঠিকানা কাজ করে, নাম কাজ করে না।
@@ -862,7 +805,6 @@ SYN - let's talk, my sequence starts at 1000	SYN — যোগাযোগ ক�
 ACK 1001 - got it	ACK 1001 — পেয়েছি
 SYN-ACK - fine, mine starts at 5000, ack 1001	SYN-ACK — ঠিক আছে, আমারটা 5000 থেকে, ack 1001
 Getting an address (DHCP)	ঠিকানা পাওয়া (DHCP)
-The order is Discover, Offer, Request, Ack. The PC asked for an address before anyone offered one.	ক্রম হলো Discover, Offer, Request, Ack। কোনো সার্ভার প্রস্তাব দেওয়ার আগেই পিসি ঠিকানা চেয়ে বসেছে।
 DISCOVER - any DHCP server?	DISCOVER — কোনো DHCP সার্ভার আছে?
 REQUEST - I'll take 192.168.1.37	REQUEST — আমি 192.168.1.37 নেব
 OFFER - you can have 192.168.1.37	OFFER: আপনি 192.168.1.37 নিতে পারেন।
@@ -881,7 +823,6 @@ Certificate, Finished	সার্টিফিকেট, Finished
 A traceroute	একটি traceroute
 With TTL 2 the packet dies at the second router, which says 'time exceeded'. 1.1.1.1 can't answer a packet that never reached it.	TTL 2 হলে প্যাকেট দ্বিতীয় রাউটারেই শেষ হয়, সেটি «সময় শেষ» জানায়। না পৌঁছানো প্যাকেটের উত্তর 1.1.1.1 দিতে পারে না।
 Time exceeded (TTL ran out here)	সময় শেষ (TTL এখানে ফুরিয়েছে)
-ping, TTL 2 - reply from 1.1.1.1 directly, TTL 64	ping, TTL 2 — সরাসরি 1.1.1.1 থেকে উত্তর, TTL 64
 Time exceeded	সময় শেষ
 A big packet, don't fragment	বড় প্যাকেট, ভাগ করবেন না
 A router only sends 'fragmentation needed' when its next link is smaller than the packet. An MTU of 1600 would have carried 1500 bytes.	পরের লিঙ্ক প্যাকেটের চেয়ে ছোট হলেই রাউটার «ভাগ করা দরকার» জানায়। MTU 1600 হলে 1500 বাইট যাওয়ার কথা।
@@ -939,6 +880,7 @@ What kind of address is	এই ঠিকানার ধরন কী
 5 cases	5টি ঘটনা
 10 puzzles	10টি ধাঁধা
 8 right to win	জিততে 8টি সঠিক
+9 right to win	জিততে 9টি সঠিক
 Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.	আপনার পিসি example.com-এ পৌঁছাতে পারছে না। নিচের সবকিছু সিমুলেশন—কমান্ড চালিয়ে কারণ খুঁজুন।
 hint used	ইঙ্গিত নেওয়া হয়েছে
 wrong guess	ভুল অনুমান
@@ -994,7 +936,7 @@ HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the
 She sends Ada's real card again, to get Ada listed twice.	Ada-র নাম দুবার তোলার জন্য সে একই আসল কার্ড আবার পাঠায়।
 One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	প্রতি কার্ড ও নামে একটি এন্ট্রি: যাচাই জানাবে «হল অব ফেমে আগে থেকেই আছেন», নতুন কিছু যোগ হবে না।
 She sends a card that claims 2,000 points.	সে 2,000 পয়েন্ট দাবি করা কার্ড পাঠায়।
-There are only about 900 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 900 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।
+There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 1000 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।
 She types <script>alert(1)</script> as her name, hoping the website runs it.	ওয়েবসাইট কোড চালাবে ভেবে সে নাম হিসেবে <script>alert(1)</script> লেখে।
 Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	আগেই নাম থেকে অক্ষর, সংখ্যা ও অনুমোদিত চিহ্ন ছাড়া সব বাদ দেওয়া হয়। পাতা প্রতিটি ঘর সাধারণ লেখা হিসেবে দেখায়, কখনো কোড হিসেবে নয়।
 She edits the points file on her own PC to 500, then makes a card the normal way.	সে নিজের পিসির পয়েন্ট ফাইল বদলে 500 করে, তারপর স্বাভাবিকভাবে কার্ড বানায়।
@@ -1053,7 +995,6 @@ Find a process or app	প্রক্রিয়া বা অ্যাপ খ�
 Site, app or server - e.g. outlook.office.com	সাইট, অ্যাপ বা সার্ভার—যেমন outlook.office.com
 Find a process	প্রক্রিয়া খুঁজুন
 Search: DNS, TCP, svchost, jitter...	খুঁজুন: DNS, TCP, svchost, jitter...
-Jump to a tab, program, term or protocol...	ট্যাব, প্রোগ্রাম, পরিভাষা বা প্রোটোকলে যান...
 Find a feature... mtr, dns, wifi, certificate	সুবিধা খুঁজুন... mtr, dns, wifi, certificate
 Your website or mail domain (optional)	আপনার সাইট বা ইমেইলের ডোমেইন (ইচ্ছাধীন)
 Or type a site - e.g. github.com	অথবা সাইট লিখুন—যেমন github.com
@@ -1085,7 +1026,6 @@ Arrange tabs...	ট্যাব সাজান...
 My tab	আমার ট্যাব
 Your own tab - one click to what you use most.	নিজের ট্যাব—বেশি ব্যবহার করা জিনিস এক ক্লিকেই।
 Nothing pinned yet. Open a tool and press the pin, or pin a search result.	এখনো কিছু পিন করেননি। টুল খুলে পিন চাপুন, অথবা অনুসন্ধানের ফল পিন করুন।
-Details on for the full path	পুরো পথ দেখতে বিস্তারিত চালু করুন
 Pinned	পিন করা
 Pinned to your tab	আপনার ট্যাবে পিন হয়েছে
 Earned	অর্জিত
@@ -1107,7 +1047,6 @@ Browse...	খুঁজে নিন...
 Make a report	রিপোর্ট তৈরি করুন
 ↑↓ move · Enter open · Ctrl+P pin to your tab · Esc close	↑↓ দিয়ে বাছুন · Enter দিয়ে খুলুন · Ctrl+P দিয়ে ট্যাবে পিন করুন · Esc দিয়ে বন্ধ করুন
 Nothing here by that name. Fewer words usually find it.	এই নামে কিছু নেই। সাধারণত কম শব্দে ভালো মেলে।
-Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	কিছু পাইনি। লক্ষণের বদলে বিষয়টি খুঁজুন: "dns", "wifi", "port"।
 Not a thing I have. Yet. Try another word?	এটি এখনো আমার তালিকায় নেই। অন্য শব্দ চেষ্টা করবেন?
 Searched every drawer. Try a shorter word.	সবখানে খুঁজেছি। ছোট কোনো শব্দ দিয়ে দেখুন।
 Pick a question - the right tool comes up.	প্রশ্ন বাছুন—সঠিক টুল পেয়ে যাবেন।
@@ -1178,7 +1117,6 @@ Normal	স্বাভাবিক
 Chatty	গল্পপ্রিয়
 Talk like...	এভাবে বলুন...
 More personas	আরও ব্যক্তিত্ব
-Companion settings...	সঙ্গীর সেটিংস...
 Surprise me	নিজেই বেছে দিন
 PREVIEW	নমুনা
 TALK LIKE...	কথার ধরন...
@@ -1202,14 +1140,10 @@ Import lines	কথার তালিকা ইম্পোর্ট করু�
 Add these lines to yours?	এই কথাগুলো আপনার তালিকায় যোগ করবেন?
 Couldn't save your lines.	আপনার কথাগুলো সেভ করা যায়নি।
 Credits	কৃতজ্ঞতা
-New: the Sidebar layout - sections down the left, search on top, a live meter.	নতুন: পাশের বার—বাঁয়ে বিভাগ, ওপরে অনুসন্ধান আর লাইভ মিটার।
 Try it	চেষ্টা করুন
-No thanks	না, ধন্যবাদ
-Find what's wrong	সমস্যার কারণ খুঁজুন
-Type what you notice, or press Find what's wrong.	কী লক্ষ করছেন লিখুন, অথবা «সমস্যা খুঁজুন» চাপুন।
 Full checkup	পুরো পরীক্ষা
 Run full checkup	পুরো পরীক্ষা চালান
-Include a speed test (100-300 MB)	গতি পরীক্ষাও করুন (100-300 MB)
+Include a speed test (up to 1 GB)	গতি পরীক্ষাও করুন (1 GB পর্যন্ত)
 This PC, its disks and apps, your Wi-Fi, router, internet and names - one report, biggest problem first.	এই পিসি, ডিস্ক ও অ্যাপ, আপনার Wi-Fi, রাউটার, ইন্টারনেট ও DNS—এক রিপোর্টে, বড় সমস্যা আগে।
 See it  ›	দেখুন  ›
 Speed only	শুধু গতি
@@ -1236,15 +1170,14 @@ When should it tell you?	কখন আপনাকে জানাবে?
 What should it remember?	কী মনে রাখবে?
 What may it ask the internet?	ইন্টারনেট থেকে কী তথ্য আনতে পারবে?
 For engineers: capture limits	বিশেষজ্ঞদের জন্য: ক্যাপচারের সীমা
-QUICK SETUP	দ্রুত সেটআপ
 Skip	এড়িয়ে যান
 All of this can be changed any time in Settings.	সেটিংস থেকে যেকোনো সময় সব বদলাতে পারবেন।
 Plain - no jokes	সোজাসাপটা—রসিকতা ছাড়া
 checks a minute	প্রতি মিনিটে পরীক্ষা
-Neon	নিয়ন
-Midnight	মিডনাইট
-Sunset	সানসেট
-Mint	মিন্ট
+Neon	Neon
+Midnight	Midnight
+Sunset	Sunset
+Mint	Mint
 All problems	সব সমস্যা
 It's fixed	ঠিক হয়ে গেছে
 Still broken - check again	এখনো সমস্যা—আবার পরীক্ষা করুন
@@ -1296,9 +1229,7 @@ Your provider	আপনার ইন্টারনেট সেবাদাত�
 no answer	উত্তর নেই
 not measured	মাপা হয়নি
 reply	উত্তর
- (posted about a week later). An index of world prices in US dollars - the change is what to read. ▲ = prices went up.	 (প্রায় এক সপ্তাহ পরে প্রকাশিত)। মার্কিন ডলারে বিশ্ববাজারের দামের সূচক—পরিবর্তনটি দেখুন। ▲ মানে দাম বেড়েছে।
  (stop)	 (থামান)
- - indicative rates, not for trading. ▲ = the currency got dearer in CAD since the day before.	 —আনুমানিক দর, ট্রেডিংয়ের জন্য নয়। ▲ মানে আগের দিনের তুলনায় CAD-এ মুদ্রাটির দাম বেড়েছে।
  - not a single dip.	 —একবারও গতি কমেনি।
  Mb/s down (was 	 Mb/s ডাউনলোড (আগে ছিল 
  ago - too old to say what you can stream right now. Press the button for a fresh one.	 আগের—এখন কী স্ট্রিম করতে পারবেন বলার জন্য পুরোনো। নতুন পরীক্ষার জন্য বোতাম চাপুন।
@@ -1317,10 +1248,6 @@ reply	উত্তর
  without a dip	 একবারও গতি না কমে
  · market closed - the live check sleeps until 9:30 Eastern	 · বাজার বন্ধ—পূর্বাঞ্চলীয় সময় 9:30 পর্যন্ত লাইভ পরীক্ষা বন্ধ থাকে
  · starting...	 · শুরু হচ্ছে...
-"are you there?" (echo request)	"আছেন?" (echo request)
-"can I connect?" (SYN)	"সংযোগ করতে পারি?" (SYN)
-"yes, come in" (SYN-ACK) - the time is this round trip	"হ্যাঁ, আসুন" (SYN-ACK)—এই যাওয়া-আসার সময় মাপা হয়
-"yes, here" (echo reply) - the time is this round trip	"হ্যাঁ, আছি" (echo reply)—এই যাওয়া-আসার সময় মাপা হয়
 % against the Canadian dollar today.	% আজ কানাডীয় ডলারের তুলনায়।
 % this week.	% এই সপ্তাহে।
 'please treat me as voice'	'আমাকে ভয়েস ট্রাফিক হিসেবে অগ্রাধিকার দিন'
@@ -1334,7 +1261,6 @@ reply	উত্তর
 (no reply - this protocol never answers)	(উত্তর নেই—এই প্রোটোকল কখনো উত্তর দেয় না)
 (no sign-in sent)	(সাইন-ইন পাঠানো হয়নি)
 (no snapshot yet)	(এখনো তথ্য সেভ করা নেই)
-(not compared)	(তুলনা করা হয়নি)
 (nothing - the router won't turn it around)	(কিছুই নেই—রাউটার ঘুরিয়ে পাঠাবে না)
 (run it to compare)	(তুলনা করতে চালান)
 (run it to see the race)	(সার্ভারের তুলনা দেখতে চালান)
@@ -1360,7 +1286,6 @@ reply	উত্তর
 3-6 months of costs	3-6 মাসের খরচ
 3. Address	3. ঠিকানা
 3389 open	3389 খোলা
-4 weeks 	4 সপ্তাহ 
 4. Router	4. রাউটার
 407 here = the proxy wants a sign-in	এখানে 407 মানে প্রক্সি সাইন-ইন চাইছে
 4K streams at once	একসঙ্গে 4K স্ট্রিম
@@ -1414,7 +1339,6 @@ Allow	অনুমতি দিন
 Allow this phone?	এই ফোনকে অনুমতি দেবেন?
 Allow?	অনুমতি দেবেন?
 Already uploading	আপলোড চলছে
-Apple/Linux-style name	Apple/Linux ধরনের নাম
 Asked	জিজ্ঞেস করা হয়েছে
 At a bank	ব্যাংকে
 Average cost of buying in steps	ধাপে ধাপে কেনার গড় খরচ
@@ -1425,8 +1349,7 @@ BY QUESTION	প্রশ্ন অনুযায়ী
 Back. That lasted 	ফিরেছে। বিচ্ছিন্ন ছিল 
 Background checks: 	ব্যাকগ্রাউন্ড পরীক্ষা: 
 Backup way out:	ফিরে আসার বিকল্প পথ:
-Balanced - trouble seen in seconds	ভারসাম্যপূর্ণ—কয়েক সেকেন্ডেই সমস্যা ধরা পড়ে
-Bank of Canada's daily averages, fetched once a day only while this page is open. Off until you turn it on.	Bank of Canada-এর দৈনিক গড়। এই পাতা খোলা থাকলে দিনে একবার আনা হয়। আপনি চালু না করলে বন্ধ থাকে।
+Balanced - trouble seen in seconds	Balanced—কয়েক সেকেন্ডেই সমস্যা ধরা পড়ে
 Binding request	বাইন্ডিং অনুরোধ
 Broker 	ব্রোকার 
 Broker steady all day	ব্রোকার সারা দিন স্থির ছিল
@@ -1436,15 +1359,11 @@ CAN I STREAM 4K RIGHT NOW?	এখন 4K স্ট্রিম করতে প�
 CASE	ঘটনা
 CERTS	সার্টিফিকেট
 CLOSED	বন্ধ
-COMMODITIES · WEEKLY · CHANGE IN PRICE	পণ্যবাজার · সাপ্তাহিক · দামের পরিবর্তন
 CPU	CPU
-CURRENCIES · END OF DAY · 1 UNIT IN CANADIAN DOLLARS	মুদ্রা · দিনের শেষে · কানাডীয় ডলারে 1 এককের দাম
 Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.	কার্ড পাঠানো হয়েছে—কোড ঠিক থাকলে কয়েক মিনিটের মধ্যে হল অব ফেমে দেখা যাবে।
 Certificate calendar	সার্টিফিকেটের ক্যালেন্ডার
 Change my keys...	আমার চাবি বদলান...
 Changed: Fun lines off · Details on · How chatty: face only.	বদলেছে: মজার কথা বন্ধ · বিস্তারিত চালু · কথার পরিমাণ: শুধু মুখ।
-Check again now	এখন আবার পরীক্ষা করুন
-Check your phone shows the same words:	ফোনেও একই শব্দগুলো দেখা যাচ্ছে কি না মিলিয়ে নিন:
 Choose your view	আপনার ভিউ বাছুন
 Classic tabs	ক্লাসিক ট্যাব
 Clean session	নতুন সেশন
@@ -1476,7 +1395,6 @@ Couldn't start Quick Share	Quick Share চালু করা যায়নি
 Crashes, a recession, inflation and surprise bills - where does your money go?	বাজারধস, মন্দা, মূল্যস্ফীতি আর হঠাৎ বিল—আপনার টাকা কোথায় যায়?
 Cricket key (cricketdata.org)...	ক্রিকেটের চাবি (cricketdata.org)...
 Currency converter	মুদ্রা রূপান্তর
-Currency rates and commodity prices	মুদ্রার দর ও পণ্যের দাম
 DCs in my site first	আগে আমার সাইটের DC
 DHCP server	DHCP সার্ভার
 DHCP server (your router)	DHCP সার্ভার (আপনার রাউটার)
@@ -1495,7 +1413,6 @@ Destination	গন্তব্য
 Devices on this network	এই নেটওয়ার্কের ডিভাইস
 Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box	draw.io / diagrams.net-এর ডায়াগ্রাম (.drawio)—প্রতিটি বাক্স সরান ও সাজান
 Didn't open: a wrong code, the wrong key - or the file was changed after it was locked. The seal can't be faked.	খোলেনি: কোড বা চাবি ভুল, অথবা লক করার পর ফাইল বদলেছে। সিল নকল করা যায় না।
-Different words, or no words on your phone? Press Don't allow - it isn't your phone.	ফোনে আলাদা শব্দ, বা কোনো শব্দই নেই? «অনুমতি দেবেন না» চাপুন—এটি আপনার ফোন নয়।
 Discover: can anyone give me an address?	Discover: কেউ কি আমাকে ঠিকানা দিতে পারবেন?
 Disk speed vs its ceiling	ডিস্কের গতি বনাম সর্বোচ্চ ক্ষমতা
 Don't accept	গ্রহণ করবেন না
@@ -1515,7 +1432,6 @@ End now	এখন শেষ করুন
 Energy	শক্তি
 Errors on my line and port (signal levels, uncorrectable errors, retrains) over the last 7 days.	গত 7 দিনে আমার লাইন ও পোর্টের ত্রুটি (সিগন্যালের মাত্রা, ঠিক না হওয়া ত্রুটি, সংযোগ নতুন করে স্থাপন)।
 Esc closes this menu	Esc দিয়ে মেনু বন্ধ করুন
-Evening summary in the widget, 17:30-19:00: 	উইজেটে সন্ধ্যার সারাংশ, 17:30-19:00: 
 Everything this PC does with your phone, in one place. Sealed end to end: the relay passes on messages it can't read.	এই পিসি আর ফোন মিলে যা করে, সব এক জায়গায়। দুই প্রান্তেই সুরক্ষিত: রিলে শুধু এমন বার্তা পৌঁছায়, যা সে পড়তে পারে না।
 Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):	লিঙ্কে ঠিক যে তথ্য আছে—যাকে দেবেন, তিনি পড়তে পারবেন। সার্ভারে কিছু যায় না; সব লিঙ্কেই থাকে:
 FOR YOUR PROVIDER · 	আপনার সেবাদাতার জন্য · 
@@ -1533,10 +1449,9 @@ Forecast until	যতক্ষণ পর্যন্ত পূর্বাভা
 Futures contract value	ফিউচারস চুক্তির মূল্য
 GAMING	গেমিং
 Game server	গেম সার্ভার
-Gamer - game servers every 	গেমার—গেম সার্ভার পরীক্ষা প্রতি 
+Gamer - game servers every 	Gamer—গেম সার্ভার পরীক্ষা প্রতি 
 Gathering the first minute...	প্রথম মিনিটের তথ্য নেওয়া হচ্ছে...
 Gathering the first seconds...	প্রথম কয়েক সেকেন্ডের তথ্য নেওয়া হচ্ছে...
-Getting today's rates from the Bank of Canada...	Bank of Canada থেকে আজকের দর আনা হচ্ছে...
 Graphics: own vs borrowed memory, link, apps	গ্রাফিক্স: নিজের ও ধার করা মেমরি, লিঙ্ক, অ্যাপ
 HARDWARE NERDS	হার্ডওয়্যারের খুঁটিনাটি
 HD streams at once	একসঙ্গে HD স্ট্রিম
@@ -1552,7 +1467,6 @@ IN USE	ব্যবহার হচ্ছে
 IPv4 - into the tunnel	IPv4 — টানেলের ভেতরে
 IPv6 or DNS outside the tunnel?	IPv6 বা DNS কি টানেলের বাইরে?
 IPv6's version of ARP	IPv6-এ ARP-এর সমতুল্য
-IPv6: Router Solicitation	IPv6: রাউটার খোঁজার অনুরোধ
 Identity?	পরিচয়?
 If even one byte was changed on the way, the seal doesn't match and nothing is opened.	পথে এক বাইটও বদলালে সিল মিলবে না, কিছুই খোলা হবে না।
 In one line: 	এক কথায়: 
@@ -1564,12 +1478,10 @@ Is my connection fast enough to trade?	ট্রেডিংয়ের জন�
 It can watch this PC and start checks - never change Windows settings.	এই পিসির অবস্থা দেখতে ও পরীক্ষা চালাতে পারে—Windows সেটিংস বদলাতে পারে না।
 It felt slow - this PC, the internet or the app?	ধীর লাগছিল—এই পিসি, ইন্টারনেট না অ্যাপ?
 It opens adeebometer.com/r. Your numbers ride in the link after the # - that part never leaves the phone, so the site never sees them. Names and addresses are left out.	adeebometer.com/r খোলে। আপনার তথ্য লিঙ্কের # চিহ্নের পরে থাকে—সেই অংশ ফোন ছাড়ে না, সাইটও পায় না। নাম ও ঠিকানা বাদ থাকে।
-It will be saved in Downloads\AdeeboMeter.	Downloads\AdeeboMeter-এ সেভ হবে।
 KEYS	চাবি
 Keep this	এটি রাখুন
-Kerberos: sign me in	Kerberos: আমাকে সাইন-ইন করান
 Keyboard test - press every key	কিবোর্ড পরীক্ষা—প্রতিটি কী চাপুন
-Keys: Ctrl+Shift+S save · C copy · Q phone	কী: Ctrl+Shift+S সেভ · C কপি · Q ফোন
+Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone	কী: Ctrl+Shift+S সেভ · Ctrl+Shift+C কপি · Ctrl+Shift+Q ফোন
 LAB	ল্যাব
 LAST 10 MINUTES	গত 10 মিনিট
 LDAP ping - are you there, which site am I in?	LDAP পিং—আছেন? আমি কোন সাইটে?
@@ -1632,7 +1544,6 @@ No moves - this PC stayed on one access point.	বদলায়নি—এই
 No seal	সিল নেই
 None - the mood talks on its own	কোনোটিই নয়—মেজাজ অনুযায়ী নিজে কথা বলে
 None yet. Once linked, a phone can ask to be remembered (Face ID or a fingerprint) and come back without a code.	এখনো নেই। যুক্ত হলে ফোন Face ID বা আঙুলের ছাপ দিয়ে মনে রাখার অনুরোধ করতে পারে; পরে কোড ছাড়াই আসতে পারবে।
-Not advice - just the numbers.	পরামর্শ নয়—শুধু হিসাব।
 Not listed? Tell it what you're watching	তালিকায় নেই? কী দেখছেন জানান
 Not quite - it's: 	পুরোটা ঠিক নয়—সঠিকটি: 
 Not shown in Roast - pick another mood to see it.	ঠাট্টার মেজাজে দেখা যায় না—দেখতে অন্য মেজাজ বাছুন।
@@ -1640,7 +1551,6 @@ Not shown with Fun lines off (Plain).	মজার কথা বন্ধ থা
 Nothing found - check the spelling, or try the nearest bigger city.	কিছু পাওয়া যায়নি—বানান দেখুন, অথবা কাছের বড় শহর লিখুন।
 Nothing matches	কিছু মেলেনি
 Nothing streaming right now	এখন কিছু স্ট্রিম হচ্ছে না
-Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	এখনো কিছু নেই। ফোনে: পিসি › ফাইল › পিসিতে পাঠান। গ্রহণ করলে Downloads\AdeeboMeter-এ ফাইল আসবে।
 Now:	এখন:
 OBS link - why frames drop	OBS সংযোগ—ফ্রেম বাদ যায় কেন
 ON YOUR NETWORK	আপনার নেটওয়ার্কে
@@ -1648,12 +1558,10 @@ ONE PAGE LOAD, PACKET BY PACKET	একটি পেজ লোড, প্যা�
 OPEN	খুলুন
 OVER TIME	সময়ের সঙ্গে
 Off - your IT team turned online lookups off.	বন্ধ—আপনার আইটি দল অনলাইন অনুসন্ধান বন্ধ করেছে।
-Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football and cricket with your own free keys, and BBC Sport's headlines, every 5 minutes at most.	আপনি চালু না করলে বন্ধ। চালু হলে এই পাতা খোলা থাকা অবস্থায়, বা দল অনুসরণ করলে স্ট্রিমিং পাতায় দেখার সময়, NHL হকির স্কোর, আপনার ফ্রি চাবিতে ফুটবল ও ক্রিকেট, আর BBC Sport-এর খবর আসে। সর্বোচ্চ প্রতি 5 মিনিটে একবার।
 Off. Turn it on for one calm line a day - from your faith, word for word, or what all of them share.	বন্ধ। দিনে একটি শান্তির কথা পেতে চালু করুন—আপনার ধর্মের বাণী হুবহু, অথবা সবার মিলিত কথা।
 Offer	প্রস্তাব
 Official rate	অফিসিয়াল দর
 Older...	পুরোনো...
-Older:	পুরোনো:
 On my phone: DNS lookup	ফোনে: DNS অনুসন্ধান
 On my phone: VPN leak check	ফোনে: VPN লিক পরীক্ষা
 On my phone: a website from outside	ফোনে: বাইরে থেকে ওয়েবসাইট পরীক্ষা
@@ -1674,7 +1582,6 @@ One click changes the pages, how hard it watches and what sits in the corner. Ea
 One contract	একটি চুক্তি
 One file at a time - wait for the last one.	একবারে একটি ফাইল—আগেরটি শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
 One tap opens your result	এক চাপেই আপনার ফল খুলবে
-Online lookups are turned off by your IT team.	আপনার আইটি দল অনলাইন অনুসন্ধান বন্ধ রেখেছে।
 Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key.	ফোনে বা সামনে বসে একসঙ্গে এই ফিঙ্গারপ্রিন্ট মিলিয়ে নিলেই শুধু হ্যাঁ বলুন। এরপর তাদের জন্য এনক্রিপ্ট করা ফাইল নতুন চাবি ব্যবহার করবে।
 Only the name you type goes to Open-Meteo (free, no account) to find it - then only its coordinates.	জায়গা খুঁজতে শুধু আপনার লেখা নাম Open-Meteo-তে যায় (ফ্রি, অ্যাকাউন্ট লাগে না); তারপর শুধু স্থানাঙ্ক।
 Open it now	এখন খুলুন
@@ -1692,7 +1599,7 @@ Paid from your safe money - nothing sold.	জমিয়ে রাখা নি
 Panic-seller ghost	আতঙ্কে বিক্রি করা প্রতিদ্বন্দ্বী
 Paste your free key from 	ফ্রি চাবি এখানে থেকে নিয়ে পেস্ট করুন 
 Pay yourself first: move the 20% on payday.	আগে নিজের জন্য রাখুন: বেতন পেলেই 20% সরিয়ে রাখুন।
-Penny - the lightest touch	অতি হালকা—সবচেয়ে কম কাজ
+Penny - the lightest touch	Penny—সবচেয়ে কম কাজ
 Phones take files up to 100 MB from here.	এখান থেকে ফোনে সর্বোচ্চ 100 MB ফাইল নেওয়া যায়।
 Pick a day	দিন বাছুন
 Pick all that fit. You'll only see the pages you need - the rest stay one switch away in Settings.	যা মানায় সব বাছুন। শুধু দরকারি পাতা দেখবেন; বাকিগুলো সেটিংসে এক সুইচেই পাবেন।
@@ -1739,11 +1646,9 @@ SNMP	SNMP
 SNMP - switches & routers	SNMP — সুইচ ও রাউটার
 SNMP test trap	SNMP পরীক্ষার ট্র্যাপ
 Safe bitrate	নিরাপদ বিটরেট
-Same answer:	একই উত্তর:
 Save a picture of this window	এই উইন্ডোর ছবি সেভ করুন
 Saved	সেভ হয়েছে
 Saved - in the Bluetooth window pick the device and Browse to the selected file. On Android, tap Accept - it lands in Downloads	সেভ হয়েছে—Bluetooth উইন্ডোতে ডিভাইস বেছে Browse দিয়ে ফাইল নিন। Android-এ Accept চাপুন; Downloads-এ আসবে
-Saved to Pictures\AdeeboMeter	Pictures\AdeeboMeter-এ সেভ হয়েছে
 Saved. Your lines are limited to 600, so the oldest	সেভ হয়েছে। আপনার কথার তালিকায় সর্বোচ্চ 600টি রাখা যায়, তাই সবচেয়ে পুরোনো
 Savings-only ghost	শুধু সঞ্চয় করা প্রতিদ্বন্দ্বী
 Scores need your own free key from 	স্কোরের জন্য নিজের ফ্রি চাবি লাগবে, এখান থেকে 
@@ -1769,23 +1674,18 @@ Show me everything	সব দেখান
 Show the QR code	QR কোড দেখান
 Show the code?	কোড দেখাব?
 Shows apps with open TCP connections to internet addresses. UDP (calls, games), local devices and closed ones are in Connections	ইন্টারনেটের ঠিকানায় খোলা TCP সংযোগ থাকা অ্যাপ দেখায়। UDP কল ও গেম, লোকাল ডিভাইস ও বন্ধ সংযোগ «সংযোগ» পাতায় আছে
-Shows the US dollar and energy's week instead of "All quiet". A problem always takes the spot back.	«সব শান্ত»-এর বদলে মার্কিন ডলার ও জ্বালানির সপ্তাহ দেখায়। সমস্যা হলে সেটিই আগে দেখানো হয়।
 Sidebar layout	পাশের বারের বিন্যাস
 Signal journey lives on the phone (Tools › Signal journey): record its field-test screen while you move. Copy the report there and Send to PC - it lands under From the phone.	সিগন্যালের যাত্রা ফোনে আছে (টুল › সিগন্যালের যাত্রা): চলার সময় ফোনের Field Test স্ক্রিন রেকর্ড করুন। রিপোর্ট কপি করে «পিসিতে পাঠান» দিলে «ফোন থেকে» অংশে পাবেন।
 Slow PC, fine internet - the hidden reasons	পিসি ধীর, ইন্টারনেট ঠিক—লুকানো কারণ
 Slow moments today: 	আজ ধীর হওয়ার মুহূর্ত: 
 Smooth all the way - 	পুরোটা মসৃণ ছিল— 
 Something failed here.	এখানে কিছু ব্যর্থ হয়েছে।
-Source: Bank of Canada commodity price index, week of 	উৎস: Bank of Canada-এর পণ্যদাম সূচক, যে সপ্তাহের 
-Source: Bank of Canada daily exchange rates, 	উৎস: Bank of Canada-এর দৈনিক মুদ্রার দর, 
 Speakers, microphone and camera	স্পিকার, মাইক্রোফোন ও ক্যামেরা
 Sports ›	খেলাধুলা ›
 Start watching my stream	আমার স্ট্রিমের ওপর নজর রাখা শুরু করুন
 Started from	যেখান থেকে শুরু
 Starting the speed test...	গতি পরীক্ষা শুরু হচ্ছে...
 Still recording the conversation above. You picked	ওপরের সংযোগ এখনো রেকর্ড হচ্ছে। আপনি বেছেছেন
-Still watching your broker in the background	আপনার ব্রোকারকে এখনো ব্যাকগ্রাউন্ডে দেখা হচ্ছে
-Stock lists and market movers arrive once their free data sources are confirmed.	ফ্রি তথ্যের উৎস নিশ্চিত হলে শেয়ারের তালিকা ও বাজারে বেশি বদলানো শেয়ার আসবে।
 Stop watching	নজর রাখা বন্ধ করুন
 Stopped.	থেমেছে।
 Suits you	আপনার উপযোগী
@@ -1814,7 +1714,7 @@ Ten years of money	টাকা নিয়ে দশ বছর
 Text files	টেক্সট ফাইল
 That didn't switch cleanly - your previous view is back, nothing lost.	ঠিকভাবে বদলায়নি—আগের ভিউ ফিরিয়ে আনা হয়েছে, কিছু হারায়নি।
 That file isn't there any more.	ফাইলটি আর নেই।
-The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে প্রায় 100-300 MB ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
+The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?	4K পরীক্ষা গতি মাপবে: 20-30 সেকেন্ডে 1 GB পর্যন্ত ডাউনলোড ও আপলোড হবে। এ সময় সংযোগের অন্য কাজ ধীর হবে। শুরু করবেন?
 The app's own connection:	অ্যাপের নিজস্ব সংযোগ:
 The biggest share is	সবচেয়ে বড় অংশ
 The busy number is the one games feel when someone else is downloading.	অন্য কেউ ডাউনলোড করার সময় গেমে যে দেরি বোঝা যায়, সেটিই ব্যস্ত সময়ের সংখ্যা।
@@ -1867,10 +1767,8 @@ Turn Sports off	খেলাধুলা বন্ধ করুন
 Turn it on	চালু করুন
 Type a number, an IPv4 address or a mask.	সংখ্যা, IPv4 ঠিকানা বা মাস্ক লিখুন।
 Type an address - see which road Windows picks for it.	ঠিকানা লিখে দেখুন Windows কোন পথ বেছে নেয়।
-Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	প্রাপকের ঘরে কোড বা ব্যক্তির নাম লিখে চালু করুন, তারপর .adeebo ফাইল পাঠান—PNG থাকবে Documents\AdeeboMeter-এ
 Type your plan's download	আপনার প্যাকেজের ডাউনলোড গতি লিখুন
 UDP 1812 · password hidden with the shared secret	UDP 1812 · শেয়ার করা গোপন চাবি দিয়ে পাসওয়ার্ড আড়াল করা
-UDP 1812 · signed with the shared secret	UDP 1812 · শেয়ার করা গোপন চাবি দিয়ে স্বাক্ষর করা
 US markets close early today, 13:00 Eastern	আজ মার্কিন বাজার আগে বন্ধ, পূর্বাঞ্চলীয় সময় 13:00
 US markets closed today	আজ মার্কিন বাজার বন্ধ
 US markets open	মার্কিন বাজার খুলেছে
@@ -1895,8 +1793,6 @@ WHAT FIXES IT	কী করলে ঠিক হবে
 WHAT HAPPENED BEFORE IT BROKE AT	সমস্যার আগে কী হয়েছিল, সময়
 WHAT THE ROUTER WAS TELLING YOU	রাউটার কী জানাচ্ছিল
 WHAT TO TRY NEXT	এরপর যা করে দেখবেন
-WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS	যা দেখেছেন · এই পিসিতে 90 দিন থাকে · গতি কমার কারণ দেখতে ক্লিক করুন
-WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)	কী হচ্ছে? · বাছুন, অথবা অনুসন্ধানে লিখুন (CTRL+K)
 WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS	স্ট্রিম কখন খারাপ হয়? · গত 30 দিন
 WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE	কখন সমস্যা ছিল? · গত 7 দিন × 24 ঘণ্টা · কারণ জানতে ঘরে মাউস রাখুন
 WHO ASKS WHOM -	কে কাকে জিজ্ঞেস করে—
@@ -1983,7 +1879,7 @@ after the server thought about it	সার্ভারের কাজ শে�
 alerts	সতর্কতা
 all of it took	সব মিলিয়ে সময় লেগেছে
 allowed	অনুমতি আছে
-amber: dips of 10% or so - normal weather	হলুদ: প্রায় 10% গতি কমা—স্বাভাবিক ওঠানামা
+amber: small dips (3-7%) - normal weather	হলুদ: ছোট পতন (3-7%)—স্বাভাবিক ওঠানামা
 an address! (it shouldn't have one)	একটি ঠিকানা! (এর থাকার কথা নয়)
 an answer	একটি উত্তর
 and the hand-off after it - loss starts there and carries on to the destination.	আর তার পরের নেটওয়ার্কে হস্তান্তর—লস সেখান থেকে শুরু হয়ে গন্তব্য পর্যন্ত থাকে।
@@ -1991,13 +1887,10 @@ and wakes the PC	এবং পিসি জাগায়
 another device	অন্য ডিভাইস
 another device answers for YOUR address	অন্য ডিভাইস আপনার ঠিকানার উত্তর দিচ্ছে
 answer	উত্তর
-answer, back through the router	রাউটারের মধ্য দিয়ে ফিরে আসা উত্তর
 answers	উত্তর দেয়
 any answer means it's alive - a Reject for a made-up name is right	যেকোনো উত্তর মানে সচল—বানানো নামের জন্য Reject-ই সঠিক
 anyone who encrypts a file for you	আপনার জন্য ফাইল এনক্রিপ্ট করেন এমন যে কেউ
 anything for	যার জন্য কিছু
-around the clock (crypto)	সারা দিনরাত (ক্রিপ্টো)
-arrived T4 - offset worked out	T4-এ এসেছে—সময়ের পার্থক্য বের হয়েছে
 arrived at T4 - offset worked out	T4-এ এসেছে—সময়ের পার্থক্য বের হয়েছে
 as fast as the line allows	লাইন যতটা পারে, তত দ্রুত
 ask	জিজ্ঞেস করুন
@@ -2052,7 +1945,6 @@ conflict - Windows warns and may stop using it	ঠিকানায় দ্�
 connected	সংযোগ আছে
 connected (remembered phone). The link button at the top shows it; Your phone > End now stops it.	যুক্ত হয়েছে (মনে রাখা ফোন)। ওপরের লিঙ্ক বোতামে দেখা যায়; আপনার ফোন > এখন শেষ করুন দিয়ে থামাতে পারবেন।
 control: test for	কন্ট্রোল: যার পরীক্ষা
-dashed = 100 ms, the "wait" line	দাগকাটা লাইন = 100 ms, অপেক্ষার সীমা
 days left	দিন বাকি
 default route 0.0.0.0/0	ডিফল্ট রুট 0.0.0.0/0
 destination	গন্তব্য
@@ -2067,7 +1959,6 @@ download at full speed	পুরো গতিতে ডাউনলোড
 drop	কমে যাওয়া
 each fix with what it gives back (memory freed, processor returned)	প্রতিটি সমাধানে কী ফিরে পাবেন (খালি মেমরি, CPU-এর সময়)
 each square is a core; its halves are its two threads - lit = working now	প্রতি ঘর একটি কোর, দুই অর্ধেক তার দুই থ্রেড—আলো জ্বললে এখন কাজ করছে
-earlier report(s) waiting to send when you're online - Read · Delete	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট—পড়ুন · মুছুন
 echo - UDP gets through	echo — UDP যেতে পারছে
 empty - as it should be	খালি—যেমন থাকার কথা
 empty: half speed	খালি: অর্ধেক গতি
@@ -2095,7 +1986,6 @@ for a lease time - renewed at half time	লিজের মেয়াদের
 for comparison	তুলনার জন্য
 for the computer (at start-up)	কম্পিউটারের জন্য (চালুর সময়)
 for you (at sign-in)	আপনার জন্য (সাইন-ইনের সময়)
-forwarded to	পাঠিয়ে দেওয়া হয়েছে
 from	থেকে
 from inside your own network	আপনার নেটওয়ার্কের ভেতর থেকে
 from local port	লোকাল পোর্ট থেকে
@@ -2104,9 +1994,7 @@ from your real address	আপনার আসল ঠিকানা থেকে
 full	পূর্ণ
 game ping while a game you added is open, call quality in a call, else speed + status	যোগ করা গেম খোলা থাকলে গেম পিং, কলে থাকলে কলের মান, নইলে গতি ও অবস্থা
 gateway	গেটওয়ে
-good for 10 h	10 h পর্যন্ত চলে
 goodbye	বিদায়
-got it T2, answered T3	T2-এ পেয়েছে, T3-এ উত্তর দিয়েছে
 got it at T2, answered at T3	T2-এ পেয়েছে, T3-এ উত্তর দিয়েছে
 green: bull years	সবুজ: বাজার বাড়ার বছর
 halfway - and narrowing in	অর্ধেক পথ—আরও কাছে আসছে
@@ -2197,14 +2085,12 @@ network part	নেটওয়ার্ক অংশ
 never heard back	আর উত্তর আসেনি
 new	নতুন
 next check	পরের পরীক্ষা
-no NAT loopback / hairpin	NAT loopback / hairpin নেই
 no answer to probes	পরীক্ষার অনুরোধে উত্তর নেই
 no dip was clearly on your home network (some couldn't be pinned on anyone). 	কোনো ঘটনাই নিশ্চিতভাবে বাড়ির নেটওয়ার্কের ছিল না; কিছু ঘটনার কারণ নির্দিষ্ট করা যায়নি। 
 no dip was on your home network. 	গতি কমার কোনো ঘটনাই বাড়ির নেটওয়ার্কে ছিল না। 
 no drops	সংযোগ বিচ্ছিন্ন হয়নি
 no overlap	ওভারল্যাপ নেই
 no reply	সাড়া নেই
-no reply would mean filtered - or it ignores this question	উত্তর না এলে ফিল্টার করা হতে পারে, অথবা এই প্রশ্নের উত্তর দেয় না
 no sign-in, no password	সাইন-ইন বা পাসওয়ার্ড লাগে না
 no slow moments	সংযোগ ধীর হয়নি
 no such name	এই নামে কিছু পাওয়া যায়নি
@@ -2238,7 +2124,6 @@ open - something answered	খোলা—কিছু সাড়া দিয�
 open now	এখন খোলা
 open to the network	নেটওয়ার্ক থেকে সংযোগ নেওয়া যায়
 opens it in AdeeboMeter	AdeeboMeter-এ খোলে
-or 'Time exceeded' if the TTL ran out	অথবা TTL ফুরালে 'Time exceeded'
 or 'fragmentation needed' from a router	অথবা রাউটার থেকে 'fragmentation needed'
 our version + key exchange	আমাদের সংস্করণ ও চাবি বিনিময়
 out from the VPN's exit	VPN-এর বেরোনোর ঠিকানা থেকে
@@ -2285,7 +2170,6 @@ refused - nothing listens there	প্রত্যাখ্যাত—ওখা
 remembered?	মনে রাখা হয়েছে?
 results	ফল
 retransmits = packets sent twice	পুনরায় পাঠানো = একই প্যাকেট দুবার পাঠানো
-reverse name?	ঠিকানা থেকে নাম?
 root	রুট
 root and	রুট ও
 round trip = (T4-T1) - (T3-T2)	যাওয়া-আসার সময় = (T4-T1) - (T3-T2)
@@ -2293,11 +2177,9 @@ router	রাউটার
 safe to share	শেয়ার করা নিরাপদ
 same packet, new return address	একই প্যাকেট, নতুন ফেরত ঠিকানা
 same ping, unmarked	একই পিং, চিহ্ন ছাড়া
-same service, its inside address	একই পরিষেবা, ভেতরের ঠিকানা
 save one	একটি সেভ করুন
 saved next to it	এর পাশেই সেভ হয়েছে
 savings-only ghost	শুধু সঞ্চয় করা প্রতিদ্বন্দ্বী
-scores: NHL, football-data.org, CricketData  ·  headlines: BBC Sport	স্কোর: NHL, football-data.org, CricketData · খবর: BBC Sport
 sealed	সিল করা
 sealed from here	এখান থেকে সিল করা
 sealed from here - no password is sent	এখান থেকেই সুরক্ষিত—পাসওয়ার্ড পাঠানো হয় না
@@ -2310,7 +2192,6 @@ server	সার্ভার
 server inside	ভেতরের সার্ভার
 showing	দেখানো হচ্ছে
 showing the last ones	শেষেরগুলো দেখানো হচ্ছে
-sign-in tickets come from here	সাইন-ইনের টিকিট এখান থেকে আসে
 signature checks out	স্বাক্ষর ঠিক আছে
 signed by	স্বাক্ষর করেছেন
 signed by the root	রুটের স্বাক্ষর করা
@@ -2319,7 +2200,6 @@ site	সাইট
 smooth	মসৃণ
 smooth so far	এখন পর্যন্ত মসৃণ
 something dropped it here - or at theirs	এখানে বা তাদের প্রান্তে কিছু বাদ দিয়েছে
-something listens on 3389	3389-এ কোনো পরিষেবা আছে
 speed + status	গতি ও অবস্থা
 speed under full load	পুরো চাপের সময় গতি
 speeds	গতি
@@ -2334,9 +2214,7 @@ still broadcast	এখনো ব্রডকাস্ট
 still broadcast - other servers learn it's taken	এখনো ব্রডকাস্ট—অন্য সার্ভার জানে ঠিকানাটি নেওয়া হয়েছে
 stop	থামান
 stop the recording to follow it.	এটি অনুসরণ করতে আগে রেকর্ডিং থামান।
-straight across your network	আপনার নেটওয়ার্কের মধ্য দিয়ে সরাসরি
 straight to the site	সরাসরি সাইটে
-stratum: steps away from an atomic clock	stratum: পারমাণবিক ঘড়ি থেকে কত ধাপ দূরে
 streams	স্ট্রিম
 switch / access point	সুইচ / অ্যাকসেস পয়েন্ট
 talks like: 	কথার ধরন: 
@@ -2357,7 +2235,6 @@ the connection	সংযোগ
 the connection is open	সংযোগ খোলা
 the destination	গন্তব্য
 the difference is the speed	পার্থক্য হলো গতি
-the directory is reachable	ডিরেক্টরিতে পৌঁছানো যায়
 the engineer's card	বিশেষজ্ঞের কার্ড
 the everyday card	দৈনন্দিন কার্ড
 the far end	শেষ প্রান্ত
@@ -2393,7 +2270,6 @@ the saved run	সেভ করা পরীক্ষা
 the server says its version first	সার্ভার আগে নিজের সংস্করণ জানায়
 the server thinking	সার্ভারের কাজের সময়
 the server's greeting - its name and software	সার্ভারের শুরুর বার্তা—নাম ও সফটওয়্যার
-the servers that run the directory	ডিরেক্টরি চালানো সার্ভারগুলো
 the service you're trying	যে পরিষেবায় পৌঁছাতে চাইছেন
 the site's own, signed by the middle	সাইটের নিজস্ব, মাঝের CA-এর স্বাক্ষর করা
 the size, DF and TTL you chose	আপনার বেছে নেওয়া আকার, DF ও TTL
@@ -2408,7 +2284,6 @@ through the VPN	VPN দিয়ে
 tight	টানাটানি
 tight for streaming yourself	নিজে স্ট্রিম করতে টানাটানি
 to get back to $100	আবার $100 হতে
-to your public address	আপনার পাবলিক ঠিকানায়
 today	আজ
 today:	আজ:
 too big - Fragmentation needed	বেশি বড়—ভাগ করা দরকার
@@ -2465,7 +2340,6 @@ with how long to keep it (TTL)	কতক্ষণ রাখতে হবে স�
 without the VPN	VPN ছাড়া
 wk	সপ্তাহ
 workgroup	ওয়ার্কগ্রুপ
-write it down - if it ever changes, ask why	লিখে রাখুন—বদলালে কারণ জানুন
 write speed, every ½ second	প্রতি ½ সেকেন্ডে লেখার গতি
 wrong shared secret, not a known client, or a firewall	শেয়ার করা গোপন চাবি ভুল, পরিচিত ক্লায়েন্ট নয়, অথবা ফায়ারওয়াল
 years	বছর
@@ -2478,7 +2352,6 @@ you see	আপনি দেখেন
 your CA (signs it)	আপনার CA (স্বাক্ষর করে)
 your DNS	আপনার DNS
 your DNS server	আপনার DNS সার্ভার
-your bytes	আপনার বাইট
 your file	আপনার ফাইল
 your key	আপনার চাবি
 your message	আপনার বার্তা
@@ -2509,21 +2382,20 @@ Right now this PC sends nothing in the background.	এখন এই পিসি
 Right now this PC sends: 	এখন এই পিসি পাঠাচ্ছে: 
 Each view keeps your own changes - switch any time from the View button at the top. Learn is in every view.	প্রতিটি ভিউতে আপনার পরিবর্তন আলাদাভাবে থাকে। ওপরের ভিউ বোতাম থেকে যেকোনো সময় বদলান। সব ভিউতেই শেখার অংশ আছে।
 English. A change takes full effect after a restart.	ইংরেজি। ভাষা বদলানোর পুরো প্রভাব দেখতে অ্যাপ আবার চালু করুন।
-Neon: near-black with electric cyan - accents glow softly.	নিয়ন: প্রায় কালো ব্যাকগ্রাউন্ডে উজ্জ্বল সায়ান, হালকা আভা ছড়ায়।
-Midnight: deep navy with aqua - calm for long nights.	মিডনাইট: গাঢ় নীলের সঙ্গে অ্যাকোয়া, দীর্ঘ রাতে চোখের আরাম।
-Sunset: warm plum with coral.	সানসেট: উষ্ণ বেগুনি ও কোরাল।
-Mint: light and fresh, soft green.	মিন্ট: হালকা, সতেজ সবুজ।
-Dark: always dark, whatever Windows uses.	ডার্ক: Windows-এর থিম যাই হোক, সবসময় গাঢ়।
-Light: always light, whatever Windows uses.	লাইট: Windows-এর থিম যাই হোক, সবসময় হালকা।
+Neon: near-black with electric cyan - accents glow softly.	Neon: প্রায় কালো ব্যাকগ্রাউন্ডে উজ্জ্বল সায়ান, হালকা আভা ছড়ায়।
+Midnight: deep navy with aqua - calm for long nights.	Midnight: গাঢ় নীলের সঙ্গে অ্যাকোয়া, দীর্ঘ রাতে চোখের আরাম।
+Sunset: warm plum with coral.	Sunset: উষ্ণ বেগুনি ও কোরাল।
+Mint: light and fresh, soft green.	Mint: হালকা, সতেজ সবুজ।
+Dark: always dark, whatever Windows uses.	Dark: Windows-এর থিম যাই হোক, সবসময় গাঢ়।
+Light: always light, whatever Windows uses.	Light: Windows-এর থিম যাই হোক, সবসময় হালকা।
 No place yet.	এখনও কোনো জায়গা ঠিক করা হয়নি।
 ) - Remove forgets it and the kept forecast.	)। সরিয়ে দিলে জায়গাটি ও সেভ করা পূর্বাভাস মুছে যাবে।
 Accuracy	নির্ভুলতা
-Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day.	আরও ভালো: পিসি চালু থাকলে প্রতি 6 ঘণ্টায় আপডেট হয়। বাদ পড়া আপডেট পরে চালায় না। দিনে সর্বোচ্চ 4টি ছোট অনুরোধ।
+Better: refreshed every 6 hours while the PC is on (never catching up on missed ones) - at most 4 small requests a day (if the weather service can't be reached, it tries again every 30 minutes until it answers).	আরও ভালো: পিসি চালু থাকলে প্রতি 6 ঘণ্টায় আপডেট হয়। বাদ পড়া আপডেট পরে চালায় না। দিনে সর্বোচ্চ 4টি ছোট অনুরোধ। আবহাওয়া সার্ভিসে পৌঁছানো না গেলে, উত্তর না পাওয়া পর্যন্ত প্রতি 30 মিনিটে আবার চেষ্টা করে।
 Normal: one request for today and the next 2 days, then quiet until less than a day is left - about one every 2 days. Rain times 2-3 days out can be off.	স্বাভাবিক: আজ ও পরের 2 দিনের জন্য একবার অনুরোধ করে। পূর্বাভাস এক দিনের কম বাকি থাকলে আবার করে, প্রায় প্রতি 2 দিনে একবার। 2-3 দিন পরের বৃষ্টির সময় এদিক-ওদিক হতে পারে।
 Temperature in	তাপমাত্রার একক
 How temperatures show in the widget and here.	উইজেট ও এখানে তাপমাত্রা যেভাবে দেখাবে।
 Weather in the widget	উইজেটে আবহাওয়া
-On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	চালু: গুটিয়ে থাকা বারে তাপমাত্রা ও কার্ডে এমন একটি লাইন দেখায়: “4°C · দুপুর 3টা থেকে বৃষ্টি”।
 Off: only the buddy's face shows the weather.	বন্ধ: শুধু সঙ্গীর মুখে আবহাওয়া বোঝায়।
 Off: plain words everywhere, the buddy's face stays.	বন্ধ: সবখানে সরল ভাষা, সঙ্গীর মুখ থাকে।
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	চালু: নিচের মেজাজ ও ব্যক্তিত্ব অনুযায়ী সঙ্গী কথা বলে। তথ্য, সংখ্যা ও রিপোর্ট বদলায় না।
@@ -2586,7 +2458,7 @@ Pings your router 	আপনার রাউটারে পিং করে
  - tells Wi-Fi trouble apart from internet trouble.	 — Wi-Fi ও ইন্টারনেটের সমস্যা আলাদা করে বোঝায়।
 Off: no 'internet went quiet' alerts; the Internet and DNS dots go grey.	বন্ধ: ইন্টারনেট বন্ধ হওয়ার সতর্কতা দেয় না। ইন্টারনেট ও DNS ডট ধূসর হয়।
 One tiny ping to a public server 	পাবলিক সার্ভারে একটি ছোট পিং 
-, and one name lookup at most once a minute.	ও সর্বোচ্চ মিনিটে একবার নাম খোঁজে।
+, and one name lookup at most once a minute (every 15 s with this window open).	ও সর্বোচ্চ মিনিটে একবার নাম খোঁজে (এই উইন্ডো খোলা থাকলে প্রতি 15 সেকেন্ডে)।
 Off: no roam, signal or channel alerts.	বন্ধ: অ্যাক্সেস পয়েন্ট বদল, সিগন্যাল বা চ্যানেলের সতর্কতা দেয় না।
 Asks Windows for signal, channel and access point 	সিগন্যাল, চ্যানেল ও অ্যাক্সেস পয়েন্ট জানতে Windows-কে জিজ্ঞেস করে 
  (every 10 s while this window is open). It asks Windows' Wi-Fi service directly - cheap. Only if that service won't answer does it start a small Windows tool (netsh) instead.	 (এই উইন্ডো খোলা থাকলে প্রতি 10 s)। সরাসরি Windows-এর Wi-Fi সেবা ব্যবহার করে, খুব কম রিসোর্স লাগে। সেবা উত্তর না দিলেই শুধু ছোট Windows টুল netsh চালায়।
@@ -2631,7 +2503,6 @@ Off - your IT team turned online lookups off (AdeeboMeter.policy).	বন্ধ:
 On: currencies (daily) and commodity prices (weekly) from the Bank of Canada - free, official, no account. Fetched only when the Trading page or the evening summary needs newer numbers.	চালু: Bank of Canada থেকে মুদ্রার হার (দৈনিক) ও পণ্যমূল্য (সাপ্তাহিক)। ফ্রি, সরকারি তথ্য, অ্যাকাউন্ট লাগে না। ট্রেডিং পাতা বা সন্ধ্যার সারাংশে নতুন সংখ্যা দরকার হলেই আনে।
 Off: no currencies or commodities.	বন্ধ: মুদ্রা বা পণ্যমূল্য দেখায় না।
 Evening summary in the widget	উইজেটে সন্ধ্যার সামারি
-On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	চালু: কর্মদিবসে 17:30-19:00 গুটিয়ে থাকা উইজেটে “সব শান্ত”-এর বদলে দিনের শেষ বাজারদর (মার্কিন ডলার ও জ্বালানির সপ্তাহ) দেখায়, পরে নিজে থেকেই ফিরে যায়। সমস্যা হলে সেটিই আগে দেখায়।
 Off: the widget never changes by itself.	বন্ধ: উইজেট নিজে থেকে বদলায় না।
 One line a minute per server, on this PC only, with the rest of the history	প্রতি সার্ভারের জন্য মিনিটে এক লাইন, শুধু এই পিসিতে, বাকি ইতিহাসের সঙ্গে
  - history is off in History & data, so nothing is kept.	 — ইতিহাস ও ডেটা অংশে ইতিহাস বন্ধ, তাই কিছু রাখা হয় না।
@@ -2661,9 +2532,6 @@ Off: connections show bare IP addresses.	বন্ধ: সংযোগে শু
 Wi-Fi keeps dropping	Wi-Fi বারবার বিচ্ছিন্ন হচ্ছে
 Saved in your AppData folder. Nothing leaves this PC.	আপনার AppData ফোল্ডারে সেভ হয়। এই পিসির বাইরে কিছু যায় না।
 Saved next to AdeeboMeter.exe. Nothing leaves this PC.	AdeeboMeter.exe-এর পাশে সেভ হয়। এই পিসির বাইরে কিছু যায় না।
-Nothing matches "	কিছু মেলেনি: “
- setting matches "	 টি সেটিং মিলেছে: “
- settings match "	 টি সেটিং মিলেছে: “
 The lightest touch. Router every 30 s, internet every 5 min, Wi-Fi every 2 min (every 10 s while this window is open), no call watching.	সবচেয়ে হালকা ব্যবহার। রাউটার প্রতি 30 s, ইন্টারনেট প্রতি 5 মিনিট, Wi-Fi প্রতি 2 মিনিট (এই উইন্ডো খোলা থাকলে প্রতি 10 s)। কলের ওপর নজর রাখে না।
 Just the speeds, like DU Meter.	শুধু গতি, DU Meter-এর মতো।
 Speeds plus OK / Busy / Problem.	গতি ও ঠিক আছে / ব্যস্ত / সমস্যা।
@@ -2685,8 +2553,7 @@ Esc, minimise, the X or the Back to corner button - they all do the same thing: 
 Quit completely	পুরোপুরি বন্ধ করুন
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	ট্রে আইকনে ডান ক্লিক করে বেরিয়ে যান বাছুন। কোনো সহায়ক প্রোগ্রামও চালু থাকে না।
 Learn anything	যেকোনো কিছু শিখুন
-When the mouse turns into a ? cursor, rest it there for a moment and an explanation appears.	মাউসের কার্সর ? হলে একটু থামুন, ব্যাখ্যা দেখাবে।
-Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	AdeeboMeter ব্যাকগ্রাউন্ডে কতটা নজর রাখবে তা সেটিংসে ঠিক করুন, অতি হালকা থেকে গেমার পর্যন্ত।
+Settings decides how much AdeeboMeter watches in the background - from Penny to Gamer.	AdeeboMeter ব্যাকগ্রাউন্ডে কতটা নজর রাখবে তা সেটিংসে ঠিক করুন, Penny থেকে Gamer পর্যন্ত।
 Readable source	পড়া যায় এমন সোর্স কোড
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	পুরো অ্যাপের সোর্স কোড চালানোর আগেই পড়তে পারেন। Windows-এর সঙ্গে থাকা কম্পাইলার দিয়েই এটি তৈরি।
 No admin rights	অ্যাডমিন অধিকার লাগে না
@@ -2694,7 +2561,7 @@ Everything it shows comes from what Windows already lets a normal user see. If s
 Secure by default	শুরু থেকেই নিরাপদ
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	চেকের সময় Windows-এর নিজস্ব সার্টিফিকেট যাচাইসহ TLS ব্যবহার করে (Windows TLS 1.2 বা 1.3 বেছে নেয়)। সার্টিফিকেট যাচাই কখনো বাদ দেয় না। ইনপুট যাচাই করে, শেল ব্যবহার করে না।
 Light as a feather	খুবই হালকা
-Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	ভারসাম্যপূর্ণ মোডে ব্যাকগ্রাউন্ডে মিনিটে প্রায় 70টি ছোট চেক (অতি হালকা মোডে প্রায় 8টি)। ভারী টুল শুধু এই উইন্ডো খোলা থাকলে চলে, নিজে থেকেই থামে।
+Around 70 small checks a minute on Balanced (about 8 on Penny) in the background. The heavy tools only run while this window is open, and always stop by themselves.	ভারসাম্যপূর্ণ মোডে ব্যাকগ্রাউন্ডে মিনিটে প্রায় 70টি ছোট চেক (Penny মোডে প্রায় 8টি)। ভারী টুল শুধু এই উইন্ডো খোলা থাকলে চলে, নিজে থেকেই থামে।
 Leaves no trace	চিহ্ন ফেলে রাখে না
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	সেটিংস ও ছোট লগ exe-এর পাশে থাকে (ইনস্টল করা কপিতে AppData ফোল্ডারে)। বন্ধ হলে ক্যাপচার মুছে যায়। উইন্ডোর নাম বা ট্রাফিকের ভেতরের তথ্য লগ করে না। বন্ধ না করলে কয়েক দিনের ইতিহাস শুধু এই পিসিতে রাখে, এক ক্লিকেই মুছতে পারেন।
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	পিসির চলমান সব যোগাযোগ: কোন অ্যাপ, কার সঙ্গে, কোন পোর্টে, কী অবস্থায়। নতুন সংযোগ ভেসে ওঠে, বন্ধগুলো মিলিয়ে যায়। অবস্থার মানে জানতে মাউস রাখুন। কোনো লাইনে Sniff চাপলে শুধু সেই যোগাযোগ Wireshark-এর জন্য রেকর্ড হয়।
@@ -2718,7 +2585,6 @@ everything AdeeboMeter does can be read there	AdeeboMeter কী করে, স�
 Copied - paste it into the page that opened	কপি হয়েছে, খোলা পাতায় পেস্ট করুন
 Found a bug? Report it	ত্রুটি পেয়েছেন? জানান
 When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	ইন্টারনেট ধীর লাগলে আমরা Task Manager খুলি, কমান্ড প্রম্পট চালাই, পিং করি, তারপর আন্দাজ করি। AdeeboMeter প্রতি সেকেন্ডে চুপচাপ এই কাজগুলো করে। সহজ এক বাক্যে জানায় কী সমস্যা ও কী করতে পারেন।
-No cloud. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	ক্লাউড নেই। টেলিমেট্রি নেই। আড়ি পাতে না। পাঠানো প্রতিটি প্যাকেট নিচে লেখা আছে, প্রতিটিই বন্ধ করতে পারেন।
 The corner widget	কোণার উইজেট
 A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	স্ক্রিনের ডান নিচে ছোট কার্ড, মনোযোগ না সরাতে 30% উজ্জ্বলতায় থাকে। সব ঠিক আছে কি না, CPU, মেমরি, ডিস্ক ও নেটওয়ার্ক এক নজরে দেখায়। ক্লিক আটকে দেয় না, নিচের কাজ চালু থাকে। কোনো উইন্ডো কোণা ঢাকলে ছোট বারে গুটিয়ে যায়। আধা সেকেন্ড মাউস রাখলে খোলে।
 Getting around	কোথায় কী পাবেন
@@ -2818,13 +2684,10 @@ WHY DOES IT FAIL?	কেন কাজ করছে না?
 Weather	আবহাওয়া
 What's wrong?	কী সমস্যা?
 Yes	হ্যাঁ
-Open engineer view	ইঞ্জিনিয়ার ভিউ খুলুন
 Settings...	সেটিংস...
 Hide widget (keep tray icon)	উইজেট লুকান (ট্রে আইকন রাখুন)
 Bigger widget	বড় উইজেট
-Serious mode (no jokes)	সিরিয়াস মোড (মজা ছাড়া)
 Widget on screen	স্ক্রিনে উইজেট
-It feels slow right now   Ctrl+Alt+S	এখন ধীর লাগছে   Ctrl+Alt+S
 Your phone...	আপনার ফোন...
 Uninstall AdeeboMeter...	AdeeboMeter আনইনস্টল করুন...
 Exit AdeeboMeter	AdeeboMeter বন্ধ করুন
@@ -4177,7 +4040,6 @@ Fix for a black hole: lower the MTU of the VPN adapter (or the router's MSS clam
 Reading your route table...	আপনার রুট টেবিল পড়ছে...
 Every route that covers 	যে রুটগুলো এই ঠিকানায় প্রযোজ্য: 
 The ping is only part of it. The server works in ticks (64 a second = every 15.6 ms), your game shows the world a couple of ticks in the past to keep movement smooth, then your PC draws it and the screen shows it.	পিং কেবল একটি অংশ। সার্ভার টিক ধরে কাজ করে (সেকেন্ডে 64টি = প্রতি 15.6 ms)। নড়াচড়া মসৃণ রাখতে গেম দু-এক টিক আগের দৃশ্য দেখায়, তারপর পিসি আঁকে ও স্ক্রিন দেখায়।
-How long one voice packet waits behind 	একটি ভয়েস প্যাকেট এর পেছনে যতক্ষণ অপেক্ষা করে: 
 Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words.	ওপরের ল্যাবে নিজের সংখ্যা দিয়ে নেটওয়ার্কের আচরণ দেখুন। নিচে প্রতিটি বিষয়ে দুই লাইন ও একটি ছবি। নেটওয়ার্কে নতুন হলে “স্তরগুলো সহজ কথায়” দিয়ে শুরু করুন।
 Records this lesson's traffic (	এই পাঠের ট্রাফিক রেকর্ড করে (
 While it records: 	রেকর্ডের সময়: 
@@ -4197,3 +4059,1619 @@ THE REAL PACKETS  ·  	আসল প্যাকেট ·
 PACKET 	প্যাকেট 
 This needs Wireshark (with Npcap) - it listens to your PC's own traffic for 10 seconds.	এটির জন্য Wireshark (Npcap-সহ) লাগে। নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে।
 Listens to your PC's own traffic for 10 seconds and tells you what it's made of: modern or old protocols, IPv4 or IPv6, and the background chatter Windows sends to your local network. Nothing is kept.	নিজের পিসির ট্রাফিক 10 সেকেন্ড পড়ে জানায় কী আছে: আধুনিক না পুরোনো প্রোটোকল, IPv4 না IPv6 ও Windows-এর ব্যাকগ্রাউন্ডে স্থানীয় নেটওয়ার্কে পাঠানো বার্তা। কিছু রেখে দেয় না।
+earlier report(s) waiting to send when you're online	অনলাইন হলে পাঠানোর অপেক্ষায় পুরোনো রিপোর্ট
+Pick your language	আপনার ভাষা বেছে নিন
+AdeeboMeter switches right away. A restart finishes the last few screens.	AdeeboMeter সঙ্গে সঙ্গে বদলে যায়। রিস্টার্ট করলে বাকি কয়েকটি স্ক্রিনও বদলাবে।
+PREVIEW OF	প্রিভিউ:
+POINT AT A LANGUAGE TO PREVIEW IT	প্রিভিউ দেখতে একটি ভাষার ওপর মাউস রাখুন
+Nothing changes until you click a card.	কোনো কার্ডে ক্লিক না করা পর্যন্ত কিছুই বদলাবে না।
+Arrow keys move, Enter picks, Esc closes	তীর চিহ্নে সরান, Enter-এ বাছুন, Esc-এ বন্ধ করুন
+The original	মূল ভাষা
+French (Canada)	ফরাসি (কানাডা)
+Spanish	স্প্যানিশ
+Arabic	আরবি
+Bangla	বাংলা
+Complete	সম্পূর্ণ
+translated	অনূদিত
+Partly translated	আংশিক অনূদিত
+Language: 	ভাষা: 
+Couldn't restart - close AdeeboMeter from the tray icon and open it again	রিস্টার্ট করা গেল না - ট্রে আইকন থেকে AdeeboMeter বন্ধ করে আবার খুলুন
+not watched - only the best	নজরে নেই - শুধু সেরা
+servers are checked	টি সার্ভার মাপা হয়
+Restart	রিস্টার্ট
+# 1.1.6 - 22 Nov
+(Bank of Canada)	(ব্যাংক অব কানাডা)
+(no 802.1X sign-in seen)	(কোনো 802.1X সাইন-ইন দেখা যায়নি)
+(no ACK)	(ACK নেই)
+(no DHCP - the address is set by hand)	(DHCP নেই—ঠিকানা হাতে বসানো)
+(no IPv6 address to ping)	(পিং করার মতো IPv6 ঠিকানা নেই)
+(no Offer)	(Offer নেই)
+(no SYN-ACK)	(SYN-ACK নেই)
+(no certificate)	(সার্টিফিকেট নেই)
+(no reply)	(কোনো উত্তর নেই)
+(no usable answer)	(কাজের কোনো উত্তর নেই)
+(nobody announced themselves)	(কেউ নিজের পরিচয় জানায়নি)
+(none answered - IPv6 is off on this network)	(কেউ উত্তর দেয়নি—এই নেটওয়ার্কে IPv6 বন্ধ)
+(not joined to a domain)	(কোনো ডোমেইনে যুক্ত নয়)
+(nothing heard)	(কিছুই শোনা যায়নি)
+(nothing to seal with)	(সিল করার মতো কিছু নেই)
+(off)	(বন্ধ)
+(this computer)	(এই কম্পিউটার)
+(your connection)	(আপনার সংযোগ)
+(your time)	(আপনার সময়)
+3 months	3 মাস
+3 months:	3 মাস:
+A Friday evening summary in the corner	শুক্রবার সন্ধ্যায় কোণে একটি সারাংশ
+A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	পরিবর্তন মানে কানাডীয় ডলারে ওই মুদ্রার দাম কতটা নড়েছে। চার্ট দেখতে একটি সারিতে ক্লিক করুন।
+A check is already running - its report opens here when it's done.	একটি পরীক্ষা আগেই চলছে—শেষ হলে তার রিপোর্ট এখানে খুলবে।
+A month ago	এক মাস আগে
+A web page doesn't list its qualities. Paste the stream's own address for this table.	ওয়েব পেজ তার মান (কোয়ালিটি) জানায় না। এই টেবিলের জন্য স্ট্রিমের নিজের ঠিকানা পেস্ট করুন।
+A year ago	এক বছর আগে
+Add	যোগ করুন
+Add a currency	একটি মুদ্রা যোগ করুন
+Add a quote key...	কোট কী যোগ করুন...
+Add currency	মুদ্রা যোগ করুন
+Add each month ($)	প্রতি মাসে যোগ ($)
+AdeeboLab	AdeeboLab
+AdeeboMeter Daily Financial Edition	AdeeboMeter দৈনিক অর্থনীতি সংস্করণ
+AdeeboMeter Matchday Edition	AdeeboMeter ম্যাচডে সংস্করণ
+After	পরে
+All closed now - here is the next trading day, from	এখন সব বন্ধ—পরের লেনদেনের দিন এখানে, শুরু
+All in One Place	সব এক জায়গায়
+All world markets	বিশ্বের সব বাজার
+Amount	পরিমাণ
+An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	এটি একটি সূচক, প্রতি ব্যারেল বা আউন্সের দাম নয়: কানাডার একদল রপ্তানি কোন দিকে আর কতটা নড়ছে, তা দেখায়।
+Asking the devices on your network who they are (about 8 s)...	আপনার নেটওয়ার্কের ডিভাইসগুলোকে জিজ্ঞেস করছি তারা কে (প্রায় 8 সেকেন্ড)...
+At kick-off: dry, most likely.	খেলা শুরুর সময়: সম্ভবত শুকনো।
+At kick-off: forecast unknown.	খেলা শুরুর সময়: পূর্বাভাস জানা নেই।
+At kick-off: rain likely.	খেলা শুরুর সময়: বৃষ্টির সম্ভাবনা।
+At the Bank of Canada's rate. Banks and exchange shops add a margin.	ব্যাংক অব কানাডার হারে। ব্যাংক ও মানি এক্সচেঞ্জ একটি মার্জিন যোগ করে।
+Average	গড়
+Bank of Canada	ব্যাংক অব কানাডা
+Bank of Canada commodity price indexes, in US dollars · weekly	ব্যাংক অব কানাডার পণ্যমূল্য সূচক, মার্কিন ডলারে · সাপ্তাহিক
+Bank of Canada policy rate	ব্যাংক অব কানাডার নীতি সুদহার
+Based on	ভিত্তি
+Biggest day	সবচেয়ে বড় দিন
+Busy	ব্যস্ত
+Canadian dollar	কানাডীয় ডলার
+Canadian dollar, in US dollars	কানাডীয় ডলার, মার্কিন ডলারে
+Certificate calendar, last looked	সার্টিফিকেটের ক্যালেন্ডার, শেষ দেখা
+Change	পরিবর্তন
+Change key...	কী বদলান...
+Changes vs the day before; the commodity index vs last week.	আগের দিনের তুলনায় পরিবর্তন; পণ্য সূচক গত সপ্তাহের তুলনায়।
+Check my line	আমার লাইন পরীক্ষা করুন
+Check my line now (20 s)	এখনই আমার লাইন পরীক্ষা করুন (20 সেকেন্ড)
+Checking	পরীক্ষা চলছে
+Checking your line...	আপনার লাইন পরীক্ষা করছি...
+Checking your network...	আপনার নেটওয়ার্ক পরীক্ষা করছি...
+Choose a place above and the forecast shows here (Open-Meteo: free, no account).	ওপরে একটি জায়গা বাছুন, পূর্বাভাস এখানে দেখাবে (Open-Meteo: ফ্রি, অ্যাকাউন্ট লাগে না)।
+Choose a place for the weather	আবহাওয়ার জন্য একটি জায়গা বাছুন
+Close heavy apps before kick-off.	খেলা শুরুর আগে ভারী অ্যাপগুলো বন্ধ করুন।
+Closed	বন্ধ
+Closes 1 PM	দুপুর 1টায় বন্ধ হয়
+Coming up	আসছে
+Commodity index	পণ্য সূচক
+Competition:	প্রতিযোগিতা:
+Cricket · CricketData	ক্রিকেট · CricketData
+Currency	মুদ্রা
+Day	দিন
+Delay is usually around	দেরি সাধারণত প্রায়
+Detected type:	শনাক্ত করা ধরন:
+Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.	শব্দ মিলছে না, ফোনে কোনো শব্দ নেই, নাকি আপনি এইমাত্র কোড স্ক্যান করেননি? «অনুমতি দেবেন না» চাপুন—এটি আপনার ফোন নয়।
+Draw your network, see the path, break one thing.	আপনার নেটওয়ার্ক আঁকুন, পথ দেখুন, একটা জিনিস ভাঙুন।
+Drops this week	এই সপ্তাহের ড্রপ
+Dry	শুকনো
+During the test (Mb/s, one point a second)	পরীক্ষার সময় (Mb/s, প্রতি সেকেন্ডে একটি বিন্দু)
+EXAMPLE - NO DATED EVENTS IN THIS RESULT	উদাহরণ—এই ফলে তারিখসহ কোনো ঘটনা নেই
+EXAMPLE - RUN IT FOR YOURS	উদাহরণ—নিজেরটা দেখতে চালান
+Each line says what it's based on. With too little history, it says so instead of guessing.	প্রতিটি লাইন বলে সেটি কিসের ভিত্তিতে। ইতিহাস কম থাকলে আন্দাজ না করে সেটাই বলে।
+Edition	সংস্করণ
+Energy index	জ্বালানি সূচক
+Example shows a finished result first; Open runs it	«উদাহরণ» আগে একটি শেষ হওয়া ফল দেখায়; «খুলুন» সেটি চালায়
+Expect the usual slow stretch:	স্বাভাবিক ধীর সময়টা আশা করুন:
+Facts from this week's numbers, not a forecast.	এই সপ্তাহের সংখ্যা থেকে তথ্য, পূর্বাভাস নয়।
+Fair	মোটামুটি
+Feels like:	অনুভূত:
+Fewer	কম
+Fine	ভালো
+Follow a team...	একটি দল অনুসরণ করুন...
+Follow teams...	দল অনুসরণ করুন...
+Follow your teams	আপনার দলগুলো অনুসরণ করুন
+Football · football-data.org	ফুটবল · football-data.org
+From ESPN's free scoreboards, updated once a day.	ESPN-এর ফ্রি স্কোরবোর্ড থেকে, দিনে একবার হালনাগাদ।
+From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on.	ব্যাংক অব কানাডা থেকে: সরকারি, ফ্রি, অ্যাকাউন্ট লাগে না। শুধু এই পেজ খোলা থাকলে আনা হয়, প্রতিদিনের হালনাগাদের পর বড়জোর একবার। আপনি চালু না করা পর্যন্ত বন্ধ।
+From your Financial Modeling Prep key · delayed while markets are open	আপনার Financial Modeling Prep কী থেকে · বাজার খোলা থাকলে দেরিতে
+GO TO	যান
+Good	ভালো
+Got as far as:	যতদূর পৌঁছেছে:
+Group · what's in it	গ্রুপ · এতে কী আছে
+HLS (.m3u8), DASH (.mpd) or a web page · the link stays on this PC	HLS (.m3u8), DASH (.mpd) বা একটি ওয়েব পেজ · লিংকটি এই পিসিতেই থাকে
+Headlines · BBC Sport	শিরোনাম · BBC Sport
+Healthy	সুস্থ
+High	বেশি
+History is off	ইতিহাস বন্ধ
+History is off, so there's no replay of this minute (Settings › General › History).	ইতিহাস বন্ধ, তাই এই মিনিটের রিপ্লে নেই (সেটিংস › সাধারণ › ইতিহাস)।
+History off	ইতিহাস বন্ধ
+Hockey · the NHL's public feed	হকি · NHL-এর পাবলিক ফিড
+Holidays are known for New York and Toronto; other exchanges' holidays aren't checked.	নিউ ইয়র্ক ও টরন্টোর ছুটির দিন জানা আছে; অন্য এক্সচেঞ্জের ছুটি দেখা হয় না।
+Humidity	আর্দ্রতা
+I'll check	আমি দেখছি
+ITS CONNECTIONS	এর সংযোগগুলো
+In CAD	CAD-এ
+Index levels need a quote service. Add your own free Financial Modeling Prep key and New York, Toronto, London, Frankfurt, Tokyo and more show here. Without one this stays empty - never old or made-up numbers.	সূচকের মান দেখতে একটি কোট সার্ভিস লাগে। নিজের ফ্রি Financial Modeling Prep কী যোগ করুন, তাহলে নিউ ইয়র্ক, টরন্টো, লন্ডন, ফ্রাঙ্কফুর্ট, টোকিও ও আরও অনেক কিছু এখানে দেখাবে। কী ছাড়া এটি ফাঁকা থাকে—কখনো পুরোনো বা বানানো সংখ্যা নয়।
+Inflation, past 12 months	মূল্যস্ফীতি, গত 12 মাস
+Is your stream ready?	আপনার স্ট্রিম কি তৈরি?
+Jitter:	জিটার:
+Kick-off (your time):	খেলা শুরু (আপনার সময়):
+LINE CHECK	লাইন পরীক্ষা
+Last 30 days	গত 30 দিন
+Last hop that answers	উত্তর দেওয়া শেষ হপ
+Last move	শেষ ওঠানামা
+Last one:	শেষটি:
+Last test:	শেষ পরীক্ষা:
+Last:	শেষ:
+Latency:	ল্যাটেন্সি:
+Leads Commodities	পণ্যবাজারে এগিয়ে
+Learning	শিখছি
+Let remembered phones reconnect while AdeeboMeter runs	AdeeboMeter চলার সময় মনে রাখা ফোনগুলোকে আবার যুক্ত হতে দিন
+Live scores: add my key...	লাইভ স্কোর: আমার কী যোগ করুন...
+Live:	লাইভ:
+Look at the phone in your own hand: does it show the same words?	আপনার হাতের ফোনটি দেখুন: সেখানে কি একই শব্দ দেখাচ্ছে?
+Loonie Firms	লুনি শক্ত হলো
+Loonie Holds Steady	লুনি স্থির আছে
+Loonie Slips	লুনি পিছিয়ে পড়ল
+Loonie {0} {1:0.0}% against the US dollar this week.	এই সপ্তাহে মার্কিন ডলারের বিপরীতে লুনি {0} {1:0.0}%।
+Loss, recent	প্যাকেট হারানো, সাম্প্রতিক
+Low	কম
+Lunch	দুপুরের খাবার
+MATCHDAY BRIEFING	ম্যাচডে ব্রিফিং
+Making the report...	রিপোর্ট তৈরি হচ্ছে...
+Markets	বাজার
+Markets are closed for the weekend.	সপ্তাহান্তে বাজার বন্ধ।
+Markets are closed right now.	এখন বাজার বন্ধ।
+Markets are open	বাজার খোলা
+Markets are open.	বাজার খোলা।
+Markets open	বাজার খোলা
+May drop at peaks	ব্যস্ত সময়ে ড্রপ হতে পারে
+Measuring...	মাপছি...
+Month	মাস
+My teams ›	আমার দল ›
+NO ADDRESS FROM DHCP	DHCP থেকে কোনো ঠিকানা আসেনি
+NOW	এখন
+Names	নাম
+Needs	লাগবে
+New York	নিউ ইয়র্ক
+New York and Toronto	নিউ ইয়র্ক ও টরন্টো
+Next 12 hours	পরের 12 ঘণ্টা
+Next game	পরের খেলা
+Next open:	পরের খোলা:
+Next:	পরে:
+No IPv4 home range to compare on this PC's adapters.	এই পিসির অ্যাডাপ্টারে তুলনা করার মতো বাসার IPv4 রেঞ্জ নেই।
+No closings in the next six weeks.	পরের ছয় সপ্তাহে কোনো ছুটি নেই।
+No drops at this hour	এই সময়ে কোনো ড্রপ নেই
+No drops in the last 7 days.	গত 7 দিনে কোনো ড্রপ নেই।
+No finished games in today's feeds.	আজকের ফিডে কোনো শেষ হওয়া খেলা নেই।
+No game in today's feeds	আজকের ফিডে কোনো খেলা নেই
+No game today for your teams	আজ আপনার দলগুলোর খেলা নেই
+No history yet for this day and hour - ask again after a few weeks.	এই দিন ও ঘণ্টার ইতিহাস এখনো নেই—কয়েক সপ্তাহ পর আবার জিজ্ঞেস করুন।
+No hour stands out: your line is about as quick all day.	কোনো ঘণ্টা আলাদা নয়: আপনার লাইন সারা দিন প্রায় একই রকম দ্রুত।
+No rain expected in the next 24 hours.	পরের 24 ঘণ্টায় বৃষ্টির সম্ভাবনা নেই।
+No upcoming games in today's feeds.	আজকের ফিডে সামনে কোনো খেলা নেই।
+None yet: names or short codes work - Leafs, TOR, Arsenal, India.	এখনো নেই: নাম বা ছোট কোড দুটোই চলে—Leafs, TOR, Arsenal, India।
+Not enough history yet to show a pattern - ask again in a few days.	প্যাটার্ন দেখানোর মতো ইতিহাস এখনো নেই—কয়েক দিন পর আবার জিজ্ঞেস করুন।
+Not enough history yet to spot a pattern. Ask again in	প্যাটার্ন বোঝার মতো ইতিহাস এখনো নেই। আবার জিজ্ঞেস করুন
+Nothing live right now.	এখন কিছু লাইভ নেই।
+Nothing planned - follow a team or turn on the markets numbers.	কিছু পরিকল্পনা নেই—একটি দল অনুসরণ করুন বা বাজারের সংখ্যা চালু করুন।
+Nothing running hot right now.	এখন কিছুই অতিরিক্ত চাপে নেই।
+Nothing to change: it should play as well as this stream allows.	কিছু বদলানোর নেই: এই স্ট্রিম যতটা ভালো চলতে পারে, ততটাই চলবে।
+Nothing to fix: every check came back fine.	ঠিক করার কিছু নেই: সব পরীক্ষা ঠিক এসেছে।
+Now	এখন
+Numbers only - AdeeboMeter never tells you what to buy or sell.	শুধু সংখ্যা—AdeeboMeter কখনো বলে না কী কিনবেন বা বেচবেন।
+OUTLOOK  ·  NOW AND NEXT	আউটলুক  ·  এখন ও পরে
+One of the row buys this much of the column.	সারির একটি একক দিয়ে কলামের এতটা কেনা যায়।
+Online checks are turned off by your IT team.	আপনার আইটি টিম অনলাইন পরীক্ষা বন্ধ রেখেছে।
+Only my teams	শুধু আমার দল
+Open-Meteo forecast	Open-Meteo পূর্বাভাস
+Opened from	যেখান থেকে খোলা
+Outlook for kick-off	খেলা শুরুর আউটলুক
+PC busy	পিসি ব্যস্ত
+PINNED	পিন করা
+PINNED MOMENTS	পিন করা মুহূর্ত
+Packet loss:	প্যাকেট হারানো:
+Paste	পেস্ট
+Paste a web address that starts with http:// or https:// - the stream's own link (ending in .m3u8 or .mpd) gives the full check.	http:// বা https:// দিয়ে শুরু হওয়া একটি ওয়েব ঠিকানা পেস্ট করুন—স্ট্রিমের নিজের লিংক (.m3u8 বা .mpd-তে শেষ) দিলে পুরো পরীক্ষা হয়।
+Paste your stream link and press Test my stream. In about 30 seconds you'll know which quality will play smoothly - and what to change if it won't.	স্ট্রিমের লিংক পেস্ট করে «আমার স্ট্রিম পরীক্ষা করুন» চাপুন। প্রায় 30 সেকেন্ডে জানবেন কোন মান মসৃণভাবে চলবে—আর না চললে কী বদলাতে হবে।
+Paste your stream link and test it: which quality will play, and how to make it better.	স্ট্রিমের লিংক পেস্ট করে পরীক্ষা করুন: কোন মান চলবে, আর কীভাবে আরও ভালো করবেন।
+Pin this minute	এই মিনিটটি পিন করুন
+Plays smoothly	মসৃণভাবে চলে
+Quality	মান
+RAM:	RAM:
+Rain chance, next 24 h	বৃষ্টির সম্ভাবনা, পরের 24 ঘণ্টা
+Rain from about	বৃষ্টি শুরু প্রায়
+Rain later	পরে বৃষ্টি
+Rain likely around	বৃষ্টির সম্ভাবনা প্রায়
+Rain:	বৃষ্টি:
+Reading your history...	আপনার ইতিহাস পড়ছি...
+Red line: now.	লাল রেখা: এখন।
+Remind	মনে করিয়ে দিন
+Remind me in the corner 15 minutes before kick-off	খেলা শুরুর 15 মিনিট আগে কোণে মনে করিয়ে দিন
+Resources are in good shape for streaming.	স্ট্রিমিংয়ের জন্য রিসোর্স ঠিক আছে।
+STREAM CHECK	স্ট্রিম পরীক্ষা
+Saved on this PC:	এই পিসিতে সংরক্ষিত:
+Score:	স্কোর:
+Secure:	নিরাপদ:
+See	দেখুন
+See all problems	সব সমস্যা দেখুন
+Server:	সার্ভার:
+Service board	সার্ভিস বোর্ড
+Show my path	আমার পথ দেখান
+Show my path in the Lab  ›	Lab-এ আমার পথ দেখান  ›
+Some	কিছু
+Some drops	কিছু ড্রপ
+Some weeks lost packets at this hour	কোনো কোনো সপ্তাহে এই সময়ে প্যাকেট হারিয়েছে
+Something else? Type it in the search box (Ctrl+K).	অন্য কিছু? সার্চ বক্সে লিখুন (Ctrl+K)।
+Something is working the PC hard - see What's running.	কিছু একটা পিসিকে খুব খাটাচ্ছে—«কী চলছে» দেখুন।
+Sounds like	শুনে মনে হচ্ছে
+Stable	স্থির
+Start with ($)	শুরুতে ($)
+Starts in:	শুরু হবে:
+Statistics Canada	Statistics Canada
+Steady	স্থির
+Storage:	স্টোরেজ:
+Stream Check is on the Sports page	স্ট্রিম পরীক্ষা খেলাধুলা পেজে আছে
+Struggling	সমস্যায় আছে
+THE MARKETS PAGE	বাজার পেজ
+THE PICTURE	পুরো ছবি
+THIS PC'S ADDRESS IS FIXED	এই পিসির ঠিকানা স্থির
+THIS WEEK'S MARKET BRIEFING	এই সপ্তাহের বাজার ব্রিফিং
+Tell me when a currency on my list moves more than 2% in a week	আমার তালিকার কোনো মুদ্রা এক সপ্তাহে 2%-এর বেশি নড়লে জানান
+Test my stream	আমার স্ট্রিম পরীক্ষা করুন
+Test your stream link (recommended).	আপনার স্ট্রিমের লিংক পরীক্ষা করুন (সুপারিশকৃত)।
+Tested	পরীক্ষিত
+Testing...	পরীক্ষা চলছে...
+That doesn't look like a key: letters and digits only.	এটা কী বলে মনে হচ্ছে না: শুধু অক্ষর আর অঙ্ক।
+That spot was removed - nothing to rename.	সেই জায়গাটি মুছে ফেলা হয়েছে—নাম বদলানোর কিছু নেই।
+The Bank of Canada's numbers, in plain words.	ব্যাংক অব কানাডার সংখ্যা, সহজ ভাষায়।
+The Week in Numbers	সপ্তাহটি সংখ্যায়
+The forecast is on its way...	পূর্বাভাস আসছে...
+The groups arrive from the Bank of Canada in a moment.	গ্রুপগুলো এক মুহূর্তে ব্যাংক অব কানাডা থেকে আসছে।
+The history arrives from the Bank of Canada in a moment.	ইতিহাস এক মুহূর্তে ব্যাংক অব কানাডা থেকে আসছে।
+The next day, in short	পরের দিন, সংক্ষেপে
+The numbers arrive after the first fetch.	প্রথমবার আনার পর সংখ্যা আসবে।
+The weather, your network and this PC: how things are now, and what the last few days say about the next one.	আবহাওয়া, আপনার নেটওয়ার্ক আর এই পিসি: এখন কেমন আছে, আর গত কয়েক দিন পরের দিন সম্পর্কে কী বলে।
+Their next game becomes this page's lead, with everything you need to watch it.	তাদের পরের খেলাই হবে এই পেজের প্রধান খবর, দেখার জন্য যা লাগে সবসহ।
+Their next game shows here as soon as it's in today's fixtures.	আজকের সূচিতে এলেই তাদের পরের খেলা এখানে দেখাবে।
+This stream lists one quality.	এই স্ট্রিমে একটিই মান আছে।
+Three days	তিন দিন
+Tip:	টিপ:
+Too little history	ইতিহাস খুব কম
+Toronto	টরন্টো
+Try this	এটা চেষ্টা করুন
+Turn on History in Settings: AdeeboMeter writes one line a minute on this PC, and this chart is made from it.	সেটিংসে ইতিহাস চালু করুন: AdeeboMeter এই পিসিতে প্রতি মিনিটে এক লাইন লেখে, আর এই চার্ট সেখান থেকেই তৈরি।
+Turn on History to see how your line usually behaves.	আপনার লাইন সাধারণত কেমন চলে দেখতে ইতিহাস চালু করুন।
+Turn on Weather in Settings to see the weather for your place at kick-off.	খেলা শুরুর সময় আপনার এলাকার আবহাওয়া দেখতে সেটিংসে আবহাওয়া চালু করুন।
+Turn on scores to see your teams' next game here.	আপনার দলগুলোর পরের খেলা এখানে দেখতে স্কোর চালু করুন।
+Type the new name first.	আগে নতুন নামটি লিখুন।
+Unpin	পিন সরান
+Unsteady	অস্থির
+Update:	আপডেট:
+Verdict	রায়
+Video came in at:	ভিডিও এসেছে:
+WHAT'S GOING ON?  ·  TAP WHAT YOU SEE	কী হচ্ছে?  ·  যা দেখছেন তাতে চাপুন
+Watch out	সাবধান
+Weather is off: your IT team turned online lookups off.	আবহাওয়া বন্ধ: আপনার আইটি টিম অনলাইন খোঁজ বন্ধ রেখেছে।
+Week	সপ্তাহ
+Weighs on Commodities	পণ্যবাজারে চাপ ফেলছে
+What $100 buys now	এখন $100-এ যা কেনা যায়
+When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	জ্বালানির দাম বাড়লে কানাডীয় ডলারও প্রায়ই সঙ্গে বাড়ে। একই সময়ের দুটোই, শুরুতে 100 ধরে।
+When your internet is slowest	কখন আপনার ইন্টারনেট সবচেয়ে ধীর
+Which currency?	কোন মুদ্রা?
+Wind	বাতাস
+Wind:	বাতাস:
+Windows trusts it	Windows এটিকে বিশ্বাস করে
+Windows' default: incoming blocked	Windows-এর ডিফল্ট: আসা ট্রাফিক বন্ধ
+Windows, Apple and Linux-style names	Windows, Apple ও Linux ধাঁচের নাম
+Would buffer	বাফার করবে
+YOUR WEEK IN TWO MINUTES	দুই মিনিটে আপনার সপ্তাহ
+Yearly growth (%)	বার্ষিক বৃদ্ধি (%)
+Years	বছর
+Yesterday	গতকাল
+You got	আপনি পেয়েছেন
+Your Financial Modeling Prep key (free at financialmodelingprep.com) - kept encrypted on this PC	আপনার Financial Modeling Prep কী (financialmodelingprep.com-এ ফ্রি)—এই পিসিতে এনক্রিপ্ট করে রাখা হয়
+Your PC is busy: close heavy apps.	আপনার পিসি ব্যস্ত: ভারী অ্যাপগুলো বন্ধ করুন।
+Your PC is ready for streaming.	আপনার পিসি স্ট্রিমিংয়ের জন্য তৈরি।
+Your PC · Your Network · Your Markets	আপনার পিসি · আপনার নেটওয়ার্ক · আপনার বাজার
+Your PC · Your Network · Your Streaming	আপনার পিসি · আপনার নেটওয়ার্ক · আপনার স্ট্রিমিং
+Your match, your setup and your stream - all in one place.	আপনার খেলা, আপনার সেটআপ আর আপনার স্ট্রিম—সব এক জায়গায়।
+Your network	আপনার নেটওয়ার্ক
+Your network is slow right now.	এই মুহূর্তে আপনার নেটওয়ার্ক ধীর।
+Your network is stable - no action needed.	আপনার নেটওয়ার্ক স্থির—কিছু করার দরকার নেই।
+Your stream link is tested.	আপনার স্ট্রিমের লিংক পরীক্ষা করা হয়েছে।
+Your stream, ready for the match	আপনার স্ট্রিম, খেলার জন্য তৈরি
+a calculator, not a promise	একটি হিসাব, প্রতিশ্রুতি নয়
+a packet to your own public address	আপনার নিজের পাবলিক ঠিকানায় একটি প্যাকেট
+a rise abroad can grow or shrink once it's turned into Canadian dollars	বিদেশে দাম বাড়লে কানাডীয় ডলারে রূপান্তরের পর তা বাড়তে বা কমতে পারে
+a team you follow	আপনার অনুসরণ করা একটি দল
+a trip, or money sent home	ভ্রমণ, বা দেশে পাঠানো টাকা
+a web server	একটি ওয়েব সার্ভার
+about 30 seconds	প্রায় 30 সেকেন্ড
+about 30 seconds · it downloads the real video to see what your line can carry	প্রায় 30 সেকেন্ড · আপনার লাইন কতটা বইতে পারে দেখতে আসল ভিডিও ডাউনলোড করে
+after (run it again)	পরে (আবার চালান)
+and by LLMNR / mDNS?	আর LLMNR / mDNS দিয়ে?
+and more on the Service board and in the Certificate calendar	আরও আছে সার্ভিস বোর্ড ও সার্টিফিকেটের ক্যালেন্ডারে
+any page, please - what time do you have?	যেকোনো পেজ, দয়া করে—আপনার কাছে কয়টা বাজে?
+around	প্রায়
+arrived back here	এখানে ফিরে এসেছে
+as	হিসেবে
+blocked (no rule allows it)	বন্ধ (কোনো নিয়ম অনুমতি দেয় না)
+chance	সম্ভাবনা
+checks in a row since	পরপর পরীক্ষা, শুরু
+comes back the same way	একই পথে ফেরে
+comes to	দাঁড়ায়
+compared with the file you gave	আপনার দেওয়া ফাইলের সঙ্গে তুলনায়
+couldn't tell	বলা গেল না
+d	দিন
+days	দিন
+days of History	দিনের ইতিহাস
+days of History on this PC	এই পিসিতে দিনের ইতিহাস
+dip	পতন
+drops in the last 7 days.	গত 7 দিনে ড্রপ।
+each set to 100 at the start, so you can compare	প্রতিটি শুরুতে 100 ধরা, যাতে তুলনা করা যায়
+each square is a core with one thread - lit = working now	প্রতিটি বর্গ একটি কোর, একটি থ্রেড—আলো জ্বলা = এখন কাজ করছে
+each square is a core; split ones run two threads, whole ones one - lit = working now	প্রতিটি বর্গ একটি কোর; ভাগ করাগুলো দুটি থ্রেড চালায়, পুরোগুলো একটি—আলো জ্বলা = এখন কাজ করছে
+every row	প্রতিটি সারি
+feels like	অনুভূত
+fetched only while a Sports page is open, every 5 minutes at most	শুধু খেলাধুলা পেজ খোলা থাকলে আনা হয়, বড়জোর প্রতি 5 মিনিটে
+free	ফ্রি
+from the	থেকে
+futures, from your quote key · delayed while open	ফিউচার্স, আপনার কোট কী থেকে · খোলা থাকলে দেরিতে
+growth	বৃদ্ধি
+h	ঘ
+hello + who are you? (anonymous)	হ্যালো + আপনি কে? (বেনামে)
+high	বেশি
+history on its way	ইতিহাস আসছে
+hover one for what it does	কোনটি কী করে জানতে একটির ওপর মাউস রাখুন
+in CAD	CAD-এ
+in Canadian dollars	কানাডীয় ডলারে
+in Connections	কানেকশনসে
+in the Time machine	টাইম মেশিনে
+in your time	আপনার সময়ে
+in your time · worked out on this PC	আপনার সময়ে · এই পিসিতে হিসাব করা
+index	সূচক
+is already a room - pick another name, or remove that one first.	আগেই একটি রুম—অন্য নাম বাছুন, বা আগে ওটি মুছুন।
+is down	বন্ধ হয়ে আছে
+it's on	চালু আছে
+its Date header	এর Date হেডার
+its host key	এর হোস্ট কী
+its time, to the second	এর সময়, সেকেন্ড পর্যন্ত
+knock	টোকা
+last 6 weeks	গত 6 সপ্তাহ
+less now	এখন কম
+live, right now	লাইভ, এই মুহূর্তে
+loonie stronger	লুনি শক্ত
+loonie weaker	লুনি দুর্বল
+mail to it would travel unencrypted	এতে পাঠানো মেইল এনক্রিপশন ছাড়া যাবে
+mail would travel unencrypted	মেইল এনক্রিপশন ছাড়া যাবে
+more hops	আরও হপ
+more in What changed	আরও আছে «কী বদলেছে»-তে
+more now	এখন বেশি
+most helpful first · each from something measured	সবচেয়ে কাজের আগে · প্রতিটি মাপা কিছু থেকে
+needs	লাগবে
+needs your free key	আপনার ফ্রি কী লাগবে
+no	না
+no DHCP server answered - Windows made up a 169.254 address	কোনো DHCP সার্ভার উত্তর দেয়নি—Windows নিজে একটি 169.254 ঠিকানা বানিয়েছে
+no DHCP server answered in the capture	ক্যাপচারে কোনো DHCP সার্ভার উত্তর দেয়নি
+no SSH answer	SSH উত্তর নেই
+no STARTTLS	STARTTLS নেই
+no key needed	কী লাগে না
+no key yet	এখনো কী নেই
+no reply can mean filtered - or it ignores this question	উত্তর না আসার মানে ফিল্টার করা—বা এটি এই প্রশ্ন উপেক্ষা করে
+nobody else answered for it	আর কেউ এর হয়ে উত্তর দেয়নি
+none	কিছুই না
+none in today's fixtures	আজকের সূচিতে নেই
+not looked up	খোঁজা হয়নি
+not read by this check - your SSH program shows it; if it ever changes, ask why	এই পরীক্ষা এটি পড়ে না—আপনার SSH প্রোগ্রাম দেখায়; কখনো বদলালে কারণ জিজ্ঞেস করুন
+of the last 6 weeks	গত 6 সপ্তাহের
+of what it bought a year ago	এক বছর আগে যা কেনা যেত তার
+offered, but never confirmed	প্রস্তাব এসেছে, কিন্তু কখনো নিশ্চিত হয়নি
+on its way from the Bank of Canada...	ব্যাংক অব কানাডা থেকে আসছে...
+on your list	আপনার তালিকায়
+one address only	শুধু একটি ঠিকানা
+one unit, in Canadian dollars	এক একক, কানাডীয় ডলারে
+online	অনলাইন
+out of 100	100-এর মধ্যে
+playing now	এখন খেলছে
+plugged in	চার্জে লাগানো
+port 25 is blocked on most home lines	বেশিরভাগ বাসার লাইনে পোর্ট 25 বন্ধ
+read without a password, as every client does first	পাসওয়ার্ড ছাড়া পড়া, যেমন প্রতিটি ক্লায়েন্ট প্রথমে করে
+remembered phone(s) couldn't be read (the list was damaged, or this is another Windows account) - remember them again from the phone.	টি মনে রাখা ফোন পড়া যায়নি (তালিকাটি নষ্ট, বা এটি অন্য Windows অ্যাকাউন্ট)—ফোন থেকে আবার মনে রাখুন।
+replay	রিপ্লে
+right (within a second or two)	ঠিক আছে (এক-দুই সেকেন্ডের মধ্যে)
+routers	রাউটার
+runs about	চলে প্রায়
+scores are off	স্কোর বন্ধ
+see below	নিচে দেখুন
+seen:	দেখা গেছে:
+sent back in	ফেরত এসেছে
+shown	দেখানো
+sign-in tickets come from 88	সাইন-ইন টিকিট আসে 88 থেকে
+signed with the shared secret	শেয়ার্ড সিক্রেট দিয়ে স্বাক্ষর করা
+since	থেকে
+slow moment	ধীর মুহূর্ত
+slower than the quietest hours	সবচেয়ে শান্ত সময়ের চেয়ে ধীর
+something listens there	সেখানে কিছু একটা শুনছে
+spike	হঠাৎ বৃদ্ধি
+starts in	শুরু হবে
+the address to knock on	যে ঠিকানায় টোকা দিতে হবে
+the certificate ends	সার্টিফিকেট শেষ হবে
+the certificate has expired	সার্টিফিকেটের মেয়াদ শেষ
+the directory's root entry	ডিরেক্টরির মূল এন্ট্রি
+the first	প্রথম
+the source Windows follows	Windows যে উৎস অনুসরণ করে
+their games come first everywhere: Overview, the corner, Streaming	তাদের খেলা সব জায়গায় আগে আসে: এক নজরে, কোণে, স্ট্রিমিং
+this PC again	আবার এই পিসি
+this PC's name (an example)	এই পিসির নাম (একটি উদাহরণ)
+this run	এই রান
+type more to narrow it	সংকুচিত করতে আরও লিখুন
+unchanged since	অপরিবর্তিত, শুরু
+up	উপরে
+video came in at	ভিডিও এসেছে
+vs	বনাম
+vs CAD	বনাম CAD
+web page	ওয়েব পেজ
+weeks	সপ্তাহ
+what each needs comes from the stream itself	কোনটির কী লাগে তা স্ট্রিম নিজেই জানায়
+what to prepare	কী প্রস্তুত করবেন
+works	কাজ করে
+yes (HTTPS)	হ্যাঁ (HTTPS)
+you put in	আপনি দেন
+your key is set	আপনার কী বসানো আছে
+your team	আপনার দল
+{0} closed {1} ({2}).	{0} বন্ধ হয়েছে {1} ({2})।
+{0} index {1} {2:0.0}% on the week.	{0} সূচক সপ্তাহে {1} {2:0.0}%।
+{0} index {1} {2} weeks running.	{0} সূচক টানা {2} সপ্তাহ {1}।
+Or tap what you see	অথবা যা দেখছেন তাতে চাপুন
+Search or describe a problem	সমস্যা খুঁজুন বা বর্ণনা করুন
+What's going on?	কী হচ্ছে?
+how sure	কতটা নিশ্চিত
+No minutes recorded for this time yet - the case uses what it measures now.	এই সময়ের কোনো মিনিট এখনো রেকর্ড হয়নি—কেসটি এখন যা মাপছে তাই ব্যবহার করে।
+History is off (Settings > History & data), so there are no past minutes to draw.	ইতিহাস বন্ধ (সেটিংস > ইতিহাস ও ডেটা), তাই আঁকার মতো আগের কোনো মিনিট নেই।
+pressure right now	এই মুহূর্তের চাপ
+who uses it, health, space	কে ব্যবহার করছে, অবস্থা, জায়গা
+the usual suspects	চেনা সন্দেহভাজনরা
+the last 7 days	গত 7 দিন
+memory that only grows	যে মেমরি শুধু বাড়তেই থাকে
+who draws the most	কে সবচেয়ে বেশি খরচ করে
+installs and updates	ইনস্টল ও আপডেট
+health and charge cycles	অবস্থা ও চার্জ সাইকেল
+Pick what's wrong - I'll run the checks and tell you what I saw, what I can't know, and what to try next.	কী সমস্যা বাছুন—আমি পরীক্ষাগুলো চালিয়ে বলব কী দেখলাম, কী জানা সম্ভব নয়, আর এরপর কী চেষ্টা করবেন।
+Choose the problem. AdeeboMeter runs the checks and reports findings, evidence, limits and next steps.	সমস্যাটি বাছুন। AdeeboMeter পরীক্ষা চালিয়ে ফলাফল, প্রমাণ, সীমাবদ্ধতা ও পরের ধাপ জানায়।
+Not established: 	নিশ্চিত হয়নি: 
+Layer by layer, stops at the first broken one	স্তর ধরে ধরে, প্রথম ভাঙা জায়গায় থামে
+Finds where the delay starts	দেরি কোথায় শুরু হয় খুঁজে বের করে
+Today's drops and what came just before	আজকের ড্রপ আর ঠিক তার আগে যা ঘটেছে
+No internet at all	একদম ইন্টারনেট নেই
+Nothing opens - checks every step	কিছুই খোলে না—প্রতিটি ধাপ পরীক্ষা করে
+Connected, but nothing works	সংযুক্ত, কিন্তু কিছুই কাজ করে না
+The network isn't in the list	নেটওয়ার্কটি তালিকায় নেই
+Downloads are slow	ডাউনলোড ধীর
+Your plan vs this PC's link and disk	আপনার প্ল্যান বনাম এই পিসির লিংক ও ডিস্ক
+My game lags	আমার গেমে ল্যাগ
+Your Wi-Fi, your line, or the game	আপনার Wi-Fi, আপনার লাইন, নাকি গেম
+Speed now and what else is busy	এখনকার গতি আর আর কী ব্যস্ত
+Slow after sleep or waking	স্লিপ বা জেগে ওঠার পর ধীর
+How long it takes to get back online	আবার অনলাইনে আসতে কতক্ষণ লাগে
+Email won't send	ইমেইল যাচ্ছে না
+Can this PC reach your mail server?	এই পিসি কি আপনার মেইল সার্ভারে পৌঁছায়?
+A device on my network is missing	আমার নেটওয়ার্কের একটি ডিভাইস নেই
+Everything seen on this network	এই নেটওয়ার্কে যা কিছু দেখা গেছে
+Pick what it feels like - I check it step by step.	কেমন লাগছে বাছুন—আমি ধাপে ধাপে পরীক্ষা করব।
+ (I can't name it)	 (নাম বলতে পারছি না)
+Every answer says where each fact came from - measured, Windows-reported, seen in packets or inferred - and what I couldn't establish.	প্রতিটি উত্তর বলে প্রতিটি তথ্য কোথা থেকে এসেছে—মাপা, Windows-এর জানানো, প্যাকেটে দেখা বা অনুমান—আর কী নিশ্চিত করতে পারিনি।
+Each fact is labelled: measured, Windows-reported, seen in packets, inferred or unavailable.	প্রতিটি তথ্যে লেবেল আছে: মাপা, Windows-এর জানানো, প্যাকেটে দেখা, অনুমান বা পাওয়া যায়নি।
+Report saved - show it	রিপোর্ট সংরক্ষিত—দেখান
+Make a report (PDF)	একটি রিপোর্ট তৈরি করুন (PDF)
+Learn why	কারণ জানুন
+Report saved	রিপোর্ট সংরক্ষিত
+Good. AdeeboMeter keeps watching - if it comes back, it'll tell you.	ভালো। AdeeboMeter নজর রাখছে—আবার হলে জানাবে।
+Streams worse in the evening? See your network's rush hour - and when to watch.	সন্ধ্যায় স্ট্রিম খারাপ চলে? আপনার নেটওয়ার্কের ব্যস্ত সময় দেখুন—আর কখন দেখবেন।
+Rush hour	ব্যস্ত সময়
+Picture freezing at the big moment? Find out if it's your Wi-Fi, your line or the service.	বড় মুহূর্তে ছবি আটকে যায়? জানুন দোষ Wi-Fi-এর, লাইনের, নাকি সার্ভিসের।
+Why it buffers	কেন বাফার করে
+Going live? Check upload, Wi-Fi and what else is using the line in one go.	লাইভে যাচ্ছেন? আপলোড, Wi-Fi আর লাইন আর কে ব্যবহার করছে—একবারে দেখুন।
+Ready to stream?	স্ট্রিমের জন্য তৈরি?
+Frames dropping in OBS? See whether it's the network or the PC.	OBS-এ ফ্রেম পড়ছে? দেখুন দোষ নেটওয়ার্কের নাকি পিসির।
+Is your plan fast enough for 4K on every screen at home?	বাসার সব স্ক্রিনে 4K-এর জন্য আপনার প্ল্যান কি যথেষ্ট?
+Plan check	প্ল্যান পরীক্ষা
+Your broker lags at the open? Check the line to it before the bell.	বাজার খোলার সময় ব্রোকার ধীর? ঘণ্টা বাজার আগে তার লাইন পরীক্ষা করুন।
+Market-open check	বাজার খোলার পরীক্ষা
+Is your connection fast enough to trade? See what 40 ms really costs.	আপনার সংযোগ কি ট্রেড করার মতো দ্রুত? দেখুন 40 ms আসলে কত খরচ করায়।
+Line vs trading	লাইন বনাম ট্রেডিং
+A slow moment while you traded? The Time machine shows what your line did then.	ট্রেডের সময় ধীর মুহূর্ত? টাইম মেশিন দেখায় তখন আপনার লাইন কী করছিল।
+Lag spikes? Find out whose fault it is - your Wi-Fi, your line or the game's server.	ল্যাগ স্পাইক? জানুন দোষ কার—আপনার Wi-Fi, আপনার লাইন, নাকি গেমের সার্ভারের।
+Why it lags	কেন ল্যাগ হয়
+Before a ranked match: one check of Wi-Fi, background downloads and the line.	র‍্যাঙ্কড ম্যাচের আগে: Wi-Fi, পেছনের ডাউনলোড আর লাইনের এক পরীক্ষা।
+Ready to play?	খেলার জন্য তৈরি?
+Would a ping booster (GPN) actually help you? Measure it instead of guessing.	পিং বুস্টার (GPN) কি সত্যিই সাহায্য করবে? আন্দাজ না করে মেপে দেখুন।
+NO CONNECTION - check Home first	সংযোগ নেই—আগে হোম দেখুন
+the first 80 shown	প্রথম 80টি দেখানো হলো
+Go to	যান
+Pinned tools	পিন করা টুল
+find the closest	সবচেয়ে কাছেরটি খুঁজুন
+Find the closest server for me	আমার জন্য সবচেয়ে কাছের সার্ভার খুঁজুন
+Add my own server...	আমার নিজের সার্ভার যোগ করুন...
+closest speed server	সবচেয়ে কাছের স্পিড সার্ভার
+I can't name it	নাম বলতে পারছি না
+pages take ages	পেজ খুলতে অনেক সময় লাগে
+ping spikes, rubber-banding	পিং লাফায়, চরিত্র পিছিয়ে যায়
+Running out of space	জায়গা ফুরিয়ে আসছে
+the disk is full, Windows nags	ডিস্ক ভরা, Windows বারবার মনে করায়
+the VPN may be the slow part	VPN হয়তো ধীর অংশটি
+how much of the delay is the VPN tunnel, and whether everything goes through it	দেরির কতটা VPN টানেলের, আর সবকিছু তার ভেতর দিয়ে যায় কিনা
+it works at home but not on VPN or at work	বাসায় চলে কিন্তু VPN-এ বা অফিসে চলে না
+overlapping networks, proxy, the VPN and the port	একে অপরের ওপর পড়া নেটওয়ার্ক, প্রক্সি, VPN আর পোর্ট
+your game is lagging	আপনার গেমে ল্যাগ হচ্ছে
+the game's servers, your Wi-Fi and your provider - in the Gamer Zone	গেমের সার্ভার, আপনার Wi-Fi আর প্রোভাইডার—গেমার জোনে
+videos keep buffering	ভিডিও বারবার বাফার করে
+your speed, your Wi-Fi and whether something else is using the internet	আপনার গতি, আপনার Wi-Fi আর অন্য কিছু ইন্টারনেট ব্যবহার করছে কিনা
+calls are choppy	কল কেটে কেটে যায়
+jitter, loss, your upload and the VPN	জিটার, প্যাকেট হারানো, আপনার আপলোড আর VPN
+the connection keeps dropping	সংযোগ বারবার কেটে যায়
+today's drops, roams and what the signal was doing	আজকের ড্রপ, রোম আর সিগন্যাল তখন কী করছিল
+the computer itself is slow	কম্পিউটার নিজেই ধীর
+processor, memory, disk, heat and frozen apps	প্রসেসর, মেমরি, ডিস্ক, তাপ আর আটকে যাওয়া অ্যাপ
+you're running out of storage	আপনার স্টোরেজ ফুরিয়ে আসছে
+temp files, the Recycle Bin and what takes the space	টেম্প ফাইল, রিসাইকেল বিন আর কী জায়গা নিচ্ছে
+a website or app won't open	একটি ওয়েবসাইট বা অ্যাপ খুলছে না
+the name, the route, the door, the lock and the answer	নাম, পথ, দরজা, তালা আর উত্তর
+the internet is slow	ইন্টারনেট ধীর
+where the delay starts: your PC, Wi-Fi, router, provider or DNS	দেরি কোথায় শুরু: আপনার পিসি, Wi-Fi, রাউটার, প্রোভাইডার নাকি DNS
+names aren't turning into addresses (DNS)	নাম ঠিকানায় রূপ নিচ্ছে না (DNS)
+the DNS servers, how fast they answer and whether a site's name resolves	DNS সার্ভার, তারা কত দ্রুত উত্তর দেয় আর সাইটের নাম মেলে কিনা
+every layer, from this PC to the internet	প্রতিটি স্তর, এই পিসি থেকে ইন্টারনেট পর্যন্ত
+something changed	কিছু বদলেছে
+what changed on this PC and network since then	তারপর থেকে এই পিসি ও নেটওয়ার্কে কী বদলেছে
+Wi-Fi works but nothing loads	Wi-Fi চলে কিন্তু কিছুই লোড হয় না
+it's the link to your router	সমস্যা রাউটারের সঙ্গে সংযোগে
+your Wi-Fi or cable: signal, speed, channel and the neighbours	আপনার Wi-Fi বা কেবল: সিগন্যাল, গতি, চ্যানেল আর প্রতিবেশীরা
+Prefer the Classic tabs?	ক্লাসিক ট্যাব পছন্দ?
+Name lookups	নাম খোঁজা
+not yet	এখনো না
+Your traffic	আপনার ট্রাফিক
+On Wi-Fi	Wi-Fi-তে
+Finding the closest...	সবচেয়ে কাছেরটি খুঁজছি...
+Nothing. Boring is good.	কিছুই না। একঘেয়েমিই ভালো।
+Nothing in the last 2 hours.	গত 2 ঘণ্টায় কিছু নেই।
+Used today on this network: 	আজ এই নেটওয়ার্কে ব্যবহার: 
+See this moment in the Time machine	এই মুহূর্তটি টাইম মেশিনে দেখুন
+Name, route, door, lock and answer for any site.	যেকোনো সাইটের নাম, পথ, দরজা, তালা আর উত্তর।
+Replay any minute, what changed, the week.	যেকোনো মিনিট আবার দেখুন, কী বদলেছে, পুরো সপ্তাহ।
+History is off - turn it on to replay.	ইতিহাস বন্ধ—আবার দেখতে চালু করুন।
+ ending within 30 days	 টির মেয়াদ 30 দিনের মধ্যে শেষ
+When your sites' certificates end.	আপনার সাইটগুলোর সার্টিফিকেট কবে শেষ হয়।
+None ending within 30 days.	30 দিনের মধ্যে কোনোটির মেয়াদ শেষ হচ্ছে না।
+This PC's locks, your network and sites.	এই পিসির তালা, আপনার নেটওয়ার্ক আর সাইট।
+Your traffic layer by layer, real packets.	আপনার ট্রাফিক স্তর ধরে ধরে, আসল প্যাকেট।
+Protocols, Windows inside, every term.	প্রোটোকল, Windows-এর ভেতর, প্রতিটি শব্দ।
+Draw a network, break one thing. 	একটি নেটওয়ার্ক আঁকুন, একটা জিনিস ভাঙুন। 
+ faults seen.	 টি ত্রুটি দেখা হয়েছে।
+Game servers live, lag spikes and whose fault.	গেম সার্ভার লাইভ, ল্যাগ স্পাইক আর দোষ কার।
+Is the stream ready - and why it stalled.	স্ট্রিম তৈরি কিনা—আর কেন আটকে গেল।
+Your broker's connection, the day's numbers.	আপনার ব্রোকারের সংযোগ, দিনের সংখ্যা।
+All quiet	সব শান্ত
+Your tab	আপনার ট্যাব
+Pin tools here from any tool page or search result.	যেকোনো টুল পেজ বা সার্চ ফল থেকে এখানে টুল পিন করুন।
+Open the AdeeboLab  ›	AdeeboLab খুলুন  ›
+Break it	ভেঙে দেখুন
+Break it: 	ভেঙে দেখুন: 
+ faults watched to the end · +	 টি ত্রুটি শেষ পর্যন্ত দেখা · +
+ Adeebo Points each, the first time.	 Adeebo Points প্রতিটিতে, প্রথমবার।
+nothing to wait for - it answers as you type	অপেক্ষার কিছু নেই—লেখার সঙ্গে সঙ্গে উত্তর দেয়
+as many minutes as you choose	আপনি যত মিনিট বাছবেন
+the seconds you choose (10-120)	আপনি যত সেকেন্ড বাছবেন (10-120)
+how many pings × how often - 200 pings every 200 ms is 40 s	কতগুলো পিং × কত পরপর—200 ms পরপর 200টি পিং মানে 40 s
+about a second per 10 packets	প্রতি 10টি প্যাকেটে প্রায় এক সেকেন্ড
+a few seconds - or keeps watching, if you give it minutes	কয়েক সেকেন্ড—বা মিনিট দিলে নজর রাখতে থাকে
+a few minutes (it tests the disk and memory)	কয়েক মিনিট (ডিস্ক ও মেমরি পরীক্ষা করে)
+a few seconds	কয়েক সেকেন্ড
+one TLS handshake to each site	প্রতিটি সাইটে একটি TLS হ্যান্ডশেক
+nothing - it reads the file or text you give it	কিছুই না—আপনার দেওয়া ফাইল বা লেখা পড়ে
+nothing - it's maths on this PC	কিছুই না—এই পিসিতে শুধু হিসাব
+nothing - it reads this PC and Windows	কিছুই না—এই পিসি আর Windows পড়ে
+an SSH session to the server you type	আপনার লেখা সার্ভারে একটি SSH সেশন
+a request to your linked phone	আপনার যুক্ত ফোনে একটি অনুরোধ
+SNMP questions to the device you type (read only)	আপনার লেখা ডিভাইসে SNMP প্রশ্ন (শুধু পড়া)
+the test packets you set up - nothing else	আপনার সাজানো পরীক্ষার প্যাকেট—আর কিছু না
+pings and test traffic to the server you type	আপনার লেখা সার্ভারে পিং ও পরীক্ষার ট্রাফিক
+a few small requests to the address you type	আপনার লেখা ঠিকানায় কয়েকটি ছোট অনুরোধ
+Busy · holding	ব্যস্ত · সামলাচ্ছে
+Can I stream 4K right now?	এখনই কি 4K দেখতে পারব?
+Copy for my provider	আমার প্রোভাইডারের জন্য কপি করুন
+Copy my week	আমার সপ্তাহ কপি করুন
+Copy report	রিপোর্ট কপি করুন
+Did you hear the tone on the LEFT only?	শব্দটা কি শুধু বাঁ দিকে শুনলেন?
+Did you hear the tone on the RIGHT only?	শব্দটা কি শুধু ডান দিকে শুনলেন?
+Not tonight	আজ না
+Posted as a PUBLIC issue on GitHub - anyone can read it. Leave out anything private. What you see above (and the details box) is exactly what goes, and nothing goes until you press Send.	GitHub-এ পাবলিক ইস্যু হিসেবে পোস্ট হয়—যে কেউ পড়তে পারে। ব্যক্তিগত কিছু দেবেন না। ওপরে যা দেখছেন (আর বিস্তারিত বক্স) ঠিক সেটাই যাবে, আর পাঠান না চাপা পর্যন্ত কিছুই যাবে না।
+Saved - drag the selected file onto Quick Share, then accept it on your Android phone	সংরক্ষিত—বাছাই করা ফাইলটি Quick Share-এ টেনে আনুন, তারপর Android ফোনে গ্রহণ করুন
+Saved - open Quick Share yourself from the Start menu (AdeeboMeter only starts it when Google's signature checks out)	সংরক্ষিত—স্টার্ট মেনু থেকে নিজে Quick Share খুলুন (Google-এর স্বাক্ষর ঠিক থাকলেই AdeeboMeter এটি চালায়)
+Send feedback	মতামত পাঠান
+Sending isn't switched on yet - Copy puts it on the clipboard for the form on adeebometer.com.	পাঠানো এখনো চালু হয়নি—«কপি» এটি adeebometer.com-এর ফর্মের জন্য ক্লিপবোর্ডে রাখে।
+What happened? What did you expect?	কী হয়েছিল? আপনি কী আশা করেছিলেন?
+Your IT team turned online sending off - Copy puts it on the clipboard instead.	আপনার আইটি টিম অনলাইনে পাঠানো বন্ধ রেখেছে—«কপি» এটি ক্লিপবোর্ডে রাখে।
+Your idea or question	আপনার আইডিয়া বা প্রশ্ন
+Your own mix	আপনার নিজের মিশ্রণ
+better now	এখন ভালো
+page hidden	পেজ লুকানো
+pages hidden	পেজ লুকানো
+subnet doesn't fit	সাবনেট আঁটছে না
+subnets don't fit	সাবনেটগুলো আঁটছে না
+tool matches	টি টুল মিলেছে
+tool shown	টি টুল দেখানো
+tools match	টি টুল মিলেছে
+tools shown	টি টুল দেখানো
+worse now	এখন খারাপ
+Risky	ঝুঁকিপূর্ণ
+Safe	নিরাপদ
+Starting...	শুরু হচ্ছে...
+Stopping...	থামানো হচ্ছে...
+Calculators	ক্যালকুলেটর
+JITTER	জিটার
+LOSS	লস
+LINK	লিংক
+BACKGROUND	পেছনে
+updating	আপডেট হচ্ছে
+busy line	লাইন ব্যস্ত
+WAIT - 	অপেক্ষা করুন - 
+WAIT - SOMETHING IS USING YOUR LINE	অপেক্ষা করুন - কিছু একটা আপনার লাইন ব্যবহার করছে
+EXPECT LAG - 	ল্যাগ হতে পারে - 
+PACKETS ARE BEING LOST	প্যাকেট হারাচ্ছে
+THE LINE IS SLOW RIGHT NOW	লাইন এখন ধীর
+READY TO QUEUE · GG	কিউ-এর জন্য তৈরি · GG
+YOU TYPE	আপনি লিখবেন
+SENDS	পাঠায়
+Keep AdeeboMeter free	AdeeboMeter ফ্রি রাখুন
+One person builds it, in his own time. No ads, no tracking, no account, no paywall - and it stays that way. If it ever saved you an hour or a phone call to your provider, you can help keep it going.	একজন মানুষ নিজের সময়ে এটি বানান। কোনো বিজ্ঞাপন নেই, ট্র্যাকিং নেই, অ্যাকাউন্ট নেই, টাকা দিয়ে খোলার কিছু নেই—আর এমনই থাকবে। এটা যদি কখনো আপনার এক ঘণ্টা বা প্রোভাইডারকে একটা ফোন বাঁচিয়ে থাকে, চালিয়ে যেতে সাহায্য করতে পারেন।
+No ads	বিজ্ঞাপন নেই
+No tracking	ট্র্যাকিং নেই
+No account	অ্যাকাউন্ট নেই
+Free, for everyone	সবার জন্য ফ্রি
+WHAT YOUR SUPPORT PAYS FOR	আপনার সহায়তা যা চালায়
+Code signing	কোড সাইনিং
+so Windows trusts the download instead of warning you	যাতে Windows সতর্ক না করে ডাউনলোডটিকে বিশ্বাস করে
+Microsoft Store	Microsoft Store
+one-click installs and updates	এক ক্লিকে ইনস্টল ও আপডেট
+The website	ওয়েবসাইট
+the guides, Learn and the phone app	গাইড, শিখুন আর ফোন অ্যাপ
+CHIP IN - ONCE, ANY AMOUNT	একবার দিন, যত খুশি
+A coffee	এক কাপ কফি
+A thank-you	একটা ধন্যবাদ
+Fuel a feature	একটা ফিচারের জ্বালানি
+Champion	চ্যাম্পিয়ন
+Other	অন্য
+you choose	আপনি ঠিক করুন
+Donate with PayPal	PayPal দিয়ে দান করুন
+with PayPal	PayPal দিয়ে
+PayPal, in Canadian dollars - it opens in your browser. AdeeboMeter itself sends nothing.	PayPal, কানাডীয় ডলারে—আপনার ব্রাউজারে খোলে। AdeeboMeter নিজে কিছুই পাঠায় না।
+OR HELP FOR FREE	বা বিনামূল্যে সাহায্য করুন
+Star it on GitHub	GitHub-এ স্টার দিন
+Tell a friend	বন্ধুকে জানান
+Share an idea	একটা আইডিয়া দিন
+Link copied	লিংক কপি হয়েছে
+free: finds out why your internet or PC is slow	ফ্রি: আপনার ইন্টারনেট বা পিসি কেন ধীর তা খুঁজে বের করে
+Thank you for using it - that already helps more than you think.	ব্যবহার করার জন্য ধন্যবাদ—এটাই আপনার ধারণার চেয়ে বেশি সাহায্য করে।
+
+DHCP & addressing	DHCP ও ঠিকানা
+SNMP & devices	SNMP ও ডিভাইস
+Routing & path	রাউটিং ও পথ
+Ports & reachability	পোর্ট ও পৌঁছানো
+ICMP & ping	ICMP ও পিং
+HTTP, TLS & certificates	HTTP, TLS ও সার্টিফিকেট
+802.1X, RADIUS, TACACS, LDAP	802.1X, RADIUS, TACACS, LDAP
+VPN & privacy	VPN ও গোপনীয়তা
+Time (NTP)	সময় (NTP)
+Speed & quality	গতি ও মান
+Calls, games, streams & trading	কল, গেম, স্ট্রিম ও ট্রেডিং
+Packets & captures	প্যাকেট ও ক্যাপচার
+Keys & encryption	কী ও এনক্রিপশন
+Hardware nerds	হার্ডওয়্যার-প্রেমীদের জন্য
+Reports & over time	রিপোর্ট ও সময়ের সঙ্গে
+WHAT IT DOES	এটি কী করে
+WHAT IT IS	এটি কী
+WHY YOU NEED IT	কেন দরকার
+WHY IT MATTERS	কেন জরুরি
+IF IT WEREN'T THERE	এটি না থাকলে
+WHAT TO DO	কী করবেন
+WHEN IT LOOKS BAD	খারাপ দেখালে
+CAN I CLOSE IT?	এটি বন্ধ করা যাবে?
+very sure	খুব নিশ্চিত
+fairly sure	বেশ নিশ্চিত
+likely	সম্ভবত
+a first guess	প্রথম অনুমান
+The PC	পিসি
+updates, sync, indexing	আপডেট, সিঙ্ক, ইনডেক্সিং
+Bestie	প্রিয় বন্ধু
+Bro code	বন্ধুদের নিয়ম
+Epic fantasy	মহাকাব্যিক ফ্যান্টাসি
+Space saga	মহাকাশ গাথা
+Pirate	জলদস্যু
+Noir detective	নোয়ার গোয়েন্দা
+Nature documentary	প্রকৃতির ডকুমেন্টারি
+Dark Ages	অন্ধকার যুগ
+Industrial	শিল্প যুগ
+Revolution	বিপ্লব
+Mission control	মিশন কন্ট্রোল
+Poetic	কাব্যিক
+Scientist	বিজ্ঞানী
+Coder	কোডার
+Gen-Z	জেন-জি
+Philosopher: Marcus Aurelius (Stoic)	দার্শনিক: মার্কাস অরেলিয়াস (স্টোয়িক)
+Philosopher: Aristotle	দার্শনিক: অ্যারিস্টটল
+Philosopher: Taoist (Laozi)	দার্শনিক: তাও (লাওজি)
+Philosopher: Confucius	দার্শনিক: কনফুসিয়াস
+Common to all	সবার জন্য এক
+Marcus Aurelius	মার্কাস অরেলিয়াস
+Aristotle	অ্যারিস্টটল
+Taoism	তাওবাদ
+Confucius	কনফুসিয়াস
+Internet speed	ইন্টারনেটের গতি
+Last test	শেষ পরীক্ষা
+Only when you press the button	শুধু বোতাম চাপলে
+When busy	ব্যস্ত অবস্থায়
+lag under load	লাইন ব্যস্ত থাকলে দেরি
+this server: download only	এই সার্ভার: শুধু ডাউনলোড
+n/a	প্রযোজ্য নয়
+Automatic	স্বয়ংক্রিয়
+Speed test:	গতি পরীক্ষা:
+About 20 seconds, up to	প্রায় ২০ সেকেন্ড, সর্বোচ্চ
+Never runs by itself.	নিজে থেকে কখনো চলে না।
+UPLOAD	আপলোড
+DOWNLOAD	ডাউনলোড
+NOT TESTED YET	এখনো পরীক্ষা হয়নি
+TEST TO	কোথায় পরীক্ষা
+Cloudflare's nearest data centre · download and upload	Cloudflare-এর সবচেয়ে কাছের ডেটা সেন্টার · ডাউনলোড ও আপলোড
+DOWNLOAD ONLY	শুধু ডাউনলোড
+Speed test server	গতি পরীক্ষার সার্ভার
+(name hidden - location is off)	(নাম লুকানো - লোকেশন বন্ধ)
+signal	সিগন্যাল
+link	লিংক
+VPN on	VPN চালু
+The {0} moved {1:0.0}% against the Canadian dollar this week.	এই সপ্তাহে কানাডিয়ান ডলারের বিপরীতে {0} {1:0.0}% বদলেছে।
+no key needed - a key gives more leagues	কী লাগবে না - কী দিলে আরও লিগ
+Football · ESPN's scoreboards (or your own key)	ফুটবল · ESPN-এর স্কোরবোর্ড (অথবা আপনার নিজের কী)
+(no greeting read)	(কোনো শুভেচ্ছা পড়া যায়নি)
+STARTTLS refused	STARTTLS প্রত্যাখ্যাত
+(no answer - the test couldn't start)	(উত্তর নেই - পরীক্ষা শুরু হয়নি)
+(no Remote Desktop answer)	(রিমোট ডেস্কটপের উত্তর নেই)
+refused, or not Remote Desktop	প্রত্যাখ্যাত, অথবা রিমোট ডেস্কটপ নয়
+(not found)	(পাওয়া যায়নি)
+port unreachable - closed	পোর্টে পৌঁছানো যায় না - বন্ধ
+the host said so (ICMP)	হোস্ট নিজেই জানিয়েছে (ICMP)
+no DHCP server to ask	জিজ্ঞেস করার মতো DHCP সার্ভার নেই
+no address from DHCP	DHCP থেকে কোনো ঠিকানা নেই
+(a device)	(একটি ডিভাইস)
+what's my public address?	আমার পাবলিক ঠিকানা কী?
+
+Off until you turn it on. Then, while this page is open - and while a stream plays on the Streaming page if you follow a team - hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines, every 5 minutes at most.	আপনি চালু না করলে বন্ধ। চালু হলে এই পাতা খোলা থাকা অবস্থায়, বা দল অনুসরণ করলে স্ট্রিমিং পাতায় দেখার সময়: NHL হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর খবর। সর্বোচ্চ প্রতি 5 মিনিটে একবার।
+Off until you turn it on. Then, while this page is open: hockey scores from the NHL, football from ESPN's public scoreboards (or football-data.org with your own free key), cricket with your own free key, and BBC Sport's headlines - every 5 minutes at most.	আপনি চালু না করা পর্যন্ত বন্ধ। তারপর এই পেজ খোলা থাকলে: NHL থেকে হকির স্কোর, ESPN-এর পাবলিক স্কোরবোর্ড থেকে ফুটবল (অথবা নিজের ফ্রি কী দিয়ে football-data.org), নিজের ফ্রি কী দিয়ে ক্রিকেট, আর BBC Sport-এর শিরোনাম—বড়জোর প্রতি 5 মিনিটে।
+
+ping your pinned addresses in the background	পিন করা ঠিকানাগুলোতে ব্যাকগ্রাউন্ডে পিং করা
+check these games' servers in the background: 	ব্যাকগ্রাউন্ডে এই গেমগুলোর সার্ভার পরীক্ষা করা: 
+replace your pinned addresses with: 	আপনার পিন করা ঠিকানাগুলোর বদলে: 
+
+A lab drawing someone sent you (.json)	কেউ আপনাকে পাঠানো একটি ল্যাব ড্রয়িং (.json)
+AdeeboLab drawings	AdeeboLab ড্রয়িং
+An empty page - pick devices and click to place them	একটি খালি পাতা - ডিভাইস বেছে নিন এবং ক্লিক করে বসান
+Couldn't read that file:	ফাইলটি পড়া গেল না:
+Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	আপনার নেটওয়ার্ক আঁকুন, একটি প্যাকেট কোন পথে যায় দেখুন, তারপর একটি জিনিস ভেঙে দেখুন কোথায় আটকে যায়। ড্রয়িং নিজের জানালায় খোলে; সবকিছু এই পিসিতেই থাকে।
+EXAMPLES - A TYPICAL HOME, READY TO BREAK	উদাহরণ - একটি সাধারণ বাসা, ভাঙার জন্য তৈরি
+New diagram	নতুন ডায়াগ্রাম
+None yet - every drawing you change in the lab is kept here (on this PC).	এখনো কিছু নেই - ল্যাবে যে ড্রয়িং বদলাবেন তা এখানে থাকবে (এই পিসিতে)।
+Open a file...	একটি ফাইল খুলুন...
+Open a lab drawing	একটি ল্যাব ড্রয়িং খুলুন
+Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies	একটি সমস্যা বেছে নিন - DNS, MTU, লস, ভুল গেটওয়ে - আর দেখুন প্যাকেট কোথায় থেমে যায়
+Run a trace or MTR first	আগে একটি trace বা MTR চালান
+That file is over 2 MB - too big for a lab drawing.	ফাইলটি ২ MB-এর বেশি - ল্যাব ড্রয়িংয়ের জন্য খুব বড়।
+That file isn't a lab drawing.	এটি কোনো ল্যাব ড্রয়িং নয়।
+The lab window needs Microsoft Edge (it's in Windows). One lab window at a time: opening another closes the last, and keeps what you drew.	ল্যাব জানালার জন্য Microsoft Edge লাগে (এটি Windows-এ আছে)। এক সময়ে একটি ল্যাব জানালা: আরেকটি খুললে আগেরটি বন্ধ হয়, আর আপনার আঁকা থেকে যায়।
+YOUR DIAGRAMS	আপনার ডায়াগ্রাম
+YOUR NETWORK, AS ADEEBOMETER SEES IT	AdeeboMeter যেভাবে আপনার নেটওয়ার্ক দেখে
+ask them	তাদের জিজ্ঞেস করুন
+
+/proc as files; re-run anything every few seconds	/proc ফাইল হিসেবে; যেকোনো কিছু কয়েক সেকেন্ড পরপর আবার চালান
+FOLDERS	ফোল্ডার
+Keys: Tab completes (twice lists) · Up/Down history · Ctrl+C stops (or copies a selection) · Ctrl+L clears · Ctrl+U/K/W edit · right-click pastes	কী: Tab পূরণ করে (দুবার চাপলে তালিকা) · উপর/নিচ ইতিহাস · Ctrl+C থামায় (বা নির্বাচিত অংশ কপি করে) · Ctrl+L মুছে দেয় · Ctrl+U/K/W সম্পাদনা · রাইট-ক্লিকে পেস্ট
+Nothing here starts another program: every command is AdeeboMeter's own.	এখান থেকে অন্য কোনো প্রোগ্রাম চালু হয় না: প্রতিটি কমান্ড AdeeboMeter-এর নিজের।
+POWER	উন্নত
+THIS PC (read only)	এই পিসি (শুধু পড়া যায়)
+TOOLS AND PAGES	টুল ও পেজ
+a script; --yes confirms its test-traffic tools for the whole run	একটি স্ক্রিপ্ট; --yes পুরো রানের জন্য এর টেস্ট-ট্রাফিক টুলগুলো নিশ্চিত করে
+addresses, routes, connections and listeners	ঠিকানা, রুট, সংযোগ ও লিসেনার
+and / or / in the background (jobs, wait, kill %1)	এবং / অথবা / ব্যাকগ্রাউন্ডে (jobs, wait, kill %1)
+choose by pattern (* ? [abc])	প্যাটার্ন দিয়ে বেছে নিন (* ? [abc])
+command output and sums in a line; the text tools	লাইনের ভেতরে কমান্ডের আউটপুট ও হিসাব; টেক্সট টুলগুলো
+disks, folder sizes, drives, memory	ডিস্ক, ফোল্ডারের আকার, ড্রাইভ, মেমরি
+every Toolbox tool is a command: ping 1.1.1.1 20 · dig example.com MX	টুলবক্সের প্রতিটি টুল একটি কমান্ড: ping 1.1.1.1 20 · dig example.com MX
+every tool is a command, every page is a folder	প্রতিটি টুল একটি কমান্ড, প্রতিটি পেজ একটি ফোল্ডার
+every tool with its example	প্রতিটি টুল তার উদাহরণসহ
+files - rm asks first	ফাইল - rm আগে জিজ্ঞেস করে
+go to a page	একটি পেজে যান
+help for everything · Tab completes · Ctrl+C stops · nothing here starts another program	help-এ সবকিছু · Tab পূরণ করে · Ctrl+C থামায় · এখান থেকে অন্য কোনো প্রোগ্রাম চালু হয় না
+home = your folder, data, mnt/c, pages, tools	home = আপনার ফোল্ডার, data, mnt/c, pages, tools
+iperf3 with its real flags (-p -u -b --bidir too); AdeeboMeter is the client	iperf3 তার আসল ফ্ল্যাগসহ (-p -u -b --bidir-ও); AdeeboMeter হলো ক্লায়েন্ট
+list them, or what one does	তালিকা দেখুন, বা একটি কী করে
+loops, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep	লুপ, while, if/then/else/fi, NAME=value, $1 $? read test seq sleep
+pipes; > file, >> file, < file, 2>/dev/null, &> file	পাইপ; > ফাইল, >> ফাইল, < ফাইল, 2>/dev/null, &> ফাইল
+read files or what a pipe sends	ফাইল পড়ুন বা পাইপ যা পাঠায়
+run together, merge as each finishes; cat hosts.txt | parallel ping {} 4	একসাথে চালান, প্রতিটি শেষ হলে মিলিয়ে দেখান; cat hosts.txt | parallel ping {} 4
+sizes, details, SHA-256	আকার, বিস্তারিত, SHA-256
+the NOW line · raw values · the app's log	এখন-লাইন · কাঁচা মান · অ্যাপের লগ
+what's here (ll = ls -l) · cd /data/scripts for ready-made scripts	এখানে কী আছে (ll = ls -l) · তৈরি স্ক্রিপ্টের জন্য cd /data/scripts
+what's running and what it costs (nothing is stopped from here)	কী চলছে আর তাতে কত খরচ (এখান থেকে কিছু বন্ধ করা হয় না)
+where you are, what's below, find by name	আপনি কোথায়, নিচে কী আছে, নাম দিয়ে খুঁজুন
+write a script or any text file, right here (^S save ^X exit · :wq); read a long one a page at a time	এখানেই স্ক্রিপ্ট বা যেকোনো টেক্সট ফাইল লিখুন (^S সেভ ^X বের হন · :wq); লম্বা ফাইল পাতায় পাতায় পড়ুন
+
+The longest one voice packet can wait behind 	একটি ভয়েস প্যাকেট সর্বোচ্চ যতক্ষণ অপেক্ষা করতে পারে, পেছনে 
+
+Router 2 ms. Past the router everything loses about 4 of 10 replies - the internet check, other sites and the stream server alike.	রাউটার 2 ms। রাউটারের পরে সবকিছুই প্রায় 10টির মধ্যে 4টি উত্তর হারায় - ইন্টারনেট চেক, অন্য সাইট আর স্ট্রিম সার্ভার সবাই।
+Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	আপনার বাড়ির নেটওয়ার্ক সঙ্গে সঙ্গে সাড়া দেয়; লস শুরু হয় রাউটারের ঠিক পরে আর দূরের সব গন্তব্যেই তা দেখা যায় - তাই এটা কোনো একটি সার্ভার নয়, সবার দিকে যাওয়ার রাস্তা।
+On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	প্রথম লিজে ক্রম হলো Discover, Offer, Request, Ack - আর এই পিসি Discover দিয়ে শুরু করেছে, মানে নতুন ঠিকানা চাইছিল: কেউ ঠিকানা অফার করার আগেই Request এসেছে। (যে পিসি আগের ঠিকানা নবায়ন করছে সে সরাসরি Request দিয়ে শুরু করতে পারে - কিন্তু Discover-এর পরে নয়।)
+Echo reply to the TTL 2 ping, straight from 1.1.1.1	TTL 2 পিং-এর ইকো উত্তর, সরাসরি 1.1.1.1 থেকে
+
+Couldn't open the AdeeboLab:	AdeeboLab খোলা গেল না:
+Couldn't read your diagrams just now - try again in a moment.	এই মুহূর্তে আপনার ডায়াগ্রামগুলো পড়া গেল না - একটু পরে আবার চেষ্টা করুন।
+Couldn't save:	সেভ করা গেল না:
+Save a copy of all my diagrams	আমার সব ডায়াগ্রামের একটি কপি সেভ করুন
+That file holds several diagrams - the first one is opened; each one you change is kept in Your diagrams.	এই ফাইলে কয়েকটি ডায়াগ্রাম আছে - প্রথমটি খোলা হয়েছে; যেটিই বদলাবেন সেটি «আপনার ডায়াগ্রাম»-এ রাখা হবে।
+diagrams saved to	টি ডায়াগ্রাম সেভ হয়েছে:
+Windows didn't answer about your connection - asking again in a few seconds.	Windows আপনার সংযোগ নিয়ে উত্তর দেয়নি - কয়েক সেকেন্ড পরে আবার জিজ্ঞেস করছি।
+Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel.	Windows-এর নিজস্ব Wi-Fi রিপোর্ট (netsh wlan) পেতে ১০ থেকে ১৫ সেকেন্ড লাগতে পারে - অ্যাডাপ্টার, আশেপাশের নেটওয়ার্ক, তারপর ব্যান্ড ও চ্যানেল।
+Postponed	স্থগিত
+Cancelled	বাতিল
+Suspended	মুলতুবি
+Abandoned	পরিত্যক্ত
+of them inside SNMP	টি SNMP-এর ভেতরে
+Not fetched yet	এখনও আনা হয়নি
+Toronto keeps the same hours	টরন্টোর সময়ও একই
+Check now	এখনই দেখুন
+Comes back if it gets worse or something new breaks	অবস্থা খারাপ হলে বা নতুন কিছু বিগড়ালে আবার দেখাবে
+Comes back tomorrow, or sooner if it gets worse	কাল আবার দেখাবে, খারাপ হলে তার আগেই
+Corner widget	কোণের উইজেট
+Hide	লুকান
+Hide for today	আজকের জন্য লুকান
+Hide while it stays like this	এরকম থাকা পর্যন্ত লুকান
+Never show	আর কখনো দেখাবেন না
+Only once a phone is remembered: a waiting room at AdeeboMeter's relay so the phone can find this PC (sealed - the relay can't read it), and once an hour one request to the relay for the time, so both sides pick the same room.	শুধু একটি ফোন মনে রাখা হলে: AdeeboMeter-এর রিলেতে একটি অপেক্ষার ঘর, যাতে ফোন এই পিসি খুঁজে পায় (সিল করা - রিলে পড়তে পারে না), আর ঘণ্টায় একবার রিলের কাছে সময় জানতে একটি অনুরোধ, যাতে দুই দিক একই ঘর বেছে নেয়।
+See what's running	কী চলছে দেখুন
+Send to my ISP	আমার ISP-কে পাঠান
+Step {0} of 4	ধাপ {0} / 4
+The network is fine.	নেটওয়ার্ক ঠিক আছে।
+a waiting room for your phone, and a clock check once an hour	আপনার ফোনের জন্য একটি অপেক্ষার ঘর, আর ঘণ্টায় একবার সময় যাচাই
+disk	ডিস্ক
+here	এখানে
+hidden while it stays like this	এরকম থাকা পর্যন্ত লুকানো
+memory	মেমরি
+memory warnings	মেমরির সতর্কবার্তা
+processor warnings	প্রসেসরের সতর্কবার্তা
+this kind of warning	এই ধরনের সতর্কবার্তা
+DNS warnings	DNS সতর্কবার্তা
+Refresh readings	রিডিং রিফ্রেশ করুন
+Show again	আবার দেখান
+The widget still shows it. Show again undoes this.	উইজেটে এটি দেখাবেই। ‘আবার দেখান’ চাপলে এটি ফিরে আসে।
+UDP port	UDP পোর্ট
+VPN and provider warnings	VPN ও প্রোভাইডারের সতর্কবার্তা
+internet warnings	ইন্টারনেট সতর্কবার্তা
+router and Wi-Fi warnings	রাউটার ও Wi-Fi সতর্কবার্তা
+{0} hidden. Everything else looks fine.	{0} লুকানো আছে। বাকি সব ঠিক আছে।
+Next problem	পরের সমস্যা
+Previous problem	আগের সমস্যা
+Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.	রাউটার, ইন্টারনেট ও নাম AdeeboMeter মাপে; ট্রাফিক Windows যেমন জানায়।
+Type a place	একটি জায়গার নাম লিখুন
+Type a place and press Enter.	জায়গার নাম লিখে Enter চাপুন।
+Where should the weather be for?	কোন জায়গার আবহাওয়া দেখাবে?
+day	দিনে
+not on Wi-Fi	Wi-Fi-তে নয়
+Forecast server	পূর্বাভাসের সার্ভার
+Nothing to fix on this PC.	এই পিসিতে ঠিক করার কিছু নেই।
+Off: the plain readings only.	বন্ধ: শুধু সাধারণ রিডিং।
+On: worst values, where each number comes from and link rates, in the Time machine and the tools.	চালু: সবচেয়ে খারাপ মান, প্রতিটি সংখ্যা কোথা থেকে এবং লিংক রেট—টাইম মেশিন ও টুলসে।
+Open setting	সেটিং খুলুন
+Open the router	রাউটার খুলুন
+Place search server	জায়গা খোঁজার সার্ভার
+What I measured	আমি যা মেপেছি
+checked at	পরীক্ষা করা হয়েছে
+checks	পরীক্ষা
+checks of this PC, your network and your sites. Nothing is changed - each fix opens the Windows screen where you change it.	এই পিসি, আপনার নেটওয়ার্ক ও সাইটগুলোর পরীক্ষা। কিছুই বদলানো হয় না—প্রতিটি সমাধান Windows-এর সেই স্ক্রিন খোলে যেখানে আপনি বদলান।
+connections	সংযোগ
+couldn't check	পরীক্ষা করা যায়নি
+nothing was changed - each fix opens the Windows screen where you change it.	কিছুই বদলানো হয়নি—প্রতিটি সমাধান Windows-এর সেই স্ক্রিন খোলে যেখানে আপনি বদলান।
+to fix	ঠিক করতে হবে
+{0} things to fix on this PC.	এই পিসিতে {0}টি জিনিস ঠিক করতে হবে।
+{0} thing to fix on this PC.	এই পিসিতে {0}টি জিনিস ঠিক করতে হবে।
+What to do	কী করবেন
+What I couldn't tell	যা বোঝা যায়নি
+Extra numbers for engineers	প্রকৌশলীদের জন্য বাড়তি সংখ্যা
+an example	একটি উদাহরণ
+done at	শেষ হয়েছে
+Where this PC talks to	এই পিসি কার সঙ্গে কথা বলছে
+connections from	সংযোগ,
+apps	অ্যাপ থেকে
+Add your own game	নিজের গেম যোগ করুন
+App: the same cards and type as every other page.	অ্যাপ: অন্য সব পেজের মতো একই কার্ড ও লেখা।
+Click to add	যোগ করতে ক্লিক করুন
+Found on this PC · click to watch	এই পিসিতে আছে · নজর রাখতে ক্লিক করুন
+Newspaper: a masthead, serif headlines and cream paper.	সংবাদপত্র: মাস্টহেড, সেরিফ শিরোনাম আর ক্রিম কাগজ।
+Nothing is playing right now.	এখন কিছু চলছে না।
+Playing	খেলছেন
+Playing now	এখন চলছে
+Streaming is switched off.	স্ট্রিমিং বন্ধ আছে।
+Traffic	ট্রাফিক
+Watching	নজরে আছে
+What you watched	আপনি যা দেখেছেন
+Your games	আপনার গেম
+kept 90 days on this PC - click one to see who caused the dips	এই পিসিতে ৯০ দিন রাখা হয় - কে মান কমিয়েছে দেখতে ক্লিক করুন
+ping to each game's nearest server	প্রতিটি গেমের কাছের সার্ভারে পিং
+starting...	শুরু হচ্ছে...
+Markets and Sports look	মার্কেট ও খেলার চেহারা
+Newspaper	সংবাদপত্র
+Click the step again to close it.	বন্ধ করতে ধাপটিতে আবার ক্লিক করুন।
+Follow an app	একটি অ্যাপ অনুসরণ করুন
+The way to	যাওয়ার পথ:
+Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.	চালু করুন, কিছু চললে AdeeboMeter টের পাবে আর নজর রাখবে। স্ট্রিম শুরু না হওয়া পর্যন্ত নেটওয়ার্কে বাড়তি কিছু যায় না।
+Point at anything with a small ? beside it, then at the ? - a short explanation opens. The × closes it.	পাশে ছোট ? আছে এমন কিছুর ওপর পয়েন্টার রাখুন, তারপর ?-এর ওপর - ছোট একটি ব্যাখ্যা খুলবে। × চাপলে বন্ধ হবে।
+Only the name you type goes to {0} to find it - then only its coordinates, to {1}.	আপনি যে নাম লেখেন শুধু সেটিই খুঁজতে {0}-এ যায় - তারপর শুধু তার স্থানাঙ্ক, {1}-এ।
+PC version not announced yet	পিসি সংস্করণ এখনও ঘোষণা হয়নি
+That server isn't a host name - use one like api.example.com, or host:port.	এটি কোনো হোস্টের নাম নয় - api.example.com বা host:port-এর মতো লিখুন।
+usually	সাধারণত
+Newspaper, white	সংবাদপত্র, সাদা
+Newspaper, app colours	সংবাদপত্র, অ্যাপের রঙে
+The answer from {0} didn't make sense - trying again in half an hour.	{0} থেকে আসা উত্তর বোঝা গেল না - আধ ঘণ্টা পরে আবার চেষ্টা হবে।
+Couldn't reach {0} - trying again in half an hour.	{0}-এ পৌঁছানো গেল না - আধ ঘণ্টা পরে আবার চেষ্টা হবে।
+Your ping right now	এই মুহূর্তে আপনার পিং
+signal hidden	সিগন্যাল লুকানো
+ setting matches "	 টি সেটিং মিলেছে: “
+ settings match "	 টি সেটিং মিলেছে: “
+"are you there?" (echo request)	"আছেন?" (echo request)
+"can I connect?" (SYN)	"সংযোগ করতে পারি?" (SYN)
+"yes, come in" (SYN-ACK) - the time is this round trip	"হ্যাঁ, আসুন" (SYN-ACK)—এই যাওয়া-আসার সময় মাপা হয়
+"yes, here" (echo reply) - the time is this round trip	"হ্যাঁ, আছি" (echo reply)—এই যাওয়া-আসার সময় মাপা হয়
+A simulation with the numbers you pick - not a measurement of your line (only rows that say "your" are).	আপনার বেছে নেওয়া সংখ্যা দিয়ে সিমুলেশন—আপনার লাইনের মাপ নয়। শুধু «আপনার» লেখা সারিগুলো আসল মাপ।
+It will be saved in Downloads\AdeeboMeter.	Downloads\AdeeboMeter-এ সেভ হবে।
+Nothing matches "	কিছু মেলেনি: “
+Nothing yet. On the phone: PC › Files › Send to PC. Files land in Downloads\AdeeboMeter after you accept them.	এখনো কিছু নেই। ফোনে: পিসি › ফাইল › পিসিতে পাঠান। গ্রহণ করলে Downloads\AdeeboMeter-এ ফাইল আসবে।
+On: the temperature on the folded strip, and a line like "4°C · rain from 3 pm" on the card.	চালু: গুটিয়ে থাকা বারে তাপমাত্রা ও কার্ডে এমন একটি লাইন দেখায়: “4°C · দুপুর 3টা থেকে বৃষ্টি”।
+On: weekdays 17:30-19:00 the folded widget shows the day's close (US dollar, energy's week) instead of "All quiet", then goes back by itself. A problem always takes the spot.	চালু: কর্মদিবসে 17:30-19:00 গুটিয়ে থাকা উইজেটে “সব শান্ত”-এর বদলে দিনের শেষ বাজারদর (মার্কিন ডলার ও জ্বালানির সপ্তাহ) দেখায়, পরে নিজে থেকেই ফিরে যায়। সমস্যা হলে সেটিই আগে দেখায়।
+Saved to Pictures\AdeeboMeter	Pictures\AdeeboMeter-এ সেভ হয়েছে
+Type code (or a person's name) in For, press Run, then send the .adeebo file - the PNG stays in Documents\AdeeboMeter	প্রাপকের ঘরে কোড বা ব্যক্তির নাম লিখে চালু করুন, তারপর .adeebo ফাইল পাঠান—PNG থাকবে Documents\AdeeboMeter-এ
+dashed = 100 ms, the "wait" line	দাগকাটা লাইন = 100 ms, অপেক্ষার সীমা
+functions with local and return; arrays: ${a[1]} "${a[@]}" ${#a[@]}	local ও return সহ ফাংশন; অ্যারে: ${a[1]} "${a[@]}" ${#a[@]}
+Wi-Fi says "No internet"	Wi-Fi-এ "No internet" দেখায়
+says "too big"	জানায় «আকার বেশি»
+Came up empty. Try the thing, not the symptom: "dns", "wifi", "port".	কিছু পাইনি। লক্ষণের বদলে বিষয়টি খুঁজুন: "dns", "wifi", "port"।
+Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press "Show my path" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.	আপনার নিজের পথ: প্যাকেটের যাত্রা, গেমার, ট্রেডিং, স্ট্রিমিং বা সার্ভিস বোর্ডে «আমার পথ দেখান» চাপুন—AdeeboMeter যে থামাগুলো মেপেছে তা সাদায় আঁকা, আর প্রোভাইডারের যে যন্ত্র দেখা যায় না তা ধূসর ও ড্যাশ দিয়ে।
+FOLLOW	অনুসরণ করুন
+Find it	খুঁজুন
+IS IT ME OR THE NETWORK?	সমস্যা আমার ডিভাইসে, নাকি নেটওয়ার্কে?
+OR TAP WHAT YOU SEE	অথবা যা দেখছেন, সেটি বেছে নিন
+WHAT'S WRONG?	কী সমস্যা?
+WHERE EVERYTHING LIVES	কোন জিনিস কোথায় আছে
+connected, but nothing works	সংযুক্ত আছে, কিন্তু কিছুই চলছে না
+Earn Adeebo Points	Adeebo Points অর্জন করুন
+Scan with your phone	ফোন দিয়ে স্ক্যান করুন
+Older:	পুরোনো:
+Open engineer view	ইঞ্জিনিয়ার ভিউ খুলুন
+Sounds like 	শুনে মনে হচ্ছে 
+NO SIGNAL	সিগন্যাল নেই
+COMPETITIVE	কম্পিটিটিভ
+CASUAL	ক্যাজুয়াল
+LAGGY	ল্যাগি
+ms PING	ms পিং
+LAST 60 SECONDS	গত 60 সেকেন্ড
+Esc takes you back to the corner	Esc চাপলে কোণে ফিরে যাবেন
+Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	পিসির চলমান সব যোগাযোগ: কোন অ্যাপ, কার সঙ্গে, কোন পোর্টে, কী অবস্থায়। নতুন সংযোগ ভেসে ওঠে, বন্ধগুলো মিলিয়ে যায়। অবস্থার মানে জানতে পাশের ?-এর ওপর পয়েন্টার রাখুন। কোনো লাইনে Sniff চাপলে শুধু সেই যোগাযোগ Wireshark-এর জন্য রেকর্ড হয়।
+updated	হালনাগাদ
+access point nearby	কাছাকাছি অ্যাক্সেস পয়েন্ট
+access points nearby	কাছাকাছি অ্যাক্সেস পয়েন্ট
+Everything AdeeboMeter observed	AdeeboMeter যা যা দেখেছে
+The whole session · download (green) · stream server delay (purple) · dips shaded	পুরো সেশন · ডাউনলোড (সবুজ) · স্ট্রিম সার্ভারের দেরি (বেগুনি) · পতনগুলো ছায়া করা
+tool	টুল
+No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	অ্যাকাউন্ট, টেলিমেট্রি, আপডেট, বিজ্ঞাপন বা ক্র্যাশ রিপোর্ট নেই। কখনো কোনো পোর্টে শোনে না - আর প্রতিবার চালু হলে নিজেই তা যাচাই করে।
+No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	অ্যাকাউন্ট নেই। টেলিমেট্রি নেই। আড়ি পাতে না। পাঠানো প্রতিটি প্যাকেট নিচে লেখা আছে, প্রতিটিই বন্ধ করতে পারেন।
+Open as script	স্ক্রিপ্ট হিসেবে খুলুন
+Open in AdeeboLab	AdeeboLab-এ খুলুন
+Monitor, diagnose, automate, visualize, learn.	নজর রাখুন, নির্ণয় করুন, স্বয়ংক্রিয় করুন, দেখুন, শিখুন।
+Finish	শেষ করুন
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows কিবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন।
+Arabic text reads right to left.	আরবি লেখা ডান থেকে বামে পড়া হয়।
+Added as "My match" and watched from now on.	"আমার ম্যাচ" হিসেবে যোগ হয়েছে, এখন থেকে নজরে থাকবে।
+An app	একটি অ্যাপ
+CPU is pegged ({0}%). {1} uses the most.	সিপিইউ পুরো চাপে ({0}%)। {1} সবচেয়ে বেশি ব্যবহার করছে।
+Capturing packets is turned off by your IT team (AdeeboMeter.policy).	আপনার আইটি টিম প্যাকেট ক্যাপচার বন্ধ করে রেখেছে (AdeeboMeter.policy)।
+Checking the destination	গন্তব্য যাচাই চলছে
+Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	বাঁ দিকের যেকোনো সারিতে ক্লিক করুন। আমি বলব এটা কী করে, কীভাবে কাজ করে, কেন আছে, না থাকলে কী হতো - আর বন্ধ করা নিরাপদ কি না।
+Collecting - one row a second while the session is open.	সংগ্রহ চলছে - সেশন খোলা থাকা পর্যন্ত প্রতি সেকেন্ডে একটি সারি।
+Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	রঙিন বিন্দু: সবুজ = বন্ধ করা নিরাপদ, অ্যাম্বার = থাকতে দিন (রিস্টার্ট করা চলে), লাল = Windows-এর দরকার, বেগুনি = আইটি পরিচালিত, ধূসর = আমার গাইডে নেই।
+Copy match report (internal addresses removed)	ম্যাচের রিপোর্ট কপি করুন (ভেতরের ঠিকানা বাদ দিয়ে)
+Couldn't tell which server the match uses.	ম্যাচ কোন সার্ভার ব্যবহার করছে বোঝা যায়নি।
+Currencies, commodities and Canada's rates	মুদ্রা, পণ্য ও কানাডার হার
+DNS is slow ({0} ms); pages will be slow to start.	DNS ধীর ({0} ms); পেজ খুলতে দেরি হবে।
+Data that minute	সেই মিনিটের তথ্য
+Each Group in Detail	প্রতিটি গ্রুপ বিস্তারিত
+Energy and the Loonie	জ্বালানি ও কানাডিয়ান ডলার
+Esc, minimise, the X or Back to corner return you to the corner widget, which keeps watching. To quit, right-click the tray icon and choose Exit.	Esc, মিনিমাইজ, X বা কোণে ফিরুন আপনাকে কোণের উইজেটে ফিরিয়ে নেয়, যা নজর রেখে চলে। বন্ধ করতে, ট্রে আইকনে রাইট-ক্লিক করে প্রস্থান বেছে নিন।
+Every device on your network, grouped - with how fast each answers	আপনার নেটওয়ার্কের প্রতিটি ডিভাইস, দলে দলে - প্রতিটি কত দ্রুত সাড়া দেয় তা সহ
+Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.	আপনার পিসির প্রতিটি প্রোগ্রাম এক বা একাধিক 'প্রসেস' - নিজস্ব মেমরিসহ একটি চলমান কপি। Windows নিজেই এমন কয়েক ডজন, প্রত্যেকের একটি করে কাজ।
+Find my match server	আমার ম্যাচের সার্ভার খুঁজুন
+Find my switch port	আমার সুইচ পোর্ট খুঁজুন
+Finding your match server...	আপনার ম্যাচের সার্ভার খোঁজা হচ্ছে...
+Five Commodity Groups, Side by Side	পাঁচটি পণ্য গ্রুপ, পাশাপাশি
+Game pings are turned off by your IT team (AdeeboMeter.policy).	আপনার আইটি টিম গেম পিং বন্ধ করে রেখেছে (AdeeboMeter.policy)।
+Getting Valve's server list (one request to api.steampowered.com)...	Valve-এর সার্ভার তালিকা আনা হচ্ছে (api.steampowered.com-এ একটি অনুরোধ)...
+History is on - the first day appears here after a few minutes.	ইতিহাস চালু - কয়েক মিনিট পরে প্রথম দিনটি এখানে দেখা যাবে।
+If it's an app you opened, closing it is safe. If you don't recognise it and it isn't in Program Files or the Windows folder, ask IT before touching it.	এটা যদি আপনার খোলা কোনো অ্যাপ হয়, বন্ধ করা নিরাপদ। চিনতে না পারলে এবং Program Files বা Windows ফোল্ডারে না থাকলে, হাত দেওয়ার আগে আইটিকে জিজ্ঞেস করুন।
+Internet answered in	ইন্টারনেট সাড়া দিয়েছে, সময়
+Keep this capture	এই ক্যাপচার রাখুন
+Kept on this PC for 90 days; about 2 KB a stream	এই পিসিতে 90 দিন রাখা হয়; প্রতি স্ট্রিমে প্রায় 2 KB
+Listing this program's connections	এই প্রোগ্রামের সংযোগগুলোর তালিকা হচ্ছে
+Looking up where programs live	প্রোগ্রামগুলো কোথায় থাকে খোঁজা হচ্ছে
+Marked - the 30 seconds around it are in the match summary.	চিহ্নিত - আশপাশের 30 সেকেন্ড ম্যাচের সারাংশে আছে।
+Measured here, the usual setup there - where each one's way out goes	এখানে মাপা, ওখানে সাধারণ সেটআপ - প্রতিটি কোন পথে বেরোয়
+Memory is almost full ({0}%), so Windows keeps swapping programs to the disk - that's the slowness. {1} use the most.	মেমরি প্রায় ভরা ({0}%), তাই Windows বারবার প্রোগ্রাম ডিস্কে সরাচ্ছে - এটাই ধীরগতির কারণ। {1} সবচেয়ে বেশি ব্যবহার করছে।
+Memory read back from disk	ডিস্ক থেকে আবার পড়া মেমরি
+Needs Wireshark (tshark) and Npcap - not found on this PC.	Wireshark (tshark) ও Npcap লাগবে - এই পিসিতে পাওয়া যায়নি।
+Needs Wireshark and Npcap on this PC.	এই পিসিতে Wireshark ও Npcap লাগবে।
+No Valve servers yet - press Refresh Valve list (one request to Valve).	এখনও কোনো Valve সার্ভার নেই - Valve তালিকা রিফ্রেশ চাপুন (Valve-এ একটি অনুরোধ)।
+No servers yet - press Edit servers and add your server's address.	এখনও কোনো সার্ভার নেই - সার্ভার সম্পাদনা চেপে আপনার সার্ভারের ঠিকানা যোগ করুন।
+No streams recorded yet	এখনও কোনো স্ট্রিম রেকর্ড হয়নি
+No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	এই পিসিতে সমর্থিত কোনো গেম ইনস্টল করা পাওয়া যায়নি। তবুও যেকোনোটিতে ক্লিক করে তার সার্ভারে নজর রাখতে পারেন - আপনি না করা পর্যন্ত কোনো গেম কোম্পানির সার্ভারে কিছু পাঠানো হয় না।
+None - the internet answered every time AdeeboMeter checked.	একটিও না - AdeeboMeter যতবার দেখেছে, ইন্টারনেট সাড়া দিয়েছে।
+None in Windows' table yet.	Windows-এর টেবিলে এখনও কিছু নেই।
+Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	ইচ্ছে করেই করা হয় না: ডিফল্ট পাসওয়ার্ড চেষ্টা করা, ফাঁস হওয়া ডেটাবেসে আপনাকে খোঁজা (তাতে আপনার তথ্য কোনো ওয়েবসাইটে যাবে), অন্যের ডিভাইস স্ক্যান করা, বা আপনার হয়ে কিছু বদলানো।
+Off (Settings > Weather). Your PC's location is never used.	বন্ধ (সেটিংস > আবহাওয়া)। আপনার পিসির অবস্থান কখনো ব্যবহার হয় না।
+Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	কে কী তা জানা হয়ে গেলে টাস্ক ম্যানেজার আর ভয়ের থাকে না - আর পিসি হিমশিম খেলে ঠিক কী বন্ধ করতে হবে জানবেন।
+Phone waiting room	ফোনের অপেক্ষার ঘর
+Pick a game to watch	নজর রাখতে একটি গেম বেছে নিন
+Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	কয়েক মিনিট কিছু চালান - একটা ম্যাচ, অনুষ্ঠান বা লাইভ চ্যানেল। প্রতিটি পতন আর কার দোষে, সেই রেকর্ড এখানে আসবে।
+Prices per Barrel and Ounce	প্রতি ব্যারেল ও আউন্সে দাম
+Rates and Prices in Canada	কানাডায় হার ও দাম
+Reading that day...	সেই দিনটি পড়া হচ্ছে...
+Reading this program's details	এই প্রোগ্রামের বিস্তারিত পড়া হচ্ছে
+Refresh Valve list	Valve তালিকা রিফ্রেশ
+Router answered in	রাউটার সাড়া দিয়েছে, সময়
+Running the health check	স্বাস্থ্য পরীক্ষা চলছে
+Running the security checkup	নিরাপত্তা পরীক্ষা চলছে
+Same name, different lock	একই নাম, ভিন্ন তালা
+Saved; opening in Wireshark. Deleted on exit - click Keep this capture to save a copy.	সংরক্ষিত; Wireshark-এ খুলছে। বন্ধ করলে মুছে যাবে - একটি কপি রাখতে এই ক্যাপচার রাখুন-এ ক্লিক করুন।
+Scores and headlines	স্কোর ও শিরোনাম
+See the packet journey	প্যাকেটের যাত্রা দেখুন
+Session started - press Mark lag whenever it feels wrong.	সেশন শুরু হয়েছে - গোলমাল মনে হলেই ল্যাগ চিহ্নিত করুন চাপুন।
+The engineer card needs Pro mode (General > Mode) - until then it shows the everyday card.	ইঞ্জিনিয়ার কার্ডের জন্য Pro মোড লাগবে (সাধারণ > মোড) - ততক্ষণ দৈনন্দিন কার্ড দেখাবে।
+The file doesn't describe itself.	ফাইলটি নিজের পরিচয় দেয় না।
+The internet check is off in Settings, so outages can't be noticed.	সেটিংসে ইন্টারনেট পরীক্ষা বন্ধ, তাই বিভ্রাট ধরা পড়বে না।
+The networks this PC hears, by channel - yours and the loud neighbours	এই পিসি যেসব নেটওয়ার্ক শুনতে পায়, চ্যানেল অনুযায়ী - আপনারটি আর হইচই করা প্রতিবেশীরা
+The route your last trace or MTR took, hop by hop	আপনার শেষ traceroute বা MTR যে পথে গেছে, হপ ধরে ধরে
+The {0} is slow (gateway {1}). The PC is not the cause.	{0} ধীর (গেটওয়ে {1})। পিসি এর কারণ নয়।
+Top by memory	মেমরিতে শীর্ষে
+Want to look back at yesterday? Turn on 7-day history in Settings  >	গতকাল ফিরে দেখতে চান? সেটিংসে 7 দিনের ইতিহাস চালু করুন  >
+What goes through the tunnel and what goes straight out	কী টানেলের ভেতর দিয়ে যায় আর কী সরাসরি বেরোয়
+Where it lives	এটি কোথায় থাকে
+Wi-Fi around you	আপনার চারপাশের Wi-Fi
+Wi-Fi link rate	Wi-Fi লিংক রেট
+Wi-Fi signal is weak ({0}%). Move closer to the access point or use a cable.	Wi-Fi সিগন্যাল দুর্বল ({0}%)। অ্যাক্সেস পয়েন্টের কাছে যান বা কেবল ব্যবহার করুন।
+You marked lag here	আপনি এখানে ল্যাগ চিহ্নিত করেছেন
+Your Line at Kick-off Time	কিক-অফের সময় আপনার লাইন
+Your phone vs this PC	আপনার ফোন বনাম এই পিসি
+local network	লোকাল নেটওয়ার্ক
+{0} MB (live capture on)	{0} MB (লাইভ ক্যাপচার চালু)
+{0} MB of 99 MB budget	99 MB বাজেটের {0} MB
+{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect.	{0} সংযুক্ত, কিন্তু রাউটার থেকে কোনো ঠিকানা পায়নি (169.254.x.x - DHCP সাড়া দেয়নি)। রাউটার রিস্টার্ট করুন বা আবার সংযোগ করুন।
+Every network connection just dropped.	সব নেটওয়ার্ক সংযোগ এইমাত্র চলে গেল।
+All network connections dropped.	সব নেটওয়ার্ক সংযোগ বিচ্ছিন্ন।
+Lost the network - you're offline, boss.	নেটওয়ার্ক হারিয়ে গেছে - আপনি অফলাইন, বস।
+Network connection lost.	নেটওয়ার্ক সংযোগ হারিয়ে গেছে।
+VPN dropped.	VPN পড়ে গেছে।
+VPN disconnected.	VPN বিচ্ছিন্ন।
+Wi-Fi dropped.	Wi-Fi পড়ে গেছে।
+Wi-Fi disconnected.	Wi-Fi বিচ্ছিন্ন।
+Wi-Fi hopped to another access point	Wi-Fi অন্য অ্যাক্সেস পয়েন্টে লাফ দিয়েছে
+Wi-Fi roamed to another access point	Wi-Fi অন্য অ্যাক্সেস পয়েন্টে সরে গেছে
+Just woke up - waiting for Windows to join the network.	এইমাত্র জেগেছি - Windows নেটওয়ার্কে যোগ দেওয়ার অপেক্ষায়।
+Starting - waiting for Windows to join the network.	শুরু হচ্ছে - Windows নেটওয়ার্কে যোগ দেওয়ার অপেক্ষায়।
+You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.	আপনি কোনো নেটওয়ার্কে সংযুক্ত নন, বস - Wi-Fi বন্ধ, কেবল খোলা, বা এয়ারপ্লেন মোড চালু।
+Not connected to any network (no Wi-Fi, no cable, or airplane mode).	কোনো নেটওয়ার্কে সংযুক্ত নয় (Wi-Fi নেই, কেবল নেই, বা এয়ারপ্লেন মোড)।
+Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.	কল টলমল করছে (জিটার {0})। মুখ জমে গেলে ভিডিও বন্ধ করুন - অডিও টিকে যাবে।
+Call quality dropping (jitter {0}). Turn video off if it stutters.	কলের মান কমছে (জিটার {0})। আটকে গেলে ভিডিও বন্ধ করুন।
+The internet isn't answering at all - your router is fine, so it's the line or your provider.	ইন্টারনেট একদমই সাড়া দিচ্ছে না - আপনার রাউটার ঠিক আছে, তাই সমস্যা লাইনে বা আপনার প্রোভাইডারে।
+The internet isn't answering (your router does) - the line or the provider.	ইন্টারনেট সাড়া দিচ্ছে না (রাউটার দিচ্ছে) - লাইন বা প্রোভাইডার।
+The internet's there but DNS lost the phone book - sites won't open by name.	ইন্টারনেট আছে, কিন্তু DNS ফোনবুক হারিয়েছে - সাইট নাম দিয়ে খুলবে না।
+DNS lookups are failing; sites won't open by name.	DNS খোঁজ ব্যর্থ হচ্ছে; সাইট নাম দিয়ে খুলবে না।
+Call looks smooth. Go impress them.	কল মসৃণ চলছে। যান, মুগ্ধ করে দিন।
+Call quality is good.	কলের মান ভালো।
+Busy, but holding. Maybe don't open another big app just yet.	ব্যস্ত, তবে সামলে নিচ্ছে। এখনই আরেকটা বড় অ্যাপ না খোলাই ভালো।
+Busy but fine. Avoid opening big apps for now.	ব্যস্ত, তবে ঠিক আছে। আপাতত বড় অ্যাপ খুলবেন না।
+Network's a bit sleepy; your PC is fine.	নেটওয়ার্ক একটু ঘুমঘুম; আপনার পিসি ঠিক আছে।
+Network a bit slow; your PC is fine.	নেটওয়ার্ক একটু ধীর; আপনার পিসি ঠিক আছে।
+All quiet. Nothing to fix - go get coffee.	সব শান্ত। ঠিক করার কিছু নেই - এক কাপ কফি খেয়ে আসুন।
+All quiet.	সব শান্ত।
+Back to normal.	আবার স্বাভাবিক।
+Recovered.	ঠিক হয়ে গেছে।
+Needs you	আপনাকে দরকার
+Above 88% for 10 s and I start nagging.	10 s ধরে 88%-এর বেশি থাকলে আমি তাগাদা দিতে শুরু করি।
+Above 88% for 10 s turns AdeeboMeter red.	10 s ধরে 88%-এর বেশি থাকলে AdeeboMeter লাল হয়ে যায়।
+No network connection at all, boss. Plug in a cable or pick a Wi-Fi network.	কোনো নেটওয়ার্ক সংযোগই নেই, বস। কেবল লাগান বা একটি Wi-Fi নেটওয়ার্ক বেছে নিন।
+Not connected.	সংযুক্ত নয়।
+You're on 2.4 GHz, but your network also offers a faster band. Moving a bit closer usually lets Windows switch.	আপনি 2.4 GHz-এ আছেন, কিন্তু আপনার নেটওয়ার্কে আরও দ্রুত ব্যান্ডও আছে। একটু কাছে গেলে সাধারণত Windows বদলে নেয়।
+Your network also has 5/6 GHz; 2.4 GHz is slower and more crowded.	আপনার নেটওয়ার্কে 5/6 GHz-ও আছে; 2.4 GHz ধীর ও বেশি ভিড়ের।
+Windows gave itself a 169.254 address - nobody handed you a real one. The router's DHCP isn't answering.	Windows নিজেকে একটি 169.254 ঠিকানা দিয়েছে - কেউ আসল ঠিকানা দেয়নি। রাউটারের DHCP সাড়া দিচ্ছে না।
+No DHCP address (169.254.x.x).	DHCP ঠিকানা নেই (169.254.x.x)।
+You're connected to the network, but there's no router (gateway) to reach anything beyond it. Usually DHCP failed, or the network is local-only.	আপনি নেটওয়ার্কে সংযুক্ত, কিন্তু এর বাইরে কিছুতে পৌঁছানোর মতো রাউটার (গেটওয়ে) নেই। সাধারণত DHCP ব্যর্থ হয়েছে, বা নেটওয়ার্কটি শুধু লোকাল।
+Connected, but no default gateway.	সংযুক্ত, কিন্তু ডিফল্ট গেটওয়ে নেই।
+Your Wi-Fi is in great shape - strong signal, clean air, quick router.	আপনার Wi-Fi দারুণ অবস্থায় - জোরালো সিগন্যাল, পরিষ্কার বাতাস, দ্রুত রাউটার।
+Wi-Fi link looks healthy.	Wi-Fi লিংক সুস্থ দেখাচ্ছে।
+Cable, full speed, no errors. The steadiest link there is.	কেবল, পুরো গতি, কোনো ত্রুটি নেই। সবচেয়ে স্থির লিংক।
+Wired link looks healthy.	তারযুক্ত লিংক সুস্থ দেখাচ্ছে।
+Windows is hiding the Wi-Fi details until you allow location for desktop apps (Settings > Privacy & security > Location > Let desktop apps access your location). Annoying, but that's how Windows 11 protects where you are.	ডেস্কটপ অ্যাপের জন্য লোকেশন চালু না করা পর্যন্ত Windows Wi-Fi-এর বিস্তারিত লুকিয়ে রাখে (সেটিংস > গোপনীয়তা ও নিরাপত্তা > লোকেশন > ডেস্কটপ অ্যাপকে আপনার লোকেশন দেখতে দিন)। বিরক্তিকর, তবে এভাবেই Windows 11 আপনার অবস্থান রক্ষা করে।
+Wi-Fi details need location access: Settings > Privacy & security > Location > Let desktop apps access your location.	Wi-Fi-এর বিস্তারিত দেখতে লোকেশন অনুমতি লাগবে: সেটিংস > গোপনীয়তা ও নিরাপত্তা > লোকেশন > ডেস্কটপ অ্যাপকে আপনার লোকেশন দেখতে দিন।
+Nothing to tweak - your Wi-Fi is set up well.	কিছু বদলানোর নেই - আপনার Wi-Fi ভালোভাবে সেট করা।
+No changes suggested.	কোনো পরিবর্তনের পরামর্শ নেই।
+Live capture needs Wireshark (tshark) and Npcap - not on this PC.	লাইভ ক্যাপচারের জন্য Wireshark (tshark) ও Npcap লাগবে - এই পিসিতে নেই।
+Live capture needs Wireshark and Npcap.	লাইভ ক্যাপচারের জন্য Wireshark ও Npcap লাগবে।
+Digging through the last few minutes and listening 15 s more...	শেষ কয়েক মিনিট ঘাঁটা হচ্ছে আর আরও 15 s শোনা হচ্ছে...
+Collecting history + 15 s...	ইতিহাস + 15 s সংগ্রহ হচ্ছে...
+Got it, with history - opening in Wireshark. (Deleted when AdeeboMeter exits - click Keep this capture to save a copy.)	হয়ে গেছে, ইতিহাসসহ - Wireshark-এ খুলছে। (AdeeboMeter বন্ধ হলে মুছে যাবে - একটি কপি রাখতে এই ক্যাপচার রাখুন-এ ক্লিক করুন।)
+Saved with history; opening in Wireshark.	ইতিহাসসহ সংরক্ষিত; Wireshark-এ খুলছে।
+On a public website that usually means your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	কোনো পাবলিক ওয়েবসাইটে এর মানে সাধারণত আপনার কোম্পানি HTTPS পরীক্ষা করছে। এটা ত্রুটি নয় - কোনো সাইট গোলমাল করলে জানা ভালো।
+On a public site this usually means HTTPS inspection by a company proxy.	পাবলিক সাইটে এর মানে সাধারণত কোম্পানির প্রক্সি দিয়ে HTTPS পরীক্ষা।
+Your company is inspecting HTTPS. Not a fault - just good to know when a site misbehaves.	আপনার কোম্পানি HTTPS পরীক্ষা করছে। এটা ত্রুটি নয় - কোনো সাইট গোলমাল করলে জানা ভালো।
+Your company's web filter decrypts HTTPS to inspect it - common and expected at work.	আপনার কোম্পানির ওয়েব ফিল্টার পরীক্ষার জন্য HTTPS ডিক্রিপ্ট করে - কর্মস্থলে এটা সাধারণ ও প্রত্যাশিত।
+Fresh enough.	যথেষ্ট নতুন।
+Recently restarted.	সম্প্রতি রিস্টার্ট হয়েছে।
+Windows is waiting for a restart. Some network fixes only land after it.	Windows রিস্টার্টের অপেক্ষায়। কিছু নেটওয়ার্ক সমাধান তার পরেই কাজ করে।
+A restart is pending; some fixes apply only after it.	একটি রিস্টার্ট বাকি; কিছু সমাধান তার পরেই কাজ করে।
+Nearly full - Windows gets grumpy below 10%. Empty Downloads or old captures.	প্রায় ভরা - 10%-এর নিচে Windows খিটখিটে হয়ে যায়। ডাউনলোডস বা পুরোনো ক্যাপচার খালি করুন।
+Nearly full; free some space.	প্রায় ভরা; কিছু জায়গা খালি করুন।
+The adapter itself is coughing. Try another cable or port, or update the driver.	অ্যাডাপ্টার নিজেই কাশছে। অন্য কেবল বা পোর্ট চেষ্টা করুন, বা ড্রাইভার আপডেট করুন।
+Adapter errors: try another cable or port, or update the driver.	অ্যাডাপ্টারের ত্রুটি: অন্য কেবল বা পোর্ট চেষ্টা করুন, বা ড্রাইভার আপডেট করুন।
+Crowded or weak. Move closer, or switch band (5 GHz near the router, 2.4 GHz far away).	ভিড় বা দুর্বল। কাছে যান, বা ব্যান্ড বদলান (রাউটারের কাছে 5 GHz, দূরে 2.4 GHz)।
+Crowded or weak channel; move closer or change band.	চ্যানেল ভিড় বা দুর্বল; কাছে যান বা ব্যান্ড বদলান।
+Your channel is calm.	আপনার চ্যানেল শান্ত।
+Channel is clear.	চ্যানেল পরিষ্কার।
+Battery saver is slowing things down on purpose. Plug in if it feels sluggish.	ব্যাটারি সেভার ইচ্ছে করে সব ধীর করছে। ধীর মনে হলে চার্জারে লাগান।
+Battery saver is on and throttles performance.	ব্যাটারি সেভার চালু, পারফরম্যান্স কমিয়ে রাখছে।
+Let's talk about it	চলুন এ নিয়ে কথা বলি
+How it started	কীভাবে শুরু হলো
+First sign	প্রথম লক্ষণ
+The low point	সবচেয়ে নিচু সময়
+Worst moment	সবচেয়ে খারাপ মুহূর্ত
+Healing	সেরে ওঠা
+Recovery	পুনরুদ্ধার
+The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.	রেকর্ডে পরিষ্কার কোনো পুনরুদ্ধার নেই - সব শুধু শান্ত হয়ে গেছে। কখনো কখনো সমাপ্তি টাইমস্ট্যাম্প নিয়ে আসে না।
+No recovery recorded in this stretch.	এই সময়টায় কোনো পুনরুদ্ধার রেকর্ড হয়নি।
+This one was close to home: your Wi-Fi or router. It's not a character flaw. A cable, or moving closer to the router, is self-care.	এবারেরটা ঘরের কাছেই: আপনার Wi-Fi বা রাউটার। এটা চরিত্রের দোষ নয়। একটা কেবল, বা রাউটারের কাছে যাওয়া - এটাই নিজের যত্ন।
+Most of it was your Wi-Fi or router. A cable or a better spot helps; Toolbox › Wi-Fi has the details.	বেশিরভাগই আপনার Wi-Fi বা রাউটার। কেবল বা ভালো জায়গা সাহায্য করে; টুলবক্স › Wi-Fi-তে বিস্তারিত আছে।
+It was DNS. It's always DNS. Toolbox › DNS race finds you a calmer one.	DNS ছিল। সবসময়ই DNS। টুলবক্স › DNS রেস আপনাকে একটা শান্ত সার্ভার খুঁজে দেবে।
+Most of it was DNS. Toolbox › DNS race compares servers.	বেশিরভাগই DNS। টুলবক্স › DNS রেস সার্ভারগুলো তুলনা করে।
+It was this PC, working too hard. Rest is productive. So is closing a few apps.	এই পিসিই ছিল, বেশি খাটছিল। বিশ্রামও কাজের। কয়েকটা অ্যাপ বন্ধ করাও।
+Most of it was this PC being busy. The Apps tab shows what.	বেশিরভাগই এই পিসি ব্যস্ত থাকায়। অ্যাপস ট্যাব দেখায় কোনগুলো।
+What we learned	আমরা যা শিখলাম
+Cause	কারণ
+Honestly? Your connection's been good. You can send this, but it's more of a thank-you note.	সত্যি বলতে? আপনার সংযোগ ভালোই ছিল। এটা পাঠাতে পারেন, তবে এটা বরং ধন্যবাদ-চিঠি।
+The connection has been good - there is little to complain about.	সংযোগ ভালো ছিল - অভিযোগ করার মতো তেমন কিছু নেই।
+Give me a host, an IP or a URL first.	আগে আমাকে একটি হোস্ট, IP বা URL দিন।
+Type a host, IP or URL.	একটি হোস্ট, IP বা URL লিখুন।
+That doesn't look like a host, an IP or a URL, boss.	এটা হোস্ট, IP বা URL মনে হচ্ছে না, বস।
+That is not a valid host, IP or URL.	এটি বৈধ হোস্ট, IP বা URL নয়।
+One more thing - checking whether a Wi-Fi sign-in page is in the way...	আরেকটা কথা - পথে কোনো Wi-Fi সাইন-ইন পেজ আছে কি না দেখা হচ্ছে...
+Checking for a captive portal (sign-in page)...	ক্যাপটিভ পোর্টাল (সাইন-ইন পেজ) খোঁজা হচ্ছে...
+Can't even find its address, boss - the DNS server says that name doesn't exist. Typo, or an internal name that needs the VPN?	এর ঠিকানাই খুঁজে পাচ্ছি না, বস - DNS সার্ভার বলছে এই নাম নেই। বানান ভুল, নাকি ভেতরের কোনো নাম যার জন্য VPN লাগে?
+DNS says the name does not exist. Check the spelling, or connect the VPN for internal names.	DNS বলছে নামটি নেই। বানান দেখুন, বা ভেতরের নামের জন্য VPN সংযোগ করুন।
+Port's shut - tracing the path to see who shut it...	পোর্ট বন্ধ - কে বন্ধ করল দেখতে পথ খোঁজা হচ্ছে...
+Tracing the path...	পথ খোঁজা হচ্ছে...
+Reading the router names along the way...	পথের রাউটারগুলোর নাম পড়া হচ্ছে...
+Naming the hops...	হপগুলোর নাম দেওয়া হচ্ছে...
+TCP connects, then TLS just... stops. Something in the middle is holding the handshake - a proxy, a firewall, or an MTU problem.	TCP সংযোগ হয়, তারপর TLS... থেমে যায়। মাঝখানে কিছু হ্যান্ডশেক আটকে রাখছে - প্রক্সি, ফায়ারওয়াল, বা MTU সমস্যা।
+TLS handshake stalls after TCP connects (proxy, firewall or MTU).	TCP সংযোগের পর TLS হ্যান্ডশেক আটকে যায় (প্রক্সি, ফায়ারওয়াল বা MTU)।
+Gets to the door but the bouncer won't let you in: Windows doesn't trust the certificate (often an inspection proxy).	দরজা পর্যন্ত পৌঁছায়, কিন্তু দারোয়ান ঢুকতে দেয় না: Windows সার্টিফিকেট বিশ্বাস করে না (প্রায়ই পরীক্ষণ প্রক্সি)।
+TLS works but the certificate is not trusted by Windows (often an inspection proxy).	TLS কাজ করে, কিন্তু Windows সার্টিফিকেট বিশ্বাস করে না (প্রায়ই পরীক্ষণ প্রক্সি)।
+TCP is fine, but the server won't do TLS 1.2 or newer - it's stuck in the past (TLS 1.0 / 1.1). That's on the server.	TCP ঠিক আছে, কিন্তু সার্ভার TLS 1.2 বা নতুনটা নেয় না - অতীতে আটকে আছে (TLS 1.0 / 1.1)। সমস্যা সার্ভারের দিকে।
+TLS handshake failed: the server likely supports only TLS 1.0/1.1.	TLS হ্যান্ডশেক ব্যর্থ: সার্ভার সম্ভবত শুধু TLS 1.0/1.1 সমর্থন করে।
+TCP is fine, TLS fails. The two sides can't agree on how to talk securely.	TCP ঠিক আছে, TLS ব্যর্থ। দুই পক্ষ নিরাপদে কথা বলার উপায়ে একমত হতে পারছে না।
+TLS handshake failed.	TLS হ্যান্ডশেক ব্যর্থ।
+Asking Windows about your connection...	Windows-কে আপনার সংযোগের খবর জিজ্ঞেস করা হচ্ছে...
+Reading...	পড়া হচ্ছে...
+Not a single drop. Rock solid.	একবারও বিচ্ছিন্ন হয়নি। পাথরের মতো মজবুত।
+No drops in 24 h.	24 h-এ কোনো বিচ্ছিন্নতা নেই।
+Cable is the gold standard: no interference, no roaming, no neighbours. If calls still stutter, the problem is further out - check a destination.	কেবলই সেরা মান: কোনো ইন্টারফেরেন্স নেই, রোমিং নেই, প্রতিবেশী নেই। তবুও কল আটকালে সমস্যা আরও দূরে - একটি গন্তব্য যাচাই করুন।
+Wired links have no radio interference; look further along the path if problems persist.	তারযুক্ত লিংকে রেডিও ইন্টারফেরেন্স নেই; সমস্যা থাকলে পথের আরও সামনে দেখুন।
+Click anything for the plain-English story. I only explain - I never close anything.	সহজ ভাষায় ব্যাখ্যা পেতে যেকোনো কিছুতে ক্লিক করুন। আমি শুধু ব্যাখ্যা করি - কখনো কিছু বন্ধ করি না।
+Click a process for its explanation. AdeeboMeter never closes processes.	ব্যাখ্যা দেখতে একটি প্রসেসে ক্লিক করুন। AdeeboMeter কখনো প্রসেস বন্ধ করে না।
+Not in my guide - here's what Windows knows.	আমার গাইডে নেই - Windows যা জানে তা এই।
+Not in AdeeboMeter's guide.	AdeeboMeter-এর গাইডে নেই।
+Rewinding the tape...	টেপ রিওয়াইন্ড হচ্ছে...
+Collecting...	সংগ্রহ হচ্ছে...
+Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.	বাফারিং কি আপনার, আপনার Wi-Fi-এর, প্রোভাইডারের - নাকি স্ট্রিমের? অ্যাপে বা ব্রাউজারে কিছু চললে আমি টের পাই আর নজর রাখি।
+Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.	স্ট্রিমের মান: প্রতিটি পতন কে ঘটাল। স্ট্রিম চেনা হয় সার্ভারের নাম দিয়ে - ট্যাব বা শিরোনাম কখনো পড়া হয় না।
+Click a row for the full story.	পুরো গল্পের জন্য একটি সারিতে ক্লিক করুন।
+Click a row for details.	বিস্তারিত দেখতে একটি সারিতে ক্লিক করুন।
+Give me a host, an IP or a URL and press Check. Nothing runs until you do.	একটি হোস্ট, IP বা URL দিয়ে যাচাই চাপুন। তার আগে কিছুই চলবে না।
+Type a host, IP or URL and press Check.	একটি হোস্ট, IP বা URL লিখে যাচাই চাপুন।
+Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...	DNS, রুট, পিং, TCP, TLS, HTTP, MTU আর পথ ধরে এগোনো হচ্ছে...
+Poking around...	খোঁজাখুঁজি চলছে...
+Running...	চলছে...
+Nothing has changed yet. Boring is good.	এখনও কিছু বদলায়নি। একঘেয়ে মানেই ভালো।
+No changes recorded yet.	এখনও কোনো পরিবর্তন রেকর্ড হয়নি।
+Warming up tshark...	tshark চালু হচ্ছে...
+No call running. Start a Teams call and I'll grade it live.	কোনো কল চলছে না। একটি Teams কল শুরু করুন, আমি সরাসরি মান যাচাই করব।
+No call media seen yet.	এখনও কলের মিডিয়া দেখা যায়নি।
+Quiet out there.	বাইরে সব চুপচাপ।
+No traffic yet.	এখনও কোনো ট্রাফিক নেই।
+Called it.	বলেছিলাম না।
+The guardian steps aside.	প্রহরী সরে দাঁড়ায়।
+Ouch - a heart lost. Try again.	উফ - একটা হৃদয় গেল। আবার চেষ্টা করুন।
+Not right - one heart lost.	ঠিক হয়নি - একটা হৃদয় গেল।
+Nothing recorded for this day yet - history writes one line a minute, so give it a few minutes.	এই দিনের জন্য এখনও কিছু রেকর্ড হয়নি - ইতিহাস প্রতি মিনিটে একটি লাইন লেখে, তাই কয়েক মিনিট সময় দিন।
+No history for this day yet (one line is written per minute).	এই দিনের ইতিহাস এখনও নেই (প্রতি মিনিটে একটি লাইন লেখা হয়)।
+History is off, so there's nothing to replay. Turn it on in Settings - it stays on this PC and deletes itself after the days you choose.	ইতিহাস বন্ধ, তাই আবার চালানোর কিছু নেই। সেটিংসে চালু করুন - এটা এই পিসিতেই থাকে আর আপনার বেছে নেওয়া দিন পরে নিজে মুছে যায়।
+History is off. Enable it in Settings to replay past minutes.	ইতিহাস বন্ধ। আগের মিনিটগুলো আবার দেখতে সেটিংসে চালু করুন।
+✨ New device!	✨ নতুন ডিভাইস!
+New device	নতুন ডিভাইস
+🦘 Wi-Fi hop!	🦘 Wi-Fi লাফ!
+Wi-Fi roamed	Wi-Fi রোমিং
+Nothing changed around then. Quiet minute.	তখন আশপাশে কিছু বদলায়নি। শান্ত মিনিট।
+No changes within 15 minutes.	15 মিনিটের মধ্যে কোনো পরিবর্তন নেই।
+Reading the process list...	প্রসেসের তালিকা পড়া হচ্ছে...
+Meet the crew running your PC.	আপনার পিসি যারা চালায়, সেই দলের সঙ্গে পরিচিত হোন।
+What's running on this PC	এই পিসিতে কী চলছে
+Nothing matches. Either the filter's too picky or it's really quiet out there.	কিছুই মেলেনি। হয় ফিল্টার খুব খুঁতখুঁতে, নয়তো সত্যিই সব চুপচাপ।
+No connections match.	কোনো সংযোগ মেলেনি।
+What's wrong? (I can't name it)	সমস্যা কী? (নাম বলতে পারছি না)
+Goes layer by layer - this PC, the link, your router, the internet, names, the way in - and stops at the first one that's broken. Only what's stale is re-tested: a few pings (1.1.1.1 if needed), one DNS question and Windows' own connectivity test page - only when you press it.	স্তরে স্তরে এগোয় - এই পিসি, লিংক, আপনার রাউটার, ইন্টারনেট, নাম, ঢোকার পথ - আর প্রথম যেটা নষ্ট সেখানে থামে। শুধু পুরোনো হয়ে যাওয়াগুলো আবার পরীক্ষা হয়: কয়েকটা পিং (দরকারে 1.1.1.1), একটি DNS প্রশ্ন আর Windows-এর নিজস্ব সংযোগ পরীক্ষার পেজ - শুধু আপনি চাপলে।
+Finds where the delay starts: your PC, your Wi-Fi, your router, your provider or DNS.	দেরি কোথায় শুরু হয় খুঁজে বের করে: আপনার পিসি, Wi-Fi, রাউটার, প্রোভাইডার বা DNS।
+Walks the name, the route, the door (TCP), the lock (TLS) and the answer (HTTP) to find the first step that fails.	নাম, রুট, দরজা (TCP), তালা (TLS) আর উত্তর (HTTP) ধরে এগিয়ে প্রথম ব্যর্থ ধাপটি খোঁজে।
+Calls freeze or sound robotic	কল জমে যায় বা আওয়াজ যান্ত্রিক শোনায়
+Checks jitter, loss, your upload, your router under load, Wi-Fi and the VPN - what calls care about.	জিটার, লস, আপনার আপলোড, লোডে রাউটার, Wi-Fi আর VPN পরীক্ষা করে - কলের জন্য যা জরুরি।
+I keep disconnecting	বারবার সংযোগ চলে যায়
+Reads today's drops, roams and changes and what the signal was doing just before.	আজকের বিচ্ছিন্নতা, রোমিং ও পরিবর্তন পড়ে, আর ঠিক তার আগে সিগন্যাল কী করছিল দেখে।
+Works at home, not on VPN or at work	বাসায় চলে, VPN-এ বা অফিসে চলে না
+Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself.	একে অপরের ওপর পড়া নেটওয়ার্ক, প্রক্সি, VPN-এর নামের নিয়ম, পথের MTU আর পোর্ট নিজেই।
+Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপ, ড্রাইভার, জমে যাওয়া অ্যাপ আর ব্যাকগ্রাউন্ডের কাজ - এই ক্রমে।
+Network (SSID)	নেটওয়ার্ক (SSID)
+Access point (BSSID)	অ্যাক্সেস পয়েন্ট (BSSID)
+Band	ব্যান্ড
+Channel	চ্যানেল
+Standard	স্ট্যান্ডার্ড
+Signal	সিগন্যাল
+Receive rate	গ্রহণের হার
+Transmit rate	পাঠানোর হার
+Sharing your channel	আপনার চ্যানেলের ভাগীদার
+Air time used	ব্যবহৃত এয়ারটাইম
+Channel width	চ্যানেলের প্রস্থ
+Roaming help	রোমিং সহায়তা
+Adapter	অ্যাডাপ্টার
+Link speed	লিংক গতি
+IPv4 address	IPv4 ঠিকানা
+IPv6	IPv6
+Gateway (router)	গেটওয়ে (রাউটার)
+DNS servers	DNS সার্ভার
+Address from	ঠিকানা এসেছে
+Packet size (MTU)	প্যাকেটের আকার (MTU)
+Hardware address (MAC)	হার্ডওয়্যার ঠিকানা (MAC)
+Received	গৃহীত
+Sent	প্রেরিত
+Damaged packets (errors)	ক্ষতিগ্রস্ত প্যাকেট (ত্রুটি)
+Dropped packets (discards)	বাদ পড়া প্যাকেট (ডিসকার্ড)
+Driver	ড্রাইভার
+Router answers in	রাউটার সাড়া দেয়
+Everything measured was fine at {0}: router {1}, internet {2}.	{0}-এ যা মাপা হয়েছে সব ঠিক ছিল: রাউটার {1}, ইন্টারনেট {2}।
+Latency under load	লোডে ল্যাটেন্সি
+Nothing looked wrong at {0} in what was measured - router {1}, internet {2}.	{0}-এ মাপা কিছুতে ভুল দেখা যায়নি - রাউটার {1}, ইন্টারনেট {2}।
+Something needed attention at {0} - see what changed around then below.	{0}-এ কিছুতে মনোযোগ দরকার ছিল - সেই সময়ের আশপাশে কী বদলেছে নিচে দেখুন।
+Turn on history in Settings to see your week.	আপনার সপ্তাহ দেখতে সেটিংসে ইতিহাস চালু করুন।
+My Teams	আমার দল
+Live Scores	লাইভ স্কোর
+Fixtures	সূচি
+Headlines	শিরোনাম
+Stream Check	স্ট্রিম যাচাই
+World Markets	বিশ্ববাজার
+Currencies	মুদ্রা
+Commodities	পণ্য
+Line Check	লাইন যাচাই
+Casual Investor	সাধারণ বিনিয়োগকারী
+Windows core	Windows-এর মূল অংশ
+Company / IT tools	কোম্পানি / আইটি টুল
+Windows helpers	Windows-এর সহায়ক
+Who carries it	কে বহন করে
+Ctrl+K jumps to anything.   Extra numbers for engineers: Settings > General.	Ctrl+K দিয়ে যেকোনো কিছুতে যান।   ইঞ্জিনিয়ারদের জন্য বাড়তি সংখ্যা: সেটিংস > সাধারণ।
+Off: no weather on the widget or the buddy's face.	বন্ধ: উইজেটে বা সঙ্গীর মুখে কোনো আবহাওয়া নেই।
+TALKS LIKE - A SAMPLE ON EACH CARD	কথার ধরন - প্রতিটি কার্ডে একটি নমুনা
+To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page	বেরোতে: খালি লাইনে Esc, Ctrl+Tab, বা কোনো পেজে যেতে Ctrl+1-7
+Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.	Windows কীবোর্ড নিয়ে নিয়েছে (Win, Alt+Tab বা কোনো নোটিফিকেশন) - চালিয়ে যেতে এখানে ক্লিক করুন বা Alt+Tab দিয়ে ফিরে আসুন।
+no server answered - is the internet down?	কোনো সার্ভার সাড়া দেয়নি - ইন্টারনেট কি বন্ধ?
+run a test to see	দেখতে একটি টেস্ট চালান
+ With the kick-off reminder on: your teams' fixtures every 30 min while the PC is on.	 কিক-অফ রিমাইন্ডার চালু থাকলে: পিসি চালু থাকা অবস্থায় প্রতি 30 মিনিটে আপনার দলগুলোর খেলার সূচি।
+ is laggy.	 ল্যাগ করছে।
+ is playable.	 খেলার উপযোগী।
+ is steady.	 স্থির।
+A TCP handshake (no data) to each host on your board every {0} min while AdeeboMeter runs, even from the tray.	AdeeboMeter চলার সময় প্রতি {0} মিনিটে আপনার বোর্ডের প্রতিটি হোস্টে একটি TCP হ্যান্ডশেক (কোনো ডেটা নয়), ট্রে থেকেও।
+A ping a minute to each device you watch on your network ({0} now). Stays on your local network.	আপনার নেটওয়ার্কে নজর রাখা প্রতিটি ডিভাইসে প্রতি মিনিটে একটি পিং (এখন {0}টি)। আপনার লোকাল নেটওয়ার্কেই থাকে।
+Add a game	একটি গেম যোগ করুন
+An Example is made-up data - run the tool to save or share your own result.	উদাহরণ মানে বানানো ডেটা - নিজের ফল সেভ বা শেয়ার করতে টুলটি চালান।
+Checking your connection...	আপনার সংযোগ পরীক্ষা করা হচ্ছে...
+Couldn't read Windows' connection list just now - trying again.	এই মুহূর্তে Windows-এর সংযোগ তালিকা পড়া যায়নি - আবার চেষ্টা করা হচ্ছে।
+Edit	সম্পাদনা
+Give the game a name.	গেমটির একটি নাম দিন।
+Green background (for OBS Chroma Key)	সবুজ ব্যাকগ্রাউন্ড (OBS ক্রোমা কি-এর জন্য)
+Internet ping	ইন্টারনেট পিং
+Line	লাইন
+Listening...	শুনছে...
+Market quotes	বাজারদর
+Nothing measured - the router and internet checks are off in Settings.	কিছুই মাপা হয়নি - সেটিংসে রাউটার ও ইন্টারনেট পরীক্ষা বন্ধ।
+Nothing measured yet - pick your broker and press Check my line.	এখনো কিছু মাপা হয়নি - আপনার ব্রোকার বেছে নিয়ে 'আমার লাইন পরীক্ষা করুন' চাপুন।
+Off - it needs your own key.	বন্ধ - আপনার নিজের কী লাগবে।
+Off - nothing is asked until you turn scores on.	বন্ধ - স্কোর চালু না করা পর্যন্ত কিছুই চাওয়া হয় না।
+Off - your IT team turned the phone link off.	বন্ধ - আপনার আইটি টিম ফোন লিংক বন্ধ করেছে।
+Only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from bankofcanada.ca. No account, nothing about you is sent.	শুধু যখন মার্কেটস খোলা (বা সন্ধ্যার সারাংশ চালু) এবং নতুন সংখ্যা আসার কথা: আপনার তালিকার প্রতিটি মুদ্রার জন্য একটি অনুরোধ (প্রথমবার 2017 থেকে ইতিহাস) এবং প্রায় সাপ্তাহিক পণ্যসূচক, নীতি সুদহার ও মূল্যস্ফীতি, bankofcanada.ca থেকে। কোনো অ্যাকাউন্ট নেই, আপনার সম্পর্কে কিছু পাঠানো হয় না।
+Only when you press Show the QR code, or a remembered phone connects: a sealed connection through AdeeboMeter's relay (adeebometer-remote.orkoadeeb.workers.dev). The relay passes messages along and can't read them.	শুধু যখন আপনি 'QR কোড দেখান' চাপেন, বা মনে রাখা কোনো ফোন যুক্ত হয়: AdeeboMeter-এর রিলে (adeebometer-remote.orkoadeeb.workers.dev) দিয়ে একটি সিল করা সংযোগ। রিলে বার্তা পৌঁছে দেয়, পড়তে পারে না।
+Only when you press Test my stream: the playlist of the link you gave, and up to 30 s of its video, from that link's own server.	শুধু যখন 'আমার স্ট্রিম পরীক্ষা করুন' চাপেন: আপনার দেওয়া লিংকের প্লেলিস্ট এবং তার ভিডিওর সর্বোচ্চ 30 সেকেন্ড, সেই লিংকের নিজের সার্ভার থেকে।
+Only when you run it: an MTR to the destinations you chose for the minutes you chose; a reverse name lookup for each router on the way (to your own DNS server); up to 4 page reads from a cable modem at 192.168.100.1 (its signal page); your public IP (one request to www.cloudflare.com/cdn-cgi/trace) only if you type yes. A typed host also gets 1.1.1.1 traced next to it, for comparison.	শুধু চালালে: আপনার বেছে নেওয়া গন্তব্যে বেছে নেওয়া মিনিট ধরে একটি MTR; পথের প্রতিটি রাউটারের জন্য একটি রিভার্স নাম খোঁজ (আপনার নিজের DNS সার্ভারে); 192.168.100.1-এর কেবল মডেম থেকে সর্বোচ্চ 4টি পেজ পড়া (সিগন্যাল পেজ); আপনার পাবলিক IP (www.cloudflare.com/cdn-cgi/trace-এ একটি অনুরোধ) শুধু আপনি হ্যাঁ লিখলে। লেখা হোস্টের পাশে তুলনার জন্য 1.1.1.1-ও ট্রেস করা হয়।
+Phone link	ফোন লিংক
+Saving turns on scores: AdeeboMeter then asks the NHL, ESPN and BBC Sport for the day's fixtures, about every 5 minutes while the Sports page is open. Nothing about you is sent.	সেভ করলে স্কোর চালু হয়: তখন স্পোর্টস পেজ খোলা থাকা অবস্থায় প্রায় প্রতি 5 মিনিটে AdeeboMeter NHL, ESPN ও BBC Sport-এর কাছে দিনের খেলার সূচি চায়। আপনার সম্পর্কে কিছু পাঠানো হয় না।
+Service board watch	সার্ভিস বোর্ড নজরদারি
+Show the PNG in its folder	PNG ফাইলটি তার ফোল্ডারে দেখান
+Spike	স্পাইক
+Sports scores	খেলার স্কোর
+The top rank - about half of everything AdeeboMeter can teach, tried and understood. Well done.	সর্বোচ্চ র‍্যাংক - AdeeboMeter যা শেখাতে পারে তার প্রায় অর্ধেক, চেষ্টা করে বোঝা হয়েছে। দারুণ।
+This is an Example (made-up data) - run the tool to save or share your own result.	এটি একটি উদাহরণ (বানানো ডেটা) - নিজের ফল সেভ বা শেয়ার করতে টুলটি চালান।
+Toronto opens	টরন্টো খোলে
+Turned off by your IT team	আপনার আইটি টিম বন্ধ করেছে
+Two servers have the same name - give each one its own.	দুটি সার্ভারের একই নাম - প্রতিটিকে আলাদা নাম দিন।
+Watched devices	নজরে রাখা ডিভাইস
+While the Sports page is open (about every 5 min), or a stream plays while a team you follow is live: the day's fixtures and scores from api-web.nhle.com (NHL), site.api.espn.com (football) and feeds.bbci.co.uk (headlines), plus api.football-data.org and api.cricapi.com when you added your own key.	স্পোর্টস পেজ খোলা থাকা অবস্থায় (প্রায় প্রতি 5 মিনিটে), বা আপনার অনুসরণ করা দল লাইভ থাকার সময় স্ট্রিম চললে: api-web.nhle.com (NHL), site.api.espn.com (ফুটবল) ও feeds.bbci.co.uk (শিরোনাম) থেকে দিনের খেলা ও স্কোর, আর নিজের কী যোগ করলে api.football-data.org ও api.cricapi.com।
+With your own key, while Markets is open: index and futures quotes from financialmodelingprep.com, as often as you set (1-60 min).	নিজের কী দিয়ে, মার্কেটস খোলা থাকা অবস্থায়: financialmodelingprep.com থেকে সূচক ও ফিউচার্সের দর, আপনার ঠিক করা ব্যবধানে (1-60 মিনিট)।
+Write a PNG for OBS (overlay.png)	OBS-এর জন্য একটি PNG লিখুন (overlay.png)
+ask msftconnecttest.com when a check fails (sign-in page check)	কোনো পরীক্ষা ব্যর্থ হলে msftconnecttest.com-কে জিজ্ঞেস করা (সাইন-ইন পেজ পরীক্ষা)
+delay	বিলম্ব
+isn't a host name or IP - letters, digits, dots and dashes only.	হোস্ট নাম বা IP নয় - শুধু অক্ষর, সংখ্যা, বিন্দু ও ড্যাশ।
+jitter	জিটার
+keep a waiting room for remembered phones at AdeeboMeter's relay	AdeeboMeter-এর রিলেতে মনে রাখা ফোনগুলোর জন্য একটি অপেক্ষাঘর রাখা
+send your weather place to a different server: 	আপনার আবহাওয়ার জায়গা অন্য সার্ভারে পাঠানো: 
+spikes	স্পাইক
+the TCP port must be 1 - 65535.	TCP পোর্ট 1 থেকে 65535 হতে হবে।
+the scores couldn't be reached - it tries again in 5 minutes	স্কোর পাওয়া যায়নি - 5 মিনিট পরে আবার চেষ্টা করবে
+turn the internet check on (a ping to 1.1.1.1 in the background)	ইন্টারনেট পরীক্ষা চালু করা (পটভূমিতে 1.1.1.1-এ পিং)
+waiting	অপেক্ষায়
+Market closed - the watch starts at 9:30 ET	বাজার বন্ধ - নজরদারি শুরু হবে 9:30 ET-এ
+Live watch is off	লাইভ নজরদারি বন্ধ
+region estimate	অঞ্চলের আনুমানিক
+Valve server	Valve সার্ভার
+exact	নির্ভুল
+Not measured yet.	এখনো মাপা হয়নি।
+up to 1 GB to the speed server you picked	আপনার বেছে নেওয়া স্পিড সার্ভারে সর্বোচ্চ 1 GB
+Same network twice	একই নেটওয়ার্ক দুবার
+The internet past your router / VPN is slow. Your PC and {0} are fine.	আপনার রাউটার / VPN-এর ওপারের ইন্টারনেট ধীর। আপনার পিসি ও {0} ঠিক আছে।
+The internet past your router is slow. Your PC and {0} are fine.	আপনার রাউটারের ওপারের ইন্টারনেট ধীর। আপনার পিসি ও {0} ঠিক আছে।
+start game monitoring on its own when a game opens	কোনো গেম খুললে নিজে থেকেই গেম নজরদারি শুরু করা
+Only inside a check you start (What's wrong? and the full checkup): one tiny request to the same test page Windows uses, to catch hotel and airport sign-in pages.	শুধু আপনার শুরু করা যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা): হোটেল ও বিমানবন্দরের সাইন-ইন পেজ ধরতে Windows যে পরীক্ষার পেজ ব্যবহার করে সেখানে একটি ছোট অনুরোধ।
+Only inside a check you start (What's wrong? and the full checkup): one request to the same test page Windows itself uses (msftconnecttest.com).	শুধু আপনার শুরু করা যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা): Windows নিজে যে পরীক্ষার পেজ ব্যবহার করে সেখানে একটি অনুরোধ (msftconnecttest.com)।
+Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3). One exception: when you ask the TLS inspector for a different name, it accepts a certificate for another name and says so on its page. Inputs are validated; no shell is ever used.	যাচাইগুলো Windows-এর নিজস্ব সার্টিফিকেট যাচাইসহ TLS ব্যবহার করে (Windows TLS 1.2 বা 1.3 বেছে নেয়)। একটি ব্যতিক্রম: TLS ইন্সপেক্টরে অন্য নাম চাইলে সেটি অন্য নামের সার্টিফিকেট গ্রহণ করে এবং তার পেজে তা জানায়। ইনপুট যাচাই করা হয়; কখনো কোনো শেল ব্যবহার হয় না।
+and {0} more - Open a file... in the lab lists them all	আরও {0}টি - ল্যাবে Open a file... সবগুলো দেখায়
+Move widget	উইজেট সরান
+Reset widget position	উইজেটের জায়গা আগের মতো করুন
+Move the widget	উইজেট সরান
+Drag to move · click opens AdeeboMeter	সরাতে টেনে আনুন · ক্লিক করলে AdeeboMeter খোলে
+Widget position	উইজেটের জায়গা
+Fade fully when the mouse comes near	মাউস কাছে এলে পুরো মিলিয়ে যাবে
+Bottom right	নিচে ডানে
+Bottom left	নিচে বাঁয়ে
+Top right	উপরে ডানে
+Top left	উপরে বাঁয়ে
+Reset	আগের মতো করুন
+Bottom right, the default. To move it, rest the mouse on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	নিচে ডানে, এটাই ডিফল্ট। সরাতে মাউস কিছুক্ষণ এর ওপর রাখুন বা ওপরে রেখে Ctrl চেপে ধরুন, তারপর টেনে আনুন। ক্লিক করলে AdeeboMeter খোলে।
+Moved by you. Pick a corner, or Reset to put it back in the bottom-right corner of the main screen.	আপনি সরিয়েছেন। একটা কোণ বেছে নিন, বা আগের মতো করুন বেছে মূল স্ক্রিনের নিচে ডান কোণে ফিরিয়ে দিন।
+On: the widget disappears as the mouse comes near, so it never covers what you point at. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে পয়েন্ট করছেন তা কখনো ঢাকে না। সরাতে এর জায়গার ওপর মাউস রেখে Ctrl চেপে ধরুন, বা ট্রে থেকে: কোণের উইজেট > উইজেট সরান।
+Off: it brightens when you point at it.	বন্ধ: পয়েন্ট করলে উজ্জ্বল হয়।
+Drag to move · click opens AdeeboMeter · fades again when you leave	সরাতে টেনে আনুন · ক্লিক করলে AdeeboMeter খোলে · সরে গেলে আবার মিলিয়ে যায়
+Keep resting to move it, or hold Ctrl	সরাতে আরেকটু ধরে রাখুন, বা Ctrl চেপে ধরুন
+Move hints on the widget	উইজেটে সরানোর টিপস
+On: a blue line on the card says how to move it while you rest on it or it's unlocked.	চালু: আপনি ওপরে মাউস রাখলে বা আনলক থাকলে কার্ডে একটা নীল লাইন বলে কীভাবে সরাবেন।
+Off: no hint line. Moving still works the same way.	বন্ধ: কোনো টিপস লাইন নেই। সরানো আগের মতোই কাজ করে।
+ Any symbol your key covers (AAPL, SHOP.TO, ^GSPC), or FX:USD for a currency - up to four.	 আপনার কি যেসব সিম্বল কভার করে (AAPL, SHOP.TO, ^GSPC), বা মুদ্রার জন্য FX:USD - সর্বোচ্চ চারটি।
+ calls today.	 কল আজ।
+ of 90 (the free key allows 100).	 / 90 (ফ্রি কি 100টি দেয়)।
+A preset the widget switches to for this part of the day, then back to yours. Not on battery.	দিনের এই সময়ে উইজেট যে প্রিসেটে যায়, তারপর আপনারটায় ফেরে। ব্যাটারিতে নয়।
+Add a game in the Gamer Zone	গেমার জোনে একটা গেম যোগ করুন
+Add your teams on the Sports page	স্পোর্টস পেজে আপনার দল যোগ করুন
+At this pace	এই হারে
+Back to my widget	আমার উইজেটে ফিরুন
+Bank of Canada, daily	ব্যাংক অব কানাডা, প্রতিদিন
+Busiest app	সবচেয়ে ব্যস্ত অ্যাপ
+DNS lookup	DNS খোঁজা
+Data this month	এই মাসের ডেটা
+Data today	আজকের ডেটা
+Data use	ডেটা ব্যবহার
+Final	শেষ
+Game ping	গেম পিং
+Gold	সোনা
+Grade	গ্রেড
+Hold this	এটা ধরে রাখুন
+How much you used today and this month, against your cap if you set one, and where this pace ends the month.	আজ আর এই মাসে কত ব্যবহার করেছেন, সীমা দিলে তার তুলনায়, আর এই হারে মাস শেষে কোথায় দাঁড়াবে।
+It comes with the next look	পরের বার দেখার সময় আসবে
+Market	মার্কেট
+Match	ম্যাচ
+Match recap	ম্যাচের সারাংশ
+My team	আমার দল
+My teams	আমার দলগুলো
+My widget	আমার উইজেট
+Needs your Financial Modeling Prep key (Settings › Markets)	আপনার Financial Modeling Prep কি লাগবে (সেটিংস › মার্কেট)
+Network fine	নেটওয়ার্ক ঠিক আছে
+No forecast yet	এখনো পূর্বাভাস নেই
+No games today	আজ কোনো খেলা নেই
+No markets picked	কোনো মার্কেট বাছা হয়নি
+No teams followed yet	এখনো কোনো দল অনুসরণ করছেন না
+None of those look like a symbol. Try AAPL, SHOP.TO, ^GSPC or FX:USD.	এগুলোর কোনোটাই সিম্বলের মতো নয়। AAPL, SHOP.TO, ^GSPC বা FX:USD চেষ্টা করুন।
+Now, next and the hours ahead.	এখন, এরপর আর সামনের ঘণ্টাগুলো।
+Now, what's next ("rain from 3 pm") and the hours ahead - refreshed hourly while it shows.	এখন, এরপর ("বিকেল 3টা থেকে বৃষ্টি") আর সামনের ঘণ্টাগুলো - দেখানো অবস্থায় প্রতি ঘণ্টায় আপডেট।
+Now: 	এখন: 
+Off.	বন্ধ।
+Off. A single game can still go on the widget: Show on widget, on the Sports page.	বন্ধ। একটা খেলা তবুও উইজেটে রাখা যায়: স্পোর্টস পেজে উইজেটে দেখান।
+Off: the widget keeps your style while you play.	বন্ধ: খেলার সময় উইজেট আপনার স্টাইলেই থাকে।
+Oil	তেল
+On the widget	উইজেটে আছে
+On: an hour before rain, snow or a storm (by the forecast), the widget shows the weather, and goes back once it has started. It's a forecast from Open-Meteo - not radar or official warnings.	চালু: বৃষ্টি, তুষার বা ঝড়ের (পূর্বাভাস অনুযায়ী) এক ঘণ্টা আগে উইজেট আবহাওয়া দেখায়, শুরু হলে ফিরে যায়। এটা Open-Meteo-র পূর্বাভাস - রাডার বা সরকারি সতর্কতা নয়।
+On: when you point at the widget after a while, a blue line says what changed - a goal, a price move, the rain moving, a network event.	চালু: কিছুক্ষণ পর উইজেটে পয়েন্ট করলে একটা নীল লাইন বলে কী বদলেছে - একটা গোল, দামের ওঠানামা, বৃষ্টির সময় সরে যাওয়া, নেটওয়ার্কের কোনো ঘটনা।
+Packet loss	প্যাকেট লস
+Pick one in Settings › Widget	সেটিংস › উইজেট থেকে একটা বেছে নিন
+Prices with your Financial Modeling Prep key, at its pace (Settings › Markets), in market hours only - 	আপনার Financial Modeling Prep কি দিয়ে দাম, তার গতিতে (সেটিংস › মার্কেট), শুধু বাজার খোলা থাকলে - 
+Right now	এই মুহূর্তে
+Settings › Widget › Markets on the widget	সেটিংস › উইজেট › উইজেটে মার্কেট
+Show on widget	উইজেটে দেখান
+Since you looked:	শেষবার দেখার পর:
+Spikes	স্পাইক
+Stop holding	ধরে রাখা বন্ধ
+Symbols, separated by commas (up to four)	সিম্বল, কমা দিয়ে আলাদা (সর্বোচ্চ চারটি)
+The teams you follow: a live score at the top, then what's next and the last results.	আপনি যে দলগুলো অনুসরণ করেন: ওপরে লাইভ স্কোর, তারপর পরের খেলা আর শেষ ফলাফল।
+This month	এই মাস
+Today, this month and your cap.	আজ, এই মাস আর আপনার সীমা।
+Turn Weather on in Settings › Weather	সেটিংস › আবহাওয়ায় আবহাওয়া চালু করুন
+Up to four prices - an index, a stock, a commodity or a currency - with a little graph. Not live: the time they're from is on the card.	সর্বোচ্চ চারটি দাম - একটা সূচক, শেয়ার, পণ্য বা মুদ্রা - ছোট গ্রাফসহ। লাইভ নয়: কখনকার দাম তা কার্ডে লেখা থাকে।
+Up to four prices with a little graph.	ছোট গ্রাফসহ সর্বোচ্চ চারটি দাম।
+Up to six readings you pick below - speeds, pings, CPU, data, game ping, weather, a market, your team, the time.	নিচে বাছা সর্বোচ্চ ছয়টি রিডিং - স্পিড, পিং, CPU, ডেটা, গেম পিং, আবহাওয়া, একটা মার্কেট, আপনার দল, সময়।
+Up to six readings you pick.	আপনার বাছা সর্বোচ্চ ছয়টি রিডিং।
+Waiting for the first price	প্রথম দামের অপেক্ষায়
+What this row of My widget shows.	আমার উইজেটের এই সারি কী দেখায়।
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one.	আপনার যোগ করা গেম খোলা থাকলে উইজেট কোথায় বসবে - যেমন মিনিম্যাপ থেকে দূরে। খেলার সময় টেনে সরালে এটাই বদলায়।
+While a game you added is open, the widget becomes the gamer card whatever style it's on, stays over the game in borderless full screen, and shows a one-minute match recap when the game closes.	আপনার যোগ করা গেম খোলা থাকলে উইজেট যেকোনো স্টাইলেই গেমার কার্ড হয়ে যায়, বর্ডারলেস ফুল স্ক্রিনে গেমের ওপর থাকে, আর গেম বন্ধ হলে এক মিনিটের ম্যাচ সারাংশ দেখায়।
+While a game you follow is live (and only then). Hockey needs no key. Football and cricket use your own keys: every 2 minutes or every minute needs a paid plan. Cricket calls today: 	আপনার অনুসরণ করা খেলা লাইভ থাকলে (শুধু তখনই)। হকির কি লাগে না। ফুটবল আর ক্রিকেট আপনার নিজের কি ব্যবহার করে: প্রতি 2 মিনিট বা প্রতি মিনিটের জন্য পেইড প্ল্যান লাগে। আজ ক্রিকেট কল: 
+While a team you follow plays, the widget shows the score; 5 minutes after the final it goes back to yours. Not on battery.	আপনার দল খেললে উইজেট স্কোর দেখায়; শেষ হওয়ার 5 মিনিট পর আপনারটায় ফেরে। ব্যাটারিতে নয়।
+Without a Financial Modeling Prep key only currencies show (Bank of Canada, once a day).	Financial Modeling Prep কি ছাড়া শুধু মুদ্রা দেখায় (ব্যাংক অব কানাডা, দিনে একবার)।
+Worst	সবচেয়ে খারাপ
+Your teams: live scores and what's next.	আপনার দল: লাইভ স্কোর আর পরের খেলা।
+as of	সময়
+avg	গড়
+by the end of the month	মাস শেষে
+Markets on the widget	উইজেটে মার্কেট
+My widget: reading 1	আমার উইজেট: রিডিং 1
+My widget: reading 2	আমার উইজেট: রিডিং 2
+My widget: reading 3	আমার উইজেট: রিডিং 3
+My widget: reading 4	আমার উইজেট: রিডিং 4
+My widget: reading 5	আমার উইজেট: রিডিং 5
+My widget: reading 6	আমার উইজেট: রিডিং 6
+S&P 500, US dollar, gold	S&P 500, মার্কিন ডলার, সোনা
+My symbols...	আমার সিম্বল...
+Same as usual	আগের মতোই
+Hockey	হকি
+Football	ফুটবল
+Cricket	ক্রিকেট
+All three	তিনটাই
+Every 5 minutes	প্রতি 5 মিনিটে
+Every 2 minutes	প্রতি 2 মিনিটে
+Every minute	প্রতি মিনিটে
+(nothing)	(কিছু না)
+The verdict	রায়
+First market	প্রথম মার্কেট
+Second market	দ্বিতীয় মার্কেট
+Time	সময়
+Widget position while gaming	গেম খেলার সময় উইজেটের জায়গা
+Switch to sports for live games of	এই খেলাগুলো লাইভ হলে স্পোর্টসে যান
+Scores: how often	স্কোর: কত ঘনঘন
+Weather before rain or snow	বৃষ্টি বা তুষারের আগে আবহাওয়া
+Day plan: morning (7-9)	দিনের পরিকল্পনা: সকাল (7-9)
+Day plan: working hours (9-17)	দিনের পরিকল্পনা: অফিসের সময় (9-17)
+Day plan: evening (17-23)	দিনের পরিকল্পনা: সন্ধ্যা (17-23)
+Day plan: night (23-7)	দিনের পরিকল্পনা: রাত (23-7)
+Since you looked	শেষবার দেখার পর
+Back to yours in a minute	এক মিনিটে আপনারটায় ফিরবে
+Bottom right, the default. To move it, rest the mouse still on it for a moment or hold Ctrl over it, then drag. A click opens AdeeboMeter.	নিচে ডানে, এটাই ডিফল্ট। সরাতে মাউস কিছুক্ষণ এর ওপর স্থির রাখুন বা ওপরে রেখে Ctrl চেপে ধরুন, তারপর টেনে আনুন। ক্লিক করলে AdeeboMeter খোলে।
+Day plan	দিনের পরিকল্পনা
+Held - tray › Stop holding lets it go	ধরে রাখা - ট্রে › ধরে রাখা বন্ধ দিলে ছেড়ে দেয়
+Moved by you. Picking the corner it's in keeps the distance; another corner puts it right in that corner. Reset puts it back in the bottom-right corner of the main screen.	আপনি সরিয়েছেন। যে কোণে আছে সেটা বাছলে দূরত্ব থাকে; অন্য কোণ বাছলে ঠিক সেই কোণে বসে। আগের মতো করুন বাছলে মূল স্ক্রিনের নিচে ডানে ফেরে।
+No readings picked	কোনো রিডিং বাছা হয়নি
+Off: no move hints. Moving still works the same way; Since you looked has its own switch.	বন্ধ: সরানোর টিপস নেই। সরানো আগের মতোই কাজ করে; শেষবার দেখার পর-এর নিজস্ব সুইচ আছে।
+On another screen - see Widget on screen.	অন্য স্ক্রিনে - স্ক্রিনে উইজেট দেখুন।
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, hold Ctrl over its spot, or use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে পয়েন্ট করছেন তা কখনো ঢাকে না - তবে কোনো উইন্ডো এর কোণ ঢাকলে, ওপরে মাউস রাখলে এটা খোলে। সরাতে এর জায়গার ওপর মাউস রেখে Ctrl চেপে ধরুন, বা ট্রে থেকে: কোণের উইজেট > উইজেট সরান।
+Online lookups are off on this PC (your IT team's policy)	এই পিসিতে অনলাইন খোঁজ বন্ধ (আপনার আইটি টিমের নীতি)
+Phone linked	ফোন যুক্ত
+Pick up to six in Settings › Widget	সেটিংস › উইজেট থেকে সর্বোচ্চ ছয়টি বাছুন
+Rain or snow within the hour - back to yours once it starts	এক ঘণ্টার মধ্যে বৃষ্টি বা তুষার - শুরু হলে আপনারটায় ফিরবে
+Sports is off	স্পোর্টস বন্ধ
+Sports is off - turn it on from the Sports page	স্পোর্টস বন্ধ - স্পোর্টস পেজ থেকে চালু করুন
+Which screen the corner widget sits on. If that screen is unplugged, it goes back to the main one.	কোণের উইজেট কোন স্ক্রিনে থাকবে। সেই স্ক্রিন খুলে ফেললে মূল স্ক্রিনে ফেরে।
+Your team is playing - back to yours 5 min after the end	আপনার দল খেলছে - শেষ হওয়ার 5 মিনিট পর আপনারটায় ফিরবে
+tray › Back to my widget	ট্রে › আমার উইজেটে ফিরুন
+morning	সকাল
+working hours	অফিসের সময়
+night	রাত
+No packet ghosts tonight.	আজ রাতে কোনো প্যাকেট ভূত নেই।
+Packet ghosts detected - haunting your Wi-Fi.	প্যাকেট ভূত ধরা পড়েছে - আপনার Wi-Fi-তে ভর করেছে।
+Packet ghosts detected - possessing your PC.	প্যাকেট ভূত ধরা পড়েছে - আপনার পিসিতে ভর করেছে।
+Packet ghosts detected - lurking past your router.	প্যাকেট ভূত ধরা পড়েছে - রাউটারের ওপারে ঘুরছে।
+Warm and cosy on the network.	নেটওয়ার্কে বেশ উষ্ণ আর আরামদায়ক।
+Cold start latency - your Wi-Fi needs a scarf.	ঠান্ডায় চালুর দেরি - আপনার Wi-Fi-এর একটা মাফলার দরকার।
+Cold start latency - something's frozen up the line.	ঠান্ডায় চালুর দেরি - লাইনের কোথাও কিছু জমে গেছে।
+A clean network to start the year.	বছর শুরুর জন্য একটা পরিষ্কার নেটওয়ার্ক।
+New year, same Wi-Fi.	নতুন বছর, সেই একই Wi-Fi।
+New year, same provider.	নতুন বছর, সেই একই সেবাদাতা।
+ - without your weather place, broker, teams, market symbols, pinned game, widget position, the name you are called and your words of comfort (they stay on this PC).	 - আপনার আবহাওয়ার জায়গা, ব্রোকার, দল, মার্কেট সিম্বল, পিন করা খেলা, উইজেটের অবস্থান, আপনাকে যে নামে ডাকা হয় আর আপনার সান্ত্বনার কথা ছাড়া (এগুলো এই পিসিতেই থাকে)।
+A game is open, so the widget is at its gaming spot now - this corner applies when the game closes.	একটা গেম খোলা, তাই উইজেট এখন গেমের জায়গায় - গেম বন্ধ হলে এই কোণ কাজ করবে।
+A scores feed couldn't be read - the Sports page says which	একটা স্কোর ফিড পড়া যায়নি - স্পোর্টস পেজে কোনটা তা লেখা আছে
+Couldn't reach the quote service - it tries again soon	কোট সার্ভিসে পৌঁছানো যায়নি - শিগগির আবার চেষ্টা করবে
+Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter	সরাতে টেনে আনুন · Esc বা সরে গেলে লক হয় · ক্লিক করলে AdeeboMeter খোলে
+Drag to move · Esc or leaving it locks it · fades again when you leave	সরাতে টেনে আনুন · Esc বা সরে গেলে লক হয় · সরে গেলে আবার মিলিয়ে যায়
+Held on another card now - tray › Stop holding goes back to this style.	এখন অন্য কার্ডে ধরে রাখা - ট্রে › ধরে রাখা বন্ধ দিলে এই স্টাইলে ফেরে।
+Held · the match that ended at	ধরে রাখা · যে ম্যাচ শেষ হয়েছে
+Its screen isn't connected, so it's in the bottom-right corner of the main screen until that screen is back.	এর স্ক্রিন যুক্ত নেই, তাই সেই স্ক্রিন ফেরা পর্যন্ত এটা মূল স্ক্রিনের নিচের ডান কোণে।
+Looking for today's games...	আজকের খেলা খোঁজা হচ্ছে...
+No price for this symbol - check it in Settings › Widget	এই সিম্বলের দাম নেই - সেটিংস › উইজেট-এ দেখে নিন
+Start time not given yet	শুরুর সময় এখনও জানানো হয়নি
+The quote service didn't accept your key - Settings › Markets	কোট সার্ভিস আপনার কি নেয়নি - সেটিংস › মার্কেট
+Today's free calls are used up - prices are from earlier	আজকের ফ্রি কল শেষ - দাম আগের
+Where the widget sits while a game you added is open - away from your minimap, say. Dragging it while you play moves this one. Picking the corner it's in keeps the distance.	আপনার যোগ করা গেম খোলা থাকলে উইজেট কোথায় থাকবে - যেমন মিনিম্যাপ থেকে দূরে। খেলার সময় টেনে সরালে এটাই বদলায়। যে কোণে আছে সেটা বাছলে দূরত্ব থাকে।
+forecast from	পূর্বাভাস
+tray › Stop holding lets it go	ট্রে › ধরে রাখা বন্ধ দিলে ছেড়ে দেয়
+New year, same old internet hiccups.	নতুন বছর, ইন্টারনেটের সেই পুরোনো হেঁচকি।
+Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	নিচে ডানে, ডিফল্ট। সরাতে, মাউস কিছুক্ষণ এর ওপর স্থির রাখুন, তারপর টানুন - অথবা ট্রে › কোণের উইজেট › উইজেট সরান। ক্লিক করলে AdeeboMeter খোলে।
+Keep resting to move it	সরাতে স্থির থাকুন
+On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে দেখাচ্ছেন তা কখনো ঢাকে না - তবে কোনো উইন্ডো এর কোণ ঢাকলে, এর ওপর স্থির থাকলে এখনও খোলে। সরাতে ট্রে ব্যবহার করুন: কোণের উইজেট > উইজেট সরান।
+Hover wait	হোভারের অপেক্ষা
+How long to rest the mouse on the widget before it brightens or opens - a mouse just passing over leaves it alone.	উইজেট উজ্জ্বল হওয়া বা খোলার আগে মাউস কতক্ষণ এর ওপর রাখতে হবে - শুধু মাউস পার হয়ে গেলে কিছু হয় না।
+Rest here a little longer to move it	সরাতে এখানে আরেকটু থামুন
+With a dashed outline, drag it to move it	ড্যাশ দেওয়া রেখা দেখা গেলে টেনে সরান
+Right-click the tray icon for everything else	বাকি সবকিছুর জন্য ট্রে আইকনে রাইট-ক্লিক করুন
+(needs a free price key)	(বিনামূল্যের দামের কী লাগবে)
+Add or change...	যোগ বা বদল করুন...
+Add to widget	উইজেটে যোগ করুন
+AdeeboMeter - live prices	AdeeboMeter - লাইভ দাম
+AdeeboMeter - your companies	AdeeboMeter - আপনার কোম্পানি
+Check and save	যাচাই করে সেভ করুন
+Checking the key with one price...	একটি দাম দিয়ে কী যাচাই হচ্ছে...
+Couldn't reach the service just now - the key was kept and will be tried again.	এখন সেবাটিতে পৌঁছানো গেল না - কী রাখা হয়েছে, আবার চেষ্টা করা হবে।
+Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name.	কোম্পানি ও সূচক অনুসরণ করুন - Google, Meta বা Shopify-এর মতো পরিচিত নাম থেকে বাছুন, বা নাম দিয়ে খুঁজুন।
+Following	অনুসরণ করছেন
+Get a free key	বিনামূল্যের কী নিন
+Get a free key from any one of these, then paste it below. It stays encrypted on this PC. With keys from two, the second answers when the first can't.	এগুলোর যেকোনো একটি থেকে বিনামূল্যের কী নিন, তারপর নিচে পেস্ট করুন। এটি এই পিসিতে এনক্রিপ্ট করা থাকে। দুটি সেবার কী থাকলে প্রথমটি না পারলে দ্বিতীয়টি উত্তর দেয়।
+To remove the chosen service's key, leave the box empty and press Check and save.	বাছাই করা সেবার কী সরাতে ঘরটি খালি রেখে যাচাই করে সেভ করুন চাপুন।
+Nothing found - try the company's name or its ticker (GOOGL, SHOP.TO).	কিছু পাওয়া যায়নি - কোম্পানির নাম বা টিকার দিয়ে চেষ্টা করুন (GOOGL, SHOP.TO)।
+Numbers only - never advice.	শুধু সংখ্যা - কখনো পরামর্শ নয়।
+Pick a few, or search any company by name or ticker.	কয়েকটি বাছুন, বা নাম বা টিকার দিয়ে যেকোনো কোম্পানি খুঁজুন।
+Pick companies...	কোম্পানি বাছুন...
+Prices show once a free price key is added.	বিনামূল্যের দামের কী যোগ করলে দাম দেখা যাবে।
+Searching...	খোঁজা হচ্ছে...
+The service didn't accept that key. Check you picked the right service above.	সেবাটি এই কী নেয়নি। ওপরে সঠিক সেবা বেছেছেন কি না দেখুন।
+Turn on live prices...	লাইভ দাম চালু করুন...
+With your own key, while Markets is open: index, company and futures prices from financialmodelingprep.com, finnhub.io or twelvedata.com - only the services you added a key for - as often as you set (1-60 min). A search in the company picker asks the same service.	নিজের কী দিয়ে, Markets খোলা থাকলে: financialmodelingprep.com, finnhub.io বা twelvedata.com থেকে সূচক, কোম্পানি ও ফিউচারের দাম - শুধু যেসব সেবার কী যোগ করেছেন - আপনার ঠিক করা হারে (১-৬০ মিনিট)। কোম্পানি বাছাইয়ের খোঁজও একই সেবাকে জিজ্ঞেস করে।
+following	অনুসরণে
+key saved	কী সেভ করা
+no price	দাম নেই
+of 4 widget places used	উইজেটের ৪টি জায়গার মধ্যে ব্যবহৃত
+on the widget	উইজেটে
+private - no public shares to follow	বেসরকারি - অনুসরণ করার মতো শেয়ার নেই
+the ticker you typed	আপনার লেখা টিকার
+Your Companies	আপনার কোম্পানি
+Popular	জনপ্রিয়
+AI and tech	এআই ও প্রযুক্তি
+Canada	কানাডা
+Indexes	সূচক
+Crypto	ক্রিপ্টো
+250 calls a day - indexes, shares, futures	দিনে ২৫০টি কল - সূচক, শেয়ার, ফিউচার
+60 calls a minute - US shares	মিনিটে ৬০টি কল - মার্কিন শেয়ার
+800 calls a day - US shares and crypto	দিনে ৮০০টি কল - মার্কিন শেয়ার ও ক্রিপ্টো

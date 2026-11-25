@@ -87,7 +87,7 @@ namespace AdeeboMeter
         static void PeriodRows(Period p, List<string[]> rows)
         {
             var c = CultureInfo.CurrentCulture; double online = 100.0 * (p.Minutes - p.BadMinutes) / Math.Max(1, p.Minutes);
-            rows.Add(R(online >= 99 ? 0 : online >= 95 ? 1 : 2, "Smooth", online.ToString("0.#", c) + "% of the minutes measured (" + N0(p.Minutes / 60.0) + " hours over " + p.Days + " days)", "A minute counts as rough when AdeeboMeter's verdict was a problem.", "m"));
+            rows.Add(R(online >= 99 ? 0 : online >= 95 ? 1 : 2, "Smooth", online.ToString("0.#", c) + "% of the minutes measured (" + N0(p.Minutes / 60.0) + " hours over " + p.Days + (p.Days == 1 ? " day)" : " days)"), "A minute counts as rough when AdeeboMeter's verdict was a problem.", "m"));
             rows.Add(R(p.OutageCount == 0 ? 0 : 1, "Outages", p.OutageCount == 0 ? "none" : p.OutageCount + " · " + N0(p.OutageMin) + " minutes without internet", "The internet check got no answer at all.", "m"));
             rows.Add(R(3, "Usual delay", "router " + N1(p.GwAvg) + " ms · internet " + N1(p.NetAvg) + " ms · loss " + N1(p.LossAvg) + "%", "", "m"));
             rows.Add(R(3, "Data", N1(p.GBDown) + " GB down · " + N1(p.GBUp) + " GB up", "Counted from Windows' own counters, all networks.", "w"));
@@ -97,7 +97,7 @@ namespace AdeeboMeter
             if (p.RushHour >= 0) rows.Add(R(3, "Rush hour", DayNames[p.RushDow] + "s " + p.RushHour.ToString("00", c) + ":00-" + ((p.RushHour + 1) % 24).ToString("00", c) + ":00 · router " + N1(p.RushGw) + " ms", "The slowest hour of the week on your own network.", "m"));
             if (p.Laggiest != "") rows.Add(R(3, "Laggiest game", p.Laggiest + " · " + N0(p.LaggiestMs) + " ms on average", "From the Gamer Zone's history (kept " + Cfg.GameDays + " days).", "m"));
             double waits = p.BadMinutes + p.OutageUnrecorded;   // rough minutes, plus the outage minutes History didn't already count as rough
-            if (waits > 0) rows.Add(R(3, "Time lost waiting", N0(waits / 60.0) + " hours of outages and rough minutes", "", "i"));
+            if (waits > 0) rows.Add(R(3, "Time lost waiting", (waits < 90 ? N0(waits) + " minutes" : N0(waits / 60.0) + " hours") + " of outages and rough minutes", "", "i"));
         }
 
         // ---------- your month on the network ("2026-10", "october", empty = last month, "this" = this month so far)
@@ -137,7 +137,7 @@ namespace AdeeboMeter
             var days = History.Days(); var from = days.Min(); var to = DateTime.Today; if ((to - from).TotalDays > 183) from = to.AddDays(-182);
             var p = Sum(m, from, to, run, true, true);
             rows.Add(R(-1, "SIX MONTHS ON YOUR NETWORK", from.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - " + to.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m"));
-            if ((to - from).TotalDays < 150) rows.Add(R(3, "So far", p.Days + " days recorded - a full review needs about six months. Keep history for 180 days (Settings) to get there.", "", "i"));
+            if ((to - from).TotalDays < 150) rows.Add(R(3, "So far", p.Days + (p.Days == 1 ? " day" : " days") + " recorded - a full review needs about six months. Keep history for 180 days (Settings) to get there.", "", "i"));
             PeriodRows(p, rows);
             // month by month: one line each
             rows.Add(R(-1, "MONTH BY MONTH", "", "", "m"));
@@ -233,10 +233,10 @@ namespace AdeeboMeter
             foreach (var e in m.Events.Recent(300)) if (e.Kind == "wake" && !evs.Any(x => Math.Abs((x.T - e.T).TotalSeconds) < 1.5 && x.Text == e.Text)) evs.Add(e);   /* History keeps whole seconds */
             var secs = new List<Tuple<DateTime, double, double>>();   // when, seconds to the router, seconds to DNS (NaN: DNS never answered)
             int failed = 0;   // woke, and the router never answered in 2 minutes
-            foreach (var e in evs)
+            foreach (var e in evs)   // bug-hunt L-66: at most 6 digits each side of the point - a damaged line can't overflow
             {
-                var mm = Regex.Match(e.Text, @"router ([0-9]+(?:\.[0-9]+)?) s(?:.*?DNS ([0-9]+(?:\.[0-9]+)?) s)?", RegexOptions.CultureInvariant);
-                if (!mm.Success) { var dm = Regex.Match(e.Text, @"waking: DNS ([0-9]+(?:\.[0-9]+)?) s", RegexOptions.CultureInvariant); if (dm.Success) { double t = double.Parse(dm.Groups[1].Value, CultureInfo.InvariantCulture); secs.Add(Tuple.Create(e.T, t, t)); continue; } }   // a router that ignores ping: DNS answering is "back online"
+                var mm = Regex.Match(e.Text, @"router ([0-9]{1,6}(?:\.[0-9]{1,6})?) s(?:.*?DNS ([0-9]{1,6}(?:\.[0-9]{1,6})?) s)?", RegexOptions.CultureInvariant);
+                if (!mm.Success) { var dm = Regex.Match(e.Text, @"waking: DNS ([0-9]{1,6}(?:\.[0-9]{1,6})?) s", RegexOptions.CultureInvariant); if (dm.Success) { double t = double.Parse(dm.Groups[1].Value, CultureInfo.InvariantCulture); secs.Add(Tuple.Create(e.T, t, t)); continue; } }   // a router that ignores ping: DNS answering is "back online"
                 if (!mm.Success) { if (e.Text.IndexOf("within 2 minutes", StringComparison.Ordinal) >= 0) failed++; continue; }
                 double r = double.Parse(mm.Groups[1].Value, CultureInfo.InvariantCulture), dn = mm.Groups[2].Success ? double.Parse(mm.Groups[2].Value, CultureInfo.InvariantCulture) : double.NaN;
                 secs.Add(Tuple.Create(e.T, r, dn));
@@ -244,13 +244,13 @@ namespace AdeeboMeter
             if (secs.Count == 0 && failed > 0) { rows.Add(R(2, "After waking", failed + " wake-up" + (failed == 1 ? "" : "s") + " - the router never answered within 2 minutes", "The Wi-Fi didn't come back by itself: the adapter's power saving, or a driver that doesn't resume well. Device Manager > the Wi-Fi adapter > Power Management.", "m")); return rows; }
             if (secs.Count == 0) { rows.Add(R(3, "No wake-ups yet", "the next time the PC wakes from sleep, AdeeboMeter times how long until the router and DNS answer", Cfg.History ? "" : "Turn on History to keep the times for a month.", "u")); return rows; }
             var c = CultureInfo.CurrentCulture; double avg = secs.Average(s => s.Item2), worst = secs.Max(s => s.Item2);
-            rows.Add(R(avg <= 10 ? 0 : avg <= 30 ? 1 : 2, "Back online after waking", N1(avg) + " s on average · slowest " + N1(worst) + " s · " + secs.Count + " wake-ups", avg <= 10 ? "Quick." : "Slow wake-ups are usually the Wi-Fi adapter's power saving or a long DHCP renew. Device Manager > the Wi-Fi adapter > Power Management, or a cable, often fixes it.", "m"));
+            rows.Add(R(avg <= 10 ? 0 : avg <= 30 ? 1 : 2, "Back online after waking", N1(avg) + " s on average · slowest " + N1(worst) + " s · " + secs.Count + (secs.Count == 1 ? " wake-up" : " wake-ups"), avg <= 10 ? "Quick." : "Slow wake-ups are usually the Wi-Fi adapter's power saving or a long DHCP renew. Device Manager > the Wi-Fi adapter > Power Management, or a cable, often fixes it.", "m"));
             double dns = Avg(secs.Select(s => s.Item3)); if (!double.IsNaN(dns)) rows.Add(R(3, "DNS answered", N1(dns) + " s after waking, on average", "", "m"));
             int noDns = secs.Count(s => double.IsNaN(s.Item3)); if (noDns > 0) rows.Add(R(1, "DNS never answered", noDns + " time" + (noDns == 1 ? "" : "s") + " the router came back but DNS didn't within 2 minutes", "", "m"));
             if (failed > 0) rows.Add(R(2, "Never came back", failed + " wake-up" + (failed == 1 ? "" : "s") + " - the router didn't answer within 2 minutes", "Not in the average above.", "m"));
             rows.Add(R(-1, "BY DAY", "", "", "m"));
             foreach (var g in secs.GroupBy(s => s.Item1.Date).OrderByDescending(g => g.Key).Take(14))
-                rows.Add(R(g.Max(s => s.Item2) > 30 ? 1 : 3, g.Key.ToString("ddd d MMM", c), g.Count() + " wake-ups · " + N1(g.Average(s => s.Item2)) + " s on average · slowest " + N1(g.Max(s => s.Item2)) + " s", "", "m"));
+                rows.Add(R(g.Max(s => s.Item2) > 30 ? 1 : 3, g.Key.ToString("ddd d MMM", c), g.Count() + (g.Count() == 1 ? " wake-up · " : " wake-ups · ") + N1(g.Average(s => s.Item2)) + " s on average · slowest " + N1(g.Max(s => s.Item2)) + " s", "", "m"));
             return rows;
         }
 
@@ -364,7 +364,8 @@ namespace AdeeboMeter
                 return rows;
             }
             var old = new SortedDictionary<string, string>(StringComparer.Ordinal); string when = "";
-            foreach (var l in File.ReadLines(SnapFile).Take(500)) { if (l.StartsWith("#", StringComparison.Ordinal)) { if (l.Length > 20) when = l.Substring(l.Length - 16); continue; } int eq = l.IndexOf('='); if (eq > 0) old[l.Substring(0, eq)] = l.Substring(eq + 1); }
+            try { foreach (var l in File.ReadLines(SnapFile).Take(500)) { if (l.StartsWith("#", StringComparison.Ordinal)) { if (l.Length > 20) when = l.Substring(l.Length - 16); continue; } int eq = l.IndexOf('='); if (eq > 0) old[l.Substring(0, eq)] = l.Substring(eq + 1); } }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Snapshot", "couldn't read the saved snapshot: " + e.Message, "Type save to make a new one.", "u")); return rows; }   // bug-hunt L-63
             var changed = now.Keys.Union(old.Keys).Where(k => { string x, y; now.TryGetValue(k, out x); old.TryGetValue(k, out y); return (x ?? "") != (y ?? ""); }).ToList();
             rows.Add(R(changed.Count == 0 ? 0 : 1, "Since the snapshot (" + when + ")", changed.Count == 0 ? "nothing changed" : changed.Count + " settings changed", changed.Count == 0 ? "" : "Type save to make this the new snapshot.", "w"));
             foreach (var k in changed)
@@ -389,13 +390,13 @@ namespace AdeeboMeter
             if (run == null) run = new Toolkit.Run();   // callers without a run still get a status to write to
             var rows = new List<string[]>(); int score = 0;
             var ups = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && n.NetworkInterfaceType != NetworkInterfaceType.Tunnel && !Monitor.IsVpn(n) && Props(n) != null).ToList();   // a VPN's IPv6 isn't the home network's
-            var v6 = ups.SelectMany(n => n.GetIPProperties().UnicastAddresses).Where(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal && !a.Address.IsIPv6SiteLocal && (a.Address.GetAddressBytes()[0] & 0xE0) == 0x20).ToList();
+            var v6 = ups.SelectMany(n => P(n).UnicastAddresses).Where(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal && !a.Address.IsIPv6SiteLocal && (a.Address.GetAddressBytes()[0] & 0xE0) == 0x20).ToList();
             bool addr = v6.Count > 0; if (addr) score++;
             rows.Add(R(addr ? 0 : 2, "A public IPv6 address", addr ? v6.Count + " - e.g. " + Mask(v6[0].Address) : "none - this network doesn't hand out IPv6", addr ? "" : "Your router or provider has IPv6 off. Many providers offer it - look for IPv6 / DHCPv6-PD in the router's settings.", "w"));
             bool temp = v6.Any(a => { try { return a.SuffixOrigin == SuffixOrigin.Random; } catch (PlatformNotSupportedException) { return false; } });
             if (addr) rows.Add(R(temp ? 0 : 1, "Privacy addresses", temp ? "on - outgoing connections use a changing address" : "off - one fixed address for everything", temp ? "" : "Windows normally turns these on. A fixed address makes this PC easier to follow across sites.", "w"));
             if (addr && temp) score++;
-            bool gw6 = ups.Any(n => n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetworkV6)); if (gw6) score++;
+            bool gw6 = ups.Any(n => P(n).GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetworkV6)); if (gw6) score++;
             rows.Add(R(gw6 ? 0 : (addr ? 1 : 3), "An IPv6 router", gw6 ? "yes - Windows has an IPv6 default route" : "no", "", "w"));
             bool dns6 = false;
             try { run.Status = "Asking your DNS server for an IPv6 address..."; dns6 = Dns.GetHostAddresses("www.google.com").Any(a => a.AddressFamily == AddressFamily.InterNetworkV6); } catch (SocketException) { }
@@ -417,7 +418,10 @@ namespace AdeeboMeter
             return rows;
         }
         // one adapter that can't answer (a driver mid-reset) mustn't sink the whole tool: it's left out
-        static IPInterfaceProperties Props(NetworkInterface n) { try { return n.GetIPProperties(); } catch (NetworkInformationException) { return null; } catch (NotImplementedException) { return null; } }
+        // bug-hunt L-77/L-78: an adapter that goes away mid-check answers with a cached copy (or an error caught once, in Props) - never a throw
+        static readonly System.Runtime.CompilerServices.ConditionalWeakTable<NetworkInterface, IPInterfaceProperties> propsSeen = new System.Runtime.CompilerServices.ConditionalWeakTable<NetworkInterface, IPInterfaceProperties>();
+        static IPInterfaceProperties P(NetworkInterface n) { var p = Props(n); if (p == null) throw new NetworkInformationException(); return p; }
+        static IPInterfaceProperties Props(NetworkInterface n) { IPInterfaceProperties p; if (propsSeen.TryGetValue(n, out p)) return p; try { p = n.GetIPProperties(); } catch (NetworkInformationException) { return null; } catch (NotImplementedException) { return null; } try { propsSeen.Add(n, p); } catch (ArgumentException) { } return p; }
         static string Mask(IPAddress a) { var s = a.ToString(); int k = s.IndexOf(':', s.IndexOf(':', s.IndexOf(':') + 1) + 1); return k > 0 ? s.Substring(0, k) + ":…" : s; }
 
         // ---------- VPN leak suite: does traffic leave outside the tunnel? Two STUN answers and the IPv6 path, one verdict
@@ -444,8 +448,9 @@ namespace AdeeboMeter
             if (Policy.NoOnline || !Online.On) { rows.Add(R(1, "Online lookups", Policy.NoOnline ? "turned off by your IT team" : "off", "This check asks a public STUN server (Cloudflare) which address it sees - turn on Online lookups (top of the window) to run it.", "u")); return rows; }
             var all = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback && Props(n) != null).ToList();
             var vpn = all.FirstOrDefault(Monitor.IsVpn);
+            if (vpn != null && Props(vpn) == null) vpn = null;   // gone while asking
             if (vpn == null) { rows.Add(R(3, "VPN", "none connected", "Connect your VPN first, then run this - it checks what still leaves outside the tunnel.", "w")); return rows; }
-            var phys = all.Where(n => !Monitor.IsVpn(n) && n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any))).ToList();
+            var phys = all.Where(n => !Monitor.IsVpn(n) && Props(n) != null && P(n).GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any))).ToList();
             IPAddress[] srv; try { run.Status = "Finding the STUN server..."; srv = Dns.GetHostAddresses("stun.cloudflare.com"); } catch (SocketException) { rows.Add(R(2, "STUN server", "couldn't find stun.cloudflare.com", "", "m")); return rows; }
             var s4 = srv.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork); var s6 = srv.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetworkV6);
             rows.Add(R(3, "VPN", vpn.Description, "", "w"));
@@ -454,15 +459,15 @@ namespace AdeeboMeter
             {
                 run.Status = "Asking which address the internet sees...";
                 var viaDefault = StunVia(s4, 3478, null);
-                var physIp = phys.SelectMany(n => n.GetIPProperties().UnicastAddresses).Select(a => a.Address).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+                var physIp = phys.SelectMany(n => P(n).UnicastAddresses).Select(a => a.Address).FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
                 var viaPhys = physIp != null ? StunVia(s4, 3478, physIp) : null;
                 rows.Add(R(3, "The internet sees you as", viaDefault == null ? "no answer" : viaDefault.Address.ToString(), "Through the normal route - this should be the VPN's exit.", "m"));
                 if (viaDefault != null && viaPhys != null && viaDefault.Address.Equals(viaPhys.Address)) { leaks++; rows.Add(R(2, "IPv4 outside the tunnel", "your normal traffic leaves with your own provider's address (" + viaPhys.Address + ")", "The VPN is on but doesn't carry everything - a split tunnel, or the VPN's route lost. If you expect full protection, reconnect the VPN or turn on its kill switch.", "m")); }
                 else if (viaDefault == null || viaPhys == null) { unknown++; rows.Add(R(1, "IPv4", "couldn't tell - " + (viaDefault == null ? "the STUN server didn't answer" : "no answer when asked through your Wi-Fi or cable directly"), "Not a clean bill - try again, or on another network.", "m")); }
                 else if (viaDefault != null && viaPhys != null) rows.Add(R(0, "IPv4", "goes through the tunnel (" + viaPhys.Address + " is only used when an app picks the Wi-Fi or cable on purpose)", "", "m"));
             }
-            bool v6Phys = phys.Any(n => n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetworkV6));
-            bool v6Vpn = vpn.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal);
+            bool v6Phys = phys.Any(n => P(n).GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetworkV6));
+            bool v6Vpn = P(vpn).UnicastAddresses.Any(a => a.Address.AddressFamily == AddressFamily.InterNetworkV6 && !a.Address.IsIPv6LinkLocal);
             if (v6Phys && !v6Vpn && s6 != null)
             {
                 run.Status = "Trying IPv6...";
@@ -472,8 +477,8 @@ namespace AdeeboMeter
             }
             else if (v6Phys && !v6Vpn) { unknown++; rows.Add(R(1, "IPv6", "couldn't check - this network has IPv6 but no IPv6 STUN address was found", "", "m")); }
             else rows.Add(R(0, "IPv6", v6Vpn ? "the VPN carries IPv6 too" : "no IPv6 on this network - nothing to leak", "", "w"));
-            var dnsPhys = phys.SelectMany(n => n.GetIPProperties().DnsAddresses).Where(a => !IPAddress.IsLoopback(a)).Distinct().ToList();
-            var dnsVpn = vpn.GetIPProperties().DnsAddresses.ToList();
+            var dnsPhys = phys.SelectMany(n => P(n).DnsAddresses).Where(a => !IPAddress.IsLoopback(a)).Distinct().ToList();
+            var dnsVpn = P(vpn).DnsAddresses.ToList();
             if (dnsVpn.Count == 0 && dnsPhys.Count > 0) { leaks++; rows.Add(R(1, "DNS", "the VPN sets no DNS server - names are asked via " + string.Join(", ", dnsPhys.Take(2)), "Your provider can see every site name you visit. Most VPN apps have a \"use VPN DNS\" switch.", "w")); }
             else if (dnsVpn.Count > 0 && dnsVpn.Any(dnsPhys.Contains)) { unknown++; rows.Add(R(1, "DNS", "couldn't tell - the VPN sets the same DNS server as your network (" + string.Join(", ", dnsVpn.Where(dnsPhys.Contains).Take(2)) + ")", "Security > DNS leak on VPN checks which one Windows actually uses.", "w")); }
             else rows.Add(R(0, "DNS", dnsVpn.Count > 0 ? "the VPN sets its own DNS server (" + string.Join(", ", dnsVpn.Take(2)) + ")" : "-", "Security > DNS leak on VPN checks which one Windows actually uses.", "w"));
@@ -496,9 +501,12 @@ namespace AdeeboMeter
                     var devs = list.Where(x => (x.Id.StartsWith("BTHENUM\\DEV_", StringComparison.OrdinalIgnoreCase) || x.Id.StartsWith("BTHLE\\DEV_", StringComparison.OrdinalIgnoreCase)) && x.Name != "").GroupBy(x => x.Name + "|" + DevKey(x.Id)).Select(g => g.OrderByDescending(x => x.Present).First()).ToList();
                     if (radio.Count == 0 && devs.Count == 0) { rows.Add(R(3, "Bluetooth", "no Bluetooth radio found on this PC", "", "w")); return rows; }
                     foreach (var r in radio.Take(2)) rows.Add(R(r.Err == 0 ? 0 : 2, "Radio", r.Name + (r.Err == 0 ? "" : " · " + DevInfo.Problem((int)r.Err)[0]), r.Err == 0 ? "" : DevInfo.Problem((int)r.Err)[1], "w"));
-                    rows.Add(R(-1, "PAIRED WITH THIS PC", Math.Min(40, devs.Count) + (devs.Count > 40 ? " of " + devs.Count : "") + " devices", "", "w"));
+                    rows.Add(R(-1, "PAIRED WITH THIS PC", Math.Min(40, devs.Count) + (devs.Count > 40 ? " of " + devs.Count : "") + (devs.Count == 1 ? " device" : " devices"), "", "w"));
                     foreach (var d in devs.OrderByDescending(d => d.Present).ThenBy(d => d.Name).Take(40))
-                        rows.Add(R(d.Err != 0 ? 2 : d.Present ? 0 : 3, d.Name, d.Err != 0 ? DevInfo.Problem((int)d.Err)[0] : d.Present ? "available" : "paired, not around right now", d.Err != 0 ? DevInfo.Problem((int)d.Err)[1] : "", "w"));
+                    {   // bug-hunt L-289: code 45 is Windows' "not connected right now" - for Bluetooth that's just out of range, not a fault
+                        bool fault = d.Err != 0 && d.Err != 45, here = d.Present && d.Err != 45;
+                        rows.Add(R(fault ? 2 : here ? 0 : 3, d.Name, fault ? DevInfo.Problem((int)d.Err)[0] : here ? "available" : "paired, not around right now", fault ? DevInfo.Problem((int)d.Err)[1] : "", "w"));
+                    }
                     rows.Add(R(3, "Only yours", "devices paired with this PC - other people's phones and watches nearby are never listed or recorded", "", "i"));
                 }
             }
@@ -542,6 +550,7 @@ namespace AdeeboMeter
             var o = Outages.Last(m, 1); if (o.Count > 0) sb.Append("Outages today: ").Append(o.Count).Append('\n');
             string txt = GameSession.Redact(sb.ToString(), "");
             txt = NoAddr(txt);
+            if (max <= 0) return "";   // bug-hunt L-64
             if (txt.Length <= max) return txt; int cut = max; if (cut > 0 && char.IsHighSurrogate(txt[cut - 1])) cut--; return txt.Substring(0, cut);   /* never half a character */
         }
         // every address out - public ones too (a DNS server, the probe target, a global IPv6): "addresses are left out" means all
@@ -553,11 +562,16 @@ namespace AdeeboMeter
         static string Word(int lv) { return lv == 0 ? "OK" : lv == 1 ? "Busy" : lv == 2 ? "Problem" : "-"; }
 
         // ---------- help a friend: the diagnosis and its fix steps in one encrypted .adeebo; the code travels separately
+        internal static string FriendStage { get { return Path.Combine(Program.DataDir, "friend"); } }
+        internal static void SweepFriend() { try { if (Directory.Exists(FriendStage)) foreach (var f in Directory.GetFiles(FriendStage)) try { File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { } } catch (IOException) { } catch (UnauthorizedAccessException) { } }
         public static List<string[]> FriendBundle(Monitor m, Toolkit.Run run)
         {
             var rows = new List<string[]>();
             string dir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments); if (dir == "" || !Directory.Exists(dir)) dir = Program.DataDir;
-            string txt = Path.Combine(dir, "AdeeboMeter-diagnosis-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".txt");
+            // bug-hunt L-65: the plain text is written in AdeeboMeter's own folder, never Documents - a run killed half way leaves
+            // nothing readable in Documents, and the start-up sweep deletes what it left; only the encrypted file is moved to Documents
+            string stage = FriendStage; try { Directory.CreateDirectory(stage); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            string txt = Path.Combine(stage, "AdeeboMeter-diagnosis-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".txt");
             try
             {
                 var s = m.Latest; var sb = new StringBuilder(Summary(m, 4000));
@@ -565,7 +579,16 @@ namespace AdeeboMeter
                 for (int i = 0; i < 5 && i < s.PathLabel.Length; i++) if (s.Path[i] == 1 || s.Path[i] == 2) sb.Append("- ").Append(s.PathLabel[i]).Append(": ").Append(NoAddr(GameSession.Redact((s.PathMain[i] ?? "") + " " + (s.PathSub[i] ?? ""), "").Trim())).Append('\n');
                 sb.Append("\nOpen this file in AdeeboMeter (Toolbox > Decrypt) with the code you were given, then run Fix a problem on your own PC to compare.\n");
                 File.WriteAllText(txt, sb.ToString(), new UTF8Encoding(false));
-                rows.AddRange(FileCrypt.Encrypt(txt, "code", "", run));
+                foreach (var row in FileCrypt.Encrypt(txt, "code", "", run))
+                {
+                    if (row.Length > 5 && row[5].StartsWith("show:", StringComparison.Ordinal))
+                    {
+                        string made = row[5].Substring(5), dest = Path.Combine(dir, Path.GetFileName(made));
+                        for (int n = 2; File.Exists(dest) && n < 100; n++) dest = Path.Combine(dir, Path.GetFileNameWithoutExtension(made) + " (" + n + ")" + Path.GetExtension(made));
+                        File.Move(made, dest); row[2] = Path.GetFileName(dest) + " - in " + Path.GetFileName(dir.TrimEnd('\\')); row[5] = "show:" + dest;
+                    }
+                    rows.Add(row);
+                }
                 rows.Add(R(3, "For your friend", "send the .adeebo file; tell them the code another way (a call, a text). They open it in AdeeboMeter > Toolbox > Decrypt.", "Nothing goes through any server - you carry the file.", "i"));
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Bundle", "couldn't write it: " + e.Message, "", "u")); }

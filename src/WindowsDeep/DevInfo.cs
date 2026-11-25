@@ -51,7 +51,8 @@ namespace AdeeboMeter
                     int inst; if (CM_Locate_DevNodeW(out inst, id, 1 /*phantom: devices not plugged in too*/) != 0) continue;
                     var d = new Dev { Id = id };
                     int st, pr; int s2 = CM_Get_DevNode_Status(out st, out pr, inst, 0);
-                    d.Present = s2 == 0; if (s2 == 0 && (st & 0x400) != 0) d.Problem = pr;   // DN_HAS_PROBLEM
+                    if (s2 == 0 && (st & 0x400) != 0) d.Problem = pr;   // DN_HAS_PROBLEM
+                    d.Present = s2 == 0 && d.Problem != 45;   // bug-hunt M-19: code 45 = remembered but not plugged in right now
                     d.Name = Str(inst, Name); if (d.Name == "") d.Name = Str(inst, Desc);
                     d.Class = Str(inst, Class); d.DriverVer = Str(inst, DrvVer); d.Provider = Str(inst, DrvProv);
                     d.DriverDate = Time(inst, DrvDate, true); d.Arrived = Time(inst, Arrived); d.Removed = Time(inst, Removed);
@@ -113,6 +114,6 @@ namespace AdeeboMeter
         public static string When(DateTime t) { if (t == DateTime.MinValue) return "-"; var c = CultureInfo.CurrentCulture; return t.Date == DateTime.Today ? "today " + t.ToString("HH:mm", c) : t.Date == DateTime.Today.AddDays(-1) ? "yesterday " + t.ToString("HH:mm", c) : t.ToString("d MMM yyyy HH:mm", c); }
         // Windows' own in-box drivers all carry the same made-up date (21 June 2006) - it says nothing about age
         public static bool Inbox(DateTime t) { return t.Year == 2006 && t.Month == 6 && (t.Day == 20 || t.Day == 21); }
-        public static string Age(DateTime t) { if (t == DateTime.MinValue) return ""; if (t > DateTime.Now) return "dated in the future"; double y = (DateTime.Now - t).TotalDays / 365.25; return y >= 1 ? y.ToString("0.#", CultureInfo.CurrentCulture) + " years old" : ((int)(DateTime.Now - t).TotalDays) + " days old"; }
+        public static string Age(DateTime t) { if (t == DateTime.MinValue) return ""; if (t > DateTime.Now) return "dated in the future"; double y = (DateTime.Now - t).TotalDays / 365.25; string ys = y.ToString("0.#", CultureInfo.CurrentCulture); int d = (int)(DateTime.Now - t).TotalDays; return y >= 1 ? ys + (ys == "1" ? " year old" : " years old") : d + (d == 1 ? " day old" : " days old"); }
     }
 }

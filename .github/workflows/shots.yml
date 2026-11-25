@@ -1,0 +1,51 @@
+# Screenshots for review (21 Nov): push any commit to the branch "shots-run" and this renders the main pages on a real
+# Windows machine with the same peek renderer the phone uses, then commits the pictures to the branch "shots".
+# No release and no secrets of ours - but the pictures ARE published, unreviewed, on the public "shots" branch, and they show
+# the CI runner's own network (its address, gateway, adapter names). The write token is used only by the last step (R2-152).
+name: shots
+on:
+  push:
+    branches: [shots-run]
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4.4.0
+        with:
+          persist-credentials: false   # the app runs below; the token isn't left in .git/config for it
+      - name: Build (release.ps1)
+        shell: pwsh
+        run: ./release.ps1
+      - name: Render pages
+        shell: pwsh
+        timeout-minutes: 30   # a slow runner stops here - and the pictures made so far are still committed below
+        run: |
+          New-Item -ItemType File AdeeboMeter.portable -Force | Out-Null
+          New-Item -ItemType Directory shots -Force | Out-Null
+          # past the first-run setup, Toolbox opening by topic
+          Set-Content AdeeboMeter.settings "setupdone=1`r`ntbview2=list"
+          # the first page waits 3 minutes so history, events and the Time machine have something to show
+          $pages = @(@('overview',180), @('toolbox',25), @('replay',25), @('gamer',25), @('stream',25), @('trade',25), @('security',25), @('learn',25), @('travel',40))
+          foreach ($p in $pages) {
+            $name = $p[0]; $wait = $p[1]
+            Remove-Item peek-test.jpg -ErrorAction SilentlyContinue
+            $proc = Start-Process -FilePath ./AdeeboMeter.exe -ArgumentList "--view","peek:$name","--view-after","$wait" -PassThru
+            $t = 0; while (-not (Test-Path peek-test.jpg) -and $t -lt ($wait + 60)) { Start-Sleep 2; $t += 2 }
+            Start-Sleep 2; Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue; Start-Sleep 2
+            if (Test-Path peek-test.jpg) { Move-Item peek-test.jpg "shots/$name.jpg" -Force } else { "no picture for $name" | Add-Content shots/missing.txt }
+          }
+          Get-ChildItem shots
+      - name: Commit to the branch "shots"
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if (-not (Test-Path shots)) { "nothing rendered"; exit 0 }
+          git config user.name "shots-bot"; git config user.email "shots-bot@users.noreply.github.com"
+          git checkout --orphan shots-out
+          git rm -r -q --cached . ; git add shots ; git commit -q -m "screenshots of $env:GITHUB_SHA"
+          git push -f "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY.git" shots-out:shots

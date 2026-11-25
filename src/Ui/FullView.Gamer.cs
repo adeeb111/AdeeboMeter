@@ -27,7 +27,7 @@ namespace AdeeboMeter
         void ClickGame(Game g)
         {
             if (g.Soon) return;
-            if (Policy.NoGamer) { gamerNote = "Game pings are turned off by your IT team (AdeeboMeter.policy)."; gamerCanvas.Invalidate(); return; }
+            if (Policy.NoGamer) { gamerNote = L.T("Game pings are turned off by your IT team (AdeeboMeter.policy)."); gamerCanvas.Invalidate(); return; }
             var mon = Games.Monitored();
             if (!mon.Contains(g.Id))
             {
@@ -39,7 +39,7 @@ namespace AdeeboMeter
         }
         void RefreshValve(Game g)
         {
-            if (valveBusy) return; valveBusy = true; gamerNote = "Getting Valve's server list (one request to api.steampowered.com)...";
+            if (valveBusy) return; valveBusy = true; gamerNote = L.T("Getting Valve's server list (one request to api.steampowered.com)...");
             int app = g.SteamIds.Length > 0 ? g.SteamIds[0] : 730;
             Task.Factory.StartNew(() =>
             {
@@ -58,6 +58,8 @@ namespace AdeeboMeter
         }
         static Color Hex(string h) { try { return Theme.C(h); } catch (Exception e) { if (!(e is ArgumentException || e is FormatException)) throw; return Theme.Grey; } }
         static string Ms(double v) { return double.IsNaN(v) ? "-" : v < 10 ? v.ToString("0.0", CultureInfo.InvariantCulture) : Math.Round(v).ToString(CultureInfo.InvariantCulture); }
+        // round 6 ML-3: text in a grade colour uses the theme's readable level text (4.5:1 on every palette); the raw colour is for lines and fills
+        static Color GradeText(string grade) { return grade == "Competitive" ? Theme.LvText(0) : grade == "Casual" ? Theme.LvText(1) : grade == "Laggy" ? Theme.LvText(2) : Theme.Muted; }
         static Color GradeColor(string grade) { return grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey; }
 
         void PaintGamer(Graphics g)
@@ -65,17 +67,18 @@ namespace AdeeboMeter
             g.TranslateTransform(gamerCanvas.AutoScrollPosition.X, gamerCanvas.AutoScrollPosition.Y);
             Begin(gamerCanvas);
             float x = 18 * S, y = 16 * S, w = gamerCanvas.ClientSize.Width - 36 * S;
-            var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games);
+            y = PaintGamerHud(g, x, y, w); y = TryThis(g, gamerCanvas, "gamer", x, y, w, false);   // 24 Nov: no NOW line - the status chips at the top already say it
+            var games = Games.All; var mon = Games.Monitored(); var inst = GameFinder.Installed(games, delegate { try { if (IsHandleCreated && !IsDisposed) BeginInvoke((Action)delegate { gamerCanvas.Invalidate(); }); } catch (InvalidOperationException) { } });
             string playing = GamePing.Me.Playing;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             using (var blue = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
             using (var nowrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
                 var pg = playing == null ? null : games.FirstOrDefault(z => z.Id == playing);
-                string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? "Your games" : "Your games · watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
+                string head = pg != null ? "Playing " + pg.Name + (Cfg.GameFast ? " · up to " + GamePing.MaxServers + " servers checked once a second" : " · checked every " + Math.Max(1, Cfg.GameBgSec) + " s (once a second is off in Settings)") : mon.Count == 0 ? L.T("Pick a game to watch") : "Watching in the background " + (Cfg.GameBgSec > 0 ? "every " + Cfg.GameBgSec + " s" : "(off in Settings)");
                 g.DrawString(head, Draw.fTitle, ink, x, y); y += 32 * S;
                 // Review-2: say what was found - "already here" read as detected when none were
-                string lead = mon.Count == 0 ? (inst.Count > 0 ? inst.Count + (inst.Count == 1 ? " game was" : " games were") + " found on this PC (marked \"Detected on this PC\"). Click one to start monitoring it - nothing is sent to a game company's servers until you do." : "No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.") : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
+                string lead = mon.Count == 0 ? (inst.Count > 0 ? inst.Count + (inst.Count == 1 ? " game was" : " games were") + " found on this PC (marked \"Detected on this PC\"). Click one to start monitoring it - nothing is sent to a game company's servers until you do." : L.T("No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.")) : "Click another game to add it. Monitoring starts by itself whenever a game you added opens" + (Cfg.GameAuto ? "." : " (that's off in Settings).");
                 var lh = Draw.Measure(lead, Draw.fBody, (int)w).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
                 if (gamerNote != "") { var nh = Draw.Measure(gamerNote, Draw.fSmall, (int)w).Height; g.DrawString(gamerNote, Draw.fSmall, blue, new RectangleF(x, y, w, nh + 4)); y += nh + 10 * S; }
 
@@ -84,48 +87,60 @@ namespace AdeeboMeter
                 // this match: Start / Stop / Mark lag, then the summary
                 if (mon.Count > 0) { y = PaintSession(g, games, x, y, w); PageUsed("gamer"); }
 
-                // tiles: monitored first, then installed, then the rest; GTA VI-style "soon" last
+                // 24 Nov (Gamer mockup): your games as a list on one card - the game's letter in its colour, the name and where or
+                // what state, its ping now (the dot: how good that ping is), a chevron - monitored first, then the ones found here, then the rest
                 var order = games.OrderBy(z => mon.Contains(z.Id) ? 0 : inst.Contains(z.Id) ? 1 : z.Soon ? 3 : 2).ToList();
-                int cols = Math.Max(2, Math.Min(6, (int)(w / (190 * S)))); float tw = (w - (cols - 1) * 10 * S) / cols, th = 64 * S;
+                int gcols = w > 900 * S ? 2 : 1; float gw = (w - 32 * S - (gcols - 1) * 24 * S) / gcols, grh = 52 * S;
+                int nrows = (order.Count + gcols - 1) / gcols; float cardTop = y;
+                Kit.Box(g, new RectangleF(x, y, w, 50 * S + nrows * grh + 10 * S), 14 * S);
+                g.DrawString(L.T("Your games"), Draw.fHead, ink, x + 18 * S, y + 16 * S);
+                { string at0 = L.T("Add your own game"); var yg = g.MeasureString(L.T("Your games"), Draw.fHead); float room = w - 36 * S - yg.Width - 8 * S - g.MeasureString(at0, Draw.fSmall).Width - 16 * S;   // review ML-10: the sub-line gives way, never runs under the link
+                  if (room > 40 * S) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T("ping to each game's nearest server"), Draw.fSmall, sub, new RectangleF(x + 18 * S + yg.Width + 8 * S, y + 18 * S, room, 20 * S), nw); }
+                { string at = L.T("Add your own game"); var az = g.MeasureString(at, Draw.fSmall); var ar = new RectangleF(x + w - 18 * S - az.Width, y + 18 * S, az.Width, az.Height); g.DrawString(at, Draw.fSmall, blue, ar.X, ar.Y); Act(gamerCanvas, ar, delegate { EditGame(new Game { Name = "", Custom = true }, true); }); }
+                y += 50 * S;
+                using (var lp = new Pen(Theme.Line2))
                 for (int i = 0; i < order.Count; i++)
                 {
-                    var gm = order[i]; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
+                    var gm = order[i]; int col = i / nrows, row = i % nrows;
+                    var r = new RectangleF(x + 16 * S + col * (gw + 24 * S), y + row * grh, gw, grh);
                     bool on = mon.Contains(gm.Id), here = inst.Contains(gm.Id);
-                    // each game in its own colour: a tinted raised tile, the badge solid, a ring in that colour while monitored
+                    if (row > 0) g.DrawLine(lp, r.X, r.Y, r.Right, r.Y);
                     var gc = gm.Soon ? Theme.Grey : Hex(gm.Color);
-                    Kit.Box(g, r, 14 * S);
-                    Theme.Fill(g, r, 14 * S, Kit.Mix(Theme.Card, gc, gm.Soon ? 0.04f : on ? (Theme.Dark ? 0.26f : 0.14f) : (Theme.Dark ? 0.12f : 0.06f)));
-                    if (on) Theme.Stroke(g, r, 14 * S, gc, 2); else if (here) Theme.Stroke(g, r, 14 * S, Kit.Mix(Theme.Line, gc, 0.5f), 1);
-                    var ic = new RectangleF(r.X + 10 * S, r.Y + 14 * S, 30 * S, 30 * S);
-                    Theme.Fill(g, ic, 10 * S, gc);
-                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(System.Globalization.StringInfo.GetNextTextElement(string.IsNullOrEmpty(gm.Name) ? "?" : gm.Name), Draw.fBodyB, wb, ic, c);
-                    using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(r.X + 48 * S, r.Y + 12 * S, r.Width - 56 * S, 20 * S), nowrap);
-                    string state;
-                    if (gm.Soon) state = "Coming when it launches on PC";
+                    var ic = new RectangleF(r.X + 2 * S, r.Y + (grh - 30 * S) / 2, 30 * S, 30 * S); Theme.Fill(g, ic, 8 * S, gc);
+                    using (var wb = new SolidBrush((0.2126 * gc.R + 0.7152 * gc.G + 0.0722 * gc.B) / 255 > 0.6 ? Theme.C("#06121A") : Color.White)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(gm.Name.Length > 0 ? System.Globalization.StringInfo.GetNextTextElement(gm.Name).ToUpperInvariant() : "?", Draw.fBodyB, wb, ic, c);   /* review ML-5: a whole character, emoji included */
+                    string state, ping = ""; int lv = -1;
+                    if (gm.Soon) state = L.T("PC version not announced yet");
                     else if (on)
                     {
                         var best = GamePing.Me.Best(gm); double now = double.NaN;
                         if (best != null) now = GameStat.Avg(GamePing.Me.Stat(gm.Id, best).Recent(10));
-                        state = (gm.Id == playing ? "Playing · " : "Monitoring · ") + (best != null && !double.IsNaN(now) ? Ms(now) + " ms " + best.Name : "starting...");
+                        state = (gm.Id == playing ? L.T("Playing") : L.T("Watching")) + (best != null ? " · " + best.Name : "");
+                        if (!double.IsNaN(now)) { ping = Ms(now) + " ms"; lv = now > 120 ? 2 : now > 70 ? 1 : 0; } else ping = L.T("starting...");
                     }
-                    else state = here ? "Detected on this PC · click to monitor" : "Supported · click to add";
-                    using (var sb = new SolidBrush(on ? (Theme.Dark ? Theme.Ink : Theme.BlueDark) : Theme.Muted)) g.DrawString(state, Draw.fSmall, sb, new RectangleF(r.X + 48 * S, r.Y + 34 * S, r.Width - 56 * S, 18 * S), nowrap);
+                    else state = here ? L.T("Found on this PC · click to watch") : L.T("Click to add");
+                    float rightW = 150 * S;
+                    using (var nb = new SolidBrush(gm.Soon ? Theme.Muted : Theme.Ink)) g.DrawString(gm.Name, Draw.fBodyB, nb, new RectangleF(ic.Right + 12 * S, r.Y + 8 * S, r.Width - ic.Width - rightW - 20 * S, 20 * S), nowrap);
+                    g.DrawString(state, Draw.fSmall, sub, new RectangleF(ic.Right + 12 * S, r.Y + 28 * S, r.Width - ic.Width - rightW - 20 * S, 18 * S), nowrap);
+                    if (ping != "")
+                    {
+                        var pz = g.MeasureString(ping, Draw.fBodyB); float px = r.Right - 24 * S - pz.Width;
+                        g.DrawString(ping, Draw.fBodyB, ink, px, r.Y + (grh - pz.Height) / 2);
+                        if (lv >= 0) Draw.LvDot(g, lv, px - 14 * S, r.Y + grh / 2 - 4 * S, 8 * S, 8 * S);
+                    }
+                    if (!gm.Soon)
+                        using (var mp = new Pen(Theme.Muted, 1.6f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+                        { float ax = r.Right - 8 * S, ay = r.Y + grh / 2; g.DrawLines(mp, new[] { new PointF(ax - 4 * S, ay - 5 * S), new PointF(ax + 1 * S, ay), new PointF(ax - 4 * S, ay + 5 * S) }); }
                     var gm2 = gm; if (!gm.Soon) Act(gamerCanvas, r, delegate { ClickGame(gm2); });
                 }
-                {
-                    int i = order.Count; var r = new RectangleF(x + (i % cols) * (tw + 10 * S), y + (i / cols) * (th + 10 * S), tw, th);
-                    Kit.Box(g, r);
-                    g.DrawString(L.T("+ Add your own game"), Draw.fBodyB, blue, new RectangleF(r.X + 14 * S, r.Y + 12 * S, r.Width - 20 * S, 20 * S), nowrap);
-                    g.DrawString(L.T("any game, any server IP"), Draw.fSmall, muted, new RectangleF(r.X + 14 * S, r.Y + 34 * S, r.Width - 20 * S, 18 * S), nowrap);
-                    Act(gamerCanvas, r, delegate { EditGame(new Game { Name = "", Custom = true }, true); });
-                }
-                y += ((order.Count + 1 + cols - 1) / cols) * (th + 10 * S) + 14 * S;
+                y += nrows * grh + 24 * S;
 
                 // one card per monitored game, the one being played first
+                float liveY0 = y;
                 foreach (var gm in games.Where(z => mon.Contains(z.Id)).OrderBy(z => z.Id == playing ? 0 : 1))
                     y = PaintGameCard(g, gm, gm.Id == playing, x, y, w);
                 // the ping map: the game being played, else the first watched one
                 y = PaintPingMap(g, games.Where(z => mon.Contains(z.Id) && !z.Soon).OrderBy(z => z.Id == playing ? 0 : 1).FirstOrDefault(), x, y, w);
+                LiveSpot(gamerCanvas, "gm.live", new RectangleF(x - 4 * S, liveY0, w + 8 * S, y - liveY0));   // a new ping redraws only the cards and the map
 
                 // spikes and who caused them
                 List<Spike> sp; lock (GamePing.Me.Spikes) sp = GamePing.Me.Spikes.Take(8).ToList();
@@ -137,7 +152,15 @@ namespace AdeeboMeter
                         string gname = games.Where(z => z.Id == s.Game).Select(z => z.Name).FirstOrDefault() ?? s.Game;
                         string t = s.T.ToString("HH:mm:ss", CultureInfo.CurrentCulture) + "   " + gname + " " + s.Server + " " + Ms(s.Normal) + " -> " + Ms(s.Ms) + " ms   ·   " + s.Blame;
                         using (var d = new SolidBrush(s.Blame.StartsWith("past", StringComparison.Ordinal) ? Theme.Red : Theme.Amber)) g.FillEllipse(d, x + 2 * S, y + 6 * S, 8 * S, 8 * S);
-                        g.DrawString(t, Draw.fBody, ink, new RectangleF(x + 18 * S, y, w - 18 * S, 22 * S), nowrap); y += 24 * S;
+                        float tmw = Cfg.History ? 110 * S : 0;   // "See 21:04 ›": the Time machine at that minute (FullView.Gateway.cs)
+                        g.DrawString(t, Draw.fBody, ink, new RectangleF(x + 18 * S, y, w - 18 * S - tmw, 22 * S), nowrap);
+                        if (Cfg.History)
+                        {
+                            var sk = s; string tl = L.T("See") + " " + s.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
+                            var tlr = new RectangleF(x + w - tsz.Width, y + 2 * S, tsz.Width, 20 * S); g.DrawString(tl, Draw.fSmall, blue, tlr.X, tlr.Y);
+                            Act(gamerCanvas, tlr, delegate { OpenTimeAt(sk.T, L.T("Gamer") + " - " + gname + " " + L.T("spike")); });
+                        }
+                        y += 24 * S;
                     }
                 }
                 y += 8 * S;
@@ -167,12 +190,13 @@ namespace AdeeboMeter
                             {
                                 gm.Servers.RemoveAll(z => z.Name == "My match");
                                 gm.Servers.Insert(0, new GameServer { Name = "My match", Where = "found " + DateTime.Now.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), Host = ip, Port = -1, Kind = "exact" });
-                                if (gm.Servers.Count > 12) gm.Servers.RemoveAt(gm.Servers.Count - 1);
+                                // bug-hunt L-101: room for "My match" is made by dropping an estimate, never an exact or Valve server
+                                if (gm.Servers.Count > 12) { int drop = gm.Servers.FindLastIndex(z => z.Kind == "estimate"); gm.Servers.RemoveAt(drop > 0 ? drop : gm.Servers.Count - 1); }
                                 Games.SaveGame(gm); Games.Reload();
                             }
-                            gamerNote = "Busiest connection: " + ip + " - most likely the match server (in a peer-to-peer game it can be another player). " + (have == null ? "Added as \"My match\" and watched from now on." : "It's already in the list (" + have.Name + ").");
+                            gamerNote = "Busiest connection: " + ip + " - most likely the match server (in a peer-to-peer game it can be another player). " + (have == null ? L.T("Added as \"My match\" and watched from now on.") : "It's already in the list (" + have.Name + ").");
                         }
-                        else gamerNote = err ?? "Couldn't tell which server the match uses.";
+                        else gamerNote = err ?? L.T("Couldn't tell which server the match uses.");
                         gamerCanvas.Invalidate();
                     });
                 }
@@ -180,6 +204,7 @@ namespace AdeeboMeter
             });
             gamerCanvas.Invalidate();
         }
+        GameSession sessFor; int sessVer = -1; List<GameSession.Sec> sessRows = new List<GameSession.Sec>(); double[] sessGv = new double[0];
         float PaintSession(Graphics g, List<Game> games, float x, float y, float w)
         {
             var gp = GamePing.Me; var ss = gp.Session ?? gp.LastSession; bool open = gp.Session != null && gp.Session.Open;
@@ -191,41 +216,49 @@ namespace AdeeboMeter
                 float bx = x;
                 Func<string, bool, Action, float> btn = (t, primary, a) =>
                 { t = L.T(t);
-                    var sz = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
+                    var sz = g.MeasureString(t, Draw.fBodyB);
+                    if (bx > x && bx + sz.Width + 28 * S > x + w) { bx = x; y += 44 * S; }   // bug-hunt ML-80: a narrow window wraps the buttons onto another line
+                    var r = new RectangleF(bx, y, sz.Width + 28 * S, 34 * S);
                     Theme.Fill(g, r, 17 * S, primary ? Theme.Blue : Theme.Soft); if (!primary) Kit.Frame(g, r);
                     using (var tb = new SolidBrush(primary ? Theme.OnBlue : Theme.Ink)) g.DrawString(t, Draw.fBodyB, tb, r.X + 14 * S, r.Y + (34 * S - sz.Height) / 2);
                     Act(gamerCanvas, r, a); bx += r.Width + 10 * S; return r.Width;
                 };
                 if (open)
                 {
-                    btn("Mark lag", true, delegate { gp.Session.Mark(); gamerNote = "Marked - the 30 seconds around it are in the match summary."; gamerCanvas.Invalidate(); });
+                    btn("Mark lag", true, delegate { gp.Session.Mark(); gamerNote = L.T("Marked - the 30 seconds around it are in the match summary."); gamerCanvas.Invalidate(); });
                     btn("Stop session", false, delegate { gp.EndSession(); gamerCanvas.Invalidate(); });
                 }
-                else if (target != null) btn("Start session · " + target.Name, true, delegate { gp.StartSession(target, true); gamerNote = "Session started - press Mark lag whenever it feels wrong."; gamerCanvas.Invalidate(); });
+                else if (target != null) btn("Start session · " + target.Name, true, delegate { gp.StartSession(target, true); gamerNote = L.T("Session started - press Mark lag whenever it feels wrong."); gamerCanvas.Invalidate(); });
                 if (gp.Playing != null)
                 {
                     var pg = games.FirstOrDefault(z => z.Id == gp.Playing);
-                    if (pg != null) btn(findBusy ? "Finding your match server..." : "Find my match server", false, delegate { FindMatch(pg); });
-                    if (pg != null) btn("See the packet journey", false, delegate { GameJourney(pg); });
+                    if (pg != null) btn(findBusy ? L.T("Finding your match server...") : L.T("Find my match server"), false, delegate { FindMatch(pg); });
+                    if (pg != null) btn(L.T("See the packet journey"), false, delegate { GameJourney(pg); });
                 }
-                btn("Test under load...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
+                btn(L.T("Test under load..."), false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("bloat"); });
+                // 1.1.6: the way to the game's best server in the Network Lab - your measured stops white, the provider's grey
+                if (target != null) { var tg = target; btn(L.T("Show my path"), false, delegate {
+                    var sv = gp.Best(tg) ?? (tg.Servers.Count > 0 ? tg.Servers[0] : null); if (sv == null) return;
+                    var v = gp.Stat(tg.Id, sv).Recent(30).Where(d => !double.IsNaN(d)).ToList();
+                    OpenLab(LabLink.PathJson(M, "game", sv.Host, tg.Name + " · " + sv.Name, v.Count > 0 ? v.Average() : double.NaN, MinOf(M.GwPing), MinOf(M.NetPing)), false); }); }
                 var rg = ss != null ? games.FirstOrDefault(z => z.Id == ss.GameId) : target;
-                btn("Lag graph for streaming", false, delegate { StreamOverlay.Toggle(M); });
-                btn("Wi-Fi vs cable...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null && tbBoxes.Count > 0) tbBoxes[0].Box.Text = rg.Id; });
-                btn("Report for my ISP...", false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null && tbBoxes.Count > 1) { tbBoxes[0].Box.Text = rg.Id; tbBoxes[1].Box.Text = "2"; } });
+                btn(L.T("Lag graph for streaming"), false, delegate { StreamOverlay.Toggle(M); });
+                btn(L.T("Wi-Fi vs cable..."), false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("gamecompare"); if (rg != null) Prefill("gamecompare", "Game", rg.Id); });
+                btn(L.T("Report for my ISP..."), false, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("ispreport"); if (rg != null) { Prefill("ispreport", "A game", rg.Id); Prefill("ispreport", "How long", "2"); } });
                 y += 44 * S;
                 if (ss == null) return y + 6 * S;
 
-                var rows = ss.All(); var gv = rows.Select(r => r.Game).ToArray();
+                if (!ReferenceEquals(ss, sessFor) || ss.Ver != sessVer) { sessFor = ss; sessVer = ss.Ver; sessRows = ss.All(); sessGv = sessRows.Select(r => r.Game).ToArray(); }   // bug-hunt ML-136: copied once a second at most, not on every paint
+                var rows = sessRows; var gv = sessGv;
                 DateTime end = ss.Open ? DateTime.Now : ss.End;
                 List<Spike> sp; lock (gp.Spikes) sp = gp.Spikes.Where(z => z.Game == ss.GameId && z.T >= ss.Start && z.T <= end).ToList();
                 y = SetHead(g, (open ? "THIS MATCH · " : "LAST MATCH · ") + ss.GameName.ToUpperInvariant() + " · " + ss.Server.ToUpperInvariant() + " · " + ss.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + " - " + (open ? "NOW" : end.ToString("HH:mm", CultureInfo.CurrentCulture)), x, y, w);
-                string line = rows.Count == 0 ? "Collecting - one row a second while the session is open." :
+                string line = rows.Count == 0 ? L.T("Collecting - one row a second while the session is open.") :
                     Math.Round((end - ss.Start).TotalMinutes) + " min · avg " + Ms(GameStat.Avg(gv)) + " ms · 95% " + Ms(GameStat.Pct(gv, 0.95)) + " ms · jitter " + Ms(GameStat.Jitter(gv)) + " ms · loss " + (double.IsNaN(GameStat.Loss(gv)) ? "-" : GameStat.Loss(gv).ToString("0.#", CultureInfo.InvariantCulture) + "%") + " · " + sp.Count + (sp.Count == 1 ? " spike" : " spikes") + (sp.Count > 0 ? " (" + string.Join(", ", sp.GroupBy(z => z.Blame).Select(gr => gr.Count() + " " + gr.Key)) + ")" : "");
                 var lh = Draw.Measure(line, Draw.fBody, (int)w).Height; g.DrawString(line, Draw.fBody, ink, new RectangleF(x, y, w, lh + 4)); y += lh + 8 * S;
                 // the worst moments and the player's marks, each with the 30 seconds around it
                 var moments = sp.OrderByDescending(z => z.Ms).Take(3).Select(z => Tuple.Create(z.T, "Spike " + Ms(z.Normal) + " -> " + Ms(z.Ms) + " ms · " + z.Blame)).ToList();
-                moments.AddRange(ss.Marks.Select(m => Tuple.Create(m, "You marked lag here")));
+                moments.AddRange(ss.Marks.Select(m => Tuple.Create(m, L.T("You marked lag here"))));
                 foreach (var m in moments.OrderBy(z => z.Item1).Take(8))
                 {
                     var ar = ss.Around(m.Item1, 15);
@@ -243,7 +276,7 @@ namespace AdeeboMeter
                     y += 38 * S;
                 }
                 var cp = new RectangleF(x, y, 360 * S, 22 * S);
-                g.DrawString((DateTime.Now - gzCopied).TotalSeconds < 3 ? "Copied - internal addresses removed" : "Copy match report (internal addresses removed)", Draw.fBodyB, blue, cp.X, cp.Y);
+                g.DrawString((DateTime.Now - gzCopied).TotalSeconds < 3 ? L.T("Copied - internal addresses removed") : L.T("Copy match report (internal addresses removed)"), Draw.fBodyB, blue, cp.X, cp.Y);
                 var ss2 = ss; Act(gamerCanvas, cp, delegate
                 {
                     try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(ss2.Report(sp, ssid)); gzCopied = DateTime.Now; } catch (Exception e) { CopyFailed(e); }
@@ -257,8 +290,10 @@ namespace AdeeboMeter
         {
             var week = GameHistory.Week(gm.Id); var best = GamePing.Me.Best(gm);
             float top = y, pad = 14 * S, rowH = 34 * S;
-            var rows = GamePing.Me.Ranked(gm, null).Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
-            float h = pad + 30 * S + 22 * S + rows.Count * rowH + 40 * S;
+            var ranked = GamePing.Me.Ranked(gm, null).ToList();
+            var rows = ranked.Take(GamePing.MaxServers).ToList();   // the best region first - never cut off the card
+            var unwatched = ranked.Skip(GamePing.MaxServers).ToList();   // carry-over (round-2 ML82): servers past the cap are listed as not watched, never just missing
+            float h = pad + 30 * S + 22 * S + rows.Count * rowH + unwatched.Count * 20 * S + 40 * S;
             var card = new RectangleF(x, y, w, h);
             var gcol = Hex(gm.Color);
             Kit.Box(g, card); if (playing) Theme.Stroke(g, card, 16 * S, gcol, 2);
@@ -269,7 +304,7 @@ namespace AdeeboMeter
             using (var right = new StringFormat { Alignment = StringAlignment.Far, FormatFlags = StringFormatFlags.NoWrap })
             {
                 float cx = x + pad, cy = y + pad, cw = w - 2 * pad;
-                g.DrawString(gm.Name + (playing ? "  ·  PLAYING NOW" : ""), Draw.fHead, ink, cx, cy);
+                g.DrawString(gm.Name + (playing ? "  ·  " + L.T("Playing now") : ""), Draw.fHead, ink, cx, cy);
                 // best region over 7 days
                 string bt = "";
                 if (best != null)
@@ -278,21 +313,22 @@ namespace AdeeboMeter
                     bt = known ? "Best for you over " + (int)wk[4] + (wk[4] == 1 ? " day: " : " days: ") + best.Name + " · " + Ms(wk[0]) + " ms average, " + wk[1].ToString("0.#", CultureInfo.InvariantCulture) + "% loss, trouble on " + (int)wk[3] + " evening" + (wk[3] == 1 ? "" : "s")
                                : "Best right now: " + best.Name + " - the week's verdict needs a few days of history";
                 }
-                var stop = new RectangleF(x + w - pad - 120 * S, cy, 120 * S, 22 * S);
+                float stw = (float)Math.Ceiling(g.MeasureString(L.T("Stop monitoring"), Draw.fSmall).Width) + 6 * S, edw = (float)Math.Ceiling(g.MeasureString(L.T("Edit servers"), Draw.fSmall).Width) + 6 * S;   /* review 1.1.6 U1 #10 */
+                var stop = new RectangleF(x + w - pad - Math.Max(120 * S, stw), cy, Math.Max(120 * S, stw), 22 * S);
                 g.DrawString(L.T("Stop monitoring"), Draw.fSmall, blue, stop, right);
                 var gm2 = gm; Act(gamerCanvas, stop, delegate { Games.SetMonitored(gm2.Id, false); gamerNote = "Stopped monitoring " + gm2.Name + ". Nothing more is sent to its servers."; gamerCanvas.Invalidate(); });
-                var ed = new RectangleF(stop.X - (gm.Valve ? 260 : 110) * S, cy, 100 * S, 22 * S);
+                var ed = new RectangleF(stop.X - (gm.Valve ? 160 * S : 10 * S) - Math.Max(100 * S, edw), cy, Math.Max(100 * S, edw), 22 * S);
                 g.DrawString(L.T("Edit servers"), Draw.fSmall, blue, ed, right);
                 Act(gamerCanvas, ed, delegate { EditGame(gm2, false); });
                 if (gm.Valve)
                 {
                     var rf = new RectangleF(stop.X - 150 * S, cy, 140 * S, 22 * S);
-                    g.DrawString(valveBusy ? "Refreshing..." : "Refresh Valve list", Draw.fSmall, blue, rf, right);
+                    g.DrawString(valveBusy ? "Refreshing..." : L.T("Refresh Valve list"), Draw.fSmall, blue, rf, right);
                     if (!valveBusy) Act(gamerCanvas, rf, delegate { RefreshValve(gm2); });
                 }
                 cy += 28 * S;
                 g.DrawString(bt, Draw.fSmall, sub, new RectangleF(cx, cy, cw, 18 * S), nowrap); cy += 22 * S;
-                if (rows.Count == 0) { g.DrawString(gm.Valve ? "No Valve servers yet - press Refresh Valve list (one request to Valve)." : "No servers yet - press Edit servers and add your server's address.", Draw.fBody, muted, cx, cy); }
+                if (rows.Count == 0) { g.DrawString(gm.Valve ? L.T("No Valve servers yet - press Refresh Valve list (one request to Valve).") : L.T("No servers yet - press Edit servers and add your server's address."), Draw.fBody, muted, cx, cy); }
                 float c1 = cx + 230 * S, c2 = c1 + 90 * S, c3 = c2 + 80 * S, c4 = c3 + 70 * S, c5 = c4 + 110 * S;
                 foreach (var s in rows)
                 {
@@ -304,12 +340,14 @@ namespace AdeeboMeter
                     string how = (s.Where ?? "") + " · " + (s.Kind == "valve" ? "Valve server" : s.Kind == "exact" ? "exact" : "region estimate") + " · " + (st.Used != "" ? st.Used : s.Method);
                     g.DrawString(how, Draw.fSmall, muted, new RectangleF(cx, cy + 17 * S, 220 * S, 16 * S), nowrap);
                     double ageS = st.LastAt == DateTime.MinValue ? 0 : (DateTime.Now - st.LastAt).TotalSeconds;   // a slow-paced server: say how old "now" is
-                    using (var pb = new SolidBrush(GradeColor(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
+                    using (var pb = new SolidBrush(GradeText(grade))) g.DrawString(Ms(now) + " ms" + (v.Length > 0 && ageS >= 90 ? "  (" + (ageS < 3600 ? Math.Round(ageS / 60) + " min" : Math.Round(ageS / 3600) + " h") + " ago)" : ""), Draw.fBodyB, pb, c1, cy + 6 * S);
                     g.DrawString(AdeeboMeter.L.T("avg ") + Ms(avg) + " · 95% " + Ms(p95), Draw.fSmall, sub, new RectangleF(c2, cy + 8 * S, 160 * S, 16 * S), nowrap);
-                    g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, c3 + 70 * S, cy + 8 * S);
-                    g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, c4 + 70 * S, cy + 8 * S);
+                    // bug-hunt ML-79: a column that would run into the grade pill is left out on a narrow card
+                    float pillAt = x + w - pad - 110 * S;
+                    if (c3 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("jitter ") + Ms(jit), Draw.fSmall, sub, new RectangleF(c3 + 70 * S, cy + 8 * S, pillAt - (c3 + 70 * S), 16 * S), nowrap);   /* L-102: clipped to the card */
+                    if (c4 + 70 * S + 90 * S < pillAt) g.DrawString(AdeeboMeter.L.T("loss ") + (double.IsNaN(loss) ? "-" : loss.ToString("0.#", CultureInfo.InvariantCulture) + "%"), Draw.fSmall, sub, new RectangleF(c4 + 70 * S, cy + 8 * S, pillAt - (c4 + 70 * S), 16 * S), nowrap);
                     // sparkline of the last minute
-                    var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, Math.Max(40 * S, x + w - pad - 110 * S - (c5 + 80 * S)), 24 * S);
+                    var sr = new RectangleF(c5 + 80 * S, cy + 4 * S, x + w - pad - 110 * S - (c5 + 80 * S), 24 * S);   // no room: no sparkline (never a forced width)
                     var okv = v.Where(z => !double.IsNaN(z)).ToArray();
                     if (okv.Length > 1 && sr.Width > 40 * S)
                     {
@@ -319,9 +357,10 @@ namespace AdeeboMeter
                     }
                     var gr = new RectangleF(x + w - pad - 100 * S, cy + 5 * S, 100 * S, 20 * S);
                     Theme.Fill(g, gr, 6 * S, Color.FromArgb(Theme.Dark ? 60 : 36, GradeColor(grade)));
-                    using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : GradeColor(grade))) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(grade, Draw.fSmall, gb, gr, c);
+                    using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : GradeText(grade))) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(grade, Draw.fSmall, gb, gr, c);
                     cy += rowH;
                 }
+                foreach (var s in unwatched) { g.DrawString(s.Name + " · " + L.T("not watched - only the best") + " " + GamePing.MaxServers + " " + L.T("servers are checked"), Draw.fSmall, muted, new RectangleF(cx, cy + 2 * S, cw, 16 * S), nowrap); cy += 20 * S; }
                 if (!string.IsNullOrEmpty(gm.Note)) g.DrawString(gm.Note, Draw.fSmall, muted, new RectangleF(cx, cy + 8 * S, cw, 18 * S), nowrap);
             }
             return top + h + 14 * S;
@@ -335,7 +374,8 @@ namespace AdeeboMeter
             var busy = new Dictionary<int, long>(); var lv = live.Running ? liveView : null;
             if (lv != null) foreach (var cv in lv.Top) if (cv.LocalPort > 0) { long b; busy.TryGetValue(cv.LocalPort, out b); busy[cv.LocalPort] = b + cv.Bytes; }
             Func<Conn, long> bytes = c => { long b; return busy.TryGetValue(c.LocalPort, out b) ? b : 0; };
-            var c1 = all.Where(mine).OrderBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(bytes).ThenByDescending(c => c.LocalPort).FirstOrDefault();
+            // bug-hunt ML-68: when live capture counted the traffic, the busiest conversation wins whatever its kind; UDP first only when nothing was counted
+            var c1 = all.Where(mine).OrderByDescending(bytes).ThenBy(c => c.Proto.StartsWith("UDP", StringComparison.Ordinal) ? 0 : c.State == "ESTABLISHED" && Watch.IsPublic(c.RemoteIp) ? 1 : 2).ThenByDescending(c => c.LocalPort).FirstOrDefault();
             if (c1 == null) { gamerNote = pg.Name + " has no network conversation open right now - join a match first."; gamerCanvas.Invalidate(); return; }
             OpenJourney(c1);
         }

@@ -33,9 +33,15 @@ namespace AdeeboMeter
             public string Host { get { Uri u; return Uri.TryCreate(Down, UriKind.Absolute, out u) ? u.Host : ""; } }
             public string Label { get { return Provider + (Where != "" ? " · " + Where : ""); } }
         }
-        public sealed class Result { public DateTime T; public string Server = "", Where = ""; public double Down = double.NaN, Up = double.NaN, Idle = double.NaN, LoadDown = double.NaN, LoadUp = double.NaN, MB; public bool NoUpload; public string Grade = "", Error = ""; }
+        public sealed class Result { public DateTime T; public string Server = "", Where = ""; public double Down = double.NaN, Up = double.NaN, Idle = double.NaN, LoadDown = double.NaN, LoadUp = double.NaN, MB; public bool NoUpload; public string UpWhy = ""; public string Grade = "", Error = ""; }
         public static Result Last;   // shown on the home page until the app closes (and kept in the day's events)
         public static volatile bool Busy;
+        // what the home page's gauge shows while a test runs: the stage (1 ping, 2 download, 3 upload; 0 none), the rate over the
+        // last second, and the result so far (its download once that part is done)
+        public static volatile int Stage; public static volatile Result Now;
+        static long liveBits = BitConverter.DoubleToInt64Bits(double.NaN);
+        public static double LiveMbps { get { return BitConverter.Int64BitsToDouble(Interlocked.Read(ref liveBits)); } }
+        static void SetLive(double v) { Interlocked.Exchange(ref liveBits, BitConverter.DoubleToInt64Bits(v)); }
 
         // ---------- the list. Cloudflare first (it picks its nearest data centre itself), then cities, nearest-to-Canada first
         // within each provider. Each file is a public test file the provider publishes for exactly this. Every one answered from
@@ -50,11 +56,12 @@ namespace AdeeboMeter
             return l;
         }
         public static string FilePath { get { return Path.Combine(Program.DataDir, "speedservers.txt"); } }
-        static List<Server> all;
+        static List<Server> all; static DateTime allStamp;
+        static DateTime Stamp() { try { return File.Exists(FilePath) ? File.GetLastWriteTimeUtc(FilePath) : DateTime.MinValue; } catch (Exception e) { if (e is IOException || e is UnauthorizedAccessException) return DateTime.MinValue; throw; } }
         // built-in + your own lines from speedservers.txt:  server|id|provider|where|download URL|upload URL (optional)
         public static List<Server> All()
         {
-            var a = all; if (a != null) return a;
+            var a = all; DateTime st = Stamp(); if (a != null && st == allStamp) return a;   /* hunt-5: an edit to speedservers.txt counts at once - no restart */ allStamp = st;
             var l = BuiltIn();
             try
             {
@@ -120,7 +127,7 @@ namespace AdeeboMeter
             if (res.Error != "") { rows.Add(R(2, "Speed test", res.Error, (res.Error.StartsWith("stopped during the upload", StringComparison.Ordinal) ? "" : "Nothing else was sent. ") + "Try another server - type list to see them, check to see which answer from here. A company network may block it.", "m")); return rows; }
             rows.Add(R(3, "Server", res.Server + (res.Where != "" ? " · " + res.Where : ""), "", "m"));
             rows.Add(R(0, "Download", Mbps(res.Down) + " Mbps", "", "m"));
-            rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")" : Mbps(res.Up) + " Mbps"), "", "m"));
+            rows.Add(R(res.NoUpload ? 3 : double.IsNaN(res.Up) ? 1 : 0, "Upload", res.NoUpload ? "this server only offers download - pick Cloudflare (or your own file server) for upload" : (double.IsNaN(res.Up) ? (res.UpWhy != "" ? res.UpWhy : "didn't take the upload (" + (srv.Up.Length > 0 ? new Uri(srv.Up).Host : "") + ")") : Mbps(res.Up) + " Mbps"), "", "m"));
             rows.Add(R(3, "Ping when idle", double.IsNaN(res.Idle) ? "-" : Math.Round(res.Idle) + " ms", "", "m"));
             rows.Add(R(3, "Ping while downloading", double.IsNaN(res.LoadDown) ? "-" : Math.Round(res.LoadDown) + " ms", "", "m"));
             if (!res.NoUpload) rows.Add(R(3, "Ping while uploading", double.IsNaN(res.LoadUp) ? "-" : Math.Round(res.LoadUp) + " ms", "", "m"));
@@ -163,7 +170,7 @@ namespace AdeeboMeter
         static HttpWebRequest Req(string url)
         {
             var req = (HttpWebRequest)WebRequest.Create(url);
-            req.Timeout = 6000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.AllowAutoRedirect = false;
+            req.Timeout = 6000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); req.AllowAutoRedirect = false;
             // the address Windows really connects to is checked at connect time (a name can answer public first, private next): without
             // a proxy in the way, never this PC or the LAN
             var u = req.RequestUri; bool direct; try { direct = req.Proxy == null || req.Proxy.IsBypassed(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; direct = true; }
@@ -175,7 +182,7 @@ namespace AdeeboMeter
         {
             var res = new Result { T = DateTime.Now, Server = srv.Label };
             if (Policy.NoSpeed) { res.Error = "turned off by your IT team (AdeeboMeter.policy)"; return res; }
-            if (Busy) { res.Error = "a speed test is already running"; return res; }
+            if (System.Threading.Interlocked.CompareExchange(ref busyN, 1, 0) != 0) { res.Error = "a speed test is already running"; return res; }   // bug-hunt ML-36: check and set in one step
             Busy = true;
             try
             {
@@ -186,8 +193,11 @@ IPAddress[] found;
                 if (ip == null && found.Length > 0) { res.Error = srv.Host + " has only IPv6 addresses - this speed test runs over IPv4; pick another server"; return res; }
                 if (ip == null) { res.Error = "couldn't find " + srv.Host + " - the server's name doesn't resolve, or DNS / the internet is down"; return res; }
                 // a server from speedservers.txt whose name points into this PC or the LAN (127.0.0.1.nip.io, localtest.me): never
+                // bug-hunt L-56: the same rule both ways - every IPv4 address the name gives must be on the internet (the test runs over IPv4)
+                var badV4 = found.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork && !Reachable(a)); if (badV4 != null) ip = badV4;
                 if (!Reachable(ip)) { res.Error = srv.Host + " points to a private address (" + ip + ") - a speed test only goes to a server on the internet"; return res; }
                 if (run != null) run.Status = "Ping to " + srv.Label + "...";
+                Now = res; Stage = 1;
                 res.Idle = Ping(ip, 10, () => run != null && run.Stop);
                 // some providers' test-file servers have no HTTPS: then the file comes over plain HTTP (it's only test data, and
                 // nothing is sent) - the result says so
@@ -195,6 +205,7 @@ IPAddress[] found;
                 if (downUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) && !Head(downUrl) && Head("http://" + downUrl.Substring(8))) { downUrl = "http://" + downUrl.Substring(8); res.Where = "over plain HTTP (this server has no HTTPS)"; }
                 long down = 0, up = 0; var pd = new List<double>(); string colo = "";
                 if (run != null) run.Status = "Downloading from " + srv.Label + " for " + Seconds + " s...";
+                Stage = 2; SetLive(double.NaN);
                 res.Down = Phase(downUrl, true, ip, run, pd, ref down, ref colo); res.LoadDown = Median(pd);
                 if (srv.Provider == "Cloudflare" && colo != "") res.Where = "data centre " + colo + Colo(colo);
                 if (run != null && run.Stop) { res.Error = "stopped"; return res; }
@@ -203,11 +214,17 @@ IPAddress[] found;
                     // the upload host may be another name: it gets the same check before a single byte goes to it
                     Uri upU; IPAddress[] upIps = null;
                     if (Uri.TryCreate(srv.Up, UriKind.Absolute, out upU)) { try { upIps = Dns.GetHostAddresses(upU.DnsSafeHost); } catch (SocketException) { upIps = null; } catch (ArgumentException) { upIps = null; } }
-                    if (upIps == null || upIps.Length == 0 || upIps.Any(a => !Reachable(a))) { res.Error = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped"; res.MB = down / 1e6; return res; }
-                    if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
-                    var pu = new List<double>(); string c2 = "";
-                    res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
-                    if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
+                    // bug-hunt ML-99: an upload host that fails the check skips the upload - the good download still counts
+                    var up4 = upIps == null ? new IPAddress[0] : upIps.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToArray();
+                    if (up4.Length == 0 || up4.Any(a => !Reachable(a))) res.UpWhy = "the upload server " + (upU != null ? upU.Host : "") + " doesn't resolve to an internet address - upload skipped";
+                    else
+                    {
+                        if (run != null) run.Status = "Uploading to " + srv.Label + " for " + Seconds + " s...";
+                        Stage = 3; SetLive(double.NaN);
+                        var pu = new List<double>(); string c2 = "";
+                        res.Up = Phase(srv.Up, false, ip, run, pu, ref up, ref c2); res.LoadUp = Median(pu);
+                        if (run != null && run.Stop) { res.Error = "stopped during the upload - nothing saved (about " + Math.Round(up / 1e6).ToString(CultureInfo.CurrentCulture) + " MB had been sent)"; return res; }
+                    }
                 }
                 else res.NoUpload = true;
                 res.MB = (down + up) / 1e6;
@@ -218,8 +235,9 @@ IPAddress[] found;
                 Program.Log("speed test " + srv.Id + " " + Mbps(res.Down) + "/" + Mbps(res.Up) + " Mbps, " + Math.Round(res.MB) + " MB");
                 return res;
             }
-            finally { Busy = false; }
+            finally { Busy = false; Stage = 0; Now = null; SetLive(double.NaN); System.Threading.Interlocked.Exchange(ref busyN, 0); }
         }
+        static int busyN;
         // a few Cloudflare data-centre codes people would recognise; others show the code alone
         static string Colo(string c)
         {
@@ -244,12 +262,16 @@ IPAddress[] found;
         static double Phase(string url, bool download, IPAddress ip, Toolkit.Run run, List<double> pings, ref long total, ref string colo)
         {
             long bytes = 0, counted = 0; var sw = System.Diagnostics.Stopwatch.StartNew(); long cap = (download ? MaxDownMB : MaxUpMB) * 1000000L;
-            Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref bytes) >= cap || (run != null && run.Stop);
+            // hunt-5: the cap counts the measured bytes (after the warm-up second), with a hard ceiling at twice the cap - a line
+            // over 850 Mb/s used to reach the cap inside the warm-up, measure nothing, and say the upload didn't take
+            Func<bool> done = () => sw.Elapsed.TotalSeconds >= Seconds || Interlocked.Read(ref counted) >= cap || Interlocked.Read(ref bytes) >= 2 * cap || (run != null && run.Stop);
             int streams = download ? 4 : 3; var th = new List<Thread>(); int fails = 0; string seenColo = "";
+            var live = new HttpWebRequest[streams];   // carry-over (round-2 L52): each stream's request in flight, so the end of the test can abort a stalled one
             // .NET allows 2 connections per server by default - the other streams would just queue
             try { var sp = ServicePointManager.FindServicePoint(new Uri(url)); if (sp.ConnectionLimit < streams + 1) sp.ConnectionLimit = streams + 1; } catch (UriFormatException) { }
             for (int i = 0; i < streams; i++)
             {
+                int slot = i;
                 var t = new Thread(() =>
                 {
                     var buf = new byte[64 * 1024]; var payload = download ? null : new byte[4 * 1024 * 1024];
@@ -257,7 +279,7 @@ IPAddress[] found;
                     {
                         try
                         {
-                            var req = Req(url);
+                            var req = Req(url); lock (live) live[slot] = req; if (done()) break;
                             if (!download)
                             {
                                 req.Method = "POST"; req.ContentType = "application/octet-stream"; req.ContentLength = payload.Length; req.AllowWriteStreamBuffering = false;
@@ -282,11 +304,22 @@ IPAddress[] found;
             }
             // a ping lost under load counts as the full second it waited - a queue so bad that nothing comes back is the worst
             // case, not a missing one (the grade is blank anyway when the server never answered pings at idle)
-            while (!done()) { double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v); Thread.Sleep(250); }
-            double secs = Math.Max(0.5, sw.Elapsed.TotalSeconds - 1);   // the measured window ends here, not after waiting for the threads
+            long lastB = 0; double lastT = 0, shown = double.NaN;
+            while (!done())
+            {
+                double v = One(ip); if (sw.Elapsed.TotalSeconds >= 1) lock (pings) pings.Add(double.IsNaN(v) ? 1000 : v);
+                Thread.Sleep(250);
+                // the gauge: the rate since the last look, smoothed a little so the needle doesn't jitter
+                long nb = Interlocked.Read(ref bytes); double nt = sw.Elapsed.TotalSeconds;
+                if (nt - lastT > 0.1) { double r = (nb - lastB) * 8 / 1e6 / (nt - lastT); shown = double.IsNaN(shown) ? r : shown * 0.6 + r * 0.4; SetLive(shown); lastB = nb; lastT = nt; }
+            }
+            double el = sw.Elapsed.TotalSeconds, secs = el - 1;   /* hunt-5: the real window - no 0.5 s floor skewing a short fast one */   // the measured window ends here, not after waiting for the threads
             long c = Interlocked.Read(ref counted);
-            foreach (var t in th) t.Join(3000); foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
-            return c <= 0 ? double.NaN : c * 8 / 1e6 / secs;
+            foreach (var t in th) t.Join(3000);
+            lock (live) foreach (var rq in live) if (rq != null) try { rq.Abort(); } catch (Exception) { }   // a stream stalled in a read ends now, not 8+ s later
+            foreach (var t in th) t.Join(9000);   /* a stream stuck in a read (8 s timeout) ends before the next test may start */ total = Interlocked.Read(ref bytes); if (seenColo != "") colo = seenColo;
+            if (c > 0 && secs >= 0.05) return c * 8 / 1e6 / secs;
+            long all = total; return all > 0 && el >= 0.2 ? all * 8 / 1e6 / el : double.NaN;   /* finished inside the warm-up: the whole run, ramp-up and all (a little low, never zero) */
         }
     }
 }

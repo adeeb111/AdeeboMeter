@@ -58,7 +58,7 @@ namespace AdeeboMeter
                 new Game { Id = "overwatch", Name = "Overwatch 2", Color = "#E3A008", Exes = new[] { "Overwatch" }, SteamIds = new[] { 2357570 }, Servers = world(), Note = "Blizzard's own data centres - regions are estimates." },
                 new Game { Id = "cod", Name = "Call of Duty", Color = "#4B5563", Exes = new[] { "cod" }, SteamIds = new[] { 1938090 }, Servers = world() },
                 new Game { Id = "gtaonline", Name = "GTA Online", Color = "#2DA44E", Exes = new[] { "GTA5", "GTA5_Enhanced" }, SteamIds = new[] { 271590, 3240220 }, Servers = world(), Note = "Mostly player-hosted sessions: this shows your path to the region, not to other players." },
-                new Game { Id = "gta6", Name = "GTA VI", Color = "#DB2777", Soon = true, Note = "Coming when it launches on PC." },
+                new Game { Id = "gta6", Name = "GTA VI", Color = "#DB2777", Soon = true, Note = "Out on PS5 and Xbox since 19 Nov 2026 - no PC version announced yet." },
                 new Game { Id = "roblox", Name = "Roblox", Color = "#64748B", Exes = new[] { "RobloxPlayerBeta" }, Servers = world(), Note = "Roblox's own data centres - regions are estimates." },
                 new Game { Id = "marvelrivals", Name = "Marvel Rivals", Color = "#9333EA", Exes = new[] { "Marvel-Win64-Shipping" }, SteamIds = new[] { 2767030 }, Servers = world() },
                 new Game { Id = "minecraft", Name = "Minecraft server", Color = "#3FB950", Exes = new[] { "javaw", "Minecraft.Windows" }, Note = "Add your server's address in Edit." } };
@@ -72,7 +72,7 @@ namespace AdeeboMeter
         static readonly Regex HostRx = new Regex(@"^(?=.{1,253}$)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$", RegexOptions.CultureInvariant);
         public static bool ValidHost(string h)
         {
-            if (string.IsNullOrEmpty(h) || h.Length > 253) return false;
+            if (string.IsNullOrEmpty(h) || h.Length > 253 || Icmp.OddV4(h)) return false;
             IPAddress ip; if (IPAddress.TryParse(h, out ip)) return h.IndexOf('%') < 0;
             return HostRx.IsMatch(h);
         }
@@ -112,8 +112,8 @@ namespace AdeeboMeter
                 else if (f[0] == "server" && f.Length >= 7)
                 {
                     string id = Clean(f[1], 40).ToLowerInvariant(); var g = all.FirstOrDefault(x => x.Id == id); if (g == null) continue;
-                    if (edited.Add(id)) g.Servers = new List<GameServer>();
                     string host = Clean(f[4], 253); int port; if (!ValidHost(host) || !int.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out port) || port < -1 || port > 65535) continue;
+                    if (edited.Add(id)) g.Servers = new List<GameServer>();   // carry-over (100-bug #3): the built-in list is replaced only by a line that's valid - a bad one alone leaves it as it was
                     if (g.Servers.Count < 12) g.Servers.Add(new GameServer { Name = Clean(f[2], 30), Where = Clean(f[3], 40), Host = host, Port = port, Kind = f[6] == "exact" ? "exact" : f[6] == "valve" ? "valve" : "estimate" });
                 }
             }
@@ -125,7 +125,7 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    var keep = File.Exists(FilePath) ? File.ReadLines(FilePath).Take(500).Where(l => { var f = l.Split('|'); return f.Length > 1 && !string.Equals(f[1], g.Id, StringComparison.OrdinalIgnoreCase); }).ToList() : new List<string>();
+                    var keep = File.Exists(FilePath) ? File.ReadLines(FilePath).Take(500).Where(l => Keep(l, g.Id)).ToList() : new List<string>();
                     keep.Add("game|" + g.Id + "|" + Clean(g.Name, 40) + "|" + string.Join(";", g.Exes.Select(x => Clean(x, 60))));
                     foreach (var s in g.Servers.Take(12)) keep.Add("server|" + g.Id + "|" + Clean(s.Name, 30) + "|" + Clean(s.Where, 40) + "|" + Clean(s.Host, 253) + "|" + s.Port.ToString(CultureInfo.InvariantCulture) + "|" + s.Kind);
                     string tmp = FilePath + ".tmp"; File.WriteAllLines(tmp, keep);
@@ -135,11 +135,13 @@ namespace AdeeboMeter
                 all = null;
             }
         }
+        // bug-hunt L-84: only that game's lines go - a line this version can't read (a comment, a newer kind) is kept as it is
+        static bool Keep(string l, string id) { var f = l.Split('|'); return f.Length > 1 ? !string.Equals(f[1], id, StringComparison.OrdinalIgnoreCase) : l.Trim() != ""; }
         public static void Reset(string id)
         {
             lock (k)
             {
-                try { if (File.Exists(FilePath)) File.WriteAllLines(FilePath, File.ReadLines(FilePath).Take(500).Where(l => { var f = l.Split('|'); return f.Length > 1 && !string.Equals(f[1], id, StringComparison.OrdinalIgnoreCase); }).ToList()); }
+                try { if (File.Exists(FilePath)) { var keep = File.ReadLines(FilePath).Take(500).Where(l => Keep(l, id)).ToList(); string tmp = FilePath + ".tmp"; File.WriteAllLines(tmp, keep); Program.ReplaceFile(tmp, FilePath); } }
                 catch (Exception e) { Program.Log("games reset: " + e.Message); }
                 all = null;
             }
@@ -158,15 +160,31 @@ namespace AdeeboMeter
     // ================================================================== which games are installed (read-only, nothing sent)
     static class GameFinder
     {
-        static HashSet<string> found; static DateTime at;
-        public static HashSet<string> Installed(List<Game> games)
+        static volatile HashSet<string> found; static DateTime at; static volatile bool scanning;
+        /* review 1.1.6 U1 #12: the disk scan (an unplugged Steam library, an offline share) runs on a pool thread, never in paint -
+           this returns what's known now and calls done when a fresh answer is in */
+        public static HashSet<string> Installed(List<Game> games, Action done)
         {
-            if (found != null && (DateTime.UtcNow - at).TotalMinutes < 2) return found;
+            var f = found;
+            if ((f == null || (DateTime.UtcNow - at).TotalMinutes >= 2) && !scanning)
+            {
+                scanning = true; at = DateTime.UtcNow; var gl = games.ToList();
+                System.Threading.ThreadPool.QueueUserWorkItem(delegate
+                {
+                    try { found = Scan(gl); at = DateTime.UtcNow; if (done != null) done(); }
+                    catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("games installed: " + e.Message); }
+                    finally { scanning = false; }
+                });
+            }
+            return f ?? new HashSet<string>();
+        }
+        static HashSet<string> Scan(List<Game> games)
+        {
             var r = new HashSet<string>();
             var steam = SteamApps(); var epic = EpicApps(); var riot = RiotProducts();
             foreach (var g in games)
                 if (g.SteamIds.Any(steam.Contains) || g.EpicNames.Any(n => epic.Contains(n)) || (g.RiotId != null && riot.Contains(g.RiotId))) r.Add(g.Id);
-            found = r; at = DateTime.UtcNow; return r;
+            return r;
         }
         static string ReadSmall(string f, int max) { var fi = new FileInfo(f); return fi.Exists && fi.Length <= max ? File.ReadAllText(f) : ""; }
         // Steam: its folder from the user's registry, libraryfolders.vdf for the other libraries, appmanifest_<id>.acf per game
@@ -202,7 +220,7 @@ namespace AdeeboMeter
             {
                 string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Epic", "EpicGamesLauncher", "Data", "Manifests");
                 if (!Directory.Exists(d)) return r;
-                foreach (var f in Directory.EnumerateFiles(d, "*.item").Take(500))
+                foreach (var f in Directory.EnumerateFiles(d, "*.item").Take(3000))   // bug-hunt L-86: room for a big library; still a cap on a folder anyone can fill
                     foreach (Match m in Regex.Matches(ReadSmall(f, 512 * 1024), "\"AppName\"\\s*:\\s*\"([A-Za-z0-9_.-]{1,80})\"")) r.Add(m.Groups[1].Value);
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
@@ -228,9 +246,27 @@ namespace AdeeboMeter
             {
                 var names = new HashSet<string>(Process.GetProcesses().Select(p => { try { using (p) return p.ProcessName; } catch (InvalidOperationException) { return ""; } }), StringComparer.OrdinalIgnoreCase);
                 // javaw is any Java program (Eclipse, a server...): it counts as Minecraft only when it runs from Minecraft's own Java
-                return games.FirstOrDefault(g => monitored.Contains(g.Id) && g.Exes.Any(x => names.Contains(x) && (!string.Equals(x, "javaw", StringComparison.OrdinalIgnoreCase) || JavaIsMinecraft())));
+                var on = games.Where(g => monitored.Contains(g.Id) && g.Exes.Any(x => names.Contains(x) && (!string.Equals(x, "javaw", StringComparison.OrdinalIgnoreCase) || JavaIsMinecraft()))).ToList();
+                if (on.Count < 2) return on.FirstOrDefault();
+                // bug-hunt L-85: two monitored games open - the one in front is the one being played
+                string front = Front(); var inFront = front == "" ? null : on.FirstOrDefault(g => g.Exes.Any(x => string.Equals(x, front, StringComparison.OrdinalIgnoreCase)));
+                return inFront ?? on[0];
             }
             catch (Exception e) { if (!(e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; return null; }
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        // 24 Nov: the game being played is the window in front - the widget may stay over it (borderless full screen)
+        public static bool PlayingInFront()
+        {
+            var id = GamePing.Me.Playing; if (id == null) return false;
+            var g = Games.All.FirstOrDefault(z => z.Id == id); if (g == null) return false;
+            string f = Front(); return f != "" && g.Exes.Any(x => string.Equals(x, f, StringComparison.OrdinalIgnoreCase));
+        }
+        static string Front()
+        {
+            try { uint pid; var h = GetForegroundWindow(); if (h == IntPtr.Zero || GetWindowThreadProcessId(h, out pid) == 0) return ""; using (var p = Process.GetProcessById((int)pid)) return p.ProcessName; }
+            catch (Exception e) { if (!(e is ArgumentException || e is InvalidOperationException || e is System.ComponentModel.Win32Exception)) throw; return ""; }
         }
         static bool JavaIsMinecraft()
         {
@@ -263,6 +299,7 @@ namespace AdeeboMeter
             {
                 int from = starts[i].Index, to = i + 1 < starts.Count ? starts[i + 1].Index : json.Length;
                 string seg = json.Substring(from, Math.Min(to - from, 6000)), code = starts[i].Groups[1].Value.ToUpperInvariant();
+                if (code == "POPS") continue;   // bug-hunt ML-44: the container of the regions, not a region
                 var d = Regex.Match(seg, "\"desc\"\\s*:\\s*\"([^\"]{1,60})\""); var ip4 = Regex.Match(seg, "\"ipv4\"\\s*:\\s*\"([0-9.]{7,15})\"");
                 IPAddress ip; if (!d.Success || !ip4.Success || !IPAddress.TryParse(ip4.Groups[1].Value, out ip) || ip.AddressFamily != AddressFamily.InterNetwork) continue;
                 string desc = d.Groups[1].Value; int p = desc.IndexOf('('); string where = p > 0 ? desc.Substring(0, p).Trim() : desc;
@@ -280,11 +317,12 @@ namespace AdeeboMeter
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var s = resp.GetResponseStream()) using (var rd = new StreamReader(s, Encoding.UTF8))
                 {
                     var buf = new char[2 * 1024 * 1024]; int n = 0, got; while (n < buf.Length && (got = rd.Read(buf, n, buf.Length - n)) > 0) n += got;
+                    if (n == buf.Length && rd.Read() >= 0) return "Valve's list was bigger than expected - kept the old one.";   // bug-hunt L-87: never a cut-off copy
                     body = new string(buf, 0, n);
                 }
                 var list = Parse(body);
                 if (list.Count == 0) return "Valve's list came back without any servers - kept the old one.";
-                File.WriteAllText(FilePath, body); Games.Reload();
+                SafeFile.WriteText(FilePath, body); Games.Reload();
                 return "Got " + list.Count + " Valve regions.";
             }
             catch (Exception e) { if (!(e is WebException || e is IOException || e is UnauthorizedAccessException)) throw; return "Couldn't reach Valve: " + e.Message; }
@@ -330,6 +368,7 @@ namespace AdeeboMeter
         readonly Dictionary<string, GameStat> stats = new Dictionary<string, GameStat>();
         public readonly List<Spike> Spikes = new List<Spike>();
         readonly object k = new object();
+        string pendingGame; DateTime pendingSince = DateTime.MinValue;   // round 6 H6-L10
         public volatile string Playing;            // id of the monitored game running now (null = none)
         public DateTime PlayingSince;
         public volatile GameSession Session, LastSession;   // the open session (or null) and the one before
@@ -358,13 +397,14 @@ namespace AdeeboMeter
             Session = null;
         }
         Thread th; volatile bool stop; Monitor mon;
+        readonly ManualResetEvent wake = new ManualResetEvent(false);   // carry-over: Stop wakes the loop out of its 5 s idle sleep, so Join(3000) never times out
         public double RouterAvg() { var m = mon; return m == null || Cfg.GwSec == 0 ? double.NaN : m.GwPing.Avg(60 / Math.Max(1, Cfg.GwSec)); }
         public static long Ver;   // goes up with every new sample: the Gamer page repaints only when something changed
         public static int MaxPerSecond { get { return MaxServers + 2; } }   // every playing server each second, plus room for the background ones
         public static int MaxServers { get { return Cfg.GameBgServers >= 5 ? 16 : 8; } }   // set by the Gamer preset (5 regions watched) - tweaking another row keeps it   // the Gamer preset watches twice as many
 
-        public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
-        public void Stop() { stop = true; var t = th; th = null; if (t != null) t.Join(3000); }
+        public void Start(Monitor m) { if (th != null || Policy.NoGamer) return; mon = m; stop = false; wake.Reset(); th = new Thread(Loop) { IsBackground = true, Name = "GamePing", Priority = ThreadPriority.BelowNormal }; th.Start(); }
+        public void Stop() { stop = true; wake.Set(); var t = th; th = null; if (t != null) t.Join(3000); }
         public GameStat Stat(string game, GameServer s)
         {
             lock (k)
@@ -375,7 +415,7 @@ namespace AdeeboMeter
             }
         }
 
-        // which servers to probe now, and how often (seconds): the game being played - all its servers (up to 8), every second;
+        // which servers to probe now, and how often (seconds): the game being played - all its servers (up to MaxServers: 8, or 16 on the Gamer preset), every second;
         // otherwise each monitored game's best region, up to Cfg.GameBgServers, every Cfg.GameBgSec
         public List<Tuple<string, GameServer, int>> Plan(List<Game> games, HashSet<string> monitored, string playing)
         {
@@ -400,7 +440,15 @@ namespace AdeeboMeter
         }
         // the servers in the order worth probing: the session's server, the best region, then the lowest recent average (never list order -
         // a Valve list of 30 relays, or a best region that's 9th in the list, would otherwise never be probed every second)
-        public List<GameServer> Ranked(Game g, string first)
+        // bug-hunt ML-141: worked out at most once every 2 seconds per game (the probe loop and every card's paint ask)
+        readonly Dictionary<string, Tuple<DateTime, object>> rankMemo = new Dictionary<string, Tuple<DateTime, object>>();
+        T Memo<T>(string key, Func<T> make) where T : class
+        {
+            lock (rankMemo) { Tuple<DateTime, object> c; if (rankMemo.TryGetValue(key, out c) && (Clock.Mono - c.Item1).TotalSeconds < 2) return (T)c.Item2; }
+            var v = make(); lock (rankMemo) { if (rankMemo.Count > 200) rankMemo.Clear(); rankMemo[key] = Tuple.Create(Clock.Mono, (object)v); } return v;
+        }
+        public List<GameServer> Ranked(Game g, string first) { return new List<GameServer>(Memo("r|" + g.Id + "|" + g.Servers.Count + "|" + (first ?? ""), () => RankedNow(g, first))); }
+        List<GameServer> RankedNow(Game g, string first)
         {
             var best = Best(g);
             return g.Servers.OrderBy(s => s.Name == first ? 0 : best != null && s.Name == best.Name ? 1 : 2)
@@ -411,7 +459,8 @@ namespace AdeeboMeter
         readonly Dictionary<string, int> pace = new Dictionary<string, int>(); readonly object paceLock = new object();
         public static int SurveySec { get { return Cfg.GameBgSec >= 60 ? 1800 : 300; } }   // Penny (game ping every 60 s) surveys every 30 min   // Penny surveys each region every 30 min
         // the best region: lowest 7-day average with little loss, from history; before there's history, the lowest recent average
-        public GameServer Best(Game g)
+        public GameServer Best(Game g) { var b = Memo("b|" + g.Id + "|" + g.Servers.Count, () => new[] { BestNow(g) }); return b[0]; }
+        GameServer BestNow(Game g)
         {
             var week = GameHistory.Week(g.Id);
             GameServer best = null; double score = double.MaxValue;
@@ -432,17 +481,23 @@ namespace AdeeboMeter
             {
                 try
                 {
-                    Thread.Sleep(idle ? 5000 : 1000);
+                    if (wake.WaitOne(idle ? 5000 : 1000)) break;
                     var mon2 = Cfg.Off("gamer") ? new HashSet<string>() : Games.Monitored();   // Gamer switched off in Settings: no game pings at all
                     idle = mon2.Count == 0;
-                    if (idle) { Playing = null; continue; }   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
+                    if (idle) { Playing = null; var os = Session; if (os != null && os.Open) EndSession(); continue; }   /* carry-over: un-monitoring every game ends a session in progress */   // nothing clicked yet: nothing is sent, and the loop wakes only every 5 s
                     var games = Games.All;
                     if ((Clock.Mono - lastRun).TotalSeconds >= 5)
                     {
                         lastRun = Clock.Mono;
                         var g = GameFinder.Running(games, mon2); string id = g == null ? null : g.Id;
+                        // round 6 H6-L10: from one game to another (two open, alt-tabbing) only after a minute in front - a quick look at
+                        // the other one doesn't chop both sessions; a game that closed (or the first one) still counts at once
+                        bool swap = id != Playing && id != null && Playing != null;
+                        if (swap) { if (pendingGame != id) { pendingGame = id; pendingSince = Clock.Mono; } if ((Clock.Mono - pendingSince).TotalSeconds < 60) id = Playing; }
+                        else pendingGame = null;
                         if (id != Playing)
                         {
+                            pendingGame = null;
                             Playing = id; PlayingSince = DateTime.Now;
                             var cur = Session;
                             if (g != null && Cfg.GameAuto && (cur == null || !cur.Manual)) StartSession(g, false);
@@ -485,12 +540,13 @@ namespace AdeeboMeter
         void ProbeOne(string game, GameServer s)
         {
             var st = Stat(game, s);
-            var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null) st.Used = used;
-            if ((DateTime.Now - began).TotalSeconds > 4) return;   // it outran the second it belonged to (a stuck lookup): filed late, it would shift the series
+            var began = DateTime.Now; string used; double v = Probe(s, out used); if (used != null && !double.IsNaN(v)) st.Used = used;   /* carry-over: the method that answered, not the one last tried */
+            if ((DateTime.Now - began).TotalSeconds > 4) { st.Add(double.NaN); System.Threading.Interlocked.Increment(ref Ver); return; }   // it outran the second it belonged to (a stuck lookup): filed as no answer, so the series keeps its place and the miss shows (bug-hunt ML-45)
             var prev = st.Window(60, 900); double med = GameStat.Pct(prev, 0.5);
             st.Add(v); System.Threading.Interlocked.Increment(ref Ver);
             // a spike: double the usual and 30 ms more - who to blame is read from the home and internet checks at the same moment
-            if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= 20 && v > med * 2 && v > med + 30)
+            int need = Math.Min(20, Math.Max(8, (int)(900 * 0.8 / Math.Max(1, PaceOf(game, s.Name)))));   // bug-hunt ML-48: a server checked once a minute has 15 samples in 15 minutes, not 20
+            if (!double.IsNaN(v) && !double.IsNaN(med) && prev.Length >= need && v > med * 2 && v > med + 30)
             {
                 // the home and internet samples count only if they're from around now (the view closed, they can be a minute old)
                 var nowM = Clock.Mono; bool gwFresh = mon != null && (nowM - mon.GwAt).TotalSeconds <= 10, netFresh = mon != null && (nowM - mon.NetAt).TotalSeconds <= 10;
@@ -581,7 +637,7 @@ namespace AdeeboMeter
                     var ar = sock.BeginConnect(ip, port, null, null);
                     using (var wh = ar.AsyncWaitHandle)   // its handle closed every time - hours of TCP probes left one per probe to the finalizer
                     {
-                        if (!wh.WaitOne(timeoutMs)) return double.NaN;
+                        if (!wh.WaitOne(timeoutMs)) { sock.Close(); try { sock.EndConnect(ar); } catch (SocketException) { } catch (ObjectDisposedException) { } return double.NaN; }   // carry-over (8502674): the attempt is ended, not left pending
                         sock.EndConnect(ar);
                         return sw.Elapsed.TotalMilliseconds;
                     }
@@ -620,7 +676,19 @@ namespace AdeeboMeter
         static IEnumerable<string> GzLines(string gz)
         {
             using (var s = File.OpenRead(gz)) using (var z = new System.IO.Compression.GZipStream(s, System.IO.Compression.CompressionMode.Decompress)) using (var rd = new StreamReader(z))
-            { string l; int n = 0; while ((l = rd.ReadLine()) != null && n++ < 60000) yield return l; }
+            {
+                // SEC-13 (security hunt): like History's reader - a line is at most 4 KB (the rest is skipped, never held), and the
+                // whole day at most 64 MB unpacked, so one planted endless line can't run the PC out of memory
+                var sb = new StringBuilder(); long total = 0; int n = 0, c; bool any = false;
+                while (n < 60000 && (c = rd.Read()) >= 0)
+                {
+                    if (++total > 64L * 1024 * 1024) yield break;
+                    any = true;
+                    if (c == '\n') { yield return sb.ToString(); sb.Clear(); any = false; n++; continue; }
+                    if (c != '\r' && sb.Length < 4096) sb.Append((char)c);
+                }
+                if (any && n < 60000) yield return sb.ToString();
+            }
         }
         static DateTime tidied;
         // from History's own roll-off and once at start: game days past "Keep game history for" go even with History off or no game watched
@@ -646,7 +714,7 @@ namespace AdeeboMeter
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             }
         }
-        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit, Gw = double.NaN; }   // Gw: the router's ping that minute (older files: none)
+        public sealed class Row { public DateTime T; public string Game, Server; public double Avg, P95, Loss, Jit, Gw = double.NaN, Samples = 1; }   /* round 6 H6-L7: Samples - how many probes the minute rests on */   // Gw: the router's ping that minute (older files: none)
         // one day's rows for one game, or for every game (game == null: one read of the file for all of them)
         public static List<Row> Read(DateTime day, string game)
         {
@@ -661,7 +729,7 @@ namespace AdeeboMeter
                 foreach (var line in lines.Take(60000))
                 {
                     var c = line.Split(','); TimeSpan t; if (c.Length < 8 || (game != null && c[1] != game) || !TimeSpan.TryParse(c[0], CultureInfo.InvariantCulture, out t)) continue;
-                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]), Gw = c.Length > 8 ? P(c[8]) : double.NaN });
+                    r.Add(new Row { T = day.Date + t, Game = c[1], Server = c[2], Avg = P(c[3]), P95 = P(c[4]), Loss = P(c[5]), Jit = P(c[6]), Gw = c.Length > 8 ? P(c[8]) : double.NaN, Samples = Math.Max(1, double.IsNaN(P(c[7])) ? 1 : P(c[7])) });
                 }
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is InvalidDataException)) throw; }   // a damaged day: skipped
@@ -670,10 +738,15 @@ namespace AdeeboMeter
         // per server over the last 7 days: { avg ms, loss %, jitter, evenings with trouble (of days with data), days with data }
         // The screen gets the last result straight away (any age up to 30 min); the game-ping thread refreshes it every 10
         // minutes (Warm), so the 7 days of files are read there - never while the Gamer Zone or the overlay paints.
+        static readonly HashSet<string> loading = new HashSet<string>();
         public static Dictionary<string, double[]> Week(string game)
         {
-            lock (k) { Tuple<DateTime, Dictionary<string, double[]>> c; if (weekCache.TryGetValue(game, out c) && (DateTime.UtcNow - c.Item1).TotalMinutes < 30) return c.Item2; }
-            return Load(game);
+            // carry-over (round-2 L93): never file reads here - the Gamer card paints with this. A missing or old summary is
+            // read on a pool thread (once at a time per game); until then the last one (or none) is shown
+            Tuple<DateTime, Dictionary<string, double[]>> c; bool have, fresh, start;
+            lock (k) { have = weekCache.TryGetValue(game, out c); fresh = have && (DateTime.UtcNow - c.Item1).TotalMinutes < 30; start = !fresh && loading.Add(game); }
+            if (start) ThreadPool.QueueUserWorkItem(delegate { try { Load(game); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("game week: " + e.Message); } finally { lock (k) loading.Remove(game); } });
+            return have ? c.Item2 : new Dictionary<string, double[]>();
         }
         public static void Warm(IEnumerable<string> games)
         {
@@ -689,9 +762,12 @@ namespace AdeeboMeter
                 foreach (var grp in rows.GroupBy(x => x.Server))
                 {
                     var days = grp.GroupBy(x => x.T.Date).ToList();
-                    double lim = 2 * Math.Max(1, grp.Average(y => double.IsNaN(y.Avg) ? 0 : y.Avg));
+                    // round 6 H6-L7: each minute counts by the probes behind it - a played minute (60) outweighs a one-probe survey minute
+                    Func<Func<Row, double>, double> wavg = sel => { double sw = 0, sv = 0; foreach (var x in grp) { double v = sel(x); if (double.IsNaN(v)) continue; sw += x.Samples; sv += v * x.Samples; } return sw > 0 ? sv / sw : double.NaN; };
+                    double avg = wavg(x => x.Avg);   // carry-over (100-bug #22): the same average the screen shows - no-reply minutes are left out, not counted as 0 ms
+                    double lim = 2 * Math.Max(1, double.IsNaN(avg) ? 0 : avg);
                     int bad = days.Count(d => d.Where(x => x.T.Hour >= 18 && x.T.Hour <= 23).Any(x => x.Loss >= 1 || x.P95 > lim));
-                    w[grp.Key] = new[] { GameStat.Avg(grp.Select(x => x.Avg).ToArray()), GameStat.Avg(grp.Select(x => x.Loss).ToArray()), GameStat.Avg(grp.Select(x => x.Jit).ToArray()), bad, days.Count };
+                    w[grp.Key] = new[] { avg, wavg(x => x.Loss), wavg(x => x.Jit), bad, days.Count };
                 }
                 lock (k) { if (weekCache.Count > 50) weekCache.Clear(); weekCache[game] = Tuple.Create(DateTime.UtcNow, w); } return w;
             }
@@ -711,9 +787,19 @@ namespace AdeeboMeter
         public readonly List<Sec> Rows = new List<Sec>(); public readonly List<DateTime> Marks = new List<DateTime>();
         public bool Open { get { return End == DateTime.MaxValue; } }
         readonly object k = new object();
-        public void Add(Sec s) { lock (k) { Rows.Add(s); if (Rows.Count > 4 * 3600) Rows.RemoveAt(0); } }
+        // bug-hunt ML-46: a session past 4 hours keeps its beginning - the older half is thinned to every other row instead
+        public void Add(Sec s)
+        {
+            lock (k)
+            {
+                Rows.Add(s); ver++; if (Rows.Count <= 4 * 3600) return;
+                int half = Rows.Count / 2; var older = new List<Sec>(half / 2 + 1); for (int i = 0; i < half; i += 2) older.Add(Rows[i]);
+                Rows.RemoveRange(0, half); Rows.InsertRange(0, older);
+            }
+        }
         public List<Sec> Around(DateTime t, int secs) { lock (k) return Rows.Where(r => Math.Abs((r.T - t).TotalSeconds) <= secs).ToList(); }
         public List<Sec> All() { lock (k) return Rows.ToList(); }
+        int ver; public int Ver { get { lock (k) return ver; } }   // bug-hunt ML-136: a page copies the rows only when this moves
         public void Mark() { lock (k) if (Marks.Count < 1000) Marks.Add(DateTime.Now); }   // only times: a long session keeps them all
         // match path recording: each router on the way, timed every 15 s (one ping each) while the match runs
         List<string> hops = new List<string>(); readonly List<double[]> hopMs = new List<double[]>();

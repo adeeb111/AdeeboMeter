@@ -35,6 +35,9 @@ namespace AdeeboMeter
         {
             get { try { using (var k = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384)) return k != null; } catch (Exception e) { if (!(e is CryptographicException || e is PlatformNotSupportedException || e is NotImplementedException || e is TypeLoadException || e is EntryPointNotFoundException || e is DllNotFoundException)) throw; return false; } }
         }
+        // SEC-12 (security hunt): the only Windows key names AdeeboMeter makes (Create below) - a planted index line naming another
+        // program's key is skipped, so it's never used to decrypt, put in a backup, or deleted
+        public static bool OwnKeyName(string n) { return n != null && System.Text.RegularExpressions.Regex.IsMatch(n, "^AdeeboMeter-[0-9a-f]{12}$"); }
         public const int MaxKeys = 100;   // AM-CG-236: the index holds this many - Create refuses the next one instead of losing it
         public static List<Key> All()
         {
@@ -48,6 +51,7 @@ namespace AdeeboMeter
                         // a damaged line is skipped: the public key must be a whole P-384 key (104 bytes of valid base64)
                         byte[] pub; try { pub = Convert.FromBase64String(p[3]); } catch (FormatException) { continue; }
                         if (pub.Length != 104 || p[1].Trim() == "" || p[2].Trim() == "") continue;
+                        if (!OwnKeyName(p[2])) continue;   // SEC-12: only our own key store names - never another program's key
                         l.Add(new Key { Name = p[1], KeyName = p[2], Pub = p[3], Made = t });
                     }
             }
@@ -68,6 +72,18 @@ namespace AdeeboMeter
         {
             using (var s = SHA256.Create()) { var h = s.ComputeHash(pub); var b = string.Join("", h.Take(15).Select(x => x.ToString("X2", CultureInfo.InvariantCulture))); return string.Join("-", Enumerable.Range(0, 6).Select(i => b.Substring(i * 5, 5))); }
         }
+        // y² = x³ - 3x + b (mod p) for P-384 (FIPS 186-4 D.1.2.4), x and y below p - the blob is "ECK3", 48, then X and Y big-endian
+        static readonly System.Numerics.BigInteger P384 = Big("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff"),
+            B384 = Big("b3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aef");
+        static System.Numerics.BigInteger Big(string hex) { return System.Numerics.BigInteger.Parse("0" + hex, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture); }
+        static System.Numerics.BigInteger Unsigned(byte[] b, int at) { var le = new byte[49]; for (int i = 0; i < 48; i++) le[i] = b[at + 47 - i]; return new System.Numerics.BigInteger(le); }
+        internal static bool OnP384(byte[] blob)
+        {
+            if (blob == null || blob.Length != 104) return false;
+            var x = Unsigned(blob, 8); var y = Unsigned(blob, 56); if (x >= P384 || y >= P384 || (x.IsZero && y.IsZero)) return false;
+            var right = ((System.Numerics.BigInteger.ModPow(x, 3, P384) - 3 * x + B384) % P384 + P384) % P384;
+            return System.Numerics.BigInteger.ModPow(y, 2, P384) == right;
+        }
         static byte[] KeyId(byte[] pub) { using (var s = SHA256.Create()) return s.ComputeHash(pub).Take(8).ToArray(); }
 
         // a new P-384 key, kept by Windows for this user; exportable only so you can back it up
@@ -81,12 +97,14 @@ namespace AdeeboMeter
             {
                 string nm = SafeName(name); if (nm.Length > 60) nm = nm.Substring(0, 60); if (nm == "") nm = "restored key";
                 var key = new Key { Name = nm, KeyName = kn, Pub = Convert.ToBase64String(k.Export(CngKeyBlobFormat.EccPublicBlob)), Made = DateTime.Now };
-                var l = All(); l.Add(key); Save(l); return key;
+                var l = All(); l.Add(key);
+                try { Save(l); } catch { try { k.Delete(); } catch (CryptographicException) { } throw; }   /* L-4: no key left behind without its entry */
+                return key;
             }
         }
         public static bool Delete(Key key)
         {
-            try { if (CngKey.Exists(key.KeyName)) using (var k = CngKey.Open(key.KeyName)) k.Delete(); } catch (CryptographicException) { }
+            try { if (OwnKeyName(key.KeyName) && CngKey.Exists(key.KeyName)) using (var k = CngKey.Open(key.KeyName)) k.Delete(); } catch (CryptographicException) { }
             var l = All(); int n = l.RemoveAll(x => x.KeyName == key.KeyName); Save(l); return n > 0;
         }
         public static string PublicFile(Key k)
@@ -153,6 +171,7 @@ namespace AdeeboMeter
                 var ephPub = take(el); var wrapped = take(64);
                 // a one-time key must be a P-384 ECDH public key ("ECK3", 48-byte X and Y) - anything else is a damaged or crafted file
                 if (ephPub[0] != 0x45 || ephPub[1] != 0x43 || ephPub[2] != 0x4B || ephPub[3] != 0x33 || ephPub[4] != 48 || ephPub[5] != 0 || ephPub[6] != 0 || ephPub[7] != 0) throw new CryptographicException("damaged header");
+                if (!OnP384(ephPub)) throw new CryptographicException("damaged header");   // bug-hunt ML-17: a point that isn't on the curve is a crafted file (invalid-curve attack)
                 if (fileKey != null) continue;
                 // AM-CG-237: every entry for this key is tried - a stale entry whose Windows key is gone doesn't hide a restored copy
                 var k = mine.FirstOrDefault(m => KeyId(Convert.FromBase64String(m.Pub)).SequenceEqual(id) && CngKey.Exists(m.KeyName)); if (k == null) continue;
@@ -206,6 +225,12 @@ namespace AdeeboMeter
         {
             // a real key backup is under 1 KB: anything much bigger isn't one (and must not be decrypted into memory to find out)
             try { if (input.CanSeek && input.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); } catch (NotSupportedException) { }
+            if (!input.CanSeek)
+            {   /* L-5: a stream that can't say its length is read up to the cap first */
+                var capped = new MemoryStream(); var cb = new byte[8192]; int got;
+                while ((got = input.Read(cb, 0, cb.Length)) > 0) { capped.Write(cb, 0, got); if (capped.Length > 64 * 1024) throw new CryptographicException("this isn't a key backup (it's far too big)"); }
+                capped.Position = 0; input = capped;
+            }
             var o = new MemoryStream(); byte[] body = null, priv = null;
             try
             {

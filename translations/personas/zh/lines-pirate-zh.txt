@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Pirate persona. key|text.
+app.open|啊哈，{addr}！瞭望手已上桅杆。
+app.open|起锚！盯着你网络的这片海。
+all.good|风平浪静，{addr}，地平线上什么也没有。
+all.good|顺风顺水，船、帆、索具都结实。
+all.good|一切井井有条。
+pc.busy|你的电脑快被重担压沉了，CPU 已到 {v}。
+pc.busy|船舱塞得太满了，关掉点东西，老伙计。
+pc.busy|慢的是电脑，不是大海。
+wifi.drops|你的 Wi-Fi 今天掉海里 {v} 次了。
+wifi.drops|Wi-Fi 掉了 {v} 次，离路由器近点航行。
+net.none|触礁了，眼前没有网络。
+net.none|没陆地，没网络，插上网线吧，{addr}。
+inet.slow|你的港口没问题，路由器外头风浪大。
+inet.slow|家里这港很快，运营商的水域很慢。
+inet.slow|延迟从海上开始，不是从家里。
+busy|正在升帆……{v}
+busy|正在规划航线。
+busy|正在擦洗数据包。
+idle|水面平静，仍在瞭望。
+idle|地平线上什么也没有。
+idle|瞭望手报告：一切平静。
+search.empty|出什么麻烦了，{addr}？
+search.empty|说出你的问题，老伙计。
+freeze|货物太沉（{v}），稳住。
+freeze|正在顺风航行（{v}）。
+speedrunner|慢着！上一个还没办完。
+speedrunner|一次只扬一面帆，老伙计。
+back.again|回船上了！海上发生了 {v} 件事。
+back.again|欢迎回来，{addr}，航海日志在这儿。
+dns.slow|海图读得慢，DNS 要 {v}。
+dns.slow|查一次要 {v}，管海图的人在打盹。
+speed.great|下载 {v}，满帆前进！
+speed.great|下载 {v}，舰队里最快的船。
+speed.bloat|船快，可下载一多就慢 {v}。
+speed.bloat|快是快，船舱一满就吃力，多了 {v} 延迟。
+game.lag|卡顿是你的 Wi-Fi，不是敌船。
+game.lag|服务器稳得很，你的 Wi-Fi 颠簸。
+game.good|Ping {v}，升起战旗！
+game.good|风稳得很，放手去闯吧。
+vpn.on|挂着假旗航行，VPN 已开。
+vpn.on|秘密航线已定，VPN 已连上。
+vpn.slow|秘密航线要多花 {v}。
+vpn.slow|VPN 多了 {v}，绕了个大弯。
+portal|这个港口要查证件，先登录。
+portal|港口 Wi-Fi 要先登录。
+gw.down|路由器没动静了，重启它，老伙计。
+gw.down|路由器没回话，看看它的灯。
+isp.down|你的船没问题，运营商的海空了。
+isp.down|家里没事，互联网迷失在海上。
+mtu.small|大桶塞不进舱口，MTU {v}。
+mtu.small|大包塞不下，MTU {v}。
+port.open|端口 {v} 开着！
+port.open|{v} 应答了。
+port.closed|{v} 关得严严实实。
+port.closed|{v} 没有回音。
+cert.ok|印章是真的，证书有效。
+cert.ok|这把锁是真的。
+cert.expired|他们的印章在 {v} 过期了。
+cert.expired|自 {v} 起证件过期，是他们的错。
+sec.ok|船身没有漏水，检查通过。
+sec.ok|船很安全。
+sec.issue|船身有 {v} 处漏水，补上它们。
+sec.issue|检查发现 {v} 处要修补。
+mtr.lossy|货物在第 {v} 跳丢了。
+mtr.lossy|数据包在第 {v} 跳掉进海里。
+mtr.clean|一个桶都没丢，航线干净。
+mtr.clean|每一跳都顺顺当当。
+devices.found|你的水域里有 {v} 艘船。
+devices.found|发现了 {v} 台设备。
+encrypt.done|锁进宝箱了，只有他们有钥匙。
+encrypt.done|宝藏锁好了。
+decrypt.done|宝箱打开了，什么都没少。
+decrypt.done|开了，没动过。
+points.earned|+{v} 金币。
+points.earned|+{v} 分宝藏。
+award|500 金币！Adeebo 奖是你的了。
+award|船长嘉奖：Adeebo 奖。
+late.night|夜班，{addr}，我在甲板上。
+late.night|夜潮已至，还在瞭望。
+morning|早上好，{addr}，海上度过平静一夜。
+morning|天亮了，夜里没有风暴。
+update.suspect|麻烦从 {v} 的更新后开始。
+update.suspect|自从 {v} 更新后，海上就风浪不断。
+call.on|正在谈判，盯着这通电话。
+call.on|通话中，瞭望手在盯着。
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} 播得很顺，老伙计，风平浪静。
+stream.on|节目像顺风一样流畅。
+stream.dip|直播遇上风浪了，{v}。
+stream.dip|一阵风暴打中了直播，{v}。
+stream.none|地平线上没有节目。
+stream.none|没看到直播，船长。
+trade.ok|到券商的线路井井有条。
+trade.ok|顺风吹向你的券商。
+trade.slow|券商线路上起了风暴，稳住。
+trade.slow|券商线路颠簸，{v}。
+trade.closed|市场回港了，9:30 再来。
+trade.closed|市场关门了，港口睡了。
+view.switch|升起 {v} 的旗帜，老伙计！
+view.switch|全体注意，我们现在挂 {v} 的旗航行！
+quiz.right|没错，就是这样！
+quiz.wrong|不对，老伙计，再试一次。
+game.streak|连对 {v} 次！你是海上传奇。
+game.timeup|沙漏空了。
+market.open|市场开门了，看好你的金币。
+storm.near|风暴要来了，索具可能要响。

@@ -26,7 +26,7 @@ namespace AdeeboMeter
     {
         static readonly byte[] Magic = { (byte)'A', (byte)'D', (byte)'E', (byte)'E', (byte)'B', (byte)'O', 1, 1 };
         public const int Iterations = 600000, HeaderLen = 8 + 4 + 16 + 16, MacLen = 32;
-        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 25L * 1024 * 1024, MaxCmsOpen = 50L * 1024 * 1024;   // a standard .p7m is built in memory (.NET has no streaming CMS; about four copies at once): made up to 25 MB (the usual mail limit); one someone sends is opened up to 50 MB; .adeebo streams up to 4 GB
+        public const long MaxBytes = 4L * 1024 * 1024 * 1024, MaxCms = 12L * 1024 * 1024, MaxCmsOpen = 20L * 1024 * 1024;   /* carry-over (100-bug #141): peak memory is ~5x the file to lock and ~3-4x to open - these keep it under the 80 MB budget */   // a standard .p7m is built in memory (.NET has no streaming CMS; about four copies at once): made up to 12 MB; one someone sends is opened up to 20 MB; .adeebo streams up to 4 GB
         const string Alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";   // no 0/O, 1/I/L - easy to read out on the phone
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
@@ -290,7 +290,8 @@ namespace AdeeboMeter
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
-        static readonly HashSet<string> RunsWhenOpened = new HashSet<string> { ".exe", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jse", ".wsf", ".msi", ".lnk", ".hta", ".cpl", ".dll", ".reg", ".pif", ".url" };
+        static readonly HashSet<string> RunsWhenOpened = new HashSet<string> { ".exe", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".jse", ".wsf", ".msi", ".lnk", ".hta", ".cpl", ".dll", ".reg", ".pif", ".url",
+            /* review 1.1.6 P2 #15: more that run (or run macros) when opened */ ".appref-ms", ".application", ".appx", ".appxbundle", ".msix", ".msixbundle", ".iso", ".img", ".vhd", ".vhdx", ".jar", ".chm", ".msc", ".scf", ".settingcontent-ms", ".library-ms", ".psm1", ".ps1xml", ".psd1", ".wsh", ".vbe", ".docm", ".dotm", ".xlsm", ".xltm", ".xlam", ".pptm", ".potm", ".ppam", ".xll", ".gadget", ".msp", ".mst", ".inf", ".sys", ".cab" };
         static bool Risky(string name) { return RunsWhenOpened.Contains(Path.GetExtension(name ?? "").ToLowerInvariant()); }
 
         sealed class LimitStream : Stream
@@ -335,6 +336,7 @@ namespace AdeeboMeter
         public static List<string[]> Encrypt(string fileIn, string to, string alsoMe, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string file = FileArg(fileIn);
+            if (file != "" && NetPath.Is(file)) { rows.Add(R(2, "File", "network paths (\\\\server\\share) aren't read - copy the file to this PC first", "", "")); return rows; }
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the file to encrypt" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); if (fi.Length > MaxBytes) { rows.Add(R(2, "File", "bigger than 4 GB", "", "")); return rows; }
             string t = (to ?? "").Trim();
@@ -376,7 +378,7 @@ namespace AdeeboMeter
                 rows.Add(R(3, "To open it", "they open it in AdeeboMeter (Open an encrypted file) - their key is found by itself, no code needed", "Only AdeeboMeter opens these. The format is AdeeboMeter's own and hasn't had an independent review yet; anyone who later gets their private key can open this file too.", ""));
                 return rows;
             }
-            if (fi.Length > MaxCms) { rows.Add(R(2, "File", "a standard (RSA) .p7m holds up to 25 MB - for bigger files use a code, or a P-384 key (.adeebo streams up to 4 GB)", "", "")); return rows; }
+            if (fi.Length > MaxCms) { rows.Add(R(2, "File", "a standard (RSA) .p7m holds up to 12 MB - for bigger files use a code, or a P-384 key (.adeebo streams up to 4 GB)", "", "")); return rows; }
             var certs = new List<X509Certificate2>(); var names = new List<string>();
             foreach (var nm in t.Split(',').Select(x => x.Trim()).Where(x => x != ""))
             {
@@ -393,6 +395,7 @@ namespace AdeeboMeter
                 var rc = new CmsRecipientCollection(); foreach (var c in certs) rc.Add(new CmsRecipient(SubjectIdentifierType.IssuerAndSerialNumber, c));
                 env.Encrypt(rc); WriteSafe(outP7m, env.Encode());
             }
+            catch (OutOfMemoryException) { rows.Add(R(2, "Encrypt", "not enough free memory to build a standard .p7m of this file - nothing was saved", "Use a code, or a P-384 key: .adeebo files stream instead of loading whole.", "")); return rows; }   // carry-over (100-bug #141)
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is CryptographicException)) throw; rows.Add(R(2, "Encrypt", e.Message, "Recipients need an RSA certificate.", "")); return rows; }
             finally { foreach (var c in certs) c.Dispose(); }
             Program.Log("encrypted a file for " + names.Count + " recipient(s)");
@@ -404,6 +407,7 @@ namespace AdeeboMeter
         public static List<string[]> Decrypt(string fileIn, string code, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string file = FileArg(fileIn);
+            if (file != "" && NetPath.Is(file)) { rows.Add(R(2, "File", "network paths (\\\\server\\share) aren't read - copy the file to this PC first", "", "")); return rows; }
             if (file == "" || !File.Exists(file)) { rows.Add(R(2, "File", file == "" ? "type or paste the path of the .adeebo or .p7m file" : "not found: " + file, "", "")); return rows; }
             var fi = new FileInfo(file); string tmp = null; int kind = 0;   // 1 code, 2 P-384 recipients, 3 key backup, 0 anything else (a .p7m)
             if (fi.Length > MaxBytes + 1024 * 1024) { rows.Add(R(2, "File", "bigger than any file AdeeboMeter makes (4 GB) - not opened", "", "")); return rows; }
@@ -443,7 +447,7 @@ namespace AdeeboMeter
                 else if (h8.Take(6).SequenceEqual(Magic.Take(6))) { rows.Add(R(2, "Open", "an AdeeboMeter file of a kind this version doesn't know - made by a newer AdeeboMeter?", "Update AdeeboMeter and open it again.", "")); return rows; }
                 else
                 {
-                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 50 MB - too big to open as a .p7m here (it is decoded in memory)", "", "")); return rows; }
+                    if (fi.Length > MaxCmsOpen) { rows.Add(R(2, "File", "bigger than 20 MB - too big to open as a .p7m here (it is decoded in memory)", "", "")); return rows; }
                     run.Status = "Looking for your key and opening it...";
                     var env = new EnvelopedCms(); env.Decode(File.ReadAllBytes(file)); env.Decrypt();   // Windows finds the matching private key in your store
                     string name = fi.Name.EndsWith(".p7m", StringComparison.OrdinalIgnoreCase) ? fi.Name.Substring(0, fi.Name.Length - 4) : fi.Name + ".opened";
@@ -458,6 +462,7 @@ namespace AdeeboMeter
                 rows.Add(R(2, "Couldn't open it", e.Message.IndexOf("wrong code", StringComparison.Ordinal) >= 0 ? "wrong code - or the file was changed or damaged on the way" : e.Message, kind == 1 ? "Nothing was opened or written. Check the code (letters and numbers only; dashes don't matter)." : kind == 2 ? "Nothing was opened or written. If it was made for you, ask the sender to make it again - it may have been damaged on the way." : kind == 3 ? "Check the recovery passphrase (letters and numbers; dashes don't matter)." : "This file wasn't made for any of your keys - ask the sender to encrypt it for your public key.", ""));
             }
             catch (OperationCanceledException) { rows.Add(R(1, "Open", "stopped - nothing was saved", "", "")); }
+            catch (OutOfMemoryException) { rows.Add(R(2, "Open", "not enough free memory to open this .p7m - nothing was saved", "Close other programs and try again.", "")); }   // carry-over (100-bug #141)
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Open", e.Message, "", "")); }
             finally { Drop(tmp); }
             return rows;

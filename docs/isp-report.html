@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How to show your ISP where packet loss starts | AdeeboMeter</title>
@@ -48,6 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
@@ -55,37 +57,37 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
-<h1>How to show your ISP where packet loss starts</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Check whether the loss carries through.</h2><p>Compare the router and destination. Send the results from a bad period and a good one.</p></div>
-<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg></span><strong>ISP report</strong></div><div class="plot-label"><span>Packet loss</span><span>Example</span></div><div class="hopline"><span><i></i>Router<small>Steady</small></span><span><i></i>Later hop<small>Loss starts</small></span><span><i></i>Destination<small>Loss continues</small></span></div></div>
-<figcaption>Illustrative path. The router is steady and loss appears later, including at the destination.</figcaption>
+<h1>How to show your provider where packet loss starts</h1>
+<p class="dek">If your router answers every time and the loss begins a few stops later, the problem is past your home. A short report proves it, and gives support something to act on.</p>
+<ul class="meta"><li>Windows app: Toolbox › Report for my ISP</li><li>A 1-, 2- or 5-minute run</li><li>4 min read</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Where the loss is in this example"><li class="ok">PC<small>steady</small></li><li class="ok">Wi-Fi<small>wired here</small></li><li class="ok">Router<small>0% loss</small></li><li class="bad">Provider<small>loss starts</small></li><li class="bad">Far end<small>loss continues</small></li></ol>
+<figcaption>The pattern worth sending: clean up to your router, loss from a stop inside your provider's network all the way to the destination.</figcaption>
 </figure>
-
-<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>App-generated example with simulated measurements and addresses. In a real report, start with the router and destination rows.</figcaption></figure>
-<h2 id="checks">Run the checks</h2>
-<ol><li>In Windows AdeeboMeter, open <strong>Toolbox</strong> and search for <strong>Report for my ISP</strong>.</li><li>Enter the hostname or IP for the affected service, or select a game you’ve added. Choose a 1-, 2-, or 5-minute run during the slowdown.</li><li>Repeat on Ethernet if possible. Save a good-period comparison. Review the report before attaching it to your support ticket or sending a screenshot.</li></ol>
-<h2 id="readings">What to check next</h2>
+<figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>A report made by the app, with simulated measurements and addresses. In yours, read the router row and the destination row first.</figcaption></figure>
+<h2 id="checks">Make the report</h2>
+<ol><li>In AdeeboMeter on Windows, open <strong>Toolbox</strong> and search for <strong>Report for my ISP</strong>.</li><li>Type the address of the service that's failing, or pick a game you've added. Run it for 1, 2 or 5 minutes while the problem is happening.</li><li>If you can, run it again on a cable, and once more when things are fine. Check the report before you attach it to your ticket.</li></ol>
+<h2 id="readings">Reading it</h2>
 <ul class="next-checks">
-  <li><strong>One hop misses replies</strong><span>Check whether loss reaches the destination.</span></li>
-  <li><strong>Loss starts near home</strong><span>Compare Wi-Fi and Ethernet.</span></li>
-  <li><strong>Router is steady, destination loses packets</strong><span>Repeat the test and share both results.</span></li>
-  <li><strong>One destination is affected</strong><span>Compare an unrelated service.</span></li>
+  <li><strong>One stop misses replies, the next ones don't</strong><span>That stop is busy answering pings, not dropping your traffic. Look at the destination row instead.</span></li>
+  <li><strong>Loss starts at your router or before</strong><span>It's inside your home. Compare Wi-Fi with a cable first.</span></li>
+  <li><strong>Router clean, destination losing packets</strong><span>Run it twice more and send both reports to your provider.</span></li>
+  <li><strong>Only one service is affected</strong><span>Try an unrelated destination. If that one is clean, the problem is on that service's side.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>In the example report above, the wired PC and router are steady. Loss appears farther along and is also visible at the destination. Send that pattern with the time of the run and the service affected. A second run helps show whether the pattern recurs.</p></aside>
-<details class="guide-detail"><summary>Why it works</summary>
-<p>Traceroute and packet loss reports are observations from one machine to one destination at a particular time. Routers can rate-limit the replies they send to probes. Paths and return routes can also vary, so a hop number is a lead for support to investigate.</p><p>See <a href="/learn/icmp.html">how ping and traceroute work</a> and <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft’s explanation of intermediate-hop response loss</a>.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">The example above</h2><p>The PC is wired and the router is clean. Loss starts farther along and is still there at the destination. Send that pattern with the time of the run and the service affected; a second run shows whether it repeats.</p></aside>
+<details class="guide-detail"><summary>Why a single stop can look worse than it is</summary>
+<p>A report is what one PC saw on the way to one destination at one time. Routers along the way often answer test packets slowly or skip them on purpose, and the way back can take a different road, so a stop number is a lead for support, not a verdict.</p><p>More: <a href="/learn/icmp.html">how ping and traceroute work</a>, and <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft on loss at intermediate hops</a>.</p>
 </details>
-<h2>Use AdeeboMeter on Windows</h2>
-<p>Use the generated summary to identify the measurements worth sharing. If you’re still deciding whether to involve your provider, start with the <a href="/wifi-or-isp.html">Wi-Fi and Ethernet comparison</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>A useful ticket includes the time and time zone, connection type, affected destination, how often it happens, and a report from both a bad and a good period.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What a useful ticket has</h2><p>The time and time zone, cable or Wi-Fi, the service affected, how often it happens, and a report from a bad moment and a good one.</p></aside>
+<p>Not sure it's your provider yet? Start with <a href="/wifi-or-isp.html">Wi-Fi against a cable</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">Catch it while it's happening</h2><p>The widget in the corner of your screen watches the same stops all day and turns amber or red at the one that slips - so the report is one click away when it counts.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><p class="sc-note">Windows 10 and 11 · no admin rights · nothing about you leaves your PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-engineer-busy.png" width="264" height="240" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

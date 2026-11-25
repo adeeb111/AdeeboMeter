@@ -16,7 +16,7 @@ namespace AdeeboMeter
     // A run from another PC comes over as one line you copy there and paste here. Up to 4 runs per game, in game-compare.txt.
     static class GameCompare
     {
-        public sealed class RunRow { public string Server; public double Avg, P95, Jit, Loss; }
+        public sealed class RunRow { public string Server; public double Avg, P95, Jit, Loss; public int N; }   // round 6 H6-L8: N - probes the row rests on (0 = an older run, not known)
         public sealed class Saved { public string Game, Name; public DateTime T; public List<RunRow> Rows = new List<RunRow>(); }
         public const int Samples = 30, MaxRuns = 4;
         static string FilePath { get { return Path.Combine(Program.DataDir, "game-compare.txt"); } }
@@ -27,8 +27,9 @@ namespace AdeeboMeter
         public static string Line(Saved s)
         {
             return "run|" + s.Game + "|" + Clean(s.Name) + "|" + s.T.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture) + "|" +
-                string.Join(";", s.Rows.Select(r => Clean(r.Server).Replace("=", "-").Replace(";", ",") + "=" + string.Join("/", new[] { r.Avg, r.P95, r.Jit, r.Loss }.Select(x => double.IsNaN(x) ? "" : x.ToString("0.#", CultureInfo.InvariantCulture)))));
+                string.Join(";", s.Rows.Select(r => Clean(r.Server).Replace("=", "-").Replace(";", ",") + "=" + string.Join("/", new[] { r.Avg, r.P95, r.Jit, r.Loss, r.N }.Select(x => double.IsNaN(x) ? "" : x.ToString("0.#", CultureInfo.InvariantCulture)))));
         }
+        static string RowsOf(Saved s) { var l = Line(s); return l.Substring(l.LastIndexOf('|') + 1); }
         public static Saved ParseLine(string l)
         {
             var p = (l ?? "").Trim().Split('|'); if (p.Length != 5 || p[0] != "run" || !Regex.IsMatch(p[1], "^[a-z0-9-]{1,40}$")) return null;
@@ -36,15 +37,15 @@ namespace AdeeboMeter
             var s = new Saved { Game = p[1], Name = Clean(p[2]), T = t };
             foreach (var part in p[4].Split(';').Take(12))
             {
-                int eq = part.IndexOf('='); if (eq <= 0) continue; var n = part.Substring(eq + 1).Split('/'); if (n.Length != 4) continue;
+                int eq = part.IndexOf('='); if (eq <= 0) continue; var n = part.Substring(eq + 1).Split('/'); if (n.Length != 4 && n.Length != 5) continue;
                 Func<string, double> d = x => { double v; return double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out v) && v >= 0 && v < 100000 ? v : double.NaN; };
-                s.Rows.Add(new RunRow { Server = Clean(part.Substring(0, eq)), Avg = d(n[0]), P95 = d(n[1]), Jit = d(n[2]), Loss = d(n[3]) });
+                s.Rows.Add(new RunRow { Server = Clean(part.Substring(0, eq)), Avg = d(n[0]), P95 = d(n[1]), Jit = d(n[2]), Loss = d(n[3]), N = n.Length > 4 && !double.IsNaN(d(n[4])) ? (int)d(n[4]) : 0 });
             }
             return s.Rows.Count == 0 ? null : s;
         }
         static string Clean(string s) { s = new string((s ?? "").Where(c => !char.IsControl(c) && c != '|').ToArray()).Trim(); return s.Length > 40 ? s.Substring(0, 40) : s; }
-        static List<Saved> Load() { try { return File.Exists(FilePath) ? File.ReadAllLines(FilePath).Take(200).Select(ParseLine).Where(x => x != null).ToList() : new List<Saved>(); } catch (IOException) { return new List<Saved>(); } }
-        static void Store(List<Saved> all) { try { File.WriteAllLines(FilePath, all.Select(Line)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("game compare: " + e.Message); } }
+        static List<Saved> Load() { try { return File.Exists(FilePath) ? File.ReadLines(FilePath).Take(200)   /* L-91: never more than 200 lines read */.Select(ParseLine).Where(x => x != null).ToList() : new List<Saved>(); } catch (IOException) { return new List<Saved>(); } }
+        static void Store(List<Saved> all) { try { SafeFile.WriteText(FilePath, string.Join("\r\n", all.Select(Line)) + "\r\n"); }   /* L-92: temp file, then replace */ catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("game compare: " + e.Message); } }
 
         // input: game | a name for this run - or paste a run copied from another PC | "clear" to start over
         public static List<string[]> Run(Monitor m, string gameIn, string name, string clear, Toolkit.Run run)
@@ -60,32 +61,35 @@ namespace AdeeboMeter
             if (pasted != null)
             {
                 if (pasted.Game != game.Id) { rows.Add(R(2, "Pasted run", "it's for " + pasted.Game + ", not " + game.Id, "", "u")); return rows; }
-                pasted.Name = Clean(pasted.Name + " (other PC)"); all.Add(pasted);
+                // bug-hunt L-93: the same run pasted again isn't added twice
+                if (all.Any(z => z.Game == pasted.Game && z.T == pasted.T && RowsOf(z) == RowsOf(pasted))) { rows.Add(R(3, "Pasted run", "already here - not added again", "", "u")); }
+                else { pasted.Name = Clean(pasted.Name + " (other PC)"); all.Add(pasted); }
             }
             else
             {
                 if (!Games.Monitored().Contains(game.Id)) { rows.Add(R(2, game.Name, "click it in the Gamer Zone first - that's your OK to contact its servers", "", "u")); return rows; }
-                if (nm == "") nm = m.AdapterKind == "Wi-Fi" ? "Wi-Fi" : "Cable";
+                if (nm == "") { string ak; lock (m.L) ak = m.AdapterKind; nm = ak == "Wi-Fi" ? "Wi-Fi" : ak == "LAN" ? "Cable" : ak == "" ? "Run" : ak; }   // bug-hunt L-94: "Cable" only for a cable
                 var distinct = game.Servers.GroupBy(z => z.Name).Select(gr => gr.First()).ToList();
                 if (distinct.Count == 0) { rows.Add(R(2, game.Name, "no servers to compare - add one in the Gamer Zone first", "", "u")); return rows; }
                 if (distinct.Count > 8) rows.Add(R(3, "Regions left out", string.Join(", ", distinct.Skip(8).Select(z => z.Name)), "Eight regions fit in one 30-second run - these weren't measured.", "i"));
                 var servers = distinct.Take(8).ToList(); /* two servers with the same (cut) name: measured once, never a crash */ var s = new Saved { Game = game.Id, Name = Clean(nm), T = DateTime.Now };
                 var samples = servers.ToDictionary(z => z.Name, z => new List<double>());
-                for (int i = 0; i < Samples && !run.Stop; i++)
+                var whole = System.Diagnostics.Stopwatch.StartNew();
+                for (int i = 0; i < Samples && !run.Stop && whole.Elapsed.TotalSeconds < 45; i++)   // bug-hunt ML-53: slow servers can't stretch the 30-second run past 45 s
                 {
                     var t0 = DateTime.UtcNow; run.Status = "Probe " + (i + 1) + " of " + Samples + " to " + servers.Count + " servers (" + nm + ")...";
                     foreach (var sv in servers) { string used; samples[sv.Name].Add(GamePing.Probe(sv, out used)); }
                     int wait = 1000 - (int)(DateTime.UtcNow - t0).TotalMilliseconds; if (wait > 0) Thread.Sleep(wait);
                 }
                 if (run.Stop) { rows.Add(R(1, "Stopped", "the run wasn't saved", "", "m")); return rows; }
-                foreach (var sv in servers) { var v = samples[sv.Name].ToArray(); s.Rows.Add(new RunRow { Server = sv.Name, Avg = GameStat.Avg(v), P95 = GameStat.Pct(v, 0.95), Jit = GameStat.Jitter(v), Loss = GameStat.Loss(v) }); }
+                foreach (var sv in servers) { var v = samples[sv.Name].ToArray(); s.Rows.Add(new RunRow { Server = sv.Name, Avg = GameStat.Avg(v), P95 = GameStat.Pct(v, 0.95), Jit = GameStat.Jitter(v), Loss = GameStat.Loss(v), N = v.Length }); }
                 all.Add(s);
             }
             var mine = all.Where(z => z.Game == game.Id).ToList();
             if (mine.Count > MaxRuns) { foreach (var old in mine.Take(mine.Count - MaxRuns)) all.Remove(old); mine = mine.Skip(mine.Count - MaxRuns).ToList(); }
             Store(all);
             // side by side: one row per server, each run's avg / 95% / jitter / loss
-            rows.Add(R(-1, game.Name.ToUpperInvariant() + " · SIDE BY SIDE", string.Join("  vs  ", mine.Select(z => z.Name + " (" + z.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + ")")), "", "m"));
+            rows.Add(R(-1, game.Name.ToUpperInvariant() + " · SIDE BY SIDE", string.Join("  vs  ", mine.Select(z => z.Name + " (" + z.T.ToString("d MMM HH:mm", CultureInfo.CurrentCulture) + (z.Rows.Any(r => r.N > 0) ? " · " + z.Rows.Where(r => r.N > 0).Min(r => r.N) + " probes" : "") + ")")), "", "m"));
             foreach (var srv in mine.SelectMany(z => z.Rows.Select(r => r.Server)).Distinct())
             {
                 var cells = mine.Select(z => { var r = z.Rows.FirstOrDefault(x => x.Server == srv); return z.Name + ": " + (r == null ? "-" : F(r.Avg) + " ms · 95% " + F(r.P95) + " · jitter " + F(r.Jit) + " · loss " + (double.IsNaN(r.Loss) ? "-" : r.Loss.ToString("0.#", CultureInfo.InvariantCulture) + "%")); });
@@ -108,6 +112,10 @@ namespace AdeeboMeter
             if (!double.IsNaN(la) && !double.IsNaN(lb) && Math.Abs(la - lb) >= 0.5) bits.Add((la < lb ? a.Name : b.Name) + " loses fewer packets (" + Math.Min(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "% vs " + Math.Max(la, lb).ToString("0.#", CultureInfo.InvariantCulture) + "%)");
             if (!double.IsNaN(ja) && !double.IsNaN(jb) && Math.Abs(ja - jb) >= 3) bits.Add((ja < jb ? a.Name : b.Name) + " is steadier (jitter " + F(Math.Min(ja, jb)) + " vs " + F(Math.Max(ja, jb)) + " ms)");
             if (!double.IsNaN(aa) && !double.IsNaN(ab) && Math.Abs(aa - ab) >= 3) bits.Add((aa < ab ? a.Name : b.Name) + " is " + F(Math.Abs(aa - ab)) + " ms quicker on average");
+            if (double.IsNaN(aa) && double.IsNaN(ab) && double.IsNaN(la) && double.IsNaN(lb)) return "Neither run got an answer from these servers - nothing to compare.";   // bug-hunt ML-54
+            // a run cut short by slow servers (45 s cap) rests on a few probes: its numbers are noise, and the verdict says so
+            int na = a.Rows.Where(r => both.Contains(r.Server) && r.N > 0).Select(r => r.N).DefaultIfEmpty(Samples).Min(), nb = b.Rows.Where(r => both.Contains(r.Server) && r.N > 0).Select(r => r.N).DefaultIfEmpty(Samples).Min();
+            if (Math.Min(na, nb) < 10) return "Too few probes to compare fairly (" + (na < nb ? a.Name : b.Name) + " got only " + Math.Min(na, nb) + " of " + Samples + " - some servers answered slowly). Run it again.";
             return (bits.Count == 0 ? "No real difference between " + a.Name + " and " + b.Name + " in these runs." : string.Join("; ", bits) + ".") + (sameSet ? "" : " (Compared on the " + both.Count + " servers both runs measured.)");
         }
     }

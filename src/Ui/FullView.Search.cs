@@ -28,6 +28,7 @@ namespace AdeeboMeter
                 l.Add(new PalItem { Group = grp, Title = title ?? "", Sub = sub ?? "", Icon = icon, Acc = acc, Pin = pin, Go = go, Words = ((title ?? "") + " " + L.T(title ?? "") + " " + (sub ?? "")).ToLowerInvariant() });
             foreach (var id in NavIds())
             {
+                if (Cfg.Off(id)) continue;   // a section first-run setup (or Settings) hid stays out of search too (review 24 Nov)
                 string nid = id; add("Pages", L.T(NavName(id)), "", NavIcon(id), NavAccent(id), "nav:" + id, delegate { OpenNav(nid); });
             }
             foreach (var kv in tabNames)
@@ -71,21 +72,26 @@ namespace AdeeboMeter
             {
                 var l = toolHits(q); var sym = Cases.Match(q);
                 if (sym != null) { string sid = sym[0]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Investigate") + ": " + L.T(sym[1]), Sub = L.T("Runs the checks that fit, then a report you can keep"), Icon = "question", Acc = "home", Pin = "", Words = sym[3], Go = delegate { OpenCase(sid, "search", "", null, null); } }); }
+                else { var fm = FixMatch(q); if (fm != null) { string fg = fm[1]; l.Insert(0, new PalItem { Group = L.T("Investigate"), Title = L.T("Sounds like") + " " + L.T(fm[2]), Sub = L.T("I'll check") + " " + L.T(fm[3]), Icon = "question", Acc = "home", Pin = "", Words = q, Go = delegate { FixGo(fg); } }); } }   // the words Home's old describe box knew ("laptop is hot", "disk is full")
                 return l;
             };
-            using (var pal = new Palette(items, hits, vocab, PinToMine))
-            {
-                pal.StartPosition = FormStartPosition.Manual; pal.Location = new Point(Left + (Width - pal.Width) / 2, Top + Sc(90));
-                pal.ShowDialog(this);
-                if (pal.Chosen != null) pal.Chosen();
-            }
+            if (openPal != null && !openPal.IsDisposed) { openPal.Activate(); return; }
+            // not modal (Adeeb, 22 Nov: "search doesn't close unless I click on it"): a click anywhere else in the window closes it
+            var pal = new Palette(items, hits, vocab, PinToMine); openPal = pal;
+            pal.StartPosition = FormStartPosition.Manual;
+            var wa = Screen.FromControl(this).WorkingArea;   // bug-hunt L-157: kept on the screen, whatever the window's position
+            pal.Location = new Point(Math.Max(wa.Left, Math.Min(Left + (Width - pal.Width) / 2, wa.Right - pal.Width)), Math.Max(wa.Top, Math.Min(Top + Sc(90), wa.Bottom - pal.Height)));
+            pal.FormClosed += delegate { openPal = null; var go = pal.Chosen; try { if (IsDisposed || Disposing || !IsHandleCreated) { pal.Dispose(); return; } BeginInvoke((Action)delegate { pal.Dispose(); if (go != null && !IsDisposed) go(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; pal.Dispose(); } };   // R2-054: closing with the app
+            pal.Show(this);
         }
+        Palette openPal;
         internal void CheckSite(string site) { tab = "dest"; ShowTab(); SyncNav(); destBox.Box.Text = site; StartDest(); }
 
         // one word against the vocabulary: the closest word one letter away (two for long words), or null
         internal static string Fix(string w, HashSet<string> vocab)
         {
-            if (w.Length < 4 || vocab.Contains(w) || w.All(char.IsDigit) || w.Contains('.')) return null;
+            // bug-hunt L-158: three letters too ("dsn" -> "dns", one letter away at most); a word with a dot is a site or an address, never "fixed"
+            if (w.Length < 3 || vocab.Contains(w) || w.All(char.IsDigit) || w.Contains('.')) return null;
             string best = null; int bd = w.Length >= 7 ? 3 : 2;
             foreach (var v in vocab)
             {
@@ -162,8 +168,8 @@ namespace AdeeboMeter
                 if (e.KeyCode == Keys.Escape) Close();
                 else if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; Pick(); }
                 else if (e.KeyCode == Keys.P && e.Control) { e.SuppressKeyPress = true; PinSel(); }
-                else if (e.KeyCode == Keys.Down) { e.Handled = true; Step(1); }
-                else if (e.KeyCode == Keys.Up) { e.Handled = true; Step(-1); }
+                else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; Step(1); }   // hunters10 L-4: suppressed, so a focused list doesn't move a second time
+                else if (e.KeyCode == Keys.Up) { e.SuppressKeyPress = true; Step(-1); }
             };
             Deactivate += delegate { Close(); };
             Shown += delegate { box.Box.Focus(); };
@@ -175,11 +181,11 @@ namespace AdeeboMeter
         void DrawRow(object s, DrawItemEventArgs e)
         {
             if (e.Index < 0) return; var it = (PalItem)list.Items[e.Index]; var g = e.Graphics; var b0 = e.Bounds;
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, b0);
             if (it.Header)
             {
-                using (var m = new SolidBrush(it.Acc == "" ? Theme.Muted : Kit.Ink(it.Acc))) g.DrawString(it.Title.ToUpperInvariant(), Draw.fTiny, m, b0.X + 6 * S, b0.Bottom - 20 * S);
+                using (var m = new SolidBrush(it.Acc == "" ? Theme.Muted : Kit.Ink(it.Acc))) g.DrawString(it.Title, Draw.fTiny, m, b0.X + 6 * S, b0.Bottom - 20 * S);
                 return;
             }
             bool sel = (e.State & DrawItemState.Selected) != 0;
@@ -239,8 +245,9 @@ namespace AdeeboMeter
             foreach (var grp in FullView.SearchGroups)
             {
                 var gl = hits.Where(h => h.Group == grp).ToList(); if (gl.Count == 0) continue;
-                rows.Add(new PalItem { Header = true, Title = L.T(grp) + "  ·  " + gl.Count, Acc = "" });
-                rows.AddRange(gl.Take(grp == "Tools" ? 8 : 5));
+                int cap = grp == "Tools" ? 8 : 5;   // bug-hunt L-156: "5 of 12" when more matched than are shown
+                rows.Add(new PalItem { Header = true, Title = L.T(grp) + "  ·  " + (gl.Count > cap ? cap + " " + L.T("of") + " " + gl.Count : gl.Count.ToString(CultureInfo.CurrentCulture)), Acc = "" });
+                rows.AddRange(gl.Take(cap));
             }
             if (rows.Count == 0)
             {
@@ -256,7 +263,7 @@ namespace AdeeboMeter
             foreach (var it in all) { int sc = FullView.Score(it, words); if (sc > 0) { it.Rank = sc; hits.Add(it); } }
             return hits.Select((h, i) => new { h, i }).OrderBy(x => Array.IndexOf(FullView.SearchGroups, x.h.Group)).ThenByDescending(x => x.h.Group == "Tools" ? -x.i : x.h.Rank).Select(x => x.h).ToList();
         }
-        static T FindForm<T>() where T : Form { return Application.OpenForms.OfType<T>().FirstOrDefault(); }
+        static T FindForm<T>() where T : Form { return Application.OpenForms.OfType<T>().FirstOrDefault(f => f.Visible) ?? Application.OpenForms.OfType<T>().FirstOrDefault(); }   /* review 1.1.6 U2 #4: never the hidden phone-runner view */
         void Show(List<PalItem> rows)
         {
             list.BeginUpdate(); list.Items.Clear(); foreach (var r in rows) list.Items.Add(r); list.EndUpdate();

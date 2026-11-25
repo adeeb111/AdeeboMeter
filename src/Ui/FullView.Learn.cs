@@ -44,7 +44,7 @@ namespace AdeeboMeter
             g.TranslateTransform(learnList.AutoScrollPosition.X, learnList.AutoScrollPosition.Y);
             Begin(learnList);
             float x = 14 * S, y = 8 * S, w = learnList.ClientSize.Width - 22 * S; string q = learnSearch.Box.Text.Trim();
-            Func<string, bool> hit = s => q == "" || (s ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+            Func<string, bool> hit = s => q == "" || (s ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (L.Code != "en" && !string.IsNullOrEmpty(s) && L.T(s).IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);   /* review 1.1.6 U2 #3: the titles shown are translated, so search them too */
             var topics = Knowledge.Learn();
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -61,8 +61,8 @@ namespace AdeeboMeter
                 }
                 if (q != "" || learnFilter == "terms")
                 {
-                    var terms = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).Take(learnFilter == "terms" ? 400 : 30).ToList();
-                    if (terms.Count > 0) { g.DrawString(L.T("TERMS USED IN ADEEBOMETER"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
+                    var termsAll = Explain.AllTerms.Where(e => hit(e.Friendly) || hit(e.Tag)).ToList(); var terms = termsAll.Take(learnFilter == "terms" ? 400 : 30).ToList();   /* L-359: the heading says when more matched */
+                    if (terms.Count > 0) { g.DrawString(Kit.Sent("TERMS USED IN ADEEBOMETER") + (termsAll.Count > terms.Count ? "  ·  " + terms.Count + " " + L.T("of") + " " + termsAll.Count + " - " + L.T("type more to narrow it") : ""), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S; foreach (var e in terms) y = LearnRow(g, "term:" + e.Friendly, e.Friendly, e.Tag, x, y, w, ink, muted, nowrap); }
                 }
             }
             Need(learnList, y);
@@ -90,6 +90,7 @@ namespace AdeeboMeter
             }
             if (learnSel.StartsWith("game:", StringComparison.Ordinal)) { y = PaintGame(g, learnSel.Substring(5), x, y, w); Need(learnInfo, y + 20 * S); return; }
             if (learnSel == "") { y = Title2(g, AdeeboMeter.L.T("Learn"), x, y, w); y = Lead2(g, AdeeboMeter.L.T("Labs at the top: play with how networks behave, with your own numbers. Below them, two lines and a picture each - new to networking? Start with The layers, in plain words."), x, y, w); Need(learnInfo, y); return; }
+            if (learnSel == "lab:netlab") { y = PaintNetLab(g, x, y, w); Need(learnInfo, y + 20 * S); return; }   // 1.1.6: the Network Lab card
             if (learnSel.StartsWith("lab:", StringComparison.Ordinal)) { y = PaintLab(learnInfo, g, learnSel.Substring(4), x, y, w); Need(learnInfo, y + 20 * S); return; }
                         if (learnSel.StartsWith("term:", StringComparison.Ordinal))
             {
@@ -137,7 +138,7 @@ namespace AdeeboMeter
             float qh = Draw.Measure(L.T(q), Draw.fBodyB, (int)(w - 32 * S)).Height, ow = (w - 46 * S) / 2, oh = 40 * S;
             var card = new RectangleF(x, y, w, 44 * S + qh + (float)Math.Ceiling(opts.Count / 2.0) * (oh + 10 * S) + (picked != null ? 34 * S : 0));
             Theme.Fill(g, card, 12 * S, Theme.Soft);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("CHECK YOURSELF") + (Cfg.Points ? "  ·  " + (earned ? "✓ " : "") + "+" + Points.Value("check." + id) : ""), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("CHECK YOURSELF") + (Cfg.Points ? "  ·  " + (earned ? "✓ " : "") + "+" + Points.Value("check." + id) : ""), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
             using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(L.T(q), Draw.fBodyB, ib, new RectangleF(x + 16 * S, y + 32 * S, w - 32 * S, qh + 4));
             float oy = y + 40 * S + qh;
             for (int i = 0; i < opts.Count; i++)

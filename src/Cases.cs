@@ -30,15 +30,16 @@ namespace AdeeboMeter
         // ("mtu", "dig") don't open a case on their own
         public static string[] Match(string q)
         {
-            var words = (q ?? "").ToLowerInvariant().Split(Sep, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3).ToList(); if (words.Count == 0) return null;
-            string[] best = null; int bs = 0;
+            // bug-hunt M-23: two-letter words count ("pc"), and one word that IS a case's keyword ("wifi", "vpn", "lag") opens it
+            var words = (q ?? "").ToLowerInvariant().Split(Sep, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 2).ToList(); if (words.Count == 0) return null;
+            string[] best = null; int bs = 0; bool bestExact = false;
             foreach (var s in Symptoms)
             {
-                var keys = s[3].Split(' '); int sc = 0;
-                foreach (var w in words) if (keys.Any(k => k == w || (w.Length >= 4 && k.StartsWith(w, StringComparison.Ordinal)))) sc += w.Length >= 5 ? 2 : 1;
-                if (sc > bs) { bs = sc; best = s; }
+                var keys = s[3].Split(' '); int sc = 0; bool exact = false;
+                foreach (var w in words) { bool ex = keys.Any(k => k == w); if (ex || (w.Length >= 4 && keys.Any(k => k.StartsWith(w, StringComparison.Ordinal)))) { sc += w.Length >= 5 ? 2 : 1; exact |= ex; } }
+                if (sc > bs) { bs = sc; best = s; bestExact = exact; }
             }
-            return bs >= 2 || (bs >= 1 && words.Count == 1 && words[0].Length >= 5) ? best : null;
+            return bs >= 2 || (bs >= 1 && words.Count == 1 && (words[0].Length >= 5 || bestExact)) ? best : null;
         }
         public static string[] Of(string id) { return Symptoms.FirstOrDefault(s => s[0] == id) ?? Symptoms[3]; }
 
@@ -82,6 +83,7 @@ namespace AdeeboMeter
         public static Series Minutes(DateTime from, DateTime to)
         {
             var s = new Series(); if (!Cfg.History || to <= from) return s;
+            if ((to - from).TotalDays > 2) from = to.AddDays(-2);   // bug-hunt ML-166: the chart shows the minutes around the case - two days of files at most, never a month
             for (var d = from.Date; d <= to.Date; d = d.AddDays(1))
             {
                 History.Day day; try { day = History.Load(d); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("case history: " + e.Message); continue; }

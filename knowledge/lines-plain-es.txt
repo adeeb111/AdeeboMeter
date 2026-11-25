@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Plain. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|AdeeboMeter está en ejecución. Todo está siendo vigilado.
+app.open|Listo. Tu PC y tu red están siendo revisados.
+app.open|Iniciado. Primeras lecturas en unos segundos.
+app.open|Vigilando tu red en silencio desde la esquina.
+app.open|De vuelta. Revisando tu PC, Wi-Fi e internet.
+all.good|Todo tranquilo. Nada que arreglar.
+all.good|Todo se ve normal.
+all.good|No se encontraron problemas por ahora.
+all.good|PC, Wi-Fi e internet están bien.
+all.good|Todo en verde. Nada te necesita.
+pc.busy|Tu PC está ocupado. Cierra algo antes de abrir más.
+pc.busy|La CPU está en {v}. Un programa usa casi toda.
+pc.busy|La memoria está casi llena. Las apps nuevas irán lentas.
+pc.busy|Tu PC es el cuello de botella ahora, no la red.
+pc.busy|Carga alta. La red puede parecer lenta por eso.
+wifi.drops|El Wi-Fi se desconectó {v} veces hoy.
+wifi.drops|Tu Wi-Fi se cayó {v} veces. Mira qué pasó justo antes.
+wifi.drops|{v} caídas de Wi-Fi hoy. La señal o el roaming suelen ser la causa.
+wifi.drops|El enlace Wi-Fi se reinició {v} veces hoy.
+wifi.drops|Caídas de Wi-Fi hoy: {v}. Vale la pena revisarlo.
+net.none|No conectado a ninguna red.
+net.none|Sin red. Conecta un cable o elige una red Wi-Fi.
+net.none|Sin conexión. Las comprobaciones de internet están en pausa.
+net.none|Sin conexión. Nada puede llegar a internet ahora.
+net.none|Ningún adaptador de red está conectado.
+inet.slow|El retraso empieza más allá de tu router.
+inet.slow|Tu router es rápido. Internet es lento.
+inet.slow|El retraso de internet es {v}. La causa está fuera de tu red doméstica.
+inet.slow|Internet lento. Lo más probable es el lado de tu proveedor.
+inet.slow|Red doméstica bien, internet lento.
+busy|Trabajando... {v}
+busy|Revisando... {v}
+busy|Sigo trabajando. Puedes seguir usando la app.
+busy|En ejecución. Pulsa Detener para cancelar.
+busy|Midiendo... casi listo.
+idle|Nada nuevo. Sigo vigilando.
+idle|Todo tranquilo por un rato.
+idle|Sin cambios en la última hora.
+idle|Sigo aquí, sigo vigilando.
+idle|Estable. Nada que informar.
+search.empty|Busca herramientas por nombre o pregunta.
+search.empty|Escribe un problema, como "lento" o "wifi".
+search.empty|Escribe un nombre de herramienta, como "mtu" o "dns".
+search.empty|¿Qué quieres revisar?
+search.empty|Busca, o elige una pregunta abajo.
+freeze|Sigo trabajando. La ventana se está poniendo al día ({v}).
+freeze|Un momento. Poniéndome al día ({v}).
+freeze|Ocupado por {v}. Los clics volverán a funcionar pronto.
+freeze|Poniéndome al día tras una tarea pesada ({v}).
+freeze|Espera, por favor. Casi de vuelta ({v}).
+speedrunner|Sigo terminando la anterior.
+speedrunner|Una a la vez: la última revisión sigue en ejecución.
+speedrunner|Dale un segundo para ponerse al día.
+speedrunner|La última solicitud sigue en ejecución.
+speedrunner|Trabajando primero en tu clic anterior.
+back.again|Bienvenido de vuelta. Esto es lo que cambió.
+back.again|De vuelta. {v} cambios desde la última vez.
+back.again|Bienvenido de vuelta. Nada cambió.
+back.again|De vuelta. Todo estuvo tranquilo.
+back.again|Bienvenido de vuelta. Mira qué pasó mientras estabas fuera.
+dns.slow|Las búsquedas de nombres son lentas ({v}).
+dns.slow|El DNS es lento. Prueba otro servidor DNS.
+speed.great|Descarga {v}. Una conexión rápida.
+speed.great|Rápido y estable. Bueno para todo.
+speed.bloat|Rápido, pero el retraso sube {v} cuando la línea está llena.
+speed.bloat|Las descargas hacen que la línea se vuelva lenta. Esto se llama bufferbloat.
+game.lag|El lag empieza en tu Wi-Fi, no en el servidor del juego.
+game.lag|Los picos de ping coinciden con caídas de señal Wi-Fi.
+game.good|El ping del juego es estable en {v}.
+game.good|Bueno para jugar en competitivo.
+vpn.on|VPN conectada.
+vpn.on|El tráfico pasa por tu VPN.
+vpn.slow|La VPN añade {v} de retraso.
+vpn.slow|Lento por la VPN, bien sin ella.
+portal|Este Wi-Fi necesita primero una página de inicio de sesión.
+portal|Abre un navegador para iniciar sesión en esta red.
+gw.down|Tu router no responde.
+gw.down|Sin respuesta de tu router. Reinícialo o revisa el cable.
+isp.down|Tu router funciona, pero internet no.
+isp.down|Internet está caído más allá de tu router. Revisa el estado de tu proveedor.
+mtu.small|Se están descartando paquetes grandes. La MTU de ruta es {v}.
+mtu.small|La ruta no puede llevar paquetes de tamaño completo.
+port.open|{v} está abierto y responde.
+port.open|Conexión exitosa.
+port.closed|{v} rechazó o no respondió.
+port.closed|Conexión fallida. Algo lo está bloqueando.
+cert.ok|El certificado es válido y de confianza.
+cert.ok|El candado está bien.
+cert.expired|El certificado venció el {v}.
+cert.expired|El certificado no es válido. Los navegadores avisarán.
+sec.ok|Revisión de seguridad aprobada.
+sec.ok|No se encontraron problemas de seguridad.
+sec.issue|{v} elementos de seguridad necesitan atención.
+sec.issue|Algunos ajustes de seguridad están desactivados.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.lossy|Se pierden paquetes en el camino. Mira dónde empieza.
+mtr.clean|Sin pérdida en ningún salto.
+mtr.clean|Toda la ruta está limpia.
+devices.found|{v} dispositivos vistos en tu red.
+devices.found|Estos son los dispositivos con los que tu PC ha hablado.
+encrypt.done|Archivo cifrado.
+encrypt.done|Bloqueado. Solo la persona correcta puede abrirlo.
+decrypt.done|Archivo abierto. No se cambió.
+decrypt.done|Descifrado y verificado.
+points.earned|+{v} puntos Adeebo.
+points.earned|Ganaste {v} puntos.
+award|Llegaste a 500 puntos: el Premio Adeebo.
+award|Premio Adeebo desbloqueado. Haz tu tarjeta.
+late.night|Es tarde. Todo sigue siendo vigilado.
+late.night|Noche tarde. Todo tranquilo.
+morning|Buenos días. Todo tranquilo anoche.
+morning|Buenos días. Esto pasó anoche.
+update.suspect|Las cosas empeoraron tras una actualización de Windows el {v}.
+update.suspect|Una actualización reciente puede ser la causa.
+call.on|Llamada detectada. Vigilando la calidad de la llamada.
+call.on|En una llamada. Se están midiendo el jitter y la pérdida.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} se reproduce sin problemas. Estoy vigilando la ruta.
+stream.on|Transmitiendo {v}. Sin caídas por ahora.
+stream.dip|El stream bajó. {v}
+stream.dip|Una caída justo ahora. {v}
+stream.none|Nada se está transmitiendo ahora.
+stream.none|Ningún stream en reproducción. Lo notaré cuando empiece uno.
+trade.ok|Tu línea al broker es rápida y estable.
+trade.ok|El broker responde con normalidad. Nada que esperar.
+trade.slow|Momento lento hacia tu broker. Espera antes de hacer clic.
+trade.slow|Tu broker está lento ahora. {v}
+trade.closed|Mercado cerrado. La revisión del broker duerme hasta las 9:30.
+trade.closed|Los mercados están cerrados. Nada se está revisando.
+view.switch|Cambiando a {v}. Tus ajustes para esa vista vuelven.
+view.switch|Cambiando a la vista {v}. Un momento.
+quiz.right|Correcto.
+quiz.wrong|Incorrecto.
+game.streak|{v} correctas seguidas.
+game.timeup|Se acabó el tiempo.
+market.open|Los mercados están abiertos.
+storm.near|Tormenta cerca. Las conexiones pueden caer.

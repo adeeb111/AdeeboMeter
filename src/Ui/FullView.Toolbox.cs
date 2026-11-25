@@ -16,7 +16,7 @@ namespace AdeeboMeter
     // (MTU per hop, MTR). Nothing runs until you press Run, and Stop always works.
     sealed partial class FullView
     {
-        sealed class Tool { public string Id, Group, Title; public string[] Inputs = Array.Empty<string>(); public Func<string[], Toolkit.Run, List<string[]>> Do; }
+        sealed class Tool { public string Id, Group, Title, Kind;   /* Kind: the tool's own group (CALC, LAB...) - Group becomes the question it sits under */ public string[] Inputs = Array.Empty<string>(); public Func<string[], Toolkit.Run, List<string[]>> Do; }
         Panel toolboxPage; DB tbList, tbCanvas; FlowLayoutPanel tbBar; PillButton tbRun; readonly List<RoundBox> tbBoxes = new List<RoundBox>(); readonly RoundBox[] tbPool = new RoundBox[4]; CheckBox tbSweepOk; string tbIperfSrv = ""; readonly List<string> tbVisible = new List<string>(); readonly Dictionary<string, float> tbRowY = new Dictionary<string, float>();
         string tbSel = "mtu", tbRowsKey = ""; List<string[]> tbRows; Toolkit.Run tbRun0; volatile bool tbBusy; string tbTitle = ""; DateTime tbAt;
         List<PathTools.Hop> mtuHops; IPAddress mtuDst; volatile bool mtuBusy;
@@ -26,10 +26,11 @@ namespace AdeeboMeter
         {
             if (tools != null) return tools;
             Func<string, string, string, string, Func<string[], Toolkit.Run, List<string[]>>, Tool> T = (id, g, t, ins, f) => new Tool { Id = id, Group = g, Title = t, Inputs = ins == null ? Array.Empty<string>() : ins.Split('|'), Do = f };   // inputs: "first|second|third"
+            toolsStatic = null;
             tools = new List<Tool> {
                 T("mtu", "PATH", "MTU per hop", "Destination - e.g. github.com", null),
                 T("udpmtu", "PATH", "MTU over UDP (QUIC / DNS)", "Target - a website (port 443) or a DNS server (port 53)|Port - 443 or 53", (a, r) => UdpMtu.Run(a[0], a[1], r)),
-                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-60) - longer runs are a recording: a graph and a file you can keep", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(60, min)); r.Status = "Tracing..."; var start = DateTime.Now; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); r.SeriesUnit = "ms"; var hops = mtrHops; PathTools.Mtr(dst, hops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second... (the graph is the far end)"; var last = hops.LastOrDefault(h => h.Ip != ""); if (last != null) lock (last.Hist) r.Add(last.Hist.Count > 0 ? last.Hist[last.Hist.Count - 1] : double.NaN); }); var res = new List<string[]> { new[] { "0", "Verdict", PathTools.MtrVerdict(hops), "", "i" } }; res.AddRange(PathTools.Flags(hops)); string csv = PathTools.SaveCsv(hops, a[0], start); if (csv != null) res.Add(new[] { "3", "Recording", System.IO.Path.GetFileName(csv) + " - every hop, every second (opens in Excel)", "Kept in AdeeboMeter's folder; nothing is sent.", "m", "show:" + csv }); return res; }),
+                T("mtr", "PATH", "MTR - loss per hop over time", "Destination|Minutes (1-60) - longer runs are a recording: a graph and a file you can keep", (a, r) => { var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); int min; if (!int.TryParse(a[1], out min)) min = 1; min = Math.Max(1, Math.Min(60, min)); r.Status = "Tracing..."; var start = DateTime.Now; mtrHops = PathTools.Trace(dst, 30, () => r.Stop); r.SeriesUnit = "ms"; var hops = mtrHops; PathTools.Mtr(dst, hops, min * 60, () => r.Stop, delegate { r.Status = "Probing every hop once a second... (the graph is the far end)"; var last = hops.LastOrDefault(h => h.Ip != ""); if (last != null) lock (last.Hist) r.Add(last.Hist.Count > 0 ? last.Hist[last.Hist.Count - 1] : double.NaN); }); LabViews.Remember(a[0], hops); int mlv; string mv = PathTools.MtrVerdict(hops, out mlv); var res = new List<string[]> { new[] { mlv.ToString(CultureInfo.InvariantCulture), "Verdict", mv, "", "i" } }; res.AddRange(PathTools.Flags(hops)); string csv = PathTools.SaveCsv(hops, a[0], start); if (csv != null) res.Add(new[] { "3", "Recording", System.IO.Path.GetFileName(csv) + " - every hop, every second (opens in Excel)", "Kept in AdeeboMeter's folder; nothing is sent.", "m", "show:" + csv }); return res; }),
                 T("ret", "PATH", "The way back (return path)", "Destination", (a, r) => Toolkit.ReturnPath(a[0], r)),
                 T("owners", "PATH", "Who carries my traffic (BGP)", "Destination", (a, r) => { if (!Online.On) return OnlineOff(); var dst = Icmp.Resolve4(a[0]); if (dst == null) return Bad("couldn't find " + a[0]); r.Status = "Tracing..."; var h = PathTools.Trace(dst, 30, () => r.Stop); r.Status = "Looking up each network..."; return Online.PathOwners(h, a[0]); }),
                 T("route", "PATH", "Which route does this take?", "Destination - e.g. 10.20.30.40 or a name", (a, r) => RoutingTools.RouteFor(Host(a[0]))),
@@ -265,9 +266,9 @@ namespace AdeeboMeter
             // grouped by the question you're asking, not by technology
             var pos = new Dictionary<string, int>();
             foreach (var grp in TbLayout) for (int i = 1; i < grp.Length; i++) pos[grp[i]] = pos.Count;
-            foreach (var t in tools) { var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
+            foreach (var t in tools) { if (t.Kind == null) t.Kind = t.Group; var grp = TbLayout.FirstOrDefault(l => Array.IndexOf(l, t.Id, 1) > 0); if (grp != null) t.Group = grp[0]; }
             tools = tools.OrderBy(t => { int p; return pos.TryGetValue(t.Id, out p) ? p : 999; }).ToList();
-            return tools;
+            toolsStatic = tools; return tools;
         }
         List<PathTools.Hop> mtrHops;
         // five sections, each grouped by the question you're asking, not by technology
@@ -307,7 +308,7 @@ namespace AdeeboMeter
             new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" }, { "MONEY & MARKETS MATHS", "net" }, { "COMMODITY MATHS", "net" }, { "GAMING MATHS", "net" },
-            { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
+            { "THIS PC AND YOUR PHONE", "net" } /* bug-hunt L-220: on purpose - they compare the two connections */, { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "hw", "Hardware nerds", "Every part of this PC against its own ceiling - disk, memory, graphics, processor, the link - how each one works, and what made it feel slow." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
@@ -322,6 +323,13 @@ namespace AdeeboMeter
         // Traffic Lab tools that don't send packets they build (or that came with their own rules before the Lab) - the self-test fails if a new Lab tool is in neither list
         public static readonly HashSet<string> LabExempt = new HashSet<string> { "wol", "iperf", "bloat", "dscp" };
         public static IEnumerable<string> LabToolsMissingGate() { string sec; return TbLayout.Where(l => GroupSection.TryGetValue(l[0], out sec) && sec == "lab").SelectMany(l => l.Skip(1)).Where(id => !LabGate.Contains(id) && !LabExempt.Contains(id)).Concat(LabGate.Concat(SenderGate).Where(id => !TbLayout.Any(l => l.Skip(1).Contains(id)))).Concat(Senders.Where(id => !LabGate.Contains(id) && !SenderGate.Contains(id))); }
+        // what may be kept or shown of an HTTP request builder's boxes: no user:password in the URL, no sign-in headers, no body
+        static void Redact(string id, string[] shown)
+        {
+            if (id != "httpreq" || shown == null) return;
+            if (shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
+            if (shown.Length > 3) { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
+        }
         static bool SecretInput(string label) { return label.StartsWith("Shared secret", StringComparison.Ordinal) || label.StartsWith("Community", StringComparison.Ordinal) || label.StartsWith("Password", StringComparison.Ordinal) || label.StartsWith("Code", StringComparison.Ordinal); }
         static bool SnmpView(string id) { return IsSnmp(id) || id == "mibs"; }
         string tbSection = "net"; bool tbHome = true; PillButton[] tbChips;
@@ -372,7 +380,7 @@ namespace AdeeboMeter
             tbRows = Examples.Rows(ex, tbBoxes.Any(b => b != null)); tbAward = "";
             if (Cfg.Points && tbRows.Count > 0)
             {
-                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) ? L.T("Replay bonus · +3 - run it again at least 10 minutes after your first run.") : L.T("Already earned.")) : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +3") : "");
+                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) && !Points.Me.Replayed(tbSel) ? L.T("Replay bonus · +2 - run it again at least 10 minutes after your first run.") : L.T("Already earned."))   /* review 1.1.6 U3 #12 */ : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +2") : "");
                 tbRows[0][3] = (tbRows[0][3] + "  " + note).Trim();
             } tbRowsKey = "example"; tbAt = DateTime.Now; tbRun0 = null; tbShown = null; tbCompare = false;
             tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
@@ -407,12 +415,19 @@ namespace AdeeboMeter
             }
             else if (what == "del")
             {
-                if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + k.Name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return null;
+                if (AskCard.Show(this, L.T("Delete this key from Windows?") + "\n\n" + k.Name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return null;
                 rows.Add(new[] { EcKeys.Delete(k) ? "0" : "2", "Deleted", k.Name, "", "w" }); rows.AddRange(CertKeys.MyKeys());
             }
             return rows;
         }
         // a code or passphrase made for you: shown on screen once - never in Copy, Save, or the result kept for this session
+        // bug-hunt L-103: a box is found by what it asks (its hint), never by its position - and an empty slot is skipped
+        void Prefill(string id, string hintStart, string value)
+        {
+            var t = Tools2().FirstOrDefault(z => z.Id == id); if (t == null) return;
+            int i = Array.FindIndex(t.Inputs, h => h.StartsWith(hintStart, StringComparison.OrdinalIgnoreCase));
+            if (i >= 0 && i < tbBoxes.Count && tbBoxes[i] != null) tbBoxes[i].Box.Text = value;
+        }
         static bool IsSecretRow(string[] r) { return r.Length > 4 && r[4] == "k"; }
         static readonly char[] Colon = { ':' };
         void RowAction(string act)
@@ -442,7 +457,7 @@ namespace AdeeboMeter
                 else if (p[1] == "del")
                 {
                     var name = CertKeys.Mine().Where(c => c.Thumbprint == thumb).Select(CertKeys.NameOf).FirstOrDefault(); if (name == null) return;
-                    if (MessageBox.Show(this, L.T("Delete this key from Windows?") + "\n\n" + name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    if (AskCard.Show(this, L.T("Delete this key from Windows?") + "\n\n" + name + "\n\n" + L.T("Files encrypted to it can't be opened afterwards, unless you have a backup. This can't be undone."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                     res = new List<string[]> { new[] { CertKeys.Delete(thumb) ? "0" : "2", "Deleted", name, "", "w" } };
                     res.AddRange(CertKeys.MyKeys());
                 }
@@ -478,7 +493,7 @@ namespace AdeeboMeter
                 if (fp == null) return;
                 if (p[1] == "keep")
                 {
-                    if (MessageBox.Show(this, L.T("Use the new key for") + " " + who + "?\n\n" + L.T("New:") + " " + fp + "\n" + L.T("Now:") + " " + CertKeys.UsedPrint(who) + "\n\n" + L.T("Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                    if (AskCard.Show(this, L.T("Use the new key for") + " " + who + "?\n\n" + L.T("New:") + " " + fp + "\n" + L.T("Now:") + " " + CertKeys.UsedPrint(who) + "\n\n" + L.T("Only say yes if you read this fingerprint together with them (a call, or in person). Files you encrypt for them afterwards use the new key."), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
                     try { CertKeys.ConfirmPending(who); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException || e is System.Security.Cryptography.CryptographicException)) throw; Program.Log("recipient confirm: " + e.Message); }
                 }
                 else CertKeys.DropPending(who);
@@ -508,8 +523,10 @@ namespace AdeeboMeter
                 tbBusy = UiActivity.ToolRunning = true; var run = new Toolkit.Run { Status = "Asking the certificate authority..." }; tbRun0 = run; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
                 Task.Factory.StartNew(() =>
                 {
-                    List<string[]> got; try { got = Toolkit.Revocation(host, port, sni); } catch (Exception e) { got = Bad(e.Message); }
-                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
+                    /* review 1.1.6 U3 #10: Stop answers at once - the lookup can't be cut short, so its late answer is dropped */
+                    List<string[]> got; try { var rt = Task.Factory.StartNew(() => Toolkit.Revocation(host, port, sni), TaskCreationOptions.LongRunning); while (!rt.Wait(200)) if (run.Stop) break; got = run.Stop ? null : rt.Result; } catch (Exception e) { got = Bad((e is AggregateException && e.InnerException != null ? e.InnerException : e).Message); }
+                    if (got == null) { try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); }); } catch (InvalidOperationException) { tbBusy = false; } return; }
+                    try { BeginInvoke((Action)delegate { tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (tbSel == sel && tbRows == rows0) { var n = new List<string[]>(); foreach (var o in rows0) { if (o.Length > 5 && o[5] == act) n.AddRange(got); else n.Add(o); } tbRows = n; PrevRun l; if (tbLast.TryGetValue(sel, out l)) l.Rows = n; } tbCanvas.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
                 }, TaskCreationOptions.LongRunning);
             }
             else if (act.StartsWith("fix:", StringComparison.Ordinal)) SecFix(act.Substring(4));
@@ -549,7 +566,7 @@ namespace AdeeboMeter
                     System.IO.File.WriteAllText(d.FileName, csv ? ResultCsv() : ResultText(), new System.Text.UTF8Encoding(true));
                     tbSaved = DateTime.Now; tbCanvas.Invalidate();
                 }
-                catch (Exception e) { Program.Log("save result: " + e.Message); MessageBox.Show(this, "Couldn't save: " + e.Message, "AdeeboMeter"); }
+                catch (Exception e) { Program.Log("save result: " + e.Message); AskCard.Show(this, "Couldn't save: " + e.Message, "AdeeboMeter"); }
             }
         }
         DateTime tbSaved;
@@ -566,12 +583,14 @@ namespace AdeeboMeter
             return sb.ToString();
         }
         // the result as plain text, for a ticket or a chat - built only when you press Copy; nothing is saved
+        // a box's name without its hint: "How many (10-2000)" stays whole, "Target - e.g. x" becomes "Target"
+        internal static string BoxLabel(string hint) { int d = hint.IndexOf(" - ", StringComparison.Ordinal); return (d > 0 ? hint.Substring(0, d) : hint).Trim(); }
         string ResultText()
         {
             if (Examples.IsExample(tbRows)) return "";   // made-up data is never copied
             var sb = new System.Text.StringBuilder(); var t = Tools2().First(x => x.Id == tbSel);
             sb.AppendLine("AdeeboMeter " + Program.Version + " · " + t.Title + " · " + tbAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(t.Inputs[i].Split('-')[0].Trim() + ": " + ShareCell(a[i]));
+            var a = tbShown ?? Inputs(); for (int i = 0; i < t.Inputs.Length && i < 4; i++) if (t.Inputs[i] != "" && a[i] != "" && !t.Inputs[i].StartsWith("Shared secret", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Password", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Community", StringComparison.Ordinal) && !t.Inputs[i].StartsWith("Code", StringComparison.Ordinal)) sb.AppendLine(BoxLabel(t.Inputs[i]) + ": " + ShareCell(a[i]));
             sb.AppendLine();
             if (tbSel == "mtu" && mtuHops != null) foreach (var h in mtuHops) sb.AppendLine(("hop " + h.N).PadRight(8) + (h.Ip == "" ? "*" : h.Ip).PadRight(40) + (h.Mtu > 0 ? h.Mtu + "  " + h.MtuNote : h.MtuNote));
             if (tbSel == "mtr" && mtrHops != null)
@@ -585,7 +604,7 @@ namespace AdeeboMeter
                 {
                     if (o[0] == "6" || o[0] == "7" || o[0] == "8") { sb.AppendLine((o[0] == "7" ? "! " : "  ") + ShareCell(o[2])); continue; }   // table lines, as they are
                     string lv = o[0] == "2" ? "[!!] " : o[0] == "1" ? "[!]  " : o[0] == "0" ? "[ok] " : "     ";
-                    sb.AppendLine(lv + ShareCell(o[1]) + ": " + ShareCell(o[2]));
+                    sb.AppendLine(lv + (o[1] == "" ? "" : ShareCell(o[1]) + ": ") + ShareCell(o[2]));
                     if (o.Length > 3 && o[3] != "") sb.AppendLine("      " + ShareCell(o[3]));
                 }
             return sb.ToString();
@@ -617,7 +636,7 @@ namespace AdeeboMeter
             int n, m;
             switch (id)
             {
-                case "mtu": return "a few seconds to trace, then about 8 small pings per hop you measure";
+                case "mtu": return "a few seconds to trace, then about 12 small pings per hop you measure";
                 case "dnsrace": return "10-20 seconds for five servers (21 lookups each); longer if a server is slow";
                 case "hotel": return "about 10 seconds, up to 20 on a slow network";
                 case "whats": return "10-20 seconds - it re-tests what's out of date";
@@ -717,9 +736,11 @@ namespace AdeeboMeter
             // 16 Nov fix: by question the list is hidden - its column stays 0 on a resize, or the page opens with an empty third on the left
             split.Resize += delegate { float want = ByQuestion ? 0 : Math.Max(Sc(170), Math.Min(Sc(290), split.ClientSize.Width / 3f)); if (Math.Abs(split.ColumnStyles[0].Width - want) > 1) split.ColumnStyles[0].Width = want; };
             tbList = new DB { Name = "tbList", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, Margin = new Padding(0) };
+            // the list works from the keyboard too: arrows move, Enter goes to the first box, Home/End, typing jumps to search.
+            // hunters10 ML-1: KeyNav before Wire, so Tab leaves the list in one press instead of walking all ~230 tools
+            tbList.KeyNav = true;
             tbList.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbList(e.Graphics); }; Wire(tbList);
-            // the list works from the keyboard too: arrows move, Enter goes to the first box, Home/End, typing jumps to search
-            tbList.KeyNav = true; tbList.AccessibleName = "Tools"; tbList.AccessibleRole = AccessibleRole.List;
+            tbList.AccessibleName = "Tools"; tbList.AccessibleRole = AccessibleRole.List;
             tbList.GotFocus += delegate { tbList.Invalidate(); }; tbList.LostFocus += delegate { tbList.Invalidate(); };
             tbList.KeyDown += delegate(object s, KeyEventArgs e)
             {
@@ -737,7 +758,7 @@ namespace AdeeboMeter
             var topBar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, BackColor = Theme.Card, Padding = new Padding(Sc(10), Sc(10), Sc(10), Sc(6)), WrapContents = true };
             tbChips = Sections.Select(sec => { var c = new PillButton(sec[1], PillButton.K.Chip) { Tag = sec[0], Margin = new Padding(0, Sc(3), Sc(8), 0) }; string id = sec[0]; c.Click += delegate { tbSearch.Box.Text = ""; ShowSection(id); }; return c; }).ToArray();
             foreach (var c in tbChips) { topBar.Controls.Add(c); tbClassic.Add(c); }
-            tbSearch = new RoundBox(Sc(320), Draw.fInput, "Find any tool (mtu, dns, wifi, slow...)") { Margin = new Padding(Sc(16), 0, 0, 0) };
+            tbSearch = new RoundBox(Sc(320), Draw.fInput, "Go to a tool - type ping, DNS, certificate, port, Wi-Fi...") { Margin = new Padding(Sc(16), 0, 0, 0) };
             tbSearch.Box.TextChanged += delegate
             {
                 tbFilter = tbSearch.Box.Text.Trim(); tbList.AutoScrollPosition = Point.Empty; tbList.Invalidate();
@@ -747,15 +768,17 @@ namespace AdeeboMeter
             {
                 if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; var first = ScopedMatches().FirstOrDefault(); if (first != null) { OpenTool(first.Id); if (tab != "toolbox") return; var b0 = tbBoxes.FirstOrDefault(b => b != null); if (b0 != null) b0.Box.Focus(); } }
                 else if (e.KeyCode == Keys.Escape) { e.SuppressKeyPress = true; tbSearch.Box.Text = ""; }
+                else if (e.KeyCode == Keys.Down && EveryTool && tbCanvas.ArrowStep != null) { e.SuppressKeyPress = true; tbCanvas.Focus(); tbCanvas.ArrowStep(Keys.Down); }   // All tools: down from the box into the list
                 else if (e.KeyCode == Keys.Down) { e.SuppressKeyPress = true; tbList.Focus(); MoveTool(tbVisible.IndexOf(tbSel) < 0 ? 0 : 1); }
             };
             topBar.Controls.Add(tbSearch);
             // by question, or the classic all-at-once list - remembered
             tbViewQ = new PillButton("By question", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewQ.Click += delegate { SetTbView("q"); };
-            tbViewL = new PillButton("Every tool", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), 0, 0) }; tbViewL.Click += delegate { SetTbView("list"); };
-            topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewL); topBar.SetFlowBreak(tbViewL, true);
+            tbViewT = new PillButton("By topic", PillButton.K.Chip) { Margin = new Padding(0, Sc(3), Sc(4), 0) }; tbViewT.Click += delegate { SetTbView("topic"); };   // 1.1.6: SNMP, DNS, DHCP...
+            tbViewL = new PillButton("All tools", PillButton.K.Chip) { Margin = new Padding(Sc(14), Sc(3), Sc(4), 0) }; tbViewL.Click += delegate { SetTbView("list"); };
+            tbViewQ.Margin = new Padding(0, Sc(3), Sc(4), 0); topBar.Controls.Add(tbViewL); topBar.Controls.Add(tbViewQ); topBar.Controls.Add(tbViewT); topBar.SetFlowBreak(tbViewT, true);   // All tools first (22 Nov)
             // one click to the tools people reach for most - from any section
-            var quick = new Label { Text = L.T("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
+            var quick = new Label { Text = Kit.Sent("QUICK"), AutoSize = true, Font = Draw.fTiny, ForeColor = Theme.Muted, BackColor = Theme.Card, Margin = new Padding(Sc(2), Sc(13), Sc(8), 0) }; topBar.Controls.Add(quick); tbClassic.Add(quick);
             foreach (var q in QuickTools)
             {
                 var qb = new PillButton(q[1], PillButton.K.Chip) { Tag = q[0], Margin = new Padding(0, Sc(6), Sc(8), 0) };
@@ -783,7 +806,7 @@ namespace AdeeboMeter
             tbEx = new PillButton("Example", PillButton.K.Chip) { Margin = new Padding(Sc(8), Sc(18), 0, 0) }; tbEx.Click += delegate { ShowExample(); };
             tbBar.Controls.Add(tbEx);
             tbCanvas = new DB { Name = "tbCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true };
-            tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas);
+            tbCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTb(e.Graphics); }; Wire(tbCanvas); tbCanvas.MouseMove += delegate(object s2, MouseEventArgs e2) { IdxHover(e2.Location); }; tbCanvas.MouseLeave += delegate { IdxHover(new Point(-9999, -9999)); };
             tbHead = new DB { Name = "tbHead", Dock = DockStyle.Top, Height = Sc(100), BackColor = Theme.Card, Visible = false };
             tbHead.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintTbHead(e.Graphics); }; Wire(tbHead);
             BuildAssist();
@@ -837,9 +860,9 @@ namespace AdeeboMeter
             if ((t.Id == "rlisten" || t.Id == "discover") && tbBoxes.Count > 0) tbBoxes[0].Box.Text = "60";
             if (IsSnmp(t.Id) && tbBoxes.Count > 1) { string gw; lock (M.L) gw = M.Gateway; tbBoxes[0].Box.Text = snmpDev != "" ? snmpDev : gw; tbBoxes[1].Box.Text = snmpCred; }
             if (TargetTools.Contains(t.Id) && tbTarget != "" && tbBoxes.Count > 0 && tbBoxes[0] != null) tbBoxes[0].Box.Text = tbTarget;   // the shared target wins over a tool's own default
-            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = QAccent(QuestionOf(t)); tbEx.Visible = Examples.Get(t.Id) != null;
+            tbRun.Text = AdeeboMeter.L.T("Run"); tbRun.Accent = null; tbEx.Visible = Examples.Get(t.Id) != null;   // Run is always app blue
             tbBar.ResumeLayout();
-            EnsureAnim();   // the picture timer: does nothing unless this tool's picture moves
+            AnimRestart(); EnsureAnim();   // the picture timer: plays once from here, then rests (CalcForm.cs AnimT)
             if (IsCalc(t.Id)) { var keep = tbShown; BuildCalcForm(t.Id); if (keep != null && calcNow != null) { FillSpec(calcNow, keep); BuildCalcFormKeep(t.Id); WriteBoxes(); CalcNow(); } EnsureAnim(); }   // calculators: a form, live (FullView.CalcForm.cs)
             else if (calcNow != null || (calcHost != null && calcHost.Visible)) { calcNow = null; calcHost.Visible = false; tbRun.Visible = true; }
             FillAssist(tbPool.Select((b, k) => new { b, k }).Where(z => z.b.Visible && z.b.Box.Text == "").Select(z => z.k).DefaultIfEmpty(0).First());
@@ -848,7 +871,21 @@ namespace AdeeboMeter
             float ry; string rid = SnmpView(t.Id) ? "snmp" : t.Id;   // opened from a card, search or Recent: bring its row into view
             if (tbRowY.TryGetValue(rid, out ry)) { int top = -tbList.AutoScrollPosition.Y, h = tbList.ClientSize.Height; if (ry < top || ry + 46 * S > top + h) { tbList.AutoScrollPosition = new Point(0, Math.Max(0, (int)ry - Sc(40))); tbList.Invalidate(); } }
         }
-        string[] Inputs() { var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i < tbBoxes.Count && tbBoxes[i] != null ? tbBoxes[i].Box.Text.Trim() : ""; return a; }
+        string[] Inputs() { var a = new string[4]; for (int i = 0; i < 4; i++) a[i] = i < tbBoxes.Count && tbBoxes[i] != null ? AsciiDigits(tbBoxes[i].Box.Text.Trim()) : ""; return a; }
+        // review 1.1.6 P2 #6 / P3 #18 (round-4 #60): Arabic-Indic, Bengali and other digits typed in a box are read as 0-9 -
+        // every tool parses with invariant rules, which would otherwise throw "Input string was not in a correct format"
+        internal static string AsciiDigits(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            System.Text.StringBuilder sb = null;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c > 127 && char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.DecimalDigitNumber) { if (sb == null) sb = new System.Text.StringBuilder(s); sb[i] = (char)('0' + (int)char.GetNumericValue(c)); }
+                else if (c == '\u066B' || c == '\u066C') { if (sb == null) sb = new System.Text.StringBuilder(s); sb[i] = c == '\u066B' ? '.' : ','; }   // Arabic decimal and thousands marks
+            }
+            return sb == null ? s : sb.ToString();
+        }
 
         void StartTool()
         {
@@ -874,11 +911,10 @@ namespace AdeeboMeter
             // HTTP sign-in headers hidden and a request body left out
             var shown = (string[])a.Clone();
             for (int i = 0; i < t.Inputs.Length && i < shown.Length; i++) if (SecretInput(t.Inputs[i])) shown[i] = "";
-            if (t.Id == "httpreq" && shown.Length > 0) shown[0] = Reach.NoUser(shown[0] ?? "");   // a user:password@ in the URL isn't kept
-            if (t.Id == "httpreq") { shown[2] = Regex.Replace(shown[2] ?? "", @"(?i)\b(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key|x-auth-token|x-amz-security-token)\s*:[^;]*(?:;(?!\s*[A-Za-z][\w-]*\s*:)[^;]*)*", "$1: (hidden)"); if (!string.IsNullOrEmpty(shown[3])) shown[3] = "(" + shown[3].Length + " characters - not kept)"; }
-            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
+            Redact(t.Id, shown);   // review 1.1.6 U3 #3: the same redaction for the picture and its export (VisIn)
+            string key = string.Join("|", IsSnmp(t.Id) ? new[] { shown[0], shown[2] } : shown); var run = new Toolkit.Run(); tbRun0 = run; tbRows = null; tbRowsKey = ""; tbAward = ""; tbBusy = UiActivity.ToolRunning = true; BuddyReact.Set("sweaty", 3600);   /* the face is nervous while a tool runs */ tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Running " + L.T(t.Title)); try { 
                 List<string[]> res;
                 try
                 {
@@ -887,8 +923,8 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { Program.Log("tool " + t.Id + ": " + e); res = new List<string[]> { new[] { "2", "Couldn't finish", Draw.Trunc(e.Message, 100), "", "u" } }; }
                 if (IsSnmp(t.Id)) { var part = SnmpTools.TakePartial(); if (part != null && res != null) res.Insert(0, new[] { "1", part.StartsWith("stopped by you", StringComparison.Ordinal) ? "Stopped - partial result" : "Partial result", part, "The device stopped answering part-way: anything missing below may simply not have arrived - run it again before trusting a gap.", "m" }); }
-                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; }
-            }, TaskCreationOptions.LongRunning);
+                try { BeginInvoke((Action)delegate { tbRows = res; tbRowsKey = key; tbAt = DateTime.Now; tbShown = shown; Earn(t.Id, Points.Completed(res, run.Stop)); BuddyReact.ToolDone(res, run.Stop); if (tbAward != "" && !res.Any(z => z != null && z.Length > 0 && z[0] == "2")) BuddyReact.Set("sparkle", 6);   /* R2-157: a red result keeps its tears, points or not */ PrevRun was; if (tbLast.TryGetValue(t.Id, out was)) tbPrev[t.Id] = was; if (!res.Any(IsSecretRow)) tbLast[t.Id] = new PrevRun { Inputs = key, At = tbAt, Rows = res, Shown = shown }; else tbLast.Remove(t.Id); tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); tbCanvas.Invalidate(); tbList.Invalidate(); }); } catch { tbBusy = UiActivity.ToolRunning = false; BuddyReact.Clear("sweaty"); }
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         // ---------- MTU per hop: trace, then measure hop by hop (Next hop / a row / all)
@@ -897,11 +933,11 @@ namespace AdeeboMeter
             tbShown = new[] { target, "", "", "" };
             if (mtuBusy) return; mtuBusy = true; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbRows = null; mtuHops = null; var run = new Toolkit.Run(); tbRun0 = run; run.Status = "Tracing to " + target + "..."; tbCanvas.Invalidate();
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Finding the MTU per hop"); try { 
                 var dst = Icmp.Resolve4(target); List<PathTools.Hop> hops = null;
-                if (dst != null) hops = PathTools.Trace(dst, 30, () => run.Stop);
+                if (dst != null) hops = PathTools.Trace(dst, 30, () => run.Stop); LabViews.Remember(target, hops);
                 try { BeginInvoke((Action)delegate { tbAt = DateTime.Now; mtuDst = dst; mtuHops = hops; mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); if (dst == null) tbRows = Bad("couldn't find " + target + " (IPv4)"); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
         void MeasureHops(List<PathTools.Hop> which)
         {
@@ -909,7 +945,7 @@ namespace AdeeboMeter
             mtuBusy = true; var run = new Toolkit.Run(); tbRun0 = run; tbBusy = UiActivity.ToolRunning = true; tbRun.Text = AdeeboMeter.L.T("Stop"); tbCanvas.Invalidate();
             var hops = mtuHops; var dst = mtuDst;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Finding the MTU per hop"); try { 
                 foreach (var h in which)
                 {
                     if (run.Stop) break;
@@ -921,14 +957,22 @@ namespace AdeeboMeter
                 }
                 bool measured = !run.Stop && hops.Any(x => x.Mtu > 0);
                 try { BeginInvoke((Action)delegate { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; tbRun.Text = AdeeboMeter.L.T("Run"); Earn("mtu", measured); tbCanvas.Invalidate(); }); } catch { mtuBusy = false; tbBusy = UiActivity.ToolRunning = false; }
-            }, TaskCreationOptions.LongRunning);
+            } finally { __bz.End(); } }, TaskCreationOptions.LongRunning);
         }
 
         // ---------- painting
         // search: every word must appear in the tool's name, its group or its explanation
         // search: every word must match somewhere; the results are ranked - the tool's own name first, then the everyday word's tools, then explanations
         List<Tool> Matches() { return Matches(tbFilter); }
+        // bug-hunt M-15: scored once per query (and tool list / language), not on every paint or keystroke repaint
+        string matchKey; List<Tool> matchHit; List<Tool> matchList;
         List<Tool> Matches(string query)
+        {
+            var list = Tools2(); string key = (query ?? "") + "|" + Cfg.Lang;
+            if (key == matchKey && ReferenceEquals(list, matchList)) return new List<Tool>(matchHit);
+            var hit = MatchesScored(query); matchKey = key; matchList = list; matchHit = hit; return new List<Tool>(hit);
+        }
+        List<Tool> MatchesScored(string query)
         {
             var words = (query ?? "").ToLowerInvariant().Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Select(w => w.Trim(SearchTrim)).Where(w => w != "").ToArray();
             var all = Tools2(); if (words.Length == 0) return all;
@@ -963,12 +1007,19 @@ namespace AdeeboMeter
         string DidYouMean(string q)
         {
             q = (q ?? "").Trim().ToLowerInvariant(); if (q.Length < 3 || q.Contains(" ")) return null;
-            var words = new List<string>(Synonyms.Keys);
-            foreach (var t in Tools2()) { words.Add(t.Id); words.AddRange((t.Title + " " + L.T(t.Title)).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+            // bug-hunt ML-144: the word list built once per language, and the answer kept per query - not redone on every paint
+            string lk = Cfg.Lang + "|" + q; if (lk == dymKey) return dymHit;
+            if (dymWords == null || dymLang != Cfg.Lang)
+            {
+                var wl = new List<string>(Synonyms.Keys);
+                foreach (var t in Tools2()) { wl.Add(t.Id); wl.AddRange((t.Title + " " + L.T(t.Title)).ToLowerInvariant().Split(TitleSplit, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length >= 3)); }
+                dymWords = wl.Select(w => w.ToLowerInvariant()).Distinct().ToArray(); dymLang = Cfg.Lang;
+            }
             string best = null; int bd = q.Length <= 4 ? 1 : 2;
-            foreach (var w in words.Distinct()) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
-            return best;
+            foreach (var w in dymWords) { int d = Edit(q, w.ToLowerInvariant(), bd); if (d <= bd && (best == null || d < bd)) { best = w.ToLowerInvariant(); bd = d; } }
+            dymKey = lk; dymHit = best; return best;
         }
+        string[] dymWords; string dymLang, dymKey, dymHit;
         // edit distance, giving up past "max"
         static int Edit(string a, string b, int max)
         {
@@ -1008,7 +1059,7 @@ namespace AdeeboMeter
                     var te = Explain.Term("tb." + t.Id); string tag = te != null ? te.Tag : ""; float rh = tag != "" ? 44 * S : 28 * S;
                     bool snmpRow = !searching && t.Id == "snmp", on = !tbHome && (t.Id == tbSel || snmpRow && SnmpView(tbSel));
                     string title = L.T(snmpRow ? "SNMP - ask a switch or router" : t.Title); if (snmpRow) tag = "Ports, traffic, CPU, neighbours, sensors, any OID.";
-                    if (searching && SectionOf(t) != tbSection) tag = SectionName(SectionOf(t)) + " · " + tag;   // a result from another section says where it lives
+                    if (searching && SectionOf(t) != tbSection) tag = L.T(SectionName(SectionOf(t))) + " · " + tag;   // R2-024   // a result from another section says where it lives
                     var rr = new RectangleF(0, y, tbList.ClientSize.Width, rh);
                     if (on) Theme.Fill(g, rr, 8 * S, Theme.RowSel);
                     if (on && tbList.Focused) using (var fp = new Pen(Theme.Blue, Math.Max(1, 2 * S))) g.DrawRectangle(fp, 1 * S, y + 1 * S, tbList.ClientSize.Width - 3 * S, rh - 2 * S);   // where the keyboard is
@@ -1022,7 +1073,7 @@ namespace AdeeboMeter
                 if (searching)
                 {
                     var found = Matches();
-                    g.DrawString(found.Count == 0 ? "NOTHING MATCHES - TRY ANOTHER WORD" : found.Count + (found.Count == 1 ? " TOOL" : " TOOLS") + "  ·  ENTER OPENS THE FIRST", Draw.fTiny, muted, x, y + 4 * S); y += 24 * S;
+                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + " " + L.T(found.Count == 1 ? "tool" : "tools") + "  ·  " + L.T("Enter opens the first"), Draw.fSmall, muted, x, y + 4 * S); y += 24 * S;
                     if (found.Count == 0)
                     {
                         // did you mean: the closest tool name or everyday word, one or two letters off
@@ -1034,7 +1085,7 @@ namespace AdeeboMeter
                 else
                 {
                     // this section only; SNMP is one row (its views are tabs on the right); recent tools live on the section's home page
-                    foreach (var grp in Tools2().Where(t => SectionOf(t) == tbSection && (!SnmpView(t.Id) || t.Id == "snmp")).GroupBy(t => t.Group))
+                    foreach (var grp in SectionGroups(tbSection))
                     {
                         bool open = tbOpen.Contains(grp.Key); var hr = new RectangleF(0, y, tbList.ClientSize.Width, 30 * S);
                         float cx = x + 1 * S, cy = y + 15 * S;   // a drawn chevron - not every font has the arrow characters
@@ -1049,50 +1100,13 @@ namespace AdeeboMeter
             }
             Need(tbList, y + 10 * S);
         }
-        // a section's home page: what it's for, your recent tools, and a card per group with its first tools
-        void PaintHome(Graphics g, float x, float y, float w)
+        // bug-hunt L-259: a section's groups are worked out once (the tool list never changes while the app runs), not every paint
+        readonly Dictionary<string, List<IGrouping<string, Tool>>> secGroups = new Dictionary<string, List<IGrouping<string, Tool>>>();
+        List<IGrouping<string, Tool>> SectionGroups(string sec)
         {
-            var sec = Sections.First(z => z[0] == tbSection);
-            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
-            {
-                y += 6 * S; g.DrawString(sec[1], Draw.fHead, ink, x, y); y += 30 * S;
-                g.DrawString(sec[2] + "  Pick a tool, or type what you need in Find any tool.", Draw.fBody, sub, new RectangleF(x, y, w, 40 * S)); y += Draw.Measure(sec[2] + "  Pick a tool, or type what you need in Find any tool.", Draw.fBody, (int)w).Height + 14 * S;
-                var recent = tbRecent.Select(id => Tools2().FirstOrDefault(z => z.Id == id)).Where(t => t != null).ToList();
-                if (recent.Count > 0)
-                {
-                    g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y + 3 * S); float rx = x + g.MeasureString("RECENT", Draw.fTiny).Width + 12 * S;
-                    foreach (var t in recent)
-                    {
-                        string tt = L.T(t.Title); var ts = g.MeasureString(tt, Draw.fSmall); if (rx + ts.Width > x + w) break;
-                        g.DrawString(tt, Draw.fSmall, lb, rx, y); string id = t.Id; Act(tbCanvas, new RectangleF(rx, y, ts.Width, ts.Height), delegate { OpenTool(id); }); rx += ts.Width + 18 * S;
-                    }
-                    y += 30 * S;
-                }
-                int cols = w > 900 * S ? 3 : w > 520 * S ? 2 : 1; float gap = 14 * S, cw = (w - gap * (cols - 1)) / cols, rowY = y, rowH = 0; int col = 0;
-                foreach (var grp in Tools2().Where(t => SectionOf(t) == tbSection).GroupBy(t => t.Group))
-                {
-                    bool snmp = grp.Any(t => t.Id == "snmp");
-                    var items = snmp ? SnmpTabs.Take(5).Select(z => new[] { z[0], z[1] }).ToList() : grp.Take(4).Select(t => new[] { t.Id, t.Title }).ToList();
-                    float cx = x + col * (cw + gap), ch = 46 * S + items.Count * 26 * S + 28 * S;
-                    var r = new RectangleF(cx, rowY, cw, ch);
-                    Theme.Fill(g, r, 16 * S, Theme.Card); Kit.Frame(g, r);
-                    g.DrawString(grp.Key, Draw.fTiny, muted, cx + 14 * S, rowY + 14 * S);
-                    float iy = rowY + 38 * S;
-                    foreach (var it in items)
-                    {
-                        using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
-                            g.DrawString(it[1], Draw.fBody, ink, new RectangleF(cx + 14 * S, iy, cw - 28 * S, 22 * S), nf);
-                        string id = it[0]; var ir = new RectangleF(cx, iy - 2 * S, cw, 24 * S); Act(tbCanvas, ir, delegate { SelectTool(id); }); Hint(tbCanvas, ir, "tb." + id);
-                        iy += 26 * S;
-                    }
-                    int n = snmp ? SnmpTabs.Length : grp.Count(); string more = (snmp ? "All " + n + " views" : "All " + n + " tools") + "  ›";
-                    var ms = g.MeasureString(more, Draw.fSmall); g.DrawString(more, Draw.fSmall, lb, cx + 14 * S, iy + 4 * S);
-                    string first = grp.First().Id, gk = grp.Key; Act(tbCanvas, new RectangleF(cx + 14 * S, iy + 4 * S, ms.Width, ms.Height), delegate { tbOpen.Add(gk); tbList.Refresh(); float gy; if (tbRowY.TryGetValue(first, out gy)) tbList.AutoScrollPosition = new Point(0, Math.Max(0, (int)gy - Sc(40))); tbList.Focus(); tbList.Invalidate(); });   // opens the group in the list
-                    rowH = Math.Max(rowH, ch);
-                    if (++col == cols) { col = 0; rowY += rowH + gap; rowH = 0; }
-                }
-                Need(tbCanvas, rowY + rowH + 20 * S);
-            }
+            List<IGrouping<string, Tool>> l;
+            if (!secGroups.TryGetValue(sec, out l)) secGroups[sec] = l = Tools2().Where(t => SectionOf(t) == sec && (!SnmpView(t.Id) || t.Id == "snmp")).GroupBy(t => t.Group).ToList();
+            return l;
         }
         // the result at a glance (PLAN 11.6): three number cards - fine, to watch, problems - when there are enough rows to count
         float PaintTbSummary(Graphics g, float x, float y, float w)
@@ -1100,15 +1114,16 @@ namespace AdeeboMeter
             int[] n = new int[3]; int lv;
             foreach (var o in tbRows) if (o.Length > 2 && int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv) && lv >= 0 && lv <= 2) n[lv]++;
             if (n[0] + n[1] + n[2] < 3) return y;
-            string[] names = { "fine", "to watch", "problems" }; float cw = Math.Min(170 * S, (w - 20 * S) / 3), ch = 64 * S;
-            for (int i = 0; i < 3; i++)
+            // 24 Nov: one quiet line of counts on a card (the three tinted tiles read as three more results)
+            string[] names = { "fine", "to watch", "problems" }; float h = 46 * S; Kit.Box(g, new RectangleF(x, y, w, h), 12 * S); float cx = x + 18 * S;
+            foreach (int i in new[] { 2, 1, 0 })
             {
-                var r = new RectangleF(x + i * (cw + 10 * S), y, cw, ch); bool on = n[i] > 0;
-                Theme.Fill(g, r, 12 * S, on ? Theme.LvSoft(i) : Theme.Soft);
-                using (var b = new SolidBrush(on ? Theme.LvText(i) : Theme.Muted)) g.DrawString(n[i].ToString(CultureInfo.CurrentCulture), Draw.fCardNum, b, r.X + 14 * S, r.Y + 6 * S);
-                using (var b = new SolidBrush(on ? Theme.LvText(i) : Theme.Muted)) g.DrawString(L.T(names[i]), Draw.fSmall, b, r.X + 15 * S, r.Bottom - 22 * S);
+                Draw.LvDot(g, n[i] > 0 ? i : 3, cx, y + h / 2 - 4 * S, 8 * S, 8 * S); cx += 14 * S;
+                string v = n[i].ToString(CultureInfo.CurrentCulture); var vs = g.MeasureString(v, Draw.fHead);
+                using (var b = new SolidBrush(n[i] > 0 && i > 0 ? Theme.LvText(i) : Theme.Ink)) g.DrawString(v, Draw.fHead, b, cx, y + (h - vs.Height) / 2); cx += vs.Width;
+                var ls = g.MeasureString(L.T(names[i]), Draw.fSmall); using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T(names[i]), Draw.fSmall, b, cx, y + (h - ls.Height) / 2); cx += ls.Width + 22 * S;
             }
-            return y + ch + 14 * S;
+            return y + h + 14 * S;
         }
         void PaintTb(Graphics g)
         {
@@ -1116,7 +1131,7 @@ namespace AdeeboMeter
             float x = 14 * S, y = 8 * S, w = tbCanvas.ClientSize.Width - 28 * S; var run = tbRun0;
             if (tbHome)
             {
-                if (EveryTool) PaintIndex(g, x + 6 * S, y, w - 12 * S); else PaintQuestions(g, x + 6 * S, y, w - 12 * S); return;
+                if (EveryTool) PaintIndex(g, x + 6 * S, y, w - 12 * S); else if (ByTopic && tbFilter == "") PaintTopics(g, x + 6 * S, y, w - 12 * S); else PaintQuestions(g, x + 6 * S, y, w - 12 * S); return;
             }
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             {
@@ -1127,9 +1142,9 @@ namespace AdeeboMeter
                     if (ByQuestion) { }   // by question: the way back and the tool's name are in the header above the boxes (tbHead)
                     else
                     {
-                        string back = "‹  " + SectionName(tbSection); var bs = g.MeasureString(back, Draw.fSmall);
+                        string back = "‹  " + L.T(SectionName(tbSection)); var bs = g.MeasureString(back, Draw.fSmall);
                         g.DrawString(back, Draw.fSmall, lb, x, y); Act(tbCanvas, new RectangleF(x, y, bs.Width, bs.Height), delegate { ShowSection(tbSection); });
-                        g.DrawString("·  " + cur.Group, Draw.fTiny, muted, x + bs.Width + 6 * S, y + 2 * S);
+                        g.DrawString("·  " + L.T(GroupName(cur.Group)), Draw.fSmall, muted, x + bs.Width + 6 * S, y);
                         y += 26 * S;
                     }
                     if (SnmpView(tbSel))
@@ -1148,11 +1163,12 @@ namespace AdeeboMeter
                         y += 46 * S; g.DrawLine(line, x, y - 6 * S, x + w, y - 6 * S);
                     }
                 }
-                g.DrawString(L.T(tbTitle).ToUpperInvariant() + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("EXAMPLE") : "  ·  " + L.T("DONE") + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fTiny, muted, x, y);
+                // 24 Nov (tool page mockup): what state the run is in, in plain words at a readable size
+                g.DrawString(L.T(tbTitle) + (tbBusy && run != null ? "  ·  " + run.Status : tbRows != null ? (Examples.IsExample(tbRows) ? "  ·  " + L.T("an example") : "  ·  " + L.T("done at") + " " + tbAt.ToString("HH:mm", CultureInfo.CurrentCulture)) : ""), Draw.fSmall, sub, x, y);
                 if (tbAward != "" && tbRows != null && !tbBusy)
                 {
-                    float hw = g.MeasureString(L.T(tbTitle).ToUpperInvariant() + "  ·  " + L.T("DONE") + " 00:00", Draw.fTiny).Width;   // the title as drawn (French too)
-                    using (var gb = new SolidBrush(Theme.Green)) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
+                    float hw = g.MeasureString(L.T(tbTitle) + "  ·  " + L.T("done at") + " 00:00", Draw.fSmall).Width;   // the title as drawn (French too)
+                    using (var gb = new SolidBrush(Theme.LvText(0))) g.DrawString("  ·  " + tbAward, Draw.fSmall, gb, x + hw, y - 2 * S);
                 }
                 bool isEx = Examples.IsExample(tbRows);   // an example is never saved, copied or compared
                 PrevRun prev = null; bool canCompare = !tbBusy && !isEx && tbRows != null && tbPrev.TryGetValue(tbSel, out prev) && prev.Inputs == tbRowsKey && prev.Rows != tbRows;
@@ -1214,9 +1230,29 @@ namespace AdeeboMeter
                 }
                 if (tbRows != null)
                 {
+                    // 24 Nov (tool page mockup): the result rows sit on one card, a line between rows, no tinted bands
+                    float ox = x, ow = w; x += 16 * S; w -= 32 * S;
                     float nameW = Math.Min(260 * S, w * 0.32f), pillW = Cfg.Details ? 170 * S : 120 * S;
-                    foreach (var o in tbRows)
                     {
+                        float tot = 8 * S;
+                        foreach (var o0 in tbRows)
+                        {
+                            int l0; int.TryParse(o0.Length > 0 ? o0[0] : "", NumberStyles.Integer, CultureInfo.InvariantCulture, out l0); if (l0 == 8) continue; if (l0 == 6 || l0 == 7) { tot += 19 * S; continue; }
+                            string n1 = o0.Length > 1 ? (o0[1] ?? "") : "", v2 = o0.Length > 2 ? (o0[2] ?? "") : "", a3 = o0.Length > 3 ? (o0[3] ?? "") : "";
+                            if (n1.Length > 400) n1 = n1.Substring(0, 400); if (v2.Length > 400) v2 = v2.Substring(0, 400); if (a3.Length > 400) a3 = a3.Substring(0, 400);
+                            float tw0 = w - nameW - pillW - 10 * S, vh0 = Draw.Measure(v2, Draw.fBody, (int)tw0).Height, ah0 = a3 == "" ? 0 : Draw.Measure(a3, Draw.fSmall, (int)tw0).Height + 4 * S;
+                            tot += Math.Max(Math.Max(30 * S, vh0 + ah0 + 12 * S), Draw.Measure(n1, Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
+                        }
+                        if (tbRows.Count > 0) Kit.Box(g, new RectangleF(ox, y, ow, tot + 8 * S), 14 * S);
+                        y += 8 * S;
+                    }
+                    // deep test 23 Nov: a 5000-letter answer with no spaces froze the window for 16 s - GDI+ wraps it letter by letter.
+                    // A row shows its first 400 characters (Copy as text keeps all of it), and rows off screen are measured, not drawn.
+                    Func<string, string> cap = z => z != null && z.Length > 400 ? z.Substring(0, 400) + "…" : z ?? "";
+                    var clip = g.ClipBounds;
+                    foreach (var o0 in tbRows)
+                    {
+                        var o = (string[])o0.Clone(); if (o.Length > 1) o[1] = cap(o[1]); if (o.Length > 2) o[2] = cap(o[2]); if (o.Length > 3) o[3] = cap(o[3]);
                         int lv; int.TryParse(o[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv);
                         if (lv == 8) continue;   // Copy as text only
                         if (lv == 6 || lv == 7)
@@ -1233,7 +1269,8 @@ namespace AdeeboMeter
                         if (tbCompare && prev != null) { var pr = prev.Rows.FirstOrDefault(z => z.Length > 2 && z[1] == o[1]); was = pr == null ? "new since " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) : pr[2] != o[2] ? "at " + prev.At.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + pr[2] : ""; }
                         if (was != "") adv = was + (adv != "" ? "\n" + adv : "");
                         float tw = w - nameW - pillW - 10 * S, vh = Draw.Measure(o[2], Draw.fBody, (int)tw).Height, ah = adv == "" ? 0 : Draw.Measure(adv, Draw.fSmall, (int)tw).Height + 4 * S, rh = Math.Max(Math.Max(30 * S, vh + ah + 12 * S), Draw.Measure(o[1], Draw.fBodyB, (int)(nameW - 24 * S)).Height + 12 * S);
-                        if (lv == 4) Theme.Fill(g, new RectangleF(x - 4 * S, y, w + 8 * S, rh), 10 * S, Theme.BlueSoft); else if (lv == 1 || lv == 2) Theme.Fill(g, new RectangleF(x - 6 * S, y, w + 12 * S, rh), 10 * S, Theme.LvSoft(lv));   // problem rows stand out, rounded
+                        if (y > clip.Bottom || y + rh < clip.Top) { if (o.Length > 5 && o[5] != "") { var act0 = o[5]; Act(tbCanvas, new RectangleF(x, y, w, rh), delegate { RowAction(act0); }); } y += rh; continue; }
+                        // the level is the dot and the value's colour - no tinted band behind the row
                         Draw.LvDot(g, lv == 4 ? 3 : lv, x, y + 9 * S, 10 * S, 10 * S);
                         g.DrawString(o[1], Draw.fBodyB, ink, new RectangleF(x + 20 * S, y + 5 * S, nameW - 24 * S, rh));
                         using (var vb = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(o[2], Draw.fBody, vb, new RectangleF(x + nameW, y + 5 * S, tw, vh + 4));
@@ -1242,6 +1279,7 @@ namespace AdeeboMeter
                         if (o.Length > 5 && o[5] != "") { var act = o[5]; Act(tbCanvas, new RectangleF(x, y, w, rh), delegate { RowAction(act); }); }
                         y += rh; g.DrawLine(line, x, y, x + w, y);
                     }
+                    x = ox; w = ow; y += 16 * S;
                 }
             }
             Need(tbCanvas, y + 20 * S);
@@ -1265,7 +1303,7 @@ namespace AdeeboMeter
                 cx += br.Width + 8 * S;
             }
             y += 46 * S;
-            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(L.T("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT"), Draw.fTiny, muted, x, y);
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("HOP   ROUTER                                     BIGGEST PACKET THAT GETS THERE  ·  CLICK A HOP TO MEASURE IT"), Draw.fTiny, muted, x, y);
             y += 22 * S; int prev = 99999; float barX = x + w * 0.45f, barW = w * 0.25f;
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
                 foreach (var h in hops)
@@ -1303,7 +1341,7 @@ namespace AdeeboMeter
             float c0 = x + Math.Max(300 * S, w * 0.38f), cw = (x + w - c0) / head.Length;
             using (var muted = new SolidBrush(Theme.Muted)) using (var right = new StringFormat { Alignment = StringAlignment.Far })
             {
-                g.DrawString(L.T("HOP"), Draw.fTiny, muted, x, y); g.DrawString(L.T("ROUTER"), Draw.fTiny, muted, x + 40 * S, y);
+                g.DrawString(Kit.Sent("HOP"), Draw.fTiny, muted, x, y); g.DrawString(Kit.Sent("ROUTER"), Draw.fTiny, muted, x + 40 * S, y);
                 for (int i = 0; i < head.Length; i++) g.DrawString(head[i] + (i >= 2 ? " ms" : ""), Draw.fTiny, muted, new RectangleF(c0 + i * cw, y, cw - 8 * S, 16 * S), right);
                 y += 22 * S;
                 using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))

@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Revolution persona (rallying speeches, never violent). key|text.
+app.open|公民们！网络守望开始了。
+app.open|人民的监测器醒了，{addr}。
+all.good|自由、平等、低延迟，一切安好。
+all.good|每一个数据包自由流动。
+all.good|今日网络为人民服务。
+pc.busy|你的电脑在 {v} 下超负荷运转，劳动者理应休息。
+pc.busy|电脑劳作过度，网络是无辜的。
+pc.busy|为电脑卸下重担，关闭一个应用。
+wifi.drops|今日 Wi-Fi 擅离职守 {v} 次。
+wifi.drops|断线 {v} 次，信号要求更好的条件。
+net.none|没有网络，人民被切断了联系。
+net.none|离线了，请重新连接，公民。
+inet.slow|你的路由器忠心耿耿，是运营商在拖后腿。
+inet.slow|家中网络坚如磐石，迟缓在它之外。
+inet.slow|延迟属于运营商，不属于你。
+busy|委员会正在商议……{v}
+busy|为事业而工作。
+busy|正在收集证据。
+idle|街垒上一片安静。
+idle|并无新事，守望继续。
+idle|平静，但保持警惕。
+search.empty|请陈述你的诉求，公民。
+search.empty|我们要调查哪一件不公？
+freeze|大会正在追赶进度（{v}）。
+freeze|请稍等（{v}），要讨论的事很多。
+speedrunner|耐心点，同志，一次只处理一项动议。
+speedrunner|上一次表决仍在计票。
+back.again|你回来了，记录中有 {v} 件事。
+back.again|欢迎回来，公民，这是会议纪要。
+dns.slow|域名登记处很慢：DNS 耗时 {v}。
+dns.slow|查询耗时 {v}，官僚作风。
+speed.great|下载 {v}，进步！
+speed.great|下载 {v}，属于大家的胜利。
+speed.bloat|速度虽快，线路繁忙时人人都要多等 {v}，不公平。
+speed.bloat|一次下载拖慢所有人，延迟 {v}。
+game.lag|延迟来自你的 Wi-Fi，而非服务器。
+game.lag|服务器无可指摘，Wi-Fi 在动摇。
+game.good|Ping {v}，前进！
+game.good|连接稳定，出发出发。
+vpn.on|VPN 已开启，你的流量秘密通行。
+vpn.on|经由私人隧道连接。
+vpn.slow|秘密隧道要多花 {v}。
+vpn.slow|VPN 增加 {v}。
+portal|这处 Wi-Fi 要求出示证件，请先登录。
+portal|守门人要你先登录。
+gw.down|路由器沉默了，请重启它。
+gw.down|路由器没有回应。
+isp.down|你的家安然无恙，运营商却沉默了。
+isp.down|运营商那边网络中断了。
+mtu.small|大包被拒之门外，MTU 为 {v}。
+mtu.small|路径 MTU 为 {v}，一道窄门。
+port.open|{v} 已开放，大门有回应。
+port.open|{v} 回应了。
+port.closed|{v} 已关闭。
+port.closed|{v} 拒绝进入。
+cert.ok|凭证已核实。
+cert.ok|挂锁是诚实的。
+cert.expired|他们的凭证已于 {v} 过期。
+cert.expired|自 {v} 起已过期，是他们的失职。
+sec.ok|防线稳固，检查通过。
+sec.ok|未发现薄弱点。
+sec.issue|{v} 处薄弱点有待整改。
+sec.issue|检查列出 {v} 项。
+mtr.lossy|数据包在第 {v} 跳消失，要求一个说法。
+mtr.lossy|丢失始于第 {v} 跳。
+mtr.clean|没有一个数据包掉队。
+mtr.clean|每一跳都送达了。
+devices.found|集会中有 {v} 台设备。
+devices.found|已清点 {v} 台设备。
+encrypt.done|已封存，避开窥探的目光。
+encrypt.done|已加密。
+decrypt.done|已打开，原封未动。
+decrypt.done|安全启封。
+points.earned|+{v} 分，为了事业。
+points.earned|+{v} 分，知识就是力量。
+award|500 分，Adeebo 奖，众望所归。
+award|Adeebo 奖！人民在欢呼。
+late.night|深夜的总部。
+late.night|挑灯夜战。
+morning|新的一天，公民，夜里安静。
+morning|新一天的黎明，什么也没坏。
+update.suspect|{v} 更新之后，情况变糟了。
+update.suspect|{v} 更新带来了麻烦。
+call.on|理事会正在开会，守望着通话。
+call.on|通话进行中，正在监测。
+quiz.right|答对了，同志！
+quiz.wrong|答错了——斗争继续！
+game.streak|连续 {v} 次——人民在欢呼！
+game.timeup|时间到——重新集结！
+market.open|市场开市了，保持警惕。
+storm.near|风暴正在聚集——坚守阵地。

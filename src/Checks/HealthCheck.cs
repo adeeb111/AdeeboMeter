@@ -29,6 +29,8 @@ namespace AdeeboMeter
     // ================================================================== Health check (runs once when asked)
     static class HealthCheck
     {
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern ulong GetTickCount64();
+        static double UptimeDays() { try { return GetTickCount64() / 86400000.0; } catch (EntryPointNotFoundException) { return (uint)Environment.TickCount / 86400000.0; } }
         public static List<string[]> Run(Monitor m)
         {
             var rows = new List<string[]>(); // level, name, value, advice
@@ -61,8 +63,10 @@ namespace AdeeboMeter
                 {
                     var st = ni.GetIPStatistics();
                     long errs = st.IncomingPacketsWithErrors + st.OutgoingPacketsWithErrors, disc = st.IncomingPacketsDiscarded + st.OutgoingPacketsDiscarded;
-                    add(errs > 100 ? 1 : 0, "Adapter errors", Draw.Trunc(ni.Name, 16) + ": " + errs + " errors · " + disc + " discards",
-                        errs > 100 ? Voice.P("The adapter itself is coughing. Try another cable or port, or update the driver.", "Adapter errors: try another cable or port, or update the driver.") : "The adapter is clean.");
+                    // bug-hunt L-283: the counts run since Windows started - judged per day of uptime (over 100 a day), not as a total
+                    double days = Math.Max(1.0 / 24, UptimeDays()); bool many = errs / days > 100;
+                    add(many ? 1 : 0, "Adapter errors", Draw.Trunc(ni.Name, 16) + ": " + errs + " errors · " + disc + " discards since Windows started (" + (days < 1 ? Math.Round(days * 24) + " h" : Math.Round(days, 1) + " days") + ")",
+                        many ? Voice.P("The adapter itself is coughing. Try another cable or port, or update the driver.", "Adapter errors: try another cable or port, or update the driver.") : "The adapter is clean.");
                 }
                 catch { }
             }

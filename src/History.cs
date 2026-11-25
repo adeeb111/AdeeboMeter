@@ -69,18 +69,33 @@ namespace AdeeboMeter
                         string n = Path.GetFileName(f); DateTime d;
                         if (n.Length < 10 || !DateTime.TryParseExact(n.Substring(0, 10), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) continue;
                         if (d < cut) { File.Delete(f); continue; }
+                        if (n.EndsWith(".packing", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // R2-041: left by a tidy that stopped. In the .gz only if the .gz was written after it (a .gz older than the day's
+                            // lines means the merge never finished - the lines go back to the .csv, and are merged on this pass or the next)
+                            string csv = f.Substring(0, f.Length - ".packing".Length), gz0 = csv + ".gz";
+                            if (File.Exists(gz0) && File.GetLastWriteTimeUtc(gz0) > File.GetLastWriteTimeUtc(f)) File.Delete(f);
+                            else if (!File.Exists(csv)) File.Move(f, csv);
+                            continue;
+                        }
                         if (d < DateTime.Today && n.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                         {
                             // a day already compressed can still get a late .csv (clock or time-zone change): add to it, never replace it
-                            string gz = f + ".gz", tmp = gz + ".tmp";
-                            using (var dst = File.Create(tmp))
-                            using (var z = new GZipStream(dst, CompressionLevel.Optimal))
+                            // bug-hunt L-46: the .csv is renamed aside first, so if its delete fails the day isn't read twice
+                            string gz = f + ".gz", tmp = gz + ".tmp", packing = f + ".packing";
+                            File.Move(f, packing); bool merged = false;
+                            try
                             {
-                                if (File.Exists(gz)) using (var old = File.OpenRead(gz)) using (var oz = new GZipStream(old, CompressionMode.Decompress)) oz.CopyTo(z);
-                                using (var src = File.OpenRead(f)) src.CopyTo(z);
+                                using (var dst = File.Create(tmp))
+                                using (var z = new GZipStream(dst, CompressionLevel.Optimal))
+                                {
+                                    if (File.Exists(gz)) using (var old = File.OpenRead(gz)) using (var oz = new GZipStream(old, CompressionMode.Decompress)) CopyCapped(oz, z, 64L << 20);   // bug-hunt L-265: a day is a few MB - a bigger one isn't ours
+                                    using (var src = File.OpenRead(packing)) src.CopyTo(z);
+                                }
+                                Program.ReplaceFile(tmp, gz); merged = true;
+                                File.Delete(packing);
                             }
-                            Program.ReplaceFile(tmp, gz);
-                            File.Delete(f);
+                            finally { if (!merged && File.Exists(packing) && !File.Exists(f)) File.Move(packing, f); }   // not merged: the day goes back as it was
                         }
                     }
                     // one damaged day never stops the others: it's left as it is (its temp file removed), the rest go on
@@ -106,13 +121,27 @@ namespace AdeeboMeter
         }
 
         // the compressed part of a day first, then any plain lines written after it - both, never one hiding the other
+        static void CopyCapped(Stream from, Stream to, long cap)
+        {
+            var b = new byte[81920]; long n = 0; int got;
+            while ((got = from.Read(b, 0, b.Length)) > 0) { n += got; if (n > cap) throw new InvalidDataException("the saved day is far too big to be one of ours - left as it is"); to.Write(b, 0, got); }
+        }
+        static string CapLine(TextReader r)
+        {
+            var sb = new StringBuilder(); int c; bool any = false;
+            while ((c = r.Read()) >= 0) { any = true; if (c == '\n') break; if (c != '\r' && sb.Length < 4096) sb.Append((char)c); }
+            return any ? sb.ToString() : null;
+        }
         static List<string> Lines(string file, int max)
         {
             var list = new List<string>();
             if (File.Exists(file + ".gz"))
                 using (var s = File.OpenRead(file + ".gz")) using (var z = new GZipStream(s, CompressionMode.Decompress)) using (var r = new StreamReader(z))
-                { string l; while ((l = r.ReadLine()) != null && list.Count < max) list.Add(l); }
-            if (File.Exists(file)) list.AddRange(File.ReadLines(file).Take(Math.Max(0, max - list.Count)));
+                {
+                    // bug-hunt L-47: a damaged .gz gives what it can and the plain lines still load; L-45: each line is capped at 4 KB
+                    try { string l; while ((l = CapLine(r)) != null && list.Count < max) list.Add(l); } catch (InvalidDataException e) { Program.Log("history: damaged " + Path.GetFileName(file) + ".gz - " + e.Message); }
+                }
+            if (File.Exists(file)) using (var r = new StreamReader(file)) { string l; while ((l = CapLine(r)) != null && list.Count < max) list.Add(l); }
             return list;
         }
 
@@ -124,13 +153,20 @@ namespace AdeeboMeter
             var l = new List<Timeline.Ev>();
             try
             {
-                foreach (var line in Lines(FileFor(d, "ev"), 2000))
+                foreach (var line in Lines(FileFor(d, "ev"), 20000))   // round 6 ML-2: the whole day (bounded), then trimmed below
                 {
                     var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
                     l.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
                 }
             }
             catch (Exception e) { Program.Log("history events: " + e.Message); }
+            // more than 2,000: every problem (level 2) is kept, then the newest of the rest - never the morning at the cost of the evening
+            if (l.Count > 2000)
+            {
+                var keep = new HashSet<Timeline.Ev>(l.Where(z => z.Lv >= 2).Reverse().Take(2000));
+                foreach (var z in Enumerable.Reverse(l)) { if (keep.Count >= 2000) break; keep.Add(z); }
+                l = l.Where(keep.Contains).OrderBy(z => z.T).ToList();
+            }
             return l;
         }
         public static Day Load(DateTime d)
@@ -147,11 +183,7 @@ namespace AdeeboMeter
                     day.M.Add(row); day.Net.Add(f.Length > Cols ? f[Cols] : ""); day.Pc.Add(new[] { f.Length > Cols + 1 ? P(f[Cols + 1]) : double.NaN, f.Length > Cols + 2 ? P(f[Cols + 2]) : double.NaN });
                     int off; day.Off.Add(f.Length > Cols + 3 && int.TryParse(f[Cols + 3], NumberStyles.Integer, CultureInfo.InvariantCulture, out off) && off > -900 && off < 900 ? off : int.MinValue);
                 }
-                foreach (var line in Lines(FileFor(d, "ev"), 2000))
-                {
-                    var f = line.Split(CommaSep, 4); TimeSpan t; int lv; if (f.Length < 4 || !TimeSpan.TryParse(f[0], CultureInfo.InvariantCulture, out t) || t < TimeSpan.Zero || t >= OneDay || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv)) continue;
-                    day.E.Add(new Timeline.Ev { T = d.Date + t, Lv = lv, Kind = f[2], Text = f[3] });
-                }
+                day.E.AddRange(EventsOf(d));   // review 1.1.6 P1 #12: the whole day, trimmed to the problems and the newest - never just the morning
             }
             catch (Exception e) { Program.Log("history load: " + e.Message); }
             day.E.Reverse();

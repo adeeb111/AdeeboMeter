@@ -105,7 +105,7 @@ namespace AdeeboMeter
             {
                 RunSteps(input, r, changed, m);
                 // Only when something failed: is a Wi-Fi sign-in page (captive portal) the real reason?
-                if (r.Level >= 1 && r.Target != "" && Cfg.Portal) Portal(r, changed);
+                if (r.Level >= 1 && r.Target != "" && Cfg.Portal && !Policy.NoOnline) Portal(r, changed);
             }
             finally { r.Running = -1; r.Done = true; changed(); }
         }
@@ -197,7 +197,9 @@ namespace AdeeboMeter
             if (IPAddress.TryParse(host, out lit)) { addrs.Add(lit); step(0, 0, "IP given"); }
             else
             {
-                var sw = Stopwatch.StartNew(); int rc4 = QueryAll(host, 1, addrs); QueryAll(host, 28, addrs); double ms = sw.Elapsed.TotalMilliseconds; r.DnsMs = ms;
+                // hunt-5: A and AAAA asked at the same time, as a browser does - two healthy 200 ms answers are 200 ms, not a "slow" 400
+                var sw = Stopwatch.StartNew(); var six = new List<IPAddress>(); var t6 = new System.Threading.Thread(() => { try { QueryAll(host, 28, six); } catch (Exception e6) { if (e6 is OutOfMemoryException) throw; } }) { IsBackground = true }; t6.Start();
+                int rc4 = QueryAll(host, 1, addrs); if (t6.Join(12000)) addrs.AddRange(six); double ms = sw.Elapsed.TotalMilliseconds; r.DnsMs = ms;
                 if (addrs.Count == 0)
                 {
                     step(0, 2, rc4 == 9003 ? "no such name" : rc4 == 1460 ? "timed out" : "failed (" + rc4 + ")");
@@ -300,7 +302,7 @@ namespace AdeeboMeter
                         r.AddCard("TLS CERTIFICATE", new List<string[]> {
                             new[] { "Name", Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 32) },
                             new[] { "Issuer", Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, true), 32), tlsUntrusted ? "2" : "0" },
-                            new[] { "Expires", days < 0 ? "expired " + (-days) + " days ago" : "in " + days + " days", days < 14 ? "2" : "0" },
+                            new[] { "Expires", DateTime.Now > cert.NotAfter ? CertChain.ExpiredAgo(cert.NotAfter, DateTime.Now) : "in " + days + (days == 1 ? " day" : " days"), days < 14 ? "2" : "0" },
                             new[] { "Version", tlsUntrusted ? "not completed" : proto },
                             new[] { "Trusted by Windows", tlsUntrusted ? "no - " + errs : "yes", tlsUntrusted ? "2" : "0" },
                             new[] { "Encryption", tlsUntrusted ? "-" : string.Join(" · ", CertChain.PartsFrom(ssl, cert, proto).Select(p => p[1]).Where(p => p != "-")) },
@@ -322,6 +324,7 @@ namespace AdeeboMeter
                     r.AddCard("TLS", new List<string[]> { new[] { "Error", Draw.Trunc(tErr, 40), "2" }, new[] { "Offered by AdeeboMeter", Tls13Client() ? "TLS 1.2, 1.3" : "TLS 1.2" } });
                     try { ssl.Dispose(); } catch { } stream = Stream.Null;
                 }
+                if (cert != null) cert.Dispose();   // bug-hunt ML-13: read for the cards above, then let go
             }
             else step(4, 3, "not TLS");
 
@@ -425,7 +428,9 @@ namespace AdeeboMeter
             {
                 int worst = r.Lv.Max(x => x == 3 ? 0 : x);
                 string ttfbTxt = r.Lv[5] == 0 && r.Val[5] != null && r.Val[5].Contains("·") ? " - " + r.Val[5].Split('·').Last().Trim() + " to first byte" : "";
-                Finish(r, worst >= 1 ? 1 : 0, Voice.P(host + " is happy to see you" + ttfbTxt + ". If it feels slow, it isn't the network.", host + " is reachable" + ttfbTxt + "."));
+                // bug-hunt L-207: an amber step on the way gets a plain verdict that says so - never "it isn't the network"
+                if (worst >= 1) Finish(r, 1, host + " is reachable" + ttfbTxt + ", but a step on the way is slow or odd - see the amber line above.");
+                else Finish(r, 0, Voice.P(host + " is happy to see you" + ttfbTxt + ". If it feels slow, it isn't the network.", host + " is reachable" + ttfbTxt + "."));
             }
             changed();
         }
@@ -683,8 +688,11 @@ namespace AdeeboMeter
 
         static bool DfPing(IPAddress ip, int payload)
         {
-            try { using (var p = new Ping()) { var r = p.Send(ip, 1000, new byte[payload], new PingOptions(64, true)); return r.Status == IPStatus.Success; } }
-            catch { return false; }
+            // hunt-5: a size counts as too big only when two tries both fail - one lost packet isn't a smaller path MTU
+            for (int k = 0; k < 2; k++)
+                try { using (var p = new Ping()) { var r = p.Send(ip, 1000, new byte[payload], new PingOptions(64, true)); if (r.Status == IPStatus.Success) return true; if (r.Status == IPStatus.PacketTooBig) return false; } }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            return false;
         }
 
         // hop -> (address, avg ms, loss %)

@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/learn/attach.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/learn/attach.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>كيفية إضافة الهاتف: إصدار LTE وتسجيل 5G | تعلّم | AdeeboMeter</title>
@@ -10,7 +11,7 @@
 <meta property="og:description" content="من أنت، إثبت ذلك، هنا عنوانك.">
 <meta property="og:type" content="article">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
@@ -63,14 +64,14 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"How a phone joins: LTE attach and 5G registration","description":"Who are you, prove it, here's your address. Joining has two halves: registration (who you are, proven with the SIM's key) and a data session (an IP address…","url":"https://adeebometer.com/learn/attach.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"Mobile, LTE and 5G","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><meta property="og:locale" content="ar_AR">
-<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/attach.html">
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/attach.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/attach.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/attach.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/attach.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/attach.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/attach.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/attach.html">
+<meta property="og:locale" content="ar_AR">
 <link rel="stylesheet" href="/sitebar.css">
 </head>
 <body data-sec="learn">
@@ -90,7 +91,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </ol></div>
 <h2>عندما تحدث مشكلة</h2>
 <div class="card warn"><p>"مسجل" على شاشة الجهاز التوجيه يعني فقط النصف الأول يعمل. ابحث عن قبول الجلسة وعنوان IP قبل إلقاء اللوم على أي شيء آخر.</p></div>
-<h2>إذهب أعمق</h2>
+<h2>اذهب أعمق</h2>
 <p>في 4G: طلب التحاق → مصادقة بتحدٍّ لا يستطيع الإجابة عنه إلا مفتاح SIM → وضع الأمان → يطلب MME جلسة من البوابات → قبول الالتحاق مع عنوان IP → يصبح حامل البيانات الافتراضي جاهزًا. في 5G SA: طلب تسجيل → مصادقة → وضع الأمان → قبول التسجيل؛ ثم يطلب الهاتف جلسة PDU لشبكة DNN، وهو اسم APN في 5G → يختار SMF بوابة UPF وعنوانًا → قبول جلسة PDU. قد تُرفض أي خطوة مع رمز سبب، مثل «DNN غير مدعوم» أو «موارد غير كافية». إذا انتهى سجل المودم بعد PDU Session Establishment Request دون قبول أو رفض، فهذا دليل قوي على مشكلة في إنشاء الجلسة، لا في الاتصال اللاسلكي.</p>
 <h2>تحقق سريع</h2>
 <div class="quiz" data-id="attach"><p>في 5G، بعد قبول التسجيل، ما الذي لا يزال يجب أن يحدث قبل تدفق البيانات؟</p>

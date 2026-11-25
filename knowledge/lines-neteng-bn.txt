@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Network engineer. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|মনিটরিং শুরু। গেটওয়ে, DNS আর ইন্টারনেট প্রোব চালু।
+app.open|এজেন্ট চালু। প্রথম স্যাম্পল 2 সেকেন্ডে।
+app.open|পোলিং: gw 2 সেকেন্ড, ইন্টারনেট 15 সেকেন্ড।
+app.open|বেসলাইন সংগ্রহ শুরু।
+app.open|প্রোব তৈরি। শুনছি: কিছুই না। শুধু আউটবাউন্ড।
+all.good|সব পথ সবুজ। কিছু করার নেই।
+all.good|RTT স্বাভাবিক, 0% লস, ফ্ল্যাপ নেই।
+all.good|L1-L7 সবুজ।
+all.good|gw, DNS বা ইন্টারনেটে কোনো অস্বাভাবিকতা নেই।
+all.good|স্থিতিশীল অবস্থা। ট্রাবলশুট করার কিছু নেই।
+pc.busy|CPU {v}। হোস্টই বাধা, পথ নয়।
+pc.busy|হোস্ট ভর্তি। অ্যাপের দিকের লেটেন্সি আশা করো।
+pc.busy|মেমোরি চাপ বেশি। পেজিং হতে পারে।
+pc.busy|লোকাল রিসোর্সের টানাটানি। লোড কমাও।
+pc.busy|CPU বেশি। নেটওয়ার্ক সংখ্যা ভুল হতে পারে।
+wifi.drops|wlan ফ্ল্যাপ x{v}। RSSI আর রোমিং দেখো।
+wifi.drops|আজ {v} বার ডিসঅ্যাসোসিয়েশন। রিজন কোড দেখো।
+wifi.drops|লিংক ফ্ল্যাপ x{v}। সম্ভবত RF বা AP ডিঅথ।
+wifi.drops|{v} বার Wi-Fi ড্রপ। কো-চ্যানেল আর রোমিং থ্রেশহোল্ড দেখো।
+wifi.drops|WLAN লিংক ডাউন x{v}। ইভেন্ট লগ দেখো।
+net.none|IP নেই, গেটওয়ে নেই। লিংক ডাউন।
+net.none|সব ইন্টারফেস ডাউন।
+net.none|ডিফল্ট রুট নেই। প্রোব বন্ধ।
+net.none|সব অ্যাডাপ্টারে L1 ডাউন।
+net.none|ক্যারিয়ার নেই।
+inet.slow|গেটওয়ে RTT কম, ইন্টারনেট RTT {v}। দেরি CPE-র ওপারে।
+inet.slow|গেটওয়ের ওপরে লেটেন্সি যোগ হয়েছে।
+inet.slow|LAN পরিষ্কার। আপস্ট্রিম লেটেন্সি বেশি।
+inet.slow|gw থেকে ইন্টারনেটের পার্থক্য: {v}। প্রোভাইডারের দিক।
+inet.slow|আপস্ট্রিম সমস্যা। হপ খুঁজতে MTR চালাও।
+busy|প্রোব করছি... {v}
+busy|স্যাম্পল নিচ্ছি...
+busy|চলছে। Stop আছে।
+busy|মাপছি...
+busy|পরীক্ষা চলছে...
+idle|অবস্থার কোনো বদল নেই।
+idle|স্থিতিশীল। বেসলাইন ধরে আছে।
+idle|গত এক ঘণ্টায় কোনো ইভেন্ট নেই।
+idle|পোলিং চলছে। নতুন কিছু নেই।
+idle|শান্ত।
+search.empty|খোঁজো: mtu, dns, arp, mtr, snmp...
+search.empty|টুলের নাম বা লক্ষণ।
+search.empty|টুল খোঁজো।
+search.empty|কোন লেয়ার?
+search.empty|প্রোটোকল বা লক্ষণ লেখো।
+freeze|UI থ্রেড আটকে আছে {v}। সারছি।
+freeze|UI স্টল {v}। কাজ চলছে।
+freeze|রেন্ডার দেরি {v}।
+freeze|মেইন থ্রেড ব্যস্ত {v}।
+freeze|UI ধরছে ({v})।
+speedrunner|আগের কাজ এখনও চলছে।
+speedrunner|কিউ ভর্তি। একবারে একটা।
+speedrunner|অনুরোধের হার বেশি। আগেরটার অপেক্ষা করছি।
+speedrunner|আগের পরীক্ষা শেষ হয়নি।
+speedrunner|ব্যস্ত। বর্তমান রান শেষে আবার চেষ্টা করো।
+back.again|গতবারের পর {v}টা ইভেন্ট।
+back.again|গতবারের পর কোনো ইভেন্ট নেই।
+back.again|গতবারের পর পার্থক্য: Changes দেখো।
+back.again|তুমি না থাকতে লগটা এই নাও।
+back.again|আবার স্বাগতম। ইভেন্ট সারাংশ তৈরি।
+dns.slow|DNS {v}। অন্য রিজলভার চেষ্টা করো।
+dns.slow|রিজলভার লেটেন্সি বেশি।
+speed.great|{v} ডাউন, RTT কম।
+speed.great|থ্রুপুট ভালো। লস নেই।
+speed.bloat|লোডে লেটেন্সি +{v}। বাফারব্লোট। পারলে SQM চালু করো।
+speed.bloat|লোডে কিউইং দেরি।
+game.lag|গেম RTT স্পাইক RSSI ড্রপের সঙ্গে মিলছে। লোকাল RF।
+game.lag|জিটার শুরু WLAN-এ।
+game.good|গেম RTT {v}, জিটার কম, 0% লস।
+game.good|গেম সার্ভারের পথ পরিষ্কার।
+vpn.on|টানেল চালু।
+vpn.on|ডিফল্ট রুট টানেল দিয়ে।
+vpn.slow|টানেল ওভারহেড +{v}।
+vpn.slow|VPN হেডএন্ড লেটেন্সি যোগ করেছে।
+portal|HTTP 302 পোর্টালের দিকে। অথ লাগবে।
+portal|ক্যাপটিভ পোর্টাল ধরা পড়েছে।
+gw.down|গেটওয়ে পৌঁছানো যাচ্ছে না। ARP বা L2 সমস্যা।
+gw.down|গেটওয়ে থেকে কোনো ICMP নেই।
+isp.down|গেটওয়ে চালু, আপস্ট্রিম পৌঁছানো যাচ্ছে না।
+isp.down|CPE-র ওপারে WAN ডাউন।
+mtu.small|পথের MTU {v}। PMTUD ব্ল্যাকহোল দেখো।
+mtu.small|{v}-এর ওপরে DF প্যাকেট ফেলা হচ্ছে।
+port.open|TCP {v} খোলা, হ্যান্ডশেক {v}-এ।
+port.open|SYN-ACK পেয়েছি।
+port.closed|TCP {v} RST বা টাইমআউট।
+port.closed|SYN-ACK নেই। ফিল্টার করা বা বন্ধ।
+cert.ok|চেইন ঠিক, বিশ্বস্ত রুট।
+cert.ok|TLS চেইন ঠিক আছে।
+cert.expired|লিফ {v}-এ শেষ হয়েছে।
+cert.expired|চেইন অবৈধ: মেয়াদ শেষ।
+sec.ok|হার্ডেনিং চেক পাস।
+sec.ok|কোনো ফাইন্ডিং নেই।
+sec.issue|{v}টা ফাইন্ডিং।
+sec.issue|হার্ডেনিং ঘাটতি পাওয়া গেছে।
+mtr.lossy|হপ {v} থেকে লস শুরু, গন্তব্য পর্যন্ত চলছে।
+mtr.lossy|মাঝপথে ফরওয়ার্ডিং লস।
+mtr.clean|সব হপে 0% লস।
+mtr.clean|পথ শুরু থেকে শেষ পর্যন্ত পরিষ্কার।
+devices.found|{v}টা ARP এন্ট্রি।
+devices.found|নেইবার টেবিল লোড হয়েছে।
+encrypt.done|এনক্রিপ্ট হয়েছে (AES-256)।
+encrypt.done|পেলোড সিল হয়েছে।
+decrypt.done|ডিক্রিপ্ট হয়েছে, ইন্টেগ্রিটি যাচাই হয়েছে।
+decrypt.done|MAC ঠিক আছে।
+points.earned|+{v}।
+points.earned|পয়েন্ট +{v}।
+award|500 পয়েন্ট। Adeebo Award।
+award|অ্যাওয়ার্ডের সীমা পেরিয়েছো।
+late.night|অফ-পিক। পথ শান্ত।
+late.night|গভীর রাত। সব প্রোব স্বাভাবিক।
+morning|রাতে: কোনো ইভেন্ট নেই।
+morning|রাতের সারাংশ তৈরি।
+update.suspect|{v}-এর আপডেটের পর রিগ্রেশন।
+update.suspect|বদলটা Windows আপডেটের সঙ্গে মিলছে।
+call.on|RTP ফ্লো ধরা পড়েছে। জিটার আর লস দেখছি।
+call.on|কল চলছে। QoS নজরদারি চালু।
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v}: পথ পরিষ্কার, লস নেই, CDN লেটেন্সি স্বাভাবিক।
+stream.on|স্ট্রিম ভালো। গেটওয়ে, ISP আর এজ বেসলাইনের মধ্যে।
+stream.dip|স্ট্রিমের অবনতি। {v}
+stream.dip|ডিপ লগ হয়েছে, প্রমাণসহ। {v}
+stream.none|কোনো ভিডিও ফ্লো ধরা পড়েনি।
+stream.none|কোনো স্ট্রিমিং সেশন নেই। ডিটেক্টর অলস।
+trade.ok|ব্রোকার RTT স্বাভাবিক, পথে লস নেই।
+trade.ok|ব্রোকারে TCP কানেক্ট বেসলাইনের মধ্যে।
+trade.slow|ব্রোকার RTT 100 ms-এর ওপরে। অর্ডার থামাও।
+trade.slow|ব্রোকারের পথ খারাপ। {v}
+trade.closed|মার্কেট সময়ের বাইরে। ব্রোকার প্রোব বন্ধ।
+trade.closed|মার্কেট বন্ধ। 09:30 ET পর্যন্ত প্রোব অলস।
+view.switch|{v} প্রোফাইল লাগাচ্ছি। কনফিগ পাঠানো হয়েছে, রিবুট লাগবে না।
+view.switch|{v} টেমপ্লেট লোড করছি। বদল কমিট করছি।
+quiz.right|ACK। ঠিক আছে।
+quiz.wrong|NACK। আবার পাঠাও, আবার চেষ্টা করো।
+game.streak|{v} বার টানা - শূন্য প্যাকেট লস।
+game.timeup|টাইমআউট। TTL শেষ।
+market.open|মার্কেট খোলা - ব্রোকার RTT দেখো।
+storm.near|কাছেই ঝড়ের সেল - ফ্ল্যাপ আশা করো।

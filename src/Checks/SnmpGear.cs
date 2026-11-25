@@ -115,8 +115,8 @@ namespace AdeeboMeter
                 if (hits.Count == 0) { rows.Add(R(1, mac, "not in this switch's MAC table (" + all.Count + " entries)", "Switches forget a MAC after about 5 minutes of silence - ping the device, then run this again. Or it's behind another switch.", "m")); return rows; }
                 foreach (var h in hits)
                 {
-                    int n; if (!perPort.TryGetValue(h.Port, out n)) n = 1;
-                    rows.Add(R(n > 3 ? 1 : 0, mac, "on " + portName(h.Port) + (h.Vlan != "" ? " · VLAN " + h.Vlan : ""), n > 3 ? "That port carries " + n + " MACs - it's an uplink to another switch or access point. Run this on that switch to get the real port." : "The only device (or one of a few) on that port - this is where it's plugged in.", "m"));
+                    int n; bool counted = perPort.TryGetValue(h.Port, out n); if (!counted) n = 1;   // bug-hunt L-273: found by a direct lookup, the port's count is unknown
+                    rows.Add(R(n > 3 ? 1 : 0, mac, "on " + portName(h.Port) + (h.Vlan != "" ? " · VLAN " + h.Vlan : ""), n > 3 ? "That port carries " + n + " MACs - it's an uplink to another switch or access point. Run this on that switch to get the real port." : counted ? "The only device (or one of a few) on that port - this is where it's plugged in." : "Found by asking for it directly (it wasn't in the part of the table read), so how many devices share that port isn't known.", "m"));
                 }
                 return rows;
             }
@@ -202,6 +202,9 @@ namespace AdeeboMeter
         }
 
         // ---------- Link aggregation (IEEE8023-LAG-MIB / LACP): is every member in its bundle, and to the same partner?
+        // bug-hunt H-5: BITS travel as an OCTET STRING (RFC 2578 7.1.4) - the state is the first byte. Some agents send a BER
+        // BIT STRING (type 0x03) instead, whose first byte is the unused-bits count: then the state is the second.
+        public static byte StateByte(Snmp.Vb s) { return s.Type == 0x03 && s.Raw.Length > 1 ? s.Raw[1] : s.Raw[0]; }
         public static string LacpState(byte b)
         {
             var f = new List<string>();
@@ -236,7 +239,7 @@ namespace AdeeboMeter
             var list = att.Keys.Select(i =>
             {
                 long at = L(att, i), se = L(sel, i); var s = V(act, i); string ps = V(psys, i) != null ? Snmp.Text(V(psys, i), "", null) : "n/a";
-                string st = s != null && s.Raw.Length > 0 ? LacpState(s.Raw[0]) : "n/a";
+                string st = s != null && s.Raw.Length > 0 ? LacpState(StateByte(s)) : "n/a";
                 return new { i, Lag = at > 0 ? ifn(I(at)) : se > 0 ? ifn(I(se)) : "-", Agg = at > 0 ? I(at) : se > 0 ? I(se) : "", Attached = at > 0, St = st, Ps = ps };
             }).ToList();
             // a member whose partner differs from the rest of its bundle is cabled to the wrong box

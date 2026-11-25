@@ -17,23 +17,29 @@ namespace AdeeboMeter
     {
         // ---------- the network we're on (told apart by the router's hardware address - works with location off)
         public static volatile string NetKey = "", NetLabel = "";
-        static DateTime lastKey = DateTime.MinValue; static readonly Dictionary<string, string> gwMacs = new Dictionary<string, string>();
+        static DateTime lastKey = DateTime.MinValue; static readonly Dictionary<string, string> gwMacs = new Dictionary<string, string>(); static string lastGw = "", lastSsid = "";
         static void LearnNetwork(Monitor m)
         {
-            if ((Clock.Mono - lastKey).TotalSeconds < 60 && NetKey != "") return;
-            lastKey = Clock.Mono;
             string gw, ssid, kind; lock (m.L) { gw = m.Gateway; ssid = m.Ssid; kind = m.AdapterKind; }
+            // round 6 H6-L3: a new gateway or Wi-Fi name is looked at now (the first minute after a roam belongs to the new network)
+            if ((Clock.Mono - lastKey).TotalSeconds < 60 && NetKey != "" && gw == lastGw && ssid == lastSsid) return;
+            lastKey = Clock.Mono; lastGw = gw; lastSsid = ssid;
             if (gw == "") { NetKey = "offline"; NetLabel = "Offline"; return; }
             string mac = ""; try { mac = Arp.MacOf(gw); } catch { }
             // one missed ARP read must not split a network into two rows: remember the router's MAC per gateway address
             if (mac != "") gwMacs[gw] = mac; else gwMacs.TryGetValue(gw, out mac);
-            NetKey = (!string.IsNullOrEmpty(mac) ? mac : gw).Replace(':', '-');
+            // without the router's hardware address, the address alone would merge every 192.168.1.1 network: the Wi-Fi name goes with it.
+            // When the hardware address turns up later, what was learned under the stand-in key moves to it instead of starting over.
+            string fallback = (gw + (ssid != "" ? "@" + ssid : "")).Replace(':', '-');
+            string key = !string.IsNullOrEmpty(mac) ? mac.Replace(':', '-') : fallback;
+            if (!string.IsNullOrEmpty(mac) && NetKey == fallback) Baseline.Rename(fallback, key);
+            NetKey = key;
             NetLabel = ssid != "" ? ssid : (kind == "Wi-Fi" ? "Wi-Fi" : kind) + " via " + gw;
         }
 
         // ---------- one-minute accumulation
         static int minute = -1, n, worst; static double cpu, mem, down, up, gw, net, wifi, rx, gwMax, netMax, mbDown, mbUp; static int gwN, netN, wifiN, rxN, lossN, lossBad, cpuN, memN, downN, upN;   // each average over its own real samples
-        static DateTime lastGwAt, lastNetAt, minuteAt;   // a new sample = a new probe (by its time), never "the value changed"; minuteAt: the minute the samples belong to
+        static DateTime lastGwAt, lastNetAt, minuteAt; static DateTime lastSecond = DateTime.MinValue;   // a new sample = a new probe (by its time), never "the value changed"; minuteAt: the minute the samples belong to
         public static void Second(Monitor m)
         {
             try
@@ -46,8 +52,11 @@ namespace AdeeboMeter
                 var s = m.Latest; worst = Math.Max(worst, s.Level);
                 double cv = m.Cpu.Last, mv = m.Mem.Last; if (!double.IsNaN(cv)) { cpu += cv; cpuN++; } if (!double.IsNaN(mv)) { mem += mv; memN++; }
                 double d = m.Down.Last, u = m.Up.Last;
-                if (!double.IsNaN(d)) { down += d; downN++; mbDown += d / 8; }
-                if (!double.IsNaN(u)) { up += u; upN++; mbUp += u / 8; }
+                // hunters12 data ML8: the data counted is the rate times the time it covered - a late tick (a busy PC) counts its 1.6 s,
+                // not 1 s; a gap over 5 s (sleep, a stall) counts 5 at most
+                var nowM = Clock.Mono; double dt = lastSecond == DateTime.MinValue ? 1 : Math.Max(0.2, Math.Min(5, (nowM - lastSecond).TotalSeconds)); lastSecond = nowM;
+                if (!double.IsNaN(d)) { down += d; downN++; mbDown += d / 8 * dt; }
+                if (!double.IsNaN(u)) { up += u; upN++; mbUp += u / 8 * dt; }
                 double g = m.GwPing.Last, t = m.NetPing.Last;
                 DateTime gAt = m.GwAt, tAt = m.NetAt;
                 if (gAt != lastGwAt) { if (!double.IsNaN(g)) { gw += g; gwN++; gwMax = Math.Max(gwMax, g); Bloat.Sample(g, d, u); } lastGwAt = gAt; }
@@ -102,7 +111,7 @@ namespace AdeeboMeter
             History.Minute(t, new[] { worst, cpuN > 0 ? cpu / cpuN : double.NaN, memN > 0 ? mem / memN : double.NaN, downN > 0 ? down / downN : double.NaN, gwAvg, netAvg, wifiN > 0 ? wifi / wifiN : -1, upN > 0 ? up / upN : double.NaN,   /* AM-CG-266: not measured stays empty, never a 0 */ gwN > 0 ? gwMax : double.NaN, netN > 0 ? netMax : double.NaN, loss, rxN > 0 ? rx / rxN : double.NaN, mbDown, mbUp }, NetKey, diskN > 0 ? diskMs / diskN : double.NaN, faultN > 0 ? faults / faultN : double.NaN);
             Usage.Add(NetKey, NetLabel, mbDown, mbUp);
             Baseline.Minute(m, NetKey, NetLabel, gwAvg, netAvg, loss);
-            if (t.Minute % 10 == 0) Task.Factory.StartNew(() => Devices.Check(m));
+            if (t.Minute % 10 == 0) Task.Factory.StartNew(() => { try { Devices.Check(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devices: " + e.Message); } });   // bug-hunt L-321: like AirLog below
             if (t.Minute == 5) Task.Factory.StartNew(() => { try { AirLog.Record(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air: " + e.Message); } });   // neighbour wars: once an hour
             if (t.Minute == 20 && Cfg.History && (Cfg.Preset != "penny" || t.Hour == 12)) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
         }
@@ -116,7 +125,7 @@ namespace AdeeboMeter
         {
             var r = new List<string[]>();
             try { var f = PathOf(name); if (File.Exists(f)) { var q = new Queue<string>(); foreach (var l in File.ReadLines(f)) { q.Enqueue(l); if (q.Count > 20000) q.Dequeue(); } foreach (var l in q) { var p = l.Split('\t'); if (p.Length > 1) r.Add(p); } } /* the NEWEST 20,000 rows: the file grows oldest-first */ }
-            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("store " + name + ": " + e.Message); }   /* L-322 */
             return r;
         }
         public static void Write(string name, IEnumerable<string[]> rows)
@@ -127,7 +136,7 @@ namespace AdeeboMeter
                 File.WriteAllLines(tmp, rows.Select(r => string.Join("\t", r.Select(x => (x ?? "").Replace('\t', ' ').Replace('\n', ' ')))));
                 Program.ReplaceFile(tmp, f);
             }
-            catch (Exception e) { Program.Log("store " + name + ": " + e.Message); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("store " + name + ": " + e.Message); }   /* L-322 */
         }
         public static double D(string s) { double v; return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : 0; }
         public static string S(double v) { return v.ToString("0.###", CultureInfo.InvariantCulture); }
@@ -206,7 +215,7 @@ namespace AdeeboMeter
                     .OrderByDescending(x => Store.D(x[1]) + Store.D(x[2])).ToList();
             }
         }
-        public static string Mb(double mb) { return mb >= 1000 ? (mb / 1000).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }
+        public static string Mb(double mb) { return Math.Round(mb) >= 1000 ? (mb / 1000).ToString("0.0", CultureInfo.CurrentCulture) + " GB" : mb.ToString("0", CultureInfo.CurrentCulture) + " MB"; }   // hunters12 L3: 999.6 MB is "1.0 GB", not "1000 MB"
     }
 
     // ================================================================== what's normal for each network ("slower than usual")
@@ -214,6 +223,10 @@ namespace AdeeboMeter
     {
         sealed class B { public string Key, Label; public double Gw = double.NaN, Net = double.NaN, Loss = double.NaN; public int N; }   // NaN: never measured here (a router that never answers stays "unknown", never "0 ms")
         static List<B> list; static readonly object k = new object(); static DateTime saved = DateTime.UtcNow, warned = DateTime.MinValue;
+        public static void Rename(string from, string to)
+        {
+            lock (k) { Load(); var f = list.FirstOrDefault(x => x.Key == from); if (f == null || list.Any(x => x.Key == to)) return; f.Key = to; saved = DateTime.MinValue; }
+        }
         static readonly List<double> recentGw = new List<double>(), recentNet = new List<double>(); static string recentKey = "";
         static void Load() { if (list == null) list = Store.Read("baselines.txt").Where(r => r.Length >= 6).Select(r => new B { Key = r[0], Label = r[1], Gw = Store.D(r[2]), Net = Store.D(r[3]), Loss = Store.D(r[4]), N = (int)Store.D(r[5]) }).ToList(); }
         public static void Minute(Monitor m, string key, string label, double gw, double net, double loss)
@@ -239,8 +252,13 @@ namespace AdeeboMeter
                 }
                 // learn: a slow average over roughly the last day of use
                 double a = 1.0 / Math.Min(b.N + 1, 1440);
-                if (!double.IsNaN(gw)) b.Gw = double.IsNaN(b.Gw) ? gw : b.Gw + (gw - b.Gw) * a;
-                if (!double.IsNaN(net)) b.Net = double.IsNaN(b.Net) ? net : b.Net + (net - b.Net) * a;
+                // round 6 H6-L1: a minute that is itself "slower than usual" teaches at a tenth of the pace - hours of trouble no longer
+                // become the new normal (and silence the alert); a lasting change (a new provider) is still learned, over days
+                bool learnt = b.N >= 120;
+                double ag = learnt && !double.IsNaN(b.Gw) && !double.IsNaN(gw) && gw > Math.Max(b.Gw * 2.5, b.Gw + 15) ? a * 0.1 : a;
+                double an = learnt && !double.IsNaN(b.Net) && !double.IsNaN(net) && net > Math.Max(b.Net * 2.5, b.Net + 40) ? a * 0.1 : a;
+                if (!double.IsNaN(gw)) b.Gw = double.IsNaN(b.Gw) ? gw : b.Gw + (gw - b.Gw) * ag;
+                if (!double.IsNaN(net)) b.Net = double.IsNaN(b.Net) ? net : b.Net + (net - b.Net) * an;
                 if (!double.IsNaN(loss)) b.Loss = double.IsNaN(b.Loss) ? loss : b.Loss + (loss - b.Loss) * a;
                 if (!double.IsNaN(gw) || !double.IsNaN(net)) b.N++;   // only minutes that measured something teach "normal"
                 if ((DateTime.UtcNow - saved).TotalMinutes >= 10) { saved = DateTime.UtcNow; Store.Write("baselines.txt", list.Select(x => new[] { x.Key, x.Label, Store.S(x.Gw), Store.S(x.Net), Store.S(x.Loss), x.N.ToString(CultureInfo.InvariantCulture) }).ToList()); }

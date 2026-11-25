@@ -97,3 +97,17 @@ game.streak|{v} in a row. Keep going.
 game.timeup|Time's up. Faster next round.
 market.open|Markets are open. Check your broker connection.
 storm.near|Storm nearby. Save your work.
+stream.on|{v} is playing. Keep it that way, network.
+stream.on|Stream running clean. Nobody touch the bandwidth.
+stream.dip|Stream dipped. Not on my watch. {v}
+stream.dip|That stutter gets fixed. {v}
+stream.none|No stream. Stand by.
+stream.none|Nothing playing. I'm still on duty.
+trade.ok|Broker line is fast. As ordered.
+trade.ok|Line to the broker holds. Good.
+trade.slow|Broker line is slow. Hold your click.
+trade.slow|Slow to the broker. {v}
+trade.closed|Market closed. Broker check stands down till 9:30.
+trade.closed|Closed. Rest, then report at 9:30.
+view.switch|{v} view. Now.
+view.switch|Switching to {v}. Keep up.

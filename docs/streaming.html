@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" data-language-route="/streaming.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter for streaming - why did it buffer?</title>
@@ -8,13 +9,14 @@
 <link rel="canonical" href="https://adeebometer.com/streaming.html">
 <meta property="og:title" content="AdeeboMeter for streaming - why did it buffer?">
 <meta property="og:description" content="Netflix, YouTube, IPTV or anime buffering? AdeeboMeter notices what&#x27;s playing and tells you whose fault each dip was: your PC, your Wi-Fi, your provider or the stream&#x27;s server. Free, offline, for Windows.">
-<meta property="og:image" content="https://adeebometer.com/img/streaming.jpg">
+<meta property="og:image" content="https://adeebometer.com/img/streaming.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/feature.css">
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/streaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/streaming.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/streaming.html">
@@ -22,7 +24,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/streaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/streaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/streaming.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-streaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -30,20 +31,23 @@
 <section class="fhero"><div>
 <h1>Why did it buffer?</h1>
 <p>Netflix, YouTube, Prime, Twitch, Crunchyroll, IPTV players - when something plays, in an app or a browser, AdeeboMeter notices and keeps an eye on it. When the picture drops, it tells you whose fault it was.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><a class="more" href="./">Everything else it does ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><a class="more" href="./">Everything else it does ›</a></div>
 </div>
-<img class="shot" src="img/streaming.jpg" alt="The Streaming page: what you watched over the last days, the dips in each stream and whose fault they were" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-speed-ok.png" width="264" height="216" alt="The speed widget: download, upload and the last minute as a graph"></figure>
 </section>
 <div class="grid">
-  <div class="card"><h3>It notices by itself</h3><p>By the servers&#x27; names Windows already knows - never your tabs, titles or what you watch inside a service. Not listed? Tell it in one line.</p></div>
-  <div class="card"><h3>Whose fault, every dip</h3><p>Your PC too busy, your Wi-Fi, your home network, your provider, or the stream&#x27;s own server - with the evidence beside each one.</p></div>
-  <div class="card"><h3>90 days of records</h3><p>Every stream kept on your PC: when it dipped, how long, and why. A grid shows the hours your streams suffer most.</p></div>
-  <div class="card"><h3>Can I stream 4K right now?</h3><p>One button: SD, HD, Full HD and 4K - safe, risky or no, judged on a real speed test and your Wi-Fi.</p></div>
-  <div class="card"><h3>Ready for your provider</h3><p>Dates, times and the evidence, copied in one click for a chat or an email with your provider.</p></div>
-  <div class="card"><h3>Learn why</h3><p>Short lessons and games: how streams adapt, what a CDN is, and how to tell your Wi-Fi from your provider.</p></div>
-  <div class="card"><h3>Replay the dip</h3><p>Each buffering dip has a Replay link: the Time machine opens at that minute so you see what changed on your side and beyond.</p></div>
-  <div class="card"><h3>Your end, always on top</h3><p>A NOW line on the Streaming page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
+  <div class="card"><h2>It notices by itself</h2><p>By the servers&#x27; names Windows already knows - never your tabs, titles or what you watch inside a service. Not listed? Tell it in one line.</p></div>
+  <div class="card"><h2>Whose fault, every dip</h2><p>Your PC too busy, your Wi-Fi, your home network, your provider, or the stream&#x27;s own server - with the evidence beside each one.</p></div>
+  <div class="card"><h2>90 days of records</h2><p>Every stream kept on your PC: when it dipped, how long, and why. A grid shows the hours your streams suffer most.</p></div>
+  <div class="card"><h2>Can I stream 4K right now?</h2><p>One button: SD, HD, Full HD and 4K - safe, risky or no, judged on a real speed test and your Wi-Fi.</p></div>
+  <div class="card"><h2>Ready for your provider</h2><p>Dates, times and the evidence, copied in one click for a chat or an email with your provider.</p></div>
+  <div class="card"><h2>Learn why</h2><p>Short lessons and games: how streams adapt, what a CDN is, and how to tell your Wi-Fi from your provider.</p></div>
+  <div class="card"><h2>Replay the dip</h2><p>Each buffering dip has a Replay link: the Time machine opens at that minute so you see what changed on your side and beyond.</p></div>
+  <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Streaming page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
 </div>
+<section class="inapp"><h2>The Streaming page in the full window</h2><p>Off until you turn it on. Then it notices what plays and keeps an eye on it.</p>
+<img class="shot" src="img/streaming.png" alt="The Streaming page, ready to watch your streams as soon as you turn it on" width="951" height="267">
+</section>
 <div class="short"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><p>It never sees what you watch. It times a tiny connection to the stream&#x27;s server (no data) every 10 seconds while something plays - and stops trying after six misses if the server ignores it.</p></div>
 <div class="others"><p>Also: <a href="trading.html">AdeeboMeter for trading</a> · <a href="gaming.html">AdeeboMeter for gaming</a> · <a href="privacy.html">Privacy</a></p>
 <p>AdeeboMeter for Windows · no account, no cloud, no telemetry · runs without admin rights</p></div>

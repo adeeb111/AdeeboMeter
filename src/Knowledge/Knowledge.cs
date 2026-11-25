@@ -44,7 +44,10 @@ namespace AdeeboMeter
                     using (var z = new GZipStream(s, CompressionMode.Decompress))
                     using (var r = new StreamReader(z, Encoding.UTF8)) return r.ReadToEnd();
             }
-            // a developer build without the packed resources: read the text files next to the exe or in the source tree
+            // a developer build without the packed resources: read the text files next to the exe or in the source tree.
+            // review 1.1.6 P1 #15: only when this build has no packs at all - a release (which has them) never reads a "knowledge"
+            // folder that happens to sit next to a downloaded exe
+            if (asm.GetManifestResourceNames().Any(n => n.StartsWith("AdeeboMeter.knowledge.", StringComparison.Ordinal))) return "";
             foreach (var dir in new[] { Path.Combine(Program.Dir ?? "", "knowledge"), Path.Combine(Program.Dir ?? "", "..", "knowledge") })
             {
                 string f = Path.Combine(dir, pack + ".txt");
@@ -59,10 +62,11 @@ namespace AdeeboMeter
             foreach (var raw in text.Split('\n'))
             {
                 string line = raw.TrimEnd('\r');
-                if (line.StartsWith("== ", StringComparison.Ordinal)) { cur = new Rec { Keys = line.Substring(3).Split('|').Select(x => x.Trim()).Where(x => x != "").ToArray() }; if (cur.Keys.Length > 0) list.Add(cur); continue; }
+                if (line.StartsWith("== ", StringComparison.Ordinal)) { cur = new Rec { Keys = line.Substring(3).Split('|').Select(x => x.Trim()).Where(x => x != "").ToArray() }; if (cur.Keys.Length > 0) list.Add(cur); else Program.Log("knowledge: a block with no name was skipped (\"" + Draw.Trunc(line, 60) + "\")"); continue; }   // bug-hunt L-106: said, not silent
                 if (cur == null || line.Length == 0 || line[0] == '#') continue;
                 int c = line.IndexOf(": ", StringComparison.Ordinal);
                 if (c > 0) cur[line.Substring(0, c).Trim()] = line.Substring(c + 2);
+                else if ((c = line.IndexOf(':')) > 0 && System.Text.RegularExpressions.Regex.IsMatch(line.Substring(0, c), "^[a-z][a-z0-9_.-]{0,40}$")) cur[line.Substring(0, c)] = line.Substring(c + 1);   // bug-hunt L-104: "what:text" too
                 else if (line.StartsWith("  ", StringComparison.Ordinal)) { /* continuation */ }
             }
             return list;
@@ -88,7 +92,7 @@ namespace AdeeboMeter
                 {
                     int close; if (!int.TryParse(r["close"], NumberStyles.Integer, CultureInfo.InvariantCulture, out close)) close = -1;
                     var e = new Explain.Entry { Friendly = r["friendly"], Cat = r["cat"], Close = close, Tag = r["tag"], What = r["what"], How = r["how"], Why = r["why"], Without = r["without"] };
-                    foreach (var key in r.Keys) d[key] = e;
+                    foreach (var key in r.Keys) { if (d.ContainsKey(key)) { Program.Log("knowledge: \"" + key + "\" is named twice in " + pack + " - the first is kept"); continue; } d[key] = e; }   // bug-hunt L-105
                 }
                 return d;
             });

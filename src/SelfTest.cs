@@ -61,6 +61,92 @@ namespace AdeeboMeter
         // --perf: how long each page takes to switch to, to paint, and what the 2-a-second timer costs - written to AdeeboMeter-perf.txt
         static double MemNow(Monitor M) { double m = M.Mem.Last; return double.IsNaN(m) && M.Latest != null ? M.Latest.Mem : m; }   // real-PC find: Latest.Mem can be empty while the series has it
         static double Busy(Monitor M) { try { double c = M.Cpu.Last, m = MemNow(M); return (!double.IsNaN(c) && c > 50) || (!double.IsNaN(m) && m > 85) ? 3 : 1; } catch (NullReferenceException) { return 1; } }
+        // --widget-gallery <folder> (the test script): every widget style, folded and open, in four network states and with the
+        // blue lines, light and dark, at 100% and 150% - one sheet per theme and scale, plus every size in a table. No window.
+        public static int Gallery(string dir)
+        {
+            try
+            {
+                Directory.CreateDirectory(dir);
+                Cfg.Mode = "pro"; Cfg.Buddy = false; Cfg.SportTeams = "TOR,Arsenal"; Cfg.Sports = true; Cfg.CapGB = 500;
+                var now = DateTime.UtcNow;
+                lock (Sports.k) Sports.Games = new List<Sports.Game> {
+                    new Sports.Game { Sport = "hockey", League = "NHL", Home = "TOR", Away = "MTL", HomeScore = "2", AwayScore = "1", State = "live", Detail = "P2 · 08:41", StartUtc = now.AddMinutes(-50) },
+                    new Sports.Game { Sport = "football", League = "Premier League", Home = "Arsenal", Away = "Chelsea", HomeScore = "3", AwayScore = "0", State = "done", Detail = "FT", StartUtc = now.AddHours(-5) },
+                    new Sports.Game { Sport = "hockey", League = "NHL", Home = "BOS", Away = "TOR", State = "soon", StartUtc = now.AddDays(1) },
+                    new Sports.Game { Sport = "football", League = "Premier League", Home = "Arsenal", Away = "Spurs", State = "off", Detail = "postponed", StartUtc = now.AddDays(2) } };
+                lock (MarketData.k)
+                {
+                    MarketData.Quotes["^GSPC"] = new MarketData.Quote { Sym = "^GSPC", Name = "S&P 500", Price = 6812.43, Pct = 0.42, When = now.AddMinutes(-20) };
+                    MarketData.Quotes["GCUSD"] = new MarketData.Quote { Sym = "GCUSD", Name = "Gold", Price = 2650.10, Pct = -0.04, When = now.AddDays(-3) };
+                    MarketData.Hist["^GSPC"] = new List<double> { 6790, 6801, 6795, 6808, 6812 };
+                }
+                Func<int, Snap> mk = lv =>
+                {
+                    if (lv < 0) return new Snap();   // checking
+                    var s = new Snap { Level = lv, Waiting = false, Down = 48.2, Up = 11.6, Ping = lv == 2 ? double.NaN : 18, GwMs = 3, DnsMs = lv == 1 ? 180 : 22, Jitter = 2.1, LossPct = lv == 2 ? 100 : 0, Cpu = 23, Mem = 61, Disk = 4,
+                        DownHist = Enumerable.Range(0, 60).Select(i => 20 + 30 * Math.Abs(Math.Sin(i / 6.0))).ToArray(), UpHist = Enumerable.Range(0, 60).Select(i => 5 + 8 * Math.Abs(Math.Cos(i / 7.0))).ToArray(),
+                        TodayDown = 2.4e9, TodayUp = 3e8, TopCpu = new List<AppStat> { new AppStat { Name = "AdeeboMeter", Cpu = 1 }, new AppStat { Name = "chrome", Cpu = 12 }, new AppStat { Name = "Teams", Cpu = 6 } } };
+                    s.Headline = lv == 0 ? L.T("All quiet") : lv == 1 ? "DNS is slow (180 ms); pages will be slow to start." : "The internet is down - your router answers, the internet doesn't.";
+                    s.Chip = lv == 0 ? "All quiet" : lv == 1 ? L.T("Busy") : L.T("Problem");
+                    s.Path = lv == 0 ? new[] { 0, 0, 0, 0, 0 } : lv == 1 ? new[] { 0, 0, 0, 1, 0 } : new[] { 0, 0, 2, 3, 2 };
+                    s.Hint = lv == 0 ? "" : lv == 1 ? "your DNS server answers slowly" : "your provider's side";
+                    return s;
+                };
+                var states = new[] { Tuple.Create("checking", -1, false), Tuple.Create("ok", 0, false), Tuple.Create("busy", 1, false), Tuple.Create("problem", 2, false), Tuple.Create("ok+lines", 0, true) };
+                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL";   // 24 Nov: one line per hover, at the foot of the card
+                var styles = Corner.AllStyles.ToList(); styles.Add("recap");
+                var csv = new List<string> { "theme,scale,style,state,chip_w,chip_h,card_w,card_h" };
+                foreach (bool dark in new[] { false, true })
+                    foreach (float sc in new[] { 1.5f, 1f, 2f })
+                    {
+                        Program.ForceTheme = dark ? 1 : 0; Theme.Apply(dark); Draw.Init(sc); Draw.Use(sc); Draw.Base = sc;
+                        var cells = new List<Tuple<string, string, Bitmap, Bitmap>>();
+                        foreach (var st in styles)
+                            foreach (var stt in states)
+                            {
+                                Draw.WidgetHint = stt.Item3 ? lines : "";
+                                var s = mk(stt.Item2); Bitmap chip = null, card = null;
+                                try { chip = Draw.Preview(s, st, false); card = Draw.Preview(s, st, true); }
+                                catch (Exception e) { if (e is OutOfMemoryException) throw; csv.Add((dark ? "dark" : "light") + "," + sc + "," + st + "," + stt.Item1 + ",ERROR " + e.GetType().Name + " " + e.Message.Replace(",", ";")); continue; }
+                                csv.Add((dark ? "dark" : "light") + "," + sc.ToString(CultureInfo.InvariantCulture) + "," + st + "," + stt.Item1 + "," + chip.Width + "," + chip.Height + "," + card.Width + "," + card.Height);
+                                cells.Add(Tuple.Create(st, stt.Item1, chip, card));
+                            }
+                        Draw.WidgetHint = "";
+                        // at 200% every open card is also saved on its own (cards\dark-gamer-problem.png) - the website's pictures
+                        if (sc == 2f) { string cd = Path.Combine(dir, "cards"); Directory.CreateDirectory(cd); foreach (var c in cells) c.Item4.Save(Path.Combine(cd, (dark ? "dark" : "light") + "-" + c.Item1 + "-" + c.Item2.Replace("+", "-") + ".png"), ImageFormat.Png); }
+                        int colW = (int)cells.Max(c => Math.Max(c.Item3.Width, c.Item4.Width)) + 30, label = 150, head = 40, gap = 16;
+                        var rowH = styles.Select(st => cells.Where(c => c.Item1 == st).Select(c => c.Item3.Height + 8 + c.Item4.Height).DefaultIfEmpty(40).Max() + gap).ToList();
+                        using (var sheet = new Bitmap(label + colW * states.Length, head + rowH.Sum() + 10))
+                        using (var g = Graphics.FromImage(sheet))
+                        using (var f = new Font("Segoe UI", 11f, GraphicsUnit.Pixel))
+                        {
+                            // a desktop-ish backdrop, so the 30% fade and the card edges read as they will on screen
+                            g.Clear(dark ? Color.FromArgb(32, 36, 44) : Color.FromArgb(214, 222, 232));
+                            using (var tb = new SolidBrush(dark ? Color.White : Color.Black))
+                            {
+                                for (int i = 0; i < states.Length; i++) g.DrawString(states[i].Item1, f, tb, label + i * colW + 4, 12);
+                                int y = head;
+                                for (int r = 0; r < styles.Count; r++)
+                                {
+                                    g.DrawString(styles[r], f, tb, 6, y + 4);
+                                    for (int i = 0; i < states.Length; i++)
+                                    {
+                                        var c = cells.FirstOrDefault(z => z.Item1 == styles[r] && z.Item2 == states[i].Item1); if (c == null) continue;
+                                        g.DrawImage(c.Item3, label + i * colW + 4, y); g.DrawImage(c.Item4, label + i * colW + 4, y + c.Item3.Height + 8);
+                                    }
+                                    y += rowH[r];
+                                }
+                            }
+                            sheet.Save(Path.Combine(dir, "widgets-" + (dark ? "dark" : "light") + "-" + ((int)Math.Round(sc * 100)).ToString(CultureInfo.InvariantCulture) + ".png"), ImageFormat.Png);
+                        }
+                        foreach (var c in cells) { c.Item3.Dispose(); c.Item4.Dispose(); }
+                    }
+                File.WriteAllLines(Path.Combine(dir, "widget-sizes.csv"), csv);
+                return csv.Any(z => z.Contains("ERROR")) ? 1 : 0;
+            }
+            catch (Exception e) { try { File.WriteAllText(Path.Combine(dir, "gallery-error.txt"), e.ToString()); } catch (IOException) { } return 2; }
+        }
         public static int Perf()
         {
             var sb = new StringBuilder();
@@ -71,10 +157,11 @@ namespace AdeeboMeter
             {
                 var fv = new FullView(icon, M); fv.Show(); Application.DoEvents(); Thread.Sleep(1500); Application.DoEvents();
                 sb.Append(fv.Perf());
+                try { sb.AppendLine(); sb.Append(fv.PerfProfile(40)); } catch (Exception e) { if (e is OutOfMemoryException) throw; sb.AppendLine("profile: " + e.Message); }
                 fv.Close(); fv.Dispose();
             }
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-perf.txt"), sb.ToString());
-            return 0;
+            return sb.ToString().Contains("SLOW FIRST PAINT") ? 1 : 0;   // R2-019 / R2-193: the exit code says so
         }
         // --deeptest [--local] [--minutes N]: the hardening run (see FullView.DeepTest.cs) - written to AdeeboMeter-deeptest.txt
         public static int Deep(bool net, int minutes)
@@ -90,7 +177,8 @@ namespace AdeeboMeter
                 using (var icon = Theme.MakeIcon(32))
                 {
                     var fv = new FullView(icon, M); fv.Show(); Application.DoEvents();
-                    sb.Append(fv.DeepTest(net, minutes));
+                    string headText = sb.ToString();   // the report so far is on disk after every section, so a run stopped from outside still says how far it got
+                    sb.Append(fv.DeepTest(net, minutes, soFar => File.WriteAllText(path, headText + soFar + Environment.NewLine + "(still running - this is the report so far)" + Environment.NewLine)));
                     fv.Close(); fv.Dispose();
                 }
             }
@@ -110,7 +198,7 @@ namespace AdeeboMeter
             }
             catch (Exception e) { sb.AppendLine(Directory.Exists(file) ? "FAILED: --mibtest takes one saved Net-SNMP walk file (snmpwalk output), not a folder - your MIB files go in the MIB folder" : "FAILED: " + e); File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString()); return 1; }
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-mibtest.txt"), sb.ToString());
-            return 0;
+            return sb.ToString().Split('\n').Length <= 2 ? 1 : 0;   // R2-193: a walk that gave nothing is a failure, for any script that checks
         }
         public static int Run()
         {
@@ -128,8 +216,8 @@ namespace AdeeboMeter
             float sc; using (var g = Graphics.FromHwnd(IntPtr.Zero)) sc = g.DpiX / 96f;
             sb.AppendLine("      display scale " + (sc * 100).ToString("0", CultureInfo.CurrentCulture) + "%");
             T("fonts / drawing init", () => Draw.Init(sc));
-            T("interfaces", () => { M.RefreshInterfaces(); lock (M.L) sb.AppendLine("      adapter=" + M.AdapterKind + " gateway=" + (M.Gateway != "" ? "yes" : "none") + " vpn=" + M.VpnUp + " mtu=" + M.PrimaryMtu); });
-            T("counters x3", () => { for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); } sb.AppendLine("      cpu=" + Draw.Fmt(M.Cpu.Last, "0", "%") + " mem=" + Draw.Fmt(M.Mem.Last, "0", "%") + " disk=" + Draw.Fmt(M.Disk.Last, "0", "%")); });
+            T("interfaces", () => { M.RefreshInterfaces(); lock (M.L) { sb.AppendLine("      adapter=" + M.AdapterKind + " gateway=" + (M.Gateway != "" ? "yes" : "none") + " vpn=" + M.VpnUp + " mtu=" + M.PrimaryMtu); if (M.AdapterKind == null || M.Gateway == null || M.PrimaryMtu < 0 || M.PrimaryMtu > 65535) throw new InvalidOperationException("adapter fields not set"); } });
+            T("counters x3", () => { for (int i = 0; i < 3; i++) { M.Tick(); Thread.Sleep(300); } sb.AppendLine("      cpu=" + Draw.Fmt(M.Cpu.Last, "0", "%") + " mem=" + Draw.Fmt(M.Mem.Last, "0", "%") + " disk=" + Draw.Fmt(M.Disk.Last, "0", "%")); foreach (var v in new[] { M.Cpu.Last, M.Mem.Last }) if (!double.IsNaN(v) && (v < 0 || v > 100.5)) throw new InvalidOperationException("a percentage out of 0-100: " + v); if (!Program.IsWine && double.IsNaN(M.Mem.Last)) throw new InvalidOperationException("no memory reading after 3 ticks"); });
             T("tcp table (every state known)", () =>
             {
                 var l = Tables.Tcp(true, new Dictionary<int, string>());
@@ -138,7 +226,92 @@ namespace AdeeboMeter
                 foreach (var c in odd.Take(5)) sb.AppendLine("      odd: " + c.State + "  " + c.Proto + " " + c.Local + " -> " + c.Remote + "  pid " + c.Pid);
                 if (odd.Count > 0) throw new InvalidOperationException(odd.Count + " socket(s) with a state number Windows doesn't document");
             });
-            T("udp table", () => sb.AppendLine("      " + Tables.Udp().Count + " sockets"));
+            T("sentence case keeps acronyms, names and \"I\" (review 24 Nov)", () => { foreach (var c in new[] { new[] { "CAN I STREAM 4K RIGHT NOW?", "Can I stream 4K right now?" }, new[] { "CURRENCIES, COMMODITIES AND CANADA'S RATES", "Currencies, commodities and Canada's rates" }, new[] { "YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY", "Your switch port  ·  LLDP / CDP, listened for passively" }, new[] { "EXPERT INFO (WIRESHARK)", "Expert info (Wireshark)" }, new[] { "WHAT I OBSERVED", "What I observed" }, new[] { "YOUR ROUTER", "Your router" }, new[] { "Mixed Case Stays", "Mixed Case Stays" }, new[] { "PING (MS)", "Ping (ms)" } }) { string got = Kit.Sent(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
+            T("review 24 Nov: weather servers kept or refused, app-look pills and cards readable in light and dark", () =>
+            {
+                foreach (var c in new[] { new[] { "https://api.example.com/v1/forecast", "api.example.com" }, new[] { "Host.Example.com:8443", "host.example.com:8443" }, new[] { "host:99999", "" }, new[] { "host:0", "" }, new[] { "two words", "" }, new[] { "", "" } })
+                    if (Weather.CleanServer(c[0]) != c[1]) throw new InvalidOperationException("CleanServer(\"" + c[0] + "\") = \"" + Weather.CleanServer(c[0]) + "\", wanted \"" + c[1] + "\"");
+                string paper0 = Cfg.Paper; bool dark0 = Theme.Dark;
+                try
+                {
+                    Cfg.Paper = "app";
+                    foreach (bool dark in new[] { false, true })
+                    {
+                        Theme.Apply(dark); string tag = dark ? "dark" : "light";
+                        if (Theme.Ratio(Paper.Ink, Paper.CardBg) < 4.5) throw new InvalidOperationException("Markets/Sports card text in " + tag + ": " + Theme.Ratio(Paper.Ink, Paper.CardBg).ToString("0.00", CultureInfo.InvariantCulture));
+                        foreach (var lv in new[] { Tuple.Create("green", Paper.Green), Tuple.Create("red", Paper.Red), Tuple.Create("amber", Paper.Amber), Tuple.Create("muted", Paper.Muted) })
+                        {
+                            var f = Paper.FillOf(lv.Item2); var bg = Kit.Mix(Theme.Card, Color.FromArgb(255, f), f.A / 255f); double r = Theme.Ratio(Paper.OnFill(lv.Item2), bg);
+                            if (r < 4.5) throw new InvalidOperationException(lv.Item1 + " pill in " + tag + ": " + r.ToString("0.00", CultureInfo.InvariantCulture) + ":1");
+                        }
+                    }
+                }
+                finally { Cfg.Paper = paper0; Theme.Apply(dark0); }
+            });
+            T("shell masks secrets for other programs (security recheck L-1)", () => { foreach (var c in new[] { new[] { "curl -H \"Authorization: Bearer abcdef123\" https://x", "curl -H \"Authorization: Bearer ****\" https://x" }, new[] { "export GITHUB_TOKEN=abc123", "export GITHUB_TOKEN=****" }, new[] { "mytool --password hunter22", "mytool --password ****" }, new[] { "curl https://bob:s3cret@host/p", "curl https://bob:****@host/p" }, new[] { "AUTHOR=adeeb", "AUTHOR=adeeb" } }) { string got = FullView.ShScrub(c[0]); if (got != c[1]) throw new InvalidOperationException(c[0] + " -> " + got); } });
+
+            // hunt-5 coverage: the feeds and verdicts that had no fixture
+            T("stream check: HLS and DASH ladders, plays and score", () =>
+            {
+                var h = StreamCheck.ParseHls("#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"a\",URI=\"audio.m3u8\"\n#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720\n720.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=6000000,RESOLUTION=1920x1080,FRAME-RATE=60.000\nhd/1080.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=6000000,RESOLUTION=1920x1080\ndup.m3u8\n");
+                if (h.Count != 2 || h[0].Bw != 6000000 || h[0].H != 1080 || h[0].Fps != 60 || h[0].Uri != "hd/1080.m3u8" || h[1].H != 720) throw new InvalidOperationException("HLS ladder: " + h.Count);
+                var d = StreamCheck.ParseDash("<MPD><Period><AdaptationSet mimeType=\"audio/mp4\"><Representation id=\"a1\" bandwidth=\"128000\"/></AdaptationSet><AdaptationSet mimeType=\"video/mp4\"><Representation id=\"v1\" bandwidth=\"2500000\" width=\"1280\" height=\"720\" frameRate=\"30000/1001\"/><Representation id=\"v2\" bandwidth=\"5000000\" width=\"1920\" height=\"1080\" frameRate=\"30\"/></AdaptationSet></Period></MPD>");
+                if (d.Count != 2 || d[0].Uri != "v2" || d[0].H != 1080 || Math.Abs(d[1].Fps - 29.97) > 0.01) throw new InvalidOperationException("DASH ladder: " + d.Count);
+                if (StreamCheck.Plays(h[0], 20, 10) != 0 || StreamCheck.Plays(h[0], 7, 4) != 1 || StreamCheck.Plays(h[0], 4, 2) != 2) throw new InvalidOperationException("plays");
+                if (StreamCheck.Score(h, 20, 10, 50, false) != 100 || StreamCheck.Score(h, double.NaN, double.NaN, 0, false) != -1 || StreamCheck.Score(h, 1, 1, 50, false) >= 60) throw new InvalidOperationException("score");
+                // SEC-01: the host you pasted may be local; what it points to afterwards must be public or that same host
+                if (!StreamCheck.AllowedFor("192.168.1.50", new Uri("http://192.168.1.50/live/a.ts")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("http://192.168.1.1/admin")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("http://169.254.169.254/latest/meta-data")) || StreamCheck.AllowedFor("cdn.example.com", new Uri("file:///c:/windows/win.ini")) || !StreamCheck.AllowedFor("cdn.example.com", new Uri("https://other.example.org/seg.ts"))) throw new InvalidOperationException("Allowed()");
+            });
+            T("line check: the broker verdict", () =>
+            {
+                Func<double, bool, WatchKit.Sample> smp = (far, lost) => new WatchKit.Sample { T = DateTime.Now, Far = lost ? double.NaN : far, FarLost = lost };
+                var good = Enumerable.Range(0, 10).Select(i => smp(20, false)).ToList();
+                var r = LineCheck.Decide(new LineCheck.Result(), good, new List<WatchKit.Session>(), 10, 15, false, -1, false, true);
+                if (r.Verdict != "Ready to trade" || r.Score != 100) throw new InvalidOperationException("good line: " + r.Verdict + " " + r.Score);
+                var bad = Enumerable.Range(0, 10).Select(i => smp(200, i % 2 == 0)).ToList();
+                r = LineCheck.Decide(new LineCheck.Result(), bad, new List<WatchKit.Session>(), 10, 15, false, -1, false, true);
+                if (r.Verdict != "Not ready") throw new InvalidOperationException("bad line: " + r.Verdict + " " + r.Score);
+                if (LineCheck.Decide(new LineCheck.Result(), good, new List<WatchKit.Session>(), 10, 15, false, -1, false, false).Verdict != "Pick your broker") throw new InvalidOperationException("no broker");
+                var nores = Enumerable.Range(0, 4).Select(i => new WatchKit.Sample { T = DateTime.Now, NoProbe = true }).ToList();
+                if (LineCheck.Decide(new LineCheck.Result(), nores, new List<WatchKit.Session>(), 10, 15, false, -1, false, true).Verdict != "Couldn't find your broker") throw new InvalidOperationException("no name");
+            });
+            T("ESPN football feed (the default for keyless users)", () =>
+            {
+                string j = "{\"events\":[{\"date\":\"2026-11-23T20:00Z\",\"status\":{\"type\":{\"state\":\"post\",\"name\":\"STATUS_FULL_TIME\",\"shortDetail\":\"FT\"}},\"competitions\":[{\"competitors\":[{\"homeAway\":\"home\",\"score\":\"2\",\"team\":{\"shortDisplayName\":\"Arsenal\",\"displayName\":\"Arsenal\",\"abbreviation\":\"ARS\"}},{\"homeAway\":\"away\",\"score\":\"1\",\"team\":{\"shortDisplayName\":\"Chelsea\",\"displayName\":\"Chelsea\",\"abbreviation\":\"CHE\"}}]}]},"
+                         + "{\"date\":\"2026-11-24T15:00Z\",\"status\":{\"type\":{\"state\":\"pre\",\"name\":\"STATUS_POSTPONED\",\"shortDetail\":\"Postponed\"}},\"competitions\":[{\"competitors\":[{\"homeAway\":\"home\",\"score\":\"0\",\"team\":{\"shortDisplayName\":\"Leeds\",\"displayName\":\"Leeds United\",\"abbreviation\":\"LEE\"}},{\"homeAway\":\"away\",\"score\":\"0\",\"team\":{\"shortDisplayName\":\"Spurs\",\"displayName\":\"Tottenham\",\"abbreviation\":\"TOT\"}}]}]}]}";
+                var g = Sports.EspnFrom(j, "Premier League");
+                if (g.Count != 2 || g[0].State != "done" || g[0].Home != "Arsenal" || g[0].HomeScore != "2" || g[0].AwayScore != "1") throw new InvalidOperationException("ESPN finished game");
+                if (g[1].State != "off" || g[1].HomeScore != "") throw new InvalidOperationException("ESPN postponed game: " + g[1].State);
+                bool threw = false; try { Sports.EspnFrom("{\"x\":1}", "x"); } catch (System.IO.InvalidDataException) { threw = true; } if (!threw) throw new InvalidOperationException("ESPN without events");
+            });
+            T("Bank of Canada (Valet) and FMP quote parsers", () =>
+            {
+                var v = MarketData.ParseValet("{\"observations\":[{\"d\":\"2026-11-21\",\"FXUSDCAD\":{\"v\":\"1.4010\"}},{\"d\":\"2026-11-20\",\"FXUSDCAD\":{\"v\":\"1.3950\"},\"FXEURCAD\":{\"v\":\"1.6100\"}},{\"d\":\"2026-11-21\",\"FXUSDCAD\":{\"v\":\"9.9\"}}]}");
+                MarketData.Series us; if (!v.TryGetValue("FXUSDCAD", out us) || us.Count != 2 || us.V[0] != 1.395 || us.V[1] != 1.401 || !v.ContainsKey("FXEURCAD")) throw new InvalidOperationException("Valet");
+                string sym = MarketData.IndexList[0][0];
+                var q = MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"name\":\"x\",\"price\":6812.4,\"changePercentage\":0.42,\"timestamp\":1763740800}]", sym);
+                if (q == null || q.Price != 6812.4 || q.Pct != 0.42 || q.When.Year != 2025) throw new InvalidOperationException("FMP quote");
+                if (MarketData.ParseFmp("[{\"symbol\":\"OTHER\",\"price\":1}]", sym) != null || MarketData.ParseFmp("{\"Error Message\":\"Invalid API KEY\"}", sym) != null || MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"price\":-5}]", sym) != null) throw new InvalidOperationException("FMP bad answers");
+                // the TSX stays open on Sep 30 (a banking holiday only - TMX notices 2021-2026)
+                if (Markets.Holiday(new DateTime(2026, 9, 30), "ca") != null) throw new InvalidOperationException("Sep 30 is a TSX trading day");
+            });
+
+            T("money calculators: decimal commas, and junk never throws (round 6 CN-1/CN-2)", () =>
+            {
+                foreach (var c in new[] { new object[] { "1,5", 1.5 }, new object[] { "10,25", 10.25 }, new object[] { "0,99", 0.99 }, new object[] { "1,234.5", 1234.5 }, new object[] { "1.234,5", 1234.5 }, new object[] { "1,000", 1000.0 }, new object[] { "1 000,5", 1000.5 }, new object[] { "$12.40", 12.4 }, new object[] { "1.000.000", 1000000.0 }, new object[] { "-3,5", -3.5 }, new object[] { "50, 45", 50.0 } })
+                { double v = Calc.P((string)c[0]); if (Math.Abs(v - (double)c[1]) > 1e-9) throw new InvalidOperationException((string)c[0] + " read as " + v); }
+                string a = string.Join("|", Calc.Pnl("10,5", "12", "100", "0,5%").Select(r => r[2])), b = string.Join("|", Calc.Pnl("10.5", "12", "100", "0.5%").Select(r => r[2]));
+                if (a != b) throw new InvalidOperationException("Pnl with commas differs: " + a + " vs " + b);
+                // every money tool takes junk without throwing (each answers with a "Need" row instead)
+                foreach (var m in typeof(Calc).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static).Where(z => z.ReturnType == typeof(List<string[]>) && z.GetParameters().All(p => p.ParameterType == typeof(string))))
+                    foreach (var junk in new[] { "", "abc", "-1", "1e400", "0", ",,,", "99999999999999999999" })
+                    {
+                        var rows = (List<string[]>)m.Invoke(null, m.GetParameters().Select(p => (object)junk).ToArray());
+                        if (rows == null || rows.Count == 0) throw new InvalidOperationException(m.Name + "('" + junk + "') answered nothing");
+                        if (rows.Any(r => r.Any(x => x != null && (x.Contains("NaN") || x.Contains("Infinity") || x.Contains("∞"))))) throw new InvalidOperationException(m.Name + "('" + junk + "') printed NaN/Infinity");
+                    }
+            });
+            T("udp table", () => { var u = Tables.Udp(); sb.AppendLine("      " + u.Count + " sockets"); if (u == null) throw new InvalidOperationException("no list"); });
             T("dns cache names (offline)", () =>
             {
                 M.RefreshIpNames(); lock (M.L) sb.AppendLine("      " + M.IpNames.Count + " cached addresses");
@@ -225,6 +398,12 @@ namespace AdeeboMeter
                     if (ck.Count != 1 || ck[0].State != "live" || ck[0].AwayScore != "250/8 (50)" || ck[0].HomeScore != "206/3 (38.2)") throw new InvalidOperationException("cricket scores read wrong: " + (ck.Count > 0 ? ck[0].HomeScore + " | " + ck[0].AwayScore : "none"));
                     var rs = Sports.Rss("<rss><channel><item><title><![CDATA[Big win &amp; more]]></title><description>A <b>great</b> day</description><link>https://www.bbc.co.uk/sport/x</link></item><item><title>No link</title><link>javascript:bad()</link></item></channel></rss>", "top");
                     if (rs.Count != 1 || rs[0].Title != "Big win & more" || rs[0].Summary != "A great day") throw new InvalidOperationException("sports headlines read wrong");
+                    {   // SEC-08: a 600 KB feed with an unterminated CDATA must not pin a thread; L-69: </title> inside CDATA is text
+                        var swr = System.Diagnostics.Stopwatch.StartNew(); var bad0 = Sports.Rss("<rss><item><title><![CDATA[" + new string('x', 600000) + "</title></item></rss>", "top");
+                        if (swr.ElapsedMilliseconds > 1500 || bad0.Count != 0) throw new InvalidOperationException("a hostile sports feed took " + swr.ElapsedMilliseconds + " ms");
+                        var cd = Sports.Rss("<item><title><![CDATA[a</title>b]]></title><link>https://www.bbc.co.uk/sport/y</link></item>", "top");
+                        if (cd.Count != 1 || !cd[0].Title.StartsWith("a", StringComparison.Ordinal) || !cd[0].Title.EndsWith("b", StringComparison.Ordinal)) throw new InvalidOperationException("CDATA with a closing tag inside read wrong");
+                    }
                     // AM-CG-276: a changed feed is an error, not "no games"; AM-CG-275: whole-word team matching; AM-CG-271: BBC Sport opens
                     bool threw = false; try { Sports.HockeyFrom("{\"gamesX\":[]}"); } catch (InvalidDataException) { threw = true; } if (!threw) throw new InvalidOperationException("a wrong-shaped hockey feed read as no games");
                     string teams0 = Cfg.SportTeams; Cfg.SportTeams = "In,TOR";
@@ -315,6 +494,8 @@ namespace AdeeboMeter
                 // the matching words: same recipe and list as the phone page (vector made with WebCrypto and Python)
                 if (RemoteWords.List.Length != 256 || RemoteWords.List.Distinct().Count() != 256) throw new InvalidOperationException("the word list isn't 256 different words");
                 if (RemoteWords.Of(Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(1, 64).Select(i => (byte)i)).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(100, 64).Select(i => (byte)i)).ToArray()) != "wagon · bucket · brook · quartz") throw new InvalidOperationException("matching words differ from the phone's");
+                // hunt-5: and v2's six words (the phone page asks for these; vector made with Python's hashlib)
+                if (RemoteWords.Of(Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(1, 64).Select(i => (byte)i)).ToArray(), new byte[] { 4 }.Concat(Enumerable.Range(100, 64).Select(i => (byte)i)).ToArray(), 2) != "lantern · bagel · fox · bear · pebble · needle") throw new InvalidOperationException("six matching words differ from the phone's");
                 var lane = new RemoteCrypto.Lane(secret, z, 1); const string fr = "AAAAAAAAAAHIx8bFxMPCwcC_vr28u7q5HhaFBDnjOMAo4LDWK4DgqbwpaUmVUNdbx3P_dm87XXJ4JeujuUjZ2Cl9tr8x-2hiamubuNxZtgu67gmrfoekcw";
                 if (lane.Open(fr) != "{\"t\":\"live\",\"ping\":12.5}") throw new InvalidOperationException("frame didn't open");
                 if (lane.Open(fr) != null) throw new InvalidOperationException("a replayed frame opened");
@@ -330,19 +511,20 @@ namespace AdeeboMeter
                 foreach (var s in good) if (!DestCheck.Parse(s, out h, out p, out t, out e)) throw new InvalidOperationException("rejected good input: " + s);
                 foreach (var s in bad) if (DestCheck.Parse(s, out h, out p, out t, out e)) throw new InvalidOperationException("accepted bad input: " + s);
             });
-            T("gateway ping", () => { string gw; lock (M.L) gw = M.Gateway; sb.AppendLine("      " + Draw.Fmt(Monitor.PingMs(gw), "0", " ms")); });
-            T("health check", () => { var r = HealthCheck.Run(M); sb.AppendLine("      " + r.Count + " checks: " + string.Join(", ", r.Select(x => x[1] + "=" + x[0]))); });
+            T("gateway ping", () => { string gw; lock (M.L) gw = M.Gateway; double pm = Monitor.PingMs(gw); sb.AppendLine("      " + Draw.Fmt(pm, "0", " ms")); if (!double.IsNaN(pm) && (pm < 0 || pm > 5000)) throw new InvalidOperationException("ping time out of range: " + pm); });
+            T("health check", () => { var r = HealthCheck.Run(M); sb.AppendLine("      " + r.Count + " checks: " + string.Join(", ", r.Select(x => x[1] + "=" + x[0]))); if (r.Count == 0 || r.Any(x => x == null || x.Length < 2 || x[1] == "")) throw new InvalidOperationException("an empty or unnamed check"); });
             T("destination check on gateway (local only)", () =>
             {
                 string gw; lock (M.L) gw = M.Gateway; if (gw == "") { sb.AppendLine("      skipped: no gateway"); return; }
                 var r = new DestResult(); DestCheck.Run(gw + ":80", r, delegate { }, M);
                 if (!r.Done) throw new InvalidOperationException("did not finish");
                 sb.AppendLine("      steps=" + string.Join(" ", r.Lv) + "  verdict=" + Draw.Trunc(r.Verdict, 70));
+                if (string.IsNullOrEmpty(r.Verdict)) throw new InvalidOperationException("finished with no verdict");
             });
             T("render chip / card / detail", () =>
             {
                 var snap = new Snap(); snap.Details["x"] = new Detail { Title = "t", Note = "n" }; snap.Details["x"].Lines.Add(new[] { "a", "b", "0" });
-                using (Draw.Chip(snap, 0.5)) { } using (Draw.Card(snap, new Dictionary<string, RectangleF>())) { } using (Draw.DetailCard(snap.Details["x"])) { }
+                using (var c1 = Draw.Chip(snap, 0.5)) using (var c2 = Draw.Card(snap, new Dictionary<string, RectangleF>())) using (var c3 = Draw.DetailCard(snap.Details["x"])) foreach (var b in new[] { c1, c2, c3 }) if (b == null || b.Width < 8 || b.Height < 8) throw new InvalidOperationException("a picture came out empty");
             });
             T("engineer view opens in under 2 s", () =>
             {
@@ -398,6 +580,7 @@ namespace AdeeboMeter
                     GC.Collect(); GC.WaitForPendingFinalizers(); Application.DoEvents();
                     int gdi1 = Native.GetGuiResources(me, 0), usr1 = Native.GetGuiResources(me, 1);
                     sb.AppendLine("      after warm-up: " + before + "   after 30 more: " + res());
+                    if (gdi0 == 0) { if (!Program.IsWine) throw new InvalidOperationException("couldn't read the GDI / USER counts - the leak check would measure nothing"); sb.AppendLine("      GDI / USER not measured (Wine gives no counts) - only memory was checked"); }   // R2-022: said, never a silent pass
                     if (gdi0 > 0 && (gdi1 - gdi0 > 10 || usr1 - usr0 > 10))
                     {
                         // A real leak grows with every open; a one-time allocation (a cache filled on a later open - the
@@ -450,8 +633,57 @@ namespace AdeeboMeter
                 if (Lab.DhcpText(121, new byte[] { 24, 10, 1, 2, 192, 168, 1, 1 }) != "10.1.2.0/24 via 192.168.1.1" || Lab.DhcpText(6, new byte[] { 1, 1, 1, 1, 9, 9, 9, 9 }) != "1.1.1.1, 9.9.9.9") bad.Add("dhcp options");
                 var jw = CertTools.Decode("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4IiwiZXhwIjoxNjAwMDAwMDAwfQ.c2ln"); if (!jw.Any(r => r[1] == "Expires" && r[2].Contains("EXPIRED"))) bad.Add("jwt");
                 if (Lab.TrapPacket("public", 100, 7, "t")[0] != 0x30 || Lab.FlowPacket(System.Net.IPAddress.Loopback, System.Net.IPAddress.Loopback, 5000, 1).Length != 72) bad.Add("trap / flow");
-                if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
+                if (Reach.SafeHost("a;b") || Reach.SafeUser("x y") || !Reach.SafeHost("sw-01.lab") || Reach.SafeHost("sw-01:22") || !Reach.SafeHost("[2001:db8::1]") || !Reach.SafeHost("2001:db8::1") || !Reach.SafeUser("DOMAIN\\adeeb")) bad.Add("remote inputs");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join(", ", bad));
+            });
+            T("review 22 Nov: big pings, STUN read inside its declared length, helper output capped", () =>
+            {
+                // 1. ICMP: 32,767 / 32,768 / 65,500 bytes all go out (a signed short sent 32,768+ in negative); loopback answers big pings
+                foreach (int size in new[] { 32767, 32768, Icmp.MaxPayload })
+                {
+                    var r = Icmp.Echo(System.Net.IPAddress.Loopback, size, 64, false, 3000, false);
+                    if (r.Status != Icmp.Ok) throw new InvalidOperationException("ping " + size + " bytes to loopback: status " + r.Status);
+                }
+                // 2. STUN: a good reply, the same reply with a fake attribute after the declared end, a truncated one, a bad length
+                Func<int, byte[], byte[]> msg = (declared, attrs) => { var m = new byte[20 + attrs.Length]; m[0] = 1; m[1] = 1; m[2] = (byte)(declared >> 8); m[3] = (byte)declared; m[4] = 0x21; m[5] = 0x12; m[6] = 0xA4; m[7] = 0x42; Array.Copy(attrs, 0, m, 20, attrs.Length); return m; };
+                var xor = new byte[] { 0, 0x20, 0, 8, 0, 1, (byte)(5000 >> 8 ^ 0x21), (byte)(5000 & 0xFF ^ 0x12), 203 ^ 0x21, 0 ^ 0x12, 113 ^ 0xA4, 7 ^ 0x42 };
+                var plain = new byte[] { 0, 1, 0, 8, 0, 1, 0x1F, 0x90, 10, 9, 9, 9 };   // MAPPED-ADDRESS 10.9.9.9:8080
+                var ok = Protocols.StunMapped(msg(12, xor));
+                if (ok == null || ok.ToString() != "203.0.113.7:5000") throw new InvalidOperationException("stun good: " + ok);
+                if (Protocols.StunMapped(msg(0, plain)) != null) throw new InvalidOperationException("stun: read an attribute past the declared end");
+                if (Protocols.StunMapped(msg(24, xor)) != null) throw new InvalidOperationException("stun: declared length longer than the datagram");
+                if (Protocols.StunMapped(msg(10, xor)) != null) throw new InvalidOperationException("stun: length not a multiple of 4");
+                if (Protocols.StunMapped(new byte[] { 1, 1, 0 }) != null) throw new InvalidOperationException("stun: 3 bytes");
+                // 3. helper output: kept up to the cap, the rest dropped
+                using (var sr = new System.IO.StringReader(new string('x', 20000))) if (Job.ReadCapped(sr, 5000).Length != 5000) throw new InvalidOperationException("cap");
+                bool to; Job.Run(Job.Sys("ping.exe"), "-n 30 127.0.0.1", 1500, out to);
+                if (!to) throw new InvalidOperationException("a helper that outlived its time wasn't reported as timed out");
+                Job.Run(Job.Sys("hostname.exe"), "", 10000, out to);
+                if (to) throw new InvalidOperationException("hostname.exe reported as timed out");
+            });
+            T("tool run 22 Nov: a disconnect isn't a sign-in that worked, a null MX says so", () =>
+            {
+                var ev = new EvLog.Ev { Id = 8003, Text = "WLAN AutoConfig service has successfully disconnected from a wireless network." };
+                if (EngPack.Kind(ev) != "disconnected") throw new InvalidOperationException("8003 read as " + EngPack.Kind(ev));
+                if (EngPack.Kind(new EvLog.Ev { Id = 8001, Text = "WLAN AutoConfig service has successfully connected to a wireless network." }) != "succeeded") throw new InvalidOperationException("8001");
+                if (!Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 ." }) || !Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 " }) || Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "10 mx.example.com" })) throw new InvalidOperationException("null MX");
+            });
+            T("AdeeboLab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
+            {
+                // AdeeboLab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops
+                var devs = Enumerable.Range(0, 70).Select(i => new Picks.LanDev { Ip = "192.168.1." + (i + 1), Mac = "00:11:22:33:44:" + i.ToString("x2"), Router = i == 0, Here = i % 3 != 0, Maker = i % 2 == 0 ? "Apple" : "Espressif", Name = "dev" + i }).ToList();
+                string lj = LabViews.LanDoc(devs, "192.168.1.1", "Test", DateTime.Now, LabViews.TestPc(), "wifi");
+                int nodes = System.Text.RegularExpressions.Regex.Matches(lj, "\\{\"id\":\"d\\d+\"").Count;
+                if (nodes != LabViews.LanMax || !lj.Contains("\"+19 more\"")) throw new InvalidOperationException("lab lan: " + nodes + " devices drawn");
+                var ids = new HashSet<string>(System.Text.RegularExpressions.Regex.Matches(lj, "\\{\"id\":\"([a-z0-9]+)\"").Cast<System.Text.RegularExpressions.Match>().Select(x => x.Groups[1].Value));
+                foreach (System.Text.RegularExpressions.Match x in System.Text.RegularExpressions.Regex.Matches(lj, "\"a\":\"([a-z0-9]+)\",\"b\":\"([a-z0-9]+)\""))
+                    if (!ids.Contains(x.Groups[1].Value) || !ids.Contains(x.Groups[2].Value)) throw new InvalidOperationException("lab lan: a link to nowhere " + x.Value);
+            });
+            T("copied results name each box whole (\"How many (10-2000)\" not \"How many (10\")", () =>
+            {
+                if (FullView.BoxLabel("How many (10-2000)") != "How many (10-2000)") throw new InvalidOperationException(FullView.BoxLabel("How many (10-2000)"));
+                if (FullView.BoxLabel("Target - e.g. github.com") != "Target") throw new InvalidOperationException(FullView.BoxLabel("Target - e.g. github.com"));
+                if (FullView.BoxLabel("Wi-Fi name") != "Wi-Fi name") throw new InvalidOperationException("Wi-Fi");
             });
             T("Security: 42 checks, end-of-support dates and site names read right", () =>
             {
@@ -675,7 +907,7 @@ namespace AdeeboMeter
                     if (Toolkit.HostOnly(c[0]) != c[1]) bad.Add("HostOnly(" + c[0] + ") = " + Toolkit.HostOnly(c[0]));
                 if (Toolkit.UrlToTarget("https://example.com/x", true) != "example.com:443" || Toolkit.UrlToTarget("http://example.com", true) != "example.com:80" || Toolkit.UrlToTarget("https://example.com:8443", false) != "example.com") bad.Add("UrlToTarget");
                 var r4 = Icmp.Resolve4("https://127.0.0.1/status"); if (r4 == null || r4.ToString() != "127.0.0.1") bad.Add("Resolve4 of a URL gave " + r4);
-                foreach (var no in new[] { "255.255.255.255", "224.0.0.1", "239.255.255.250", "0.0.0.0", "ff02::1", "::" }) if (Lab.NotOne(IPAddress.Parse(no)) == "") bad.Add("Traffic Lab would send to " + no);
+                foreach (var no in new[] { "255.255.255.255", "224.0.0.1", "239.255.255.250", "0.0.0.0", "ff02::1", "::", "10.99.7.255" }) if (Lab.NotOne(IPAddress.Parse(no)) == "") bad.Add("Traffic Lab would send to " + no);
                 if (Lab.NotOne(IPAddress.Parse("192.0.2.10")) != "") bad.Add("one device refused");
                 var o = Toolkit.ParseOpts("-u -l 4"); if (Toolkit.BlockLen(o) < 16) bad.Add("UDP block " + Toolkit.BlockLen(o));
                 if (Toolkit.BlockLen(Toolkit.ParseOpts("-l 4")) != 4 || Toolkit.BlockLen(Toolkit.ParseOpts("-u")) != 1400) bad.Add("block sizes");
@@ -696,12 +928,68 @@ namespace AdeeboMeter
                 if (!Program.CanWrite(Path.GetTempPath())) bad.Add("temp not writable?");
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
+            T("Widget presets and the corner ladder: symbols, readings, day plan, pinned game, tile cards draw", () =>
+            {
+                var bad = new List<string>();
+                if (Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft") != "AAPL,SHOP.TO,^GSPC,FX:USD") bad.Add("symbols: " + Corner.CleanSyms("aapl, shop.to ,^gspc, fx:usd, fx:zzz, bad sym!, msft"));
+                if (Corner.CleanMine("cpu,nope,cpu,ping") != "cpu,,,ping") bad.Add("readings: " + Corner.CleanMine("cpu,nope,cpu,ping"));   // hunters13 lifecycle ML-4: rows keep their places
+                { string km = Cfg.WMine; try { Cfg.WMine = "none"; if (Corner.SetMine(2, "cpu") != ",,cpu") bad.Add("row 3 landed elsewhere: " + Corner.SetMine(2, "cpu")); Cfg.WMine = "down,cpu"; if (Corner.SetMine(0, "cpu") != "cpu") bad.Add("a reading set twice: " + Corner.SetMine(0, "cpu")); Cfg.WMine = "down"; if (Corner.SetMine(0, null) != "none") bad.Add("the last row emptied"); } finally { Cfg.WMine = km; } }
+                if (string.Join("|", Corner.SplitBacks("match|a~~weather|1~~match|a")) != "match|a|weather|1") bad.Add("sent-away takeovers: " + string.Join("|", Corner.SplitBacks("match|a~~weather|1~~match|a")));   // hunters13 lifecycle ML-2
+                { string kg = Cfg.WPosGame; try { Cfg.WPosGame = "tl|120|40"; if (WidgetPos.PickGame(4) != "tl|120|40") bad.Add("re-picking the gaming corner lost the distance"); if (WidgetPos.PickGame(1) != "br|0|0") bad.Add("another gaming corner kept the distance"); } finally { Cfg.WPosGame = kg; } }   // hunters13 lifecycle L-2
+                if (!AppCtx.Still(new Point(100, 100), new Point(104, 97), 1f) || AppCtx.Still(new Point(100, 100), new Point(106, 100), 1f) || !AppCtx.Still(new Point(100, 100), new Point(106, 105), 1.5f)) bad.Add("resting box");   // hunters13 input L-5
+                if (MarketData.Venue("^FTSE") != "London" || MarketData.Venue("SHOP.TO") != "Toronto" || MarketData.Venue("7203.T") != "Tokyo" || MarketData.Venue("AAPL") != "New York") bad.Add("venues");   // hunters12 data M3
+                if (Weather.Temp(-0.4).StartsWith("-", StringComparison.Ordinal) || Weather.Temp(-0.4).StartsWith("−", StringComparison.Ordinal)) bad.Add("minus zero: " + Weather.Temp(-0.4));   // hunters12 data L6
+                if (Usage.Mb(999.6).Contains("1000")) bad.Add("1000 MB");   // hunters12 data L3
+                if (Corner.CleanMine("") != "down,ping,weather,market1") bad.Add("empty readings have no default");
+                if (Corner.CleanMine("none") != "none") bad.Add("an emptied My widget came back with the defaults");   // hunters12 ML-2
+                { string kp = Cfg.WPos; try { Cfg.WPos = "tr|40|30"; if (WidgetPos.Pick(2) != "tr|40|30") bad.Add("picking its own corner lost the distance"); if (WidgetPos.Pick(3) != "tl|0|0") bad.Add("another corner kept the distance"); if (WidgetPos.NormalCornerIndex != 2) bad.Add("normal corner index"); } finally { Cfg.WPos = kp; } }   // hunters12 L-1 / M-6
+                if (Corner.CleanPlan("e=sports;m=bogus;w=weather") != "m=;w=weather;e=sports;n=") bad.Add("plan: " + Corner.CleanPlan("e=sports;m=bogus;w=weather"));
+                if (Corner.SlotOf(new DateTime(2026, 1, 1, 8, 0, 0)) != "m" || Corner.SlotOf(new DateTime(2026, 1, 1, 12, 0, 0)) != "w" || Corner.SlotOf(new DateTime(2026, 1, 1, 20, 0, 0)) != "e" || Corner.SlotOf(new DateTime(2026, 1, 1, 2, 0, 0)) != "n") bad.Add("day slots");
+                if (Corner.AllStyles.Length != 13) bad.Add("not 13 presets");
+                var q = MarketData.ParseFmp("[{\"symbol\":\"AAPL\",\"name\":\"Apple Inc.\",\"price\":231.5,\"changePercentage\":-0.8}]", "AAPL");
+                if (q == null || q.Name != "Apple Inc." || Math.Abs(q.Price - 231.5) > 1e-9) bad.Add("a typed symbol's quote");
+                string keepPin = Cfg.WPinGame, keepK = Cfg.WSportKinds, keepT = Cfg.SportTeams;
+                try
+                {
+                    var g = new Sports.Game { Sport = "hockey", Home = "TOR", Away = "MTL", State = "live", StartUtc = new DateTime(2026, 11, 24, 0, 0, 0, DateTimeKind.Utc) };
+                    Cfg.SportTeams = "TOR"; Cfg.WSportKinds = ""; Cfg.WPinGame = "";
+                    if (Corner.Wanted(g)) bad.Add("a followed game took over with no sport ticked and nothing pinned");
+                    Cfg.WSportKinds = "hockey"; if (!Corner.Wanted(g)) bad.Add("a ticked sport's live followed game was not wanted");
+                    Cfg.WSportKinds = ""; Cfg.WPinGame = Corner.PinKey(g); if (!Corner.Wanted(g)) bad.Add("the pinned game was not wanted");
+                }
+                finally { Cfg.WPinGame = keepPin; Cfg.WSportKinds = keepK; Cfg.SportTeams = keepT; }
+                var s = new Snap { Level = 2, Waiting = false, Headline = "Internet is down", Chip = "Internet down", Down = 1, Up = 1, Ping = double.NaN };
+                foreach (var st in new[] { "markets", "sports", "data", "weather", "mine" })
+                    try { using (var b = Draw.Preview(s, st, true)) if (b.Width < 50 || b.Height < 50) bad.Add(st + " card is tiny"); using (var c = Draw.Preview(s, st, false)) { } }
+                    catch (Exception e) { bad.Add(st + ": " + e.GetType().Name + " " + e.Message); }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
+            T("Widget position: corners, snapping, the default and a gone screen", () =>
+            {
+                var bad = new List<string>(); string keepPos = Cfg.WPos, keepScr = Cfg.WidgetScreen;
+                try
+                {
+                    var wa = new Rectangle(0, 0, 1920, 1040); Cfg.WidgetScreen = "";
+                    Cfg.WPos = ""; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(1710, 980)) bad.Add("default not bottom right: " + WidgetPos.At(wa, 200, 50, 1f));
+                    Cfg.WPos = "tl|0|0"; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(10, 10)) bad.Add("top left: " + WidgetPos.At(wa, 200, 50, 1f));
+                    Cfg.WPos = "tr|0|0"; if (WidgetPos.At(wa, 200, 300, 1f) != new Point(1710, 10)) bad.Add("a taller card at top right does not open downward");
+                    if (WidgetPos.From(new Rectangle(15, 990, 200, 40), wa, 1f) != "bl|0|0") bad.Add("near bottom left did not snap: " + WidgetPos.From(new Rectangle(15, 990, 200, 40), wa, 1f));
+                    if (WidgetPos.From(new Rectangle(1000, 500, 200, 40), wa, 1f) != "br|710|490") bad.Add("middle: " + WidgetPos.From(new Rectangle(1000, 500, 200, 40), wa, 1f));
+                    if (WidgetPos.From(new Rectangle(1700, 990, 200, 40), wa, 1f) != "") bad.Add("bottom right is not the default");
+                    Cfg.WPos = "br|99999|99999"; if (!wa.Contains(new Rectangle(WidgetPos.At(wa, 200, 50, 1f), new Size(200, 50)))) bad.Add("off screen");
+                    Cfg.WPos = "tl|5|5"; Cfg.WidgetScreen = @"\\.\DISPLAY99"; if (WidgetPos.At(wa, 200, 50, 1f) != new Point(1710, 980)) bad.Add("a gone screen kept its place instead of the default");
+                    foreach (var junk in new[] { "xx|1|1", "br|-5|0", "tl|1", "tl|a|b" }) if (WidgetPos.Clean(junk) != "") bad.Add("kept " + junk);
+                    if (!Cfg.Known.Contains("wpos") || !Cfg.Known.Contains("whidenear")) bad.Add("settings not known");
+                }
+                finally { Cfg.WPos = keepPos; Cfg.WidgetScreen = keepScr; }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
+            });
             T("About links: only AdeeboMeter's pages and its PayPal donation link open", () =>
             {
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
                 foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "", "https://github.com/adeeb111/AdeeboMeterEvil", "https://github.com/adeeb111/AdeeboMeter@evil.example", "https://x@github.com/adeeb111/AdeeboMeter", "https://adeeb111.github.io/AdeeboMeterX/" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
             });
-            T("Adeebo Points: +2 / +4 once, replay +3 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
+            T("Adeebo Points: +2 / +4 once, replay +2 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
@@ -719,14 +1007,14 @@ namespace AdeeboMeter
                     if (p.Award("ping", true, true, t0.AddMinutes(1), t0.AddMinutes(1)) != 0 || p.Award("ping", true, true, t0.AddHours(3), t0.AddHours(3)) != 0) bad.Add("regular example earned twice");
                     if (p.Award("ispreport", true, true, t0, t0) != 4) bad.Add("a longer test (ISP report) first not +4");
                     if (p.Award("ispreport", true, true, t0.AddMinutes(5), t0.AddMinutes(5)) != 0) bad.Add("replay bonus inside 10 minutes");
-                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != 3) bad.Add("replay bonus not +3");
+                    if (p.Award("ispreport", true, true, t0.AddMinutes(11), t0.AddMinutes(11)) != Points.ReplayPts) bad.Add("replay bonus not +" + Points.ReplayPts);
                     if (p.Award("ispreport", true, true, t0.AddMinutes(40), t0.AddMinutes(40)) != 0) bad.Add("replay bonus twice");
                     if (p.Award("udpsend", true, true, t0, t0) != 0) bad.Add("a Traffic Lab sender earned");
                     if (p.Award("mtr", true, true, t0, t0) != 4 || p.Award("mtr", true, true, t0.AddMinutes(11), t0.AddMinutes(1)) != 0) bad.Add("moving the Windows clock paid the replay bonus");
-                    if (p.Total != 13) bad.Add("total " + p.Total + " (want 13)");
-                    var again = new Points(f); if (again.Total != 13 || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
+                    if (p.Total != 10 + Points.ReplayPts) bad.Add("total " + p.Total + " (want " + (10 + Points.ReplayPts) + ")");
+                    var again = new Points(f); if (again.Total != 10 + Points.ReplayPts || again.Done != 3) bad.Add("after restart " + again.Total + "/" + again.Done);
                     if (again.Award("mtr", true, true, t0.AddMinutes(12), t0.AddMinutes(2)) != 0) bad.Add("a restart plus a clock moved forward paid the replay bonus");
-                    if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != 3) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
+                    if (again.Award("mtr", true, true, t0.AddMinutes(13), t0.AddMinutes(13)) != Points.ReplayPts) bad.Add("the replay bonus after a real 10 minutes (across a restart)");
                     // round-3 #10: the uptime rule holds only within one Windows boot - a reboot the next day pays at 5 min of uptime
                     {
                         string fb = f + ".boot"; try { File.Delete(fb); } catch (IOException) { }
@@ -734,12 +1022,12 @@ namespace AdeeboMeter
                         {
                             var pb = new Points(fb); pb.Award("gamecompare", true, true, t0, t0, 5L << 32 | 120000);
                             if (pb.Award("gamecompare", true, true, t0.AddMinutes(12), t0.AddMinutes(12), 5L << 32 | 300000) != 0) bad.Add("same boot, 3 min of uptime later: paid");
-                            if (pb.Award("gamecompare", true, true, t0.AddDays(1), t0.AddDays(1), 6L << 32 | 300000) != 3) bad.Add("a new boot the next day: the replay bonus was refused");
+                            if (pb.Award("gamecompare", true, true, t0.AddDays(1), t0.AddDays(1), 6L << 32 | 300000) != Points.ReplayPts) bad.Add("a new boot the next day: the replay bonus was refused");
                         }
                         finally { try { File.Delete(fb); } catch (IOException) { } }
                     }
                     if (again.Award("ispreport", true, true, t0.AddDays(1), t0.AddDays(1)) != 0 || again.Award("ping", true, true, t0.AddDays(1), t0.AddDays(1)) != 0) bad.Add("restart let it earn again");
-                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 16) bad.Add("earning off changed the total");
+                    if (again.Award("dig", true, false, t0, t0) != 0 || again.Total != 10 + 2 * Points.ReplayPts) bad.Add("earning off changed the total");
                     if (again.Award("learn.dhcp", true, true, t0, t0) != 2 || again.Award("page.replay", true, true, t0, t0) != 2 || again.Award("check.dhcp", true, true, t0, t0) != 2 || again.Award("lab.tcp", true, true, t0, t0) != 4 || again.Award("quiz.5", true, true, t0, t0) != 3 || again.Award("quiz.10", true, true, t0, t0) != 5 || again.Award("journey.explain", true, true, t0, t0) != 3 || again.Award("path.gamer", true, true, t0, t0) != 10 || again.Award("lab.tcp", true, true, t0.AddHours(2), t0.AddHours(2)) != 0 || again.Award("learn.dhcp", true, true, t0.AddHours(1), t0.AddHours(1)) != 0) bad.Add("Learn / page points");
                     if (!again.Replayed("ispreport") || again.Replayed("ping")) bad.Add("replay state");
                     // round-2 review: lines typed into points.txt for things that don't exist count nothing; a replay mark on a
@@ -751,7 +1039,7 @@ namespace AdeeboMeter
                     int left; if (Points.Rank(29) != "Beginner" || Points.Rank(30) != "Learner" || Points.Rank(99) != "Learner" || Points.Rank(100) != "Troubleshooter" || Points.Rank(200) != "Expert" || Points.Rank(300) != "Network detective" || Points.Rank(499) != "Packet whisperer" || Points.Rank(Points.AwardAt) != "Adeebo Award" || Points.Next(32, out left) != "Troubleshooter" || left != 68 || Points.Next(600, out left) != "") bad.Add("ranks");
                     // a points file from 1.1.4 (+1 per tool, +2 replay) counts at today's values
                     string old = f + ".old"; File.WriteAllLines(old, new[] { "ping|" + t0.Ticks + "|-|1", "mtr|" + t0.Ticks + "|" + t0.AddMinutes(20).Ticks + "|2", "learn.dns|" + t0.Ticks + "|-|1" });
-                    try { var po = new Points(old); if (po.Total != 2 + 4 + 3 + 2) bad.Add("1.1.4 file total " + po.Total); } finally { try { File.Delete(old); } catch (IOException) { } }
+                    try { var po = new Points(old); if (po.Total != 2 + 4 + Points.ReplayPts + 2) bad.Add("1.1.4 file total " + po.Total); } finally { try { File.Delete(old); } catch (IOException) { } }
                     var ex = Examples.Rows(Examples.Get("ping"), true);
                     if (Points.Completed(ex, false)) bad.Add("an example counted as a run");
                     if (Points.Completed(new List<string[]> { new[] { "0", "Replies", "50 of 50", "", "m" } }, true)) bad.Add("a stopped run counted");
@@ -986,13 +1274,24 @@ namespace AdeeboMeter
                 for (int sd = 0; sd < 200; sd++) { var q = LabSim.Subnet(sd); if (q.Options.Length != 4 || q.Options.Count(o => o == q.Answer) != 1 || q.Options.Distinct().Count() != 4) throw new InvalidOperationException("quiz " + sd + ": " + q.Question + " " + string.Join(",", q.Options)); }
                 var qn = LabSim.Subnet(3); if (qn.Question.IndexOf("network address", StringComparison.Ordinal) >= 0) { var part = qn.Question.Split(' ').First(z => z.Contains("/")).TrimEnd('?'); var sub = Toolkit.Subnet(part, ""); if (!sub.Any(r => r[2].StartsWith(qn.Answer + "/", StringComparison.Ordinal))) throw new InvalidOperationException("quiz answer disagrees with the calculator"); }
                 var wnd = LabSim.CwndFromCapture(Journey.Sample(), 0.05); if (wnd == null) throw new InvalidOperationException("cwnd estimate failed");
+                // AdeeboLab deep check (finding 15): the places the sim was wrong are tested now
+                { var c10 = LabSim.Tcp(new LabSim.TcpIn { Algo = "cubic", Mbps = 10, RttMs = 10, BufferBdp = 1, Rounds = 30 }); var l1 = c10.First(z => z.Loss != ""); double g1 = c10[l1.Round + 3].Cwnd - c10[l1.Round + 2].Cwnd; if (Math.Abs(g1 - 0.529) > 0.03) throw new InvalidOperationException("CUBIC's Reno-friendly growth should be 0.529 a round trip (RFC 9438), was " + g1.ToString("0.###", CultureInfo.InvariantCulture)); }
+                { var lossy = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1000, RttMs = 100, BufferBdp = 8, LossPct = 0.01, Rounds = 3000 }); double avg = lossy.Skip(200).Average(z => z.Cwnd); if (avg < 122 * 0.8 || avg > 122 * 1.25) throw new InvalidOperationException("Reno under 0.01% random loss should average near Mathis' 1.22/sqrt(p) = 122 packets, was " + avg.ToString("0", CultureInfo.InvariantCulture)); }
+                { var tiny = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1, RttMs = 5, BufferBdp = 0.1, Rounds = 40 }); var qd = tiny.First(z => z.Queue > 0); if (Math.Abs(qd.QueueMs - qd.Queue * 1460 * 8 / 1e6 * 1000) > 0.01) throw new InvalidOperationException("queue delay isn't the queue's drain time on a tiny link"); if (LabSim.CapPackets(1, 5, 0.1) < 8) throw new InvalidOperationException("the chart's buffer line lost the 8-packet floor"); }
+                { double q94 = LabSim.Bloat(20, 18.8, 500, 20, false).QueueMs, q96 = LabSim.Bloat(20, 19.2, 500, 20, false).QueueMs; if (q96 - q94 > 20 || LabSim.Bloat(20, 20, 500, 20, false).QueueMs < 499) throw new InvalidOperationException("bufferbloat queue has a cliff below the link's rate, or isn't full at it"); }
+                { double gb = LabSim.GameBudget(30, 64, 2, 144, 8).Sum(); if (Math.Abs(gb - 87.48) > 0.05) throw new InvalidOperationException("game budget: " + gb); }
+                if (LabSim.VoiceWaitMs("fair", 10, 50) <= LabSim.VoiceWaitMs("priority", 10, 50) || LabSim.VoiceWaitMs("fair", 10, 50) >= LabSim.VoiceWaitMs("fifo", 10, 50)) throw new InvalidOperationException("fair queuing should sit between priority and one queue");
+                if (wnd.Any(v => !double.IsNaN(v) && v <= 0)) throw new InvalidOperationException("a round trip with no measured flight was drawn as a window of 0");
+                if (LearnGames.Heist.Count(hh => hh[1] == "0") >= LearnGames.HeistWin) throw new InvalidOperationException("Heist: answering 'It fails' every time wins");
+                if (AdeeboMeter.Json.ParseWhole("{\"nodes\": []}};alert(1);//") != null) throw new InvalidOperationException("a lab file with script after the drawing was accepted");
+                if (AdeeboMeter.Json.Write(new Dictionary<string, object> { { "n", "</script><b>\u2028" } }).IndexOfAny(new[] { '<', '>', '\u2028' }) >= 0) throw new InvalidOperationException("Json.Write left < > or U+2028 for a script");
             });
             T("examples: every tool has one, it fits its boxes, it's marked and never copied", () =>
             {
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
-                    try { string bad = fv.ExampleCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    try { string bad = fv.ExampleCheck(); if (bad == "" && Examples.Problems.Count > 0) bad = "examples.txt: " + string.Join("; ", Examples.Problems.Take(3)); if (bad != "") throw new InvalidOperationException(bad); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
             });
@@ -1023,10 +1322,10 @@ namespace AdeeboMeter
                 if (!Weather.InWindow(new DateTime(2026, 11, 14, 9, 12, 0)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 15, 0)) || !Weather.InWindow(new DateTime(2026, 11, 14, 9, 54, 20)) || Weather.InWindow(new DateTime(2026, 11, 14, 9, 55, 0))) bad.Add("face minutes");
                 int win = Enumerable.Range(0, 3600).Count(sec => Weather.InWindow(new DateTime(2026, 11, 14, 9, 0, 0).AddSeconds(sec))); if (win < 400 || win > 540) bad.Add("face shows " + win + " s an hour, want 6-9 min");
                 // the line and the face, with a forecast on hand (settings put back after)
-                bool on0 = Cfg.WeatherOn; string pl0 = Cfg.WeatherPlace, co0 = Cfg.Corner; bool f0 = Cfg.WeatherF;
+                bool on0 = Cfg.WeatherOn, ww0 = Cfg.WWeather; string pl0 = Cfg.WeatherPlace, co0 = Cfg.Corner; bool f0 = Cfg.WeatherF;
                 try
                 {
-                    Cfg.WeatherOn = true; Cfg.WeatherPlace = "45.41;-75.7;Ottawa, Ontario, Canada"; Cfg.Corner = Moments.WithMoments; Cfg.WeatherF = false;
+                    Cfg.WeatherOn = true; Cfg.WWeather = true; Cfg.WeatherPlace = "45.41;-75.7;Ottawa, Ontario, Canada"; Cfg.Corner = Moments.WithMoments; Cfg.WeatherF = false;
                     var nowU = DateTime.UtcNow; var hb = new DateTime(nowU.Year, nowU.Month, nowU.Day, nowU.Hour, 0, 0, DateTimeKind.Utc);
                     var l = Enumerable.Range(-1, 30).Select(i => new Weather.Hour { Utc = hb.AddHours(i), Temp = 4, Feels = 1, Code = i >= 0 && i < 3 ? 61 : 3 }).ToList();
                     Weather.Inject(l, Cfg.WeatherPlace);
@@ -1042,20 +1341,339 @@ namespace AdeeboMeter
                     Cfg.Corner = Moments.Quiet; if (Weather.Face(inWin) != null) bad.Add("a face in the Quiet corner"); Cfg.Corner = Moments.WithMoments;
                     var sn = new Snap { Call = true }; if (Moments.FaceFor(sn) != null) bad.Add("a face during a call");
                     Weather.Inject(l, "1;1;Elsewhere"); if (Weather.Text(nowU) != null) bad.Add("another place's forecast shown");
+                    Cfg.WWeather = false; if (Weather.Chip(nowU) != null || Weather.Face(inWin) != null) bad.Add("the widget shows weather with \"Weather in the widget\" off"); Cfg.WWeather = true;
                     Cfg.WeatherOn = false; if (Weather.Chip(nowU) != null || Weather.Face(inWin) != null) bad.Add("shows while off");
                     foreach (var e in new[] { "1f975", "1f976", "1f327", "1f328", "26c8" }) if (Draw.Emoji(e) == null) bad.Add("emoji " + e + " not built in");
                 }
-                finally { Cfg.WeatherOn = on0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
+                finally { Cfg.WeatherOn = on0; Cfg.WWeather = ww0; Cfg.WeatherPlace = pl0; Cfg.Corner = co0; Cfg.WeatherF = f0; Weather.Inject(new List<Weather.Hour>(), ""); }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad.Take(8)));
+            });
+            // 21 Nov: the sitting test - what a person notices by leaving it open (Adeeb: "I found a lot of bugs just by sitting").
+            // Plays a day on the real window: every page at three sizes, light and dark, idle; a freeze, a sleep; the face and
+            // the typing. Reports every problem at once, not just the first.
+            T("sitting: idle pages don't keep redrawing, nothing is wider than the window, slow pages, freeze card, sleep, typing, faces", () =>
+            {
+                var bad = new List<string>();
+                Action<int> pump = ms => { var until = DateTime.UtcNow.AddMilliseconds(ms); while (DateTime.UtcNow < until) { Application.DoEvents(); System.Threading.Thread.Sleep(15); } };
+                // the face and the typing (no window needed)
+                Typing.Show("sit", "first line", null); if (Typing.Show("sit", "second line", null) != "second line") bad.Add("typing: a line changing again within 15 s types again (should show whole)");
+                var faceWas = BuddyReact.Save();   // R2-049: the real face state is put back after
+                BuddyReact.Now(0); BuddyReact.Now(2); if (BuddyReact.Now(2) != "shout") bad.Add("face: an outage starting doesn't shout");
+                if (BuddyReact.Now(0) != "love") bad.Add("face: coming back up isn't love");
+                BuddyReact.Set("happy", 0.2); System.Threading.Thread.Sleep(300); if (BuddyReact.Now(0) != null) bad.Add("face: a reaction doesn't settle back");
+                BuddyReact.ToolDone(new List<string[]> { new[] { "0", "a", "b" }, new[] { "2", "c", "d" } }, false); if (BuddyReact.Now(0) != "tears") bad.Add("face: a red result isn't tears");
+                BuddyReact.Restore(faceWas);
+                using (var icon = Theme.MakeIcon(16))
+                {
+                    var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Size = new Size(1280, 860); fv.Show(); pump(1500);
+                    try
+                    {
+                        // AdeeboShell (22 Nov rewrite): folders, pipes, redirects, loops, $VAR splitting, && ||, parallel, a script with $1
+                        {
+                            string tdir = System.IO.Path.Combine(Program.DataDir, "selftest-shell");
+                            try { if (System.IO.Directory.Exists(tdir)) System.IO.Directory.Delete(tdir, true); } catch (System.IO.IOException) { }
+                            var cases = new[] {
+                                new[] { "cd /data; mkdir -p selftest-shell; cd selftest-shell; echo hello > a.txt; echo world >> a.txt; cat a.txt | grep -c o", "2" },
+                                new[] { "cd /data/selftest-shell; for h in a b c; do echo $h; done | sort -r | head -1", "c" },
+                                new[] { "X=\"1 2 3\"; for i in $X; do echo n$i; done | wc -l", "3" },
+                                new[] { "if test 3 -gt 2; then echo yes; else echo no; fi", "yes" },
+                                new[] { "false || echo ok && echo two", "ok\ntwo" },
+                                new[] { "parallel -j 3 echo {} ::: a b c | grep -c \"^[abc]$\"", "3" },
+                                new[] { "cd /data/selftest-shell; printf 'echo arg=$1\\n' > s.sh; ./s.sh zz", "arg=zz" },
+                                new[] { "cd /data/selftest-shell; cat < a.txt | tail -n 1", "world" },
+                                new[] { "cd home; pwd | grep -c \"^/home\"", "1" },
+                                new[] { "cd pages; ls | grep -c \"^shell\"", "1" },
+                                new[] { "ls /tools | wc -l | grep -c \"^[1-9]\"", "1" },
+                                new[] { "cd /data; rm -rf selftest-shell; test -d selftest-shell || echo gone", "gone" },
+                                new[] { "nosuchcommand; echo $?", "127" },
+                                new[] { "iperf3 -s; echo $?", "2" },
+                                new[] { "echo $((1+2*3)) $(( (2+3) * 4 )) $((7 % 3))", "7 20 1" },
+                                new[] { "x=$(echo hi there); echo \"[$x]\"", "[hi there]" },
+                                new[] { "for i in $(seq 1 3); do echo $i; done | wc -l", "3" },
+                                new[] { "n=0; for i in a b c; do n=$((n+1)); done; echo $n", "3" },
+                                new[] { "nosuchcommand 2>/dev/null; echo $?", "127" },
+                                new[] { "echo hidden > /dev/null; echo shown", "shown" },
+                                new[] { "echo a,b,c | cut -d , -f 2", "b" },
+                                new[] { "echo 'one two three' | awk '{print $2}'", "two" },
+                                new[] { "printf '1 x\\n2 y\\n3 z\\n' | awk '{s+=$1} END {print s}'", "6" },
+                                new[] { "echo hello | sed 's/l/L/g'", "heLLo" },
+                                new[] { "echo hello | tr a-z A-Z", "HELLO" },
+                                new[] { "cat /proc/meminfo | grep -c MemTotal", "1" },
+                                new[] { "df | head -1 | grep -c Filesystem", "1" },
+                                new[] { "free | grep -c Mem:", "1" },
+                                new[] { "ps | head -1 | grep -c PID", "1" },
+                                new[] { "ip a | grep -c inet | grep -c \"^[1-9]\"", "1" },
+                                new[] { "ss -tl | head -1 | grep -c Netid", "1" },
+                                new[] { "echo abc | md5sum", "0bee89b07a248e27c83fc3d5951213c1  -" },
+                                new[] { "printf 'x\\ny\\nz\\n' | while read h; do echo got$h; done | tail -n 1", "gotz" },
+                                new[] { "iperf3 -R -t 5; echo $?", "2" },
+                                new[] { "cd /data; mkdir -p selftest-sh2; cd selftest-sh2; echo ok", "ok" },
+                                new[] { "cd /data/selftest-sh2; printf '#!/bin/adeeboshell\\n# header\\necho ran # tail comment\\necho two\\n' > c.sh; ./c.sh", "ran\ntwo" },
+                                new[] { "cd /data/selftest-sh2; cat missing.txt | wc -l", "0" },
+                                new[] { "cd /data/selftest-sh2; x=$(nosuchcmd); echo \"[$x]\"", "[]" },
+                                new[] { "cd /data/selftest-sh2; printf 'echo a\\nexit 3\\necho b\\n' > e.sh; ./e.sh; echo $?", "a\n3" },
+                                new[] { "for i in 1 2 3 4; do if test $i -eq 3; then break; fi; echo $i; done", "1\n2" },
+                                new[] { "for i in 1 2 3 4; do if test $i -eq 3; then continue; fi; echo $i; done", "1\n2\n4" },
+                                new[] { "false; true && echo $?", "0" },
+                                new[] { "x=$(false); echo $?", "1" },
+                                new[] { "cd /data; x=$(cd /home; pwd); pwd | grep -c \"^/data\"", "1" },
+                                new[] { "cd /data; echo hi | cd /home; pwd | grep -c \"^/data\"", "1" },
+                                new[] { "cd /data/selftest-sh2; for i in 1 2; do echo $i; done > loop.txt; cat loop.txt | wc -l", "2" },
+                                new[] { "cd /data/selftest-sh2; while read l; do echo got$l; done < loop.txt | tail -n 1", "got2" },
+                                new[] { "nosuchcmd 2>&1 | grep -c \"not found\"", "1" },
+                                new[] { "echo x > \"/data/.. /adeeboshell-escape.txt\"", "~read-only" },
+                                new[] { "cd /data/selftest-sh2; echo z > z.txt; cp z.txt ~/adeeboshell-cp-check.txt 2>&1 | grep -c read-only", "1" },   // hunt-5: the fence, for cp and mv too
+                                new[] { "cd /data/selftest-sh2; mv z.txt ~/adeeboshell-mv-check.txt 2>&1 | grep -c read-only; test -f z.txt && echo kept", "1\nkept" },
+                                new[] { "echo hello | sed 's/l/L/g; s/o/0/'", "heLL0" },   // hunt-5: sed's ';'
+                                new[] { "f=report.txt; echo \"$f\"bak", "report.txtbak" },   // round 6 M-3: a quote ends the name
+                                new[] { "x=ab; echo a\"$x\"b $x\\y", "aabb aby" },
+                                new[] { "printf 'a;b\\na;b\\n' | sed '2s/a;b/c/'", "a;b\nc" },   // round 6: an address in front of s
+                                new[] { "d=/pages; echo \"$d\"/sh*", "/pages/shell" },   // round 6 D2-2
+                                new[] { "echo /pages/[s]hell", "/pages/shell" },   // round 6 D2-5
+                                new[] { "f() { for a in \"$@\"; do echo \"[$a]\"; done; }; f \"x y\" z", "[x y]\n[z]" },   // round 6 D2-3
+                                new[] { "echo ${nope:-hello world}; y=ok; echo ${nope:-${y}}", "hello world\nok" },   // round 6 D2-4
+                                new[] { "readonly RR=1; for RR in 2; do echo in; done 2>&1 | grep -c readonly", "1" },   // round 6 D2-6
+                                new[] { "echo $((010)) $((0x10)) $((2#101)) $((5 & 3)) $((1 << 4)) $((3 > 2 ? 10 : 20))", "8 16 5 1 16 10" },   // hunt-6 D2-9/D2-10
+                                new[] { "x=5; echo $((x++)) $x $((x += 4))", "5 6 10" },
+                                new[] { "which nosuchthing >/dev/null; echo $?", "1" },   // hunt-6 D2-11
+                                new[] { "printf 'hello\\n' | head -c 3", "hel" },   // hunt-6 D2-14
+                                new[] { "printf 'x a\\ny a\\nz b\\n' | uniq -f 1", "x a\nz b" },   // hunt-6 D2-15
+                                new[] { "printf 'a\\\\b\\n' | { read x; echo $x; }", "ab" },   // hunt-6 D2-16
+                                new[] { "printf 'abc' | { read v; echo $?; }", "1" },
+                                new[] { "y=world; echo ${y/o/[&]}; x=a/b/c; echo ${x//\\//_}", "w[o]rld\na_b_c" },   // hunt-6 D2-18
+                                new[] { "echo /pag*/shell", "/pages/shell" },   // hunt-6 D2-19
+                                new[] { "echo aF9 | tr '[:xdigit:]' '#'", "###" },   // hunt-6 D2-20
+                                new[] { "printf '\"a b\" c\\n' | xargs -n 1 echo", "a b\nc" },   // hunt-6 D2-21
+                                new[] { "seq -w 8 10 | tr '\\n' ' '; seq 0 0.5 1 | tr '\\n' ' '", "08 09 10 0.0 0.5 1.0" },   // hunt-6 D2-22
+                                new[] { "printf '%e %u %.*s\\n' 1.5 42 2 hello", "1.500000e+00 42 he" },   // hunt-6 D2-24
+                                new[] { "printf 'a 2 x\\nb 2 a\\n' | sort -k2,2 | head -n 1; printf 'b2\\na10\\n' | sort -n | head -n 1", "a 2 x\na10" },   // hunt-6 D2-25 + last resort
+                                new[] { "echo 'a;b' | sed 's/;/-/'", "a-b" },
+                                new[] { "f() { read x; echo got$x; }; printf '1\\n2\\n' | { f; f; }", "got1\ngot2" },   // hunt-5: one input stream
+                                new[] { "grep -A 2 x nofile 2>&1 | grep -c \"isn't in this grep\"", "1" },   // hunt-5: never misread
+                                new[] { "seq 1 8 | head -n -5", "1\n2\n3" },
+                                new[] { "rm /data/selftest-sh2/no-such-file 2>/dev/null; echo $?", "1" },
+                                new[] { "printf 'x 10\\n2 y\\n1\\n' | sort -n | head -n 1", "x 10" },
+                                new[] { "printf 'a\\n' | awk 'END {print \"e\"; exit}'", "e" },   // review A1: a trailing space never walks out of /data
+                                new[] { "touch ~/adeeboshell-ro-check.txt 2>&1 | grep -c read-only; test -f ~/adeeboshell-ro-check.txt && echo wrote || echo kept", "1\nkept" },   // 1.1.6: your own files are read-only here
+                                new[] { "echo debug >&2 | wc -l", "0" },
+                                new[] { "cd /data/selftest-sh2; > made.txt; test -f made.txt && echo made", "made" },
+                                new[] { "cd /data/selftest-sh2; < nope.txt; echo $?", "1" },
+                                new[] { "F=\"a b\"; echo hi > $F; echo $?", "1" },
+                                new[] { "cd /data/selftest-sh2; echo hi > h.txt; sha256sum h.txt > sums; sha256sum -c sums", "h.txt: OK" },
+                                new[] { "cd /data/selftest-sh2; echo x >> h.txt; sha256sum -c sums 2>/dev/null; echo $?", "1" },
+                                new[] { "echo ${NOPE:-fallback} ${#HOME}", "fallback 5" },
+                                new[] { "f=report.tar.gz; echo ${f%%.*} ${f#*.}", "report tar.gz" },
+                                new[] { "x=0; echo $((x && 10/x))", "0" },
+                                new[] { "FOO=bar env | grep -c FOO=bar", "1" },
+                                new[] { "A=1 B=2; echo $A$B", "12" },
+                                new[] { "printf 'loss 1\\naverage 2\\nx\\n' | grep -c 'loss\\|average'", "2" },
+                                new[] { "printf 'loss 1\\naverage 2\\nx\\n' | grep -cE 'loss|average'", "2" },
+                                new[] { "echo a12b | sed 's/[0-9]\\+/N/'", "aNb" },
+                                // hunters11 L-6 / L-9 / L-10 / L-12 / L-14 / L-17
+                                new[] { "printf 'a\\nb\\nc\\nd\\n' | sed '2,/c/d' | tr -d '\\n'", "ad" },
+                                new[] { "printf 'x\\nSTART\\ny\\nEND\\nz\\n' | sed -n '/START/,/END/p' | wc -l", "3" },
+                                new[] { "printf 'a\\nb\\nc\\n' | sed '/b/,$s/./Z/' | tr -d '\\n'", "aZZ" },
+                                new[] { "printf '1\\n2\\n3\\n' | sed '3,1d' | tr -d '\\n'", "12" },
+                                new[] { "echo abc | tr -d a b 2>&1", "~extra operand 'b'" },
+                                new[] { "f() { echo hi; }; type f; type for", "f is a function (defined in this session)\nfor is a shell keyword" },
+                                new[] { "printf 'hello\\n' | while read -n 3 x; do echo $x; break; done", "hel" },
+                                new[] { "cat 2>&1; echo $?", "~nothing to read" },
+                                new[] { "open markets extra 2>&1; echo $?", "~one page at a time" },
+                                new[] { "printf 'a\\nb\\n' | awk 'BEGIN {print \"start\"}' | wc -l", "1" },
+                                new[] { "printf 'a\\nb\\na\\n' | awk '{n[$1]++} END {print n[\"a\"]}'", "2" },
+                                new[] { "echo 'x y' | awk '{print $1 $2}'", "xy" },
+                                new[] { "printf '1\\n2\\n' | awk '{s += $1 * 2} END {print s}'", "6" },
+                                new[] { "echo 'a  b' | awk -F' ' '{print $2}'", "b" },
+                                new[] { "echo -n abc | md5sum", "900150983cd24fb0d6963f7d28e17f72  -" },
+                                new[] { "printf '%s\\n' a b c | wc -l", "3" },
+                                new[] { "printf '%05.1f|%-3s|' 3.14159 x", "003.1|x  |" },
+                                new[] { "printf 'a\\na\\nb\\n' | uniq -d", "a" },
+                                new[] { "echo a,b,c | cut -d , -f 3,1", "a,c" },
+                                new[] { "echo ab12cd3 | tr -cd 0-9", "123" },
+                                new[] { "cd /data/selftest-sh2; wc -l loop.txt loop.txt | tail -n 1", "4 total" },
+                                new[] { "echo hi | cat -", "hi" },
+                                new[] { "[ -f nope.txt; echo $?", "2" },
+                                new[] { "echo 'x y z' | while read a b; do echo $b; done", "y z" },
+                                new[] { "cd /data/selftest-sh2; echo one > m1; echo two > m2; mv m1 m2; cat m2", "one" },
+                                new[] { "cd /data/selftest-sh2; mkdir -p d1; cp -r d1 d1/inner 2>/dev/null; echo $?", "1" },
+                                new[] { "cd /data/selftest-sh2; touch -c nothere.txt; test -e nothere.txt || test -e ./-c || echo none", "none" },
+                                new[] { "echo /proc/mem*", "/proc/meminfo" },
+                                new[] { "cd /data/selftest-sh2; printf 'sweep 192.0.2.0/30\\n' > g.sh; ./g.sh 2>&1", "~skipped" },
+                                new[] { "cd /data/selftest-sh2; printf 'source g.sh --yes\\n' > g2.sh; ./g2.sh 2>&1", "~only counts when you type it" },
+                                new[] { "cd /data/selftest-sh2; printf 'parallel --yes echo {} ::: a\\n' > g3.sh; ./g3.sh 2>&1", "~only counts when you type it" },
+                                new[] { "cd /data/selftest-sh2; printf './r.sh\\n' > r.sh; ./r.sh 2>&1", "~nested 8 deep" },
+                                new[] { "rm -rf /home 2>&1", "~read-only" },
+                                new[] { "cd /data/selftest-sh2; echo z > keep.txt; rm keep.txt 2>&1", "~add -f in a script" },
+                                new[] { "host example.com 1.1.1.1 2>&1", "~chosen server" },
+                                new[] { "uptime | grep -c \"load average\"", "1" },
+                                new[] { "id | grep -c \"^uid=[0-9]\"", "1" },
+                                new[] { "lsblk | head -1 | grep -c NAME", "1" },
+                                new[] { "df -h | head -1 | grep -c Size", "1" },
+                                new[] { "cat /proc/loadavg | awk '{print NF}'", "5" },
+                                new[] { "x=b; case $x in a) echo A;; b|c) echo BC;; *) echo other;; esac", "BC" },
+                                new[] { "case z in [!a-y]) echo noty;; esac; case hello in \"h*\") echo lit;; h*) echo glob;; esac", "noty\nglob" },
+                                new[] { "n=1; f() { local n=5; echo \"$n $1 $#\"; return 3; }; f a b; echo $? $n", "5 a 2\n3 1" },
+                                new[] { "fact() { if [ $1 -le 1 ]; then echo 1; else echo $(( $1 * $(fact $(( $1 - 1 ))) )); fi; }; fact 5", "120" },
+                                new[] { "loop() { loop; }; loop 2>&1", "~100 deep" },
+                                new[] { "a=(x \"y z\" w); echo ${a[1]} ${#a[@]}; for i in \"${a[@]}\"; do echo \"[$i]\"; done", "y z 3\n[x]\n[y z]\n[w]" },
+                                new[] { "a=(1 2); a+=(3); a[5]=6; unset a[0]; echo ${a[@]} ${#a[@]} ${!a[@]} ${a[-1]}", "2 3 6 3 1 2 5 6" },
+                                new[] { "x=1; (x=2; echo $x); echo $x; { echo b; echo a; } | sort", "2\n1\na\nb" },
+                                new[] { "echo (hi) 2>&1", "~unexpected" },
+                                new[] { "true & echo next; wait", "~next" },
+                                new[] { "r=; case \"a*b\" in *\"*\"*) r=star;; esac; case hello in *\"ell\"*) r=\"$r in\";; esac; case ^ in [^x]) r=\"$r caret\";; esac; echo $r", "star in caret" },
+                                new[] { "Z=9 printenv Z; printenv NOPE_NOT_SET; echo $?", "9\n1" },
+                                new[] { "printf 'x,3\\ny,1\\n' | sort -t, -k2 | head -1; printf 'b 2\\na 10\\nc 1\\n' | sort -n -k2 | tail -1", "y,1\na 10" },
+                                new[] { "(echo out; echo err >&2) 2>&1 >/dev/null", "err" },
+                                new[] { "cd /data/selftest-sh2; (echo o; echo e >&2) > both.txt 2>&1; cat both.txt; echo x > a1.txt; echo y > a1.txt > a2.txt; wc -c < a1.txt", "o\ne\n0" },
+                                new[] { "printf 'a\\nb\\n' | awk 'END{print NR}'; echo x | awk '{print /x/}'; awk 'BEGIN{a[1]=1;a[2]=2; print length(a), (\"10\" < \"9\")}'", "2\n1\n2 1" },
+                                new[] { "awk 'BEGIN{srand(5); x=rand(); srand(5); print (x==rand())}'; awk 'BEGIN{break}' 2>&1", "1\nawk: break outside a loop" },
+                                new[] { "echo \"a b c\" | { read -a arr; echo ${#arr[@]} ${arr[2]}; }; echo q | read -z x 2>&1", "~not a flag" },
+                                new[] { "f() { echo in; exit 3; }; echo a | f; echo \"after $?\"", "in\nafter 3" },
+                                new[] { "cd /data/selftest-sh2; printf 'one two\\r\\nthree' > wc.txt; wc wc.txt", "1       3       14 wc.txt" },
+                                new[] { "cd /data; rm -rf selftest-sh2; echo cleaned", "cleaned" },
+                            };
+                            foreach (var cs0 in cases)
+                            {
+                                fv.TestShellReset(); int ex; string got;
+                                try { got = fv.TestShell(cs0[0], out ex).Trim(); } catch (Exception e) { bad.Add("shell \"" + cs0[0] + "\" threw " + e.GetType().Name + " " + e.Message); continue; }
+                                bool okc = cs0[1].StartsWith("~", StringComparison.Ordinal) ? got.Contains(cs0[1].Substring(1)) : got.EndsWith(cs0[1], StringComparison.Ordinal);
+                                if (!okc) bad.Add("shell \"" + cs0[0] + "\" gave \"" + got.Replace("\n", "\\n") + "\", wanted \"" + cs0[1].Replace("\n", "\\n") + "\"");
+                            }
+                            fv.TestShellReset();
+                            { string dl = fv.TestDuLinks(); if (dl != null) bad.Add("du: " + dl); }
+                            // nano and vim: typing, cut, undo, :wq
+                            var nano = new TermEditor(false, null, null, null); foreach (var ch in "echo hi") nano.Char(ch); nano.Key(new KeyEventArgs(Keys.Enter)); foreach (var ch in "ls") nano.Char(ch);
+                            if (nano.Body != "echo hi\nls\n") bad.Add("nano: typed text came out as \"" + nano.Body.Replace("\n", "\\n") + "\"");
+                            string saved = null; bool closed = false;
+                            var vim = new TermEditor(true, "x.sh", "x.sh", "one\ntwo\nthree\n"); vim.Save = (to, b) => { saved = b; return null; }; vim.Closed = () => closed = true;
+                            vim.Char('j'); vim.Char('d'); vim.Char('d'); if (vim.Body != "one\nthree\n") bad.Add("vim: jdd left \"" + vim.Body.Replace("\n", "\\n") + "\"");
+                            vim.Char('u'); if (vim.Body != "one\ntwo\nthree\n") bad.Add("vim: u didn't undo the dd");
+                            vim.Char('o'); foreach (var ch in "new") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Escape)); foreach (var ch in ":wq") vim.Char(ch); vim.Key(new KeyEventArgs(Keys.Enter));
+                            if (saved != "one\ntwo\nnew\nthree\n" || !closed) bad.Add("vim: o + :wq saved \"" + (saved ?? "(nothing)").Replace("\n", "\\n") + "\"" + (closed ? "" : " and didn't close"));
+                            // #49: nano ^X on a new file -> Y -> a name -> Enter saves it and leaves
+                            string nsaved = null; bool nclosed = false;
+                            var n2 = new TermEditor(false, null, null, null); n2.Save = (to, b) => { nsaved = to + "|" + b; return null; }; n2.Closed = () => nclosed = true;
+                            foreach (var ch in "hi") n2.Char(ch); n2.Key(new KeyEventArgs(Keys.Control | Keys.X)); n2.Char('y'); foreach (var ch in "f.txt") n2.Char(ch); n2.Key(new KeyEventArgs(Keys.Enter));
+                            if (nsaved != "f.txt|hi\n" || !nclosed) bad.Add("nano: ^X Y name Enter on a new file " + (nsaved == null ? "didn't save" : "saved " + nsaved.Replace("\n", "\\n")) + (nclosed ? "" : " and didn't leave"));
+                            // #90: undoing back to the saved text isn't "modified" - :q leaves
+                            bool qclosed = false; var v2 = new TermEditor(true, "y.sh", "y.sh", "a\n"); v2.Closed = () => qclosed = true;
+                            v2.Char('x'); v2.Char('u'); foreach (var ch in ":q") v2.Char(ch); v2.Key(new KeyEventArgs(Keys.Enter));
+                            if (!qclosed) bad.Add("vim: after x then u, :q still said 'no write since last change'");
+                            // C2 masking, #18 the editor's save keeps the file's shape
+                            if (!fv.TestMaskHides()) bad.Add("shell: a secret after ; / NAME=value / time / inside $( ) is echoed in clear");
+                            string shapeFile = System.IO.Path.Combine(Program.DataDir, "selftest-shape.txt");
+                            try { if (!fv.TestShapeRoundTrip(shapeFile)) bad.Add("editor: saving changed the file's BOM, line endings, tabs or last line"); } finally { try { System.IO.File.Delete(shapeFile); } catch (System.IO.IOException) { } }
+                        }
+                        var pages = new[] { "overview", "toolbox", "gamer", "stream", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "sports", "settings", "about", "points", "shell", "lab" };   // bug-hunt R2-020: every page, settings/about/points/shell included
+                        foreach (var dark in new[] { false, true })
+                        {
+                            Theme.Apply(dark); fv.Invalidate(true);
+                            foreach (var sz in new[] { new Size(1280, 860), new Size(1024, 700), new Size(1920, 1080) })
+                            {
+                                fv.Size = sz; pump(300);
+                                foreach (var pg in pages)
+                                {
+                                    string at = pg + " " + sz.Width + "x" + sz.Height + (dark ? " dark" : "");
+                                    try { fv.TestShow(pg); } catch (Exception e) { bad.Add(at + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
+                                    pump(700);
+                                    var cs = fv.TestCanvases();
+                                    foreach (var c in cs)
+                                    {
+                                        var sw = System.Diagnostics.Stopwatch.StartNew(); c.Refresh(); sw.Stop();
+                                        if (sw.ElapsedMilliseconds > 400) bad.Add(at + ": " + c.Name + " takes " + sw.ElapsedMilliseconds + " ms to draw");
+                                        { float wd = fv.TestWidest(c); if (wd > c.ClientSize.Width + 4) bad.Add(at + ": " + c.Name + " runs past the window (something at " + Math.Round(wd) + " > " + c.ClientSize.Width + ")"); }
+                                    }
+                                    if (sz.Width != 1280 || dark) continue;   // idle redraw: once per page is enough
+                                    foreach (var c in cs) { c.Paints = 0; c.PaintArea = 0; }
+                                    pump(5000);
+                                    foreach (var c in cs)
+                                    {
+                                        double full = c.PaintArea / Math.Max(1.0, (double)c.ClientSize.Width * c.ClientSize.Height);
+                                        if (full > 2.5) bad.Add(pg + ": " + c.Name + " redrew " + full.ToString("0.0", CultureInfo.InvariantCulture) + " whole pages in 5 s while idle (" + c.Paints + " paints)");
+                                    }
+                                }
+                            }
+                        }
+                        Theme.Apply(false);
+                        // the other languages: longer words are where text runs off the page - a new window per language, as after a switch
+                        string oldL = L.Code; var oldFonts = Draw.SaveFonts();
+                        // R2-195: Arabic (the right-to-left one) also at full HD and in the dark theme
+                        foreach (var lcv in new[] { "fr", "es", "bn", "ar", "ar:1920:dark" })
+                        {
+                            var lcp = lcv.Split(':'); string lc = lcp[0]; var lsz = lcp.Length > 1 ? new Size(1920, 1080) : new Size(1024, 700); bool ldark = lcp.Length > 2;
+                            try
+                            {
+                                L.Use(lc); Draw.UseLanguageFonts(); if (ldark) Theme.Apply(true);
+                                var lv = new FullView(icon, M); lv.WindowState = FormWindowState.Normal; lv.Opacity = 0; lv.ShowInTaskbar = false; lv.Size = lsz; lv.Show(); pump(800);
+                                try
+                                {
+                                    foreach (var pg in pages)
+                                    {
+                                        try { lv.TestShow(pg); } catch (Exception e) { bad.Add(lcv + " " + pg + ": opening threw " + e.GetType().Name + " " + e.Message); continue; }
+                                        pump(400);
+                                        foreach (var c in lv.TestCanvases())
+                                        {
+                                            try { c.Refresh(); } catch (Exception e) { bad.Add(lcv + " " + pg + ": drawing threw " + e.GetType().Name); }
+                                            if (lv.TestWidest(c) > c.ClientSize.Width + 4) bad.Add(lcv + " " + pg + ": " + c.Name + " runs past the window");
+                                        }
+                                    }
+                                }
+                                finally { lv.Close(); lv.Dispose(); }
+                            }
+                            finally { L.Use(oldL); Draw.RestoreFonts(oldFonts); if (ldark) Theme.Apply(false); }   // the English fonts back, never Bengali / Segoe left behind for the tests after
+                        }
+                        // a real freeze shows the card, and it goes when the window answers
+                        fv.TestShow("overview"); pump(500); int shown0 = FreezeCard.Shown;
+                        System.Threading.Thread.Sleep(3300); pump(2500);
+                        if (FreezeCard.Shown == shown0) bad.Add("freeze card: a 3 s freeze didn't show it");
+                        if (FreezeCard.Visible) bad.Add("freeze card: still up after the window answered");
+                        // waking from sleep isn't a freeze
+                        int shown1 = FreezeCard.Shown; fv.TestSlept(); pump(2500);
+                        if (FreezeCard.Shown != shown1 || FreezeCard.Visible) bad.Add("freeze card: shown after a sleep");
+                        // the Time machine's "Opened from" ends when you leave
+                        fv.OpenTimeAt(DateTime.Now.AddMinutes(-2), "sitting test"); pump(400);
+                        if (fv.TestOpenedFrom != "sitting test") bad.Add("Time machine: Opened from not set");
+                        fv.TestShow("overview"); pump(200); if (fv.TestOpenedFrom != "") bad.Add("Time machine: Opened from still set after leaving");
+                    }
+                    finally { fv.Close(); fv.Dispose(); Theme.Apply(false); }
+                }
+                if (bad.Count > 0) throw new InvalidOperationException(bad.Count + " problem(s):\n  " + string.Join("\n  ", bad.Distinct().Take(80)));
             });
             T("tool pictures: each one draws before a run and with its Example, and the Example fills it", () =>
             {
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
-                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); }
+                    try { string bad = fv.VisualCheck(); if (bad != "") throw new InvalidOperationException(bad); string gc = Glyphs.Check(); if (gc != "") throw new InvalidOperationException("icons: " + gc); using (var fb = new Bitmap(64, 64)) using (var fg = Graphics.FromImage(fb)) foreach (var fm in BuddyReact.All) { BuddyReact.Set(fm, 5); Draw.Buddy(fg, new RectangleF(4, 4, 56, 56), new Snap(), false); } BuddyReact.Set("smug", 0); if (FullView.TmWorse(10, 40, 10, true) != "w" || FullView.TmWorse(80, 40, 10, false) != "w" || FullView.TmWorse(40, 20, 10, true) != "b" || FullView.TmWorse(10, 15, 10, true) != "" || FullView.TmWorse(double.NaN, 5, 1, true) != "") throw new InvalidOperationException("pinned-moment compare marks worse/better wrongly"); string tc = fv.TopicCheck(); if (tc != "") throw new InvalidOperationException("toolbox topics: " + tc); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
+            });
+            T("network lab: the page is in the exe, the path hand-over, Edge's localStorage read back, faults earn once", () =>
+            {
+                var bad = new List<string>();
+                using (var rs = typeof(LabLink).Assembly.GetManifestResourceStream("AdeeboMeter.lab.html")) if (rs == null || rs.Length < 20000) bad.Add("lab.html not packed into the exe");
+                var sn = BrowserStore.Snappy(new byte[] { 9, 0x08, (byte)'a', (byte)'b', (byte)'c', 0x09, 3 }); if (System.Text.Encoding.ASCII.GetString(sn) != "abcabcabc") bad.Add("snappy: " + System.Text.Encoding.ASCII.GetString(sn));
+                string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "am-labtest-" + Guid.NewGuid().ToString("N")), ldb = System.IO.Path.Combine(dir, "Default", "Local Storage", "leveldb");
+                try
+                {
+                    System.IO.Directory.CreateDirectory(ldb);
+                    var key = new List<byte>(System.Text.Encoding.ASCII.GetBytes("_file://")); key.Add(0); key.Add(1); key.AddRange(System.Text.Encoding.ASCII.GetBytes("adeebometer-lab:solved"));
+                    var val = new List<byte> { 1 }; val.AddRange(System.Text.Encoding.ASCII.GetBytes("[\"mtu\",\"bogus\"]"));
+                    var log = new List<byte>(BrowserStore.TestLog(7, key.ToArray(), val.ToArray()));
+                    var damaged = BrowserStore.TestLog(9, key.ToArray(), System.Text.Encoding.ASCII.GetBytes("\u0001[\"dns\"]")); damaged[damaged.Length - 2] ^= 0x55; log.AddRange(damaged);   // a half-written record: never read
+                    System.IO.File.WriteAllBytes(System.IO.Path.Combine(ldb, "000003.log"), log.ToArray());
+                    string got; var ls = BrowserStore.LocalStorage(dir, "adeebometer-lab:");
+                    if (!ls.TryGetValue("adeebometer-lab:solved", out got) || got != "[\"mtu\",\"bogus\"]") bad.Add("localStorage read back: " + (got ?? "nothing"));
+                    if (BrowserStore.Stamp(dir) == "") bad.Add("no folder fingerprint");
+                }
+                finally { try { System.IO.Directory.Delete(dir, true); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { } }
+                if (!Points.Known("nlab.mtu") || Points.Known("nlab.bogus") || Points.Value("nlab.mtu") != 2) bad.Add("nlab points keys");
+                foreach (var who in new[] { "game", "view", "trade", "stream", "server" })
+                {
+                    string j = LabLink.PathJson(M, who, "203.0.113.9", "Test \"quoted\" server", 31, 2, 18);
+                    if (!j.StartsWith("{\"name\":", StringComparison.Ordinal) || !j.Contains("\"measured\":true") || !j.EndsWith("]}", StringComparison.Ordinal) || !j.Contains("31 ms") || j.Contains("Test \"quoted")) bad.Add("path json (" + who + ")");
+                }
+                if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
             T("UI 1.1.5 wave 3: search finds tools, forgives typos, groups; tool chips make sense", () =>
             {
@@ -1068,13 +1686,54 @@ namespace AdeeboMeter
                 if (FullView.AssistFor("URL - e.g. github.com or https://203.0.113.5", "10.0.0.1", "", null, out br).Any(z => z.Contains(":") && !z.Contains("."))) throw new InvalidOperationException("URL example read as choices");
                 if (FullView.AssistFor("host:port - e.g. smtp.office365.com:587", "10.0.0.1", "", null, out br).FirstOrDefault() != "10.0.0.1:587" || FullView.AssistFor("Second saved result (.txt)", "10.0.0.1", "", null, out br).Count != 0 || !br || FullView.AssistFor("Name this run - e.g. VPN off", "10.0.0.1", "", null, out br).Count != 0 || FullView.AssistFor("Hosts each subnet needs - e.g. 200, 60, 12, 2", "", "", null, out br).Count != 0) throw new InvalidOperationException("host:port chip has no port");
                 if (FullView.AssistFor("Shared secret", "10.0.0.1", "x", null, out br).Count != 0) throw new InvalidOperationException("chips on a secret");
-                if (FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2") != "home,mine1,toolbox,mine2" || Cfg.NavClean("toolbox,home,bogus,gamer,a,b,c,d,e,f,g,time,learn,story,security") .Split(',').Length > 7 || !Cfg.NavClean("toolbox").StartsWith("home,", StringComparison.Ordinal)) throw new InvalidOperationException("tab order rules wrong: " + FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2"));
+                if (FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2") != "home,mine1,toolbox,mine2" || Cfg.NavClean("toolbox,home,bogus,gamer,a,b,c,d,e,f,g,time,learn,story,security") .Split(',').Length > 8 || !Cfg.NavClean("toolbox").StartsWith("home,", StringComparison.Ordinal)) throw new InvalidOperationException("tab order rules wrong: " + FullView.NavAfterDelete("home,mine1,toolbox,mine3,mine2", "mine2"));
                 using (var icon = Theme.MakeIcon(16))
                 {
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Show(); Application.DoEvents();
                     try { string bad = fv.AssistCheck(sb); if (bad != "") throw new InvalidOperationException(bad); }
                     finally { fv.Close(); fv.Dispose(); }
                 }
+            });
+            T("buddy lines in Spanish, Arabic and Bengali: each file passes the tone rules, every persona speaks the language, nothing is blank", () =>
+            {
+                var bad = new List<string>(); string was = L.Code, pp = Lines.Persona; bool ps = Voice.Serious; int n = 0;
+                try
+                {
+                    Voice.Serious = false;
+                    foreach (var code in new[] { "es", "ar", "bn" })
+                    {
+                        foreach (var id in Lines.Moods.Concat(Lines.Personas.Select(p => p[0])))
+                        {
+                            string raw = Knowledge.RawText("lines-" + id + "-" + code); if (raw == "") { bad.Add(id + "-" + code + ": no file"); continue; }
+                            bad.AddRange(Lines.Check(id + "-" + code, raw)); var tp = Lines.Parse(raw); n += tp.Values.Sum(l => l.Count);
+                            // R2-083: measured against the English file - most lines differ from English (Spanish too), a key whose every
+                            // English line has {v} keeps it, and the file isn't much shorter than the English one
+                            var ep = Lines.Parse(Knowledge.RawText("lines-" + id)); int en = ep.Values.Sum(l => l.Count), tn = tp.Values.Sum(l => l.Count), same = 0, all = 0;
+                            foreach (var kv in tp)
+                            {
+                                List<string> el; if (!ep.TryGetValue(kv.Key, out el)) continue;
+                                var es = new HashSet<string>(el, StringComparer.OrdinalIgnoreCase); foreach (var t in kv.Value) { all++; if (es.Contains(t)) same++; }
+                                if (el.Count > 0 && el.All(t => t.Contains("{v}")) && kv.Value.Any(t => !t.Contains("{v}"))) bad.Add(id + "-" + code + "/" + kv.Key + ": a line lost {v}");
+                            }
+                            if (all > 0 && same * 2 > all) bad.Add(id + "-" + code + ": " + same + " of " + all + " lines are still English");
+                            if (en > 0 && tn < en * 0.9) bad.Add(id + "-" + code + ": " + tn + " lines against " + en + " in English");
+                        }
+                        L.Use(code); if (L.Code != code) { bad.Add(code + ": language didn't load"); continue; }
+                        if (L.Count < 3000) bad.Add(code + ": the app's table has only " + L.Count + " lines");   // R2-177 / R2-182: a gutted table fails here
+                        foreach (var p in Lines.Personas.Select(z => z[0]))
+                        {
+                            Lines.Persona = p;
+                            foreach (var key in new[] { "app.open", "all.good", "wifi.drops", "stream.on", "trade.closed", "view.switch" })
+                            {
+                                string t = Lines.Line(key, "42"); if (t == "" || t.Contains("{")) { bad.Add(code + "/" + p + "/" + key + ": '" + t + "'"); continue; }
+                                if (code != "es" && !t.Any(c => code == "ar" ? c >= '\u0600' && c <= '\u06ff' : c >= '\u0980' && c <= '\u09ff')) bad.Add(code + "/" + p + "/" + key + ": English - '" + t + "'");
+                            }
+                        }
+                    }
+                }
+                finally { L.Use(was); Lines.Persona = pp; Voice.Serious = ps; }
+                if (n < 3 * 2500) bad.Add("only " + n + " translated lines");
+                if (bad.Count > 0) throw new InvalidOperationException(bad.Count + ": " + string.Join(" · ", bad.Take(8)));
             });
             T("buddy lines: every built-in line passes the tone rules, every persona falls back, nothing is blank", () =>
             {
@@ -1319,6 +1978,7 @@ namespace AdeeboMeter
                     Cfg.WidgetStyle = "speed"; Cfg.WUnits = "bits"; string k1 = Draw.ChipKey(sn); sn.Headline = "something else"; if (Draw.ChipKey(sn) != k1) bad.Add("the speed strip redraws for words it doesn't show");
                     sn.Down = 12.44; if (Draw.ChipKey(sn) != k1) bad.Add("the strip redraws for a digit it doesn't show"); sn.Down = 13.9; if (Draw.ChipKey(sn) == k1) bad.Add("the strip didn't change with its number");
                     if (Draw.Rate(0.85, true) != (0.85 * 1000).ToString("0", CultureInfo.CurrentCulture) + " kb/s" || Draw.Rate(940, true) != "940 Mb/s") bad.Add("rates in bits: " + Draw.Rate(0.85, true));
+                    if (Draw.Rate(0, true) != "0 kb/s" || Draw.Pair(0.85, 0.12) != "↓ " + (850).ToString("0", CultureInfo.CurrentCulture) + "  ↑ " + (120).ToString("0", CultureInfo.CurrentCulture) + " kb/s" || !Draw.Pair(12, 0.5).Contains("Mb/s") || !Draw.Pair(12, 0.5).Contains("kb/s")) bad.Add("quiet line / pair: " + Draw.Rate(0, true) + " · " + Draw.Pair(0.85, 0.12));   // 21 Nov: never "0.0 Mb/s" for a quiet line
                     Cfg.WUnits = "bytes"; if (Draw.Rate(100, true) != (12.5).ToString("0", CultureInfo.CurrentCulture) + " MB/s") bad.Add("rates in bytes: " + Draw.Rate(100, true));
                 }
                 finally { Cfg.WUnits = u0; Cfg.WidgetStyle = w0; }
@@ -1343,6 +2003,9 @@ namespace AdeeboMeter
                         if (cr(Theme.Ink, Theme.Bg) < 7) bad.Add(n + ": text on the page");
                         if (cr(Theme.Muted, Theme.Card) < 4.5) bad.Add(n + ": grey text " + cr(Theme.Muted, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));
                         for (int l = 0; l < 3; l++) if (cr(Theme.LvText(l), Theme.LvSoft(l)) < 4.5) bad.Add(n + ": level " + l + " text " + cr(Theme.LvText(l), Theme.LvSoft(l)).ToString("0.0", CultureInfo.InvariantCulture));
+                        if (cr(Theme.BlueText, Theme.Card) < 4.5) bad.Add(n + ": blue text " + cr(Theme.BlueText, Theme.Card).ToString("0.0", CultureInfo.InvariantCulture));   // round 6 H6-ML3
+                        // round 6 ML-3: the grade pills - level text over the level colour at 40/255 on a card (light palettes)
+                        if (!Theme.Dark) { var lvc = new[] { Theme.Green, Theme.Amber, Theme.Red }; for (int l = 0; l < 3; l++) { var bg = Color.FromArgb((Theme.Card.R * 215 + lvc[l].R * 40) / 255, (Theme.Card.G * 215 + lvc[l].G * 40) / 255, (Theme.Card.B * 215 + lvc[l].B * 40) / 255); if (cr(Theme.LvText(l), bg) < 4.5) bad.Add(n + ": grade pill " + l + " " + cr(Theme.LvText(l), bg).ToString("0.0", CultureInfo.InvariantCulture)); } }
                         var gr = Theme.LvText(0); var rd = Theme.LvText(2); if (!(gr.G > gr.R && rd.R > rd.G)) bad.Add(n + ": green or red changed meaning");
                         if (cr(Theme.OnBlue, Theme.Blue) < 2.5) bad.Add(n + ": button text " + cr(Theme.OnBlue, Theme.Blue).ToString("0.0", CultureInfo.InvariantCulture));
                     }
@@ -1375,8 +2038,13 @@ namespace AdeeboMeter
             T("wave 4: UDP MTU packets, neighbour filter, speed grade, mode setting", () =>
             {
                 foreach (int n in new[] { 100, 572, 1200, 1472 }) { var d = UdpMtu.DnsPad(n); if (d.Length != n) throw new InvalidOperationException("DNS pad " + n + " -> " + d.Length); if (!UdpMtu.IsDns(new byte[] { d[0], d[1], 0x81, 0x80, 0, 1, 0, 0, 0, 0, 0, 0 }, d)) throw new InvalidOperationException("DNS reply match"); }
-                var q = UdpMtu.Quic(1172); if (q.Length != 1172 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
+                var q = UdpMtu.Quic(1200); if (q.Length != 1200 || (q[0] & 0xC0) != 0xC0 || q[5] != 8) throw new InvalidOperationException("QUIC probe");
                 if (!UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }) || UdpMtu.IsVn(q)) throw new InvalidOperationException("version negotiation check");
+                {   // SEC-09: a reply that echoes our ids (swapped) passes; one with the right first bytes but other ids doesn't
+                    var vn = new byte[27]; vn[0] = 0x80; vn[5] = 8; vn[14] = 8; for (int i = 0; i < 8; i++) { vn[6 + i] = q[15 + i]; vn[15 + i] = q[6 + i]; }
+                    var fake = (byte[])vn.Clone(); fake[9] ^= 0xFF;
+                    if (!UdpMtu.IsVn(vn, q) || UdpMtu.IsVn(fake, q) || UdpMtu.IsVn(new byte[] { 0x80, 0, 0, 0, 0, 8, 1, 2 }, q)) throw new InvalidOperationException("QUIC version negotiation ids not checked");
+                }
                 if (!Reach.SameNet("192.168.1.20", "192.168.1.5") || Reach.SameNet("192.168.1.255", "192.168.1.5") || Reach.SameNet("192.168.2.20", "192.168.1.5") || Reach.SameNet("192.168.1.5", "192.168.1.5")) throw new InvalidOperationException("same network");
                 if (SpeedTest.Pick("auto").Id != "cloudflare" || SpeedTest.Pick("vultr toronto").Id != "vultr-tor-ca" || SpeedTest.Pick("ovh-ca") == null || SpeedTest.Pick("ovh montreal").Id != "ovh-ca" || SpeedTest.Pick("nowhere at all") != null) throw new InvalidOperationException("speed server pick");
                 if (!SpeedTest.SafeUrl("https://example.com/100MB.bin") || SpeedTest.SafeUrl("https://user:pw@example.com/x") || SpeedTest.SafeUrl("file:///c:/x") || SpeedTest.SafeUrl("ftp://example.com/x")) throw new InvalidOperationException("speed URL check");
@@ -1460,17 +2128,24 @@ namespace AdeeboMeter
             });
             T("languages: embedded previews load and English stays the fallback", () =>
             {
-                var fr = L.Parse(Knowledge.RawText("lang-fr"));
-                if (fr.Count < 250) throw new InvalidOperationException("French table has only " + fr.Count + " lines");
-                foreach (var kv in fr)
+                // R2-102: every table, not only French - no line twice, none empty, no number lost (Bengali and Arabic digits count)
+                foreach (var lc in new[] { "fr", "es", "ar", "bn" })
                 {
-                    if (kv.Value.Trim().Length == 0) throw new InvalidOperationException("empty translation: " + kv.Key);
-                    // numbers and placeholders must survive translation (a "20 pings" that becomes "pings" is a wrong translation)
-                    var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
-                    foreach (var n in nums) if (kv.Value.IndexOf(n, StringComparison.Ordinal) < 0) throw new InvalidOperationException("number " + n + " lost in: " + kv.Value);
+                    var tb = L.Parse(Knowledge.RawText("lang-" + lc));
+                    if (tb.Count < 2000) throw new InvalidOperationException(lc + " table has only " + tb.Count + " lines");
+                    if (L.LastDupes.Count > 0) throw new InvalidOperationException(lc + " table names a line twice: " + string.Join(" | ", L.LastDupes.Take(3)));
+                    if (L.LastBad > 0) throw new InvalidOperationException(lc + " table has " + L.LastBad + " line(s) without a tab");
+                    foreach (var kv in tb)
+                    {
+                        if (kv.Value.Trim().Length == 0) throw new InvalidOperationException(lc + ": empty translation: " + kv.Key);
+                        // numbers must survive translation (a "20 pings" that becomes "pings" is a wrong translation)
+                        var vd = new string(kv.Value.Select(ch => ch >= '\u09e6' && ch <= '\u09ef' ? (char)('0' + ch - '\u09e6') : ch >= '\u0660' && ch <= '\u0669' ? (char)('0' + ch - '\u0660') : ch).ToArray());
+                        var nums = System.Text.RegularExpressions.Regex.Matches(kv.Key, @"\d+").Cast<System.Text.RegularExpressions.Match>().Select(m => m.Value);
+                        foreach (var n in nums) if (vd.IndexOf(n, StringComparison.Ordinal) < 0 && !(lc == "ar" && n == "2")) /* Arabic's dual: "two hours" is one word */ throw new InvalidOperationException(lc + ": number " + n + " lost in: " + kv.Value);
+                    }
                 }
                 var expected = new Dictionary<string, string> {
-                    { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }, { "zh", "设置" }
+                    { "es", "Ajustes" }, { "ar", "الإعدادات" }, { "bn", "সেটিংস" }
                 };
                 string old = L.Code;
                 try
@@ -1670,16 +2345,16 @@ namespace AdeeboMeter
                     if (all.IndexOf(must, StringComparison.Ordinal) < 0) throw new InvalidOperationException("missing event: " + must);
                 if (h.IndexOf("Wi-Fi signal fell to 40%", StringComparison.Ordinal) < 0) throw new InvalidOperationException("wrong hint: " + h);
             });
-            T("Ctrl+Alt+A shortcut is free", () =>
+            T("Ctrl+Alt+A shortcut (a note about this PC, never a failure)", () =>
             {
                 bool running = Process.GetProcessesByName("AdeeboMeter").Length > 1;
                 if (running) { sb.AppendLine("      skipped: AdeeboMeter is running and holds it"); return; }
-                using (var hk = new HotKey(delegate { })) if (!hk.Ok) throw new InvalidOperationException("another app already uses Ctrl+Alt+A");
+                using (var hk = new HotKey(delegate { })) if (!hk.Ok) sb.AppendLine("      note: another app on this PC already uses Ctrl+Alt+A, so the open-the-window shortcut does nothing here (the corner widget and tray still open it)");   // the PC's setup, not a fault in the app
             });
             T("memory after everything", () =>
             {
                 GC.Collect(); GC.WaitForPendingFinalizers();
-                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (80 MB in normal use; up to 120 here, where every page and tool has just been opened at once)"); if (mb > 120) throw new InvalidOperationException(mb + " MB"); }
+                using (var p = Process.GetCurrentProcess()) { long mb = p.PrivateMemorySize64 / 1048576; sb.AppendLine("      private " + mb + " MB (99 MB in normal use; up to 120 here, where every page and tool has just been opened at once)"); if (mb > 120) throw new InvalidOperationException(mb + " MB"); }
             });
             T("install: paths, settings line, icon", () =>
             {
@@ -1728,7 +2403,7 @@ namespace AdeeboMeter
             foreach (var c in r.CardsCopy()) { sb.AppendLine("  [" + c.Key + "]"); foreach (var row in c.Value) sb.AppendLine("     " + row[0] + ": " + (row.Length > 1 ? row[1] : "")); }
             AppendStory(sb, r);
             File.AppendAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-check.txt"), sb.ToString() + "\n");
-            return 0;
+            return !r.Done || string.IsNullOrEmpty(r.Verdict) ? 1 : 0;   // R2-193
         }
 
         // Feeds tshark field lines from a file through the live-capture parser and prints what the Live tab would show.
@@ -1744,7 +2419,7 @@ namespace AdeeboMeter
             sb.AppendLine("-- expert");
             foreach (var e in v.Expert) sb.AppendLine(e[1] + " = " + e[2]);
             File.WriteAllText(Path.Combine(Program.WriteDir, "AdeeboMeter-parsetest.txt"), sb.ToString());
-            return 0;
+            return n > 0 && lc.Dropped >= n ? 1 : 0;   // R2-193: every line malformed is a failure
         }
     }
 }

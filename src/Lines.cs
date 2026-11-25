@@ -49,7 +49,7 @@ namespace AdeeboMeter
             {
                 if (comfort != null) return comfort;
                 comfort = new List<string[]>();
-                foreach (var l0 in Knowledge.RawText("comfort").Split('\n')) { var l = l0.Trim(); if (l == "" || l[0] == '#') continue; var p = l.Split('|'); if (p.Length == 3) comfort.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim() }); }
+                foreach (var l0 in Knowledge.RawText("comfort").Split('\n')) { var l = l0.Trim(); if (l == "" || l[0] == '#') continue; var p = l.Split('|'); if (p.Length != 3) { Program.Log("comfort: a line without exactly 3 parts was skipped (" + (l.Length > 40 ? l.Substring(0, 40) : l) + ")"); continue; } comfort.Add(new[] { p[0].Trim(), p[1].Trim(), p[2].Trim() }); }
                 return comfort;
             }
         }
@@ -126,11 +126,11 @@ namespace AdeeboMeter
         public static string Line(string key, string v, string who)
         {
             string own = OwnFor(key, v != null, who); if (own != null) return Fill(own, v, who);
-            foreach (var id in Chain(who))
+            foreach (var src in Sources(who))
             {
-                var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
+                var p = src.Value; List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
                 var ok = l.Where(t => v != null || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
-                return Fill(Pick(key, ok), v, id);
+                return Fill(Pick(key, ok), v, src.Key);
             }
             return "";
         }
@@ -160,14 +160,37 @@ namespace AdeeboMeter
         static string RawLine(string key, bool haveV, string who)
         {
             string own = OwnFor(key, haveV, who); if (own != null) return own;
-            foreach (var id in Chain(who))
+            foreach (var src in Sources(who))
             {
-                var p = Pack(id); List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
+                var p = src.Value; List<string> l; if (p == null || !p.TryGetValue(key, out l)) continue;
                 var ok = l.Where(t => haveV || t.IndexOf("{v}", StringComparison.Ordinal) < 0).Distinct().ToList(); if (ok.Count == 0) continue;
                 return Pick(key, ok);
             }
             return "";
         }
+        // where a line comes from: in a language other than English, that language's packs down the whole chain first (a
+        // persona without a line for this key gives the mood's line in the same language, not English mid-sentence), then
+        // the English packs (a key nobody translated yet)
+        static IEnumerable<KeyValuePair<string, Dictionary<string, List<string>>>> Sources(string who)
+        {
+            string code = L.Code;
+            if (code != "en") foreach (var id in Chain(who)) yield return new KeyValuePair<string, Dictionary<string, List<string>>>(id, Tr(id, code));
+            foreach (var id in Chain(who)) yield return new KeyValuePair<string, Dictionary<string, List<string>>>(id, Pack(id));
+        }
+        // a persona or mood in another language: knowledge\lines-<id>-<code>.txt (1.1.6: es, ar, bn)
+        static readonly Dictionary<string, Dictionary<string, List<string>>> trPacks = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.Ordinal);
+        static Dictionary<string, List<string>> Tr(string id, string code)
+        {
+            string key = id + "-" + code;
+            lock (k)
+            {
+                Dictionary<string, List<string>> p; if (trPacks.TryGetValue(key, out p)) return p;
+                string raw = Knowledge.RawText("lines-" + key); p = raw == "" ? null : Parse(raw);
+                if (trPacks.Count >= 8) { var keep = new HashSet<string>(Chain(Persona).Select(x => x + "-" + code), StringComparer.Ordinal); foreach (var old in trPacks.Keys.Where(z => !keep.Contains(z)).ToList()) trPacks.Remove(old); }   // R2-190: the packs in use stay
+                trPacks[key] = p; return p;
+            }
+        }
+        public static void LangChanged() { lock (k) { trPacks.Clear(); sticky.Clear(); } }
         static IEnumerable<string> Chain(string who)
         {
             var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -185,6 +208,19 @@ namespace AdeeboMeter
         public static string AddrFor(string who)
         {
             if (Addr == "name" && !string.IsNullOrWhiteSpace(Name)) return Name.Trim();
+            string en = AddrEn(who); Dictionary<string, string> w; string t;
+            return L.Code != "en" && AddrWords.TryGetValue(L.Code, out w) && w.TryGetValue(en, out t) ? t : en;
+        }
+        // the words the personas call you by, in each language with persona lines (drafts - a native speaker checks them)
+        static readonly Dictionary<string, Dictionary<string, string>> AddrWords = new Dictionary<string, Dictionary<string, string>> {
+            { "es", new Dictionary<string, string> { { "my lord", "mi señor" }, { "my lady", "mi señora" }, { "bro", "bro" }, { "sis", "hermana" }, { "captain", "capitán" }, { "sir", "señor" }, { "ma'am", "señora" },
+                     { "bestie", "bestie" }, { "friend", "amigo" }, { "matey", "grumete" }, { "player", "jugador" }, { "pal", "compañero" }, { "pilot", "piloto" }, { "flight", "director de vuelo" }, { "boss", "jefe" } } },
+            { "ar", new Dictionary<string, string> { { "my lord", "مولاي" }, { "my lady", "سيدتي" }, { "bro", "صاحبي" }, { "sis", "أختي" }, { "captain", "قبطان" }, { "sir", "سيدي" }, { "ma'am", "سيدتي" },
+                     { "bestie", "صديقي" }, { "friend", "صديقي" }, { "matey", "رفيقي" }, { "player", "لاعب" }, { "pal", "صاحبي" }, { "pilot", "كابتن" }, { "flight", "مدير الرحلة" }, { "boss", "ريّس" } } },
+            { "bn", new Dictionary<string, string> { { "my lord", "প্রভু" }, { "my lady", "মহোদয়া" }, { "bro", "ব্রো" }, { "sis", "আপু" }, { "captain", "ক্যাপ্টেন" }, { "sir", "স্যার" }, { "ma'am", "ম্যাডাম" },
+                     { "bestie", "দোস্ত" }, { "friend", "বন্ধু" }, { "matey", "সাথী" }, { "player", "প্লেয়ার" }, { "pal", "দোস্ত" }, { "pilot", "পাইলট" }, { "flight", "ফ্লাইট" }, { "boss", "বস" } } } };
+        static string AddrEn(string who)
+        {
             bool epic = who == "epic-fantasy" || who == "shakespeare" || who == "dark-ages";
             switch (Addr)
             {
@@ -245,10 +281,23 @@ namespace AdeeboMeter
             lock (k)
             {
                 if (mineRead) return mine; mineRead = true;
-                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8)); }
+                try { var f = new System.IO.FileInfo(MinePath); if (f.Exists && f.Length <= 1048576) mine = Clean(Parse(System.IO.File.ReadAllText(MinePath, System.Text.Encoding.UTF8))); else if (f.Exists) Program.Log("lines: " + MinePath + " is over 1 MB - your own lines are switched off until it's smaller (Import keeps 600)"); }   // bug-hunt L-318
                 catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
                 return mine;
             }
+        }
+        // R2-081: the same rules on load as on Import - a mine.txt edited or copied in by hand gets no special trust
+        static Dictionary<string, List<string>> Clean(Dictionary<string, List<string>> d)
+        {
+            if (d == null) return null; var o = new Dictionary<string, List<string>>(StringComparer.Ordinal); int dropped = 0;
+            foreach (var kv in d)
+            {
+                var l = new List<string>();
+                foreach (var t0 in kv.Value) { string t = Bidi.Replace(t0 ?? "", "").Trim(); if (t.Length == 0 || t.Length > 200 || Regex.IsMatch(t, @"\{(?!v\}|addr\}|Addr\})[^}]*\}")) { dropped++; continue; } l.Add(t); }
+                if (l.Count > 0) o[kv.Key] = l;
+            }
+            if (dropped > 0) Program.Log("lines: " + dropped + " of your own line(s) in mine.txt skipped (over 200 characters, or an unknown {placeholder})");
+            return o;
         }
         public static int MineCount { get { var m = Mine(); return m == null ? 0 : m.Values.Sum(l => l.Count); } }
         // a line of yours for this key, if you wrote one (picked like the others)
@@ -307,6 +356,8 @@ namespace AdeeboMeter
                 var all = new List<string>(); if (append && System.IO.File.Exists(MinePath)) all.AddRange(System.IO.File.ReadAllLines(MinePath, System.Text.Encoding.UTF8).Where(l => l.Trim() != "" && !l.StartsWith("#", StringComparison.Ordinal)));
                 all.AddRange(lines); all = all.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 LastDropped = Math.Max(0, all.Count - 600); if (LastDropped > 0) all = all.Skip(LastDropped).ToList();
+                // bug-hunt L-319: once new lines are saved, the cleared ones can't come back - their undo copy goes too
+                try { if (System.IO.File.Exists(MinePath + ".undo")) System.IO.File.Delete(MinePath + ".undo"); } catch (System.IO.IOException) { } catch (UnauthorizedAccessException) { }
                 FullView.WriteSafe(MinePath, "# My AdeeboMeter lines: key|text. {addr} = how I like to be called, {v} = the measured value.\n" + string.Join("\n", all) + "\n", false);
                 lock (k) { mineRead = false; mine = null; }
                 return true;

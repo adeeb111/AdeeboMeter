@@ -47,7 +47,7 @@ namespace AdeeboMeter
                         var until = DateTime.UtcNow.AddMilliseconds(700);
                         while (DateTime.UtcNow < until)
                         {
-                            try { var ep = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref ep); if (p == 443 ? IsVn(r) : IsDns(r, pkt)) return 1; }
+                            try { var ep = Toolkit.AnyEp(u); var r = u.Receive(ref ep); if (p == 443 ? IsVn(r, pkt) : IsDns(r, pkt)) return 1; }
                             catch (SocketException e) { if (e.SocketErrorCode == SocketError.TimedOut) break; if (e.SocketErrorCode == SocketError.ConnectionReset) return 2; throw; }   /* "port unreachable": the packet arrived (nothing listens) - the size got through */
                         }
                     }
@@ -94,10 +94,18 @@ namespace AdeeboMeter
             return b;
         }
         public static bool IsVn(byte[] r) { return r != null && r.Length >= 7 && (r[0] & 0x80) != 0 && r[1] == 0 && r[2] == 0 && r[3] == 0 && r[4] == 0; }
+        // SEC-09 (security hunt): the server's Version Negotiation echoes our connection ids, swapped (RFC 9000 17.2.1) - checked,
+        // as the DNS probe checks its id, so a spoofed reply on the LAN can't pass a size that never got through
+        public static bool IsVn(byte[] r, byte[] q)
+        {
+            if (!IsVn(r) || q == null || q.Length < 23 || r.Length < 23 || r[5] != 8 || r[14] != 8) return false;
+            for (int i = 0; i < 8; i++) if (r[6 + i] != q[15 + i] || r[15 + i] != q[6 + i]) return false;
+            return true;
+        }
         // DNS: "." NS with an EDNS OPT record carrying a padding option that makes the datagram exactly size bytes
         public static byte[] DnsPad(int size)
         {
-            int id0; lock (Rnd) id0 = Rnd.Next(65536); var id = (ushort)id0;
+            var idb = new byte[2]; using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider()) rng.GetBytes(idb); var id = (ushort)(idb[0] << 8 | idb[1]);   /* L-17: an unguessable query id */
             var head = new List<byte> { (byte)(id >> 8), (byte)id, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1 };   // RD, 1 question, 1 additional; "." NS IN
             var opt = new List<byte> { 0, 0, 41, 0x10, 0x00, 0, 0, 0, 0 };   // root, OPT, UDP size 4096, no flags
             int pad = Math.Max(0, size - head.Count - opt.Count - 2 - 4);

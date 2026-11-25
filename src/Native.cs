@@ -30,7 +30,32 @@ namespace AdeeboMeter
     static class Native
     {
         [DllImport("gdi32.dll")] public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pdv, out uint pcFonts);
+        [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey);   // the freeze watchdog: is a mouse button held right now
         [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+        // ---- the corner widget's move mode (hunters13 widget input, 24 Nov)
+        [StructLayout(LayoutKind.Sequential)] struct CURSORINFO { public int cbSize, flags; public IntPtr hCursor; public int x, y; }
+        [DllImport("user32.dll")] static extern bool GetCursorInfo(ref CURSORINFO ci);
+        // Windows hides the pointer while a finger or a pen is used (CURSOR_SUPPRESSED): the cursor moved by touch, not by a mouse
+        public static bool CursorFromTouch() { try { var ci = new CURSORINFO { cbSize = Marshal.SizeOf(typeof(CURSORINFO)) }; return GetCursorInfo(ref ci) && (ci.flags & 2) != 0; } catch (EntryPointNotFoundException) { return false; } }
+        [StructLayout(LayoutKind.Sequential)] struct PTI { public int X, Y; }
+        [DllImport("user32.dll")] static extern IntPtr WindowFromPoint(PTI p);
+        [DllImport("user32.dll")] static extern bool ScreenToClient(IntPtr h, ref PTI p);
+        [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
+        // a press or a wheel turn the unlocked widget caught, handed to the window under the pointer once the widget lets clicks
+        // through again (posted to that window - never typed or clicked as new input). The button's release reaches it by itself.
+        public static void PassOn(int msg, int keys, int data)
+        {
+            try
+            {
+                var c = System.Windows.Forms.Cursor.Position; var p = new PTI { X = c.X, Y = c.Y }; IntPtr h = WindowFromPoint(p); if (h == IntPtr.Zero) return;
+                bool wheel = msg == 0x020A || msg == 0x020E; if (!wheel) ScreenToClient(h, ref p);
+                var mk = System.Windows.Forms.Control.ModifierKeys; if ((mk & System.Windows.Forms.Keys.Control) != 0) keys |= 0x8; if ((mk & System.Windows.Forms.Keys.Shift) != 0) keys |= 0x4;   // Ctrl+wheel still zooms
+                long w = (wheel ? ((long)(short)data << 16) : ((long)(data & 0xFFFF) << 16)) | (uint)keys;
+                PostMessage(h, msg, new IntPtr(w), new IntPtr(((p.Y & 0xFFFF) << 16) | (p.X & 0xFFFF)));
+            }
+            catch (EntryPointNotFoundException) { }
+        }
+        [DllImport("user32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SystemParametersInfo(uint action, uint param, out bool value, uint winIni);
         [DllImport("kernel32.dll", SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool SetDefaultDllDirectories(uint flags);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr GetModuleHandle(string name);
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)] public static extern IntPtr GetProcAddress(IntPtr module, string name);
@@ -70,12 +95,15 @@ namespace AdeeboMeter
         [DllImport("gdi32.dll")] public static extern bool DeleteObject(IntPtr o);
         [DllImport("user32.dll")] public static extern bool DestroyIcon(IntPtr h);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr h, int msg, IntPtr w, string l);
+        [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
+        [DllImport("user32.dll")] public static extern bool ReleaseCapture();
 
         public delegate bool EnumWindowsProc(IntPtr h, IntPtr l);
         [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc cb, IntPtr l);
         [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
         [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
         [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int idx);
+        [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr h, int idx, int v);   // the widget takes clicks only while unlocked to move
         [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, [Out] char[] s, int n);
         [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
@@ -101,7 +129,14 @@ namespace AdeeboMeter
         [DllImport("dnsapi.dll")] public static extern void DnsRecordListFree(IntPtr list, int freeType);
         // The DNS name of an address: one PTR question and nothing else (Dns.GetHostEntry also looks the answer up again, a
         // second query About doesn't list). "" when there's no name. Blocks for at most what the resolver allows.
+        // bug-hunt L-297: Windows' DnsQuery has no timeout of its own - the caller waits 5 s at most (the lookup itself ends when
+        // the DNS client gives up, on its own pool thread)
         public static string PtrName(string ip)
+        {
+            var t = System.Threading.Tasks.Task.Factory.StartNew(() => PtrNameNow(ip));
+            try { return t.Wait(5000) ? t.Result : ""; } catch (AggregateException ae) { throw ae.InnerException ?? ae; }
+        }
+        static string PtrNameNow(string ip)
         {
             System.Net.IPAddress a; if (!System.Net.IPAddress.TryParse(ip ?? "", out a)) return "";
             var b = a.GetAddressBytes(); string q;
@@ -154,7 +189,7 @@ namespace AdeeboMeter
         [DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid id, uint flags, IntPtr token, out IntPtr path);   // 5 = OK to notify; else presenting / full screen / quiet
         // Windows says it's fine to pop a notification now (not presenting, not full screen, not in Focus quiet time)
-        public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch { return true; } }
+        public static bool CanNotify() { try { int s; return SHQueryUserNotificationState(out s) != 0 || s == 5; } catch (Exception e) { if (e is OutOfMemoryException) throw; return true; } }   /* L-296 */
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool QueryFullProcessImageName(IntPtr h, int flags, [Out] char[] name, ref int size);
         [DllImport("kernel32.dll")] [return: MarshalAs(UnmanagedType.Bool)] public static extern bool CloseHandle(IntPtr h);
         // Full path of a process's exe without admin (PROCESS_QUERY_LIMITED_INFORMATION); "" when Windows says no.

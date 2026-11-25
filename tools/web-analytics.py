@@ -12,21 +12,23 @@ TAG = '<script defer src="/analytics.js"></script>'
 EXCLUDED = {"app.html", "files.html", "live.html", "remote.html", "r.html", "games.html"}
 
 def install():
-    count = 0
+    count = changed = viaLocale = 0; skipped = []
     for page in DOCS.rglob("*.html"):
         if page.name in EXCLUDED:
             continue
         content = page.read_text(encoding="utf-8-sig")
         original = content
         if 'rel="canonical"' not in content or "</head>" not in content:
-            continue
+            skipped.append(str(page.relative_to(DOCS)) if 'DOCS' in globals() else str(page)); continue   # R2-186: said, not silent
         content = content.replace(TAG + "\n", "").replace(TAG, "")
         if 'src="/locale.js"' not in content:
             content = content.replace("</head>", TAG + "\n</head>", 1)
         if content != original:
-            page.write_text(content, encoding="utf-8", newline="\n")
-        count += 1
-    print(f"Analytics loader installed on {count} public pages.")
+            page.write_text(content, encoding="utf-8", newline="\n"); changed += 1
+        count += 1 if 'src="/locale.js"' not in content else 0
+        viaLocale += 1 if 'src="/locale.js"' in content else 0
+    print(f"Analytics loader tag on {count} pages ({changed} changed this run); {viaLocale} more load it through locale.js.")
+    if skipped: print(f"Skipped (no canonical link or no </head>): {len(skipped)} - " + ", ".join(skipped[:8]))
 
 if __name__ == "__main__":
     install()

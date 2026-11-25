@@ -21,7 +21,7 @@ namespace AdeeboMeter
     // (never in the Quiet corner, during a call or a problem), and as one line in the widget if you want it.
     static class Weather
     {
-        public sealed class Hour { public DateTime Utc; public double Temp = double.NaN, Feels = double.NaN; public int Code = -1, Pop = -1; }
+        public sealed class Hour { public DateTime Utc; public double Temp = double.NaN, Feels = double.NaN, Wind = double.NaN; public int Code = -1, Pop = -1, Hum = -1, WindFrom = -1; }   // 1.1.6: humidity %, wind km/h and where it comes from (degrees)
         public sealed class Place { public string Name = ""; public double Lat, Lon; }
         static readonly char[] Semi = { ';' };
         static readonly object k = new object();
@@ -40,6 +40,22 @@ namespace AdeeboMeter
             return n == "" ? "" : Line(new Place { Lat = la, Lon = lo, Name = n });
         }
         public static string Line(Place p) { return p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + ";" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture) + ";" + p.Name.Replace(";", ",").Replace("=", " ").Replace("|", " "); }
+        public static string PlaceName() { var p = Current; return p == null ? "" : p.Name.Split(',')[0].Trim(); }
+        // the forecast hour nearest a moment (a kick-off), within 90 minutes - or null
+        public static Hour HourAt(DateTime utc) { return Ahead(DateTime.UtcNow, 96).Where(h => Math.Abs((h.Utc - utc).TotalMinutes) <= 90).OrderBy(h => Math.Abs((h.Utc - utc).TotalMinutes)).FirstOrDefault(); }
+        // is the sun up at the place, at that moment? (24 Nov, his PC: a sun at 7:43 pm in November) - the sun's height worked out
+        // from the date and the place (the usual low-precision formula, good to a few minutes); -0.83 degrees is sunrise/sunset
+        public static bool DayAt(DateTime utc)
+        {
+            var p = Current; if (p == null) { int hr = utc.ToLocalTime().Hour; return hr >= 7 && hr < 18; }
+            double n = (utc - new DateTime(2000, 1, 1, 12, 0, 0, DateTimeKind.Utc)).TotalDays, rad = Math.PI / 180;
+            double L0 = (280.460 + 0.9856474 * n) % 360, g0 = ((357.528 + 0.9856003 * n) % 360) * rad;
+            double lam = (L0 + 1.915 * Math.Sin(g0) + 0.020 * Math.Sin(2 * g0)) * rad, eps = (23.439 - 0.0000004 * n) * rad;
+            double ra = Math.Atan2(Math.Cos(eps) * Math.Sin(lam), Math.Cos(lam)), dec = Math.Asin(Math.Sin(eps) * Math.Sin(lam));
+            double gmst = ((18.697374558 + 24.06570982441908 * n) % 24 + 24) % 24, ha = (gmst * 15 + p.Lon) * rad - ra, lat = p.Lat * rad;
+            double el = Math.Asin(Math.Sin(lat) * Math.Sin(dec) + Math.Cos(lat) * Math.Cos(dec) * Math.Cos(ha)) / rad;
+            return el > -0.83;
+        }
         public static Place Current
         {
             get
@@ -53,11 +69,24 @@ namespace AdeeboMeter
         public static bool Active { get { return Cfg.WeatherOn && Current != null && !Policy.NoOnline; } }
 
         // ---------- finding a place by name ("Ottawa", "Dhaka, Bangladesh", "Ottawa, Illinois")
+        // the servers (24 Nov, Adeeb: "give me an option to change the server"): any host that answers Open-Meteo's API -
+        // a mirror or a self-hosted copy. Only a bare host name (and port) is kept; HTTPS always.
+        public const string GeoDefault = "geocoding-api.open-meteo.com", ApiDefault = "api.open-meteo.com";
+        public static string GeoHost { get { var h = Cfg.WeatherGeo; return string.IsNullOrEmpty(h) ? GeoDefault : h; } }
+        public static string ApiHost { get { var h = Cfg.WeatherApi; return string.IsNullOrEmpty(h) ? ApiDefault : h; } }
+        public static string CleanServer(string v)
+        {
+            v = (v ?? "").Trim(); if (v.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(8); else if (v.StartsWith("http://", StringComparison.OrdinalIgnoreCase)) v = v.Substring(7);
+            int sl = v.IndexOf('/'); if (sl >= 0) v = v.Substring(0, sl);
+            if (!Regex.IsMatch(v, @"^[A-Za-z0-9.-]{1,120}(:[0-9]{1,5})?$")) return "";
+            int c = v.IndexOf(':'); if (c > 0) { int port = int.Parse(v.Substring(c + 1), System.Globalization.CultureInfo.InvariantCulture); if (port < 1 || port > 65535) return ""; }   // review 24 Nov: :99999 is no port
+            return v.ToLowerInvariant();
+        }
         public static string SearchUrl(string typed)
         {
             string q = (typed ?? "").Split(',')[0].Trim(); if (q.Length > 60) q = q.Substring(0, 60);
             bool qualified = (typed ?? "").IndexOf(',') >= 0;   // AM-CG-154: "Springfield, Illinois" - 10 Springfields may not include Illinois
-            return "https://geocoding-api.open-meteo.com/v1/search?count=" + (qualified ? "100" : "10") + "&language=en&format=json&name=" + Uri.EscapeDataString(q);
+            return "https://" + GeoHost + "/v1/search?count=" + (qualified ? "100" : "10") + "&language=en&format=json&name=" + Uri.EscapeDataString(q);
         }
         static readonly Regex objRx = new Regex("\\{[^{}]*\"latitude\"[^{}]*\\}"), strRx = new Regex("\"(name|country|admin1)\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\""), numRx = new Regex("\"(latitude|longitude)\"\\s*:\\s*(-?[0-9.]+)");
         public static List<Place> ParsePlaces(string json, string typed)
@@ -88,7 +117,7 @@ namespace AdeeboMeter
             {
                 List<Place> r = null;
                 try { r = ParsePlaces(Get(SearchUrl(typed)), typed); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach Open-Meteo just now - try again in a minute."; Program.Log("weather find: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Note = "Couldn't reach " + GeoHost + ": " + HttpSmall.Why(e).TrimEnd('.') + "."; Program.Log("weather find: " + e.Message); }
                 done(r);
             }) { IsBackground = true, Name = "weather find" }.Start();
         }
@@ -96,8 +125,8 @@ namespace AdeeboMeter
         // ---------- the forecast
         public static string ForecastUrl(Place p)
         {
-            return "https://api.open-meteo.com/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
-                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability&forecast_days=3&timezone=auto&timeformat=unixtime";
+            return "https://" + ApiHost + "/v1/forecast?latitude=" + p.Lat.ToString("0.####", CultureInfo.InvariantCulture) + "&longitude=" + p.Lon.ToString("0.####", CultureInfo.InvariantCulture)
+                + "&hourly=temperature_2m,apparent_temperature,weather_code,precipitation_probability,relative_humidity_2m,wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=auto&timeformat=unixtime";
         }
         static double[] Nums(string json, string key)
         {
@@ -117,7 +146,7 @@ namespace AdeeboMeter
             PlaceOffset = om.Success ? (int)off : int.MinValue;
             var tm = Regex.Match(json, "\"time\"\\s*:\\s*\\[([^\\]]*)\\]"); if (!tm.Success) return list;
             var raw = tm.Groups[1].Value.Split(',').Select(z => z.Trim().Trim('"')).Where(z => z != "").ToList();
-            double[] t = Nums(json, "temperature_2m"), f = Nums(json, "apparent_temperature"), c = Nums(json, "weather_code"), p = Nums(json, "precipitation_probability");
+            double[] t = Nums(json, "temperature_2m"), f = Nums(json, "apparent_temperature"), c = Nums(json, "weather_code"), p = Nums(json, "precipitation_probability"), hu = Nums(json, "relative_humidity_2m"), ws = Nums(json, "wind_speed_10m"), wd = Nums(json, "wind_direction_10m");
             for (int i = 0; i < raw.Count; i++)
             {
                 DateTime utc; long unix;
@@ -128,6 +157,9 @@ namespace AdeeboMeter
                 if (f != null && i < f.Length && Finite(f[i]) && f[i] > -100 && f[i] < 70) h.Feels = f[i];
                 if (c != null && i < c.Length && Finite(c[i]) && c[i] == Math.Floor(c[i]) && KnownCodes.Contains((int)c[i])) h.Code = (int)c[i];
                 if (p != null && i < p.Length && Finite(p[i]) && p[i] >= 0 && p[i] <= 100) h.Pop = (int)p[i];
+                if (hu != null && i < hu.Length && Finite(hu[i]) && hu[i] >= 0 && hu[i] <= 100) h.Hum = (int)Math.Round(hu[i]);
+                if (ws != null && i < ws.Length && Finite(ws[i]) && ws[i] >= 0 && ws[i] < 500) h.Wind = ws[i];
+                if (wd != null && i < wd.Length && Finite(wd[i]) && wd[i] >= 0 && wd[i] <= 360) h.WindFrom = (int)Math.Round(wd[i]) % 360;
                 list.Add(h);
             }
             return list;
@@ -139,12 +171,14 @@ namespace AdeeboMeter
             if (have == null || have.Count == 0) return true;
             if ((have.Max(h => h.Utc) - nowUtc).TotalHours < 24) return true;                       // less than a day of forecast left
             if (have.Count(h => h.Utc > nowUtc && h.Utc <= nowUtc.AddHours(24) && h.Code >= 0 && !double.IsNaN(h.Temp)) < 18) return true;   // AM-CG-163: holes or unknown hours in the next day
+            if (acc == "hourly") return (nowUtc - fetched).TotalMinutes >= 60;                          // 24 Nov: the Weather widget is showing - once an hour
             return acc == "better" && (nowUtc - fetched).TotalHours >= BetterHours;                  // Better: every 6 hours while the PC is on
         }
         // only the last day and what's ahead: 3-4 days at most
         public static List<Hour> Trim(List<Hour> l, DateTime nowUtc) { return l.Where(h => h.Utc >= nowUtc.AddHours(-24) && h.Utc <= nowUtc.AddDays(4)).OrderBy(h => h.Utc).ToList(); }
 
         // called from the widget's tick: cheap - looks once a minute, asks the internet only when NeedFetch says so
+        public static volatile bool Hourly;   // set by the corner while the Weather widget shows or could take over
         public static void Tick()
         {
             if (!Active || busy) return;
@@ -152,7 +186,7 @@ namespace AdeeboMeter
             if ((now - checkedUtc).TotalSeconds < 60 || (now - started).TotalSeconds < 45) return;   // not in the first moments after start
             checkedUtc = now; Load();
             List<Hour> have; DateTime f; lock (k) { have = forPlace == Cfg.WeatherPlace ? hours.ToList() : new List<Hour>(); f = fetchedUtc; }
-            if (!NeedFetch(have, f, now, Cfg.WeatherAcc) || (triedFor == Cfg.WeatherPlace && (now - triedUtc).TotalMinutes < 30)) return;   // a failed try waits half an hour (for that place only)
+            if (!NeedFetch(have, f, now, Hourly ? "hourly" : Cfg.WeatherAcc) || (triedFor == Cfg.WeatherPlace && (now - triedUtc).TotalMinutes < 30)) return;   // a failed try waits half an hour (for that place only)
             Fetch();
         }
         static string triedFor = ""; static int gen; static volatile bool again;
@@ -172,8 +206,8 @@ namespace AdeeboMeter
                     lock (k) { hours = l; fetchedUtc = DateTime.UtcNow; forPlace = place; } Note = ""; Save();
                     Program.Log("weather: " + l.Count + " hours");   // AM-CG-164: never the place's name in the log
                 }
-                catch (InvalidDataException e) { if (g0 == gen) Note = "Open-Meteo's answer didn't make sense - trying again in half an hour."; Program.Log("weather: " + e.Message); }
-                catch (Exception e) { if (e is OutOfMemoryException) throw; if (g0 == gen) Note = "Couldn't reach Open-Meteo - trying again in half an hour."; Program.Log("weather: " + e.GetType().Name); }
+                catch (InvalidDataException e) { if (g0 == gen) Note = string.Format(L.T("The answer from {0} didn't make sense - trying again in half an hour."), ApiHost); Program.Log("weather: " + e.Message); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; if (g0 == gen) Note = string.Format(L.T("Couldn't reach {0} - trying again in half an hour."), ApiHost); Program.Log("weather: " + e.GetType().Name); }
                 finally { busy = false; if (again) { again = false; if (Cfg.WeatherPlace != place) Fetch(); } }
             }) { IsBackground = true, Name = "weather" }.Start();
         }
@@ -197,7 +231,13 @@ namespace AdeeboMeter
                     if ((c[1] != "" && !double.TryParse(c[1], NumberStyles.Float, CultureInfo.InvariantCulture, out t)) | (c[2] != "" && !double.TryParse(c[2], NumberStyles.Float, CultureInfo.InvariantCulture, out fe))
                         | (c[3] != "" && !int.TryParse(c[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out co)) | (c[4] != "" && !int.TryParse(c[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out po))) continue;   // AM-CG-162
                     if (c[3] != "" && !KnownCodes.Contains(co)) co = -1; if (c[4] != "" && (po < 0 || po > 100)) po = -1;
-                    l.Add(new Hour { Utc = DateTime.SpecifyKind(u, DateTimeKind.Utc), Temp = c[1] == "" ? double.NaN : t, Feels = c[2] == "" ? double.NaN : fe, Code = c[3] == "" ? -1 : co, Pop = c[4] == "" ? -1 : po });
+                    var hr = new Hour { Utc = DateTime.SpecifyKind(u, DateTimeKind.Utc), Temp = c[1] == "" ? double.NaN : t, Feels = c[2] == "" ? double.NaN : fe, Code = c[3] == "" ? -1 : co, Pop = c[4] == "" ? -1 : po };
+                    // hunt-5: humidity, wind and its direction (older files have five fields - those stay blank)
+                    int hu; double wi; int wf;
+                    if (c.Length > 5 && int.TryParse(c[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out hu) && hu >= 0 && hu <= 100) hr.Hum = hu;
+                    if (c.Length > 6 && double.TryParse(c[6], NumberStyles.Float, CultureInfo.InvariantCulture, out wi) && wi >= 0 && wi < 500) hr.Wind = wi;
+                    if (c.Length > 7 && int.TryParse(c[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out wf) && wf >= 0 && wf <= 360) hr.WindFrom = wf % 360;
+                    l.Add(hr);
                 }
                 lock (k) { hours = Trim(l, DateTime.UtcNow); fetchedUtc = f; forPlace = place; }
             }
@@ -208,8 +248,8 @@ namespace AdeeboMeter
             try
             {
                 var lines = new List<string>(); lock (k) { lines.Add("place=" + forPlace); lines.Add("fetched=" + fetchedUtc.ToString("o", CultureInfo.InvariantCulture));
-                    foreach (var h in hours) lines.Add(h.Utc.ToString("yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture) + "|" + N(h.Temp) + "|" + N(h.Feels) + "|" + (h.Code < 0 ? "" : h.Code.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Pop < 0 ? "" : h.Pop.ToString(CultureInfo.InvariantCulture))); }
-                File.WriteAllLines(File0, lines);
+                    foreach (var h in hours) lines.Add(h.Utc.ToString("yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture) + "|" + N(h.Temp) + "|" + N(h.Feels) + "|" + (h.Code < 0 ? "" : h.Code.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Pop < 0 ? "" : h.Pop.ToString(CultureInfo.InvariantCulture)) + "|" + (h.Hum < 0 ? "" : h.Hum.ToString(CultureInfo.InvariantCulture)) + "|" + N(h.Wind) + "|" + (h.WindFrom < 0 ? "" : h.WindFrom.ToString(CultureInfo.InvariantCulture))); }   /* hunt-5: humidity and wind kept too */
+                SafeFile.WriteText(File0, string.Join("\r\n", lines) + "\r\n");   // bug-hunt L-320: temp file, then replace
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
         }
@@ -257,9 +297,11 @@ namespace AdeeboMeter
             if (code >= 80 && code <= 82) return "showers"; if (code == 85 || code == 86) return "snow showers"; return code == 96 || code == 99 ? "thunderstorm with hail" : code == 95 ? "thunderstorm" : "";
         }
         static bool Wet(int code) { return code >= 51 && code != 45 && code != 48; }
-        public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? (c * 9 / 5 + 32).ToString("0", CultureInfo.CurrentCulture) + "°F" : c.ToString("0", CultureInfo.CurrentCulture) + "°C"; }
-        public static string TempShort(double c) { if (double.IsNaN(c)) return "-"; return (Cfg.WeatherF ? c * 9 / 5 + 32 : c).ToString("0", CultureInfo.CurrentCulture) + "°"; }
-        static string At(DateTime utc) { return utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : "h tt", CultureInfo.CurrentCulture).ToLowerInvariant(); }
+        // hunters12 data L6: rounded first, so -0.4 °C reads "0°C", never "-0°C"
+        static string Deg(double v) { double r = Math.Round(v); if (r == 0) r = 0; return r.ToString("0", CultureInfo.CurrentCulture); }
+        public static string Temp(double c) { if (double.IsNaN(c)) return "-"; return Cfg.WeatherF ? Deg(c * 9 / 5 + 32) + "°F" : Deg(c) + "°C"; }
+        public static string TempShort(double c) { if (double.IsNaN(c)) return "-"; return Deg(Cfg.WeatherF ? c * 9 / 5 + 32 : c) + "°"; }
+        static string At(DateTime utc) { return utc.ToLocalTime().ToString(CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern.Contains("H") ? "HH:mm" : AdeeboMeter.Draw.Tt("h tt"), CultureInfo.CurrentCulture).ToLowerInvariant(); }
         // "4°C · rain from 3 pm" / "-2°C · snow until 18:00" / "21°C · clear"
         public static string Text(DateTime nowUtc)
         {
@@ -277,7 +319,7 @@ namespace AdeeboMeter
 
         // the face: 2.5 minutes three times an hour (:12, :32, :52) when the hour is notable
         public static bool InWindow(DateTime local) { double m = local.Minute + local.Second / 60.0; return (m >= 12 && m < 14.5) || (m >= 32 && m < 34.5) || (m >= 52 && m < 54.5); }
-        public static string Face(DateTime nowUtc) { if (!Active || !Moments.On || !InWindow(nowUtc.ToLocalTime())) return null; return EmojiOf(Kind(Now(nowUtc))); }
+        public static string Face(DateTime nowUtc) { if (!Active || !Cfg.WWeather || !Moments.On || !InWindow(nowUtc.ToLocalTime())) return null; return EmojiOf(Kind(Now(nowUtc))); }
 
         // what Settings says under the switch
         public static string Status()

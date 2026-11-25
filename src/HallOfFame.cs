@@ -30,7 +30,6 @@ namespace AdeeboMeter
 
         static partial void BuildKey(ref string key);   // only the official build has a body for this (obj/HofKey.cs)
         public static string Key { get { string k = null; BuildKey(ref k); return k ?? ""; } }
-        public static bool Official { get { return Key != ""; } }
         // the generated file holds the key masked, so it isn't a readable string in the exe (a speed bump, not a lock)
         internal static string Unmask(byte[] b) { var o = new byte[b.Length]; for (int i = 0; i < b.Length; i++) o[i] = (byte)(b[i] ^ ((i * 73 + 41) & 0xFF)); return Encoding.UTF8.GetString(o); }
 
@@ -63,7 +62,8 @@ namespace AdeeboMeter
             if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= 0xC0 && c <= 0x24F && c != 0xD7 && c != 0xF7) || (c >= 0x1E00 && c <= 0x1EFF)) return 1;
             if (c >= 0x400 && c <= 0x52F) return 2;
             if ((c >= 0x370 && c <= 0x3FF) || (c >= 0x1F00 && c <= 0x1FFF)) return 3;
-            return 0;
+            if (c >= 0x2B0 && c <= 0x2FF) return 0;   // modifier letters (the ʻokina in Hawaiʻi) belong to no alphabet
+            return char.IsLetter((char)c) ? 4 : 0;   // bug-hunt L-302: any other alphabet (Arabic, Hebrew, CJK...) is its own - mixed with Latin in one word, refused
         }
         public static bool MixedScript(string name)
         {
@@ -102,15 +102,18 @@ namespace AdeeboMeter
         public static Bitmap Card(string name, int total, string date, string code, Stats st)
         {
             const int W = 1200, H = 675; var bmp = new Bitmap(W, H);
+            SolidBrush gold = null, soft = null, faint = null;   // bug-hunt L-301: let go however the drawing ends; the picture too if it fails
+            try
+            {
             using (var g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.ImageText; g.TextContrast = Draw.Contrast;
                 using (var bg = new LinearGradientBrush(new Rectangle(0, 0, W, H), Color.FromArgb(14, 33, 74), Color.FromArgb(31, 111, 235), 35f)) g.FillRectangle(bg, 0, 0, W, H);
                 // a soft gold glow behind the star
                 using (var path = new GraphicsPath()) { path.AddEllipse(820, -120, 520, 520); using (var pg = new PathGradientBrush(path) { CenterColor = Color.FromArgb(90, 242, 204, 96), SurroundColors = new[] { Color.FromArgb(0, 242, 204, 96) } }) g.FillEllipse(pg, 820, -120, 520, 520); }
                 Star(g, 1080, 140, 92, Color.FromArgb(242, 204, 96));
                 Mark(g, 60, 52, 56);
-                var white = Brushes.White; var gold = new SolidBrush(Color.FromArgb(242, 204, 96)); var soft = new SolidBrush(Color.FromArgb(200, 255, 255, 255)); var faint = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
+                var white = Brushes.White; gold = new SolidBrush(Color.FromArgb(242, 204, 96)); soft = new SolidBrush(Color.FromArgb(200, 255, 255, 255)); faint = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
                 using (var f1 = new Font("Segoe UI", 20f, FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("AdeeboMeter", f1, white, 128, 64);
                 using (var fk = new Font("Segoe UI", 22f, FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("ADEEBO AWARD", fk, gold, 60, 150);
                 string nm = CleanName(name); if (nm == "") nm = "A network detective";
@@ -129,7 +132,10 @@ namespace AdeeboMeter
                             new[] { st.Paths.Length == 0 ? "-" : string.Join("  ·  ", st.Paths), "learning paths finished" } };
                         foreach (var l in lines)
                         {
-                            g.DrawString(l[0], fsb, white, 60, y); var w0 = g.MeasureString(l[0], fsb).Width;
+                            // bug-hunt L-303: a long list of paths is cut with "…" so it and its label stay on the card
+                            string v0 = l[0]; float room = W - 120 - g.MeasureString(l[1], fs).Width - 6;
+                            while (v0.Length > 4 && g.MeasureString(v0, fsb).Width > room) v0 = v0.Substring(0, v0.Length - 2).TrimEnd(' ', '·') + "…";
+                            g.DrawString(v0, fsb, white, 60, y); var w0 = g.MeasureString(v0, fsb).Width;
                             g.DrawString(l[1], fs, faint, 60 + w0 + 6, y); y += 38;
                         }
                     }
@@ -148,8 +154,10 @@ namespace AdeeboMeter
                     const string site = "adeebometer.com/hall-of-fame"; var sw = g.MeasureString(site, fw).Width;
                     g.DrawString("Send it to the Hall of Fame", fw, faint, box.Right - sw - 22, box.Y + 12); g.DrawString(site, fw, soft, box.Right - sw - 22, box.Y + 38);
                 }
-                gold.Dispose(); soft.Dispose(); faint.Dispose();
             }
+            }
+            catch { bmp.Dispose(); throw; }
+            finally { if (gold != null) gold.Dispose(); if (soft != null) soft.Dispose(); if (faint != null) faint.Dispose(); }
             return bmp;
         }
         static Font Fit(Graphics g, ref string s, float maxW, float size)

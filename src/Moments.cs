@@ -26,8 +26,9 @@ namespace AdeeboMeter
             if (!On || string.IsNullOrEmpty(text)) return false;
             lock (k)
             {
+                if (!seenLoaded) LoadSeen();
                 DateTime last; if (shown.TryGetValue(kind, out last) && last.Date == DateTime.Today) return false;   // once a day per kind
-                shown[kind] = DateTime.Now; face = emoji; line = text; until = DateTime.UtcNow.AddSeconds(12);
+                shown[kind] = DateTime.Now; SaveSeen(); face = emoji; line = text; until = DateTime.UtcNow.AddSeconds(12);
             }
             Program.Log("moment: " + kind);
             return true;
@@ -69,7 +70,7 @@ namespace AdeeboMeter
         public static void Speed(double downMbps)
         {
             if (double.IsNaN(downMbps) || downMbps <= 0) return;
-            double best = Best(); if (downMbps <= best * 1.02) { if (best <= 0) SaveBest(downMbps); return; }
+            double best = Best(); if (downMbps <= best * 1.02) return;   // bug-hunt L-123: a first result is always above 0, so it's saved below
             SaveBest(downMbps);
             if (best > 0) Fire("speed", "1f929", L.T("New record: ") + downMbps.ToString("0", CultureInfo.CurrentCulture) + L.T(" Mb/s down (was ") + best.ToString("0", CultureInfo.CurrentCulture) + ").");
         }
@@ -82,6 +83,20 @@ namespace AdeeboMeter
         static void SaveBest(double v) { try { File.WriteAllText(BestFile, v.ToString("0.0", CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
         static string Dur(double min) { return min < 60 ? Math.Max(1, (int)Math.Round(min)).ToString(CultureInfo.CurrentCulture) + " min" : ((int)(min / 60)).ToString(CultureInfo.CurrentCulture) + " h " + ((int)min % 60).ToString(CultureInfo.CurrentCulture) + " min"; }
         // self-test
-        internal static void Reset() { lock (k) { shown.Clear(); until = DateTime.MinValue; } }
+        internal static void Reset() { lock (k) { shown.Clear(); seenLoaded = true; until = DateTime.MinValue; } }
+        // bug-hunt L-122: "once a day" survives a restart - the day each kind was last shown is kept beside the settings
+        static bool seenLoaded;
+        static string SeenFile { get { return Path.Combine(Program.DataDir, "moments-seen.txt"); } }
+        static void LoadSeen()
+        {
+            seenLoaded = true;
+            try { if (File.Exists(SeenFile)) foreach (var l in File.ReadLines(SeenFile).Take(50)) { var p = l.Split('='); DateTime d; if (p.Length == 2 && DateTime.TryParseExact(p[1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d)) shown[p[0]] = d; } }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+        }
+        static void SaveSeen()
+        {
+            try { SafeFile.WriteText(SeenFile, string.Join("\n", shown.Where(kv => kv.Value.Date == DateTime.Today).Select(kv => kv.Key + "=" + kv.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))) + "\n"); }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+        }
     }
 }

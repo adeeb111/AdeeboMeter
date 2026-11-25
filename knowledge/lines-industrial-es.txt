@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Industrial persona (steam, gears, factory floor). key|text.
+app.open|Calderas encendidas. La fábrica de red funciona, {addr}.
+app.open|Turno iniciado. Medidores revisados, tuberías vigiladas.
+all.good|Toda la maquinaria funciona suave.
+all.good|Cada medidor en verde. PC, Wi-Fi e internet.
+all.good|La fábrica zumba muy bien.
+pc.busy|El motor de la PC está sobrecargado. CPU al {v}.
+pc.busy|Presión alta en la PC. Las tuberías de red están bien.
+pc.busy|Demasiados telares en marcha. Apaga uno.
+wifi.drops|La correa del Wi-Fi patinó {v} veces hoy.
+wifi.drops|{v} caídas. La tubería de señal tiene una fuga.
+net.none|Sin línea a la fábrica. Conecta el cable.
+net.none|Sin conexión. El telégrafo está caído.
+inet.slow|Tu fábrica está bien. El tren de afuera es lento.
+inet.slow|La fábrica va rápido. La línea del proveedor es lenta.
+inet.slow|El atasco está tras tu router.
+busy|Girando los engranajes... {v}
+busy|Generando vapor.
+busy|La máquina funciona.
+idle|Zumbido estable. Nada que reportar.
+idle|La fábrica está tranquila.
+idle|Medidores estables.
+search.empty|¿Qué máquina necesita revisión?
+search.empty|Nombra la pieza averiada, {addr}.
+freeze|Generando presión ({v}). Espera.
+freeze|Los engranajes se ponen al día ({v}).
+speedrunner|Una palanca a la vez. El último trabajo sigue en marcha.
+speedrunner|Con calma en los controles.
+back.again|De vuelta en el taller. Pasaron {v} cosas.
+back.again|Bienvenido de vuelta. Aquí va el reporte del turno.
+dns.slow|El oficinista es lento. DNS a {v}.
+dns.slow|Las consultas tardan {v}. El registro tiene polvo.
+speed.great|{v} de bajada. A todo vapor.
+speed.great|Descarga {v}. Línea exprés.
+speed.bloat|Rápido, pero las tuberías se atascan {v} con carga.
+speed.bloat|La presión sube {v} cuando la línea se llena.
+game.lag|El lag es la correa del Wi-Fi, no el servidor.
+game.lag|El servidor funciona bien. Tu Wi-Fi patina.
+game.good|Ping {v}. Máquinas listas.
+game.good|Producción estable. A jugar.
+vpn.on|Tráfico por una tubería sellada. VPN activa.
+vpn.on|VPN conectada. Línea sellada.
+vpn.slow|La tubería sellada suma {v}.
+vpn.slow|La VPN suma {v} de demora.
+portal|Esta fábrica quiere tu nombre en la puerta. Inicia sesión.
+portal|Wi-Fi con portero. Inicia sesión primero.
+gw.down|El router se detuvo. Reinicia el motor.
+gw.down|Sin señal del router. Revisa sus luces.
+isp.down|Tu fábrica está bien. La línea de suministro está cortada.
+isp.down|La línea del proveedor está caída. No es tu maquinaria.
+mtu.small|Cajas demasiado grandes para el conducto. MTU {v}.
+mtu.small|MTU de ruta {v}. Tubería estrecha.
+port.open|La válvula {v} está abierta.
+port.open|{v} respondió.
+port.closed|La válvula {v} está cerrada.
+port.closed|{v} no respondió.
+cert.ok|Certificado. El sello es auténtico.
+cert.ok|El candado pasó la inspección.
+cert.expired|Su certificado caducó el {v}.
+cert.expired|Vencido desde {v}. Inspección atrasada.
+sec.ok|Inspección de seguridad aprobada.
+sec.ok|Sin peligros en el taller.
+sec.issue|{v} fallas de seguridad marcadas.
+sec.issue|La inspección halló {v} puntos.
+mtr.lossy|Fuga en la línea desde el salto {v}.
+mtr.lossy|Los paquetes se derraman en el salto {v}.
+mtr.clean|Sin fugas en toda la línea.
+mtr.clean|Tuberías limpias de punta a punta.
+devices.found|{v} máquinas en tu red.
+devices.found|Conté {v} dispositivos.
+encrypt.done|Sellado en la caja fuerte.
+encrypt.done|Cifrado.
+decrypt.done|Caja fuerte abierta. Contenido intacto.
+decrypt.done|Desbloqueado, intacto.
+points.earned|+{v} puntos en el registro.
+points.earned|+{v}. Turno productivo.
+award|500 puntos. Medalla del capataz: el Premio Adeebo.
+award|Premio Adeebo. Buen trabajo.
+late.night|Turno nocturno. La fábrica sigue funcionando.
+late.night|Horas tardías en el taller.
+morning|Silbato de la mañana. Noche tranquila.
+morning|Turno nuevo. Nada se rompió anoche.
+update.suspect|Funciona mal desde la actualización del {v}.
+update.suspect|La actualización {v} metió un palo en la rueda.
+call.on|Hay una llamada. Mantengo la línea libre.
+call.on|Llamada en curso. Vigilando la línea.
+quiz.right|Correcto. Control de calidad aprobado.
+quiz.wrong|Falla. Rehazlo y reenvíalo.
+game.streak|{v} seguidas: la línea funciona suave.
+game.timeup|Se acabó el turno.
+market.open|La bolsa está en marcha.
+storm.near|Tormenta cerca: la luz y las líneas pueden fallar.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} corre en la línea, firme como un volante.
+stream.on|La cinta del stream corre suave.
+stream.dip|Un tirón en la cinta del stream. {v}
+stream.dip|La línea del stream patinó un engranaje. {v}
+stream.none|No hay stream en la línea.
+stream.none|Cinta del stream detenida.
+trade.ok|El tubo al bróker va a plena presión.
+trade.ok|Línea al bróker: manómetros en verde.
+trade.slow|Baja la presión hacia el bróker. Sujeta la palanca.
+trade.slow|El tubo al bróker va lento. {v}
+trade.closed|Terminó el turno del mercado. Volvemos a las 9:30.
+trade.closed|El parqué cierra hasta las 9:30.
+view.switch|Pasando la planta a {v}.
+view.switch|Vista {v} en la planta.

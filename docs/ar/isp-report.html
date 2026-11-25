@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>كيف أظهر لك ISP حيث يبدأ فقدان الحزمة AdeeboMeter</title>
-<meta name="description" content="مقارنة الجهاز التوجيهي والمكان المقصود أرسل نتائج فترة سيئة و جيدة">
+<meta name="description" content="إذا كان الراوتر يجيب في كل مرة وتبدأ الخسارة بعد بضع محطات، فالمشكلة خارج منزلك. تقرير قصير يثبت ذلك ويعطي الدعم الفني ما يعمل عليه.">
 <link rel="canonical" href="https://adeebometer.com/ar/isp-report.html">
 <meta property="og:title" content="كيفية إظهار ISP الخاص بك حيث يبدأ فقدان الحزم">
-<meta property="og:description" content="مقارنة الجهاز التوجيهي والمكان المقصود أرسل نتائج فترة سيئة و جيدة">
+<meta property="og:description" content="إذا كان الراوتر يجيب في كل مرة وتبدأ الخسارة بعد بضع محطات، فالمشكلة خارج منزلك. تقرير قصير يثبت ذلك ويعطي الدعم الفني ما يعمل عليه.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/ar/isp-report.html">
 <meta property="og:image" content="https://adeebometer.com/img/isp-report-example.png">
@@ -48,7 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<meta property="og:locale" content="ar_AR">
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
@@ -56,37 +57,38 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
-<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
-<h1>كيفية إظهار ISP الخاص بك حيث يبدأ فقدان الحزم</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">تحقق من استمرار الخسارة</h2><p>مقارنة الجهاز التوجيهي والمكان المقصود أرسل نتائج فترة سيئة و جيدة</p></div>
-<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg></span><strong>تقرير ISP</strong></div><div class="plot-label"><span>فقد الحزم</span><span>مثال</span></div><div class="hopline"><span><i></i>الراوتر<small>مستمرة</small></span><span><i></i>بعد ذلك قفز<small>الخسارة تبدأ</small></span><span><i></i>الوجهة<small>الخسارة مستمرة</small></span></div></div>
-<figcaption>مسار مثالي جهاز التوجيه ثابت و الخسارة تظهر لاحقاً، بما في ذلك في الوجهة المقصودة.</figcaption>
+<h1>كيف تُري مزوّد الخدمة أين تبدأ خسارة الحزم</h1>
+<p class="dek">إذا كان الراوتر يجيب في كل مرة وتبدأ الخسارة بعد بضع محطات، فالمشكلة خارج منزلك. تقرير قصير يثبت ذلك ويعطي الدعم الفني ما يعمل عليه.</p>
+<ul class="meta"><li>تطبيق Windows: صندوق الأدوات › تقرير لمزوّد الخدمة</li><li>تشغيل لمدة 1 أو 2 أو 5 دقائق</li><li>قراءة 4 دقائق</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="أين الخسارة في هذا المثال"><li class="ok">الكمبيوتر<small>مستقر</small></li><li class="ok">Wi-Fi<small>سلكي هنا</small></li><li class="ok">الراوتر<small>خسارة 0%</small></li><li class="bad">المزود<small>تبدأ الخسارة</small></li><li class="bad">الطرف البعيد<small>تستمر الخسارة</small></li></ol>
+<figcaption>النمط الذي يستحق الإرسال: نظيف حتى الراوتر، ثم خسارة من محطة داخل شبكة مزوّد الخدمة وحتى الوجهة.</figcaption>
 </figure>
-
-<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>مثال من التطبيقات التي تم إنشاؤها مع قياسات ومواقع محاكاة. في تقرير حقيقي، تبدأ مع توجيه وخطوط الوجهة.</figcaption></figure>
-<h2 id="checks">اجري الشيكات</h2>
-<ol><li>في Windows AdeeboMeter، مفتوح <strong>صندوق الأدوات</strong> والبحث عن <strong>تقرير لمزوّد الإنترنت</strong>.</li><li>أدخل اسم المضيف أو عنوان IP للخدمة المتضررة، أو حدد اللعبة التي أضفتها. اختر 1، 2 ، أو 5- دقيقة تشغيل خلال التباطؤ.</li><li>كرر على إيثرنت إذا أمكن احفظ مقارنة بين الفترة الجيدة راجع التقرير قبل إرفاقه إلى تذكرة الدعم أو إرسال صورة الشاشة.</li></ol>
-<h2 id="readings">ما الذي يجب التحقق منه</h2>
+<figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="يُظهر تقرير AdeeboMeter النموذجي عدم وجود خسارة عند راوتر المنزل، واستمرار خسارة الحزم من قفزة لاحقة حتى الوجهة."><figcaption>تقرير أنشأه التطبيق بقياسات وعناوين محاكاة. في تقريرك، اقرأ صف الراوتر وصف الوجهة أولًا.</figcaption></figure>
+<h2 id="checks">أنشئ التقرير</h2>
+<ol><li>في AdeeboMeter على Windows، افتح <strong>صندوق الأدوات</strong> والبحث عن <strong>تقرير لمزوّد الإنترنت</strong>.</li><li>اكتب عنوان الخدمة التي تتعطل، أو اختر لعبة أضفتها. شغّله 1 أو 2 أو 5 دقائق أثناء حدوث المشكلة.</li><li>إن أمكن، شغّله مرة أخرى عبر كابل، ومرة ثالثة والأمور جيدة. راجع التقرير قبل إرفاقه بتذكرتك.</li></ol>
+<h2 id="readings">كيف تقرأ النتيجة</h2>
 <ul class="next-checks">
-  <li><strong>أمل واحد يفتقد الإجابة</strong><span>تحقق من أن الخسارة تصل إلى الوجهة</span></li>
-  <li><strong>يبدأ فقد الحزم قرب شبكتك المنزلية</strong><span>مقارنة Wi-Fi و إيثرنت.</span></li>
-  <li><strong>جهاز التوجيه ثابت، وجهة الخروج تفقد الحزم</strong><span>كرر الاختبار وتشارك النتائج.</span></li>
-  <li><strong>وجهة واحدة تتأثر</strong><span>مقارنة خدمة غير مرتبطة.</span></li>
+  <li><strong>محطة واحدة تفوّت ردودًا، والتالية لا</strong><span>تلك المحطة مشغولة عن الرد على ping ولا تُسقط حركتك. انظر إلى صف الوجهة بدلًا من ذلك.</span></li>
+  <li><strong>تبدأ الخسارة عند الراوتر أو قبله</strong><span>المشكلة داخل منزلك. قارن Wi-Fi بالكابل أولًا.</span></li>
+  <li><strong>الراوتر نظيف والوجهة تفقد حزمًا</strong><span>شغّله مرتين أخريين وأرسل التقريرين إلى مزوّد الخدمة.</span></li>
+  <li><strong>خدمة واحدة فقط متأثرة</strong><span>جرّب وجهة لا علاقة لها. إذا كانت نظيفة، فالمشكلة من جهة تلك الخدمة.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">مثال عمل</h2><p>في التقرير المثالية أعلاه، جهاز الكمبيوتر المحمول والمركب ثابت. الخسارة تظهر في أبعد مكان ويمكن أيضاً أن ترىها في الوجهة. أرسل هذا النمط مع وقت الجري والخدمة المتأثرة. المرحلة الثانية تساعد على إظهار ما إذا كان النمط يتكرر.</p></aside>
-<details class="guide-detail"><summary>لماذا يعمل</summary>
-<p>تقارير المسار والخسارة في الحزمة هي ملاحظات من جهاز واحد إلى وجهة واحدة في وقت معين. يمكن لجهاز التوجيه تحديد المعدلات التي يرسلونها إلى الصور يمكن أن تختلف المسارات والطرق العائدة أيضا، لذلك رقم القفز هو دليل لدعم للتحقيق.</p><p>انظروا <a href="/ar/learn/icmp.html">كيف يعمل Ping وتتبع المسار</a> و <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">تفسير مايكروسوفت عن فقدان الاستجابة المتوسطة</a>.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">المثال أعلاه</h2><p>الكمبيوتر موصول بكابل والراوتر نظيف. تبدأ الخسارة لاحقًا وتبقى حتى الوجهة. أرسل هذا النمط مع وقت التشغيل والخدمة المتأثرة؛ وتشغيل ثانٍ يبيّن إن كان يتكرر.</p></aside>
+<details class="guide-detail"><summary>لماذا قد تبدو محطة واحدة أسوأ مما هي عليه</summary>
+<p>التقرير هو ما رآه كمبيوتر واحد في الطريق إلى وجهة واحدة في وقت واحد. كثيرًا ما تجيب الراوترات على طول الطريق عن حزم الاختبار ببطء أو تتجاهلها عمدًا، وقد يسلك طريق العودة مسارًا آخر، لذا فرقم المحطة خيط للدعم الفني وليس حكمًا.</p><p>المزيد: <a href="/ar/learn/icmp.html">كيف يعمل Ping وتتبع المسار</a>، و <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft عن الخسارة عند القفزات الوسيطة</a>.</p>
 </details>
-<h2>استخدم AdeeboMeter على Windows</h2>
-<p>استخدم الموجز المُنتج لتحديد القياسات التي تستحق مشاركتها. إذا كنت لا تزال تقرر ما إذا كان يجب أن تشمل مقدمك، فابدأ من <a href="/ar/wifi-or-isp.html">مقارنة Wi-Fi و Ethernet</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">ما الذي يجب الاحتفاظ به</h2><p>وتشمل تذكرة مفيدة المنطقة الزمنية والوقت، ونوع الاتصال، وجهة المصلحة، ومدى حدوثها، وتقرير من فترة سيئة وجيدة.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">ما تحتويه التذكرة المفيدة</h2><p>الوقت والمنطقة الزمنية، كابل أم Wi-Fi، والخدمة المتأثرة، ومدى تكرار المشكلة، وتقرير من لحظة سيئة وآخر من لحظة جيدة.</p></aside>
+<p>لست متأكدًا بعد أنه مزوّد الخدمة؟ ابدأ بـ <a href="/ar/wifi-or-isp.html">Wi-Fi مقابل الكابل</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">التقطها أثناء حدوثها</h2><p>تراقب الأداة في زاوية شاشتك المحطات نفسها طوال اليوم وتتحول إلى الكهرماني أو الأحمر عند المحطة التي تتعثر - فيكون التقرير على بُعد نقرة حين يهم الأمر.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><p class="sc-note">Windows 10 و11 · بلا صلاحيات المسؤول · لا شيء عنك يغادر جهازك</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-engineer-busy.png" width="264" height="240" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

@@ -54,7 +54,9 @@ def script(c):
         return 2
     if 0x370 <= o <= 0x3FF or 0x1F00 <= o <= 0x1FFF:
         return 3
-    return 0
+    if 0x2B0 <= o <= 0x2FF:
+        return 0   # modifier letters (the okina) belong to no alphabet
+    return 4 if c.isalpha() else 0   # any other alphabet is its own (L-302), as HallOfFame.Script
 
 
 def mixed_script(name):
@@ -172,17 +174,31 @@ def main():
     author = os.environ.get("ISSUE_AUTHOR", "")
     if not re.fullmatch(r"[A-Za-z0-9-]{1,39}", author or ""):
         author = ""
+    # B4 (review 1.1.6): cards sent from the app or the website reach GitHub through the relay, so they all carry the relay
+    # token's account. That account is no one in particular: it may add a card, never change one already listed.
+    relay = os.environ.get("RELAY_LOGIN") or os.environ.get("GITHUB_REPOSITORY_OWNER", "")
+    if author and relay and author.lower() == relay.lower():
+        author = ""
     # a GitHub link must be the account that sent it: a card is made to be shared, so anyone can type its code
     if site == "github" and handle.lower() != author.lower():
         site, handle = "", ""
-    with open(JSON, encoding="utf-8") as f:
-        data = json.load(f)
+    # bug-hunt L-114: a damaged list is reported plainly, never a traceback
+    try:
+        with open(JSON, encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or not isinstance(data.get("entries", []), list):
+            raise ValueError("not the expected shape")
+    except (OSError, ValueError) as e:
+        out("error", "hall-of-fame.json couldn't be read (%s) - fix the file, then run this again." % type(e).__name__)
+        return 3
     entries = data.setdefault("entries", [])
-    mine = next((e for e in entries if e.get("code") == claim), None)
+    # the claim code itself is never published: the list keeps a keyed fingerprint of it (a public code let anyone re-send a card)
+    kept = "h:" + hmac.new(key.encode("utf-8"), ("claim|" + claim).encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+    mine = next((e for e in entries if e.get("code") in (claim, kept)), None)
     if mine is not None:
         by = (mine.get("by") or "").lower()
-        if author and by == author.lower():   # the same sender again: let them fix their link
-            mine["site"], mine["handle"] = site, handle
+        if author and by == author.lower():   # the same (named) sender again: let them fix their link
+            mine["site"], mine["handle"], mine["code"] = site, handle, kept
             save(data)
             out("updated", "Updated your link in the Hall of Fame, %s." % name)
         elif author and by and by != author.lower():   # a second sender for the same card: nobody's link until Adeeb checks
@@ -195,7 +211,7 @@ def main():
     if any(same_person(e.get("name", ""), name) for e in entries):
         out("already", "There's already a %s in the Hall of Fame. If that isn't you, put something extra in your name on the card (an initial or your city) and send the new card." % name)
         return 0
-    entries.append({"name": name, "points": total, "date": date, "code": claim, "site": site, "handle": handle, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
+    entries.append({"name": name, "points": total, "date": date, "code": kept, "site": site, "handle": handle, "via": via, "by": author, "ref": ref if re.fullmatch(r"https://github\.com/adeeb111/AdeeboMeter/issues/\d+", ref or "") else ""})
     entries.sort(key=lambda e: (e["date"], e["name"].lower()))
     save(data)
     out("added", "Welcome to the Hall of Fame, %s! You'll be on the page in a minute or two: https://adeeb111.github.io/AdeeboMeter/hall-of-fame.html" % name)

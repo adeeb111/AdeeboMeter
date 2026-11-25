@@ -37,7 +37,7 @@ namespace AdeeboMeter
                 Task.Factory.StartNew(() => { double[,] gw = null; int[,] lv = null; string[,] wy = null; try { lv = History.Week(out gw, out wy); } catch (Exception e) { Program.Log("week: " + e.Message); } try { BeginInvoke((Action)delegate { weekLv = lv; weekGw = gw; weekWhy = wy; weekAt = DateTime.UtcNow; weekBusy = false; weekKey = ""; changesCanvas.Invalidate(); }); } catch { weekBusy = false; } });
             }
             float hh = 7 * 22 * S + 52 * S;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE"), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("WHEN WERE THERE PROBLEMS?  ·  LAST 7 DAYS × 24 HOURS  ·  POINT AT A SQUARE FOR THE CAUSE"), Draw.fTiny, mb, x, y);
             Hint(changesCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "hist.WEEK");
             y += 20 * S;
             if (weekLv != null)
@@ -63,7 +63,7 @@ namespace AdeeboMeter
             }
             else
             {
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Cfg.History ? "Reading history..." : "Turn on history in Settings to see your week.", Draw.fBody, mb, x, y);
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Cfg.History ? "Reading history..." : L.T("Turn on history in Settings to see your week."), Draw.fBody, mb, x, y);
                 y += 30 * S;
             }
 
@@ -77,7 +77,7 @@ namespace AdeeboMeter
             foreach (var r in Usage.MonthByNetwork().Take(4)) rows.Add(new[] { "  " + Draw.Trunc(r[0], 26), Usage.Mb(Store.D(r[1])) + " down · " + Usage.Mb(Store.D(r[2])) + " up" });
             string normal = Baseline.Normal(Brain.NetKey);
             if (normal != "") rows.Add(new[] { "What's normal here", normal });
-            rows.Add(new[] { "Latency under load", Bloat.Story() });
+            rows.Add(new[] { L.T("Latency under load"), Bloat.Story() });
             y = InfoCard(g, "DATA USAGE AND WHAT'S NORMAL  ·  COUNTED ON THIS PC, NEVER SENT", rows, "hist.USAGE", x, y, w);
 
             // ---- after your calls (memory only)
@@ -120,21 +120,22 @@ namespace AdeeboMeter
         // { label, text, [level] } rows; the text wraps
         float InfoCard(Graphics g, string title, List<string[]> rows, string key, float x, float y, float w)
         {
-            float lw = 170 * S, tw = w - lw - 28 * S; var hs = rows.Select(r => Math.Max(22 * S, Math.Max(Draw.Measure(r[1], Draw.fBody, (int)tw).Height, Draw.Measure(r[0], Draw.fBody, (int)(lw - 8 * S)).Height) + 6 * S)).ToList();
-            var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            Hint(changesCanvas, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            float lw = 170 * S, tw = w - lw - 36 * S; var hs = rows.Select(r => Math.Max(28 * S, Math.Max(Draw.Measure(r[1], Draw.fBody, (int)tw).Height, Draw.Measure(r[0], Draw.fBody, (int)(lw - 8 * S)).Height) + 10 * S)).ToList();
+            // 24 Nov (v8 screenshots): the title in heading type and sentence case, like the other cards - was tiny grey capitals
+            var card = new RectangleF(x, y, w, 16 * S + 34 * S + hs.Sum() + 12 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fHead, ib, x + 18 * S, y + 16 * S);
+            Hint(changesCanvas, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 34 * S;
             using (var muted = new SolidBrush(Theme.Muted))
                 for (int i = 0; i < rows.Count; i++)
                 {
                     int l = 3; if (rows[i].Length > 2) int.TryParse(rows[i][2], NumberStyles.Integer, CultureInfo.InvariantCulture, out l);
-                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 14 * S, ry, lw - 8 * S, hs[i]));
-                    using (var tb = new SolidBrush(l >= 0 && l <= 2 && l != 0 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 14 * S + lw, ry, tw, hs[i]));
+                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 18 * S, ry, lw - 8 * S, hs[i]));
+                    using (var tb = new SolidBrush(l >= 0 && l <= 2 && l != 0 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 18 * S + lw, ry, tw, hs[i]));
                     ry += hs[i];
                 }
-            return y + card.Height + 16 * S;
+            return y + card.Height + 20 * S;
         }
     }
 }

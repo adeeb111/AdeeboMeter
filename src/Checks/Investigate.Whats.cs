@@ -27,11 +27,11 @@ namespace AdeeboMeter
         static void PortalTest(out string portal, out string portalErr)
         {
             portal = ""; portalErr = "";
-            if (!Cfg.Portal) { portalErr = "off"; return; }   // Settings › Sign-in page check is off: nothing is sent
+            if (!Cfg.Portal || Policy.NoOnline) { portalErr = "off"; return; }   // review 1.1.6 P2 #10: the IT switch covers it too   // Settings › Sign-in page check is off: nothing is sent
             try
             {
-                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.AllowAutoRedirect = false;
-                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var body = rd.ReadToEnd(); if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
+                var q = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt"); q.Timeout = 5000; q.ReadWriteTimeout = 5000; q.AllowAutoRedirect = false;
+                using (var resp = (HttpWebResponse)q.GetResponse()) using (var rd = new System.IO.StreamReader(resp.GetResponseStream())) { var cb = new char[200]; int got = rd.ReadBlock(cb, 0, cb.Length); var body = new string(cb, 0, got);   /* security recheck SECN-1: 200 characters at most - a hostile hotspot streaming forever can't fill memory */ if ((int)resp.StatusCode != 200 || !body.StartsWith("Microsoft Connect Test", StringComparison.Ordinal)) portal = (int)resp.StatusCode + " instead of Windows' test page"; }
             }
             catch (WebException e) { var resp = e.Response as HttpWebResponse; portal = resp != null ? ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 ? "redirected to " + Draw.Trunc(resp.Headers["Location"] ?? "", 60) : "error " + (int)resp.StatusCode) : e.Status == WebExceptionStatus.Timeout ? "no answer (a proxy may be required)" : ""; if (resp == null && e.Status != WebExceptionStatus.Timeout) portalErr = e.Status.ToString(); if (resp != null) resp.Dispose(); }
         }
@@ -130,6 +130,7 @@ namespace AdeeboMeter
                 r.Next.Add(wifi ? "Move closer, or turn Wi-Fi off and on." : "Check the cable and the router's lights."); r.Next.Add("Restart the router if nothing else on this network works either.");
                 r.GoTab = "guide:drops"; r.GoLabel = "Run I keep disconnecting"; around(); return;
             }
+            if (gwSilent && !(double.IsNaN(net) && double.IsNaN(netTcp))) r.Relevel("3. Your router", 3);   // bug-hunt ML-94: the internet answers through it - not amber
             if (gwSilent) r.Obs("i", 3, "Your router is quiet", "it ignores ping and TCP from this PC, but traffic passes through it - that's a setting on the router, not a fault");
             if (double.IsNaN(net) && double.IsNaN(netTcp))
             {

@@ -26,7 +26,7 @@ namespace AdeeboMeter
             new[] { "windows", "Inside Windows", "What all those processes and services are for." },
             new[] { "apps", "Teams and office apps", "What a call or a sync really does on the network." },
             new[] { "streaming", "Streaming", "How video reaches you, why it buffers, and whose fault it is - with three games." },
-            new[] { "investing", "Money & investing", "Bull and bear markets, recessions, inflation, compound growth, emergency funds, budgets and scams - learning, never advice. Seven games." },
+            new[] { "investing", "Money & investing", "Bull and bear markets, orders and spreads, dividends, bonds, crypto, inflation, compound growth, budgets and scams - learning, never advice. Seven games." },
             new[] { "labs", "Labs", "Play with how networks behave, with your own numbers." },
             new[] { "games", "Games", "An escape room, catch the thief, packet detective, quick-fire rounds." },
             new[] { "check", "Check yourself", "One question per topic - right first time earns." },
@@ -68,7 +68,7 @@ namespace AdeeboMeter
             var t = Knowledge.Learn();
             switch (card)
             {
-                case "labs": all = Labs.Length; return Labs.Count(l => l[0] == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + l[0]));   // the same tick as the Labs page
+                case "labs": all = Labs.Length + 1; return (LabLink.Faults.All(f => Points.Me.Has("nlab." + f[0])) ? 1 : 0) + Labs.Count(   /* review 1.1.6 U2 #10: AdeeboLab counts too */l => l[0] == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + l[0]));   // the same tick as the Labs page
                 case "games": { var k = LearnGames.Keys().ToList(); all = k.Count; return k.Count(Points.Me.Has); }
                 case "check": { var c = t.Where(x => x["check"] != "").ToList(); all = c.Count; return c.Count(x => Points.Me.Has("check." + x.Id)); }
                 case "paths": all = Paths.Length; return Paths.Count(p => Points.Me.Has("path." + p.Id));
@@ -88,8 +88,11 @@ namespace AdeeboMeter
                 // an icon card with a progress ring (PLAN 11.5)
                 string acc = c[0] == "games" ? "gamer" : c[0] == "labs" ? "toolbox" : "learn", icon; if (!LearnIcons.TryGetValue(c[0], out icon)) icon = "learn";
                 Kit.Card(g, r, acc, false);
-                using (var cb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(cb, r.X + 14 * S, r.Y + 16 * S, 34 * S, 34 * S);
-                Kit.Icon(g, icon, new RectangleF(r.X + 22 * S, r.Y + 24 * S, 18 * S, 18 * S), Kit.Accent(acc));
+                if (!BigIcon(g, "l:" + c[0], new RectangleF(r.X + 12 * S, r.Y + 10 * S, 44 * S, 44 * S), Kit.Accent(acc)))   // 1.1.6: big icons (FullView.Gateway.cs)
+                {
+                    using (var cb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(cb, r.X + 14 * S, r.Y + 16 * S, 34 * S, 34 * S);
+                    Kit.Icon(g, icon, new RectangleF(r.X + 22 * S, r.Y + 24 * S, 18 * S, 18 * S), Kit.Accent(acc));
+                }
                 var ring = new RectangleF(r.Right - 52 * S, r.Y + 14 * S, 38 * S, 38 * S);
                 using (var tp = new Pen(Theme.Track, 4 * S)) g.DrawEllipse(tp, ring);
                 if (all > 0 && done > 0) using (var ap = new Pen(done >= all ? Theme.Green : Kit.Accent(acc), 4 * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round }) g.DrawArc(ap, ring, -90, 360f * done / all);
@@ -113,7 +116,7 @@ namespace AdeeboMeter
             var l = new List<string[]>();
             switch (card)
             {
-                case "labs": foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.10")) ? "1" : "" }); break;
+                case "labs": l.Add(new[] { "lab:netlab", "AdeeboLab", "Draw your network, see the path, break one thing.", LabLink.Faults.All(f => Points.Me.Has("nlab." + f[0])) ? "1" : "" }); foreach (var lab in Labs) l.Add(new[] { "lab:" + lab[0], lab[1], lab[2], Points.Me.Has("lab." + lab[0]) || (lab[0] == "quiz" && Points.Me.Has("quiz.10")) ? "1" : "" }); break;
                 case "games": foreach (var gm in LearnGames.All) { string pre = GamePrefix(gm[0]); l.Add(new[] { "game:" + gm[0], gm[1], L.T(gm[2]) + " · " + L.T(gm[3]), LearnGames.Keys().Where(k => k.StartsWith(pre, StringComparison.Ordinal)).All(Points.Me.Has) ? "1" : "" }); } break;
                 case "check": foreach (var t in Knowledge.Learn().Where(t => t["check"] != "")) l.Add(new[] { "topic:" + t.Id, t["title"], CheckParts(t["check"])[0], Points.Me.Has("check." + t.Id) ? "1" : "" }); break;
                 default:
@@ -161,7 +164,7 @@ namespace AdeeboMeter
         float PaintGameList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
             var list = LearnGames.All.Where(z => hit(z[1]) || hit(z[2]) || hit("game")).ToList(); if (list.Count == 0) return y;
-            g.DrawString(L.T("GAMES - PLAY TO LEARN"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+            g.DrawString(Kit.Sent("GAMES - PLAY TO LEARN"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
             foreach (var z in list) y = LearnRow(g, "game:" + z[0], L.T(z[1]), L.T(z[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
         }

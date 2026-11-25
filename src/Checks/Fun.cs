@@ -25,7 +25,10 @@ namespace AdeeboMeter
         static string Hm(DateTime t) { return t.ToString("HH:mm", CultureInfo.CurrentCulture); }
         static string Len(double min) { return min < 1 ? "under a minute" : min < 90 ? (int)Math.Round(min) + " min" : (min / 60).ToString("0.#", CultureInfo.CurrentCulture) + " h"; }
         static string Ssid(Monitor m) { lock (m.L) return m.Ssid ?? ""; }
-        static string Clean(string t, string ssid) { return GameSession.Redact(t ?? "", ssid); }   // the Wi-Fi name and addresses never go into a file meant for sharing
+        // R2-144: only the narrative callers (which add their own ".") drop one trailing full stop - an ellipsis stays, and the event
+        // list and the letter keep theirs
+        static string Clean(string t, string ssid) { return GameSession.Redact(t ?? "", ssid).TrimEnd(); }
+        static string CleanNoStop(string t, string ssid) { string c = Clean(t, ssid); return c.EndsWith(".", StringComparison.Ordinal) && !c.EndsWith("..", StringComparison.Ordinal) ? c.Substring(0, c.Length - 1) : c; }   // the tool run, 22 Nov: the callers add their own full stop ("the most.. In total")   // the Wi-Fi name and addresses never go into a file meant for sharing
 
         static string Dir() { string d = Path.Combine(Program.DataDir, "reports"); Directory.CreateDirectory(d); return d; }
         static string Write(string name, string text)
@@ -101,9 +104,9 @@ namespace AdeeboMeter
             // the story, in five short chapters: each has a mood for its picture
             var ch = new List<string[]>();   // {title, text, buddy mood}
             ch.Add(new[] { Voice.P("Let's talk about it", "When"), Voice.P("Let's talk about " + when + ". " + (healed != null ? "You're safe now. The packets are flowing. Take a breath." : "It may not be over yet - but let's talk it through."), "From " + Hm(from) + " to " + Hm(to) + " " + dayName + "."), healed != null ? "smug" : "worried" });
-            ch.Add(new[] { Voice.P("How it started", "First sign"), Voice.P("At " + Hm(bad[0].T) + " something felt off. " + Clean(bad[0].Text, ssid) + ". It seemed small. It always seems small.", Hm(bad[0].T) + ": " + Clean(bad[0].Text, ssid) + "."), "worried" });
-            ch.Add(new[] { Voice.P("The low point", "Worst moment"), Voice.P((low == bad[0] ? "It didn't get better from there. " : "Then, at " + Hm(low.T) + ": " + Clean(low.Text, ssid) + ". ") + (outs.Count > 0 ? "The internet went quiet " + (outs.Count == 1 ? "once" : outs.Count + " times") + " - " + Len(outMin) + " with nothing. " : "") + (bad.Count > 2 ? "In total " + bad.Count + " things went wrong in " + Len((to - from).TotalMinutes) + ". " : "") + "It's okay to feel things about this.", Hm(low.T) + ": " + Clean(low.Text, ssid) + ". " + bad.Count + " problems in " + Len((to - from).TotalMinutes) + (outs.Count > 0 ? "; " + outs.Count + " outage(s), " + Len(outMin) + " in total." : ".")), blame == 1 ? "dizzy" : blame == 0 ? "sweaty" : "betrayed" });
-            ch.Add(new[] { Voice.P("Healing", "Recovery"), healed != null ? Voice.P("At " + Hm(healed.T) + " it came back: " + Clean(healed.Text, ssid) + ". Healing isn't linear, but it got there.", Hm(healed.T) + ": " + Clean(healed.Text, ssid) + ".") : Voice.P("The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.", "No recovery recorded in this stretch."), healed != null ? "smug" : "worried" });
+            ch.Add(new[] { Voice.P("How it started", "First sign"), Voice.P("At " + Hm(bad[0].T) + " something felt off. " + CleanNoStop(bad[0].Text, ssid) + ". It seemed small. It always seems small.", Hm(bad[0].T) + ": " + CleanNoStop(bad[0].Text, ssid) + "."), "worried" });
+            ch.Add(new[] { Voice.P("The low point", "Worst moment"), Voice.P((low == bad[0] ? "It didn't get better from there. " : "Then, at " + Hm(low.T) + ": " + CleanNoStop(low.Text, ssid) + ". ") + (outs.Count > 0 ? "The internet went quiet " + (outs.Count == 1 ? "once" : outs.Count + " times") + " - " + Len(outMin) + " with nothing. " : "") + (bad.Count > 2 ? "In total " + bad.Count + " things went wrong in " + Len((to - from).TotalMinutes) + ". " : "") + "It's okay to feel things about this.", Hm(low.T) + ": " + CleanNoStop(low.Text, ssid) + ". " + bad.Count + " problems in " + Len((to - from).TotalMinutes) + (outs.Count > 0 ? "; " + outs.Count + " outage(s), " + Len(outMin) + " in total." : ".")), blame == 1 ? "dizzy" : blame == 0 ? "sweaty" : "betrayed" });
+            ch.Add(new[] { Voice.P("Healing", "Recovery"), healed != null ? Voice.P("At " + Hm(healed.T) + " it came back: " + CleanNoStop(healed.Text, ssid) + ". Healing isn't linear, but it got there.", Hm(healed.T) + ": " + CleanNoStop(healed.Text, ssid) + ".") : Voice.P("The record doesn't show a clean recovery - things just went quiet. Sometimes closure doesn't come with a timestamp.", "No recovery recorded in this stretch."), healed != null ? "smug" : "worried" });
             string who = blame == 2 ? Voice.P("This wasn't you. The trouble lived past your router, in " + (string.IsNullOrEmpty(m.Isp) ? "your provider" : m.Isp) + "'s part of the world. You can't fix them. You can only send them a letter (Toolbox › Letter to my provider).", "The trouble was past your router (provider or internet). Toolbox › Letter to my provider writes it up.")
                        : blame == 1 ? Voice.P("This one was close to home: your Wi-Fi or router. It's not a character flaw. A cable, or moving closer to the router, is self-care.", "Most of it was your Wi-Fi or router. A cable or a better spot helps; Toolbox › Wi-Fi has the details.")
                        : blame == 3 ? Voice.P("It was DNS. It's always DNS. Toolbox › DNS race finds you a calmer one.", "Most of it was DNS. Toolbox › DNS race compares servers.")
@@ -132,16 +135,16 @@ namespace AdeeboMeter
         // the buddy, as a picture in a web page (the same five faces as the widget)
         static string FaceSvg(string mood)
         {
-            string body = mood == "betrayed" || mood == "dizzy" ? "#FDE2E1" : mood == "worried" || mood == "sweaty" ? "#FFF1CC" : "#DCF5E3";
-            string edge = mood == "betrayed" || mood == "dizzy" ? "#CF222E" : mood == "worried" || mood == "sweaty" ? "#BF8700" : "#2DA44E";
-            var s = new StringBuilder("<svg viewBox=\"0 0 20 20\" width=\"96\" height=\"96\"><circle cx=\"10\" cy=\"10\" r=\"9.3\" fill=\"" + body + "\" stroke=\"" + edge + "\" stroke-width=\"1.1\"/><g stroke=\"#28303C\" stroke-width=\"1.3\" stroke-linecap=\"round\" fill=\"none\">");
+            // 22 Nov: flat, one colour that says how things were - a round outline, see-through inside (like the app's face)
+            string body = mood == "betrayed" || mood == "dizzy" ? "#CF222E" : mood == "worried" || mood == "sweaty" ? "#BF8700" : "#2DA44E";
+            var s = new StringBuilder("<svg viewBox=\"0 0 20 20\" width=\"96\" height=\"96\"><circle cx=\"10\" cy=\"10\" r=\"9.3\" fill=\"none\" stroke=\"" + body + "\" stroke-width=\"1.3\"/><g stroke=\"" + body + "\" stroke-width=\"1.3\" stroke-linecap=\"round\" fill=\"none\">");
             switch (mood)
             {
-                case "smug": s.Append("<line x1=\"4.5\" y1=\"8\" x2=\"7.5\" y2=\"8\"/><circle cx=\"14\" cy=\"8\" r=\"1.1\" fill=\"#28303C\" stroke=\"none\"/><path d=\"M7 13.5 Q11 15.5 13.5 12.5\"/>"); break;
-                case "worried": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"#28303C\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"#28303C\" stroke=\"none\"/><line x1=\"4\" y1=\"5.5\" x2=\"7.5\" y2=\"4.5\"/><line x1=\"16\" y1=\"5.5\" x2=\"12.5\" y2=\"4.5\"/><line x1=\"7\" y1=\"14\" x2=\"13\" y2=\"14\"/>"); break;
-                case "sweaty": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"#28303C\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"#28303C\" stroke=\"none\"/><path d=\"M7.5 15 Q10 13 12.5 15\"/><ellipse cx=\"15.5\" cy=\"6\" rx=\"1.2\" ry=\"1.7\" fill=\"#5AA0E6\" stroke=\"none\"/>"); break;
+                case "smug": s.Append("<line x1=\"4.5\" y1=\"8\" x2=\"7.5\" y2=\"8\"/><circle cx=\"14\" cy=\"8\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><path d=\"M7 13.5 Q11 15.5 13.5 12.5\"/>"); break;
+                case "worried": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><line x1=\"4\" y1=\"5.5\" x2=\"7.5\" y2=\"4.5\"/><line x1=\"16\" y1=\"5.5\" x2=\"12.5\" y2=\"4.5\"/><line x1=\"7\" y1=\"14\" x2=\"13\" y2=\"14\"/>"); break;
+                case "sweaty": s.Append("<circle cx=\"6\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><circle cx=\"14\" cy=\"8.5\" r=\"1.1\" fill=\"" + body + "\" stroke=\"none\"/><path d=\"M7.5 15 Q10 13 12.5 15\"/><ellipse cx=\"15.5\" cy=\"6\" rx=\"1.2\" ry=\"1.7\" fill=\"" + body + "\" stroke=\"none\"/>"); break;
                 case "dizzy": s.Append("<path d=\"M4.5 6.5 L7.5 9.5 M7.5 6.5 L4.5 9.5 M12.5 6.5 L15.5 9.5 M15.5 6.5 L12.5 9.5\"/><circle cx=\"10\" cy=\"14\" r=\"1.5\"/>"); break;
-                default: s.Append("<circle cx=\"6\" cy=\"8\" r=\"1.8\"/><circle cx=\"14\" cy=\"8\" r=\"1.8\"/><circle cx=\"6\" cy=\"8.3\" r=\".6\" fill=\"#28303C\"/><circle cx=\"14\" cy=\"8.3\" r=\".6\" fill=\"#28303C\"/><path d=\"M6.5 15.5 Q10 12.5 13.5 15.5\"/><ellipse cx=\"6\" cy=\"11.5\" rx=\".8\" ry=\"1.3\" fill=\"#5AA0E6\" stroke=\"none\"/>"); break;
+                default: s.Append("<circle cx=\"6\" cy=\"8\" r=\"1.8\"/><circle cx=\"14\" cy=\"8\" r=\"1.8\"/><circle cx=\"6\" cy=\"8.3\" r=\".6\" fill=\"" + body + "\"/><circle cx=\"14\" cy=\"8.3\" r=\".6\" fill=\"" + body + "\"/><path d=\"M6.5 15.5 Q10 12.5 13.5 15.5\"/><ellipse cx=\"6\" cy=\"11.5\" rx=\".8\" ry=\"1.3\" fill=\"" + body + "\" stroke=\"none\"/>"); break;
             }
             return s.Append("</g></svg>").ToString();
         }
@@ -162,7 +165,7 @@ namespace AdeeboMeter
             if (Cfg.History)
             {
                 var p = OverTime.Sum(m, DateTime.Today.AddDays(-(days - 1)), DateTime.Today, run, false);
-                if (p.Minutes >= 60)
+                if (p.Minutes >= 24 * 60)   // 1.1.6 test day: two hours graded the line F and the letter claimed "134 h of trouble a month" - a day at least before judging
                 {
                     w.History = true; w.Days = p.Days; w.Smooth = 100.0 * (p.Minutes - p.BadMinutes) / p.Minutes; w.Gw = p.GwAvg; w.Net = p.NetAvg; w.Loss = p.LossAvg; w.Outages = p.OutageCount; w.OutMin = p.OutageMin; w.Speeds = p.Speeds;
                     if (!double.IsNaN(p.WorstScore)) w.WorstDay = p.WorstDay.ToString("dddd d MMMM", CultureInfo.CurrentCulture);
@@ -207,8 +210,11 @@ namespace AdeeboMeter
         public static List<string[]> Roast(Monitor m, Toolkit.Run run)
         {
             run.Status = "Collecting receipts...";
-            var w = Measure(m, 7, run); string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
-            var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + " days" : " · the last few minutes (turn on History for a week)"), "", "m") };
+            var w = Measure(m, 7, run);
+            // review 1.1.6 P2 #5: no grade from one moment - a roast needs a day of History, like the letter
+            if (!w.History) return new List<string[]> { R(3, "Not enough to roast yet", "a roast needs at least a day of measurements", Cfg.History ? "History is on - come back after a day of normal use." : "Turn on History in Settings, then come back after a day.", "u") };
+            string g = Grade(w); var burns = Burns(w, g, "");   // made to be posted: never the provider's name (it says where you live)
+            var rows = new List<string[]> { R(g.StartsWith("A", StringComparison.Ordinal) ? 0 : g == "F" || g == "D" ? 2 : 1, "Grade", g + (w.History ? " · the last " + w.Days + (w.Days == 1 ? " day" : " days") : " · the last few minutes (turn on History for a week)"), "", "m") };
             foreach (var b in burns) rows.Add(R(3, "", b, "", "m"));
             string file = null;
             try
@@ -217,7 +223,7 @@ namespace AdeeboMeter
                 using (var bmp = new Bitmap(Z, Z, PixelFormat.Format32bppArgb))
                 using (var gr = Graphics.FromImage(bmp))
                 {
-                    gr.SmoothingMode = SmoothingMode.AntiAlias; gr.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                    gr.SmoothingMode = SmoothingMode.AntiAlias; gr.TextRenderingHint = Draw.ImageText; gr.TextContrast = Draw.Contrast;
                     using (var bg = new LinearGradientBrush(new Rectangle(0, 0, Z, Z), Color.FromArgb(24, 20, 48), Color.FromArgb(90, 24, 70), 45f)) gr.FillRectangle(bg, 0, 0, Z, Z);
                     Color gc = g.StartsWith("A", StringComparison.Ordinal) ? Color.FromArgb(70, 220, 120) : g == "B" || g == "C" ? Color.FromArgb(255, 196, 60) : Color.FromArgb(255, 90, 90);
                     using (var f1 = new Font("Segoe UI", 54, FontStyle.Bold, GraphicsUnit.Pixel)) using (var wb = new SolidBrush(Color.White)) gr.DrawString("my network got roasted", f1, wb, 72, 70);
@@ -228,7 +234,7 @@ namespace AdeeboMeter
                     using (var f3 = new Font("Segoe UI", 38, FontStyle.Regular, GraphicsUnit.Pixel)) using (var tb = new SolidBrush(Color.FromArgb(240, 240, 250)))
                         foreach (var b in burns) { var sz = gr.MeasureString(b, f3, Z - 144); if (y + sz.Height > Z - 110) break; gr.DrawString(b, f3, tb, new RectangleF(72, y, Z - 144, sz.Height + 4)); y += sz.Height + 22; }
                     using (var f4 = new Font("Segoe UI", 26, FontStyle.Regular, GraphicsUnit.Pixel)) using (var mb = new SolidBrush(Color.FromArgb(170, 170, 200)))
-                        gr.DrawString("AdeeboMeter · measured on my PC, " + (w.History ? "last " + w.Days + " days" : "just now") + " · no data left my PC to make this", f4, mb, 72, Z - 80);
+                        gr.DrawString("AdeeboMeter · measured on my PC, " + (w.History ? "last " + w.Days + (w.Days == 1 ? " day" : " days") : "just now") + " · no data left my PC to make this", f4, mb, 72, Z - 80);
                     string f = Path.Combine(Dir(), "Roast-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".png");
                     bmp.Save(f, ImageFormat.Png); file = f;
                 }
@@ -245,14 +251,14 @@ namespace AdeeboMeter
             int days; if (!int.TryParse((daysText ?? "").Trim(), out days)) days = 30; days = Math.Max(1, Math.Min(180, days));
             run.Status = "Reading " + days + " days of measurements...";
             var w = Measure(m, days, run);
-            if (!w.History) return new List<string[]> { R(1, "Not enough history", "the letter needs at least an hour of measurements", (Cfg.History ? "History is on - give it a day or two of normal use, then come back." : "Turn on History in Settings, use the PC for a day or two, then come back.") + " A letter without numbers is just a complaint.", "i") };
+            if (!w.History) return new List<string[]> { R(1, "Not enough history", "the letter needs at least a day of measurements", (Cfg.History ? "History is on - give it a day or two of normal use, then come back." : "Turn on History in Settings, use the PC for a day or two, then come back.") + " A letter without numbers is just a complaint.", "i") };
             string isp = string.IsNullOrEmpty(m.Isp) ? "" : m.Isp, c = isp == "" ? "Hello," : "Hello " + isp + " team,";
             double lostH = w.OutMin / 60.0, roughMonth = (100 - w.Smooth) / 100 * 24 * 30;
             bool home = !double.IsNaN(w.Gw) && w.Gw > 15;   // our own network was slow too: say so - the letter never lies
             var sb = new StringBuilder();
             sb.Append("Subject: My connection over the last " + days + " days, measured\n\n" + c + "\n\n");
             sb.Append(Voice.P("I really like the internet. I'd like to use it more often. ", ""));
-            sb.Append("I've been measuring my connection from my PC for the last " + w.Days + " days. ");
+            sb.Append("I've been measuring my connection from my PC for the last " + w.Days + (w.Days == 1 ? " day. " : " days. "));
             if (w.Outages > 0) sb.Append("In that time it dropped completely " + w.Outages + (w.Outages == 1 ? " time" : " times") + ", for " + Len(w.OutMin) + " in total" + Voice.P(lostH >= 2 ? " - about " + Math.Round(lostH / 2) + " feature-length film" + (Math.Round(lostH / 2) == 1 ? "" : "s") + " of nothing" : "", "") + ". ");
             sb.Append("It was smooth " + N1(w.Smooth) + "% of the time. " + (w.Smooth < 99.5 ? Voice.P("That sounds high until you work it out: it's roughly " + Len(roughMonth * 60) + " of trouble a month. ", "That is roughly " + Len(roughMonth * 60) + " of trouble a month. ") : ""));
             if (!double.IsNaN(w.Loss) && w.Loss >= 0.5) sb.Append("Packet loss averaged " + N1(w.Loss) + "%. ");

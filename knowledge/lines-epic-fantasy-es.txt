@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Epic fantasy. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|La guardia comienza. Nada pasa sin ser visto esta noche.
+app.open|¡Salve, {addr}! Los cuervos vuelan a cada torre.
+app.open|La fortaleza tiene guardia. Tu reino está vigilado.
+app.open|Tus estandartes ondean, {addr}. La guardia comienza.
+app.open|Las puertas del castillo se abren. Los exploradores parten.
+all.good|El reino está en paz, {addr}.
+all.good|Ni un dragón en el horizonte. Todo está bien.
+all.good|Las murallas resisten. Nada necesita tu espada hoy.
+all.good|Cada torre reporta calma.
+all.good|Un día tranquilo en el reino.
+pc.busy|Tu castillo está abarrotado, {addr}. Despide a algunos huéspedes.
+pc.busy|La fragua arde demasiado. Un herrero acapara el fuego.
+pc.busy|Tu fortaleza gime bajo tantos estandartes.
+pc.busy|El castillo está asediado desde dentro. Cierra un programa.
+pc.busy|El gran salón está lleno. No cabe otro banquete.
+wifi.drops|{addr}, tu Wi-Fi es más lento que un cuervo con un ala herida.
+wifi.drops|La señal cayó {v} veces. La noche está llena de cortes.
+wifi.drops|Tu Wi-Fi abandonó su puesto {v} veces hoy.
+wifi.drops|El puente al castillo se derrumbó {v} veces.
+wifi.drops|{v} veces hoy el Wi-Fi se rindió ante el microondas.
+net.none|El reino está aislado, {addr}. Ni caminos ni cuervos.
+net.none|Sin red. El reino queda solo.
+net.none|Las puertas están selladas. Nada entra ni sale.
+net.none|Ni un solo cuervo puede encontrarnos.
+net.none|El castillo no tiene camino al mundo.
+inet.slow|Tus murallas son fuertes. El problema está más allá del río.
+inet.slow|El router vigila bien. La lentitud viene de tierras lejanas.
+inet.slow|Tu fortaleza está bien, {addr}. El gran camino está embarrado.
+inet.slow|Los mensajeros llegan rápido a tu puerta y luego se arrastran.
+inet.slow|La culpa es de los señores del proveedor.
+busy|Los maestres leen los pergaminos...
+busy|Los cuervos vuelan. Paciencia, {addr}.
+busy|Los exploradores cabalgan. Respuestas pronto.
+busy|Afilando las espadas...
+busy|El consejo delibera...
+idle|La guardia nocturna vigila. Nada se mueve.
+idle|Silencio en el reino. La guardia continúa.
+idle|Las antorchas arden. Todo está quieto.
+idle|No hay jinetes en el camino.
+idle|El castillo duerme. La guardia no.
+search.empty|Nombra tu misión, {addr}.
+search.empty|¿Qué aflige al reino?
+search.empty|Habla, y la herramienta adecuada responderá.
+search.empty|¿A qué enemigo cazamos hoy?
+search.empty|Cuenta al consejo tu problema.
+freeze|El puente levadizo está atascado. Bajándolo ({v})...
+freeze|Un momento, {addr}. Las puertas pesan ({v}).
+freeze|El maestre perdió su lugar. Buscándolo ({v})...
+freeze|Manteniendo la línea. Vuelvo pronto ({v}).
+freeze|El castillo toma aire ({v}).
+speedrunner|Con calma, {addr}. Hasta los dragones vuelan de uno en uno.
+speedrunner|El último cuervo aún no ha llegado.
+speedrunner|Paciencia. Una batalla a la vez.
+speedrunner|Tu caballo es más rápido que nuestros exploradores.
+speedrunner|El consejo aún está en tu última petición.
+back.again|Regresas, {addr}. Esto pasó en tu ausencia.
+back.again|Bienvenido a casa. La guardia guardó {v} registros.
+back.again|La guardia informa: nada cambió.
+back.again|Tu fortaleza se mantuvo firme mientras estabas fuera.
+back.again|¿De vuelta del camino? Aquí están las noticias.
+dns.slow|Los heraldos olvidan los nombres. {v} para recordar cada uno.
+dns.slow|El guardián de nombres es lento, {addr}. Prueba otro.
+speed.great|{v} de descarga. Veloz como el fuego de dragón.
+speed.great|Un camino digno de un rey.
+speed.bloat|Veloz a solas, pero un castillo lleno atasca la puerta.
+speed.bloat|Cuando toda la corte descarga, el camino se atasca.
+game.lag|No es el castillo enemigo. Tu propio Wi-Fi te traiciona.
+game.lag|El traidor está dentro de tus murallas: el Wi-Fi.
+game.good|Ping {v}. Listo para la batalla.
+game.good|Tus líneas resisten. Cabalga, {addr}.
+vpn.on|Tu túnel secreto está abierto.
+vpn.on|Viajando bajo un estandarte oculto.
+vpn.slow|El túnel secreto añade {v} a cada viaje.
+vpn.slow|El camino oculto es más lento que el gran camino.
+portal|Esta tierra exige un peaje. Inicia sesión primero.
+portal|El guardián quiere tu nombre. Abre un navegador.
+gw.down|Tu guardián ha guardado silencio.
+gw.down|El router no responde al cuerno.
+isp.down|Tu puerta resiste, pero el camino más allá se fue.
+isp.down|Los señores del proveedor cerraron el camino.
+mtu.small|El puente es demasiado estrecho para carros llenos. Tamaño {v}.
+mtu.small|Los carros grandes no pueden cruzar. Los paquetes son devueltos.
+port.open|La puerta en {v} se abre.
+port.open|Respondieron al llamado.
+port.closed|La puerta en {v} está cerrada.
+port.closed|Nadie respondió al llamado.
+cert.ok|El sello es auténtico.
+cert.ok|El sello real es válido.
+cert.expired|El sello venció el {v}. No confíes en él.
+cert.expired|Un sello roto. Los navegadores gritarán traición.
+sec.ok|Las murallas son fuertes. No se encontró brecha.
+sec.ok|Tus defensas resisten.
+sec.issue|{v} puntos débiles en las murallas.
+sec.issue|Algunas puertas quedaron sin guardia.
+mtr.lossy|Los jinetes desaparecen en la torre {v}.
+mtr.lossy|Los mensajes se pierden en el camino. Mira dónde.
+mtr.clean|Cada torre pasó el mensaje.
+mtr.clean|Ni un solo jinete perdido.
+devices.found|{v} almas habitan tu reino.
+devices.found|Estas son las casas de tu reino.
+encrypt.done|Sellado con tu sello.
+encrypt.done|Cerrado. Solo los elegidos podrán leerlo.
+decrypt.done|El sello está roto. Intacto en su viaje.
+decrypt.done|Abierto, y nada fue alterado.
+points.earned|+{v} de gloria.
+points.earned|El reino te honra: +{v}.
+award|500 puntos. De esto se cantará una balada.
+award|El Premio Adeebo. Arrodíllate y levántate como leyenda.
+late.night|La noche es larga, {addr}. La guardia sigue despierta.
+late.night|Medianoche en el reino. Todo está en calma.
+morning|Amanece, {addr}. La noche pasó en paz.
+morning|Buenos días. La guardia tiene su informe.
+update.suspect|El problema empezó tras el decreto del rey de {v}.
+update.suspect|Una actualización reciente de Windows podría ser la traidora.
+call.on|Una reunión del consejo. Vigilando la llamada.
+call.on|Celebras audiencia. La llamada está vigilada.
+quiz.right|¡Bien respondido, {addr}!
+quiz.wrong|Ay, las runas dicen otra cosa.
+game.streak|¡{v} victorias seguidas, de esto se cantarán canciones!
+game.timeup|Las arenas del reloj se han agotado.
+market.open|Los grandes mercados abren sus puertas.
+storm.near|Una tempestad se cierne sobre tu reino.
+# 1.1.6 - streaming, trading and views
+stream.on|{v} fluye fiel por todo el reino.
+stream.on|El relato sigue, sin interrupciones.
+stream.dip|El relato vaciló. {v}
+stream.dip|Una sombra cruzó el stream. {v}
+stream.none|Esta noche no se cuenta ningún relato.
+stream.none|El narrador descansa.
+trade.ok|El camino al gremio de la moneda es veloz.
+trade.ok|Cuervos veloces hacia tu bróker.
+trade.slow|Los cuervos vuelan lentos. Detén tu mano.
+trade.slow|Hoy el camino al bróker es largo. {v}
+trade.closed|El gremio de la moneda cierra hasta las 9:30.
+trade.closed|Las puertas del mercado están cerradas por esta noche.
+view.switch|¡Entramos al salón {v}!
+view.switch|Se alza el estandarte {v}.

@@ -42,7 +42,7 @@ namespace AdeeboMeter
             try { Whats(m, net, changed); } finally { fullMode = false; }
             foreach (var o in net.ObservedCopy()) if (!o[2].StartsWith("1. This PC", StringComparison.Ordinal)) r.Obs(o[0], int.Parse(o[1], CultureInfo.InvariantCulture), "3. " + o[2], o[3]);
             if (net.Lv >= 1 && net.Finding != "") found.Add(new KeyValuePair<int, string>(net.Lv, net.Finding));
-            // 4. the speed test - only when ticked (it moves 100-300 MB)
+            // 4. the speed test - only when ticked (it moves up to 1 GB)
             if (CheckupSpeed)
             {
                 step("Speed test (download, then upload)...");
@@ -58,7 +58,7 @@ namespace AdeeboMeter
                 }
                 catch (Exception e) { r.NotEst.Add("Speed test: " + e.Message); }
             }
-            else r.NotEst.Add("Internet speed - the speed test wasn't ticked (it uses 100-300 MB).");
+            else r.NotEst.Add("Internet speed - the speed test wasn't ticked (it uses up to 1 GB).");
             // 5. the parts between the internet and your files: a disk or a link slower than the plan caps every download
             {
                 var spd = SpeedTest.Last; double wr = HwTests.LastNum("disk", 1);

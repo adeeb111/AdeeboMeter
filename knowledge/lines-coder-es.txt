@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Coder persona. key|text.
+app.open|Proceso iniciado. Vigilando el bucle de red.
+app.open|Hola, mundo. Monitoreando la red de {addr}.
+all.good|Todos los tests en verde.
+all.good|Build en verde. PC, Wi-Fi e internet bien.
+all.good|Sin errores. Sin advertencias.
+pc.busy|CPU al {v}. Algo está en un bucle cerrado.
+pc.busy|Cuello de botella: la PC, no la red.
+pc.busy|Demasiados procesos. Cierra uno y reintenta.
+wifi.drops|El Wi-Fi lanzó {v} excepciones de desconexión hoy.
+wifi.drops|{v} caídas. Problemas de señal sin manejar.
+net.none|Sin red. 404: internet no encontrado.
+net.none|Sin conexión. Conéctate y reintenta.
+inet.slow|Local rápido. La latencia está fuera, tras el router.
+inet.slow|No es tu código. El proveedor es lento.
+inet.slow|La demora empieza fuera de tu red.
+busy|Ejecutando... {v}
+busy|Compilando resultados.
+busy|Ejecutando.
+idle|Bucle inactivo. Nada nuevo.
+idle|Sin commits nuevos.
+idle|Esperando eventos.
+search.empty|¿Qué estamos depurando?
+search.empty|Búscalo con grep: "slow", "dns", "wifi".
+freeze|Recolectando basura ({v}).
+freeze|Poniéndome al día ({v}). Async en curso.
+speedrunner|Petición en cola. La anterior sigue corriendo.
+speedrunner|Límite de tasa. Una a la vez.
+back.again|Bienvenido de vuelta. {v} entradas nuevas en el log.
+back.again|De vuelta. Aquí va el changelog.
+dns.slow|Tiempo de resolución DNS {v}. Origen lento.
+dns.slow|Consultas a {v}. Puro fallo de caché.
+speed.great|{v} de bajada. Clona todo el repo.
+speed.great|Descarga {v}. Tubería rápida.
+speed.bloat|Rendimiento bien, latencia +{v} bajo carga.
+speed.bloat|Bufferbloat: {v} extra con carga.
+game.lag|Origen del lag: Wi-Fi, no el servidor.
+game.lag|El servidor responde rápido. El Wi-Fi falla.
+game.good|Ping {v}. A producción.
+game.good|Conexión estable.
+vpn.on|Túnel VPN activo.
+vpn.on|Enrutando por la VPN.
+vpn.slow|Sobrecarga VPN: {v}.
+vpn.slow|El túnel suma {v}.
+portal|Redirección HTTP a la página de inicio. Entra primero.
+portal|Portal cautivo. Autentícate para seguir.
+gw.down|Tiempo de espera del gateway. Reinicia el router.
+gw.down|El router no responde.
+isp.down|Local bien. El origen está caído.
+isp.down|El proveedor no devuelve nada.
+mtu.small|Los paquetes de más de {v} bytes se descartan.
+mtu.small|MTU {v}. Problemas de fragmentación.
+port.open|{v}: conexión aceptada.
+port.open|{v} está escuchando.
+port.closed|{v}: conexión rechazada o expirada.
+port.closed|{v} no está escuchando.
+cert.ok|Certificado válido. Cadena bien.
+cert.ok|Handshake TLS limpio.
+cert.expired|Certificado vencido {v}. Alguien olvidó renovar.
+cert.expired|Vencido desde {v}.
+sec.ok|Lint de seguridad: aprobado.
+sec.ok|Sin problemas hallados.
+sec.issue|{v} advertencias de seguridad.
+sec.issue|La revisión devolvió {v} puntos.
+mtr.lossy|Pérdida de paquetes desde el salto {v}.
+mtr.lossy|Las caídas empiezan en el salto {v}.
+mtr.clean|0% de pérdida. Traza limpia.
+mtr.clean|Sin pérdida en ningún salto.
+devices.found|{v} hosts activos.
+devices.found|Hallé {v} dispositivos.
+encrypt.done|Cifrado. Solo la clave del destinatario lo abre.
+encrypt.done|Listo. Texto cifrado preparado.
+decrypt.done|Descifrado. El hash coincide.
+decrypt.done|Abierto. Integridad bien.
+points.earned|+{v} puntos.
+points.earned|+{v}. Subida de nivel en camino.
+award|500 puntos. Logro: Premio Adeebo.
+award|Premio Adeebo fusionado.
+late.night|Sesión nocturna. Sigo corriendo.
+late.night|Build nocturno. Vigilando.
+morning|Buenos días. La corrida nocturna salió limpia.
+morning|Buenos días. Sin errores anoche.
+update.suspect|Regresión tras la actualización del {v}.
+update.suspect|Se rompió tras la actualización {v}. Bisect apunta ahí.
+call.on|Llamada detectada. Vigilando el jitter.
+call.on|En llamada. Monitoreando.
+quiz.right|Tests en verde. Correcto.
+quiz.wrong|La aserción falló. Inténtalo de nuevo.
+game.streak|{v} seguidas: build en verde.
+game.timeup|Tiempo de espera excedido.
+market.open|Mercados en línea. Estado 200.
+storm.near|Tormenta cerca: espera conexiones caídas.
+# 1.1.6 - streaming, trading and views
+stream.on|stream.status = PLAYING ({v}). Sin excepciones.
+stream.on|{v} en marcha. Buffer sano, sin advertencias.
+stream.dip|Warning: el stream bajó. {v}
+stream.dip|Caída de fotogramas registrada. {v}
+stream.none|stream == null. Bucle en reposo.
+stream.none|No se encontró proceso de stream. Esperando play().
+trade.ok|ping(broker) responde rápido. Todos los tests en verde.
+trade.ok|Latencia del bróker dentro de especificación.
+trade.slow|Regresión de latencia del bróker. Retén la orden.
+trade.slow|Tiempos del bróker fuera de rango. {v}
+trade.closed|market.isOpen() == false. Sleep hasta las 9:30.
+trade.closed|Mercado cerrado. El cron job sigue a las 9:30.
+view.switch|Cargando vista: {v}.
+view.switch|Cambio de contexto a {v}. Ajustes restaurados.

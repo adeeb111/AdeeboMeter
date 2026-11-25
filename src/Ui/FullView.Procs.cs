@@ -41,11 +41,11 @@ namespace AdeeboMeter
             if (todo.Count == 0 || whereBusy) return;
             whereBusy = true;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin(L.T("Looking up where programs live")); try { 
                 var res = new Dictionary<string, string>();
                 foreach (var t in todo) { string path = ""; try { path = Native.ExePath(t.Value); } catch { } res[t.Key] = path == "" ? "" : Explain.Where(path); }
                 try { BeginInvoke((Action)delegate { foreach (var kv in res) procWhere[kv.Key] = kv.Value; whereBusy = false; procList.Invalidate(); }); } catch { whereBusy = false; }
-            });
+            } finally { __bz.End(); } });
         }
         string CatOf(AppStat a)
         {
@@ -58,12 +58,15 @@ namespace AdeeboMeter
         List<Conn> procConns; volatile bool procConnBusy;
         void LoadProcConns(string name)
         {
-            if (procConnBusy) return; procConnBusy = true;
+            if (procConnBusy) return;
+            // bug-hunt ML-143: the connection list the page already read in the last 10 seconds is used, not a fresh read of every table
+            var snap = connSnap; if (snap != null && (DateTime.UtcNow - lastConns).TotalSeconds < 10) { procConns = snap.Where(c => c.Proc == name).ToList(); procInfo.Invalidate(); return; }
+            procConnBusy = true;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin(L.T("Listing this program's connections")); try { 
                 List<Conn> l = null; try { l = M.Connections(true).Where(c => c.Proc == name).ToList(); } catch (Exception e) { Program.Log("app connections: " + e.Message); }
                 try { BeginInvoke((Action)delegate { procConnBusy = false; if (procSel == name) { procConns = l; procInfo.Invalidate(); } }); } catch (InvalidOperationException) { procConnBusy = false; }
-            });
+            } finally { __bz.End(); } });
         }
         static readonly string[] ConnReading = { "Connections", "reading..." }, ConnNone = { "Connections", "none right now - it isn't using the network" }, ConnMore = { "", "... and more - Monitor › Connections shows them all" };
         static List<string[]> ConnRows(List<Conn> l)
@@ -88,12 +91,14 @@ namespace AdeeboMeter
             procSel = a.Name; procFacts = null; procPathSel = ""; procConns = null; LoadProcConns(a.Name); procInfo.AutoScrollPosition = Point.Empty; procList.Invalidate(); procInfo.Invalidate();
             string name = a.Name; int pid = a.Pid;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin(L.T("Reading this program's details")); try { 
                 string path = ""; try { path = Native.ExePath(pid); } catch { }
                 var f = Explain.FileFacts(path);
                 try { BeginInvoke((Action)delegate { if (procSel == name) { procFacts = f; procPathSel = path; procInfo.Invalidate(); } }); } catch { }
-            });
+            } finally { __bz.End(); } });
         }
+        sealed class ProcRow { public AppStat A; public Explain.Entry E; public string C; }
+        List<AppStat> procRowsFor; string procRowsKey = ""; int procRowsCount; readonly Dictionary<string, List<ProcRow>> procRowsByCat = new Dictionary<string, List<ProcRow>>();
         bool procByCpu;   // Review-1: the list says which way it's sorted - Memory (default) or CPU, a click on the header swaps
         void PaintProcList(Graphics g)
         {
@@ -101,18 +106,22 @@ namespace AdeeboMeter
             Begin(procList);
             float x = 14 * S, y = 4 * S + 30 * S, w = procList.ClientSize.Width - 22 * S, rh = 42 * S;
             string q = procSearch.Box.Text.Trim();
-            var items = procs.Where(a => a.Name != "Idle").Select(a => new { A = a, E = Explain.Find(a.Name) ?? Explain.Find(Monitor.RawOf(a.Name)), C = CatOf(a) })
+            // bug-hunt ML-142: filtered and sorted only when the list, the search or the order changes - not on every paint
+            string pk = q + "|" + procByCpu; if (!ReferenceEquals(procRowsFor, procs) || pk != procRowsKey) { procRowsFor = procs; procRowsKey = pk; procRowsByCat.Clear();
+            var items = procs.Where(a => a.Name != "Idle").Select(a => new ProcRow { A = a, E = Explain.Find(a.Name) ?? Explain.Find(Monitor.RawOf(a.Name)), C = CatOf(a) })
                              .Where(i => q == "" || i.A.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || (i.E != null && (i.E.Friendly.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || i.E.Tag.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0))).ToList();
+            procRowsCount = items.Count;
+            foreach (var grp in items.GroupBy(i => i.C)) procRowsByCat[grp.Key] = (procByCpu ? grp.OrderByDescending(i => i.A.Cpu).ThenByDescending(i => i.A.Mem) : grp.OrderByDescending(i => i.A.Mem)).ToList(); }
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (items.Count == 0) g.DrawString(procs.Count == 0 ? Voice.P("Reading the process list...", "Loading...") : "Nothing matches.", Draw.fBody, muted, x, y + 8 * S);
+                if (procRowsCount == 0) g.DrawString(procs.Count == 0 ? Voice.P("Reading the process list...", "Loading...") : "Nothing matches.", Draw.fBody, muted, x, y + 8 * S);
                 foreach (var cat in Explain.CatOrder)
                 {
-                    var rows = (procByCpu ? items.Where(i => i.C == cat).OrderByDescending(i => i.A.Cpu).ThenByDescending(i => i.A.Mem) : items.Where(i => i.C == cat).OrderByDescending(i => i.A.Mem)).ToList();
+                    List<ProcRow> rows; if (!procRowsByCat.TryGetValue(cat, out rows)) rows = new List<ProcRow>();
                     if (rows.Count == 0) continue;
                     y += 8 * S;
-                    g.DrawString(cat.ToUpperInvariant() + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(L.T(cat) + "  ·  " + rows.Count, Draw.fTiny, muted, x, y); y += 20 * S;
                     foreach (var i in rows)
                     {
                         var a = i.A; var rr = new RectangleF(0, y, w + 8 * S, rh);
@@ -124,8 +133,8 @@ namespace AdeeboMeter
                         g.DrawString(title + (i.E != null && !string.Equals(i.E.Friendly, a.Name, StringComparison.OrdinalIgnoreCase) ? "  (" + a.Name + ")" : ""), Draw.fBodyB, ink, new RectangleF(tx, y + 4 * S, tw, 18 * S), nowrap);
                         g.DrawString(subl, Draw.fSmall, muted, new RectangleF(tx, y + 22 * S, tw, 16 * S), nowrap);
                         string mem = Draw.MemStr(a.Mem), cpu = a.Cpu.ToString("0.0", CultureInfo.CurrentCulture) + "%";
-                        var ms = g.MeasureString(mem, Draw.fMono); g.DrawString(mem, Draw.fMono, ink, x + w - 64 * S - ms.Width, y + 12 * S);
-                        var cs = g.MeasureString(cpu, Draw.fMono); g.DrawString(cpu, Draw.fMono, sub, x + w - cs.Width, y + 12 * S);
+                        var ms = g.MeasureString(mem, Draw.fBodyB); g.DrawString(mem, Draw.fBodyB, ink, x + w - 64 * S - ms.Width, y + 12 * S);
+                        var cs = g.MeasureString(cpu, Draw.fBodyB); g.DrawString(cpu, Draw.fBodyB, sub, x + w - cs.Width, y + 12 * S);
                         g.DrawLine(line, x, y + rh - 1, x + w, y + rh - 1);
                         var captured = a; Act(procList, rr, delegate { SelectProc(captured); });
                         y += rh;
@@ -139,8 +148,8 @@ namespace AdeeboMeter
             using (var line = new Pen(Theme.Line2)) g.DrawLine(line, x, hh - 1, x + w, hh - 1);
             using (var muted = new SolidBrush(Theme.Muted)) using (var on = new SolidBrush(Theme.Ink))
             {
-                g.DrawString(L.T("APP"), Draw.fTiny, muted, x + 20 * S, 9 * S);
-                string mh = L.T("MEMORY") + (procByCpu ? "" : " ▼"), ch = L.T("CPU") + (procByCpu ? " ▼" : "");
+                g.DrawString(Kit.Sent("APP"), Draw.fTiny, muted, x + 20 * S, 9 * S);
+                string mh = Kit.Sent("MEMORY") + (procByCpu ? "" : " ▼"), ch = Kit.Sent("CPU") + (procByCpu ? " ▼" : "");
                 var mz = g.MeasureString(mh, Draw.fTiny); var cz = g.MeasureString(ch, Draw.fTiny);
                 float mx = x + w - 64 * S - mz.Width, cx = x + w - cz.Width;
                 g.DrawString(mh, Draw.fTiny, procByCpu ? muted : on, mx, 9 * S); g.DrawString(ch, Draw.fTiny, procByCpu ? on : muted, cx, 9 * S);
@@ -163,10 +172,10 @@ namespace AdeeboMeter
                 {
                     Friendly = Voice.P("Meet the crew running your PC.", "What's running on this PC"), Close = -1,
                     Tag = total + " processes, grouped into " + procs.Count + " programs. I know " + known + " of them by heart.",
-                    What = "Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job.",
-                    How = "Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.",
-                    Why = "Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.",
-                    Without = "Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide."
+                    What = L.T("Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job."),
+                    How = L.T("Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close."),
+                    Why = L.T("Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling."),
+                    Without = L.T("Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.")
                 };
                 y = ExplainPaint.Paint(g, intro, x, y, w, false);
             }
@@ -181,7 +190,7 @@ namespace AdeeboMeter
                 rows.Add(new[] { "Program file", procFacts == null ? "reading..." : procPathSel != "" ? procPathSel : "hidden by Windows (protected process)" });
                 if (procFacts != null && procFacts[0] != "") rows.Add(new[] { "Describes itself as", procFacts[0] });
                 if (procFacts != null && procFacts[1] != "") rows.Add(new[] { "Publisher", procFacts[1] });
-                if (procFacts != null) rows.Add(new[] { "Where it lives", Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
+                if (procFacts != null) rows.Add(new[] { L.T("Where it lives"), Explain.WhereText(procPathSel == "" ? "" : procFacts[3]) });
                 y = ExplainPaint.Section(g, "ON THIS PC", rows, x, y, w);
                 y += 6 * S;
                 y = ExplainPaint.Section(g, "ITS CONNECTIONS RIGHT NOW", ConnRows(procConns), x, y, w);

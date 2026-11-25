@@ -1,7 +1,8 @@
 /* AdeeboMeter phone app - brand layer (prototype, 23 Nov). Same instrument as the website:
    graphite page, the logo's blue faceplate for the verdict, the gauge's three arcs for status. */
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
-@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 800;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 
@@ -113,3 +114,51 @@ input.search:focus{box-shadow:0 0 0 1px var(--blue),0 0 0 4px color-mix(in srgb,
 #pickhere label:last-of-type{border-bottom:0}
 #pickhere select{min-width:0;max-width:60%!important;border:0!important;text-align:end;color:var(--blue)!important;font-weight:500!important;padding:6px 0!important;font-size:15px!important}
 #pickhere input{width:100%!important;margin:4px 0 8px;padding:10px 12px!important;font-size:15px!important}
+
+/* ---- review 24 Nov --------------------------------------------------------------------------------------------------- */
+/* light: status text dark enough to read at badge size (4.5:1), as on the website and the PC */
+:root[data-theme="light"]:not([data-pal]){--green:#17794F;--amber:#875A00;--red:#B42318;--mut:#5A6270}
+/* the primary button, the segmented control and the main action are the logo blue too (they kept the old gradient) */
+.btn:not(.ghost),.seg button.on,.act.main i{background:var(--face);color:#fff;box-shadow:none}
+.act.main i{box-shadow:0 0 0 6px rgba(17,85,224,.18)}
+:root[data-pal] .btn:not(.ghost),:root[data-pal] .seg button.on,:root[data-pal] .act.main i,:root[data-pal] .mini button.on{background:var(--blue);color:var(--onblue)}
+/* colour themes: the quiet grey was 2-2.7:1; it takes the secondary text colour; text on Sunset/Mint's accent is dark */
+:root[data-pal]{--mut:var(--sub)}
+:root[data-pal="sunset"]{--onblue:#1A1016}
+:root[data-pal="mint"]{--onblue:#00140F}
+/* badges and chips: tints from the same colour as their text */
+.badge{background:color-mix(in srgb,var(--green) 14%,transparent)}.badge.warn{background:color-mix(in srgb,var(--amber) 16%,transparent)}
+.badge.bad{background:color-mix(in srgb,var(--red) 14%,transparent)}
+.where.ph{background:color-mix(in srgb,var(--green) 14%,transparent)}
+.where.off{background:var(--card2);color:var(--sub)}
+.where{background:color-mix(in srgb,var(--blue) 14%,transparent)}
+:root:not([data-pal]):not([data-theme="light"]) .where{color:#7FA6F8}
+/* narrow phones: a four-digit ping fits its stat (the icon steps aside below 390 px) */
+.st>div{min-width:0}
+@media (max-width:389px){.stats:not(.two) .st>span{display:none}.stats:not(.two) .st{padding:10px}}
+/* long Wi-Fi names wrap instead of pushing the chip off the card */
+.card h2>span{min-width:0;overflow-wrap:anywhere}
+/* iOS zooms into any form field under 16 px */
+.card.langrow .phone-locale select,#pickhere select,#pickhere input,#vpick select,#vpick input{font-size:16px}
+/* text buttons get a finger-sized target without moving the layout */
+.lnk{padding:12px 6px;margin:-12px -6px}
+.mini button{min-height:44px}
+/* the speed dial's scale numbers readable on a small phone */
+.sdial .lbl text{font-size:24px}
+/* right-to-left: the switch knob, the timeline and the bars mirror */
+[dir="rtl"] .tog:after{left:auto;right:3px;transition:right .18s}[dir="rtl"] .tog.on:after{left:auto;right:23px}
+[dir="rtl"] .tl{padding-left:0;padding-right:18px}[dir="rtl"] .tl:before{left:auto;right:5px}[dir="rtl"] .tl>div:before{left:auto;right:-17px}
+[dir="rtl"] .bars i:after{inset:0 0 0 auto}[dir="rtl"] .bars b{text-align:left}
+[dir="rtl"] .chev{display:inline-block;transform:scaleX(-1)}
+.pre{text-align:left;direction:ltr}
+/* review 24 Nov: the toggle keeps its look but takes a 44 px tall tap; the language picker shows its label at 320 px */
+.tog:before{content:"";position:absolute;inset:-6px -2px}
+.card.langrow .phone-locale select{max-width:60vw;text-overflow:ellipsis}
+/* the shared corner scale - same steps as the website and the PC app (24 Nov) */
+:root{--r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:999px}
+.card,.tile,.wgc,.gcard,.pcrow2,.qa2,.sc-box{border-radius:var(--r-lg)}
+.card.face{border-radius:var(--r-xl)}
+.sheet{border-top-left-radius:var(--r-xl);border-top-right-radius:var(--r-xl)}
+.btn,.in,.seg,.cbtn,.ibtn,.tabs button,.thb,.vchip,.row.sel,.st,.card.face .btn,.card.face .big3>div,.ic,.ic.qc,.vopt .ic,.qa .qc,.peekbox,.pwords span,.sc-in{border-radius:var(--r-md)}
+.seg button,.mini button,.pre,.card.langrow .phone-locale select{border-radius:var(--r-sm)}
+.voices button{border-radius:var(--r-pill)}

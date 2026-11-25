@@ -58,8 +58,8 @@ namespace AdeeboMeter
                     ShowExample(); visFail = "";
                     float y1 = PaintToolVisual(g, 10, 10, 900); if (visFail != "") bad.Add("example " + visFail); else if (y1 <= 10) bad.Add(id + ": no picture with the example");
                     if (VisState() != "EXAMPLE") bad.Add(id + ": example not marked");
-                    { string dio = DrawIo(), js = Json(), csv = Csv(); if (!dio.StartsWith("<mxfile", StringComparison.Ordinal) || !dio.EndsWith("</mxfile>", StringComparison.Ordinal) || !js.TrimStart().StartsWith("{", StringComparison.Ordinal) || !csv.StartsWith("level" + CsvSep, StringComparison.Ordinal)) bad.Add(id + ": export"); if (id == "dig" || id == "owners" || id == "dnsrace") { System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "export-" + id + ".json"), js); System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "export-" + id + ".drawio"), DrawIo()); } }
-                    { string pl = PhoneLink(); if (Qr.Encode(pl) == null) bad.Add(id + ": phone link too long for a QR code (" + pl.Length + ")"); else if (pl.EndsWith("!!!!!", StringComparison.Ordinal) && ResRows().Count > 0) bad.Add(id + ": phone link lost every row"); else foreach (var pr in ResRows().Where(o => o[0] == "1" || o[0] == "2")) if (!pl.Contains(E(Cut(pr[1], 40)))) bad.Add(id + ": phone link dropped a warning: " + pr[1]); else if (id == "dig") using (var qb = Qr.Picture(Qr.Encode(pl), 6)) { qb.Save(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.png")); System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "qr-dig-test.txt"), pl); } }
+                    { string dio = DrawIo(), js = Json(), csv = Csv(); if (!dio.StartsWith("<mxfile", StringComparison.Ordinal) || !dio.EndsWith("</mxfile>", StringComparison.Ordinal) || !js.TrimStart().StartsWith("{", StringComparison.Ordinal) || !csv.StartsWith("level" + CsvSep, StringComparison.Ordinal)) bad.Add(id + ": export"); if (id == "dig" || id == "owners" || id == "dnsrace") { string tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "am-export-" + id); System.IO.File.WriteAllText(tmp + ".json", js); System.IO.File.WriteAllText(tmp + ".drawio", DrawIo()); System.IO.File.Delete(tmp + ".json"); System.IO.File.Delete(tmp + ".drawio"); }   /* R2-194: written and read back in temp, never left in your data folder */ }
+                    { string pl = PhoneLink(); if (Qr.Encode(pl) == null) bad.Add(id + ": phone link too long for a QR code (" + pl.Length + ")"); else if (pl.EndsWith("!!!!!", StringComparison.Ordinal) && ResRows().Count > 0) bad.Add(id + ": phone link lost every row"); else foreach (var pr in ResRows().Where(o => o[0] == "1" || o[0] == "2")) if (!pl.Contains(E(Cut(pr[1], 40)))) bad.Add(id + ": phone link dropped a warning: " + pr[1]); else if (id == "dig") using (var qb = Qr.Picture(Qr.Encode(pl), 6)) { if (qb == null || qb.Width < 21) bad.Add(id + ": QR picture empty"); } }
                 }
             if (HopsNowCount("mtr") < 3) bad.Add("mtr example: hops not read");
             // the front door: words people use find the right case; tool names alone don't
@@ -147,6 +147,7 @@ namespace AdeeboMeter
             if (VisEx()) { var ex = Examples.Get(tbSel); a = ex == null ? null : ex.In; }
             else a = tbRows != null && tbShown != null ? tbShown : Inputs();
             var t = Tools2().FirstOrDefault(z => z.Id == tbSel);   // secret boxes (passwords, communities, shared secrets) never reach a picture, a phone link or an export
+            if (a != null && t != null && t.Id == "httpreq") { a = (string[])a.Clone(); Redact(t.Id, a); }   // review 1.1.6 U3 #3: before a run too
             var r = new string[4]; for (int i = 0; i < 4; i++) r[i] = a != null && i < a.Length && a[i] != null && !(t != null && i < t.Inputs.Length && SecretInput(t.Inputs[i])) ? ShareCell(a[i].Trim()) : ""; return r;
         }
         // the result rows without the example banner and table lines
@@ -165,8 +166,15 @@ namespace AdeeboMeter
         }
         static double VNum(string text, string pattern)
         {
+            /* review 1.1.6 U4 #1: the rows are written with the Windows format, so "99,8%" has a decimal comma - let the
+               pattern take it, and read it the way it was written */
+            pattern = pattern.Replace("[0-9.]", "[0-9.,]").Replace(@"(?:\.[0-9]+)", @"(?:[.,][0-9]+)");
             var m = Regex.Match(text ?? "", pattern, RegexOptions.IgnoreCase); double v;
-            return m.Success && double.TryParse(m.Groups[1].Value.Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
+            if (!m.Success) return double.NaN;
+            string s = m.Groups[1].Value.TrimEnd('.', ',');
+            var cur = CultureInfo.CurrentCulture.NumberFormat;
+            if (cur.NumberDecimalSeparator == "," && double.TryParse(s.Replace(".", ""), NumberStyles.Float, CultureInfo.CurrentCulture, out v)) return v;
+            return double.TryParse(s.Replace(",", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN;
         }
         static string VFile(string path) { string p = (path ?? "").Trim().Trim('"'); int i = Math.Max(p.LastIndexOf('\\'), p.LastIndexOf('/')); return i >= 0 ? p.Substring(i + 1) : p; }
 
@@ -175,7 +183,8 @@ namespace AdeeboMeter
         static RectangleF VisCard(Graphics g, float x, float y, float w, float h, string caption, string state)
         {
             var r = new RectangleF(x, y, w, h); Kit.Box(g, r, 14 * S);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T(caption), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
+            int cm = caption.IndexOf("  ·  +", StringComparison.Ordinal);   /* review 1.1.6 U4 #11: translate the caption before its "+N more" */
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(cm > 0 ? L.T(caption.Substring(0, cm)) + caption.Substring(cm) : L.T(caption), Draw.fTiny, mb, x + 16 * S, y + 12 * S);
             string sl = L.T(state); var ss = g.MeasureString(sl, Draw.fTiny); var pr = new RectangleF(x + w - ss.Width - 30 * S, y + 9 * S, ss.Width + 16 * S, ss.Height + 4 * S);
             Theme.Fill(g, pr, pr.Height / 2, state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvSoft(0) : state == "EXAMPLE" ? Theme.LvSoft(1) : Theme.Soft);
             using (var sb = new SolidBrush(state == "YOUR RESULT" || state == "YOUR NUMBERS" ? Theme.LvText(0) : state == "EXAMPLE" ? Theme.LvText(1) : Theme.Sub)) g.DrawString(sl, Draw.fTiny, sb, pr.X + 8 * S, pr.Y + 2 * S);
@@ -252,7 +261,7 @@ namespace AdeeboMeter
             Theme.Fill(g, dr, 7 * S, maxData > 0 ? Theme.LvSoft(0) : Theme.LvSoft(2));
             using (var tb = new SolidBrush(maxData > 0 ? Theme.LvText(0) : Theme.LvText(2))) using (var c = new StringFormat { Alignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                g.DrawString(maxData > 0 ? L.T("YOUR DATA") : L.T("NO ROOM LEFT"), Draw.fSmall, tb, new RectangleF(dr.X, by + 8 * S, dr.Width, 18 * S), c);
+                g.DrawString(maxData > 0 ? Kit.Sent("YOUR DATA") : Kit.Sent("NO ROOM LEFT"), Draw.fSmall, tb, new RectangleF(dr.X, by + 8 * S, dr.Width, 18 * S), c);
                 g.DrawString(maxData > 0 ? "up to " + maxData.ToString("N0", CultureInfo.CurrentCulture) + " bytes" + (tls ? " · TLS adds 22 B a record" : "") : "the headers fill the MTU", Draw.fTiny, tb, new RectangleF(dr.X, by + 28 * S, dr.Width, 16 * S), c);
             }
             // what the link's MTU covers, and what rides outside it
@@ -473,7 +482,7 @@ namespace AdeeboMeter
             float bx = r.X + 16 * S + colW * 2 + 10 * S, bw = colW - 20 * S, by = r.Y + 48 * S;
             using (var ib = new SolidBrush(Theme.Ink)) using (var sb = new SolidBrush(Theme.Sub)) using (var mb = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("PING"), Draw.fTiny, mb, bx, by); by += 20 * S;
+                g.DrawString(Kit.Sent("PING"), Draw.fTiny, mb, bx, by); by += 20 * S;
                 double max = Math.Max(50, Math.Max(double.IsNaN(idle) ? 0 : idle, double.IsNaN(busy) ? 0 : busy) * 1.2);
                 foreach (var row in new[] { new object[] { L.T("quiet"), idle, Theme.Blue }, new object[] { L.T("busy"), busy, Theme.Orange } })
                 {

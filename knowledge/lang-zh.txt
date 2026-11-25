@@ -1,6 +1,5 @@
 # AdeeboMeter - zh translation preview. Missing lines stay in English.
 + Add server	+ 添加服务器
-+ Add your own game	+ 添加自己的游戏
 1 day	1 天
 14 days	14 天
 3 days	3 天
@@ -15,7 +14,6 @@ Address me as	叫我
 AdeeboMeter itself	AdeeboMeter 本身
 Alerts	提醒
 All	全部
-An app freezes	应用卡住了
 Announcements (mDNS, SSDP, LLMNR, NetBIOS)	广播通告 (mDNS, SSDP, LLMNR, NetBIOS)
 App and connection watch	监控应用和连接
 Auto	自动
@@ -245,3 +243,8 @@ Your phone	你的手机
 days of history are deleted for good - this can't be undone.	天的历史记录将被永久删除，无法撤销。
 dig - any DNS record	dig - 任意 DNS 记录
 iperf3 to your server	iperf3 到你的服务器
+Postponed	延期
+Cancelled	取消
+Suspended	暂停
+Abandoned	中止
+of them inside SNMP	在 SNMP 中

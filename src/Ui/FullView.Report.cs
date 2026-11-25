@@ -37,7 +37,7 @@ namespace AdeeboMeter
                         catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; status.Text = L.T("Couldn't copy - try again."); }
                         return;
                     }
-                    if (MessageBox.Show(f, L.T("This becomes a public GitHub issue that anyone can read:") + "\n\n" + (body.Length > 700 ? body.Substring(0, 700) + "\n..." : body) + "\n\n" + L.T("Send it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                    if (AskCard.Show(f, L.T("This becomes a public GitHub issue that anyone can read:") + "\n\n" + (body.Length > 700 ? body.Substring(0, 700) + "\n..." : body) + "\n\n" + L.T("Send it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
                     send.Enabled = false; status.Text = L.T("Sending...");
                     string first = text.Split('\n')[0].Trim(); if (first.Length > 80) first = first.Substring(0, 80);
                     Relay.Send(Relay.Json(bug ? "bug" : "feedback", first, body, null), r =>
@@ -59,37 +59,46 @@ namespace AdeeboMeter
                 // AM-CG-216: reports kept while offline can be read and removed before they go
                 if (Relay.Waiting > 0)
                 {
-                    var wl = new LinkLabel { Text = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online - Read · Delete"), AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
-                    string tx = wl.Text; int ri = tx.LastIndexOf(L.T("Read"), StringComparison.Ordinal), di = tx.LastIndexOf(L.T("Delete"), StringComparison.Ordinal);
-                    wl.Links.Clear(); if (ri >= 0) wl.Links.Add(ri, L.T("Read").Length, "read"); if (di >= 0) wl.Links.Add(di, L.T("Delete").Length, "del");
+                    // bug-hunt L-330: built from its parts, so the two links sit exactly on the words whatever the language
+                    string lead = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online") + " - ", rd = L.T("Read"), dl = L.T("Delete");
+                    var wl = new LinkLabel { Text = lead + rd + " · " + dl, AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
+                    wl.Links.Clear(); wl.Links.Add(lead.Length, rd.Length, "read"); wl.Links.Add(lead.Length + rd.Length + 3, dl.Length, "del");
                     wl.LinkClicked += delegate(object s2, LinkLabelLinkClickedEventArgs e2)
                     {
-                        if ((string)e2.Link.LinkData == "read") MessageBox.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        else if (MessageBox.Show(f, L.T("Delete the waiting report(s)? They won't be sent."), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK) { wl.Text = Relay.DropWaiting() ? L.T("Deleted - nothing is waiting.") : L.T("Couldn't delete them."); wl.Links.Clear(); }
+                        if ((string)e2.Link.LinkData == "read") AskCard.Show(f, Relay.WaitingText(), L.T("Waiting to send"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        else if (AskCard.Show(f, L.T("Delete the waiting report(s)? They won't be sent."), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK) { wl.Text = Relay.DropWaiting() ? L.T("Deleted - nothing is waiting.") : L.T("Couldn't delete them."); wl.Links.Clear(); }
                     };
                     f.Controls.Add(wl); f.ClientSize = new Size(f.ClientSize.Width, Math.Max(f.ClientSize.Height, wl.Bottom + Sc(14)));
                 }
-                f.ShowDialog(this);
+                Kit.Polish(f); Draw.FitOnShow(f, true); f.ShowDialog(this);
             }
         }
         // the Hall of Fame card, sent the same way (the check runs by itself and the issue closes on a match)
+        bool cardSending;   // hunt-5: one card at a time - repeat clicks while it's on its way don't send copies
         void SendCard()
         {
+            if (cardSending) { pointsFlash = L.T("Sending your card..."); pointsFlashUntil = DateTime.Now.AddSeconds(5); pointsCanvas.Invalidate(); return; }
             if (!Relay.Ready) { try { Clipboard.SetText(HallOfFame.Text(awardName, awardTotal, awardDate, awardCode)); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } if (!Policy.NoOnline) Crash.OpenUrl(HallOfFame.Page); return; }
             var card = new System.Collections.Generic.Dictionary<string, string> { { "name", awardName }, { "points", awardTotal.ToString(System.Globalization.CultureInfo.InvariantCulture) }, { "date", awardDate }, { "code", awardCode } };
             pointsFlash = L.T("Sending your card..."); pointsFlashUntil = DateTime.Now.AddSeconds(30); SyncPointsBtn(); pointsCanvas.Invalidate();
-            Relay.Send(Relay.Json("hof", "", "", card), r =>
+            cardSending = true;
+            try
             {
-                try
+                Relay.Send(Relay.Json("hof", "", "", card), r =>
                 {
-                    BeginInvoke((Action)delegate
+                    try
                     {
-                        pointsFlash = r.Ok ? L.T("Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.") : r.Queued ? L.T("No internet - the card goes the next time AdeeboMeter starts online.") : L.T("Couldn't send the card: ") + r.Why;
-                        pointsFlashUntil = DateTime.Now.AddSeconds(10); SyncPointsBtn(); pointsCanvas.Invalidate();
-                    });
-                }
-                catch (InvalidOperationException) { }
-            });
+                        BeginInvoke((Action)delegate
+                        {
+                            cardSending = false;
+                            pointsFlash = r.Ok ? L.T("Card sent - you're on the Hall of Fame page in a few minutes if the code checks out.") : r.Queued ? L.T("No internet - the card goes the next time AdeeboMeter starts online.") : L.T("Couldn't send the card: ") + r.Why;
+                            pointsFlashUntil = DateTime.Now.AddSeconds(10); SyncPointsBtn(); pointsCanvas.Invalidate();
+                        });
+                    }
+                    catch (InvalidOperationException) { cardSending = false; }
+                });
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; cardSending = false; pointsFlash = L.T("Couldn't send the card: ") + e.Message; pointsFlashUntil = DateTime.Now.AddSeconds(10); pointsCanvas.Invalidate(); }   // round 6: a send that throws never leaves "Sending..." stuck
         }
     }
 }

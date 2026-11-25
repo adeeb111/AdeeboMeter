@@ -8,19 +8,20 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- The result arrives in the link after the # - browsers never send that part to the server, so adeebometer.com never sees it.
      Everything below is worked out here, on the phone. Format (v1): see src/Ui/FullView.Share.cs, QrLink(). -->
+<link rel="stylesheet" href="/base.css">
 <style>
-:root{--blue:#1F6FEB;--blue-s:#E8F0FE;--green:#2DA44E;--green-s:#E6F4EA;--amber:#BF8700;--amber-s:#FFF4D6;--red:#CF222E;--red-s:#FDE7E9;--purple:#8250DF;--ink:#1B2330;--sub:#4A5568;--muted:#6B7685;--line:#E3E8EF;--bg:#F6F8FB;--card:#fff;--grey-s:#EEF1F5}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue-s:#16233A;--green-s:#132A1B;--amber-s:#2E2410;--red-s:#3A1519;--ink:#E6EAF0;--sub:#B4BDC9;--muted:#8A94A3;--line:#2A3340;--bg:#0E131A;--card:#161C25;--grey-s:#1F2630}}
+:root{--blue:#1155E0;--blue-s:#E8EFFC;--green:#17794F;--green-s:#E7F3EC;--amber:#875A00;--amber-s:#FBF1DC;--red:#B42318;--red-s:#FBEAE8;--purple:#6D4BD8;--ink:#16191E;--sub:#4B5360;--muted:#5A6270;--line:#DDE1E7;--bg:#F1F3F6;--card:#fff;--grey-s:#E8EBF0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#3B7BF5;--blue-s:#1A2A4A;--green:#5EF2B0;--green-s:#16302A;--amber:#FCD34D;--amber-s:#332B14;--red:#FF7A6B;--red-s:#3A1D1A;--ink:#EEF1F5;--sub:#A9B1BD;--muted:#7E8794;--line:#262A31;--bg:#111316;--card:#181B20;--grey-s:#1D2127}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.5 "Barlow","Segoe UI",-apple-system,Roboto,sans-serif}
 main{max-width:640px;margin:0 auto;padding:16px}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;margin:4px 0 12px}.brand img{width:22px;height:22px}.brand small{font-weight:400;color:var(--muted);margin-left:auto;font-size:13px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px}
-.verdict{border-left:6px solid var(--muted)}.verdict h1{font-size:22px;line-height:1.25;margin:4px 0 6px}.verdict p{margin:0;color:var(--sub)}
-.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:99px}
+.verdict{}.verdict h1{font-size:22px;line-height:1.25;margin:4px 0 6px}.verdict p{margin:0;color:var(--sub)}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;padding:2px 8px;border-radius:99px}
 .l0{--c:var(--green);--s:var(--green-s)}.l1{--c:var(--amber);--s:var(--amber-s)}.l2{--c:var(--red);--s:var(--red-s)}.l3{--c:var(--muted);--s:var(--grey-s)}
-.verdict.l0,.verdict.l1,.verdict.l2{border-left-color:var(--c)}.tag{background:var(--s);color:var(--c)}
-h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:700}
+.verdict.l0,.verdict.l1,.verdict.l2{background:var(--s);border-color:color-mix(in srgb,var(--c) 30%,var(--line))}.tag{background:var(--s);color:var(--c)}
+h2{font-size:17px;color:var(--ink);margin:0 0 10px;font-weight:700}
 .path{display:flex;align-items:flex-start;gap:0}.leg{flex:1;text-align:center;font-size:13px;position:relative}
 .leg .dot{width:28px;height:28px;border-radius:50%;margin:0 auto 6px;background:var(--s);border:3px solid var(--c)}
 .leg:not(:last-child):after{content:"";position:absolute;top:13px;left:calc(50% + 16px);right:calc(-50% + 16px);height:3px;background:var(--line)}
@@ -39,7 +40,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
 .empty{text-align:center;padding:40px 16px}
 @media print{body{background:#fff}.btns,#msgcard,.note button,#toast{display:none}.card{break-inside:avoid;border-color:#ccc}}
 </style>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
 <main id="app"></main>
@@ -68,7 +69,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   var raw; try { raw = decodeURIComponent(rawHash); } catch (e) { raw = ""; }
   var p = raw.split("!");
   if (p[0] !== "1" || p.length < 4) {
-    app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">Nothing to show yet</h1><p>Open this page by scanning the QR code in AdeeboMeter on your PC (Toolbox › QR code). The result travels inside the link and stays on your phone.</p><p><a href="./">What is AdeeboMeter?</a></p></div>';
+    app.innerHTML = '<div class="brand"><img src="favicon.svg" width="22" height="22" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">Nothing to show yet</h1><p>Open this page by scanning the QR code in AdeeboMeter on your PC (Toolbox › QR code). The result travels inside the link and stays on your phone.</p><p><a href="./">What is AdeeboMeter?</a></p></div>';
     return;
   }
   // ---- the result
@@ -106,7 +107,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     ["Try another DNS server (1.1.1.1 or 8.8.8.8) in Windows' network settings", "Restart the router - it often serves DNS", "If only some sites fail: those sites' DNS"],
     ["Wait a little - it's usually the service, not you", "Check the service's status page", "If every site is slow: send this to your provider"]];
   var title = head || (overall === 0 ? "All good right now" : worst >= 0 ? names[worst] + (overall === 2 ? " is the problem" : " needs a look") : "Something needs a look");
-  var word = ["ALL GOOD", "WORTH A LOOK", "PROBLEM", "NOT SURE"][overall] || "RESULT";
+  var word = ["All good", "Worth a look", "Problem", "NOT SURE"][overall] || "RESULT";
   var agoT = age(when);
   var whenT = isNaN(when.getTime()) ? "" : when.toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -151,17 +152,17 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
   var leg = function (i) { var l = legs[i] == null ? 3 : legs[i], sub = i === 0 ? (isNaN(M.cpu) ? "" : "CPU " + f(M.cpu) + "%") : i === 1 ? (M.cable ? "cable" : isNaN(M.wifi) ? "" : f(M.wifi) + "% signal") : i === 2 ? (isNaN(M.loss) ? "" : f(M.loss, 1) + "% lost") : i === 3 ? (isNaN(M.dns) ? "" : f(M.dns) + " ms") : (isNaN(M.ping) ? "" : f(M.ping) + " ms"); return '<div class="leg l' + l + '"><div class="dot"></div><b>' + names[i] + '</b><span>' + sub + '</span></div>'; };
   var num = function (k, label, x, unit, d) { var g = grade(k, x); return '<div class="num l' + g[0] + '"><div class="k">' + label + '</div><div class="v">' + f(x, d) + ' <small>' + unit + '</small></div><div class="w">' + g[1] + '</div></div>'; };
   var h = "";
-  h += '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT ? " · " + agoT : "") + '</small></div>';
+  h += '<div class="brand"><img src="favicon.svg" width="22" height="22" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT ? " · " + agoT : "") + '</small></div>';
   h += '<div class="card verdict l' + overall + '"><span class="tag">' + word + '</span><h1>' + esc(title) + '</h1><p>' + (worst >= 0 ? means[worst] : legs.every(function (x) { return x === 3; }) || overall === 3 ? "Not enough was measured to say where the trouble is - run it again on the PC." : "Every part of the path checked out.") + '</p></div>';
-  h += '<div class="card"><h2>FROM THIS PC TO THE INTERNET</h2><div class="path">' + [0, 1, 2, 3, 4].map(leg).join("") + '</div></div>';
-  h += '<div class="card"><h2>THE NUMBERS, IN PLAIN WORDS</h2><div class="grid">' + num("gw", "Your router answers in", M.gw, "ms") + num("ping", "The internet answers in", M.ping, "ms") + num("jit", "Wobble (jitter)", M.jit, "ms", 1) + num("loss", "Lost on the way", M.loss, "%", 1) + num("dns", "Names (DNS)", M.dns, "ms") + (M.cable ? num("cpu", "This PC's processor", M.cpu, "%") : num("wifi", "Wi-Fi signal", M.wifi, "%")) + '</div>' + (isNaN(M.down) ? "" : '<p class="cap">Traffic right then: ' + f(M.down, 1) + ' Mbps down · ' + f(M.up, 1) + ' Mbps up</p>') + '</div>';
+  h += '<div class="card"><h2>From this PC to the internet</h2><div class="path">' + [0, 1, 2, 3, 4].map(leg).join("") + '</div></div>';
+  h += '<div class="card"><h2>The numbers, in plain words</h2><div class="grid">' + num("gw", "Your router answers in", M.gw, "ms") + num("ping", "The internet answers in", M.ping, "ms") + num("jit", "Wobble (jitter)", M.jit, "ms", 1) + num("loss", "Lost on the way", M.loss, "%", 1) + num("dns", "Names (DNS)", M.dns, "ms") + (M.cable ? num("cpu", "This PC's processor", M.cpu, "%") : num("wifi", "Wi-Fi signal", M.wifi, "%")) + '</div>' + (isNaN(M.down) ? "" : '<p class="cap">Traffic right then: ' + f(M.down, 1) + ' Mbps down · ' + f(M.up, 1) + ' Mbps up</p>') + '</div>';
   var c1 = chart(net, "var(--blue)", "internet checks", 60, "ms", null);
-  if (c1) h += '<div class="card"><h2>THE LAST INTERNET CHECKS</h2>' + c1 + '<p class="cap">Each bar is one check. Red at the bottom = no answer at all.</p></div>';
+  if (c1) h += '<div class="card"><h2>The last internet checks</h2>' + c1 + '<p class="cap">Each bar is one check. Red at the bottom = no answer at all.</p></div>';
   var c2 = chart(gws, "var(--green)", "router, per minute", 20, "ms", loss);
-  if (c2) h += '<div class="card"><h2>YOUR ROUTER, MINUTE BY MINUTE</h2>' + c2 + '<p class="cap">Red bars are minutes with packet loss. A flat, low router line with trouble elsewhere means your home network is not the problem.</p></div>';
-  h += '<div class="card"><h2>WHAT TO DO</h2><ol>' + (worst >= 0 ? todo[worst] : ["Not enough was measured to say - run the check again on the PC, ideally while it acts up, then scan the new code"])   /* R2-03: no "nothing to do" when nothing could be judged */.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ol></div>';
+  if (c2) h += '<div class="card"><h2>Your router, minute by minute</h2>' + c2 + '<p class="cap">Red bars are minutes with packet loss. A flat, low router line with trouble elsewhere means your home network is not the problem.</p></div>';
+  h += '<div class="card"><h2>What to do</h2><ol>' + (worst >= 0 ? todo[worst] : ["Not enough was measured to say - run the check again on the PC, ideally while it acts up, then scan the new code"])   /* R2-03: no "nothing to do" when nothing could be judged */.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ol></div>';
   h += '<div class="card"><div class="btns"><button class="main" id="isp">Send to my internet provider</button><button id="share">Share</button><button id="pdf">Save as PDF</button><button id="copyall">Copy everything</button><button id="ai">Copy for AI</button></div></div>';
-  h += '<div class="card" id="msgcard"><h2>THE MESSAGE (EDIT IT IF YOU LIKE)</h2><textarea id="msg"></textarea><div class="btns" style="margin-top:10px"><button id="copy">Copy message</button><button id="mail">Email it</button></div></div>';
+  h += '<div class="card" id="msgcard"><h2>The message (edit it if you like)</h2><textarea id="msg"></textarea><div class="btns" style="margin-top:10px"><button id="copy">Copy message</button><button id="mail">Email it</button></div></div>';
   if (/Android/i.test(navigator.userAgent)) h += '<p class="note">Android: Share sends this to any app. From the PC, Send by Bluetooth or Quick Share drops a picture straight into Downloads.</p>';
   h += '<p class="note">These numbers came inside the link you scanned - they stayed on this phone and were never sent to adeebometer.com. AdeeboMeter can\'t check who made a link: trust it as much as the person who sent it.</p>';
   app.innerHTML = h;
@@ -183,7 +184,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     var items = function (x) { return x ? x.split("~").map(function (i) { return i.split(","); }) : []; };
     // R2-02: a link with nothing in it (cut short, or typed by hand) gets no Copy / Share / PDF of an empty result
     if (!R && !B) {   // AM-CG-288: a title alone is no result
-     app.innerHTML = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">This link has no result in it</h1><p>It may have been cut short when it was copied. Scan the code on the PC again, or ask for a new link.</p></div>'; return; }
+     app.innerHTML = '<div class="brand"><img src="favicon.svg" width="22" height="22" alt="">AdeeboMeter</div><div class="card empty"><h1 style="font-size:20px">This link has no result in it</h1><p>It may have been cut short when it was copied. Scan the code on the PC again, or ask for a new link.</p></div>'; return; }
     var col = function (lv, back) { return lv == 2 ? "var(--red)" : lv == 1 ? "var(--amber)" : back ? "var(--green)" : "var(--blue)"; };
     var W = 600, svg = "";
     if (kind === "x") {
@@ -231,16 +232,16 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
     // the PC's own clock, when its time zone differs from this phone's: "PC 23:00, UTC+0" makes a wrongly set zone obvious
     var pcOff = /o(-?\d{1,4})$/.exec(t), pcT = "";
     if (pcOff && !isNaN(when.getTime())) { var po = +pcOff[1]; if (po !== -when.getTimezoneOffset()) { var pc = new Date(when.getTime() + po * 60000); pcT = " · PC " + ("0" + pc.getUTCHours()).slice(-2) + ":" + ("0" + pc.getUTCMinutes()).slice(-2) + " (UTC" + (po < 0 ? "-" : "+") + Math.floor(Math.abs(po) / 60) + (Math.abs(po) % 60 ? ":" + ("0" + Math.abs(po) % 60).slice(-2) : "") + ")"; } }
-    var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + esc(pcT) + '</small></div>';
-    var tagT = cap ? cap.toUpperCase() : worst === 2 ? "PROBLEM FOUND" : worst === 1 ? "WORTH A LOOK" : worst === 0 ? "LOOKS GOOD" : "RESULT";
+    var agoT2 = age(when), h2 = '<div class="brand"><img src="favicon.svg" width="22" height="22" alt="">AdeeboMeter<small>' + esc(whenT) + (agoT2 ? " · " + agoT2 : "") + esc(pcT) + '</small></div>';
+    var tagT = cap ? cap.toUpperCase() : worst === 2 ? "Problem found" : worst === 1 ? "Worth a look" : worst === 0 ? "LOOKS GOOD" : "RESULT";
     var lead = rows.filter(function (r) { return +r[0] >= 0 && +r[0] <= 2; }).sort(function (a, b) { return +b[0] - +a[0]; })[0];
     var nextT = lead && +lead[0] >= 1 && lead[3] ? D(lead[3]) : "";
     // AM-CG-301: when the code couldn't carry everything, the verdict says so right away (and whether a warning was left out)
     var leftRow = rows.filter(function (r) { return +r[0] === 3 && D(r[1]) === "Left on the PC"; })[0], coverT = leftRow ? D(leftRow[2]) : "";
     h2 += '<div class="card verdict l' + (worst < 0 ? 3 : worst) + '"><span class="tag">' + esc(tagT) + '</span><h1>' + esc(title) + '</h1>' + (lead ? '<p style="margin:8px 0 0;color:var(--sub)">' + esc(D(lead[1])) + ': ' + esc(D(lead[2])) + '</p>' : '') + (nextT ? '<p style="margin:8px 0 0;color:var(--ink)"><b>Next:</b> ' + esc(nextT) + '</p>' : '') + (coverT ? '<p style="margin:8px 0 0;font-size:13px;color:' + (/warning/.test(coverT) ? 'var(--amber)' : 'var(--muted)') + '">Not everything fit in the code: ' + esc(coverT) + '</p>' : '') + '</div>';
-    if (!rows.length && !svg) h2 += '<div class="card"><h2>NO NUMBERS IN THIS LINK</h2><p style="margin:0;color:var(--sub)">The link only carried the tool\'s name, not its results. Open the result on the PC and scan its code again - newer versions of AdeeboMeter always fit the results in.</p></div>';
+    if (!rows.length && !svg) h2 += '<div class="card"><h2>No numbers in this link</h2><p style="margin:0;color:var(--sub)">The link only carried the tool\'s name, not its results. Open the result on the PC and scan its code again - newer versions of AdeeboMeter always fit the results in.</p></div>';
     if (svg) h2 += '<div class="card" id="pic">' + svg + '</div>';
-    if (rows.length) h2 += '<div class="card"><h2>THE RESULT</h2>' + rows.map(function (r) { if (+r[0] === -1) return '<h2 style="margin:16px 0 8px">' + esc(D(r[1]).toUpperCase()) + '</h2>'; var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';
+    if (rows.length) h2 += '<div class="card"><h2>The result</h2>' + rows.map(function (r) { if (+r[0] === -1) return '<h2 style="margin:16px 0 8px">' + esc(D(r[1]).toUpperCase()) + '</h2>'; var lv = +r[0]; return '<div class="num l' + (lv >= 0 && lv <= 2 ? lv : 3) + '" style="margin:0 0 8px"><div class="k">' + esc(D(r[1])) + '</div><div style="font-weight:600">' + esc(D(r[2])) + '</div>' + (r[3] ? '<div class="w" style="font-size:13px;margin-top:4px">' + esc(D(r[3])) + '</div>' : '') + '</div>'; }).join("") + '</div>';
     h2 += '<div id="kb"></div>';
     h2 += '<div class="card"><div class="btns"><button class="main" id="cp">Copy</button><button id="sh">Share</button>' + (svg ? '<button id="img">Save image</button>' : '') + '<button id="ai2">Copy for AI</button><button id="pdf2">Save as PDF</button></div></div>';
     if (/Android/i.test(navigator.userAgent)) h2 += '<p class="note">Android: Save image opens the share sheet - pick Files, Photos or any app. From the PC, Send by Bluetooth or Quick Share drops the picture straight into Downloads.</p>';
@@ -254,7 +255,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
         var t = kb && kb.tools && kb.tools[title]; if (!t) return;
         var box = document.getElementById("kb"); if (!box) return;
         var extra = rows.filter(function (r) { return !r[3] && t.labels && t.labels[D(r[1]) + "|" + r[0]] && +r[0] >= 1 && +r[0] <= 2; });
-        box.innerHTML = '<div class="card"><h2>ABOUT THIS CHECK</h2>' + (t.tag ? '<p style="margin:0 0 8px;font-weight:700">' + esc(t.tag) + '</p>' : '') + (t.what ? '<p style="margin:0 0 8px;color:var(--sub)">' + esc(t.what) + '</p>' : '') + (t.why ? '<p style="margin:0;color:var(--sub)"><b>Why it matters:</b> ' + esc(t.why) + '</p>' : '') +
+        box.innerHTML = '<div class="card"><h2>About this check</h2>' + (t.tag ? '<p style="margin:0 0 8px;font-weight:700">' + esc(t.tag) + '</p>' : '') + (t.what ? '<p style="margin:0 0 8px;color:var(--sub)">' + esc(t.what) + '</p>' : '') + (t.why ? '<p style="margin:0;color:var(--sub)"><b>Why it matters:</b> ' + esc(t.why) + '</p>' : '') +
           (extra.length ? '<h2 style="margin:14px 0 6px">WHAT TO DO</h2>' + extra.map(function (r) { return '<p style="margin:0 0 6px"><b>' + esc(D(r[1])) + ':</b> ' + esc(t.labels[D(r[1]) + "|" + r[0]]) + '</p>'; }).join("") : '') + '</div>';
       }).catch(function () {});
     } catch (e) {}

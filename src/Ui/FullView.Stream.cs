@@ -23,11 +23,15 @@ namespace AdeeboMeter
             return streamPage;
         }
         // repaint only when something moved (a sample, a dip, a session start/end) and once a minute for the times
+        string streamVer = "";
         void StreamTick()
         {
             if (tab != "stream" || streamCanvas == null) return;
-            string k = System.Threading.Interlocked.Read(ref Streams.Ver) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
-            if (k != streamKey) { streamKey = k; streamCanvas.Invalidate(); }
+            // a new sample only moves the NOW STREAMING card; a stream starting or ending, a new dip or anything else redraws the page
+            var nw = Streams.Now; string ver = System.Threading.Interlocked.Read(ref Streams.Ver).ToString(CultureInfo.InvariantCulture);
+            string k = (nw == null || nw.S == null ? "-" : nw.S.Start.Ticks + ":" + nw.S.Dips.Count) + "|" + System.Threading.Interlocked.Read(ref WatchKit.CacheVer) + "|" + DateTime.Now.Minute + "|" + SpeedTest.Busy + "|" + (SpeedTest.Last != null ? SpeedTest.Last.T.Ticks : 0);
+            if (k != streamKey) { streamKey = k; streamVer = ver; streamCanvas.Invalidate(); }
+            else if (ver != streamVer) { streamVer = ver; if (nw == null || !RedrawSpots(streamCanvas, "st.now")) streamCanvas.Invalidate(); }
         }
         static string Dur(TimeSpan t) { return t.TotalHours >= 1 ? ((int)t.TotalHours).ToString(CultureInfo.InvariantCulture) + " h " + t.Minutes.ToString("00", CultureInfo.InvariantCulture) + " min" : Math.Max(1, (int)t.TotalMinutes).ToString(CultureInfo.InvariantCulture) + " min"; }
         static string TallyText(WatchKit.Session s)
@@ -42,6 +46,8 @@ namespace AdeeboMeter
             g.TranslateTransform(streamCanvas.AutoScrollPosition.X, streamCanvas.AutoScrollPosition.Y);
             Begin(streamCanvas);
             float x = 18 * S, y = 16 * S, w = streamCanvas.ClientSize.Width - 36 * S;
+            y = TryThis(g, streamCanvas, "stream", x, y, w, false);
+            y = NowLine(g, streamCanvas, x, y, w);   // back 24 Nov (Adeeb): the router ping and a busy PC are what spoil a stream
             var all = WatchKit.Recent("stream");
             if (streamSel != "")
             {
@@ -51,51 +57,61 @@ namespace AdeeboMeter
             }
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("Streaming"), Draw.fTitle, ink, x, y);
-                // watching your team? its live score, from Sports (fetched at most every 5 min while a stream plays) - a stutter
-                // below gets its verdict here, the score lives next door
-                // AM-CG-272/273/281: it's your followed team's game (not necessarily what's playing), with how old the score is;
-                // a score older than 15 minutes isn't shown as live, and the badge never runs past the title's room
+                // 24 Nov (Streaming mockup): one card on top - what's playing (or that nothing is), one line on what this page
+                // does, and the 4K question as the card's button; your team's live score sits under it when there is one
+                WatchKit.Session ns0 = null; lock (Streams.k) if (Streams.Now != null) ns0 = Streams.Now.S;
+                string head = !Cfg.Streams ? L.T("Streaming is switched off.") : ns0 != null ? L.T("Playing now") + ": " + ns0.What : L.T("Nothing is playing right now.");
+                string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
+                if (!Cfg.Streams) lead = L.T("Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.");   /* v8: said once, in the top card */
+                string tb = L.T(!Cfg.Streams ? L.T("Turn it on") : SpeedTest.Busy ? "Testing..." : L.T("Can I stream 4K right now?")); var tbs = g.MeasureString(tb, Draw.fBtn);
+                float cardH = 0;
+                {
+                    var tbr0 = new RectangleF(0, 0, tbs.Width + 28 * S, 38 * S); float tw = Math.Max(120 * S, w - 40 * S - tbr0.Width - 16 * S);   /* review L-13: never a negative width */
+                    float hh = Draw.Measure(head, Draw.fBig, (int)tw).Height, lh = Draw.Measure(lead, Draw.fSmall, (int)tw).Height; cardH = Math.Max(78 * S, 16 * S + hh + 4 * S + lh + 16 * S);
+                    Kit.Box(g, new RectangleF(x, y, w, cardH), 14 * S);
+                    g.DrawString(head, Draw.fBig, ink, new RectangleF(x + 20 * S, y + 16 * S, tw, hh + 4));
+                    g.DrawString(lead, Draw.fSmall, sub, new RectangleF(x + 20 * S, y + 20 * S + hh, tw, lh + 4));
+                    var tbr = new RectangleF(x + w - 20 * S - tbr0.Width, y + (cardH - 38 * S) / 2, tbr0.Width, 38 * S);
+                    if (!Cfg.Streams)
+                    {   // switched off: the card's one button turns it on (was a second "switched off" card under this one)
+                        Theme.Fill(g, tbr, 10 * S, Theme.Blue);
+                        using (var bb = new SolidBrush(Theme.OnBlue)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
+                        Act(streamCanvas, tbr, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
+                    }
+                    else {
+                    Theme.Fill(g, tbr, 10 * S, Theme.Card); Theme.Stroke(g, tbr, 10 * S, Theme.Line, 1);
+                    using (var bb = new SolidBrush(Theme.BlueText)) g.DrawString(tb, Draw.fBtn, bb, tbr.X + 14 * S, tbr.Y + (38 * S - tbs.Height) / 2);
+                    Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); }); }
+                }
+                y += cardH + 12 * S;
                 var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
                 if (lm != null && ageMin <= 15)
                 {
                     int more = Sports.LiveMineCount() - 1;
                     string t = L.T("Your team") + "  " + lm.Away + " " + lm.AwayScore + " · " + lm.Home + " " + lm.HomeScore + (lm.Detail != "" ? "  (" + lm.Detail + ")" : "") + "  · " + (ageMin < 1 ? L.T("just now") : ageMin + " " + L.T("min ago")) + (more > 0 ? "  +" + more : "") + "   " + L.T("Sports ›");
-                    float room = Math.Max(160 * S, w - g.MeasureString(L.T("Streaming"), Draw.fTitle).Width - 30 * S);
+                    float room = w;
                     var ts = g.MeasureString(t, Draw.fSmall); float bwid = Math.Min(ts.Width + 26 * S, room);
-                    var lr = new RectangleF(x + w - bwid, y + 4 * S, bwid, 26 * S); Theme.Fill(g, lr, 13 * S, Theme.LvSoft(2));
+                    var lr = new RectangleF(x, y, bwid, 26 * S); y += 36 * S; Theme.Fill(g, lr, 13 * S, Theme.LvSoft(2));
                     using (var lb = new SolidBrush(Theme.LvText(2))) using (var cf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(t, Draw.fSmall, lb, new RectangleF(lr.X + 13 * S, lr.Y + (26 * S - ts.Height) / 2, lr.Width - 20 * S, ts.Height + 2), cf);
                     Act(streamCanvas, lr, delegate { tab = "sports"; ShowTab(); SyncNav(); });
                 }
-                string lead = Voice.P("Is the buffering you, your Wi-Fi, your provider - or the stream? When something plays, in an app or a browser, I notice and keep an eye on it.", "Stream quality: who caused each dip. Streams are found by their servers' names - tabs and titles are never read.");
-                // Test before I watch
-                string tb = L.T(SpeedTest.Busy ? "Testing..." : "Can I stream 4K right now?"); var tbs = g.MeasureString(tb, Draw.fBodyB);
-                var tbr = new RectangleF(x + w - tbs.Width - 32 * S, y - 2 * S, tbs.Width + 32 * S, 34 * S);
-                Theme.Fill(g, tbr, 17 * S, Kit.Accent("stream")); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(tb, Draw.fBodyB, wb, tbr.X + 16 * S, tbr.Y + (34 * S - tbs.Height) / 2);
-                Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && MessageBox.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads about 100-300 MB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); });
-                y += 32 * S;
-                float lh = Draw.Measure(lead, Draw.fBody, (int)(w - tbr.Width - 20 * S)).Height; g.DrawString(lead, Draw.fBody, sub, new RectangleF(x, y, w - tbr.Width - 20 * S, lh + 4)); y += lh + 14 * S;
                 if (streamNote != "") { using (var nb = new SolidBrush(Kit.Ink("stream"))) g.DrawString(streamNote, Draw.fSmall, nb, x, y); y += 22 * S; }
                 if (!Cfg.Streams)
                 {
-                    y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "app", "stream", "Streaming is switched off", "Turn it on and AdeeboMeter notices when something plays and keeps an eye on it. Nothing extra goes on the network until a stream starts.", null);
-                    var on = new RectangleF(x, y, 150 * S, 34 * S); Theme.Fill(g, on, 17 * S, Kit.Accent("stream"));
-                    using (var wb = new SolidBrush(Theme.OnBlue)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(L.T("Turn it on"), Draw.fBodyB, wb, on, c);
-                    Act(streamCanvas, on, delegate { Cfg.Streams = true; Cfg.Save(); streamCanvas.Invalidate(); });
-                    Need(streamCanvas, on.Bottom + 20 * S); return;
+                    Need(streamCanvas, y + 20 * S); return;   // the top card already says it's off and carries Turn it on
                 }
                 {
-                    WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null) ns = Streams.Now.S;
+                    WatchKit.Session ns = null; lock (Streams.k) if (Streams.Now != null && Streams.Now.S != null) ns = Streams.Now.S.Copy();
                     var ld = ns != null && ns.Dips.Count > 0 ? ns.Dips.Last() : null;
                     if (ld != null && (DateTime.Now - ld.T).TotalMinutes < 3) y = PaintModeLine(g, "stream.dip", WatchKit.BlameName(ld.Blame, Streams.FarName) + ".", true, x, y, w);
                     else y = PaintModeLine(g, ns != null ? "stream.on" : "stream.none", ns != null ? ns.What : null, false, x, y, w);
                 }
                 if (stream4k) y = PaintStream4K(g, x, y, w);
-                y = PaintStreamNow(g, x, y, w);
+                float sy0 = y; y = PaintStreamNow(g, x, y, w); LiveSpot(streamCanvas, "st.now", new RectangleF(x - 4 * S, sy0, w + 8 * S, y - sy0));   // a new sample redraws only this card (StreamTick)
                 // the records
                 if (all.Count > 0)
                 {
-                    g.DrawString(L.T("WHAT YOU WATCHED · KEPT 90 DAYS ON THIS PC · CLICK ONE TO SEE WHO CAUSED THE DIPS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(L.T("What you watched"), Draw.fHead, ink, x, y); { float hw0 = g.MeasureString(L.T("What you watched"), Draw.fHead).Width + 8 * S; if (w - hw0 > 40 * S) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(L.T("kept 90 days on this PC - click one to see who caused the dips"), Draw.fSmall, sub, new RectangleF(x + hw0, y + 2 * S, w - hw0, 20 * S), nw); }   /* review ML-10 */ y += 28 * S;
                     var rows = all.Take(12).ToList(); float rh = 38 * S;
                     var card = new RectangleF(x, y, w, rows.Count * rh + 12 * S); Kit.Box(g, card); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))
@@ -114,16 +130,16 @@ namespace AdeeboMeter
                     y += 22 * S;
                     y = PaintStreamPatterns(g, all, x, y, w);
                 }
-                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", "No streams recorded yet", "Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.", StreamPoints);
+                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", L.T("No streams recorded yet"), L.T("Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was."), StreamPoints);
             }
             Need(streamCanvas, y + 10 * S);
         }
-        static readonly string[] StreamPoints = { "YouTube, Netflix, Prime Video, Hulu, Disney+, Max, Twitch, Crunchyroll, Hotstar, DAZN and more - in an app or a browser", "IPTV and network video in VLC, Kodi and other players", "Kept on this PC for 90 days; about 2 KB a stream" };
+        static readonly string[] StreamPoints = { "YouTube, Netflix, Prime Video, Hulu, Disney+, Max, Twitch, Crunchyroll, Hotstar, DAZN and more - in an app or a browser", "IPTV and network video in VLC, Kodi and other players", L.T("Kept on this PC for 90 days; about 2 KB a stream") };
 
         float PaintStreamNow(Graphics g, float x, float y, float w)
         {
             Streams.Live l; WatchKit.Session s = null; List<WatchKit.Sample> samples = null; string far = "";
-            lock (Streams.k) { l = Streams.Now; if (l != null) { s = l.S; samples = l.Samples.ToList(); far = l.FarIp; } }
+            lock (Streams.k) { l = Streams.Now; if (l != null) { s = l.S != null ? l.S.Copy() : null; samples = l.Samples.ToList(); far = l.FarIp; } }   /* review 1.1.6 U3 #1: paint from a copy, the watch thread adds dips */
             using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 if (s == null)
@@ -141,7 +157,7 @@ namespace AdeeboMeter
                 int lv = s.Dips.Count == 0 ? 0 : 1; float h = 236 * S;
                 var c2 = new RectangleF(x, y, w, h); Kit.Box(g, c2); Theme.Stroke(g, c2, 16 * S, Theme.Lv(lv), 2);
                 float cx = x + 22 * S, cy = y + 16 * S;
-                g.DrawString(L.T("NOW STREAMING") + (s.Via != "" ? " · " + L.T("in") + " " + s.Via : "") + (s.Via != "you said so" ? " · " + L.T("recognised by its servers, not by reading your tabs") : ""), Draw.fTiny, muted, cx, cy); cy += 20 * S;
+                g.DrawString(Kit.Sent("NOW STREAMING") + (s.Via != "" ? " · " + L.T("in") + " " + s.Via : "") + (s.Via != "you said so" ? " · " + L.T("recognised by its servers, not by reading your tabs") : ""), Draw.fTiny, muted, cx, cy); cy += 20 * S;
                 g.DrawString(s.What + " · " + Dur(DateTime.Now - s.Start) + " · " + (s.Dips.Count == 0 ? L.T("smooth so far") : s.Dips.Count + (s.Dips.Count == 1 ? L.T(" dip so far") : L.T(" dips so far"))), Draw.fTitle, ink, cx, cy); cy += 34 * S;
                 if (s.Dips.Count > 0) { var ld = s.Dips.Last(); using (var ab = new SolidBrush(Theme.LvText(1))) g.DrawString(ld.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " · " + WatchKit.BlameName(ld.Blame, Streams.FarName) + ": " + ld.Evidence, Draw.fBody, ab, new RectangleF(cx, cy, w - 44 * S, 22 * S)); }
                 cy += 28 * S;
@@ -176,7 +192,7 @@ namespace AdeeboMeter
         }
         void AskWatching(Point at)
         {
-            var menu = new ContextMenuStrip { ShowImageMargin = false, Font = Draw.fBody };
+            var menu = Menus.Make(); menu.ShowImageMargin = false;
             var box = new ToolStripTextBox { AutoSize = false, Width = Sc(260), Font = Draw.fBody };
             menu.Items.Add(new ToolStripLabel(L.T("What are you watching? (only for your own records)")));
             menu.Items.Add(box);
@@ -195,7 +211,7 @@ namespace AdeeboMeter
                 double gw; int sig; bool wifi; lock (M.L) { gw = M.GwPing.Avg(5); sig = M.WifiSignal; wifi = M.AdapterKind == "Wi-Fi"; }
                 float h = busy || res == null ? 70 * S : 200 * S; var card = new RectangleF(x, y, w, h); Kit.Box(g, card);
                 float cx = x + 22 * S, cy = y + 16 * S;
-                g.DrawString(L.T("CAN I STREAM 4K RIGHT NOW?"), Draw.fTiny, muted, cx, cy); cy += 20 * S;
+                g.DrawString(Kit.Sent("CAN I STREAM 4K RIGHT NOW?"), Draw.fTiny, muted, cx, cy); cy += 20 * S;
                 if (busy || res == null) { g.DrawString(busy ? speedRun.Status : L.T("Starting the speed test..."), Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
                 if (res.Error != "") { g.DrawString(L.T("The speed test didn't finish: ") + res.Error, Draw.fBody, sub, cx, cy); return card.Bottom + 18 * S; }
                 double age = (DateTime.Now - res.T).TotalMinutes;   // AM-CG-149: a test from earlier (or another network) isn't "right now"
@@ -225,7 +241,7 @@ namespace AdeeboMeter
                 // when do your streams dip
                 var a = new RectangleF(x, y, half, h); Kit.Box(g, a);
                 float ax = a.X + 20 * S, ay = a.Y + 16 * S;
-                g.DrawString(L.T("WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS"), Draw.fTiny, muted, ax, ay); ay += 24 * S;
+                g.DrawString(Kit.Sent("WHEN DO YOUR STREAMS DIP? · LAST 30 DAYS"), Draw.fTiny, muted, ax, ay); ay += 24 * S;
                 int h0 = 16, h1 = 24; float cw = (half - 40 * S - 40 * S) / (h1 - h0), ch = 20 * S; int max = 1; for (int d = 0; d < 7; d++) for (int hh = h0; hh < h1; hh++) max = Math.Max(max, grid[d, hh]);
                 string[] days = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedDayNames;
                 for (int hh = h0; hh < h1; hh++) g.DrawString(hh.ToString(CultureInfo.InvariantCulture), Draw.fTiny, muted, ax + 40 * S + (hh - h0) * cw, ay);
@@ -246,7 +262,7 @@ namespace AdeeboMeter
                 var b = new RectangleF(x + half + 16 * S, y, half, h); Kit.Box(g, b);
                 float bx = b.X + 20 * S, by = b.Y + 16 * S; var month = DateTime.Now.Day <= 3 ? DateTime.Now.AddMonths(-1) : DateTime.Now;
                 var ms = all.Where(s => s.Start.Year == month.Year && s.Start.Month == month.Month).ToList(); var dips = ms.SelectMany(s => s.Dips).ToList();
-                g.DrawString(L.T("FOR YOUR PROVIDER · ") + month.ToString("MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, bx, by); by += 26 * S;
+                g.DrawString(Kit.Sent("FOR YOUR PROVIDER · ") + month.ToString("MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, bx, by); by += 26 * S;
                 string[][] nums = { new[] { "HOURS WATCHED", ms.Sum(s => s.Length.TotalHours).ToString("0.#", CultureInfo.CurrentCulture) }, new[] { "DIPS", dips.Count.ToString(CultureInfo.CurrentCulture) }, new[] { "PAST YOUR ROUTER", dips.Count(d => d.Blame == "provider").ToString(CultureInfo.CurrentCulture) } };
                 float nw = (half - 40 * S - 20 * S) / 3;
                 for (int i = 0; i < 3; i++)
@@ -293,7 +309,7 @@ namespace AdeeboMeter
                 y += 80 * S;
                 // the whole session: download (green), the stream server's delay (purple), dips shaded
                 var card = new RectangleF(x, y, w, 170 * S); Kit.Box(g, card);
-                g.DrawString(L.T("THE WHOLE SESSION · download (green) · stream server delay (purple) · dips shaded"), Draw.fTiny, muted, x + 18 * S, y + 12 * S);
+                g.DrawString(L.T("The whole session · download (green) · stream server delay (purple) · dips shaded"), Draw.fTiny, muted, x + 18 * S, y + 12 * S);
                 var ch = new RectangleF(x + 18 * S, y + 36 * S, w - 36 * S, 110 * S); double span = Math.Max(1, s.Length.TotalMinutes);
                 foreach (var d in s.Dips) using (var db = new SolidBrush(Theme.LvSoft(d.Blame == "provider" ? 2 : 1))) g.FillRectangle(db, ch.X + (float)((d.T - s.Start).TotalMinutes / span) * ch.Width, ch.Y, Math.Max(4 * S, (float)(d.Secs / 60.0 / span) * ch.Width), ch.Height);
                 if (s.Line.Count >= 2)
@@ -310,7 +326,7 @@ namespace AdeeboMeter
                 // each dip and the evidence
                 if (s.Dips.Count > 0)
                 {
-                    g.DrawString(L.T("EACH DIP AND THE EVIDENCE"), Draw.fTiny, muted, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent("EACH DIP AND THE EVIDENCE"), Draw.fTiny, muted, x, y); y += 20 * S;
                     float rows = 0; foreach (var d in s.Dips) rows += Math.Max(36 * S, Draw.Measure(d.Evidence, Draw.fBody, (int)(w - 420 * S)).Height + 16 * S);
                     var dc = new RectangleF(x, y, w, rows + 12 * S); Kit.Box(g, dc); y += 6 * S;
                     using (var line = new Pen(Theme.Line2))
@@ -318,6 +334,12 @@ namespace AdeeboMeter
                         {
                             var d = s.Dips[i]; float rh = Math.Max(36 * S, Draw.Measure(d.Evidence, Draw.fBody, (int)(w - 420 * S)).Height + 16 * S);
                             g.DrawString(d.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fBodyB, ink, x + 18 * S, y + 9 * S);
+                            if (Cfg.History)   // the dip's minute in the Time machine (FullView.Gateway.cs)
+                            {
+                                var dt = d.T; string what = s.What; var tr0 = new RectangleF(x + w - 150 * S, y + 9 * S, 64 * S, 20 * S);
+                                using (var bl = new SolidBrush(Theme.BlueText)) g.DrawString(L.T("Replay") + " ›", Draw.fSmall, bl, tr0.X, tr0.Y + 2 * S);
+                                Act(streamCanvas, tr0, delegate { OpenTimeAt(dt, L.T("Streaming") + " - " + what + " " + L.T("dip")); });
+                            }
                             using (var bb = new SolidBrush(Theme.LvText(d.Blame == "provider" ? 2 : 1))) g.DrawString(WatchKit.BlameName(d.Blame, farName), Draw.fBodyB, bb, x + 80 * S, y + 9 * S);
                             g.DrawString(d.Evidence, Draw.fBody, sub, new RectangleF(x + 270 * S, y + 9 * S, w - 420 * S, rh));
                             g.DrawString(d.Secs + " s", Draw.fSmall, muted, x + w - 80 * S, y + 11 * S);
@@ -330,10 +352,12 @@ namespace AdeeboMeter
                 var or = new RectangleF(x, y, w, 44 * S); Theme.Fill(g, or, 12 * S, Kit.Soft("stream"));
                 using (var ob = new SolidBrush(Kit.Ink("stream"))) g.DrawString(L.T("In one line: ") + one, Draw.fBody, ob, new RectangleF(or.X + 16 * S, or.Y + 12 * S, w - 32 * S, 24 * S));
                 y = or.Bottom + 14 * S;
-                string ct = L.T((DateTime.Now - streamCopied).TotalSeconds < 3 ? "Copied" : "Copy for my provider"); var cs = g.MeasureString(ct, Draw.fBodyB);
+                string ct = L.T((DateTime.Now - streamCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for my provider")); var cs = g.MeasureString(ct, Draw.fBodyB);
                 var cr = new RectangleF(x, y, cs.Width + 30 * S, 34 * S); Theme.Fill(g, cr, 17 * S, Theme.Soft); g.DrawString(ct, Draw.fBodyB, ink, cr.X + 15 * S, cr.Y + (34 * S - cs.Height) / 2);
                 var rec = s; Act(streamCanvas, cr, delegate { try { Clipboard.SetText(RecordText(rec)); streamCopied = DateTime.Now; } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException || e is System.Threading.ThreadStateException)) throw; } streamCanvas.Invalidate(); });
                 // the lesson that fits what went wrong most, right where it's needed
+                // 1.1.6: this PC to the stream's server in the Network Lab (the CDN server it played from)
+                if (s.Far != "") { var pr = LabPill(g, streamCanvas, "Show my path", cr.Right + 10 * S, cr.Y, false, delegate { OpenLab(LabLink.PathJson(M, "view", rec.Far, (rec.What == "" ? "Stream" : rec.What) + " server", rec.FarNormal, MinOf(M.GwPing), MinOf(M.NetPing)), false); }); cr = new RectangleF(cr.X, cr.Y, pr.Right - cr.X, cr.Height); }
                 if (s.Dips.Count > 0) { float lx2 = InvLink(g, streamCanvas, cr.Right + 16 * S, cr.Y + 8 * S, top.Key == "wifi" ? "drops" : "buffer", "stream", OneLine(s, farName), s.Start, s.End > s.Start ? s.End : DateTime.Now); LessonLink(g, streamCanvas, WatchKit.Lesson(top.Key, "stream"), lx2, cr.Y + 8 * S); }
                 return cr.Bottom + 20 * S;
             }

@@ -90,3 +90,17 @@ game.streak|{v} in a row - a rare streak in the wild.
 game.timeup|The season ends.
 market.open|The markets awaken, like a herd at dawn.
 storm.near|A storm approaches the colony.
+stream.on|And here, {v} flows gently, undisturbed.
+stream.on|The stream moves peacefully through the network.
+stream.dip|A brief ripple in the stream. {v}
+stream.dip|The stream falters, then recovers. {v}
+stream.none|The stream is still. Nothing stirs.
+stream.none|No stream today. The forest rests.
+trade.ok|The path to the broker is clear and quick.
+trade.ok|The broker answers swiftly, as it should.
+trade.slow|The broker grows slow. Patience, now.
+trade.slow|A sluggish broker in the afternoon heat. {v}
+trade.closed|The market sleeps until 9:30.
+trade.closed|The trading grounds are quiet tonight.
+view.switch|We move now to the {v} view.
+view.switch|A new habitat: the {v} view.

@@ -58,7 +58,7 @@ namespace AdeeboMeter
         // parses "tcp ipv4 wireguard pppoe ethernet" (top to bottom; "mpls x2" repeats); error = the word it didn't know
         public static List<Layer> Parse(string text, out string error)
         {
-            error = null; string t = (text ?? "").Trim().ToLowerInvariant();
+            error = null; string t = System.Text.RegularExpressions.Regex.Replace((text ?? "").Trim().ToLowerInvariant(), @"\s+", " ");   // bug-hunt L-100: "office  vpn" is "office vpn"
             foreach (var p in Presets) if (t == p[0]) t = p[1];
             if (t == "") t = "tcp ipv4 ethernet";
             var list = new List<Layer>(); var words = t.Split(new[] { ' ', ',', '>', '/', '+', '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -73,7 +73,6 @@ namespace AdeeboMeter
             }
             return list;
         }
-        public static IEnumerable<string> LayerKeys { get { return Known.Select(k => k.Key); } }
 
         public static List<string[]> Stack(string layers, string mtuText, string payloadText)
         {
@@ -82,6 +81,7 @@ namespace AdeeboMeter
             if (err != null) { rows.Add(R(2, "Layers", "\"" + err + "\" isn't a layer I know - try: " + string.Join(", ", Known.Select(k => k.Key)) + ", or a preset: " + string.Join(", ", Presets.Select(p => p[0])), "", "u")); return rows; }
             int mtu = 1500; if (!string.IsNullOrWhiteSpace(mtuText) && ((mtu = IntText(mtuText)) < 576 || mtu > 9216)) { rows.Add(R(2, "MTU", "type a link MTU between 576 and 9216 (1500 = normal Ethernet)", "", "u")); return rows; }
             int payload = -1; if (!string.IsNullOrWhiteSpace(payloadText) && (payload = IntText(payloadText)) < 0) { rows.Add(R(2, "Payload", "type the data size in bytes, e.g. 1400", "", "u")); return rows; }
+            if (payload > 1000000000) { rows.Add(R(2, "Payload", "1,000,000,000 bytes (1 GB) at most", "", "u")); return rows; }   // bug-hunt ML-59: no overflow into a negative size
             int ips = st.Count(x => x.Kind == "i"); if (ips > 1) rows.Add(R(1, "Layers", ips + " IP layers - both are counted inside the MTU. A tunnel's outer IP belongs to the tunnel layer (gre, ipsec, vxlan...), which already carries it.", "", "u")); if (ips == 0) { rows.Add(R(2, "Layers", "add an IP layer (ipv4 or ipv6) - the MTU is counted against it", "", "u")); return rows; }
             var trans = st.Where(x => x.Key == "tcp" || x.Key == "udp" || x.Key == "icmp").Select(x => x.Key).Distinct().ToList();   // FRESH-041: one transport per packet
             if (trans.Count > 1 || st.Count(x => x.Key == "tcp" || x.Key == "udp" || x.Key == "icmp") > 1) { rows.Add(R(2, "Layers", "one transport per packet - pick tcp, udp or icmp, not " + string.Join(" and ", trans.Count > 1 ? trans : new List<string> { trans[0], trans[0] }), "", "u")); return rows; }
@@ -97,7 +97,7 @@ namespace AdeeboMeter
             bool tcp = st.Any(x => x.Key == "tcp");
             rows.Add(R(0, tcp ? "Biggest segment (MSS)" : "Biggest data per packet", ap + I(maxData) + " bytes", tcp ? "What TCP should advertise so nothing splits: link MTU " + mtu + " - " + (shim + tun > 0 ? (shim + tun) + " tunnel/PPPoE - " : "") + ip + " IP - " + pay + " above." : "", "i"));
             if (tun + shim > 0) rows.Add(R(1, "Set the inner MTU to", ap + I(innerMtu), "The tunnel (or PPPoE) eats " + ap + (tun + shim) + " bytes of the " + mtu + " - set the VPN adapter's MTU to this, or big packets split or vanish.", "i"));
-            if (tun + shim > 0) rows.Add(R(3, "Router MSS clamp", ap + I(innerMtu - ip - 20), "For TCP through it: the inner MTU less " + ip + " IP and 20 TCP - a clamp set to the MTU is " + (ip + 20) + " bytes too big.", "i"));   // FRESH-068
+            if (tun + shim > 0 && tcp) rows.Add(R(3, "Router MSS clamp",   /* bug-hunt L-99: only when TCP is in the stack */ ap + I(innerMtu - ip - 20), "For TCP through it: the inner MTU less " + ip + " IP and 20 TCP - a clamp set to the MTU is " + (ip + 20) + " bytes too big.", "i"));   // FRESH-068
             int wire = mtu + frame;
             int full = maxData + pay + ip + tun + shim + frame; double eff = 100.0 * maxData / Math.Max(1, full + (st.Any(x => x.Key == "ethernet") ? 20 : 0));
             rows.Add(R(3, "Frame on the wire", ap + I(wire) + " bytes" + (st.Any(x => x.Key == "ethernet") ? " (+20 preamble and gap)" : ""), "", "i"));
@@ -131,8 +131,8 @@ namespace AdeeboMeter
             var need = new List<int>(); foreach (var w in (sizes ?? "").Split(new[] { ',', ' ', ';', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries)) { int n; if (!int.TryParse(w, NumberStyles.None, CultureInfo.InvariantCulture, out n) || n < 1 || n > 16777214) { rows.Add(R(2, "Sizes", "\"" + w + "\" isn't a host count - type e.g. 200, 60, 12, 2", "", "u")); return rows; } need.Add(n); }
             if (need.Count == 0) { rows.Add(R(2, "Sizes", "type how many hosts each subnet needs, e.g. 200, 60, 12, 2", "", "u")); return rows; }
             if (need.Count > 64) { rows.Add(R(2, "Sizes", "64 subnets at most", "", "u")); return rows; }
-            uint start = Be(ip.GetAddressBytes()); uint bmask = pre == 0 ? 0 : 0xFFFFFFFFu << (32 - pre); start &= bmask; ulong end = (ulong)start + (1UL << (32 - pre));
-            rows.Add(R(3, "Block", U(start) + "/" + pre + "  (" + I(1L << (32 - pre)) + " addresses)", "Biggest first, so every subnet lands on its own boundary.", "i"));
+            uint start = Be(ip.GetAddressBytes()); uint bmask = pre == 0 ? 0 : 0xFFFFFFFFu << (32 - pre); uint typed = start; start &= bmask; ulong end = (ulong)start + (1UL << (32 - pre));
+            rows.Add(R(3, "Block", U(start) + "/" + pre + "  (" + I(1L << (32 - pre)) + " addresses)", (typed != start ? U(typed) + " isn't the network address - the block starts at " + U(start) + ". " : "") + "Biggest first, so every subnet lands on its own boundary.", "i"));   /* hunters11 lab L-6 */
             var order = need.Select((n, i) => new { n, i }).OrderByDescending(x => x.n).ThenBy(x => x.i).ToList();
             ulong at = start; long used = 0; bool full = false;
             foreach (var x in order)
@@ -171,6 +171,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); double bytes = Size(sizeText), bps = Speed(speedText), secs = Time(timeText);
             if (double.IsNaN(bytes) && !string.IsNullOrWhiteSpace(sizeText)) { rows.Add(R(2, "Size", "type e.g. 4.7 GB, 300 MB or 1.2 TB (in bytes - \"Gb\" is gigabits; and write 1000 or 1,000, not 1.000)", "", "u")); return rows; }
             if (double.IsNaN(bps) && !string.IsNullOrWhiteSpace(speedText)) { rows.Add(R(2, "Speed", "type e.g. 100 Mbps, 1 Gbps or 12 MB/s", "", "u")); return rows; }
+            if (bps > 1e15) { rows.Add(R(2, "Speed", "up to 1,000,000 Gbps (1 Pbps) - that's faster than any link today", "", "u")); return rows; }   // carry-over: past this the packet count overflows a whole number
             if (double.IsNaN(secs) && !string.IsNullOrWhiteSpace(timeText)) { rows.Add(R(2, "Time", "type e.g. 90 s, 10 min or 2 h", "", "u")); return rows; }
             int have = (double.IsNaN(bytes) ? 0 : 1) + (double.IsNaN(bps) ? 0 : 1) + (double.IsNaN(secs) ? 0 : 1);
             if (have == 0) { rows.Add(R(2, "Input", "type a size and a speed (how long?), a size and a time (how fast?), or just a speed (conversions)", "", "u")); return rows; }
@@ -190,7 +191,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(bps) && bps > 0)
             {
                 rows.Add(R(3, "Same speed", Bits(bps) + " = " + ByteRate(bps) + " = " + ByteSize(bps / 8 * 3600) + " an hour", "Network speeds are in bits; file sizes in bytes (8 bits). Sizes here are decimal (1 MB = 1,000,000 bytes), like ISPs and Windows' network pages.", "i"));
-                rows.Add(R(3, "Full-size packets", I((long)(bps / 8 / 1538)) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
+                double pps = bps / 8 / 1538; rows.Add(R(3, "Full-size packets", (pps >= 9.2e18 ? F(pps, "0.###e0") : pps >= 10 ? I((long)pps) : F(pps, "0.###")) + " a second (1500-byte Ethernet)  ·  " + (1538 * 8 / bps * 1e6 < 1 ? F(1538 * 8 / bps * 1e9, "0.###") + " ns" : F(1538 * 8 / bps * 1e6, "0.##") + " µs") + " each on the wire", "", "i"));
             }
             return rows;
         }
@@ -212,7 +213,8 @@ namespace AdeeboMeter
         static double Speed(string t)
         {
             if (string.IsNullOrWhiteSpace(t)) return double.NaN; string u; double v = Parse2(t, out u); if (double.IsNaN(v)) return v;
-            string k = u.Replace("/s", "ps"); if (k == "") return v * 1e6;   // a bare number is Mbps, how ISPs sell it
+            string k = u.Replace("/s", "ps"); if (k == "") return v * 1e6;
+            if (k.Length >= 3 && k == k.ToUpperInvariant()) k = k.ToLowerInvariant();   // carry-over: all capitals (MBPS, GBPS, MBIT) can't say bits from bytes - read as bits, the way speeds are sold   // a bare number is Mbps, how ISPs sell it
             switch (k) { case "bps": return v; case "kbps": case "Kbps": case "kbit": case "kbitps": case "Kbit": case "Kbitps": return v * 1e3; case "Tbps": case "tbps": case "Tbit": case "Tbitps": return v * 1e12; case "Mb": return v * 1e6; case "Gb": return v * 1e9; case "Mbps": case "mbps": case "Mbit": case "mbit": case "Mbitps": case "mbitps": return v * 1e6; case "Gbps": case "gbps": case "Gbit": case "gbit": case "Gbitps": case "gbitps": return v * 1e9; case "Bps": return v * 8; case "KBps": case "kBps": return v * 8e3; case "MBps": return v * 8e6; case "GBps": return v * 8e9; case "KiBps": return v * 8 * 1024; case "MiBps": return v * 8 * 1048576; case "GiBps": return v * 8 * 1073741824.0; default: return double.NaN; }
         }
         static double Time(string t)
@@ -240,7 +242,7 @@ namespace AdeeboMeter
             {
                 uint u = (uint)v; rows.Add(R(3, "As an IPv4 address", U(u), "", "i"));
                 int ones = 0; bool contiguous = true; for (int i = 31; i >= 0; i--) { if ((u >> i & 1) == 1) { if (ones != 31 - i) contiguous = false; ones++; } }
-                if (contiguous && ones > 0 && from.StartsWith("IPv4", StringComparison.Ordinal)) rows.Add(R(3, "As a mask", "/" + ones + "  ·  wildcard " + U(~u), "", "i"));
+                if (contiguous && ones > 0 && (from.StartsWith("IPv4", StringComparison.Ordinal) || (u & 0xFF000000u) == 0xFF000000u)) rows.Add(R(3, "As a mask",   /* L-212: any value shaped like a mask (0xFFFFFF00, 4294967040), not only one typed dotted */ "/" + ones + "  ·  wildcard " + U(~u), "", "i"));
                 if (v <= 65535) rows.Add(R(3, "As a port / VLAN / ID", v == 0 ? "port 0 is reserved - to the OS it means \"pick any free port\"" : v <= 4094 ? "valid VLAN ID and port number" : "valid port number", "", "i"));
                 if (v <= 63) rows.Add(R(3, "As DSCP", "DSCP " + v + "  ·  ToS byte 0x" + (v << 2).ToString("X2", CultureInfo.InvariantCulture) + Dscp((int)v), "", "i"));
             }

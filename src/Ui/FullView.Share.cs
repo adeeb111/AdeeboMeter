@@ -23,6 +23,7 @@ namespace AdeeboMeter
         const string QrSite = "https://adeebometer.com/r#";
         // loss: 1 % steps up to 50 %, then about 4 % steps to 100 % - so 63 % and 100 % no longer look the same
         static char QrLoss(double p) { p = Math.Max(0, Math.Min(100, p)); return QrAlpha[(int)(p <= 50 ? Math.Round(p) : 50 + Math.Round((p - 50) * 13 / 50))]; }
+        // bug-hunt L-325: the top character means "1 s or more" - the phone page reads it as 1000 ms, a cap rather than a wrong 992
         static char QrMs(double ms) { return double.IsNaN(ms) || ms < 0 ? '-' : QrAlpha[(int)Math.Min(63, Math.Round(2 * Math.Sqrt(ms)))]; }
         static string QrNum(double v, int d) { return double.IsNaN(v) || double.IsInfinity(v) ? "" : Math.Round(v, d).ToString(CultureInfo.InvariantCulture); }
         static readonly string[] QrPhoneRow = { "3", "On the phone", "the verdict, the path, the numbers in plain words, two charts, what to do - and Send to my provider, Share, Save as PDF", "Names, the Wi-Fi name and addresses are left out.", "i" };
@@ -41,6 +42,7 @@ namespace AdeeboMeter
             string body = "1!" + now.ToUniversalTime().ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!";
             // the QR holds at most Qr.MaxBytes: the headline gives way first, then the oldest of each series
             int room = Qr.MaxBytes - QrSite.Length - body.Length; if (room < head.Length) head = room > 8 ? head.Substring(0, room) : "";
+            // a safety net only (bug-hunt L-324): the series are ~90 characters and the limit 1,732, so it never runs today
             while (QrSite.Length + body.Length + head.Length > Qr.MaxBytes && net.Length > 10) { net.Remove(0, 1); if (gw.Length > 10) { gw.Remove(0, 1); lo.Remove(0, 1); } body = "1!" + now.ToUniversalTime().ToString("yyMMddHHmm", c) + "!" + lv + "!" + nums + "!" + net + "!" + gw + "!" + lo + "!"; }
             return QrSite + body + head;
         }
@@ -81,8 +83,8 @@ namespace AdeeboMeter
                 var canvas = new Panel { Bounds = new Rectangle(0, 0, f.ClientSize.Width, done.Top - Sc(4)), BackColor = Theme.Bg };
                 canvas.Paint += delegate(object s2, PaintEventArgs e)
                 {
-                    var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("SCAN TO OPEN"), Draw.fTiny, mb, pad, pad);
+                    var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("SCAN TO OPEN"), Draw.fTiny, mb, pad, pad);
                     using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(what, Draw.fHead, ib, new RectangleF(pad, pad + Sc(20), w, hHead + 4));
                     var qr = new RectangleF(pad + (w - qrBox) / 2f, yQr, qrBox, qrBox);
                     Theme.Fill(g, qr, Sc(16), Color.White); Theme.Stroke(g, qr, Sc(16), Theme.Line, 1);
@@ -101,7 +103,7 @@ namespace AdeeboMeter
                 f.Controls.Add(canvas);
                 f.Load += delegate { try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
                 f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter) f.Close(); };
-                f.ShowDialog(this);
+                Kit.Polish(f); f.ShowDialog(this);
             }
         }
     }

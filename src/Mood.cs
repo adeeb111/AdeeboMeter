@@ -46,12 +46,12 @@ namespace AdeeboMeter
             int lv, at = Worst(s, out lv);
             bool down = at >= 2 && lv == 2 && downSince != DateTime.MinValue;
             string mo = Moments.FaceFor(s) != null ? Moments.Line : null; if (mo != null) return mo;   // a moment says why the face changed (even in serious mode: it's a fact)
-            if (Voice.Serious) return "";
+            if (Voice.Serious || s.Waiting) return "";   // review 1.1.6 D1 #10: no "everything's fine" quip before anything was measured
             // the provider's excuses: the longer it lasts, the better the story (every mood, Companion too)
             if (down && (DateTime.Now - downSince).TotalMinutes >= 3) { if (!Lines.Speaks("problem")) return ""; return Lines.Who() == Lines.Mood ? Excuse((DateTime.Now - downSince).TotalMinutes, isp) : Lines.Steady("isp.down", null); }   // AM-CG-188
             // 1.1.5: the words come from the lines files (Lines) - the persona if one talks, else the mood
             string key, v = null, kind = "state";
-            bool knownCalm = s.Path != null && s.Path.Length > 2 && s.Path[0] >= 0 && s.Path[0] <= 2 && s.Path.Skip(2).Any(p => p >= 0 && p <= 2);   // AM-CG-169
+            bool knownCalm = s.Path != null && s.Path.Length > 2 && s.Path[0] >= 0 && s.Path[0] <= 2 && s.Path.Skip(2).Any(p => p >= 0 && p <= 2) && s.Path[1] != 1 && s.Path[1] != 2;   // AM-CG-169; bug-hunt L-298: a busy or broken Wi-Fi / LAN leg isn't calm
             string comfort = s.Level == 0 && !s.Call && knownCalm && Lines.Speaks("idle") ? Lines.Comfort() : "";
             if (comfort != "" && (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) || (DateTime.Now.Minute < 5 && Lines.Speaks("idle")))) return comfort;   // calm moments only: the greeting, and the first minutes of a quiet hour
             if (DateTime.Now - Program.Started < TimeSpan.FromSeconds(60) && s.Level == 0 && knownCalm) { key = DateTime.Now.Hour >= 23 || DateTime.Now.Hour < 5 ? "late.night" : DateTime.Now.Hour < 11 ? "morning" : "app.open"; kind = "greet"; }
@@ -60,9 +60,9 @@ namespace AdeeboMeter
             {
                 kind = lv >= 2 ? "problem" : "state";
                 if (at == 0) { key = "pc.busy"; if (!double.IsNaN(s.Cpu)) v = s.Cpu.ToString("0", CultureInfo.CurrentCulture) + "%"; }
-                else if (at == 1) key = s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
+                else if (at == 1) key = s.Offline || s.PathMain != null && s.PathMain.Length > 1 && (s.PathMain[1] ?? "").IndexOf("not connected", StringComparison.OrdinalIgnoreCase) >= 0 || s.Headline.IndexOf("not connected to any network", StringComparison.OrdinalIgnoreCase) >= 0 ? "net.none" : lv >= 2 ? "gw.down" : "wifi.drops";
                 else if (at == 3) { key = "dns.slow"; if (s.DnsMs > 0) v = s.DnsMs.ToString("0", CultureInfo.CurrentCulture) + " ms"; }
-                else key = lv >= 2 ? "isp.down" : "inet.slow";
+                else key = at == 4 ? "inet.slow" : lv >= 2 ? "isp.down" : "inet.slow";   // bug-hunt L-299: the far end (the site's side) is never the provider's fault in words
             }
             if (!Lines.Speaks(kind)) return "";
             return Lines.Steady(key, v);
@@ -108,13 +108,14 @@ namespace AdeeboMeter
         }
         public static string SeasonLine(Snap s)
         {
-            if (Voice.Serious) return "";
+            if (Voice.Serious || s.Waiting) return "";   /* hunters13 display L-5: nothing measured yet - no "all is well" line */
             int lv, at = Worst(s, out lv);
             switch (Season())
             {
-                case "halloween": return at < 0 ? "🎃 No packet ghosts tonight." : "👻 Packet ghosts detected - " + (at == 1 ? "haunting your Wi-Fi." : at == 0 ? "possessing your PC." : "lurking past your router.");
-                case "winter": return at < 0 ? "❄ Warm and cosy on the network." : "❄ Cold start latency - " + (at == 1 ? "your Wi-Fi needs a scarf." : "something's frozen up the line.");
-                case "newyear": return at < 0 ? "🎆 A clean network to start the year." : "🎆 New year, same " + (at == 1 ? "Wi-Fi" : "provider") + ".";
+                // hunters12 display ML-2: whole sentences, translated, and no emoji in the text (the app's font has none - they drew as a gap)
+                case "halloween": return L.T(at < 0 ? "No packet ghosts tonight." : at == 1 ? "Packet ghosts detected - haunting your Wi-Fi." : at == 0 ? "Packet ghosts detected - possessing your PC." : "Packet ghosts detected - lurking past your router.");
+                case "winter": return L.T(at < 0 ? "Warm and cosy on the network." : at == 1 ? "Cold start latency - your Wi-Fi needs a scarf." : "Cold start latency - something's frozen up the line.");
+                case "newyear": return L.T(at < 0 ? "A clean network to start the year." : at == 1 ? "New year, same Wi-Fi." : at == 2 ? "New year, same provider." : "New year, same old internet hiccups.");   /* hunters13 data ML1: only the provider's own leg blames the provider */
                 default: return "";
             }
         }

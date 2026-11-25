@@ -1,0 +1,57 @@
+# AdeeboMeter buddy lines - Stoic persona, in the spirit of Marcus Aurelius (our own lines; no quotations). key|text.
+app.open|Buenos días, {addr}. Atendamos lo que está en nuestro poder: esta red.
+app.open|Mantengo la guardia. Lo que venga, lo recibiremos con calma.
+all.good|Todo en orden. Disfrútalo y no te aferres a ello.
+all.good|Nada que arreglar. El momento presente basta.
+pc.busy|El PC trabaja al {v}. Pídele menos y servirá mejor.
+pc.busy|Demasiadas tareas. Elige la necesaria.
+wifi.drops|El Wi-Fi se fue {v} veces. Acércate; lo demás no es para preocuparse.
+net.none|Sin red. La molestia no cambia nada. Revisa el cable o el Wi-Fi.
+inet.slow|Tu lado está bien. El retraso está tras tu router, no es tu carga.
+busy|Trabajando en ello, con calma... {v}
+idle|Silencio. Una buena hora para estar contento.
+search.empty|¿Qué te preocupa? Dilo con claridad.
+freeze|Una pausa ({v}). La paciencia no cuesta nada.
+speedrunner|Una tarea a la vez. Termina bien esta.
+back.again|Bienvenido de nuevo. Esto es lo que pasó; júzgalo con calma.
+dns.slow|Los nombres responden lento ({v}). Algo pequeño; arreglamos lo que podemos.
+speed.great|{v} de descarga. Úsala bien.
+speed.bloat|Rápida, pero el retraso sube {v} cuando se llena. Moderación, incluso para una línea.
+game.lag|El lag empieza en tu Wi-Fi. Esa parte te toca arreglarla.
+game.good|Estable en {v}. Juega con la mente despejada.
+vpn.on|VPN conectada.
+vpn.slow|La VPN suma {v}. Cada elección tiene su costo.
+portal|Este Wi-Fi pide iniciar sesión primero. Una puerta pequeña; crúzala.
+gw.down|Tu router no responde. Empieza por ahí.
+isp.down|Tu router funciona; el proveedor no. Anota la hora y llámalos con calma.
+mtu.small|Los paquetes grandes caen en {v}. Envía lo que el camino puede llevar.
+port.open|{v} responde.
+port.closed|{v} está cerrado o en silencio.
+cert.ok|El certificado está en regla.
+cert.expired|El certificado terminó el {v}. Todo tiene su momento.
+sec.ok|Revisión superada. Mantente atento de todos modos.
+sec.issue|{v} cosas necesitan atención. Una a la vez.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.clean|Sin pérdida en todo el camino.
+devices.found|{v} dispositivos comparten tu red.
+encrypt.done|Sellado. Lo tuyo sigue siendo tuyo.
+decrypt.done|Abierto, sin cambios.
+points.earned|+{v} puntos. Agradable, aunque no es lo importante.
+award|500 puntos: el Premio Adeebo. Llévalo con ligereza.
+late.night|Es tarde. Descansar también es un deber.
+morning|Buenos días. La noche fue tranquila. Empieza el trabajo del día.
+update.suspect|Las cosas empeoraron tras la actualización del {v}. Mira ahí primero.
+call.on|Una llamada. Vigilo su calidad.
+stream.on|{v} se reproduce con fluidez. Vigilo el camino.
+stream.dip|El stream falló. {v}
+stream.none|Nada se transmite ahora.
+trade.ok|Tu línea al bróker es estable. Decide con la mente en calma.
+trade.slow|El bróker va lento ahora. Espera; la prisa no es sabiduría.
+trade.closed|El mercado duerme hasta las 9:30. Tú también puedes.
+view.switch|Cambiando a {v}.
+quiz.right|Correcto. Bien razonado.
+quiz.wrong|Un error, y una lección. Empieza de nuevo.
+game.streak|{v} seguidas. Mantén la humildad.
+game.timeup|Se acabó el tiempo. Nunca fue nuestro.
+market.open|Los mercados abren. Actúa, no reacciones.
+storm.near|Se acerca una tormenta. Prepárate y mantén la calma.

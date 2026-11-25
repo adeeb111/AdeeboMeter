@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Network engineer. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|मॉनिटरिंग शुरू। Gateway, DNS, internet probes चालू।
+app.open|एजेंट चालू। पहले सैंपल 2 s में।
+app.open|Polling: gw 2 s, internet 15 s।
+app.open|बेसलाइन कलेक्शन शुरू।
+app.open|Probes तैयार। Listening: none। Outbound only।
+all.good|सारे paths ग्रीन। कोई action नहीं चाहिए।
+all.good|RTT nominal, 0% loss, no flaps।
+all.good|L1-L7 ग्रीन।
+all.good|gw, DNS, internet पर कोई anomaly नहीं।
+all.good|Steady state। Troubleshoot करने को कुछ नहीं।
+pc.busy|CPU {v}। Host ही bottleneck है, path नहीं।
+pc.busy|Host saturated। App-side latency होगी।
+pc.busy|Memory pressure ज़्यादा। Paging likely है।
+pc.busy|Local resource contention। Load घटाओ।
+pc.busy|High CPU। Network numbers skewed हो सकते हैं।
+wifi.drops|wlan x{v} बार flap हुआ। RSSI और roaming चेक करो।
+wifi.drops|आज {v} disassociations। Reason codes चेक करो।
+wifi.drops|Link x{v} बार flap। Likely RF या AP deauth।
+wifi.drops|{v} Wi-Fi drops। Co-channel और roaming threshold चेक करो।
+wifi.drops|WLAN link x{v} बार down। Event log देखो।
+net.none|No IP, no gateway। Link down।
+net.none|सारे interfaces down।
+net.none|No default route। Probes रुके हैं।
+net.none|सभी adapters पर L1 down।
+net.none|No carrier।
+inet.slow|Gateway RTT low, internet RTT {v}। Delay CPE के आगे है।
+inet.slow|Latency gateway के upstream जुड़ी है।
+inet.slow|LAN clean। Upstream latency ज़्यादा है।
+inet.slow|Delta gw से internet: {v}। Provider side।
+inet.slow|Upstream issue। Hop खोजने को MTR चलाओ।
+busy|Probing... {v}
+busy|Samples collect हो रहे हैं...
+busy|चल रहा है। Stop उपलब्ध है।
+busy|मापा जा रहा है...
+busy|Test चल रहा है...
+idle|कोई state change नहीं।
+idle|Steady। Baseline कायम है।
+idle|पिछले घंटे में कोई events नहीं।
+idle|Polling जारी। कुछ नया नहीं।
+idle|शांत है।
+search.empty|खोजें: mtu, dns, arp, mtr, snmp...
+search.empty|Tool का नाम या symptom।
+search.empty|Tool खोजो।
+search.empty|कौन सी layer?
+search.empty|Protocol या symptom लिखो।
+freeze|UI thread {v} से blocked। Recover हो रहा है।
+freeze|UI stall {v}। काम जारी है।
+freeze|Render {v} देर से।
+freeze|Main thread {v} से busy।
+freeze|UI पकड़ रहा है ({v})।
+speedrunner|पिछला job अभी चल रहा है।
+speedrunner|Queue फुल। एक बार में एक।
+speedrunner|Request rate ज़्यादा। पिछला खत्म होने का इंतज़ार।
+speedrunner|पिछला test पूरा नहीं हुआ।
+speedrunner|Busy। मौजूदा run के बाद retry करो।
+back.again|पिछली बार से {v} events।
+back.again|पिछली बार से कोई events नहीं।
+back.again|पिछली बार से delta: Changes देखो।
+back.again|तुम्हारी गैरहाज़िरी का log ये रहा।
+back.again|वापस स्वागत है। Event summary तैयार है।
+dns.slow|DNS {v}। दूसरा resolver आज़माओ।
+dns.slow|Resolver latency ज़्यादा है।
+speed.great|{v} down, low RTT।
+speed.great|Throughput अच्छा। No loss।
+speed.bloat|Loaded latency +{v}। Bufferbloat। हो सके तो SQM चालू करो।
+speed.bloat|Load में queueing delay।
+game.lag|Game RTT spikes RSSI drops से जुड़े हैं। Local RF।
+game.lag|Jitter WLAN से शुरू होता है।
+game.good|Game RTT {v}, jitter low, 0% loss।
+game.good|Game server तक path clean है।
+vpn.on|Tunnel up है।
+vpn.on|Default route tunnel से है।
+vpn.slow|Tunnel overhead +{v}।
+vpn.slow|Latency VPN headend ने जोड़ी है।
+portal|HTTP 302, portal पर। Auth चाहिए।
+portal|Captive portal मिला।
+gw.down|Gateway unreachable। ARP या L2 issue।
+gw.down|Gateway से no ICMP।
+isp.down|Gateway up, upstream unreachable।
+isp.down|WAN CPE के आगे down है।
+mtu.small|Path MTU {v}। PMTUD blackhole चेक करो।
+mtu.small|{v} से ऊपर DF packets drop हो रहे हैं।
+port.open|TCP {v} open, handshake {v} में।
+port.open|SYN-ACK मिला।
+port.closed|TCP {v} RST या timeout।
+port.closed|No SYN-ACK। Filtered या closed।
+cert.ok|Chain valid, trusted root।
+cert.ok|TLS chain OK।
+cert.expired|Leaf {v} को expired।
+cert.expired|Chain invalid: expired।
+sec.ok|Hardening checks pass।
+sec.ok|कोई findings नहीं।
+sec.issue|{v} findings।
+sec.issue|Hardening gaps मिले।
+mtr.lossy|Loss hop {v} से शुरू, destination तक जारी।
+mtr.lossy|Mid-path forwarding loss।
+mtr.clean|सभी hops पर 0% loss।
+mtr.clean|Path end to end clean है।
+devices.found|{v} ARP entries।
+devices.found|Neighbour table load हुई।
+encrypt.done|Encrypted (AES-256)।
+encrypt.done|Payload sealed है।
+decrypt.done|Decrypted, integrity verified।
+decrypt.done|MAC OK।
+points.earned|+{v}।
+points.earned|Points +{v}।
+award|500 points। Adeebo Award।
+award|Award threshold पूरा हुआ।
+late.night|Off-peak। Path शांत है।
+late.night|देर हो गई। सभी probes nominal।
+morning|रात भर: कोई events नहीं।
+morning|Overnight summary तैयार है।
+update.suspect|{v} के update के बाद regression।
+update.suspect|Change Windows update से जुड़ा है।
+call.on|RTP flows मिले। Jitter और loss monitor हो रहे हैं।
+call.on|Call चल रही है। QoS watch ऑन है।
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v}: path clean, no loss, CDN latency nominal।
+stream.on|Stream healthy। Gateway, ISP, edge सब baseline में।
+stream.dip|Stream degradation। {v}
+stream.dip|Dip evidence के साथ log हुआ। {v}
+stream.none|कोई video flows नहीं मिले।
+stream.none|कोई streaming sessions नहीं। Detector idle।
+trade.ok|Broker RTT nominal, path पर no loss।
+trade.ok|Broker से TCP connect baseline में।
+trade.slow|Broker RTT 100 ms से ऊपर। Orders रोको।
+trade.slow|Broker path degraded। {v}
+trade.closed|Market hours के बाहर। Broker probe रुका।
+trade.closed|Market closed। Probe 09:30 ET तक idle।
+view.switch|{v} profile लागू हो रहा है। Config pushed, reboot नहीं चाहिए।
+view.switch|{v} template load हो रहा है। Changes commit हो रहे हैं।
+quiz.right|ACK। Correct।
+quiz.wrong|NACK। Retransmit करके फिर कोशिश करो।
+game.streak|लगातार {v} — zero packet loss।
+game.timeup|Timeout। TTL expired।
+market.open|Market open — broker RTT देखो।
+storm.near|पास में storm cell — flaps की उम्मीद करो।

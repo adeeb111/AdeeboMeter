@@ -73,7 +73,9 @@ namespace AdeeboMeter
         {
             if (s.Nav != "") Cfg.Nav = s.Nav;
             Cfg.Mode = s.Mode; Cfg.HiddenSecs = s.Hidden; Cfg.Preset = s.Preset; Cfg.WidgetStyle = s.Widget; Cfg.Details = s.Details; Cfg.Call = s.Call;
-            Cfg.GwSec = s.Gw; Cfg.NetSec = s.Net; Cfg.WifiSec = s.Wifi; Cfg.AppsSec = s.Apps; Cfg.GameBgSec = s.GameBg; Cfg.GameBgServers = s.GameSrv;
+            // review 1.1.6 P1 #10: a saved or imported view gets only the paces the Settings lists allow - never a ping every second
+            Func<int, int, int[], int> ok = (v, def, a) => a.Contains(v) ? v : def;
+            Cfg.GwSec = ok(s.Gw, 2, new[] { 2, 5, 10, 30, 0 }); Cfg.NetSec = ok(s.Net, 15, new[] { 15, 30, 60, 300, 0 }); Cfg.WifiSec = ok(s.Wifi, 10, new[] { 10, 30, 120, 0 }); Cfg.AppsSec = ok(s.Apps, 5, new[] { 5, 10, 30, 0 }); Cfg.GameBgSec = ok(s.GameBg, 30, new[] { 10, 30, 60, 0 }); Cfg.GameBgServers = ok(s.GameSrv, 3, new[] { 1, 3, 5 });
         }
 
         // ---------- the views kept: "id~name~state" between '|' (ready-made ones only once changed; yours always)
@@ -96,6 +98,11 @@ namespace AdeeboMeter
                 }
             }
         }
+        // review 1.1.6 P1 #16: the one-time 1.1.6 bar change (Sports after Streaming, Toolbox second) for every kept view too
+        public static void MigrateNav(Func<string, string> fix)
+        {
+            lock (k) foreach (var id in kept.Keys.ToList()) { var s = State.Parse(kept[id][1]); if (s == null || s.Nav == "") continue; string n = fix(s.Nav); if (n != s.Nav) { s.Nav = n; kept[id] = new[] { kept[id][0], s.Line() }; } }
+        }
         static bool IdOk(string id) { return id.Length > 0 && id.Length <= 24 && id.All(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'); }
         static string Clean(string n) { n = new string((n ?? "").Where(c => !char.IsControl(c) && c != '~' && c != '|' && c != '/').ToArray()).Trim(); return n.Length > 30 ? n.Substring(0, 30) : n; }
         public static bool IsBuiltIn(string id) { return BuiltIn.Any(b => b[0] == id); }
@@ -104,7 +111,7 @@ namespace AdeeboMeter
             var b = BuiltIn.FirstOrDefault(z => z[0] == id); if (b != null) return L.T(b[1]);
             lock (k) { string[] v; return kept.TryGetValue(id, out v) ? v[0] : id; }
         }
-        // the views to offer: the ready-made five, then yours
+        // the views to offer: the ready-made ones (Builtin), then yours
         public static List<string[]> All()
         {
             var l = BuiltIn.Select(b => new[] { b[0], b[1], b[2] }).ToList();

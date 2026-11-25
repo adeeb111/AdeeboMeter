@@ -18,7 +18,7 @@ namespace AdeeboMeter
         static double First(string t) { var m = AnyNum.Match(t ?? ""); double v; return m.Success && double.TryParse(m.Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }
         static double[] Nums(string t) { return AnyNum.Matches(t ?? "").Cast<Match>().Select(m => { double v; return double.TryParse(m.Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }).Where(v => !double.IsNaN(v)).ToArray(); }
         static List<string[]> Need(string box, string what) { return new List<string[]> { R(2, box, what, "", "u") }; }
-        static string Pct(double v) { return F(v, v < 1 ? "0.###" : "0.##") + "%"; }
+        static string Pct(double v) { string s = F(v, v < 1 ? "0.###" : "0.##"); if (v < 100 && s == "100") s = F(v, "0.#####"); return s + "%"; }   // round 6: 99.999% never reads as 100%
 
         // ---------- wildcard mask: mask <-> prefix <-> wildcard, and what an ACL line with it matches
         public static List<string[]> Wildcard(string text)
@@ -39,6 +39,7 @@ namespace AdeeboMeter
                 R(0, "Mask", Dotted(mask), "", "i"), R(0, "Prefix", "/" + prefix, "", "i"), R(0, "Wildcard", Dotted(wild), "What an ACL or OSPF network line wants: the mask turned inside out.", "i"),
                 R(3, "Addresses", I(1L << (32 - prefix)) + " in the block · " + I(hosts) + " usable" + (prefix == 31 ? " (point-to-point, RFC 3021)" : ""), "", "i"),
                 R(3, "In an ACL", "permit ip " + Dotted(ex) + " " + Dotted(wild) + " any  - matches " + Dotted(ex) + "/" + prefix, "Swap " + Dotted(ex) + " for your block's first address.", "i") };
+            if (!zero && Regex.IsMatch(t, @"^255\.255\.255\.255$")) rows.Insert(0, R(1, "Read as", "the /32 mask - one address. As an ACL wildcard, 255.255.255.255 means every address (/0): type /0 for that", "", "i"));   // bug-hunt ML-105
             if (zero) rows.Insert(0, R(1, "Read as", "the /0 mask - every address. As an ACL wildcard, 0.0.0.0 means one exact address (/32): type /32 for that", "", "i"));   // FRESH-001
             return rows;
         }
@@ -56,9 +57,10 @@ namespace AdeeboMeter
             else if (it != "" && (double.IsNaN(First(it)) || First(it) < 2)) return Need("Split into", "type /56, /64 or a count like 256");   // FRESH-003: only a blank picks the default
             else { double n = First(it); if (double.IsNaN(n)) { q = p <= 56 ? 64 : Math.Min(128, p + 8); } else { int bits = (int)Math.Ceiling(Math.Log(n, 2) - 1e-9); q = p + bits; } }
             if (q <= p || q > 128) return Need("Split into", "has to be longer than /" + p + " and at most /128");
-            int extra = q - p; var b = ip.GetAddressBytes(); ClearFrom(b, p);
+            int extra = q - p; var b = ip.GetAddressBytes(); var typedB = ip.GetAddressBytes(); ClearFrom(b, p);
             var rows = new List<string[]>();
             rows.Add(R(0, "Pieces", (extra >= 63 ? "2^" + extra : I(1L << extra)) + " × /" + q, "", "i"));
+            if (!b.SequenceEqual(typedB)) rows.Add(R(1, "Moved", "what you typed isn't the start of a /" + p + " - the pieces start at its first address", "", "i"));   /* hunters11 lab L-6 */
             if (q <= 64) rows.Add(R(3, "Each one holds", (64 - q >= 63 ? "2^" + (64 - q) : I(1L << (64 - q))) + " LAN-sized /64" + (q == 64 ? "" : "s"), "A /64 is one LAN (SLAAC needs exactly /64).", "i"));
             else rows.Add(R(1, "Smaller than /64", "SLAAC and most LANs need a /64; /" + q + " fits point-to-point links (/127) or loopbacks (/128)", "", "i"));
             int show = (int)Math.Min(4, 1L << Math.Min(extra, 20));
@@ -85,6 +87,7 @@ namespace AdeeboMeter
             if (bdp > 65535.0 * (1 << 14)) rows.Add(R(1, "Window scaling", "even the largest shift (14, ×16384) caps one window at about 1.07 GB - less than the " + ByteSize(bdp) + " in flight, so one stream can't fill this link; use several", "", "i"));   // FRESH-005
             else rows.Add(R(3, "Window scaling", scale == 0 ? "not needed - fits in 64 KB" : "shift " + scale + " (×" + (1 << scale) + ") - Windows and Linux do this on their own", "", "i"));
             double win = Size(winText);
+            if (!string.IsNullOrWhiteSpace(winText) && (double.IsNaN(win) || win <= 0)) rows.Add(R(1, "Window", "\"" + winText.Trim() + "\" isn't a size - type e.g. 64 KB or 4 MB", "", "i"));   // bug-hunt L-130: said, not ignored
             if (!double.IsNaN(win) && win > 0)
             {
                 double max = win * 8 / rtt;
@@ -103,7 +106,8 @@ namespace AdeeboMeter
             string tech = (techText ?? "").Trim().ToLowerInvariant(); bool nr = tech.Contains("nr") || tech.Contains("5g");
             if (!nr && !tech.Contains("lte") && !tech.Contains("4g")) return Need("Technology", "type LTE or NR (5G)");
             double bw = First(bwText); if (double.IsNaN(bw) || bw <= 0) return Need("Bandwidth", "type e.g. 20 MHz");
-            string mm = (mimoText ?? "").ToLowerInvariant(); var lm = Regex.Match(mm, @"(\d)\s*[x×]\s*(\d)"); int layers = lm.Success ? Math.Min(int.Parse(lm.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(lm.Groups[2].Value, CultureInfo.InvariantCulture)) : 2;
+            string mm = (mimoText ?? "").ToLowerInvariant(); var lm = Regex.Match(mm, @"(\d)\s*[x×]\s*(\d)"); var lb = Regex.Match(mm, @"^\s*(\d)\s*(layers?)?\s*$|(\d)\s*layers?");   // bug-hunt L-128: a bare "4" (or "4 layers") is the layer count
+            int layers = lm.Success ? Math.Min(int.Parse(lm.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(lm.Groups[2].Value, CultureInfo.InvariantCulture)) : lb.Success ? int.Parse(lb.Groups[1].Success ? lb.Groups[1].Value : lb.Groups[3].Value, CultureInfo.InvariantCulture) : 2;
             int qm = mm.Contains("1024") ? 10 : mm.Contains("256") ? 8 : mm.Contains("64") ? 6 : mm.Contains("16") ? 4 : mm.Contains("qpsk") ? 2 : 8;
             if (layers < 1 || layers > 8) return Need("MIMO", "layers are 1 to 8, e.g. 4x4");
             var rows = new List<string[]>(); double mbps;
@@ -136,7 +140,7 @@ namespace AdeeboMeter
         public static List<string[]> WifiRate(string genText, string widthText, string ssText)
         {
             int gen = (int)First(genText); string g0 = (genText ?? "").ToLowerInvariant();
-            if (g0.Contains("ax")) gen = 6; else if (g0.Contains("be")) gen = 7; else if (g0.Contains("ac")) gen = 5; else if (Regex.IsMatch(g0, @"\bn\b")) gen = 4;
+            if (g0.Contains("ax")) gen = 6; else if (g0.Contains("be")) gen = 7; else if (g0.Contains("ac")) gen = 5; else if (Regex.IsMatch(g0, @"(\b|11)n\b")) gen = 4;   // bug-hunt ML-60: "802.11n" too
             if (gen < 4 || gen > 7) return Need("Generation", "type 4 (n), 5 (ac), 6 (ax) or 7 (be)");
             double wf = First(widthText), sf = First(ssText);   // FRESH-010/011: 80.9 MHz or 2.9 streams aren't settings
             int w = double.IsNaN(wf) ? (gen >= 6 ? 80 : gen == 5 ? 80 : 40) : Whole(wf) ? (int)wf : -1;
@@ -159,16 +163,19 @@ namespace AdeeboMeter
         public static List<string[]> LinkBudget(string txText, string gainText, string distText, string sensText)
         {
             double tx = First(txText); if (double.IsNaN(tx)) return Need("Transmit power", "type e.g. 20 dBm");
-            if (Regex.IsMatch(txText ?? "", @"\bm?W\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(txText, "dbm", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(txText ?? "", @"(?<![A-Za-z])M[wW]\b")) return Need("Transmit power", "MW is megawatts - type mW for milliwatts");   /* hunters11 lab L-4 */
+            if (Regex.IsMatch(txText ?? "", @"(?<![a-z])m?W\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(txText, "dbm", RegexOptions.IgnoreCase))   // bug-hunt ML-61: "100mW" and "1W" with no space
             {
                 if (tx <= 0) return Need("Transmit power", "has to be more than 0 W");   // FRESH-013
-                tx = 10 * Math.Log10(tx * (Regex.IsMatch(txText, @"\bmw\b", RegexOptions.IgnoreCase) ? 1 : 1000));   // FRESH-012: 100 mw is milliwatts
+                tx = 10 * Math.Log10(tx * (Regex.IsMatch(txText, @"(?<![a-z])mw\b", RegexOptions.IgnoreCase) ? 1 : 1000));   // FRESH-012: 100 mw is milliwatts
             }
-            var gains = Nums(gainText); double gt = gains.Length > 0 ? gains[0] : 0, gr = gains.Length > 1 ? gains[1] : gt;
+            var gains = Nums(gainText); if (gains.Length > 2) return Need("Antenna gains", "one number for both ends, or two (sender, receiver) - e.g. 14 dBi 14 dBi");   // bug-hunt L-125
+            double gt = gains.Length > 0 ? gains[0] : 0, gr = gains.Length > 1 ? gains[1] : gt;
             string dt = (distText ?? "").ToLowerInvariant(); var dm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(km|m|mi)\b"); var fm = Regex.Match(dt, @"(-?[0-9.,]+)\s*(ghz|mhz)");   // FRESH-014: keep the minus, so -1 km is refused
             if (!dm.Success || !fm.Success) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");
-            double d = double.Parse(dm.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture) * (dm.Groups[2].Value == "km" ? 1 : dm.Groups[2].Value == "mi" ? 1.609 : 0.001);
-            double fmhz = double.Parse(fm.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture) * (fm.Groups[2].Value == "ghz" ? 1000 : 1);
+            double d0, f0; if (!double.TryParse(dm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out d0) || !double.TryParse(fm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out f0)) return Need("Distance and frequency", "type e.g. 2 km at 5.8 GHz");   // review 1.1.6 P2 #6
+            double d = d0 * (dm.Groups[2].Value == "km" ? 1 : dm.Groups[2].Value == "mi" ? 1.609 : 0.001);
+            double fmhz = f0 * (fm.Groups[2].Value == "ghz" ? 1000 : 1);
             if (d <= 0 || fmhz <= 0) return Need("Distance and frequency", "both have to be more than 0");
             double fspl = 20 * Math.Log10(d) + 20 * Math.Log10(fmhz) + 32.44, rx = tx + gt + gr - fspl;
             var rows = new List<string[]> { R(0, "Received", F(rx, "0.#") + " dBm", "Transmit + gains − free-space loss. Real links lose another 5-20 dB to walls, rain, trees and cables.", "i"),
@@ -184,7 +191,7 @@ namespace AdeeboMeter
         // ---------- RAID usable space and how many disks it survives
         public static List<string[]> Raid(string levelText, string disksText, string sizeText)
         {
-            string lv = Regex.Replace((levelText ?? "").ToLowerInvariant(), @"raid|\s", ""); int n = (int)First(disksText); double size = Bare(sizeText) ? First(sizeText) * 1e12 : Size(sizeText);   // a bare number is TB; "4 xb" isn't (FRESH-015)
+            string lv = Regex.Replace((levelText ?? "").ToLowerInvariant(), @"raid|[\s_-]", "");   /* L-129: RAID-10 too */ int n = (int)First(disksText); double size = Bare(sizeText) ? First(sizeText) * 1e12 : Size(sizeText);   // a bare number is TB; "4 xb" isn't (FRESH-015)
             if (n < 1 || double.IsNaN(First(disksText))) return Need("Disks", "type how many, e.g. 6");
             if (!Regex.IsMatch((disksText ?? "").Trim(), @"^\d+(\s*(disks?|drives?))?$", RegexOptions.IgnoreCase)) return Need("Disks", "a whole number of disks, e.g. 6 - \"" + (disksText ?? "").Trim() + "\" isn't one");   // AM-CG-303: 3.9 disks isn't 3
             if (double.IsNaN(size) || size <= 0) return Need("Disk size", "type e.g. 4 TB");
@@ -218,7 +225,8 @@ namespace AdeeboMeter
             double ch = First(changeText);
             if (!double.IsNaN(ch) && ch > 0)
             {
-                double daily = (changeText ?? "").Contains("%") || Bare(changeText) ? bytes * ch / 100 : Size(changeText);
+                if (Bare(changeText)) return Need("Daily change", "say which: " + changeText.Trim() + "% or " + changeText.Trim() + " GB");   // bug-hunt ML-63: a bare number could be either
+                double daily = (changeText ?? "").Contains("%") ? bytes * ch / 100 : Size(changeText);
                 if (double.IsNaN(daily)) return Need("Daily change", "type e.g. 3% or 60 GB");   // FRESH-016
                 double t = daily * 8 / (bps * eff);
                 rows.Add(R(t > 8 * 3600 ? 1 : 0, "Each night", ByteSize(daily) + " changes · " + Dur(t) + (t > 8 * 3600 ? " - longer than a night; it won't finish before morning" : ""), "", "i"));
@@ -233,14 +241,14 @@ namespace AdeeboMeter
             string b = (battText ?? "").ToLowerInvariant(); double wh;
             // FRESH-017/072: kWh, and a minus is kept
             var whm = Regex.Match(b, @"(-?[0-9.,]+)\s*(k?)wh"); var ahm = Regex.Match(b, @"(-?[0-9.,]+)\s*ah"); var vm = Regex.Match(b, @"(-?[0-9.,]+)\s*v\b"); var xm = Regex.Match(b, @"\b(\d{1,3})\s*[x×]");
-            Func<Match, double> v = m => double.Parse(m.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            Func<Match, double> v = m => { double x; return double.TryParse(m.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out x) ? x : double.NaN; };   // review 1.1.6 P2 #6: "1.2.3 kWh" is refused, not a crash
             if (whm.Success) wh = v(whm) * (whm.Groups[2].Value == "k" ? 1000 : 1);
             else if (ahm.Success && vm.Success) wh = v(ahm) * v(vm) * (xm.Success ? int.Parse(xm.Groups[1].Value, CultureInfo.InvariantCulture) : 1);
             else return Need("Battery", "type the energy (216 Wh) or volts and amp-hours (2 x 12 V 9 Ah) - a VA rating alone doesn't say how long it lasts");
             if (wh <= 0) return Need("Battery", "has to be more than 0 Wh");
-            double load = First(loadText); if (Regex.IsMatch(loadText ?? "", @"\bkw\b", RegexOptions.IgnoreCase)) load *= 1000;   // FRESH-073
+            double load = First(loadText); if (Regex.IsMatch(loadText ?? "", @"(?<![a-z])kw\b", RegexOptions.IgnoreCase)) load *= 1000;   // FRESH-073; bug-hunt ML-100: "1.5kW" with no space too
             if (double.IsNaN(load) || load <= 0) return Need("Load", "type the watts, e.g. 300 W");
-            double eff = First(effText); eff = double.IsNaN(eff) ? 0.85 : (effText ?? "").Contains("%") || eff > 1 ? eff / 100 : eff;   // FRESH-019: 1% is 1%
+            double eff = First(effText); eff = double.IsNaN(eff) ? 0.85 : (effText ?? "").Contains("%") || eff > 1 || (eff == 1 && !(effText ?? "").Contains(".")) ? eff / 100 : eff;   // FRESH-019: 1% is 1%; hunters11 L-2: a bare 1 too (0.85 and 1.0 stay fractions)
             if (eff <= 0 || eff > 1) return Need("Efficiency", "0 to 100% - most inverters are 80-90%");   // FRESH-018
             double hours = wh * eff / load, real = hours * (load > wh ? 0.6 : 0.8);
             return new List<string[]> {
@@ -252,10 +260,11 @@ namespace AdeeboMeter
         // ---------- SLA: uptime % <-> downtime per year / month / week / day
         public static List<string[]> Sla(string text)
         {
-            string t = (text ?? "").Trim().ToLowerInvariant(); double up;
+            string t = Regex.Replace((text ?? "").Trim().ToLowerInvariant(), @"\s*(per\s*cent|percent|pct)\b", "%"); double up;   // bug-hunt L-127: "99.9 percent"
             double n = First(t); if (double.IsNaN(n)) return Need("Uptime", "type e.g. 99.9% - or a downtime, e.g. 4 h a year");
             const double Year = 365.25 * 86400;
-            if (t.Contains("%") || (n > 90 && n < 100 && !Regex.IsMatch(t, "[a-z]"))) up = n / 100;
+            if (!t.Contains("%") && !Regex.IsMatch(t, "[a-z]") && n > 100) return Need("Uptime", "a percentage is 0 to 100 - for a downtime add its unit, e.g. 2 h a year");   /* hunters11 lab L-3 */
+            if (t.Contains("%") || (n > 0 && n <= 100 && !Regex.IsMatch(t, "[a-z]"))) up = n / 100;   // bug-hunt ML-62: a bare number is a percentage (a downtime needs its unit: 4 h)
             else
             {
                 double secs = Time(Regex.Replace(t, @"\s*(a|per|/)\s*(year|quarter|month|week|day).*$", "").Trim()); if (double.IsNaN(secs)) return Need("Uptime", "type e.g. 99.9% or 4 h a year");
@@ -299,9 +308,9 @@ namespace AdeeboMeter
         public static List<string[]> Stream(string resText, string codecText, string upText)
         {
             string r = (resText ?? "").ToLowerInvariant(); var m = Regex.Match(r, @"(\d{3,4})\s*p\s*(\d{2,3})?"); int h, fps;
-            if (r.Contains("4k") || r.Contains("2160")) h = 2160; else if (r.Contains("1440") || r.Contains("2k")) h = 1440; else if (m.Success) h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
+            if (r.Contains("8k") || r.Contains("4320")) h = 4320; else if (r.Contains("4k") || r.Contains("2160")) h = 2160;   /* hunters11 lab L-5: 8K */ else if (r.Contains("1440") || r.Contains("2k")) h = 1440; else if (m.Success) h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); else return Need("Resolution", "type e.g. 1080p60, 720p30 or 4k60");
             // FRESH-022: 5fps is read, then refused
-            var fm = Regex.Match(r, @"p\s*(\d{1,3})|(\d{1,3})\s*fps|4k\s*(\d{1,3})"); fps = fm.Success ? int.Parse(fm.Groups.Cast<Group>().Skip(1).First(gg => gg.Success).Value, CultureInfo.InvariantCulture) : 30;
+            var fm = Regex.Match(r, @"p\s*(\d{1,3})|(\d{1,3})\s*fps|[48]k\s*(\d{1,3})"); fps = fm.Success ? int.Parse(fm.Groups.Cast<Group>().Skip(1).First(gg => gg.Success).Value, CultureInfo.InvariantCulture) : 30;
             if (h < 240 || h > 4320) return Need("Resolution", "type e.g. 1080p60");
             if (fps < 10 || fps > 240) return Need("Frame rate", "10 to 240 fps - e.g. 1080p60");
             double w = h * 16.0 / 9; string c = (codecText ?? "").ToLowerInvariant();
@@ -315,6 +324,7 @@ namespace AdeeboMeter
                 R(3, "Data", ByteSize(total / 8 * 3600) + " an hour · " + ByteSize(total / 8 * 3600 * 4) + " for a 4-hour stream or recording", "", "i") };
             if (odd) rows.Insert(1, R(1, "Codec", "\"" + (codecText ?? "").Trim() + "\" isn't one I know - shown as H.264 (AV1, HEVC and VP9 need less)", "", "i"));
             double up = Speed(upText);
+            if (!string.IsNullOrWhiteSpace(upText) && double.IsNaN(up)) rows.Insert(1, R(1, "Your upload", "\"" + upText.Trim() + "\" isn't a speed - type e.g. 20 Mbps", "", "i"));   // bug-hunt L-130
             if (up == 0) rows.Insert(1, R(2, "Your upload", "none - the stream can't start", "Run the speed test for your real upload.", "i"));   // FRESH-074
             if (!double.IsNaN(up) && up > 0) rows.Insert(1, R(up < total * 1.5 ? (up < total ? 2 : 1) : 0, "Your upload", Bits(up) + (up < total ? " - too slow; drop to " + (h > 720 ? "720p" : "a lower frame rate") : up < total * 1.5 ? " - just about; no headroom" : " - plenty"), "Run the speed test for your real upload.", "i"));
             return rows;
@@ -325,6 +335,8 @@ namespace AdeeboMeter
         {
             string v = (videoText ?? "").ToLowerInvariant(); double vh = Hours(v), ch = Hours(callText), gh = Hours(gameText);
             if (double.IsNaN(vh) && double.IsNaN(ch) && double.IsNaN(gh)) return Need("Hours", "type hours a day, e.g. 3 h HD");
+            foreach (var bx in new[] { Tuple.Create(videoText, vh, "Video"), Tuple.Create(callText, ch, "Calls"), Tuple.Create(gameText, gh, "Games") })   // bug-hunt L-130: a box that isn't hours says so
+                if (!string.IsNullOrWhiteSpace(bx.Item1) && double.IsNaN(bx.Item2)) return Need(bx.Item3, "\"" + bx.Item1.Trim() + "\" isn't hours a day - e.g. 3 h or 30 min");
             foreach (var x in new[] { vh, ch, gh }) if (x < 0 || x > 24) return Need("Hours", "0 to 24 hours a day - e.g. 3 h HD or 30 min");   // FRESH-025
             double vRate = v.Contains("4k") || v.Contains("uhd") ? 7 : v.Contains("sd") ? 1 : 3;   // GB an hour (the big streaming services' own figures)
             double[] gb = { double.IsNaN(vh) ? 0 : vh * vRate * 30.4, double.IsNaN(ch) ? 0 : ch * 1.0 * 30.4, double.IsNaN(gh) ? 0 : gh * 0.1 * 30.4 };
@@ -389,7 +401,7 @@ namespace AdeeboMeter
                 double bytes = Size(t); if (double.IsNaN(bytes)) { double mult = u.StartsWith("T", StringComparison.OrdinalIgnoreCase) ? 1e12 : u.StartsWith("G", StringComparison.OrdinalIgnoreCase) ? 1e9 : u.StartsWith("M", StringComparison.OrdinalIgnoreCase) ? 1e6 : u.StartsWith("K", StringComparison.OrdinalIgnoreCase) ? 1e3 : 1; bytes = v * mult / 8; }
                 rows.Add(R(0, "Decimal", ByteSize(bytes) + " (what drive makers and networks use)", "", "i"));
                 rows.Add(R(0, "Binary", BinSize(bytes) + " (what Windows shows, though it writes GB)", "", "i"));
-                rows.Add(R(3, "Bits", Bits(bytes * 8).Replace("ps", "") + " · " + I((long)Math.Min(bytes * 8, long.MaxValue)) + " bits", "", "i"));
+                rows.Add(R(3, "Bits", Bits(bytes * 8).Replace("ps", "") + " · " + (bytes * 8 < 9.2e18 ? I((long)(bytes * 8)) : (bytes * 8).ToString("0.###e0", CultureInfo.InvariantCulture)) + " bits", "", "i"));
             }
             else
             {
@@ -419,6 +431,7 @@ namespace AdeeboMeter
         public static List<string[]> JitterBuf(string pdvText, string ptimeText, string codecText)
         {
             var pd = Nums(pdvText); if (pd.Length == 0) return Need("Delay variation", "type e.g. 30 ms, or the measured range 20-70 ms");
+            if (pd.Length > 2) return Need("Delay variation", "one number, or a range of two - e.g. 30 ms, or 20-70 ms");   // bug-hunt L-126
             if (pd.Any(x => x < 0)) return Need("Delay variation", "can't be negative - e.g. 30 ms, or 20-70 ms");   // FRESH-028
             double pdv = pd.Length >= 2 ? Math.Abs(pd[1] - pd[0]) : pd[0]; double pt = First(ptimeText);
             if (string.IsNullOrWhiteSpace(ptimeText)) pt = 20; else if (double.IsNaN(pt) || pt <= 0) return Need("Packet time", "more than 0 - usually 20 ms");   // FRESH-051

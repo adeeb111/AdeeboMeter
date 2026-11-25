@@ -30,7 +30,7 @@ namespace AdeeboMeter
     // Static text only. Nothing here closes, changes or uploads anything - AdeeboMeter only explains.
     static class Explain
     {
-        public sealed class Entry { public string Friendly, Cat, Tag, What, How, Why, Without; public int Close; }
+        public sealed class Entry { public string Friendly, Cat, Tag, What, How, Why, Without; public int Close; public List<string[]> Facts; }   // Facts: short label · value lines under the tag (a tool's tip: you type, takes, sends)
         // Close: 0 safe to close · 1 leave it, OK to restart if it misbehaves · 2 don't - Windows needs it · 3 managed by IT
         public static readonly string[] CloseText =
         {
@@ -73,7 +73,7 @@ namespace AdeeboMeter
             string pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string roam = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), temp = Path.GetTempPath();
             Func<string, bool> under = delegate(string root) { return root != "" && path.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase); };
-            if (under(temp) || (win != "" && under(Path.Combine(win, "Temp"))) || path.IndexOf("\\Temp\\", StringComparison.OrdinalIgnoreCase) >= 0) return "temp";   // C:\Windows\Temp is a temp folder, not "ships with Windows"
+            if (under(temp) || (win != "" && under(Path.Combine(win, "Temp"))) || System.Text.RegularExpressions.Regex.IsMatch(path, @"^[A-Za-z]:\\(Temp|Tmp)\\|\\AppData\\Local\\Temp\\", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) return "temp";   // bug-hunt L-120: a real temp folder, not any folder called Temp (a game's own data\Temp)   // C:\Windows\Temp is a temp folder, not "ships with Windows"
             if (under(win)) return "windows";
             if (under(pf) || under(pf86)) return "programfiles";
             if (under(local) || under(roam) || under(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))) return "user";
@@ -105,6 +105,16 @@ namespace AdeeboMeter
                 if (g != null) g.DrawString(e.Friendly, compact ? Draw.fHead : Draw.fTitle, ink, new RectangleF(x, y, w, th + 4)); y += th + 2 * S;
                 if (!string.IsNullOrEmpty(e.Tag)) { var tg = Draw.Measure(e.Tag, Draw.fBodyB, (int)w).Height; if (g != null) g.DrawString(e.Tag, Draw.fBodyB, blue, new RectangleF(x, y, w, tg + 4)); y += tg + 8 * S; }
             }
+            if (e.Facts != null)
+                foreach (var f in e.Facts)
+                    using (var mb = new SolidBrush(Theme.Muted)) using (var sb = new SolidBrush(Theme.Sub))
+                    {
+                        string f0 = L.T(f[0]), f1 = L.T(f[1]);   // the language check, 22 Nov: the hover card's YOU TYPE / TAKES / SENDS were English only
+                        float lw = 76 * S, fh = Draw.Measure(f1, Draw.fSmall, (int)(w - lw)).Height;
+                        if (g != null) { g.DrawString(f0, Draw.fTiny, mb, x, y + 2 * S); g.DrawString(f1, Draw.fSmall, sb, new RectangleF(x + lw, y, w - lw, fh + 2)); }
+                        y += fh + 4 * S;
+                    }
+            if (e.Facts != null) y += 6 * S;
             bool proc = e.Close >= 0 || e.Cat != "term";
             var rows = new List<string[]>();
             if (!string.IsNullOrEmpty(e.What)) rows.Add(new[] { proc ? "WHAT IT DOES" : "WHAT IT IS", e.What });
@@ -114,12 +124,12 @@ namespace AdeeboMeter
             if (e.Close >= 0 && e.Close < Explain.CloseText.Length) rows.Add(new[] { "CAN I CLOSE IT?", Explain.CloseText[e.Close], e.Close == 0 ? "0" : e.Close == 2 ? "2" : "1" });
             foreach (var r in rows)
             {
-                using (var mb = new SolidBrush(Theme.Muted)) if (g != null) g.DrawString(r[0], Draw.fTiny, mb, x, y);
-                y += 16 * S;
+                using (var mb = new SolidBrush(Theme.Ink)) if (g != null) g.DrawString(Kit.Sent(r[0]), Draw.fBodyB, mb, x, y);   // R2-023; 24 Nov: sentence case, a real label
+                y += 22 * S;
                 var font = compact ? Draw.fSmall : Draw.fBody;
                 var h = Draw.Measure(r[1], font, (int)w).Height;
                 using (var b = new SolidBrush(r.Length > 2 ? Theme.LvText(int.Parse(r[2], CultureInfo.InvariantCulture)) : Theme.Sub)) if (g != null) g.DrawString(r[1], font, b, new RectangleF(x, y, w, h + 4));
-                y += h + (compact ? 6 : 10) * S;
+                y += h + (compact ? 10 : 16) * S;
             }
             return y;
         }

@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Dark Ages persona (silly, never grim). key|text.
+app.open|听好了！网络守望已经开始，{addr} 大人。
+app.open|城堡大门已开，我来守望王国的线路。
+all.good|王国上下一切安好，实在可疑。
+all.good|百姓们说没有问题，电脑、Wi-Fi、互联网都好。
+all.good|没有麻烦，宫廷小丑都闲得发慌。
+pc.busy|阁下的电脑不堪重负，CPU 占用 {v}，任务太多了。
+pc.busy|电脑像老牛一样辛苦，网络是清白的。
+pc.busy|给阁下的电脑减减负，关掉点东西吧。
+wifi.drops|Wi-Fi 像山羊一样跑丢了，今天 {v} 次。
+wifi.drops|断线 {v} 次，把路由器搬到大厅近一点吧。
+net.none|没网络了，我们只能靠信鸽了。
+net.none|断网了，取来网线吧，{addr} 大人。
+inet.slow|阁下的城堡没问题，城外的路泥泞难行。
+inet.slow|延迟在路由器之外，在运营商的沼泽里。
+inet.slow|阁下的城堡很快，运营商的马车太慢了。
+busy|僧侣们正在抄写……{v}
+busy|正在查阅卷轴。
+busy|信使正在赶路。
+idle|村子里很安静，安静得过头了。
+idle|除了孤零零一只鸡，什么都没动。
+idle|我还在塔楼上守望。
+search.empty|什么事让阁下烦恼，{addr} 大人？
+search.empty|把问题说给书记官听吧。
+freeze|吊桥太沉了（{v}），请稍等。
+freeze|书记官们正在赶上进度（{v}）。
+speedrunner|耐心点！上一位信使还在赶路。
+speedrunner|耐心点，{addr} 大人，一次只办一件事。
+back.again|阁下回来了！有 {v} 条消息等着。
+back.again|欢迎回到城堡。
+dns.slow|报信人太慢了：DNS 要花 {v}。
+dns.slow|查名字要花 {v}，报信人嗓子哑了。
+speed.great|下载 {v}，比任何骏马都快。
+speed.great|下载 {v}，是巫术吗？不，是好光纤。
+speed.bloat|速度很快，但集市一忙就慢 {v}。
+speed.bloat|路很快，赶集那天很挤：多 {v}。
+game.lag|卡顿是阁下的 Wi-Fi，不是敌方的城堡。
+game.lag|服务器稳稳站着，阁下的 Wi-Fi 在晃。
+game.good|Ping {v}，去参加比武大会吧！
+game.good|坐骑很稳，出发吧。
+vpn.on|乔装出行，VPN 已开启。
+vpn.on|阁下的流量披上了斗篷。
+vpn.slow|秘密通道要多花 {v}。
+vpn.slow|VPN 绕路：多 {v}。
+portal|客栈老板要先知道阁下的名字，先登录吧。
+portal|酒馆 Wi-Fi，登录就是过路费。
+gw.down|路由器没有回应，关了再开吧。
+gw.down|门楼里的路由器没有消息。
+isp.down|阁下的城堡没事，王国的路封了。
+isp.down|运营商的桥断了。
+mtu.small|马车太宽，进不了城门，MTU 是 {v}。
+mtu.small|大包卡在城门口，MTU 是 {v}。
+port.open|{v} 号城门开着。
+port.open|{v} 放下了吊桥。
+port.closed|{v} 号城门关着。
+port.closed|{v} 没有放下吊桥。
+cert.ok|王室印章是真的。
+cert.ok|这是真正的小锁，国王作证。
+cert.expired|他们的王室印章在 {v} 过期了。
+cert.expired|自从 {v} 就过期了，书记官忘了。
+sec.ok|城墙很结实，检查通过。
+sec.ok|城墙上没有破洞。
+sec.issue|城墙上有 {v} 个破洞，快修补吧。
+sec.issue|检查发现了 {v} 处薄弱的城门。
+mtr.lossy|信使在第 {v} 跳失踪了。
+mtr.lossy|丢包从第 {v} 跳开始，肯定是强盗干的。
+mtr.clean|每位信使都到了。
+mtr.clean|国王大道上没有丢包。
+devices.found|阁下的网络上有 {v} 个人。
+devices.found|在大厅里数出了 {v} 台设备。
+encrypt.done|已用火漆封好，只有他们能读。
+encrypt.done|卷轴已上锁。
+decrypt.done|卷轴打开了，封印完好。
+decrypt.done|已解锁，完好无损。
+points.earned|+{v} 枚金币。
+points.earned|+{v} 分，爵位快到手了。
+award|500 分！阁下受封骑士：Adeebo 奖。
+award|Adeebo 奖！请奏起号角。
+late.night|蜡烛快烧完了，我还在守望。
+late.night|城堡里已是午夜。
+morning|公鸡打鸣了，夜里很安静。
+morning|早上好，王国睡得很安稳。
+update.suspect|在 {v} 更新之后开始出问题，真让人烦恼。
+update.suspect|自从 {v} 更新之后，就有怪事。
+call.on|阁下正在开会，我来守着通话。
+call.on|正在通话，传令官在听着。
+quiz.right|阁下答对了。
+quiz.wrong|错了，以我的名誉保证，再试一次吧。
+game.streak|连续 {v} 次，值得写进编年史。
+game.timeup|蜡烛已经烧完了。
+market.open|集市广场开市了。
+storm.near|一场大风暴正向这片土地袭来。

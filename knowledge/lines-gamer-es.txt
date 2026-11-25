@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Gamer persona. key|text.
+app.open|Jugador uno listo. Vigilancia de red cargada.
+app.open|GG, estamos en vivo. Vigilo tu conexión, {addr}.
+all.good|Todo en verde. Cero lag, a tope.
+all.good|Lobby limpio. PC, Wi-Fi e internet bien.
+all.good|Sin debuffs. Listo para jugar.
+pc.busy|Tu PC está al {v}. Se vienen caídas de FPS.
+pc.busy|El PC es el cuello de botella, no el servidor. Cierra una pestaña.
+pc.busy|Tu equipo está saturado. La red está bien.
+wifi.drops|El Wi-Fi se desconectó {v} veces. Eso es abandonar la partida.
+wifi.drops|{v} caídas de Wi-Fi hoy. Usa cable para ranked.
+net.none|Sin conexión. Juegas sin conexión.
+net.none|Desconectado de todo. Conéctate, {addr}.
+inet.slow|Tu router está bien. El lag empieza en tu proveedor.
+inet.slow|Tu setup en casa está limpio. El ISP es el lag.
+inet.slow|Ping alto tras tu router. No es tu culpa.
+busy|Cargando... {v}
+busy|Ejecutando la comprobación. No cierres con alt-F4.
+busy|Cargando los resultados...
+idle|Comprobación AFK: sigo vigilando.
+idle|Nada nuevo. El lobby está tranquilo.
+idle|En pausa, pero la red sigue en mi radar.
+search.empty|¿Qué depuramos, {addr}?
+search.empty|Escríbelo: «lag», «ping», «wifi».
+freeze|Pantalla de carga ({v}). Aguanta.
+freeze|Poniéndome al día ({v}). Sin lag de entrada, lo prometo.
+speedrunner|Speedrunner detectado. Todavía con el último.
+speedrunner|Sin machacar botones. Uno a la vez.
+back.again|Reapareciste. Pasaron {v} cosas.
+back.again|Bienvenido de nuevo, {addr}. Aquí tienes el resumen.
+dns.slow|DNS al {v}. Búsqueda de servidor lenta.
+dns.slow|Las consultas de nombres van a {v}. Cambia de DNS.
+speed.great|{v} de descarga. Descarga toda la biblioteca.
+speed.great|Descarga {v}. El día de parche no dolerá.
+speed.bloat|Rápido, pero el ping sube {v} cuando alguien descarga.
+speed.bloat|Bufferbloat: {v} extra bajo carga. Ese es tu pico de lag.
+game.lag|El lag empieza en tu Wi-Fi. Usa cable para ranked.
+game.lag|El servidor está bien. Tu Wi-Fi te hace perder la partida.
+game.good|Ping {v}. Ve a por todas.
+game.good|Conexión limpia. La red hoy hace su parte.
+vpn.on|VPN activada. Cuida tu ping.
+vpn.on|Conectado por VPN.
+vpn.slow|La VPN suma {v}. Apágala para las partidas.
+vpn.slow|La VPN es tu {v} extra de ping.
+portal|El Wi-Fi pide iniciar sesión primero. Nivel tutorial.
+portal|Portal cautivo. Inicia sesión y luego a jugar.
+gw.down|El router no responde. Reinícialo.
+gw.down|Tu router se fue AFK.
+isp.down|El router está bien. Internet cayó en el proveedor.
+isp.down|¿El servidor caído? No, tu proveedor.
+mtu.small|Paquetes grandes descartados. MTU {v}.
+mtu.small|MTU de ruta {v}. Algunos paquetes no caben.
+port.open|{v} está abierto. La conexión funciona.
+port.open|{v} respondió.
+port.closed|{v} está cerrado. El NAT dice que no.
+port.closed|{v} no respondió.
+cert.ok|Certificado válido. Sitio legítimo.
+cert.ok|El candado está bien.
+cert.expired|Certificado vencido {v}. Sospechoso.
+cert.expired|Vencido desde {v}. Culpa suya, no tuya.
+sec.ok|Revisión de seguridad: superada. Armadura completa.
+sec.ok|Sin puntos débiles.
+sec.issue|{v} puntos de seguridad. Arréglalos.
+sec.issue|La revisión encontró {v} cosas. Resuélvelas antes del jefe final.
+mtr.lossy|Pérdida de paquetes desde el salto {v}. Ahí nace el lag.
+mtr.lossy|El salto {v} pierde paquetes.
+mtr.clean|Cero pérdidas en cada salto. Ruta limpia.
+mtr.clean|Sin pérdida. Ruta impecable.
+devices.found|{v} dispositivos en la red.
+devices.found|Encontré {v} jugadores en el lobby.
+encrypt.done|Cifrado. Botín asegurado.
+encrypt.done|Bloqueado.
+decrypt.done|Abierto. Intacto.
+decrypt.done|Desbloqueado. Sin manipulación.
+points.earned|+{v} XP.
+points.earned|+{v} puntos. Subes de nivel pronto.
+award|500 puntos. Logro desbloqueado: Premio Adeebo.
+award|Premio Adeebo desbloqueado. GG.
+late.night|Sesión nocturna. Sigo vigilando.
+late.night|¿Una partida más? Vigilo el ping.
+morning|Buenos días. Los servidores aguantaron toda la noche.
+morning|Buenos días. Sin lag anoche.
+update.suspect|Se rompió tras la actualización del {v}. El parche lo empeoró.
+update.suspect|Todo empeoró tras la actualización {v}.
+call.on|Chat de voz detectado. Vigilo la calidad.
+call.on|En una llamada. Vigilo el jitter.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} a fotogramas completos. Sin picos de lag.
+stream.on|El stream va fluido. Cero tirones por ahora.
+stream.dip|Pico de lag en el stream. {v}
+stream.dip|Caída de fotogramas detectada. {v}
+stream.none|Sin stream en cola.
+stream.none|Lobby del stream vacío. Pulsa reproducir para empezar.
+trade.ok|El ping al bróker es bajo. Puedes seguir.
+trade.ok|Ping bajo al bróker. Conexión limpia.
+trade.slow|Ping alto al bróker. No hagas clic aún.
+trade.slow|Pico de lag al bróker. {v}
+trade.closed|El servidor del mercado está sin conexión hasta las 9:30.
+trade.closed|Mercado cerrado. Reaparece a las 9:30.
+view.switch|Cargando el equipamiento {v}. Reapareciendo los menús.
+view.switch|Cambiando a la build {v}. GG en un segundo.
+quiz.right|GG, eso es correcto.
+quiz.wrong|Fallaste el tiro. Reaparece e inténtalo de nuevo.
+game.streak|¡Racha de {v}! Llevando la partida.
+game.timeup|Se acabó el tiempo, ronda terminada.
+market.open|Los mercados están en vivo. Nueva partida empezada.
+storm.near|Tormenta en camino, posibles picos de lag.

@@ -17,8 +17,9 @@ namespace AdeeboMeter
     //   sender: fdat {id, n, d (base64, ≤ 30 KB)} × N, at most 20 a second and 24 ahead of the last fack  →  fend {id, n, size}
     //   receiver: fack {id, n} every 8 pieces; either side: fcancel {id}
     //
-    // Every piece is sealed with its own counter and MAC (RemoteCrypto), so a changed, missing, replayed or reordered piece
-    // ends the session - the size and the piece count are checked at the end as well. A file from the phone lands in
+    // Every piece is sealed with its own counter and MAC (RemoteCrypto), so a changed or replayed piece ends the session (its
+    // seal fails); a piece out of order or missing drops just that file (Drop), the session goes on - the size and the piece
+    // count are checked at the end as well (bug-hunt L-224). A file from the phone lands in
     // AdeeboMeter's own folder as a .part until it's complete, then moves to Downloads\AdeeboMeter with its name and Windows'
     // "downloaded" mark; the receiver confirms with fgot {id}. The relay only ever sees sealed pieces.
     sealed partial class Remote
@@ -29,7 +30,7 @@ namespace AdeeboMeter
 
         sealed class In { public string Id = "", Name = "", Tmp = "", Dir = ""; public long Size, Got; public int Next; public FileStream Fs; }
         sealed class Out { public string Id = ""; public volatile int Acked = -1; public volatile bool Ok, No, Cancel, Got; public readonly ManualResetEventSlim Ev = new ManualResetEventSlim(false); }
-        readonly Dictionary<string, In> ins = new Dictionary<string, In>(); readonly Dictionary<string, Out> outs = new Dictionary<string, Out>(); readonly object fk = new object();
+        readonly Dictionary<string, In> ins = new Dictionary<string, In>(); readonly Dictionary<string, Out> outs = new Dictionary<string, Out>(); readonly object fk = new object(); readonly HashSet<string> asking = new HashSet<string>();
 
         // AM-CG-372: Windows' own Downloads folder, wherever it was moved to; the old guess only if Windows doesn't say
         public static string DropDir { get { return Path.Combine(Downloads(), "AdeeboMeter"); } }
@@ -45,11 +46,14 @@ namespace AdeeboMeter
         // crash or a killed app is deleted the first time a transfer starts in this run
         static string Staging { get { return Path.Combine(Program.DataDir, "incoming"); } }
         static int swept;
-        static void Sweep()
+        internal static void Sweep()   // bug-hunt L-40: also run once at start, so a crashed transfer's leftover doesn't wait for the next one
         {
             if (Interlocked.Exchange(ref swept, 1) != 0) return;
-            try { if (Directory.Exists(Staging)) foreach (var f in Directory.GetFiles(Staging, "*.part")) try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
-            catch (IOException) { } catch (UnauthorizedAccessException) { }
+            // bug-hunt L-255: what couldn't be deleted is logged (it's tried again next start)
+            int left = 0;
+            try { if (Directory.Exists(Staging)) foreach (var f in Directory.GetFiles(Staging, "*.part")) try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch (IOException) { left++; } catch (UnauthorizedAccessException) { left++; } }
+            catch (IOException e) { Program.Log("phone files: couldn't tidy the incoming folder - " + e.Message); } catch (UnauthorizedAccessException e) { Program.Log("phone files: couldn't tidy the incoming folder - " + e.Message); }
+            if (left > 0) Program.Log("phone files: " + left + " unfinished file(s) couldn't be deleted - tried again next start");
         }
 
         void Files(Msg c)
@@ -64,10 +68,19 @@ namespace AdeeboMeter
                         long size; long.TryParse(c.S("size"), NumberStyles.Integer, CultureInfo.InvariantCulture, out size);
                         string name = SafeName(c.S("name"));
                         if (id == "" || size <= 0 || size > MaxFile) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"" + (size > MaxFile ? "over 200 MB" : "empty") + "\"}"); return; }
-                        lock (fk) if (ins.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"one at a time\"}"); return; }
+                        // bug-hunt ML-115/116: a transfer's place is held from the moment it's asked - a second fput with the same id, or a
+                        // third while two are being asked about, is refused before any question appears
+                        lock (fk)
+                        {
+                            if (ins.ContainsKey(id) || asking.Contains(id)) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"already sending that one\"}"); return; }
+                            if (ins.Count + asking.Count >= 2) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"two at a time at most - wait for one to finish\"}"); return; }
+                            asking.Add(id);
+                        }
                         // ask on the PC (No is the default); the answer may take a while, so not on the receive thread
                         Task.Factory.StartNew(() =>
                         {
+                          try
+                          {
                             bool yes = AskFile != null && AskFile(PhoneName, name, size);
                             if (!yes || St != State.Paired) { Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"not accepted on the PC\"}"); return; }
                             try
@@ -80,6 +93,8 @@ namespace AdeeboMeter
                                 Seal("{\"t\":\"fok\",\"id\":\"" + J(id) + "\"}");
                             }
                             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote file: " + e.Message); Seal("{\"t\":\"fno\",\"id\":\"" + J(id) + "\",\"why\":\"couldn't save on the PC\"}"); }
+                          }
+                          finally { lock (fk) asking.Remove(id); }
                         });
                         return;
                     }
@@ -90,6 +105,7 @@ namespace AdeeboMeter
                         byte[] d; try { d = Convert.FromBase64String(c.S("d") ?? ""); } catch (FormatException) { Drop(f, "a piece was damaged"); return; }
                         if (n != f.Next || d.Length == 0 || d.Length > Piece || f.Got + d.Length > f.Size) { Drop(f, "pieces arrived out of order"); return; }
                         try { f.Fs.Write(d, 0, d.Length); } catch (IOException e) { Drop(f, "the disk refused it: " + e.Message); return; }
+                        catch (ObjectDisposedException) { return; }   // bug-hunt ML-15: the transfer was dropped meanwhile - only it ends, not the session
                         f.Got += d.Length; f.Next++;
                         if (f.Next % 8 == 0) Seal("{\"t\":\"fack\",\"id\":\"" + J(id) + "\",\"n\":" + (f.Next - 1).ToString(CultureInfo.InvariantCulture) + "}");
                         return;
@@ -139,7 +155,10 @@ namespace AdeeboMeter
         }
         static string SafeName(string n)
         {
-            n = Path.GetFileName((n ?? "").Replace('/', '\\')) ?? "";
+            // review 1.1.6 (security #11): the last part is taken by hand (GetFileName throws on " < > | on .NET Framework, which ended the
+            // session), and bidi / format characters (U+202E and friends) go, so "photo\u202Egpj.exe" can't pose as a .jpg
+            n = n ?? ""; int cut = Math.Max(n.LastIndexOf('/'), n.LastIndexOf('\\')); if (cut >= 0) n = n.Substring(cut + 1);
+            var sb = new System.Text.StringBuilder(n.Length); foreach (char ch in n) { var cat = char.GetUnicodeCategory(ch); if (cat == System.Globalization.UnicodeCategory.Format || cat == System.Globalization.UnicodeCategory.Control) continue; sb.Append(ch); } n = sb.ToString();
             foreach (char ch in Path.GetInvalidFileNameChars()) n = n.Replace(ch, '_');
             n = n.Trim().TrimEnd('.', ' '); if (n == "" || n.StartsWith(".", StringComparison.Ordinal)) n = "from-phone" + n;
             if (System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileNameWithoutExtension(n), @"^(CON|PRN|AUX|NUL|COM\d|LPT\d)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)) n = "_" + n;
@@ -163,6 +182,8 @@ namespace AdeeboMeter
                 try
                 {
                     var fi = new FileInfo(path); if (!fi.Exists) { say(L.T("That file isn't there any more.")); return; }
+                    // bug-hunt L-252 (by design): 100 MB to the phone, 200 MB from it - the phone's page holds an incoming file in its
+                    // memory until it's saved, the PC writes to disk piece by piece
                     if (fi.Length == 0 || fi.Length > 100L * 1024 * 1024) { say(L.T("Phones take files up to 100 MB from here.")); return; }
                     lock (fk) { if (outs.Count > 0) { say(L.T("One file at a time - wait for the last one.")); return; } outs[o.Id] = o; }
                     Seal("{\"t\":\"fput\",\"id\":\"" + o.Id + "\",\"name\":\"" + J(fi.Name) + "\",\"size\":" + fi.Length.ToString(CultureInfo.InvariantCulture) + "}");

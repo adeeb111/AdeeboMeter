@@ -42,7 +42,11 @@ namespace AdeeboMeter
         static string Render(IntPtr e)
         {
             int used, props; var buf = new char[16384];
-            return EvtRender(IntPtr.Zero, e, 1 /*EvtRenderEventXml*/, buf.Length * 2, buf, out used, out props) ? new string(buf, 0, Math.Max(0, used / 2 - 1)) : "";
+            if (EvtRender(IntPtr.Zero, e, 1 /*EvtRenderEventXml*/, buf.Length * 2, buf, out used, out props)) return new string(buf, 0, Math.Max(0, used / 2 - 1));
+            // carry-over (100-bug line 209): a bigger event says how much room it needs - try once more with that (1 MB at most)
+            if (Marshal.GetLastWin32Error() != 122 /*ERROR_INSUFFICIENT_BUFFER*/ || used <= 0 || used > 2 * 1024 * 1024) return "";
+            buf = new char[used / 2 + 1];
+            return EvtRender(IntPtr.Zero, e, 1, buf.Length * 2, buf, out used, out props) ? new string(buf, 0, Math.Max(0, used / 2 - 1)) : "";
         }
         static string Format(IntPtr pub, IntPtr e)
         {
@@ -71,6 +75,7 @@ namespace AdeeboMeter
                     try
                     {
                         string xml = Render(evs[0]);
+                        if (xml == "") continue;   // carry-over: an event that couldn't be read is left out - never a made-up year-1 event with Id 0
                         var ev = new Ev { Xml = xml };
                         var idm = Regex.Match(xml, @"<EventID[^>]*>(\d+)</EventID>"); if (idm.Success) ev.Id = int.Parse(idm.Groups[1].Value, CultureInfo.InvariantCulture);
                         var lvm = Regex.Match(xml, @"<Level>(\d+)</Level>"); if (lvm.Success) ev.Level = int.Parse(lvm.Groups[1].Value, CultureInfo.InvariantCulture);
@@ -253,8 +258,9 @@ namespace AdeeboMeter
                     if (rc != 0) { err = rc == 5 ? "Windows needs location access for Wi-Fi details" : "Wi-Fi list unavailable (" + rc + ")"; continue; }
                     try
                     {
-                        int cnt = Marshal.ReadInt32(bl, 4);
-                        for (int j = 0; j < cnt && j < 400; j++) res.Add(ParseEntry(bl + 8 + j * 360));   // WLAN_BSS_ENTRY is 360 bytes
+                        int total = Marshal.ReadInt32(bl, 0), cnt = Marshal.ReadInt32(bl, 4);   // dwTotalSize, dwNumberOfItems
+                        // bug-hunt L-275: only entries (and their IEs) inside the buffer Windows says it filled
+                        for (int j = 0; j < cnt && j < 400 && 8 + (j + 1) * 360 <= total; j++) res.Add(ParseEntry(bl + 8 + j * 360, total - (8 + j * 360)));   // WLAN_BSS_ENTRY is 360 bytes
                     }
                     finally { WlanFreeMemory(bl); }
                 }
@@ -263,15 +269,15 @@ namespace AdeeboMeter
             finally { if (ifl != IntPtr.Zero) WlanFreeMemory(ifl); if (h != IntPtr.Zero && WlanCloseHandle(h, IntPtr.Zero) != 0) Program.Log("Wi-Fi handle close failed"); }
             return res;
         }
-        static Bss ParseEntry(IntPtr e)
+        static Bss ParseEntry(IntPtr e, int remain)
         {
             var b = new Bss();
-            int sl = Math.Min(32, Marshal.ReadInt32(e, 0)); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
+            int sl = Math.Max(0, Math.Min(32, Marshal.ReadInt32(e, 0))); var sb = new byte[sl]; Marshal.Copy(e + 4, sb, 0, sl); b.Ssid = Program.Plain(Encoding.UTF8.GetString(sb));
             var mac = new byte[6]; Marshal.Copy(e + 40, mac, 0, 6); b.Bssid = string.Join(":", mac.Select(x => x.ToString("x2", CultureInfo.InvariantCulture)));
             b.Rssi = Marshal.ReadInt32(e, 56);
             b.FreqMHz = Marshal.ReadInt32(e, 92) / 1000;
             int ieOff = Marshal.ReadInt32(e, 352), ieSize = Marshal.ReadInt32(e, 356);
-            byte[] ies = new byte[Math.Max(0, Math.Min(ieSize, 4096))];
+            byte[] ies = ieOff < 360 || ieOff > remain ? new byte[0] : new byte[Math.Max(0, Math.Min(Math.Min(ieSize, 4096), remain - ieOff))];
             if (ies.Length > 0) Marshal.Copy(e + ieOff, ies, 0, ies.Length);
             FromFreq(b); ReadIes(ies, b);
             if (b.Sec == "") b.Sec = (Marshal.ReadInt16(e, 88) & 0x0010) != 0 ? "WEP" : "Open";   // no RSN / WPA element: the privacy bit says WEP or nothing
@@ -281,24 +287,27 @@ namespace AdeeboMeter
         static string Rsn(byte[] ies, int p, int len)
         {
             int end = p + len, q = p + 2 + 4; if (q + 2 > end) return "WPA2";
-            int pc = ies[q] | ies[q + 1] << 8; q += 2 + 4 * pc; if (q + 2 > end) return "WPA2";
+            // bug-hunt ML-150: the pairwise ciphers - TKIP alone is the old, broken one even under the WPA2 name
+            int pc = ies[q] | ies[q + 1] << 8; bool tkipOnly = pc > 0;
+            for (int i = 0; i < pc && q + 2 + 4 * i + 4 <= end; i++) { int o = q + 2 + 4 * i; if (!(ies[o] == 0x00 && ies[o + 1] == 0x0F && ies[o + 2] == 0xAC && ies[o + 3] == 2)) tkipOnly = false; }
+            q += 2 + 4 * pc; if (q + 2 > end) return tkipOnly ? "WPA2 (TKIP)" : "WPA2";
             int ac = ies[q] | ies[q + 1] << 8; q += 2; bool sae = false, psk = false, ent = false, owe = false, ent3 = false, sha256only = false, ent1 = false;
             for (int i = 0; i < ac && q + 4 <= end; i++, q += 4)
             {
                 if (ies[q] != 0x00 || ies[q + 1] != 0x0F || ies[q + 2] != 0xAC) continue; int t = ies[q + 3];
                 if (t == 8 || t == 9 || t == 24 || t == 25) sae = true;
-                else if (t == 2 || t == 4 || t == 6) psk = true;
+                else if (t == 2 || t == 4 || t == 6 || t == 19 || t == 20) psk = true;   // 19/20: PSK with SHA-384 (bug-hunt ML-149)
                 else if (t == 12 || t == 13) ent3 = true;
                 else if (t == 5) { ent = true; sha256only = true; }
-                else if (t == 1 || t == 3 || t == 11 || t == 14 || t == 15) { ent = true; ent1 = true; }   // 14/15: FILS - a fast 802.1X sign-in
+                else if (t == 1 || t == 3 || t == 11 || t == 14 || t == 15 || t == 16 || t == 17) { ent = true; ent1 = true; }   // 14-17: FILS (16/17 with fast roaming) - a fast 802.1X sign-in (bug-hunt ML-149)
                 else if (t == 18) owe = true;
             }
             // RSN capabilities after the AKM list: bit 6 = management frame protection required. 802.1X-SHA256 alone with it
             // required is WPA3-Enterprise ("only" mode)
             bool mfpr = q + 2 <= end && (ies[q] & 0x40) != 0;
-            if (ent3 || (sha256only && !ent1 && mfpr)) return "WPA3-Enterprise"; if (ent) return "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return "WPA2";
+            if (ent3 || (sha256only && !ent1 && mfpr)) return "WPA3-Enterprise"; if (ent) return tkipOnly ? "WPA2-Enterprise (TKIP)" : "WPA2-Enterprise"; if (sae && psk) return "WPA2/WPA3"; if (sae) return "WPA3"; if (owe) return "Enhanced Open"; return tkipOnly ? "WPA2 (TKIP)" : "WPA2";
         }
-        public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)"; }
+        public static bool Weak(string sec) { return sec == "Open" || sec == "WEP" || sec == "WPA (old)" || (sec ?? "").EndsWith("(TKIP)", StringComparison.Ordinal); }
         // the least crowded channel in a band: each neighbour weighs by its signal (squared - a strong one hurts far more),
         // counted on every channel it overlaps
         static readonly int[] Upper5 = { 149, 153, 157, 161 }, Dfs5 = { 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 };
@@ -316,8 +325,10 @@ namespace AdeeboMeter
                 cand = cand.Concat(extra).Distinct().ToArray();
             }
             if (cand.Length == 0) return null;
-            Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, c, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
+            Func<int, double> load = c => aps.Where(a => a.Band == band && a.Channel > 0 && !string.Equals(a.Bssid, myBssid, StringComparison.OrdinalIgnoreCase) && (a.Channel == c || LinkInfo.Overlaps(a.Channel, a.Width, c, 20, band))).Sum(a => Math.Pow(Math.Max(0, a.Signal) / 100.0, 2));
             int best = cand.OrderBy(c => load(c)).ThenBy(c => c == mine ? 0 : 1).First();
+            // bug-hunt ML-154: a channel outside the usual list (165, 13, a high 6 GHz one) that's no busier than the best stays put
+            if (mine > 0 && best != mine && load(mine) <= load(best) + 1e-9) best = mine;
             return new[] { best, (int)Math.Round(load(best) * 100), (int)Math.Round(load(mine) * 100) };
         }
         public static void FromFreq(Bss b)
@@ -334,7 +345,7 @@ namespace AdeeboMeter
             for (int i = 0; i + 2 <= ies.Length; )
             {
                 int id = ies[i], len = ies[i + 1], p = i + 2; if (p + len > ies.Length) break;
-                if (id == 61 && len >= 2 && (ies[p + 1] & 0x04) != 0) b.Width = Math.Max(b.Width, 40);
+                if (id == 61 && len >= 2 && (ies[p + 1] & 0x04) != 0 && (ies[p + 1] & 0x03) != 0) b.Width = Math.Max(b.Width, 40);   // HT Operation: byte 1 bit 2 = STA channel width, bits 0-1 = where the second 20 MHz sits (0 = none) - bug-hunt ML-148 checked against the spec
                 else if (id == 192 && len >= 3)
                 {
                     int w = ies[p], c0 = ies[p + 1], c1 = ies[p + 2];
@@ -344,7 +355,8 @@ namespace AdeeboMeter
                 else if (id == 255 && len >= 7 && ies[p] == 36)   // HE Operation
                 {
                     int prm = ies[p + 1] | (ies[p + 2] << 8) | (ies[p + 3] << 16);
-                    int q = p + 1 + 3 + 1 + 2;                        // params, BSS colour, basic HE-MCS
+                    int q = p + 1 + 3 + 1 + 2;                        // params, BSS colour, basic HE-MCS (bug-hunt L-276: 2 octets at every width in
+                                                                      // HE Operation - only HE Capabilities' MCS set grows with 160 MHz; EHT Operation's basic set is 4 fixed)
                     if ((prm & (1 << 14)) != 0) q += 3;               // VHT operation info present
                     if ((prm & (1 << 15)) != 0) q += 1;               // co-hosted BSS
                     if ((prm & (1 << 17)) != 0 && q + 2 <= p + len)   // 6 GHz operation info
@@ -554,7 +566,11 @@ namespace AdeeboMeter
             var best = blocks.FirstOrDefault(b => Regex.IsMatch(b, @":\s*(\d{1,3}\s*%|%\s*\d{1,3})", RegexOptions.Multiline)) ?? blocks.FirstOrDefault(b => b.Split('\n').Any(l => { int c = l.IndexOf(':'); return c > 0 && Monitor.NormState(l.Substring(c + 1)) == "connected"; }));
             return best ?? text;
         }
-        public static bool Blocked(string text) { return text != null && text.IndexOf("location", StringComparison.OrdinalIgnoreCase) >= 0 && text.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0; }
+        // bug-hunt L-274: netsh's "location permission" message in the languages AdeeboMeter speaks and a few more (the native signal,
+        // m.WifiBlocked, stays the main one - this is the fallback)
+        static readonly Regex LocWord = new Regex("location|localisation|emplacement|ubicaci[oó]n|standort|posizione|localiza[cç][aã]o|locatie|lokalizacj|расположени|местоположени|位置|위치|konum|الموقع|লোকেশন|অবস্থান", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        static readonly Regex PermWord = new Regex("permission|autorisation|permiso|berechtigung|autorizzazione|permiss[aã]o|toestemming|uprawnie|разрешени|权限|許可|権限|권한|izin|إذن|অনুমতি", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        public static bool Blocked(string text) { return text != null && LocWord.IsMatch(text) && PermWord.IsMatch(text); }
         public static string BandOf(int ch, string band)
         {
             if (!string.IsNullOrEmpty(band)) return band;
@@ -590,6 +606,7 @@ namespace AdeeboMeter
             if (list.Count > 300) list = list.OrderByDescending(a => a.Signal).Take(300).ToList();
             return list;
         }
+        public static bool Overlaps(int a, int wa, int b, int wb, string band) { return AirLog.Overlap(a, wa <= 0 ? 20 : wa, b, wb <= 0 ? 20 : wb, band); }
         public static bool Overlaps(int a, int b, string band)
         {
             if (a <= 0 || b <= 0) return false;
@@ -628,7 +645,7 @@ namespace AdeeboMeter
                 iface = ActiveBlock(iface);   // two Wi-Fi adapters: the connected one's lines only, never a mix of both
                 var f = Fields(iface); string v; int ch = -1, sig = -1;
                 if (f.TryGetValue("Channel", out v)) int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch);
-                if (f.TryGetValue("Signal", out v)) int.TryParse(v.TrimEnd('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig);
+                if (f.TryGetValue("Signal", out v) && !int.TryParse(v.Trim('%', ' ', '\u00A0', '\u202F', '\t'), NumberStyles.Integer, CultureInfo.InvariantCulture, out sig)) sig = -1;   /* review 1.1.6 R5 N1: Turkish writes "%88"; a failed parse stays unknown so the fallback reads it */
                 // Windows in another language: the same reading the corner widget uses (it finds the % and the channel by shape)
                 int psig, prate; string pssid, pch, pbssid, pstate; Monitor.ParseWifi(iface, out psig, out pssid, out pch, out pbssid, out pstate, out prate);
                 if (sig < 0) sig = psig; if (ch < 0) int.TryParse(pch, NumberStyles.Integer, CultureInfo.InvariantCulture, out ch); if (ch == 0) ch = -1;
@@ -650,23 +667,27 @@ namespace AdeeboMeter
                 s.Radio.Add(new[] { "Signal", sig >= 0 ? sig + "%  ·  " + rssi : "-", sig < 0 ? "0" : sig < 40 ? "2" : sig < 60 ? "1" : "0" });
                 s.Radio.Add(new[] { "Receive rate", F("Receive rate (Mbps)") == "-" ? "-" : F("Receive rate (Mbps)") + " Mb/s" });
                 s.Radio.Add(new[] { "Transmit rate", F("Transmit rate (Mbps)") == "-" ? "-" : F("Transmit rate (Mbps)") + " Mb/s" });
-                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Authentication") == "Open" ? "2" : "0" });
+                /* review 1.1.6 R5 37b: "Open" is English-only in netsh - the Wi-Fi API's BSS list says it in any language */
+                string apiSec = ""; if (bssid != "") { string werr2; var meS = WlanApi.List(false, out werr2).FirstOrDefault(b => string.Equals(b.Bssid, bssid.Replace('-', ':'), StringComparison.OrdinalIgnoreCase)); if (meS != null) apiSec = meS.Sec ?? ""; }
+                bool openNet = apiSec == "Open" || Regex.IsMatch(F("Authentication"), @"^(Open|Ouvert[e]?|Offen|Abierta|Aberta|Aperta|Open\w*|مفتوح|খোলা)$", RegexOptions.IgnoreCase);
+                s.Radio.Add(new[] { "Security", F("Authentication") + " · " + F("Cipher"), F("Authentication") == "-" || F("Authentication") == "" ? "3" : F("Authentication").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || F("Cipher").IndexOf("WEP", StringComparison.OrdinalIgnoreCase) >= 0 || openNet ? "2" : "0" });   /* L-284: unreadable is unknown, not green */
                 if (sig >= 0 && sig < 40) { lv = 2; notes.Add(Voice.P("Your Wi-Fi signal is weak (" + sig + "%). Walls are winning - move closer to the access point or plug in a cable.", "Weak Wi-Fi signal (" + sig + "%).")); }
                 else if (sig >= 0 && sig < 60) { lv = Math.Max(lv, 1); notes.Add("Signal is so-so (" + sig + "%). Fine for browsing; calls may stutter."); }
 
                 s.Aps = ParseNetworks(nets);
                 if (ch > 0)
                 {
-                    var same = s.Aps.Where(a => !string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase) && a.Band == band && Overlaps(a.Channel, ch, band)).ToList();
-                    var mine = s.Aps.FirstOrDefault(a => string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
-                    int strong = same.Count(a => a.Signal >= 50);
-                    s.Radio.Add(new[] { "Sharing your channel", same.Count == 0 ? "nobody - clean air" : same.Count + " other access point" + (same.Count > 1 ? "s" : "") + (strong > 0 ? " (" + strong + " strong)" : ""), strong >= 3 ? "2" : same.Count >= 3 ? "1" : "0" });
-                    if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + " devices on this AP" : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
-                    if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
-                    // Windows' Native Wifi API: channel width, roaming helpers, exact dBm
+                    // Windows' Native Wifi API first: channel widths (the overlap below needs them), roaming helpers, exact dBm
                     string werr; var bss = WlanApi.List(true, out werr);
                     foreach (var a in s.Aps) { var m2 = bss.FirstOrDefault(x => string.Equals(x.Bssid, a.Bssid, StringComparison.OrdinalIgnoreCase)); if (m2 != null) { a.Rssi = m2.Rssi; a.Width = m2.Width; a.Sec = m2.Sec; } }
                     var me = bss.FirstOrDefault(x => string.Equals(x.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
+                    int myW = me != null ? me.Width : 20;   // carry-over (100-bug #26): a wide neighbour covers more than its own channel number
+                    var same = s.Aps.Where(a => !string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase) && a.Band == band && Overlaps(a.Channel, a.Width, ch, myW, band)).ToList();
+                    var mine = s.Aps.FirstOrDefault(a => string.Equals(a.Bssid, bssid, StringComparison.OrdinalIgnoreCase));
+                    int strong = same.Count(a => a.Signal >= 50);
+                    s.Radio.Add(new[] { "Sharing your channel", same.Count == 0 ? "nobody - clean air" : same.Count + " other access point" + (same.Count > 1 ? "s" : "") + (strong > 0 ? " (" + strong + " strong)" : ""), strong >= 3 ? "2" : same.Count >= 3 ? "1" : "0" });
+                    if (mine != null && mine.Util >= 0) s.Radio.Add(new[] { "Air time used", mine.Util + "% of the channel" + (mine.Stations >= 0 ? " · " + mine.Stations + (mine.Stations == 1 ? " device on this AP" : " devices on this AP") : ""), mine.Util >= 70 ? "2" : mine.Util >= 45 ? "1" : "0" });
+                    if (strong >= 3) { lv = Math.Max(lv, 1); notes.Add(Voice.P("Your channel is a crowded room: " + same.Count + " neighbours share it. Everyone takes turns, so everyone is slower.", same.Count + " access points share your channel.")); }
                     if (me != null)
                     {
                         s.Radio.Insert(4, new[] { "Channel width", me.Width + " MHz" + (me.Width >= 80 ? " - a wide, fast lane" : me.Width == 40 ? "" : " - narrow, so slower but sturdier"), "0" });
@@ -727,7 +748,7 @@ namespace AdeeboMeter
                 s.Radio.Add(new[] { "Driver", drv[0] + (drv[1] != "" ? " · " + drv[1] : "") + (age >= 0 ? " (" + (age < 1 ? "this year" : age.ToString("0", CultureInfo.CurrentCulture) + (age < 1.5 ? " year old" : " years old")) + ")" : ""), age >= 3 ? "1" : "0" });
                 // Review-1: advice, not a measured problem - the banner turns amber but the PC's level stays as measured
                 if (age >= 3) s.Advice = true;
-                if (age >= 3) notes.Add("Driver update suggested: " + Voice.P("Your " + (s.Wifi ? "Wi-Fi" : "network") + " driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old. Old drivers are a top cause of random drops - worth an update from the laptop maker.", "Network driver is " + age.ToString("0", CultureInfo.CurrentCulture) + " years old."));
+                if (age >= 3) notes.Add("Driver update suggested: " + Voice.P("Your " + (s.Wifi ? "Wi-Fi" : "network") + " driver is " + age.ToString("0", CultureInfo.CurrentCulture) + (Math.Round(age) == 1 ? " year old" : " years old") + ". Old drivers are a top cause of random drops - worth an update from the laptop maker.", "Network driver is " + age.ToString("0", CultureInfo.CurrentCulture) + (Math.Round(age) == 1 ? " year old." : " years old.")));
             }
             // ---- Windows' own diary: drops and DHCP trouble in the last 24 h
             string de;

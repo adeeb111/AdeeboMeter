@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hall of Fame — AdeeboMeter</title>
@@ -13,20 +14,12 @@
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <!-- No fonts, trackers or pictures from anywhere else. A winner shows as a name, and a link to their profile only if they gave one. -->
 <script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="/base.css">
 <style>
-:root{
-  --blue:#1F6FEB; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --gold:#B7861A; --gold-s:#FFF4D6;
-  --ink:#1B2330; --sub:#4A5568; --muted:#6B7685; --line:#E3E8EF; --card:#FFFFFF; --page:#FBFCFE; --soft:#F6F8FB; --nav:rgba(251,252,254,.82);
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --gold:#E3B341; --gold-s:#2E2410;
-  --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27; --nav:rgba(10,14,19,.78);}}
-:root[data-theme="dark"]{
-  --blue:#2F6FDB; --blue-d:#3B7BE6; --blue-s:#14233D; --green:#3FB950; --green-s:#12271A; --gold:#E3B341; --gold-s:#2E2410;
-  --ink:#E6EDF3; --sub:#B4BFCB; --muted:#8B97A5; --line:#26303B; --card:#121820; --page:#0A0E13; --soft:#171E27; --nav:rgba(10,14,19,.78);}
+:root{--blue-s:color-mix(in srgb,var(--blue) 14%,var(--card));--green-s:color-mix(in srgb,var(--ok) 12%,var(--card));--gold:var(--warn);--gold-s:color-mix(in srgb,var(--warn) 16%,var(--card));--r-md:12px;--r-lg:16px}
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--page);scroll-behavior:smooth}
-body{background:var(--page);color:var(--ink);font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
+body{background:var(--page);color:var(--ink);font-size:17px;-webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden}
 a{color:var(--blue)}
 .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
 .top{position:sticky;top:0;z-index:20;background:var(--nav);-webkit-backdrop-filter:saturate(1.8) blur(14px);backdrop-filter:saturate(1.8) blur(14px);border-bottom:1px solid var(--line)}
@@ -35,34 +28,33 @@ a{color:var(--blue)}
 .brand svg{width:26px;height:26px}
 .links{display:flex;align-items:center;gap:18px;font-size:14px}
 .links a{text-decoration:none;color:var(--sub)}.links a:hover{opacity:.6}
-.pill{display:inline-flex;align-items:center;background:var(--blue);color:#fff!important;text-decoration:none;font-weight:600;border-radius:99px;padding:8px 18px;font-size:15px;white-space:nowrap}
-.pill:hover{background:var(--blue-d)}
-.pill.ghost{background:transparent;color:var(--blue)!important;border:1px solid var(--line)}
+.pill{display:inline-flex;align-items:center;min-height:48px;background:var(--face);color:#fff!important;text-decoration:none;font-weight:600;border-radius:12px;padding:0 22px;font-size:16px;white-space:nowrap;transition:transform .14s var(--ease-out),background-color .15s ease}
+@media (hover:hover){.pill:hover{background:var(--blue-d)}}.pill:active{transform:scale(.97)}
+.pill.ghost{background:var(--card);color:var(--ink)!important;border:1px solid var(--line)}@media (hover:hover){.pill.ghost:hover{background:var(--soft)}}
 @media (max-width:640px){.links a.hide-s{display:none}}
 .hero{padding:56px 0 28px;text-align:center}
 .star{width:64px;height:64px;display:block;margin:0 auto 14px}
-h1{font-size:clamp(32px,6vw,52px);letter-spacing:-.02em;line-height:1.1}
+h1{font-size:clamp(40px,6vw,64px);letter-spacing:-.01em;line-height:1.02}
 .lead{color:var(--sub);font-size:clamp(16px,2.2vw,19px);max-width:640px;margin:14px auto 0}
 .cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
 section{padding:30px 0}
-h2{font-size:26px;letter-spacing:-.01em;margin-bottom:6px}
+h2{font-size:clamp(24px,2.6vw,30px);line-height:1.15;margin-bottom:8px}
 h3{font-size:18px;margin:18px 0 6px}
 .sub{color:var(--sub);margin-bottom:16px;max-width:760px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
-.winner{background:linear-gradient(135deg,#0E214A,#1F6FEB);color:#fff;border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;min-height:150px}
-.winner::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(rgba(242,204,96,.45),rgba(242,204,96,0) 70%)}
-.winner .k{font-size:11.5px;font-weight:700;letter-spacing:.12em;color:#F2CC60}
+.winner{background:var(--face);color:#fff;border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;min-height:150px}
+.winner .k{font-size:14px;font-weight:600;color:#FCD34D}
 .winner .n{font-size:22px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere}
 .winner .p{color:rgba(255,255,255,.85);font-size:13.5px;white-space:nowrap}
 .winner .c{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12.5px;color:rgba(255,255,255,.7);margin-top:10px}
-.winner a{color:#F2CC60;font-size:13.5px;position:relative;z-index:1}
+.winner a{color:#FCD34D;font-size:13.5px;position:relative;z-index:1;overflow-wrap:anywhere;word-break:break-word}
 .empty{border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--sub)}
 .count{color:var(--muted);font-size:14px;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;font-size:15px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+th{font-size:14px;font-weight:600;color:var(--sub);background:var(--soft)}
 tr:last-child td{border-bottom:none}
-td.pts{font-weight:700;color:var(--green);white-space:nowrap}
+td.pts{font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ranks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .rank{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-size:14px}
 .rank b{margin-left:6px;color:var(--muted);font-weight:600}
@@ -94,7 +86,7 @@ footer a{color:inherit}
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <section class="hero"><div class="wrap">
-  <svg class="star" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 L61.8 35.6 L95.6 37.2 L69.1 58.2 L78.2 90.8 L50 72.2 L21.8 90.8 L30.9 58.2 L4.4 37.2 L38.2 35.6 Z" fill="#F2CC60"/></svg>
+  <svg class="star" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 4 L61.8 35.6 L95.6 37.2 L69.1 58.2 L78.2 90.8 L50 72.2 L21.8 90.8 L30.9 58.2 L4.4 37.2 L38.2 35.6 Z" fill="#FCD34D"/></svg>
   <h1>Hall of Fame</h1>
   <p class="lead">Everyone here reached <b>500 Adeebo Points</b>. They tried almost every tool, read the Learn topics, answered the check questions and met the lab challenges. That's the <b>Adeebo Award</b>.</p>
   <div class="cta"><a class="pill" href="#join">Join the Hall of Fame</a><a class="pill ghost" href="#how">How Adeebo Points work</a></div>
@@ -117,7 +109,7 @@ footer a{color:inherit}
     <tbody>
       <tr><td>Open a tool's <b>Example</b>, then run the tool for real and get a result</td><td class="pts">+2</td><td>Toolbox - 232 tools</td></tr>
       <tr><td>…the longer tests (MTR, speed test, iperf3, bufferbloat, ISP report, game compare, MTU per hop)</td><td class="pts">+4</td><td>Toolbox</td></tr>
-      <tr><td>Run a tool marked <b>replay</b> again, 10 minutes or more after the first run - to compare</td><td class="pts">+3</td><td>Toolbox (ISP report, game compare, before/after, certificate compare, MTR)</td></tr>
+      <tr><td>Run a tool marked <b>replay</b> again, 10 minutes or more after the first run - to compare</td><td class="pts">+2</td><td>Toolbox (ISP report, game compare, before/after, certificate compare, MTR)</td></tr>
       <tr><td>Read a <b>Learn</b> topic to the end</td><td class="pts">+2</td><td>Learn - 98 topics</td></tr>
       <tr><td>Answer the topic's <b>Check yourself</b> question right the first time</td><td class="pts">+2</td><td>End of each Learn topic</td></tr>
       <tr><td>Meet a <b>lab challenge</b></td><td class="pts">+4</td><td>Learn › Labs - 11 challenges</td></tr>
@@ -217,14 +209,16 @@ footer a{color:inherit}
   var human = '', f = function (id) { return document.getElementById(id); }, send = f('h-send'), note = f('h-note');
   function ready() { send.disabled = !(f('h-name').value.trim() && f('h-points').value.trim() && f('h-date').value.trim() && f('h-code').value.trim() && human); }
   window.hofHuman = function (t) { human = t; ready(); };
+  // hunt-5: every try uses a new human check - one used (or lost with the network) can't be sent again; Send waits for the new one
+  function fresh() { human = ''; try { turnstile.reset(); } catch (e) {} ready(); }
   ['h-name', 'h-points', 'h-date', 'h-code'].forEach(function (id) { f(id).addEventListener('input', ready); });
   send.addEventListener('click', function () {
     send.disabled = true; note.textContent = 'Sending…';
     var card = { name: f('h-name').value, points: f('h-points').value, date: f('h-date').value, code: f('h-code').value, where: f('h-where').value, handle: f('h-handle').value };
     fetch('https://adeebometer-relay.orkoadeeb.workers.dev/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'hof', from: 'site', card: card, turnstile: human }) })
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
-      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; if (!j.ok) send.disabled = false; human = ''; try { turnstile.reset(); } catch (e) {} })
-      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again.'; send.disabled = false; });
+      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; fresh(); })
+      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again in a moment.'; fresh(); });
   });
 })();
 (function () {
@@ -245,16 +239,16 @@ footer a{color:inherit}
   var grid = document.getElementById('grid'), count = document.getElementById('count');
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   fetch('hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
-    var list = (d && d.entries) || [];
+    var all = (d && d.entries) || [], list = all.filter(function (w) { return !w.disputed; }), held = all.length - list.length;   // hunt-5: a disputed claim waits for review - not shown as a winner
     list = list.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
     if (!list.length) { count.textContent = ''; grid.appendChild(el('p', 'empty', 'No one yet - the first Adeebo Award is still out there. Will it be you?')); return; }
-    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.';
+    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.' + (held ? ' (' + held + ' more ' + (held === 1 ? 'claim is' : 'claims are') + ' being reviewed.)' : '');
     list.forEach(function (w) {
       var c = el('div', 'winner');
       c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));
       c.appendChild(el('div', 'n', String(w.name || '')));
       // just the name - and a handle, if they gave one: the link is built here from a known site, never taken from the file
-      var site = SITES[String(w.site || '')], h = String(w.handle || '');
+      var sk = String(w.site || ''), site = Object.prototype.hasOwnProperty.call(SITES, sk) ? SITES[sk] : null, h = String(w.handle || '');
       if (site && site.rx.test(h)) { var a = el('a', null, (w.site === 'linkedin' ? '' : '@') + h + ' on ' + site.name + ' ›'); a.href = site.url + encodeURIComponent(h); a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
       grid.appendChild(c);
     });

@@ -10,8 +10,8 @@ namespace AdeeboMeter
 {
     // ================================================================== Toolbox, by question (the default view since 1.1.5)
     // One big search, your recent tools, and a card per question you'd ask - "Can I reach it?", "Why is it slow?" - with its
-    // three most useful tools in plain words. A tool opens across the whole width. "All tools (list)" brings back the classic
-    // view (sections, quick row, the side list) for people who like everything at once; the choice is remembered.
+    // three most useful tools in plain words. A tool opens across the whole width. "Every tool" (FullView.Index.cs) lists them all,
+    // each once; the choice is remembered. (bug-hunt L-153: the classic "All tools (list)" view is gone.)
     sealed partial class FullView
     {
         // id, question, the groups (from TbLayout) it covers, its three featured tools
@@ -44,11 +44,18 @@ namespace AdeeboMeter
         };
         static string QAccent(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[0] : "toolbox"; }
         static string QIcon(string q) { string[] l; return q != null && QLook.TryGetValue(q, out l) ? l[1] : "tool"; }
-        DB tbHead; PillButton tbViewQ, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
+        DB tbHead; PillButton tbViewQ, tbViewT, tbViewL; readonly List<Control> tbClassic = new List<Control>(); Panel tbLeft; TableLayoutPanel tbSplit;
         // both views now use the roomy layout (a tool across the whole width); Every tool only changes the home page (FullView.Index.cs)
         static bool ByQuestion { get { return true; } }
 
-        static string QuestionOf(Tool t) { var q = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); return q != null ? q[0] : ""; }
+        string idxListKey; List<Tool> idxRows; string idxTitle, idxCount; List<IGrouping<string, Tool>> idxGroups;
+        static readonly Dictionary<string, string> qOfGroup = new Dictionary<string, string>();   // a group's question, worked out once (perf, 24 Nov)
+        static string QuestionOf(Tool t)
+        {
+            string q, gk = t.Group ?? ""; lock (qOfGroup) if (qOfGroup.TryGetValue(gk, out q)) return q;
+            var qd = Questions.FirstOrDefault(z => z[2].Split('|').Contains(t.Group)); q = qd != null ? qd[0] : "";
+            lock (qOfGroup) qOfGroup[gk] = q; return q;
+        }
         List<Tool> ToolsOf(string q)
         {
             var qd = Questions.First(z => z[0] == q); var groups = qd[2].Split('|'); var feat = qd[3].Split('|');
@@ -65,7 +72,7 @@ namespace AdeeboMeter
             toolboxPage.SuspendLayout();
             tbSplit.ColumnStyles[0].Width = q ? 0 : Sc(290); tbLeft.Visible = !q;
             foreach (var c in tbClassic) c.Visible = !q;
-            tbViewQ.Selected = !EveryTool; tbViewL.Selected = EveryTool;
+            tbViewQ.Selected = !EveryTool && !ByTopic; tbViewT.Selected = ByTopic; tbViewL.Selected = EveryTool;
             tbSearch.Width = TbSearchW(q);
             toolboxPage.ResumeLayout(true);
             // the bar with the search and the two views: laid out and painted again (it stayed blank when the Toolbox opened in Every tool)
@@ -79,7 +86,7 @@ namespace AdeeboMeter
         {
             if (tbBusy) return;
             Cfg.TbView = v; Cfg.Save(); ApplyTbView();
-            tbSearch.Box.Text = ""; ShowQuestions(EveryTool ? tbQ : "");
+            tbSearch.Box.Text = ""; ShowQuestions(EveryTool ? "*" : "");
         }
         void ShowQuestions(string q)
         {
@@ -177,7 +184,7 @@ namespace AdeeboMeter
                 if (tbFilter != "")
                 {
                     var found = ScopedMatches();
-                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + (found.Count == 1 ? L.T(" tool matches") : L.T(" tools match")) + "  ·  " + L.T("Enter opens the first"), Draw.fHead, ink, x, y); y += 36 * S;
+                    g.DrawString(found.Count == 0 ? L.T("Nothing matches - try another word") : found.Count + (found.Count == 1 ? L.T(" tool matches") : L.T(" tools match")) + (found.Count > 60 ? "  ·  " + L.T("the first") + " 60 " + L.T("shown") : "") + "  ·  " + L.T("Enter opens the first"), Draw.fHead, ink, x, y);   /* L-143 */ y += 36 * S;
                     if (found.Count == 0) { string dym = DidYouMean(tbFilter); if (dym != null) { string tx = L.T("Did you mean") + "  " + dym + " ?"; var ts = g.MeasureString(tx, Draw.fBody); g.DrawString(tx, Draw.fBody, lb, x, y); string qq = dym; Act(tbCanvas, new RectangleF(x, y, ts.Width, ts.Height), delegate { tbSearch.Box.Text = qq; tbSearch.Box.SelectionStart = qq.Length; }); y += 30 * S; } }
                     int c2 = Math.Min(cols, 2); float rw = (w - gap * (c2 - 1)) / c2; int i = 0;
                     foreach (var t in found.Take(60)) { var qn = Questions.FirstOrDefault(z => z[0] == QuestionOf(t)); toolRow(t, new RectangleF(x + (i % c2) * (rw + gap), y + (i / c2) * 66 * S, rw, 58 * S), qn != null ? L.T(qn[1]) : SectionName(SectionOf(t))); i++; }
@@ -210,7 +217,7 @@ namespace AdeeboMeter
                     // "Right now": only when something is off - the headline and the question that fits it
                     string fit = sn.Path != null && sn.Path.Length > 1 && sn.Path[1] == 2 ? "join" : "slow"; var fq = Questions.First(z => z[0] == fit);
                     var rr = new RectangleF(x, y, w, 58 * S); Theme.Fill(g, rr, 12 * S, Theme.LvSoft(sn.Level));
-                    using (var lb2 = new SolidBrush(Theme.LvText(sn.Level))) { g.DrawString(L.T("RIGHT NOW"), Draw.fTiny, lb2, x + 16 * S, y + 10 * S); g.DrawString(sn.Headline, Draw.fBodyB, lb2, new RectangleF(x + 16 * S, y + 27 * S, w - 230 * S, 22 * S), nowrap); }
+                    using (var lb2 = new SolidBrush(Theme.LvText(sn.Level))) { g.DrawString(Kit.Sent("RIGHT NOW"), Draw.fTiny, lb2, x + 16 * S, y + 10 * S); g.DrawString(sn.Headline, Draw.fBodyB, lb2, new RectangleF(x + 16 * S, y + 27 * S, w - 230 * S, 22 * S), nowrap); }
                     string go = L.T(fq[1]) + "  ›"; var gz = g.MeasureString(go, Draw.fBtn);
                     var gr = new RectangleF(rr.Right - gz.Width - 32 * S, y + 13 * S, gz.Width + 20 * S, 32 * S);
                     Theme.Fill(g, gr, 10 * S, Kit.Accent(QAccent(fit))); using (var wb = new SolidBrush(Color.White)) g.DrawString(go, Draw.fBtn, wb, gr.X + 10 * S, gr.Y + (gr.Height - gz.Height) / 2);
@@ -225,7 +232,7 @@ namespace AdeeboMeter
                 var recent = tbRecent.Select(id => Tools2().FirstOrDefault(z => z.Id == id)).Where(t => t != null).ToList();
                 if (recent.Count > 0)
                 {
-                    g.DrawString(L.T("RECENT"), Draw.fTiny, muted, x, y + 9 * S); float rx = x + g.MeasureString(L.T("RECENT"), Draw.fTiny).Width + 14 * S;
+                    g.DrawString(Kit.Sent("RECENT"), Draw.fTiny, muted, x, y + 9 * S); float rx = x + g.MeasureString(Kit.Sent("RECENT"), Draw.fTiny).Width + 14 * S;
                     foreach (var t in recent)
                     {
                         string tt = L.T(t.Title); var ts = g.MeasureString(tt, Draw.fBody); var pr = new RectangleF(rx, y, ts.Width + 28 * S, 32 * S); if (pr.Right > x + w) break;
@@ -241,9 +248,9 @@ namespace AdeeboMeter
                     float ch = 62 * S + feat.Count * 50 * S + 34 * S; var r = new RectangleF(x + col * (cw + gap), rowY, cw, ch);
                     string acc = QAccent(qd[0]);
                     Kit.Card(g, r, acc, false);
-                    using (var rb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(rb, r.X + 14 * S, r.Y + 16 * S, 32 * S, 32 * S);
-                    Kit.Icon(g, QIcon(qd[0]), new RectangleF(r.X + 22 * S, r.Y + 24 * S, 16 * S, 16 * S), Kit.Accent(acc));
-                    g.DrawString(L.T(qd[1]), Draw.fHead, ink, new RectangleF(r.X + 54 * S, r.Y + 21 * S, r.Width - 130 * S, 26 * S), nowrap);
+                    bool big = BigIcon(g, "q:" + qd[0], new RectangleF(r.X + 12 * S, r.Y + 10 * S, 44 * S, 44 * S), Kit.Accent(acc));   // 1.1.6: big icons (FullView.Gateway.cs)
+                    if (!big) { using (var rb = new SolidBrush(Kit.Soft(acc))) g.FillEllipse(rb, r.X + 14 * S, r.Y + 16 * S, 32 * S, 32 * S); Kit.Icon(g, QIcon(qd[0]), new RectangleF(r.X + 22 * S, r.Y + 24 * S, 16 * S, 16 * S), Kit.Accent(acc)); }
+                    g.DrawString(L.T(qd[1]), Draw.fHead, ink, new RectangleF(r.X + (big ? 66 : 54) * S, r.Y + 21 * S, r.Width - (big ? 142 : 130) * S, 26 * S), nowrap);
                     string cnt = all.Count.ToString(CultureInfo.CurrentCulture); var cs = g.MeasureString(cnt, Draw.fTiny);
                     var cr = new RectangleF(r.Right - 16 * S - cs.Width - 12 * S, r.Y + 22 * S, cs.Width + 12 * S, 20 * S);
                     Theme.Fill(g, cr, 10 * S, Kit.Soft(acc)); using (var cb = new SolidBrush(Kit.Ink(acc))) g.DrawString(cnt, Draw.fTiny, cb, cr.X + 6 * S, cr.Y + 3 * S);

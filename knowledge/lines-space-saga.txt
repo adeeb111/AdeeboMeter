@@ -90,3 +90,17 @@ game.streak|{v} in a row - hyperdrive engaged.
 game.timeup|Mission clock expired.
 market.open|Trading stations are online.
 storm.near|Ion storm nearby - signal may degrade.
+stream.on|{v} transmission is clear, captain.
+stream.on|Stream signal holding steady.
+stream.dip|Stream signal flickered. {v}
+stream.dip|Interference on the stream. {v}
+stream.none|No transmission on the stream.
+stream.none|Stream channel silent. Scanning.
+trade.ok|Link to the broker station is strong.
+trade.ok|Broker channel open and fast.
+trade.slow|Broker channel lagging. Hold position.
+trade.slow|Slow link to the broker station. {v}
+trade.closed|Market station offline until 9:30.
+trade.closed|Trading port closed. Docking until 9:30.
+view.switch|Switching the bridge to {v}.
+view.switch|{v} display online.

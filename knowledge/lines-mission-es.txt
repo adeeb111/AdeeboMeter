@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Mission control persona. key|text.
+app.open|Control de misión en línea. Estaciones, reporten.
+app.open|Vuelo, tenemos luz verde para vigilar la red.
+all.good|Todos los sistemas en verde.
+all.good|Telemetría nominal. PC, Wi-Fi e internet en verde.
+all.good|Tenemos luz verde en todo.
+pc.busy|Carga de PC al {v}. Conviene soltar un proceso.
+pc.busy|Guía: la PC es el límite, no las comunicaciones.
+pc.busy|Computadora de a bordo sobrecargada. Comunicaciones nominales.
+wifi.drops|Pérdida de señal {v} veces hoy en Wi-Fi.
+wifi.drops|{v} caídas de Wi-Fi. Conviene acercarse más.
+net.none|Pérdida de señal. Sin red.
+net.none|Comunicaciones sin conexión. Reconecta el cable o el Wi-Fi.
+inet.slow|Sistemas locales nominales. La demora está lejos, tras el router.
+inet.slow|Enlace local en verde. El tramo del proveedor es lento.
+inet.slow|La latencia nace fuera de la red local.
+busy|Ejecutando el procedimiento... {v}
+busy|Recopilando telemetría.
+busy|En espera.
+idle|Estado estable. Vigilando.
+idle|Sin anomalías.
+idle|Silencio en el circuito.
+search.empty|Describe la anomalía, {addr}.
+search.empty|¿Qué estamos resolviendo?
+freeze|Procesando ({v}). En espera.
+freeze|Los datos se ponen al día ({v}).
+speedrunner|Alto. El procedimiento anterior sigue en curso.
+speedrunner|Un comando a la vez, vuelo.
+back.again|Bienvenido de vuelta. {v} eventos en el registro.
+back.again|De vuelta en la consola. Aquí va el resumen.
+dns.slow|Resolución de nombres lenta: {v}.
+dns.slow|Latencia DNS {v}. Conviene un servidor más rápido.
+speed.great|{v} de bajada. Rendimiento excelente.
+speed.great|Descarga {v}. Luz verde para los datos.
+speed.bloat|Rendimiento bueno. La latencia sube {v} con carga.
+speed.bloat|Demora en cola {v} con carga. Revisa el router.
+game.lag|Origen del lag: tu Wi-Fi, no el servidor.
+game.lag|Servidor nominal. Wi-Fi inestable.
+game.good|Ping {v}. Luz verde para el lanzamiento.
+game.good|Enlace estable. Tienes luz verde.
+vpn.on|Túnel VPN establecido.
+vpn.on|Enlace seguro activo.
+vpn.slow|La VPN suma {v} de latencia.
+vpn.slow|Sobrecarga del túnel: {v}.
+portal|Portal cautivo detectado. Autentícate primero.
+portal|Se requiere inicio de sesión antes del enlace.
+gw.down|El router no responde. Apágalo y enciéndelo.
+gw.down|Sin contacto con el router.
+isp.down|Sistemas locales nominales. Enlace del proveedor caído.
+isp.down|Enlace perdido en el proveedor.
+mtu.small|Paquetes grandes descartados. MTU de ruta {v}.
+mtu.small|MTU {v} en esta ruta.
+port.open|{v} responde.
+port.open|{v} tiene luz verde.
+port.closed|{v} sin respuesta.
+port.closed|{v} sin luz verde.
+cert.ok|Certificado verificado.
+cert.ok|Cadena de confianza nominal.
+cert.expired|Certificado vencido {v}.
+cert.expired|Vencido desde {v}. Es su lado.
+sec.ok|Lista de seguridad completa. Todo en verde.
+sec.ok|Sin hallazgos.
+sec.issue|{v} puntos en la lista.
+sec.issue|La revisión marca {v} hallazgos.
+mtr.lossy|Pérdida de paquetes desde el salto {v}.
+mtr.lossy|La pérdida empieza en el salto {v}. Lejos.
+mtr.clean|Cero pérdidas, todos los saltos.
+mtr.clean|Trayectoria limpia.
+devices.found|{v} dispositivos en la red.
+devices.found|Siguiendo {v} dispositivos.
+encrypt.done|Carga cifrada.
+encrypt.done|Asegurado.
+decrypt.done|Carga abierta. Integridad confirmada.
+decrypt.done|Descifrado. Sin alteraciones.
+points.earned|+{v} puntos.
+points.earned|+{v}. Buen trabajo, vuelo.
+award|500 puntos. Misión cumplida: Premio Adeebo.
+award|Premio Adeebo. Excelente.
+late.night|Turno nocturno en la consola.
+late.night|Vigilancia nocturna activa.
+morning|Buenos días. Noche tranquila.
+morning|Buenos días. Sin anomalías anoche.
+update.suspect|Degradación tras la actualización del {v}.
+update.suspect|La anomalía coincide con la actualización {v}.
+call.on|Circuito de voz activo. Vigilando la calidad.
+call.on|Llamada en curso. Vigilando el jitter.
+quiz.right|Confirmado. Correcto.
+quiz.wrong|Negativo. Revisa y reintenta.
+game.streak|{v} seguidas: todos los sistemas nominales.
+game.timeup|El reloj está en cero.
+market.open|Los mercados tienen luz verde.
+storm.near|Aviso meteorológico: tormenta cerca, el enlace puede caer.
+# 1.1.6 - streaming, trading and views
+stream.on|Vuelo, {v} está nominal.
+stream.on|La telemetría del stream se ve bien.
+stream.dip|Anomalía de stream registrada. {v}
+stream.dip|Tuvimos un corte de stream. {v}
+stream.none|No hay stream en el tablero.
+stream.none|Canal de stream en silencio. En espera.
+trade.ok|Enlace con el bróker: go.
+trade.ok|Enlace con el bróker estable. Go para operar.
+trade.slow|Enlace con el bróker degradado. Esperen.
+trade.slow|Latencia alta con el bróker. {v}
+trade.closed|Ventana del mercado cerrada. Próxima ventana 9:30.
+trade.closed|Trading en no-go hasta las 9:30.
+view.switch|Cambiando consolas a {v}.
+view.switch|Vista {v}, recibido.

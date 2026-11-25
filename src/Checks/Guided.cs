@@ -24,7 +24,7 @@ namespace AdeeboMeter
         public static List<string[]> Usb(string which)
         {
             var rows = new List<string[]>(); string q = (which ?? "").Trim(), err;
-            var all = DevInfo.List("USB", false, out err).Concat(DevInfo.List("USBSTOR", false, out err)).Concat(DevInfo.List("HID", false, out err).Where(d => d.Present && d.Problem != 0))
+            var all = DevInfo.List("USB", false, out err).Concat(DevInfo.List("USBSTOR", false, out err)).Concat(DevInfo.List("HID", false, out err).Where(d => (d.Present && d.Problem != 0) || (d.Removed != DateTime.MinValue && (DateTime.Now - d.Removed).TotalHours < 24)))   /* bug-hunt ML-57: a mouse or keyboard that dropped today counts too */
                              .Where(d => d.Name != "" && d.Name.IndexOf("Root Hub", StringComparison.OrdinalIgnoreCase) < 0 && d.Name.IndexOf("Host Controller", StringComparison.OrdinalIgnoreCase) < 0)
                              .GroupBy(d => d.Id).Select(gr => gr.First()).ToList();
             if (all.Count == 0) { rows.Add(R(2, "USB devices", err != "" ? err : "Windows lists no USB devices", "", "u")); return rows; }
@@ -49,6 +49,7 @@ namespace AdeeboMeter
             string ss = SelectiveSuspend();
             if (ss.StartsWith("on", StringComparison.Ordinal)) { rows.Add(R(1, "USB power saving", ss + " - Windows may put idle USB devices to sleep (a known cause of mice, headsets and adapters dropping out)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings › USB selective suspend › Disabled (you change it; AdeeboMeter doesn't).", "w")); warn++; if (next == "") next = "Turn off USB selective suspend and see if it stops."; }
             else if (ss == "off") rows.Add(R(0, "USB power saving", "off - Windows won't put USB devices to sleep", "", "w"));
+            else rows.Add(R(3, "USB power saving", "couldn't read it (powercfg didn't answer)", "Control Panel › Power Options › Change plan settings › Advanced › USB settings shows it.", "w"));   // bug-hunt L-215: said, not left out
             PowerStatus ps; if (GetSystemPowerStatus(out ps) && ps.SystemStatus == 1) { rows.Add(R(1, "Battery saver", "on - it cuts power to some devices", "Plug the laptop in, or turn battery saver off, and try again.", "w")); warn++; }
             // 4. a USB network adapter or a phone's tethering: is the link actually up?
             foreach (var d in mine.Where(d => d.Present && string.Equals(d.Class, "Net", StringComparison.OrdinalIgnoreCase)).Take(4))
@@ -63,7 +64,7 @@ namespace AdeeboMeter
             // the verdict, and what we can't see
             var present = mine.Where(d => d.Present).ToList();
             rows.Insert(0, R(bad > 0 ? 2 : warn > 0 ? 1 : 0, "Verdict",
-                bad > 0 ? "Found the likely reason - " + (next != "" ? next : "see below") : warn > 0 ? "Nothing broken, but " + (next != "" ? next.Substring(0, 1).ToLowerInvariant() + next.Substring(1) : "see the notes below") : q != "" && present.Count == 0 ? "Windows remembers it, but it isn't plugged in right now - plug it in, then run this again" : "Windows sees " + (q != "" ? "it" : "every USB device") + " working - if it still misbehaves, the problem is inside the device or its app",
+                bad > 0 ? "Found the likely reason - " + (next != "" ? next : "see below") : warn > 0 ? "Nothing broken, but " + (next != "" ? next.Substring(0, 1).ToLowerInvariant() + next.Substring(1) : "see the notes below") : q != "" && present.Count == 0 ? "Windows remembers it, but it isn't plugged in right now - plug it in, then run this again" : present.Count == 0 ? "No USB device is plugged in right now - plug one in, then run this again" : "Windows sees " + (q != "" ? "it" : "every USB device") + " working - if it still misbehaves, the problem is inside the device or its app",
                 "Read from Windows' Plug and Play list - nothing is changed. AdeeboMeter can't test the device's own hardware.", "w"));
             if (bad == 0 && warn == 0 && present.Count > 0) foreach (var d in present.Take(12)) rows.Add(R(0, Draw.Trunc(d.Name, 50), "working" + (d.DriverVer != "" ? " · driver " + d.DriverVer : "") + " · plugged in since " + DevInfo.When(d.Arrived), "", "w"));
             return rows;
@@ -75,9 +76,9 @@ namespace AdeeboMeter
             {
                 string pc = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "powercfg.exe"); if (!System.IO.File.Exists(pc)) return "";
                 string t = Job.Run(pc, "/qh SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226", 8000) ?? "";
-                var m = Regex.Matches(t, @"0x0000000([01])\s*$", RegexOptions.Multiline);
+                var m = Regex.Matches(t, @":\s*0x0000000([01])\s*$", RegexOptions.Multiline);
                 if (m.Count == 0) return "";
-                if (m.Count >= 2) { bool ac = m[0].Groups[1].Value == "1", dc = m[1].Groups[1].Value == "1"; return ac && dc ? "on" : !ac && !dc ? "off" : ac ? "on when plugged in, off on battery" : "on on battery, off when plugged in"; }   // AC first, then DC
+                if (m.Count >= 2) { bool ac = m[m.Count - 2].Groups[1].Value == "1", dc = m[m.Count - 1].Groups[1].Value == "1";   /* round 6 H6-2: the current AC and DC values are always the last two lines (anything before is the setting's range) */ return ac && dc ? "on" : !ac && !dc ? "off" : ac ? "on when plugged in, off on battery" : "on on battery, off when plugged in"; }   // AC first, then DC
                 return m[0].Groups[1].Value == "1" ? "on" : "off";
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("powercfg: " + e.Message); return ""; }
@@ -117,12 +118,12 @@ namespace AdeeboMeter
             if (gwUnknown) { gLost = 0; nLost = net.Count(double.IsNaN); }
             int lvHome = gwUnknown ? 3 : double.IsNaN(gA) ? 2 : (gA > 50 || gJ > 30 || gLost >= 3) ? 2 : (gA > 20 || gJ > 10 || gLost == 2) ? 1 : 0;
             double ispA = double.IsNaN(nA) ? double.NaN : gwUnknown || double.IsNaN(gA) ? nA : Math.Max(0, nA - gA);
-            double ispJ = gwUnknown || double.IsNaN(gJ) ? nJ : nJ - gJ;
+            double ispJ = gwUnknown || double.IsNaN(gJ) ? nJ : Math.Max(0, nJ - gJ);   // the release check showed "jitter -1 ms": a share can't be negative
             // no internet probes at all (the internet check is off by policy) is "can't tell" too
             int lvIsp = net.Length == 0 ? 3 : double.IsNaN(nA) ? 2 : (ispA > (gwUnknown ? 80 : 60) || ispJ > 20 || nLost >= 3) ? 2 : (ispA > (gwUnknown ? 45 : 30) || ispJ > 10 || nLost == 2) ? 1 : 0;
             int lvSrv = srv.Length == 0 || double.IsNaN(sA) ? 3 : (sA > 120 || sJ > 25 || (sL > 3 && sLost >= 3)) ? 2 : (sA > 70 || sJ > 12 || (sL > 1 && sLost >= 2)) ? 1 : 0;
             rows.Add(R(lvHome, kind == "Wi-Fi" ? "This PC → router (Wi-Fi)" : "This PC → router (cable)", gwUnknown ? (gw.Length == 0 ? "not measured - the router check is off in Settings" : "your router doesn't answer pings, so this leg can't be measured on its own") + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : "") : ms(gA) + " · jitter " + ms(gJ) + " · lost " + gLost + " of " + gw.Length + (kind == "Wi-Fi" && sig >= 0 ? " · signal " + sig + "%" : ""), "Should be under 5 ms on a cable and under 10 ms on good Wi-Fi.", "i"));
-            rows.Add(R(lvIsp, gwUnknown ? "This PC → your provider → internet" : "Router → your provider → internet", net.Length == 0 ? "not measured - the internet check is off" : (gwUnknown ? "" : "+") + ms(ispA) + " · jitter " + ms(nJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
+            rows.Add(R(lvIsp, gwUnknown ? "This PC → your provider → internet" : "Router → your provider → internet", net.Length == 0 ? "not measured - the internet check is off" : (gwUnknown ? "" : "+") + ms(ispA) + " · jitter " + ms(ispJ) + " · lost " + nLost + " more" + (nLost == 1 ? " (one lost probe means little)" : ""), "The part your provider is responsible for.", "i"));
             rows.Add(R(lvSrv, "→ the game's server" + (srvName != "" ? " (" + srvName + ")" : ""), srv.Length == 0 ? "not measured yet - add the game in the Gamer Zone and start it" : ms(sA) + " · jitter " + ms(sJ) + " · lost " + sLost + " of " + srv.Length, "Distance to the server sets the floor; the Gamer Zone compares regions.", "i"));
             // what else is going on
             double up = m.Up.Avg(10), down = m.Down.Avg(10), cpu = m.Cpu.Avg(10), mem = m.Mem.Avg(10);
@@ -136,12 +137,15 @@ namespace AdeeboMeter
             string verdict, next;
             if (lvHome == 3 && lvIsp == 3 && lvSrv == 3) { verdict = "Nothing was measured - the router and internet checks are off and no game is known"; next = "Turn the checks on in Settings, start the game (or add it in the Gamer Zone), then run this again."; }
             else if (lvHome == 2 || (lvHome == 1 && lvIsp < 2 && lvSrv < 2)) { verdict = kind == "Wi-Fi" ? "Your Wi-Fi" + (sig >= 0 && sig < 60 ? " (weak signal)" : "") + " - the lag starts before the router" : "Your home network - the lag starts before the router"; next = kind == "Wi-Fi" ? "Move closer to the router or use a cable for one match: if the lag goes, that was it." : "Check the cable and the router (restart it)."; }
-            else if (lvIsp == 2 || lvIsp == 1) { verdict = "Your provider - the router is fine, the delay is past it"; next = lvLoad == 1 ? "First stop the upload that's running, then test again; if it stays, the Report for my ISP shows them the numbers." : "Report for my ISP collects the proof (times, loss, the hop where it starts)."; }
-            else if (lvSrv >= 1 && lvSrv != 3) { verdict = "The game server's side - your connection is clean up to the internet"; next = "Try a closer region in the game, or Find my match server in the Gamer Zone to see the real server."; }
-            else if (lvPc == 1) { verdict = "This PC is too busy - the network is fine"; next = "Close what's using the CPU (Monitor shows it) and lower the game's settings."; }
+            else if (lvIsp == 2 || (lvIsp == 1 && lvSrv != 2)) {   // bug-hunt M-7: a worse server leg wins over a slightly slow provider
+            verdict = lvHome == 3 ? "Your provider - the delay is past your home network (the router leg wasn't measured)" : "Your provider - the router is fine, the delay is past it"; next = lvLoad == 1 ? "First stop the upload that's running, then test again; if it stays, the Report for my ISP shows them the numbers." : "Report for my ISP collects the proof (times, loss, the hop where it starts)."; }
+            else if (lvSrv >= 1 && lvSrv != 3) { verdict = lvHome == 3 || lvIsp == 3 ? "The game server's side - the legs that were measured look clean" : "The game server's side - your connection is clean up to the internet"; next = "Try a closer region in the game, or Find my match server in the Gamer Zone to see the real server."; }
+            else if (lvPc == 1) { verdict = lvHome == 3 && lvIsp == 3 ? "This PC is too busy" : "This PC is too busy - the network is fine"; next = "Close what's using the CPU (Monitor shows it) and lower the game's settings."; }
             else if (lvLoad == 1) { verdict = "An upload is running - the legs look fine right now"; next = "Pause the backup or sync while you play."; }
-            else { verdict = "The network looks fine - likely the PC or the game itself (frame rate)"; next = "Turn on the game's own frame-rate counter: if it drops when it lags, it's the PC, not the connection."; }
-            int vlv = verdict.StartsWith("Nothing was measured", StringComparison.Ordinal) ? 3 : verdict.StartsWith("The network looks fine", StringComparison.Ordinal) ? 0 : 1;
+            else { verdict = lvHome == 3 || lvIsp == 3 || lvSrv == 3 ? "The legs that were measured look fine - likely the PC or the game itself (frame rate)" : "The network looks fine - likely the PC or the game itself (frame rate)"; next = "Turn on the game's own frame-rate counter: if it drops when it lags, it's the PC, not the connection."; }
+            // bug-hunt L-213: red when the leg it blames is red, amber otherwise
+            int blamed = verdict.StartsWith("Your Wi-Fi", StringComparison.Ordinal) || verdict.StartsWith("Your home", StringComparison.Ordinal) ? lvHome : verdict.StartsWith("Your provider", StringComparison.Ordinal) ? lvIsp : verdict.StartsWith("The game server", StringComparison.Ordinal) ? lvSrv : 1;
+            int vlv = verdict.StartsWith("Nothing was measured", StringComparison.Ordinal) ? 3 : verdict.StartsWith("The network looks fine", StringComparison.Ordinal) || verdict.StartsWith("The legs that were measured look fine", StringComparison.Ordinal) ? 0 : blamed == 2 ? 2 : 1;
             rows.Insert(0, R(vlv, "Verdict", verdict, "Next: " + next + " For the full picture, Capture this conversation in the packet journey shows the game's own packets - stalls, bursts and gaps.", "i"));
             rows.Add(R(3, "Honest limits", "AdeeboMeter measures the network with its own probes; it can't read the game's in-game ping or frame rate.", "", "i"));
             return rows;

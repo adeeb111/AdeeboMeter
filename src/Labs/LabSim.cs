@@ -20,28 +20,34 @@ namespace AdeeboMeter
             public string Algo = "cubic"; public double Mbps = 100, RttMs = 40, BufferBdp = 1, LossPct; public int Rounds = 120, Seed = 7;
             public readonly Dictionary<int, string> Events = new Dictionary<int, string>();   // round -> "soft" (3 duplicate ACKs) or "hard" (timeout)
         }
-        public static double Bdp(double mbps, double rttMs) { return Math.Max(1, mbps * 1e6 * rttMs / 1000 / 8 / Mss); }
+        public static double Bdp(double mbps, double rttMs) { return Math.Max(1, BdpExact(mbps, rttMs)); }
+        public static double BdpExact(double mbps, double rttMs) { return mbps * 1e6 * rttMs / 1000 / 8 / Mss; }
+        // the buffer the TCP lab's routers have: BDPs of it, but never under 8 packets (the chart draws the same line - finding 6)
+        public static double CapPackets(double mbps, double rttMs, double bufferBdp) { return Math.Max(Bdp(mbps, rttMs) * (1 + Math.Max(0, bufferBdp)), 8); }
         public static List<Step> Tcp(TcpIn p)
         {
             var res = new List<Step>(); var rnd = new Random(p.Seed);
-            double bdp = Bdp(p.Mbps, p.RttMs), cap = Math.Max(bdp * (1 + Math.Max(0, p.BufferBdp)), 8);   /* any real router holds at least 8 packets: on a tiny link (BDP under 2) a buffer sized only in BDPs lost a packet every other round trip */
-            double cwnd = 10, ss = double.PositiveInfinity, wmax = 0, k = 0; int sinceLoss = 0; bool cubic = p.Algo == "cubic", recovering = false;
-            const double C = 0.4, Beta = 0.7;
+            double bdp = Bdp(p.Mbps, p.RttMs), cap = CapPackets(p.Mbps, p.RttMs, p.BufferBdp);   /* any real router holds at least 8 packets: on a tiny link (BDP under 2) a buffer sized only in BDPs lost a packet every other round trip */
+            double pktMs = Mss * 8 / (p.Mbps * 1e6) * 1000, pipe = BdpExact(p.Mbps, p.RttMs);
+            double cwnd = 10, ss = double.PositiveInfinity, wmax = 0, k = 0, est = 0, prior = 0; int sinceLoss = 0; bool cubic = p.Algo == "cubic", recovering = false;
+            const double C = 0.4, Beta = 0.7, AlphaCubic = 3 * (1 - Beta) / (1 + Beta);   // RFC 9438 §4.3: 0.529 packets per round trip until W_est reaches the window before the loss, then 1
             for (int r = 0; r < p.Rounds; r++)
             {
                 var st = new Step { Round = r, Cwnd = cwnd, Ssthresh = ss };
-                st.Queue = Math.Max(0, cwnd - bdp); st.QueueMs = st.Queue / bdp * p.RttMs; st.Util = Math.Min(1, cwnd / bdp);
+                st.Queue = Math.Max(0, cwnd - pipe); st.QueueMs = st.Queue * pktMs; st.Util = Math.Min(1, cwnd / bdp);   // finding 17: a queue drains at the link's rate, whatever the BDP floor
                 st.Phase = recovering ? "fast recovery" : cwnd < ss ? "slow start" : "congestion avoidance";
                 // what goes wrong this round: your click, the buffer overflowing, or a random loss
                 string loss; p.Events.TryGetValue(r, out loss); loss = loss ?? "";
-                if (loss == "" && cwnd > Math.Max(cap, 2)) loss = "soft";   // the window never goes below 2: a link whose BDP is under 2 packets just queues them
-                if (loss == "" && p.LossPct > 0 && rnd.NextDouble() < 1 - Math.Pow(1 - p.LossPct / 100, Math.Min(cwnd, 5000))) loss = "soft";
+                if (loss == "" && cwnd > Math.Max(cap, 2)) loss = "soft";   // the window isn't cut below 2 by the pipe: a link whose BDP is under 2 packets just queues them (only a timeout drops it to 1)
+                if (loss == "" && p.LossPct > 0 && rnd.NextDouble() < -Expm1(cwnd * Log1p(-Math.Min(p.LossPct, 99.99) / 100))) loss = "soft";   // finding 5: every packet of the window takes its chance - no cap
                 st.Loss = loss; res.Add(st);
                 recovering = false;
                 if (loss != "")
                 {
-                    wmax = cwnd; ss = Math.Max(2, cwnd * (cubic ? Beta : 0.5)); sinceLoss = 0;
-                    k = Math.Pow(wmax * (1 - Beta) / C, 1.0 / 3);
+                    // RFC 9438 §4.6 fast convergence: a loss before the old peak was reached lowers W_max, leaving room for new flows
+                    wmax = cubic && cwnd < wmax ? cwnd * (1 + Beta) / 2 : cwnd; prior = cwnd;
+                    ss = Math.Max(2, cwnd * (cubic ? Beta : 0.5)); sinceLoss = 0;
+                    k = Math.Pow(Math.Max(0, wmax - ss) / C, 1.0 / 3); est = ss;
                     if (loss == "hard") cwnd = 1;                                   // a timeout: start again from one packet
                     else { cwnd = ss; recovering = true; }                          // three duplicate ACKs: halve (Reno) or x0.7 (CUBIC) and carry on
                     continue;
@@ -53,13 +59,17 @@ namespace AdeeboMeter
                 {
                     double t = sinceLoss * p.RttMs / 1000;                          // CUBIC grows with time since the loss, not with ACKs
                     double w = C * Math.Pow(t - k, 3) + wmax;
-                    double est = wmax * Beta + 3 * (1 - Beta) / (1 + Beta) * sinceLoss;   // never slower than Reno would be (the TCP-friendly region)
+                    // the Reno-friendly estimate (RFC 9438 §4.3): grows by 0.529 a round trip - which, with CUBIC's smaller cut (x0.7
+                    // against Reno's x0.5), averages what Reno gets - and by 1 once it has passed the window before the loss
+                    est += est >= prior ? 1 : AlphaCubic;
                     cwnd = Math.Max(cwnd + 0.01, Math.Max(w, est));
                 }
                 cwnd = Math.Min(cwnd, 100000);
             }
             return res;
         }
+        static double Log1p(double x) { return Math.Abs(x) < 1e-4 ? x - x * x / 2 + x * x * x / 3 : Math.Log(1 + x); }
+        static double Expm1(double x) { return Math.Abs(x) < 1e-5 ? x + x * x / 2 + x * x * x / 6 : Math.Exp(x) - 1; }
         public static double Throughput(List<Step> s) { return s.Count == 0 ? 0 : s.Average(x => x.Util); }
 
         // ---------- loss -> the most a single TCP download can do (Mathis et al.): MSS / RTT * 1.22 / sqrt(loss)
@@ -76,9 +86,14 @@ namespace AdeeboMeter
             var o = new BloatOut(); double over = loadMbps / Math.Max(0.1, linkMbps);
             // a full queue holds bufferMs of data; a smart queue (fq_codel / CAKE) keeps its standing queue near 5 ms and
             // gives the small ping flow its own turn
-            o.QueueMs = over < 0.95 ? bufferMs * Math.Max(0, over - 0.7) * 0.2 : smartQueue ? Math.Min(bufferMs, 5) : bufferMs;
+            // finding 8: below the link's rate the queue is the ordinary waiting of packets arriving at random (M/D/1: rho / 2(1-rho)
+            // packet times) - small, growing smoothly as the load nears the link; a download that wants more than the link keeps the
+            // buffer full (a plain queue) or near 5 ms (a smart one)
+            double pktMs = 1500 * 8 / (Math.Max(0.1, linkMbps) * 1e6) * 1000;
+            if (over >= 1) o.QueueMs = smartQueue ? Math.Min(bufferMs, 5) : bufferMs;
+            else { double w = over / (2 * (1 - over)) * pktMs; o.QueueMs = Math.Min(w, smartQueue ? Math.Min(bufferMs, 5) : bufferMs); }
             o.PingMs = baseMs + (smartQueue ? Math.Min(o.QueueMs, 2) : o.QueueMs);
-            o.Mbps = Math.Min(linkMbps, loadMbps) * (smartQueue && over >= 0.95 ? 0.97 : 1);
+            o.Mbps = Math.Min(linkMbps, loadMbps) * (smartQueue && over >= 1 ? 0.97 : 1);
             return o;
         }
 
@@ -103,7 +118,7 @@ namespace AdeeboMeter
             o.LatePct = 100.0 * extraDelays.Count(d => d > bufferMs) / extraDelays.Count;
             o.MouthToEarMs = baseMs + bufferMs + 20;   // + 20 ms for the codec on both ends
             // a late packet is a gap the codec papers over (packet loss concealment): it hurts about half as much as a lost one
-            o.Mos = LiveCapture.Mos(baseMs + bufferMs, 0, lossPct + o.LatePct * 0.5);
+            o.Mos = LiveCapture.Mos(o.MouthToEarMs - 10, 0, lossPct + o.LatePct * 0.5);   // carry-over (100-bug:160): scored on the same mouth-to-ear delay the lab shows (Mos adds its own 10 ms)
             return o;
         }
 
@@ -133,13 +148,17 @@ namespace AdeeboMeter
         public static double VoiceWaitMs(string mode, double linkMbps, int bulkPackets)
         {
             double perBig = 1500 * 8 / (linkMbps * 1e6) * 1000;   // ms to send one full-size packet
-            switch (mode) { case "priority": return perBig; case "fair": return perBig * 1.0 + perBig * 0.5; default: return perBig * bulkPackets; }
+            // the most the voice packet waits: behind the whole burst (one queue); behind the one big packet already on the wire
+            // (priority); fair queuing with the one bulk flow: that packet, plus the bulk flow's turn if it's next in the round
+            switch (mode) { case "priority": return perBig; case "fair": return perBig * 2; default: return perBig * bulkPackets; }
         }
 
         // ---------- subnetting practice: a question, its answer and three wrong answers that look right
         public sealed class Quiz { public string Question = "", Answer = ""; public string[] Options; }
         public static Quiz Subnet(int seed)
         {
+            // bug-hunt L-313: prefixes 20-30, so the /31 answer below (2 hosts, RFC 3021) isn't asked today - it stays right for when
+            // the range grows; not widened now because a seed must keep giving the same quiz
             var rnd = new Random(seed); int pre = 20 + rnd.Next(11); byte a = (byte)(new[] { 10, 172, 192 }[rnd.Next(3)]);
             var ip = new byte[] { a, (byte)(a == 172 ? 16 + rnd.Next(16) : a == 192 ? 168 : rnd.Next(256)), (byte)rnd.Next(256), (byte)(1 + rnd.Next(254)) };
             uint v = (uint)(ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3]), m = 0xFFFFFFFFu << (32 - pre), net = v & m, bc = net | ~m;
@@ -163,15 +182,17 @@ namespace AdeeboMeter
             int port = tcpRecs.GroupBy(x => x.LPort).OrderByDescending(gr => gr.Sum(x => (long)x.PayLen)).First().Key;
             recs = tcpRecs.Where(x => x.LPort == port).ToList();
             long inB = recs.Where(r => !r.Out).Sum(r => (long)r.PayLen), outB = recs.Where(r => r.Out).Sum(r => (long)r.PayLen); bool down = inB >= outB;
-            uint hiSeq = 0, hiAck = 0; bool seqSet = false, ackSet = false; double t0 = recs[0].T, binEnd = t0 + rttS, best = 0;
+            uint hiSeq = 0, hiAck = 0; bool seqSet = false, ackSet = false, any = false; double t0 = recs[0].T, binEnd = t0 + rttS, best = 0;
             foreach (var r in recs.Where(x => x.Proto == 6))
             {
-                while (r.T > binEnd) { res.Add(best / Mss); best = 0; binEnd += rttS; if (res.Count > 2000) return res; }
+                // bug-hunt L-314: a round trip with no packets at all is "nothing measured" (NaN, a gap in the line), not a window of 0
+                while (r.T > binEnd) { res.Add(any && best > 0 ? best / Mss : double.NaN); best = 0; any = false; binEnd += rttS; if (res.Count > 2000) return res; }   // finding 19: packets but no measurable flight is unmeasured too
+                any = true;
                 if (r.Out != down && r.PayLen > 0) { uint end = r.Seq + (uint)r.PayLen; if (!seqSet || (int)(end - hiSeq) > 0) { hiSeq = end; seqSet = true; } }
                 if (r.Out == down && (r.Flags & 0x10) != 0) { if (!ackSet || (int)(r.Ack - hiAck) > 0) { hiAck = r.Ack; ackSet = true; } }
                 if (seqSet && ackSet) { int fl = (int)(hiSeq - hiAck); if (fl > 0) best = Math.Max(best, fl); }
             }
-            if (best > 0) res.Add(best / Mss);
+            if (any) res.Add(best > 0 ? best / Mss : double.NaN);
             return res;
         }
         public static List<double> LastRealCwnd; public static double LastRealRttMs;   // the newest captured download, for the TCP lab

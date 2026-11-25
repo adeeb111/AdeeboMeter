@@ -16,7 +16,9 @@ $Tsa = "http://time.certum.pl"
 
 # signtool: the newest Windows SDK's x64 copy
 $st = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
-      Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+      Where-Object { $_.FullName -match '\\x64\\' } |
+      Sort-Object @{ Expression = { $v = [regex]::Match($_.FullName, '\\(\d+\.\d+\.\d+\.\d+)\\').Groups[1].Value; if ($v) { [version]$v } else { [version]'0.0' } } } -Descending |
+      Select-Object -First 1   # bug-hunt L-164: by version number (10.0.26100 is newer than 10.0.9600), not by the text of the path
 if (-not $st) { Write-Host "signtool wasn't found. Install the Windows SDK with only 'Windows SDK Signing Tools for Desktop Apps' ticked."; exit 2 }
 
 # the certificate, through SimplySign
@@ -44,7 +46,7 @@ foreach ($f in $Files) {
     Write-Host "  OK - $($s.SignerCertificate.Subject.Split(',')[0]) - timestamped $($s.TimeStamperCertificate -ne $null)"
     # the fingerprint changes with the signature
     $h = (Get-FileHash $p -Algorithm SHA256).Hash.ToLower()
-    if (Test-Path "$p.sha256") { $h | Set-Content -Encoding ASCII "$p.sha256" }
+    $h | Set-Content -Encoding ASCII "$p.sha256"   # bug-hunt L-163: always written, as the header says
     Write-Host "  SHA256 $h"
 }
 if ($bad) { Write-Host "$bad file(s) not signed."; exit 1 }

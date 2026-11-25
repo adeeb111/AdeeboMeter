@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,10 +32,14 @@ namespace AdeeboMeter
         // Colour tokens. Light and dark follow Windows' own "app mode" setting and switch live.
         public static bool Dark;
         public static Color Ink, Muted, Sub, Line, Line2, Track, Soft, Card, Bg, Rail, UpText, BlueSoft, BlueDark, RowNew, RowGone, RowSel, RowHot, Grey;
-        public static Color Blue = C("#1F6FEB"), BlueHot = C("#1A5FCC"); public static readonly Color Orange = C("#E36209"), Green = C("#2DA44E"), Amber = C("#BF8700"), Red = C("#CF222E");
+        // declared before the colours below: static fields start in the order they're written, and C() needs this one
+        static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Color> parsed = new System.Collections.Concurrent.ConcurrentDictionary<string, Color>(StringComparer.Ordinal);
+        // 23 Nov polish: the website's colours - the faceplate blue, and the logo's three arcs as the status colours (deeper on light)
+        public static Color Blue = C("#1155E0"), BlueHot = C("#0E47BD"); public static readonly Color Orange = C("#E36209"); public static Color Green = C("#1F9E6B"), Amber = C("#B7791F"), Red = C("#D9473A");
         static readonly Color[] lvText = new Color[4], lvSoft = new Color[4];
         static Theme() { Apply(false); }
-        public static Color C(string h) { return ColorTranslator.FromHtml(h); }
+        // bug-hunt L-261: each hex is parsed once - paints call this often
+        public static Color C(string h) { if (h == null) return ColorTranslator.FromHtml(h); return parsed.GetOrAdd(h, x => ColorTranslator.FromHtml(x)); }
         public static bool SystemDark()
         {
             try
@@ -61,6 +65,13 @@ namespace AdeeboMeter
         // text on the main accent: white on deep blues, near-black on Neon's cyan and Midnight's aqua
         public static Color OnBlue { get { return OnColor(Blue); } }
         // AM-CG-198: Mint's white-on-green was 3.47:1 - choose the foreground by computed contrast
+        // round 6 H6-ML3: the accent used as text - itself where it reads at 4.5:1 on a card, otherwise moved toward the text colour
+        // step by step until it does (Mint's green and the dark theme's blue were 3.5-3.7:1)
+        public static double Ratio(Color a, Color b) { Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); }; Func<Color, double> L = x => 0.2126 * lin(x.R) + 0.7152 * lin(x.G) + 0.0722 * lin(x.B); double la = L(a), lb = L(b); return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05); }
+        // hunters13 display ML-5: the download colour as a line or a bar - itself where it shows at 3:1 on the card, the graph's panel
+        // and the empty track, otherwise moved toward the text colour until it does (raw blue was 2.3-2.8:1 in the dark theme)
+        public static Color BlueLine { get { var c = Blue; for (int i = 1; i <= 10 && (Ratio(c, Card) < 3 || Ratio(c, Soft) < 3 || Ratio(c, Track) < 3); i++) c = Kit.Mix(Blue, Ink, i * 0.1f); return c; } }
+        public static Color BlueText { get { var c = Blue; for (int i = 1; i <= 10 && Ratio(c, Card) < 4.5; i++) c = Kit.Mix(Blue, Ink, i * 0.1f); return c; } }
         public static Color OnColor(Color bg)
         {
             Func<double, double> lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4); };
@@ -77,21 +88,29 @@ namespace AdeeboMeter
             Dark = dark; AppliedContrast = SystemInformation.HighContrast; AppliedSig = ContrastSig();
             if (!dark)
             {
-                Ink = C("#1B2330"); Muted = C("#5B6B7C"); Sub = C("#3D4B5A"); Line = C("#D6DEE8"); Line2 = C("#EEF2F6"); Track = C("#E6ECF3"); Soft = C("#F4F7FB");
-                Card = C("#FFFFFF"); Bg = C("#F2F5F9"); Rail = C("#C5CED8"); UpText = C("#9A4A00"); BlueSoft = C("#EEF4FF"); BlueDark = C("#0B4FB3");
-                RowNew = C("#E6F7EC"); RowGone = C("#FFEFEF"); RowSel = C("#E8F0FE"); RowHot = C("#F7FAFF"); Grey = C("#AEB8C2");
-                lvText[0] = C("#116329"); lvText[1] = C("#7D4E00"); lvText[2] = C("#B42318");
-                lvSoft[0] = C("#DAFBE1"); lvSoft[1] = C("#FFF8C5"); lvSoft[2] = C("#FFEBE9");
+                Ink = C("#16191E"); Muted = C("#5A6270"); Sub = C("#4B5360"); Line = C("#DDE1E7"); Line2 = C("#EEF0F3"); Track = C("#E6E9ED"); Soft = C("#F1F3F6");
+                Card = C("#FFFFFF"); Bg = C("#F1F3F6"); Rail = C("#C9CED6"); UpText = C("#9A4A00"); BlueSoft = C("#EAF0FD"); BlueDark = C("#0D47BD");
+                RowNew = C("#E6F4EC"); RowGone = C("#FCEBE8"); RowSel = C("#E8EEFC"); RowHot = C("#F6F8FB"); Grey = C("#B3B9C2");
+                lvText[0] = C("#17794F"); lvText[1] = C("#875A00"); lvText[2] = C("#B42318");
+                // the light level-text colours are a step darker than the website's (#17794F / #875A00 / #B42318): small text on
+                // Windows needs 5:1 or more, the website draws them larger (review L-10, kept on purpose)
+                lvSoft[0] = C("#E6F4EC"); lvSoft[1] = C("#FCF1DC"); lvSoft[2] = C("#FCEBE8");
+                Green = C("#1F9E6B"); Amber = C("#B7791F"); Red = C("#D9473A");
             }
             else
             {
-                Ink = C("#E6EDF3"); Muted = C("#9AA7B4"); Sub = C("#C2CCD6"); Line = C("#2E3A46"); Line2 = C("#222B35"); Track = C("#2A3542"); Soft = C("#1B232D");
-                Card = C("#161D26"); Bg = C("#0E1319"); Rail = C("#3A4757"); UpText = C("#F0A060"); BlueSoft = C("#13284A"); BlueDark = C("#9CC2FF");
-                RowNew = C("#11301D"); RowGone = C("#3B1B1E"); RowSel = C("#1B2B44"); RowHot = C("#1A222C"); Grey = C("#4A5868");
-                lvText[0] = C("#7EE2A8"); lvText[1] = C("#F2CC60"); lvText[2] = C("#FFA198");
-                lvSoft[0] = C("#12301C"); lvSoft[1] = C("#3A2F0B"); lvSoft[2] = C("#3A1A1D");
+                // graphite, not navy (23 Nov): the website's dark
+                Ink = C("#EEF1F5"); Muted = C("#7E8794"); Sub = C("#A9B1BD"); Line = C("#262A31"); Line2 = C("#202329"); Track = C("#262A31"); Soft = C("#1F2329");
+                // review 24 Nov (design ML-4 / L-10), kept on purpose: dark link text is #9CB9FA here, #5B91F7 on the website. Windows
+                // draws text thinner than a browser, so the app's links take the lighter blue (8.8:1 on the card); the website's
+                // value also serves as a button fill, where a lighter blue would fail under white text.
+                Card = C("#181B20"); Bg = C("#111316"); Rail = C("#3A3F47"); UpText = C("#F0A060"); BlueSoft = C("#16233D"); BlueDark = C("#9CB9FA");
+                RowNew = C("#14271F"); RowGone = C("#3A1E1C"); RowSel = C("#1C2638"); RowHot = C("#1C1F24"); Grey = C("#4A5058");
+                lvText[0] = C("#5EF2B0"); lvText[1] = C("#FCD34D"); lvText[2] = C("#FF7A6B");
+                lvSoft[0] = C("#14271F"); lvSoft[1] = C("#3A2E14"); lvSoft[2] = C("#3A1E1C");
+                Green = C("#5EF2B0"); Amber = C("#FCD34D"); Red = C("#FF7A6B");   // the logo's gauge colours, as on the website and phone
             }
-            Blue = C("#1F6FEB"); BlueHot = C("#1A5FCC"); Palette = "standard";
+            Blue = C("#1155E0"); BlueHot = C("#0D47BD"); Palette = "standard";
             // 1.1.5 themes on top of Light / Dark: their own background, cards, lines and main accent. Green, amber and red
             // keep their meaning in every one (only their shades move), and the text stays readable (self-tested).
             string pal = Program.ForceTheme >= 2 && Program.ForceTheme < Palettes.Length + 2 ? Palettes[Program.ForceTheme - 2] : "standard";
@@ -152,6 +171,23 @@ namespace AdeeboMeter
                 for (int i = 0; i < 3; i++) { float gl = glow != null && i < glow.Length ? Math.Max(0, Math.Min(1, glow[i])) : 0, dd = d * (1 + 0.35f * gl); g.FillEllipse(gl > 0.5f ? hb : db, X(xs[i] - dd), Y(42.6f - dd), 2 * dd * k, 2 * dd * k); }
             }
         }
+        // Home's gauge (24 Nov mockup): the logo's three arcs without the blue plate, an ink needle that points at the level
+        // (0 = the green side, 1 = straight up, 2 = the red side). Drawn still - nothing animates it.
+        public static void Gauge(Graphics g, RectangleF r, int level)
+        {
+            var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
+            float d = Math.Min(r.Width, r.Height * 1.55f), w = d * 0.085f;
+            var arc = new RectangleF(r.X + (r.Width - d) / 2 + w, r.Y + w, d - 2 * w, d - 2 * w);
+            float cx = arc.X + arc.Width / 2, cy = arc.Y + arc.Height / 2, rad = arc.Width / 2;
+            foreach (var seg in new[] { new { a = 184f, c = "#5EF2B0" }, new { a = 248f, c = "#FCD34D" }, new { a = 312f, c = "#FF7A6B" } })
+                using (var p = new Pen(C(seg.c), w)) { p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; g.DrawArc(p, arc, seg.a, 44); }
+            double a = (level == 2 ? 48 : level == 1 ? 0 : -48) * Math.PI / 180;
+            using (var pn = new Pen(Ink, Math.Max(1.5f, d * 0.035f))) { pn.StartCap = LineCap.Round; pn.EndCap = LineCap.Round; g.DrawLine(pn, cx, cy, cx + (float)(rad * 0.78 * Math.Sin(a)), cy - (float)(rad * 0.78 * Math.Cos(a))); }
+            using (var hb = new SolidBrush(Ink)) { float h = d * 0.05f; g.FillEllipse(hb, cx - h, cy - h, 2 * h, 2 * h); }
+            g.SmoothingMode = sm;
+        }
+        // one copy of the logo for every window that can show in the taskbar - a window without it showed Windows' plain default icon (1.1.6 test)
+        static Icon appIcon; public static Icon AppIcon { get { if (appIcon == null) appIcon = MakeIcon(32); return appIcon; } }
         public static Icon MakeIcon(int size)
         {
             using (var bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb))
@@ -223,6 +259,14 @@ namespace AdeeboMeter
     // All fonts made once; nothing is created per paint (a lesson from topogram).
     static partial class Draw
     {
+        // review 1.1.6 P4 #7: "h tt" on a Windows format with no AM/PM (French, German, Arabic) loses morning vs evening -
+        // there, use the 24-hour clock instead
+        public static string Tt(string f)
+        {
+            var d = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat;
+            if (!string.IsNullOrEmpty(d.AMDesignator) && !string.IsNullOrEmpty(d.PMDesignator)) return f;
+            return f.Replace("h:mm tt", "H:mm").Replace("h tt", "H':00'").Replace(" tt", "").Replace("tt", "");
+        }
         // a status dot that doesn't rely on colour alone: a problem carries a bar across it, a "worth a look" a short upright
         // stroke - red / amber / green still tell apart for colour-blind eyes and in high contrast
         public static void LvDot(Graphics g, int lv, float x, float y, float w, float h)
@@ -248,14 +292,15 @@ namespace AdeeboMeter
             if (Math.Abs(s - S) < 0.0005f) return;
             if (!sets.ContainsKey(K(S))) sets[K(S)] = Grab();
             Font[] f; if (sets.TryGetValue(K(s), out f)) { Put(f); S = s; return; }
-            if (sets.Count >= 3) foreach (var key in sets.Keys.Where(z => z != K(Base) && z != K(S)).ToList()) { foreach (var x in sets[key]) x.Dispose(); sets.Remove(key); }   // an old zoom: let it go
+            // 1.1.6 PC test: an old zoom's fonts are kept, never disposed - a button made at that zoom still holds one, and a
+            // disposed font throws "Parameter is not valid" on its next paint. Zoom is 80-175 % in steps, so the sets stay few.
             fName = null; Init(s); sets[K(s)] = Grab();
         }
         public static float ViewScale { get { return Base * Math.Max(80, Math.Min(175, Cfg.Zoom)) / 100f; } }
         public static Font fName, fHead, fBody, fBodyB, fMono, fMonoS, fTiny, fPill, fSmall, fBig, fTitle, fInput;
         static readonly Bitmap measureBmp = new Bitmap(1, 1);
         static Graphics measureG;
-        public static Font fHero, fValue, fCardNum, fZ, fBtn;   // fBtn: buttons and tabs (Inter SemiBold)   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
+        public static Font fHero, fValue, fCardNum, fZ, fBtn;   // fBtn: buttons and tabs (Barlow Bold)   // fCardNum: the 26 px number on the Gamer / metric cards; fZ: the sleeping buddy's "z"
         public static string Fam(params string[] names)
         {
             try
@@ -269,50 +314,75 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("fonts: " + e.Message); }
             return names[names.Length - 1];
         }
-        // Inter (assets\fonts, SIL Open Font License): the UI font for titles, headings, buttons and big numbers - the look
-        // the drawing kit is built around (PLAN 11.2). Loaded once from the exe into this process only (nothing installed);
-        // body text stays on Windows' own font so names in any script (a Chinese Wi-Fi name...) still get Windows' fallback.
-        static System.Drawing.Text.PrivateFontCollection inter;
-        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", SmallFam = "";
-        public static FontStyle UiSemiStyle = FontStyle.Bold;
-        static void LoadInter()
+        // Barlow (assets\fonts, SIL Open Font License - OFL-Barlow.txt): the same type as the website and the phone app (23 Nov).
+        // 24 Nov: one step heavier than the website - Windows draws Barlow thinner than a browser does (Adeeb: "looks thinner on my
+        // PC"): Barlow SemiBold for the writing, Barlow Bold for labels and buttons, Barlow Semi Condensed Bold for headings and big
+        // numbers. Their digits are the fixed-width ones (remapped when the fonts were made), so live numbers never jitter.
+        // Loaded once from the exe into this process only (nothing installed); Arabic and Bengali keep Windows' own faces.
+        static System.Drawing.Text.PrivateFontCollection brand;
+        public static string UiFam = "Segoe UI", UiSemi = "Segoe UI", UiDisp = "Segoe UI";
+        public static FontStyle UiFamStyle = FontStyle.Regular, UiSemiStyle = FontStyle.Bold, UiDispStyle = FontStyle.Bold;
+        static void LoadBrand()
         {
+            if (brand != null) return;   // once per process: a zoom change makes new sizes, not new copies of the font files
             try
             {
                 var asm = typeof(Draw).Assembly; var pfc = new System.Drawing.Text.PrivateFontCollection();
-                // Inter for the writing; Nunito Bold for the small writing (Adeeb, 16 Nov: "rounder and thicker, easy to read")
-                foreach (var w in new[] { "Inter-Regular", "Inter-SemiBold", "Inter-Bold", "Nunito-Bold" })
-                    using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
+                foreach (var w in new[] { "Barlow-SemiBold", "Barlow-Bold", "BarlowSemiCondensed-SemiBold", "BarlowSemiCondensed-Bold" })
+                    // R2-080: each font on its own - a damaged one never takes the others with it
+                    try
                     {
-                        if (rs == null) { if (w.StartsWith("Inter", StringComparison.Ordinal)) return; continue; }
-                        byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
-                        IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
-                        pfc.AddMemoryFont(mem, data.Length);
-                        uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
+                        using (var rs = asm.GetManifestResourceStream("AdeeboMeter.font." + w + ".gz"))
+                        {
+                            if (rs == null) { Program.Log("font " + w + ": not in the exe"); continue; }
+                            byte[] data; using (var gz = new System.IO.Compression.GZipStream(rs, System.IO.Compression.CompressionMode.Decompress)) using (var ms = new MemoryStream()) { gz.CopyTo(ms); data = ms.ToArray(); }
+                            IntPtr mem = Marshal.AllocCoTaskMem(data.Length); Marshal.Copy(data, 0, mem, data.Length);   // kept for the life of the process: GDI+ and GDI read the font from it
+                            pfc.AddMemoryFont(mem, data.Length);
+                            uint n; Native.AddFontMemResourceEx(mem, (uint)data.Length, IntPtr.Zero, out n);   // the same font for GDI (Windows text boxes and labels)
+                        }
                     }
-                inter = pfc;
-                foreach (var f in pfc.Families) { if (f.Name == "Nunito") SmallFam = "Nunito"; if (f.Name == "Inter") UiFam = "Inter"; else if (f.Name.StartsWith("Inter Semi", StringComparison.Ordinal)) { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; } }
-                if (UiFam == "Inter" && UiSemi == "Segoe UI") { UiSemi = "Inter"; UiSemiStyle = FontStyle.Bold; }
+                    catch (Exception fe) { Program.Log("font " + w + ": " + fe.Message); }   // GDI+ reports a bad font file as OutOfMemoryException too
+                brand = pfc;
+                foreach (var f in pfc.Families)
+                {
+                    if (f.Name == "Barlow SemiBold") { UiFam = f.Name; UiFamStyle = FontStyle.Regular; }
+                    else if (f.Name == "Barlow Bold") { UiSemi = f.Name; UiSemiStyle = FontStyle.Regular; }
+                    else if (f.Name == "Barlow Semi Condensed" && f.IsStyleAvailable(FontStyle.Bold)) { UiDisp = f.Name; UiDispStyle = FontStyle.Bold; }
+                }
+                // one missing weight borrows its neighbour, so the type stays one family
+                if (UiSemi == "Segoe UI" && UiFam != "Segoe UI") { UiSemi = UiFam; UiSemiStyle = FontStyle.Bold; }
+                if (UiDisp == "Segoe UI" && UiSemi != "Segoe UI") { UiDisp = UiSemi; UiDispStyle = UiSemiStyle; }
             }
-            catch (Exception e) { Program.Log("Inter font: " + e.Message); UiFam = UiSemi = "Segoe UI"; UiSemiStyle = FontStyle.Bold; }
+            catch (Exception e) { Program.Log("Barlow font: " + e.Message); UiFam = UiSemi = UiDisp = "Segoe UI"; UiFamStyle = FontStyle.Regular; UiSemiStyle = UiDispStyle = FontStyle.Bold; }
         }
+        // the newspaper mastheads (Sports, Markets): Windows' Georgia - a serif every PC has, no extra font in the exe
+        public static Font Serif(float px, bool black)
+        {
+            return new Font(L.IsRtl ? "Segoe UI" : L.Code == "bn" ? BengaliFontFamily : "Georgia", px, FontStyle.Bold, GraphicsUnit.Pixel);
+        }
+        public static FontFamily UiFamilyName() { return UiFamily(UiFam); }
         static FontFamily UiFamily(string name)
         {
-            if (inter != null) foreach (var f in inter.Families) if (f.Name == name) return f;
+            if (brand != null) foreach (var f in brand.Families) if (f.Name == name) return f;
             return new FontFamily(name);
         }
         static string bengaliFontFamily;
+        public static string LangFamily { get { return L.Code == "bn" ? BengaliFontFamily : "Segoe UI"; } }   /* review 1.1.6 U1 #16: report and freeze card */
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
-        static Font Ui(string fam, float px, FontStyle st) { return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
-        // Inter/Nunito do not contain Arabic glyphs. Use Windows' Arabic-capable
-        // UI face after loading the saved language, before creating controls.
-        public static void UseArabicFonts()
-        {
-            UseLanguageFonts();
-        }
+        // 24 Nov (Adeeb: "very small fonts still have the pixelated issue"): ClearType grid-fitting snaps each letter to whole
+        // pixels, and a size like 11.5 or 13.75 px (half sizes times 125%) leaves the strokes landing between pixels - the small
+        // text came out uneven. Every size is now a whole pixel, and nothing goes under 12 px.
+        public static float Px(float px) { return Math.Max(12f, (float)Math.Round(px)); }
+        static Font Ui(string fam, float px, FontStyle st) { px = Px(px); return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        // the self-test's language pass switches fonts for bn / ar and back: it keeps the set it started with and puts it back
+        public static object SaveFonts() { return new object[] { Grab(), S }; }
+        public static void RestoreFonts(object saved) { var o = (object[])saved; Put((Font[])o[0]); S = (float)o[1]; sets.Clear(); }
         public static void UseLanguageFonts()
         {
             if (!L.IsRtl && L.Code != "bn") return;
+            // R2-079: the zoom cache may hold these very fonts - empty it first (fonts not in use now are let go), so a zoom back
+            // never puts a disposed font in use
+            sets.Clear();   // fonts aren't disposed here: a window or button made earlier may still hold one (a disposed font throws on paint)
             fName = ArabicFont(fName); fHead = ArabicFont(fHead);
             fBody = ArabicFont(fBody); fBodyB = ArabicFont(fBodyB);
             fSmall = ArabicFont(fSmall); fTiny = ArabicFont(fTiny);
@@ -325,41 +395,35 @@ namespace AdeeboMeter
         {
             if (old == null) return old;
             var font = new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, old.Size, old.Style, GraphicsUnit.Pixel);
-            old.Dispose(); return font;
+            return font;   // the old one stays valid for whoever holds it
         }
         public static void Init(float s)
         {
             if (fName != null) return;
-            S = s; LoadInter();
-            // Windows 11 type (Segoe UI Variable, Cascadia Mono) when it's there; Windows 10 falls back to Segoe UI / Consolas.
-            string text = Fam("Segoe UI Variable Text", "Segoe UI"), disp = Fam("Segoe UI Variable Display", "Segoe UI"), semi = Fam("Segoe UI Semibold", "Segoe UI"), mono = Fam("Cascadia Mono", "Consolas");
-            FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
-            // GDI+ can't pick a variable font's real bold - it smears the regular one. Bold text uses Segoe UI's true bold.
-            if (disp.IndexOf("Variable", StringComparison.Ordinal) >= 0) disp = "Segoe UI";
-            string tb = text.IndexOf("Variable", StringComparison.Ordinal) >= 0 ? "Segoe UI" : text;
-            fName = Ui(UiFam, 12.5f * S, FontStyle.Bold);
-            fHead = Ui(UiSemi, 13.5f * S, UiSemiStyle);
-            // 1.1.5: the writing is Inter too - one modern typeface from headline to footnote (Segoe UI only if Inter failed to load)
-            fBody = Ui(UiFam, 12.5f * S, FontStyle.Regular);
-            fBodyB = Ui(UiSemi, 12.5f * S, UiSemiStyle);
-            // Adeeb, 14 Nov: "the small writing is not even sharp" - Inter has no hinting, so below 12 px it goes soft on Windows.
-            // The small sizes use Windows' own text face (hinted for exactly these sizes); headings and body stay Inter.
-            // Adeeb, 16 Nov (option D): the small writing is Nunito Bold - round, thick, easy to read; Windows' own face if it didn't load
-            fSmall = SmallFam != "" ? Ui(SmallFam, 13 * S, FontStyle.Bold) : new Font(text, 12 * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fMono = new Font(mono, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fMonoS = new Font(mono, 10.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fTiny = SmallFam != "" ? Ui(SmallFam, 11.5f * S, FontStyle.Bold) : new Font(semi, 10.5f * S, semiStyle, GraphicsUnit.Pixel);   // the small capitals
-            fPill = new Font(semi, 11 * S, semiStyle, GraphicsUnit.Pixel);
-            fBig = Ui(UiFam, 20 * S, FontStyle.Bold);
-            fTitle = Ui(UiFam, 16 * S, FontStyle.Bold);
-            fHero = Ui(UiFam, 30 * S, FontStyle.Bold);
-            fValue = Ui(UiFam, 14 * S, FontStyle.Bold);
-            fCardNum = Ui(UiSemi, 26 * S, UiSemiStyle); fBtn = Ui(UiSemi, 12.5f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fInput = Ui(UiFam, 13 * S, FontStyle.Regular);
-            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+            S = s; LoadBrand();
+            string mono = Fam("Cascadia Mono", "Consolas"), tb = "Segoe UI";
+            // one family, three weights, the same roles as the website: headings and big numbers in Barlow Semi Condensed Bold,
+            // labels and buttons in Barlow Bold, the writing in Barlow SemiBold (24 Nov). Barlow is narrower than Inter, so the
+            // sizes are half a pixel up to keep the same reading size. Monospace is for code and captures only.
+            fName = Ui(UiDisp, 13.5f * S, UiDispStyle);
+            fHead = Ui(UiSemi, 14f * S, UiSemiStyle);
+            fBody = Ui(UiFam, 13.5f * S, UiFamStyle);
+            fBodyB = Ui(UiSemi, 13f * S, UiSemiStyle);
+            fSmall = Ui(UiFam, 13f * S, UiFamStyle);
+            fMono = new Font(mono, Px(12f * S), FontStyle.Regular, GraphicsUnit.Pixel);
+            fMonoS = new Font(mono, Px(11f * S), FontStyle.Regular, GraphicsUnit.Pixel);
+            fTiny = Ui(UiSemi, 12f * S, UiSemiStyle);
+            fPill = Ui(UiSemi, 11.5f * S, UiSemiStyle);
+            fBig = Ui(UiDisp, 21 * S, UiDispStyle);
+            fTitle = Ui(UiDisp, 17 * S, UiDispStyle);
+            fHero = Ui(UiDisp, 31 * S, UiDispStyle);
+            fValue = Ui(UiDisp, 15 * S, UiDispStyle);
+            fCardNum = Ui(UiDisp, 27 * S, UiDispStyle); fBtn = Ui(UiSemi, 13f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            fInput = Ui(UiFam, 13.5f * S, UiFamStyle);
+            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; measureG.TextContrast = Contrast;   /* measured as the windows draw */
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)
-        static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>();
+        static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>(); static readonly Queue<string> measuredOrder = new Queue<string>();
         public static SizeF Measure(string t, Font f, int width)
         {
             t = t ?? ""; string key = f.Name + "|" + f.Size.ToString("R", CultureInfo.InvariantCulture) + "|" + (int)f.Style + "|" + width.ToString(CultureInfo.InvariantCulture) + "|" + t;   // the font's own name, size and style (its hash ignores the family)
@@ -367,14 +431,15 @@ namespace AdeeboMeter
             {
                 SizeF sz; if (measured.TryGetValue(key, out sz)) return sz;
                 sz = width > 0 ? measureG.MeasureString(t, f, width) : measureG.MeasureString(t, f);
-                if (measured.Count > 3000) measured.Clear();
-                measured[key] = sz; return sz;
+                // bug-hunt L-262: the oldest thousand go when it's full - the rest of the page's text stays measured
+                if (measured.Count >= 3000) for (int i = 0; i < 1000 && measuredOrder.Count > 0; i++) measured.Remove(measuredOrder.Dequeue());
+                measured[key] = sz; measuredOrder.Enqueue(key); return sz;
             }
         }
         // the corner widget can be drawn a little bigger (tray menu > Bigger widget): same layout, scaled when drawn, so text stays sharp
         public static float WidgetK { get { return Cfg.BigWidget ? 1.3f : 1f; } }
         static Graphics PrepW(Bitmap b) { var g = Prep(b); g.ScaleTransform(WidgetK, WidgetK); return g; }
-        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit; g.Clear(Color.Transparent); return g; }
+        static Graphics Prep(Bitmap b) { var g = Graphics.FromImage(b); g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = ImageText; g.TextContrast = Contrast; g.Clear(Color.Transparent); return g; }
         public static string Fmt(double v, string f, string unit) { return double.IsNaN(v) ? "-" : v.ToString(f, CultureInfo.CurrentCulture) + unit; }
         public static string Trunc(string s, int n)
         {
@@ -389,6 +454,12 @@ namespace AdeeboMeter
         // Your Wi-Fi or router: dizzy. Past the router (provider, DNS, internet) red: betrayed. Amber anywhere: worried. Asleep
         // on the folded chip while all is quiet. Drawn with a few lines - no pictures, nothing loaded.
         public static string BuddyMood(Snap s)
+        {
+            // a reaction first (a tool run, an outage starting or ending...) - never on a replayed minute
+            string re = s != null && !(s.Chip ?? "").StartsWith("«", StringComparison.Ordinal) ? BuddyReact.Now(s.Level) : null;
+            return re ?? BaseMood(s);
+        }
+        public static string BaseMood(Snap s)
         {
             int worst = -1, lv = 0; for (int i = 0; i < 5 && i < s.Path.Length; i++) if (s.Path[i] >= 1 && s.Path[i] <= 2 && s.Path[i] > lv) { lv = s.Path[i]; worst = i; }
             if (lv == 0) return "smug"; if (lv == 1) return worst == 0 ? "sweaty" : "worried";
@@ -443,7 +514,17 @@ namespace AdeeboMeter
         }
         // the window's text: ClearType when Windows uses it (sharp on an LCD, on the window's solid backgrounds), plain
         // smoothing otherwise; the corner widget keeps plain smoothing (it's drawn on see-through pixels)
-        public static TextRenderingHint WindowText { get { try { return SystemInformation.IsFontSmoothingEnabled && SystemInformation.FontSmoothingType == 2 ? TextRenderingHint.ClearTypeGridFit : TextRenderingHint.AntiAliasGridFit; } catch (InvalidOperationException) { return TextRenderingHint.AntiAliasGridFit; } } }
+        // 22 Nov (Adeeb): ClearType grid-fit looked jagged ("writing is not very smooth"); plain anti-aliasing then spaced letters
+        // unevenly ("some words look broken"). Grey anti-aliasing with grid fitting: smooth edges, letters on whole pixels, even spacing
+        // web-like text (Adeeb, 22 Nov: "doesn't look web standard yet"): browsers on Windows draw grey anti-aliased text with a
+        // stronger gamma than GDI+'s default (4), so the strokes look fuller and evener. 1 is close to Chrome/Edge at 13-15 px.
+        // 23 Nov (Adeeb, textlab on his PC): contrast 1 with grid-fitting is what made the letters jagged - every row drawn that
+        // way looked broken, while contrast 4 looked right. Windows (opaque): ClearType + grid-fit at 4 (his pick D, closest to
+        // Windows' own text). Anything drawn on see-through pixels or saved as a picture - the corner widget, cards, exports -
+        // can't use ClearType: plain grey smoothing at 4 (his pick C) - see Draw.ImageText.
+        public const int Contrast = 4;
+        public static TextRenderingHint WindowText { get { return TextRenderingHint.ClearTypeGridFit; } }
+        public static TextRenderingHint ImageText { get { return TextRenderingHint.AntiAlias; } }
         // the calm face of a mood (the buddy sheet's chips)
         public static string MoodEmoji(string mood) { switch (mood) { case "roast": return "1f60f"; case "hype": return "1f929"; case "support": return "1f60a"; case "bossy": return "1f624"; case "emo": return "1f614"; case "plain": return "1f610"; default: return "1f60c"; } }
         // the face for a state; the calm face follows the mood
@@ -482,11 +563,12 @@ namespace AdeeboMeter
         // forFile: a picture that gets saved or shared - never the surprise face or the hour mark (they're on-screen moments)
         public static void Buddy(Graphics g, RectangleF r, Snap s, bool asleep, bool forFile)
         {
-            string m = asleep ? "asleep" : BuddyMood(s);
-            string hm = asleep || forFile ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
-            string face = !forFile && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
-            if (!forFile) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment (12 s) or the weather (2.5 min) wakes the folded chip too
-            if (face == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
+            string re = asleep || forFile || s == null || (s.Chip ?? "").StartsWith("«", StringComparison.Ordinal) ? null : BuddyReact.Now(s.Level);
+            string m = asleep ? "asleep" : re ?? BaseMood(s);
+            string hm = asleep || forFile || re != null ? null : HourMark(s, DateTime.Now); if (hm != null) m = hm;
+            string face = !forFile && re == null && (m == "smug" || m == "smile") ? SurpriseFace(DateTime.Today) : null;
+            if (!forFile && re == null) { string mf = Moments.FaceFor(s); if (mf != null) face = mf; }   // a moment (12 s) or the weather (2.5 min) wakes the folded chip too
+            if (face == null && re == null && Cfg.BuddyFace == "emoji" && !forFile) face = EmojiFor(m);   // a reaction is always the drawn round face   // a saved picture keeps the drawn face (no third-party artwork to credit inside a shared image)
             var em = face != null ? Emoji(face) : null;
             if (em != null)
             {
@@ -496,10 +578,14 @@ namespace AdeeboMeter
                 return;
             }
             if (m == "smile") m = "smug";
-            Color body = m == "betrayed" || m == "dizzy" ? Theme.LvSoft(2) : m == "worried" || m == "sweaty" ? Theme.LvSoft(1) : Theme.LvSoft(0);
-            Color ink = Theme.Dark ? Color.FromArgb(230, 235, 240) : Color.FromArgb(40, 48, 60);
-            using (var b = new SolidBrush(body)) g.FillEllipse(b, r);
-            using (var p = new Pen(m == "betrayed" || m == "dizzy" ? Theme.Red : m == "worried" || m == "sweaty" ? Theme.Amber : Theme.Green, Math.Max(1f, r.Width / 16))) g.DrawEllipse(p, r);
+            // the colour says how things are: red family for trouble, amber for a worry, grey for no answer / asleep, green otherwise
+            bool redF = m == "betrayed" || m == "dizzy" || m == "tears" || m == "shout" || m == "angry" || m == "frustrated" || m == "gloom" || m == "sad";
+            bool ambF = m == "worried" || m == "sweaty"; bool greyF = m == "speechless";
+            // 21 Nov (Adeeb: "3 colours, distracting - do vector 2D"): flat, one colour that says how things are
+            Color body = redF ? Theme.Red : ambF ? Theme.Amber : greyF ? Theme.Muted : Theme.Green;
+            // 22 Nov (Adeeb: "the inside was transparent before"): no filled disc - a round outline and the features, all in that one colour
+            Color ink = body;
+            using (var ring = new Pen(body, Math.Max(1.2f, r.Width / 14f))) { float iw = ring.Width / 2; g.DrawEllipse(ring, r.X + iw, r.Y + iw, r.Width - 2 * iw, r.Height - 2 * iw); }
             float u = r.Width / 20f, cx = r.X + r.Width / 2, ey = r.Y + 8 * u, ex = 4 * u;
             using (var p = new Pen(ink, Math.Max(1f, 1.4f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
             using (var b = new SolidBrush(ink))
@@ -510,7 +596,7 @@ namespace AdeeboMeter
                     case "asleep":
                         g.DrawArc(p, cx - ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140); g.DrawArc(p, cx + ex - 2 * u, ey - u, 4 * u, 3 * u, 20, 140);
                         g.DrawLine(p, cx - 1.5f * u, r.Y + 14 * u, cx + 1.5f * u, r.Y + 14 * u);
-                        using (var zb = new SolidBrush(Theme.Muted)) g.DrawString("z", fZ ?? fTiny, zb, r.Right - 4 * u, r.Y - 2 * u);
+                        using (var zb = new SolidBrush(body)) g.DrawString("z", fZ ?? fTiny, zb, r.Right - 4 * u, r.Y - 2 * u);
                         break;
                     case "smug":
                         g.DrawLine(p, cx - ex - 1.5f * u, ey, cx - ex + 1.5f * u, ey);   // half-closed, pleased
@@ -525,32 +611,100 @@ namespace AdeeboMeter
                     case "sweaty":
                         g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
                         g.DrawArc(p, cx - 3 * u, r.Y + 13 * u, 6 * u, 4 * u, 200, 140);
-                        using (var db = new SolidBrush(Color.FromArgb(90, 160, 230))) g.FillEllipse(db, r.X + 16 * u, r.Y + 3.2f * u, 2.2f * u, 3.2f * u);   // a drop of sweat
+                        using (var db = new SolidBrush(Color.FromArgb(210, body))) g.FillEllipse(db, r.X + 16 * u, r.Y + 3.2f * u, 2.2f * u, 3.2f * u);   // a drop of sweat
                         break;
                     case "dizzy":
                         foreach (var dx in new[] { -ex, ex }) { g.DrawLine(p, cx + dx - 1.5f * u, ey - 1.5f * u, cx + dx + 1.5f * u, ey + 1.5f * u); g.DrawLine(p, cx + dx - 1.5f * u, ey + 1.5f * u, cx + dx + 1.5f * u, ey - 1.5f * u); }
                         g.DrawEllipse(p, cx - 1.5f * u, r.Y + 12.5f * u, 3 * u, 3 * u);
                         break;
+                    // ---- 21 Nov: the reactions (BuddyReact) - still the round face, small marks around it
+                    case "happy":
+                    case "sparkle":
+                    case "love":
+                    case "blush":
+                        g.DrawArc(p, cx - ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140); g.DrawArc(p, cx + ex - 1.6f * u, ey - 0.6f * u, 3.2f * u, 2.6f * u, 200, 140);   // ^ ^
+                        g.DrawArc(p, cx - 4 * u, r.Y + 9.5f * u, 8 * u, 5.5f * u, 20, 140);   // a wide smile
+                        if (m == "blush") using (var cb = new SolidBrush(Color.FromArgb(110, body))) { g.FillEllipse(cb, cx - ex - 2.6f * u, ey + 2 * u, 3 * u, 1.8f * u); g.FillEllipse(cb, cx + ex - 0.4f * u, ey + 2 * u, 3 * u, 1.8f * u); }
+                        if (m == "sparkle") Star(g, r.Right - 2.5f * u, r.Y + 2.5f * u, 2.6f * u, body);
+                        if (m == "love") Heart(g, r.Right - 3 * u, r.Y + 1.5f * u, 3.2f * u, body);
+                        break;
+                    case "sad":
+                    case "tears":
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        g.DrawArc(p, cx - 3 * u, r.Y + 13.5f * u, 6 * u, 4 * u, 200, 140);   // a frown
+                        if (m == "tears") using (var tp = new Pen(Color.FromArgb(210, body), Math.Max(1f, 1.2f * u)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round })
+                            { g.DrawLine(tp, cx - ex, ey + 2.2f * u, cx - ex, ey + 6.5f * u); g.DrawLine(tp, cx + ex, ey + 2.2f * u, cx + ex, ey + 6.5f * u); }
+                        break;
+                    case "gloom":
+                        g.DrawLine(p, cx - ex - 1.6f * u, ey + 0.5f * u, cx - ex + 1.6f * u, ey + 0.5f * u); g.DrawLine(p, cx + ex - 1.6f * u, ey + 0.5f * u, cx + ex + 1.6f * u, ey + 0.5f * u);   // heavy lids
+                        g.DrawLine(p, cx - 2.5f * u, r.Y + 14 * u, cx + 2.5f * u, r.Y + 14 * u);
+                        using (var gp = new Pen(body, Math.Max(1f, 0.9f * u)) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash })
+                            for (int i = 0; i < 3; i++) g.DrawLine(gp, cx - 3 * u + i * 3 * u, r.Y - 3.5f * u, cx - 3 * u + i * 3 * u, r.Y + 0.5f * u);   // the cloud of gloom
+                        break;
+                    case "angry":
+                    case "shout":
+                        g.DrawLine(p, cx - ex - 2 * u, ey - 3.6f * u, cx - ex + 1.6f * u, ey - 2.4f * u); g.DrawLine(p, cx + ex + 2 * u, ey - 3.6f * u, cx + ex - 1.6f * u, ey - 2.4f * u);   // brows down
+                        g.FillEllipse(b, cx - ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u); g.FillEllipse(b, cx + ex - 1.2f * u, ey - u, 2.4f * u, 2.4f * u);
+                        if (m == "shout") g.FillEllipse(b, cx - 2.2f * u, r.Y + 12 * u, 4.4f * u, 4 * u); else g.DrawLine(p, cx - 3 * u, r.Y + 14 * u, cx + 3 * u, r.Y + 14 * u);
+                        using (var ap = new Pen(body, Math.Max(1f, 1.1f * u)))   // the anger mark
+                        { float ax = r.Right - 3 * u, ay = r.Y + 2 * u; g.DrawArc(ap, ax - 2 * u, ay - 2 * u, 2 * u, 2 * u, 0, 90); g.DrawArc(ap, ax, ay - 2 * u, 2 * u, 2 * u, 90, 90); g.DrawArc(ap, ax - 2 * u, ay, 2 * u, 2 * u, 270, 90); g.DrawArc(ap, ax, ay, 2 * u, 2 * u, 180, 90); }
+                        break;
+                    case "frustrated":
+                        foreach (var dx in new[] { -ex, ex }) { float sx = dx < 0 ? 1 : -1; g.DrawLine(p, cx + dx - 1.4f * u * sx, ey - 1.4f * u, cx + dx + 1.4f * u * sx, ey); g.DrawLine(p, cx + dx + 1.4f * u * sx, ey, cx + dx - 1.4f * u * sx, ey + 1.4f * u); }   // > <
+                        g.DrawLines(p, new[] { new PointF(cx - 3.5f * u, r.Y + 14 * u), new PointF(cx - 1.75f * u, r.Y + 13 * u), new PointF(cx, r.Y + 14 * u), new PointF(cx + 1.75f * u, r.Y + 13 * u), new PointF(cx + 3.5f * u, r.Y + 14 * u) });
+                        break;
+                    case "speechless":
+                        g.FillEllipse(b, cx - ex - 0.9f * u, ey - 0.6f * u, 1.8f * u, 1.8f * u); g.FillEllipse(b, cx + ex - 0.9f * u, ey - 0.6f * u, 1.8f * u, 1.8f * u);
+                        g.DrawLine(p, cx - 2 * u, r.Y + 14 * u, cx + 2 * u, r.Y + 14 * u);
+                        using (var db = new SolidBrush(body)) for (int i = 0; i < 3; i++) g.FillEllipse(db, r.Right - 6 * u + i * 2.4f * u, r.Y - 0.5f * u, 1.6f * u, 1.6f * u);   // ...
+                        break;
                     default:   // betrayed: wide eyes, a wobbly frown, one tear (a hat, if any, is drawn after the switch)
                         g.FillEllipse(b, cx - ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u); g.FillEllipse(b, cx + ex - 1.8f * u, ey - 1.8f * u, 3.6f * u, 3.6f * u);   // big wet eyes: dark, with a shine
-                        using (var hb = new SolidBrush(Color.White)) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
+                        using (var hb = new SolidBrush(Color.FromArgb(235, Theme.Card))) { g.FillEllipse(hb, cx - ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); g.FillEllipse(hb, cx + ex - 0.2f * u, ey - 1.2f * u, 1.2f * u, 1.2f * u); }
                         g.DrawArc(p, cx - 3.5f * u, r.Y + 13.5f * u, 7 * u, 4 * u, 200, 140);
-                        using (var tb = new SolidBrush(Color.FromArgb(90, 160, 230))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
+                        using (var tb = new SolidBrush(Color.FromArgb(210, body))) g.FillEllipse(tb, cx - ex - 0.8f * u, ey + 3.2f * u, 1.6f * u, 2.6f * u);
                         break;
                 }
             }
             if (!asleep && r.Width >= 22 * S) { string h = HatNow(); if (h != "") Hat(g, r, h); }
         }
+        static void Star(Graphics g, float x, float y, float rad, Color c)
+        {
+            var pts = new PointF[8]; for (int i = 0; i < 8; i++) { double a = Math.PI / 4 * i - Math.PI / 2; float rr = i % 2 == 0 ? rad : rad * 0.35f; pts[i] = new PointF(x + (float)Math.Cos(a) * rr, y + (float)Math.Sin(a) * rr); }
+            using (var b = new SolidBrush(c)) g.FillPolygon(b, pts);
+        }
+        static void Heart(Graphics g, float x, float y, float w, Color c)
+        {
+            using (var gp = new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                gp.AddBezier(x, y + w * 0.3f, x, y - w * 0.1f, x - w * 0.5f, y - w * 0.1f, x - w * 0.5f, y + w * 0.3f);
+                gp.AddBezier(x - w * 0.5f, y + w * 0.3f, x - w * 0.5f, y + w * 0.6f, x, y + w * 0.8f, x, y + w);
+                gp.AddBezier(x, y + w, x, y + w * 0.8f, x + w * 0.5f, y + w * 0.6f, x + w * 0.5f, y + w * 0.3f);
+                gp.AddBezier(x + w * 0.5f, y + w * 0.3f, x + w * 0.5f, y - w * 0.1f, x, y - w * 0.1f, x, y + w * 0.3f);
+                using (var b = new SolidBrush(c)) g.FillPath(b, gp);
+            }
+        }
+        // the folded chip's words: a tile preset's own, the game's ping while the gamer card is up, else the verdict's
+        public static string ChipWords(Snap s)
+        {
+            string st = Style;
+            // hunters12 display M-1, hunters13 ML-1: a slow or broken network folds a tile preset to the verdict ("Busy", "Problem"),
+            // not a price; the gamer card's ping gives way to it on a real problem (the game's own ping still shows when it's only slow)
+            bool lv = (s.Level == 1 || s.Level == 2) && !s.Waiting;
+            if (Corner.IsTile(st) && !lv) { var w = TileChip(st, s); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            if (!SpeedStyle && Layout(s.Call) == "gamer" && !(s.Level == 2 && !s.Waiting)) { var w = GamerChip(); if (!string.IsNullOrEmpty(w)) return Trunc(w, 48); }
+            return Trunc(s.Chip, 48);   /* display L-5: never wider than the strip was meant to be */
+        }
         public static Bitmap Chip(Snap s, double dwell)
         {
             if (SpeedStyle) return SpeedChip(s, dwell);
-            var ts = Measure(s.Chip, fSmall, 0);
-            float ww = Layout(s.Call) == "everyday" ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            string words = ChipWords(s); var ts = Measure(words, fSmall, 0);
+            float ww = Layout(s.Call) == "everyday" && !Corner.IsTile(Style) ? WeatherChipW() : 0; /* AM-CG-212: weather on the chip only where the open card shows it too */ int W = (int)(9 * S + 16 * S + 6 * S + 8 * S + 6 * S + ts.Width + 9 * S + (Cfg.Buddy ? 8 * S : 0) + ww), H = (int)(26 * S);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             {
                 var r = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
-                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); Theme.Stroke(g, r, H / 2f, Theme.Line, 1);
+                Theme.Fill(g, r, H / 2f, Color.FromArgb(246, Theme.Card)); bool bad = (s.Level == 1 || s.Level == 2) && !s.Waiting; Theme.Stroke(g, r, H / 2f, bad ? Theme.Lv(s.Level) : Theme.Line, bad ? 1.5f : 1);   /* hunters12 display M-1: a problem shows on the folded strip, not only in its 8 px dot */
                 float x = 9 * S;
                 if (Cfg.Buddy) { Buddy(g, new RectangleF(x - 2 * S, (H - 20 * S) / 2, 20 * S, 20 * S), s, s.Level == 0 && !s.Call); x += 36 * S; }   // folded and all quiet: asleep
                 else
@@ -558,13 +712,13 @@ namespace AdeeboMeter
                     Theme.Logo(g, new RectangleF(x, (H - 16 * S) / 2, 16 * S, 16 * S), false); x += 22 * S;
                     using (var b = new SolidBrush(Theme.Lv(s.Level))) g.FillEllipse(b, x, (H - 8 * S) / 2, 8 * S, 8 * S); x += 14 * S;
                 }
-                using (var b = new SolidBrush(Theme.Ink)) g.DrawString(s.Chip, fSmall, b, x, (H - ts.Height) / 2);
+                using (var b = new SolidBrush(Theme.Ink)) g.DrawString(words, fSmall, b, x, (H - ts.Height) / 2);
                 if (ww > 0) WeatherChipDraw(g, x + ts.Width + 6 * S, H);
                 if (dwell > 0)
                 {
                     var tr = new RectangleF(10 * S, H - 4 * S, W - 20 * S, 2 * S);
                     using (var b = new SolidBrush(Theme.Track)) g.FillRectangle(b, tr);
-                    using (var b = new SolidBrush(Theme.Blue)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
+                    using (var b = new SolidBrush(Theme.BlueLine)) g.FillRectangle(b, tr.X, tr.Y, tr.Width * (float)Math.Min(1, dwell), tr.Height);
                 }
             }
             return bmp;
@@ -596,12 +750,14 @@ namespace AdeeboMeter
             double now = v.Length > 0 ? v[v.Length - 1] : double.NaN, avg = GameStat.Avg(v), jit = GameStat.Jitter(v), loss = GameStat.Loss(v);
             string grade = v.Length == 0 ? "Waiting" : GameStat.Grade(avg, jit, double.IsNaN(loss) ? 0 : loss);
             Color gc = grade == "Competitive" ? Theme.Green : grade == "Casual" ? Theme.Amber : grade == "Laggy" ? Theme.Red : Theme.Grey;
-            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.FirstOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);
-            string head = last != null ? "Spike " + Math.Round(last.Ms) + " ms: " + last.Blame + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? " is steady." : grade == "Casual" ? " is playable." : grade == "Laggy" ? " is laggy." : "...");
+            Color gt = grade == "Competitive" ? Theme.LvText(0) : grade == "Casual" ? Theme.LvText(1) : grade == "Laggy" ? Theme.LvText(2) : Theme.Muted;   // H6-ML3: text in the grade's readable shade (4.5:1), the raw colour only for the wash and the graph
+            Spike last = null; lock (GamePing.Me.Spikes) last = GamePing.Me.Spikes.LastOrDefault(z => z.Game == t.Item1.Id && (DateTime.Now - z.T).TotalSeconds < 20);   /* hunters12 data L4: the latest spike */
+            string head = last != null ? L.T("Spike") + " " + Math.Round(last.Ms) + " ms: " + L.T(last.Blame) + "." : t.Item1.Name + " · " + t.Item2.Name + (grade == "Competitive" ? L.T(" is steady.") : grade == "Casual" ? L.T(" is playable.") : grade == "Laggy" ? L.T(" is laggy.") : "...");
+            string gradeW = L.T(grade);   /* review 1.1.6 U4 #3 */
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + 30 * S + pad);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + 20 * S + 14 * S + PathStripH + pad);   // test4 pictures: the strip's names under the dots were cut off
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -610,28 +766,28 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
-                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure("GAME", fTiny, 0).Width + 10 * S, 15 * S);
-                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(L.T("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
+                var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent("GAME"), fTiny, 0).Width + 10 * S, 15 * S);
+                Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
+                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, H, inner, wh); y += 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
-                var bf = fCardNum; using (var bb = new SolidBrush(gc))
+                var bf = fCardNum; using (var bb = new SolidBrush(gt))
                 {
                     g.DrawString(big, bf, bb, pad - 2 * S, y); float bw = g.MeasureString(big, bf).Width;
                     g.DrawString(L.T("ms"), fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
-                var gp = new RectangleF(W - pad - Measure(grade.ToUpperInvariant(), fTiny, 0).Width - 12 * S, y + 12 * S, Measure(grade.ToUpperInvariant(), fTiny, 0).Width + 12 * S, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade.ToUpperInvariant(), fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                var gp = new RectangleF(W - pad - Measure(gradeW, fTiny, 0).Width - 12 * S, y + 12 * S, Measure(gradeW, fTiny, 0).Width + 12 * S, 17 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gt)) g.DrawString(gradeW, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
                 Theme.Spark(g, v, sr, gc, cap * 1.15, false);
                 y += 30 * S;
-                string row = "jitter " + Fmt(jit, "0.0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s");
+                string row = L.T("jitter") + " " + Fmt(jit, "0.0", " ms") + "   " + L.T("loss") + " " + Fmt(loss, "0.#", "%") + "   " + Pair(s.Down, s.Up);
                 g.DrawString(row, fSmall, muted, pad, y); y += 20 * S;
                 hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 30 * S);
-                g.DrawString(t.Item2.Where + " · " + (t.Item2.Kind == "estimate" ? "region estimate" : t.Item2.Kind == "valve" ? "Valve server" : "exact"), fTiny, muted, pad, y); y += 14 * S;
+                g.DrawString(t.Item2.Where + " · " + L.T(t.Item2.Kind == "estimate" ? "region estimate" : t.Item2.Kind == "valve" ? "Valve server" : "exact"), fTiny, muted, pad, y); y += 14 * S;
                 PathStrip(g, s, new RectangleF(pad, y, inner, 12 * S), false);
             }
             if (WidgetK != 1f) foreach (var k in hits.Keys.ToList()) { var r = hits[k]; hits[k] = new RectangleF(r.X * WidgetK, r.Y * WidgetK, r.Width * WidgetK, r.Height * WidgetK); }
@@ -645,9 +801,9 @@ namespace AdeeboMeter
             int lv = double.IsNaN(ping) ? 3 : (jit > 30 || loss > 3 || ping > 250) ? 2 : (jit > 15 || loss > 1 || ping > 150) ? 1 : partial ? 3 : 0;   // AM-CG-208: missing jitter or loss is never "clear"
             string grade = lv == 0 ? "LINE OK" : lv == 1 ? "SOME BREAKUP" : lv == 2 ? "CHOPPY" : "WAITING";
             string head = s.Call ? (lv == 0 ? "Your connection looks fine for calls (an estimate from the line - your call app's own numbers can differ)." : lv == 1 ? "Your connection may make calls break up now and then." : lv == 2 ? "Your connection will likely make calls choppy." : partial && !double.IsNaN(ping) ? "Not enough measured yet to judge calls (jitter or loss still missing)." : "Measuring your connection...") : "No call right now - this is how the line looks for one.";
-            string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? "through the VPN · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
+            string vpnLine = s.PathLabel != null && s.PathLabel.Length > 2 && s.PathLabel[2] == "VPN" ? L.T("through the VPN") + " · " + (s.PathSub != null && s.PathSub.Length > 2 ? s.PathSub[2] : "") : "";
             return MetricCard(s, hits, "CALL", head, lv, double.IsNaN(jit) ? "-" : Math.Round(jit).ToString(CultureInfo.InvariantCulture), "ms jitter", grade,
-                s.NetHist, new[] { "delay " + Fmt(ping, "0", " ms") + "   loss " + Fmt(loss, "0.#", "%") + "   ↑" + Fmt(s.Up, "0.0", " Mb/s"), vpnLine });
+                s.NetHist, new[] { L.T("delay") + " " + Fmt(ping, "0", " ms") + "   " + L.T("loss") + " " + Fmt(loss, "0.#", "%") + "   ↑ " + Rate(s.Up, true), vpnLine });
         }
         // Engineer: the raw numbers - router and internet delay, DNS, TCP retransmits / resets, throughput
         public static Bitmap EngineerCard(Snap s, Dictionary<string, RectangleF> hits)
@@ -655,19 +811,20 @@ namespace AdeeboMeter
             string h1 = s.Health != null && s.Health.Count > 0 ? s.Health[0][0] + " " + s.Health[0][1] : "", h2 = s.Health != null && s.Health.Count > 1 ? s.Health[1][0] + " " + s.Health[1][1] : "";
             double gw = s.GwMs;
             return MetricCard(s, hits, "ENG", s.Headline, s.Level, Fmt(s.Ping, "0", ""), "ms internet", s.Level == 0 ? "OK" : s.Level == 1 ? "SLOW" : s.Level == 2 ? "PROBLEM" : "WAITING",
-                s.NetHist, new[] { "router " + Fmt(gw, "0", " ms") + "   DNS " + Fmt(s.DnsMs, "0", " ms") + "   jitter " + Fmt(s.Jitter, "0.0", " ms") + "   loss " + Fmt(s.LossPct, "0.#", "%"), (h1 + (h2 != "" ? "   " + h2 : "")).Trim(), "↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s") + "   CPU " + Fmt(s.Cpu, "0", "%") + "   RAM " + Fmt(s.Mem, "0", "%") });
+                s.NetHist, new[] { L.T("router") + " " + Fmt(gw, "0", " ms") + "   DNS " + Fmt(s.DnsMs, "0", " ms") + "   " + L.T("jitter") + " " + Fmt(s.Jitter, "0.0", " ms") + "   " + L.T("loss") + " " + Fmt(s.LossPct, "0.#", "%"), (h1 + (h2 != "" ? "   " + h2 : "")).Trim(), "↓" + Fmt(s.Down, "0.0", "") + " ↑" + Fmt(s.Up, "0.0", " Mb/s") + "   CPU " + Fmt(s.Cpu, "0", "%") + "   RAM " + Fmt(s.Mem, "0", "%") });
         }
         // the shared shape: tag, headline, one big number with its level colour and a grade pill, a 60-sample sparkline,
         // a few small rows, then the five-dot path strip
         static Bitmap MetricCard(Snap s, Dictionary<string, RectangleF> hits, string tagText, string head, int lv, string big, string unit, string grade, double[] series, string[] rows)
         {
             hits.Clear();
+            head = L.T(head); unit = L.T(unit); grade = L.T(grade); tagText = L.T(tagText);   /* review 1.1.6 U4 #3: the widget card speaks the app's language */
             var lines = rows.Where(r => !string.IsNullOrEmpty(r)).ToArray();
             Color gc = lv == 0 ? Theme.Green : lv == 1 ? Theme.Amber : lv == 2 ? Theme.Red : Theme.Grey;
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(head, fHead, (int)inner).Height;
-            int H = (int)Math.Ceiling(pad + 24 * S + headH + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + 30 * S + pad);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            float headH = Measure(head, fHead, (int)inner).Height, wh = HintLineH(inner);
+            int H = (int)Math.Ceiling(pad + 24 * S + headH + wh + 8 * S + 46 * S + 30 * S + lines.Length * 18 * S + 4 * S + PathStripH + pad);   // L-147; test4: room for the names under the dots
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp)) using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 var cr = new RectangleF(0.5f, 0.5f, W - 1, H - 1);
@@ -679,7 +836,7 @@ namespace AdeeboMeter
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH + 8 * S;
+                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, H, inner, wh); y += 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 var bf = fCardNum; using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
                 {
@@ -687,7 +844,7 @@ namespace AdeeboMeter
                     g.DrawString(unit, fBody, muted, pad + bw - 2 * S, y + 16 * S);
                 }
                 float pw = Measure(grade, fTiny, 0).Width + 12 * S; var gp = new RectangleF(W - pad - pw, y + 12 * S, pw, 17 * S);
-                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : gc)) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
+                Theme.Fill(g, gp, gp.Height / 2, Color.FromArgb(Theme.Dark ? 60 : 40, gc)); using (var gb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.LvText(lv))) g.DrawString(grade, fTiny, gb, gp.X + 6 * S, gp.Y + 2 * S);
                 y += 46 * S;
                 var sr = new RectangleF(pad, y, inner, 26 * S); Theme.Fill(g, sr, 9 * S, Theme.Soft);
                 var v = series ?? Array.Empty<double>(); double cap = 30; foreach (var x in v) if (!double.IsNaN(x) && x > cap) cap = x;
@@ -702,23 +859,38 @@ namespace AdeeboMeter
             return bmp;
         }
         public static volatile bool CardHovered = true;   // set by the widget before it draws the card
+        // the hint line (24 Nov): where the second, grey fun line used to be - how to move the widget, by its settings; "" = none
+        public static volatile string WidgetHint = "";
+        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 10 * S; }
+        // 24 Nov (Adeeb: "writing on top of it doesn't feel natural"): the one hint line sits at the foot of the card, quiet grey under a
+        // hairline - the card reads as itself, the hint is a footnote. H is the card's height; the room was counted into it
+        static void HintLine(Graphics g, float pad, int H, float inner, float h)
+        {
+            if (h <= 0) return; float y = H - pad - h + 6 * S;
+            using (var lp = new Pen(Theme.Line, 1f)) g.DrawLine(lp, pad, y - 2 * S, pad + inner, y - 2 * S);
+            using (var sf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0)) using (var b = new SolidBrush(Theme.Muted)) g.DrawString(WidgetHint, fSmall, b, new RectangleF(pad, y + 2 * S, inner, h), sf);
+        }
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
             if (SpeedStyle) return SpeedCard(s, hits);
+            if (Corner.IsTile(Style)) return TileCard(s, hits, Style);
             string lay = Layout(s.Call);
             if (lay == "gamer") return GamerCard(s, hits);
             if (lay == "calls") return CallsCard(s, hits);
             if (lay == "engineer") return EngineerCard(s, hits);
             hits.Clear();
             int W = (int)(264 * S); float pad = 12 * S, inner = W - 2 * pad;
-            float headH = Measure(s.Headline, fHead, (int)inner).Height;
-            float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure("Why: " + s.Hint, fSmall, (int)inner).Height + 4 * S;
-            string quip = ReferenceEquals(s, AppCtx.Rewind) ? "" : Mood.Quip(s), season = Mood.SeasonLine(s);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */ string extra = (quip + (quip != "" && season != "" ? "\n" : "") + season).Trim();
-            float quipH = extra == "" ? 0 : Measure(extra, fSmall, (int)inner).Height + 4 * S;
+            // one line, not two (Adeeb, 24 Nov): with Fun lines on, the mood's line (or the season's) says the verdict in its own
+            // words, in the verdict's place and colour; Fun lines off, or nothing to say, it's the plain verdict ("All quiet")
+            bool replay = ReferenceEquals(s, AppCtx.Rewind);   /* a replayed minute gets no quip: it would reset the outage and koan clocks */
+            string quip = replay ? "" : Mood.Quip(s), season = replay ? "" : Mood.SeasonLine(s);
+            string head = s.Level == 2 && !s.Waiting ? s.Headline : quip != "" ? quip : season != "" ? season : s.Headline;   // hunters12 display L-1: a problem keeps the plain verdict
+            float headH = Measure(head, fHead, (int)inner).Height, quipH = HintLineH(inner);
+            float hintH = string.IsNullOrEmpty(s.Hint) ? 0 : Measure(L.T("Why: ") + s.Hint, fSmall, (int)inner).Height + 4 * S;
             string wtx = WeatherCardText();
-            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 52 * S + (s.Call ? 44 * S : 0) + 3 * 20 * S + 6 * S + 17 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
+            float h = pad + 24 * S + headH + quipH + hintH + 10 * S + 4 * 21 * S + (s.Call ? 44 * S : 0) + 10 * S + 34 * S + (wtx != null ? 24 * S : 0) + pad;
             int H = (int)Math.Ceiling(h);
-            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(H * WidgetK), PixelFormat.Format32bppArgb);
+            var bmp = new Bitmap((int)Math.Ceiling(W * WidgetK), (int)Math.Ceiling(Math.Min(H, 900 * S) * WidgetK), PixelFormat.Format32bppArgb);   /* review 1.1.6 R5 N4: a card is never taller than 900 px, whatever the font metrics say */
             using (var g = PrepW(bmp))
             using (var ink = new SolidBrush(Theme.Ink))
             using (var muted = new SolidBrush(Theme.Muted))
@@ -730,20 +902,39 @@ namespace AdeeboMeter
                 Theme.Logo(g, new RectangleF(pad, y, 18 * S, 18 * S), false);
                 g.DrawString(L.T("AdeeboMeter"), fName, ink, pad + 24 * S, y + 1 * S);
                 float nw = Measure(L.T("AdeeboMeter"), fName, 0).Width;
-                Theme.Pill(g, Word(s.Level), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Level, S);
+                Theme.Pill(g, s.Waiting ? L.T("Checking") : L.T(Word(s.Level)), fPill, pad + 24 * S + nw + 2 * S, y + 2 * S, s.Waiting ? 3 : s.Level, S);   // review 1.1.6 U4 #3, D1 #10
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 24 * S, y, 24 * S, 24 * S), s, false);   // the buddy, awake, in the corner of the card
                 else if (CardHovered) { string cd = s.Countdown + "s"; var cs = Measure(cd, fSmall, 0); g.DrawString(cd, fSmall, muted, W - pad - cs.Width, y + 2 * S); }   // the countdown only while you look: unhovered, the card isn't redrawn each second
                 y += 24 * S;
-                using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(s.Headline, fHead, hb, new RectangleF(pad, y, inner, headH + 2));
-                y += headH;
-                if (quipH > 0) { using (var qb = new SolidBrush(Theme.Muted)) g.DrawString(extra, fSmall, qb, new RectangleF(pad, y + 4 * S, inner, quipH)); y += quipH; }   // the mood's line and the season's - personality, after the facts
-                if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH)); y += hintH; }
+                using (var rsf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0))   /* review 1.1.6 U4 #8: Arabic paragraphs read right to left */
+                {
+                    using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
+                    y += headH;
+                    if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH), rsf); y += hintH; }
+                    HintLine(g, pad, H, inner, quipH);   // the move hint (at the foot of the card), by the settings - after the verdict and its Why
+                }
                 y += 10 * S;
-                hits["path"] = new RectangleF(pad - 4 * S, y - 4 * S, inner + 8 * S, 52 * S);
-                g.DrawString(L.T("IS IT ME OR THE NETWORK?"), fTiny, muted, pad, y);
-                y += 15 * S;
-                PathStrip(g, s, new RectangleF(pad, y, inner, 32 * S), false);
-                y += 37 * S;
+                // 24 Nov (widget mockup): the same four readings as Home, in the same order - this PC, the router, the internet,
+                // your traffic - a dot in each one's level, the number on the right
+                {
+                    bool memHot = !double.IsNaN(s.Mem) && s.Mem >= 85 && (double.IsNaN(s.Cpu) || s.Mem - 85 >= s.Cpu - 85);
+                    int pcLv = s.Path.Length > 0 ? s.Path[0] : 3, gwLv = s.Path.Length > 1 ? s.Path[1] : 3, netLv = s.Path.Length > 4 ? s.Path[4] : 3;
+                    var rows = new[] {
+                        Tuple.Create("cpu", L.T("This PC"), memHot ? Fmt(s.Mem, "0", "% ") + L.T("memory") : double.IsNaN(s.Cpu) ? "-" : Fmt(s.Cpu, "0", "% ") + Kit.Sent("CPU"), pcLv),   /* test4 pictures: "-CPU" while checking */
+                        Tuple.Create("path", L.T("Router"), Fmt(s.GwMs, "0", " ms"), gwLv),
+                        Tuple.Create("inet", L.T("Internet"), Fmt(s.Ping, "0", " ms"), netLv),
+                        Tuple.Create("net", L.T("Traffic"), "↓ " + Rate(s.Down, true) + "  ↑ " + Rate(s.Up, true), 3) };
+                    foreach (var rw in rows)
+                    {
+                        hits[rw.Item1] = new RectangleF(pad - 4 * S, y - 2 * S, inner + 8 * S, 21 * S);
+                        Draw.LvDot(g, rw.Item4, pad, y + 6 * S, 7 * S, 7 * S);
+                        using (var lb = new SolidBrush(Theme.Sub)) g.DrawString(rw.Item2, fSmall, lb, pad + 14 * S, y + 1 * S);
+                        var vs = Measure(rw.Item3, fSmall, 0);
+                        using (var vb = new SolidBrush(rw.Item4 == 1 || rw.Item4 == 2 ? Theme.LvText(rw.Item4) : Theme.Ink)) g.DrawString(rw.Item3, fSmall, vb, W - pad - vs.Width, y + 1 * S);
+                        y += 21 * S;
+                    }
+                    y += 6 * S;
+                }
                 if (s.Call)
                 {
                     bool bad = s.Jitter > 30 || s.LossPct > 2;
@@ -751,32 +942,26 @@ namespace AdeeboMeter
                     Theme.Fill(g, r, 7 * S, bad ? Theme.LvSoft(1) : Theme.BlueSoft);
                     using (var b = new SolidBrush(bad ? Theme.LvText(1) : Theme.BlueDark))
                     {
-                        g.DrawString(L.T("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
-                        g.DrawString(AdeeboMeter.L.T("up ") + Fmt(s.Up, "0.0", " Mb/s") + "   jitter " + Fmt(s.Jitter, "0", " ms") + "   loss " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
+                        g.DrawString(Kit.Sent("MEETING MODE · TEAMS CALL"), fTiny, b, r.X + 8 * S, r.Y + 4 * S);
+                        g.DrawString(AdeeboMeter.L.T("up ") + Rate(s.Up, true) + "   " + AdeeboMeter.L.T("jitter") + " " + Fmt(s.Jitter, "0", " ms") + "   " + AdeeboMeter.L.T("loss") + " " + Fmt(s.LossPct, "0", "%"), fSmall, b, r.X + 8 * S, r.Y + 19 * S);
                     }
                     y += 44 * S;
                 }
-                Bar(g, "cpu", "CPU", s.Cpu, Fmt(s.Cpu, "0", "%"), 60, 88, pad, ref y, inner, hits);
-                Bar(g, "ram", "Memory", s.Mem, Fmt(s.Mem, "0", "%"), 80, 90, pad, ref y, inner, hits);
-                Bar(g, "disk", "Disk", s.Disk, Fmt(s.Disk, "0", "%"), 60, 90, pad, ref y, inner, hits);
-                y += 6 * S;
-                hits["net"] = new RectangleF(pad - 4 * S, y - 3 * S, inner + 8 * S, 56 * S);
-                using (var b = new SolidBrush(Theme.Blue)) g.DrawString("↓ " + Fmt(s.Down, "0.0", " Mb/s"), fMono, b, pad, y);
-                string up = "↑ " + Fmt(s.Up, "0.0", " Mb/s"); var us = Measure(up, fMono, 0);
-                using (var b = new SolidBrush(Theme.UpText)) g.DrawString(up, fMono, b, W - pad - us.Width, y);
-                y += 17 * S;
-                var gr = new RectangleF(pad, y, inner, 34 * S);
+                y += 4 * S;
+                var gr = new RectangleF(pad, y, inner, 34 * S);   // the traffic graph under the readings (the speeds are in the Traffic row)
                 Theme.Fill(g, gr, 9 * S, Theme.Soft);
                 double cap = 1; foreach (var v in s.DownHist) if (!double.IsNaN(v) && v > cap) cap = v; foreach (var v in s.UpHist) if (!double.IsNaN(v) && v > cap) cap = v;
-                Theme.Spark(g, s.DownHist, gr, Theme.Blue, cap * 1.15, true);
+                Theme.Spark(g, s.DownHist, gr, Theme.BlueLine, cap * 1.15, true);
                 Theme.Spark(g, s.UpHist, gr, Theme.Orange, cap * 1.15, false);
                 // data used today, in the graph's top corners (no extra height); this month against a cap at the bottom right
                 var du = Usage.TodayDU();
-                using (var tb = new SolidBrush(Theme.Muted))
+                using (var tb = new SolidBrush(Theme.Sub))   /* hunters13 display L-4: on the graph's panel, muted grey was 4.3:1 in dark */
                 {
-                    g.DrawString(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), fTiny, tb, gr.X + 4 * S, gr.Y + 2 * S);
-                    string ut = "↑ " + Usage.Mb(du[1]); g.DrawString(ut, fTiny, tb, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
-                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; g.DrawString(ct, fTiny, tb, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
+                    // test4 pictures: the lines ran through these words - each sits on a patch of the graph's own colour
+                    Action<string, float, float> lab = (txt, x, yy) => { var sz = Measure(txt, fTiny, 0); Theme.Fill(g, new RectangleF(x - 2 * S, yy, sz.Width + 4 * S, sz.Height), 4 * S, Color.FromArgb(235, Theme.Soft)); g.DrawString(txt, fTiny, tb, x, yy); };
+                    lab(AdeeboMeter.L.T("today ↓ ") + Usage.Mb(du[0]), gr.X + 4 * S, gr.Y + 2 * S);
+                    string ut = "↑ " + Usage.Mb(du[1]); lab(ut, gr.Right - 4 * S - Measure(ut, fTiny, 0).Width, gr.Y + 2 * S);
+                    if (Cfg.CapGB > 0) { string ct = (Usage.Month(null) / 1000).ToString("0", CultureInfo.CurrentCulture) + " / " + Cfg.CapGB + " GB"; lab(ct, gr.Right - 4 * S - Measure(ct, fTiny, 0).Width, gr.Bottom - 2 * S - Measure(ct, fTiny, 0).Height); }
                 }
                 if (wtx != null) WeatherCardDraw(g, pad, gr.Bottom + 8 * S, inner, wtx);
             }
@@ -789,15 +974,17 @@ namespace AdeeboMeter
             if (hits != null) hits[key] = new RectangleF(x - 4 * S, y - 2 * S, inner + 8 * S, 19 * S);
             int lv = double.IsNaN(v) ? 3 : v >= rl ? 2 : v >= yl ? 1 : 0;
             using (var b = new SolidBrush(Theme.Muted)) g.DrawString(label, fBody, b, x, y);
-            var ts = Measure(txt, fMono, 0);
+            var ts = Measure(txt, fBodyB, 0);   // 23 Nov: numbers in Barlow's fixed-width digits, not monospace
             float tw = Math.Max(44 * S, ts.Width + 6 * S);
             var tr = new RectangleF(x + 66 * S, y + 6 * S, Math.Max(10, inner - 66 * S - tw), 7 * S);
             Theme.Fill(g, tr, 3.5f * S, Theme.Track);
             if (!double.IsNaN(v)) Theme.Fill(g, new RectangleF(tr.X, tr.Y, Math.Max(7 * S, tr.Width * (float)Math.Min(100, v) / 100f), tr.Height), 3.5f * S, Theme.Lv(lv));
-            using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.Lv(lv) : Theme.Ink)) g.DrawString(txt, fMono, b, x + inner - ts.Width, y);
+            using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(txt, fBodyB, b, x + inner - ts.Width, y);
             y += 20 * S;
         }
 
+        // the small strip's height: the dots and the names under them (PC, LAN, ISP, DNS, Internet)
+        static float PathStripH { get { return 12 * S + 3 * S + Measure("PC", fSmall, 0).Height; } }
         public static void PathStrip(Graphics g, Snap s, RectangleF r, bool big)
         {
             int n = 5; float slot = r.Width / n, dot = (big ? 18 : 12) * S; Font lf = big ? fName : fSmall;
@@ -806,9 +993,7 @@ namespace AdeeboMeter
             for (int i = 0; i < n; i++)
             {
                 float cx = r.X + slot * i + slot / 2; int lv = s.Path[i];
-                using (var halo = new SolidBrush(Color.FromArgb(lv == 2 ? 70 : 38, Theme.Lv(lv)))) g.FillEllipse(halo, cx - dot / 2 - 5 * S, r.Y - 5 * S, dot + 10 * S, dot + 10 * S);
                 Draw.LvDot(g, lv, cx - dot / 2, r.Y, dot, dot);
-                if (big) using (var hi = new SolidBrush(Color.FromArgb(90, Color.White))) g.FillEllipse(hi, cx - dot / 4, r.Y + dot / 5, dot / 2, dot / 3);
                 string lab = s.PathLabel[i] ?? ""; var ls = Measure(lab, lf, 0);
                 using (var b = new SolidBrush(lv == 2 ? Theme.LvText(2) : Theme.Ink)) g.DrawString(lab, lf, b, cx - ls.Width / 2, r.Y + dot + 3 * S);
                 if (big)

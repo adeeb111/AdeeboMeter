@@ -31,7 +31,7 @@ namespace AdeeboMeter
         static int Lv(string[] r) { int v; return r != null && int.TryParse(r[0], out v) && v >= 1 && v <= 2 ? v : -1; }
         static string P(string v, int i) { var p = (v ?? "").Split(Dot, StringSplitOptions.None); return i < p.Length ? p[i].Trim() : ""; }
         static string Or(string a, string b) { return string.IsNullOrEmpty(a) ? b : a; }
-        static string Cut(string s, int n) { s = s ?? ""; return s.Length <= n ? s : s.Substring(0, n - 1) + "…"; }
+        static string Cut(string s, int n) { s = s ?? ""; if (s.Length <= n) return s; int k = n - 1; if (k > 0 && char.IsHighSurrogate(s[k - 1])) k--; return s.Substring(0, k) + "…"; }   // bug-hunt ML-174: never half an emoji
         string Tg(string def) { foreach (var a in VisIn()) { var t = Regex.Replace(a ?? "", @"^[a-z]+://", "", RegexOptions.IgnoreCase).Split('/', ' ', '|')[0]; if (Regex.IsMatch(t, @"^[\w.\-\[\]:@]+$") && t.Length > 2 && !Regex.IsMatch(t, @"^\d{1,5}$")) return t; } return def; }
         static string HostOf(string t) { t = t.Contains("@") ? t.Substring(t.IndexOf('@') + 1) : t; return t.Count(c => c == ':') == 1 ? t.Split(':')[0] : t; }
         static string PortOf(string t, string def) { var m = Regex.Match(t ?? "", @"^[^:\[]+:(\d+)$"); return m.Success ? m.Groups[1].Value : def; }
@@ -48,63 +48,88 @@ namespace AdeeboMeter
                 case "mail":
                     {
                         string t = Tg("mail.example.com:587"), h = HostOf(t), port = PortOf(t, "587"); var b = Res().FirstOrDefault(o => Regex.IsMatch(o[1], @"^(SMTP|IMAP|POP)", RegexOptions.IgnoreCase));
-                        string proto = b != null ? b[1] : "SMTP " + port, banner = b != null ? P(b[2], 0) : "220 " + h + " ESMTP", tls = RV("STARTTLS"), auth = RV("Login");
+                        // bug-hunt ML-183: the row is "SMTP greeting (12 ms)" - the kind and the time are in its name, the port is the one you typed
+                        string proto = b != null ? b[1].Split(' ')[0] : "SMTP", banner = b != null ? b[2] : ran ? L.T("(no greeting read)") : "220 " + h + " ESMTP",   /* R2-204: never an invented greeting after a run */ tls = RV("STARTTLS"), offers = RV("Offers"), cert = RV("Certificate");
+                        string auth = Regex.Match(offers, @"AUTH[ =][A-Z0-9 \-]+").Value.Trim();
+                        double gms = b != null ? VNum(b[1], @"\((\d+)\s*ms\)") : double.NaN;
                         who = new[] { L.T("This PC"), h };
-                        s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + Regex.Replace(proto, @"\D", ""), double.NaN));
-                        s.Add(Rd(X(1, 0, Cut(banner, 46), L.T("the server's greeting - its name and software"), RowMs(b != null ? b[2] : "")), Lv(b)));
+                        s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + port, double.NaN));
+                        s.Add(Rd(X(1, 0, Cut(banner, 46), L.T("the server's greeting - its name and software"), gms), Lv(b)));
                         s.Add(X(0, 1, proto.StartsWith("SMTP", StringComparison.OrdinalIgnoreCase) ? "EHLO" : "CAPABILITY", L.T("what can you do?"), double.NaN));
-                        s.Add(X(1, 0, "STARTTLS" + (auth != "" ? " · " + Cut(auth, 30) : ""), L.T("what it offers"), double.NaN));
-                        s.Add(X(0, 1, "STARTTLS", L.T("let's seal the line first"), double.NaN));
-                        s.Add(Rd(Lk(X(1, 0, Cut(Or(P(tls, 1), L.T("certificate + keys")), 30), Cut(Or(P(tls, 2), L.T("sealed from here - no password is sent")), 60), double.NaN)), RLv("STARTTLS")));
+                        bool refused = Res().Any(o => o[1].StartsWith("STARTTLS", StringComparison.OrdinalIgnoreCase) && o[2].IndexOf("refused", StringComparison.OrdinalIgnoreCase) >= 0);   // R2-089: offered, then refused when asked
+                        bool tlsOk = !ran || (tls.StartsWith("offered", StringComparison.Ordinal) && !refused) || cert != "";
+                        s.Add(X(1, 0, (tlsOk ? "STARTTLS" : L.T("no STARTTLS")) + (auth != "" ? " · " + Cut(auth, 30) : ""), L.T("what it offers"), double.NaN));
+                        if (tlsOk)
+                        {
+                            s.Add(X(0, 1, "STARTTLS", L.T("let's seal the line first"), double.NaN));
+                            s.Add(Rd(Lk(X(1, 0, Cut(Or(P(cert, 0), L.T("certificate + keys")), 30), Cut(Or(P(cert, 1), L.T("sealed from here - no password is sent")), 60), double.NaN)), RLv("Certificate")));
+                        }
+                        else s.Add(Rd(X(0, 1, refused ? L.T("STARTTLS refused") : L.T("(nothing to seal with)"), L.T("mail to it would travel unencrypted"), double.NaN), refused ? 2 : 1));
                         cap = "KNOCKING ON " + h.ToUpperInvariant(); foot = "AdeeboMeter stops before any password. Port 25 is often blocked on home lines; 587 and 465 are for apps.";
                     }
                     break;
                 case "smtppath":
                     {
-                        string d = HostOf(Tg("example.com")), mx = RV("MX"), con = RV("Connects"), tls = RV("STARTTLS"); string mxh = Or(Regex.Replace(mx, @"\s*\(.*$", ""), "mx1." + d);
+                        // bug-hunt ML-185: EngPack.SmtpPath's own rows - "MX", then per server "Got as far as", the greeting ("SMTP greeting (N ms)"), "STARTTLS"
+                        // R2-090: up to two servers - the picture follows the first one that answered, not just the first one tried
+                        var fars = Res().Where(o => o[1].StartsWith("Got as far as", StringComparison.Ordinal)).ToList(); int okAt = fars.FindIndex(o => o[2].IndexOf("FAILED", StringComparison.Ordinal) < 0);
+                        var grs = Res().Where(o => o.Length > 2 && o[1].StartsWith("SMTP greeting", StringComparison.Ordinal)).ToList(); var tlss = Res().Where(o => o[1].StartsWith("STARTTLS", StringComparison.OrdinalIgnoreCase)).ToList();
+                        string d = HostOf(Tg("example.com")), mx = RV("MX"), far = okAt >= 0 ? fars[okAt][2] : RV("Got as far as"), tls = tlss.Count == 0 ? "" : tlss[Math.Min(Math.Max(0, okAt), tlss.Count - 1)][2]; string mxh = Or(Regex.Replace(P(mx, 0), @"\s*\(.*$", ""), "mx1." + d);
+                        var gr = grs.Count == 0 ? null : grs[Math.Min(Math.Max(0, okAt), grs.Count - 1)]; bool failed = fars.Count > 0 ? okAt < 0 : far.IndexOf("FAILED", StringComparison.Ordinal) >= 0;
+                        if (okAt > 0) mxh = Or(Regex.Match(mx, @"([\w.-]+)\s*\(\d+\)\s*[,·]\s*([\w.-]+)").Groups[2].Value, mxh);   // the second server answered
                         who = new[] { L.T("This PC"), L.T("DNS server"), mxh };
                         s.Add(X(0, 1, L.T("who takes mail for") + " " + d + "?", "DNS · MX", double.NaN));
-                        s.Add(Rd(X(1, 0, Or(mx, mxh + " (priority 10)"), L.T("lowest priority number is tried first"), double.NaN), RLv("MX")));
-                        s.Add(X(0, 2, L.T("hello (SYN)"), Or(P(con, 0), "TCP 25"), double.NaN));
-                        s.Add(Rd(X(2, 0, Or(P(con, 1), "220 " + L.T("ready")), L.T("the receiving server's greeting"), RowMs(con)), RLv("Connects")));
-                        s.Add(X(0, 2, "EHLO", "", double.NaN));
-                        s.Add(Rd(X(2, 0, "STARTTLS " + Or(P(tls, 0), "offered"), Or(P(tls, 1), L.T("encryption between mail servers")), double.NaN), RLv("STARTTLS")));
-                        cap = "HOW MAIL FOR " + d.ToUpperInvariant() + " GETS DELIVERED"; foot = Or(RV("How far"), "Senders look up MX, then talk to that server on port 25.");
+                        s.Add(Rd(X(1, 0, Cut(Or(mx, mxh + " (10)"), 46), L.T("lowest priority number is tried first"), double.NaN), RLv("MX")));
+                        s.Add(X(0, 2, L.T("hello (SYN)"), "TCP 25", double.NaN));
+                        if (failed) s.Add(Rd(X(2, 0, L.T("(no answer)"), L.T("port 25 is blocked on most home lines"), double.NaN), 1));
+                        else
+                        {
+                            s.Add(Rd(X(2, 0, gr != null ? Cut(gr[2], 40) : "220 " + L.T("ready"), L.T("the receiving server's greeting"), gr != null ? VNum(gr[1], @"\((\d+)\s*ms\)") : double.NaN), gr != null ? Lv(gr) : -1));
+                            s.Add(X(0, 2, "EHLO", "", double.NaN));
+                            bool offered = !ran || (tls.StartsWith("offered", StringComparison.Ordinal) && tls.IndexOf("refused", StringComparison.OrdinalIgnoreCase) < 0);
+                            s.Add(Rd(X(2, 0, offered ? "STARTTLS" : L.T("no STARTTLS"), offered ? L.T("encryption between mail servers") : L.T("mail would travel unencrypted"), double.NaN), offered ? -1 : 1));
+                        }
+                        cap = "HOW MAIL FOR " + d.ToUpperInvariant() + " GETS DELIVERED"; foot = Or(far != "" ? L.T("Got as far as:") + " " + far : "", "Senders look up MX, then talk to that server on port 25.");
                     }
                     break;
                 case "ssh":
                     {
-                        string h = HostOf(Tg("192.0.2.10")), v = RV("SSH"), key = RV("Host key"); who = new[] { L.T("This PC"), h };
+                        // bug-hunt M-28: Protocols.Ssh writes one row, "host:port (N ms)", its value the banner (or why it failed); it never reads a host key
+                        string h = HostOf(Tg("192.0.2.10")); var row = Res().FirstOrDefault(o => o.Length > 2 && o[1].StartsWith(h + ":", StringComparison.OrdinalIgnoreCase)); string v = row == null ? "" : row[2] + " " + row[1]; int rlv = -1; if (row != null) int.TryParse(row[0], out rlv);
+                        bool failed = row != null && !row[2].StartsWith("SSH-", StringComparison.Ordinal); who = new[] { L.T("This PC"), h };
                         s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + PortOf(Tg(""), "22"), double.NaN));
-                        s.Add(Rd(X(1, 0, L.T("hello back (SYN-ACK)"), L.T("the port is open"), RowMs(v)), RLv("SSH")));
-                        s.Add(X(1, 0, Or(P(v, 0), "SSH-2.0-OpenSSH_9.6"), L.T("the server says its version first"), double.NaN));
+                        s.Add(Rd(X(1, 0, failed ? L.T("no SSH answer") : L.T("hello back (SYN-ACK)"), failed ? Cut(row[2], 40) : L.T("the port is open"), RowMs(v)), rlv >= 1 && rlv <= 2 ? rlv : -1));
+                        if (!failed) s.Add(X(1, 0, row != null ? Cut(row[2], 40) : "SSH-2.0-OpenSSH_9.6", L.T("the server says its version first"), double.NaN));
                         s.Add(X(0, 1, L.T("our version + key exchange"), "KEXINIT", double.NaN));
-                        s.Add(X(1, 0, L.T("host key") + " " + Cut(Or(key, "ED25519 SHA256:…"), 34), L.T("write it down - if it ever changes, ask why"), double.NaN));
+                        if (!failed) s.Add(X(1, 0, L.T("its host key"), L.T("not read by this check - your SSH program shows it; if it ever changes, ask why"), double.NaN));
                         s.Add(X(0, 1, L.T("goodbye"), L.T("no sign-in, no password"), double.NaN));
                         cap = "READING AN SSH SERVER'S BANNER"; foot = "The banner shows it's really SSH and how old the software is. A changed host key means a new server - or someone in the middle.";
                     }
                     break;
                 case "rdpcheck":
                     {
-                        string h = HostOf(Tg("pc01.example.net")), v = RV("Remote Desktop"); bool nla = v.IndexOf("NLA", StringComparison.OrdinalIgnoreCase) >= 0 || !ran; who = new[] { L.T("This PC"), h };
-                        s.Add(X(0, 1, L.T("hello (SYN)"), "TCP 3389", double.NaN));
-                        s.Add(Rd(X(1, 0, Or(P(v, 0), L.T("3389 open")), L.T("something listens on 3389"), RowMs(v)), RLv("Remote Desktop")));
+                        // bug-hunt ML-184: MoreTools.Rdp says "Network Level Authentication" or "NLA with early user check" - and "(no NLA)" for plain TLS
+                        string h = HostOf(Tg("pc01.example.net")), v = RV("Remote Desktop"); bool nla = !ran || (Regex.IsMatch(v, @"Network Level Authentication|NLA with") && v.IndexOf("no NLA", StringComparison.Ordinal) < 0); who = new[] { L.T("This PC"), h };
+                        var prow = Res().FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], @":\d+$")); string rport = prow != null ? prow[1].Substring(prow[1].LastIndexOf(':') + 1) : PortOf(Tg(""), "3389");
+                        s.Add(X(0, 1, L.T("hello (SYN)"), "TCP " + rport, double.NaN));
+                        s.Add(Rd(X(1, 0, prow != null ? Cut(prow[2], 40) : L.T("3389 open"), L.T("something listens there"), prow != null ? VNum(prow[2], @"\((\d+)\s*ms\)") : double.NaN), prow != null ? Lv(prow) : -1));
                         s.Add(X(0, 1, L.T("Remote Desktop, please"), "X.224 Connection Request", double.NaN));
-                        s.Add(X(1, 0, nla ? L.T("yes - sign in first (NLA)") : L.T("yes - plain RDP security"), "X.224 Connection Confirm", double.NaN));
-                        if (!nla) s[3].Lv = 1;
+                        if (ran && v == "") s.Add(Rd(X(1, 0, L.T("(no Remote Desktop answer)"), Cut(Or(prow != null ? prow[2] : "", L.T("refused, or not Remote Desktop")), 60), double.NaN), 2));   // R2-092: nothing said is nothing claimed
+                        else { s.Add(X(1, 0, nla ? L.T("yes - sign in first (NLA)") : L.T("yes - plain RDP security"), "X.224 Connection Confirm", double.NaN)); if (!nla) s[3].Lv = 1; }
                         cap = "IS REMOTE DESKTOP REALLY THERE?"; foot = "An open port isn't proof; the X.224 answer is. NLA asks for a password before the desktop shows - safer. AdeeboMeter stops here.";
                     }
                     break;
                 case "ldapcheck":
                     {
-                        string d = HostOf(Tg("example.net")), dcs = RV("Domain controllers"), ld = RV("LDAP"), kb = RV("Kerberos"); string dc1 = Or(dcs.Split(',')[0].Trim(), "dc01." + d);
-                        who = new[] { L.T("This PC"), L.T("DNS server"), dc1 };
-                        s.Add(X(0, 1, "_ldap._tcp.dc._msdcs." + d + "?", "DNS · SRV", double.NaN));
-                        s.Add(Rd(X(1, 0, Cut(Or(dcs, dc1), 48), L.T("the servers that run the directory"), double.NaN), RLv("Domain controllers")));
-                        s.Add(X(0, 2, L.T("hello"), "TCP 389 · 636 (LDAPS)", double.NaN));
-                        s.Add(Rd(X(2, 0, Or(P(ld, 0), L.T("answers")), L.T("the directory is reachable"), RowMs(ld)), RLv("LDAP")));
-                        s.Add(X(0, 2, L.T("hello"), "TCP 88 · Kerberos", double.NaN));
-                        s.Add(Rd(X(2, 0, Or(kb, L.T("answers")), L.T("sign-in tickets come from here"), double.NaN), RLv("Kerberos")));
+                        // bug-hunt ML-186: what MoreTools.Ldap really does - the name's address, LDAP on 389 (its root entry, read anonymously), then knocks on 636 and 88
+                        string d = HostOf(Tg("dc01.example.net")); var lrow = Res().FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], @"^\S+:\d+")); string addr = lrow != null ? Regex.Replace(lrow[1], @":\d+.*$", "") : ran ? L.T("(not found)") : "192.0.2.20";
+                        string host = Or(RV("dnsHostName"), d), nc = RV("defaultNamingContext"), p636 = RV("636"), p88 = RV("88"); bool ok = ran ? lrow != null && lrow[2] == "LDAP answers" : true;   // R2-093: a failed run is a failure in the picture too
+                        who = new[] { L.T("This PC"), L.T("DNS server"), host };
+                        s.Add(X(0, 1, d + "?", "DNS · A", double.NaN));
+                        s.Add(Rd(X(1, 0, addr, L.T("the address to knock on"), double.NaN), lrow == null && ran ? 2 : -1));
+                        s.Add(X(0, 2, L.T("hello + who are you? (anonymous)"), "TCP 389 · LDAP root", double.NaN));
+                        s.Add(Rd(X(2, 0, ok ? Cut(Or(nc, L.T("the directory's root entry")), 40) : Cut(lrow != null ? lrow[2] : Or(Res().Select(o => o[2]).FirstOrDefault(), L.T("no answer")), 40), ok ? L.T("read without a password, as every client does first") : "", lrow != null ? VNum(lrow[1], @"\((\d+)\s*ms\)") : double.NaN), lrow != null ? Lv(lrow) : -1));
+                        if (ok) { s.Add(X(0, 2, L.T("knock"), "TCP 636 (LDAPS) · 88 (Kerberos)", double.NaN)); s.Add(Rd(X(2, 0, "636 " + Or(p636, ran ? "?" : "open") + " · 88 " + Or(p88, ran ? "?" : "open"), L.T("sign-in tickets come from 88"), double.NaN), Math.Max(RLv("636"), RLv("88")))); }
                         cap = "FINDING AND KNOCKING ON THE DOMAIN CONTROLLERS"; foot = "Sign-ins, Group Policy and mapped drives all start here. If DNS can't find _ldap, nothing else works.";
                     }
                     break;
@@ -112,11 +137,16 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- NAT: what the outside sees
                 case "stun":
                     {
-                        string pub = RV("Your public"), nat = RV("NAT"); who = new[] { L.T("This PC"), L.T("your router (NAT)"), HostOf(Tg("stun.example.com")) };
+                        // bug-hunt ML-187: Reach.Stun names its rows "The internet sees you as" and "Your side"
+                        string pub = RV("The internet sees you as"), nat = RV("Your side"); var fail = Res().FirstOrDefault(o => o.Length > 2 && o[0] == "2"); who = new[] { L.T("This PC"), L.T("your router (NAT)"), HostOf(Tg("stun.example.com")) };
                         s.Add(X(0, 1, L.T("Binding request"), L.T("from your private address") + " · UDP " + PortOf(Tg(""), "3478"), double.NaN));
                         s.Add(X(1, 2, L.T("same packet, new return address"), L.T("the router swaps in its public address and a port"), double.NaN));
-                        s.Add(Rd(X(2, 1, L.T("you look like") + " " + Or(pub, "203.0.113.50:51234"), "XOR-MAPPED-ADDRESS", double.NaN), RLv("Your public")));
-                        s.Add(Rd(X(1, 0, L.T("passed back in to you"), Cut(Or(nat, L.T("now the PC knows its outside address")), 70), double.NaN), RLv("NAT")));
+                        if (fail != null && pub == "") s.Add(Rd(X(2, 1, L.T("(no answer)"), Cut(fail[2], 60), double.NaN), 2));
+                        else
+                        {
+                            s.Add(X(2, 1, L.T("you look like") + " " + Or(pub, "203.0.113.50:51234"), "XOR-MAPPED-ADDRESS", double.NaN));
+                            s.Add(X(1, 0, L.T("passed back in to you"), Cut(Or(nat, L.T("now the PC knows its outside address")), 70), double.NaN));
+                        }
                         cap = "WHAT YOU LOOK LIKE FROM OUTSIDE"; foot = "Calls and games use this address to reach each other. If the port changes for every destination (symmetric NAT), they need a relay.";
                     }
                     break;
@@ -132,14 +162,21 @@ namespace AdeeboMeter
                     break;
                 case "hairpin":
                     {
-                        var own = RRow("Your own"); string loc = RV("Same service"); string pub = own != null ? P(own[2], 0).Split(' ')[0] : "203.0.113.50:443", lan = Or(loc.Split(' ')[0], "192.168.1.40:443");
-                        bool broke = Lv(own) == 2; who = new[] { L.T("This PC"), L.T("your router"), L.T("server inside") };
-                        s.Add(X(0, 1, L.T("to your public address") + " " + pub, L.T("from inside your own network"), double.NaN));
-                        if (broke) s.Add(Rd(X(1, 0, L.T("(nothing - the router won't turn it around)"), L.T("no NAT loopback / hairpin"), double.NaN), 2));
-                        else { s.Add(X(1, 2, L.T("turned around (hairpin NAT)"), L.T("forwarded to") + " " + lan, double.NaN)); s.Add(X(2, 0, L.T("answer, back through the router"), "", double.NaN)); }
-                        s.Add(X(0, 2, L.T("same service, its inside address") + " " + lan, L.T("straight across your network"), double.NaN));
-                        s.Add(Rd(X(2, 0, L.T("answer"), Or(loc, ""), RowMs(loc)), loc == "" ? -1 : 0));
-                        cap = "REACHING YOUR OWN SERVER BY ITS OUTSIDE ADDRESS"; foot = broke ? "From outside it probably works. Inside, use the local address or name - or turn on NAT loopback on the router." : "Your router loops traffic back, so the outside address works from inside too.";
+                        // bug-hunt ML-188: Protocols.Hairpin's rows - "Your public address" (from STUN), then "Hairpin (NAT loopback)" works / doesn't loop back
+                        string pubRaw = RV("Your public address"), hp = RV("Hairpin"); bool noStun = ran && hp == "";   // R2-091: no STUN answer - the hairpin test never ran
+                        string pub = noStun ? "?" : Or(pubRaw, "203.0.113.50"); bool broke = ran && !noStun && !hp.StartsWith("works", StringComparison.Ordinal);
+                        who = new[] { L.T("This PC"), L.T("your router"), L.T("this PC again") };
+                        if (noStun)
+                        {
+                            s.Add(Rd(X(0, 1, L.T("what's my public address?"), "STUN", double.NaN), -1));
+                            s.Add(Rd(X(1, 0, L.T("(no answer - the test couldn't start)"), Cut(pubRaw, 60), double.NaN), 2));
+                            cap = "SENDING TO YOUR OWN OUTSIDE ADDRESS"; foot = "Without your public address there's nothing to send to - this says nothing about the router's loopback yet.";
+                            break;
+                        }
+                        s.Add(X(0, 1, L.T("a packet to your own public address") + " " + Cut(pub, 24), L.T("from inside your own network"), double.NaN));
+                        if (broke) s.Add(Rd(X(1, 0, L.T("(nothing - the router won't turn it around)"), Cut(Or(hp, RV("Your public address")), 60), double.NaN), 1));
+                        else { s.Add(X(1, 2, L.T("turned around (hairpin NAT)"), L.T("sent back in"), double.NaN)); s.Add(X(2, 0, L.T("arrived back here"), Cut(RV("Port kept?"), 50), double.NaN)); }
+                        cap = "SENDING TO YOUR OWN OUTSIDE ADDRESS"; foot = broke ? "From outside it probably works. Inside, use the local address or name - or turn on NAT loopback on the router." : "Your router loops traffic back, so the outside address works from inside too.";
                     }
                     break;
 
@@ -147,7 +184,7 @@ namespace AdeeboMeter
                 case "syslog": case "trap": case "netflow":
                     {
                         string sent = RV("Sent"), h = HostOf(Tg("192.0.2.20")); string port = id == "syslog" ? "UDP 514" : id == "trap" ? "UDP 162" : "UDP 2055";
-                        var m = Regex.Match(sent, @":(\d+)"); if (m.Success) port = "UDP " + m.Groups[1].Value;
+                        string tp = PortOf(Tg(""), ""); if (tp != "") port = "UDP " + tp;   // bug-hunt L-348: the collector's port is the one you typed (host:port) - the record's own ports are inside the message
                         string what = id == "syslog" ? "<" + L.T("priority") + "> " + Or(VisIn().Length > 1 ? VisIn()[1] : "", "AdeeboMeter test") : id == "trap" ? L.T("SNMP test trap") : L.T("NetFlow test record");
                         who = new[] { L.T("This PC"), h };
                         s.Add(X(0, 1, Cut(what, 40), port + " · " + Cut(Or(sent, L.T("one packet, one way")), 60), double.NaN));
@@ -170,21 +207,33 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- your own packets
                 case "icmpb":
                     {
-                        string h = HostOf(Tg("192.0.2.10")), shape = VisIn().Length > 2 ? VisIn()[2] : "size 1472 df", rep = RV("Replies"), tm = RV("Time"); bool bad = RLv("Replies") == 2;
+                        // bug-hunt ML-190: Lab.Icmp's rows - the target row ("N sent · N answered · min / avg / max"), "Too big", "Answered by", "No answer"
+                        string h = HostOf(Tg("192.0.2.10")), shape = VisIn().Length > 2 ? VisIn()[2] : "size 1472 df"; var main = Res().FirstOrDefault(o => o.Length > 2 && o[2].Contains(" sent · "));
+                        string big = RV("Too big"), by = RV("Answered by"); int answered = main == null ? (ran ? 0 : 1) : (int)VNum(main[2], @"(\d+) answered");   /* R2-207: a run that sent nothing has no reply */ double avg = main == null ? double.NaN : VNum(main[2], @"/ (\d+) /");
                         who = new[] { L.T("This PC"), L.T("a router on the way"), h };
                         s.Add(X(0, 2, L.T("Echo request") + " · " + Or(shape, "size 1472 df"), L.T("the size, DF and TTL you chose"), double.NaN));
-                        if (!bad) s.Add(X(2, 0, L.T("Echo reply") + " · " + Cut(Or(P(rep, 0), L.T("came back")), 30), Cut(Or(P(rep, 1), ""), 60), RowMs(tm)));
-                        else { s.Add(Rd(X(1, 0, Cut(Or(P(rep, 0), L.T("too big - Fragmentation needed")), 40), Cut(Or(P(rep, 1), L.T("or 'Time exceeded' if the TTL ran out")), 60), double.NaN), 2)); }
+                        if (big != "") s.Add(Rd(X(1, 0, L.T("too big - Fragmentation needed"), Cut(big, 60), double.NaN), 1));
+                        else if (by != "") s.Add(X(1, 0, L.T("Time exceeded"), L.T("from") + " " + Cut(by, 40), double.NaN));
+                        else if (answered > 0) s.Add(X(2, 0, L.T("Echo reply"), main != null ? Cut(main[2], 60) : L.T("came back"), avg));
+                        else s.Add(Rd(X(2, 0, L.T("(no answer)"), main != null ? Cut(main[2], 60) : Cut(Or(Res().Select(o => o[2]).FirstOrDefault(), ""), 60), double.NaN), 2));
                         cap = "AN ICMP PACKET YOU SHAPED YOURSELF"; foot = "Raise the size with DF on until it fails - that's the path MTU. A small TTL shows which router is that many hops away.";
                     }
                     break;
                 case "udpsend": case "tcpsend":
                     {
                         string t = Tg("192.0.2.10:8080"), h = HostOf(t), port = PortOf(t, id == "udpsend" ? "5060" : "8080"), pay = VisIn().Length > 1 ? VisIn()[1].Replace("\\r\\n", " ↵ ").Trim() : "";
-                        var rep = RRow("Reply"); string con = RV("Connected"); who = new[] { L.T("This PC"), h };
-                        if (id == "tcpsend") { s.Add(X(0, 1, "SYN", "TCP " + port, double.NaN)); s.Add(Rd(X(1, 0, "SYN-ACK", L.T("connected"), RowMs(con)), RLv("Connected"))); s.Add(X(0, 1, "ACK", L.T("open"), double.NaN)); }
-                        s.Add(X(0, 1, Cut(Or(pay, L.T("your message")), 44), (id == "udpsend" ? "UDP " : "TCP ") + port + " · " + Or(RV("Sent"), L.T("your bytes")), double.NaN));
-                        s.Add(Rd(X(1, 0, Cut(rep != null ? P(rep[2], 0) : L.T("its reply"), 44), id == "udpsend" ? L.T("no reply would mean filtered - or it ignores this question") : L.T("first bytes shown"), RowMs(rep != null ? rep[2] : "")), Lv(rep)));
+                        // bug-hunt ML-199: Lab.Udp's "Sent to a:p (UDP)" and "Answer" rows; Lab.Tcp's "a:p" (connected in N ms / refused) and "Sent N bytes, got back"
+                        var con = Res().FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], @"^\S+:\d+$")); var sentRow = RRow("Sent to "); string ans = id == "udpsend" ? RV("Answer") : RV("Sent ").Length > 0 ? RV("Sent ") : RV("Got (without sending)");
+                        bool conOk = con == null || con[2].StartsWith("connected", StringComparison.Ordinal); who = new[] { L.T("This PC"), h };
+                        if (id == "tcpsend") { s.Add(X(0, 1, "SYN", "TCP " + port, double.NaN)); s.Add(Rd(X(1, 0, conOk ? "SYN-ACK" : L.T("(no SYN-ACK)"), con != null ? Cut(con[2], 50) : L.T("connected"), con != null ? VNum(con[2], @"(\d+) ms") : double.NaN), con != null ? Lv(con) : -1)); if (conOk) s.Add(X(0, 1, "ACK", L.T("open"), double.NaN)); }
+                        if (id == "udpsend" || conOk)
+                        {
+                            s.Add(X(0, 1, Cut(Or(pay, L.T("your message")), 44), (id == "udpsend" ? "UDP " : "TCP ") + port + (sentRow != null ? " · " + Cut(P(sentRow[2], 0), 30) : ""), double.NaN));
+                            bool closed = id == "udpsend" && Res().Any(o => o[2].IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0);   // R2-206: the host said "closed" (ICMP port unreachable)
+                            bool none = ran && !closed && (ans == "" || ans.StartsWith("nothing", StringComparison.Ordinal)) && !(sentRow != null && sentRow[2].Contains("answers"));
+                            if (closed) s.Add(Rd(X(1, 0, L.T("port unreachable - closed"), L.T("the host said so (ICMP)"), double.NaN), 1));
+                            else s.Add(Rd(X(1, 0, none ? L.T("(no reply)") : Cut(Or(ans, L.T("its reply")), 44), id == "udpsend" ? L.T("no reply can mean filtered - or it ignores this question") : L.T("first bytes shown"), double.NaN), none ? 3 : -1));
+                        }
                         if (id == "tcpsend") s.Add(X(0, 1, "FIN", L.T("done - closed politely"), double.NaN));
                         cap = id == "udpsend" ? "ONE UDP PACKET, AND WHAT CAME BACK" : "A TCP CONVERSATION, START TO FINISH";
                         foot = id == "udpsend" ? "UDP has no handshake: the reply (or an ICMP 'port unreachable') is the only sign anything is there." : "RST instead of SYN-ACK = closed. No answer at all = a firewall dropped it.";
@@ -194,21 +243,29 @@ namespace AdeeboMeter
                     {
                         string url = VisIn()[0] != "" ? VisIn()[0] : "https://example.com/api/health", meth = VisIn().Length > 1 && VisIn()[1] != "" ? VisIn()[1] : "GET";
                         var um = Regex.Match(url, @"^(https?)://([^/:]+)(?::\d+)?(/.*)?$", RegexOptions.IgnoreCase); string h = um.Success ? um.Groups[2].Value : url, path = um.Success && um.Groups[3].Value != "" ? um.Groups[3].Value : "/";
-                        bool tls = !url.StartsWith("http:", StringComparison.OrdinalIgnoreCase); var stl = res.FirstOrDefault(o => Regex.IsMatch(o[1], @"^\d{3}\b")); string ct = RV("Content-Type"), body = RV("Body");
+                        bool tls = !url.StartsWith("http:", StringComparison.OrdinalIgnoreCase); var stl = res.FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[2], @"^\d{3} ")); string ct = RV("Content-Type"), body = RV("Body");   /* bug-hunt ML-198: Reach.Http's row is "METHOD url" with "200 OK · N ms · bytes" as its value */
+                        var fail = stl == null ? res.FirstOrDefault(o => o.Length > 2 && o[0] == "2") : null;
                         who = new[] { L.T("This PC"), h };
                         s.Add(X(0, 1, "SYN → SYN-ACK", "TCP " + (tls ? "443" : "80"), double.NaN));
                         if (tls) s.Add(Lk(X(0, 1, L.T("TLS hello - name") + ": " + h, "SNI", double.NaN)));
                         var rq = X(0, 1, meth + " " + Cut(path, 40), L.T("method, path, headers"), double.NaN); rq.Sealed = tls; s.Add(rq);
-                        var rp = X(1, 0, stl != null ? stl[1] + " · " + P(stl[2], 0) : L.T("status line + headers"), Cut(Or(ct + (body != "" ? "  " + body : ""), "200 / 301 / 403 / 404 / 500"), 70), RowMs(stl != null ? stl[2] : "")); rp.Sealed = tls; s.Add(Rd(rp, Lv(stl)));
+                        var rp = fail != null ? X(1, 0, L.T("(no answer)"), Cut(fail[2], 70), double.NaN) : X(1, 0, stl != null ? P(stl[2], 0) : L.T("status line + headers"), Cut(Or(ct + (body != "" ? "  " + body : ""), "200 / 301 / 403 / 404 / 500"), 70), stl != null ? VNum(stl[2], @"(\d+) ms") : double.NaN); rp.Sealed = tls; s.Add(Rd(rp, fail != null ? 2 : Lv(stl)));
                         cap = "YOUR HTTP REQUEST, AS SENT"; foot = "2xx = fine · 3xx = go elsewhere · 4xx = your request or access · 5xx = the server broke.";
                     }
                     break;
                 case "dhcpopt":
                     {
-                        string srv = Or(RV("DHCP server"), L.T("DHCP server")), opt = RV("Options"); who = new[] { L.T("This PC"), srv };
+                        // bug-hunt ML-197: Lab.DhcpOptions' rows - the adapter ("the DHCP server answered in N ms" / didn't answer) and one row per option, "Router (3)" = value
+                        var head = res.FirstOrDefault(o => o.Length > 2 && o[2].StartsWith("the DHCP server", StringComparison.Ordinal)); var opts = res.Where(o => o.Length > 2 && Regex.IsMatch(o[1], @"\(\d+\)$")).ToList();
+                        bool noAns = (head != null && head[2].Contains("didn't answer")) || (ran && head == null && opts.Count == 0);   /* R2-205: no server to ask (a fixed address, no adapter) is no Ack */
+                        if (noAns && head == null) head = Res().FirstOrDefault() ?? new[] { "2", "", L.T("no DHCP server to ask") }; who = new[] { L.T("This PC"), L.T("DHCP server") };
                         s.Add(Bc(0, 1, L.T("Inform: I have an address - just tell me the options"), L.T("broadcast · UDP 68 → 67")));
-                        s.Add(Rd(X(1, 0, L.T("Ack with options"), Cut(Or(opt, "3 router · 6 DNS · 15 domain · 51 lease"), 80), double.NaN), RLv("Options")));
-                        foreach (var o in (opt == "" ? Array.Empty<string>() : opt.Split(Dot, StringSplitOptions.None)).Take(4)) s.Add(X(1, 1, o.Trim(), OptNo(o), double.NaN));
+                        if (noAns) s.Add(Rd(X(1, 0, L.T("(no answer)"), Cut(head[2], 60), double.NaN), 2));
+                        else
+                        {
+                            s.Add(X(1, 0, L.T("Ack with options"), ran ? Cut(head != null ? head[2] : "", 60) : "3 router · 6 DNS · 15 domain · 51 lease", head != null ? VNum(head[2], @"in (\d+) ms") : double.NaN));
+                            foreach (var o in opts.Take(4)) s.Add(X(1, 1, Cut(o[1] + ": " + o[2], 50), "", double.NaN));
+                        }
                         cap = "WHAT THE DHCP SERVER HANDS OUT"; foot = "Phones and PXE boot read more options: 66/67 (boot server and file), 150 (Cisco TFTP), 43 (vendor).";
                     }
                     break;
@@ -216,7 +273,7 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- speed and quality, measured
                 case "twamp":
                     {
-                        string rt = RV("Round trip"), ow = RV("One way"); double o1 = VNum(ow, @"out\s*([0-9.]+)"), b1 = VNum(ow, @"back\s*([0-9.]+)");
+                        string rt = RV("Round trip"), ow = Or(RV("One-way"), RV("One way"));   /* L-347: the row is "One-way delay" */ double o1 = VNum(ow, @"out\s*([0-9.]+)"), b1 = VNum(ow, @"back\s*([0-9.]+)");
                         who = new[] { L.T("This PC (sender)"), L.T("reflector") + " " + HostOf(Tg("192.0.2.7")) };
                         s.Add(X(0, 1, L.T("test packet, stamped T1"), "UDP 862 · TWAMP-light", o1));
                         s.Add(X(1, 1, L.T("received T2, sent back T3"), L.T("the reflector stamps both - its own delay is taken out"), double.NaN));
@@ -226,21 +283,24 @@ namespace AdeeboMeter
                     break;
                 case "dscp":
                     {
-                        var mk = res.FirstOrDefault(o => o[1].StartsWith("Marked", StringComparison.OrdinalIgnoreCase)); string un = RV("Unmarked"), mean = RV("What it means");
-                        string tag = mk != null ? Regex.Replace(mk[1], "^Marked ", "") : "EF (46)"; who = new[] { L.T("This PC"), L.T("your router"), L.T("provider"), HostOf(Tg("192.0.2.1")) };
+                        // bug-hunt ML-196: Toolkit.DscpPing's rows are "DSCP 46 (EF)" and "Unmarked (0)", each "median N ms · N of N lost"
+                        var mk = res.FirstOrDefault(o => o.Length > 2 && o[1].StartsWith("DSCP ", StringComparison.Ordinal)); string un = RV("Unmarked"), mean = RV("Was it really marked?");
+                        string tag = mk != null ? mk[1].Substring(5) : "EF (46)"; who = new[] { L.T("This PC"), L.T("your router"), L.T("provider"), HostOf(Tg("192.0.2.1")) };
                         s.Add(X(0, 1, L.T("ping marked") + " " + tag, L.T("'please treat me as voice'"), double.NaN));
                         s.Add(X(1, 2, L.T("mark kept on your side"), "", double.NaN));
                         s.Add(Rd(X(2, 3, L.T("mark may be reset to 0 here"), L.T("providers usually ignore your marks"), double.NaN), 1));
-                        s.Add(Rd(X(3, 0, L.T("marked replies"), Cut(Or(mk != null ? mk[2] : "", ""), 50), VNum(mk != null ? mk[2] : "", @"avg\s*([0-9.]+)")), Lv(mk)));
+                        s.Add(Rd(X(3, 0, L.T("marked replies"), Cut(Or(mk != null ? mk[2] : "", ""), 50), VNum(mk != null ? mk[2] : "", @"median\s*([0-9.]+)")), Lv(mk)));
                         s.Add(X(0, 3, L.T("same ping, unmarked"), L.T("for comparison"), double.NaN));
-                        s.Add(X(3, 0, L.T("unmarked replies"), Cut(un, 50), VNum(un, @"avg\s*([0-9.]+)")));
+                        s.Add(X(3, 0, L.T("unmarked replies"), Cut(un, 50), VNum(un, @"median\s*([0-9.]+)")));
                         cap = "DOES ANYONE HONOUR YOUR PRIORITY MARK?"; foot = Or(mean, "Marks matter on your own network (Wi-Fi WMM, company QoS). Across the internet they rarely survive.");
                     }
                     break;
                 case "iperf":
                     {
-                        string dl = RV("Download"), ul = RV("Upload"), sv = RV("Server"); who = new[] { L.T("This PC"), "iperf3 " + Or(P(sv, 0), HostOf(Tg("192.0.2.5")) + ":5201") };
-                        s.Add(X(0, 1, L.T("control: test for") + " " + Or(P(sv, 1), "10 s"), "TCP 5201", double.NaN));
+                        // bug-hunt ML-233: the server and port you typed, the length from Toolkit.Iperf's "Settings" row ("TCP · 1 stream · 10 s")
+                        string dl = RV("Download"), ul = RV("Upload"), set = RV("Settings"), tg = Tg("192.0.2.5:5201"), ip3 = HostOf(tg), pt3 = PortOf(tg, "5201"); var pm = Regex.Match(set, @"(\d+) s\b");
+                        who = new[] { L.T("This PC"), "iperf3 " + ip3 + ":" + pt3 };
+                        s.Add(X(0, 1, L.T("control: test for") + " " + (pm.Success ? pm.Groups[1].Value + " s" : "10 s"), "TCP " + pt3 + (set != "" ? " · " + Cut(P(set, 0), 20) : ""), double.NaN));
                         s.Add(X(1, 0, L.T("ready"), "", double.NaN));
                         if (ul != "" || !ran) s.Add(Rd(X(0, 1, L.T("upload at full speed") + " - " + Or(P(ul, 0), "…"), Or(P(ul, 1), L.T("as fast as the line allows")), double.NaN), RLv("Upload")));
                         if (dl != "" || !ran) s.Add(Rd(X(1, 0, L.T("download at full speed") + " - " + Or(P(dl, 0), "…"), Or(P(dl, 1), L.T("retransmits = packets sent twice")), double.NaN), RLv("Download")));
@@ -264,7 +324,7 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- the proxy and the VPN: which way
                 case "proxy":
                     {
-                        string goes = RV("This URL goes"), set = RV("Windows proxy"), why = RV("Why"); string u = HostOf(Tg("www.example.com"));
+                        string fixedP = RV("Fixed proxy"), set = Or(fixedP == "off" ? "" : fixedP, RV("PAC file")), goes = RV("This URL goes"), why = "";   /* R2-095: "off" is the sentinel, not a setting; WhyFails.Proxy has no Why row */   /* L-349: WhyFails.Proxy's own row names */ string u = HostOf(Tg("www.example.com"));
                         bool direct = goes.StartsWith("DIRECT", StringComparison.OrdinalIgnoreCase) || (!ran); var pm = Regex.Match(goes + " " + why, @"([\w.-]+:\d{2,5})"); string px = pm.Success ? pm.Groups[1].Value : "proxy:8080";
                         string pac = Regex.Match(set, @"https?://[^\s)]+").Value;
                         who = direct ? new[] { L.T("This PC"), L.T("proxy script (PAC)"), u } : new[] { L.T("This PC"), L.T("proxy script (PAC)"), px, u };
@@ -272,7 +332,7 @@ namespace AdeeboMeter
                         s.Add(X(1, 0, direct ? "DIRECT" : "PROXY " + px, Cut(Or(why, ""), 70), double.NaN));
                         if (direct) s.Add(Lk(X(0, 2, L.T("straight to the site"), "TCP 443 · TLS", double.NaN)));
                         else { s.Add(X(0, 2, "CONNECT " + u + ":443", "", double.NaN)); s.Add(X(2, 3, L.T("the proxy connects for you"), "", double.NaN)); s.Add(X(2, 0, "200 Connection established", L.T("407 here = the proxy wants a sign-in"), double.NaN)); s.Add(Lk(X(0, 3, L.T("TLS straight through"), L.T("the proxy sees the name, not the page"), double.NaN))); }
-                        cap = "WHICH WAY " + u.ToUpperInvariant() + " GOES"; foot = Or(set, "No proxy set - everything goes direct.");
+                        cap = "WHICH WAY " + u.ToUpperInvariant() + " GOES"; foot = set != "" ? set : goes.IndexOf("proxy", StringComparison.OrdinalIgnoreCase) >= 0 ? goes : "No proxy set - everything goes direct.";
                     }
                     break;
                 case "vpnleak":
@@ -280,7 +340,10 @@ namespace AdeeboMeter
                         who = new[] { L.T("This PC"), Cut(Or(res.Where(o => o[1] == "VPN").Select(o => o[2]).FirstOrDefault(), L.T("VPN tunnel")), 22), L.T("your provider"), L.T("the internet") };
                         foreach (var o in res.Where(o => Regex.IsMatch(o[1], @"^(IPv4|IPv6|DNS|WebRTC)", RegexOptions.IgnoreCase)))
                         {
-                            bool leak = Lv(o) == 2; string what = Regex.Replace(o[1], @"\s*outside the tunnel", "");
+                            // bug-hunt ML-202: a DNS leak is level 1 ("the VPN sets no DNS server"), and "couldn't tell" is level 1 too - each drawn as itself
+                            bool leak = o[1].Contains("outside the tunnel") || (o[1] == "DNS" && o[2].StartsWith("the VPN sets no DNS", StringComparison.Ordinal)), unsure = !leak && o[2].StartsWith("couldn't", StringComparison.Ordinal);
+                            string what = Regex.Replace(o[1], @"\s*outside the tunnel", "");
+                            if (unsure) { s.Add(Rd(X(0, 1, what + " - " + L.T("couldn't tell"), Cut(o[2], 60), double.NaN), 1)); continue; }
                             if (leak) { s.Add(Rd(X(0, 2, what + " - " + L.T("outside the tunnel"), Cut(o[2], 60), double.NaN), 2)); s.Add(Rd(X(2, 3, L.T("from your real address"), L.T("your provider sees it"), double.NaN), 2)); }
                             else { s.Add(Lk(X(0, 1, what + " - " + L.T("into the tunnel"), Cut(o[2], 60), double.NaN))); }
                         }
@@ -294,17 +357,25 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- IPv6 and neighbours
                 case "ping6":
                     {
-                        string r6 = RV("IPv6 reply"), path = RV("Path"); string addr = Or(P(r6, 0), "2001:db8::10"); who = new[] { L.T("This PC"), L.T("router") + " fe80::1", HostOf(Tg("example.com")) };
+                        // bug-hunt ML-200: SysTools.Ping6's row is "Ping <address>" = "N of 10 answered · min N ms · median N ms", then "Path MTU (IPv6)"
+                        var pr = RRow("Ping "); string addr = pr != null ? pr[1].Substring(5) : "2001:db8::10", path = RV("Path MTU"), r6 = pr != null ? pr[2] : ""; var fail = RRow("IPv6 address");
+                        who = new[] { L.T("This PC"), L.T("router") + " fe80::1", HostOf(Tg("example.com")) };
                         s.Add(Bc(0, 1, L.T("Neighbour Solicitation: who has fe80::1?"), "ICMPv6 135 · multicast"));
                         s.Add(X(1, 0, L.T("Neighbour Advertisement: me"), L.T("IPv6's version of ARP"), double.NaN));
                         s.Add(X(0, 2, L.T("Echo request to") + " " + addr, "ICMPv6 128" + (path != "" ? " · " + path : ""), double.NaN));
-                        s.Add(Rd(X(2, 0, L.T("Echo reply") + (P(r6, 2) != "" ? " · " + P(r6, 2) : ""), "ICMPv6 129", RowMs(r6)), RLv("IPv6 reply")));
+                        if (fail != null) s.Add(Rd(X(2, 0, L.T("(no IPv6 address to ping)"), Cut(fail[2], 60), double.NaN), 2));
+                        else s.Add(Rd(X(2, 0, L.T("Echo reply") + (r6 != "" ? " · " + Cut(P(r6, 0), 24) : ""), "ICMPv6 129", VNum(r6, @"median (\d+) ms")), pr != null ? Lv(pr) : -1));
                         cap = "AN IPV6 PING, FROM THE FIRST HOP"; foot = "No ARP in IPv6 - neighbour discovery does it. Blocking all ICMPv6 breaks IPv6 itself.";
                     }
                     break;
                 case "v6routers": case "rareplay":
                     {
-                        var rs = res.Where(o => o[1].StartsWith("fe80", StringComparison.OrdinalIgnoreCase)).ToList();
+                        // bug-hunt ML-191: RoutingTools.Ipv6Routers writes "<adapter> · routers" = "N: fe80::1, fe80::2"; Replay.RaReplay "Router <address>"
+                        var rs = new List<string[]>();
+                        foreach (var o in res.Where(o => o.Length > 2 && o[1].EndsWith("· routers", StringComparison.Ordinal))) foreach (var a in Regex.Replace(o[2], @"^\d+:\s*", "").Split(',').Select(z => z.Trim()).Where(z => z.Contains(":"))) rs.Add(new[] { o[0], a, Cut(RV(o[1].Replace("· routers", "· prefixes")), 60), "" });
+                        foreach (var o in res.Where(o => o.Length > 2 && o[1].StartsWith("Router ", StringComparison.Ordinal))) rs.Add(new[] { o[0], o[1].Substring(7).Split(' ')[0], o[2], "" });
+                        if (rs.Count > 1) foreach (var o in rs.Skip(1)) o[0] = "2";
+                        if (rs.Count == 0 && ran) rs.Add(new[] { "3", L.T("routers"), L.T("(none answered - IPv6 is off on this network)"), "" });
                         if (rs.Count == 0) { string seen = RV("IPv6 routers seen"), pre = RV("Prefix"); foreach (var a in (seen == "" ? "1 · fe80::1 (your router)" : seen).Split(Dot, StringSplitOptions.None).Skip(1)) rs.Add(new[] { "0", a.Split(' ')[0], (pre != "" ? "prefix " + pre.Split(' ')[0] : "") + " " + Regex.Match(a, @"\(.*\)").Value }); }
                         rs = rs.Take(3).ToList(); who = new[] { L.T("This PC") }.Concat(rs.Select(o => o[1])).ToArray();
                         s.Add(Bc(0, who.Length - 1, L.T("Router Solicitation: any routers here?"), "ICMPv6 133 · ff02::2"));
@@ -315,20 +386,26 @@ namespace AdeeboMeter
                     break;
                 case "discover":
                     {
-                        var devs = res.Where(o => Regex.IsMatch(o[1], @"^\d+\.\d+\.\d+\.\d+$")).Take(4).ToList(); who = new[] { L.T("This PC"), L.T("everyone (multicast)") };
+                        // bug-hunt ML-192: RoutingTools.Listen names its rows by what was heard ("mDNS", "SSDP" = "N packets from a, b") and by the kind of device found
+                        var devs = res.Where(o => o.Length > 2 && o[2].Contains(" packets from ")).Take(4).ToList(); var things = VisRows().Where(o => o.Length > 2).SkipWhile(o => o[1] != "Smart things here").Skip(1).TakeWhile(o => o[1] != "Look, don't touch" && o[0] != "-1").Take(3).ToList();   // R2-094: the header is a -1 row, which Res() leaves out
+                        who = new[] { L.T("This PC"), L.T("everyone (multicast)") };
                         s.Add(Bc(0, 1, L.T("who's here? (mDNS, SSDP, NetBIOS)"), "224.0.0.251:5353 · 239.255.255.250:1900 · UDP 137"));
-                        foreach (var d in devs) s.Add(X(1, 0, d[1] + " - " + P(d[2], 1), P(d[2], 0) + " · " + P(d[2], 2), double.NaN));
-                        if (devs.Count == 0) { s.Add(X(1, 0, L.T("me: Office printer"), "mDNS · _ipp._tcp", double.NaN)); s.Add(X(1, 0, L.T("me: a media renderer"), "SSDP", double.NaN)); }
+                        foreach (var d in things) s.Add(X(1, 0, Cut(d[1], 40), Cut(d[2], 60), double.NaN));
+                        foreach (var d in devs.Take(Math.Max(1, 4 - things.Count))) s.Add(X(1, 0, d[1], Cut(d[2], 60), double.NaN));
+                        if (ran && devs.Count == 0 && things.Count == 0) s.Add(Rd(X(1, 0, L.T("(nobody announced themselves)"), Cut(RV("Heard nothing"), 60), double.NaN), 3));
+                        if (!ran) { s.Add(X(1, 0, L.T("me: Office printer"), "mDNS · _ipp._tcp", double.NaN)); s.Add(X(1, 0, L.T("me: a media renderer"), "SSDP", double.NaN)); }
                         cap = Or(RV("Heard in"), "DEVICES ANNOUNCING THEMSELVES").ToUpperInvariant(); foot = "These never leave your own network - the router doesn't pass them on. Guest Wi-Fi often blocks them.";
                     }
                     break;
                 case "nbname":
                     {
-                        string h = HostOf(Tg("192.0.2.40")), nm = RV("Name"), wg = RV("Workgroup"); who = new[] { L.T("This PC"), h };
+                        // bug-hunt ML-189: Reach.NameOf's own rows - "NetBIOS name", "LLMNR name", "mDNS (Bonjour) name", "DNS name (PTR)"
+                        string h = HostOf(Tg("192.0.2.40")), nb = RV("NetBIOS name"), ll = RV("LLMNR name"), md = RV("mDNS (Bonjour) name"), ptr = RV("DNS name (PTR)"); who = new[] { L.T("This PC"), h };
+                        Func<string, string, string> got = (v, ex) => !ran ? ex : v != "" ? v : L.T("(no answer)");
                         s.Add(X(0, 1, L.T("what's your name?"), "NetBIOS node status · UDP 137", double.NaN));
-                        s.Add(Rd(X(1, 0, Cut(Or(P(nm, 0), "NAS01 (NetBIOS)"), 40), wg != "" ? L.T("workgroup") + " " + wg : "", double.NaN), RLv("Name")));
-                        s.Add(X(0, 1, L.T("reverse name?"), "mDNS · 224.0.0.251:5353", double.NaN));
-                        s.Add(X(1, 0, Cut(Or(P(nm, 1), "nas01.local (mDNS)"), 40), L.T("Apple/Linux-style name"), double.NaN));
+                        s.Add(Rd(X(1, 0, Cut(got(P(nb, 0), "NAS01"), 40), Cut(nb.Contains("workgroup") ? nb.Substring(nb.IndexOf("workgroup", StringComparison.Ordinal)) : "", 50), double.NaN), ran && nb == "" ? 3 : -1));
+                        s.Add(X(0, 1, L.T("and by LLMNR / mDNS?"), "UDP 5355 · 224.0.0.251:5353", double.NaN));
+                        s.Add(Rd(X(1, 0, Cut(got(ll != "" ? ll : md, "nas01.local"), 40), ran && ptr != "" ? "DNS: " + Cut(ptr, 40) : L.T("Windows, Apple and Linux-style names"), double.NaN), ran && ll == "" && md == "" ? 3 : -1));
                         cap = "ASKING " + h + " ITS NAME"; foot = "Old Windows boxes answer NetBIOS, newer ones LLMNR or mDNS. Guest networks usually block all three.";
                     }
                     break;
@@ -336,12 +413,23 @@ namespace AdeeboMeter
                 // ---------------------------------------------------------------- time
                 case "clock": case "timesrc":
                     {
-                        string src = RV("Time comes from"), off = RV("Clock"), tz = RV("Time zone"); string srcName = Or(src.Split(' ')[0], "time.windows.com");
-                        who = new[] { L.T("This PC"), srcName };
-                        s.Add(X(0, 1, L.T("what time is it? (sent at T1)"), "NTP · UDP 123", double.NaN));
-                        s.Add(X(1, 1, L.T("got it T2, answered T3"), L.T("stratum: steps away from an atomic clock"), double.NaN));
-                        s.Add(X(1, 0, L.T("its time"), Or(P(src, 1), ""), double.NaN));
-                        s.Add(Rd(X(0, 0, Cut(Or(off, L.T("arrived T4 - offset worked out")), 44), Or(tz, L.T("offset = ((T2-T1) + (T3-T4)) / 2")), double.NaN), RLv("Clock")));
+                        // bug-hunt ML-195: Clock compares with a web server's Date header ("Your clock" = right / ahead by / behind by);
+                        // timesrc reads Windows Time ("How", "Current source", "Configured server") - each drawn as what it really did
+                        if (id == "clock")
+                        {
+                            string yc = RV("Your clock"), cl = RV("Clock"), tz = RV("Time zone"); var ycr = RRow("Your clock");
+                            who = new[] { L.T("This PC"), L.T("a web server") };
+                            s.Add(X(0, 1, L.T("any page, please - what time do you have?"), "HTTPS · " + L.T("its Date header"), double.NaN));
+                            s.Add(X(1, 0, L.T("its time, to the second"), "Date: …", double.NaN));
+                            s.Add(Rd(X(0, 0, Cut(Or(yc, Or(cl, L.T("right (within a second or two)"))), 44), Cut(tz, 60), double.NaN), ycr != null ? Lv(ycr) : RLv("Clock")));
+                        }
+                        else
+                        {
+                            string how = RV("How"), cur = RV("Current source"), conf = RV("Configured server"); string srcName = Or(Regex.Replace(cur, @"[,\s].*$", ""), Or(Regex.Replace(conf, @"[,\s].*$", ""), "time.windows.com"));
+                            who = new[] { L.T("This PC"), Cut(srcName, 24) };
+                            s.Add(X(0, 1, L.T("what time is it?"), "NTP · UDP 123" + (how != "" ? " · " + Cut(how, 30) : ""), double.NaN));
+                            s.Add(Rd(X(1, 0, L.T("its time"), Cut(Or(cur, L.T("the source Windows follows")), 60), double.NaN), RLv("Current source")));
+                        }
                         cap = id == "timesrc" ? "WHERE THIS PC GETS ITS TIME" : "IS THIS PC'S CLOCK RIGHT?"; foot = "Domain PCs follow a domain controller; home PCs time.windows.com. More than 5 minutes off and sign-ins (Kerberos) fail.";
                     }
                     break;
@@ -350,16 +438,21 @@ namespace AdeeboMeter
                 case "dot1x": case "eapreplay": case "auth":
                     {
                         who = new[] { L.T("This PC"), L.T("switch / access point"), L.T("RADIUS server") };
-                        var ev = res.Where(o => Regex.IsMatch(o[1], @"^\d{1,2}:\d{2}")).ToList();
+                        // bug-hunt ML-194: the timelines name rows "Mon 14:02:11" (EngPack.Dot1x), "Mon 14:02" (WinEvidence.Auth) or "0.123 s" (a capture)
+                        var ev = res.Where(o => o.Length > 2 && Regex.IsMatch(o[1], @"^((\w{2,4}\.? )?\d{1,2}:\d{2}|\d+\.\d{3} s$)")).ToList();
                         if (ev.Count > 0) foreach (var o in ev.Take(8)) s.Add(Eap(o[1] + " " + Cut(o[2], 46), o.Length > 3 ? Cut(o[3], 60) : "", o[2], Lv(o)));
                         else if (RV("EAP") != "")
                         {
                             foreach (var part in RV("EAP").Split(EapSep, StringSplitOptions.RemoveEmptyEntries)) s.Add(Eap(part.Trim(), "", part, -1));
                             var r = RRow("Result"); if (r != null) s.Add(Eap(r[2], r.Length > 3 ? Cut(r[3], 60) : "", r[2], Lv(r)));
                         }
+                        else if (ran)
+                        {
+                            var said = res.FirstOrDefault(o => o.Length > 2 && o[0] != "-1"); s.Add(Rd(X(0, 1, L.T("(no 802.1X sign-in seen)"), said != null ? Cut(said[2], 70) : "", double.NaN), said != null ? Lv(said) : 3));
+                        }
                         else
                         {
-                            s.Add(X(0, 1, "EAPOL-Start", L.T("I'd like to join"), double.NaN)); s.Add(X(1, 0, L.T("Identity?"), "EAP-Request", double.NaN)); s.Add(X(0, 1, "host/PC01.corp.example.com", "EAP-Response", double.NaN));
+                            s.Add(X(0, 1, "EAPOL-Start", L.T("I'd like to join"), double.NaN)); s.Add(X(1, 0, L.T("Identity?"), "EAP-Request", double.NaN)); s.Add(X(0, 1, L.T("this PC's name (an example)"), "EAP-Response", double.NaN));
                             s.Add(X(1, 2, "Access-Request", "UDP 1812", double.NaN)); s.Add(Lk(X(2, 0, L.T("TLS: certificates both ways"), "Access-Challenge × n", double.NaN)));
                             var last = RRow("Last network sign-in"); bool fail = Lv(last) == 2;
                             if (fail) s[4] = Rd(Lk(X(2, 0, L.T("TLS: certificates - failed"), Cut(last.Length > 3 ? last[3] : last[2], 60), double.NaN)), 2);
@@ -373,7 +466,7 @@ namespace AdeeboMeter
                         var r = res.FirstOrDefault(o => o[1].StartsWith("Access-", StringComparison.OrdinalIgnoreCase)); string from = RV("Sent from"), attr = RV("Attributes");
                         string t = Tg("labtest@192.0.2.30"), user = t.Contains("@") ? t.Split('@')[0] : "labtest"; who = new[] { L.T("This PC") + (from != "" ? " " + from.Split(' ')[0] : ""), HostOf(t) };
                         s.Add(X(0, 1, "Access-Request: " + user, L.T("UDP 1812 · password hidden with the shared secret"), double.NaN));
-                        s.Add(Rd(X(1, 0, r != null ? r[1] : "Access-Accept / Reject", Cut(r != null ? r[2] : L.T("silence = wrong secret or not a known client"), 60), RowMs(r != null ? r[2] : "")), Lv(r)));
+                        s.Add(Rd(X(1, 0, r != null ? r[1] : "Access-Accept / Reject", Cut(r != null ? r[2] : L.T("silence = wrong secret or not a known client"), 60), r != null ? (double.IsNaN(RowMs(r[1])) ? RowMs(r[2]) : RowMs(r[1])) : double.NaN), Lv(r)));   /* L-350: the time is in the row's name ("Access-Accept in 45 ms") */
                         if (attr != "") s.Add(X(1, 0, L.T("attributes"), Cut(attr, 70), double.NaN));
                         cap = "A TEST SIGN-IN AGAINST RADIUS"; foot = from != "" ? Cut(from, 110) : "Silence = wrong shared secret or firewall. Reject = the server works, the account or policy doesn't.";
                     }
@@ -381,6 +474,21 @@ namespace AdeeboMeter
                 case "https": case "certlive":
                     {
                         string h = HostOf(Tg("www.example.com")); who = new[] { L.T("This PC"), h }; string ver = RV("TLS version");
+                        if (id == "certlive")
+                        {
+                            // bug-hunt ML-201: CertKeys.Live's rows - "The server presents" (the same or a DIFFERENT certificate), the chain it sent ("Intermediate" / "Root"), "Windows trusts it"
+                            var pres = RRow("The server presents"); var fail = pres == null ? res.FirstOrDefault(o => o.Length > 2 && o[0] == "2") : null; var trust = RRow("Windows trusts it");
+                            s.Add(X(0, 1, L.T("TLS hello - name") + ": " + h, "ClientHello", double.NaN));
+                            if (fail != null) s.Add(Rd(X(1, 0, L.T("(no certificate)"), Cut(fail[2], 60), double.NaN), 2));
+                            else
+                            {
+                                s.Add(Rd(X(1, 0, pres != null ? Cut(pres[2], 50) : L.T("its certificate"), L.T("compared with the file you gave"), double.NaN), pres != null ? Lv(pres) : -1));
+                                foreach (var c in res.Where(o => o.Length > 2 && (o[1] == "Intermediate" || o[1] == "Root")).Take(2)) s.Add(Rd(X(1, 0, c[1] + ": " + Cut(c[2], 40), "", double.NaN), Lv(c)));
+                                if (trust != null) s.Add(Rd(X(0, 0, L.T("Windows trusts it") + ": " + Cut(trust[2], 30), trust.Length > 3 ? Cut(trust[3], 60) : "", double.NaN), Lv(trust)));
+                            }
+                            cap = "WHAT THE SERVER REALLY SENDS"; foot = Or(pres != null && pres.Length > 3 ? pres[3] : "", "The server must present the certificate you installed - and the middle ones with it.");
+                            break;
+                        }
                         s.Add(X(0, 1, L.T("TLS hello - name") + ": " + h, "ClientHello · TCP 443", double.NaN));
                         s.Add(X(1, 0, Or(P(ver, 0), "ServerHello") + (RV("Key agreement") != "" ? " · " + RV("Key agreement") : ""), Or(P(ver, 1), ""), RowMs(ver)));
                         var chain = res.Where(o => o[1].Contains("missing") || o[1].Contains("certificate") || o[1].Contains("root") || o[1].Contains("intermediate")).Take(3).ToList();
@@ -393,12 +501,21 @@ namespace AdeeboMeter
                     break;
                 case "dhcpreplay":
                     {
-                        string lease = RV("Lease"), off = RV("Offer"); var im = Regex.Match(lease, @"(\d+\.\d+\.\d+\.\d+) from (\d+\.\d+\.\d+\.\d+)"); string ip = im.Success ? im.Groups[1].Value : "192.168.1.20", sv = im.Success ? im.Groups[2].Value : L.T("DHCP server");
-                        double ms = VNum(lease, @"in\s*([0-9.]+)\s*ms"); who = new[] { L.T("the PC in the capture"), sv };
+                        // bug-hunt ML-193: Replay.DhcpReplay's rows - one per message, its value "Offer 192.168.1.20 from 192.168.1.1" / "ACK ..." / "NAK ...",
+                        // and the finding "Lease for <client>" = "192.168.1.20 from 192.168.1.1 in 0.120 s"
+                        string lease = RV("Lease for"); var offR = res.FirstOrDefault(o => o.Length > 2 && o[2].StartsWith("Offer ", StringComparison.Ordinal)); var ackR = res.FirstOrDefault(o => o.Length > 2 && o[2].StartsWith("ACK ", StringComparison.Ordinal)); var nakR = res.FirstOrDefault(o => o.Length > 2 && o[2].StartsWith("NAK", StringComparison.Ordinal));
+                        var im = Regex.Match(lease != "" ? lease : offR != null ? offR[2] : "", @"(\d+\.\d+\.\d+\.\d+) from (\d+\.\d+\.\d+\.\d+)"); string ip = im.Success ? im.Groups[1].Value : "192.168.1.20", sv = im.Success ? im.Groups[2].Value : L.T("DHCP server");
+                        double secs = VNum(lease, @"in\s*([0-9.]+)\s*s"); double ms = double.IsNaN(secs) ? double.NaN : secs * 1000; who = new[] { L.T("the PC in the capture"), sv };
                         s.Add(Bc(0, 1, "Discover", L.T("broadcast · UDP 68 → 67")));
-                        s.Add(X(1, 0, "Offer: " + ip, Cut(Or(off, L.T("mask, gateway, DNS")), 70), double.NaN));
-                        s.Add(X(0, 1, "Request: " + ip, L.T("still broadcast"), double.NaN));
-                        s.Add(Rd(X(1, 0, "ACK", L.T("whole exchange") + (double.IsNaN(ms) ? "" : " " + ms + " ms"), ms), RLv("Lease")));
+                        if (ran && offR == null) s.Add(Rd(X(1, 0, L.T("(no Offer)"), L.T("no DHCP server answered in the capture"), double.NaN), 2));
+                        else
+                        {
+                            s.Add(X(1, 0, "Offer: " + ip, Cut(offR != null && offR.Length > 3 && offR[3] != "" ? offR[3] : L.T("mask, gateway, DNS"), 70), double.NaN));
+                            s.Add(X(0, 1, "Request: " + ip, L.T("still broadcast"), double.NaN));
+                            if (nakR != null) s.Add(Rd(X(1, 0, "NAK", Cut(nakR[2], 60), double.NaN), 2));
+                            else if (ran && ackR == null) s.Add(Rd(X(1, 0, L.T("(no ACK)"), L.T("offered, but never confirmed"), double.NaN), 1));
+                            else s.Add(X(1, 0, "ACK", L.T("whole exchange") + (double.IsNaN(ms) ? "" : " " + Math.Round(ms) + " ms"), ms));
+                        }
                         cap = "THE DHCP EXCHANGE IN YOUR CAPTURE"; foot = "Missing Offer = the server never answered (or a relay is wrong). NAK = the address asked for isn't valid here.";
                     }
                     break;
@@ -419,7 +536,7 @@ namespace AdeeboMeter
                         }
                         else
                         {
-                            s.Add(X(0, 1, "GetRequest - " + L.T(q[1]), q[0] + " · UDP 161 · " + (v3 ? "SNMPv3" : L.T("community") + " " + (com == "" ? "public" : new string('•', Math.Min(8, com.Length)))), double.NaN));
+                            s.Add(X(0, 1, "GetRequest - " + L.T(q[1]), q[0] + " · UDP 161 · " + (v3 ? "SNMPv3" : L.T("community") + " " + (com == "" ? "public" : "••••••" /* L-351: always six - the length isn't shown */)), double.NaN));
                             if (id == "snmptraffic") s.Add(X(0, 1, L.T("the same, 5 s later"), L.T("the difference is the speed"), double.NaN));
                             if (vals.Count == 0) s.Add(X(1, 0, "Response", L.T("the values, one per object"), double.NaN));
                             foreach (var o in vals) s.Add(Rd(X(1, 0, Cut(o[1] + ": " + o[2], 54), o.Length > 3 ? Cut(o[3], 60) : "", double.NaN), Lv(o)));
@@ -443,11 +560,6 @@ namespace AdeeboMeter
             else if (r.Contains("fail") || r.Contains("reject")) { from = 2; to = 0; }
             else if (r.Contains("success") || r.Contains("accept")) { from = 2; to = 0; }
             var s = X(from, to, label, detail, double.NaN); if (r.Contains("tls") || r.Contains("peap")) s.Sealed = true; return Rd(s, lv);
-        }
-        static string OptNo(string o)
-        {
-            string l = o.Trim().ToLowerInvariant();
-            return l.StartsWith("router", StringComparison.Ordinal) ? "option 3" : l.StartsWith("dns", StringComparison.Ordinal) ? "option 6" : l.StartsWith("domain", StringComparison.Ordinal) ? "option 15" : l.StartsWith("lease", StringComparison.Ordinal) ? "option 51" : l.StartsWith("ntp", StringComparison.Ordinal) ? "option 42" : l.StartsWith("tftp", StringComparison.Ordinal) || l.StartsWith("boot", StringComparison.Ordinal) ? "option 66/67" : "";
         }
         static readonly Dictionary<string, string[]> SnmpAsk = new Dictionary<string, string[]> {
             { "snmp", new[] { "sysDescr, sysName, sysUpTime", "what are you?" } }, { "snmpif", new[] { "ifOperStatus, ifInErrors", "how are your ports?" } },

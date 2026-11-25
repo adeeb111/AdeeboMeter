@@ -90,3 +90,17 @@ game.streak|{v} in a row - a feat for the chronicles.
 game.timeup|The candle has burned down.
 market.open|The market square opens.
 storm.near|A great storm comes upon the land.
+stream.on|The minstrels play {v}, and play it well.
+stream.on|The show flows like mead at a feast.
+stream.dip|The minstrel stumbled. {v}
+stream.dip|A hiccup in the hall. {v}
+stream.none|No players on the stage tonight.
+stream.none|The hall is quiet. No show.
+trade.ok|The road to the merchant is swift and clear.
+trade.ok|The merchant's messenger rides fast.
+trade.slow|The merchant's road is muddy. Wait a moment.
+trade.slow|Slow riders to the merchant. {v}
+trade.closed|The market square is shut till 9:30.
+trade.closed|Stalls closed. Merchants rest till morning.
+view.switch|To the {v} chamber we go!
+view.switch|Hark, the {v} view.

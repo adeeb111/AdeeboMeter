@@ -9,6 +9,12 @@ $taskLanguage.GetMethod('Use',$taskFlags).Invoke($null,@('bn')) | Out-Null
 if($taskLanguage.GetMethod('T',$taskFlags).Invoke($null,@('Settings')) -ne 'সেটিংস'){throw 'Bengali lookup failed'}
 $taskExpected = @([IO.File]::ReadAllLines((Join-Path $taskRoot 'knowledge/lang-bn.txt')) | Where-Object {$_ -and !$_.StartsWith('#') -and $_.Contains("`t")}).Count
 if($taskLanguage.GetProperty('Count',$taskFlags).GetValue($null,$null) -ne $taskExpected){throw 'Embedded Bengali catalog differs from source'}
+# R2-182: every embedded translation must equal the source's (first) value - not only the count
+$srcPairs=@{}; foreach($l in [IO.File]::ReadAllLines((Join-Path $taskRoot 'knowledge/lang-bn.txt'))){ if($l -and !$l.StartsWith('#') -and $l.Contains("`t")){ $kv=$l.Split("`t",2); if(-not $srcPairs.ContainsKey($kv[0])){ $srcPairs[$kv[0]]=$kv[1] } } }
+$bad=0; foreach($k in $srcPairs.Keys){ $want=$srcPairs[$k]; if($want.Trim().Length -eq 0){ $bad++; continue }; if($taskLanguage.GetMethod('T',$taskFlags).Invoke($null,@($k)) -ne $want){ $bad++ } }
+if($bad -gt 0){throw "$bad embedded bn translations are empty or differ from the source"}
+$bnFont = @('Nirmala UI','Vrinda','Segoe UI') | Where-Object { (New-Object Drawing.Font($_,10)).Name -eq $_ } | Select-Object -First 1   # R2-183: the app's own fallback order
+
 $taskDraw = $taskAssembly.GetType('AdeeboMeter.Draw')
 $taskDraw.GetMethod('Init',$taskFlags).Invoke($null,@([single]1)) | Out-Null
 $taskDraw.GetMethod('UseLanguageFonts',$taskFlags).Invoke($null,@()) | Out-Null
@@ -16,7 +22,7 @@ foreach($taskScale in @([single]1,[single]1.25,[single]1)){
  $taskDraw.GetMethod('Use',$taskFlags).Invoke($null,@($taskScale)) | Out-Null
  foreach($taskField in @('fBody','fHead','fTitle','fSmall')){
   $taskFont=$taskDraw.GetField($taskField,$taskFlags).GetValue($null)
-  if($taskFont.Name -ne 'Nirmala UI'){throw "Bengali font lost at scale $taskScale : $($taskFont.Name)"}
+  if($taskFont.Name -ne $bnFont){throw "Bengali font lost at scale $taskScale : $($taskFont.Name) (expected $bnFont)"}
  }
 }
 $taskAssembly.GetType('AdeeboMeter.Theme').GetMethod('Apply',$taskFlags).Invoke($null,@($true)) | Out-Null

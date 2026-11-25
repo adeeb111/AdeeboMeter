@@ -54,7 +54,7 @@ namespace AdeeboMeter
             if (!double.IsNaN(s.Cpu) && s.Cpu > 70) { warn++; var top = s.TopCpu.FirstOrDefault(); rows.Add(R(1, "CPU", Math.Round(s.Cpu) + "% busy" + (top != null ? " - most: " + top.Name : ""), "", "m")); }
             foreach (var u in GamerTools.Updaters)
             {
-                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; }
+                Process[] ps; try { ps = Process.GetProcessesByName(u[0]); } catch (InvalidOperationException) { continue; } catch (System.ComponentModel.Win32Exception) { continue; }
                 foreach (var p in ps) p.Dispose(); if (ps.Length == 0 || u[1] == "") continue;
                 warn++; rows.Add(R(1, "Background", u[1], "Pause it - it can start a big transfer any second.", "w"));
             }
@@ -74,7 +74,7 @@ namespace AdeeboMeter
             rows.Add(R(bad ? 2 : slow ? 1 : 0, "Broker " + host, bad ? "no answer on port " + port : Ms(k.Avg) + " average · jitter " + Ms(k.Jit) + " · worst " + Ms(k.Max) + " · " + k.Lost + " of 10 lost",
                 bad ? "The broker doesn't answer from here right now - check its status page, or your connection." : slow ? "Unsteady right now - orders may fill late. Close downloads and streams before the open." : "", "m"));
             run.Status = "Checking the clock (time.windows.com)...";
-            var clock = Protocols.Ntp("time.windows.com").FirstOrDefault(r => r.Length > 2 && r[1] == "Your clock");
+            var clock = Protocols.Ntp("time.windows.com").FirstOrDefault(r => r.Length > 2 && r[1].StartsWith("Your clock", StringComparison.Ordinal));   // review 1.1.6 P3 #4: the row is "Your clock vs this server ..."
             if (clock != null) { int lv; if (!int.TryParse(clock[0], out lv)) lv = 3; if (lv >= 1) warn++; rows.Add(R(lv, "Clock", clock[2], lv >= 1 ? "Order and fill times are stamped by this clock - fix it in Settings > Time > Sync now." : "", "m")); }
             else { warn++; rows.Add(R(1, "Clock", "couldn't ask the time server - unchecked", "Order times are stamped by this clock; check it once (Settings > Time > Sync now).", "m")); }
             var s = m.Latest; bool busy = !double.IsNaN(s.Down) && s.Down > 20 || !double.IsNaN(s.Up) && s.Up > 5, noTraffic = double.IsNaN(s.Down) && double.IsNaN(s.Up); if (busy) warn++;
@@ -94,6 +94,9 @@ namespace AdeeboMeter
             string ev = (every ?? "").Trim().ToLowerInvariant(); int mins;
             var rows = new List<string[]>();
             if (ev == "off" || ev == "stop") { if (SetWatch(0, "")) rows.Add(R(0, "Watching", "stopped - no more background checks", "", "i")); else rows.Add(R(2, "Watching", "couldn't stop it - the watch file can't be changed, so checks carry on", "Check that AdeeboMeter's data folder isn't read-only, then try Off again.", "i")); return rows; }
+            // bug-hunt ML-104: a schedule with nothing to watch isn't saved
+            bool nothing = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).Length == 0; if (nothing) lock (Cfg.Pins) nothing = Cfg.Pins.Count == 0;
+            if (ev != "" && ev != "off" && ev != "stop" && nothing) { rows.Add(R(1, "Watching", "nothing to watch - type hosts and ports first, then the minutes", "", "u")); return rows; }
             if (ev != "") { if (int.TryParse(ev, NumberStyles.None, CultureInfo.InvariantCulture, out mins) && mins >= 1) { if (!SetWatch(Math.Min(1440, mins), list ?? "")) rows.Add(R(2, "Watching", "couldn't save the schedule - the data folder can't be written", "", "i")); } else rows.Add(R(1, "Watching", "didn't understand \"" + every + "\" - type minutes (1-1440) or off; watching is unchanged", "", "u")); } var items = (list ?? "").Split(ListSep, StringSplitOptions.RemoveEmptyEntries).ToList();
             if (items.Count == 0) { string[] pins; lock (Cfg.Pins) pins = Cfg.Pins.ToArray(); items = pins.Select(Security.HostOf).Where(x => x != null).Distinct().ToList(); }
             if (items.Count == 0) { rows.Add(R(3, "Service board", "type hosts and ports, e.g. nas.local:445, mail.example.com:587, 192.0.2.10:22", "Or pin sites in Investigate › Check a destination - they show here.", "u")); return rows; }
@@ -103,13 +106,14 @@ namespace AdeeboMeter
             {
                 if (run.Stop) break; string host; int port; if (!Split(it, 443, out host, out port)) { rows.Add(R(2, it, "not a host name or address", "", "u")); continue; }
                 n++; run.Status = host + ":" + port + "...";
-                var k = Knock(host, port, 5, run); if (run.Stop) break;   // stopped mid-way: not a result, not logged as down
+                var k = Knock(host, port, 5, run); if (run.Stop) { n--; break; }   // stopped mid-way: not a result, not logged as down, not counted (the tool run, 22 Nov: "0 of 3")
                 Log(host + ":" + port, k, false);
                 if (k.Ms.Count == 0) { rows.Add(R(2, host + ":" + port, "down - no answer to 5 tries", "", "m")); continue; }
                 up++; int lv = k.Lost > 0 || k.Avg > 200 ? 1 : 0;
                 rows.Add(R(lv, host + ":" + port, Ms(k.Avg) + " · min " + Ms(k.Min) + " · max " + Ms(k.Max) + (k.Lost > 0 ? " · " + k.Lost + " of 5 lost" : ""), "", "m"));
             }
-            rows.Insert(0, R(n == 0 ? 2 : up == n ? 0 : up == 0 ? 2 : 1, "Up right now", n == 0 ? "nothing checked - no valid host:port" : up + " of " + n, "TCP handshakes only - connect, time it, close.", "m"));
+            bool stopped = run.Stop;
+            rows.Insert(0, R(stopped && n == 0 ? 3 : n == 0 ? 2 : up == n ? 0 : up == 0 ? 2 : 1, "Up right now", stopped ? (n == 0 ? "stopped before any answer" : up + " of the " + n + " checked before you stopped") : n == 0 ? "nothing checked - no valid host:port" : up + " of " + n, "TCP handshakes only - connect, time it, close.", "m"));
             int wm; string wl; Watch(out wm, out wl); rows.Add(R(3, "Watching", wm > 0 ? "every " + wm + " min while AdeeboMeter runs - see Uptime report" : "off - type a number of minutes in the second box to keep watching", "", "i"));
             return rows;
         }
@@ -119,7 +123,10 @@ namespace AdeeboMeter
         public static List<string[]> GoLive(Monitor m, string bitrate, string service, Toolkit.Run run)
         {
             var rows = new List<string[]>(); int warn = 0; var ic = CultureInfo.InvariantCulture;
-            double kbps; if (!double.TryParse((bitrate ?? "").Trim().Replace("kbps", "").Trim(), NumberStyles.Float, ic, out kbps) || double.IsNaN(kbps) || double.IsInfinity(kbps) || kbps <= 0 || kbps > 500000) kbps = 6000;   // R2-06: "NaN" and "Infinity" parse as numbers - not a bitrate
+            // bug-hunt ML-102: empty means the usual 6000; anything else that isn't a bitrate is said, not swapped silently
+            string bt = (bitrate ?? "").Trim(); double kbps;
+            if (bt == "") kbps = 6000;
+            else if (!double.TryParse(System.Text.RegularExpressions.Regex.Replace(bt, @"\s*(kbps|kb/s|kbit/s|k)$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase), NumberStyles.Float, ic, out kbps) || double.IsNaN(kbps) || double.IsInfinity(kbps) || kbps <= 0 || kbps > 500000) { rows.Add(R(2, "Bitrate", "type the stream's bitrate in kbps, e.g. 6000", "", "u")); return rows; }   // R2-06: "NaN" and "Infinity" parse as numbers - not a bitrate
             string sv = (service ?? "").Trim().ToLowerInvariant(); var ing = Ingest.FirstOrDefault(z => sv == "" ? z[0] == "twitch" : z[0] == sv || string.Equals(z[1], sv, StringComparison.OrdinalIgnoreCase));
             string host = ing != null ? ing[2] : sv, name = ing != null ? ing[1] : sv;
             rows.AddRange(Pc(m, ref warn));
@@ -138,7 +145,8 @@ namespace AdeeboMeter
                 var k = Knock(host, 1935, 5, run); bool bad = k.Ms.Count == 0, slow = k.Avg > 80 || k.Lost > 0; if (bad || slow) warn++;
                 rows.Add(R(bad ? 2 : slow ? 1 : 0, name + " ingest", bad ? "no answer on RTMP 1935" : Ms(k.Avg) + " · jitter " + Ms(k.Jit) + (k.Lost > 0 ? " · " + k.Lost + " of 5 lost" : ""), bad ? "Blocked or down - try another ingest server in OBS (Settings > Stream > Server)." : "", "m"));
             }
-            rows.Insert(0, R(warn == 0 ? 0 : 1, "Go-live check", warn == 0 ? "ready - go live" : warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never changes OBS or closes anything.", "i"));
+            int worstLv = rows.Where(r => r.Length > 0 && r[0] == "2").Any() ? 2 : 1;   // bug-hunt L-206: red when something is red (an upload below the bitrate), not always amber
+            rows.Insert(0, R(warn == 0 ? 0 : worstLv, "Go-live check", warn == 0 ? "ready - go live" : warn + " thing" + (warn == 1 ? "" : "s") + " to fix first", "AdeeboMeter only checks - it never changes OBS or closes anything.", "i"));
             return rows;
         }
     }

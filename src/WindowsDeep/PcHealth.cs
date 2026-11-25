@@ -78,7 +78,7 @@ namespace AdeeboMeter
                         if (!wanted(i2.InstanceName) || !d1.Contains(i2.InstanceName)) continue;
                         var mm = Regex.Match(i2.InstanceName, @"pid_(\d+)_"); int pid; if (!mm.Success || !int.TryParse(mm.Groups[1].Value, out pid)) continue;
                         double x; try { x = CounterSample.Calculate(d1[i2.InstanceName].Sample, i2.Sample); } catch (InvalidOperationException) { continue; }
-                        double o; by.TryGetValue(pid, out o); by[pid] = o + x;
+                        double o; by.TryGetValue(pid, out o); by[pid] = Math.Min(100, o + x);   // bug-hunt ML-161: never over 100% of the card
                     }
                 foreach (var kv in by.Where(x => x.Value >= 0.5).OrderByDescending(x => x.Value).Take(8))
                 { string name = "pid " + kv.Key; try { using (var p = Process.GetProcessById(kv.Key)) name = p.ProcessName; } catch { } rows.Add(R(kv.Value > 60 ? 1 : 0, name, kv.Value.ToString("0", CultureInfo.CurrentCulture) + "% of the graphics card", "", "w")); }
@@ -97,7 +97,7 @@ namespace AdeeboMeter
         [DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr h, int cmd);
         // PC-045: a frozen program is remembered by pid, name and start time, so an exit or a reused pid isn't told as "recovered"
         sealed class Hung { public DateTime Since, Started; public string Name = "A program"; }
-        static DateTime StartOf(int pid) { try { using (var p = Process.GetProcessById(pid)) return p.StartTime; } catch (ArgumentException) { return DateTime.MinValue; } catch (InvalidOperationException) { return DateTime.MinValue; } catch (System.ComponentModel.Win32Exception) { return DateTime.MinValue; } catch (NotSupportedException) { return DateTime.MinValue; } }
+        static DateTime StartOf(int pid) { try { using (var p = Process.GetProcessById(pid)) return p.StartTime; } catch (ArgumentException) { return DateTime.MinValue; } catch (InvalidOperationException) { return DateTime.MinValue; } catch (System.ComponentModel.Win32Exception) { return DateTime.MaxValue; } catch (NotSupportedException) { return DateTime.MaxValue; } }   // MaxValue: running, but its start time can't be read (an elevated program) - bug-hunt ML-162
         static readonly Dictionary<int, Hung> hungSince = new Dictionary<int, Hung>();
         public static void HungTick(Monitor m)
         {
@@ -108,7 +108,7 @@ namespace AdeeboMeter
                 foreach (int pid in now) if (!hungSince.ContainsKey(pid)) { var h = new Hung { Since = DateTime.Now, Started = StartOf(pid) }; try { using (var p = Process.GetProcessById(pid)) h.Name = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } hungSince[pid] = h; }
                 foreach (var pid in hungSince.Keys.ToList())
                 {
-                    var h = hungSince[pid]; var st = StartOf(pid); bool same = st != DateTime.MinValue && st == h.Started;
+                    var h = hungSince[pid]; var st = StartOf(pid); bool same = st != DateTime.MinValue && (st == h.Started || st == DateTime.MaxValue || h.Started == DateTime.MaxValue);   // unreadable but still running counts as the same program
                     if (now.Contains(pid) && same) continue;
                     var secs = (DateTime.Now - h.Since).TotalSeconds; hungSince.Remove(pid);
                     if (secs >= 8) m.Events.Add(1, "pc", h.Name + (same ? " stopped responding for " + secs.ToString("0", CultureInfo.CurrentCulture) + " s" : " stopped responding and closed (after about " + secs.ToString("0", CultureInfo.CurrentCulture) + " s)"));
@@ -291,7 +291,7 @@ namespace AdeeboMeter
             else rows.Add(R(3, "How it's counted", "one look a minute at the programs running then - one that starts, works and closes between two looks isn't counted", "", "i"));   // PC-065
             try
             {
-                var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage");
+                var scope = new System.Management.ManagementScope(@"\\.\root\Microsoft\Windows\Storage", new System.Management.ConnectionOptions { Timeout = TimeSpan.FromSeconds(8) });
                 using (var s = new System.Management.ManagementObjectSearcher(scope, new System.Management.ObjectQuery("SELECT FriendlyName, MediaType, HealthStatus, Size FROM MSFT_PhysicalDisk"), new System.Management.EnumerationOptions { Timeout = TimeSpan.FromSeconds(10), ReturnImmediately = true, Rewindable = false }))   // a sleeping USB disk or a broken WMI can't hang it forever
                     foreach (System.Management.ManagementObject d in s.Get())
                         using (d)

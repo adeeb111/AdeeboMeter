@@ -77,7 +77,7 @@ namespace AdeeboMeter
             for (int i = 0; i < rr && p + 10 <= b.Length; i++)
             {
                 string owner = Name(b, ref p); int type = b[p] << 8 | b[p + 1], len = b[p + 8] << 8 | b[p + 9]; p += 10; int end = p + len; if (end > b.Length) return;
-                if (type == 12) { int q = p; string inst = Name(b, ref q); string svc = owner.ToLowerInvariant(); string nice = inst.Split('.')[0];
+                if (type == 12) { int q = p; string inst = Name(b, ref q); string svc = owner.ToLowerInvariant(); string nice = inst.EndsWith("." + owner, StringComparison.OrdinalIgnoreCase) ? inst.Substring(0, inst.Length - owner.Length - 1) : inst.Split('.')[0];   /* L-208: the whole instance name ("Mr. Smith's TV"), up to the service */
                     add(ip, x => { if (x.Name == "" && nice != "" && !nice.StartsWith("_", StringComparison.Ordinal)) x.Name = Clean(nice); if (x.Kind == "") x.Kind = KindOf(svc); x.Via = Via(x.Via, "Bonjour"); }); }
                 else if (type == 16)
                 {
@@ -157,7 +157,7 @@ namespace AdeeboMeter
                         var buf = new byte[65536]; int n = 0, r; while (n < buf.Length && (r = st.Read(buf, n, buf.Length - n)) > 0) n += r;
                         xml = Encoding.UTF8.GetString(buf, 0, n);
                     }
-                    Func<string, string> tag = t => { var m = Regex.Match(xml, "<" + t + ">([^<]{1,80})</" + t + ">", RegexOptions.IgnoreCase); return m.Success ? Clean(WebUtility.HtmlDecode(m.Groups[1].Value)) : ""; };
+                    Func<string, string> tag = t => { var m = Regex.Match(xml, "<(?:[\\w-]+:)?" + t + "(?:\\s[^>]*)?>([^<]{1,80})</(?:[\\w-]+:)?" + t + "\\s*>", RegexOptions.IgnoreCase);   /* L-209: <ns:friendlyName xml:lang="en"> too */ return m.Success ? Clean(WebUtility.HtmlDecode(m.Groups[1].Value)) : ""; };
                     string fn = tag("friendlyName"), mk = tag("manufacturer"), md = tag("modelName"), mn = tag("modelNumber");
                     add(kv.Key, x => { if (fn != "") x.Name = fn; if (mk != "") x.Maker = mk; if (md != "") x.Model = (md + (mn != "" && !md.Contains(mn) ? " " + mn : "")).Trim(); });
                 }

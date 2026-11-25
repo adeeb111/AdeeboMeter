@@ -29,10 +29,10 @@ namespace AdeeboMeter
     sealed partial class FullView
     {
         // ---------- painting
-        // ---- the logo's needle (16 Nov, Motion board): it sweeps when the window opens and settles where the connection is;
-        // every 5 minutes, right after a background check lands, it breathes and the three dots ping left to right.
+        // ---- the logo's needle (16 Nov, Motion board): it sweeps when the window opens and settles where the connection is
+        // (23 Nov: the 5-minute breath is gone).
         // ~1.2 s at 60 frames, then nothing redraws. Off with Windows' "Show animations" off, and while a game is being played.
-        DateTime logoAt = DateTime.MinValue, logoBreath = DateTime.UtcNow; int logoKind; System.Windows.Forms.Timer logoTimer;
+        DateTime logoAt = DateTime.MinValue; int logoKind; System.Windows.Forms.Timer logoTimer;
         const double LogoMs = 1200;
         float LogoRest() { int lv = snap != null ? snap.Level : 3; return lv == 0 ? -42f : lv == 1 ? 0f : lv == 2 ? 44f : 36f; }
         void LogoAnim(int kind)
@@ -65,9 +65,9 @@ namespace AdeeboMeter
                 var ts = g.MeasureString("AdeeboMeter", Draw.fBig); var tf = StringFormat.GenericTypographic;
                 float aw = g.MeasureString("Adeebo", Draw.fBig, PointF.Empty, tf).Width;
                 float ty = cy - ts.Height / 2, tx = x + (ts.Width - g.MeasureString("AdeeboMeter", Draw.fBig, PointF.Empty, tf).Width) / 2;
-                g.DrawString(AdeeboMeter.L.T("Adeebo"), Draw.fBig, b, tx, ty, tf); g.DrawString(AdeeboMeter.L.T("Meter"), Draw.fBig, mb, tx + aw, ty, tf);
+                g.DrawString("Adeebo", Draw.fBig, b, tx, ty, tf); g.DrawString("Meter", Draw.fBig, mb, tx + aw, ty, tf);   // review 1.1.6 D1 #12: the product name is never translated
             }
-            PaintMood(g, gearBtn.Left - 8 * S, cy);
+            // 23 Nov: the companion's face moved into the ⋯ menu - the top line keeps the logo and the controls
         }
         // the verdict, beside the path it explains: "Not connected to any network · ...   Investigate ›" - returns where it ends
         float PaintVerdict(Graphics g, Control on, float x, float cy, float right)
@@ -112,10 +112,27 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
-                string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB of 80 MB budget" + (live.Running && liveView != null ? "    + tshark " + liveView.TsharkMB + " MB (live capture on)" : "");
-                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Ink)) g.DrawString(st, Draw.fMono, b, x, y);
-                string right = Program.Version + " · no cloud · no telemetry · never listens · hover the ? cursor to learn · Esc = back to the corner";
-                var rs = g.MeasureString(right, Draw.fSmall); g.DrawString(right, Draw.fSmall, muted, r.Width - rs.Width - 20 * S, y);
+                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + string.Format(L.T("{0} MB of 99 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) + (live.Running && liveView != null ? "    + tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB) : "");
+                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
+                // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 99 MB budget is overlapping"):
+                // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
+                float left = x + g.MeasureString(st, Draw.fSmall).Width + 24 * S;
+                // anything AdeeboMeter has waited on for 5 s or more: named here with its seconds, gone when it ends (1.1.6 test day)
+                int more; var bz = Busy.Oldest(out more);
+                if (bz != null)
+                {
+                    int secs = (int)(DateTime.UtcNow - bz.At).TotalSeconds; string spin = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏".Substring((int)(DateTime.UtcNow.Ticks / 1000000 % 10), 1);
+                    string note = spin + "  " + bz.What + "  ·  " + secs + " s" + (more > 0 ? "  ·  +" + more + " more" : "");
+                    using (var ab = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+                    using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter, Alignment = StringAlignment.Far })
+                        g.DrawString(note, Draw.fSmall, ab, new RectangleF(left, y, Math.Max(1, r.Width - 20 * S - left), 20 * S), sf);
+                    return;
+                }
+                foreach (var right in new[] { L.T("Esc takes you back to the corner") + "     " + Program.Version, Program.Version })   // review CD-L4: the shortcut said once, where there's room
+                {
+                    var rs = g.MeasureString(right, Draw.fSmall); float rx = r.Width - rs.Width - 20 * S;
+                    if (rx >= left) { g.DrawString(right, Draw.fSmall, muted, rx, y); break; }
+                }
             }
         }
 
@@ -124,12 +141,31 @@ namespace AdeeboMeter
             if (!Cfg.SideOpen) { PaintSlim(g, r); return; }
             float x = 0, y = 0, w = r.Width;
             Begin(side);
-            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
+            // three cards, each its own live spot (motion review, 23 Nov): a new CPU % or a new top process redraws its card only,
+            // not the whole panel once a second; OnTimer decides which, and a change of shape (rows added) redraws the panel
+            float h1 = SideHealthH(); var c1 = new RectangleF(x, y, w - 1, h1);
+            PaintSideHealth(g, c1); LiveSpot(side, "side.health", c1, Theme.Bg, gg => PaintSideHealth(gg, c1));
+            y += h1 + 14 * S;
+            var c2 = new RectangleF(x, y, w - 1, 16 * S + 20 * S + 4 * 20 * S + 8 * S);
+            PaintSidePc(g, c2); LiveSpot(side, "side.pc", c2, Theme.Bg, gg => PaintSidePc(gg, c2));
+            y += c2.Height + 14 * S;
+            int n = SideTopRows(r.Height - y); if (n == 0) return;
+            var c3 = new RectangleF(x, y, w - 1, 16 * S + 18 * S + n * 20 * S + 8 * S);
+            PaintSideTop(g, c3, n); LiveSpot(side, "side.top", c3, Theme.Bg, gg => PaintSideTop(gg, c3, n));
+        }
+        float SideHealthH() { return 16 * S + 22 * S + snap.Health.Count * 24 * S + 8 * S; }
+        int SideTopRows(float room)
+        {
+            int fit = (int)((room - 16 * S - 18 * S - 8 * S) / (20 * S));   // fewer rows on short / high-DPI screens instead of clipping
+            return Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
+        }
+        void PaintSideHealth(Graphics g, RectangleF c1)
+        {
+            Theme.Fill(g, c1, 16 * S, Theme.Card); Kit.Frame(g, c1);
+            float yy = c1.Y + 14 * S, xx = c1.X + 14 * S, ww = c1.Width + 1 - 28 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) using (var sub = new SolidBrush(Theme.Sub))
             {
-                float h1 = 16 * S + 22 * S + snap.Health.Count * 24 * S + 8 * S;
-                var c1 = new RectangleF(x, y, w - 1, h1); Theme.Fill(g, c1, 16 * S, Theme.Card); Kit.Frame(g, c1);
-                float yy = y + 14 * S, xx = x + 14 * S, ww = w - 28 * S;
-                g.DrawString(L.T("TCP / IP HEALTH"), Draw.fTiny, muted, xx, yy);
+                g.DrawString(Kit.Sent("TCP / IP HEALTH"), Draw.fTiny, muted, xx, yy);
                 var ns = g.MeasureString(L.T("Windows counters · no admin"), Draw.fSmall); g.DrawString(L.T("Windows counters · no admin"), Draw.fSmall, muted, xx + ww - ns.Width, yy - 2 * S);
                 yy += 22 * S;
                 for (int i = 0; i < snap.Health.Count && i < snap.HealthHist.Count; i++)
@@ -140,26 +176,30 @@ namespace AdeeboMeter
                         g.DrawString(hrow[0], Draw.fBody, sub, new RectangleF(xx, yy, ww - 170 * S, 20 * S), sf);
                     Theme.Spark(g, snap.HealthHist[i], new RectangleF(xx + ww - 160 * S, yy + 2 * S, 84 * S, 16 * S), Theme.Lv(lv), 0, false);
                     var vs = g.MeasureString(hrow[1], Draw.fMono);
-                    using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.Lv(lv) : Theme.Ink)) g.DrawString(hrow[1], Draw.fMono, b, xx + ww - vs.Width, yy);
+                    using (var b = new SolidBrush(lv == 1 || lv == 2 ? Theme.LvText(lv) : Theme.Ink)) g.DrawString(hrow[1], Draw.fMono, b, xx + ww - vs.Width, yy);
                     yy += 24 * S;
                 }
-                y += h1 + 14 * S;
-                float h2 = 16 * S + 20 * S + 4 * 20 * S + 8 * S;
-                var c2 = new RectangleF(x, y, w - 1, h2); Theme.Fill(g, c2, 16 * S, Theme.Card); Kit.Frame(g, c2);
-                yy = y + 14 * S; g.DrawString(L.T("THIS PC"), Draw.fTiny, muted, xx, yy); yy += 20 * S;
-                float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
-                yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
-                yb = yy; Draw.Bar(g, "", "Disk", snap.Disk, snap.DiskText, 60, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Disk");
-                yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Fmt(dn, "0.0", " Mb/s"), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
-                y += h2 + 14 * S;
-                int fit = (int)((r.Height - y - 16 * S - 18 * S - 8 * S) / (20 * S));   // fewer rows on short / high-DPI screens instead of clipping
-                int n = Math.Max(0, Math.Min(Math.Min(6, fit), Math.Max(snap.TopMem.Count, snap.TopCpu.Count)));
-                if (n == 0) return;
-                float h3 = 16 * S + 18 * S + n * 20 * S + 8 * S;
-                var c3 = new RectangleF(x, y, w - 1, h3); Theme.Fill(g, c3, 16 * S, Theme.Card); Kit.Frame(g, c3);
-                yy = y + 14 * S; float colW = (ww - 16 * S) / 2;
-                g.DrawString(L.T("TOP BY MEMORY"), Draw.fTiny, muted, xx, yy); g.DrawString(L.T("TOP BY CPU"), Draw.fTiny, muted, xx + colW + 16 * S, yy);
-                Hint(side, new RectangleF(xx, yy, colW, 16 * S), "Top by memory"); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
+            }
+        }
+        void PaintSidePc(Graphics g, RectangleF c2)
+        {
+            Theme.Fill(g, c2, 16 * S, Theme.Card); Kit.Frame(g, c2);
+            float xx = c2.X + 14 * S, ww = c2.Width + 1 - 28 * S, yy = c2.Y + 14 * S;
+            using (var muted = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("THIS PC"), Draw.fTiny, muted, xx, yy);
+            yy += 20 * S;
+            float yb = yy; Draw.Bar(g, "", "CPU", snap.Cpu, Draw.Fmt(snap.Cpu, "0", "%"), 60, 88, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "CPU");
+            yb = yy; Draw.Bar(g, "", "Memory", snap.Mem, snap.MemText, 80, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Memory");
+            yb = yy; Draw.Bar(g, "", "Disk", snap.Disk, snap.DiskText, 60, 90, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Disk");
+            yb = yy; double dn = snap.Down; Draw.Bar(g, "", "Download", double.IsNaN(dn) ? double.NaN : Math.Min(100, dn), Draw.Rate(dn, true), 200, 200, xx, ref yy, ww, null); Hint(side, new RectangleF(xx, yb, ww, yy - yb), "Download");
+        }
+        void PaintSideTop(Graphics g, RectangleF c3, int n)
+        {
+            Theme.Fill(g, c3, 16 * S, Theme.Card); Kit.Frame(g, c3);
+            float xx = c3.X + 14 * S, ww = c3.Width + 1 - 28 * S, yy = c3.Y + 14 * S, colW = (ww - 16 * S) / 2;
+            using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
+            {
+                g.DrawString(Kit.Sent("TOP BY MEMORY"), Draw.fTiny, muted, xx, yy); g.DrawString(Kit.Sent("TOP BY CPU"), Draw.fTiny, muted, xx + colW + 16 * S, yy);
+                Hint(side, new RectangleF(xx, yy, colW, 16 * S), L.T("Top by memory")); Hint(side, new RectangleF(xx + colW + 16 * S, yy, colW, 16 * S), "Top by CPU"); yy += 18 * S;
                 for (int i = 0; i < n; i++)
                 {
                     if (i < snap.TopMem.Count) Hint(side, new RectangleF(xx, yy, colW, 20 * S), "proc:" + snap.TopMem[i].Name);
@@ -194,11 +234,12 @@ namespace AdeeboMeter
             string verdict = d == null ? Voice.P("Give me a host, an IP or a URL and press Check. Nothing runs until you do.", "Type a host, IP or URL and press Check.")
                                            + (Cfg.Pins.Count == 0 ? Voice.P("\nTip: press Pin to save places you check often - the VPN head-end, Jira, the lab jump host - then run them all at once.", "\nTip: Pin saves a destination; Run all checks every saved one.") : "")
                            : done ? d.Verdict : (d.Note ?? Voice.P("Working through DNS, route, ping, TCP, TLS, HTTP, MTU and path...", "Checking..."));
-            float vh = Draw.Measure(verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
-            var vb = new RectangleF(x, y, w, vh + 38 * S);
+            var vf = d == null ? Draw.fBody : Draw.fTitle;   /* v8: the ready-state instructions in body type - a verdict earns the big type */
+            float vh = Draw.Measure(verdict, vf, (int)(w - 32 * S)).Height;
+            var vb = new RectangleF(x, y, w, vh + 48 * S);
             Color bg = lv == -2 ? Theme.BlueSoft : lv == 3 ? Theme.Soft : Theme.LvSoft(lv), fg = lv == -2 ? Theme.BlueDark : lv == 3 ? Theme.Sub : Theme.LvText(lv);
             Theme.Fill(g, vb, 10 * S, bg);
-            using (var b = new SolidBrush(fg)) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
+            using (var b = new SolidBrush(fg)) { g.DrawString(Kit.Sent(title), Draw.fBodyB, b, x + 16 * S, y + 12 * S); g.DrawString(verdict, vf, b, new RectangleF(x + 16 * S, y + 34 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 20 * S;
             if (d == null)
             {
@@ -207,8 +248,8 @@ namespace AdeeboMeter
                 if (chips.Count > 0)
                 {
                     float cx0 = x;
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("AGAIN"), Draw.fTiny, mb, cx0, y + 8 * S);
-                    cx0 += g.MeasureString(L.T("AGAIN"), Draw.fTiny).Width + 12 * S; float cy0 = y;
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("AGAIN"), Draw.fTiny, mb, cx0, y + 8 * S);
+                    cx0 += g.MeasureString(Kit.Sent("AGAIN"), Draw.fTiny).Width + 12 * S; float cy0 = y;
                     foreach (var c0 in chips)
                     {
                         string c = c0; bool pin = Cfg.Pins.Contains(c); var cs = g.MeasureString(c, Draw.fSmall); float cw = cs.Width + (pin ? 38 : 24) * S;
@@ -225,7 +266,7 @@ namespace AdeeboMeter
             if (done)
             {
                 // Copy as text and Save: only when you press them, only where you choose
-                string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : "Copy as text", st = "Save...";
+                string ct = destCopied > DateTime.Now.AddSeconds(-3) ? "Copied ✓" : L.T("Copy as text"), st = "Save...";
                 var cs = g.MeasureString(ct, Draw.fSmall); var ss = g.MeasureString(st, Draw.fSmall); var cr = new RectangleF(x + w - 16 * S - cs.Width, vb.Y + 8 * S, cs.Width, cs.Height); var sr = new RectangleF(cr.X - 14 * S - ss.Width, cr.Y, ss.Width, ss.Height);
                 using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) { g.DrawString(ct, Draw.fSmall, lb, cr.X, cr.Y); g.DrawString(st, Draw.fSmall, lb, sr.X, sr.Y); }
                 var dd = d; Act(destCanvas, cr, delegate { try { Clipboard.SetText(dd.Text()); destCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } destCanvas.Invalidate(); });
@@ -255,13 +296,15 @@ namespace AdeeboMeter
             {
                 int per = Math.Max(1, (int)(w / (300 * S))); float cw = (w - (per - 1) * 12 * S) / per, inner = cw - 28 * S;
                 // each row: name and value on one line when they fit, otherwise the value gets its own (wrapping) line - nothing is cut
-                Func<string[], float> rowH = row =>
+                var rowHs = new Dictionary<string[], float>();   // bug-hunt ML-138: each row measured once per paint, not twice
+                Func<string[], float> rowH0 = row =>
                 {
                     string rn = row[0], rv = row.Length > 1 ? row[1] : "";
                     float nw = g.MeasureString(rn, Draw.fBody).Width, vw = g.MeasureString(rv, Draw.fMonoS).Width;
                     if (nw + vw + 12 * S <= inner) return 19 * S;
                     return Draw.Measure(rn, Draw.fBody, (int)inner).Height + Draw.Measure(rv, Draw.fMonoS, (int)inner).Height + 6 * S;
                 };
+                Func<string[], float> rowH = row => { float hh; if (!rowHs.TryGetValue(row, out hh)) { hh = rowH0(row); rowHs[row] = hh; } return hh; };
                 for (int i = 0; i < cards.Count; i += per)
                 {
                     float rowsH = 0;
@@ -299,8 +342,8 @@ namespace AdeeboMeter
             Need(destCanvas, y);
         }
 
-        static readonly string[] HealthPoints = { "How long since a restart, and whether Windows is waiting for one", "Memory and free disk space", "Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings" },
-            LivePoints = { "Which apps and conversations use the most traffic", "Call quality (loss, jitter, MOS) and Wireshark's own warnings", "Stays on this PC - nothing is uploaded" };
+        static readonly string[] HealthPoints = { L.T("How long since a restart, and whether Windows is waiting for one"), L.T("Memory and free disk space"), L.T("Your network adapter, Wi-Fi channel crowding, DNS, VPN and power settings") },
+            LivePoints = { L.T("Which apps and conversations use the most traffic"), L.T("Call quality (loss, jitter, MOS) and Wireshark's own warnings"), L.T("Stays on this PC - nothing is uploaded") };
         void PaintHealth(Graphics g)
         {
             g.TranslateTransform(healthCanvas.AutoScrollPosition.X, healthCanvas.AutoScrollPosition.Y);
@@ -314,7 +357,7 @@ namespace AdeeboMeter
                 if (health == null)
                 {
                     if (healthRunning) g.DrawString(Voice.P("Poking around...", "Running..."), Draw.fBody, muted, x, y + 6 * S);
-                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "cpu", "home", "A quick once-over of this PC", Voice.P("Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.", "Press Run health check. Takes a few seconds."),
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "cpu", "home", L.T("A quick once-over of this PC"), Voice.P("Press Run health check and I'll look at the things that make a PC feel slow or flaky. Takes a few seconds.", "Press Run health check. Takes a few seconds."),
                         HealthPoints);
                     return;
                 }
@@ -343,8 +386,8 @@ namespace AdeeboMeter
             var list = Outages.Last(M, 7);
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
-                g.DrawString(AdeeboMeter.L.T("INTERNET OUTAGES · LAST 7 DAYS") + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
-                if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? "The internet check is off in Settings, so outages can't be noticed." : "None - the internet answered every time AdeeboMeter checked.", Draw.fBody, muted, x, y); y += 26 * S; }
+                g.DrawString(AdeeboMeter.Kit.Sent("INTERNET OUTAGES · LAST 7 DAYS") + (Cfg.History ? "" : " · HISTORY IS OFF, SO ONLY THE LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 20 * S;
+                if (list.Count == 0) { g.DrawString(Cfg.NetSec == 0 ? L.T("The internet check is off in Settings, so outages can't be noticed.") : L.T("None - the internet answered every time AdeeboMeter checked."), Draw.fBody, muted, x, y); y += 26 * S; }
                 foreach (var o in list.Take(8))
                 {
                     using (var b = new SolidBrush(o.Ongoing ? Theme.Red : Theme.Amber)) g.FillEllipse(b, x + 2 * S, y + 6 * S, 9 * S, 9 * S);
@@ -379,7 +422,7 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                g.DrawString(histDay == null ? "LAST 2 HOURS · NEWEST FIRST · ONLY CHANGES ARE RECORDED" + (Cfg.History ? " · ALSO SAVED TO HISTORY" : ", IN MEMORY ONLY") : "EVERYTHING THAT CHANGED ON " + histDay.Value.ToString("dddd d MMMM", CultureInfo.CurrentCulture).ToUpperInvariant(), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(histDay == null ? "Last 2 hours · newest first · only changes are recorded" + (Cfg.History ? " · also saved to history" : ", in memory only") : "Everything that changed on " + histDay.Value.ToString("dddd d MMMM", CultureInfo.CurrentCulture), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (evs.Count <= (histDay == null ? 1 : 0)) g.DrawString(Voice.P("Nothing has changed yet. Boring is good.", "No changes recorded yet."), Draw.fBody, muted, x, y + 4 * S);
                 foreach (var e in evs)
                 {
@@ -402,7 +445,7 @@ namespace AdeeboMeter
             var days = histDays;
             if (days.Count == 0)
             {
-                string t = Cfg.History ? "History is on - the first day appears here after a few minutes." : "Want to look back at yesterday? Turn on 7-day history in Settings  >";
+                string t = Cfg.History ? L.T("History is on - the first day appears here after a few minutes.") : L.T("Want to look back at yesterday? Turn on 7-day history in Settings  >");
                 using (var b = new SolidBrush(Cfg.History ? Theme.Muted : (Theme.Dark ? Theme.BlueDark : Theme.Blue))) g.DrawString(t, Draw.fBody, b, x, y);
                 if (!Cfg.History) Act(changesCanvas, new RectangleF(x, y, g.MeasureString(t, Draw.fBody).Width, 20 * S), delegate { tab = "settings"; ShowTab(); });
                 return y + 32 * S;
@@ -426,7 +469,7 @@ namespace AdeeboMeter
         {
             float h = 150 * S; var card = new RectangleF(x, y, w, h + 46 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("THE DAY AT A GLANCE  ·  BAND = VERDICT, BLUE = ROUTER DELAY (MS), GREEN = WI-FI SIGNAL (%)"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             float px = x + 40 * S, pw = w - 60 * S, top = y + 34 * S, bandY = top + h - 18 * S, ph = h - 30 * S;
             Func<double, float> X = sec => px + (float)(sec / 86400.0) * pw;
             using (var axis = new Pen(Theme.Line)) using (var mb = new SolidBrush(Theme.Muted))
@@ -482,7 +525,7 @@ namespace AdeeboMeter
                 if (!live.Running || v == null)
                 {
                     if (live.Running) g.DrawString(Voice.P("Warming up tshark...", "Starting..."), Draw.fBody, muted, x, y + 6 * S);
-                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "traffic", "home", "See your traffic, live", Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture. Nothing runs until you do."),
+                    else Kit.Empty(g, x, y + 6 * S, Math.Min(w, 760 * S), "traffic", "home", L.T("See your traffic, live"), Voice.P("Press Start and I'll put Wireshark's brain on your traffic. Nothing runs until you do.", "Press Start live capture. Nothing runs until you do."),
                         LivePoints);
                     return;
                 }
@@ -498,7 +541,7 @@ namespace AdeeboMeter
                 // protocol hierarchy
                 var c1 = new RectangleF(x, y, colW, 34 * S + Math.Max(1, v.Phs.Count) * 20 * S);
                 Kit.Box(g, c1);
-                g.DrawString(L.T("PROTOCOL HIERARCHY (BY PACKETS)"), Draw.fTiny, muted, c1.X + 14 * S, c1.Y + 12 * S); Hint(liveCanvas, new RectangleF(c1.X, c1.Y, c1.Width, 26 * S), "live.PROTOCOL HIERARCHY");
+                g.DrawString(Kit.Sent("PROTOCOL HIERARCHY (BY PACKETS)"), Draw.fTiny, muted, c1.X + 14 * S, c1.Y + 12 * S); Hint(liveCanvas, new RectangleF(c1.X, c1.Y, c1.Width, 26 * S), "live.PROTOCOL HIERARCHY");
                 float yy = c1.Y + 30 * S;
                 foreach (var r in v.Phs)
                 {
@@ -513,7 +556,7 @@ namespace AdeeboMeter
                 // expert info
                 var c3 = new RectangleF(x + colW + 24 * S, y, colW, 34 * S + v.Expert.Count * 20 * S);
                 Kit.Box(g, c3);
-                g.DrawString(L.T("EXPERT INFO (WIRESHARK)"), Draw.fTiny, muted, c3.X + 14 * S, c3.Y + 12 * S); Hint(liveCanvas, new RectangleF(c3.X, c3.Y, c3.Width, 26 * S), "live.EXPERT INFO");
+                g.DrawString(Kit.Sent("EXPERT INFO (WIRESHARK)"), Draw.fTiny, muted, c3.X + 14 * S, c3.Y + 12 * S); Hint(liveCanvas, new RectangleF(c3.X, c3.Y, c3.Width, 26 * S), "live.EXPERT INFO");
                 yy = c3.Y + 30 * S;
                 foreach (var e in v.Expert)
                 {
@@ -527,7 +570,7 @@ namespace AdeeboMeter
                 // bytes per app + call quality
                 var c4 = new RectangleF(x, y, colW, 34 * S + Math.Max(1, v.ByApp.Count) * 20 * S);
                 Kit.Box(g, c4);
-                g.DrawString(L.T("BYTES PER APP (SINCE START)"), Draw.fTiny, muted, c4.X + 14 * S, c4.Y + 12 * S); Hint(liveCanvas, new RectangleF(c4.X, c4.Y, c4.Width, 26 * S), "live.BY APP");
+                g.DrawString(Kit.Sent("BYTES PER APP (SINCE START)"), Draw.fTiny, muted, c4.X + 14 * S, c4.Y + 12 * S); Hint(liveCanvas, new RectangleF(c4.X, c4.Y, c4.Width, 26 * S), "live.BY APP");
                 yy = c4.Y + 30 * S;
                 if (v.ByApp.Count == 0) g.DrawString(L.T("-"), Draw.fBody, muted, c4.X + 14 * S, yy);
                 foreach (var a in v.ByApp)
@@ -541,7 +584,7 @@ namespace AdeeboMeter
                 }
                 var c5 = new RectangleF(x + colW + 24 * S, y, colW, 34 * S + Math.Max(2, v.Calls.Count) * 20 * S);
                 Kit.Box(g, c5);
-                g.DrawString(L.T("CALL QUALITY (TEAMS AND OTHER CALLS)"), Draw.fTiny, muted, c5.X + 14 * S, c5.Y + 12 * S); Hint(liveCanvas, new RectangleF(c5.X, c5.Y, c5.Width, 26 * S), "live.CALL QUALITY");
+                g.DrawString(Kit.Sent("CALL QUALITY (TEAMS AND OTHER CALLS)"), Draw.fTiny, muted, c5.X + 14 * S, c5.Y + 12 * S); Hint(liveCanvas, new RectangleF(c5.X, c5.Y, c5.Width, 26 * S), "live.CALL QUALITY");
                 yy = c5.Y + 30 * S;
                 if (!v.Extras) g.DrawString(L.T("Needs a newer Wireshark (3.0 or later)."), Draw.fBody, muted, new RectangleF(c5.X + 14 * S, yy, colW - 28 * S, 40 * S));
                 else if (v.Calls.Count == 0) g.DrawString(Voice.P("No call running. Start a Teams call and I'll grade it live.", "No call media seen yet."), Draw.fBody, muted, new RectangleF(c5.X + 14 * S, yy, colW - 28 * S, 40 * S));
@@ -559,7 +602,7 @@ namespace AdeeboMeter
                 // conversations
                 var c2 = new RectangleF(x, y, w, 34 * S + Math.Max(1, v.Top.Count) * 36 * S);
                 Kit.Box(g, c2);
-                g.DrawString(L.T("TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC"), Draw.fTiny, muted, c2.X + 14 * S, c2.Y + 12 * S); Hint(liveCanvas, new RectangleF(c2.X, c2.Y, c2.Width, 26 * S), "live.TOP CONVERSATIONS");
+                g.DrawString(Kit.Sent("TOP CONVERSATIONS · NAMED FROM TLS SERVER NAME / DNS IN THE TRAFFIC"), Draw.fTiny, muted, c2.X + 14 * S, c2.Y + 12 * S); Hint(liveCanvas, new RectangleF(c2.X, c2.Y, c2.Width, 26 * S), "live.TOP CONVERSATIONS");
                 yy = c2.Y + 30 * S;
                 if (v.Top.Count == 0) g.DrawString(Voice.P("Quiet out there.", "No traffic yet."), Draw.fBody, muted, c2.X + 14 * S, yy);
                 foreach (var c in v.Top)

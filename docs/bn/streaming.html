@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="bn" data-language-route="/streaming.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>স্ট্রিমিংয়ের জন্য AdeeboMeter: বাফারিং কেন হলো?</title>
@@ -8,13 +9,14 @@
 <link rel="canonical" href="https://adeebometer.com/bn/streaming.html">
 <meta property="og:title" content="স্ট্রিমিংয়ের জন্য AdeeboMeter: বাফারিং কেন হলো?">
 <meta property="og:description" content="অ্যাপ বা ব্রাউজারে Netflix, YouTube, Prime, Twitch, Crunchyroll বা IPTV প্লেয়ার চললে AdeeboMeter খেয়াল করে এবং সংযোগ দেখে। ছবির মান কমলে সমস্যা কোথায় ছিল, তা জানায়।">
-<meta property="og:image" content="https://adeebometer.com/img/streaming.jpg">
+<meta property="og:image" content="https://adeebometer.com/img/streaming.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/feature.css">
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/streaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/streaming.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/streaming.html">
@@ -22,7 +24,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/streaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/streaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/streaming.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-streaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/bn/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -30,20 +31,23 @@
 <section class="fhero"><div>
 <h1>বাফারিং কেন হলো?</h1>
 <p>অ্যাপ বা ব্রাউজারে Netflix, YouTube, Prime, Twitch, Crunchyroll বা IPTV প্লেয়ার চললে AdeeboMeter খেয়াল করে এবং সংযোগ দেখে। ছবির মান কমলে সমস্যা কোথায় ছিল, তা জানায়।</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Windows-এর জন্য বিনামূল্যে ডাউনলোড</a><a class="more" href="/bn/">অ্যাপটি আর যা করে ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Windows-এর জন্য বিনামূল্যে ডাউনলোড</a><a class="more" href="/bn/">অ্যাপটি আর যা করে ›</a></div>
 </div>
-<img class="shot" src="/img/streaming.jpg" alt="Streaming পেজ: গত কয়েক দিনের স্ট্রিম, প্রতিটির গতি কমার ঘটনা এবং তার কারণ" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-speed-ok.png" width="264" height="216" alt="স্পিড উইজেট: ডাউনলোড, আপলোড আর শেষ মিনিট গ্রাফে"></figure>
 </section>
 <div class="grid">
-  <div class="card"><h3>স্ট্রিম নিজে থেকেই চিনতে পারে</h3><p>Windows যে সার্ভারের নাম জানে, তা থেকে বোঝে। আপনার ট্যাব, শিরোনাম বা সেবার ভেতরে কী দেখেন, তা দেখা হয় না। তালিকায় নেই? এক লাইনে জানান।</p></div>
-  <div class="card"><h3>প্রতিবার গতি কমার কারণ</h3><p>পিসি ব্যস্ত, Wi-Fi, বাড়ির নেটওয়ার্ক, সেবাদাতা নাকি স্ট্রিম সার্ভার, প্রতিটির সঙ্গে প্রমাণ দেখায়।</p></div>
-  <div class="card"><h3>90 দিনের রেকর্ড</h3><p>স্ট্রিমের রেকর্ড পিসিতে থাকে। কখন গতি কমেছে, কতক্ষণ ছিল আর কেন, তা দেখা যায়। ছকে দেখবেন কোন সময়ে সমস্যা বেশি।</p></div>
-  <div class="card"><h3>এখন 4K স্ট্রিম করতে পারব?</h3><p>একটি বোতামেই SD, HD, Full HD ও 4K-এর ফল। আসল গতির পরীক্ষা ও Wi-Fi দেখে বলে চলবে, ঝুঁকি আছে, নাকি চলবে না।</p></div>
-  <div class="card"><h3>সেবাদাতাকে দেখানোর জন্য প্রস্তুত</h3><p>সেবাদাতার চ্যাট বা ইমেইলে পাঠাতে এক ক্লিকে তারিখ, সময় ও প্রমাণ কপি করুন।</p></div>
-  <div class="card"><h3>কারণগুলো শিখুন</h3><p>ছোট পাঠ ও গেমে জানুন, স্ট্রিমের মান কীভাবে বদলায়, CDN কী, আর Wi-Fi ও সেবাদাতার সমস্যা কীভাবে আলাদা করবেন।</p></div>
-  <div class="card"><h3>Replay the dip</h3><p>Each buffering dip has a Replay link: the Time machine opens at that minute so you see what changed on your side and beyond.</p></div>
-  <div class="card"><h3>Your end, always on top</h3><p>A NOW line on the Streaming page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
+  <div class="card"><h2>স্ট্রিম নিজে থেকেই চিনতে পারে</h2><p>Windows যে সার্ভারের নাম জানে, তা থেকে বোঝে। আপনার ট্যাব, শিরোনাম বা সেবার ভেতরে কী দেখেন, তা দেখা হয় না। তালিকায় নেই? এক লাইনে জানান।</p></div>
+  <div class="card"><h2>প্রতিবার গতি কমার কারণ</h2><p>পিসি ব্যস্ত, Wi-Fi, বাড়ির নেটওয়ার্ক, সেবাদাতা নাকি স্ট্রিম সার্ভার, প্রতিটির সঙ্গে প্রমাণ দেখায়।</p></div>
+  <div class="card"><h2>90 দিনের রেকর্ড</h2><p>স্ট্রিমের রেকর্ড পিসিতে থাকে। কখন গতি কমেছে, কতক্ষণ ছিল আর কেন, তা দেখা যায়। ছকে দেখবেন কোন সময়ে সমস্যা বেশি।</p></div>
+  <div class="card"><h2>এখন 4K স্ট্রিম করতে পারব?</h2><p>একটি বোতামেই SD, HD, Full HD ও 4K-এর ফল। আসল গতির পরীক্ষা ও Wi-Fi দেখে বলে চলবে, ঝুঁকি আছে, নাকি চলবে না।</p></div>
+  <div class="card"><h2>সেবাদাতাকে দেখানোর জন্য প্রস্তুত</h2><p>সেবাদাতার চ্যাট বা ইমেইলে পাঠাতে এক ক্লিকে তারিখ, সময় ও প্রমাণ কপি করুন।</p></div>
+  <div class="card"><h2>কারণগুলো শিখুন</h2><p>ছোট পাঠ ও গেমে জানুন, স্ট্রিমের মান কীভাবে বদলায়, CDN কী, আর Wi-Fi ও সেবাদাতার সমস্যা কীভাবে আলাদা করবেন।</p></div>
+  <div class="card"><h2>ড্রপটা আবার দেখুন</h2><p>প্রতিটি বাফারিং ড্রপে একটি Replay লিংক আছে: Time machine সেই মিনিটে খোলে, তাই আপনার দিকে আর তার বাইরে কী বদলেছে দেখতে পান।</p></div>
+  <div class="card"><h2>আপনার দিক, সবসময় ওপরে</h2><p>Streaming পাতায় একটি NOW লাইন: রাউটার, ইন্টারনেট, Wi-Fi আর পিসি কতটা ব্যস্ত, লাইভ, আর Home এক ক্লিক দূরে।</p></div>
 </div>
+<section class="inapp"><h2>পুরো উইন্ডোতে Streaming পাতা</h2><p>চালু না করা পর্যন্ত বন্ধ থাকে। তারপর যা চলছে তা খেয়াল করে নজর রাখে।</p>
+<img class="shot" src="/img/streaming.png" alt="Streaming পেজ, চালু করলেই আপনার স্ট্রিমে নজর রাখতে তৈরি" width="951" height="267">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>আপনি কী দেখেন, তা অ্যাপ দেখে না। কিছু চললে প্রতি 10 সেকেন্ডে স্ট্রিম সার্ভারে সংযোগের সময় মাপে, কোনো ডেটা পাঠায় না। ছয়বার উত্তর না পেলে থামে।</p></div>
 <div class="others"><p>আরও দেখুন: <a href="/bn/trading.html">ট্রেডিংয়ের জন্য AdeeboMeter</a> · <a href="/bn/gaming.html">গেমিংয়ের জন্য AdeeboMeter</a> · <a href="/bn/privacy.html">গোপনীয়তা</a></p>
 <p>Windows-এর জন্য AdeeboMeter · অ্যাকাউন্ট, ক্লাউড বা টেলিমেট্রি নেই · অ্যাডমিন অনুমতি লাগে না</p></div>

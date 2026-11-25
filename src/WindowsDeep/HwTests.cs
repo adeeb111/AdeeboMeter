@@ -141,10 +141,12 @@ namespace AdeeboMeter
             }
             Thread.Sleep(50); var sw = Stopwatch.StartNew(); go.Set();
             while (sw.Elapsed.TotalSeconds < 1.5 && (run == null || !run.Stop) && failed == 0) Thread.Sleep(20);
-            stop = true; double secs = sw.Elapsed.TotalSeconds; foreach (var t in ts) t.Join(); go.Dispose();
+            // bug-hunt L-288: the bytes and the clock are read at the same moment - copies still in flight after it don't count
+            stop = true; double secs = sw.Elapsed.TotalSeconds; long counted = 0; for (int i = 0; i < th; i++) counted += Volatile.Read(ref bytes[i]);
+            foreach (var t in ts) t.Join(); go.Dispose();
             if (failed != 0) { why = "Windows didn't have enough free memory for the test - close some programs and try again"; GC.Collect(); return double.NaN; }
             if (run != null && run.Stop) { why = "stopped"; GC.Collect(); return double.NaN; }
-            double gbs = bytes.Sum() / 1e9 / Math.Max(0.001, secs);
+            double gbs = counted / 1e9 / Math.Max(0.001, secs);
             SaveLast("ram", gbs, double.NaN, double.NaN); GC.Collect();
             return gbs;
         }

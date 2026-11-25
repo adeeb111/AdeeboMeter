@@ -12,9 +12,10 @@ namespace AdeeboMeter
     // the real network. A one-second timer runs only while a timed game is on screen.
     sealed partial class FullView
     {
-        LearnGames.Room room; readonly List<string> roomOut = new List<string>(); DateTime roomStart; int roomHints, roomMiss, roomStage; string roomMsg = "";   // stage: 0 looking, 1 fault found, 2 escaped, 3 out of time / wrong
+        LearnGames.Room room; readonly List<string> roomOut = new List<string>(); long roomStartMs; int roomHints, roomMiss, roomStage; string roomMsg = "";   // stage: 0 looking, 1 fault found, 2 escaped, 3 out of time / wrong
         LearnGames.Case thief; int thiefClues = 1; string thiefPick = "";
-        int detIdx; int detPick = -1;
+        int detIdx; int detPick = -1; string thiefLast; List<int> detOrder;   // finding 34: the detective's puzzles in a new order each time round
+        int DetAt() { if (detOrder == null) detOrder = Enumerable.Range(0, LearnGames.Detective.Length).OrderBy(i => GameRnd.Next()).ToList(); return detOrder[detIdx % LearnGames.Detective.Length]; }
         LearnGames.Quick quick; string quickMsg = "", quickEarn;
         static readonly StringFormat GameNoWrap = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter };
         // Review-1: a description gets two lines before it's cut, on a word
@@ -30,11 +31,11 @@ namespace AdeeboMeter
         readonly HashSet<string> cleanRuns = new HashSet<string>();
         string EarnFirst(string key) { return Points.Me.Tried(key) && !cleanRuns.Contains(key) ? "" : EarnPts(key, true, true); }
         void Revealed(string key) { if (cleanRuns.Contains(key) || Points.Me.Has(key)) return; if (!Points.Me.Tried(key)) cleanRuns.Add(key); Points.Me.MarkTried(key); }
-        void NewRun(string key) { cleanRuns.Remove(key); }
+        void NewRun(string key) { cleanRuns.Remove(key); gameAway = DateTime.MinValue; }   // bug-hunt L-174: a fresh run's clock starts clean - time away from an earlier one isn't added
         long quickAway;
         void GameTick(bool on)
         {
-            if (on && gameAway != DateTime.MinValue) { var away = DateTime.UtcNow - gameAway; if (away < TimeSpan.Zero) away = TimeSpan.Zero; roomStart += away; outStart += away; if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
+            if (on && gameAway != DateTime.MinValue) { roomStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway);   /* hunt-5: the escape room on the monotonic clock too */ outStartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); if (quick != null) quick.StartMs += Math.Max(0, LearnGames.Mono.ElapsedMilliseconds - quickAway); gameAway = DateTime.MinValue; }
             if (gameTimer == null) { gameTimer = new System.Windows.Forms.Timer { Interval = 1000 }; FormClosed += delegate { gameTimer.Dispose(); }; gameTimer.Tick += delegate { if (!learnPage.Visible || !Visible || !learnSel.StartsWith("game:", StringComparison.Ordinal)) { gameTimer.Stop(); gameAway = DateTime.UtcNow; quickAway = LearnGames.Mono.ElapsedMilliseconds; return; } learnInfo.Invalidate(); }; }
             if (on && !gameTimer.Enabled) gameTimer.Start(); else if (!on && gameTimer.Enabled) gameTimer.Stop();
         }
@@ -94,10 +95,11 @@ namespace AdeeboMeter
         void NewRoom()
         {
             var open = LearnGames.Faults.Where(f => !Points.Me.Has("game.room." + f.Id)).ToList(); if (open.Count == 0) open = LearnGames.Faults.ToList();
+            if (room != null && open.Count > 1) open.RemoveAll(f => f.Id == room.F.Id);   // finding 34: never the same room twice in a row
             var f0 = open[GameRnd.Next(open.Count)]; room = LearnGames.NewRoom(GameRnd.Next(), f0.Id);
-            roomOut.Clear(); roomOut.Add(L.T("Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.")); roomStart = DateTime.UtcNow; roomHints = 0; roomMiss = 0; roomStage = 0; roomMsg = "";
+            roomOut.Clear(); roomOut.Add(L.T("Your PC can't get to example.com. Everything below is a simulation - run the commands and find out why.")); roomStartMs = LearnGames.Mono.ElapsedMilliseconds; roomHints = 0; roomMiss = 0; roomStage = 0; roomMsg = "";
         }
-        int RoomLeft() { return Math.Max(0, 600 - (roomHints + roomMiss) * 60 - (int)(DateTime.UtcNow - roomStart).TotalSeconds); }
+        int RoomLeft() { return Math.Max(0, 600 - (roomHints + roomMiss) * 60 - (int)((LearnGames.Mono.ElapsedMilliseconds - roomStartMs) / 1000)); }
         float PaintRoom(Graphics g, float x, float y, float w)
         {
             if (room == null) NewRoom();
@@ -126,16 +128,16 @@ namespace AdeeboMeter
                 float hb2 = Button(learnInfo, g, roomHints == 0 ? "Hint (-1 min)" : roomHints == 1 ? "Another hint (-1 min)" : "No more hints", false, delegate { if (roomHints < 2) { roomOut.Add("HINT: " + L.T(roomHints == 0 ? room.F.Hint1 : room.F.Hint2)); roomHints++; learnInfo.Invalidate(); } }, x, y);
                 Button(learnInfo, g, "New scenario", false, delegate { NewRoom(); learnInfo.Invalidate(); }, x + hb2 + 10 * S, y);
                 y += 46 * S;
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S BROKEN?"), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("WHAT'S BROKEN?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FaultChoices, x, y, w, o => 0, o => { if (o == room.F.Name) { roomStage = 1; roomMsg = L.T("Right. Now - how do you fix it?"); } else { roomMiss++; roomMsg = L.T("Not that - it costs a minute. Look again."); } learnInfo.Invalidate(); });
             }
             else if (roomStage == 1)
             {
                 y = Say(g, room.F.Name, 0, x, y, w);
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("THE FIX?"), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("THE FIX?"), Draw.fTiny, mb, x, y); y += 20 * S;
                 y = Options(g, room.FixChoices, x, y, w, o => 0, o =>
                 {
-                    if (o == room.F.Fix) { roomStage = 2; if (roomMiss >= 3) Points.Me.MarkTried("game.room." + room.F.Id); string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)(DateTime.UtcNow - roomStart).TotalSeconds) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
+                    if (o == room.F.Fix) { roomStage = 2; if (roomMiss >= 3) Points.Me.MarkTried("game.room." + room.F.Id); string earned = roomMiss >= 3 ? "" : EarnFirst("game.room." + room.F.Id);   /* clicking through every option isn't solving it */ roomMsg = L.T("You escaped in") + " " + Clock2((int)((LearnGames.Mono.ElapsedMilliseconds - roomStartMs) / 1000)) + (roomHints + roomMiss > 0 ? " (" + L.T("the clock lost") + " " + (roomHints + roomMiss) + " " + L.T("min to hints and guesses") + ")" : "") + ". " + earned; }
                     else { roomMiss++; roomMsg = L.T("That wouldn't fix it - another minute gone."); }
                     learnInfo.Invalidate();
                 });
@@ -149,7 +151,8 @@ namespace AdeeboMeter
         void NewThief()
         {
             var open = LearnGames.ThiefCases.Where(c => !Points.Me.Has("game.thief." + c)).ToList(); if (open.Count == 0) open = LearnGames.ThiefCases.ToList();
-            thief = LearnGames.NewCase(GameRnd.Next(), open[GameRnd.Next(open.Count)]); thiefClues = 1; thiefPick = "";
+            if (thief != null && open.Count > 1) open.RemoveAll(c => c == thiefLast); thiefLast = null;
+            thiefLast = open[GameRnd.Next(open.Count)]; thief = LearnGames.NewCase(GameRnd.Next(), thiefLast); thiefClues = 1; thiefPick = "";
         }
         float PaintThief(Graphics g, float x, float y, float w)
         {
@@ -158,7 +161,7 @@ namespace AdeeboMeter
             using (var mb = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
             using (var nw = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
             {
-                g.DrawString(L.T("DEVICES ON THE NETWORK  ·  CLICK ONE TO ACCUSE IT"), Draw.fTiny, mb, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("DEVICES ON THE NETWORK  ·  CLICK ONE TO ACCUSE IT"), Draw.fTiny, mb, x, y); y += 22 * S;
                 float[] cols = { 0, 0.22f, 0.37f, 0.60f, 0.75f, 0.89f }; string[] heads = { "Name", "Address", "Hardware address", "Maker", "First seen", "Data" };
                 for (int i = 0; i < heads.Length; i++) g.DrawString(L.T(heads[i]), Draw.fSmall, mb, x + cols[i] * w, y); y += 22 * S;
                 foreach (var d in thief.Devices)
@@ -175,11 +178,11 @@ namespace AdeeboMeter
                 y += 10 * S;
                 if (thief.Log.Count > 0)
                 {
-                    g.DrawString(L.T("THE ROUTER'S LOG"), Draw.fTiny, mb, x, y); y += 20 * S;
+                    g.DrawString(Kit.Sent("THE ROUTER'S LOG"), Draw.fTiny, mb, x, y); y += 20 * S;
                     foreach (var l in thief.Log) { g.DrawString(l, Draw.fMono, sub, new RectangleF(x, y, w, 18 * S), nw); y += 19 * S; }
                     y += 10 * S;
                 }
-                g.DrawString(L.T("CLUES"), Draw.fTiny, mb, x, y); y += 20 * S;
+                g.DrawString(Kit.Sent("CLUES"), Draw.fTiny, mb, x, y); y += 20 * S;
                 for (int i = 0; i < thiefClues && i < thief.Clues.Length; i++) y = Lead2(g, (i + 1) + ". " + L.T(thief.Clues[i]), x, y, w);
             }
             if (thiefPick == "")
@@ -199,9 +202,9 @@ namespace AdeeboMeter
         // ---------- packet detective
         float PaintDetective(Graphics g, float x, float y, float w)
         {
-            GameTick(false); var p = LearnGames.Detective[detIdx % LearnGames.Detective.Length]; int wrong = int.Parse(p[2], CultureInfo.InvariantCulture);
+            GameTick(false); int pi = DetAt(); var p = LearnGames.Detective[pi]; int wrong = int.Parse(p[2], CultureInfo.InvariantCulture);
             y = Say(g, (detIdx % LearnGames.Detective.Length + 1) + " / " + LearnGames.Detective.Length + "  ·  " + L.T(p[0]), 1, x, y, w);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("ONE OF THESE PACKETS IS WRONG - CLICK IT"), Draw.fTiny, mb, x, y); y += 22 * S;
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("ONE OF THESE PACKETS IS WRONG - CLICK IT"), Draw.fTiny, mb, x, y); y += 22 * S;
             var pk = p[1].Split('~');
             using (var sub = new SolidBrush(Theme.Sub)) using (var ink = new SolidBrush(Theme.Ink))
                 for (int i = 0; i < pk.Length; i++)
@@ -212,14 +215,14 @@ namespace AdeeboMeter
                     g.DrawString(f[0] + " s", Draw.fMono, sub, x + 12 * S, y + 11 * S);
                     g.DrawString(f[1], Draw.fBodyB, ink, x + 90 * S, y + 10 * S);
                     g.DrawString(L.T(f[2]), Draw.fBody, ink, new RectangleF(x + 260 * S, y + 10 * S, w - 270 * S, 22 * S), GameNoWrap);
-                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; string dk = "game.detective." + (detIdx % LearnGames.Detective.Length + 1).ToString(CultureInfo.InvariantCulture); if (ii == wrong) EarnFirst(dk); else Points.Me.MarkTried(dk); learnInfo.Invalidate(); });
+                    int ii = i; if (detPick < 0) Act(learnInfo, r, delegate { detPick = ii; string dk = "game.detective." + (pi + 1).ToString(CultureInfo.InvariantCulture); if (ii == wrong) EarnFirst(dk); else Points.Me.MarkTried(dk); learnInfo.Invalidate(); });
                     y += 48 * S;
                 }
             if (detPick >= 0)
             {
                 y = Say(g, detPick == wrong ? "Spotted." : "Not that one - the green one is wrong.", detPick == wrong ? 0 : 2, x, y + 4 * S, w);
                 y = Lead2(g, L.T(p[3]), x, y, w);
-                Button(learnInfo, g, "Next puzzle", true, delegate { detIdx++; detPick = -1; learnInfo.Invalidate(); }, x, y); y += 46 * S;
+                Button(learnInfo, g, "Next puzzle", true, delegate { detIdx++; detPick = -1; if (detIdx % LearnGames.Detective.Length == 0) detOrder = null; learnInfo.Invalidate(); }, x, y); y += 46 * S;
             }
             return y;
         }
@@ -257,6 +260,7 @@ namespace AdeeboMeter
             return y;
         }
         int heistIdx, heistPick = -1, heistRight; string heistEarn; static readonly string[] HeistOpts = { "It works", "It fails" };
+        List<int> heistOrder; string[] heistOpts = HeistOpts; int heistOptsAt = -1;   // finding 14: the attacks in a new order, the two answers swapped at random
         float PaintHeist(Graphics g, float x, float y, float w)
         {
             GameTick(false);
@@ -272,12 +276,14 @@ namespace AdeeboMeter
                 y = Say(g, (won ? L.T("You know the Adeebo Award inside out") : L.T("Mallory fooled you a few times")) + " - " + heistRight + " / " + LearnGames.Heist.Length + ". " + heistEarn, won ? 0 : 2, x, y, w);
                 y = Lead2(g, L.T("The code stops the easy cheats. The honest limit of an offline app: points live on your own PC, so the Hall of Fame is for bragging rights, not prizes."), x, y, w);
                 if (!won) Points.Me.MarkTried("game.heist");
-                Button(learnInfo, g, "Play again", true, delegate { heistIdx = 0; heistPick = -1; heistRight = 0; heistEarn = null; NewRun("game.heist"); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
+                Button(learnInfo, g, "Play again", true, delegate { heistIdx = 0; heistPick = -1; heistRight = 0; heistEarn = null; heistOrder = null; heistOptsAt = -1; NewRun("game.heist"); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
             }
-            var h = LearnGames.Heist[heistIdx]; bool works = h[1] == "1";
+            if (heistOrder == null) heistOrder = Enumerable.Range(0, LearnGames.Heist.Length).OrderBy(i => GameRnd.Next()).ToList();
+            if (heistPick < 0 && heistIdx < heistOrder.Count && heistOptsAt != heistIdx) { heistOpts = GameRnd.Next(2) == 0 ? HeistOpts : HeistOpts.Reverse().ToArray(); heistOptsAt = heistIdx; }
+            var h = LearnGames.Heist[heistOrder[heistIdx]]; bool works = h[1] == "1";
             y = Say(g, (heistIdx + 1) + " / " + LearnGames.Heist.Length + "  ·  " + L.T(h[0]), 1, x, y, w);
             string answer = works ? "It works" : "It fails", picked = heistPick == 0 ? "It works" : "It fails";
-            y = Options(g, HeistOpts, x, y, w, o => heistPick < 0 ? 0 : o == answer ? 1 : o == picked ? 2 : 3,
+            y = Options(g, heistOpts, x, y, w, o => heistPick < 0 ? 0 : o == answer ? 1 : o == picked ? 2 : 3,
                 heistPick >= 0 ? (Action<string>)null : o => { heistPick = o == "It works" ? 0 : 1; if ((heistPick == 0) == works) heistRight++; Revealed("game.heist"); learnInfo.Invalidate(); });
             if (heistPick >= 0)
             {
@@ -290,9 +296,9 @@ namespace AdeeboMeter
         }
 
         // ---------- survive the outage: eight made-up broken networks, fifteen seconds each; right and fast scores more
-        List<int> outOrder; int outAt, outRight, outScore, outPick = -1; DateTime outStart; string outEarn; string[] outOpts; bool outBest;
+        List<int> outOrder; int outAt, outRight, outScore, outPick = -1; long outStartMs;   /* finding 30: the monotonic clock, like quick-fire - changing the PC clock adds no time */ string outEarn; string[] outOpts; bool outBest;
         void NewOutage() { NewRun("game.outage"); outOrder = Enumerable.Range(0, LearnGames.Outage.Length).OrderBy(i => GameRnd.Next()).Take(LearnGames.OutageRounds).ToList(); outAt = 0; outRight = 0; outScore = 0; outPick = -1; outEarn = null; OutRound(); }
-        void OutRound() { if (outAt < outOrder.Count) { var o = LearnGames.Outage[outOrder[outAt]]; outOpts = new[] { o[3], o[4], o[5], o[6] }.OrderBy(z => GameRnd.Next()).ToArray(); } outStart = DateTime.UtcNow; outPick = -1; }
+        void OutRound() { if (outAt < outOrder.Count) { var o = LearnGames.Outage[outOrder[outAt]]; outOpts = new[] { o[3], o[4], o[5], o[6] }.OrderBy(z => GameRnd.Next()).ToArray(); } outStartMs = LearnGames.Mono.ElapsedMilliseconds; outPick = -1; }
         float PaintOutage(Graphics g, float x, float y, float w)
         {
             if (outOrder == null)
@@ -312,7 +318,7 @@ namespace AdeeboMeter
                 Button(learnInfo, g, "Play again", true, delegate { NewOutage(); learnInfo.Invalidate(); }, x, y); return y + 46 * S;
             }
             var o = LearnGames.Outage[outOrder[outAt]];
-            int left = Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds);
+            int left = Math.Max(0, LearnGames.OutageSecs - (int)((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000));
             if (left == 0 && outPick < 0) { outPick = 99; Revealed("game.outage"); }   // out of time: counts as wrong (and the answer shows)
             GameTick(outPick < 0);
             using (var mb = new SolidBrush(left <= 5 && outPick < 0 ? Theme.LvText(2) : Theme.Ink)) g.DrawString((outPick < 0 ? left + " s" : L.T("Done")) + "  ·  " + (outAt + 1) + " / " + outOrder.Count + "  ·  " + outScore, Draw.fHead, mb, x, y);
@@ -323,8 +329,8 @@ namespace AdeeboMeter
             y += 66 * S;
             y = Lead2(g, AdeeboMeter.L.T("• ") + L.T(o[1]) + "\n• " + L.T(o[2]), x, y, w);
             y = Options(g, outOpts, x, y, w, z => outPick < 0 ? 0 : z == o[3] ? 1 : outPick < 4 && outOpts[outPick] == z ? 2 : 3,
-                outPick >= 0 ? (Action<string>)null : z => { if ((DateTime.UtcNow - outStart).TotalSeconds >= LearnGames.OutageSecs) { outPick = 99; Revealed("game.outage"); learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
-                    outPick = Array.IndexOf(outOpts, z); Revealed("game.outage"); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)(DateTime.UtcNow - outStart).TotalSeconds); } learnInfo.Invalidate(); });
+                outPick >= 0 ? (Action<string>)null : z => { if ((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000.0 >= LearnGames.OutageSecs) { outPick = 99; Revealed("game.outage"); learnInfo.Invalidate(); return; }   /* the clock ran out between two ticks: too late */
+                    outPick = Array.IndexOf(outOpts, z); Revealed("game.outage"); if (z == o[3]) { outRight++; outScore += 100 + 10 * Math.Max(0, LearnGames.OutageSecs - (int)((LearnGames.Mono.ElapsedMilliseconds - outStartMs) / 1000)); } learnInfo.Invalidate(); });
             if (outPick >= 0)
             {
                 bool right = outPick < 4 && outOpts[outPick] == o[3];
@@ -355,14 +361,16 @@ namespace AdeeboMeter
                 using (var tb = new SolidBrush(i == dunRoom ? Theme.OnBlue : Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(i < dunRoom ? "✓" : (i + 1).ToString(CultureInfo.InvariantCulture), Draw.fBodyB, tb, r, c);
             }
             float hx = x + LearnGames.Dungeon.Length * (sq + 8 * S) + 10 * S;   // hearts: full ones red, lost ones grey (one glyph - the outline heart is missing from some fonts)
+            float hy = y, below = 0;
+            if (hx + LearnGames.DungeonHearts * (30 * S) > x + w) { hx = x; hy = y + sq + 6 * S; below = 22 * S + 6 * S; }   // bug-hunt L-107: no room beside the rooms - the hearts go under them
             for (int i = 0; i < LearnGames.DungeonHearts; i++)
                 using (var hb = new SolidBrush(i < dunHearts ? Theme.Red : Theme.Track))
                 {
-                    float hs = 22 * S, h0 = hx + i * (hs + 8 * S), v0 = y + (sq - hs) / 2;   // drawn, not a font glyph: the same size on every PC
+                    float hs = 22 * S, h0 = hx + i * (hs + 8 * S), v0 = below > 0 ? hy : y + (sq - hs) / 2;   // drawn, not a font glyph: the same size on every PC
                     g.FillEllipse(hb, h0, v0, hs * 0.55f, hs * 0.55f); g.FillEllipse(hb, h0 + hs * 0.45f, v0, hs * 0.55f, hs * 0.55f);
                     g.FillPolygon(hb, new[] { new PointF(h0 + hs * 0.02f, v0 + hs * 0.36f), new PointF(h0 + hs * 0.98f, v0 + hs * 0.36f), new PointF(h0 + hs / 2, v0 + hs * 0.95f) });
                 }
-            y += sq + 16 * S;
+            y += sq + 16 * S + below;
             if (dunRoom >= LearnGames.Dungeon.Length)
             {
                 if (dunEarn == null) dunEarn = EarnFirst("game.dungeon");
@@ -421,8 +429,10 @@ namespace AdeeboMeter
             {
                 var q = quick.Q[quick.At];
                 y = Say(g, q[0], 1, x, y, w);
+                // bug-hunt L-175/176: the answer moves straight on to the next question, so the options aren't coloured - the line under
+                // them says how the LAST one went, labelled as such
                 y = Options(g, q.Skip(2).ToArray(), x, y, w, o => 0, o => { bool ok = o == q[1]; if (!LearnGames.Answer(quick, ok)) { learnInfo.Invalidate(); return; } if (!ok) Revealed("game.quick." + id); quickMsg = ok ? L.T("Right") : L.T("No") + " - " + L.T(q[1]); learnInfo.Invalidate(); });
-                if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(quickMsg, Draw.fSmall, b, x, y);
+                if (quickMsg != "") using (var b = new SolidBrush(quickMsg == L.T("Right") ? Theme.LvText(0) : Theme.LvText(2))) g.DrawString(L.T("Last one:") + " " + quickMsg, Draw.fSmall, b, x, y);
                 y += 26 * S;
             }
             else

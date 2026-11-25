@@ -21,6 +21,8 @@ namespace AdeeboMeter
     // nearest cloud, ping sweep, Wake-on-LAN, subnet calculator. All on press, all outbound, nothing listens.
     static class Toolkit
     {
+        // carry-over (200-bug High #1): an endpoint of the socket's own family for Receive - an IPv4 Any on an IPv6 socket is wrong
+        internal static IPEndPoint AnyEp(UdpClient u) { return new IPEndPoint(u.Client.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, 0); }
         // A TCP client that can reach IPv6-only hosts too (dual mode: IPv4 still works through mapped addresses).
         // Where the PC has no IPv6 at all, a plain IPv4 one.
         public static TcpClient Tcp()
@@ -41,7 +43,7 @@ namespace AdeeboMeter
             return Open(all, port, ms);
         }
         public static TcpClient Open(IPAddress ip, int port, int ms) { return Open(new[] { ip }, port, ms); }
-        static TcpClient Open(IPAddress[] all, int port, int ms)
+        public static TcpClient Open(IPAddress[] all, int port, int ms)
         {
             var v6 = all.Where(a => a.AddressFamily == AddressFamily.InterNetworkV6).ToList(); var v4 = all.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList();
             var order = new List<IPAddress>(); for (int i = 0; i < Math.Max(v6.Count, v4.Count); i++) { if (i < v6.Count) order.Add(v6[i]); if (i < v4.Count) order.Add(v4[i]); }
@@ -108,7 +110,7 @@ namespace AdeeboMeter
             return withPort && u.Port > 0 ? h + ":" + u.Port.ToString(CultureInfo.InvariantCulture) : h;
         }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
-        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } }
+        public sealed class Run { public volatile string Status = ""; public volatile bool Stop; public DateTime Deadline; public readonly List<double> Series = new List<double>(); public string SeriesUnit = ""; public void Add(double v) { lock (Series) Series.Add(v); } public List<double> Copy() { lock (Series) return Series.ToList(); } public int Count { get { lock (Series) return Series.Count; } } }   /* Count: bug-hunt ML-145, no copy just to count */
 
         // ================================================================== iperf3 client
         const int Cookie = 37;
@@ -199,8 +201,9 @@ namespace AdeeboMeter
             }
             Func<List<double>, string> sum = l => { var ok = l.Where(x => !double.IsNaN(x)).OrderBy(x => x).ToList(); return ok.Count == 0 ? "no replies" : "median " + ok[ok.Count / 2] + " ms · " + (l.Count - ok.Count) + " of " + l.Count + " lost"; };
             string name = Dscp.FirstOrDefault(x => x.Value == d).Key;
-            rows.Add(R(mk.Count(double.IsNaN) > pl.Count(double.IsNaN) + 1 ? 1 : 0, "DSCP " + d + (name != null ? " (" + name + ")" : ""), sum(mk), "", "m"));
-            rows.Add(R(0, "Unmarked (0)", sum(pl), "", "m"));
+            bool none = mk.Count + pl.Count > 0 && mk.All(double.IsNaN) && pl.All(double.IsNaN);   // R2-141: stopped after one ping counts too   // tool-run 22 Nov: "no replies" was marked ok
+            rows.Add(R(none ? 2 : mk.Count(double.IsNaN) > pl.Count(double.IsNaN) + 1 ? 1 : 0, "DSCP " + d + (name != null ? " (" + name + ")" : ""), sum(mk), none ? "Nothing answered, marked or not - the target is off, wrong, or doesn't answer ping. Try your router or 1.1.1.1 first." : "", "m"));
+            rows.Add(R(none ? 2 : pl.Count == 0 ? 3 : 0, "Unmarked (0)", pl.Count == 0 ? "not sent - stopped first" : sum(pl), "", "m"));
             rows.Add(R(3, "Was it really marked?", "only a capture can say", "Windows clears the marking a program asks for unless a QoS policy (Group Policy > Policy-based QoS) allows it. To check: Live capture with filter  icmp , look at the DSCP field of the request. Marked pings that are dropped while unmarked ones pass mean something on the way polices that class.", "i"));
             return rows;
         }
@@ -435,7 +438,7 @@ namespace AdeeboMeter
             int lostN = s.Count - ok.Count, burst = 0, cur = 0; foreach (var x in s) { cur = double.IsNaN(x) ? cur + 1 : 0; burst = Math.Max(burst, cur); }
             double jit = 0; int pairs = 0; for (int i = 1; i < s.Count; i++) if (!double.IsNaN(s[i]) && !double.IsNaN(s[i - 1])) { jit += Math.Abs(s[i] - s[i - 1]); pairs++; } pairs = Math.Max(1, pairs);   /* divide by the pairs actually summed */ jit /= pairs;
             double loss = s.Count > 0 ? 100.0 * lostN / s.Count : 0;
-            rows.Add(R(loss > 2 ? 2 : loss > 0 ? 1 : 0, "Lost", lostN + " of " + s.Count + " (" + loss.ToString("0.#", CultureInfo.CurrentCulture) + "%)" + (burst > 1 ? " · longest gap " + burst + " in a row (" + (burst * iv / 1000.0).ToString("0.#", CultureInfo.CurrentCulture) + " s)" : ""), burst > 3 ? "Losses come in bursts - typical of Wi-Fi roaming, interference or a link flapping, not of a busy line." : "", "m"));
+            rows.Add(R(loss > 2 ? 2 : loss > 0 ? 1 : 0, "Lost", lostN + " of " + s.Count + " (" + loss.ToString("0.#", CultureInfo.CurrentCulture) + "%)" + (burst > 1 ? " · longest gap " + burst + " in a row (" + (burst * iv / 1000.0).ToString("0.#", CultureInfo.CurrentCulture) + " s)" : ""), ok.Count == 0 && s.Count > 0 ? "Nothing answered at all - the address may be wrong or switched off, or it doesn't answer ping (many servers and firewalls don't). Try your router or 1.1.1.1 to see if the line itself is fine." : burst > 3 ? "Losses come in bursts - typical of Wi-Fi roaming, interference or a link flapping, not of a busy line." : "", "m"));
             if (ok.Count > 0)
             {
                 rows.Add(R(0, "Delay", "min " + ok[0].ToString("0", CultureInfo.CurrentCulture) + " · median " + ok[ok.Count / 2].ToString("0", CultureInfo.CurrentCulture) + " · 95% under " + ok[(int)(ok.Count * 0.95) < ok.Count ? (int)(ok.Count * 0.95) : ok.Count - 1].ToString("0", CultureInfo.CurrentCulture) + " · max " + ok.Last().ToString("0", CultureInfo.CurrentCulture) + " ms", "", "m"));
@@ -448,6 +451,7 @@ namespace AdeeboMeter
         static readonly Dictionary<string, int> Types = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "A", 1 }, { "NS", 2 }, { "CNAME", 5 }, { "SOA", 6 }, { "PTR", 12 }, { "MX", 15 }, { "TXT", 16 }, { "AAAA", 28 }, { "SRV", 33 }, { "CAA", 257 }, { "DS", 43 }, { "SSHFP", 44 }, { "DNSKEY", 48 }, { "TLSA", 52 }, { "SVCB", 64 }, { "HTTPS", 65 } };
         public sealed class Rr { public string Name = "", Type = "", Data = ""; public int Ttl; public int Section; }
         public sealed class Msg { public int Rcode; public bool Aa, Ad, Tc; public List<Rr> Rrs = new List<Rr>(); public string From = ""; public long Ms; }
+        internal static bool NullMx(Rr r) { if (r.Type != "MX") return false; var p = (r.Data ?? "").Trim().Split(' '); return p.Length >= 1 && p[0] == "0" && (p.Length == 1 || p[1].Trim('.') == ""); }
         public static List<string[]> Dig(string name, string type, string server, Monitor m)
         {
             var rows = new List<string[]>(); name = (name ?? "").Trim().TrimEnd('.'); type = string.IsNullOrWhiteSpace(type) ? "A" : type.Trim().ToUpperInvariant();
@@ -486,7 +490,7 @@ namespace AdeeboMeter
             }
             object srv2 = srvName;
             rows.Add(R(msg.Rcode == 0 ? 0 : msg.Rcode == 3 ? 1 : 2, "Status", (msg.Rcode == 0 ? "NOERROR" : msg.Rcode == 3 ? "NXDOMAIN - the name doesn't exist" : msg.Rcode == 2 ? "SERVFAIL - the server couldn't get an answer" : "error " + msg.Rcode) + " from " + srv2 + " in " + msg.Ms + " ms" + (msg.Aa ? " · authoritative" : "") + (msg.Ad ? " · DNSSEC validated (AD)" : ""), msg.Rcode == 2 ? "Often a DNSSEC failure or the domain's own servers being down." : "", "m"));
-            foreach (var r in msg.Rrs.Where(x => x.Section == 1)) rows.Add(R(3, r.Type + "  " + r.Name, r.Data + "   (TTL " + r.Ttl + " s)", "", "m"));
+            foreach (var r in msg.Rrs.Where(x => x.Section == 1)) rows.Add(R(3, r.Type + "  " + r.Name, (NullMx(r) ? "0 .   - a \"null MX\": this domain accepts no mail (RFC 7505)" : r.Data) + "   (TTL " + r.Ttl + " s)", "", "m"));   // the tool run, 22 Nov: a null MX printed as "0 " with nothing after it
             if (!msg.Rrs.Any(x => x.Section == 1) && msg.Rcode == 0) rows.Add(R(1, "Answer", "no " + type + " records for this name", "", "m"));
             foreach (var r in msg.Rrs.Where(x => x.Section == 2).Take(4)) rows.Add(R(3, "authority  " + r.Type, r.Name + " → " + r.Data, "", "m"));
             return rows;
@@ -526,7 +530,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(server.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(server, 53); u.Send(q.ToArray(), q.Count);   // connected: only the server we asked can answer
-                    var from = new IPEndPoint(IPAddress.Any, 0); resp = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); resp = u.Receive(ref from);
                     if (resp.Length < 12 || resp[0] != id[0] || resp[1] != id[1]) return null;
                 }
                 if ((resp[2] & 2) != 0)   // truncated: ask again over TCP
@@ -569,7 +573,7 @@ namespace AdeeboMeter
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create(url); req.Method = "POST"; req.ContentType = "application/dns-message"; req.Accept = "application/dns-message";
-                req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.AllowAutoRedirect = false; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy(); req.ContentLength = q.Length;
+                req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.AllowAutoRedirect = false; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); req.ContentLength = q.Length;
                 using (var rs = req.GetRequestStream()) rs.Write(q, 0, q.Length);
                 using (var resp = (HttpWebResponse)req.GetResponse()) using (var st = resp.GetResponseStream())
                 {
@@ -678,7 +682,7 @@ namespace AdeeboMeter
                 followed = false;
                 try
                 {
-                    var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                    var req = (HttpWebRequest)WebRequest.Create(u); req.AllowAutoRedirect = false; req.Method = "GET"; req.Timeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
                     if (sni != "" && u.Host == first) req.Host = sni + (u.IsDefaultPort ? "" : ":" + u.Port.ToString(CultureInfo.InvariantCulture));
                     // asking by address for another name: the certificate is for the name, so only that mismatch is let through (the
                     // chain must still be trusted) - the TLS rows below check the certificate against the name you gave
@@ -689,7 +693,12 @@ namespace AdeeboMeter
                     {
                         int code = (int)resp.StatusCode; string loc = resp.Headers["Location"] ?? "";
                         rows.Add(R(code >= 500 ? 2 : code >= 400 ? 1 : 0, (hop == 0 ? "" : "then ") + code + " " + resp.StatusDescription, Reach.NoUser(u) + " · " + sw.ElapsedMilliseconds + " ms" + (loc != "" ? " → " + Reach.NoUser(loc) : ""), "", "m"));
-                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) { u = n; followed = true; continue; } }
+                        if (code >= 300 && code < 400 && loc != "") { Uri n; if (Uri.TryCreate(u, loc, out n)) {
+                            // security recheck SECN-2: each hop is checked - http(s) only, and a site can't bounce this PC to the router, the LAN,
+                            // this PC or a cloud metadata address (only the host you typed may be one of those)
+                            bool sameHost = n.Host.Equals(first, StringComparison.OrdinalIgnoreCase);
+                            if ((n.Scheme != "https" && n.Scheme != "http") || n.UserInfo != "" || (!sameHost && !SpeedTest.SafeUrl(n.AbsoluteUri))) { rows.Add(R(1, "Not followed", "the redirect points at " + Reach.NoUser(n) + " - a local, private or non-web address, so it wasn't opened", "Redirects are only followed to public web addresses or the same host you typed.", "m")); break; }
+                            u = n; followed = true; continue; } }
                         foreach (var h in new[] { "Server", "Alt-Svc", "Content-Type", "Cache-Control", "Via", "X-Cache", "CF-Ray" })
                             if (!string.IsNullOrEmpty(resp.Headers[h])) rows.Add(R(3, h, Draw.Trunc(resp.Headers[h], 120), h == "Alt-Svc" && resp.Headers[h].Contains("h3") ? "The site also offers HTTP/3 (QUIC over UDP 443) - browsers switch to it after the first visit." : "", "m"));
                         rows.AddRange(SecurityHeaders(resp.Headers, u.Scheme == "https"));
@@ -765,7 +774,7 @@ namespace AdeeboMeter
         static List<string[]> Tls(string host, int port, string sni)
         {
             host = (host ?? "").Trim('[', ']'); sni = (sni ?? "").Trim('[', ']');
-            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None; List<string[]> chainRows = null;
+            var rows = new List<string[]>(); X509Certificate2 cert = null; SslPolicyErrors errs = SslPolicyErrors.None, trustBad = SslPolicyErrors.None; List<string[]> chainRows = null;
             foreach (var proto in new[] { Tuple.Create("TLS 1.3", (SslProtocols)12288), Tuple.Create("TLS 1.2", SslProtocols.Tls12) })
             {
                 // Windows 10 can't speak TLS 1.3 as a client: that's this PC, not the site
@@ -779,13 +788,13 @@ namespace AdeeboMeter
                         { ssl.ReadTimeout = 5000; var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(sni, null, proto.Item2, false)); bool hd; try { hd = hs.Wait(8000); } catch (AggregateException ae) { throw ae.InnerException ?? ae; } if (!hd) { tc.Close(); try { hs.Wait(1000); } catch (AggregateException) { } throw new TimeoutException("no TLS answer in 8 s"); } rows.Add(R(0, proto.Item1, "supported · " + ssl.CipherAlgorithm + " " + ssl.CipherStrength + "-bit", "", "m")); }
                     }
                 }
-                catch (Exception e) { rows.Add(R(3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
+                catch (Exception e) { if (errs != SslPolicyErrors.None) trustBad = errs; rows.Add(R(errs != SslPolicyErrors.None ? 2 : 3, proto.Item1, errs != SslPolicyErrors.None ? "certificate not trusted (" + errs + ")" : "not offered (" + Draw.Trunc(e.Message, 50) + ")", "", "m")); }
             }
             if (cert != null)
                 using (cert)
                 {
                     double days = (cert.NotAfter - DateTime.Now).TotalDays;
-                    rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 0 ? " (EXPIRED)" : " (" + days.ToString("0", CultureInfo.CurrentCulture) + " days)"), errs != SslPolicyErrors.None ? "Windows doesn't trust it: " + errs + "." : "", "m"));
+                    rows.Add(R(days < 0 || trustBad != SslPolicyErrors.None ? 2 : days < 14 ? 1 : 0, "Certificate",   /* review 1.1.6 P3 #8: an untrusted certificate is red, whatever its date */ cert.GetNameInfo(X509NameType.SimpleName, false) + " · from " + cert.GetNameInfo(X509NameType.SimpleName, true) + " · expires " + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (days < 0 ? " (EXPIRED)" : " (" + days.ToString("0", CultureInfo.CurrentCulture) + " days)"), errs != SslPolicyErrors.None ? "Windows doesn't trust it: " + errs + "." : "", "m"));
                     var san = cert.Extensions.Cast<X509Extension>().FirstOrDefault(x => x.Oid != null && x.Oid.Value == "2.5.29.17");
                     if (san != null) rows.Add(R(3, "Names it covers", Draw.Trunc(san.Format(false).Replace("DNS Name=", ""), 200), "", "m"));
                     string ins = ""; try { ins = Inspection.InspectedBy(cert); } catch (Exception e) { Program.Log("inspect: " + e.Message); }
@@ -872,8 +881,9 @@ namespace AdeeboMeter
             var arp = new Dictionary<string, string>(); try { foreach (var a in Arp.Table()) arp[a.Ip] = a.Mac; } catch (Exception e) { Program.Log("sweep arp: " + e.Message); }
             foreach (var x in up.OrderBy(x => BitConverter.ToUInt32(x.Item1.GetAddressBytes().Reverse().ToArray(), 0)))
             {
-                string mac; arp.TryGetValue(x.Item1.ToString(), out mac);
-                rows.Add(R(3, x.Item1.ToString(), (mac != null ? mac + "  " + Vendor(mac) : "") + (x.Item1.ToString() == u.Address.ToString() ? "  (this PC)" : "") + " · " + x.Item2 + " ms", "", "m"));
+                string mac; arp.TryGetValue(x.Item1.ToString(), out mac); bool me = x.Item1.ToString() == u.Address.ToString();
+                if (mac == null && me) mac = OwnMac(u.Address);   // the PC isn't in its own ARP table: its adapter's address (release check: the row was blank)
+                rows.Add(R(3, x.Item1.ToString(), ((mac != null ? mac + "  " + Vendor(mac) : "") + (me ? "  (this PC)" : "")).Trim() + " · " + x.Item2 + " ms", "", "m"));
             }
             rows.Insert(0, R(0, "Answered", up.Count + " of " + targets.Count + (wide ? " (your /24 only - the network is bigger)" : ""), "Devices that ignore ping (many phones, printers in sleep) don't show - the ARP table on Your Wi-Fi may know more.", "m"));
             return rows;
@@ -888,6 +898,17 @@ namespace AdeeboMeter
             { "00:21:5A", "HP" }, { "3C:D9:2B", "HP" }, { "00:80:77", "Brother" }, { "00:00:48", "Epson" }, { "5C:AA:FD", "Sonos" }, { "00:0E:58", "Sonos" }, { "D0:52:A8", "SmartThings" },
             { "18:B4:30", "Nest" }, { "64:16:66", "Nest" }, { "B4:7C:9C", "Amazon" }, { "8C:85:90", "Apple" }, { "28:6C:07", "Xiaomi" }, { "7C:49:EB", "Xiaomi" }, { "00:E0:4C", "Realtek" },
             { "E8:6F:38", "Hitron (Rogers modem)" }, { "00:FC:8D", "Hitron" }, { "CC:03:FA", "Technicolor" }, { "10:56:11", "Arris" }, { "00:1D:D0", "Arris" }, { "BC:30:7D", "Wistron" } };
+        static string OwnMac(System.Net.IPAddress a)
+        {
+            try
+            {
+                foreach (var n in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+                    if (n.GetIPProperties().UnicastAddresses.Any(z => z.Address.Equals(a)))
+                    { var b = n.GetPhysicalAddress().GetAddressBytes(); if (b.Length == 6) return string.Join(":", b.Select(z => z.ToString("x2", CultureInfo.InvariantCulture))); }
+            }
+            catch (Exception e) { Program.Log("own mac: " + e.Message); }
+            return null;
+        }
         public static string Vendor(string mac)
         {
             if (string.IsNullOrEmpty(mac) || mac.Length < 8) return ""; string p = mac.Substring(0, 8).Replace('-', ':').ToUpperInvariant();
@@ -938,7 +959,7 @@ namespace AdeeboMeter
                 else { prefix = MaskBits(mk.GetAddressBytes()); var mb = mk.GetAddressBytes(); var want = new byte[mb.Length]; for (int i = 0; i < Math.Max(0, prefix); i++) want[i / 8] |= (byte)(0x80 >> (i % 8)); if (prefix < 0 || !mb.SequenceEqual(want)) bad = sp[1] + " isn't a contiguous mask"; }
             }
             else if (sp.Length > 2) bad = "too many parts - one address and a prefix or mask";
-            if (bad == null && Regex.IsMatch(ipPart, @"^[0-9.]+$") && !Regex.IsMatch(ipPart, @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$")) bad = "write the address as four plain numbers, no leading zeros (Windows reads 010 as 8)";
+            if (bad == null && Icmp.OddV4(ipPart)) bad = "write the address as four plain numbers, no leading zeros (Windows reads 010 as 8)";
             IPAddress ip; if (bad != null || !IPAddress.TryParse(ipPart, out ip) || (ip.AddressFamily == AddressFamily.InterNetwork && ipPart.Count(ch => ch == '.') != 3)) { rows.Add(R(2, "Input", (bad != null ? bad + " - " : "") + "type e.g. 10.1.2.3/22, 10.1.2.3 255.255.252.0 or 2001:db8::1/64", "", "u")); return rows; }
             int bits = ip.AddressFamily == AddressFamily.InterNetwork ? 32 : 128; if (prefix < 0) prefix = bits;
             if (sp.Length == 2 && slash < 0 && IPAddress.Parse(sp[1]).AddressFamily != ip.AddressFamily) { rows.Add(R(2, "Mask", "an IPv" + (bits == 32 ? "6" : "4") + " mask on an IPv" + (bits == 32 ? "4" : "6") + " address", "", "u")); return rows; } if (prefix > bits) { rows.Add(R(2, "Prefix", "/" + prefix + " is too long", "", "u")); return rows; }
@@ -963,7 +984,7 @@ namespace AdeeboMeter
             IPAddress q;
             if (!string.IsNullOrWhiteSpace(inside))
             {
-                if (Regex.IsMatch(inside.Trim(), @"^[0-9.]+$") && !Regex.IsMatch(inside.Trim(), @"^(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}$")) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" - write it as four plain numbers, no leading zeros (Windows reads 010 as 8)", "", "u"));   // FRESH-039: the same rule as the address
+                if (Icmp.OddV4(inside.Trim())) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" - write it as four plain numbers, no leading zeros (Windows reads 010 as 8)", "", "u"));   // FRESH-039: the same rule as the address
                 else if (!IPAddress.TryParse(inside.Trim(), out q)) rows.Add(R(1, "Inside?", "\"" + inside.Trim() + "\" isn't an IP address - type one like " + (ip.AddressFamily == AddressFamily.InterNetwork ? "10.1.2.50" : "2001:db8::50"), "", "u"));
                 else if (q.AddressFamily != ip.AddressFamily) rows.Add(R(1, q + " inside?", "can't be - it's IPv" + (q.AddressFamily == AddressFamily.InterNetwork ? "4" : "6") + " and this network is IPv" + (ip.AddressFamily == AddressFamily.InterNetwork ? "4" : "6"), "", "i"));
                 else { var qb = q.GetAddressBytes(); bool inNet = qb.Select((x, i) => (byte)(x & mask[i])).SequenceEqual(net); rows.Add(R(inNet ? 0 : 1, q + " inside?", inNet ? "yes" : "no", "", "i")); }

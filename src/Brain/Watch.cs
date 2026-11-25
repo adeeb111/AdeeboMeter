@@ -15,17 +15,21 @@ namespace AdeeboMeter
     // by whoever shows it (AppCtx). Never information for its own sake.
     static class Alerts
     {
-        public static Action<string, string> Show = delegate { };     // (title, text) - set by AppCtx
+        public static Action<string, string> Show = delegate { }; public static Func<bool> CanShow;     // (title, text) - set by AppCtx
         static readonly Dictionary<string, DateTime> last = new Dictionary<string, DateTime>();
-        public static void Raise(string kind, string text, int cooldownMin)
+        static bool inetDownSaid;
+        public static bool Raise(string kind, string text, int cooldownMin)
         {
-            if (!Cfg.Alerts) return;
+            if (!Cfg.Alerts) return false;
+            if (CanShow != null && !CanShow()) return false;   // round 6: a balloon that can't be shown now (quiet hours, muted, full screen) doesn't use up its cooldown
             lock (last)
             {
-                DateTime t; if (last.TryGetValue(kind, out t) && (DateTime.UtcNow - t).TotalMinutes < cooldownMin) return;
+                DateTime t; if (last.TryGetValue(kind, out t) && (DateTime.UtcNow - t).TotalMinutes < cooldownMin) return false;
                 last[kind] = DateTime.UtcNow;
+                if (last.Count > 200) foreach (var old in last.Where(kv => (DateTime.UtcNow - kv.Value).TotalDays > 1).Select(kv => kv.Key).ToList()) last.Remove(old);   // bug-hunt L-55: a day-old cooldown is over anyway
             }
             try { Show("AdeeboMeter", text); } catch { }
+            return true;
         }
         // Windows drops in a row, internet gone, router hardware changed: learned from the timeline as it happens
         static readonly List<DateTime> drops = new List<DateTime>();
@@ -36,8 +40,8 @@ namespace AdeeboMeter
                 lock (drops) { drops.Add(e.T); drops.RemoveAll(t => (e.T - t).TotalMinutes > 10); if (drops.Count >= 3) Raise("drops", "Wi-Fi dropped " + drops.Count + " times in 10 minutes. Move closer to the router, or switch to 5 GHz if it's offered.", 30); }
             }
             else if (e.Kind == "net" && e.Lv == 2 && (e.Text.IndexOf("hardware address", StringComparison.OrdinalIgnoreCase) >= 0 || e.Text.IndexOf("ARP spoofing", StringComparison.OrdinalIgnoreCase) >= 0)) /* both voices: the serious text is worded differently */ Raise("arp", "Your router's hardware address changed on the same network - possible spoofing. Use the VPN until you know why.", 60);
-            else if (e.Kind == "inet" && e.Lv == 2) Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
-            else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1);
+            else if (e.Kind == "inet" && e.Lv == 2) inetDownSaid |= Raise("inet", Monitor.GwAnswering ? "The internet went quiet. Your router still answers - it's your provider or the line, not your PC." : "The internet went quiet, and your router isn't answering either - check the Wi-Fi or cable first, then the router.", 20);
+            else if (e.Kind == "inet" && e.Lv == 0 && e.Text.StartsWith("Internet back", StringComparison.Ordinal)) { if (inetDownSaid) { inetDownSaid = false; Raise("inetback", e.Text + ". Every outage is listed in Time machine.", 1); } }   // round 6: "back" only follows a "went quiet" that was shown
         }
     }
 
@@ -75,7 +79,7 @@ namespace AdeeboMeter
             var worst = rows.Where(r => !double.IsNaN(r.Gw)).OrderByDescending(r => r.Gw).FirstOrDefault();
             string when = started.ToString("HH:mm", CultureInfo.CurrentCulture);
             string s; int lv = 0;
-            var roam = evs.FirstOrDefault(e => e.Text.IndexOf("roam", StringComparison.OrdinalIgnoreCase) >= 0 || e.Text.IndexOf("hopped", StringComparison.OrdinalIgnoreCase) >= 0);
+            var roam = evs.FirstOrDefault(e => Monitor.IsRoamText(e.Text));
             var drop = evs.FirstOrDefault(e => e.Lv == 2);
             double upBusy = rows.Count(r => r.Up > 3) * 100.0 / rows.Count;
             if (drop != null) { lv = 2; s = "Your " + mins + "-minute call at " + when + " broke at " + drop.T.ToString("HH:mm", CultureInfo.CurrentCulture) + ": " + drop.Text; }
@@ -91,7 +95,6 @@ namespace AdeeboMeter
             }
             if (lv > 0) Alerts.Raise("call", "After your call: " + s, 5);
         }
-        public static bool InCall { get { lock (k) return inCall; } }
     }
 
     // ================================================================== watch and suggest (never blocks - that needs admin)
@@ -151,6 +154,7 @@ namespace AdeeboMeter
                 foreach (var g in list.Where(c => c.State == "ESTABLISHED" && IsPublic(c.RemoteIp)).GroupBy(c => c.Pid))
                 {
                     string path = Native.ExePath(g.Key); if (path == "") continue;
+                    if (g.Key == Program.MyPid) continue;   // 22 Nov: AdeeboMeter warned about itself (a test build has no publisher yet)
                     var c0 = g.First();
                     // versioned folders (Teams, Discord, updaters: "app-1.0.9", "MSTeams_24123.1.2_x64") are the same app after an update
                     string key = Unversioned(path); DateTime was; if (key != path && seen.TryGetValue(path, out was) && !seen.ContainsKey(key)) seen[key] = was;
@@ -164,7 +168,7 @@ namespace AdeeboMeter
                         bool noPublisher = facts.Length > 1 && string.IsNullOrEmpty(facts[1]);
                         // temp-folder updaters are normal while it's still learning this PC: amber then, red afterwards
                         if (odd) Add(Learning ? 1 : 2, c0.Proc, path, "connects to the internet from " + (path.IndexOf("Downloads", StringComparison.OrdinalIgnoreCase) >= 0 ? "your Downloads folder" : "a temporary folder") + " - programs normally live in Program Files.", HowToBlock(path));
-                        else if (!Learning) Add(noPublisher ? 2 : 1, c0.Proc, path, "connected to the internet for the first time" + (noPublisher ? ", and its file names no publisher" : "") + " (" + Draw.Trunc(c0.Host != "" ? c0.Host : c0.RemoteIp, 40) + ").", noPublisher ? HowToBlock(path) : "If you just installed or updated it, that's expected. If not, look it up before trusting it. " + HowToBlock(path));
+                        else if (!Learning) Add(noPublisher ? 2 : 1, c0.Proc, path, "connected to the internet for the first time" + (noPublisher ? ", and its file has no publisher (it isn't signed)" : "") + " (" + Draw.Trunc(c0.Host != "" ? c0.Host : c0.RemoteIp, 40) + ").", noPublisher ? HowToBlock(path) : "If you just installed or updated it, that's expected. If not, look it up before trusting it. " + HowToBlock(path));
                     }
                     if (atNight && !night.Contains(path))
                     {
@@ -184,9 +188,12 @@ namespace AdeeboMeter
             if (busySec == 60 && (DateTime.UtcNow - upWarned).TotalMinutes > 30)
             {
                 upWarned = DateTime.UtcNow;
-                List<AppStat> apps; lock (m.L) apps = m.Apps.OrderByDescending(a => a.Cpu).Take(3).ToList();
-                string who = string.Join(", ", apps.Select(a => a.Name));
-                Add(1, "Upload", "upload|" + DateTime.Now.ToString("yyyyMMddHH", CultureInfo.InvariantCulture), "your PC has been uploading more than 5 Mb/s for a minute. Busiest programs right now: " + who + ". Backups and OneDrive do this; if you didn't expect it, check them.", "Live capture (with Wireshark) shows exactly which program is uploading and where to.");
+                // bug-hunt ML-41: the programs holding the most connections to the internet - busy CPU isn't uploading
+                string who;
+                try { who = string.Join(", ", m.Connections(false).Where(c => c.State == "ESTABLISHED" && IsPublic(c.RemoteIp) && !string.IsNullOrEmpty(c.Proc)).GroupBy(c => c.Proc, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(3).Select(g => g.Key)); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; who = ""; }
+                if (who == "") who = "(couldn't tell)";
+                Add(1, "Upload", "upload|" + DateTime.Now.ToString("yyyyMMddHH", CultureInfo.InvariantCulture), "your PC has been uploading more than 5 Mb/s for a minute. Programs connected to the internet right now: " + who + ". Backups and OneDrive do this; if you didn't expect it, check them.", "Live capture (with Wireshark) shows exactly which program is uploading and where to.");
             }
         }
         public static bool IsPublic(string ip)
@@ -206,16 +213,16 @@ namespace AdeeboMeter
         static Dictionary<string, HashSet<string>> known; static readonly object k = new object();
         public static readonly List<string[]> Joined = new List<string[]>();   // { when, network, ip, mac, note }
         public static DateTime QuietUntil = DateTime.MinValue;   // after a ping sweep: learn what it found, without "new device" alerts
-        static Dictionary<string, DateTime> netSince; static readonly Dictionary<string, DateTime> lastPop = new Dictionary<string, DateTime>();
+        static Dictionary<string, DateTime> netSince;
         // Every new device is listed (What changed) and in Devices on this network - never announced.
         public static void Check(Monitor m)
         {
+            // bug-hunt ML-83: the device lists are history too - History off deletes them (like air.txt), and they never grow without end
+            if (!Cfg.History) { Picks.TidyInventory(true); lock (k) { known = null; netSince = null; try { foreach (var f in new[] { "devices.txt", "device-nets.txt" }) if (System.IO.File.Exists(Store.PathOf(f))) System.IO.File.Delete(Store.PathOf(f)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory clear: " + e.Message); } } return; }
             string key = Brain.NetKey, label = Brain.NetLabel; if (key == "" || key == "offline") return;
             List<Arp.Entry> table; try { table = Arp.Table(); } catch { return; }
             string gw; bool vpn; lock (m.L) { gw = m.Gateway; vpn = m.VpnUp; }
             try { Picks.SeeDevices(key, table, gw); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("inventory: " + e.Message); }
-            bool company = vpn || !string.Equals(Environment.UserDomainName, Environment.MachineName, StringComparison.OrdinalIgnoreCase);
-            var announce = new List<Arp.Entry>();
             lock (k)
             {
                 if (known == null) { known = new Dictionary<string, HashSet<string>>(); foreach (var r in Store.Read("devices.txt")) { HashSet<string> s; if (!known.TryGetValue(r[0], out s)) known[r[0]] = s = new HashSet<string>(); s.Add(r[1]); } }
@@ -236,9 +243,12 @@ namespace AdeeboMeter
                     if (quiet) note += " · learning this network (no alert)";
                     lock (Joined) { Joined.Insert(0, new[] { DateTime.Now.ToString("ddd HH:mm", CultureInfo.CurrentCulture), label, e.Ip, e.Mac, note }); if (Joined.Count > 30) Joined.RemoveAt(Joined.Count - 1); }
                     m.Events.Add(3, "lan", "New on " + label + ": " + e.Ip + " (" + note + ")");
-                    if (!rnd && !quiet) announce.Add(e);
                 }
                 if (newHere > 10) m.Events.Add(3, "lan", (newHere - 10) + " more devices seen for the first time on " + label + " (after a sweep, or a busy network)");
+                // at most 40 networks (the ones met longest ago go) and 1,000 addresses each (private, random addresses go first)
+                foreach (var old in netSince.OrderByDescending(kv => kv.Value).Skip(40).Select(kv => kv.Key).Where(z => z != key).ToList()) { netSince.Remove(old); known.Remove(old); changed = true; }
+                if (set.Count > 1000) { set.RemoveWhere(Arp.Randomised); if (set.Count > 1000) { var live = new HashSet<string>(table.Select(x => x.Mac)); set.RemoveWhere(x => !live.Contains(x)); } changed = true; }   /* round 6 H6-L9: over 1,000 - the devices here now stay known; never "the whole LAN is new" */
+                if (changed) Store.Write("device-nets.txt", netSince.Select(kv => new[] { kv.Key, kv.Value.ToString("o", CultureInfo.InvariantCulture) }).ToList());
                 if (changed) Store.Write("devices.txt", known.SelectMany(kv => kv.Value.Select(mac => new[] { kv.Key, mac })).ToList());
             }
             // no pop-up for a new device, ever (16 Nov): on a busy network it would be a storm - they are listed in What changed
@@ -252,12 +262,12 @@ namespace AdeeboMeter
         public static volatile string Host = ""; static DateTime last = DateTime.MinValue; static volatile bool busy;
         public static void Tick()
         {
-            string pin; try { pin = Cfg.Pins.FirstOrDefault(); } catch (InvalidOperationException) { return; } catch (ArgumentOutOfRangeException) { return; }   // the list belongs to the UI thread: read once, never Count then [0]
+            string pin; lock (Cfg.Pins) pin = Cfg.Pins.FirstOrDefault();   // bug-hunt L-52: under the lock the list's comment asks for
             if (!Cfg.PinWatch || pin == null) { Host = ""; return; }
             if ((Clock.Mono - last).TotalSeconds < 30 || busy) return;
             last = Clock.Mono; busy = true; string h; int port; bool tls; string err;
             if (!DestCheck.Parse(pin, out h, out port, out tls, out err)) { busy = false; return; }
-            if (h != Host) { Host = h; }
+            if (h != Host) { Host = h; Ms.Clear(); }   // bug-hunt L-53: a new destination starts a new day's line
             Task.Factory.StartNew(() => { try { Ms.Add(Monitor.PingMs(h)); } finally { busy = false; } });
         }
     }
@@ -277,7 +287,7 @@ namespace AdeeboMeter
             if (s == null) return "";
             string user = Environment.UserName, home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             if (!string.IsNullOrEmpty(home)) s = s.Replace(home, "%USERPROFILE%");
-            if (!string.IsNullOrEmpty(user) && user.Length > 2) s = s.Replace(user, "<user>");
+            if (!string.IsNullOrEmpty(user) && user.Length > 2) s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z0-9])" + System.Text.RegularExpressions.Regex.Escape(user) + @"(?![A-Za-z0-9])", "<user>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);   // bug-hunt L-54: the name as a word, not inside others
             // any other folder (D:\Clients\..., a share, OneDrive): only the file's own name is kept
             // (folder names with spaces too: everything up to the last backslash on the line, stopping only at a quote or a colon)
             s = System.Text.RegularExpressions.Regex.Replace(s, @"(?<![A-Za-z])([A-Za-z]:\\|\\\\|%USERPROFILE%\\)[^""'<>|:*?\r\n]*\\", "<folder>\\");

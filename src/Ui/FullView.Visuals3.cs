@@ -58,7 +58,7 @@ namespace AdeeboMeter
             }
             // where we are in the loop
             bool live = WindowsAnimates() && Animates3(tbSel);
-            var dur = steps.Select(s => 0.8 + Math.Min(1.2, double.IsNaN(s.Ms) ? 0.3 : s.Ms / 150.0)).ToList(); double total = dur.Sum() + 1.6, t = live ? AnimT % total : total;
+            var dur = steps.Select(s => 0.8 + Math.Min(1.2, double.IsNaN(s.Ms) ? 0.3 : s.Ms / 150.0)).ToList(); double total = dur.Sum() + 1.6, t = live && !AnimHolding ? AnimT % total : total;   // resting: the finished picture
             int cur = steps.Count; double into = 0; { double acc = 0; for (int i = 0; i < steps.Count; i++) { if (t < acc + dur[i]) { cur = i; into = (t - acc) / dur[i]; break; } acc += dur[i]; } }
             var sm = g.SmoothingMode; g.SmoothingMode = SmoothingMode.AntiAlias;
             for (int i = 0; i < steps.Count; i++)
@@ -114,6 +114,7 @@ namespace AdeeboMeter
                 case "allips": cap = "EVERY ADDRESS BEHIND THE NAME, KNOCKED ON"; foreach (var o in VisRows().Where(o => Regex.IsMatch(o[1], @"^[0-9a-f:.]+$", RegexOptions.IgnoreCase))) lanes.Add(Tuple.Create(o[1], RowMs(o[2]), double.NaN, int.Parse(o[0], CultureInfo.InvariantCulture) == 2 ? 2 : 0)); break;
                 default: cap = "THE SAME GAME, SIDE BY SIDE"; foreach (var o in VisRows().Where(o => o[2].Contains(" ms") || Regex.IsMatch(o[2], @":\s*\d+ ms"))) { double m1 = VNum(o[2], @":\s*([0-9.]+)\s*ms"), p95 = VNum(o[2], @"95%\s*([0-9.]+)"); if (!double.IsNaN(m1)) lanes.Add(Tuple.Create(o[1], m1, p95, o[0] == "1" ? 1 : 0)); } break;
             }
+            if (lanes.Count == 0) cap += "  ·  " + Kit.Sent("EXAMPLE - RUN IT FOR YOURS");   // bug-hunt L-345: made-up numbers say so
             if (lanes.Count == 0) lanes = tbSel == "ip46" ? new List<Tuple<string, double, double, int>> { Tuple.Create("IPv4", 21.0, double.NaN, 0), Tuple.Create("IPv6", 19.0, double.NaN, 0) } : new List<Tuple<string, double, double, int>> { Tuple.Create(L.T("your DNS"), 8.0, 30.0, 0), Tuple.Create("1.1.1.1", 12.0, 24.0, 0), Tuple.Create("8.8.8.8", 14.0, 40.0, 0) };
             return RaceCard(g, x, y, w, st, cap, lanes, tbSel == "dnsrace" ? "Blue: a name the server already knows (its memory). Purple: a new name it has to look up. Shorter is faster." : tbSel == "gamecompare" ? "Blue: the usual ping. Purple: the worst 5% - what you feel as lag. Steadier wins, not just lower." : "Each dot goes there and back; the first one home is the fastest.");
         }
@@ -139,7 +140,7 @@ namespace AdeeboMeter
                     float end = lx + (float)(ms / max) * lw; Color c = l.Item4 == 2 ? Theme.Red : l.Item4 == 1 ? Theme.Amber : k == 0 ? Theme.Blue : VPurple;
                     using (var p = new Pen(Color.FromArgb(120, c), 2 * S)) g.DrawLine(p, lx, ly + 13 * S + (k == 0 ? -3 : 3) * S, end, ly + 13 * S + (k == 0 ? -3 : 3) * S);
                     // the packet: out to the server and back, faster lanes come home first
-                    double p0 = Math.Min(1, ph * max / Math.Max(1, ms) * 0.45); float px = p0 < 0.5 ? lx + (end - lx) * (float)(p0 * 2) : end - (end - lx) * (float)((p0 - 0.5) * 2);
+                    double p0 = Math.Min(1, ph * max / Math.Max(1, ms) * 1.15);   /* bug-hunt L-344: every lane comes home - the slowest at 87% of the cycle, the fastest long before */ float px = p0 < 0.5 ? lx + (end - lx) * (float)(p0 * 2) : end - (end - lx) * (float)((p0 - 0.5) * 2);
                     if (p0 < 1) Theme.Fill(g, new RectangleF(px - 6 * S, ly + 7 * S + (k == 0 ? -3 : 3) * S, 12 * S, 12 * S), 6 * S, p0 < 0.5 ? c : Theme.Green);
                     else Kit.Icon(g, "check", new RectangleF(lx - 2 * S, ly + 6 * S, 14 * S, 14 * S), Theme.Green);
                 }
@@ -154,8 +155,8 @@ namespace AdeeboMeter
         // ================================================================== bufferbloat: small packets stuck behind big ones
         float VisQueue(Graphics g, float x, float y, float w, string st)
         {
-            double idle = RowMs(Big("Idle")), down = RowMs(Big("Download busy")), up = RowMs(Big("Upload busy")); if (double.IsNaN(idle)) { idle = 12; down = 40; up = 150; }
-            var r = VisCard(g, x, y, w, 250 * S, "YOUR PING, QUIET AND WHILE THE LINE IS FULL", st);
+            double idle = RowMs(Big("Idle")), down = RowMs(Big("During download")), up = RowMs(Big("During upload")); bool exQ = double.IsNaN(idle);   /* bug-hunt M-27: Toolkit.Loaded's own row names */ if (double.IsNaN(idle)) { idle = 12; down = 40; up = 150; }
+            var r = VisCard(g, x, y, w, 250 * S, "YOUR PING, QUIET AND WHILE THE LINE IS FULL" + (exQ ? "  ·  " + Kit.Sent("EXAMPLE - RUN IT FOR YOURS") : ""), st);   // L-345
             var rows = new[] { new object[] { L.T("Quiet"), idle, 0 }, new object[] { L.T("Downloading"), down, 1 }, new object[] { L.T("Uploading"), up, 2 } };
             float lx = r.X + 140 * S, lw = r.Width - 280 * S, ly = r.Y + 50 * S; bool live = WindowsAnimates();
             foreach (var row in rows)
@@ -221,7 +222,9 @@ namespace AdeeboMeter
                 if (live) { float f = Wrap((float)AnimT * 0.6f + i * 0.13f, 1f); if (f > 0.5f) Theme.Fill(g, new RectangleF(dx + (cx - dx) * (f - 0.5f) * 2 - 4 * S, dy + (cy - dy) * (f - 0.5f) * 2 - 4 * S, 8 * S, 8 * S), 4 * S, Theme.Green); }
                 string lab = devs[i].Item1; string ic = Regex.IsMatch(lab, "router", RegexOptions.IgnoreCase) ? "route" : Regex.IsMatch(lab, "phone|random|hiding", RegexOptions.IgnoreCase) ? "phone" : Regex.IsMatch(lab, "TV|screen|Chromecast|Roku", RegexOptions.IgnoreCase) ? "app" : Regex.IsMatch(lab, "console|Xbox|PlayStation|Switch", RegexOptions.IgnoreCase) ? "game" : "devices";
                 VNode(g, dx, dy, 16 * S, ic, devs[i].Item3 ? Theme.Green : Theme.Muted, devs[i].Item3);
-                VTextC(g, Draw.Trunc(lab, 24), Draw.fSmall, Theme.Ink, dx, dy + 18 * S, 150 * S); if (devs[i].Item2 != "" && devs[i].Item2 != lab) VTextC(g, devs[i].Item2, Draw.fTiny, Theme.Sub, dx, dy + 34 * S, 150 * S);
+                // bug-hunt L-365: a label as wide as the room between neighbours (never wider than 150), kept inside the card
+                float lw = Math.Min(150 * S, Math.Max(60 * S, 2 * (float)Math.PI * rad * 1.1f / Math.Max(1, n))), lx = Math.Max(r.X + lw / 2 + 4 * S, Math.Min(r.Right - lw / 2 - 4 * S, dx));
+                VTextC(g, Draw.Trunc(lab, 24), Draw.fSmall, Theme.Ink, lx, dy + 18 * S, lw); if (devs[i].Item2 != "" && devs[i].Item2 != lab) VTextC(g, devs[i].Item2, Draw.fTiny, Theme.Sub, lx, dy + 34 * S, lw);
             }
             VNode(g, cx, cy, 24 * S, "route", Theme.Blue, true); VTextC(g, L.T("your router"), Draw.fBodyB, Theme.Ink, cx, cy + 26 * S, 140 * S);
             if (devs.Count > n) VText(g, "+" + (devs.Count - n) + " " + L.T("more"), Draw.fSmall, Theme.Sub, r.X + 18 * S, r.Bottom - 26 * S);
@@ -233,7 +236,7 @@ namespace AdeeboMeter
             HotelDefault = { "Wi-Fi lock", "Sign-in page", "DNS", "Windows treats it as", "Other devices seen", "VPN" };
         float VisFork(Graphics g, float x, float y, float w, string st)
         {
-            string goes = Big("Goes out"), why = Big("Why this way"); string dst = VisIn()[0] != "" ? VisIn()[0] : "198.51.100.40"; bool vpn = Regex.IsMatch(goes, "vpn|tunnel|wireguard|tap|tun", RegexOptions.IgnoreCase);
+            string goes = Res().Where(o => o.Length > 2 && o[2].StartsWith("leaves through", StringComparison.Ordinal)).Select(o => o[2]).FirstOrDefault() ?? "", why = RV("Because of");   /* bug-hunt M-25: the engine's own rows (RoutingTools.RouteFor) */ string dst = VisIn()[0] != "" ? VisIn()[0] : "198.51.100.40"; bool vpn = Regex.IsMatch(goes, "vpn|tunnel|wireguard|tap|tun", RegexOptions.IgnoreCase);
             var r = VisCard(g, x, y, w, 230 * S, "WHICH WAY A PACKET TO " + dst + " GOES", st);
             float sx = r.X + 60 * S, fx = r.X + r.Width * 0.38f, ex = r.Right - 80 * S, cy = r.Y + 110 * S, upY = cy - 50 * S, dnY = cy + 50 * S;
             VNode(g, sx, cy, 20 * S, "devices", Theme.Blue, true);
@@ -259,7 +262,7 @@ namespace AdeeboMeter
         // ================================================================== the ladder of trust
         float VisChain(Graphics g, float x, float y, float w, string st)
         {
-            var links = VisRows().Where(o => o[0] != "-1" && (o[1].Contains("root") || o[1].Contains("middle") || o[1].Contains("your certificate") || o[1].Contains("intermediate"))).ToList();
+            var links = VisRows().Where(o => o[0] != "-1" && (o[1].Contains("root") || o[1].Contains("middle") || o[1].Contains("your certificate") || o[1].Contains("intermediate") || o[1].Contains("missing"))).ToList();   // bug-hunt L-346: the gap is a rung too
             if (links.Count == 0) links = new List<string[]> { new[] { "3", "root", L.T("a root your PC trusts"), "", "m" }, new[] { "3", "middle (intermediate)", L.T("signed by the root"), "", "m" }, new[] { "3", "your certificate", L.T("the site's own, signed by the middle"), "", "m" } };
             var r = VisCard(g, x, y, w, 60 * S + links.Count * 76 * S, "THE LADDER OF TRUST - EACH ONE SIGNS THE ONE BELOW", st);
             float bx = r.X + 60 * S, bw = r.Width - 120 * S, by = r.Y + 48 * S;
@@ -278,16 +281,23 @@ namespace AdeeboMeter
         // ================================================================== overlapping networks: two ranges, one clash
         float VisOverlap(Graphics g, float x, float y, float w, string st)
         {
-            string home = Big("Home network").Split(' ')[0], vpnR = Big("VPN routes"); var vpns = vpnR.Split(',').Select(z => z.Trim().Split(' ')[0]).Where(z => z.Contains("/")).ToList();
-            if (home == "") { home = "10.0.0.0/24"; vpns = new List<string> { "10.0.0.0/8" }; }
-            var r = VisCard(g, x, y, w, 170 * S, "YOUR HOME RANGE AND THE VPN'S RANGES", st);
-            uint hip; int hp; V4Mask(home, out hip, out hp); float bx = r.X + 140 * S, bw = r.Width - 170 * S, by = r.Y + 56 * S;
+            // bug-hunt M-26: PathTools.Overlap names its rows by adapter ("Ethernet", "Ethernet (VPN)") with the range as the value
+            var nets = Res().Where(o => o.Length > 2 && o[1] != "Overlap" && o[2].Contains("/") && !o[2].Contains(" ")).ToList();
+            string home = nets.Where(o => !o[1].EndsWith("(VPN)", StringComparison.Ordinal)).Select(o => o[2]).FirstOrDefault() ?? "";
+            var vpns = nets.Where(o => o[1].EndsWith("(VPN)", StringComparison.Ordinal)).Select(o => o[2]).ToList();
+            bool ran = Res().Any(o => o.Length > 1 && o[1] == "Overlap"), clash = RV("Overlap") != "" && !RV("Overlap").StartsWith("none", StringComparison.Ordinal);
+            bool exO = home == "" && !ran; if (exO) { home = "10.0.0.0/24"; vpns = new List<string> { "10.0.0.0/8" }; }   // the example, before a run
+            var r = VisCard(g, x, y, w, 170 * S, "YOUR HOME RANGE AND THE VPN'S RANGES" + (exO ? "  ·  " + Kit.Sent("EXAMPLE - RUN IT FOR YOURS") : ""), st);   // L-345
+            uint hip; int hp;
+            // 21 Nov: no IPv4 home range to draw (a run with IPv6 only, or rows in another shape) - say so; an unread range
+            // used to become the whole address space and a box millions of pixels wide (GDI+ "Overflow error" on Windows)
+            if (!V4Mask(home, out hip, out hp) || hp < 0) { VText(g, L.T("No IPv4 home range to compare on this PC's adapters."), Draw.fBody, Theme.Muted, r.X + 18 * S, r.Y + 60 * S); return r.Bottom + 14 * S; } float bx = r.X + 140 * S, bw = r.Width - 170 * S, by = r.Y + 56 * S;
             var vp = vpns.Select(z => { uint ip; int p; return V4Mask(z, out ip, out p) && p >= 0 ? new { S = z, Net = ip & (p == 0 ? 0 : 0xFFFFFFFFu << (32 - p)), Size = Math.Pow(2, 32 - p) } : null; }).Where(z => z != null).ToList();
             double lo = vp.Count > 0 ? vp.Min(z => (double)z.Net) : hip, hi = vp.Count > 0 ? vp.Max(z => z.Net + z.Size) : hip + 256; if (hi <= lo) hi = lo + 256;
             Func<double, float> X = v => bx + (float)((v - lo) / (hi - lo)) * bw;
-            VText(g, L.T("VPN"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); foreach (var v in vp) { Theme.Fill(g, new RectangleF(X(v.Net), by, Math.Max(4 * S, X(v.Net + v.Size) - X(v.Net)), 22 * S), 5 * S, VPurple); VText(g, v.S, Draw.fTiny, Color.White, X(v.Net) + 6 * S, by + 4 * S); }
-            uint hn = hip & (hp <= 0 ? 0 : 0xFFFFFFFFu << (32 - hp)); double hs = Math.Pow(2, 32 - Math.Max(0, hp)); bool inside = vp.Any(v => hn >= v.Net && hn < v.Net + v.Size);
-            VText(g, L.T("Home"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 42 * S); float hx = X(hn); Theme.Fill(g, new RectangleF(Math.Max(bx, Math.Min(bx + bw - 8 * S, hx)), by + 40 * S, Math.Max(8 * S, X(hn + hs) - hx), 22 * S), 5 * S, inside ? Theme.Red : Theme.Green);
+            VText(g, Kit.Sent("VPN"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 2 * S); foreach (var v in vp) { Theme.Fill(g, new RectangleF(X(v.Net), by, Math.Min(bw, Math.Max(4 * S, X(v.Net + v.Size) - X(v.Net))), 22 * S), 5 * S, VPurple); VText(g, v.S, Draw.fTiny, Color.White, X(v.Net) + 6 * S, by + 4 * S); }
+            uint hn = hip & (hp <= 0 ? 0 : 0xFFFFFFFFu << (32 - hp)); double hs = Math.Pow(2, 32 - Math.Max(0, hp)); bool inside = ran ? clash : vp.Any(v => hn < v.Net + v.Size && v.Net < hn + hs);   // after a run the engine's verdict; ranges overlap when either starts inside the other
+            VText(g, L.T("Home"), Draw.fBodyB, Theme.Ink, r.X + 18 * S, by + 42 * S); float hx = X(hn); Theme.Fill(g, new RectangleF(Math.Max(bx, Math.Min(bx + bw - 8 * S, hx)), by + 40 * S, Math.Min(bw, Math.Max(8 * S, X(hn + hs) - hx)), 22 * S), 5 * S, inside ? Theme.Red : Theme.Green);
             VText(g, home + (inside ? "  -  " + L.T("inside the VPN's range: those addresses go home instead") : "  -  " + L.T("no overlap")), Draw.fSmall, inside ? Theme.LvText(2) : Theme.LvText(0), bx, by + 68 * S);
             VFoot(g, r, "Change your router's range (e.g. to 192.168.77.0/24) and the clash goes away.");
             return r.Bottom + 14 * S;
@@ -295,8 +305,9 @@ namespace AdeeboMeter
         // ================================================================== where did my space go: a treemap
         float VisSpace(Graphics g, float x, float y, float w, string st)
         {
-            var items = VisRows().Skip(1).Select(o => new { N = o[1], V = VNum(o[2], @"([0-9.]+)\s*GB") }).Where(z => !double.IsNaN(z.V) && z.V > 0).OrderByDescending(z => z.V).Take(8).ToList();
-            var disk = VisRows().FirstOrDefault(); double used = disk == null ? double.NaN : VNum(disk[2], @"([0-9.]+)\s*GB");
+            // bug-hunt ML-182: every row is a folder (PcHealth.Space has no disk row first) - the biggest one included
+            var items = VisRows().Select(o => new { N = o[1], V = VNum(o[2], @"([0-9.]+)\s*GB") }).Where(z => !double.IsNaN(z.V) && z.V > 0).OrderByDescending(z => z.V).Take(8).ToList();
+            double used = double.NaN;
             var r = VisCard(g, x, y, w, 220 * S, "WHERE THE SPACE WENT - BIGGER BOX, BIGGER FOLDER", st);
             if (items.Count == 0) { VText(g, L.T("Run it to see your biggest folders as boxes."), Draw.fBody, Theme.Muted, r.X + 18 * S, r.Y + 60 * S); return r.Bottom + 14 * S; }
             double tot = Math.Max(items.Sum(z => z.V), double.IsNaN(used) ? 0 : used); var area = new RectangleF(r.X + 18 * S, r.Y + 44 * S, r.Width - 36 * S, 160 * S);

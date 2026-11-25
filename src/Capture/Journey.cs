@@ -168,7 +168,7 @@ namespace AdeeboMeter
             foreach (var r in list)
             {
                 string who = r.Out ? "This PC" : "Server";
-                if (r.IcmpType >= 0) { r.Say = (r.FromRouter ? "A router on the way: " : "Server: ") + IcmpWords(r); continue; }
+                if (r.IcmpType >= 0) { r.Say = (r.Out ? "This PC: " : r.FromRouter ? "A router on the way: " : "Server: ") + IcmpWords(r);   /* carry-over (round-2 ML79): the PC's own ICMP is labelled as its own */ continue; }
                 if (r.Proto == 6)
                 {
                     int fl = r.Flags;
@@ -237,7 +237,7 @@ namespace AdeeboMeter
                 if (idx > 0 && inb.Skip(idx).Count(x => Math.Abs(x.Ttl - first) >= 2) >= 5) findings.Add(N(1, "The route changed during the capture", "Replies started arriving with a different hop count (TTL " + first + " → " + inb[idx].Ttl + ") - the internet moved this conversation to another road mid-way. A short spike or a few lost packets around " + At(inb[idx].T) + " are normal when that happens.", inb[idx].T));
             }
             // per kind
-            if (kind == "realtime" || (kind == "unknown" && f.Udp)) RealTime(findings, inb, outb, dur, wifi);
+            if (kind == "realtime" || (f.Udp && (kind == "unknown" || kind == "local"))) RealTime(findings, inb, outb, dur, wifi);   // bug-hunt ML-74: a UDP flow on the home network has a rhythm too
             if (!f.Udp) TcpRules(findings, data, inb, outb, dur, kind);
             if (kind == "dns") Dns(findings, data);
             if (kind == "vpn") Vpn(findings, data);
@@ -299,7 +299,8 @@ namespace AdeeboMeter
             int synTries = tcp.Count(x => x.Out && (x.Flags & 0x12) == 0x02);
             if (syn != null && synack == null) n.Add(N(2, "The server never answered", "This PC asked to connect " + synTries + " time(s) and got no reply - a firewall dropping it, the server down, or the wrong port.", syn.T));
             else if (synTries > 1) n.Add(N(1, "The first try to connect was lost", "The connection request went " + synTries + " times before the server answered - each retry waits 1-3 s, which is the delay you saw.", syn.T));
-            double rtt = syn != null && synack != null ? synack.T - syn.T : double.NaN;
+            var lastSyn = synack == null ? null : tcp.LastOrDefault(x => x.Out && (x.Flags & 0x12) == 0x02 && x.T <= synack.T);   // bug-hunt ML-73: timed from the try that was answered, not a lost first one
+            double rtt = lastSyn != null && synack != null ? synack.T - lastSyn.T : double.NaN;
             if (!double.IsNaN(rtt)) n.Add(N(rtt > 0.15 ? 1 : 3, "Round trip to the server", Ms(rtt) + " (from the connection handshake)" + (rtt > 0.15 ? " - far away or a slow path; every request waits at least this long." : "."), synack.T));
             int resIn = inb.Count(x => x.Resend), resOut = outb.Count(x => x.Resend), dupIn = inb.Count(x => x.DupAck), dupOut = outb.Count(x => x.DupAck);
             int dataIn = inb.Count(x => x.PayLen > 0 && !x.Keepalive), dataOut = outb.Count(x => x.PayLen > 0 && !x.Keepalive);
@@ -369,7 +370,22 @@ namespace AdeeboMeter
             }
             if (times.Count == 0)
             {
-                if (data.Any(x => !x.Out && hasData(x))) n.Add(N(3, "How fast the device answers", "can't tell from this one - only the device sent data (a download), this PC just acknowledged it. Its speed shows in the transfer itself.", double.NaN));
+                if (data.Any(x => !x.Out && hasData(x)))
+                {
+                    // carry-over (round-2 ML80): a download - time the two turns instead: data in -> this PC's ACK out, and ACK out -> the next data in
+                    var ackGap = new List<double>(); var dataGap = new List<double>();
+                    for (int i = 0; i + 1 < data.Count; i++)
+                    {
+                        if (!data[i].Out && hasData(data[i]) && data[i + 1].Out && data[i + 1].Proto == 6 && data[i + 1].PayLen == 0) ackGap.Add(data[i + 1].T - data[i].T);
+                        if (data[i].Out && data[i].Proto == 6 && data[i].PayLen == 0 && !data[i + 1].Out && hasData(data[i + 1])) dataGap.Add(data[i + 1].T - data[i].T);
+                    }
+                    if (ackGap.Count < 3 || dataGap.Count < 3) n.Add(N(3, "How fast the device answers", "can't tell from this one - only the device sent data (a download), this PC just acknowledged it. Its speed shows in the transfer itself.", double.NaN));
+                    else
+                    {
+                        double pa = Median(ackGap), da = Median(dataGap);
+                        n.Add(N(da > 0.2 ? 1 : 0, "How fast the device answers", "a download: this PC acknowledges in " + Ms(pa) + " typically, and the device sends its next piece " + Ms(da) + " after that" + (da > 0.2 ? " - slow for a device on your own network; it's busy, or reading from a slow disk" : " - the local network is fine") + ".", double.NaN));
+                    }
+                }
                 return;
             } double m = Median(times), mx = times.Max();
             n.Add(N(m > 0.2 ? 1 : 0, "How fast the device answers", Ms(m) + " typical, " + Ms(mx) + " at worst" + (m > 0.2 ? " - slow for a device on your own network; the device itself is busy or asleep (printers and NAS drives wake up slowly)" : " - the local network is fine") + ".", double.NaN));
@@ -434,10 +450,11 @@ namespace AdeeboMeter
                 catch (IOException) { return; } catch (UnauthorizedAccessException) { return; }
                 var now = Strip(Pcap.Parse(b, x => Belongs(x, F)));
                 if (F.Remote == "") { FindRemote(F, now, Mine); if (F.Remote == "") return; now = now.Where(x => Belongs(x, F)).ToList(); }
-                var all = before.Concat(now).ToList(); if (all.Count == 0) return;
-                if (double.IsNaN(T0)) T0 = all.Min(x => x.Abs);
-                var recs = Records(all, F, T0); foreach (var r in recs.Take(before.Count)) r.Before = true;
-                lock (k) { Recs = recs; Before = before.Count; }
+                var bf = before.Where(x => Belongs(x, F)).ToList();   // carry-over (100-bug #21): the rewind packets go through the same filter once the remote is known
+                var all = bf.Concat(now).ToList(); if (all.Count == 0) return;
+                if (double.IsNaN(T0) || bf.Count != before.Count) T0 = all.Min(x => x.Abs);
+                var recs = Records(all, F, T0); foreach (var r in recs.Take(bf.Count)) r.Before = true;
+                lock (k) { Recs = recs; Before = bf.Count; }
             }
             // only ICMP keeps its bytes (the router's message); everything else drops the payload right away
             static List<Pcap.Pkt> Strip(List<Pcap.Pkt> l) { foreach (var x in l) if (x.Proto != 1 && x.Proto != 58) x.Payload = Array.Empty<byte>(); return l; }

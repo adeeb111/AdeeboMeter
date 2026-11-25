@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/learn/hash.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/learn/hash.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>البصمة الإصبعية في ملف | تعلّم | AdeeboMeter</title>
-<meta name="description" content="تغيير قليلاً، الحصول على بصمة إصبع مختلفة تماماً.">
+<title>الهاش: بصمة الملف | تعلّم | AdeeboMeter</title>
+<meta name="description" content="غيّر بتًا واحدًا تحصل على بصمة مختلفة تمامًا.">
 <link rel="canonical" href="https://adeebometer.com/ar/learn/hash.html">
-<meta property="og:title" content="البصمة الإصبعية في ملف | تعلّم | AdeeboMeter">
-<meta property="og:description" content="تغيير قليلاً، الحصول على بصمة إصبع مختلفة تماماً.">
+<meta property="og:title" content="الهاش: بصمة الملف | تعلّم | AdeeboMeter">
+<meta property="og:description" content="غيّر بتًا واحدًا تحصل على بصمة مختلفة تمامًا.">
 <meta property="og:type" content="article">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <style>
 :root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844}}
@@ -63,34 +64,34 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"A hash - a file's fingerprint","description":"Change one bit, get a completely different fingerprint. A hash squeezes any file into a short fingerprint (SHA-256: 64 hex digits). The same file always…","url":"https://adeebometer.com/learn/hash.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"Encryption and keys","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><meta property="og:locale" content="ar_AR">
-<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/hash.html">
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/hash.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/hash.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/hash.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/hash.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/hash.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/hash.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/hash.html">
+<meta property="og:locale" content="ar_AR">
 <link rel="stylesheet" href="/sitebar.css">
 </head>
 <body data-sec="learn">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main><a class="chip" href="/ar/learn/#crypto">التشفير والمفاتيح</a>
-<h1>البصمة الإصبعية في ملف</h1>
-<p class="tag">تغيير قليلاً، الحصول على بصمة إصبع مختلفة تماماً.</p>
-<div class="card one"><p>يضغط الهاش أي ملف إلى بصمة أصابع قصيرة (SHA-256: 64 أرقام ستة أرقام). نفس الملف دائماً يعطي نفسها</p></div>
+<h1>الهاش: بصمة الملف</h1>
+<p class="tag">غيّر بتًا واحدًا تحصل على بصمة مختلفة تمامًا.</p>
+<div class="card one"><p>يضغط الهاش أي ملف في بصمة قصيرة (SHA-256: ‏64 رقمًا ست عشريًا). الملف نفسه يعطي دائمًا البصمة نفسها.</p></div>
 <h2>كيف تجري المحادثة</h2>
 <div class="ladder"><div class="lanes" aria-hidden="true"><span>صفحة التنزيل</span><span>أنت</span></div><ol aria-label="تبادل الرسائل بين صفحة التنزيل وأنت، بالترتيب">
 <li class="msg"><p><span class="sr">تنزيل الصفحة إليك: </span>بصمة setup.exe هي 3f2a...9c1d</p><div class="arrow" aria-hidden="true"></div></li>
-<li class="msg r"><p>جهاز الكمبيوتر الخاص بك → جهاز الكمبييوتر الخاص: hash الملف الذي حصلت عليه - 3f2a...9c1d</p><div class="arrow" aria-hidden="true"></div></li>
-<li class="msg r"><p>جهاز الكمبيوتر الخاص بك: نفس بصمة الأصابع - هو الملف الحقيقي</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>أنت → جهاز الكمبيوتر الخاص بك: احسب بصمة الملف المستلَم — ‏3f2a...9c1d</p><div class="arrow" aria-hidden="true"></div></li>
+<li class="msg r"><p>جهاز الكمبيوتر الخاص بك: البصمة نفسها - إنه الملف الحقيقي</p><div class="arrow" aria-hidden="true"></div></li>
 </ol></div>
 <h2>عندما تحدث مشكلة</h2>
-<div class="card warn"><p>تحميل لا يطابق الجهاز المطبوع أو غير الملف الحقيقي - احصل عليه مرة أخرى.</p></div>
-<h2>إذهب أعمق</h2>
+<div class="card warn"><p>التنزيل الذي لا تطابق بصمته البصمة المنشورة تالف أو ليس الملف الحقيقي - نزّله مرة أخرى.</p></div>
+<h2>اذهب أعمق</h2>
 <p>لا يمكن استعادة الملف من بصمته، ولا إنشاء ملفين مختلفين ببصمة واحدة عند استخدام SHA-256. أما MD5 وSHA-1 فلم يعودا آمنين لهذا الغرض؛ إذ يمكن إنشاء زوج من الملفات المتطابقة في البصمة، وإن لم يكن مطابقًا لبصمة ملف موجود مسبقًا. تعتمد الشهادات وWindows Update ومديرو الحزم على هذه الخاصية.</p>
 <h2>تحقق سريع</h2>
-<div class="quiz" data-id="hash"><p>تغير حرف واحد في ملف 2 GB ماذا سيحدث لخطابات أصابع SHA-256؟</p>
+<div class="quiz" data-id="hash"><p>غيّرت حرفًا واحدًا في ملف حجمه 2 GB. ماذا يحدث لبصمة SHA-256 الخاصة به؟</p>
 <button data-ok>إنه يتغير تماما</button>
 <button>يتغير حرف واحد أيضاً</button>
 <button>لا تزال نفسها</button>

@@ -26,7 +26,7 @@ namespace AdeeboMeter
         // ---------- opening a case (every door ends here)
         internal void OpenCase(string symptom, string source, string context, DateTime? from, DateTime? to)
         {
-            if (guideBusy) { tab = "guide"; ShowTab(); SyncNav(); return; }
+            if (guideBusy) { guideNote = L.T("A check is already running - its report opens here when it's done."); tab = "guide"; ShowTab(); SyncNav(); if (guideCanvas != null) guideCanvas.Invalidate(); return; }   // bug-hunt L-327
             var c = Cases.New(symptom, source, context, from, to);
             tab = "guide"; ShowTab(); SyncNav();
             if (c.Flow == "site" && context != "" && guideBox != null) guideBox.Box.Text = context;
@@ -47,24 +47,32 @@ namespace AdeeboMeter
         }
 
         // ---------- the front door on Home: "What's going on?" - one tap per common problem, plus your recent cases
-        static readonly string[] HomeChips = { "calls", "game", "buffer", "slow", "drops", "site", "pc" };
         float PaintFrontDoor(Graphics g, float x, float y, float w)
         {
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("WHAT'S GOING ON?  ·  TAP IT, OR TYPE IT IN THE SEARCH BOX (CTRL+K)"), Draw.fTiny, mb, x, y);
-            y += 22 * S; float cx = x;
-            foreach (var id in HomeChips)
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("WHAT'S GOING ON?  ·  TAP WHAT YOU SEE"), Draw.fTiny, mb, x, y);
+            y += 24 * S;
+            int sc = Math.Max(1, Math.Min(3, (int)(w / (300 * S)))); float sbh = 70 * S, sbw = (w - (sc - 1) * 10 * S) / sc;
+            if (symRect == null || symRect.Length != Symptoms.Length) symRect = new RectangleF[Symptoms.Length];
+            for (int i = 0; i < Symptoms.Length; i++)
             {
-                string t = L.T(Cases.Of(id)[1]); var ts = g.MeasureString(t, Draw.fBody); var r = new RectangleF(cx, y, ts.Width + 26 * S, 32 * S);
-                if (r.Right > x + w && cx > x) { cx = x; y += 40 * S; r = new RectangleF(cx, y, r.Width, r.Height); }
-                Theme.Fill(g, r, 16 * S, Kit.Soft("home")); using (var tb = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, tb, r.X + 13 * S, r.Y + (32 * S - ts.Height) / 2);
-                string sid = id; Act(overviewCanvas, r, delegate { OpenCase(sid, "home", "", null, null); });
-                cx = r.Right + 8 * S;
+                var br = new RectangleF(x + (i % sc) * (sbw + 10 * S), y + (i / sc) * (sbh + 10 * S), sbw, sbh);
+                symRect[i] = br; DrawSymptom(g, i, br, i < symHot.Length ? symHot[i] : 0);
+                string go = Symptoms[i][0]; Act(overviewCanvas, br, delegate { FixGo(go); });
             }
-            y += 44 * S;
+            y += ((Symptoms.Length + sc - 1) / sc) * (sbh + 10 * S) + 2 * S;
+            // not in the list: search knows the words (Ctrl+K), and every problem is one click away
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Something else? Type it in the search box (Ctrl+K)."), Draw.fSmall, mb, x, y + 2 * S);
+            using (var bl = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
+            {
+                string all = L.T("See all problems") + "  ›"; var asz = g.MeasureString(all, Draw.fBodyB);
+                var ar = new RectangleF(x + w - asz.Width, y, asz.Width, asz.Height); g.DrawString(all, Draw.fBodyB, bl, ar.X, ar.Y);
+                Act(overviewCanvas, ar, delegate { GoGuide(null); });
+            }
+            y += 34 * S;
             var rec = Cases.Recent().Where(c => c.Run != null && c.Run.Done).Take(3).ToList();
             if (rec.Count > 0)
             {
-                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR RECENT CASES"), Draw.fTiny, mb, x, y); y += 20 * S;
+                using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("YOUR RECENT CASES"), Draw.fTiny, mb, x, y); y += 20 * S;
                 foreach (var c in rec)
                 {
                     string t = c.Opened.ToString("HH:mm", CultureInfo.CurrentCulture) + "  ·  " + c.Title + "  ·  " + Draw.Trunc(c.Run.Finding, 90);
@@ -82,8 +90,10 @@ namespace AdeeboMeter
         {
             var c = guideCase; var r = guideRun; int sure = Cases.Sure(r);
             var card = new RectangleF(x, y, w, 132 * S); Kit.Card(g, card, "home", false);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("CASE") + "  ·  " + L.T("from") + " " + L.T(Cases.SourceName(c.Source)) + "  ·  " + c.From.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + c.To.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x + 18 * S, y + 12 * S);
-            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(c.Title, Draw.fHead, ib, x + 18 * S, y + 30 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("CASE") + "  ·  " + L.T("from") + " " + L.T(Cases.SourceName(c.Source)) + "  ·  " + c.From.ToString("ddd HH:mm", CultureInfo.CurrentCulture) + " - " + c.To.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fTiny, mb, x + 18 * S, y + 12 * S);
+            // bug-hunt L-329: the title stops before the "how sure" dots, with "…" if it's longer
+            float titleRoom = w - 36 * S - (sure > 0 ? g.MeasureString(L.T(Cases.SureWords(sure)), Draw.fSmall).Width + 4 * 14 * S + 12 * S : 0);
+            using (var ib = new SolidBrush(Theme.Ink)) using (var tf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(c.Title, Draw.fHead, ib, new RectangleF(x + 18 * S, y + 30 * S, Math.Max(60 * S, titleRoom), 26 * S), tf);
             if (sure > 0)
             {
                 string sw = L.T(Cases.SureWords(sure)); var ss = g.MeasureString(sw, Draw.fSmall); float dx = x + w - ss.Width - 18 * S - 4 * 14 * S;
@@ -176,14 +186,14 @@ namespace AdeeboMeter
             {
                 var box = new RectangleF(50, y, W, fh + 60); using (var fb = new SolidBrush(RSoft(r.Lv))) g.FillRectangle(fb, box);
                 using (var lb = new SolidBrush(RText(r.Lv))) g.FillRectangle(lb, box.X, box.Y, 6, box.Height);
-                using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("FINDING") + "   ·   " + L.T(Cases.SureWords(sure)).ToUpperInvariant(), F["tiny"], sb, 70, y + 12);
+                using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent("FINDING") + "   ·   " + L.T(Cases.SureWords(sure)), F["tiny"], sb, 70, y + 12);
                 for (int i = 0; i < 4; i++) using (var db = new SolidBrush(i < sure ? RBlue : RLine)) g.FillEllipse(db, box.Right - 80 + i * 16, y + 14, 10, 10);
                 using (var tb = new SolidBrush(r.Lv == 0 ? RInk : RText(r.Lv))) g.DrawString(fin, F["fin"], tb, new RectangleF(70, y + 34, W - 40, fh + 6));
             } });
             // the path, as it is now
             b.Add(new RBlock { H = 92, Draw = (g, y) =>
             {
-                using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("THE PATH, AS IT IS NOW"), F["tiny"], sb, 50, y);
+                using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent("THE PATH, AS IT IS NOW"), F["tiny"], sb, 50, y);
                 float slot = W / 5;
                 for (int i = 0; i < 5; i++)
                 {
@@ -196,7 +206,7 @@ namespace AdeeboMeter
             } });
             // the minutes around it
             var series = Cases.Minutes(c.From, c.To);
-            b.Add(new RBlock { H = 170, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("THE MINUTES AROUND IT"), F["tiny"], sb, 50, y); CaseChart(g, new RectangleF(50, y + 20, W, 130), series, true); } });
+            b.Add(new RBlock { H = 170, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(Kit.Sent("THE MINUTES AROUND IT"), F["tiny"], sb, 50, y); CaseChart(g, new RectangleF(50, y + 20, W, 130), series, true); } });
             // lists: what was ruled out, what isn't proven, what to try
             var obs = r.ObservedCopy();
             Action<string, IEnumerable<string>, Color> list = (head, items, col) =>
@@ -205,11 +215,11 @@ namespace AdeeboMeter
                 b.Add(new RBlock { H = 30, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(head, F["tiny"], sb, 50, y + 8); } });
                 foreach (var it in its) { string t = it; float h = hgt(t, F["body"], W - 24) + 6; b.Add(new RBlock { H = h, Draw = (g, y) => { using (var db = new SolidBrush(col)) g.FillEllipse(db, 52, y + 6, 7, 7); using (var tb = new SolidBrush(RInk)) g.DrawString(t, F["body"], tb, new RectangleF(68, y, W - 24, h)); } }); }
             };
-            list(L.T("RULED OUT - LOOKED FINE"), obs.Where(o => o[1] == "0").Select(o => o[2] + ": " + o[3]).Take(8), Theme.Green);
-            list(L.T("NOT ESTABLISHED"), r.NotEst, Theme.Amber);
-            list(L.T("WHAT TO TRY NEXT"), r.Next, RBlue);
+            list(Kit.Sent("RULED OUT - LOOKED FINE"), obs.Where(o => o[1] == "0").Select(o => o[2] + ": " + o[3]).Take(8), Theme.Green);
+            list(Kit.Sent("NOT ESTABLISHED"), r.NotEst, Theme.Amber);
+            list(Kit.Sent("WHAT TO TRY NEXT"), r.Next, RBlue);
             // the evidence, every line with where it came from
-            b.Add(new RBlock { H = 40, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("EVERYTHING AdeeboMeter OBSERVED"), F["tiny"], sb, 50, y + 16); } });
+            b.Add(new RBlock { H = 40, Draw = (g, y) => { using (var sb = new SolidBrush(RSub)) g.DrawString(L.T("Everything AdeeboMeter observed"), F["tiny"], sb, 50, y + 16); } });
             foreach (var o in obs)
             {
                 int lv; int.TryParse(o[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out lv); string what = clean(o[2]), val = clean(o[3]), ev = Evidence.Label(o[0]);
@@ -229,7 +239,7 @@ namespace AdeeboMeter
         // Segoe UI on every Windows; the system sans-serif anywhere it's missing
         static Font RFont(float size, FontStyle st)
         {
-            try { return new Font("Segoe UI", size, st, GraphicsUnit.World); }
+            try { return new Font(Draw.LangFamily, size, st, GraphicsUnit.World); }
             catch (ArgumentException) { return new Font(FontFamily.GenericSansSerif, size, st, GraphicsUnit.World); }
         }
         static Dictionary<string, Font> ReportFonts()
@@ -246,7 +256,7 @@ namespace AdeeboMeter
         }
         static void DrawPage(Graphics g, List<RBlock> page, int no, int of)
         {
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit; float y = PTop;
+            g.TextRenderingHint = Draw.ImageText; g.TextContrast = Draw.Contrast; float y = PTop;
             foreach (var b in page) { b.Draw(g, y); y += b.H; }
             using (var f = RFont(10, FontStyle.Regular)) using (var sb = new SolidBrush(RSub)) g.DrawString(AdeeboMeter.L.T("AdeeboMeter · ") + (no + 1) + " / " + of, f, sb, PW - 150, PH - 30);
         }

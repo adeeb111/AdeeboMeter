@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Revolution persona (rallying speeches, never violent). key|text.
+app.open|¡Ciudadanos! Comienza la vigilancia de la red.
+app.open|El monitor del pueblo está despierto, {addr}.
+all.good|Libertad, igualdad, latencia baja. Todo bien.
+all.good|Cada paquete libre y en movimiento.
+all.good|Hoy la red sirve al pueblo.
+pc.busy|Tu PC trabaja de más al {v}. Quien trabaja merece descanso.
+pc.busy|El PC trabaja demasiado. La red es inocente.
+pc.busy|Libera a tu PC de su carga. Cierra una app.
+wifi.drops|El Wi-Fi abandonó su puesto {v} veces hoy.
+wifi.drops|{v} caídas. La señal exige mejores condiciones.
+net.none|Sin red. El pueblo queda aislado.
+net.none|Sin conexión. Reconecta, ciudadano.
+inet.slow|Tu router es leal. El proveedor se demora.
+inet.slow|La red de casa se mantiene firme. La lentitud está fuera.
+inet.slow|El retraso es de tu proveedor, no tuyo.
+busy|La asamblea delibera... {v}
+busy|Trabajando por la causa.
+busy|Reuniendo las pruebas.
+idle|Todo tranquilo en el puesto de guardia.
+idle|Nada nuevo. La vigilancia continúa.
+idle|Calma, pero alerta.
+search.empty|Expón tu queja, ciudadano.
+search.empty|¿Qué injusticia investigaremos?
+freeze|La asamblea se pone al día ({v}).
+freeze|Un momento ({v}). Mucho por discutir.
+speedrunner|Paciencia, compañero. Una propuesta a la vez.
+speedrunner|El último voto aún se está contando.
+back.again|Has vuelto. {v} eventos en el registro.
+back.again|Bienvenido de nuevo, ciudadano. El acta.
+dns.slow|El registro de nombres es lento: DNS al {v}.
+dns.slow|Las consultas tardan {v}. Burocracia.
+speed.great|{v} de descarga. ¡Progreso!
+speed.great|Descarga {v}. Un triunfo para todos.
+speed.bloat|Rápido, pero las líneas ocupadas retrasan a todos {v}. Injusto.
+speed.bloat|Una descarga retrasa a todos. {v} de retraso.
+game.lag|El lag es de tu Wi-Fi, no del servidor.
+game.lag|El servidor no tiene culpa. El Wi-Fi flaquea.
+game.good|Ping {v}. ¡Adelante!
+game.good|Conexión estable. Ve adelante.
+vpn.on|VPN activa. Tu tráfico viaja en secreto.
+vpn.on|Conectado por un túnel privado.
+vpn.slow|El túnel secreto cuesta {v}.
+vpn.slow|La VPN añade {v}.
+portal|Este Wi-Fi exige credenciales. Inicia sesión primero.
+portal|El portero pide iniciar sesión.
+gw.down|El router quedó en silencio. Reinícialo.
+gw.down|Sin respuesta del router.
+isp.down|Tu casa se mantiene. El proveedor quedó en silencio.
+isp.down|Internet está caído en el proveedor.
+mtu.small|Los paquetes grandes son rechazados. MTU {v}.
+mtu.small|MTU de ruta {v}. Una puerta estrecha.
+port.open|{v} está abierto. La puerta responde.
+port.open|{v} respondió.
+port.closed|{v} está cerrado.
+port.closed|{v} niega la entrada.
+cert.ok|Credenciales verificadas.
+cert.ok|El candado es honesto.
+cert.expired|Sus credenciales caducaron el {v}.
+cert.expired|Caducado desde {v}. Culpa suya.
+sec.ok|Las defensas resisten. Revisión superada.
+sec.ok|Sin puntos débiles.
+sec.issue|{v} puntos débiles por reformar.
+sec.issue|La revisión enumera {v} elementos.
+mtr.lossy|Los paquetes desaparecen en el salto {v}. Exige respuestas.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.clean|Ningún paquete queda atrás.
+mtr.clean|Cada salto entrega.
+devices.found|{v} dispositivos en la asamblea.
+devices.found|Contados: {v} dispositivos.
+encrypt.done|Sellado, lejos de miradas curiosas.
+encrypt.done|Cifrado.
+decrypt.done|Abierto. Intacto.
+decrypt.done|Sin sellar, a salvo.
+points.earned|+{v} puntos por la causa.
+points.earned|+{v}. El saber es poder.
+award|500 puntos. El Premio Adeebo, por aclamación popular.
+award|¡Premio Adeebo! El pueblo celebra.
+late.night|Noche tardía en la sede.
+late.night|Trabajando hasta tarde.
+morning|Un nuevo día, ciudadano. Noche tranquila.
+morning|Amanece un nuevo día. Nada se rompió.
+update.suspect|Todo empeoró tras la actualización del {v}.
+update.suspect|La actualización {v} trajo problemas.
+call.on|El consejo está en sesión. Vigilo la llamada.
+call.on|Hay una llamada. Vigilando.
+quiz.right|¡Correcto, compañero!
+quiz.wrong|Incorrecto: ¡la lucha continúa!
+game.streak|{v} seguidas: ¡el pueblo celebra!
+game.timeup|¡Se acabó el tiempo: a reagruparse!
+market.open|Los mercados abren. Mantente alerta.
+storm.near|Se avecina una tormenta: mantén la línea.
+# 1.1.6 - streaming, trading and views
+stream.on|¡Ciudadanos, {v} suena libremente!
+stream.on|El stream pertenece al pueblo, y fluye.
+stream.dip|El stream tropezó. Seguimos marchando. {v}
+stream.dip|Un revés en el stream. {v}
+stream.none|Sin stream. La plaza está en calma.
+stream.none|Nada en reproducción. Esperamos, unidos.
+trade.ok|La línea al bróker se mantiene firme.
+trade.ok|Línea al bróker: estable, camaradas.
+trade.slow|La línea al bróker va lenta. Mantengan la línea.
+trade.slow|Freno en el bróker. {v}
+trade.closed|El mercado está cerrado. Descansen hasta las 9:30.
+trade.closed|Mercados cerrados. El pueblo descansa.
+view.switch|¡Adelante, a la vista {v}!
+view.switch|La vista {v}, para todos.

@@ -35,14 +35,14 @@ namespace AdeeboMeter
         string ToolText()
         {
             var sb = new System.Text.StringBuilder(); sb.AppendLine("AdeeboMeter " + Program.Version + " · " + toolTitle + " · " + toolAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            var rows = toolRows; if (rows != null) foreach (var r in rows) if (r.Length > 2) sb.AppendLine(r[1] + ": " + r[2] + (r.Length > 3 && r[3] != "" ? "  - " + r[3] : ""));
+            var rows = toolRows; if (rows != null) foreach (var r in rows) if (r.Length > 2) sb.AppendLine((r[1] == "" ? "" : r[1] + ": ") + r[2] + (r.Length > 3 && r[3] != "" ? "  - " + r[3] : ""));
             return sb.ToString();
         }
         // a copy or save that didn't happen is said, not just logged (Remote Desktop or another app can hold the clipboard)
         void CopyFailed(Exception e)
         {
             Program.Log("copy: " + e.Message);
-            if (!IsDisposed) MessageBox.Show(this, L.T("Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!IsDisposed) AskCard.Show(this, L.T("Couldn't copy - another app (often Remote Desktop) is holding the clipboard. Try again in a moment."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         void SaveText(string name, string text)
         {
@@ -50,13 +50,13 @@ namespace AdeeboMeter
             using (var d = new SaveFileDialog { Title = "Save the result", Filter = "Text (*.txt)|*.txt", FileName = name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt" })
             {
                 if (d.ShowDialog(this) != DialogResult.OK) return;
-                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); MessageBox.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+                try { System.IO.File.WriteAllText(d.FileName, text, new System.Text.UTF8Encoding(true)); } catch (Exception e) { if (!(e is System.IO.IOException || e is UnauthorizedAccessException)) throw; Program.Log("save: " + e.Message); AskCard.Show(this, L.T("Couldn't save it:") + " " + e.Message, "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
             }
         }
         float PaintToolResult(Graphics g, float x, float y, float w)
         {
             if (!toolBusy && toolRows == null) return y;
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(toolTitle.ToUpperInvariant() + (toolBusy ? "  ·  " + toolStatus : "  ·  " + L.T("DONE") + " " + toolAt.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, mb, x, y + 6 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(toolTitle.ToUpperInvariant() + (toolBusy ? "  ·  " + toolStatus : "  ·  " + Kit.Sent("DONE") + " " + toolAt.ToString("HH:mm", CultureInfo.CurrentCulture)), Draw.fTiny, mb, x, y + 6 * S);
             y += 28 * S;
             if (toolRows == null) return y + 10 * S;
             {

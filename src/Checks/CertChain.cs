@@ -26,6 +26,8 @@ namespace AdeeboMeter
     [SuppressMessage("Performance", "CA1861", Justification = "result rows, built once per run")]
     static class CertChain
     {
+        // hunt-5: one wording for every certificate display - hours under a day, "1 day", then days
+        internal static string ExpiredAgo(DateTime notAfter, DateTime now) { var ago = now - notAfter; if (ago.TotalHours < 24) return "expired " + Math.Max(1, (int)ago.TotalHours) + " h ago"; int d = (int)ago.TotalDays; return "expired " + d + (d == 1 ? " day ago" : " days ago"); }
         static string[] R(int lv, string name, string val, string adv, string ev) { return new[] { lv.ToString(CultureInfo.InvariantCulture), name, val, adv, ev }; }
 
         [DllImport("crypt32.dll", SetLastError = true)]
@@ -99,6 +101,7 @@ namespace AdeeboMeter
                 // what today's apps refuse: an RSA key under 2048 bits, a SHA-1 or MD5 signature (a root's own signature doesn't count)
                 var l0 = chain[i]; bool selfRoot = SelfSigned(l0.Cert);
                 try { using (var rsa = l0.Cert.GetRSAPublicKey()) if (rsa != null && rsa.KeySize < 2048) l0.Bad.Add("weak key: RSA " + rsa.KeySize + " bits (apps want 2048 or more)"); } catch (CryptographicException) { }
+                string weak = WeakKey(l0.Cert); if (weak != null) l0.Bad.Add(weak);   // bug-hunt ML-6: EC and DSA too
                 string sig = l0.Cert.SignatureAlgorithm != null ? l0.Cert.SignatureAlgorithm.Value : "";
                 if (!selfRoot && (sig == "1.2.840.113549.1.1.5" || sig == "1.2.840.10045.4.1" || sig == "1.2.840.113549.1.1.4" || sig == "1.3.14.3.2.29")) l0.Bad.Add("weak signature: " + (sig == "1.2.840.113549.1.1.4" ? "MD5" : "SHA-1") + " (apps refuse it)");
             }
@@ -108,6 +111,9 @@ namespace AdeeboMeter
                 else if (now < l.Cert.NotBefore) l.Bad.Add("not valid until " + l.Cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + " - or this PC's clock is behind");
                 else if ((l.Cert.NotAfter - now).TotalDays < 30) l.Warn = true;
             }
+            // bug-hunt ML-5: every store certificate not kept in the chain is let go now, not left to the finalizer
+            var keep = new HashSet<X509Certificate2>(chain.Select(l => l.Cert));
+            foreach (var c in ca.Concat(roots)) if (!keep.Contains(c)) c.Dispose();
             return chain;
         }
 
@@ -117,7 +123,8 @@ namespace AdeeboMeter
             bool missing, trusted; string missingName;
             var chain = Walk(leaf, given, out missing, out trusted, out missingName);
             // the missing one is the root when the last certificate we have is itself a CA: servers aren't meant to send roots
-            bool rootMissing = missing && chain.Count > 1 && IsCa(chain[chain.Count - 1].Cert);
+            // bug-hunt ML-7: ...and its issuer is named like a root - a CA whose own issuer is another intermediate is a missing middle, with the server to blame
+            bool rootMissing = missing && chain.Count > 1 && IsCa(chain[chain.Count - 1].Cert) && System.Text.RegularExpressions.Regex.IsMatch(Cn(missingName) ?? "", @"\broot\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             bool stopped = !missing && !trusted && !SelfSigned(chain[chain.Count - 1].Cert);   // the walk hit its 9-certificate limit
             if (fromServer)
             {
@@ -141,6 +148,25 @@ namespace AdeeboMeter
             }
             int plv = chain.Any(l => l.Bad.Count > 0) || (missing && !rootMissing) ? 2 : rootMissing || stopped || !trusted || chain.Any(l => l.Warn) ? 1 : 0;
             rows.Insert(at, R(plv, "In plain words", stopped ? "The chain is longer than 9 certificates, so it wasn't followed to the end - that alone is a problem worth fixing." : rootMissing && chain.All(l => l.Bad.Count == 0) ? "Every certificate here holds, but the root at the top (" + Draw.Trunc(Cn(missingName), 40) + ") isn't on this PC yet. A public root arrives by itself the first time Windows needs it; a private one has to be installed." : Plain(chain, missing, trusted, fromServer), "", "i"));
+        }
+        // EC under 256 bits (P-192, P-224) and DSA (no app accepts it now) - RSA is checked above with its key size
+        static string WeakKey(X509Certificate2 c)
+        {
+            string alg = c.PublicKey.Oid != null ? c.PublicKey.Oid.Value : "";
+            if (alg == "1.2.840.10040.4.1") return "weak key: DSA (apps no longer accept it)";
+            if (alg == "1.2.840.10045.2.1")
+            {
+                string curve = ""; try { var p = c.PublicKey.EncodedParameters.RawData; if (p.Length > 2 && p[0] == 6) curve = Oid2(p); } catch (CryptographicException) { }
+                if (curve == "1.2.840.10045.3.1.1" || curve == "1.3.132.0.33") return "weak key: EC " + (curve == "1.3.132.0.33" ? "P-224" : "P-192") + " (apps want P-256 or more)";
+            }
+            return null;
+        }
+        // a DER OBJECT IDENTIFIER (06 len bytes...) to its dotted form
+        static string Oid2(byte[] d)
+        {
+            int len = d[1], i = 2; if (len + 2 > d.Length) return ""; var sb = new System.Text.StringBuilder(); sb.Append(d[i] / 40).Append('.').Append(d[i] % 40); i++;
+            long v = 0; for (; i < 2 + len; i++) { v = (v << 7) | (uint)(d[i] & 0x7F); if ((d[i] & 0x80) == 0) { sb.Append('.').Append(v); v = 0; } }
+            return sb.ToString();
         }
         static string Cn(string dn) { var m = System.Text.RegularExpressions.Regex.Match(dn ?? "", @"CN=([^,]+)"); return m.Success ? m.Groups[1].Value : dn; }
         static string Plain(List<Link> chain, bool missing, bool trusted, bool fromServer)
@@ -174,7 +200,7 @@ namespace AdeeboMeter
             {
                 string l2; var more = CertTools.LoadCerts(part, rows, out l2); if (more != null) given.AddRange(more);
             }
-            rows.Add(R(3, label, given.Count == 0 ? "1 certificate - the rest of its chain comes from Windows' own stores" : "1 certificate + " + given.Count + " to build its chain from (then Windows' own stores)", "Checked on this PC: nothing is fetched from the internet.", "m"));
+            rows.Add(R(3, label, given.Count == 0 ? "1 certificate - the rest of its chain comes from Windows' own stores" : "1 certificate + " + given.Count + " to build its chain from (then Windows' own stores)", CertCfg.Revocation && !Policy.NoOnline ? "Checked on this PC - plus one question to the issuer's revocation list (Settings › Certificate revocation)." : "Checked on this PC: nothing is fetched from the internet.", "m"));
             Ladder(rows, leafC, given, false);
             if (CertCfg.Revocation && !Policy.NoOnline) Revocation(rows, leafC, given);
             foreach (var c in certs.Concat(given)) c.Dispose();
@@ -229,27 +255,32 @@ namespace AdeeboMeter
             {
                 new[] { "Key agreement", ka == "" ? "-" : ka, ka == "ECDHE" || ka == "DHE" ? "A fresh secret for every session (forward secrecy): a key stolen later can't open today's traffic." : ka == "RSA" ? "No forward secrecy: anyone who gets the server's key later can open recorded traffic." : "", ka == "RSA" ? "1" : "0" },
                 new[] { "Server's key", auth == "" ? "-" : auth, auth == "ECDSA" ? "A small, fast elliptic-curve key proves who the server is." : auth == "RSA" ? "An RSA key proves who the server is." : "", "0" },
-                new[] { "Encryption", enc == "" ? "-" : enc, enc.EndsWith("GCM", StringComparison.Ordinal) || enc.StartsWith("ChaCha", StringComparison.Ordinal) ? "Locks the data and seals it, so any change on the way is caught." : enc.EndsWith("CBC", StringComparison.Ordinal) ? "An older mode: still encrypted, but the modern ones (GCM) are preferred." : "", enc.EndsWith("CBC", StringComparison.Ordinal) ? "1" : "0" },
+                new[] { "Encryption", enc == "" ? "-" : enc, enc.Contains("GCM") || enc.Contains("CCM") || enc.StartsWith("ChaCha", StringComparison.Ordinal) ? "Locks the data and seals it, so any change on the way is caught." : enc.EndsWith("CBC", StringComparison.Ordinal) ? "An older mode: still encrypted, but the modern ones (GCM) are preferred." : "", enc.EndsWith("CBC", StringComparison.Ordinal) ? "1" : "0" },
                 new[] { "Hash", hash == "" ? "-" : hash, hash == "SHA-1" ? "An old hash - fine for this job inside TLS, but a sign of an old setup." : hash != "" ? "Mixes the keys and checks the handshake wasn't tampered with." : "", hash == "SHA-1" ? "1" : "0" }
             };
         }
         // what Windows negotiated (TLS 1.3 included): the parts from SslStream's own fields
+        // bug-hunt L-199: under a day is said in hours, never "0 days"
+        static string Until(TimeSpan t) { return t.TotalDays >= 1 ? (int)t.TotalDays + ((int)t.TotalDays == 1 ? " day" : " days") : Math.Max(1, (int)Math.Ceiling(t.TotalHours)) + " h"; }
         internal static string[][] PartsFrom(SslStream ssl, X509Certificate2 cert, string proto)
         {
             int kx = (int)ssl.KeyExchangeAlgorithm;
             string ka = proto == "TLS 1.3" ? "ECDHE" : kx == 44550 ? "ECDHE" : kx == (int)ExchangeAlgorithmType.DiffieHellman ? "DHE" : kx == (int)ExchangeAlgorithmType.RsaKeyX || kx == (int)ExchangeAlgorithmType.RsaSign ? "RSA" : "";
             string auth = cert == null ? "" : cert.PublicKey.Oid.Value == "1.2.840.10045.2.1" ? "ECDSA" : cert.PublicKey.Oid.Value == "1.2.840.113549.1.1.1" ? "RSA" : "";
-            string enc = ssl.CipherAlgorithm == CipherAlgorithmType.Aes128 ? "AES-128" : ssl.CipherAlgorithm == CipherAlgorithmType.Aes256 ? "AES-256" : ssl.CipherAlgorithm.ToString();
-            if (proto == "TLS 1.3" && enc.StartsWith("AES", StringComparison.Ordinal)) enc += "-GCM";
+            string sn = ""; try { var p = ssl.GetType().GetProperty("NegotiatedCipherSuite"); if (p != null) sn = Convert.ToString(p.GetValue(ssl, null)); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            int ca = (int)ssl.CipherAlgorithm;   // bug-hunt L-200: ChaCha20 has no name in .NET 4.8's enum, so it came out as a bare number
+            string enc = ssl.CipherAlgorithm == CipherAlgorithmType.Aes128 ? "AES-128" : ssl.CipherAlgorithm == CipherAlgorithmType.Aes256 ? "AES-256" : ssl.CipherAlgorithm == CipherAlgorithmType.Aes ? "AES" : Enum.IsDefined(typeof(CipherAlgorithmType), ssl.CipherAlgorithm) ? ssl.CipherAlgorithm.ToString() : sn.IndexOf("CHACHA", StringComparison.OrdinalIgnoreCase) >= 0 || proto == "TLS 1.3" ? "ChaCha20-Poly1305" : "cipher " + ca;
+            /* L-8: Windows reports AES-CCM suites as plain AES too; TLS 1.3 sites use GCM almost always, so it says "GCM (or CCM)" only when the suite name isn't known */
+            if (proto == "TLS 1.3" && enc.StartsWith("AES", StringComparison.Ordinal)) enc += sn.Contains("CCM") ? "-CCM" : sn.Contains("GCM") ? "-GCM" : "-GCM (or CCM)";
             int h = (int)ssl.HashAlgorithm;
-            string hash = ssl.HashAlgorithm == HashAlgorithmType.Sha1 ? "SHA-1" : h == 32780 ? "SHA-256" : h == 32781 ? "SHA-384" : h == 32782 ? "SHA-512" : enc.StartsWith("AES-256", StringComparison.Ordinal) ? "SHA-384" : enc.StartsWith("AES-128", StringComparison.Ordinal) ? "SHA-256" : "";
+            string hash = ssl.HashAlgorithm == HashAlgorithmType.Sha1 ? "SHA-1" : h == 32780 ? "SHA-256" : h == 32781 ? "SHA-384" : h == 32782 ? "SHA-512" : enc.StartsWith("AES-256", StringComparison.Ordinal) ? "SHA-384" : enc.StartsWith("AES-128", StringComparison.Ordinal) || enc.StartsWith("ChaCha", StringComparison.Ordinal) ? "SHA-256" : "";
             return Explain(ka, auth, enc, hash);
         }
 
         // ---------- the raw read: a TLS 1.2 hello, and the server's answer up to its certificates. No key is agreed, nothing else
         // is sent - the connection is closed right after. In TLS 1.3 the certificates travel encrypted, so only TLS 1.2 shows
         // what the server really sends.
-        public sealed class Hello { public int Version, Suite = -1, Alert = -1; public List<byte[]> Certs = new List<byte[]>(); public string Error = ""; }
+        public sealed class Hello { public int Version, Suite = -1, Alert = -1, More; public List<byte[]> Certs = new List<byte[]>(); public string Error = ""; }
         public static Hello ReadHello(IPAddress ip, int port, string sni, int version)
         {
             var h = new Hello();
@@ -261,8 +292,10 @@ namespace AdeeboMeter
                     var s = tc.GetStream(); s.ReadTimeout = 6000; s.WriteTimeout = 6000;
                     var hello = ClientHello(sni, version); s.Write(hello, 0, hello.Length);
                     var hs = new MemoryStream(); var hdr = new byte[5];
+                    var wall = System.Diagnostics.Stopwatch.StartNew();   // bug-hunt L-201: 15 s for the whole answer - a server dripping bytes can't hold it for 64 x 6 s
                     for (int rec = 0; rec < 64 && hs.Length < 128 * 1024; rec++)
                     {
+                        if (wall.ElapsedMilliseconds > 15000) { if (h.Certs.Count == 0) h.Error = "the server's answer took too long"; break; }
                         if (!Fill(s, hdr, 5)) break;
                         int type = hdr[0], len = hdr[3] << 8 | hdr[4]; if (len > 18432) { h.Error = "not a TLS answer"; break; }
                         var body = new byte[len]; if (!Fill(s, body, len)) break;
@@ -290,7 +323,7 @@ namespace AdeeboMeter
                 else if (t == 11 && len >= 3)
                 {
                     int total = d[b] << 16 | d[b + 1] << 8 | d[b + 2], q = b + 3, end = Math.Min(b + 3 + total, b + len);
-                    while (q + 3 <= end && h.Certs.Count < 10) { int cl = d[q] << 16 | d[q + 1] << 8 | d[q + 2]; q += 3; if (q + cl > end) break; var c = new byte[cl]; Array.Copy(d, q, c, 0, cl); h.Certs.Add(c); q += cl; }
+                    while (q + 3 <= end) { int cl = d[q] << 16 | d[q + 1] << 8 | d[q + 2]; q += 3; if (q + cl > end) break; if (h.Certs.Count < 10) { var c = new byte[cl]; Array.Copy(d, q, c, 0, cl); h.Certs.Add(c); } else h.More++; q += cl; }   /* L-7: past 10 they're counted, not kept */
                     return true;
                 }
                 else if (t == 14) return true;   // ServerHelloDone
@@ -328,7 +361,8 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string host; int port;
             string t = Toolkit.OneSlash(target); var um = System.Text.RegularExpressions.Regex.Match(t, @"^https?://([^/?#]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase); if (um.Success) t = um.Groups[1].Value;
             if (!Lab.Split(t, 443, out host, out port)) { rows.Add(R(2, "Site", "type a site - e.g. example.com or vpn.example.com:8443", "", "u")); return rows; }
-            IPAddress ip; if (!IPAddress.TryParse(host, out ip)) { try { var all = Dns.GetHostAddresses(host); ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); } catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; } }
+            // bug-hunt ML-8: every address the name has, taken in turn - the one that answers is the one checked
+            IPAddress ip; IPAddress[] all = null; if (!IPAddress.TryParse(host, out ip)) { try { all = Dns.GetHostAddresses(host); ip = all.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? all.FirstOrDefault(); } catch (SocketException) { ip = null; } catch (ArgumentException) { ip = null; } }
             if (ip == null) { rows.Add(R(2, host, "the name doesn't resolve", "Check the spelling, or DNS (Toolbox › DNS).", "m")); return rows; }
             string sni = host;
             if (sni.Any(ch => ch > 127)) { try { sni = new System.Globalization.IdnMapping().GetAscii(sni); } catch (ArgumentException) { } }   // bücher.de goes out as xn--bcher-kva.de, never "b?cher"
@@ -336,8 +370,9 @@ namespace AdeeboMeter
             // 1. Windows' own handshake - what every app on this PC gets: version, cipher, full validation, the name
             run.Status = "TLS handshake with " + host + "...";
             SslPolicyErrors errs = SslPolicyErrors.None; X509Certificate2 cert = null; string proto = "", hsErr = ""; string[][] parts = null; double ms = double.NaN;
-            using (var tc = Toolkit.Open(ip, port, 5000))
+            using (var tc = all != null && all.Length > 1 ? Toolkit.Open(all, port, 8000) : Toolkit.Open(ip, port, 5000))
             {
+                if (tc != null) { var ep = tc.Client.RemoteEndPoint as IPEndPoint; if (ep != null) ip = ep.Address.IsIPv4MappedToIPv6 ? ep.Address.MapToIPv4() : ep.Address; }
                 if (tc == null) { rows.Add(R(2, host + ":" + port, "no answer on port " + port, "Nothing listens there, or a firewall drops it. Check a destination tells which.", "m")); return rows; }
                 using (var ssl = new SslStream(tc.GetStream(), false, (o, c, ch, e) => { errs = e; if (c != null && cert == null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }))   // full validation: an untrusted certificate stops the handshake (it's still read for the report)
                 {
@@ -373,12 +408,12 @@ namespace AdeeboMeter
             else if (nameBad) { verdict = "The certificate isn't for " + host + " - it's for " + Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 40) + ". The wrong server, a wrong name, or something in the middle."; vlv = 2; }
             else if (chainBad) { verdict = "Windows doesn't trust this certificate's chain - see the ladder below for which link breaks."; vlv = 2; }
             else if (proto == "") { verdict = "The certificate checks out, but the handshake didn't finish" + (hsErr != "" ? " (" + Draw.Trunc(hsErr, 60) + ")" : "") + " - the server may want a client certificate, or it stopped answering."; vlv = 2; }
-            else { verdict = "A good padlock: " + proto + ", the right name, a chain Windows trusts" + ((cert.NotAfter - now).TotalDays < 30 ? " - but it expires in " + (int)(cert.NotAfter - now).TotalDays + " days" : "") + "."; vlv = (cert.NotAfter - now).TotalDays < 30 ? 1 : 0; }
+            else { verdict = "A good padlock: " + proto + ", the right name, a chain Windows trusts" + ((cert.NotAfter - now).TotalDays < 30 ? " - but it expires in " + Until(cert.NotAfter - now) : "") + "."; vlv = (cert.NotAfter - now).TotalDays < 30 ? 1 : 0; }
             rows.Add(R(vlv, host + ":" + port, verdict, "Two short handshakes, no HTTP request to the site: one by Windows (what your apps get), one TLS 1.2 hello to read the certificates as the server sends them." + (clock != null && Cfg.Portal && !Policy.NoOnline ? " The certificate's dates looked wrong, so the clock was also compared with msftconnecttest.com (Settings › Sign-in page check turns that off)." : ""), "m"));
 
             // the connection
             rows.Add(R(-1, "THE CONNECTION", "", "", "m"));
-            rows.Add(R(proto == "" ? 2 : 0, "TLS version", proto == "" && cert != null && h12.Version != 0 ? VersionName(h12.Version) + " - the handshake stopped at the certificate" : proto != "" ? proto + (h12.Version == 0x0303 && proto != "TLS 1.2" ? " (TLS 1.2 works too)" : "") + (double.IsNaN(ms) ? "" : " · handshake " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms") : legacy ? VersionName(old.Version) + " only" : "no handshake", proto != "" ? "" : legacy ? "TLS 1.0 and 1.1 are switched off in current Windows and browsers - the server needs updating." : "", "m"));
+            rows.Add(R(proto == "" ? 2 : 0, "TLS version", proto == "" && cert != null && h12.Version != 0 ? VersionName(h12.Version) + (h12.Version == 0x0303 ? " at least (this hello offered no newer - the server may also speak TLS 1.3)" : "") + " - the handshake stopped at the certificate"   /* bug-hunt ML-91 */ : proto != "" ? proto + (h12.Version == 0x0303 && proto != "TLS 1.2" ? " (TLS 1.2 works too)" : "") + (double.IsNaN(ms) ? "" : " · handshake " + ms.ToString("0", CultureInfo.CurrentCulture) + " ms") : legacy ? VersionName(old.Version) + " only" : "no handshake", proto != "" ? "" : legacy ? "TLS 1.0 and 1.1 are switched off in current Windows and browsers - the server needs updating." : "", "m"));
             string sname = ""; bool known = h12.Suite >= 0 && Suites.TryGetValue(h12.Suite, out sname); if (!known) sname = h12.Suite >= 0 ? "0x" + h12.Suite.ToString("X4", CultureInfo.InvariantCulture) : "";
             bool via12 = proto == "TLS 1.2" || (proto == "" && h12.Version == 0x0303);   // TLS 1.2 - or the handshake stopped at the certificate: the hello still says which suite
             var shown = via12 && known ? Parts(sname) : parts;
@@ -388,7 +423,7 @@ namespace AdeeboMeter
             {
                 int days = (int)Math.Floor((cert.NotAfter - now).TotalDays);
                 rows.Add(R(nameBad ? 2 : 0, "Name matches", nameBad ? "no - it's for " + Draw.Trunc(cert.GetNameInfo(X509NameType.SimpleName, false), 50) : "yes - valid for " + host, "", "m"));
-                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? ((now - cert.NotAfter).TotalHours < 24 ? "expired " + Math.Max(1, (int)(now - cert.NotAfter).TotalHours) + " h ago" : "expired " + (int)(now - cert.NotAfter).TotalDays + " days ago") : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + days + " days (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
+                rows.Add(R(expired ? 2 : early ? 2 : days < 30 ? 1 : 0, "Expires", expired ? (ExpiredAgo(cert.NotAfter, now)) : early ? "not valid until " + cert.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) : "in " + Until(cert.NotAfter - now) + " (" + cert.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ")", "", "m"));
                 string insp = !chainBad ? Inspection.InspectedBy(cert) : "";
                 // a private root can be a company proxy inspecting HTTPS - or simply an intranet / home-lab CA that signs this site itself.
                 // Only a public website signed that way points at inspection (Security checkup tests that with www.microsoft.com).
@@ -400,7 +435,7 @@ namespace AdeeboMeter
             // the chain: as the server sends it (TLS 1.2), else as Windows built it
             var sent = new List<X509Certificate2>();
             foreach (var der in h12.Certs) try { sent.Add(new X509Certificate2(der)); } catch (CryptographicException) { }
-            if (sent.Count > 0) { Ladder(rows, sent[0], sent.Skip(1).ToList(), true); rows.Add(R(3, "Sent by the server", sent.Count + " certificate" + (sent.Count == 1 ? "" : "s"), sent.Count == 1 ? "Only its own - fine if the issuer is a root Windows already has, otherwise the middle one is missing." : "", "m")); }
+            if (sent.Count > 0) { Ladder(rows, sent[0], sent.Skip(1).ToList(), true); rows.Add(R(3, "Sent by the server", sent.Count + " certificate" + (sent.Count == 1 ? "" : "s"), sent.Count == 1 ? "Only its own - fine if the issuer is a root Windows already has, otherwise the middle one is missing." : "", "m")); if (h12.More > 0) rows.Add(R(2, "Extra certificates", h12.More + " more past the first 10 weren't read", "A chain needs 2 to 4. A server sending this many is padding its answer, which slows every visit.", "m")); }
             else if (cert != null) { Ladder(rows, cert, new List<X509Certificate2>(), false); rows.Add(R(3, "Chain source", "Windows' stores - this server speaks only TLS 1.3, where the certificates travel encrypted", "So a missing middle certificate can't be told apart from one this PC already had.", "m")); }
             if (cert != null && CertCfg.Revocation && !Policy.NoOnline) Revocation(rows, sent.Count > 0 ? sent[0] : cert, sent.Skip(1).ToList());
             foreach (var c in sent) c.Dispose(); if (cert != null) cert.Dispose();

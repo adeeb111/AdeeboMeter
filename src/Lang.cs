@@ -13,7 +13,7 @@ namespace AdeeboMeter
     {
         public static readonly string[][] Languages = {
             new[] { "en", "English" }, new[] { "fr", "Français (Canada)" },
-            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "zh", "简体中文" }
+            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }   // Chinese (lang-zh.txt, 4% done) is kept in the repo but not offered until it is translated - a saved "zh" opens in English
         };
         public static bool IsRtl { get { return Code == "ar"; } }
 
@@ -29,26 +29,68 @@ namespace AdeeboMeter
         public static string Code = "en";
         public static void Use(string code)
         {
-            Code = Languages.Any(l => l[0] == code) ? code : "en"; map = null;
+            Code = Languages.Any(l => l[0] == code) ? code : "en"; map = null; Lines.LangChanged();   // the buddy speaks the new language too
             if (Code == "en") return;
-            try { map = Parse(Knowledge.RawText("lang-" + Code)); }
-            catch (Exception e) { if (!(e is InvalidOperationException || e is System.IO.IOException || e is ArgumentException)) throw; Program.Log("language " + Code + ": " + e.Message); Code = "en"; }
+            try { map = Parse(Knowledge.RawText("lang-" + Code)); if (LastBad > 0) Program.Log("language " + Code + ": " + LastBad + " line(s) without a tab skipped"); if (map.Count == 0) { Program.Log("language " + Code + ": the table is empty - English"); map = null; Code = "en"; } }
+            catch (Exception e) { if (!Recoverable(e)) throw; Program.Log("language " + Code + ": " + e.Message); Code = "en"; }
         }
+        // bug-hunt R2-009: a damaged table (a bad gzip throws InvalidDataException, an IOException) means English, never a crash at start
+        static bool Recoverable(Exception e) { return e is InvalidOperationException || e is System.IO.IOException || e is System.IO.InvalidDataException || e is ArgumentException || e is FormatException || e is NotSupportedException; }
+        public static List<string> LastDupes = new List<string>(); public static int LastBad;
         public static Dictionary<string, string> Parse(string text)
         {
-            var d = new Dictionary<string, string>(StringComparer.Ordinal);
+            // bug-hunt L-315/316: an empty translation is kept (T() still falls back to English, and the self-test can see it), and
+            // an English line given twice is noted - the first translation stays
+            var d = new Dictionary<string, string>(StringComparer.Ordinal); var dup = new List<string>(); int bad = 0;
             foreach (var raw in (text ?? "").Split('\n'))
             {
                 string line = raw.TrimEnd('\r'); if (line.Length == 0 || line[0] == '#') continue;
-                int tab = line.IndexOf('\t'); if (tab <= 0 || tab == line.Length - 1) continue;
-                d[line.Substring(0, tab)] = line.Substring(tab + 1);
+                int tab = line.IndexOf('\t'); if (tab <= 0) { bad++; continue; }   // R2-177: counted, and logged by Use
+                string k = line.Substring(0, tab); if (d.ContainsKey(k)) { dup.Add(k); continue; }
+                d[k] = line.Substring(tab + 1);
             }
+            LastDupes = dup; LastBad = bad;
             return d;
         }
         public static string T(string en)
         {
             var m = map; if (m == null || string.IsNullOrEmpty(en)) return en;
-            string v; return m.TryGetValue(en, out v) ? v : en;
+            string v; return m.TryGetValue(en, out v) && v.Trim().Length > 0 ? v : en;
+        }
+        // another language's word, for the picker's preview (that table read once, kept)
+        static readonly Dictionary<string, Dictionary<string, string>> others = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+        static Dictionary<string, string> Table(string code)
+        {
+            if (code == "en" || !Languages.Any(l => l[0] == code)) return null;
+            lock (others)
+            {
+                Dictionary<string, string> d; if (others.TryGetValue(code, out d)) return d;
+                others.Clear();   // bug-hunt R2-178: one other table at a time - hovering the picker doesn't pin every language in memory
+                try { d = Parse(Knowledge.RawText("lang-" + code)); } catch (Exception e) { if (!Recoverable(e)) throw; d = new Dictionary<string, string>(); }
+                others[code] = d; return d;
+            }
+        }
+        public static string In(string code, string en) { var m = Table(code); string v; return m != null && en != null && m.TryGetValue(en, out v) && v.Trim().Length > 0 ? v : en; }
+        // how much of the app is translated - the "#coverage NN" line tools/langcheck.py keeps in the table; -1 when it isn't there
+        static readonly Dictionary<string, int> coverage = new Dictionary<string, int>(StringComparer.Ordinal);   // R2-078: read once per language, not per repaint
+        public static int Coverage(string code)
+        {
+            if (code == "en") return 100;
+            lock (coverage) { int c; if (coverage.TryGetValue(code ?? "", out c)) return c; }
+            int r = Coverage1(code); lock (coverage) coverage[code ?? ""] = r; return r;
+        }
+        static int Coverage1(string code)
+        {
+            try
+            {
+                foreach (var line in (Knowledge.RawText("lang-" + code) ?? "").Split('\n'))
+                {
+                    if (!line.StartsWith("#coverage ", StringComparison.Ordinal)) { if (line.Length > 0 && line[0] != '#') break; continue; }
+                    int p; return int.TryParse(line.Substring(10).Trim(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out p) ? Math.Max(0, Math.Min(100, p)) : -1;
+                }
+            }
+            catch (Exception e) { if (!Recoverable(e)) throw; }
+            return -1;
         }
         public static int Count { get { var m = map; return m == null ? 0 : m.Count; } }
     }

@@ -10,7 +10,7 @@ namespace AdeeboMeter
 {
     partial class FullView
     {
-        const string NavDefault = "home,toolbox,gamer,time,learn";
+        const string NavDefault = "home,outlook,toolbox,gamer,time,learn";
 
         float PaintNavSettings(Graphics g, float x, float y, float w)
         {
@@ -39,7 +39,7 @@ namespace AdeeboMeter
             };
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink))
             {
-                g.DrawString(L.T("ON YOUR BAR") + "  ·  " + bar.Count + " / 7", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("ON YOUR BAR") + "  ·  " + bar.Count + " / 7", Draw.fTiny, muted, x, y); y += 22 * S;
                 for (int i = 0; i < bar.Count; i++)
                 {
                     string id = bar[i]; int k = i; rowFace(id, y); float right = x + rw - 8 * S;
@@ -53,7 +53,7 @@ namespace AdeeboMeter
                     y += rh;
                 }
                 y += 10 * S;
-                g.DrawString(L.T("IN MORE"), Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("IN MORE"), Draw.fTiny, muted, x, y); y += 22 * S;
                 if (more.Count == 0) { g.DrawString(L.T("Everything is on the bar."), Draw.fSmall, muted, x, y); y += 26 * S; }
                 foreach (var id0 in more)
                 {
@@ -62,7 +62,7 @@ namespace AdeeboMeter
                     y += rh;
                 }
                 y += 10 * S;
-                g.DrawString(L.T("YOUR OWN TABS") + "  ·  " + mine.Count + " / 3", Draw.fTiny, muted, x, y); y += 22 * S;
+                g.DrawString(Kit.Sent("YOUR OWN TABS") + "  ·  " + mine.Count + " / 3", Draw.fTiny, muted, x, y); y += 22 * S;
                 foreach (var t0 in mine)
                 {
                     var t = t0; rowFace(t.Id, y);
@@ -70,7 +70,7 @@ namespace AdeeboMeter
                     float right = x + rw - 8 * S;
                     right = btn(right, y - 4 * S, null, "Delete", true, delegate
                     {
-                        if (t.Items.Count > 0 && MessageBox.Show(this, L.T("Delete this tab and its pins?") + "\n\n" + t.Name, "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                        if (t.Items.Count > 0 && AskCard.Show(this, L.T("Delete this tab and its pins?") + "\n\n" + t.Name, "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
                         var l = MyTabs().Where(z => z.Id != t.Id).ToList(); SaveMyTabs(l);
                         Cfg.Nav = NavAfterDelete(Cfg.Nav, t.Id); Cfg.Save(); ApplyLayout(); settingsCanvas.Invalidate();
                     });
@@ -119,19 +119,24 @@ namespace AdeeboMeter
             return Cfg.NavClean(string.Join(",", l));
         }
         // a one-line question box: the text, or null when cancelled. 1-24 characters, no | = ;
-        string Ask(string title, string start)
+        string Ask(string title, string start) { return Ask(title, start, false, 24); }
+        // secret: a key or password - shown as dots (SEC-04), and as long as such keys are (SEC-11: never cut short silently)
+        string Ask(string title, string start, bool secret, int max)
         {
-            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(360), Sc(130)) })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(400), Sc(130)) })
             {
-                var lb = new Label { Text = title, Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true };
-                var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, MaxLength = 24, Location = new Point(Sc(16), Sc(44)), Width = Sc(328) };
-                var ok = new PillButton("OK", PillButton.K.Primary) { Location = new Point(Sc(16), Sc(84)) }; ok.Click += delegate { f.DialogResult = DialogResult.OK; };
-                var no = new PillButton("Cancel", PillButton.K.Chip) { Location = new Point(Sc(110), Sc(86)) }; no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
+                // 24 Nov (his PC: "...free at financialmodelingp" was cut off): the question wraps, and the box grows to fit it
+                var lb = new Label { Text = title, Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true, MaximumSize = new Size(Sc(368), 0) };
+                int lh = lb.GetPreferredSize(new Size(Sc(368), 0)).Height;
+                var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, MaxLength = max, UseSystemPasswordChar = secret, Location = new Point(Sc(16), Sc(14) + lh + Sc(10)), Width = Sc(368) };
+                var ok = new PillButton("OK", PillButton.K.Primary) { Location = new Point(Sc(16), tb.Bottom + Sc(14)) }; ok.Click += delegate { f.DialogResult = DialogResult.OK; };
+                var no = new PillButton("Cancel", PillButton.K.Chip) { Location = new Point(Sc(110), tb.Bottom + Sc(16)) }; no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
+                f.ClientSize = new Size(Sc(400), Math.Max(ok.Bottom, no.Bottom) + Sc(16));
                 f.Controls.Add(lb); f.Controls.Add(tb); f.Controls.Add(ok); f.Controls.Add(no);
                 tb.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; f.DialogResult = DialogResult.OK; } else if (e.KeyCode == Keys.Escape) f.DialogResult = DialogResult.Cancel; };
-                if (f.ShowDialog(this) != DialogResult.OK) return null;
+                Kit.Polish(f); if (f.ShowDialog(this) != DialogResult.OK) return null;
                 string v = new string(tb.Text.Where(c => c != '|' && c != '=' && c != ';' && !char.IsControl(c)).ToArray()).Trim();
-                return v.Length == 0 ? null : v.Length > 24 ? v.Substring(0, 24) : v;
+                return v.Length == 0 ? null : v.Length > max ? v.Substring(0, max) : v;
             }
         }
     }

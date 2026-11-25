@@ -25,7 +25,8 @@ namespace AdeeboMeter
         static Thread thread; static volatile bool running; static volatile bool stopAll; static readonly ManualResetEvent wake = new ManualResetEvent(false);
         // AM-CG-121: Stop and app exit wake the watch at once, so it saves the day's recording instead of being cut off mid-sleep
         public static void Stop() { stopAll = true; wake.Set(); }
-        public static bool Stopping { get { return stopAll; } }
+        // bug-hunt ML-42: only the Monitor starting again lifts a Stop - a probe tick racing the quit can't restart the watch
+        public static void Resume() { stopAll = false; }
         static IPAddress hostIp; static DateTime resolvedAt = DateTime.MinValue; static string resolvedFor = "";
         public static string Status = "";
         public const string FarName = "your broker";
@@ -39,7 +40,14 @@ namespace AdeeboMeter
         public static DateTime EasternNow()
         {
             try { if (eastern == null) eastern = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); return TimeZoneInfo.ConvertTime(DateTime.Now, eastern); }
-            catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return DateTime.UtcNow.AddHours(-5); }
+            catch (Exception e) { if (!(e is TimeZoneNotFoundException || e is InvalidTimeZoneException)) throw; return UsEastern(DateTime.UtcNow); }
+        }
+        // bug-hunt L-59: no time-zone data - the US rule by hand: daylight time from 2 am on the second Sunday of March to 2 am on the first Sunday of November
+        static DateTime UsEastern(DateTime utc)
+        {
+            Func<int, int, int, DateTime> nthSun = (y, mo, n) => { var d = new DateTime(y, mo, 1); while (d.DayOfWeek != DayOfWeek.Sunday) d = d.AddDays(1); return d.AddDays(7 * (n - 1)); };
+            var std = utc.AddHours(-5); var start = nthSun(std.Year, 3, 2).AddHours(2); var end = nthSun(std.Year, 11, 1).AddHours(1);   // end: 2 am daylight is 1 am standard
+            return std >= start && std < end ? utc.AddHours(-4) : std;
         }
         // open if either the US (NYSE/Nasdaq) or the Toronto exchange is: a Canadian broker trades both
         public static bool MarketOpen(DateTime et) { return Cfg.TradeVenue == "us" ? Markets.Open(et, "us") : Cfg.TradeVenue == "ca" ? Markets.Open(et, "ca") : Markets.Open(et, "us") || Markets.Open(et, "ca"); }
@@ -50,8 +58,8 @@ namespace AdeeboMeter
         public static void Ensure(Monitor m)
         {
             if (m != null) viewOpen = m.ViewOpen;
-            if (running || !Watching || m == null) return;
-            running = true; stopAll = false; wake.Reset();
+            if (running || stopAll || !Watching || m == null) return;
+            running = true; wake.Reset();
             thread = new Thread(() => Loop(m)) { IsBackground = true, Name = "broker watch", Priority = ThreadPriority.BelowNormal }; thread.Start();
         }
         static void Loop(Monitor m)
@@ -59,6 +67,7 @@ namespace AdeeboMeter
             try
             {
                 lock (k) { if (Day == null || Day.Start.Date != DateTime.Today || Day.Far != Cfg.TradeHost) { Close(); Day = new WatchKit.Session { Mode = "trade", What = Cfg.TradeHost, Via = "", Far = Cfg.TradeHost, Start = DateTime.Now, End = DateTime.Now }; } Ver++; }
+                Flush();
                 while (Watching && !stopAll)
                 {
                     var t0 = DateTime.UtcNow; Step(m);
@@ -66,18 +75,20 @@ namespace AdeeboMeter
                 }
             }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("broker watch: " + e.Message); }
-            finally { lock (k) { Close(); Ver++; } running = false; }
+            finally { lock (k) { Close(); Ver++; } Flush(); running = false; }
         }
         static void Step(Monitor m)
         {
             string host = Cfg.TradeHost, hn; int port; if (!Lab.Split(host, 443, out hn, out port)) { hn = host; port = 443; }   // the port you typed is the one tried
-            if (hostIp == null || resolvedFor != host || (DateTime.UtcNow - resolvedAt).TotalMinutes > 10)
+            if (resolvedFor != host || (DateTime.UtcNow - resolvedAt).TotalMinutes > (hostIp == null ? 1 : 10))   /* review 1.1.6 P4 #10: a failed or refused name is asked again after a minute, not every round */
             {
                 resolvedFor = host; resolvedAt = DateTime.UtcNow; IPAddress ip;
                 if (IPAddress.TryParse(hn, out ip)) hostIp = ip;
-                else try { hostIp = Dns.GetHostAddresses(hn).FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? Dns.GetHostAddresses(hn).FirstOrDefault(); }
+                else try { var all = Dns.GetHostAddresses(hn); hostIp = all.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ?? all.FirstOrDefault(); }   /* L-57: asked once */
                     catch (Exception e) { if (!(e is System.Net.Sockets.SocketException || e is ArgumentException)) throw; hostIp = null; Status = "Can't find " + hn + " - check the name in Trading."; }
             }
+            // bug-hunt L-58: the same rule as the speed test - a broker name that points into this PC or the LAN isn't knocked on
+            if (hostIp != null && !SpeedTest.Reachable(hostIp)) { Status = hn + " points to a private address (" + hostIp + ") - check the broker's name in Trading."; hostIp = null; }
             var s = new WatchKit.Sample { T = DateTime.Now, NoProbe = hostIp == null };
             if (hostIp != null) { s.Far = GamePing.TcpMs(hostIp, port, 1500); s.FarLost = double.IsNaN(s.Far); if (!s.FarLost) Status = ""; }
             lock (m.L)
@@ -106,23 +117,26 @@ namespace AdeeboMeter
                 if (!double.IsNaN(s.Far)) { sessionFar.Add(s.Far); if (sessionFar.Count > 4000) sessionFar.RemoveRange(0, 1000); }
                 Day.End = s.T; Day.FarNormal = Streams.Median(sessionFar); Ver++;
             }
+            Flush();
         }
         static void Close()
         {
             if (Day == null) return;
             var d = maker.Close(FarName); if (d != null) Day.Dips.Add(d);
-            if (Day.Length.TotalMinutes >= 5) WatchKit.Save(Day);
+            if (Day.Length.TotalMinutes >= 5) lock (unsaved) unsaved.Add(Day);   // bug-hunt L-62: written by Flush, after lock k is let go
             Moments.BrokerDay(Day.Length.TotalHours, Day.Dips.Count, Streams.Median(Samples.Where(x => !double.IsNaN(x.Far)).Select(x => x.Far).ToList()));
             Day = null; Samples.Clear(); sessionFar.Clear();
         }
         static readonly List<double> sessionFar = new List<double>();
+        static readonly List<WatchKit.Session> unsaved = new List<WatchKit.Session>();
+        static void Flush() { WatchKit.Session[] l; lock (unsaved) { l = unsaved.ToArray(); unsaved.Clear(); } foreach (var s in l) WatchKit.Save(s); }
         // the verdict line at the top of the panel
         public static string Headline(out int lv)
         {
             lock (k)
             {
                 var last = Samples.LastOrDefault(); lv = 3;
-                if (last == null) return Status != "" ? Status : "Starting...";
+                if (last == null) return Status != "" ? Status : !Watching ? (Cfg.TradeLive ? "Market closed - the watch starts at 9:30 ET" : "Live watch is off") : "Starting...";   /* review 1.1.6 P4 #11 */
                 // AM-CG-106: a reading older than three rounds of the watch is no verdict at all
                 double age = (DateTime.Now - last.T).TotalSeconds; if (age > Math.Max(15, Sec * 3)) return "No new reading for " + (age < 120 ? Math.Round(age) + " s" : Math.Round(age / 60) + " min") + " - the watch isn't updating";
                 if (last.NoProbe) return Status != "" ? Status : "Can't reach the broker's name - no reading";
@@ -137,7 +151,7 @@ namespace AdeeboMeter
 
         // ---------- currencies, end of day: the Bank of Canada's daily rates (official, free, no key)
         // One fetch a day, after the Bank publishes (about 16:30 Eastern), only while the Trading page is open.
-        public static readonly string[] Fx = { "USD", "EUR", "GBP", "CNY", "JPY", "INR", "CHF", "AUD", "MXN", "HKD" };
+        public static string[] Fx { get { return MarketData.MyFx().ToArray(); } }   // 1.1.6: the person's own list (Markets › Currencies › Add)
         public sealed class Rate { public string Code; public DateTime Day; public double Cad, Prev = double.NaN; }
         public static List<Rate> Rates = new List<Rate>(); public static string FxNote = ""; static volatile bool fxBusy; static bool fxLoaded; static DateTime fxTried = DateTime.MinValue;
         static string FxFile { get { return Path.Combine(Program.DataDir, "fx.txt"); } }
@@ -156,7 +170,7 @@ namespace AdeeboMeter
             {
                 var et = EasternNow(); var want = et.TimeOfDay >= new TimeSpan(16, 45, 0) ? et.Date : et.Date.AddDays(-1);
                 while (want.DayOfWeek == DayOfWeek.Saturday || want.DayOfWeek == DayOfWeek.Sunday) want = want.AddDays(-1);
-                return Rates.Count == 0 || Rates.Min(r => r.Day) < want;   // AM-CG-111: one stale currency makes the set stale - a fresh one can't hide it
+                return Rates.Count == 0 || Rates.Min(r => r.Day) < want || Fx.Any(c => !Rates.Any(r => r.Code == c));   // a newly added currency is "stale" until fetched   // AM-CG-111: one stale currency makes the set stale - a fresh one can't hide it
             }
         }
         // the day's numbers, both from the Bank of Canada in one short visit: the rates when they're stale, and the weekly
@@ -193,11 +207,11 @@ namespace AdeeboMeter
                         }
                         catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("commodities: " + e.Message); }
                 }
-                finally { fxBusy = false; if (done != null) done(); }
+                finally { fxBusy = false; MarketData.Done(done); }   // bug-hunt M-4: a closing window can't crash the app from here
             }) { IsBackground = true, Name = "fx" }.Start();
         }
         static string Get(string url) { return HttpSmall.Get(url, 200); }   // AM-CG-127: capped while reading
-        static void Keep(string file, string body) { try { File.WriteAllText(file, body); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
+        static void Keep(string file, string body) { try { SafeFile.WriteText(file, body); }   /* L-60: temp file, then replace */ catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
 
         // ---------- the evening line (opt-in): for an hour and a half after work the folded widget shows the day's close
         // instead of "All quiet", then goes back by itself. Weekdays only; nothing shows until there are numbers.
@@ -215,6 +229,7 @@ namespace AdeeboMeter
             if (usd == null && en == null) return null;
             // AM-CG-126: the Bank's figure is a daily average, not a close - and an older one carries its date
             if (usd != null && (today - usd.Day).TotalDays > 4) usd = null;   // over a long weekend's age: too old for a "today" line
+            if (en != null && (today - en.Day).TotalDays > 13) en = null;   // hunters13 data L6: the weekly index is late by a week at most - older isn't "this week"
             if (usd == null && en == null) return null;
             var parts = new List<string> { usd != null ? (usd.Day == today ? L.T("Daily avg") : L.T("Daily avg") + " " + usd.Day.ToString("d MMM", CultureInfo.CurrentCulture)) : L.T("Week of") + " " + en.Day.ToString("d MMM", CultureInfo.CurrentCulture) };
             if (usd != null) parts.Add("US$ " + usd.Cad.ToString("0.0000", CultureInfo.CurrentCulture) + Arrow(double.IsNaN(usd.Prev) || usd.Prev <= 0 ? double.NaN : (usd.Cad - usd.Prev) / usd.Prev * 100, "0.00"));
@@ -227,7 +242,6 @@ namespace AdeeboMeter
         // An index, not a price per barrel: what matters is the change - this week against last, and over four weeks.
         public static readonly string[] Idx = { "ENER", "MTLS", "FOPR", "AGRI", "BCPI" };
         public static readonly Dictionary<string, string> IdxNames = new Dictionary<string, string> { { "ENER", "Energy" }, { "MTLS", "Metals and minerals" }, { "FOPR", "Forestry" }, { "AGRI", "Farm goods" }, { "BCPI", "All commodities" } };
-        public static readonly Dictionary<string, string> IdxWhat = new Dictionary<string, string> { { "ENER", "oil, natural gas, coal" }, { "MTLS", "gold, copper, nickel, potash..." }, { "FOPR", "lumber, pulp, newsprint" }, { "AGRI", "wheat, canola, cattle..." }, { "BCPI", "the whole basket" } };
         public sealed class Index { public string Code; public DateTime Day; public double[] V; }   // V: oldest to newest (up to 5 weeks)
         public static List<Index> Indexes = new List<Index>(); static DateTime idxTried = DateTime.MinValue;
         static string IdxFile { get { return Path.Combine(Program.DataDir, "bcpi.txt"); } }

@@ -24,7 +24,6 @@ namespace AdeeboMeter
         static readonly HashSet<string> Moving7 = new HashSet<string> { "hwmap", "cpuheld", "netcap" };
         static readonly string[][] IdleSticks = { new[] { "3", "Channel A", "8 GB DDR4 · 3200 MT/s" }, new[] { "3", "Channel B", "8 GB DDR4 · 3200 MT/s" } };
         static double HN(string text, string pat) { return VNum(text, pat); }
-        static Color LvC(int lv) { return lv == 2 ? Theme.Red : lv == 1 ? Theme.Amber : lv == 0 ? Theme.Green : Theme.Blue; }
 
         float Wave7(Graphics g, float x, float y, float w, string st)
         {
@@ -74,7 +73,7 @@ namespace AdeeboMeter
         // ---------- why the PC struggles: symptom → what that does → the maths → why → the fixes, like a network diagnosis
         float WhyPic(Graphics g, float x, float y, float w, string st)
         {
-            var steps = new[] { Tuple.Create("1. Symptom", "WHAT'S FULL", Theme.Red), Tuple.Create("2. What that does", "WHAT THAT DOES", Theme.Amber), Tuple.Create("3. The maths", "THE MATHS", VPurple), Tuple.Create("4. Why it's full", "WHY", Theme.Blue) };
+            var steps = new[] { Tuple.Create("1. Symptom", "WHAT'S FULL", Theme.LvText(2)), Tuple.Create("2. What that does", "WHAT THAT DOES", Theme.LvText(1)), Tuple.Create("3. The maths", "THE MATHS", Theme.Sub), Tuple.Create("4. Why it's full", "WHY", Theme.BlueText) };
             var have = steps.Where(t => RRow(t.Item1) != null).ToList(); bool idle = have.Count == 0;
             if (idle) have = steps.ToList();
             var fixes = Res().Where(o => o[1].StartsWith("Fix ", StringComparison.Ordinal)).Take(4).ToList();
@@ -83,13 +82,13 @@ namespace AdeeboMeter
             for (int i = 0; i < have.Count; i++)
             {
                 var t = have[i]; var b = new RectangleF(r.X + 18 * S + i * (bw + 26 * S), r.Y + 44 * S, bw, bh);
-                Theme.Fill(g, b, 10 * S, Theme.Soft); Theme.Fill(g, new RectangleF(b.X, b.Y, 4 * S, b.Height), 2 * S, t.Item3);
-                VText(g, L.T(t.Item2), Draw.fTiny, t.Item3, b.X + 12 * S, b.Y + 8 * S);
+                Theme.Fill(g, b, 10 * S, Theme.Soft);   // no bar down the side - the heading carries the colour (24 Nov)
+                VText(g, Kit.Sent(t.Item2), Draw.fTiny, t.Item3, b.X + 12 * S, b.Y + 8 * S);
                 string txt = idle ? (i == 0 ? L.T("what is full or busy - memory, processor, disk, drivers") : i == 1 ? L.T("what that does to every click") : i == 2 ? L.T("the numbers behind the feeling") : L.T("the reason it's full: the apps, too little memory, a leak, heat")) : RV(t.Item1);
                 using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(Cut(txt, 260), Draw.fSmall, sb, new RectangleF(b.X + 12 * S, b.Y + 26 * S, b.Width - 20 * S, b.Height - 30 * S));
                 if (i < have.Count - 1) VArrow(g, b.Right + 4 * S, b.Y + bh / 2, b.Right + 22 * S, b.Y + bh / 2, Theme.Muted, false);
             }
-            float fy = r.Y + 44 * S + bh + 18 * S; VText(g, L.T("WHAT FIXES IT"), Draw.fTiny, Theme.Green, r.X + 18 * S, fy); fy += 18 * S;
+            float fy = r.Y + 44 * S + bh + 18 * S; VText(g, Kit.Sent("WHAT FIXES IT"), Draw.fTiny, Theme.LvText(0), r.X + 18 * S, fy); fy += 18 * S;
             if (fixes.Count == 0) VText(g, L.T("each fix with what it gives back (memory freed, processor returned)"), Draw.fSmall, Theme.Sub, r.X + 18 * S, fy);
             foreach (var f in fixes) { Theme.Fill(g, new RectangleF(r.X + 18 * S, fy + 5 * S, 8 * S, 8 * S), 4 * S, Theme.Green); VText(g, Cut(f[2], 150), Draw.fSmall, Theme.Ink, r.X + 32 * S, fy); fy += 26 * S; }
             VFoot(g, r, "The same depth as a network diagnosis: not just who uses the most, but what's full, what that does, the maths, and what each fix gives back.");
@@ -152,7 +151,7 @@ namespace AdeeboMeter
             // the lines: processor %, disk busy %, ping (own scale)
             Func<string, List<double>> ser = name => { var m = Regex.Match(tl, name + @"\s+([-\dx ]+)"); return m.Success ? m.Groups[1].Value.Trim().Split(' ').Select(t => t == "x" ? -1 : t == "-" ? double.NaN : double.Parse(t, CultureInfo.InvariantCulture)).ToList() : new List<double>(); };
             var cpu = ser("CPU"); var disk = ser("Disk"); var mem = ser("Memory"); var ping = ser("Ping");
-            if (cpu.Count < 2) { cpu = new List<double> { 10, 12, 30, 20, 15, 12 }; disk = new List<double> { 5, 8, 10, 6, 5, 4 }; ping = new List<double> { 14, 15, 14, 16, 15, 14 }; }
+            if (cpu.Count < 2) { cpu = new List<double> { 10, 12, 30, 20, 15, 12 }; disk = new List<double> { 5, 8, 10, 6, 5, 4 }; mem = new List<double> { 52, 53, 58, 57, 55, 54 }; /* L-282: all four lines */ ping = new List<double> { 14, 15, 14, 16, 15, 14 }; }
             var gr = new RectangleF(r.X + 50 * S, r.Y + 100 * S, r.Width - 110 * S, 150 * S);
             using (var p = new Pen(Theme.Line, 1 * S)) { g.DrawRectangle(p, gr.X, gr.Y, gr.Width, gr.Height); g.DrawLine(p, gr.X, gr.Y + gr.Height * 0.1f, gr.Right, gr.Y + gr.Height * 0.1f); }
             VText(g, "100%", Draw.fTiny, Theme.Sub, r.X + 14 * S, gr.Y - 6 * S); VText(g, "0", Draw.fTiny, Theme.Sub, r.X + 30 * S, gr.Bottom - 10 * S);
@@ -245,7 +244,7 @@ namespace AdeeboMeter
                 if (o[1] == "Memory") cur = Rep(cards, cur, o[2], null, null); else if (o[1] == "In use now") cur = Rep(cards, cur, null, o[2], null); else if (o[1] == "Link") cur = Rep(cards, cur, null, null, o[2]); else if (o[1].StartsWith("  ", StringComparison.Ordinal)) cur.Item5.Add(o[1].Trim() + " " + P(o[2], 0));
             }
             if (cards.Count == 0) cards.Add(Tuple.Create("GRAPHICS CARD: (run it to see)", "8 GB of its own", "", "PCIe 4.0 x8 now · up to PCIe 4.0 x16", new List<string>()));
-            var r = VisCard(g, x, y, w, 70 * S + cards.Count * 120 * S + 30 * S, "GRAPHICS: OWN MEMORY, BORROWED MEMORY, AND THE ROAD TO THE PROCESSOR", st);
+            var r = VisCard(g, x, y, w, 70 * S + Math.Min(3, cards.Count) * 120 * S + 30 * S, "GRAPHICS: OWN MEMORY, BORROWED MEMORY, AND THE ROAD TO THE PROCESSOR", st);
             float yy = r.Y + 44 * S;
             foreach (var c in cards.Take(3))
             {
@@ -279,15 +278,16 @@ namespace AdeeboMeter
             string cpu = RV("Processor"); double cores = HN(cpu, @"(\d+)\s*cores"), threads = HN(cpu, @"(\d+)\s*threads"), rated = HN(cpu, @"rated\s*([\d.]+)\s*GHz"), perf = HN(RV("Speed under full load"), @"([\d.]+)%"), ghz = HN(RV("Speed under full load"), @"≈\s*([\d.]+)\s*GHz");
             if (double.IsNaN(cores)) { cores = 8; threads = 16; } if (double.IsNaN(threads)) threads = cores;
             var r = VisCard(g, x, y, w, 290 * S, "THE PROCESSOR: " + cores + " CORES (WORKERS), " + threads + " THREADS, AND ITS REAL SPEED", st);
-            int nt = (int)Math.Min(64, threads), per = threads > cores ? 2 : 1, cols = (int)Math.Min(16, cores); float cs = Math.Min(30 * S, (r.Width * 0.5f) / cols - 6 * S);
+            int nt = (int)Math.Min(64, threads), htCores = (int)Math.Max(0, Math.Min(cores, threads - cores)), cols = (int)Math.Min(16, cores); float cs = Math.Min(30 * S, (r.Width * 0.5f) / cols - 6 * S);
             double load = tbBusy && tbSel == "cpuheld" ? 100 : M.Cpu.Last; bool anim = WindowsAnimates(); var rnd = new Random(anim ? (int)(AnimT * 3) : 1);
             for (int c = 0; c < (int)cores && c < 32; c++)
             {
                 float cx = r.X + 18 * S + (c % cols) * (cs + 6 * S), cy = r.Y + 48 * S + (c / cols) * (cs + 10 * S);
                 Theme.Fill(g, new RectangleF(cx, cy, cs, cs), 4 * S, Theme.Soft);
+                int per = c < htCores ? 2 : 1;   // bug-hunt L-280: a hybrid CPU (6 two-thread cores + 8 one-thread ones) drawn as it is
                 for (int t = 0; t < per; t++) { bool on = rnd.NextDouble() * 100 < (double.IsNaN(load) ? 20 : load); Theme.Fill(g, new RectangleF(cx + 3 * S + t * (cs - 6 * S) / per, cy + 3 * S, (cs - 6 * S) / per - 2 * S, cs - 6 * S), 2 * S, on ? Theme.Green : Theme.Line); }
             }
-            VText(g, L.T("each square is a core; its halves are its two threads - lit = working now"), Draw.fTiny, Theme.Sub, r.X + 18 * S, r.Y + 48 * S + ((int)Math.Ceiling(Math.Min(32, cores) / cols)) * (cs + 10 * S));
+            VText(g, htCores > 0 && htCores < cores ? L.T("each square is a core; split ones run two threads, whole ones one - lit = working now") : htCores == 0 ? L.T("each square is a core with one thread - lit = working now") : L.T("each square is a core; its halves are its two threads - lit = working now"), Draw.fTiny, Theme.Sub, r.X + 18 * S, r.Y + 48 * S + ((int)Math.Ceiling(Math.Min(32, cores) / cols)) * (cs + 10 * S));
             // the speed gauge: 100% = the rated clock; above = boost, below = held back
             float gx = r.X + r.Width * 0.62f, gy = r.Y + 150 * S, rad = Math.Min(90 * S, r.Width * 0.16f);
             var box = new RectangleF(gx - rad, gy - rad, rad * 2, rad * 2);
@@ -359,7 +359,7 @@ namespace AdeeboMeter
                 {
                     bool left = false, right = false; Invoke((Action)delegate { left = AskTone(true); right = AskTone(false); });
                     rows.Add(R(left ? 0 : 2, "Left speaker", left ? "heard" : "not heard on the left", "")); rows.Add(R(right ? 0 : 2, "Right speaker", right ? "heard" : "not heard on the right", ""));
-                    Invoke((Action)delegate { MessageBox.Show(this, L.T("After OK, talk or clap for 4 seconds - the microphone is measured."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); });
+                    Invoke((Action)delegate { AskCard.Show(this, L.T("After OK, talk or clap for 4 seconds - the microphone is measured."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); });
                     double peak = MicPeak(4000);
                     rows.Add(R(double.IsNaN(peak) ? 3 : peak < 1 ? 2 : peak < 5 ? 1 : 0, "Microphone", double.IsNaN(peak) ? "no microphone found" : peak < 1 ? "silence - nothing came in" : "loudest " + peak.ToString("0", CultureInfo.CurrentCulture) + "% of full scale", double.IsNaN(peak) || peak < 1 ? "No sound: Settings > Privacy > Microphone (let desktop apps use it), or the mic is off / broken." : ""));
                     try { using (Process.Start(new ProcessStartInfo("microsoft.windows.camera:") { UseShellExecute = true })) { } rows.Add(R(3, "Camera", "Windows' Camera app opened - check the picture is clear and the light next to the camera comes on", "")); }
@@ -384,7 +384,7 @@ namespace AdeeboMeter
             }
             return Math.Min(i + 1, cols.Length);
         }
-        static readonly string[] KeyRows = { "Esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12", "` 1 2 3 4 5 6 7 8 9 0 - = Back", "Tab Q W E R T Y U I O P [ ] \\", "Caps A S D F G H J K L ; ' Enter", "Shift Z X C V B N M , . / RShift", "Ctrl Win Alt Space RAlt RCtrl ← ↑ ↓ →" };
+        static readonly string[] KeyRows = { "Esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 PrtSc", "` 1 2 3 4 5 6 7 8 9 0 - = Back", "Tab Q W E R T Y U I O P [ ] \\", "Caps A S D F G H J K L ; ' Enter", "Shift Z X C V B N M , . / RShift", "Ctrl Win Alt Space RAlt RCtrl ← ↑ ↓ →" };
         static string KeyName(Keys k, Keys code)
         {
             switch (code)
@@ -393,6 +393,7 @@ namespace AdeeboMeter
                 case Keys.OemOpenBrackets: return "["; case Keys.OemCloseBrackets: return "]"; case Keys.OemPipe: return "\\"; case Keys.OemBackslash: return "\\"; case Keys.CapsLock: return "Caps"; case Keys.OemSemicolon: return ";"; case Keys.OemQuotes: return "'"; case Keys.Enter: return "Enter";
                 case Keys.ShiftKey: case Keys.LShiftKey: return "Shift"; case Keys.RShiftKey: return "RShift"; case Keys.Oemcomma: return ","; case Keys.OemPeriod: return "."; case Keys.OemQuestion: return "/";
                 case Keys.ControlKey: case Keys.LControlKey: return "Ctrl"; case Keys.RControlKey: return "RCtrl"; case Keys.LWin: case Keys.RWin: return "Win"; case Keys.Menu: case Keys.LMenu: return "Alt"; case Keys.RMenu: return "RAlt"; case Keys.Space: return "Space";
+                case Keys.PrintScreen: return "PrtSc";
                 case Keys.Left: return "←"; case Keys.Up: return "↑"; case Keys.Down: return "↓"; case Keys.Right: return "→";
             }
             if (code >= Keys.D0 && code <= Keys.D9) return ((int)(code - Keys.D0)).ToString(CultureInfo.InvariantCulture);
@@ -402,7 +403,17 @@ namespace AdeeboMeter
         sealed class KeyForm : Form
         {
             public readonly HashSet<string> Hit = new HashSet<string>(); public int Presses;
-            public KeyForm() { KeyPreview = true; DoubleBuffered = true; }
+            public KeyForm() { KeyPreview = true; DoubleBuffered = true; Icon = Theme.AppIcon; Activated += delegate { Away = false; Invalidate(); }; Deactivate += delegate { Away = true; Invalidate(); }; MouseClick += (s, e) => { if (Done.Contains(e.Location)) Close(); }; }
+            /* 24 Nov (Adeeb: "got stuck"): Alt or F10 put the window in menu mode, so the next keys went to the hidden system menu;
+               the Win key's Start menu took the keyboard away with no sign of it; a broken Esc left no way out. Now the menu never
+               opens, losing the keyboard says "click here", and Finish is a drawn button (Space or Enter can't press it) */
+            public bool Away; public RectangleF Done;
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == 0x112 && ((long)m.WParam & 0xFFF0) == 0xF100) return;   // SC_KEYMENU: Alt / F10 menu mode
+                if ((m.Msg == 0x101 || m.Msg == 0x105) && (int)m.WParam == 0x2C) { Hit.Add("PrtSc"); Presses++; Invalidate(); }   // Print Screen only sends key-up
+                base.WndProc(ref m);
+            }
             [DllImport("user32.dll")] static extern short GetKeyState(int k);
             protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
             {
@@ -412,6 +423,7 @@ namespace AdeeboMeter
                     if (code == Keys.ShiftKey) code = ((long)msg.LParam >> 16 & 0xFF) == 0x36 ? Keys.RShiftKey : Keys.LShiftKey;
                     if (code == Keys.ControlKey) code = ext ? Keys.RControlKey : Keys.LControlKey; if (code == Keys.Menu) code = ext ? Keys.RMenu : Keys.LMenu;
                     if (code == Keys.Escape && Hit.Contains("Esc")) { Close(); return true; }
+                    if (keyData == (Keys.Alt | Keys.F4)) { Close(); return true; }   // hunters10 ML-6: Alt+F4 closes it, as everywhere
                     Hit.Add(KeyName(keyData, code)); Presses++; Invalidate(); return true;
                 }
                 return base.ProcessCmdKey(ref msg, keyData);
@@ -419,7 +431,7 @@ namespace AdeeboMeter
         }
         int KeyTest(List<string> missing)
         {
-            using (var f = new KeyForm { Text = AdeeboMeter.L.T("AdeeboMeter - keyboard test (press Esc twice to finish)"), StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(360 * S)), BackColor = Theme.Bg })
+            using (var f = new KeyForm { Text = AdeeboMeter.L.T("AdeeboMeter - keyboard test (press Esc twice to finish)"), StartPosition = FormStartPosition.CenterParent, ClientSize = new Size((int)(900 * S), (int)(410 * S)), BackColor = Theme.Bg })
             {
                 f.Paint += delegate(object s, PaintEventArgs e)
                 {
@@ -431,14 +443,29 @@ namespace AdeeboMeter
                         foreach (var k in row.Split(' '))
                         {
                             float kw = (k.Length > 2 ? 56 : k == "Space" ? 200 : 40) * S; if (k == "Space") kw = 220 * S; var b = new RectangleF(xx, yy, kw, 40 * S);
-                            bool on = f.Hit.Contains(k); Theme.Fill(g, b, 6 * S, on ? Theme.Green : Theme.Soft); VTextC(g, k, Draw.fSmall, on ? Color.White : Theme.Ink, b.X + b.Width / 2, b.Y + 11 * S, b.Width); xx += kw + 6 * S;
+                            bool on = f.Hit.Contains(k); Theme.Fill(g, b, 6 * S, on ? Theme.Green : Theme.Soft); Color kc = on ? Theme.OnColor(Theme.Green) : Theme.Ink;
+                            int ai = Array.IndexOf(new[] { "←", "↑", "↓", "→" }, k);
+                            if (ai >= 0)
+                            {
+                                /* 24 Nov (Adeeb: the arrow keys disappeared): the app's own font has no arrows and GDI+ draws nothing in their
+                                   place, so the four arrows are drawn as shapes */
+                                float cx = b.X + b.Width / 2, cy = b.Y + b.Height / 2, r = 8 * S; var st = new[] { new PointF(-r, 0), new PointF(r, 0), new PointF(r * 0.2f, -r * 0.7f), new PointF(r * 0.2f, r * 0.7f) };
+                                double ang = ai == 0 ? Math.PI : ai == 1 ? -Math.PI / 2 : ai == 2 ? Math.PI / 2 : 0; float ca = (float)Math.Cos(ang), sa = (float)Math.Sin(ang);
+                                var p = st.Select(q => new PointF(cx + q.X * ca - q.Y * sa, cy + q.X * sa + q.Y * ca)).ToArray();
+                                using (var pen = new Pen(kc, 2 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round }) { g.DrawLine(pen, p[0], p[1]); g.DrawLines(pen, new[] { p[2], p[1], p[3] }); }
+                            }
+                            else VTextC(g, k, Draw.fSmall, kc, b.X + b.Width / 2, b.Y + 11 * S, b.Width);
+                            xx += kw + 6 * S;
                         }
                         yy += 48 * S;
                     }
+                    var cs = f.ClientSize; var dn = new RectangleF(cs.Width - 136 * S, cs.Height - 48 * S, 120 * S, 34 * S); f.Done = dn;
+                    Theme.Fill(g, dn, dn.Height / 2, Theme.Blue); VTextC(g, L.T("Finish"), Draw.fBtn, Theme.OnBlue, dn.X + dn.Width / 2, dn.Y + 8 * S, dn.Width);
+                    VText(g, f.Away ? L.T("Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.") : f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h))) + " / " + KeyRows.Sum(r => r.Split(' ').Length), Draw.fSmall, f.Away ? Theme.LvText(1) : Theme.Sub, 16 * S, cs.Height - 40 * S);
                 };
-                f.ShowDialog(this);
-                foreach (var row in KeyRows) foreach (var k in row.Split(' ')) if (!f.Hit.Contains(k)) missing.Add(k);
-                return f.Hit.Count;
+                Kit.Polish(f); Draw.FitOnShow(f, true); f.ShowDialog(this);
+                foreach (var row in KeyRows) foreach (var k in row.Split(' ')) if (!f.Hit.Contains(k) && k != "PrtSc") missing.Add(k);   /* review 1.1.6 U1 #18: Windows 11's screen capture takes PrtSc, and many laptops have none - not a dead key */
+                return f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h)));
             }
         }
         // a 1-second tone in one ear, then "did you hear it there?"
@@ -448,7 +475,7 @@ namespace AdeeboMeter
             w.Write(0x46464952); w.Write(36 + n * 4); w.Write(0x45564157); w.Write(0x20746d66); w.Write(16); w.Write((short)1); w.Write((short)2); w.Write(rate); w.Write(rate * 4); w.Write((short)4); w.Write((short)16); w.Write(0x61746164); w.Write(n * 4);
             for (int i = 0; i < n; i++) { short v = (short)(Math.Sin(2 * Math.PI * (left ? 440 : 660) * i / rate) * 9000 * Math.Min(1, Math.Min(i, n - i) / 2000.0)); w.Write(left ? v : (short)0); w.Write(left ? (short)0 : v); }
             ms.Position = 0; using (var p = new System.Media.SoundPlayer(ms)) { try { p.PlaySync(); } catch (InvalidOperationException) { } }
-            return MessageBox.Show(this, L.T(left ? "Did you hear the tone on the LEFT only?" : "Did you hear the tone on the RIGHT only?"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            return AskCard.Show(this, L.T(left ? "Did you hear the tone on the LEFT only?" : "Did you hear the tone on the RIGHT only?"), "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
         }
         // the microphone: record a few seconds through winmm, return the loudest sample as % of full scale (NaN = no microphone)
         [StructLayout(LayoutKind.Sequential)] struct WaveFmt { public short Tag, Ch; public int Rate, Bps; public short Align, Bits, Extra; }

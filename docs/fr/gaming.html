@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/gaming.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter pour les jeux : d’où vient le délai?</title>
@@ -8,13 +9,14 @@
 <link rel="canonical" href="https://adeebometer.com/fr/gaming.html">
 <meta property="og:title" content="AdeeboMeter pour les jeux : d’où vient le délai?">
 <meta property="og:description" content="Votre jeu a du lag? Vérifiez le PC, le Wi-Fi et le trajet vers le serveur avec AdeeboMeter, un outil gratuit pour Windows.">
-<meta property="og:image" content="https://adeebometer.com/img/gaming.jpg">
+<meta property="og:image" content="https://adeebometer.com/img/gaming.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/feature.css">
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/gaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/gaming.html">
@@ -23,7 +25,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/gaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/gaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/gaming.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-gaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,21 +32,24 @@
 <section class="fhero"><div>
 <h1>D’où vient le délai?</h1>
 <p>Valorant, Fortnite, League of Legends, Counter-Strike 2, Roblox et autres : AdeeboMeter connaît leurs serveurs, détecte les jeux ouverts et distingue PC, Wi-Fi, fournisseur et serveur.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
 </div>
-<img class="shot" src="/img/gaming.jpg" alt="Zone Gamer : jeux à ajouter et serveurs du jeu surveillé" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-gamer-problem.png" width="264" height="243" alt="Le widget du coin qui nomme le fautif : votre routeur répond, Internet non - côté fournisseur"></figure>
 </section>
 <div class="grid">
-  <div class="card"><h3>Votre meilleur serveur</h3><p>Ping, gigue et pertes par région, mesurés sur une semaine, soirées comprises.</p></div>
-  <div class="card"><h3>Chaque seconde pendant le jeu</h3><p>Les serveurs sont vérifiés chaque seconde quand un jeu s’ouvre; les pointes sont conservées avec leur cause.</p></div>
-  <div class="card"><h3>Rapports de parties</h3><p>Après la session : pointes, pires moments et causes en mots simples.</p></div>
-  <div class="card"><h3>Tester sous charge</h3><p>Un téléchargement fait-il monter votre ping? Un test le montre.</p></div>
-  <div class="card"><h3>Rapport au fournisseur</h3><p>Chemin vers le serveur de jeu, début des pertes et minutes difficiles de la semaine.</p></div>
-  <div class="card"><h3>Tous les jeux</h3><p>Ajoutez un jeu avec son adresse de serveur.</p></div>
-  <div class="card"><h3>See the spike again</h3><p>Every spike and lag moment has a link to the Time machine at that exact minute - the router, the internet and your PC as they were, then Back to where you were.</p></div>
-  <div class="card"><h3>Your end, always on top</h3><p>A NOW line on the Gamer page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
-  <div class="card"><h3>Your path, drawn</h3><p>Show my path opens the Network Lab with your measured route to the game's server - your stops in white, your provider's in grey - and Break it shows what each fault looks like.</p></div>
+  <div class="card"><h2>Votre meilleur serveur</h2><p>Ping, gigue et pertes par région, mesurés sur une semaine, soirées comprises.</p></div>
+  <div class="card"><h2>Chaque seconde pendant le jeu</h2><p>Les serveurs sont vérifiés chaque seconde quand un jeu s’ouvre; les pointes sont conservées avec leur cause.</p></div>
+  <div class="card"><h2>Rapports de parties</h2><p>Après la session : pointes, pires moments et causes en mots simples.</p></div>
+  <div class="card"><h2>Tester sous charge</h2><p>Un téléchargement fait-il monter votre ping? Un test le montre.</p></div>
+  <div class="card"><h2>Rapport au fournisseur</h2><p>Chemin vers le serveur de jeu, début des pertes et minutes difficiles de la semaine.</p></div>
+  <div class="card"><h2>Tous les jeux</h2><p>Ajoutez un jeu avec son adresse de serveur.</p></div>
+  <div class="card"><h2>Revoir le pic</h2><p>Chaque pic et moment de lag a un lien vers la Machine à remonter le temps à cette minute précise - le routeur, Internet et votre PC tels qu'ils étaient, puis Retour là où vous étiez.</p></div>
+  <div class="card"><h2>Votre côté, toujours en haut</h2><p>Une ligne MAINTENANT sur la page Gamer : routeur, Internet, Wi-Fi et la charge de votre PC, en direct, avec l'Accueil à un clic.</p></div>
+  <div class="card"><h2>Votre chemin, dessiné</h2><p>Afficher mon chemin ouvre le Labo réseau avec votre trajet mesuré vers le serveur du jeu - vos arrêts en blanc, ceux du fournisseur en gris - et Casser montre à quoi ressemble chaque panne.</p></div>
 </div>
+<section class="inapp"><h2>La page Gamer dans la grande fenêtre</h2><p>Votre ping, gigue et pertes en ce moment, chaque jeu à un clic.</p>
+<img class="shot" src="/img/gaming.png" alt="Page Gamer : votre ping, gigue et pertes en ce moment, et les jeux à ajouter" width="951" height="618">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>Rien n’est envoyé aux serveurs avant l’ajout d’un jeu. Ensuite, pings ou connexions chronométrées selon le rythme choisi.</p></div>
 <div class="others"><p>Aussi : <a href="/fr/streaming.html">AdeeboMeter pour la vidéo</a> · <a href="/fr/trading.html">AdeeboMeter pour les marchés</a> · <a href="/fr/privacy.html">Confidentialité</a></p>
 <p>AdeeboMeter pour Windows · sans compte, service infonuagique ni télémétrie · sans droits d’administrateur</p></div>

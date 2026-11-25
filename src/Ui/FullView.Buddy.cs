@@ -19,8 +19,8 @@ namespace AdeeboMeter
             bool money = key.StartsWith("trade.", StringComparison.Ordinal);
             string text = money && Lines.Faith != "off" ? Lines.SteadyAs(key, v, "plain") : Lines.Steady(key, v);
             if (text == "") return y;
-            text = Typing.Show(money ? "trade" : "stream", text, money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas);
-            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            var tc = money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas; var r = new RectangleF(x, y, w, 34 * S);
+            text = Typing.Show(money ? "trade" : "stream", text, tc, OnScreen(tc, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
@@ -47,8 +47,8 @@ namespace AdeeboMeter
                 text = buddyText;
             }
             if (text == "") return y;
-            text = Typing.Show("tool", text, tbCanvas);
-            var r = new RectangleF(x, y, w, 34 * S); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            var r = new RectangleF(x, y, w, 34 * S);
+            text = Typing.Show("tool", text, tbCanvas, OnScreen(tbCanvas, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
@@ -76,8 +76,13 @@ namespace AdeeboMeter
                     { var lossy = rows.FirstOrDefault(o => o.Length > 2 && o[0] != "0" && Regex.IsMatch(o[1], @"^\s*(hop\s*)?\d+", RegexOptions.IgnoreCase) && o[2].Contains("%") && !o[2].StartsWith("0%", StringComparison.Ordinal));
                       if (worst >= 1 && lossy != null) { var m = Regex.Match(lossy[1], @"\d+"); v = m.Success ? m.Value : null; return "mtr.lossy"; }
                       return worst == 0 ? "mtr.clean" : null; }
-                case "mtu": case "udpmtu": { if (worst == 0) return null; var m = rows.Select(o => o.Length > 2 ? Regex.Match(o[2], @"\b(\d{3,4})\b") : Match.Empty).FirstOrDefault(z => z.Success); v = m != null ? m.Groups[1].Value : null; return "mtu.small"; }
-                case "speedtest": { var d = row("Download"); if (d != null) v = Regex.Match(d[2], @"[0-9.,]+\s*[MG]bps").Value; if (v == "") v = null; return worst >= 1 ? "speed.bloat" : "speed.great"; }
+                case "mtu": case "udpmtu":
+                    {   // bug-hunt L-148: the number from the row that IS the MTU (biggest packet / MTU), never the first number anywhere
+                        if (worst == 0) return null;
+                        var mr = rows.FirstOrDefault(o => o.Length > 2 && Regex.IsMatch(o[1], "biggest|MTU|largest", RegexOptions.IgnoreCase) && Regex.IsMatch(o[2], @"\b\d{3,4}\s*bytes\b"));
+                        var m = mr != null ? Regex.Match(mr[2], @"\b(\d{3,4})\s*bytes\b") : Match.Empty; v = m.Success ? m.Groups[1].Value : null; return "mtu.small";
+                    }
+                case "speedtest": { var d = row("Download"); if (d != null) v = Regex.Match(d[2], @"[0-9.,]+\s*[kMG]bps").Value;   /* L-149: kbps too */ if (v == "") v = null; return worst >= 1 ? "speed.bloat" : "speed.great"; }
                 case "bloat": return worst >= 1 ? "speed.bloat" : null;
                 case "http": case "certlive": case "https": case "chain":
                     { var ex = rows.FirstOrDefault(o => o.Length > 2 && o[0] == "2" && o[2].IndexOf("expired", StringComparison.OrdinalIgnoreCase) >= 0);
@@ -104,11 +109,11 @@ namespace AdeeboMeter
             Kit.Icon(g, "mood", new RectangleF(pr.X + 14 * S, pr.Y + 17 * S, 20 * S, 20 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var m = new SolidBrush(Theme.Muted))
             {
-                g.DrawString(L.T("PREVIEW") + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)).ToUpperInvariant(), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
+                g.DrawString(Kit.Sent("PREVIEW") + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
                 g.DrawString(Voice.Serious ? L.T("Fun lines are off - plain words everywhere.") : sample, Draw.fBody, b, new RectangleF(pr.X + 46 * S, pr.Y + 26 * S, pr.Width - 56 * S, 22 * S));
             }
             y = pr.Bottom + 18 * S;
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("TALK LIKE..."), Draw.fTiny, m, x, y); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("TALK LIKE..."), Draw.fTiny, m, x, y); y += 22 * S;
             var ids = new List<string> { "surprise" }; ids.AddRange(Lines.Personas.Select(p => p[0])); ids.Add("none");
             int cols = w > 820 * S ? 4 : w > 560 * S ? 3 : 2; float cw = (w - (cols - 1) * 10 * S) / cols, ch = 50 * S; int k = 0;
             foreach (var id0 in ids)
@@ -123,35 +128,37 @@ namespace AdeeboMeter
                 k++;
             }
             y += ((k + cols - 1) / cols) * (ch + 10 * S) + 10 * S;
-            var jf = new RectangleF(x, y, 260 * S, 30 * S);
-            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Just the facts (Plain, Details on, face only)"), Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
-            Act(settingsCanvas, jf, delegate { factsUndo = new[] { Voice.Serious ? "1" : "0", Lines.Chat, Cfg.Details ? "1" : "0" }; Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
+            string jft = L.T("Just the facts (Plain, Details on, face only)");   /* review 1.1.6 U1 #10: measured */
+            var jf = new RectangleF(x, y, Math.Min(w, (float)Math.Ceiling(g.MeasureString(jft, Draw.fBodyB).Width) + 8 * S), 30 * S);
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(jft, Draw.fBodyB, b, jf.X, jf.Y + 4 * S);
+            Act(settingsCanvas, jf, delegate { if (factsUndo == null) factsUndo = new[] { Voice.Serious ? "1" : "0", Lines.Chat, Cfg.Details ? "1" : "0" }; Voice.Serious = true; Lines.Chat = "face"; Cfg.Details = true; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
             if (factsUndo != null)
             {
                 // AM-CG-182: what it changed, and the way back
-                using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Changed: Fun lines off · Details on · How chatty: face only."), Draw.fSmall, m, jf.X, jf.Bottom + 2 * S);
-                var ur = new RectangleF(jf.X + 380 * S, jf.Bottom, 60 * S, 20 * S); using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Undo"), Draw.fBodyB, b, ur.X, ur.Y);
+                string cht = L.T("Changed: Fun lines off · Details on · How chatty: face only."); float chw = (float)Math.Ceiling(g.MeasureString(cht, Draw.fSmall).Width);
+                using (var m = new SolidBrush(Theme.Muted)) g.DrawString(cht, Draw.fSmall, m, jf.X, jf.Bottom + 2 * S);
+                var ur = new RectangleF(jf.X + Math.Max(380 * S, chw + 16 * S), jf.Bottom, 60 * S, 20 * S); using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Undo"), Draw.fBodyB, b, ur.X, ur.Y);
                 Act(settingsCanvas, ur, delegate { if (factsUndo == null) return; Voice.Serious = factsUndo[0] == "1"; Lines.Chat = factsUndo[1]; Cfg.Details = factsUndo[2] == "1"; factsUndo = null; Cfg.Save(); Invalidate(true); foreach (System.Windows.Forms.Control c in Descendants(this)) c.Invalidate(); });
                 y += 22 * S;
             }
             y += 44 * S;
             // your own lines: import (checked and fixed, never silent), export to share, clear
             int own = Lines.MineCount; float bx = x;
-            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR OWN LINES") + "  ·  " + own, Draw.fTiny, m, x, y); y += 22 * S;
+            using (var m = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("YOUR OWN LINES") + "  ·  " + own, Draw.fTiny, m, x, y); y += 22 * S;
             using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 foreach (var a in new[] { "Import...", "Export...", "Clear" })
                 {
                     if (a != "Import..." && own == 0) continue;
                     string t = L.T(a); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, ts.Width + 4, 24 * S);
                     g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); string a0 = a;
-                    Act(settingsCanvas, r, delegate { if (a0 == "Import...") ImportLines(); else if (a0 == "Export...") SaveText("AdeeboMeter-my-lines", Lines.MineText()); else { if (!Lines.ClearMine()) System.Windows.Forms.MessageBox.Show(this, L.T("Windows wouldn't let me remove your lines file - nothing changed."), "AdeeboMeter"); Invalidate(true); } });
+                    Act(settingsCanvas, r, delegate { if (a0 == "Import...") ImportLines(); else if (a0 == "Export...") SaveText("AdeeboMeter-my-lines", Lines.MineText()); else { if (!Lines.ClearMine()) AskCard.Show(this, L.T("Windows wouldn't let me remove your lines file - nothing changed."), "AdeeboMeter"); Invalidate(true); } });
                     bx += ts.Width + 24 * S;
                 }
             if (Lines.CanUndoClear)
                 using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue))
                 {
                     string t = L.T("Undo clear"); var ts = g.MeasureString(t, Draw.fBodyB); var r = new RectangleF(bx, y, ts.Width + 4, 24 * S);
-                    g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); Act(settingsCanvas, r, delegate { if (!Lines.UndoClear()) System.Windows.Forms.MessageBox.Show(this, L.T("Couldn't bring your lines back."), "AdeeboMeter"); Invalidate(true); });
+                    g.DrawString(t, Draw.fBodyB, b, r.X, r.Y); Act(settingsCanvas, r, delegate { if (!Lines.UndoClear()) AskCard.Show(this, L.T("Couldn't bring your lines back."), "AdeeboMeter"); Invalidate(true); });
                 }
             y += 30 * S;
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("A text file, one line each: key|text - for example all.good|All calm, {addr}. Yours come first."), Draw.fSmall, m, new RectangleF(x, y, w, 36 * S));
@@ -177,10 +184,10 @@ namespace AdeeboMeter
                     BeginInvoke((Action)delegate
                     {
                         string msg = string.Join("\n", report.Take(18)) + (report.Count > 18 ? "\n(+" + (report.Count - 18) + " more)" : "");
-                        if (kept == null || kept.Count == 0) { System.Windows.Forms.MessageBox.Show(this, msg, "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information); return; }
-                        if (System.Windows.Forms.MessageBox.Show(this, msg + "\n\n" + L.T("Add these lines to yours?"), "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OKCancel, System.Windows.Forms.MessageBoxIcon.Question) != System.Windows.Forms.DialogResult.OK) return;
-                        if (!Lines.SaveMine(kept, true)) System.Windows.Forms.MessageBox.Show(this, L.T("Couldn't save your lines."), "AdeeboMeter");
-                        else if (Lines.LastDropped > 0) System.Windows.Forms.MessageBox.Show(this, L.T("Saved. Your lines are limited to 600, so the oldest") + " " + Lines.LastDropped + " " + L.T("were let go."), "AdeeboMeter");
+                        if (kept == null || kept.Count == 0) { AskCard.Show(this, msg, "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information); return; }
+                        if (AskCard.Show(this, msg + "\n\n" + L.T("Add these lines to yours?"), "AdeeboMeter", System.Windows.Forms.MessageBoxButtons.OKCancel, System.Windows.Forms.MessageBoxIcon.Question) != System.Windows.Forms.DialogResult.OK) return;
+                        if (!Lines.SaveMine(kept, true)) AskCard.Show(this, L.T("Couldn't save your lines."), "AdeeboMeter");
+                        else if (Lines.LastDropped > 0) AskCard.Show(this, L.T("Saved. Your lines are limited to 600, so the oldest") + " " + Lines.LastDropped + " " + L.T("were let go."), "AdeeboMeter");
                         Invalidate(true);
                     });
                 }
@@ -192,7 +199,9 @@ namespace AdeeboMeter
         readonly Dictionary<string, Bitmap> wpics = new Dictionary<string, Bitmap>(StringComparer.Ordinal); DateTime wpicsAt; string wpicsKey = "";
         Bitmap WPic(string style, bool card)
         {
-            string key = previewExample + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious;   // AM-CG-200
+            // bug-hunt L-146: "example" or live is decided now, not by the last picture drawn - live numbers replace the example at once
+            var snapNow = snap; bool exampleNow = snapNow == null || double.IsNaN(snapNow.Down) || snapNow.DownHist == null || snapNow.DownHist.Length < 5;
+            string key = exampleNow + "|" + Theme.Dark + "|" + Theme.Palette + "|" + Cfg.BigWidget + "|" + Draw.S + "|" + Cfg.WUnits + Cfg.WDir + Cfg.WGraph + Cfg.WTotal + Cfg.Buddy + Cfg.BuddyFace + Lines.Mood + Lines.Persona + Voice.Serious + "|" + Cfg.WSyms + "|" + Cfg.WMine + "|" + Cfg.WSportKinds + "|" + Cfg.WPinGame + "|" + Cfg.WPlan;   // AM-CG-200; hunters12 L-7: the new presets' choices too
             if (key != wpicsKey || (DateTime.Now - wpicsAt).TotalSeconds > 10) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); wpicsKey = key; wpicsAt = DateTime.Now; }
             Bitmap bm; string k = style + (card ? "|c" : "|s");
             if (!wpics.TryGetValue(k, out bm)) { try { bm = Draw.Preview(PreviewSnap(), style, card); } catch (Exception e) { Program.Log("widget preview " + style + ": " + e.Message); bm = null; } wpics[k] = bm; }

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace AdeeboMeter
 {
@@ -94,10 +95,10 @@ namespace AdeeboMeter
                 Dip done = null;
                 if (blame != null)
                 {
-                    if (run.Count > 0 && (s.T - lastBad).TotalSeconds > gapSec * 2.5) done = Close(farName);
+                    if (run.Count > 0 && ((s.T - lastBad).TotalSeconds > gapSec * 2.5 || s.T < lastBad)) done = Close(farName);   // bug-hunt L-79: the clock going back closes the dip too
                     run.Add(Tuple.Create(s, blame)); lastBad = s.T;
                 }
-                else if (run.Count > 0 && (s.T - lastBad).TotalSeconds > gapSec * 2.5) done = Close(farName);
+                else if (run.Count > 0 && ((s.T - lastBad).TotalSeconds > gapSec * 2.5 || s.T < lastBad)) done = Close(farName);   // bug-hunt L-79: the clock going back closes the dip too
                 return done;
             }
             public Dip Close(string farName)
@@ -132,14 +133,15 @@ namespace AdeeboMeter
             var f = line.Split('\t'); if (f.Length < 11 || f[0] != "1") return null;
             DateTime a, b;
             if (!DateTime.TryParse(f[5], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out a) || !DateTime.TryParse(f[6], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out b)) return null;
+            if (b < a) return null;   // bug-hunt L-81: a record can't end before it starts
             var s = new Session { Mode = f[1], What = f[2], Via = f[3], Far = f[4], Start = a, End = b, AvgDown = P(f[7]), FarNormal = P(f[8]) };
-            foreach (var d in f[9].Split(Semi, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var d in f[9].Split(Semi, StringSplitOptions.RemoveEmptyEntries).Take(2000))   // bug-hunt L-80: capped, like the file's lines
             {
                 var p = d.Split('|'); DateTime t; int secs;
-                if (p.Length < 4 || !DateTime.TryParse(p[0], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out t) || !int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out secs)) continue;
+                if (p.Length < 4 || !DateTime.TryParse(p[0], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out t) || !int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out secs) || secs < 0) continue;
                 s.Dips.Add(new Dip { T = t, Secs = secs, Blame = Blames.Contains(p[2]) ? p[2] : "unsure", Evidence = p[3] });
             }
-            foreach (var pt in f[10].Split(Semi, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var pt in f[10].Split(Semi, StringSplitOptions.RemoveEmptyEntries).Take(2000))
             {
                 var p = pt.Split('~'); if (p.Length < 3) continue;
                 s.Line.Add(new[] { (float)P(p[0]), (float)P(p[1]), (float)P(p[2]) });
@@ -149,31 +151,47 @@ namespace AdeeboMeter
         public static void Save(Session s)
         {
             if (!Cfg.History) return;
-            lock (k)
-                try { Directory.CreateDirectory(History.Dir); File.AppendAllText(FileOf(s.Start), Encode(s) + "\n"); cache = null; Tidy(); }
+            // bug-hunt L-82: the file is written under its own lock - a page asking for the cached list (lock k) never waits on the disk
+            lock (fileLock)
+                try { Directory.CreateDirectory(History.Dir); File.AppendAllText(FileOf(s.Start), Encode(s) + "\n"); Tidy(); }
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch store: " + e.Message); }
+            lock (k) cacheAt = DateTime.MinValue;
         }
-        static List<Session> cache; static DateTime cacheAt;
-        public static void Drop() { lock (k) cache = null; }
-        // the last 90 days, newest first (cached for a minute: the page asks on every paint)
+        static readonly object fileLock = new object();
+        static List<Session> cache; static DateTime cacheAt; static volatile bool reading; public static long CacheVer;
+        public static void Drop() { lock (k) cacheAt = DateTime.MinValue; }   // stale, but the old list stays to show until the new one is read
+        // the last 90 days, newest first. Bug-hunt H-4: the pages ask on every paint, so the files (up to 4 x 5,000 lines) are
+        // read on a background thread when the minute-old copy is stale - a paint only ever gets the copy it already has.
+        // Until the first read lands that copy is empty; CacheVer moves when a new one is ready (the pages repaint on it).
         public static List<Session> Recent(string mode)
         {
             lock (k)
             {
-                if (cache == null || (DateTime.UtcNow - cacheAt).TotalSeconds > 60)
+                if ((cache == null || (DateTime.UtcNow - cacheAt).TotalSeconds > 60) && !reading)
                 {
-                    var l = new List<Session>(); var from = DateTime.Now.AddDays(-90);
-                    try
+                    reading = true;
+                    new Thread(() =>
                     {
-                        if (Directory.Exists(History.Dir))
-                            foreach (var f in Directory.GetFiles(History.Dir, "watch-*.log").OrderByDescending(x => x, StringComparer.Ordinal).Take(4))
-                                foreach (var line in File.ReadLines(f).Take(5000)) { var s = Decode(line); if (s != null && s.Start >= from) l.Add(s); }
-                    }
-                    catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch read: " + e.Message); }
-                    cache = l.OrderByDescending(s => s.Start).ToList(); cacheAt = DateTime.UtcNow;
+                        var l = new List<Session>(); var from = DateTime.Now.AddDays(-90); bool whole = false;
+                        try
+                        {
+                            if (Directory.Exists(History.Dir))
+                                foreach (var f in Directory.GetFiles(History.Dir, "watch-*.log").OrderByDescending(x => x, StringComparer.Ordinal).Take(4))
+                                    foreach (var line in File.ReadLines(f).Take(5000)) { var s = Decode(line); if (s != null && s.Start >= from) l.Add(s); }
+                            whole = true;
+                        }
+                        catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("watch read: " + e.Message); }
+                        finally { lock (k) { if (whole || cache == null) { cache = l.OrderByDescending(s => s.Start).ToList(); CacheVer++; } cacheAt = whole ? DateTime.UtcNow : DateTime.UtcNow.AddSeconds(-50); reading = false; } }   // R2-148: a read that failed partway keeps the last whole list and tries again in 10 s
+                    }) { IsBackground = true, Name = "watch-read" }.Start();
                 }
-                return cache.Where(s => mode == null || s.Mode == mode).ToList();
+                return cache == null ? new List<Session>() : cache.Where(s => mode == null || s.Mode == mode).ToList();
             }
+        }
+        // for callers that need the records now and aren't on the window's thread (reports, the self-test)
+        public static List<Session> RecentNow(string mode)
+        {
+            Recent(mode); for (int i = 0; i < 100 && reading; i++) Thread.Sleep(50);
+            return Recent(mode);
         }
         static DateTime tidied;
         static void Tidy()
@@ -197,7 +215,7 @@ namespace AdeeboMeter
             double hours = ss.Sum(s => s.Length.TotalHours); var dips = ss.SelectMany(s => s.Dips).ToList();
             int past = dips.Count(d => d.Blame == "provider" || d.Blame == "far");
             var sb = new StringBuilder();
-            sb.AppendLine(month.ToString("MMMM yyyy", CultureInfo.CurrentCulture) + " - " + mode + " report from AdeeboMeter (measured on my PC)");
+            sb.AppendLine(month.ToString("MMMM yyyy", CultureInfo.InvariantCulture) + " - " + mode + " report from AdeeboMeter (measured on my PC)");
             sb.AppendLine(hours.ToString("0.#", CultureInfo.CurrentCulture) + " h watched, " + dips.Count + " dips, " + dips.Count(d => d.Blame == "provider") + " beyond my router (router replies normal, internet check failing), " + dips.Count(d => d.Blame == "far") + " at the service's own servers, " + dips.Count(d => d.Blame == "wifi" || d.Blame == "home" || d.Blame == "pc") + " in my home or PC.");
             if (dips.Count > 0)
             {

@@ -26,7 +26,7 @@ namespace AdeeboMeter
                     case "bullbear": case "dip": case "recession":
                         {
                             // a made-up 20-year index: two bears, a few corrections
-                            double[] v = { 100, 112, 125, 121, 140, 158, 150, 103, 118, 140, 165, 180, 172, 196, 214, 200, 168, 190, 222, 250, 268 };
+                            double[] v = { 100, 112, 125, 121, 140, 158, 150, 103, 118, 140, 165, 180, 172, 196, 214, 200, 158, 190, 222, 250, 268 };   // bug-hunt ML-168: the second bear really is -21% (200 to 158)
                             double max = v.Max() * 1.08, min = v.Min() * 0.85; Func<int, float> X = i => cx0 + cw * i / (v.Length - 1); Func<double, float> Y = q => cy0 + ch - (float)((q - min) / (max - min)) * ch;
                             if (pic == "recession") { var rr = new RectangleF(X(6), cy0, X(9) - X(6), ch); Theme.Fill(g, rr, 6 * S, Theme.LvSoft(2)); VTextC(g, L.T("recession"), Draw.fTiny, Theme.LvText(2), (X(6) + X(9)) / 2, cy0 + 2 * S, X(9) - X(6)); }
                             for (int i = 1; i < v.Length; i++)
@@ -34,7 +34,7 @@ namespace AdeeboMeter
                                 bool bear = (i == 7 || i == 16), corr = !bear && v[i] < v[i - 1];
                                 using (var p = new Pen(bear ? Theme.Red : corr ? Theme.Amber : Theme.Green, 3 * S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) g.DrawLine(p, X(i - 1), Y(v[i - 1]), X(i), Y(v[i]));
                             }
-                            VText(g, pic == "dip" ? L.T("amber: dips of 10% or so - normal weather") : L.T("green: bull years"), Draw.fSmall, pic == "dip" ? Theme.LvText(1) : Theme.LvText(0), r.X + 18 * S, r.Bottom - 30 * S);
+                            VText(g, pic == "dip" ? L.T("amber: small dips (3-7%) - normal weather") : L.T("green: bull years"), Draw.fSmall, pic == "dip" ? Theme.LvText(1) : Theme.LvText(0), r.X + 18 * S, r.Bottom - 30 * S);
                             VText(g, L.T("red: bear markets (-20% or more)"), Draw.fSmall, Theme.LvText(2), r.X + 280 * S, r.Bottom - 30 * S);
                             break;
                         }

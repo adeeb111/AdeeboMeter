@@ -11,13 +11,36 @@ namespace AdeeboMeter
     // and the whole answer has a total deadline.
     static class HttpSmall
     {
+        // SEC-06 (security hunt): redirects are followed by hand, and only on the same site and never from https down to http -
+        // so no request (and no key header) ever goes to a host that wasn't asked for, instead of refusing the data afterwards
+        public static HttpWebResponse SameSite(Uri u, Func<Uri, HttpWebRequest> make)
+        {
+            string host = u.Host; bool secure = u.Scheme == "https";
+            for (int hop = 0; hop <= 3; hop++)
+            {
+                var q = make(u); q.AllowAutoRedirect = false; HttpWebResponse r;
+                try { r = (HttpWebResponse)q.GetResponse(); }
+                catch (WebException we) { var er = we.Response as HttpWebResponse; if (er == null || (int)er.StatusCode < 300 || (int)er.StatusCode >= 400) throw; r = er; }
+                int code = (int)r.StatusCode; string loc = r.Headers["Location"];
+                if (code < 300 || code >= 400 || loc == null) return r;
+                r.Close(); Uri next;
+                if (!Uri.TryCreate(u, loc, out next) || !string.Equals(next.Host, host, StringComparison.OrdinalIgnoreCase) || (secure && next.Scheme != "https") || (next.Scheme != "https" && next.Scheme != "http"))
+                    throw new InvalidDataException("the site redirected somewhere else (" + (next != null ? next.Host : "?") + ") - not followed");   // bug-hunt L-39, before the request now
+                u = next;
+            }
+            throw new InvalidDataException("too many redirects");
+        }
+        // a compressed answer this Windows can't unpack (a filter or proxy re-encoding it) gets one more try, uncompressed (24 Nov)
         public static string Get(string url, int maxKb, string header, string value)
         {
-            var q = (HttpWebRequest)WebRequest.Create(url); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
-            q.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            if (header != null) q.Headers[header] = value;
+            try { return Get1(url, maxKb, header, value, false); }
+            catch (InvalidDataException e) { if (e.Message.IndexOf("decod", StringComparison.OrdinalIgnoreCase) < 0 && e.Message.IndexOf("magic number", StringComparison.OrdinalIgnoreCase) < 0) throw; return Get1(url, maxKb, header, value, true); }
+        }
+        static string Get1(string url, int maxKb, string header, string value, bool plain)
+        {
             var deadline = DateTime.UtcNow.AddSeconds(20);
-            using (var r = q.GetResponse()) using (var s = r.GetResponseStream())
+            using (var r = SameSite(new Uri(url), x => { var q = (HttpWebRequest)WebRequest.Create(x); q.Timeout = 10000; q.ReadWriteTimeout = 10000; q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = Proxy(); if (plain) q.Headers[HttpRequestHeader.AcceptEncoding] = "identity"; else q.AutomaticDecompression = DecompressionMethods.GZip;   /* gzip only: .NET Framework reads "deflate" as raw deflate, so a server sending zlib-wrapped deflate failed with "Found invalid data while decoding" (the weather search, 24 Nov) */ if (header != null) q.Headers[header] = value; return q; }))
+            using (var s = r.GetResponseStream())
             {
                 var buf = new byte[maxKb * 1024]; int got = 0, n;
                 while (got < buf.Length && (n = s.Read(buf, got, buf.Length - got)) > 0) { got += n; if (DateTime.UtcNow > deadline) throw new InvalidDataException("answer too slow"); }
@@ -26,5 +49,24 @@ namespace AdeeboMeter
             }
         }
         public static string Get(string url, int maxKb) { return Get(url, maxKb, null, null); }
+        // Windows' proxy, signed in as you: a company proxy that asks who you are (407) gets your Windows sign-in, as Edge does
+        public static IWebProxy Proxy() { var p = WebRequest.GetSystemWebProxy(); if (p != null) p.Credentials = CredentialCache.DefaultCredentials; return p; }
+        // why a request failed, in words (the weather place search said only "couldn't reach")
+        public static string Why(Exception e)
+        {
+            var we = e as WebException; var hr = we != null ? we.Response as HttpWebResponse : null;
+            if (hr != null) return (int)hr.StatusCode == 407 ? "a proxy asked for a sign-in (407)" : "it answered " + (int)hr.StatusCode;
+            if (we != null) switch (we.Status)
+                {
+                    case WebExceptionStatus.NameResolutionFailure: return "its name didn't resolve - DNS, or blocked on this network";
+                    case WebExceptionStatus.ProxyNameResolutionFailure: return "the proxy's name didn't resolve";
+                    case WebExceptionStatus.Timeout: return "no answer in 10 s";
+                    case WebExceptionStatus.TrustFailure: case WebExceptionStatus.SecureChannelFailure: return "the secure connection failed - something on this network checks HTTPS (a company filter?)";
+                    case WebExceptionStatus.ConnectFailure: return "the connection was refused or blocked";
+                    default: return we.Status.ToString();
+                }
+            if (e is InvalidDataException) return e.Message;   // our own reasons ("redirected somewhere else", "answer too large") - not just the type (24 Nov: the weather search said only "InvalidDataException")
+            return e.GetType().Name;
+        }
     }
 }

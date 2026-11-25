@@ -29,7 +29,7 @@ namespace AdeeboMeter
             if (s.Contains("-----BEGIN") || (s.Length > 40 && Regex.IsMatch(s, @"^[A-Za-z0-9+/=\s]+$"))) { label = "pasted text"; return Encoding.ASCII.GetBytes(s); }
             try
             {
-                if (s.StartsWith(@"\\", StringComparison.Ordinal) || s.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(s)) { rows.Add(R(2, "File", "type the file's full path, e.g. C:\\certs\\server.cer", "Network paths (\\\\server\\share) aren't read - copy the file here first.", "u")); return null; }
+                if (NetPath.Is(s) || s.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(s)) { rows.Add(R(2, "File", "type the file's full path, e.g. C:\\certs\\server.cer", "Network paths (\\\\server\\share) aren't read - copy the file here first.", "u")); return null; }
                 var fi = new FileInfo(s); if (!fi.Exists) { rows.Add(R(2, "File", "not found: " + Draw.Trunc(s, 80), "", "u")); return null; }
                 if (fi.Length > MaxFile) { rows.Add(R(2, "File", "bigger than 1 MB - not a certificate", "", "u")); return null; }
                 label = fi.Name; return File.ReadAllBytes(fi.FullName);
@@ -54,11 +54,11 @@ namespace AdeeboMeter
         {
             var now = DateTime.Now; double left = (c.NotAfter - now).TotalDays; int days = (int)Math.Floor(left);
             bool expired = now > c.NotAfter, early = now < c.NotBefore;
-            rows.Add(R(expired || (!early && days < 30) ? 2 : early ? 3 : 0, label, c.GetNameInfo(X509NameType.SimpleName, false) + " - " + Verdict(c), "", "m"));
+            rows.Add(R(expired || early || days < 30 ? 2 : 0, label,   /* bug-hunt ML-92: not valid yet is refused today, like expired */ c.GetNameInfo(X509NameType.SimpleName, false) + " - " + Verdict(c), "", "m"));
             rows.Add(R(3, "Subject", c.Subject, "Who it is for.", "m"));
             bool self = c.Subject == c.Issuer;
             rows.Add(R(3, "Issued by", c.Issuer + (self ? " (itself - self-signed)" : ""), self ? "Who vouches for it - here, nobody but itself: apps trust it only if it's added to their trust list (normal for devices and private CAs)." : "Who vouches for it.", "m"));
-            rows.Add(R(expired ? 2 : early ? 3 : days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + Math.Max(1, -days) + " days ago" : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
+            rows.Add(R(expired || early || days < 30 ? 2 : 0, "Valid", c.NotBefore.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " to " + c.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + (expired ? " · EXPIRED " + CertChain.ExpiredAgo(c.NotAfter, now).Substring(8) : early ? " · not valid yet (starts in " + Math.Max(1, (int)Math.Ceiling((c.NotBefore - now).TotalDays)) + " days)" : " · expires in " + days + " days"),
                 early ? "Its start date is still ahead - or this PC's clock is behind." : "Outside these dates every app refuses it.", "m"));
             string ka = KeyName(c); int bits = KeyBits(c);
             rows.Add(R(ka == "RSA" && bits > 0 && bits < 2048 ? 1 : 3, "Key", ka + (bits > 0 ? (ka == "ECDSA" ? " P-" + bits : " " + bits) : ""), ka == "RSA" && bits > 0 && bits < 2048 ? "Under 2048 bits is weak; most systems refuse it now." : "The public half of the key pair - the server proves it holds the private half.", "m"));
@@ -83,7 +83,7 @@ namespace AdeeboMeter
         public static string Verdict(X509Certificate2 c)
         {
             var now = DateTime.Now; int days = (int)Math.Floor((c.NotAfter - now).TotalDays);
-            if (now > c.NotAfter) return Voice.P("expired " + Math.Max(1, -days) + " days ago. This pumpkin used to be a carriage.", "expired " + Math.Max(1, -days) + " days ago.");
+            if (now > c.NotAfter) { string ago = CertChain.ExpiredAgo(c.NotAfter, now); return Voice.P(ago + ". This pumpkin used to be a carriage.", ago + "."); }
             if (now < c.NotBefore) return Voice.P("not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ". It's from the future - or your clock is from the past.", "not valid until " + c.NotBefore.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + ".");
             if (days < 7) return Voice.P("expires in " + days + " day" + (days == 1 ? "" : "s") + ". This one is about to turn into a pumpkin.", "expires in " + days + " day" + (days == 1 ? "" : "s") + " - renew it now.");
             if (days < 30) return Voice.P("expires in " + days + " days. Time to book the renewal.", "expires in " + days + " days - renew it soon.");
@@ -165,7 +165,7 @@ namespace AdeeboMeter
         public static List<string[]> Hash(string path, string expected, Toolkit.Run run)
         {
             var rows = new List<string[]>(); string p = (path ?? "").Trim().Trim('"');
-            if (p == "" || p.StartsWith(@"\\", StringComparison.Ordinal) || p.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(p)) { rows.Add(R(2, "File", "type the file's full path - e.g. C:\\Downloads\\setup.exe", "Shift + right-click the file in Explorer › Copy as path.", "u")); return rows; }
+            if (p == "" || NetPath.Is(p) || p.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathRooted(p)) { rows.Add(R(2, "File", "type the file's full path - e.g. C:\\Downloads\\setup.exe", "Shift + right-click the file in Explorer › Copy as path.", "u")); return rows; }
             FileInfo fi; try { fi = new FileInfo(p); if (!fi.Exists) { rows.Add(R(2, "File", "not found", "", "u")); return rows; } } catch (Exception e) { if (!(e is ArgumentException || e is NotSupportedException || e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "File", Draw.Trunc(e.Message, 90), "", "u")); return rows; }
             // SHA-384 and SHA-512 too, when the pasted hash is that long (96 or 128 hex digits) - on request, not every time
             string ex = Regex.Replace(expected ?? "", @"(?<=\b[0-9a-fA-F]{2}) (?=[0-9a-fA-F]{2}\b)", "");
@@ -221,7 +221,7 @@ namespace AdeeboMeter
                 bool toPem = !t.Contains("-----BEGIN"); string src = input.Trim().Trim('"'), dir = Path.GetDirectoryName(src), stem = Path.GetFileNameWithoutExtension(src), ext = toPem ? ".pem" : ".der";
                 string outp = Path.Combine(dir, stem + ext); for (int i = 1; File.Exists(outp) && i < 100; i++) outp = Path.Combine(dir, stem + "-" + i + ext);
                 var bytes = toPem ? Encoding.ASCII.GetBytes("-----BEGIN CERTIFICATE-----\r\n" + Regex.Replace(Convert.ToBase64String(c.RawData), ".{64}", "$0\r\n").TrimEnd() + "\r\n-----END CERTIFICATE-----\r\n") : c.RawData;
-                try { using (var f = new FileStream(outp, FileMode.CreateNew, FileAccess.Write)) f.Write(bytes, 0, bytes.Length); }
+                try { SafeFile.WriteNew(outp, bytes); }   // bug-hunt ML-2
                 catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; rows.Add(R(2, "Couldn't write", Draw.Trunc(e.Message, 90), "", "m")); return rows; }
                 rows.Add(new[] { "0", toPem ? "PEM (text) written" : "DER (binary) written", outp, (certs.Count > 1 ? "Only the first of " + certs.Count + " certificates. " : "") + "PEM is the text form (-----BEGIN CERTIFICATE-----), DER the binary one - same certificate. Click to show it in its folder.", "m", "show:" + outp });
             }
@@ -274,7 +274,9 @@ namespace AdeeboMeter
         static string Oid(byte[] b, Der d)
         {
             if (d.Len < 1) return ""; var sb = new StringBuilder(); int f = b[d.Start]; sb.Append(f / 40 >= 2 ? 2 : f / 40).Append('.').Append(f / 40 >= 2 ? f - 80 : f % 40); long v = 0;
-            for (int i = d.Start + 1; i < d.End; i++) { v = (v << 7) + (b[i] & 0x7F); if ((b[i] & 0x80) == 0) { sb.Append('.').Append(v.ToString(CultureInfo.InvariantCulture)); v = 0; } }
+            bool open = false;   /* L-6: an arc too big for 63 bits, or cut off at the end, marks the OID as damaged */
+            for (int i = d.Start + 1; i < d.End; i++) { if (v > (long.MaxValue >> 7)) return sb.Append(".? (damaged)").ToString(); v = (v << 7) + (b[i] & 0x7F); open = (b[i] & 0x80) != 0; if (!open) { sb.Append('.').Append(v.ToString(CultureInfo.InvariantCulture)); v = 0; } }
+            if (open) sb.Append(".? (cut off)");
             return sb.ToString();
         }
         static readonly Dictionary<string, string> Algs = new Dictionary<string, string> {

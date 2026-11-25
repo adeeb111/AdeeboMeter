@@ -21,21 +21,23 @@ namespace AdeeboMeter
         public static List<DateTime> ChangeDays = new List<DateTime>();   // for the week heatmap: days something was installed
         public static string Strong = "";                                  // one line for the Overview when a match is strong (empty = none)
 
+        public static string LastErr = "";
         public static List<Change> Changes(int days)
         {
-            var l = new List<Change>(); string err;
+            var l = new List<Change>(); string err; LastErr = "";
             foreach (var e in EvLog.Recent("System", "Provider[@Name='Microsoft-Windows-WindowsUpdateClient'] and EventID=19", days * 24, 120, out err).Where(x => x.Text.IndexOf("Installation Successful", StringComparison.OrdinalIgnoreCase) >= 0 || EvLog.Field(x.Xml, "updateTitle") != ""))
             {
                 string t = EvLog.Field(e.Xml, "updateTitle");
                 if (Defender(t)) continue;   // Defender's definitions arrive every day: they'd match any bad week, and they don't touch networking
                 l.Add(new Change { T = e.T, What = t != "" ? Short(t) : "a Windows update", Kind = "update" });
             }
+            if (!string.IsNullOrEmpty(err)) LastErr = err;   /* review 1.1.6 P3 #15 */
             foreach (var e in EvLog.Recent("System", "Provider[@Name='Microsoft-Windows-UserPnp'] and EventID=20001", days * 24, 60, out err))
             {
                 // a driver that installed (status 0x0) for a device that can matter to the connection - not a USB stick,
                 // a phone, a printer or a mouse being plugged in
                 string text = Regex.Replace(e.Text ?? "", @"\s+", " ");
-                if (!Regex.IsMatch(text, @"status:?\s*0x0\b", RegexOptions.IgnoreCase) && text.IndexOf("0x0.", StringComparison.Ordinal) < 0) continue;
+                if (!Regex.IsMatch(text, @"status:?\s*0x0+\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(text, @"\b0x0+\.")) continue;   /* L-267: 0x00000000 too */
                 if (Regex.IsMatch(text, @"\b(USBSTOR|WPDBUSENUM|SWD\\WPDBUSENUM|HID|STORAGE|SCSI|USBPRINT|MONITOR|DISPLAY|BTHLEDEVICE|BTHENUM)\\", RegexOptions.IgnoreCase)) continue;
                 l.Add(new Change { T = e.T, What = "driver: " + Draw.Trunc(text, 90), Kind = "driver" });
             }
@@ -104,14 +106,16 @@ namespace AdeeboMeter
                 foreach (var c in ch.OrderByDescending(c => c.T).Take(20)) rows.Add(R(3, c.T.ToString("ddd d MMM", CultureInfo.CurrentCulture), c.What, "", "w"));
                 return rows;
             }
+            if (ch.Count == 0 && LastErr != "") { rows.Add(R(3, "Verdict", "couldn't read the Windows event log, so this can't tell what was installed", LastErr, "w")); return rows; }
             if (ch.Count == 0) { rows.Add(R(0, "Verdict", "nothing was installed in the last 14 days - if things got worse, it wasn't Windows Update", "", "w")); return rows; }
             // one finding per day (several updates often land together)
             var byDay = ch.GroupBy(c => c.T.Date).Select(gr => new Change { T = gr.First().T, What = string.Join(", ", gr.Select(c => c.What).Distinct().Take(3)) + (gr.Count() > 3 ? " and " + (gr.Count() - 3) + " more" : ""), Kind = gr.Any(c => c.Kind == "driver") ? "driver" : "update" }).OrderByDescending(c => c.T).ToList();
             var fs = byDay.Select(c => Compare(c, Day)).ToList();
             // the strongest match; among equals the EARLIEST change - the newest one can't have started something that was already there
-            var worst = fs.Where(f => f.Lv >= 1).OrderByDescending(f => f.Lv).ThenByDescending(f => f.Stayed).ThenBy(f => f.C.T).FirstOrDefault();
+            var worst = fs.Where(f => f.Lv == 1 || f.Lv == 2).OrderByDescending(f => f.Lv).ThenByDescending(f => f.Stayed).ThenBy(f => f.C.T).FirstOrDefault();
             int alsoStrong = worst != null && worst.Strong ? fs.Count(f => f.Strong && f != worst && Math.Abs((f.C.T.Date - worst.C.T.Date).TotalDays) <= 2) : 0;
-            if (worst == null) rows.Add(R(0, "Verdict", "none of the " + byDay.Count + " install days changed your connection - ping and drops stayed the same before and after", "Compared with AdeeboMeter's History: three days before each install against three days after.", "w"));
+            if (worst == null && fs.All(f => f.Lv == 3)) rows.Add(R(3, "Verdict", "not enough History yet to compare - AdeeboMeter needs about two days before and one day after an install", "Come back in a few days.", "w"));   /* review 1.1.6 P3 #6 */
+            else if (worst == null) rows.Add(R(0, "Verdict", "none of the " + byDay.Count + " install days changed your connection - ping and drops stayed the same before and after", "Compared with AdeeboMeter's History: three days before each install against three days after.", "w"));
             else rows.Add(R(worst.Lv, "Verdict", (worst.Strong ? "Things got worse starting the day after " : "A small change after ") + worst.C.What + " (" + worst.C.T.ToString("ddd d MMM", CultureInfo.CurrentCulture) + "): " + worst.Text, (alsoStrong > 0 ? "Something else was installed within two days of it too, so it could be either. " : "") + "It started then - that's not proof it's the cause (your provider can have a bad week too). To test it: " + (worst.C.Kind == "driver" ? "Device Manager › the device › Driver › Roll Back Driver." : "Settings › Windows Update › Update history › Uninstall updates.") + " If it gets better, that was it.", "w"));
             foreach (var f in fs) rows.Add(R(f.Lv, f.C.T.ToString("ddd d MMM", CultureInfo.CurrentCulture) + " · " + (f.C.Kind == "driver" ? "driver" : "update"), f.C.What + " - " + f.Text, "", "w"));
             rows.Add(R(3, "How", "Typical ping to the internet and outages per day from History, three days before each install against three days after. The install day itself is left out.", "", "i"));

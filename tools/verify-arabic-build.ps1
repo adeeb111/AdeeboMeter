@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 $rootArabic = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -9,6 +9,11 @@ $languageArabic.GetMethod('Use',$flagsArabic).Invoke($null,@('ar')) | Out-Null
 if($languageArabic.GetMethod('T',$flagsArabic).Invoke($null,@('Settings')) -ne 'الإعدادات'){throw 'Arabic lookup failed'}
 $expectedArabic = @([IO.File]::ReadAllLines((Join-Path $rootArabic 'knowledge/lang-ar.txt')) | Where-Object {$_ -and !$_.StartsWith('#') -and $_.Contains("`t")}).Count
 if($languageArabic.GetProperty('Count',$flagsArabic).GetValue($null,$null) -ne $expectedArabic){throw 'Embedded Arabic catalog differs from source'}
+# R2-182: every embedded translation must equal the source's (first) value - not only the count
+$srcPairs=@{}; foreach($l in [IO.File]::ReadAllLines((Join-Path $rootArabic 'knowledge/lang-ar.txt'))){ if($l -and !$l.StartsWith('#') -and $l.Contains("`t")){ $kv=$l.Split("`t",2); if(-not $srcPairs.ContainsKey($kv[0])){ $srcPairs[$kv[0]]=$kv[1] } } }
+$bad=0; foreach($k in $srcPairs.Keys){ $want=$srcPairs[$k]; if($want.Trim().Length -eq 0){ $bad++; continue }; if($languageArabic.GetMethod('T',$flagsArabic).Invoke($null,@($k)) -ne $want){ $bad++ } }
+if($bad -gt 0){throw "$bad embedded ar translations are empty or differ from the source"}
+
 $drawArabic = $assemblyArabic.GetType('AdeeboMeter.Draw')
 $drawArabic.GetMethod('Init',$flagsArabic).Invoke($null,@([single]1)) | Out-Null
 $drawArabic.GetMethod('UseArabicFonts',$flagsArabic).Invoke($null,@()) | Out-Null

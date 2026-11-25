@@ -12,3 +12,10 @@ class_name = "Room"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Room"]
+
+# bug-hunt ML-126: one count per address across all of Cloudflare (the in-memory count is per machine). 20 rooms a
+# minute is far above a person (a phone 20, a PC 6 are the in-memory limits) and far below a flood.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1002"
+simple = { limit = 20, period = 60 }

@@ -162,7 +162,7 @@ namespace AdeeboMeter
                         double x; try { x = CounterSample.Calculate(d1[i2.InstanceName].Sample, i2.Sample); } catch (InvalidOperationException) { continue; }
                         long l = luid(i2.InstanceName); if (l < 0) continue; double o; busy.TryGetValue(l, out o); busy[l] = Math.Min(100, o + x);
                         var pm = Regex.Match(i2.InstanceName, @"pid_(\d+)_"); int pid; if (x < 1 || !pm.Success || !int.TryParse(pm.Groups[1].Value, out pid)) continue;
-                        string nm; if (!names.TryGetValue(pid, out nm)) { nm = "pid " + pid; try { using (var p = Process.GetProcessById(pid)) nm = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } names[pid] = nm; }
+                        string nm; if (!names.TryGetValue(pid, out nm)) { nm = "pid " + pid; try { using (var p = Process.GetProcessById(pid)) nm = p.ProcessName; } catch (ArgumentException) { } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }   /* bug-hunt ML-160: an elevated process keeps its pid as the name */ names[pid] = nm; }
                         Dictionary<string, double> a; if (!apps.TryGetValue(l, out a)) apps[l] = a = new Dictionary<string, double>(); double ao; a.TryGetValue(nm, out ao); a[nm] = ao + x;
                     }
                 var ded = new Dictionary<long, double>(); var sh = new Dictionary<long, double>();
@@ -217,7 +217,7 @@ namespace AdeeboMeter
             rows.Add(R(3, "Internet (last speed test)", double.IsNaN(plan) ? "no speed test yet this session - Toolbox > Speed test" : F(plan) + " Mbps = " + F(plan / 8) + " MB/s", "", double.IsNaN(plan) ? "u" : "m"));
             if (!double.IsNaN(s.NicMbps)) rows.Add(R(!double.IsNaN(plan) && s.NicMbps < plan * 1.1 ? 2 : s.NicMbps <= 100 && s.NicKind == "Cable" ? 1 : 0, "This PC's link", s.NicKind + " · " + F(s.NicMbps) + " Mbps" + (s.Nic != "" ? " (" + Cutl(s.Nic, 40) + ")" : ""),
                 s.NicKind == "Cable" && s.NicMbps <= 100 ? "A cable link at 100 Mbps: a damaged cable (one of 4 pairs broken), an old cable, or a 100 Mbps port. Most PCs and routers do 1,000." : !double.IsNaN(plan) && s.NicMbps < plan * 1.1 ? "Your link can't carry your plan - it's the cap, not your ISP." : "", "w"));
-            if (rate > 0) rows.Add(R(!double.IsNaN(plan) && rate < plan * 1.4 ? 1 : 0, "Wi-Fi link rate", rate + " Mbps (real throughput is about 60% of this)", !double.IsNaN(plan) && rate < plan * 1.4 ? "Wi-Fi delivers about 60% of its link rate, so this Wi-Fi can't reach your plan - closer to the router, 5 GHz, or a cable." : "", "w"));
+            if (rate > 0) rows.Add(R(!double.IsNaN(plan) && rate * 0.6 < plan * 1.1 ? 1 : 0, "Wi-Fi link rate",   /* bug-hunt ML-164: judged by the verdict's own 60% rule */ rate + " Mbps (real throughput is about 60% of this)", !double.IsNaN(plan) && rate * 0.6 < plan * 1.1 ? "Wi-Fi delivers about 60% of its link rate, so this Wi-Fi can't reach your plan - closer to the router, 5 GHz, or a cable." : "", "w"));
             if (Regex.IsMatch(s.Nic, @"USB 2|USB2", RegexOptions.IgnoreCase)) rows.Add(R(1, "USB adapter", "a USB 2 network adapter tops out near 300 Mbps", "Plug it into a blue USB 3 port, or use a USB 3 adapter.", "w"));
             // the disk can be the slowest part of a download: 1 Gbps internet = 125 MB/s. No speed test yet: no disk work either (PC-030)
             if (double.IsNaN(plan)) { rows.Insert(0, R(3, "Verdict", "Run a speed test first (Toolbox > Speed test); then this compares your plan with every part on the way to your files.", "", "u")); rows.Add(R(3, "How the link works", Explain("net", s), "", "i")); return rows; }
@@ -243,7 +243,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); var s = HwSpecs.Get(); var sd = HwSpecs.SystemDisk(s);
             var v = PcHealth.Sample(); Thread.Sleep(900); v = PcHealth.Sample();
             Func<string, double> c = k => { double x; return v.TryGetValue(k, out x) ? x : double.NaN; };
-            double cpu = m.Cpu.Avg(10), mem = m.Mem.Last, faults = c("faults"), commit = c("commit"), limit = c("limit"), dms = c("diskms"), q = c("queue"), perf = c("perf"), dpc = c("dpc") + c("intr"), busy = 100 - c("idle");
+            double cpu = m.Cpu.Avg(10), mem = m.Mem.Last, faults = c("faults"), commit = c("commit"), limit = c("limit"), dms = c("diskms"), q = c("queue"), perf = c("perf"), dpc = c("dpc") + c("intr"), busy = Math.Max(0, Math.Min(100, 100 - c("idle")));
             if (double.IsNaN(cpu)) cpu = m.Cpu.Last;
             List<AppStat> apps; lock (m.L) apps = m.Apps.Where(a => a.Name != "Idle" && a.Name != "_Total").ToList();
             Func<AppStat, string> who = a => { var e = global::AdeeboMeter.Explain.Find(a.Name); string nm = e != null && !string.IsNullOrEmpty(e.Friendly) ? e.Friendly : a.Name; return nm + (a.Count > 1 ? " (" + a.Count + " processes" + (e != null && (e.Tag ?? "").IndexOf("tab", StringComparison.OrdinalIgnoreCase) >= 0 ? "; one per tab" : "") + ")" : ""); };
@@ -331,7 +331,7 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); var s = HwSpecs.Get();
             double days = (DateTime.Now - s.Boot).TotalDays;
-            rows.Add(R(days > 14 ? 1 : 0, "Last restart", days < 1 ? "today" : F(Math.Floor(days)) + " days ago", days > 14 ? "Windows collects leaks and half-done updates over weeks. A real restart (not shut down - Fast Startup keeps the old state) clears them." : "", "w"));
+            rows.Add(R(days > 14 ? 1 : 0, "Last restart", days < 1 ? "today" : F(Math.Floor(days)) + (Math.Floor(days) == 1 ? " day ago" : " days ago"), days > 14 ? "Windows collects leaks and half-done updates over weeks. A real restart (not shut down - Fast Startup keeps the old state) clears them." : "", "w"));
             if (s.RestartPending) rows.Add(R(1, "Restart waiting", "an update is waiting for a restart", "Until then the update stays half done, and Windows keeps working on it in the background.", "w"));
             rows.Add(R(s.Startup.Count > 12 ? 1 : 0, "Start with Windows", s.Startup.Count + " programs" + (s.Startup.Count > 0 ? ": " + string.Join(", ", s.Startup.Take(6).ToArray()) + (s.Startup.Count > 6 ? " …" : "") : ""), s.Startup.Count > 12 ? "Each one slows the start and sits in memory. Task Manager > Startup apps turns them off (they still work when you open them)." : "", "w"));
             // browsers: dozens of processes, one bill
@@ -348,20 +348,21 @@ namespace AdeeboMeter
             try { var di = new DriveInfo(HwSpecs.SystemLetter()); double fr = (double)di.AvailableFreeSpace / di.TotalSize; rows.Add(R(fr < 0.1 ? 2 : fr < 0.15 ? 1 : 0, "Free space on " + di.Name.TrimEnd('\\'), (fr * 100).ToString("0", CultureInfo.CurrentCulture) + "% free", fr < 0.15 ? "An SSD slows down when nearly full, and Windows can't update. Toolbox > Where did my space go?" : "", "w")); } catch (IOException) { } catch (ArgumentException) { }
             rows.Add(R(s.RamGb < 8 ? 1 : 0, "Memory", Gb(s.RamGb) + " · " + HwSpecs.ChText(s), s.RamGb < 8 ? "8 GB is the comfortable minimum for Windows and a browser." : "", "w"));
             var errs = Errors(30); int bad = errs.Sum(e => e.Item3);
-            rows.Add(R(errs.Any(e => e.Item1 == "disk" && e.Item3 > 0) ? 2 : bad > 0 ? 1 : 0, "Hardware errors (30 days)", bad == 0 ? "none" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + e.Item2).ToArray()), bad > 0 ? "Disk errors mean a failing disk or cable - back up now. Sudden power-offs mean a crash, overheating or a weak battery / charger." : "", "w"));
+            rows.Add(R(errs.Any(e => e.Item1 == "disk" && e.Item3 > 0) ? 2 : bad > 0 ? 1 : 0, "Hardware errors (30 days)", bad == 0 ? "none" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), bad > 0 ? "Disk errors mean a failing disk or cable - back up now. Sudden power-offs mean a crash, overheating or a weak battery / charger." : "", "w"));
             string pat = PcRecord.Pattern(); if (pat != "") rows.Add(R(3, "When it felt slow", pat, "", "m"));
             var top = rows.Where(x => x[0] == "2").Concat(rows.Where(x => x[0] == "1")).FirstOrDefault();
             rows.Insert(0, R(top == null ? 0 : int.Parse(top[0], CultureInfo.InvariantCulture), "Verdict", top == null ? "None of the usual hidden causes: restarted recently, few startup apps, an SSD with room, no hardware errors." : "The likeliest hidden cause: " + top[1].ToLowerInvariant() + " - " + top[2] + ". " + top[3], "", "i"));
             return rows;
         }
+        static string Singular(string w) { return w.EndsWith("errors", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w.EndsWith("power-offs", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w.EndsWith("resets", StringComparison.Ordinal) ? w.Substring(0, w.Length - 1) : w; }   // "1 sudden power-off", not "1 sudden power-offs"
         // (key, words, count): disk errors, controller resets, hardware errors (WHEA), sudden power-offs - the System log, no admin
         internal static List<Tuple<string, string, int>> Errors(int days)
         {
             long ms = days * 86400000L;
             var q = new[] {
-                Tuple.Create("disk", "disk errors", "*[System[(Provider[@Name='disk'] or Provider[@Name='Ntfs']) and (EventID=7 or EventID=11 or EventID=51 or EventID=55 or EventID=153) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
+                Tuple.Create("disk", "disk errors", "*[System[(Provider[@Name='disk'] or Provider[@Name='Ntfs']) and (EventID=7 or EventID=11 or EventID=55 or EventID=153) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
                 Tuple.Create("reset", "disk controller resets", "*[System[(Provider[@Name='stornvme'] or Provider[@Name='storahci'] or Provider[@Name='iaStorAC'] or Provider[@Name='iaStorA']) and (EventID=129 or EventID=11) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
-                Tuple.Create("whea", "hardware errors (WHEA)", "*[System[Provider[@Name='Microsoft-Windows-WHEA-Logger'] and (Level=1 or Level=2 or Level=3) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
+                Tuple.Create("whea", "hardware errors (WHEA)", "*[System[Provider[@Name='Microsoft-Windows-WHEA-Logger'] and (Level=1 or Level=2) and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]"),
                 Tuple.Create("power", "sudden power-offs", "*[System[Provider[@Name='Microsoft-Windows-Kernel-Power'] and EventID=41 and TimeCreated[timediff(@SystemTime) <= " + ms + "]]]") };
             var r = new List<Tuple<string, string, int>>();
             foreach (var x in q)
@@ -393,7 +394,7 @@ namespace AdeeboMeter
             rows.Add(R(3, "Processor", (s.Cpu == "" ? "?" : s.Cpu) + " · " + s.Cores + "C/" + s.Threads + "T · " + F(m.Cpu.Last) + "% busy now" + (double.IsNaN(perf) ? "" : " · " + F(perf) + "% speed under load (last test)"), "", "w"));
             rows.Add(R(s.Channels == 1 ? 1 : 3, "Memory", Gb(s.RamGb) + " " + HwSpecs.RamTypeOf(s) + " · " + HwSpecs.ChText(s) + " · ceiling " + F(rc) + " GB/s" + (double.IsNaN(ram) ? "" : " · measured " + F(ram)) + " · " + F(m.Mem.Last) + "% in use", "", "w"));
             foreach (var d in s.Disks.Take(3)) { string w; double c = HwSpecs.DiskCeiling(d, out w); rows.Add(R(d.Media == "HDD" && d.System ? 1 : 3, "Disk" + (d.Letters != "" ? " " + d.Letters : ""), d.Name + " · " + (d.Media == "" ? d.Bus : d.Media + " " + d.Bus) + (d.MaxWidth > 0 ? " · PCIe " + d.LinkGen + ".0 x" + d.LinkWidth : "") + " · ceiling " + F(c) + " MB/s" + (d.System && !double.IsNaN(dr) ? " · measured " + F(dr) + " read / " + F(dwr) + " write" : ""), "", "w")); }
-            if (!double.IsNaN(busy)) rows.Add(R(busy > 90 ? 1 : 0, "Disk now", F(busy) + "% busy · " + F(bytes / 1048576) + " MB/s moving", "", "m"));
+            if (!double.IsNaN(busy)) rows.Add(R(busy > 90 ? 1 : 0, "Disk now", F(Math.Max(0, Math.Min(100, busy))) + "% busy · " + F(bytes / 1048576) + " MB/s moving", "", "m"));
             foreach (var g in s.Gpus.Where(g => !g.Software)) rows.Add(R(3, g.Integrated ? "Built-in graphics" : "Graphics card", g.Name + " · " + (g.Integrated ? "borrows up to " + Gb(g.SharedMb / 1024) : Gb(g.DedicatedMb / 1024) + " own memory") + (g.MaxWidth > 0 ? " · PCIe " + g.LinkGen + ".0 x" + g.LinkWidth + " (max x" + g.MaxWidth + ")" : ""), "", "w"));
             rows.Add(R(3, "Network", (s.NicKind == "" ? "?" : s.NicKind) + " · " + F(s.NicMbps) + " Mbps link · " + F(m.Down.Last) + " Mb/s down now", "", "w"));
             // every part explained in its own numbers (the advice line under each row)
@@ -401,6 +402,10 @@ namespace AdeeboMeter
             // the narrowest pipe, from what's measured or specified
             string neck = sd != null && sd.Media == "HDD" && sd.System ? "the spinning hard disk Windows runs from" : s.Channels == 1 && s.Gpus.Any(g => g.Integrated) && !s.Gpus.Any(g => !g.Integrated && !g.Software) ? "single-channel memory shared with the built-in graphics"
                 : !double.IsNaN(dwr) && !double.IsNaN(dc) && dwr < dc * 0.3 ? "the disk's write speed (" + F(dwr) + " of " + F(dc) + " MB/s)" : s.RamGb < 8 ? "the amount of memory (" + Gb(s.RamGb) + ")" : !double.IsNaN(perf) && perf < 70 ? "the processor held back to " + F(perf) + "%" : "";
+            // bug-hunt ML-152: the network is a pipe too - a slow link to the router, or a slow internet in the last speed test
+            var st0 = SpeedTest.Last;
+            if (neck == "" && s.NicMbps > 0 && s.NicMbps < 100) neck = "the network link (" + F(s.NicMbps) + " Mbps to your router)";
+            else if (neck == "" && st0 != null && !double.IsNaN(st0.Down) && st0.Down < 25) neck = "your internet connection (" + F(st0.Down) + " Mb/s in the last speed test)";
             rows.Insert(0, R(neck == "" ? 0 : 1, "Narrowest pipe", neck == "" ? "nothing stands out - the parts are balanced" + (double.IsNaN(dr) ? " (run Disk speed and CPU held back? for measured numbers)" : "") : neck, "", "i"));
             return rows;
         }
@@ -409,6 +414,9 @@ namespace AdeeboMeter
         internal static List<string[]> Laptop(Monitor m, string seller, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var s = HwSpecs.Get(); var bad = new List<string>();
+            // deep test (23 Nov): it ignored Stop for over a minute - each step now checks it, and a stopped check says so
+            Func<bool> stopped = () => run != null && run.Stop;
+            Func<List<string[]>> halt = () => { rows.Insert(0, R(3, "Stopped", "the check was stopped before it finished - the rows below are what it had", "", "i")); return rows; };
             Action<string> sec = t => rows.Add(R(-1, t, "", "", ""));
             Action<List<string[]>, string> take = (src, title) => { var v = src.FirstOrDefault(x => x[1] == "Verdict"); if (v != null) { rows.Add(R(int.Parse(v[0], CultureInfo.InvariantCulture), title, v[2], v[3], v[4])); if (v[0] == "2" || v[0] == "1") bad.Add(title.ToLowerInvariant() + ": " + Cutl(v[2], 90)); } foreach (var x in src.Where(x => x[1] != "Verdict" && x[0] != "3" && x[0] != "-1").Take(4)) rows.Add(x); };
             sec("WHAT'S INSIDE");
@@ -418,6 +426,7 @@ namespace AdeeboMeter
             foreach (var d in s.Disks.Where(d => d.Bus != "USB" && d.Bus != "Virtual").Take(2)) rows.Add(R(d.Health == 0 ? 3 : d.Health == 1 ? 1 : d.Health == 2 ? 2 : 3, "Disk", d.Name + " · " + F(d.Gb) + " GB " + d.Media + " " + d.Bus + (d.Health == 1 ? " · Windows: WARNING" : d.Health == 2 ? " · Windows: UNHEALTHY" : ""), "", "w"));
             foreach (var g in s.Gpus.Where(g => !g.Software)) rows.Add(R(3, g.Integrated ? "Built-in graphics" : "Graphics card", g.Name + (g.Integrated ? "" : " · " + Gb(g.DedicatedMb / 1024)), "", "w"));
             if (!string.IsNullOrWhiteSpace(seller)) foreach (var x in Seller(seller, s)) { rows.Add(x); if (x[0] == "2") bad.Add(x[1] + ": " + x[2]); }
+            if (stopped()) return halt();
             sec("BATTERY");
             double de, fu; int cy; HwSpecs.Battery(out de, out fu, out cy);
             if (double.IsNaN(de) || double.IsNaN(fu) || de <= 0) rows.Add(R(3, "Battery health", System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus == System.Windows.Forms.BatteryChargeStatus.NoSystemBattery ? "no battery" : "Windows didn't report it - run 'powercfg /batteryreport' in a terminal", "", "u"));
@@ -426,14 +435,18 @@ namespace AdeeboMeter
                 double h = 100 * fu / de; rows.Add(R(h < 60 ? 2 : h < 80 ? 1 : 0, "Battery health", F(h) + "% of new (" + F(fu / 1000) + " of " + F(de / 1000) + " Wh)" + (cy > 0 ? " · " + cy + " charge cycles" : ""), h < 80 ? "Below 80% the battery runs noticeably shorter; a replacement costs real money - count it in the price." : "", "w"));
                 if (h < 80) bad.Add("battery at " + F(h) + "% of new");
             }
+            if (stopped()) return halt();
             sec("DISK"); take(DiskSpeed("", true, run), "Disk speed");
-            var wear = HwSpecs.Wear();
-            if (wear != null) rows.Add(R(wear[0] > 50 || wear[3] > 0 ? 2 : wear[0] > 20 ? 1 : 0, "Disk wear", F(wear[0]) + "% worn · " + F(wear[1]) + " hours used" + (wear[2] > 0 ? " · " + F(wear[2]) + " °C" : "") + (wear[3] > 0 ? " · " + F(wear[3]) + " read errors" : "") + (wear[0] > 0 && wear[1] > 0 ? " · at this pace ≈ " + F((100 - wear[0]) / wear[0] * wear[1] / 2000) + " more years (2,000 h a year)" : ""), "", "w"));
+            if (stopped()) return halt();
+            var wsd = HwSpecs.SystemDisk(HwSpecs.Get()); var wear = HwSpecs.Wear(wsd != null && wsd.DeviceId != "" ? wsd.DeviceId : null);
+            if (wear != null) rows.Add(R(wear[0] > 50 || wear[3] > 0 ? 2 : wear[0] > 20 ? 1 : 0, "Disk wear" + (wsd != null && wsd.DeviceId != "" ? " (" + wsd.Name + ", Windows' disk)" : ""), F(wear[0]) + "% worn · " + F(wear[1]) + " hours used" + (wear[2] > 0 ? " · " + F(wear[2]) + " °C" : "") + (wear[3] > 0 ? " · " + F(wear[3]) + " read errors" : "") + (wear[0] > 0 && wear[1] > 0 ? " · at this pace ≈ " + F((100 - wear[0]) / wear[0] * wear[1] / 2000) + " more years (2,000 h a year)" : ""), "", "w"));
             else rows.Add(R(3, "Disk wear", "needs admin - right-click AdeeboMeter > Run as administrator to see wear %, hours used and temperature", "", "u"));
-            sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); take(Gpu(), "Graphics"); take(Cpu(run), "Processor");
+            if (stopped()) return halt();
+            sec("MEMORY, GRAPHICS, PROCESSOR"); take(Ram(run), "Memory"); if (stopped()) return halt(); take(Gpu(), "Graphics"); if (stopped()) return halt(); take(Cpu(run), "Processor");
+            if (stopped()) return halt();
             sec("HIDDEN TROUBLE");
             var errs = Errors(30); int nbad = errs.Sum(e => e.Item3);
-            rows.Add(R(errs.Any(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0) ? 2 : nbad > 0 ? 1 : 0, "Errors in 30 days", nbad == 0 ? "none - no disk, hardware or power-off errors" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + e.Item2).ToArray()), nbad > 0 ? "Ask the seller about these. Disk errors = a failing disk; sudden power-offs = crashes, heat or the battery." : "", "w"));
+            rows.Add(R(errs.Any(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0) ? 2 : nbad > 0 ? 1 : 0, "Errors in 30 days", nbad == 0 ? "none - no disk, hardware or power-off errors" : string.Join(" · ", errs.Where(e => e.Item3 > 0).Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), nbad > 0 ? "Ask the seller about these. Disk errors = a failing disk; sudden power-offs = crashes, heat or the battery." : "", "w"));
             if (nbad > 0) bad.Add("errors in the event log");
             rows.Add(R(3, "Hands-on", "test the screen, every key, the speakers and the mic with the buttons under this result - a camera test opens Windows' Camera app", "", "i"));
             int worst = rows.Where(x => x[0] != "3" && x[0] != "-1").Select(x => int.Parse(x[0], CultureInfo.InvariantCulture)).DefaultIfEmpty(0).Max();
@@ -444,17 +457,22 @@ namespace AdeeboMeter
         internal static List<string[]> Seller(string said, HwSpecs.Specs s)
         {
             var r = new List<string[]>(); said = said ?? "";
-            var ram = Regex.Match(said, @"(\d{1,3})\s*GB?\s*(?:RAM|DDR|memory|ram)?\b(?!\s*(?:SSD|HDD|NVMe|storage|disk))", RegexOptions.IgnoreCase);
-            var disk = Regex.Match(said, @"(\d(?:\.\d)?\s*TB|\d{3,4}\s*GB?)\s*(?:SSD|HDD|NVMe|storage|disk)", RegexOptions.IgnoreCase);
+            // bug-hunt ML-157: memory needs its word (16GB RAM, 16 GB DDR4) - or a bare size small enough to only be memory (8GB, 16GB, up to 64)
+            var ram = Regex.Match(said, @"(\d{1,3})\s*GB?\s*(?:RAM|DDR\d?|LPDDR\d?x?|memory)\b", RegexOptions.IgnoreCase);
+            if (!ram.Success) { var bare = Regex.Match(said, @"\b(\d{1,2})\s*GB\b(?!\s*(?:SSD|HDD|NVMe|M\.2|storage|disk|drive|hard|flash|eMMC))", RegexOptions.IgnoreCase); if (bare.Success && int.Parse(bare.Groups[1].Value, CultureInfo.InvariantCulture) <= 64) ram = bare; }
+            var disk = Regex.Match(said, @"(?<![0-9.,])([0-9](?:[.,][0-9])?\s*T[BO]|[0-9]{3,4}\s*G[BO]?)\s*(?:SSD|HDD|NVMe|storage|disk|disque|disco)", RegexOptions.IgnoreCase);
             var cpu = Regex.Match(said, @"\b(i[3579]|ryzen\s*[3579]|core\s*ultra\s*[3579]|celeron|pentium|m[1-4])\b", RegexOptions.IgnoreCase);
             var gpu = Regex.Match(said, @"\b(rtx|gtx|rx)\s*\d{3,4}\w*", RegexOptions.IgnoreCase);
             if (ram.Success) { double want = double.Parse(ram.Groups[1].Value, CultureInfo.InvariantCulture); bool ok = Math.Abs(s.RamGb - want) <= Math.Max(1, want * 0.1); r.Add(R(ok ? 0 : 2, "Seller said: " + want + " GB memory", ok ? "matches (" + Gb(s.RamGb) + ")" : "this PC has " + Gb(s.RamGb), "", "w")); }
             if (disk.Success)
             {
-                string t = disk.Groups[1].Value.ToUpperInvariant().Replace(" ", ""); double want = t.EndsWith("TB", StringComparison.Ordinal) ? double.Parse(t.Replace("TB", ""), CultureInfo.InvariantCulture) * 1000 : double.Parse(Regex.Replace(t, "[^0-9]", ""), CultureInfo.InvariantCulture);
-                double have = s.Disks.Where(d => d.Bus != "USB").Select(d => d.Gb).DefaultIfEmpty(0).Max(); bool ok = have >= want * 0.9 && have <= want * 1.15;
-                bool ssdSaid = Regex.IsMatch(disk.Value, "SSD|NVMe", RegexOptions.IgnoreCase); var sd = HwSpecs.SystemDisk(s); bool hdd = sd != null && sd.Media == "HDD";
-                r.Add(R(ok && !(ssdSaid && hdd) ? 0 : 2, "Seller said: " + disk.Value.Trim(), (ok ? "size matches (" + F(have) + " GB)" : "this PC's disk is " + F(have) + " GB") + (ssdSaid && hdd ? " - but it's a spinning hard disk, not an SSD" : ""), "", "w"));
+                string t = disk.Groups[1].Value.ToUpperInvariant().Replace(" ", ""); t = t.Replace(',', '.').Replace("TO", "TB").Replace("GO", "GB");   /* review 1.1.6 P4 #9: "1,5 TB" / "1,5 To" */
+                double want = t.EndsWith("TB", StringComparison.Ordinal) ? double.Parse(t.Replace("TB", ""), CultureInfo.InvariantCulture) * 1000 : double.Parse(Regex.Replace(t, "[^0-9]", ""), CultureInfo.InvariantCulture);
+                // bug-hunt ML-158: the disk that matches the size is the one checked for SSD too (a big data HDD beside a 512 GB system SSD is fine)
+                var cands = s.Disks.Where(d => d.Bus != "USB").ToList(); var md = cands.Where(d => d.Gb >= want * 0.9 && d.Gb <= want * 1.15).OrderBy(d => Math.Abs(d.Gb - want)).FirstOrDefault();
+                double have = md != null ? md.Gb : cands.Select(d => d.Gb).DefaultIfEmpty(0).Max(); bool ok = md != null;
+                bool ssdSaid = Regex.IsMatch(disk.Value, "SSD|NVMe", RegexOptions.IgnoreCase); var sd = md ?? HwSpecs.SystemDisk(s); bool hdd = sd != null && sd.Media == "HDD";
+                bool bigger = !ok && have > want * 1.15; r.Add(R((ok || bigger) && !(ssdSaid && hdd) ? 0 : 2, "Seller said: " + disk.Value.Trim(), (ok ? "size matches (" + F(have) + " GB)" : bigger ? "this PC's disk is bigger: " + F(have) + " GB" : "this PC's disk is " + F(have) + " GB") + (ssdSaid && hdd ? " - but it's a spinning hard disk, not an SSD" : ""), "", "w"));
             }
             if (cpu.Success) { string w = cpu.Groups[1].Value.Replace(" ", "").ToLowerInvariant(); bool ok = s.Cpu.Replace(" ", "").IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0; r.Add(R(ok ? 0 : 2, "Seller said: " + cpu.Value, ok ? "matches (" + s.Cpu + ")" : "this PC has " + s.Cpu, "", "w")); }
             if (gpu.Success) { bool ok = s.Gpus.Any(g => g.Name.Replace(" ", "").IndexOf(gpu.Value.Replace(" ", ""), StringComparison.OrdinalIgnoreCase) >= 0); r.Add(R(ok ? 0 : 2, "Seller said: " + gpu.Value, ok ? "matches" : "not found - this PC has " + string.Join(", ", s.Gpus.Where(g => !g.Software).Select(g => g.Name).ToArray()), "", "w")); }
@@ -479,9 +497,9 @@ namespace AdeeboMeter
             if (s.Channels == 1 && s.RamSticks > 0) rows.Add(R(1, "Memory channels", "single channel (" + Gb(s.RamGb) + ")", s.Soldered ? "Half the memory speed (soldered - can't be changed)." : "Half the memory speed: a second matching stick doubles it.", "w"));
             if (s.RamGb > 0 && s.RamGb < 8) rows.Add(R(1, "Memory size", Gb(s.RamGb), "Tight for Windows and a browser.", "w"));
             var errs = Errors(30); var de = errs.Where(e => (e.Item1 == "disk" || e.Item1 == "reset") && e.Item3 > 0).ToList();
-            if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + e.Item2).ToArray()), "A failing disk or cable - back up now.", "w"));
+            if (de.Count > 0) rows.Add(R(2, "Disk errors (30 days)", string.Join(" · ", de.Select(e => e.Item3 + " " + (e.Item3 == 1 ? Singular(e.Item2) : e.Item2)).ToArray()), "A failing disk or cable - back up now.", "w"));
             var pw = errs.FirstOrDefault(e => e.Item1 == "power"); if (pw != null && pw.Item3 > 0) rows.Add(R(1, "Sudden power-offs (30 days)", pw.Item3.ToString(CultureInfo.CurrentCulture), "Crashes, overheating or a weak battery / charger.", "w"));
-            double days = (DateTime.Now - s.Boot).TotalDays; if (days > 14) rows.Add(R(1, "Last restart", F(Math.Floor(days)) + " days ago", "A real restart clears weeks of leaks and half-done updates.", "w"));
+            double days = (DateTime.Now - s.Boot).TotalDays; if (days > 14) rows.Add(R(1, "Last restart", F(Math.Floor(days)) + (Math.Floor(days) == 1 ? " day ago" : " days ago"), "A real restart clears weeks of leaks and half-done updates.", "w"));
             if (s.RestartPending) rows.Add(R(1, "Restart waiting", "an update is waiting for a restart", "", "w"));
             var link = NetLinkIssue(m, s); if (link != null) rows.Add(link);
             return rows;

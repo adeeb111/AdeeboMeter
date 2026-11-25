@@ -13,7 +13,7 @@ namespace AdeeboMeter
     // fades back; anything that goes wrong puts the old view back - a switch never crashes the app.
     sealed partial class FullView
     {
-        DB viewSheet; string switchingTo, switchLine; DateTime switchAt; System.Windows.Forms.Timer switchTimer;
+        DB viewSheet; string switchingTo, switchLine; bool switchFailed; System.Windows.Forms.Timer switchTimer;
         // each view's colour and icon: the group it's for (combinations get both colours)
         static readonly Dictionary<string, string[]> ViewLook = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
@@ -103,7 +103,7 @@ namespace AdeeboMeter
                 g.DrawString(L.T(v[2]), Draw.fSmall, sb, new RectangleF(cx + 50 * S, cy + 24 * S, r.Right - cx - 68 * S, 34 * S), nf);   // two lines at most
             if (cur)
             {
-                string t = L.T("IN USE"); var ts = g.MeasureString(t, Draw.fTiny); var tr = new RectangleF(r.Right - ts.Width - 30 * S, r.Y + 16 * S, ts.Width + 14 * S, 20 * S);
+                string t = Kit.Sent("IN USE"); var ts = g.MeasureString(t, Draw.fTiny); var tr = new RectangleF(r.Right - ts.Width - 30 * S, r.Y + 16 * S, ts.Width + 14 * S, 20 * S);
                 Theme.Fill(g, tr, 10 * S, Kit.Accent(a1)); using (var tb = new SolidBrush(Theme.OnBlue)) g.DrawString(t, Draw.fTiny, tb, tr.X + 7 * S, tr.Y + (20 * S - ts.Height) / 2);
             }
             // the points: pages, pace, corner
@@ -115,7 +115,7 @@ namespace AdeeboMeter
                 for (int i = 0; i < pts.Length; i++)
                 {
                     using (var db = new SolidBrush(Kit.Accent(i == 1 ? a2 : a1))) g.FillEllipse(db, cx + 2 * S, cy + 5 * S, 7 * S, 7 * S);
-                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(pts[i][0].TrimEnd(' ', ':').ToUpperInvariant(), Draw.fTiny, mb, cx + 16 * S, cy);
+                    using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(pts[i][0].TrimEnd(' ', ':'), Draw.fTiny, mb, cx + 16 * S, cy);
                     cy += Draw.fTiny.GetHeight(g) + 1 * S;
                     var vr = new RectangleF(cx + 16 * S, cy, r.Right - cx - 34 * S, 2 * lh + 1); float vh = Math.Min(vr.Height, g.MeasureString(pts[i][1], Draw.fSmall, (int)vr.Width).Height);
                     using (var sb = new SolidBrush(Theme.Ink)) g.DrawString(pts[i][1], Draw.fSmall, sb, vr, nf);
@@ -135,7 +135,7 @@ namespace AdeeboMeter
             if (pages.Count == 0)   // a view that leaves the bar as it is: Home, its activity pages, Learn
             {
                 pages.Add(L.T("Home"));
-                foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Trading" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
+                foreach (var p in new[] { new[] { "gamer", "Gamer Zone" }, new[] { "stream", "Streaming" }, new[] { "trade", "Markets" } }) if (!("," + s.Hidden + ",").Contains("," + p[0] + ",")) pages.Add(L.T(p[1]));
                 pages.Add(L.T("Learn"));
             }
             if (s.Mode == "pro") pages.Add(L.T("every tool"));
@@ -149,7 +149,7 @@ namespace AdeeboMeter
         void RunSwitch(string id, bool reset)
         {
             if (switchingTo != null) return;   // one at a time
-            switchingTo = id; switchAt = DateTime.UtcNow; SetTipKey(null);
+            switchingTo = id; switchFailed = false; SetTipKey(null);
             string name = Views.NameOf(id);
             try { switchLine = Lines.Steady("view.switch", name) ?? ""; } catch (Exception e) { if (e is OutOfMemoryException) throw; switchLine = ""; }
             viewSheet.AutoScrollPosition = Point.Empty; viewSheet.Invalidate(); viewSheet.Update();   // the "switching" screen shows before the work starts
@@ -169,16 +169,16 @@ namespace AdeeboMeter
                     Program.Log("view switch to " + id + ": " + e.GetType().Name + " " + e.Message); err = e.Message;
                     try { Cfg.View = beforeId; Views.Put(before); Policy.Apply(); Cfg.Save(); AfterView(); } catch (Exception e2) { if (e2 is OutOfMemoryException) throw; Program.Log("view restore: " + e2.Message); }
                 }
-                if (err != null) switchLine = L.T("That didn't switch cleanly - your previous view is back, nothing lost.");
-                // stay long enough to read the line (at least 0.7 s), never longer than needed
-                if (switchTimer == null) { switchTimer = new System.Windows.Forms.Timer { Interval = 60 }; switchTimer.Tick += delegate { SwitchTick(); }; }
-                switchTimer.Start();
+                // motion review (23 Nov): a switch that worked closes the card at once - no minimum wait, the card only stood
+                // in for the time the work took. A switch that failed keeps its line up long enough to read, without repainting.
+                if (err == null) { switchingTo = null; HideViewSheet(); return; }
+                switchFailed = true; switchLine = L.T("That didn't switch cleanly - your previous view is back, nothing lost."); viewSheet.Invalidate();
+                if (switchTimer == null) { switchTimer = new System.Windows.Forms.Timer { Interval = 2500 }; switchTimer.Tick += delegate { SwitchTick(); }; }
+                switchTimer.Stop(); switchTimer.Start();
             });
         }
         void SwitchTick()
         {
-            if (viewSheet != null && viewSheet.Visible) viewSheet.Invalidate();
-            if ((DateTime.UtcNow - switchAt).TotalMilliseconds < 900) return;
             switchTimer.Stop(); switchingTo = null; HideViewSheet();
         }
         void PaintSwitching(Graphics g, float x, float w)
@@ -189,8 +189,9 @@ namespace AdeeboMeter
             var ic = new RectangleF(card.X + 26 * S, card.Y + 30 * S, 48 * S, 48 * S); Theme.Fill(g, ic, 14 * S, Kit.Soft(look[0])); Kit.Icon(g, look[2], new RectangleF(ic.X + 12 * S, ic.Y + 12 * S, 24 * S, 24 * S), Kit.Accent(look[0]));
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Switching to ") + Views.NameOf(switchingTo) + "...", Draw.fTitle, ink, ic.Right + 18 * S, ic.Y + 8 * S);
             if (!string.IsNullOrEmpty(switchLine)) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(switchLine, Draw.fBody, sb, new RectangleF(card.X + 26 * S, card.Y + 100 * S, card.Width - 52 * S, 46 * S));
-            // a small moving bar: something is happening
-            float t = (float)((DateTime.UtcNow - switchAt).TotalMilliseconds % 900 / 900.0); var track = new RectangleF(card.X + 26 * S, card.Bottom - 30 * S, card.Width - 52 * S, 5 * S);
+            // the bar says "working" while the switch runs; once it failed, the line is the message and the bar goes
+            if (switchFailed) return;
+            float t = 0; var track = new RectangleF(card.X + 26 * S, card.Bottom - 30 * S, card.Width - 52 * S, 5 * S);
             Theme.Fill(g, track, 2.5f * S, Theme.Track);
             Theme.Fill(g, new RectangleF(track.X + (track.Width * 0.7f) * t, track.Y, track.Width * 0.3f, track.Height), 2.5f * S, Kit.Accent(look[1] == "" ? look[0] : look[1]));
         }
@@ -234,7 +235,7 @@ namespace AdeeboMeter
         {
             name = n ?? ""; a1 = acc1; a2 = acc2; icon = ic; AccessibleName = L.T("View: ") + name;
             float S = Draw.S; var f = Draw.fBodyB ?? Font;
-            Width = (int)(Math.Max(Draw.Measure(name, f, 0).Width, Draw.Measure(L.T("VIEW"), Draw.fTiny ?? Font, 0).Width) + 74 * S); Height = (int)(38 * S);
+            Width = (int)(Math.Max(Draw.Measure(name, f, 0).Width, Draw.Measure(Kit.Sent("VIEW"), Draw.fTiny ?? Font, 0).Width) + 74 * S); Height = (int)(38 * S);
             Invalidate();
         }
         protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
@@ -242,24 +243,23 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space || e.KeyCode == Keys.Down) { OnClick(EventArgs.Empty); e.Handled = true; } base.OnKeyDown(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
-            // a soft wash from the first colour to the second, a coloured edge
-            using (var path = Theme.Round(r, r.Height / 2))
-            using (var lg = new System.Drawing.Drawing2D.LinearGradientBrush(r, Kit.Mix(Theme.Card, Kit.Accent(a1), hot || sel ? 0.20f : 0.12f), Kit.Mix(Theme.Card, Kit.Accent(a2), hot || sel ? 0.20f : 0.12f), 0f))
-                g.FillPath(lg, path);
-            Theme.Stroke(g, r, r.Height / 2, Kit.Mix(Kit.Accent(a1), Theme.Card, sel ? 0f : 0.45f), sel ? 2 * S : 1);
+            // 24 Nov (Adeeb: "the View is all pink - shouldn't it follow our theme?"): the theme's own blue, the same in every view -
+            // not the current view's section colour
+            Theme.Fill(g, r, r.Height / 2, hot || sel ? Kit.Mix(Theme.BlueSoft, Theme.Blue, 0.10f) : Theme.BlueSoft);
+            Theme.Stroke(g, r, r.Height / 2, sel ? Theme.Blue : Kit.Mix(Theme.BlueSoft, Theme.Blue, 0.25f), sel ? 2 * S : 1);
             // the icon in a filled circle
             var ic = new RectangleF(6 * S, (Height - 26 * S) / 2, 26 * S, 26 * S);
-            using (var cb = new SolidBrush(Kit.Accent(a1))) g.FillEllipse(cb, ic);
+            using (var cb = new SolidBrush(Theme.Blue)) g.FillEllipse(cb, ic);
             Kit.Icon(g, icon, new RectangleF(ic.X + 6 * S, ic.Y + 6 * S, 14 * S, 14 * S), Theme.OnBlue);
             float tx = ic.Right + 8 * S;
-            using (var mb = new SolidBrush(Kit.Ink(a1))) g.DrawString(L.T("VIEW"), Draw.fTiny, mb, tx, 3 * S);
+            using (var mb = new SolidBrush(Theme.BlueText)) g.DrawString(Kit.Sent("VIEW"), Draw.fTiny, mb, tx, 3 * S);
             using (var nb = new SolidBrush(Theme.Ink)) g.DrawString(name, Draw.fBodyB, nb, tx - 1 * S, 14 * S);
             // the chevron, drawn (no font glyph needed)
             float cx = Width - 18 * S, cy = Height / 2f + (sel ? -1 : 1) * 1.5f * S, d = 4 * S;
-            using (var p = new Pen(Kit.Ink(a1), 1.8f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            using (var p = new Pen(Theme.Sub, 1.8f * S) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
                 g.DrawLines(p, sel ? new[] { new PointF(cx - d, cy + d / 2), new PointF(cx, cy - d / 2), new PointF(cx + d, cy + d / 2) } : new[] { new PointF(cx - d, cy - d / 2), new PointF(cx, cy + d / 2), new PointF(cx + d, cy - d / 2) });
             if (Focused && ShowFocusCues) Theme.Stroke(g, new RectangleF(1.5f, 1.5f, Width - 3, Height - 3), (Height - 3) / 2f, Theme.BlueDark, 2);
         }

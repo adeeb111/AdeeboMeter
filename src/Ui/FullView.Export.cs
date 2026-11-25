@@ -44,6 +44,23 @@ namespace AdeeboMeter
         // a short note beside the links after a save or a copy
         string barNote = ""; DateTime barAt;
         void Toast(string t) { barNote = t; barAt = DateTime.Now; tbCanvas.Invalidate(); }
+        // 1.1.6: the far end a tool measured, for the Network Lab - the go-live check's ingest server, or the service board's
+        // worst host:port (a down one first). null when the result has none.
+        string[] LabRow()
+        {
+            var rows = tbRows; if (rows == null) return null;
+            if (tbSel == "golive") return rows.FirstOrDefault(r => r.Length > 2 && r[1].EndsWith(" ingest", StringComparison.Ordinal));
+            if (tbSel == "board") return rows.Where(r => r.Length > 2 && r[1].Contains(":") && r[2] != "not a host name or address").OrderByDescending(r => r[0]).FirstOrDefault();
+            return null;
+        }
+        void ToolPath()
+        {
+            var r = LabRow(); if (r == null) return;
+            var mm = System.Text.RegularExpressions.Regex.Match(r[2], @"([0-9]+(?:[.,][0-9]+)?)\s*ms"); double ms;
+            if (!mm.Success || !double.TryParse(mm.Groups[1].Value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out ms)) ms = double.NaN;
+            bool live = tbSel == "golive"; string name = live ? r[1].Replace(" ingest", "") + " ingest" : "Your server", host = live ? "" : r[1];
+            OpenLab(LabLink.PathJson(M, live ? "stream" : "server", host, name, ms, MinOf(M.GwPing), MinOf(M.NetPing)), false);
+        }
         // the link bar under a picture
         float PaintPictureBar(Graphics g, float x, float y, float w)
         {
@@ -56,8 +73,12 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(col)) g.DrawString(L.T(t), Draw.fBodyB, b, lx + 20 * S, y);
                 Act(tbCanvas, new RectangleF(lx, y - 2 * S, ts.Width + 24 * S, ts.Height + 4 * S), a); lx += ts.Width + 46 * S;
             };
-            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone); if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
-            if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · C copy · Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
+            if (VisEx()) { using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T("An Example is made-up data - run the tool to save or share your own result."), Draw.fSmall, b, lx, y); return y + 26 * S; }   // review 1.1.6 U3 #7 (rule 9)
+            link("report", "Save picture ...", SaveMenu); link("plus", "Copy picture", CopyPicture); link("phone", "Open on my phone", OpenOnPhone);
+            if (!VisEx() && tbRows != null && (tbSel == "golive" || tbSel == "board") && LabRow() != null) link("route", "Show my path", ToolPath);
+            if (!VisEx() && Cfg.History && tbRows != null && tbRows.Any(r => r.Length > 0 && r[0] == "2"))   // a red result: that minute in the Time machine (FullView.Gateway.cs)
+            { DateTime at = tbAt; string tt = tbTitle; link("time", L.T("See") + " " + at.ToString("HH:mm", CultureInfo.CurrentCulture) + " " + L.T("in the Time machine"), delegate { OpenTimeAt(at, L.T("Toolbox") + " - " + tt); }); }   /* 1.1.6: the Network Lab; hunt-5 scan: the three send links below had been swallowed by this comment */ if (File.Exists(Path.Combine(Environment.SystemDirectory, "fsquirt.exe"))) link("devices", "Picture by Bluetooth (PNG)", SendBluetooth); link("lock", "Encrypt picture, then send", EncryptPicture); if (QuickShareExe() != null) link("go", "Picture to Quick Share (PNG)", SendQuickShare);
+            if (barNote == "" || (DateTime.Now - barAt).TotalSeconds >= 8) { string kh = L.T("Keys: Ctrl+Shift+S save · Ctrl+Shift+C copy · Ctrl+Shift+Q phone"); var ks = g.MeasureString(kh, Draw.fTiny); if (lx + ks.Width > x + w) { lx = x + 4 * S; y += 26 * S; } using (var b = new SolidBrush(Theme.Muted)) g.DrawString(kh, Draw.fTiny, b, lx, y + 4 * S); }
             if (barNote != "" && (DateTime.Now - barAt).TotalSeconds < 8)
             {
                 var ns = g.MeasureString(barNote, Draw.fSmall); if (lx + ns.Width > x + w) { lx = x + 4 * S; y += 26 * S; }
@@ -66,9 +87,51 @@ namespace AdeeboMeter
             return y + 30 * S;
         }
 
+        // ---------- the arrow keys between controls (1.1.6 test day: "keyboard doesn't work well... I can't go side to side. We should
+        // be able to control everything without a mouse"): from the sidebar Right goes into the page, from a page's left edge Left goes
+        // back to the sidebar, and Left / Right walk the header buttons and the page's tab row. Boxes and the shell keep their own arrows.
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            var k = keyData & Keys.KeyCode;
+            if ((keyData & Keys.Modifiers) == Keys.None && (k == Keys.Left || k == Keys.Right || k == Keys.Up || k == Keys.Down))
+            {
+                Control a = this; while (a is ContainerControl && ((ContainerControl)a).ActiveControl != null) a = ((ContainerControl)a).ActiveControl;
+                if (a != null && a != this && !(a is TextBoxBase) && !(a is TermView) && !(a is ComboBox) && !(a is ListBox) && SpatialMove(a, k)) return true;
+            }
+            return base.ProcessDialogKey(keyData);
+        }
+        static IEnumerable<Control> AllUnder(Control c) { foreach (Control x in c.Controls) { yield return x; foreach (var y in AllUnder(x)) yield return y; } }
+        static bool ShownAll(Control c) { for (var x = c; x != null; x = x.Parent) if (!x.Visible) return false; return true; }
+        static int Gap(int a0, int a1, int b0, int b1) { return a1 < b0 ? b0 - a1 : b1 < a0 ? a0 - b1 : 0; }
+        internal bool SpatialMove(Control from, Keys key)
+        {
+            if (from == null || from.IsDisposed) return false;
+            Rectangle cur = from.RectangleToScreen(from.ClientRectangle);
+            var fdb = from as DB; if (fdb != null && fdb.Mark != null) { var m = fdb.Mark(); if (m.Width > 0) cur = fdb.RectangleToScreen(Rectangle.Round(m)); }
+            var win = RectangleToScreen(ClientRectangle); Control best = null; double bs = double.MaxValue;
+            foreach (var c in AllUnder(this))
+            {
+                if (c == from || !c.TabStop || !c.Enabled || !c.CanSelect || !ShownAll(c) || c.Contains(from) || from.Contains(c)) continue;
+                var r = c.RectangleToScreen(c.ClientRectangle); if (r.Width < 4 || r.Height < 4 || !r.IntersectsWith(win)) continue;
+                double along, across;
+                if (key == Keys.Right) { if (r.Left < cur.Right - 4) continue; along = r.Left - cur.Right; across = Gap(r.Top, r.Bottom, cur.Top, cur.Bottom); }
+                else if (key == Keys.Left) { if (r.Right > cur.Left + 4) continue; along = cur.Left - r.Right; across = Gap(r.Top, r.Bottom, cur.Top, cur.Bottom); }
+                else if (key == Keys.Down) { if (r.Top < cur.Bottom - 4) continue; along = r.Top - cur.Bottom; across = Gap(r.Left, r.Right, cur.Left, cur.Right); }
+                else { if (r.Bottom > cur.Top + 4) continue; along = cur.Top - r.Bottom; across = Gap(r.Left, r.Right, cur.Left, cur.Right); }
+                // a tie on the edges goes to the one nearest the middle of where you are
+                double mid = key == Keys.Left || key == Keys.Right ? Math.Abs((r.Top + r.Bottom) / 2.0 - (cur.Top + cur.Bottom) / 2.0) : Math.Abs((r.Left + r.Right) / 2.0 - (cur.Left + cur.Right) / 2.0);
+                double sc = along + across * 3 + mid * 0.05; if (sc < bs) { bs = sc; best = c; }
+            }
+            if (best == null) return false;
+            best.Focus();
+            var tdb = best as DB; if (tdb != null && !tdb.KeyNav && tdb.ArrowStep != null) tdb.ArrowStep(key);   // into a page: its first tile on screen gets the mark
+            return true;
+        }
+
         // keyboard: the links under a picture (Ctrl+Shift+S save, C copy, Q phone)
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (keyData == (Keys.Control | Keys.Oemtilde)) { OpenNav("shell"); return true; }   // bug-hunt R2-036: Ctrl+` from anywhere, typing in a box included
             if (tbCanvas != null && tbCanvas.Visible && !visRect.IsEmpty && !tbBusy)
             {
                 if (keyData == (Keys.Control | Keys.Shift | Keys.S)) { SaveMenuAt(tbCanvas.PointToScreen(new Point((int)(20 * S), (int)Math.Min(tbCanvas.Height - 40 * S, visRect.Bottom)))); return true; }
@@ -109,9 +172,12 @@ namespace AdeeboMeter
         }
         // Save picture ...: PNG, a draw.io diagram (real boxes and arrows to edit), or the data behind it (JSON, CSV)
         void SaveMenu() { SaveMenuAt(Cursor.Position); }
+        // review 1.1.6 U3 #7 (rule 9): an Example is made-up data - it is never saved, copied or sent, from the bar or its keys
+        bool ExampleBlocked() { if (!VisEx()) return false; Toast(L.T("This is an Example (made-up data) - run the tool to save or share your own result.")); return true; }
         void SaveMenuAt(Point at)
         {
-            var m = new ContextMenuStrip { Font = Draw.fBody };
+            if (ExampleBlocked()) return;
+            var m = Menus.Make();
             m.Items.Add(L.T("Picture (PNG)"), null, delegate { SavePicture(); });
             m.Items.Add(L.T("Diagram for draw.io / diagrams.net (.drawio) - move and restyle every box"), null, delegate { SaveText("drawio", "draw.io diagram|*.drawio", DrawIo); });
             m.Items.Add(L.T("Data (JSON) - for scripts and other tools"), null, delegate { SaveText("json", "JSON|*.json", Json); });
@@ -164,7 +230,7 @@ namespace AdeeboMeter
             {
                 case "x":
                     {
-                        var act = PhoneX.Item2; var st = PhoneX.Item3; double gap = 200, top = y0 + 20, rowH = 70, bottom = top + 50 + st.Count * rowH;
+                        var act = PhoneX.Item2; var st = PhoneX.Item3; double gap = Math.Min(200, act.Length > 1 ? (1020.0 - 160) / (act.Length - 1) : 200),   /* L-333: all actors fit the 1100-wide page */ top = y0 + 20, rowH = 70, bottom = top + 50 + st.Count * rowH;
                         box(PhoneX.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
                         for (int i = 0; i < act.Length; i++) { box(act[i], "rounded=1;whiteSpace=wrap;html=1;fillColor=#EEF1F5;strokeColor=#E3E8EF;fontStyle=1;", 40 + i * gap, top, 160, 36); line("", "endArrow=none;dashed=1;html=1;strokeColor=#B4BDC9;", 120 + i * gap, top + 36, 120 + i * gap, bottom); }
                         for (int i = 0; i < st.Count; i++)
@@ -184,12 +250,12 @@ namespace AdeeboMeter
                         box(PhoneP.Item1, Txt + "fontColor=#6B7685;", 20, y0 - 20, 700, 20);
                         for (int i = 0; i < hops.Count; i++)
                         {
-                            var h = hops[i]; double x = 40 + i * 150;
+                            var h = hops[i]; double x = 40 + (i % 7) * 150, yR = y0 + (i / 7) * 190;   // bug-hunt L-333: 7 hops a row, then the next row - never past the page
                             int me = id; if (i > 0) sb.Append("<mxCell id=\"c" + (id++) + "\" style=\"endArrow=block;html=1;strokeWidth=3;strokeColor=#B4BDC9;\" edge=\"1\" parent=\"1\" source=\"c" + prevHop + "\" target=\"c" + (me + 1) + "\"><mxGeometry relative=\"1\" as=\"geometry\"/></mxCell>");
-                            prevHop = id; box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, y0 + 35, 50, 50);
-                            box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, y0 + 95, 130, 70);
+                            prevHop = id; box(h.Item1, "ellipse;whiteSpace=wrap;html=1;fontStyle=1;fillColor=" + LvFill(h.Item5) + ";strokeColor=" + LvLine(h.Item5) + ";strokeWidth=2;", x + 10, yR + 35, 50, 50);
+                            box(h.Item2 + (double.IsNaN(h.Item3) ? "" : "\n" + Nm(h.Item3) + " ms") + "\n" + h.Item4, "rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=" + pal[owners.IndexOf(h.Item4) % pal.Length] + ";strokeColor=none;", x - 20, yR + 95, 130, 70);
                         }
-                        y0 += 190;
+                        y0 += Math.Max(1, (hops.Count + 6) / 7) * 190;
                     }
                     break;
                 case "r": case "b":
@@ -217,7 +283,7 @@ namespace AdeeboMeter
             }
             // the result rows, as a column of cards
             var rows = ResRows(); double ry = y0 + 10;
-            if (rows.Count > 0) box(L.T("THE RESULT"), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
+            if (rows.Count > 0) box(Kit.Sent("THE RESULT"), Txt + "fontStyle=1;fontColor=#6B7685;", 20, ry, 300, 20); ry += 26;
             if (rows.Count > 40) { box((rows.Count - 40) + " " + L.T("more rows not drawn - every row is in the JSON and CSV"), Txt + "fontColor=#6B7685;", 20, ry, 700, 20); ry += 24; }
             foreach (var o in rows.Take(40))
             {
@@ -264,6 +330,7 @@ namespace AdeeboMeter
         }
         void CopyPicture()
         {
+            if (ExampleBlocked()) return;
             try { using (var bmp = PictureBitmap()) Clipboard.SetDataObject(new DataObject(DataFormats.Bitmap, bmp), true, 6, 150); Toast(L.T("Picture copied - paste it into a chat, a mail or a document")); }
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("copy picture: " + e.Message); Toast(L.T("Couldn't copy the picture")); }
         }
@@ -271,6 +338,7 @@ namespace AdeeboMeter
         // take Bluetooth files - use Open on my phone). AdeeboMeter never listens: Windows does the sending and the receiving.
         void SendBluetooth()
         {
+            if (ExampleBlocked()) return;
             try
             {
                 string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboMeter"); Directory.CreateDirectory(dir);
@@ -300,6 +368,7 @@ namespace AdeeboMeter
         // person, and send the .adeebo (Bluetooth, Quick Share, mail) instead of the PNG
         void EncryptPicture()
         {
+            if (ExampleBlocked()) return;
             try
             {
                 if (tbSel == "encrypt" || tbSel == "decrypt") { Toast(L.T("This picture is from the encryption tools - nothing to encrypt")); return; }
@@ -332,6 +401,7 @@ namespace AdeeboMeter
         static string phoneOk = "";
         void OpenOnPhone()
         {
+            if (ExampleBlocked()) return;
             string link = PhoneLink(); if (link == null) return;
             var f = link.Substring(link.IndexOf('#') + 1).Split('!'); string body = string.Join("!", f.Skip(2).ToArray());
             if (body != phoneOk)
@@ -339,9 +409,15 @@ namespace AdeeboMeter
                 Func<string, string> D = x => { try { return Uri.UnescapeDataString((x ?? "").Replace("+", " ")); } catch (UriFormatException) { return x; } };
                 var lines = new List<string>();
                 if (f.Length > 4 && f[4] == "p" && f.Length > 6) foreach (var h in f[6].Split('~').Where(z => z != "")) { var p = h.Split(','); lines.Add("• " + L.T("Hop") + " " + D(p[0]) + (p.Length > 1 ? " · " + D(p[1]) : "") + (p.Length > 3 && p[3] != "" ? " · " + D(p[3]) : "")); }
+                // bug-hunt ML-173: the picture's own data (an exchange's actors and steps, a race's lanes, bars) is in the link too - so it's shown
+                if (f.Length > 6 && (f[4] == "x" || f[4] == "r" || f[4] == "b"))
+                {
+                    lines.Add("\n" + Kit.Sent("THE PICTURE"));
+                    foreach (var part in new[] { f[5], f[6] }) foreach (var it in part.Split('~').Where(z => z != "")) lines.Add("• " + string.Join(" · ", it.Split(',').Select(D).Where(z => z != "")));
+                }
                 if (f.Length > 7) foreach (var it in f[7].Split('~').Where(z => z != "")) { var p = it.Split(','); if (p.Length < 2) continue; lines.Add(p[0] == "-1" ? "\n" + D(p[1]).ToUpperInvariant() : "• " + D(p[1]) + (p.Length > 2 && p[2] != "" ? ": " + D(p[2]) : "") + (p.Length > 3 && p[3] != "" ? " (" + D(p[3]) + ")" : "")); }
                 string what = string.Join("\n", lines.Take(60)) + (lines.Count > 60 ? "\n• ... " + (lines.Count - 60) + " " + L.T("more lines") : "");
-                if (MessageBox.Show(this, L.T("Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                if (AskCard.Show(this, L.T("Exactly what the link carries - anyone you give it to can read it (nothing goes to a server; it all sits in the link):") + "\n\n" + what + "\n\n" + L.T("Show the code?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
                 phoneOk = body;
             }
             ShowQr(link);

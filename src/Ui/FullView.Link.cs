@@ -28,33 +28,42 @@ namespace AdeeboMeter
 {
     sealed partial class FullView
     {
+        // hunters11 core ML-4: a value is data - a network called "Home" stays "Home". Only a value that is a known UI word
+        // (for example "no answer") is translated, and never under a label that names something.
+        static string LinkVal(string label, string v)
+        {
+            if (string.IsNullOrEmpty(v) || System.Text.RegularExpressions.Regex.IsMatch(label ?? "", "SSID|[Nn]ame|Network|Profile|Adapter|Description|Vendor|Driver|Router|DNS|Gateway|Domain")) return v;
+            return L.T(v);
+        }
         // ---------- Your connection
+        Rectangle linkAskRect;   // test6 (his PC: 4 whole-page paints in 5 s while Windows kept not answering): the waiting line alone repaints
+        string linkErr;   // why the last read failed - shown instead of a "still asking" that never ends
         void RefreshLink(bool now)
         {
             if (linkBusy || (!now && (DateTime.UtcNow - lastLink).TotalSeconds < 10)) return;
             linkBusy = true; lastLink = DateTime.UtcNow;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Reading your Wi-Fi from Windows"); try { 
                 if (IsDisposed) { linkBusy = false; return; }
                 LinkSnap ls = null; WifiAdvisor.Extra ex = null;
-                try { ls = LinkInfo.Collect(M); ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link: " + e.Message); }
+                string err = null; try { ls = LinkInfo.Collect(M); } catch (Exception e) { err = e.Message; Program.Log("link: " + e.Message); } if (ls != null) try { ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link advisor: " + e.Message); }
                 if (IsDisposed || !IsHandleCreated) { linkBusy = false; return; }
-                try { BeginInvoke((Action)delegate { linkBusy = false; if (ls != null && !IsDisposed) { linkSnap = ls; linkExtra = ex; linkCanvas.Invalidate(); } }); } catch { linkBusy = false; }
-            });
+                try { BeginInvoke((Action)delegate { linkBusy = false; if (IsDisposed) return; string was = linkErr; linkErr = ls == null ? (err ?? "no answer") : null; if (ls != null) { linkSnap = ls; linkExtra = ex; } else lastLink = DateTime.UtcNow.AddSeconds(-5); if (ls == null && linkSnap == null && was == linkErr && !linkAskRect.IsEmpty) linkCanvas.Invalidate(linkAskRect); else linkCanvas.Invalidate(); }); } catch { linkBusy = false; }   // 1.1.6 walk: a failed read left "Asking Windows..." up for good
+            } finally { __bz.End(); } });
         }
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
         {
             Kit.Box(g, cr);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, cr.X + 14 * S, cr.Y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fBodyB, mb, cr.X + 14 * S, cr.Y + 12 * S);   /* 24 Nov: sentence case */
             Hint(linkCanvas, new RectangleF(cr.X, cr.Y, cr.Width, 26 * S), keyPrefix + title);
             float ry = cr.Y + 34 * S, lw = Math.Min(170 * S, cr.Width * 0.42f);
             using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 foreach (var row in rows)
                 {
-                    g.DrawString(row[0], Draw.fBody, muted, new RectangleF(cr.X + 14 * S, ry, lw, 20 * S), nowrap);
+                    g.DrawString(L.T(row[0]), Draw.fBody, muted, new RectangleF(cr.X + 14 * S, ry, lw, 20 * S), nowrap);
                     using (var vb = new SolidBrush(row.Length > 2 && row[2] != "0" ? Theme.LvText(int.Parse(row[2], CultureInfo.InvariantCulture)) : Theme.Ink))
-                        g.DrawString(row[1], Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
+                        g.DrawString(LinkVal(row[0], row[1]), Draw.fBodyB, vb, new RectangleF(cr.X + 14 * S + lw, ry, cr.Width - lw - 28 * S, 20 * S), nowrap);
                     Hint(linkCanvas, new RectangleF(cr.X, ry - 2 * S, cr.Width, 22 * S), "link." + row[0]);
                     ry += 22 * S;
                 }
@@ -66,13 +75,14 @@ namespace AdeeboMeter
             Begin(linkCanvas);
             float x = 14 * S, y = 6 * S, w = linkCanvas.ClientSize.Width - 28 * S;
             var ls = linkSnap;
-            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Voice.P("Asking Windows about your connection...", "Reading..."), Draw.fBody, mb, x, y + 10 * S); return; }
-            string title = (ls.Wifi ? "YOUR WI-FI" : "YOUR CABLE") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  UPDATED " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) { int secs = (int)(DateTime.UtcNow - lastLink).TotalSeconds; linkAskRect = Rectangle.Ceiling(new RectangleF(x + linkCanvas.AutoScrollPosition.X, y + 10 * S + linkCanvas.AutoScrollPosition.Y, w, 30 * S)); g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading...") + (secs >= 2 ? "  " + secs + " s" : ""), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 30 * S));
+                  if (linkErr == null && secs >= 2) using (var db = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel."), Draw.fSmall, db, new RectangleF(x, y + 40 * S, w, 40 * S)); } return; }   // 1.1.6 test: a still line read as stuck
+            string title = L.T(ls.Wifi ? "Your Wi-Fi" : "Your cable") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  " + L.T("updated") + " " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);   // v8: sentence case
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;
             var vb = new RectangleF(x, y, w, vh + 44 * S);
             int blv = ls.Level == 0 && ls.Advice && ls.Verdict.StartsWith("Driver update", StringComparison.Ordinal) ? 1 : ls.Level;   // advice leads: amber, never green
             Theme.Fill(g, vb, 12 * S, Theme.LvSoft(blv));
-            using (var b = new SolidBrush(Theme.LvText(blv))) { g.DrawString(title, Draw.fTiny, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
+            using (var b = new SolidBrush(Theme.LvText(blv))) { g.DrawString(title, Draw.fSmall, b, x + 16 * S, y + 10 * S); g.DrawString(ls.Verdict, Draw.fTitle, b, new RectangleF(x + 16 * S, y + 26 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 16 * S;
             if (ls.Radio.Count + ls.Address.Count + ls.Traffic.Count == 0) return;   // nothing connected: the message says it all
             float cw = (w - 14 * S) / 2;
@@ -87,7 +97,7 @@ namespace AdeeboMeter
             if (!ls.Wifi) y = PaintSwitch(g, x, y, w);
             if (ls.Wifi) y = ListCard(g, "WI-FI DROPS IN THE LAST 24 HOURS  ·  FROM WINDOWS' OWN LOG", ls.Drops, ls.DropsErr != "" ? ls.DropsErr : Voice.P("Not a single drop. Rock solid.", "No drops in 24 h."), "link.DROPS", x, y, w);
             y = ListCard(g, "ADDRESS (DHCP) TROUBLE IN THE LAST 24 HOURS", ls.Dhcp, ls.DhcpErr != "" ? ls.DhcpErr : "None - your address renewed without a hitch.", "link.DHCP", x, y, w);
-            y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), "None in Windows' table yet.", "link.LAN", x, y, w);
+            y = ListCard(g, "DEVICES ON YOUR NETWORK  ·  THE ONES YOUR PC HAS TALKED TO (NOTHING IS SCANNED)", ls.Lan.Select(r => new[] { r[0], r[1] + (r[2] != "" ? "  ·  " + r[2] : ""), r[2] == "your router" ? "-1" : "0" }).ToList(), L.T("None in Windows' table yet."), "link.LAN", x, y, w);
             if (ls.Wifi && ls.MyChannel > 0 && ls.Aps.Count > 0) y = PaintChannelMap(g, ls, x, y, w);
             if (ls.Wifi && ls.Aps.Count == 0 && !ls.LocationBlocked)
                 using (var mb = new SolidBrush(Theme.Muted)) { g.DrawString(L.T("Windows didn't list any neighbouring networks this time - it refreshes its scan every minute or so."), Draw.fBody, mb, x, y); y += 30 * S; }
@@ -102,39 +112,40 @@ namespace AdeeboMeter
         }
         float ListCard(Graphics g, string title, List<string[]> rows, string empty, string key, float x, float y, float w)
         {
-            float rh = 22 * S; var card = new RectangleF(x, y, w, 40 * S + Math.Max(1, rows.Count) * rh);
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            // 24 Nov (v8 screenshots): heading-type, sentence-case title and roomier rows, like the other cards
+            float rh = 28 * S; var card = new RectangleF(x, y, w, 16 * S + 34 * S + Math.Max(1, rows.Count) * rh + 10 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) using (var nw0 = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(Kit.Sent(title), Draw.fHead, ib, new RectangleF(x + 18 * S, y + 16 * S, w - 36 * S, 24 * S), nw0);
+            Hint(linkCanvas, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
-                if (rows.Count == 0) g.DrawString(empty, Draw.fBody, muted, new RectangleF(x + 14 * S, ry, w - 28 * S, 20 * S), nowrap);
+                if (rows.Count == 0) g.DrawString(L.T(empty), Draw.fBody, muted, new RectangleF(x + 18 * S, ry, w - 36 * S, 22 * S), nowrap);
                 foreach (var r in rows)
                 {
                     int lv = r.Length > 2 ? int.Parse(r[2], CultureInfo.InvariantCulture) : 0;
-                    using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 14 * S, ry + 6 * S, 8 * S, 8 * S);
-                    g.DrawString(r[0], Draw.fBodyB, ink, new RectangleF(x + 30 * S, ry, w * 0.30f, 20 * S), nowrap);
-                    g.DrawString(r[1], Draw.fBody, muted, new RectangleF(x + 30 * S + w * 0.31f, ry, w * 0.69f - 44 * S, 20 * S), nowrap);
+                    using (var d = new SolidBrush(lv < 0 ? Theme.Blue : Theme.Lv(lv))) g.FillEllipse(d, x + 18 * S, ry + 7 * S, 8 * S, 8 * S);
+                    g.DrawString(L.T(r[0]), Draw.fBodyB, ink, new RectangleF(x + 34 * S, ry, w * 0.30f, 22 * S), nowrap);
+                    g.DrawString(LinkVal(r[0], r[1]), Draw.fBody, muted, new RectangleF(x + 34 * S + w * 0.31f, ry, w * 0.69f - 52 * S, 22 * S), nowrap);
                     ry += rh;
                 }
             }
-            return y + card.Height + 14 * S;
+            return y + card.Height + 20 * S;
         }
         float PaintSwitch(Graphics g, float x, float y, float w)
         {
             var card = new RectangleF(x, y, w, switchInfo != null ? 150 * S : 86 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("YOUR SWITCH PORT  ·  LLDP / CDP, LISTENED FOR PASSIVELY"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.SWITCH");
             var btn = new RectangleF(x + 14 * S, y + 36 * S, 210 * S, 32 * S);
-            bool can = LiveCapture.Available && !switchBusy;
+            bool can = LiveCapture.Available && !switchBusy && !Policy.NoCapture;
             Theme.Fill(g, btn, 16 * S, can ? Theme.Blue : Theme.Track);
-            string bt = switchBusy ? "Listening... " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : "Find my switch port";
+            string bt = switchBusy ? L.T("Listening...") + " " + (int)(DateTime.UtcNow - switchStart).TotalSeconds + " s" : Policy.NoCapture ? L.T("Turned off by your IT team") : L.T("Find my switch port");
             using (var bb = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBodyB, bb, btn, c);
             if (can) Act(linkCanvas, btn, StartSwitch);
-            string note = !LiveCapture.Available ? "Needs Wireshark and Npcap on this PC." : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";
+            string note = !LiveCapture.Available ? L.T("Needs Wireshark and Npcap on this PC.") : switchErr != "" ? switchErr : "Switches announce themselves every 30-60 s. I listen for up to 65 s - nothing is sent.";
             using (var nb = new SolidBrush(switchErr != "" ? Theme.LvText(1) : Theme.Muted)) g.DrawString(note, Draw.fSmall, nb, new RectangleF(btn.Right + 14 * S, btn.Y, w - btn.Width - 56 * S, 34 * S));
             var si = switchInfo;
             if (si != null)
@@ -170,7 +181,7 @@ namespace AdeeboMeter
             var chans = inBand.Select(a => a.Channel).Concat(new[] { ls.MyChannel }).Distinct().OrderBy(c => c).ToList();
             float ch = 170 * S; var card = new RectangleF(x, y, w, ch + 70 * S);
             Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.L.T("WHO ELSE IS ON THE AIR  ·  ") + band.ToUpperInvariant() + "  ·  " + inBand.Count + " ACCESS POINTS NEARBY", Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(AdeeboMeter.Kit.Sent("WHO ELSE IS ON THE AIR  ·  ") + band + "  ·  " + inBand.Count + " " + L.T(inBand.Count == 1 ? "access point nearby" : "access points nearby"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.CHANNEL MAP");
             float plotX = x + 20 * S, plotW = w - 40 * S, base0 = y + 34 * S + ch - 30 * S, colW = Math.Min(64 * S, plotW / Math.Max(1, chans.Count));
             using (var axis = new Pen(Theme.Line)) g.DrawLine(axis, plotX, base0, plotX + plotW, base0);
@@ -205,14 +216,14 @@ namespace AdeeboMeter
             {
                 var secs = grp.Select(a => a.Sec).Distinct().ToList();
                 if (secs.Count > 1 && secs.Any(WlanApi.Weak) && secs.Any(z => !WlanApi.Weak(z)))
-                    tips.Add(new[] { "Same name, different lock", "\"" + grp.Key + "\" is on the air both as " + string.Join(" and as ", secs) + ". The " + secs.First(WlanApi.Weak) + " one could be a fake copy - join the protected one, and don't sign in on a page you didn't expect.", "2" });
+                    tips.Add(new[] { L.T("Same name, different lock"), "\"" + grp.Key + "\" is on the air both as " + string.Join(" and as ", secs) + ". The " + secs.First(WlanApi.Weak) + " one could be a fake copy - join the protected one, and don't sign in on a page you didn't expect.", "2" });
             }
             if (tips.Count > 0) y = TextCard(g, "WHAT TO DO ABOUT IT", tips, "link.CHANNEL MAP", x, y, w);
 
             var top = ls.Aps.OrderByDescending(a => a.Signal).Take(12).ToList();
             float rh = 24 * S; var card2 = new RectangleF(x, y, w, 40 * S + top.Count * rh);
             Kit.Box(g, card2);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("STRONGEST NEIGHBOURS"), Draw.fTiny, mb, x + 14 * S, y + 12 * S);
             Hint(linkCanvas, new RectangleF(x, y, w, 26 * S), "link.NEIGHBOURS");
             float ry = y + 34 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
@@ -247,7 +258,7 @@ namespace AdeeboMeter
                 warsBusy = true; warsAt = DateTime.UtcNow;
                 Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; wars = r; linkCanvas.Invalidate(); }); } catch (InvalidOperationException) { warsBusy = false; } });
             }
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(L.T("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
+            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
             Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;
             var wr = wars;
             if (!Cfg.History) return Lead(g, AdeeboMeter.L.T("Turn on History in Settings and AdeeboMeter writes down who is on your air once an hour (the list Windows already has - no extra scanning), kept 7 days on this PC."), x, y, w, true);

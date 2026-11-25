@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Poetic persona. key|text.
+app.open|线缆轻声低吟，我在此守望。
+app.open|一场静默的守望，自你的网络开始。
+all.good|水静天清，一切安好。
+all.good|你的电脑、Wi-Fi 与网络，和谐相伴。
+all.good|今日溪流无扰。
+pc.busy|你的电脑负担太重，CPU 已达 {v}。
+pc.busy|迟缓生于电脑，而非空气。
+pc.busy|让电脑喘口气，关掉一个窗口。
+wifi.drops|今日 Wi-Fi 淡去 {v} 次，如暮色般悄然。
+wifi.drops|断线 {v} 次，信号随距离渐渐稀薄。
+net.none|寂静，无网络抵达你身边。
+net.none|离线了，丝线已断。
+inet.slow|家中安宁，迟缓在路由器之外。
+inet.slow|近处迅捷，远处迟缓，是运营商那边。
+inet.slow|门外之路，渐渐漫长。
+busy|倾听中……{v}
+busy|收集线缆诉说的一切。
+busy|耐心些，答案将至。
+idle|静谧的一小时。
+idle|寂静，我继续守望。
+idle|天底下并无新事。
+search.empty|你在寻找什么？
+search.empty|说出困扰你的事。
+freeze|一次呼吸（{v}），正在追赶。
+freeze|缓慢的片刻（{v}），快了。
+speedrunner|轻一点，一次只做一件事。
+speedrunner|上一个念头尚未完成。
+back.again|你回来了，发生了 {v} 件事。
+back.again|欢迎回来，这是今日的小故事。
+dns.slow|名字姗姗来迟，耗时 {v}。
+dns.slow|查询徘徊在 {v}。
+speed.great|下载 {v}，如风一般。
+speed.great|下载 {v}，轻快迅捷。
+speed.bloat|平静时快，拥挤时慢，{v}。
+speed.bloat|线路满载时，延迟增至 {v}。
+game.lag|延迟源于你的 Wi-Fi，而非服务器。
+game.lag|服务器稳稳的，Wi-Fi 在颤抖。
+game.good|Ping {v}，好好发挥。
+game.good|线路稳定。
+vpn.on|你的话语走上一条隐秘之路，VPN 已开启。
+vpn.on|如今穿过隧道前行。
+vpn.slow|隐秘之路多耗时 {v}。
+vpn.slow|VPN 的路径要多花 {v}。
+portal|这处 Wi-Fi 先问你的名字。
+portal|通途之前有一道门，请登录。
+gw.down|你的路由器沉默了，唤醒它。
+gw.down|路由器没有回应。
+isp.down|家中完好，门外的世界一片黑暗。
+isp.down|运营商的灯熄灭了。
+mtu.small|大包无法通过，MTU 为 {v}。
+mtu.small|一条窄路：{v}。
+port.open|{v} 已开放。
+port.open|{v} 有回应。
+port.closed|{v} 依然关闭。
+port.closed|{v} 没有回应。
+cert.ok|印信真实无误。
+cert.ok|一把诚实的挂锁。
+cert.expired|他们的印信已于 {v} 失效。
+cert.expired|自 {v} 起已过期。
+sec.ok|你的墙垣坚固。
+sec.ok|未发现裂缝。
+sec.issue|{v} 处小裂缝，待修补。
+sec.issue|检查记下 {v} 件事。
+mtr.lossy|在第 {v} 跳，数据包悄然滑落。
+mtr.lossy|丢失始于第 {v} 跳。
+mtr.clean|每一步都抵达了。
+mtr.clean|沿途零丢失。
+devices.found|{v} 台设备共享你的空气。
+devices.found|我数到 {v} 台。
+encrypt.done|已封存，只供一位读者。
+encrypt.done|已锁好。
+decrypt.done|已打开，完好如初。
+decrypt.done|已启封，完整无缺。
+points.earned|+{v} 分。
+points.earned|+{v} 分，你在成长。
+award|500 分，Adeebo 奖，实至名归。
+award|里程碑：Adeebo 奖。
+late.night|夜，我继续守望。
+late.night|深夜，线缆静悄悄。
+morning|清晨，夜晚温柔。
+morning|黎明，一切安好。
+update.suspect|{v} 更新之后，事情变了。
+update.suspect|自 {v} 更新以来，蒙上一层阴影。
+call.on|声音在传送，我守望着通话。
+call.on|通话进行中，我倾听有无异常。
+quiz.right|对了——如钥匙契合锁孔。
+quiz.wrong|不是这一个，答案还在稍远处等你。
+game.streak|连续 {v} 次，如一串珍珠。
+game.timeup|时钟闭上了眼睛。
+market.open|市场醒来，开始低吟。
+storm.near|风暴悄然逼近，信号或将颤抖。

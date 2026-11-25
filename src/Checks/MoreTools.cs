@@ -50,10 +50,7 @@ namespace AdeeboMeter
             }
             catch (IOException) { } catch (ArgumentException) { }
             // startup programs
-            int su = 0;
-            foreach (var h in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
-                try { using (var b = RegistryKey.OpenBaseKey(h, RegistryView.Registry64)) using (var k = b.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")) if (k != null) su += k.ValueCount; } catch (Exception rex) { if (!(rex is System.Security.SecurityException || rex is IOException || rex is UnauthorizedAccessException)) throw; }   /* one unreadable key must not stop the rest */
-            try { su += Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Startup)).Count(f => !f.EndsWith("desktop.ini", StringComparison.OrdinalIgnoreCase)); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            int su = HwSpecs.StartupApps().Count;   // the tool run, 22 Nov: the same count as the Security checkup and Hardware (switched-off ones left out)
             rows.Add(Rf(su > 15 ? 1 : 3, "Programs that start with Windows", su + " start by themselves", su > 15 ? "Each one slows start-up a little. Turn off the ones you don't need at once (Startup apps shows their impact)." : "", "ms-settings:startupapps"));
             // frozen or memory-hungry programs
             run.Status = "Looking at running programs...";
@@ -124,7 +121,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); name = (name ?? "").Trim().TrimEnd('.');
             if (name == "" || name.Length > 253 || !Regex.IsMatch(name, @"^[\w.-]+$")) { rows.Add(R(2, "Name", "type a name - e.g. outlook.office.com", "", "u")); return rows; }
             string dns; lock (m.L) dns = m.DnsServer; IPAddress mine; if (!IPAddress.TryParse((dns ?? "").Split(',')[0].Trim(), out mine)) { rows.Add(R(2, "Your DNS", "no DNS server set", "", "u")); return rows; }
-            string o = (other ?? "").Trim(); if (o == "") o = "1.1.1.1";
+            string o = (other ?? "").Trim(); if (o == "") { if (Policy.NoOnline) { rows.Add(R(2, "Other DNS", "type the DNS server to compare with - the default 1.1.1.1 is off because your IT team turned online lookups off", "", "u")); return rows; } o = "1.1.1.1"; }   // review 1.1.6 P2 #10
             Func<Toolkit.Msg, List<string>> ans = x => x == null ? null : x.Rrs.Where(r => r.Section == 1 && (r.Type == "A" || r.Type == "AAAA" || r.Type == "CNAME")).Select(r => r.Type + " " + r.Data).OrderBy(z => z, StringComparer.Ordinal).ToList();
             Toolkit.Msg a4 = Toolkit.Query(mine, name, 1, true), a6 = Toolkit.Query(mine, name, 28, true), b4, b6; string where;
             if (o.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) { Uri u; if (!Uri.TryCreate(o, UriKind.Absolute, out u)) { rows.Add(R(2, "Other server", "not a DoH address", "", "u")); return rows; } string w; b4 = Toolkit.QueryDoh(u, name, 1, out w); b6 = Toolkit.QueryDoh(u, name, 28, out w); where = u.Host + " (DoH)"; }
@@ -134,8 +131,10 @@ namespace AdeeboMeter
             if (b4 == null && b6 == null) { rows.Add(R(2, where, "no answer", "Blocked here (company networks often allow only their own DNS), or the server is down.", "m")); return rows; }
             bool same = A.SequenceEqual(B), overlap = A.Intersect(B).Any();
             rows.Add(R(same ? 0 : overlap ? 3 : 1, name, same ? "the same answer from both" : overlap ? "partly the same" : "DIFFERENT answers", same ? "" : "Normal for big services (each DNS gets the nearest servers) and for company names only your DNS knows. Suspicious if a well-known site points somewhere odd.", "m"));
-            rows.Add(R(3, "Your DNS (" + mine + ")", A.Count == 0 ? "no address" : string.Join(" · ", A.Take(12)), "", "m"));
-            rows.Add(R(3, where, B.Count == 0 ? "no address" : string.Join(" · ", B.Take(12)), "", "m"));
+            // bug-hunt ML-212: how long each took, so the race can be drawn
+            Func<Toolkit.Msg, Toolkit.Msg, string> took = (p, q) => { var t = new[] { p, q }.Where(z => z != null).Select(z => z.Ms).ToList(); return t.Count == 0 ? "" : " (" + t.Max() + " ms)"; };
+            rows.Add(R(3, "Your DNS (" + mine + ")", (A.Count == 0 ? "no address" : string.Join(" · ", A.Take(12))) + took(a4, a6), "", "m"));
+            rows.Add(R(3, where, (B.Count == 0 ? "no address" : string.Join(" · ", B.Take(12))) + took(b4, b6), "", "m"));
             return rows;
         }
 
@@ -164,7 +163,7 @@ namespace AdeeboMeter
                 // whole numbers only: "100000" is a mistake, not port 10000
                 // a range ("8000-8010") becomes its ports - still 20 at most
                 string tooWide = null;
-                w = Regex.Replace(w, @"([0-9]{1,5})\s*-\s*([0-9]{1,5})", mr => { int a1 = int.Parse(mr.Groups[1].Value, CultureInfo.InvariantCulture), b1 = int.Parse(mr.Groups[2].Value, CultureInfo.InvariantCulture); if (b1 < a1 || b1 - a1 >= 20) { tooWide = mr.Value; return " "; } return string.Join(",", Enumerable.Range(a1, b1 - a1 + 1)); });
+                w = Regex.Replace(w, @"(?<![0-9])([0-9]{1,9})\s*-\s*([0-9]{1,9})(?![0-9])", mr => { int a1 = int.Parse(mr.Groups[1].Value, CultureInfo.InvariantCulture), b1 = int.Parse(mr.Groups[2].Value, CultureInfo.InvariantCulture); if (b1 < a1 || b1 - a1 >= 20 || b1 > 65535) { tooWide = mr.Value.Trim(); return " "; }   /* L-196: the whole range as typed is quoted */ return string.Join(",", Enumerable.Range(a1, b1 - a1 + 1)); });
                 if (tooWide != null) { rows.Add(R(2, "Ports", tooWide + " - a range of up to 20 ports (this isn't a port scanner)", "", "u")); return rows; }
                 var all = Regex.Matches(w, @"[0-9]+").Cast<Match>().Select(x => x.Value).ToList();
                 var badNum = all.FirstOrDefault(x => x.Length > 5 || int.Parse(x, CultureInfo.InvariantCulture) < 1 || int.Parse(x, CultureInfo.InvariantCulture) > 65535);
@@ -215,12 +214,13 @@ namespace AdeeboMeter
                 if (run.Stop) break; run.Status = h + "...";
                 IPAddress[] a; try { a = Dns.GetHostAddresses(h); } catch (SocketException) { rows.Add(R(2, h, "name doesn't resolve", "", "m")); continue; } catch (ArgumentException) { rows.Add(R(2, h, "not a name", "", "m")); continue; }
                 if (a.Length == 0) { rows.Add(R(2, h, "the name has no addresses", "", "m")); continue; }
-                double ms; string st = Knock(a[0], 443, out ms);
+                double ms = double.NaN; string st = "closed"; var a0 = a[0];   // bug-hunt ML-33: every address of the site, until one answers
+                foreach (var ai in a.OrderBy(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 0 : 1).Take(4)) { st = Knock(ai, 443, out ms); a0 = ai; if (st == "open") break; }
                 if (st != "open") { rows.Add(R(2, h, "HTTPS port " + st, "", "m")); continue; }
                 X509Days(h, out ms);
                 int days = double.IsNaN(ms) ? -1 : (int)ms;
                 bool expired = !double.IsNaN(ms) && ms < 0;
-                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a[0] + (expired ? " · certificate EXPIRED " + (-days) + " days ago" : !double.IsNaN(ms) ? " · certificate " + days + " days left" : " · certificate not read"), expired ? "Visitors get a security warning - renew it." : "", "m"));
+                rows.Add(R(double.IsNaN(ms) ? 3 : expired ? 2 : days >= 0 && days < 14 ? 1 : 0, h, "reachable · " + a0 + (expired ? " · certificate EXPIRED " + (ms > -1 ? Math.Max(1, (int)Math.Ceiling(-ms * 24)) + " h ago" : (int)(-ms) + ((int)(-ms) == 1 ? " day ago" : " days ago")) : !double.IsNaN(ms) ? " · certificate " + (ms < 1 ? Math.Max(1, (int)Math.Ceiling(ms * 24)) + " h left" : days + " days left") : " · certificate not read")   /* L-205: under a day in hours */, expired ? "Visitors get a security warning - renew it." : "", "m"));
             }
             return rows;
         }
@@ -283,7 +283,7 @@ namespace AdeeboMeter
                 // X.224 connection request with an RDP negotiation request: TLS + CredSSP (NLA) offered
                 var req = new byte[] { 3, 0, 0, 19, 14, 0xE0, 0, 0, 0, 0, 0, 1, 0, 8, 0, 3, 0, 0, 0 };
                 var s = c.GetStream(); s.ReadTimeout = 3000; var b = new byte[64]; int n = 0;
-                try { s.Write(req, 0, req.Length); n = s.Read(b, 0, b.Length); } catch (IOException) { }
+                try { s.Write(req, 0, req.Length); int g; while (n < 19 && (g = s.Read(b, n, b.Length - n)) > 0) n += g; } catch (IOException) { }   /* carry-over (100-bug #235): the 19-byte answer can arrive in pieces */
                 if (n >= 19 && b[0] == 3 && b[5] == 0xD0)
                 {
                     int type = b[11], proto = b[15] | b[16] << 8;
@@ -416,7 +416,7 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string err;
             var evs = EvLog.Recent("System", "EventID=7000 or EventID=7001 or EventID=7009 or EventID=7011 or EventID=7022 or EventID=7023 or EventID=7024 or EventID=7031 or EventID=7034", 24 * 7, 500, out err);
             if (err != "") { rows.Add(R(3, "System log", err, "", "w")); return rows; }
-            var by = evs.Select(e => new { e, Svc = EvLog.Field(e.Xml, "param1") }).Where(x => x.Svc != "").GroupBy(x => x.Svc).OrderByDescending(g => g.Count()).ToList();
+            var by = evs.Select(e => new { e, Svc = EvLog.Field(e.Xml, e.Id == 7009 || e.Id == 7011 ? "param2" : "param1") })   /* 7009 / 7011: param1 is the timeout in ms (tool-run 22 Nov showed "120000") */.Where(x => x.Svc != "").GroupBy(x => x.Svc).OrderByDescending(g => g.Count()).ToList();
             rows.Add(R(by.Count == 0 ? 0 : 1, "Last 7 days", by.Count == 0 ? "no service failed to start or stopped unexpectedly" : by.Count + " services had trouble" + (evs.Count >= 500 ? " (from the newest 500 events)" : ""), "From Windows' own System log (Service Control Manager).", "w"));
             foreach (var g in by.Take(25))
             {

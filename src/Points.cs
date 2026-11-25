@@ -11,7 +11,7 @@ namespace AdeeboMeter
     // A small reward for learning: open a tool's Example, then run it for real and get a result -> +2 (+4 the longer
     // tests), once. Learn topics, their check questions, lab challenges, subnetting streaks, the packet journey and the
     // learning paths earn too (see Value). 500 is the Adeebo Award. Tools where a second look teaches something carry a
-    // replay bonus: the first real run again, at least 10 minutes later -> +3, once. Everything after that, a stopped run or a run that only asked for input -> 0.
+    // replay bonus: the first real run again, at least 10 minutes later -> +2, once. Everything after that, a stopped run or a run that only asked for input -> 0.
     // On from day 1 (Settings can turn it off); off pauses earning and keeps the total. Local only: one line per tool in
     // points.txt in AdeeboMeter's data folder ("id|first award time|replay award time"), written once per award - so
     // reopening the app, pressing Run twice or replaying again can never add more.
@@ -25,8 +25,8 @@ namespace AdeeboMeter
         // longer tests are worth +4 the first time; everything else +2 (see Value(): paths 10, labs and escape rooms 4, games 3)
         public static readonly HashSet<string> Big = new HashSet<string>(StringComparer.Ordinal) { "mtr", "ispreport", "speedtest", "iperf", "bloat", "gamecompare", "mtu" };
         public static readonly TimeSpan ReplayGap = TimeSpan.FromMinutes(10);
-        // 1.1.5: every item is worth more, and there is more to earn (about 910 in all), so 500 means you've done nearly everything
-        public const int AwardAt = 500, ReplayPts = 3;
+        // 1.1.5: every item is worth more, and there is more to earn (about 1,000 in all), so 500 means you've done about half of everything
+        public const int AwardAt = 500, ReplayPts = 2;   /* owner 1.1.6: +2 */
         static readonly string[][] Ranks = { new[] { "0", "Beginner" }, new[] { "30", "Learner" }, new[] { "100", "Troubleshooter" }, new[] { "200", "Expert" }, new[] { "300", "Network detective" }, new[] { "400", "Packet whisperer" }, new[] { "500", "Adeebo Award" } };
         public static int[] Floors { get { return Ranks.Select(r => int.Parse(r[0], CultureInfo.InvariantCulture)).ToArray(); } }
         // a tool +2 (the longer tests +4), a Learn topic read +2, its check question +2, a page's first use +2, a lab challenge +4,
@@ -43,7 +43,7 @@ namespace AdeeboMeter
         }
         public static string Next(int total, out int left) { foreach (var x in Ranks) { int at = int.Parse(x[0], CultureInfo.InvariantCulture); if (total < at) { left = at - total; return x[1]; } } left = 0; return ""; }
 
-        sealed class Entry { public DateTime First, Again; public int Pts = 1; public long Tick; }   // Tick: ms since Windows started, at the first award (the replay wait survives a restart)
+        sealed class Entry { public DateTime First, Again; public int Pts = 1; public long Tick; }   // Pts: what it was worth when earned - kept as the record only (bug-hunt L-116: totals use today's values, see Total). Tick: ms since Windows started, at the first award (the replay wait survives a restart)
         readonly Dictionary<string, DateTime> firstMono = new Dictionary<string, DateTime>(StringComparer.Ordinal);
         readonly string file; readonly Dictionary<string, Entry> map = new Dictionary<string, Entry>(StringComparer.Ordinal); readonly object k = new object();
 
@@ -58,7 +58,7 @@ namespace AdeeboMeter
             try
             {
                 if (!File.Exists(file)) return;
-                foreach (var line in File.ReadAllLines(file))
+                foreach (var line in File.ReadLines(file).Take(5000).Select(l => l.Length > 400 ? l.Substring(0, 400) : l))   // carry-over: bounded - a few hundred entries is a full file; a huge or damaged one can't eat memory
                 {
                     var p = line.Split('|'); if (p.Length < 2 || p[0].Trim() == "") continue;
                     long a, b; var e = new Entry();
@@ -139,7 +139,7 @@ namespace AdeeboMeter
                 // have run 10 minutes - moving the clock forward and restarting doesn't help
                 // The value carries Windows' boot number in its high half (0 = unknown): a different boot is a real restart of the PC,
                 // never a reason to wait - only the same boot is held to the 10 minutes of uptime (round-3 #10)
-                long bootNow = boot >> 32, bootThen = e.Tick >> 32, bt = boot & 0xFFFFFFFFL, et = e.Tick & 0xFFFFFFFFL;
+                long bootNow = boot >> 40, bootThen = e.Tick >> 40, bt = boot & TickMask, et = e.Tick & TickMask;
                 bool sameBoot = bootNow == 0 || bootThen == 0 || bootNow == bootThen;
                 if (sameBoot && et > 0 && bt >= et && bt - et < (long)ReplayGap.TotalMilliseconds) return 0;
                 if (!Replay.Contains(id) || e.Again != default(DateTime) || nowUtc - e.First < ReplayGap) return 0;
@@ -148,7 +148,10 @@ namespace AdeeboMeter
                 return ReplayPts;
             }
         }
-        static long BootMs() { return BootId() << 32 | (long)(uint)Environment.TickCount; }
+        // bug-hunt L-43: 40 bits of milliseconds since boot (34 years, from the 64-bit count) - the 32-bit one wrapped after 25-50 days
+        const long TickMask = (1L << 40) - 1;
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern ulong GetTickCount64();
+        static long BootMs() { long t; try { t = (long)GetTickCount64(); } catch (EntryPointNotFoundException) { t = (long)(uint)Environment.TickCount; } return (BootId() & 0xFFFFFF) << 40 | (t & TickMask); }
         // Windows counts its boots (the prefetcher's BootId); 0 when it can't be read
         static long bootId = -1;
         static long BootId()

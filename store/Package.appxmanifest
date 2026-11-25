@@ -25,6 +25,15 @@
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png" />
       </uap:VisualElements>
       <Extensions>
+        <!-- bug-hunt ML-127: a locked .adeebo file opens in AdeeboMeter (Open an encrypted file, the file filled in) -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="adeebo">
+            <uap:DisplayName>AdeeboMeter locked file</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.adeebo</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
         <!-- "Start with Windows": on by default like the installed exe (a portable copy never starts by itself); the user switches it in Settings > Apps > Startup -->
         <desktop:Extension Category="windows.startupTask" Executable="AdeeboMeter.exe" EntryPoint="Windows.FullTrustApplication">
           <desktop:StartupTask TaskId="AdeeboMeter" Enabled="true" DisplayName="AdeeboMeter" />

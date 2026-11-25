@@ -26,7 +26,7 @@ namespace AdeeboMeter
         Panel BuildTravelPage()
         {
             travelPage = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Card, Visible = false };
-            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(64), BackColor = Theme.Card, Padding = new Padding(Sc(14), Sc(14), 0, 0), WrapContents = false };
+            var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Sc(68), BackColor = Theme.Card, Padding = new Padding(Sc(20), Sc(16), 0, 0), WrapContents = false };
             travelBox = new RoundBox(Sc(320), Draw.fInput, "Or type a site - e.g. github.com");
             travelBox.Box.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; StorySite(); } };
             travelGo = new PillButton("Follow", PillButton.K.Primary); travelGo.Click += delegate { StorySite(); };
@@ -52,23 +52,23 @@ namespace AdeeboMeter
         }
         // one read at a time, and a failed one waits a minute - a paint never starts another and another
         bool routesLoading, appsLoading; DateTime appsFailedAt = DateTime.MinValue;
-        void LoadRoutes() { if (routesLoading) return; routesLoading = true; Task.Factory.StartNew(() => { List<Routes.R> t; try { t = Routes.Read(); } catch (Exception e) { Program.Log("routes: " + e.Message); t = new List<Routes.R>(); } try { BeginInvoke((Action)delegate { routeTable = t; routesLoading = false; travelCanvas.Invalidate(); LabRefresh(); }); } catch { routesLoading = false; } }); }
+        void LoadRoutes() { if (routesLoading) return; routesLoading = true; Task.Factory.StartNew(() => { var __bz = Busy.Begin("Reading the route table"); try {  List<Routes.R> t; try { t = Routes.Read(); } catch (Exception e) { Program.Log("routes: " + e.Message); t = new List<Routes.R>(); } try { BeginInvoke((Action)delegate { routeTable = t; routesLoading = false; travelCanvas.Invalidate(); LabRefresh(); }); } catch { routesLoading = false; } } finally { __bz.End(); } }); }
         void LoadApps()
         {
             if (appsLoading || (DateTime.UtcNow - appsFailedAt).TotalSeconds < 60) return; appsLoading = true;
             Task.Factory.StartNew(() =>
-            {
+            { var __bz = Busy.Begin("Finding which apps use the network"); try { 
                 List<M365.Row> rows = null; Dictionary<int, string> fam = null; string fb = ""; List<string[]> ol = null;
                 try { fam = M365.FamilyByPid(); rows = M365.Connections(M); fb = M365.TcpFallback(M, rows); ol = M365.OutlookSlow(M, rows); } catch (Exception e) { Program.Log("m365: " + e.Message); }
                 try { BeginInvoke((Action)delegate { appsLoading = false; if (rows == null) appsFailedAt = DateTime.UtcNow; m365Rows = rows; m365Fam = fam; m365Fallback = fb; outlookRows = ol; travelCanvas.Invalidate(); }); } catch { appsLoading = false; }
-            });
+            } finally { __bz.End(); } });
         }
 
         void PaintTravel(Graphics g)
         {
             g.TranslateTransform(travelCanvas.AutoScrollPosition.X, travelCanvas.AutoScrollPosition.Y);
             Begin(travelCanvas);
-            float x = 14 * S, y = 8 * S, w = travelCanvas.ClientSize.Width - 28 * S;
+            float x = 20 * S, y = 6 * S, w = travelCanvas.ClientSize.Width - 40 * S;
             y = PaintStory(g, x, y, w);
             if (storyTarget != "" || jFlow != null) y = PaintJourney(g, x, y, w);
             var need = new Size(0, (int)(y + 30 * S)); SetNeed(travelCanvas, need);
@@ -83,9 +83,10 @@ namespace AdeeboMeter
         float Head(Graphics g, string t, float x, float y, float w, string key)
         {
             t = L.T(t);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(t, Draw.fTiny, mb, x, y);
-            if (key != null) Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), key);
-            return y + 22 * S;
+            // 24 Nov: a sub-heading in the card's own type (was tiny grey capitals), with room under it
+            using (var mb = new SolidBrush(Theme.Sub)) g.DrawString(t, Draw.fBodyB, mb, x, y);
+            if (key != null) Hint(travelCanvas, new RectangleF(x, y - 2 * S, w, 22 * S), key);
+            return y + 28 * S;
         }
 
         // ---------- layer by layer
@@ -93,7 +94,7 @@ namespace AdeeboMeter
         static readonly Color[] LayerCol = { Theme.C("#8250DF"), Theme.C("#1F6FEB"), Theme.C("#0E8A9E"), Theme.C("#2DA44E"), Theme.C("#BF8700"), Theme.C("#CF222E"), Theme.C("#57606A") };
         float PaintAnatomy(Graphics g, float x, float y, float w, int mtu, bool vpn, int vpnMtu)
         {
-            y = Head(g, AdeeboMeter.L.T("PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK"), x, y, w, "travel.ANATOMY");
+            y = Head(g, AdeeboMeter.Kit.Sent("PACKET ANATOMY  ·  WHAT'S INSIDE ONE FULL-SIZE PACKET ON YOUR LINK"), x, y, w, "travel.ANATOMY");
             int payload = Math.Max(0, mtu - 20 - 20 - 5);
             var parts = new List<Tuple<string, int, Color>> { Tuple.Create("Ethernet 14", 14, LayerCol[4]), Tuple.Create("IP 20", 20, LayerCol[3]), Tuple.Create("TCP 20", 20, LayerCol[2]), Tuple.Create("TLS 5", 5, LayerCol[1]), Tuple.Create("your data " + payload, payload, LayerCol[0]) };
             float total = parts.Sum(p => p.Item2), bx = x, bh = 30 * S, min = 54 * S;
@@ -106,7 +107,7 @@ namespace AdeeboMeter
                 bx += pw;
             }
             y += bh + 10 * S;
-            string t = "Your link carries packets of up to " + mtu + " bytes (the MTU). Headers take " + (mtu - payload) + " of them, so each packet holds " + payload + " bytes of your data. " +
+            string t = "Your link carries packets of up to " + mtu + " bytes (the MTU). Inside it the IP, TCP and TLS headers take " + (mtu - payload) + ", so each packet holds " + payload + " bytes of your data; Ethernet's 14 wrap around it on the wire, outside the MTU. " +   /* bug-hunt ML-170: the text now adds up like the bar */
                        (mtu == 1492 ? "1492 means PPPoE (DSL / some fibre): the provider's tunnel takes 8 bytes. " : "") +
                        (vpn ? "Through your VPN the usable size drops to " + (vpnMtu > 0 ? vpnMtu.ToString(CultureInfo.CurrentCulture) : "about 1400") + ": IPsec adds ~60 bytes, SSL VPNs ~80. " : "") +
                        "Tunnels add more: GRE 24, VXLAN 50. If something on the way drops big packets without saying so (a path-MTU \"black hole\"), small pages load but big downloads hang - Check a destination tests for that.";
@@ -163,7 +164,8 @@ namespace AdeeboMeter
                 rows.Add(new[] { "Windows' own pick", pick > 0 && nic.TryGetValue(pick, out ni) ? ni.Name + (Monitor.IsVpn(ni) ? " (VPN)" : "") : "-", "3" });
                 y = InfoCardOn(travelCanvas, g, "WHICH ROUTE WINS FOR " + ask, rows, "travel.WINS", x, y, w);
             }
-            y = Head(g, AdeeboMeter.L.T("ACTIVE ROUTES (IPv4)  ·  ") + routeTable.Count, x, y, w, "travel.ROUTES");
+            int shownRoutes = routeTable.Count(r => r.Dest >> 28 != 14 && r.Dest != 0xFFFFFFFF);   // bug-hunt L-362: "the first 60" when there are more
+            y = Head(g, AdeeboMeter.L.T("ACTIVE ROUTES (IPv4)  ·  ") + routeTable.Count + (shownRoutes > 60 ? "  ·  " + AdeeboMeter.L.T("the first") + " 60 " + AdeeboMeter.L.T("shown") : ""), x, y, w, "travel.ROUTES");
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted)) using (var line = new Pen(Theme.Line2))
             {
                 foreach (var r in routeTable.Where(r => r.Dest >> 28 != 14 && r.Dest != 0xFFFFFFFF).OrderBy(r => r.Prefix).ThenBy(r => r.Metric).Take(60))
@@ -186,13 +188,13 @@ namespace AdeeboMeter
                     foreach (var u in ip.UnicastAddresses)
                     {
                         bool v6 = u.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6;
-                        string how = !v6 ? (u.PrefixOrigin == PrefixOrigin.Dhcp ? "from your router by DHCP" + (u.DhcpLeaseLifetime > 0 ? " · lease " + TimeSpan.FromSeconds(u.DhcpLeaseLifetime).TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : "") : u.PrefixOrigin == PrefixOrigin.Manual ? "set by hand" : u.PrefixOrigin.ToString())
+                        string how = !v6 ? (u.PrefixOrigin == PrefixOrigin.Dhcp ? "from your router by DHCP" + (u.DhcpLeaseLifetime >= uint.MaxValue - 1 ? " · lease never expires" : u.DhcpLeaseLifetime > 0 ? " · lease " + TimeSpan.FromSeconds(u.DhcpLeaseLifetime).TotalHours.ToString("0.#", CultureInfo.CurrentCulture) + " h" : "")   /* bug-hunt ML-171: 0xFFFFFFFF is "infinite" */ : u.PrefixOrigin == PrefixOrigin.Manual ? "set by hand" : u.PrefixOrigin.ToString())
                                           : u.Address.IsIPv6LinkLocal ? "link-local - every IPv6 adapter has one, only for this network" : u.SuffixOrigin == SuffixOrigin.Random ? "temporary (private) - changes daily so websites can't track this PC" : u.PrefixOrigin == PrefixOrigin.RouterAdvertisement ? "built from your router's advertisement (SLAAC)" : u.PrefixOrigin == PrefixOrigin.Dhcp ? "from DHCPv6" : u.PrefixOrigin.ToString();
                         rows.Add(new[] { v6 ? "IPv6" : "IPv4", u.Address + "  ·  " + how, "3" });
                     }
                     var dhcp = ip.DhcpServerAddresses.Select(a => a.ToString()).ToList();
                     if (dhcp.Count > 0) rows.Add(new[] { "DHCP server", string.Join(", ", dhcp), "3" });
-                    rows.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Select(a => a.ToString()).Take(4)), "3" });
+                    rows.Add(new[] { "DNS servers", string.Join(", ", ip.DnsAddresses.Select(a => a.ToString()).Take(4)) + (ip.DnsAddresses.Count > 4 ? " +" + (ip.DnsAddresses.Count - 4) + " " + AdeeboMeter.L.T("more") : ""), "3" });   /* L-362 */
                     if (ip.DnsSuffix != "") rows.Add(new[] { "DNS suffix", ip.DnsSuffix + " - short names like 'printer' are tried as 'printer." + ip.DnsSuffix + "'", "3" });
                 }
                 catch (Exception e) { rows.Add(new[] { "Addresses", e.Message, "1" }); }
@@ -214,10 +216,10 @@ namespace AdeeboMeter
             y = InfoCardOn(travelCanvas, g, "WHAT THEY'RE TALKING TO  ·  BY ROLE", roles, "travel.ROLES", x, y, w);
             y = InfoCardOn(travelCanvas, g, "TEAMS CALLS: UDP OR TCP?", new List<string[]> { new[] { "Right now", m365Fallback, m365Fallback.StartsWith("Teams seems", StringComparison.Ordinal) ? "1" : "3" } }, "travel.FALLBACK", x, y, w);
             var call = Knowledge.Topic("teams-call");
-            if (call != null && call["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW A TEAMS CALL CONNECTS"), x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
+            if (call != null && call["ladder"] != "") { y = Head(g, AdeeboMeter.Kit.Sent("HOW A TEAMS CALL CONNECTS"), x, y, w, "travel.CALLFLOW"); y = DrawKnowledgeLadder(g, travelCanvas, call["ladder"], x, y, w); }
             if (outlookRows != null) y = InfoCardOn(travelCanvas, g, "WHY IS OUTLOOK SLOW?  ·  THE USUAL SUSPECTS, CHECKED", outlookRows.Select(r => new[] { r[1], r[2] + (r[3] != "" ? " - " + r[3] : ""), r[0] }).ToList(), "travel.OUTLOOK", x, y, w);
             var o = Knowledge.Topic("outlook-flow");
-            if (o != null && o["ladder"] != "") { y = Head(g, AdeeboMeter.L.T("HOW OUTLOOK GETS YOUR MAIL"), x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
+            if (o != null && o["ladder"] != "") { y = Head(g, AdeeboMeter.Kit.Sent("HOW OUTLOOK GETS YOUR MAIL"), x, y, w, null); y = DrawKnowledgeLadder(g, travelCanvas, o["ladder"], x, y, w); }
             var refresh = new RectangleF(x, y, 120 * S, 22 * S);
             using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(L.T("Refresh  ↻"), Draw.fBodyB, lb, refresh.X, refresh.Y);
             Act(travelCanvas, refresh, delegate { m365Rows = null; travelCanvas.Invalidate(); });
@@ -251,7 +253,7 @@ namespace AdeeboMeter
             if (realErr != "") y = Lead(g, realErr, x, y, w, true);
             if (realPkts == null) return y;
             var shown = realPkts.Take(40).ToList();
-            y = Head(g, AdeeboMeter.L.T("THE REAL PACKETS  ·  ") + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
+            y = Head(g, AdeeboMeter.Kit.Sent("THE REAL PACKETS  ·  ") + realPkts.Count + " RECORDED  ·  CLICK ONE TO EXPLAIN IT", x, y, w, "travel.REAL");
             float colA = x + 90 * S, colB = x + w - 90 * S;
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
@@ -273,7 +275,7 @@ namespace AdeeboMeter
             }
             if (realDecode != null)
             {
-                y += 14 * S; y = Head(g, AdeeboMeter.L.T("PACKET ") + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
+                y += 14 * S; y = Head(g, AdeeboMeter.Kit.Sent("PACKET ") + realSel + ", EVERY LAYER  ·  WIRESHARK'S DECODE WITH WHAT IT MEANS", x, y, w, "travel.DECODE");
                 foreach (var layer in realDecode)
                 {
                     string story = Packets.LayerStory(layer.Key);
@@ -359,21 +361,22 @@ namespace AdeeboMeter
         // InfoCard drawn on any canvas (rows: { label, text, level })
         float InfoCardOn(Control host, Graphics g, string title, List<string[]> rows, string key, float x, float y, float w)
         {
-            float lw = 190 * S, tw = w - lw - 28 * S; var hs = rows.Select(r => Math.Max(22 * S, Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 6 * S)).ToList();
-            var card = new RectangleF(x, y, w, 40 * S + hs.Sum());
-            Kit.Box(g, card);
-            using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(title, Draw.fTiny, mb, x + 14 * S, y + 12 * S);
-            if (key != null) Hint(host, new RectangleF(x, y, w, 26 * S), key);
-            float ry = y + 34 * S;
+            // 24 Nov: the card's title in heading type (was tiny grey capitals) and rows with room between them
+            float lw = 190 * S, tw = w - lw - 36 * S; var hs = rows.Select(r => Math.Max(30 * S, Draw.Measure(r[1], Draw.fBody, (int)tw).Height + 10 * S)).ToList();
+            var card = new RectangleF(x, y, w, 16 * S + 36 * S + hs.Sum() + 10 * S);
+            Kit.Box(g, card, 14 * S);
+            using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(title), Draw.fHead, ib, x + 18 * S, y + 16 * S);
+            if (key != null) Hint(host, new RectangleF(x, y, w, 40 * S), key);
+            float ry = y + 16 * S + 36 * S;
             using (var muted = new SolidBrush(Theme.Muted))
                 for (int i = 0; i < rows.Count; i++)
                 {
                     int l = 3; if (rows[i].Length > 2) int.TryParse(rows[i][2], NumberStyles.Integer, CultureInfo.InvariantCulture, out l);
-                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 14 * S, ry, lw - 8 * S, 20 * S));
-                    using (var tb = new SolidBrush(l == 1 || l == 2 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 14 * S + lw, ry, tw, hs[i]));
+                    g.DrawString(rows[i][0], Draw.fBody, muted, new RectangleF(x + 18 * S, ry, lw - 8 * S, 22 * S));
+                    using (var tb = new SolidBrush(l == 1 || l == 2 ? Theme.LvText(l) : Theme.Ink)) g.DrawString(rows[i][1], Draw.fBody, tb, new RectangleF(x + 18 * S + lw, ry, tw, hs[i]));
                     ry += hs[i];
                 }
-            return y + card.Height + 16 * S;
+            return y + card.Height + 20 * S;
         }
     }
 }

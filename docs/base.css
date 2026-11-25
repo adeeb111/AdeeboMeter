@@ -3,14 +3,15 @@
    faceplate blue #1155E0 and the gauge's three arcs - mint #5EF2B0, amber #FCD34D, coral #FF7A6B. */
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 @font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
-@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Barlow SC";src:url(/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 
 :root{
-  --face:#1155E0; --face-hi:#2A6BF0; --face-ink:#FFFFFF; --face-sub:#CFE0FF;
-  --ok:#1F9E6B; --warn:#B7791F; --bad:#D9473A;            /* light mode: the arc colours, darkened to read on paper */
-  --ink:#16191E; --sub:#4B5360; --muted:#6B7380; --line:#DDE1E7; --card:#FFFFFF; --page:#F1F3F6; --soft:#E8EBF0;
-  --blue:#1155E0; --blue-d:#0D47BD; --green:#1F9E6B;
+  --face:#1155E0; --face-ink:#FFFFFF; --face-sub:#CFE0FF;
+  --ok:#17794F; --warn:#875A00; --bad:#B42318;            /* light mode: the arc colours, darkened until small text reads (4.5:1, as the PC app) */
+  --ink:#16191E; --sub:#4B5360; --muted:#5A6270; --line:#DDE1E7; --card:#FFFFFF; --page:#F1F3F6; --soft:#E8EBF0;
+  --blue:#1155E0; --blue-d:#0D47BD; --green:#17794F;
   --ease-out:cubic-bezier(.23,1,.32,1);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -26,10 +27,14 @@
 
 body{font-family:"Barlow","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;font-weight:500}
 h1,h2,h3{font-family:"Barlow SC","Barlow","Segoe UI",system-ui,sans-serif}
-:root{--amber:#B7791F;--red:#D9473A;--green:#1F9E6B;--c-learn:var(--blue);--c-games:var(--blue);--c-live:var(--blue);--c-files:var(--blue);--ui-blue:var(--face)}
+:root{--amber:#875A00;--red:#B42318;--green:#17794F;--c-learn:var(--blue);--c-games:var(--blue);--c-live:var(--blue);--c-files:var(--blue);--ui-blue:var(--face)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}}
 :root[data-theme="dark"]{--amber:#FCD34D;--red:#FF7A6B;--green:#5EF2B0}
 ::selection{background:rgba(17,85,224,.35)}
 html{scrollbar-color:var(--line) var(--page);caret-color:var(--blue)}
 a{text-underline-offset:.18em}
 a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+/* one corner scale for the website, the phone app and the PC app (24 Nov, Adeeb: unify now):
+   sm 8 - tags, small chips, inner segments · md 12 - buttons, fields, icon tiles · lg 16 - cards and boxes ·
+   xl 24 - the meter faceplate and sheets · pill - pills, toggles, status chips */
+:root{--r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:999px}

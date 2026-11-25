@@ -30,4 +30,4 @@ gh attestation verify .\AdeeboMeter.exe -R adeeb111/AdeeboMeter
 ```
 
 Download AdeeboMeter only from [GitHub Releases](https://github.com/adeeb111/AdeeboMeter/releases) or the
-[website](https://adeeb111.github.io/AdeeboMeter/) — fake copies of network tools are spread through search ads.
+[website](https://adeebometer.com/) — fake copies of network tools are spread through search ads.

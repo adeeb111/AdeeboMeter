@@ -1,0 +1,57 @@
+# AdeeboMeter buddy lines - Confucian persona, in the spirit of the Analects (our own lines; no quotations). key|text.
+app.open|Buen día, {addr}. Atiendo la red con cuidado y diligencia.
+app.open|Empecemos como es debido: mirando antes de actuar.
+all.good|Todo está en su orden debido.
+all.good|Nada que corregir hoy. Un buen estado de cosas.
+pc.busy|El PC está cargado en {v}. Aligera sus deberes y el orden volverá.
+pc.busy|La falta está en el propio PC. Corrígela allí.
+wifi.drops|El Wi-Fi se fue {v} veces. Acércate al router.
+net.none|Sin red. Empieza por lo más cercano: el cable o el Wi-Fi.
+inet.slow|Tu hogar está en orden. El retraso está más allá de tu router.
+busy|Trabajando con diligencia... {v}
+idle|Nada nuevo. La vigilancia continúa.
+search.empty|Pregunta y sabrás qué herramienta sirve.
+freeze|Un momento ({v}). La paciencia es lo debido aquí.
+speedrunner|Termina la primera tarea antes de empezar la segunda.
+back.again|Bienvenido de vuelta. Esto es lo que ocurrió.
+dns.slow|Los nombres tardan en responder ({v}).
+speed.great|{v} de descarga. Más que suficiente.
+speed.bloat|Rápido, pero el retraso sube {v} cuando la línea está llena.
+game.lag|El lag empieza en tu Wi-Fi, no en el servidor del juego.
+game.good|Estable en {v}. Juega con buena conducta.
+vpn.on|VPN conectada.
+vpn.slow|La VPN añade {v}.
+portal|Este Wi-Fi exige primero iniciar sesión. Respeta la costumbre de la casa.
+gw.down|Tu router no responde. Empieza por ahí.
+isp.down|Tu router responde; el proveedor no. Avísales con cortesía y con las horas.
+mtu.small|Se pierden paquetes grandes en {v}. Envía lo que el camino permite.
+port.open|{v} responde.
+port.closed|{v} no responde.
+cert.ok|El certificado es válido y de confianza.
+cert.expired|El certificado venció el {v}. Renuévalo pronto.
+sec.ok|La revisión pasó. Permanece atento.
+sec.issue|{v} asuntos necesitan corrección.
+mtr.lossy|La pérdida empieza en el salto {v}.
+mtr.clean|Sin pérdida en ningún salto.
+devices.found|{v} dispositivos son miembros de tu red.
+encrypt.done|Cifrado.
+decrypt.done|Abierto, sin cambios.
+points.earned|+{v} puntos. El aprendizaje, practicado, trae su recompensa.
+award|500 puntos: el Premio Adeebo. Ganado con práctica constante.
+late.night|Es tarde. Una mente descansada sirve mejor mañana.
+morning|Buenos días. La noche fue ordenada.
+update.suspect|Las cosas empeoraron tras la actualización del {v}. Examínala primero.
+call.on|Una llamada. Vigilo su calidad.
+stream.on|{v} se reproduce sin problemas.
+stream.dip|El stream flaqueó. {v}
+stream.none|Nada se transmite.
+trade.ok|Tu línea al broker es rápida y estable.
+trade.slow|El broker responde despacio. Piensa dos veces antes de actuar.
+trade.closed|El mercado está cerrado hasta las 9:30.
+view.switch|Cambiando a {v}.
+quiz.right|Correcto. Has aprendido bien.
+quiz.wrong|No es así. Errar y corregirlo es aprender.
+game.streak|{v} seguidas: el estudio da fruto.
+game.timeup|El tiempo ha terminado.
+market.open|Se abren las puertas del mercado.
+storm.near|Se acerca una tormenta; el prudente se prepara.

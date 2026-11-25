@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#0B1426">
+<meta name="theme-color" content="#1155E0">
 <title data-i18n="AdeeboMeter - your network, devices and PC in your pocket">AdeeboMeter - your network, devices and PC in your pocket</title>
 <meta name="description" content="AdeeboMeter on your phone: your PC's live numbers, the devices on your network, guided checks, encrypted file transfer, and lessons and games that work offline.">
 <link rel="canonical" href="https://adeebometer.com/app.html">
@@ -41,20 +41,20 @@ header h1{font-size:28px;line-height:1.08;margin:0;font-weight:800;letter-spacin
 svg.i{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .card{background:var(--card);box-shadow:var(--glow);border-radius:22px;padding:16px;margin:0 0 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-width:0}
 .card h3{margin:6px 0 4px;font-size:18px;overflow-wrap:anywhere}
-.hero{background:linear-gradient(135deg,rgba(31,111,235,.55),rgba(20,50,110,.6));box-shadow:0 0 0 1px var(--edge2),0 12px 40px rgba(31,111,235,.25);display:flex;align-items:center;gap:14px;cursor:pointer;border:0;width:100%;text-align:left;color:inherit;font:inherit}
+.hero{background:linear-gradient(135deg,rgba(31,111,235,.55),rgba(20,50,110,.6));box-shadow:0 0 0 1px var(--edge2),0 12px 40px rgba(31,111,235,.25);display:flex;align-items:center;gap:14px;cursor:pointer;border:0;width:100%;text-align:start;color:inherit;font:inherit}
 :root[data-theme="light"] .hero{background:linear-gradient(135deg,#2F7BF5,#1C5FD6);color:#fff}
 .hero .m{color:#C9DAF7;font-size:13px}:root[data-theme="light"] .hero .m{color:#DCE8FF}.hero b{font-size:19px;display:block;margin:2px 0}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
 .led{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);flex:none}.led.off{background:var(--mut);box-shadow:none}.led.warn{background:var(--amber);box-shadow:0 0 10px var(--amber)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
-.tile{background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:15px;min-height:116px;cursor:pointer;border:0;text-align:left;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px;text-decoration:none}
+.tile{background:var(--card);box-shadow:var(--glow);border-radius:20px;padding:15px;min-height:116px;cursor:pointer;border:0;text-align:start;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px;text-decoration:none}
 .tile b{font-size:18px}.tile span{color:var(--sub);font-size:13px;line-height:1.3}
 .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none}
 .c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-purple{color:var(--purple)}.c-amber{color:var(--amber)}.c-cyan{color:var(--cyan)}.c-red{color:var(--red)}
 .bg-blue{background:rgba(59,139,255,.12)}.bg-cyan{background:rgba(63,208,224,.10)}.bg-amber{background:rgba(242,184,75,.12)}
 .where{display:inline-flex;gap:4px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.03em;border-radius:99px;padding:2px 8px;background:rgba(59,139,255,.16);color:var(--blue);white-space:nowrap}
 .where.ph{background:rgba(63,208,122,.15);color:var(--green)}.where.off{background:rgba(164,123,255,.16);color:var(--purple)}
-.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:start}
 .list>.row:first-child,.card>.row:first-of-type{border-top:0}
 .row .tx{flex:1;min-width:0}.row .tx b{display:block;font-size:16px;overflow-wrap:anywhere}.row .tx span{display:block;color:var(--sub);font-size:13px;overflow-wrap:anywhere}.row .tx span.where{display:inline-flex;margin-top:3px}
 .chev{color:var(--mut)}
@@ -186,7 +186,7 @@ body.page #app>*{animation:amFade .12s cubic-bezier(.23,1,.32,1) backwards}
 .led:not(.off):not(.warn){animation:none}
 
 .btn,.row,.card[data-go],.card[data-act],#tabs button,.vchip,.gcard{transition:transform .12s ease,background-color .2s,box-shadow .2s}
-.btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active{transform:scale(.975)}
+.btn:active,.row:active,.card[data-go]:active,.card[data-act]:active,.vchip:active,.gcard:active,.vopt:active,.seg button:active,.ibtn:active,.cbtn:active,.lnk:active,.tog:active{transform:scale(.975)}
 }
 p.foot{margin:22px 4px 6px;text-align:center;font-size:12px;color:var(--mut);line-height:1.6}
 #scanov{position:fixed;inset:0;z-index:50;background:rgba(5,10,20,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}#scanov[hidden]{display:none}#scanov .sc-in{position:relative;width:min(86vw,420px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000}#scanov video{width:100%;height:100%;object-fit:cover}#scanov .sc-box{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:18px}#scanov.live .sc-box{border-color:var(--blue)}#scanov p{color:#E8EEF9;text-align:center;max-width:420px;margin:0}
@@ -198,7 +198,7 @@ body.inweb #app{display:none}@media (max-width:767px){body.inweb #web{bottom:cal
 .pre{background:var(--well,rgba(127,127,127,.12));border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;margin:8px 0 0;overflow:auto;max-height:340px}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:150px;margin-top:14px}.wk>div{display:flex;flex-direction:column;align-items:center;min-width:0}.wk .bar{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}.wk i{display:block;width:70%;border-radius:6px 6px 2px 2px}.wk b{font-size:12px;margin-top:4px}.wk small{font-size:11px;color:var(--sub)}
 textarea.in{resize:vertical;min-height:120px}
-.pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:left;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
+.pcrow2{display:flex;align-items:center;gap:12px;width:100%;border:1px dashed var(--edge);background:none;color:var(--ink);font:inherit;text-align:start;border-radius:16px;padding:12px 14px;margin:8px 0 14px;cursor:pointer}.pcrow2 .tx{flex:1}.pcrow2 b{display:block}.pcrow2 .tx span{color:var(--sub);font-size:13px}
 .tog.on{background:var(--blue)}#qrbox svg{width:100%;height:auto;border-radius:8px}
 /* themes (16 Nov): the desktop app's palettes - Neon, Midnight, Sunset, Mint - over Dark/Light; text on the accent by contrast */
 :root[data-pal="neon"]{--bg:#07080D;--bg2:#10121A;--card:#10121A;--card2:#161925;--edge:#262B3D;--edge2:#00E5FF;--ink:#EEF4FF;--sub:#9AA2BA;--mut:#4C536C;--blue:#00E5FF;--green:#5CFFB0;--amber:#FFE066;--red:#FF7A99;--well:#07080D;--onblue:#04121A}
@@ -207,10 +207,10 @@ textarea.in{resize:vertical;min-height:120px}
 :root[data-pal="mint"]{--bg:#EEF7F4;--bg2:#FFFFFF;--card:#FFFFFF;--card2:#F2FAF7;--edge:#CBE3DA;--edge2:#0E9C78;--ink:#14302A;--sub:#4F6A62;--mut:#9FBAB1;--blue:#0E9C78;--green:#116329;--amber:#7D4E00;--red:#B42318;--well:#EEF7F4;--onblue:#FFFFFF}
 :root[data-pal] body{background:var(--bg)}:root[data-pal] nav.tabs{background:var(--bg2)}
 :root[data-pal] .seg button.on,:root[data-pal] .act.main i,:root[data-pal] .btn:not(.ghost),:root[data-pal] nav.tabs button.on,:root[data-pal] .voices button.on,:root[data-pal] .mini button.on{color:var(--onblue,#fff)}
-.thg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.thb{border:2px solid var(--edge);border-radius:14px;padding:8px;text-align:left;font:inherit;cursor:pointer}.thb.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}.thb b{display:block;font-size:14px;margin-top:6px}.thb i{display:block;border-radius:10px;padding:8px}.thb i u{display:block;height:6px;border-radius:3px;margin-bottom:5px}.thb i em{display:block;height:14px;width:45%;border-radius:7px;margin-top:7px}
+.thg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.thb{border:2px solid var(--edge);border-radius:14px;padding:8px;text-align:start;font:inherit;cursor:pointer}.thb.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}.thb b{display:block;font-size:14px;margin-top:6px}.thb i{display:block;border-radius:10px;padding:8px}.thb i u{display:block;height:6px;border-radius:3px;margin-bottom:5px}.thb i em{display:block;height:14px;width:45%;border-radius:7px;margin-top:7px}
 /* views (v4): the View chip and companion button, one result per view, game and service cards, quick buttons, activity, sheets */
 .vrow{display:flex;gap:8px;align-items:center;margin:0 0 12px}
-.vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:left}
+.vchip{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;border-radius:14px;padding:10px 12px;color:var(--ink);font:inherit;font-size:16px;cursor:pointer;text-align:start}
 .vchip small{color:var(--sub);font-weight:600;font-size:14px;margin-right:auto}.vchip b{white-space:nowrap}
 .cbtn{width:46px;height:46px;flex:none;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--edge);border:0;display:grid;place-items:center;cursor:pointer;padding:0}.cbtn svg{width:30px!important;height:30px!important}
 .say2{display:flex;gap:8px;align-items:flex-end;margin:0 2px 12px}.say2>span:last-child{background:var(--card2);border-radius:14px 14px 14px 4px;padding:8px 12px;font-style:italic;color:var(--sub);font-size:14px;line-height:1.35}.say2>span:first-child svg{width:32px!important;height:32px!important}
@@ -221,7 +221,7 @@ textarea.in{resize:vertical;min-height:120px}
 .hrow{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 8px}.hrow b{font-size:17px}
 .lnk{background:none;border:0;color:var(--blue);font:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:0}
 .gscroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:2px 16px}.gscroll::-webkit-scrollbar{display:none}
-.gcard{flex:none;width:126px;background:var(--card);border:1.5px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gcard{flex:none;width:126px;background:var(--card);border:1.5px solid var(--edge);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink);font:inherit;text-align:start;cursor:pointer}
 .gcard.on{border-color:var(--blue)}.gcard .gtop{height:50px;margin:-10px -10px 8px;background:linear-gradient(135deg,color-mix(in srgb,var(--g) 85%,#000),color-mix(in srgb,var(--g) 45%,#0B1426));display:grid;place-items:center;color:#fff}
 .gcard b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gcard small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gst{margin-top:6px;align-self:flex-start;font-size:12px;font-weight:800;border-radius:7px;padding:2px 8px}.gst.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}.gst.warn{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}.gst.bad{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.gst.off{background:var(--card2);color:var(--sub)}
@@ -235,12 +235,12 @@ textarea.in{resize:vertical;min-height:120px}
 .dim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5)}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:86vh;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -1px 0 var(--edge);padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
 @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
-.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:0 auto 12px}.sheet h3{font-size:20px;margin:0 0 4px}
-.vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:left;cursor:pointer}.vopt:first-of-type{border-top:0}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--edge);margin:-10px auto 2px;padding:12px 40px;background-clip:content-box;box-sizing:content-box;touch-action:none;cursor:grab}.sheet h3{font-size:20px;margin:0 0 4px}
+.vopt{display:flex;align-items:center;gap:12px;padding:11px 0;border:0;border-top:1px solid var(--edge);background:none;width:100%;color:var(--ink);font:inherit;text-align:start;cursor:pointer}.vopt:first-of-type{border-top:0}
 .vopt .tx{flex:1;min-width:0}.vopt .tx b{display:block}.vopt .tx span{color:var(--sub);font-size:13px}.vopt .ic{width:40px;height:40px;border-radius:12px}
 .tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--edge);display:grid;place-items:center;flex:none}.tick.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .voices{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);gap:8px;margin:8px -18px 4px;padding:2px 18px;overflow-x:auto;scrollbar-width:none;justify-content:start}.voices::-webkit-scrollbar{display:none}
-.voices button,.mini button{border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.voices button,.mini button{min-height:44px;border:1px solid var(--edge);background:var(--card2);color:var(--ink);font:inherit;font-weight:600;font-size:14px;border-radius:99px;padding:8px 14px;cursor:pointer;white-space:nowrap}.voices button.on,.mini button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mini button{border-radius:10px;padding:9px 0}
 @media (min-width:768px){.sheet{left:auto;right:24px;bottom:24px;width:420px;border-radius:22px}}
 /* matching words */
@@ -256,8 +256,8 @@ textarea.in{resize:vertical;min-height:120px}
 <link rel="stylesheet" href="/locale.css">
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1F6FEB"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 <link rel="stylesheet" href="/brand-app.css">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
 </head>
 <body>
 <div id="splash" aria-hidden="true"><svg class="amlogo" viewBox="0 0 64 64" width="96" height="96" style="--r:-42deg" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="14" fill="#1155E0"/><g fill="none" stroke-width="5" stroke-linecap="round"><path class="arc a1" d="M16.04 32.48A16 16 0 0 1 21.29 21.71" stroke="#5EF2B0"/><path class="arc a2" d="M26.01 18.77A16 16 0 0 1 37.99 18.77" stroke="#FCD34D"/><path class="arc a3" d="M42.71 21.71A16 16 0 0 1 47.96 32.48" stroke="#FF7A6B"/></g><g class="ndl"><line x1="32" y1="33.6" x2="32" y2="19.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g><circle cx="32" cy="33.6" r="2.6" fill="#fff"/><line x1="18.8" y1="42.6" x2="45.2" y2="42.6" stroke="#fff" stroke-width=".9"/><g fill="#A8F5D4"><circle cx="18.8" cy="42.6" r="2.3"/><circle cx="32" cy="42.6" r="2.3"/><circle cx="45.2" cy="42.6" r="2.3"/></g></svg><b class="amword">Adeebo<span class="m">Meter</span></b></div>
@@ -333,6 +333,33 @@ textarea.in{resize:vertical;min-height:120px}
     return '<span class="where' + (w === "off" ? " off" : w === "pc" ? "" : " ph") + '">' + mark + esc(tr(label)) + '</span>';
   }
   function tr(label) { return window.AdeeboMeterLocale ? AdeeboMeterLocale.t(label) : label; }
+  // hunters11 phone ML-1 and others: sentences built from live values ("Not live · 5 min ago") match a template key;
+  // the values inside are translated too (units, names that have a key)
+  var PATS = [
+    [/^Not live · last reading (.+) ago$/, "Not live · last reading {t} ago", ["t"]], [/^Not live - from (.+) ago$/, "Not live - from {t} ago", ["t"]],
+    [/^Not live · (.+) ago$/, "Not live · {t} ago", ["t"]], [/^NOT LIVE · no reading for (.+)$/, "NOT LIVE · no reading for {t}", ["t"]],
+    [/^(\d+) here now · (\d+) watched · from your PC · (.+) ago$/, "{n} here now · {m} watched · from your PC · {t} ago", ["n", "m", "t"]],
+    [/^(.+) ago$/, "{t} ago", ["t"]], [/^(\d+) (s|min|h)$/, null, ["n", "u"]],
+    [/^Normally open · closes in (.+)$/, "Normally open · closes in {t}", ["t"]], [/^Opens 9:30 · in (.+)$/, "Opens 9:30 · in {t}", ["t"]],
+    [/^(\d+) of (\d+): low, steady delay$/, "{a} of {b}: low, steady delay", ["a", "b"]], [/^This phone · (.+) · 5 tries each$/, "This phone · {t} · 5 tries each", ["t"]],
+    [/^(\d+) ms · steady$/, "{v} ms · steady", ["v"]], [/^(\d+) ms · jumpy$/, "{v} ms · jumpy", ["v"]],
+    [/^(.+) · the same maths as the PC$/, "{g} · the same maths as the PC", ["g"]], [/^(\d+) of (\d+) shown - the List has them all$/, "{a} of {b} shown - the List has them all", ["a", "b"]],
+    [/^Results · (\d+)$/, "Results · {n}", ["n"]], [/^Map of your network: (\d+) devices\. The List shows the same devices\.$/, "Map of your network: {n} devices. The List shows the same devices.", ["n"]],
+    [/^(.+), here now$/, "{x}, here now", ["x"]], [/^(.+), away$/, "{x}, away", ["x"]], [/^Your router, (.+)$/, "Your router, {x}", ["x"]],
+    [/^Link rate (.+) Mb\/s$/, "Link rate {v} Mb/s", ["v"]], [/^(.+) works; (.+) doesn't$/, "{a} works; {b} doesn't", ["a", "b"]],
+    [/^(.+) is (\d+) ms quicker$/, "{a} is {n} ms quicker", ["a", "n"]], [/^Your PC asked this phone to run (.+)$/, "Your PC asked this phone to run {x}", ["x"]],
+    [/^(\d+) CHECKS$/, "{n} CHECKS", ["n"]], [/^🔒 encrypted · (.+) left$/, "🔒 encrypted · {t} left", ["t"]], [/^🔒 (.+) left$/, "🔒 {t} left", ["t"]]
+  ];
+  function trAny(key) {
+    var t = tr(key); if (t !== key) return t;
+    for (var i = 0; i < PATS.length; i++) {
+      var m = PATS[i][0].exec(key); if (!m) continue;
+      if (PATS[i][1] === null) return trFormat("{n} " + m[2], { n: m[1] });
+      var vals = {}; PATS[i][2].forEach(function (n, j) { var v = m[j + 1]; vals[n] = /^\d+([.,]\d+)?$/.test(v) ? v : trAny(v); });
+      var out = trFormat(PATS[i][1], vals); return out;
+    }
+    return key;
+  }
   function heading(label) {
     var translated = tr(label);
     return label === translated ? label : esc(translated);
@@ -385,7 +412,7 @@ textarea.in{resize:vertical;min-height:120px}
           (async function () {
             if (!quiet) { phase = "asking"; draw(); }
             var dev = /iPhone/.test(navigator.userAgent) ? "iPhone" : /iPad/.test(navigator.userAgent) ? "iPad" : /Android/.test(navigator.userAgent) ? "Android phone" : "A browser";
-            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))) }));
+            sock.send(JSON.stringify({ t: "hi", v: PROTO, w: "1", w2: "1", pk: b64u(pk), dev: dev, mac: b64u(await hmac(auth, cat2(te.encode("hi"), pk))), mac2: b64u(await hmac(auth, cat2(te.encode("hi2|1|1|" + dev), pk))), mac3: b64u(await hmac(auth, cat2(te.encode("hi3|" + rm), pk))) }));
           })().catch(function () { try { sock.close(); } catch (e) {} });
         };
       sock.onclose = function () {
@@ -401,9 +428,12 @@ textarea.in{resize:vertical;min-height:120px}
           if (m.t === "key" && !keyPk) {   // the PC's key early, so both can show the matching words before you press Allow
             var kp2 = unb64u(m.pk || "");
             if (kp2.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("key"), pk, kp2)))) { why = "This isn't your PC - its key wasn't signed with your code."; sock.close(); return; }
-            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, m.wv === 2 ? 2 : 1); draw(); return;
+            // security recheck R-1: this page asked for six words - fewer is a downgrade, and a PC that signs the count (mac2) must sign 2
+            if (m.wv !== 2 || m.mac2 == null || !same(unb64u(m.mac2 || ""), await hmac(auth, cat2(te.encode("key2|2"), pk, kp2)))) { why = "The PC offered fewer matching words than this page asked for - the session was closed to be safe. Update AdeeboMeter on the PC and scan again."; sock.close(); return; }
+            keyPk = kp2; pcWords = await wordsOf(sec, pk, kp2, 2); draw(); return;
           }
           if (m.t !== "ok") return;
+          if (!quiet && !keyPk) { why = "The PC skipped the matching words - the session was closed to be safe."; sock.close(); return; }   // review 1.1.6: a code session always shows the words first
           if (m.v && +m.v > PROTO) { why = "Your PC has a newer AdeeboMeter than this page. Close the app and open it again to update (it updates itself when it's online)."; if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (g) { if (g) g.update(); }); sock.close(); return; }
           var pcPk = unb64u(m.pk || "");
           if (pcPk.length !== 65 || !same(unb64u(m.mac || ""), await hmac(auth, cat2(te.encode("ok"), pk, pcPk)))) { why = "This isn't your PC - the answer wasn't signed with your key."; sock.close(); return; }
@@ -774,7 +804,7 @@ textarea.in{resize:vertical;min-height:120px}
   function tile(go, icn, col, t, s, href) { return '<button class="tile" ' + (href ? 'data-web="' + href + '" data-title="' + t + '"' : 'data-go="' + go + '"') + '><span class="ic ' + col + '">' + ic(icn, 30) + '</span><b dir="auto">' + esc(tr(t)) + '</b><span dir="auto">' + esc(tr(s)) + '</span></button>'; }
   // Learn, Games, Live and Lock files open inside the app (the PC stays connected; Back returns here)
   var webHome = "", webFrom = "more";
-  function openWeb(url, title) { if (S.tab !== "web") webFrom = S.tab; webHome = url; $("wtitle").textContent = tr(title); var f = $("wframe"); if (f.getAttribute("src") !== url) { var wl = $("wload"); wl.textContent = tr(/learn/.test(url) ? "Loading lessons…" : /live/.test(url) ? "Loading live data…" : "Loading…"); wl.hidden = false; f.setAttribute("src", url); } S.tab = "web"; draw(); }
+  function openWeb(url, title) { if (S.tab !== "web") webFrom = S.tab; webHome = url; $("wtitle").textContent = tr(title); var f = $("wframe"); if (f.getAttribute("src") !== url) { var wl = $("wload"); wl.textContent = tr(/learn/.test(url) ? "Loading lessons…" : /live/.test(url) ? "Loading live data…" : "Loading…"); wl.hidden = false; wl.onclick = null; f.setAttribute("src", url); clearTimeout(openWeb.t); openWeb.t = setTimeout(function () { if (wl.hidden) return; wl.textContent = tr("Still loading - check your connection, then tap here to try again."); wl.onclick = function () { wl.textContent = tr("Loading…"); f.setAttribute("src", "about:blank"); setTimeout(function () { f.setAttribute("src", url); }, 50); }; }, 12000); } S.tab = "web"; draw(); }   // hunters14 PHONE-L2: a hung page says so after 12 s, and a tap tries again
   function webBack() { var f = $("wframe"), p = ""; try { p = f.contentWindow.location.pathname; } catch (e) {} if (/^\/learn\/(?!index\.html$).+/.test(p)) { f.setAttribute("src", "/learn/"); return; } S.tab = webFrom === "web" ? "more" : webFrom; draw(); }
   function rowBtn(attr, icn, col, t, s, right) { return '<button class="row" ' + attr + '>' + (icn ? '<span class="ic ' + col + '">' + ic(icn, 22) + '</span>' : '') + '<div class="tx"><b>' + t + '</b>' + (s ? '<span>' + s + '</span>' : '') + '</div>' + (right == null ? '<span class="chev">' + ic("chev", 20) + '</span>' : right) + '</button>'; }
   function needPc(what) { return '<div class="card empty">' + ic("pc", 52) + '<b>' + esc(tr(phase === "ended" ? "Your PC isn't connected" : "Connect your PC")) + '</b><p>' + esc(tr(what)) + '</p><button class="btn" data-go="pair"><span data-i18n="How to connect">How to connect</span></button></div>'; }
@@ -798,7 +828,7 @@ textarea.in{resize:vertical;min-height:120px}
   }
   function installCard(home) {
     if (installed() || (home && store("am-noinst"))) return "";
-    return '<div class="card"><div style="display:flex;gap:12px;align-items:center"><span class="ic">' + ic("download", 22) + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:16px"><span data-i18n="Get the app">Get the app</span></b><span style="color:var(--sub);font-size:13px"><span data-i18n="Free, no app store, no account. Opens full screen; Learn and Games work offline.">Free, no app store, no account. Opens full screen; Learn and Games work offline.</span></span></div></div>' +
+    return '<div class="card"><div style="display:flex;gap:12px;align-items:center"><span class="ic">' + ic("download", 22) + '</span><div style="flex:1;min-width:0"><b style="display:block;font-size:16px"><span data-i18n="Get the app">Get the app</span></b><span style="color:var(--sub);font-size:13px"><span data-i18n="Free, no app store, no account. Opens full screen; Learn and Games work offline.">' + esc(tr("Free, no app store, no account. Opens full screen; Learn and Games work offline.")) + '</span></span></div></div>' +
       (bip ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="install">Install</button>' + (home ? '<button class="btn ghost" data-act="noinst"><span data-i18n="Not now">Not now</span></button>' : '') + '</div>' : '<p style="margin:10px 0 0;font-size:14px">' + installHow() + '</p>' + (home ? '<button class="btn ghost" data-act="noinst" style="margin-top:10px;min-height:0;padding:10px"><span data-i18n="Got it">Got it</span></button>' : '')) + '</div>';
   }
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
@@ -874,17 +904,17 @@ textarea.in{resize:vertical;min-height:120px}
   }
 
   // ---- pieces of Home
-  function vrow() { var v = vdef(S.view); return '<div class="vrow"><button class="vchip" data-act="sheet" data-s="view">' + ic(v[1], 20) + '<small>Activity view</small><b>' + v[2] + '</b>' + ic("cdown", 18) + '</button></div>'; }
+  function vrow() { var v = vdef(S.view); return '<div class="vrow"><button class="vchip" data-act="sheet" data-s="view">' + ic(v[1], 20) + '<small>' + esc(tr("Activity view")) + '</small><b>' + v[2] + '</b>' + ic("cdown", 18) + '</button></div>'; }
   function meta(r, who) { return (who || "This phone") + (r && r.at ? " · " + hm(r.at) : "") + (r && r.n ? " · " + r.n + " tries" : ""); }
   function ms(v) { return v == null ? "–" : v + '<small> ms</small>'; }
-  function dialSvg(deg) { return '<svg class="dial" viewBox="0 0 400 200" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="376.0" y2="190.0"/><line class="tick" x1="359.5" y1="161.9" x2="367.4" y2="160.5"/><line class="tick" x1="352.2" y1="134.6" x2="359.7" y2="131.9"/><line class="tick" x1="340.3" y1="109.0" x2="352.4" y2="102.0"/><line class="tick" x1="324.1" y1="85.9" x2="330.2" y2="80.7"/><line class="tick" x1="304.1" y1="65.9" x2="309.3" y2="59.8"/><line class="tick" x1="281.0" y1="49.7" x2="288.0" y2="37.6"/><line class="tick" x1="255.4" y1="37.8" x2="258.1" y2="30.3"/><line class="tick" x1="228.1" y1="30.5" x2="229.5" y2="22.6"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="14.0"/><line class="tick" x1="171.9" y1="30.5" x2="170.5" y2="22.6"/><line class="tick" x1="144.6" y1="37.8" x2="141.9" y2="30.3"/><line class="tick" x1="119.0" y1="49.7" x2="112.0" y2="37.6"/><line class="tick" x1="95.9" y1="65.9" x2="90.7" y2="59.8"/><line class="tick" x1="75.9" y1="85.9" x2="69.8" y2="80.7"/><line class="tick" x1="59.7" y1="109.0" x2="47.6" y2="102.0"/><line class="tick" x1="47.8" y1="134.6" x2="40.3" y2="131.9"/><line class="tick" x1="40.5" y1="161.9" x2="32.6" y2="160.5"/><line class="tick" x1="38.0" y1="190.0" x2="24.0" y2="190.0"/><g fill="none" stroke-width="18" stroke-linecap="round"><path d="M61.4 170.5A140 140 0 0 1 113.8 79.7" stroke="#5EF2B0"/><path d="M147.6 60.2A140 140 0 0 1 252.4 60.2" stroke="#FCD34D"/><path d="M286.2 79.7A140 140 0 0 1 338.6 170.5" stroke="#FF7A6B"/></g><g class="needle" style="--r:' + deg + 'deg"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g><circle cx="200" cy="190" r="12" fill="#fff"/></svg>'; }
+  function dialSvg(deg) { return '<svg class="dial" viewBox="0 0 400 200" aria-hidden="true"><line class="tick" x1="362.0" y1="190.0" x2="376.0" y2="190.0"/><line class="tick" x1="359.5" y1="161.9" x2="367.4" y2="160.5"/><line class="tick" x1="352.2" y1="134.6" x2="359.7" y2="131.9"/><line class="tick" x1="340.3" y1="109.0" x2="352.4" y2="102.0"/><line class="tick" x1="324.1" y1="85.9" x2="330.2" y2="80.7"/><line class="tick" x1="304.1" y1="65.9" x2="309.3" y2="59.8"/><line class="tick" x1="281.0" y1="49.7" x2="288.0" y2="37.6"/><line class="tick" x1="255.4" y1="37.8" x2="258.1" y2="30.3"/><line class="tick" x1="228.1" y1="30.5" x2="229.5" y2="22.6"/><line class="tick" x1="200.0" y1="28.0" x2="200.0" y2="14.0"/><line class="tick" x1="171.9" y1="30.5" x2="170.5" y2="22.6"/><line class="tick" x1="144.6" y1="37.8" x2="141.9" y2="30.3"/><line class="tick" x1="119.0" y1="49.7" x2="112.0" y2="37.6"/><line class="tick" x1="95.9" y1="65.9" x2="90.7" y2="59.8"/><line class="tick" x1="75.9" y1="85.9" x2="69.8" y2="80.7"/><line class="tick" x1="59.7" y1="109.0" x2="47.6" y2="102.0"/><line class="tick" x1="47.8" y1="134.6" x2="40.3" y2="131.9"/><line class="tick" x1="40.5" y1="161.9" x2="32.6" y2="160.5"/><line class="tick" x1="38.0" y1="190.0" x2="24.0" y2="190.0"/><g fill="none" stroke-width="18" stroke-linecap="round"><path d="M61.4 170.5A140 140 0 0 1 113.8 79.7" stroke="#5EF2B0"/><path d="M147.6 60.2A140 140 0 0 1 252.4 60.2" stroke="#FCD34D"/><path d="M286.2 79.7A140 140 0 0 1 338.6 170.5" stroke="#FFB4AA"/></g><g class="needle" style="--r:' + deg + 'deg"><line x1="200" y1="190" x2="200" y2="70" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g><circle cx="200" cy="190" r="12" fill="#fff"/></svg>'; }
   function verdictEveryday() {
-    if (!me) { if (!phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50); return '<div class="card vcard face"><div class="tag2"><span class="lc" data-i18n="THIS PHONE">THIS PHONE</span></div>' + dialSvg(-84) + '<div class="vh"><span data-i18n="Measuring...">Measuring...</span></div><div style="color:var(--sub)"><span data-i18n="A few seconds.">A few seconds.</span></div><button class="btn" disabled>' + ic("refresh", 18) + ' ' + esc(tr("Measuring...")) + '</button></div>'; }
+    if (!me) { if (!phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50); return '<div class="card vcard face"><div class="tag2"><span class="lc" data-i18n="THIS PHONE">THIS PHONE</span></div>' + dialSvg(-84) + '<div class="vh"><span data-i18n="Measuring...">' + esc(tr("Measuring...")) + '</span></div><div style="color:var(--sub)"><span data-i18n="A few seconds.">' + esc(tr("A few seconds.")) + '</span></div><button class="btn" disabled>' + ic("refresh", 18) + ' ' + esc(tr("Measuring...")) + '</button></div>'; }
     var lv = worst(phoneRows(me)), ty = me.type === "cellular" ? "MOBILE DATA" : me.type === "wifi" ? "WI-FI" : "";
     return '<div class="card vcard face"><div class="tag2"><span class="lc">' + esc(tr("THIS PHONE")) + '</span>' + (ty ? " · " + (ty === "WI-FI" ? '<span class="keep">Wi-Fi</span>' : esc(tr(ty))) : "") + (me.org ? ' · <span class="keep">' + esc(me.org) + '</span>' : "") + ' · ' + hm(me.at) + '</div>' + dialSvg(me.err ? 62 : lv <= 0 ? -48 : lv === 1 ? 0 : 46) + '<div class="vh">'  + esc(tr(me.err ? "Couldn't reach the internet" : lv <= 0 ? "Low, steady delay" : lv === 1 ? "A bit slow or uneven" : "Slow or uneven")) + '</div>' +
       (me.err ? '<div style="color:var(--sub)">' + esc(phoneRows(me, true)[0][3]) + '</div>' : '<div class="big3"><div><small><span data-i18n="Delay">Delay</span></small><b>' + ms(Math.round(me.med)) + '</b></div><div><small><span data-i18n="Spread">Spread</span></small><b>' + ms(Math.round(me.jit)) + '</b></div><div><small>IPv6</small><b>' + (me.v6 == null ? "–" : esc(tr(me.v6 ? "Yes" : "No"))) + '</b></div></div>' +
         (S.mode !== "advanced" && S.mode !== "engineer" ? "" : '<p class="fine" style="margin:8px 0 0">' + esc(tr("Timed to the nearest internet edge server")) + (me.colo ? " (" + esc(me.colo) + ")" : "") + ' at ' + hm(me.at)  + '. ' + esc(tr("Other screens time other servers, so their numbers differ.")) + '</p>') +
-        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › This phone shows which step is slow.">check again closer to the router. Still uneven? Tools › This phone shows which step is slow.</span></p>' : '')) +
+        (lv >= 1 ? '<p style="margin:8px 0 0"><b><span data-i18n="Next:">Next:</span></b> <span data-i18n="check again closer to the router. Still uneven? Tools › My connection shows which step is slow.">' + esc(tr("check again closer to the router. Still uneven? Tools › My connection shows which step is slow.")) + '</span></p>' : '')) +
       '<button class="btn" data-act="phone2"' + (phoneBusy ? " disabled" : "") + '>' + ic("refresh", 18) + (' ' + esc(tr(phoneBusy ? "Measuring..." : "Check this phone again"))) + '</button></div>';
   }
   function gameCards() {
@@ -902,7 +932,7 @@ textarea.in{resize:vertical;min-height:120px}
         '<div class="bars">' + r.regs.slice(0, 4).map(function (x) { var ll = lvOf({ med: x[2], jit: x[3] }, 60, 120); return '<div><span>' + esc(x[0]) + '</span><i style="--w:' + Math.round(100 * (x[2] || mx) / (mx * 1.15)) + '%;--c:var(' + (ll === 0 ? "--green" : ll === 1 ? "--amber" : "--red") + ')"></i><b>' + (x[2] == null ? "–" : x[2]) + '</b></div>'; }).join("") + '</div>' +
         (g[5] === "m" ? '<p class="fine">To the big cloud city nearest each of ' + esc(g[1]) + '\'s server regions - an estimate of distance.' + (g[4] && g[0] !== "freefire" ? ' If the game lets you pick a server, pick the lowest.' : g[0] === "freefire" ? ' Free Fire puts you in your account\'s region.' : ' The game picks the server for you.') + '</p>' : g[3] ? '<p class="fine">' + esc(g[1]) + ' uses its own relays, which a browser can\'t reach - these are the nearby cloud regions.</p>' : '<p class="fine">To the cloud region next to the servers - an estimate. Real game ping and whose lag it is: on your PC.</p>') + '</div>';
     }
-    return a + '<div class="btns"><button class="btn" data-act="measure" data-k="game"' + (measuring ? " disabled" : "") + '>' + ic("game", 18) + (measuring === "game" ? " Checking..." : " Check now") + '</button><button class="btn ghost" data-go="walk">' + ic("walk", 18) + ' Wi-Fi walk</button></div>';
+    return a + '<div class="btns"><button class="btn" data-act="measure" data-k="game"' + (measuring ? " disabled" : "") + '>' + ic("game", 18) + (measuring === "game" ? " " + esc(tr("Checking...")) : " " + esc(tr("Measure now"))) + '</button><button class="btn ghost" data-go="walk">' + ic("walk", 18) + ' Wi-Fi walk</button></div>';
   }
   function svcCards(list, store, kind) {
     var good = 0, done = 0, at = 0;
@@ -917,7 +947,7 @@ textarea.in{resize:vertical;min-height:120px}
       (!c.done ? "Not checked yet today" : c.good + " of " + c.done + ": low, steady delay") + '</div><div style="color:var(--sub);font-size:13px">' + (c.done ? "This phone · " + hm(c.at) + " · 5 tries each" : kind === "svc" ? "Delay and steadiness to each service - no speed test" : "Delay and steadiness to each service, before you join") + '</div></div></div>';
     a += '<div class="hrow"><b>' + (kind === "svc" ? "Your services" : "Your call apps") + '</b><button class="lnk" data-act="sheet" data-s="' + kind + '">Edit</button></div><div class="sgrid">' + c.cards + '</div>';
     a += '<p class="fine">' + (kind === "svc" ? "Steady delay helps a stream start fast and keep going; it can't promise a picture quality. Why it buffered last night: on your PC." : "Calls want under 100 ms and little spread. It times each app's front door, not a real call.") + '</p>';
-    return a + '<button class="btn" data-act="measure" data-k="' + kind + '"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === kind ? " Checking..." : " Check now") + '</button>';
+    return a + '<button class="btn" data-act="measure" data-k="' + kind + '"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === kind ? " " + esc(tr("Checking...")) : " " + esc(tr("Measure now"))) + '</button>';
   }
   function etNow() { var p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Toronto", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()), o = {}; p.forEach(function (x) { o[x.type] = x.value; }); return { d: o.weekday, m: (+o.hour) * 60 + (+o.minute) }; }
   function verdictTrade() {
@@ -927,22 +957,22 @@ textarea.in{resize:vertical;min-height:120px}
     var T = DAY.trade, m = T && T.m, fx = m && m.fx && m.fx.items ? m.fx.items.filter(function (i) { return i.c === "USD" || i.c === "EUR"; }) : [], ix = m && m.idx && m.idx.items ? m.idx.items.filter(function (i) { return i.c === "ENER" || i.c === "BCPI"; }) : [];
     var NM = { USD: "US dollar", EUR: "Euro", ENER: "Energy (oil, gas)", BCPI: "All commodities" };
     if (fx.length || ix.length) a += '<div class="hrow"><b>Today\'s numbers</b><span class="fineh">Bank of Canada</span></div><div class="card list">' + fx.concat(ix).map(function (i) { var up = i.p != null && i.v > i.p, dn = i.p != null && i.v < i.p; return '<div class="row" style="cursor:default"><div class="tx"><b>' + NM[i.c] + '</b><span>' + (i.c.length === 3 ? "1 " + i.c + " in CAD" : "index, week before → now") + '</span></div><b>' + (i.v < 10 ? i.v.toFixed(4) : i.v.toFixed(1)) + (up ? ' <span style="color:var(--green)">▲</span>' : dn ? ' <span style="color:var(--red)">▼</span>' : '') + '</b></div>'; }).join("") + '</div>';
-    if (T) a += '<div class="card vcard"><div class="tag2">YOUR LINE TO THE MARKETS · THIS PHONE · ' + hm(T.at) + '</div><div class="big3"><div><small>Canada cloud</small><b>' + ms(T.ca.med) + '</b></div><div><small>US East cloud</small><b>' + ms(T.us.med) + '</b></div><div><small>Delay variation</small><b>' + ms(Math.max(T.ca.jit || 0, T.us.jit || 0)) + '</b></div></div><p class="fine">Your broker\'s own line: on your PC (Trading).</p></div>';
+    if (T) a += '<div class="card vcard"><div class="tag2">YOUR LINE TO THE MARKETS · THIS PHONE · ' + hm(T.at) + '</div><div class="big3"><div><small>Canada cloud</small><b>' + ms(T.ca.med) + '</b></div><div><small>US East cloud</small><b>' + ms(T.us.med) + '</b></div><div><small>' + esc(tr("Delay variation")) + '</small><b>' + ms(Math.max(T.ca.jit || 0, T.us.jit || 0)) + '</b></div></div><p class="fine">Your broker\'s own line: on your PC (Trading).</p></div>';
     return a + '<button class="btn" data-act="measure" data-k="trade"' + (measuring ? " disabled" : "") + '>' + ic("refresh", 18) + (measuring === "trade" ? " Checking..." : T ? " Check again" : " Check my line and today's numbers") + '</button>';
   }
   function viewBody() { var v = S.view || "everyday"; return v === "gaming" ? verdictGaming() : v === "calls" ? verdictList("call") : v === "stream" ? verdictList("svc") : v === "trade" ? verdictTrade() : verdictEveryday() + (v === "fix" ? '<button class="btn ghost" data-go="tools">' + ic("tools", 18) + ' Every tool</button>' : ''); }
   function quick() {
     var on = phase === "live", q = function (go, icn, k, t, act) { return '<button ' + (act ? 'data-act="' + act + '"' : 'data-go="' + go + '"') + '><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + esc(tr(t)) + '</button>'; };
     var w = function (url, icn, k, t) { return '<button data-web="' + url + '" data-title="' + t + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + t + '</button>'; }, tl = function (id, icn, k, t) { return '<button data-tool="' + id + '"><span class="ic qc ' + k + '">' + ic(icn, 18) + '</span>' + esc(tr(t)) + '</button>'; };
-    var more = '<div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + (hasPc() ? w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live data") : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
+    var more = '<div class="qa">' + q("walk", "walk", "k-walk", "Wi-Fi walk") + w("/games.html", "game", "k-games", "Games") + w("/learn/", "book", "k-learn", "Learn") + w("/live.html", "chart", "k-live", "Live data") + (hasPc() ? "" : q("addpc", "pc", "k-pc", "Connect to PC") + q("tools", "tools", "k-tools", "All tools")) + '</div>';
     if (!hasPc()) return '<div class="qa2"><div class="qh"><span data-i18n="Quick tools">Quick tools</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "ISP report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' + more + '</div>';
     return '<div class="qa2"><div class="qh"><span data-i18n="Quick tools">Quick tools</span></div><div class="qa">' + w("/files.html#lock", "lock", "k-files", "Lock a file") + w("/files.html#of", "download", "k-files", "Open .adeebo") + q("", "report", "k-pc", "Report", "report") + tl("speed", "signal", "k-dev", "Speed test") + '</div>' +
-      '<div class="qh">' + (on ? "<span>YOUR PC</span>" : '<span>WITH YOUR PC</span> <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
+      '<div class="qh">' + (on ? "<span>YOUR PC</span>" : '<span>' + esc(tr("WITH YOUR PC")) + '</span> <button class="lnk" data-go="' + (hasPc() ? "pair" : "addpc") + '">' + (hasPc() ? "Connect ›" : "Add ›") + '</button>') + '</div><div class="qa' + (on ? "" : " pc") + '">' + q("devices", "wifi", "k-dev", "Devices") + q("pc", "pc", "k-pc", "My PC") + q("send", "send", "k-send", "Send") + q(on ? "pc" : "addpc", "search", "k-tools", "Checks") + '</div>' + more + '</div>';
   }
   function actList(n) {
     var L = DAY.d === today() ? DAY.act : [];
-    if (!L.length) return n ? '' : '<div class="card empty"><b><span data-i18n="Nothing yet today">Nothing yet today</span></b><p><span data-i18n="Checks you run show here until midnight - on this phone only.">Checks you run show here until midnight - on this phone only.</span></p></div>';
-    return (n ? '<div class="hrow"><b>Activity today</b>' + (L.length > n ? '<button class="lnk" data-go="activity"><span data-i18n="See all">See all</span></button>' : '') + '</div>' : '') + '<div class="card list">' + L.slice(0, n || 30).map(function (x) { return '<button class="row" data-view="' + x.v + '"><span class="vdot sm ' + (x.l === 0 ? "ok" : x.l === 1 ? "warn" : x.l === 2 ? "bad" : "off") + '">' + ic(x.l === 0 ? "check" : x.l === 3 ? "clock" : "bang", 14) + '</span><div class="tx"><b>' + esc(x.h) + '</b><span>' + esc(x.s) + '</span></div><span style="color:var(--sub);font-size:13px">' + hm(x.t) + '</span></button>'; }).join("") + '</div>';
+    if (!L.length) return n ? '' : '<div class="card empty"><b><span data-i18n="Nothing yet today">' + esc(tr("Nothing yet today")) + '</span></b><p><span data-i18n="Checks you run show here until midnight - on this phone only.">' + esc(tr("Checks you run show here until midnight - on this phone only.")) + '</span></p></div>';
+    return (n ? '<div class="hrow"><b>' + esc(tr("Activity today")) + '</b>' + (L.length > n ? '<button class="lnk" data-go="activity"><span data-i18n="See all">See all</span></button>' : '') + '</div>' : '') + '<div class="card list">' + L.slice(0, n || 30).map(function (x) { return '<button class="row" data-view="' + x.v + '"><span class="vdot sm ' + (x.l === 0 ? "ok" : x.l === 1 ? "warn" : x.l === 2 ? "bad" : "off") + '">' + ic(x.l === 0 ? "check" : x.l === 3 ? "clock" : "bang", 14) + '</span><div class="tx"><b>' + esc(x.h) + '</b><span>' + esc(x.s) + '</span></div><span style="color:var(--sub);font-size:13px">' + hm(x.t) + '</span></button>'; }).join("") + '</div>';
   }
 
   // ---- the sheets: View, Companion, and Edit for games, services and call apps
@@ -951,14 +981,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (!S.sheet) return "";
     var h = '<div class="dim" data-act="closesheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>';
     if (S.sheet === "view") h += '<div class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></div><h3 dir="auto">' + esc(tr("What do you use the internet for?")) + '</h3><p dir="auto" class="fine" style="margin:0 0 6px">' + esc(tr("Home shows what fits. Change it any time.")) + '</p>' + VIEWDEF.map(function (v) { var on = (S.view || "everyday") === v[0]; return '<button class="vopt" data-setview="' + v[0] + '"><span class="ic">' + ic(v[1], 20) + '</span><span class="tx"><b dir="auto">' + esc(tr(v[2])) + '</b><span dir="auto">' + esc(tr(v[3])) + '</span></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
-    else if (S.sheet === "comp") {
-      var st = window.AMV && AMV.state ? AMV.state() : { mine: null, chat: "normal" };
-      if (!vlist && window.AMV && AMV.voices) AMV.voices().then(function (j) { vlist = j; if (S.sheet === "comp") draw(); });
-      var vs = [["", "Surprise me"], ["plain", "Plain"]].concat(vlist ? vlist.moods.filter(function (m) { return m[0] !== "plain"; }).concat(vlist.personas) : []);
-      h += '<h3>Your companion</h3><div class="voices">' + vs.map(function (v) { var on = (st.mine || "") === v[0]; return '<button class="' + (on ? "on" : "") + '" data-voice="' + v[0] + '">' + esc(v[1]) + '</button>'; }).join("") + '</div>' +
-        '<div class="tag2" style="margin:12px 0 6px">HOW MUCH IT TALKS</div><div class="mini">' + [["face", "Face only"], ["quiet", "Quiet"], ["normal", "Normal"], ["chatty", "Chatty"]].map(function (c) { return '<button class="' + (st.chat === c[0] ? "on" : "") + '" data-talk="' + c[0] + '">' + c[1] + '</button>'; }).join("") + '</div>' +
-        '<div class="tag2" style="margin:14px 0 6px">SOUNDS LIKE</div>' + bubble(V("app.open") || "(the face only - no words)") + '<p class="fine"><button class="lnk" data-go="companion">What it calls you, and more ›</button></p>';
-    } else {
+    else {
       var L = S.sheet === "games" ? GAMES : S.sheet === "svc" ? SVC : CALL, mine = S.sheet === "games" ? myGames : S.sheet === "svc" ? mySvc : myCalls;
       h += '<h3>' + (S.sheet === "games" ? "Your games" : S.sheet === "svc" ? "Your services" : "Your call apps") + '</h3><p class="fine" style="margin:0 0 6px">Pick the ones you use. Kept on this phone.</p>' + L.map(function (x, k) { var on = mine.indexOf(x[0]) >= 0, hd = S.sheet !== "games" ? "" : k === 0 ? '<div class="tag2" style="margin:10px 0 4px">ON PHONES</div>' : x[5] == null && L[k - 1][5] != null ? '<div class="tag2" style="margin:14px 0 4px">ON PC AND CONSOLE</div>' : ""; return hd + '<button class="vopt" data-pickone="' + x[0] + '"><span class="ic" style="--k:' + x[2] + '">' + ic(S.sheet === "games" ? "game" : S.sheet === "svc" ? "play" : "headset", 18) + '</span><span class="tx"><b>' + esc(x[1]) + '</b></span><span class="tick' + (on ? " on" : "") + '">' + (on ? ic("check", 14) : "") + '</span></button>'; }).join("");
     }
@@ -970,18 +993,18 @@ textarea.in{resize:vertical;min-height:120px}
   function hero() {
     var rec = recLoad();
     if (rec && (phase === "none" || phase === "ended")) return '<button class="card hero" data-act="reconnect"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led ' + (reconnecting ? 'warn' : 'off') + '"></span>' + (reconnecting ? "Reconnecting..." : liveAt ? "Not live · last reading " + ago(age()) + " ago" : "Remembered") + '</span><b>' + esc(rec.pc) + '</b><span class="m">' + esc(why && !reconnecting ? why : "Tap to reconnect with Face ID or fingerprint") + '</span></div>' + ic("chev") + '</button>';
-    if (phase === "none") return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led off"></span>No PC connected</span><b>Connect your PC</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>' + ic("chev") + '</button>';
+    if (phase === "none") return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led off"></span>No PC connected</span><b>' + esc(tr("Connect your PC")) + '</b><span class="m">Scan the code from AdeeboMeter on your PC</span></div>' + ic("chev") + '</button>';
     if (phase === "asking" && pcWords) return '<div class="card hero" style="flex-direction:column;align-items:stretch;text-align:center"><span class="pill" style="align-self:center"><span class="led warn"></span>Waiting for you</span><b style="margin-top:8px">Your PC should show these words</b>' +
       '<div class="pwords">' + pcWords.split(" · ").map(function (x) { return '<span>' + esc(x) + '</span>'; }).join("") + '</div><span class="m">Same words? Press Allow on your PC. Different words - press Don\'t allow there.</span></div>';
     if (phase === "connecting" || phase === "asking") return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>' + (phase === "asking" ? "Waiting for you" : "Connecting...") + '</span><b>' + (phase === "asking" ? "Press Allow on your PC" : "Reaching your PC") + '</b><span class="m">Nothing is shared until you allow it</span></div></div>';
-    if (phase === "live" && !liveAt) return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Connected · waiting for the first reading</span><b>Your PC</b><span class="m">A few seconds.</span></div></div>';
+    if (phase === "live" && !liveAt) return '<div class="card hero"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Connected · waiting for the first reading</span><b>Your PC</b><span class="m">' + esc(tr("A few seconds.")) + '</span></div></div>';
     if (phase === "ended" || !isLive()) return '<button class="card hero" data-go="pair"><span>' + ic("pc", 54) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led warn"></span>Not live' + (liveAt ? ' · last reading ' + ago(age()) + ' ago' : '') + '</span><b>' + (phase === "ended" ? "Session ended" : "No reading from your PC") + '</b><span class="m">' + esc(phase === "ended" ? "Scan the code on your PC again to reconnect" : "The PC may be asleep, or its internet dropped") + '</span></div>' + ic("chev") + '</button>';
     var L = live || {}, s = Math.max(0, Math.round(L.left || 0));
     return '<button class="card hero" data-go="pc"><span style="display:flex;align-items:center;gap:6px">' + ic("pc", 40) + '<span style="opacity:.8">⇄</span>' + ic("phone", 28) + '</span><div style="flex:1;min-width:0"><span class="pill"><span class="led"></span>Connected · live</span><b>PC engine online</b><span class="m">🔒 encrypted · ' + Math.floor(s / 60) + ':' + ("0" + s % 60).slice(-2) + ' left</span></div>' + ic("chev") + '</button>';
   }
   function glance() {
     var L = live || {}, on = phase === "live" && liveAt;
-    return '<button class="card" data-go="pc" style="display:block;width:100%;text-align:left;color:inherit;font:inherit;border:0;cursor:pointer"><h2><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)"><span class="led' + (isLive() ? '' : on ? ' warn' : ' off') + '"></span>Live at a glance</span>' + ic("chev", 20) + '</h2><p style="margin:-6px 2px 10px;color:var(--sub);font-size:13px">' + (isLive() ? 'Last update: now' : on ? 'Not live - from ' + ago(age()) + ' ago' : 'Connect your PC to see this') + '</p>' +
+    return '<button class="card" data-go="pc" style="display:block;width:100%;text-align:start;color:inherit;font:inherit;border:0;cursor:pointer"><h2><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)"><span class="led' + (isLive() ? '' : on ? ' warn' : ' off') + '"></span>Live at a glance</span>' + ic("chev", 20) + '</h2><p style="margin:-6px 2px 10px;color:var(--sub);font-size:13px">' + (isLive() ? 'Last update: now' : on ? 'Not live - from ' + ago(age()) + ' ago' : 'Connect your PC to see this') + '</p>' +
       '<div class="stats">' + stat("wifi", "c-cyan", "Devices", devs ? devs.filter(function (d) { return d.here; }).length : "–") + stat("signal", "c-green", "Ping", on ? ms(L.ping) : "–", on ? lvOf(L.ping, 80, 200) : 3) + stat("cpu", "c-purple", "PC CPU", on ? pct(L.cpu) : "–", on ? lvOf(L.cpu, 80, 95) : 3) + '</div></button>';
   }
   function say() {
@@ -997,7 +1020,7 @@ textarea.in{resize:vertical;min-height:120px}
   var sayT = { line: "", at: 0 }, sayRun = false;
   function sayTick() {
     var sp = document.querySelector('[data-say]'); if (!sp || !sayT.line) { sayRun = false; return; }
-    var line = sayT.line, dur = Math.min(2000, line.length * 28), el = Date.now() - sayT.at;
+    var line = sayT.line, dur = Math.min(600, line.length * 12), el = Date.now() - sayT.at;   // the same pace as say()
     if (el >= dur) { sp.textContent = line; sayRun = false; return; }
     sp.innerHTML = esc(line.slice(0, Math.ceil(line.length * el / dur))) + '<i class="caret">▏</i>'; requestAnimationFrame(sayTick);
   }
@@ -1063,7 +1086,7 @@ textarea.in{resize:vertical;min-height:120px}
     return '<div class="card"><h2 style="margin:0 0 10px"><span style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:16px;color:var(--ink)">' + ic("wifi", 20) + esc(w.ssid) + '</span>' + where("pc") + '</h2><div class="stats">' + stat("signal", lv === 0 ? "c-green" : lv === 1 ? "c-amber" : "c-red", "Signal", sig == null ? "–" : pct(sig), lv) + stat("wifi", "c-blue", "Band", b || "–") + stat("chart", "c-purple", "Channel", esc(String(w.ch || "–").replace(/\s*\(.*$/, ""))) + '</div>' + (w.rate != null ? '<p style="margin:10px 2px 0;color:var(--sub);font-size:14px">Link rate ' + Math.round(w.rate) + ' Mb/s' + (lv === 2 ? ' · weak signal - closer to the router, or 5 GHz if it reaches' : '') + '</p>' : '') + '</div>';
   }
   VIEWS.pc = function () {
-    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, click the link button at its top, and press Scan the code on your PC here.");
+    if (phase !== "live" && !live) return hdr("My PC", "") + needPc("Install AdeeboMeter on your Windows PC, open ⋯ › Your phone in it, and press Scan the code on your PC here.");
     var t = S.pcTab, L = live || {}, on = isLive();
     var a = hdr("My PC", '<span class="pill"><span class="led' + (on ? '' : ' warn') + '"></span>' + (on ? "Connected · live" : phase === "ended" ? "Session ended" : phase === "live" && !liveAt ? "Connected · waiting for the first reading" : "Not live · " + ago(age()) + " ago") + '</span>');
     a += '<div class="pcart"><svg viewBox="0 0 120 90" width="140" aria-hidden="true"><rect x="10" y="6" width="100" height="62" rx="7" fill="#0E2147" stroke="#CFE0FF" stroke-width="4"/><rect x="18" y="14" width="84" height="46" rx="3" fill="' + (on ? "#1F6FEB" : "#3A4A66") + '"/><path d="M18 50 Q50 30 102 40 L102 60 L18 60z" fill="#3B8BFF" opacity="' + (on ? ".6" : ".15") + '"/><rect x="46" y="70" width="28" height="8" fill="#CFE0FF"/><rect x="34" y="78" width="52" height="5" rx="2.5" fill="#CFE0FF"/></svg></div>';
@@ -1114,7 +1137,7 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.widget = function () {
     var L = live || {}, lv = L.lv >= 0 && L.lv <= 2 ? L.lv : 3, g = L.game, s = Math.max(0, Math.round(L.left || 0)), stale = !isLive();
     document.body.classList.toggle("stale", stale);
-    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:0;padding:8px 14px">Done</button></div><div class="wgm">';
+    var a = '<div class="wgw"><div class="wgh">' + faceHtml(stale ? "speechless" : lv === 2 ? "sad" : lv === 1 ? "worried" : "happy") + '<b>' + (stale ? "NOT LIVE · no reading for " + ago(age()) : esc(L.head || L.chip || "Waiting for your PC...")) + '</b><button class="btn ghost" data-act="unwidget" style="width:auto;min-height:44px;padding:8px 14px">Done</button></div><div class="wgm">';
     a += '<div class="wgc"><div class="k">↓ Download</div><div class="v">' + bigv(L.down, "Mb/s") + '</div>' + area(hD, "var(--blue)") + '</div><div class="wgc"><div class="k">↑ Upload</div><div class="v">' + bigv(L.up, "Mb/s") + '</div>' + area(hU, "var(--purple)") + '</div>';
     if (g) a += '<div class="wgc full"><div class="k">🎮 ' + esc(g.name) + ' · ' + esc(g.srv) + ' · ' + esc(g.grade) + '</div><div class="v">' + bigv(g.now, "ms") + '</div>' + area(g.hist || [], "var(--green)") + '</div>';
     else a += '<div class="wgc full"><div class="k">Ping' + (L.gw != null ? ' · router ' + Math.round(L.gw) + ' ms' : '') + (L.loss ? ' · ' + Math.round(L.loss * 10) / 10 + '% lost' : '') + '</div><div class="v" style="color:' + (lvOf(L.ping, 80, 200) === 0 ? "var(--green)" : lvOf(L.ping, 80, 200) === 1 ? "var(--amber)" : "var(--red)") + '">' + bigv(L.ping, "ms") + '</div>' + area(hP, "var(--cyan)") + '</div>';
@@ -1173,7 +1196,7 @@ textarea.in{resize:vertical;min-height:120px}
   function calcOf(id) { for (var i = 0; i < CALCS.length; i++) if (CALCS[i][1] === id) return CALCS[i]; return null; }
   var CV = {};   // what's typed into each calculator, this visit only
   function calcRows(c) {
-    if (!window.AMCALC) return [["2", "Calculator", "still loading - try again in a second", ""]];
+    if (!window.AMCALC) { if (!document.getElementById("calcRetry")) { var cs = document.createElement("script"); cs.id = "calcRetry"; cs.src = "/calc.js?r=" + Date.now(); cs.onload = function () { draw(); }; document.head.appendChild(cs); } return [["2", "Calculator", "still loading - if it doesn't appear in a few seconds, reload the page", ""]]; }   // hunters14 PHONE-L1: a failed load is fetched again once
     var v = CV[c[1]] || c[4].map(function (f) { return f[1]; }), args = c[5] ? c[5].map(function (k) { return v[k]; }) : v;
     try { return AMCALC.fn[c[2]].apply(null, args); } catch (e) { return [["2", "Calculator", "couldn't work that out - check the boxes", ""]]; }
   }
@@ -1295,7 +1318,7 @@ textarea.in{resize:vertical;min-height:120px}
       var nx = r.cf && r.cf.Status === 3, addrs = ans(r.cf, "A"), up = r.t.n > 0, tries = r.t.n + r.t.fail, lv = nx ? 2 : !up ? 2 : r.t.fail ? 1 : 0;
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, trFormat("{count} tries", { count: tries })) + '<div class="vh">' + (nx ? "That name doesn't exist" : !up ? "Not reachable from here" : r.t.fail ? "Up, but some tries failed" : "Up from here") + '</div><div style="color:var(--sub);font-size:14px">' +
         esc(nx ? trFormat("Check the spelling - DNS says {host} isn't a real name.", { host: r.h }) : !up ? trFormat("If other sites load, {host} is likely down or blocking you. Try again on mobile data to tell which.", { host: r.h }) : trFormat("{host} answered {count} of {total} times. If it still won't load, it's more likely the app, the page or your account than the network.", { host: r.h, count: r.t.n, total: tries })) + '</div>' +
-        (up ? '<div class="big3"><div><small>Delay</small><b>' + ms(r.t.med) + '</b></div><div><small>Delay variation</small><b>' + ms(r.t.jit) + '</b></div><div><small>Missed</small><b>' + r.t.fail + '</b></div></div>' : '') + '</div>';
+        (up ? '<div class="big3"><div><small>Delay</small><b>' + ms(r.t.med) + '</b></div><div><small>' + esc(tr("Delay variation")) + '</small><b>' + ms(r.t.jit) + '</b></div><div><small>Missed</small><b>' + r.t.fail + '</b></div></div>' : '') + '</div>';
       var cfA = addrs.map(function (x) { return x.data; }).sort().join(","), ggA = ans(r.gg, "A").map(function (x) { return x.data; }).sort().join(",");
       a += rowsCard([[r.cf ? (addrs.length ? "0" : "2") : "1", "Name lookup", !r.cf ? "Cloudflare's DNS didn't answer" : addrs.length ? (addrs.length === 1 ? tr("1 address") : trFormat("{count} addresses", { count: addrs.length })) + (r.gg ? (cfA === ggA ? " · " + tr("Cloudflare and Google agree") : " · " + tr("Cloudflare and Google differ (normal for big sites)")) : "") : "no IPv4 address", ""],
         [ans(r.v6, "AAAA").length ? "0" : "3", "IPv6", ans(r.v6, "AAAA").length ? "has an IPv6 address" : "IPv4 only", ""], [up ? "0" : "2", "Secure connection", up ? "opened fine" : "didn't open", ""]].concat(r.out ? [(function () { var v = siteV(r.out); return [lvS(v[0]), tr("From outside (Cloudflare") + (r.out.colo ? " " + r.out.colo : "") + ")", v[1] + (v[0] === 0 && !up ? " - so it's down just for you" : v[0] === 2 && !up ? " - down for everyone" : ""), !up && v[0] === 0 ? tr("Try the other network (Wi-Fi or mobile data), restart the router, or check a blocker/VPN on this phone.") : ""]; })()] : [])) +
@@ -1316,7 +1339,7 @@ textarea.in{resize:vertical;min-height:120px}
     return hdr("DNS lookup", "From Cloudflare and Google, side by side", "tools") + a;
   };
   TOOLV.fastdns = function () {
-    var st = tst("fastdns"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Times 5 fresh lookups at each public DNS service, from this phone, over the web (DNS over HTTPS).</p>' + errBox("fastdns") + btn("fastdns", "Time them");
+    var st = tst("fastdns"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Times 5 fresh lookups at each public DNS service, from this phone, over the web (DNS over HTTPS).")) + '</p>' + errBox("fastdns") + btn("fastdns", "Time them");
     if (r) { var mx = Math.max.apply(null, r.rows.map(function (x) { return x[1].med || 0; }).concat([1]));
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "5 LOOKUPS EACH") + '<div class="vh">' + esc(fastWin(r) ? trFormat("{resolver} answered fastest", { resolver: fastWin(r) }) : "None answered") + '</div><div class="bars">' + r.rows.map(function (x, i) { return '<div><span>' + x[0] + '</span><i style="--w:' + (x[1].med == null ? 4 : Math.round(100 * x[1].med / (mx * 1.15))) + '%;--c:var(' + (x[1].med == null ? "--red" : i === 0 ? "--green" : "--blue") + ')"></i><b>' + (x[1].med == null ? (x[1].blocked ? "n/a" : "–") : x[1].med) + '</b></div>'; }).join("") + '</div>' + (r.rows.some(function (x) { return x[1].blocked; }) ? '<p class="fine">n/a: that service doesn\'t let a web page read its answers, so it can\'t be timed from here.</p>' : '') +
         '<p class="fine">ms per lookup. To use one on the phone: Settings › Private DNS (Android) or a DNS profile (iPhone). Your router\'s own DNS: on your PC.</p></div>'; }
@@ -1340,7 +1363,7 @@ textarea.in{resize:vertical;min-height:120px}
   TOOLV.regions = function () {
     var st = tst("regions"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Delay to ' + REG.length + ' cloud regions around the world, from this phone. Handy for a VPN, travel, or choosing a game server.</p>' + errBox("regions") + btn("regions", "Check the world");
     if (r) { var mx = Math.max.apply(null, r.o.map(function (x) { return x.med || 0; }).concat([1]));
-      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "4 TRIES EACH") + '<div class="vh">' + (r.o[0].med != null ? esc(trFormat("Nearest: {region}", { region: r.o[0].r[0] + " · " + r.o[0].r[1] })) : "No region answered - check the connection") + '</div><div class="bars">' + r.o.map(function (x) { var l = lvOf(x, 60, 150); return '<div><span>' + esc(x.r[1]) + '</span><i style="--w:' + Math.round(100 * (x.med || mx) / (mx * 1.1)) + '%;--c:var(' + (l === 0 ? "--green" : l === 1 ? "--amber" : "--red") + ')"></i><b>' + (x.med == null ? "–" : x.med) + '</b></div>'; }).join("") + '</div><p class="fine">Light in fibre needs about 1 ms per 100 km each way, so far regions are slow for everyone.</p></div>'; }
+      a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, "4 TRIES EACH") + '<div class="vh">' + (r.o[0].med != null ? esc(trFormat("Nearest: {region}", { region: r.o[0].r[0] + " · " + r.o[0].r[1] })) : "No region answered - check the connection") + '</div><div class="bars">' + r.o.map(function (x) { var l = lvOf(x, 60, 150); return '<div><span>' + esc(x.r[1]) + '</span><i style="--w:' + Math.round(100 * (x.med || mx) / (mx * 1.1)) + '%;--c:var(' + (l === 0 ? "--green" : l === 1 ? "--amber" : "--red") + ')"></i><b>' + (x.med == null ? "–" : x.med) + '</b></div>'; }).join("") + '</div><p class="fine">' + esc(tr("Light in fibre needs about 1 ms per 100 km each way, so far regions are slow for everyone.")) + '</p></div>'; }
     return hdr("How far is the internet?", "Delay to the world's cloud regions", "tools") + a;
   };
   TOOLV.who = function () {
@@ -1348,7 +1371,7 @@ textarea.in{resize:vertical;min-height:120px}
     var a = errBox("who");
     if (r) a += rowsCard([["3", "Provider", r.org || "not known", "From the public address this phone uses now - looked up by our small server for this answer only, never kept."], [r.v6 ? "0" : "3", "IPv6", r.v6 ? "this connection uses IPv6" : "IPv4 only", ""], ["3", "Nearest Cloudflare city", r.colo || "–", "Where your traffic meets the big networks."]]) + btn("who", "Check again");
     else a += '<div class="card empty"><b>Asking...</b></div>';
-    return hdr("Who carries my connection?", "Provider, IPv6, where you meet the internet", "tools") + a + '<p class="fine">Your address itself is never shown or kept.</p>';
+    return hdr("Who carries my connection?", "Provider, IPv6, where you meet the internet", "tools") + a + '<p class="fine">' + esc(tr("Your address itself is never shown or kept.")) + '</p>';
   };
   TOOLV.status = function () {
     var st = tst("status"), r = st.res; if (!r && !st.busy && !st.err) setTimeout(function () { runTool("status"); }, 30);
@@ -1379,8 +1402,8 @@ textarea.in{resize:vertical;min-height:120px}
     return hdr("Share Wi-Fi as a QR code", "Guests scan it to join - made on this phone", "tools") +
       '<div class="card"><label class="k" for="qs">Network name</label><input class="in" id="qs" data-qf="ssid" value="' + esc(st.ssid || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false"><label class="k" for="qp">Password</label><input class="in" id="qp" data-qf="pw" type="text" value="' + esc(st.pw || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">' +
       '<div class="mini" style="grid-template-columns:repeat(3,1fr)">' + [["WPA", "WPA2/3"], ["WEP", "WEP"], ["none", "Open"]].map(function (x) { return '<button class="' + (sec === x[0] ? "on" : "") + '" data-qsec="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
-      '<div class="sw" style="border-top:0;padding-bottom:0"><div class="tx"><b>Hidden network</b></div><button class="tog' + (st.hid ? " on" : "") + '" data-qhid="1" aria-pressed="' + !!st.hid + '"></button></div></div>' +
-      '<div class="card" id="qrbox" style="text-align:center">' + (payload && window.AMQR ? '<div style="max-width:300px;margin:0 auto">' + AMQR.svg(payload) + '</div><p style="margin:10px 0 0;font-weight:700">' + esc(st.ssid) + '</p><p class="fine" style="margin:4px 0 0">Point a phone camera at it. The password stays on this phone - nothing is sent.</p>' : '<p style="color:var(--sub);margin:0">Type the network name to make the code.</p>') + '</div>';
+      '<div class="sw" style="border-top:0;padding-bottom:0"><div class="tx"><b>Hidden network</b></div><button class="tog' + (st.hid ? " on" : "") + '" data-qhid="1" aria-label="' + esc(tr("Hidden network")) + '" aria-pressed="' + !!st.hid + '"></button></div></div>' +
+      '<div class="card" id="qrbox" style="text-align:center">' + (payload && window.AMQR ? '<div style="max-width:300px;margin:0 auto">' + AMQR.svg(payload) + '</div><p style="margin:10px 0 0;font-weight:700">' + esc(st.ssid) + '</p><p class="fine" style="margin:4px 0 0">' + esc(tr("Point a phone camera at it. The password stays on this phone - nothing is sent.")) + '</p>' : '<p style="color:var(--sub);margin:0">' + esc(tr("Type the network name to make the code.")) + '</p>') + '</div>';
   };
   // ---- watch the connection: a check every 2 seconds while you watch, with a timeline
   // one probe at a time, every 2 s; each belongs to the watch that sent it (AM-CG-408/409); a missed timer (the phone
@@ -1407,7 +1430,7 @@ textarea.in{resize:vertical;min-height:120px}
       var w = 320, h = 90, mx = Math.max(100, s.max || 0), n = Math.max(W.pts.length, 2), d = "", bars = "";
       W.pts.forEach(function (p, i) { var x = Math.round(i * (w - 4) / (n - 1)) + 2; if (p[1] === undefined) bars += '<rect x="' + (x - 2) + '" y="0" width="4" height="' + h + '" fill="var(--sub)" opacity=".35"/>'; else if (p[1] == null) bars += '<rect x="' + (x - 2) + '" y="0" width="4" height="' + h + '" fill="var(--red)" opacity=".7"/>'; else d += (d ? "L" : "M") + x + " " + Math.round(h - 4 - (h - 8) * p[1] / mx); });
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(W.t0, s.n + " CHECKS") + '<div class="vh">' + (s.drops ? s.drops + " dropout" + (s.drops > 1 ? "s" : "") + " · longest " + s.gap + " s" : s.max > 300 ? tr("No dropouts, some spikes") : tr("Steady, no dropouts")) + '</div><svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;margin-top:8px" role="img" aria-label="Delay over time">' + bars + '<path d="' + d + '" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/></svg>' +
-        '<div class="big3"><div><small>Median</small><b>' + ms(s.med) + '</b></div><div><small>Worst</small><b>' + ms(s.max) + '</b></div><div><small>Dropouts</small><b>' + s.drops + '</b></div></div><p class="fine">Red is a check that got no answer in 3 seconds; grey is time the phone paused this page, so nothing was measured' + (s.holes ? " (" + s.holeS + " s here)" : "") + '. Keep this page open while it runs.</p></div>';
+        '<div class="big3"><div><small>Median</small><b>' + ms(s.med) + '</b></div><div><small>Worst</small><b>' + ms(s.max) + '</b></div><div><small>Dropouts</small><b>' + s.drops + '</b></div></div><p class="fine">' + esc(tr("Red is a check that got no answer in 3 seconds; grey is time the phone paused this page, so nothing was measured")) + (s.holes ? " (" + s.holeS + " s here)" : "") + '. Keep this page open while it runs.</p></div>';
     }
     return hdr("Watch my connection", "A check every 2 seconds - catches dropouts", "tools") + a;
   };
@@ -1420,16 +1443,16 @@ textarea.in{resize:vertical;min-height:120px}
   }
   function better(x, y, nx, ny) { if (!x || !y) return ""; if (x.err && y.err) return tr("Neither reached the internet"); if (x.err || y.err) return (x.err ? ny : nx) + " works; " + (x.err ? nx : ny) + " doesn't"; var d = Math.round(x.med - y.med); return Math.abs(d) < 10 ? "About the same" : (d > 0 ? ny : nx) + " is " + Math.abs(d) + " ms quicker"; }
   TOOLV.compare = function () {
-    var ty = navigator.connection && navigator.connection.type, a = '<p class="fine" style="margin:0 2px 12px">Check once on Wi-Fi, then turn Wi-Fi off and check on mobile data. Is it your Wi-Fi, or your provider?' + (ty ? " (This phone says it's on " + (ty === "wifi" ? "Wi-Fi" : ty === "cellular" ? "mobile data" : ty) + " now.)" : "") + '</p>' +
-      '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>' + (phoneBusy ? '<p class="fine" style="margin:8px 2px 0">Measuring… a few seconds - up to 30 seconds right after switching networks.</p>' : '');
+    var ty = navigator.connection && navigator.connection.type, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Check once on Wi-Fi, then turn Wi-Fi off and check on mobile data. Is it your Wi-Fi, or your provider?")) + (ty ? " " + tr("(This phone says it's on") + " " + (ty === "wifi" ? "Wi-Fi" : ty === "cellular" ? "mobile data" : ty) + " now.)" : "") + '</p>' +
+      '<div class="btns"><button class="btn' + (CMP.a ? " ghost" : "") + '" data-cmp="a"' + (phoneBusy ? " disabled" : "") + '>' + ic("wifi", 18) + ' On Wi-Fi now</button><button class="btn' + (CMP.b || !CMP.a ? " ghost" : "") + '" data-cmp="b"' + (phoneBusy ? " disabled" : "") + '>' + ic("signal", 18) + ' On mobile now</button></div>' + (phoneBusy ? '<p class="fine" style="margin:8px 2px 0">' + esc(tr("Measuring… a few seconds - up to 30 seconds right after switching networks.")) + '</p>' : '');
     if (CMP.a || CMP.b) a += '<div style="margin-top:14px">' + sideBySide(CMP.a, CMP.b, "WI-FI", "MOBILE") + '</div>' + (CMP.a && CMP.b ? '<div class="card vcard"><div class="vh">' + esc(better(CMP.a, CMP.b, "Wi-Fi", "Mobile data")) + '</div><p class="fine">' + (CMP.a.err || CMP.b.err ? "" : CMP.a.med > CMP.b.med + 30 ? tr("Your Wi-Fi (or the router) is the slow part - try Wi-Fi walk, or restart the router.") : CMP.b.med > CMP.a.med + 30 ? tr("Your home line is quicker than mobile here - normal.") : tr("Both are similar, so Wi-Fi isn't the problem.")) + '</p></div>' : '');
     return hdr("Wi-Fi vs mobile data", "Is it your Wi-Fi or your provider?", "tools") + a;
   };
   TOOLV.restart = function () {
     var a = '<div class="card list">' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : tr("Before you touch anything")) + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
-      '<div class="row" style="cursor:default"><span class="vdot sm off">2</span><div class="tx"><b>Restart the router</b><span>Unplug it, count to 30, plug it back in. Wait until its lights settle (about 2 minutes) and the phone is back on Wi-Fi.</span></div></div>' +
-      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : tr("After the restart")) + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:0;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.before ? "ok" : "off") + '">' + (BA.before ? ic("check", 14) : "1") + '</span><div class="tx"><b>Check now</b><span>' + (BA.before ? Math.round(BA.before.med) + " ms · spread " + Math.round(BA.before.jit) + " ms" : tr("Before you touch anything")) + '</span></div>' + (BA.before ? "" : '<button class="btn" style="width:auto;min-height:44px;padding:8px 14px" data-ba="before"' + (phoneBusy ? " disabled" : "") + '>Check</button>') + '</div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm off">2</span><div class="tx"><b>' + esc(tr("Restart the router")) + '</b><span>' + esc(tr("Unplug it, count to 30, plug it back in. Wait until its lights settle (about 2 minutes) and the phone is back on Wi-Fi.")) + '</span></div></div>' +
+      '<div class="row" style="cursor:default"><span class="vdot sm ' + (BA.after ? "ok" : "off") + '">' + (BA.after ? ic("check", 14) : "3") + '</span><div class="tx"><b>Check again</b><span>' + (BA.after ? Math.round(BA.after.med) + " ms · spread " + Math.round(BA.after.jit) + " ms" : tr("After the restart")) + '</span></div>' + (BA.before && !BA.after ? '<button class="btn" style="width:auto;min-height:44px;padding:8px 14px" data-ba="after"' + (phoneBusy ? " disabled" : "") + '>Check</button>' : "") + '</div></div>';
     if (BA.before && BA.after) a += sideBySide(BA.before, BA.after, "BEFORE", "AFTER") + '<div class="card vcard"><div class="vh">' + esc(better(BA.before, BA.after, "Before", "After")) + '</div><p class="fine">' + (!BA.after.err && !BA.before.err && BA.before.med > BA.after.med + 30 ? tr("The restart helped. If it keeps coming back, the router may be overheating or need a firmware update - or ask your provider.") : tr("No real change - the router wasn't the problem. Try Wi-Fi vs mobile data next.")) + '</p><button class="btn ghost" data-ba="reset">Start over</button></div>';
     return hdr("Before and after", "Did restarting the router help?", "tools") + a;
   };
@@ -1444,7 +1467,7 @@ textarea.in{resize:vertical;min-height:120px}
   function guideOf(id) { for (var i = 0; i < GUIDES.length; i++) if (GUIDES[i][0] === id) return GUIDES[i]; return null; }
   TOOLV.guide = function () {
     var g = guideOf(S.guide); if (!g) return TOOLV.isdown();
-    return hdr(g[1], esc(trFormat("{summary} · step by step", {summary:tr(g[2])})), "tools") + '<div class="card list">' + g[3].map(function (s, i) { return '<button class="row" data-step="' + esc(s[1]) + '"><span class="vdot sm off" style="font-weight:800">' + (i + 1) + '</span><div class="tx"><b>' + esc(s[0]) + '</b>' + (s[2] ? '<span>' + esc(s[2]) + '</span>' : '') + '</div>' + ic("chev", 18) + '</button>'; }).join("") + '</div><p class="fine">Each step opens a check on this phone; Back brings you here.</p>';
+    return hdr(g[1], esc(trFormat("{summary} · step by step", {summary:tr(g[2])})), "tools") + '<div class="card list">' + g[3].map(function (s, i) { return '<button class="row" data-step="' + esc(s[1]) + '"><span class="vdot sm off" style="font-weight:800">' + (i + 1) + '</span><div class="tx"><b>' + esc(s[0]) + '</b>' + (s[2] ? '<span>' + esc(s[2]) + '</span>' : '') + '</div>' + ic("chev", 18) + '</button>'; }).join("") + '</div><p class="fine">' + esc(tr("Each step opens a check on this phone; Back brings you here.")) + '</p>';
   };
   VIEWS.tool = function () { var f = TOOLV[S.tool]; return f ? f() + alsoPc(S.tool) : VIEWS.tools(); };
   function rowsCard(rows) { return '<div class="card">' + rowsHtml(rows) + '</div>'; }
@@ -1489,7 +1512,7 @@ textarea.in{resize:vertical;min-height:120px}
   RUN2.stun = async function (st) { st.res = stunSum(await stunGather()); var r = st.res;
     addAct("everyday", "Calls and games: " + (r.none ? tr("not testable here") : r.noAnswer ? "no STUN answer" : r.sym ? "strict NAT" : r.v4 || r.v6 ? (r.sure ? "easy-going NAT" : tr("NAT type unclear")) : "no answer"), r.v4 || r.v6 || "", r.none || r.noAnswer || !r.sure ? 3 : r.sym ? 1 : 0); };
   TOOLV.stun = function () {
-    var st = tst("stun"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Asks two public STUN servers (Google, Cloudflare) how they see this phone - the same first step a video call or game chat takes.</p>' + errBox("stun") + btn("stun", "Check calls and games");
+    var st = tst("stun"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Asks two public STUN servers (Google, Cloudflare) how they see this phone - the same first step a video call or game chat takes.")) + '</p>' + errBox("stun") + btn("stun", "Check calls and games");
     if (r) {
       var h = r.none ? tr("This browser can't run the test") : r.noAnswer || (!r.v4 && !r.v6) ? tr("No STUN server answered") : r.sym ? tr("Strict NAT - direct calls often fail") : r.sure ? tr("Easy-going NAT - direct calls should work") : tr("Your public address - NAT type unclear");
       var sub = r.none ? tr("It has no WebRTC. Try Chrome or Safari.") : r.noAnswer || (!r.v4 && !r.v6) ? tr("That can mean this network blocks the UDP that calls prefer, the STUN servers were unreachable, or this browser hides the answer. Apps then fall back to relays - they still work, with more delay. Try again, or on the other network.") : !r.sure && !r.sym ? tr("Only one STUN server's answer could be read, so whether your NAT is strict can't be told. The address below is still right.") : r.sym ? tr("Each server saw a different port. Peer-to-peer (game chat, some calls, file sharing) usually needs a relay; consoles call this Strict or NAT type 3.") : r.v4 || r.v6 ? tr("Both servers saw the same address and port, so other devices can usually reach you directly. Consoles would say Open or Moderate - a browser can't tell those two apart.") : tr("Check the connection and try again.");
@@ -1524,7 +1547,7 @@ textarea.in{resize:vertical;min-height:120px}
     return [1, tr("couldn't compare"), tr("Our small server didn't answer. Try again in a moment.")];
   }
   TOOLV.vpnleak = function () {
-    var st = tst("vpnleak"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Turn your VPN on first. This compares the address websites see with the one a video call reveals.</p>' + errBox("vpnleak") + btn("vpnleak", "Check for a leak");
+    var st = tst("vpnleak"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Turn your VPN on first. This compares the address websites see with the one a video call reveals.")) + '</p>' + errBox("vpnleak") + btn("vpnleak", "Check for a leak");
     if (r) { var v = leakVerdict(r);
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at) + '<div class="vh">' + (v[0] === 0 ? "No leak found" : v[0] === 2 ? "Possible leak" : v[1] === tr("couldn't measure") ? tr("Couldn't measure") : "Not sure") + '</div><div style="color:var(--sub);font-size:14px">' + esc(v[2]) + '</div></div>' +
         rowsCard([["3", "Websites see", r.web ? (r.web.org || "a provider") + " · over " + (r.web.v6 ? "IPv6" : "IPv4") : "–", ""], ["3", "Calls see", [r.g.v4, r.g.v6].filter(Boolean).join(" · ") || "nothing", ""],
@@ -1539,7 +1562,7 @@ textarea.in{resize:vertical;min-height:120px}
     addAct("everyday", has6 ? "IPv6 works here" : "No IPv6 here", "IPv4 " + (r[0].med == null ? "–" : r[0].med + " ms") + " · IPv6 " + (r[1].med == null ? "–" : r[1].med + " ms"), has6 ? 0 : 3);
   };
   TOOLV.v6v4 = function () {
-    var st = tst("v6v4"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">Times the same site (Google) over IPv4 only, then IPv6 only.</p>' + errBox("v6v4") + btn("v6v4", "Compare them");
+    var st = tst("v6v4"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("Times the same site (Google) over IPv4 only, then IPv6 only.")) + '</p>' + errBox("v6v4") + btn("v6v4", "Compare them");
     if (r) {
       var has6 = r.v6.n > 0, has4 = r.v4.n > 0, d = has6 && has4 ? r.v6.med - r.v4.med : 0;
       var h = !has4 && !has6 ? "Neither answered" : !has6 ? "No IPv6 on this connection" : !has4 ? tr("Reached the IPv6 test site, not the IPv4 one") : Math.abs(d) < 10 ? "IPv6 works - about the same speed" : d < 0 ? "IPv6 works - and it's faster" : "IPv6 works - but it's slower here";
@@ -1566,7 +1589,7 @@ textarea.in{resize:vertical;min-height:120px}
   };
   function safeLv(o) { return !o.net ? 2 : o.tlsOk < o.tlsN ? 2 : !(o.doh || o.doh2) ? 1 : 0; }
   TOOLV.wifisafe = function () {
-    var st = tst("wifisafe"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">For hotel, cafe and airport Wi-Fi. Join the network first, then check.</p>' + errBox("wifisafe") + btn("wifisafe", "Check this network");
+    var st = tst("wifisafe"), r = st.res, a = '<p class="fine" style="margin:0 2px 12px">' + esc(tr("For hotel, cafe and airport Wi-Fi. Join the network first, then check.")) + '</p>' + errBox("wifisafe") + btn("wifisafe", "Check this network");
     if (r) { var v = safeLv(r);
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, r.type === "wifi" ? "WI-FI" : r.type === "cellular" ? "MOBILE DATA" : "") + '<div class="vh">' + (!r.net ? "Not online yet" : v === 0 ? "Looks fine for everyday use" : v === 1 ? "Usable - with care" : "Something is interfering") + '</div><div style="color:var(--sub);font-size:14px">' +
         (!r.net ? "Probably a sign-in page. Open neverssl.com in the browser to bring it up, sign in, then check again." : v === 0 ? "Secure connections open normally, so nobody on this network can read your logins. Apps and sites with a padlock are safe here." : v === 1 ? "Secure connections are fine, but private DNS is blocked, so the network can see which sites you visit." : "Some secure connections failed. The network may be blocking or tampering with them - don't sign in to anything; use mobile data.") + '</div></div>' +
@@ -1574,7 +1597,7 @@ textarea.in{resize:vertical;min-height:120px}
           [r.doh || r.doh2 ? "0" : "1", "Private DNS", r.doh || r.doh2 ? "allowed - you can turn it on" : "blocked on this network", r.doh || r.doh2 ? "Android: Settings › Private DNS. iPhone: a DNS profile, or a VPN." : "The network can see the names of sites you open. A VPN hides them."],
           ["3", "Who runs the connection", r.org || "unknown", "Hotels often use a separate provider - that's normal."],
           ["3", "Can other guests see your phone?", "a browser can't test this", "Turn off AirDrop for Everyone and file sharing while on public Wi-Fi."]]) +
-          '<div class="btns" style="margin-top:12px"><button class="btn ghost" data-tool="vpnleak">' + ic("lock", 18) + ' VPN leak check</button><button class="btn ghost" data-go="phone">' + ic("phone", 18) + ' My connection</button></div>' : '<a class="btn ghost" href="http://neverssl.com/" target="_blank" rel="noopener" style="margin-top:12px">Open neverssl.com</a>'); }
+          '<div class="btns" style="margin-top:12px"><button class="btn ghost" data-tool="vpnleak">' + ic("lock", 18) + ' VPN leak check</button><button class="btn ghost" data-go="phone">' + ic("phone", 18) + ' My connection</button></div>' : '<a class="btn ghost" href="http://neverssl.com/" target="_blank" rel="noopener" style="margin-top:12px">' + esc(tr("Open neverssl.com")) + '</a>'); }
     return hdr("Is this Wi-Fi safe?", "Hotel, cafe, airport", "tools") + a;
   };
 
@@ -1733,7 +1756,7 @@ textarea.in{resize:vertical;min-height:120px}
       else if (r.kind === "bin") a += '<div class="card" style="margin-top:14px">' + stamp(r.at, trFormat("BASE64 · {count} BYTES OF BINARY", { count: r.len })) + '<pre class="pre">' + esc(r.hex) + (r.len > 48 ? " …" : "") + '</pre></div>';
       else a += rowsCard([["3", r.label, r.len + " bytes", tr("Recognised, but only certificates and requests are decoded here. Keys: never paste a private key anywhere.")]]);
     }
-    return hdr("Decode", "Certificate, CSR, JWT or Base64 - on this phone", "tools") + a + '<p class="fine">Decoded on this phone; nothing is sent. Never paste a private key into any website.</p>';
+    return hdr("Decode", "Certificate, CSR, JWT or Base64 - on this phone", "tools") + a + '<p class="fine">' + esc(tr("Decoded on this phone; nothing is sent. Never paste a private key into any website.")) + '</p>';
   };
 
   // ---- Hash a file (or text) and compare - WebCrypto, on this phone
@@ -1749,12 +1772,12 @@ textarea.in{resize:vertical;min-height:120px}
   function fmtB(n) { return n >= 1e9 ? (n / 1e9).toFixed(2) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : n >= 1e3 ? Math.round(n / 1e3) + " KB" : n + " bytes"; }
   TOOLV.hash = function () {
     var st = tst("hash"), r = st.res, want = String(st.want || "").trim().toLowerCase().replace(/[^0-9a-f]/g, "");
-    var a = '<div class="card"><label class="k" for="hfile">A file on this phone</label><input type="file" id="hfile" class="in" style="padding:10px">' + (HASH.f ? '<p class="fine" style="margin:6px 0 0">Chosen: <b>' + esc(HASH.f.name) + '</b> · ' + fmtB(HASH.f.size) + '</p>' : '') + '<label class="k" for="htxt">…or some text</label><input class="in" id="htxt" data-hq="txt" value="' + esc(st.txt || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">' +
-      '<label class="k" for="hwant">The hash it should have (optional)</label><input class="in" id="hwant" data-hq="want" value="' + esc(st.want || "") + '" placeholder="Paste from the download page" autocapitalize="off" autocorrect="off" spellcheck="false"></div>' + errBox("hash") + btn("hash", "Work it out");
+    var a = '<div class="card"><label class="k" for="hfile">' + esc(tr("A file on this phone")) + '</label><input type="file" id="hfile" class="in" style="padding:10px">' + (HASH.f ? '<p class="fine" style="margin:6px 0 0">Chosen: <b>' + esc(HASH.f.name) + '</b> · ' + fmtB(HASH.f.size) + '</p>' : '') + '<label class="k" for="htxt">' + esc(tr("…or some text")) + '</label><input class="in" id="htxt" data-hq="txt" value="' + esc(st.txt || "") + '" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<label class="k" for="hwant">' + esc(tr("The hash it should have (optional)")) + '</label><input class="in" id="hwant" data-hq="want" value="' + esc(st.want || "") + '" placeholder="Paste from the download page" autocapitalize="off" autocorrect="off" spellcheck="false"></div>' + errBox("hash") + btn("hash", "Work it out");
     if (r) { var match = want ? Object.keys(r.h).filter(function (k) { return r.h[k] === want; })[0] : null;
       a += '<div class="card vcard" style="margin-top:14px">' + stamp(r.at, esc(r.name)) + (want ? '<div class="vh">' + (match ? "✓ Matches (" + match + ")" : "✕ Doesn't match") + '</div><div style="color:var(--sub);font-size:14px">' + (match ? "The file is exactly what the publisher made." : tr("The file changed, is incomplete, or the hash is for another version or algorithm. Don't open it - download it again from the official page.")) + '</div>' : '') +
         Object.keys(r.h).map(function (k) { return '<div class="k" style="margin-top:10px">' + k + (k === "SHA-1" ? " (old, only for matching)" : "") + '</div><div class="pre" style="word-break:break-all' + (r.h[k] === want ? ";outline:2px solid var(--green)" : "") + '">' + r.h[k] + '</div>'; }).join("") + '</div>'; }
-    return hdr("Hash a file", "Check a download is exactly what it should be", "tools") + a + '<p class="fine">Worked out on this phone; the file never leaves it. MD5: on your PC.</p>';
+    return hdr("Hash a file", "Check a download is exactly what it should be", "tools") + a + '<p class="fine">' + esc(tr("Worked out on this phone; the file never leaves it. MD5: on your PC.")) + '</p>';
   };
 
   // ---- Signal journey (Adeeb, 16 Nov): the phone's own field test screen, screen-recorded, read here by /journey.js.
@@ -1792,20 +1815,20 @@ textarea.in{resize:vertical;min-height:120px}
     var a = hdr("Signal journey", "Your phone's own signal numbers, read off a screen recording", "tools");
     if (J.st === "reading") {
       var pc = J.n ? Math.round(J.i / J.n * 100) : 4;
-      return a + '<div class="card"><b>' + esc(J.msg || "Reading...") + '</b><div style="height:10px;border-radius:9px;background:var(--line);margin:12px 0;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:var(--blue);border-radius:9px"></i></div><p class="fine" style="margin:0 0 12px">On this phone - nothing is uploaded.</p><button class="btn ghost" data-act="jstop">Stop</button></div>';
+      return a + '<div class="card"><b>' + esc(J.msg || "Reading...") + '</b><div style="height:10px;border-radius:9px;background:var(--line);margin:12px 0;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:var(--blue);border-radius:9px"></i></div><p class="fine" style="margin:0 0 12px">' + esc(tr("On this phone - nothing is uploaded.")) + '</p><button class="btn ghost" data-act="jstop">Stop</button></div>';
     }
     if (J.st === "done" && J.R) return a + jResult(J.R);
     return a + (J.st === "error" ? '<p style="color:var(--amber);font-weight:600;margin:0 2px 12px">' + esc(J.err) + '</p>' : '') +
       '<p class="fine" style="margin:0 2px 10px">A web app isn\'t allowed to read your signal, but your phone shows it on its field test screen. Record that screen while you move, and this reads every number off the recording.</p>' + jSteps() +
       '<label class="btn" style="margin-top:14px;cursor:pointer">' + ic("play", 20) + ' Read my recording<input type="file" id="jfile" accept="video/*,image/*" multiple style="position:absolute;opacity:0;width:1px;height:1px"></label>' +
-      '<p class="fine">Up to 30 seconds of video (one moment a second) or 30 screenshots. Read on this phone, then forgotten - your phone number and IMEI on that screen are skipped.</p>';
+      '<p class="fine">' + esc(tr("Up to 30 seconds of video (one moment a second) or 30 screenshots. Read on this phone, then forgotten - your phone number and IMEI on that screen are skipped.")) + '</p>';
   };
   function jLv(g) { return g ? String(g[0]) : "3"; }
   function jResult(R) {
     var top = R.findings[0] || [3, "Read", ""], rows = [], F = AMJ.fmtT;
     var hero = '<div class="card vcard verdict l' + top[0] + '">' + stamp(Date.now(), (R.carrier ? esc(R.carrier) + " · " : "") + (R.rat === "nr" ? "5G" : "LTE") + " · " + F(R.span) + " · " + trFormat("{count} moments", {count:R.read})) + '<div class="vh">' + esc(top[1]) + '</div><div style="color:var(--sub);font-size:15px;line-height:1.45">' + esc(AMJ.findingText(top)) + '</div></div>';
     if (R.cut) hero += '<p class="fine" style="margin:6px 2px 0">' + (J.vid ? trFormat("The video is {duration} long - the first 30 seconds were read.", {duration:F(R.cut)}) : trFormat("The first 30 of {count} pictures were read.", {count:R.cut})) + '</p>';
-    var chart = (R.rsrp.s.length > 1 || R.sinr.s.length > 1) ? '<div class="card" style="margin-top:12px"><b>Over the journey</b>' + AMJ.chart(R, 340) + '<div class="fine" style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0"><span><span style="display:inline-block;width:14px;height:3px;background:var(--blue);vertical-align:middle"></span> Strength</span><span><span style="display:inline-block;width:14px;height:3px;background:#E89B2C;vertical-align:middle"></span> ' + (R.sinr.s.length ? "Quality (SINR)" : "Quality (RSRQ)") + '</span><span>┆ new cell</span><span style="color:var(--red)">● worst moment</span></div></div>' : '';
+    var chart = (R.rsrp.s.length > 1 || R.sinr.s.length > 1) ? '<div class="card" style="margin-top:12px"><b>' + esc(tr("Over the journey")) + '</b>' + AMJ.chart(R, 340) + '<div class="fine" style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 0"><span><span style="display:inline-block;width:14px;height:3px;background:var(--blue);vertical-align:middle"></span> Strength</span><span><span style="display:inline-block;width:14px;height:3px;background:#E89B2C;vertical-align:middle"></span> ' + (R.sinr.s.length ? "Quality (SINR)" : "Quality (RSRQ)") + '</span><span>┆ new cell</span><span style="color:var(--red)">' + esc(tr("● worst moment")) + '</span></div></div>' : '';
     R.findings.slice(1).forEach(function (f) { rows.push([String(f[0]), tr(f[1]), "", AMJ.findingText(f)]); });
     rows.push(["-1", "The numbers"]);
     var g = AMJ.gRSRP(R.rsrp.med); if (g) rows.push([jLv(g), "Strength (RSRP)", R.rsrp.med + " dBm - " + g[1], R.rsrp.min !== R.rsrp.max ? trFormat("from {min} to {max} dBm", {min:R.rsrp.min,max:R.rsrp.max}) : ""]);
@@ -1826,7 +1849,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (m.tx != null) rows.push([m.tx >= 20 ? "1" : "3", "Phone's transmit power", m.tx + " dBm", m.tx >= 20 ? "working hard to be heard - the battery drains faster" : ""]);
     return hero + chart + '<div class="card" style="margin-top:12px">' + rowsHtml(rows) + '</div>' +
       '<div style="display:flex;gap:10px;margin-top:12px"><button class="btn ghost" data-act="jcopy" style="flex:1">Copy report</button>' + (navigator.share ? '<button class="btn" data-act="jshare" style="flex:1">Share</button>' : '') + '</div>' +
-      '<button class="btn ghost" data-act="jagain" style="margin-top:10px">Read another</button><p class="fine">Read on this phone and not kept - leave this page and it\'s gone.</p>';
+      '<button class="btn ghost" data-act="jagain" style="margin-top:10px">' + esc(tr("Read another")) + '</button><p class="fine">Read on this phone and not kept - leave this page and it\'s gone.</p>';
   }
 
   // ---- My week: kept on this phone only (Adeeb: "we're just passthru"), 7 days, from the checks run here
@@ -1865,13 +1888,13 @@ textarea.in{resize:vertical;min-height:120px}
   function hh(h) { return (h % 12 || 12) + (h < 12 ? " am" : " pm"); }
   TOOLV.week = function () {
     var w = weekSum(), mx = Math.max.apply(null, w.days.map(function (d) { return d.med || 0; }).concat([1])), a = '';
-    if (!w.n) a += '<div class="card empty"><b>Nothing yet this week</b><p>Every check you run on this phone adds to it - My connection, Is it down, games, calls. Kept on this phone only, for 7 days.</p><button class="btn" data-act="phone2">' + ic("refresh", 18) + ' Check this phone now</button></div>';
+    if (!w.n) a += '<div class="card empty"><b>' + esc(tr("Nothing yet this week")) + '</b><p>' + esc(tr("Every check you run on this phone adds to it - My connection, Is it down, games, calls. Kept on this phone only, for 7 days.")) + '</p><button class="btn" data-act="phone2">' + ic("refresh", 18) + ' Check this phone now</button></div>';
     else {
       a += '<div class="card vcard"><div class="tag2">' + esc(trFormat("LAST 7 DAYS · THIS PHONE · {count} CHECKS", { count: w.n })) + '</div><div class="vh">' + (w.med == null ? "Checks, no timings yet" : esc(trFormat("Typical delay {ms} ms", { ms: w.med }))) + '</div><div style="color:var(--sub);font-size:14px">' + (w.bad ? esc(w.bad === 1 ? tr("1 connection check found real trouble.") : trFormat("{count} connection checks found real trouble.", { count: w.bad })) : esc(tr("No real trouble found."))) + (w.best ? " " + esc(trFormat("Best around {time}", { time: hh(w.best[0]) })) + (w.worst && w.worst[1] - w.best[1] >= 15 ? esc(trFormat(", slowest around {time}", { time: hh(w.worst[0]) })) : "") + "." : "") + '</div>' +
         '<div class="wk">' + w.days.map(function (d) { var hgt = d.med ? Math.max(8, Math.round(100 * d.med / (mx * 1.1))) : 0; return '<div><span class="bar"><i style="height:' + hgt + '%;background:var(' + (d.bad ? "--red" : d.med == null ? "--edge" : d.med < 60 ? "--green" : d.med < 150 ? "--amber" : "--red") + ')"></i></span><b>' + (d.med == null ? (d.n ? "·" : "") : d.med) + '</b><small>' + d.dn + '</small></div>'; }).join("") + '</div><p class="fine">ms, the middle of each day\'s connection checks. Red: a check that day found real trouble. Days without checks are empty.</p></div>';
-      a += '<div class="btns"><button class="btn ghost" data-tool="roast">' + ic("smile", 18) + ' Roast it</button><button class="btn ghost" data-act="wkclear">Clear the week</button></div>';
+      a += '<div class="btns"><button class="btn ghost" data-tool="roast">' + ic("smile", 18) + ' Roast it</button><button class="btn ghost" data-act="wkclear">' + esc(tr("Clear the week")) + '</button></div>';
     }
-    return hdr("My week", "Kept on this phone only", "tools") + a + '<button class="pcrow2" data-go="' + (hasPc() ? "pc" : "addpc") + '">' + ic("pc", 24) + '<span class="tx"><b>Every minute, not just your checks</b><span>A PC records the whole week and your rush hour</span></span>' + ic("chev", 18) + '</button>';
+    return hdr("My week", "Kept on this phone only", "tools") + a + '<button class="pcrow2" data-go="' + (hasPc() ? "pc" : "addpc") + '">' + ic("pc", 24) + '<span class="tx"><b>' + esc(tr("Every minute, not just your checks")) + '</b><span>' + esc(tr("A PC records the whole week and your rush hour")) + '</span></span>' + ic("chev", 18) + '</button>';
   };
 
   // ---- Roast my network: the PC's jokes, on the phone's numbers; a square picture to share
@@ -1904,7 +1927,7 @@ textarea.in{resize:vertical;min-height:120px}
   }
   TOOLV.roast = function () {
     if (!me && !phoneBusy) setTimeout(function () { if (!me && !phoneBusy) phoneCheck(); }, 50);
-    if (!me) return hdr("Roast my network", "A grade and a few honest burns", "tools") + '<div class="card vcard"><div class="vh">Measuring first...</div><div style="color:var(--sub)">A few seconds.</div></div>';
+    if (!me) return hdr("Roast my network", "A grade and a few honest burns", "tools") + '<div class="card vcard"><div class="vh">' + esc(tr("Measuring first...")) + '</div><div style="color:var(--sub)">' + esc(tr("A few seconds.")) + '</div></div>';
     var d = roastData();
     return hdr("Roast my network", "A grade and a few honest burns", "tools") + '<div class="card vcard" style="text-align:center"><div class="tag2">THIS PHONE · ' + hm(me.at) + '</div><div style="font-size:96px;font-weight:800;line-height:1;margin:6px 0;color:var(' + (/^A/.test(d.grade) ? "--green" : d.grade === "F" ? "--red" : "--amber") + ')">' + d.grade + '</div></div>' +
       '<div class="card list">' + d.lines.map(function (t) { return '<div class="row" style="cursor:default"><span class="ic k-games">' + ic("smile", 18) + '</span><div class="tx"><b style="font-weight:600">' + esc(t) + '</b></div></div>'; }).join("") + '</div>' +
@@ -2024,13 +2047,13 @@ textarea.in{resize:vertical;min-height:120px}
     if (!rid || ASKN >= 2) return;
     if (k.indexOf("run:") === 0) return answerRun(k.slice(4), q, rid);
     if (["check", "isdown", "week"].indexOf(k) < 0) return; ASKN++;
-    toast(k === "isdown" ? "Your PC asked this phone to try " + (hostOf(q) || "a website") : k === "week" ? tr("Your PC asked for this phone's week") : tr("Your PC asked this phone to check its connection"));
+    toast(k === "isdown" ? tr("Your PC asked this phone to try") + " " + (hostOf(q) || "a website") : k === "week" ? tr("Your PC asked for this phone's week") : tr("Your PC asked this phone to check its connection"));
     try {
       if (k === "check") { var r = await phoneCheck(); rows = phoneRows(r); head = (r.type === "cellular" ? "On mobile data" : r.type === "wifi" ? "On Wi-Fi" : "This phone") + (r.org ? " · " + r.org : ""); }
       else if (k === "isdown") { var h = hostOf(q); if (!h) { head = "Not a website name"; } else { var st = tst("isdown"); st.q = h; await runTool("isdown"); var x = st.res;
         if (!x || x.h !== h) head = "Couldn't check from this phone"; else { var up = x.t.n > 0; head = (up ? "Up from this phone" : "Not reachable from this phone") + (up ? " (" + x.t.med + " ms)" : "");
           var ty = navigator.connection && navigator.connection.type; rows = [[up ? (x.t.fail ? "1" : "0") : "2", "Reached it", x.t.n + " of " + (x.t.n + x.t.fail) + " tries", ""], [x.cf && ans(x.cf, "A").length ? "0" : "2", "Name lookup", x.cf && x.cf.Status === 3 ? "no such name" : ans(x.cf, "A").length + " address(es)", ""], ["3", tr("Phone connected over"), ty === "cellular" ? "mobile data" : ty === "wifi" ? "Wi-Fi" : tr("unknown (iPhone doesn't say)"), ""]]; } } }
-      else if (k === "week") { var w = weekSum(); head = w.n ? w.n + " checks in 7 days" + (w.med != null ? " · typical " + w.med + " ms" : "") : "No checks on the phone this week";
+      else if (k === "week") { var w = weekSum(); head = w.n ? w.n + " " + tr("checks in 7 days") + (w.med != null ? " · typical " + w.med + " ms" : "") : "No checks on the phone this week";
         rows = w.days.filter(function (d) { return d.n; }).map(function (d) { return [d.bad ? "2" : d.med == null ? "3" : d.med < 60 ? "0" : d.med < 150 ? "1" : "2", d.dn, (d.med == null ? "no timing" : d.med + " ms") + " · " + d.n + " check" + (d.n > 1 ? "s" : ""), d.bad ? "a check found real trouble" : ""]; });
         if (w.best) rows.push(["3", "Best time", "around " + hh(w.best[0]), w.worst && w.worst[1] - w.best[1] >= 15 ? "slowest around " + hh(w.worst[0]) : ""]); }
     } catch (e) { head = head || "The check didn't finish on the phone"; }
@@ -2054,8 +2077,8 @@ textarea.in{resize:vertical;min-height:120px}
     PT.forEach(function (sec) { var L = sec[1].filter(function (t) { return toolMatch(q, t); }); if (!L.length) return; any = true; a += '<h2>' + esc(tr(sec[0])) + '</h2><div class="card list">' + L.map(function (t) { return rowBtn('data-tool="' + t[0] + '"', TICON[t[1]] || t[1], sec[0] === "MAKE" || sec[0] === "DECODE AND CHECK" ? "k-files" : sec[0] === "LOOK UP" || sec[0] === "YOUR SERVER OR HOME SETUP" ? "k-tools" : sec[0] === "SAFE AND PRIVATE" ? "k-walk" : "k-dev", esc(tr(t[2])), esc(tr(t[3]))); }).join("") + '</div>'; });
     var groups = []; CALCS.forEach(function (c) { if (q && (c[3] + " " + c[0] + " " + c[1]).toLowerCase().indexOf(q) < 0) return; var g = groups.filter(function (x) { return x.g === c[0]; })[0]; if (!g) groups.push(g = { g: c[0], l: [] }); g.l.push(c); });
     if (groups.length) { any = true; a += '<h2><span data-i18n="Calculators">Calculators</span> <span style="text-transform:none;letter-spacing:0;font-weight:600">' + esc(trFormat("{count}, the same as the PC's", { count: CALCS.length })) + '</span></h2>' + groups.map(function (g) { var op = q || openG["c:" + g.g]; return '<div class="card list" style="padding:4px 16px">' + rowBtn('data-grp="c:' + esc(g.g) + '"', "", "", esc(gname(g.g)), esc(g.l.length === 1 ? tr("1 calculator") : trFormat("{count} calculators", { count: g.l.length })), '<span class="chev">' + (op ? "▴" : "▾") + '</span>') + (op ? g.l.map(function (c) { return rowBtn('data-calc="' + c[1] + '"', "", "", esc(c[3]), "", null); }).join("") : '') + '</div>'; }).join(""); }
-    if (!any) a += '<div class="card empty"><b>No tools match "' + esc(findQ) + '"</b><p><span data-i18n="Try a shorter word, like dns or subnet.">Try a shorter word, like dns or subnet.</span></p><button class="btn ghost" data-act="clearfind"><span data-i18n="Show everything">Show everything</span></button></div>';
-    if (!on && !q) a += '<button class="pcrow2" data-go="addpc">' + ic("pc", 24) + '<span class="tx"><b>With a Windows PC: 100+ more</b><span>Every device on your network, real game ping, history</span></span>' + ic("chev", 18) + '</button>';
+    if (!any) a += '<div class="card empty"><b>' + esc(tr("No tools match \"")) + esc(findQ) + '"</b><p><span data-i18n="Try a shorter word, like dns or subnet.">' + esc(tr("Try a shorter word, like dns or subnet.")) + '</span></p><button class="btn ghost" data-act="clearfind"><span data-i18n="Show everything">' + esc(tr("Show everything")) + '</span></button></div>';
+    if (!on && !q) a += '<button class="pcrow2" data-go="addpc">' + ic("pc", 24) + '<span class="tx"><b>' + esc(tr("With a Windows PC: 100+ more")) + '</b><span>' + esc(tr("Every device on your network, real game ping, history")) + '</span></span>' + ic("chev", 18) + '</button>';
     return a;
   };
   // ---- what a PC adds: an upgrade, not a wall
@@ -2063,12 +2086,12 @@ textarea.in{resize:vertical;min-height:120px}
     var F2 = [["wifi", "k-dev", "Every device on your network", "The TV, printer, doorbell - and how quick each answers"], ["clock", "k-pc", "What happened while you were away", "Replay any minute; the day's events"], ["game", "k-games", "Real game ping, whose lag it is", "Your PC times the actual servers"], ["send", "k-send", "Send files and text", "Phone ⇄ PC, end-to-end encrypted"], ["phone", "k-walk", "Your PC and phone check each other", "Same check on both - is it the PC, the Wi-Fi or the provider?"], ["tools", "k-tools", "100+ checks", "Trace route, ports, Wi-Fi signal, MTU..."]];
     return hdr("Add your Windows PC", "Everything here keeps working", S.from2 || "home") + '<div style="display:flex;justify-content:center;gap:10px;align-items:center;color:var(--sub);margin:6px 0 14px">' + ic("phone", 34) + '<span style="font-size:22px">+</span>' + ic("pc", 40) + '</div>' +
       '<button class="btn" data-go="pair">' + ic("pc", 20) + ' ' + esc(tr("Scan the QR code on your PC")) + '</button>' +
-      '<h2><span data-i18n="What it adds">What it adds</span></h2><div class="card list">' + F2.map(function (f) { return '<div class="row" style="cursor:default"><span class="ic ' + f[1] + '">' + ic(f[0], 20) + '</span><div class="tx"><b>' + esc(tr(f[2])) + '</b><span>' + esc(tr(f[3])) + '</span></div></div>'; }).join("") + '</div>' +
-      '<p class="note"><span data-i18n="No PC app yet?">No PC app yet?</span> <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ" target="_blank" rel="noopener"><span data-i18n="Get AdeeboMeter for Windows ›">Get AdeeboMeter for Windows ›</span></a> <span data-i18n="- free, no admin rights.">- free, no admin rights.</span></p>';
+      '<h2><span data-i18n="What it adds">' + esc(tr("What it adds")) + '</span></h2><div class="card list">' + F2.map(function (f) { return '<div class="row" style="cursor:default"><span class="ic ' + f[1] + '">' + ic(f[0], 20) + '</span><div class="tx"><b>' + esc(tr(f[2])) + '</b><span>' + esc(tr(f[3])) + '</span></div></div>'; }).join("") + '</div>' +
+      '<p class="note"><span data-i18n="No PC app yet?">' + esc(tr("No PC app yet?")) + '</span> <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ" target="_blank" rel="noopener"><span data-i18n="Get AdeeboMeter for Windows ›">' + esc(tr("Get AdeeboMeter for Windows ›")) + '</span></a> <span data-i18n="- free, no admin rights.">' + esc(tr("- free, no admin rights.")) + '</span></p>';
   };
   VIEWS.phone = function () {
     var a = hdr("This phone", "What a browser can measure", "tools");
-    if (!me || phoneBusy) { if (!phoneBusy && !me) phoneCheck(); return a + '<div class="card empty">' + ic("phone", 44) + '<b><span data-i18n="Measuring...">Measuring...</span></b><p><span data-i18n="A few seconds.">A few seconds.</span></p></div>'; }
+    if (!me || phoneBusy) { if (!phoneBusy && !me) phoneCheck(); return a + '<div class="card empty">' + ic("phone", 44) + '<b><span data-i18n="Measuring...">' + esc(tr("Measuring...")) + '</span></b><p><span data-i18n="A few seconds.">' + esc(tr("A few seconds.")) + '</span></p></div>'; }
     a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(me))) + '"><span class="badge">' + where("phone") + '</span>' + rowsHtml(phoneRows(me, true)) + '</div><button class="btn ghost" data-act="phone">' + ic("refresh", 18) + ' ' + esc(tr("Measure again")) + '</button>';
     return a + '<p class="note">' + esc(tr("A phone's browser can't see signal bars, 4G/5G, the band or the tower - only a native app can. The Wi-Fi details on My PC come from your PC.")) + '</p>';
   };
@@ -2086,7 +2109,7 @@ textarea.in{resize:vertical;min-height:120px}
     else if (phase !== "live" && r.state === "done") a += '<div class="card" style="color:var(--sub)">Your PC isn\'t connected, so this report is from the phone only.</div>';
     if (r.err) a += '<div class="card" style="color:var(--sub)">Your PC: ' + esc(r.err) + '</div>';
     if (r.phone) a += '<div class="card verdict l' + Math.max(0, worst(phoneRows(r.phone))) + '"><span class="badge">' + where("phone") + '</span><h3 style="display:flex;gap:10px;align-items:center">' + (r.state === "done" ? faceHtml([ "happy", "worried", "tears" ][Math.max(0, Math.min(2, worst(phoneRows(r.phone))))]) : "") + 'This phone</h3>' + rowsHtml(phoneRows(r.phone, true)) + '</div>';
-    if (r.state === "done" && r.phone) a += '<div class="btns"><button class="btn" data-act="share">' + ic("share", 18) + ' Share</button><button class="btn ghost" data-act="copyrep">Copy</button></div><p class="note">Shared as text, with public addresses masked. A PDF report is in the PC app (Investigate › ISP report).</p>';
+    if (r.state === "done" && r.phone) a += '<div class="btns"><button class="btn" data-act="share">' + ic("share", 18) + ' Share</button><button class="btn ghost" data-act="copyrep">Copy</button></div><p class="note">' + esc(tr("Shared as text, with public addresses masked. A PDF report is in the PC app (Investigate › ISP report).")) + '</p>';
     return a;
   };
 
@@ -2099,27 +2122,27 @@ textarea.in{resize:vertical;min-height:120px}
   VIEWS.settings = function () {
     var M = { everyday: ["Simple", "Plain answers and the next step."], advanced: ["Advanced", "Plus addresses, ping, router delay and loss."], engineer: ["Engineer", "Plus every check, raw rows and details."] };
     return hdr("Settings", "", S.tab === "settings" && S.from ? S.from : "more") +
-      '<h2><span data-i18n="Language">Language</span></h2><div class="card langrow"><span class="ic k-tools">' + ic("globe", 22) + '</span><div class="tx"><b data-i18n="Language">Language</b><span data-i18n="Menus, tips and the companion">Menus, tips and the companion</span></div><span class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></span></div><p class="locale-preview fine" data-i18n-preview data-i18n="Some content is still in English." hidden>Some content is still in English.</p><h2><span data-i18n="Detail level">Detail level</span></h2><div class="card"><div class="seg" style="box-shadow:none;margin:0;background:transparent;padding:0">' + Object.keys(M).map(function (m) { return '<button data-mode="' + m + '" class="' + (S.mode === m ? 'on' : '') + '">' + esc(tr(M[m][0])) + '</button>'; }).join("") + '</div><p style="color:var(--sub);font-size:14px;margin:10px 2px 0">' + esc(tr(M[S.mode][1])) + '</p></div>' +
-      '<h2><span data-i18n="Look">Look</span></h2><div class="card"><p class="fine" style="margin:0 0 6px"><span data-i18n="The same themes as AdeeboMeter on your PC. Kept on this phone.">The same themes as AdeeboMeter on your PC. Kept on this phone.</span></p><div class="thg">' + LOOKS.map(function (l) { var on = S.theme === l[0] || (S.theme === "system" && l[0] === (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")); return '<button class="thb' + (on ? " on" : "") + '" data-look="' + l[0] + '" style="background:' + l[2] + '"><i style="background:' + l[3] + '"><u style="width:60%;background:' + l[4] + '"></u><u style="width:85%;background:' + l[5] + ';opacity:.6"></u><em style="background:' + l[6] + '"></em></i><b style="color:' + l[4] + '">' + l[1] + '</b></button>'; }).join("") + '</div>' +
-      '<div class="sw"><div class="tx"><b><span data-i18n="Match my phone">Match my phone</span></b><span><span data-i18n="Dark at night, Light by day">Dark at night, Light by day</span></span></div><button class="tog' + (S.theme === "system" ? ' on' : '') + '" data-look="' + (S.theme === "system" ? "dark" : "system") + '" aria-label="Match my phone"></button></div><div class="sw"><div class="tx"><b><span data-i18n="High contrast">High contrast</span></b></div><button class="tog' + (S.hc ? ' on' : '') + '" data-tog="hc" aria-label="High contrast"></button></div></div>' +
+      '<h2><span data-i18n="Language">Language</span></h2><div class="card langrow"><span class="ic k-tools">' + ic("globe", 22) + '</span><div class="tx"><b data-i18n="Language">Language</b><span data-i18n="Menus, tips and the companion">' + esc(tr("Menus, tips and the companion")) + '</span></div><span class="phone-locale"><select data-language-picker aria-label="Language" hidden></select></span></div><p class="locale-preview fine" data-i18n-preview data-i18n="Some content is still in English." hidden>' + esc(tr("Some content is still in English.")) + '</p><h2><span data-i18n="Detail level">' + esc(tr("Detail level")) + '</span></h2><div class="card"><div class="seg" style="box-shadow:none;margin:0;background:transparent;padding:0">' + Object.keys(M).map(function (m) { return '<button data-mode="' + m + '" class="' + (S.mode === m ? 'on' : '') + '">' + esc(tr(M[m][0])) + '</button>'; }).join("") + '</div><p style="color:var(--sub);font-size:14px;margin:10px 2px 0">' + esc(tr(M[S.mode][1])) + '</p></div>' +
+      '<h2><span data-i18n="Look">Look</span></h2><div class="card"><p class="fine" style="margin:0 0 6px"><span data-i18n="The same themes as AdeeboMeter on your PC. Kept on this phone.">' + esc(tr("The same themes as AdeeboMeter on your PC. Kept on this phone.")) + '</span></p><div class="thg">' + LOOKS.map(function (l) { var on = S.theme === l[0] || (S.theme === "system" && l[0] === (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")); return '<button class="thb' + (on ? " on" : "") + '" data-look="' + l[0] + '" style="background:' + l[2] + '"><i style="background:' + l[3] + '"><u style="width:60%;background:' + l[4] + '"></u><u style="width:85%;background:' + l[5] + ';opacity:.6"></u><em style="background:' + l[6] + '"></em></i><b style="color:' + l[4] + '">' + l[1] + '</b></button>'; }).join("") + '</div>' +
+      '<div class="sw"><div class="tx"><b><span data-i18n="Match my phone">' + esc(tr("Match my phone")) + '</span></b><span><span data-i18n="Dark at night, Light by day">' + esc(tr("Dark at night, Light by day")) + '</span></span></div><button class="tog' + (S.theme === "system" ? ' on' : '') + '" data-look="' + (S.theme === "system" ? "dark" : "system") + '" aria-label="Match my phone"></button></div><div class="sw"><div class="tx"><b><span data-i18n="High contrast">' + esc(tr("High contrast")) + '</span></b></div><button class="tog' + (S.hc ? ' on' : '') + '" data-tog="hc" aria-label="High contrast"></button></div></div>' +
       thisPc() +
-      '<p class="note"><span data-i18n="These choices are kept in this browser only.">These choices are kept in this browser only.</span></p>';
+      '<p class="note"><span data-i18n="These choices are kept in this browser only.">' + esc(tr("These choices are kept in this browser only.")) + '</span></p>';
   };
   function thisPc() {
     var rec = recLoad(), a = '<h2><span data-i18n="This PC">This PC</span></h2><div class="card">';
     if (rec) a += '<div class="sw"><div class="tx"><b>Remembered: ' + esc(rec.pc) + '</b><span>' + (rec.prf ? tr("Its key is locked by Face ID / fingerprint on this phone.") : tr("Face ID / fingerprint opens it in this app (this browser can't lock the key itself).")) + ' Your PC lets it in without asking.</span></div></div><div class="btns" style="margin-top:6px">' + (phase === "live" ? '' : '<button class="btn" data-act="reconnect"><span data-i18n="Reconnect">Reconnect</span></button>') + '<button class="btn ghost" data-act="forget" style="color:var(--red)"><span data-i18n="Forget this PC">Forget this PC</span></button></div>';
-    else if (phase === "live") a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">Remember this PC</span></b><span>Next time, reconnect with Face ID or fingerprint instead of a new code - from anywhere, while AdeeboMeter runs on it. Your PC asks you first.</span></div><button class="tog" data-act="remember" aria-label="Remember this PC"></button></div>' + (bioOk() ? '' : '<p style="color:var(--amber);font-size:14px;margin:6px 0 0">This browser has no Face ID / fingerprint support.</p>');
-    else a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">Remember this PC</span></b><span><span data-i18n="Connect with the code first, then turn this on here.">Connect with the code first, then turn this on here.</span></span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC"></button></div>';
+    else if (phase === "live") a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">' + esc(tr("Remember this PC")) + '</span></b><span>' + esc(tr("Next time, reconnect with Face ID or fingerprint instead of a new code - from anywhere, while AdeeboMeter runs on it. Your PC asks you first.")) + '</span></div><button class="tog" data-act="remember" aria-label="Remember this PC"></button></div>' + (bioOk() ? '' : '<p style="color:var(--amber);font-size:14px;margin:6px 0 0">' + esc(tr("This browser has no Face ID / fingerprint support.")) + '</p>');
+    else a += '<div class="sw"><div class="tx"><b><span data-i18n="Remember this PC">' + esc(tr("Remember this PC")) + '</span></b><span><span data-i18n="Connect with the code first, then turn this on here.">' + esc(tr("Connect with the code first, then turn this on here.")) + '</span></span></div><button class="tog" disabled style="opacity:.4" aria-label="Remember this PC"></button></div>';
     return a + '</div>';
   }
-  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || "") + '</div></div><div class="card" id="pickhere"></div><p class="note">Only the words change with a voice - numbers and facts stay as they are. ' + (phase === "live" ? tr("It follows your PC's voice unless you pick one here.") : "") + '</p>'; };
+  VIEWS.companion = function () { return hdr("Companion", "", "more") + '<div class="card" style="display:flex;gap:14px;align-items:center">' + faceHtml("happy") + '<div style="font-weight:600">' + esc(V("app.open") || tr("(the face only - no words)")) + '</div></div><div class="card" id="pickhere"></div><p class="note">' + esc(tr("Only the words change with a voice - numbers and facts stay as they are.")) + " " + (phase === "live" ? tr("It follows your PC's voice unless you pick one here.") : "") + '</p>'; };
   VIEWS.pair = function () {
     return hdr(phase === "ended" ? "Reconnect" : "Connect your PC", "", "home") + (why ? '<div class="card" style="box-shadow:0 0 0 1px rgba(242,184,75,.5)">' + esc(why) + '</div>' : '') +
       // the app reads the code itself (Adeeb, 16 Nov): scanning with the Camera app opens the browser, which has none of this app's setup
       '<button class="btn" data-act="scanqr" style="font-size:18px;padding:18px">' + ic("pc", 22) + ' Scan the code on your PC</button>' +
       '<p class="note" style="margin-top:8px">Asks for your camera each time you scan - only to read the code. Nothing is recorded, sent or kept. Rather not? Point your phone\'s Camera app at the code instead - it then opens in the browser, which keeps its own separate setup.</p>' +
-      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>Click the link button at the top of AdeeboMeter (or the tray icon › Your phone...)</small></div><div><b>On this phone</b><br><small>Press Scan the code on your PC, and point it at the code</small></div><div><b>Back on the PC</b><br><small>Press Allow. Nothing is shared before that.</small></div></div></div>' +
-      '<p class="note">No AdeeboMeter on your PC yet? <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get it free for Windows</a>.</p>';
+      '<div class="card"><div class="tl"><div><b>On the PC</b><br><small>' + esc(tr("In AdeeboMeter, open ⋯ › Your phone (or the tray icon › Your phone...)")) + '</small></div><div><b>On this phone</b><br><small>' + esc(tr("Press Scan the code on your PC, and point it at the code")) + '</small></div><div><b>Back on the PC</b><br><small>' + esc(tr("Press Allow. Nothing is shared before that.")) + '</small></div></div></div>' +
+      '<p class="note">' + esc(tr("No AdeeboMeter on your PC yet?")) + ' <a href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">' + esc(tr("Get it free for Windows")) + '</a>.</p>';
   };
   // ---- the code reader: the camera, asked for each time; jsQR (vendor/jsqr, loaded on first use) reads the frames on the phone
   var scanSt = null, scanT = 0;
@@ -2163,7 +2186,7 @@ textarea.in{resize:vertical;min-height:120px}
     } else scanUi(tr("That's not an AdeeboMeter code - use the one on your PC's Your phone page."), true);
   }
   VIEWS.how = function () {
-    return hdr("How it works", "", "more") + '<div class="card"><dl class="kv"><dt>' + where("pc") + '</dt><dd style="font-family:inherit;font-size:14px">Real measurements: ping, trace, ports, devices, Wi-Fi, game and broker timing. Your PC does them.</dd><dt>' + where("phone") + '</dt><dd style="font-family:inherit;font-size:14px">What a browser can: delay to the web, steadiness, DNS, IPv6, your carrier. No signal bars, no ping.</dd><dt>' + where("off") + '</dt><dd style="font-family:inherit;font-size:14px">Learn, Games, .adeebo files.</dd></dl></div><div class="card" style="color:var(--sub);font-size:14px">Your PC only connects out - it never listens. Phone and PC talk end to end encrypted through a relay that keeps nothing. The phone can only start checks that read or measure; anything that changes the PC stays on the PC. No account, no alerts, no tracking.</div>';
+    return hdr("How it works", "", "more") + '<div class="card"><dl class="kv"><dt>' + where("pc") + '</dt><dd style="font-family:inherit;font-size:14px">' + esc(tr("Real measurements: ping, trace, ports, devices, Wi-Fi, game and broker timing. Your PC does them.")) + '</dd><dt>' + where("phone") + '</dt><dd style="font-family:inherit;font-size:14px">' + esc(tr("What a browser can: delay to the web, steadiness, DNS, IPv6, your carrier. No signal bars, no ping.")) + '</dd><dt>' + where("off") + '</dt><dd style="font-family:inherit;font-size:14px">' + esc(tr("Learn, Games, .adeebo files.")) + '</dd></dl></div><div class="card" style="color:var(--sub);font-size:14px">' + esc(tr("Your PC only connects out - it never listens. Phone and PC talk end to end encrypted through a relay that keeps nothing. The phone can only start checks that read or measure; anything that changes the PC stays on the PC. No account, no alerts, no tracking.")) + '</div>';
   };
   VIEWS.send = function () { S.tab = "pc"; S.pcTab = "files"; return VIEWS.pc(); };
   VIEWS.learn = function () { location.href = "/learn/"; return ""; };
@@ -2171,7 +2194,7 @@ textarea.in{resize:vertical;min-height:120px}
   // ---------------------------------------------------------------- frame
   var PALS = ["neon", "midnight", "sunset", "mint"];
   // [id, name, background, card, text, sub text, accent] - the desktop's colours (src/Ui/Theme.cs)
-  var LOOKS = [["dark", "Dark", "#0B1426", "#121F38", "#E8EEF9", "#93A6C6", "#2F7BF6"], ["light", "Light", "#F3F6FB", "#FFFFFF", "#13223D", "#4A5C7A", "#1F6FEB"], ["neon", "Neon", "#07080D", "#10121A", "#EEF4FF", "#9AA2BA", "#00E5FF"],
+  var LOOKS = [["dark", "Dark", "#111316", "#181B20", "#EEF1F5", "#A9B1BD", "#3B7BF5"], ["light", "Light", "#F1F3F6", "#FFFFFF", "#16191E", "#4B5360", "#1155E0"], ["neon", "Neon", "#07080D", "#10121A", "#EEF4FF", "#9AA2BA", "#00E5FF"],
     ["midnight", "Midnight", "#08142B", "#0E1F3D", "#E8F1FF", "#9DB0CF", "#3DE0C2"], ["sunset", "Sunset", "#1A1016", "#241720", "#FBEFF2", "#C9AEBA", "#FF7A59"], ["mint", "Mint", "#EEF7F4", "#FFFFFF", "#14302A", "#4F6A62", "#0E9C78"]];
   var TABS = [["home", "home", "Home"], ["devices", "wifi", "Devices"], ["pc", "pc", "PC"], ["tools", "tools", "Tools"], ["more", "more", "More"]];
   var TABS0 = [["home", "home", "Home"], ["tools", "tools", "Tools"], ["@/learn/", "book", "Learn"], ["@/live.html", "chart", "Live data"], ["more", "more", "More"]];   // no PC: every tab works on its own
@@ -2181,7 +2204,8 @@ textarea.in{resize:vertical;min-height:120px}
   // what AdeeboMeter says at the foot of every page - the phone's version of the PC's status line
   function footHtml() {
     var st = phase === "live" ? '<span class="led" style="display:inline-block;margin-right:6px"></span>' + esc(tr("Linked to your PC")) : recLoad() ? esc(tr("PC remembered, not linked now")) : esc(tr("No PC linked"));
-    if (S.tab !== "more" && S.tab !== "how") return ""; return '<p class="foot">' + st + ' · ' + esc(tr("no account · no tracking · nothing kept online · runs on this phone")) + '</p>';
+    if (S.tab !== "more" && S.tab !== "how" && S.tab !== "home") return "";   /* 24 Nov (Adeeb): the privacy line on Home too */
+    return '<p class="foot">' + st + ' · ' + esc(tr("no account · no tracking · nothing kept online · runs on this phone")) + '</p>';
   }
   var lastHtml = "", lastTab = null, lastLocale = "";
   function entrance(tabNow) {
@@ -2201,32 +2225,37 @@ textarea.in{resize:vertical;min-height:120px}
       node.dir = "auto";
     });
     if (locale !== "en") {
+      // hunters11 phone: SVG text (the network map) is walked too, and so are the attributes people and screen readers meet
       var walker = document.createTreeWalker(template, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
         acceptNode: function (node) {
           if (node.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
-          return node.matches("script, style, svg, code, pre, textarea, [data-i18n], [data-raw], [data-say]")
+          return node.matches("script, style, code, pre, textarea, [data-i18n], [data-raw], [data-say]")
             ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
         }
       });
       for (var node; (node = walker.nextNode());) {
         var value = node.nodeValue, key = value.trim();
         if (key) {
-          var translated = tr(key);
+          var translated = trAny(key);
           if (translated !== key) node.nodeValue = value.replace(key, function () { return translated; });
         }
       }
+      template.querySelectorAll("[placeholder], [aria-label], [alt], [title]").forEach(function (el) {
+        if (el.closest("[data-raw], code, pre")) return;
+        ["placeholder", "aria-label", "alt", "title"].forEach(function (an) { var v = el.getAttribute(an); if (v) { var t2 = trAny(v.trim()); if (t2 !== v.trim()) el.setAttribute(an, t2); } });
+      });
     }
     // headings and small labels written in capitals read in sentence case (any language: the translation is in by now)
     template.querySelectorAll("h2, .qh > span").forEach(function (h) {
       var t = h.firstChild; if (!t || t.nodeType !== 3) return; var v = t.nodeValue, k = v.trim();
-      if (k.length > 2 && k === k.toUpperCase() && k !== k.toLowerCase()) t.nodeValue = v.replace(k, (k.charAt(0) + k.slice(1).toLowerCase()).replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr)\b/gi, function (w) { var m = { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }; return m[w.toLowerCase()] || w.toUpperCase(); }));
+      if (k.length > 2 && k === k.toUpperCase() && k !== k.toLowerCase()) t.nodeValue = v.replace(k, (k.charAt(0) + k.slice(1).toLowerCase()).replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu|isp)\b/gi, function (w) { var m = { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }; return m[w.toLowerCase()] || w.toUpperCase(); }));
     });
     template.querySelectorAll(".tag2").forEach(function (tg) {
       var w = document.createTreeWalker(tg, NodeFilter.SHOW_TEXT), first = true, n;
       while ((n = w.nextNode())) {
         if (n.parentNode.closest && n.parentNode.closest(".keep")) { first = false; continue; }
         var v = n.nodeValue; if (v !== v.toUpperCase() || v === v.toLowerCase()) { if (/[a-z]/i.test(v)) first = false; continue; }
-        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi" }[x] || x.toUpperCase(); });
+        v = v.toLowerCase().replace(/\b(pc|isp|dns|vpn|tv|nat|ip|ipv6|wi-fi|lan|wan|qr|us|eu|tcp|udp|stun|jwt|https?|tls|ssl|api|url|mtu|dhcp|ssid|cpu|gpu|cloudflare|google|quad9)\b/g, function (x) { return { "ipv6": "IPv6", "wi-fi": "Wi-Fi", "cloudflare": "Cloudflare", "google": "Google", "quad9": "Quad9" }[x] || x.toUpperCase(); });   /* hunters11 phone L-3 */
         if (first) { v = v.replace(/[a-z]/, function (c) { return c.toUpperCase(); }); if (/[a-z]/i.test(v)) first = false; }
         n.nodeValue = v;
       }
@@ -2264,17 +2293,35 @@ textarea.in{resize:vertical;min-height:120px}
     if (tb.getAttribute("data-built")) { [].forEach.call(tb.querySelectorAll("button[data-go]"), function (b) { var on = b.getAttribute("data-go") === cur; b.className = on ? "on" : ""; if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }); }
     else { tb.setAttribute("data-built", tkey); tb.innerHTML = '<div class="brand">' + amLogo(34) + '<span class="amword shine">Adeebo<span class="m">Meter</span></span></div>' + TB.map(function (t) { return '<button data-go="' + t[0] + '" class="' + (cur === t[0] ? 'on' : '') + '"' + (cur === t[0] ? ' aria-current="page"' : '') + '>' + ic(t[1], 24) + '<span dir="auto">' + esc(tr(t[2])) + '</span>' + '</button>'; }).join(""); }
     [].forEach.call(document.querySelectorAll("select[data-sel]"), function (s) { s.value = S[s.getAttribute("data-sel")]; });
-    if ((S.sheet === "view" || S.tab === "settings") && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
+    if ((S.sheet === "view" || S.tab === "settings" || S.tab === "web") && window.AdeeboMeterLocale) window.AdeeboMeterLocale.mountPickers();
     var ph = $("pickhere"); if (ph && window.AMV) AMV.picker(ph);
     if (keep && $(keep)) { var e = $(keep); e.focus(); try { if (pos != null) e.setSelectionRange(pos, pos); } catch (x) {} }
+    else if (S.sheet) { var sh = document.querySelector(".sheet"); if (sh && !sh.contains(document.activeElement)) { var fb = sh.querySelector("button:not([hidden]),select:not([hidden]),input"); if (fb) try { fb.focus({ preventScroll: true }); } catch (x) {} } }   // hunters10 ML-7: the keyboard goes into an open sheet
   }
   document.addEventListener("adeebometerlanguagechange", function () { keepDraft(); draw(); });
-  function go(t) { keepDraft(); if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
+  function closeSheet() { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; }
+  function go(t) { keepDraft(); if (S.sheet && t !== "home") closeSheet();   /* hunters10 ML-8: a sheet left open doesn't pop back on the next visit to Home */ if (t && t[0] === "@") { openWeb(t.slice(1), t.indexOf("live") >= 0 ? "Live" : "Learn"); return; }
     if (t === "tools" && S.fromGuide && S.tab !== "tools") { S.tab = "tool"; S.tool = "guide"; S.guide = S.fromGuide; S.fromGuide = ""; draw(); window.scrollTo(0, 0); return; }
     if (!hasPc() && (t === "devices" || t === "pc" || t === "send")) { S.from2 = S.tab === "web" ? "home" : S.tab; t = "addpc"; } if (t === "learn") { openWeb("/learn/", "Learn"); return; } if (t === "devices") S.dev = wide() ? S.dev : -1; if (t === "pc" && S.tab !== "pc") { S.pcTab = "overview"; } if (t === "settings") S.from = S.tab === "settings" ? S.from : (TABOF[S.tab] === "more" || S.tab === "more" ? "more" : S.tab); S.tab = t; draw(); window.scrollTo(0, 0); }
   function keepDraft() { if (!open) return; var T = toolOf(open); if (!T) return; drafts[open] = T.in.map(function (x, k) { var e = document.querySelector('input[data-k="' + k + '"]'); var was = (drafts[open] || T.in.map(function (y) { return y[2] || ""; }))[k]; return e ? (e.value.trim() || (/^@(broker|gw)$/.test(was) ? was : "")) : ""; }); }
 
-  document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+  // hunters11 phone ML-4: an open sheet keeps the keyboard inside it (aria-modal promises that)
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Tab" || !S.sheet) return; var sh = document.querySelector(".sheet"); if (!sh) return;
+    var f = [].slice.call(sh.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(function (x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return; var first = f[0], last = f[f.length - 1], at = document.activeElement;
+    if (!sh.contains(at)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+    if (e.shiftKey && at === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.sheet) { e.preventDefault(); closeSheet(); draw(); return; }   /* hunters10 ML-7: Esc closes a sheet */ if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("role") === "button" && e.target.hasAttribute("data-dev")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+  // hunters10 L-4: the grab bar works - pull the sheet down to close it (a short or slow pull springs back)
+  (function () {
+    var sh = null, y0 = 0, t0 = 0, dy = 0;
+    document.addEventListener("touchstart", function (e) { var g = e.target.closest && e.target.closest(".sheet .grab"); if (!g || e.touches.length !== 1) return; sh = g.parentNode; y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; sh.style.transition = "none"; }, { passive: true });
+    document.addEventListener("touchmove", function (e) { if (!sh) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transform = "translateY(" + dy + "px)"; e.preventDefault(); }, { passive: false });
+    function end() { if (!sh) return; var s = sh, v = dy / Math.max(1, Date.now() - t0); sh = null; if (dy > 90 || (dy > 24 && v > 0.5)) { closeSheet(); draw(); return; } s.style.transition = "transform .2s cubic-bezier(.23,1,.32,1)"; s.style.transform = ""; }
+    document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
+  })();
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-jos],[data-dfull],[data-look],[data-alsopc],[data-pchip],[data-tool],[data-calc],[data-run],[data-dty],[data-cpre],[data-guide],[data-step],[data-cmp],[data-ba],[data-wgo],[data-wstop],[data-wmin],[data-qsec],[data-qhid],[data-setview],[data-voice],[data-talk],[data-pickone],[data-game],[data-view],[data-finstop],[data-web],[data-go],[data-dev],[data-pct],[data-dv],[data-act],[data-mode],[data-tog],[data-open],[data-goid],[data-back],[data-grp],[data-jr],[data-test],[data-fin],[data-fsave],[data-fdrop],[data-fstop],[data-fcopy],[data-fopen],[data-fclose],[data-ftxt],[data-peek]");
     if (!b || b.disabled) return;
@@ -2328,7 +2375,7 @@ textarea.in{resize:vertical;min-height:120px}
     var act = A("data-act");
     if (act === "report") { oneTap(); return; }
     if (act === "sheet") { S.sheet = A("data-s"); draw(); return; }
-    if (act === "closesheet") { if (S.sheet === "view" && !S.view) { S.view = "everyday"; wr("am-view", "everyday"); } S.sheet = ""; draw(); return; }
+    if (act === "closesheet") { closeSheet(); draw(); return; }
     if (act === "measure") { measure(A("data-k")); return; }
     if (act === "phone2") { phoneCheck(); return; }
     if (act === "scanqr") { scanStart(); return; }
@@ -2346,7 +2393,7 @@ textarea.in{resize:vertical;min-height:120px}
     if (act === "install") { if (bip) { var b = bip; bip = null; b.prompt(); b.userChoice.then(function (r) { if (r && r.outcome === "accepted") inst = true; draw(); }, function () { draw(); }); } return; }
     if (act === "noinst") { store("am-noinst", "1"); draw(); return; }
     if (act === "reconnect") { reconnect(); return; }
-    if (act === "forget") { if (confirm("Forget this PC on this phone" + (phase === "live" ? " and on the PC" : "") + "?")) forgetPc(); return; }
+    if (act === "forget") { if (confirm(tr(phase === "live" ? "Forget this PC on this phone and on the PC?" : "Forget this PC on this phone?"))) forgetPc();   /* hunters11 phone ML-7 */ return; }
     if (act === "remember") { if (!bioOk()) { toast("This browser has no Face ID / fingerprint support"); return; } send({ t: "remember" }); toast("Answer the question on your PC"); return; }
     if (act === "checkup") { if (sure !== "checkup") { sure = "checkup"; toast("Tap again to run the full checkup - about a minute"); return; } sure = ""; run("checkup", []); draw(); return; }
     if (act === "stop") { if (curRid) send({ t: "stop", rid: curRid }); return; }

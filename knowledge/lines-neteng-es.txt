@@ -1,0 +1,139 @@
+# AdeeboMeter buddy lines - Network engineer. One line: key|text. {addr} = how you like to be called, {v} = the measured value.
+# Approved by Adeeb 13 Nov 2026 (batch 1). Max 16 words, no emoji; the fact always survives.
+app.open|Monitoreo iniciado. Sondas de puerta de enlace, DNS e internet activas.
+app.open|Agente activo. Primeras muestras en 2 s.
+app.open|Muestreo: gw 2 s, internet 15 s.
+app.open|Recolección de línea base iniciada.
+app.open|Sondas armadas. Escucha: ninguna. Solo salida.
+all.good|Todas las rutas en verde. No se requiere acción.
+all.good|RTT nominal, 0 % de pérdida, sin fluctuaciones.
+all.good|L1-L7 en verde.
+all.good|Sin anomalías en gw, DNS ni internet.
+all.good|Estado estable. Nada que diagnosticar.
+pc.busy|CPU {v}. El host es el cuello de botella, no la ruta.
+pc.busy|Host saturado. Espera latencia del lado de la app.
+pc.busy|Presión de memoria alta. Paginación probable.
+pc.busy|Contención de recursos locales. Libera carga.
+pc.busy|CPU alta. Las cifras de red pueden estar sesgadas.
+wifi.drops|wlan fluctuó x{v}. Revisa RSSI y roaming.
+wifi.drops|{v} desasociaciones hoy. Revisa los códigos de motivo.
+wifi.drops|Fluctuaciones de enlace x{v}. Probable RF o deauth del AP.
+wifi.drops|{v} caídas de Wi-Fi. Revisa cocanal y umbral de roaming.
+wifi.drops|Enlace WLAN caído x{v}. Revisa el registro de eventos.
+net.none|Sin IP, sin puerta de enlace. Enlace caído.
+net.none|Todas las interfaces caídas.
+net.none|Sin ruta por defecto. Sondas en pausa.
+net.none|L1 caído en todos los adaptadores.
+net.none|Sin portadora.
+inet.slow|RTT de puerta de enlace bajo, RTT de internet {v}. Retraso tras el CPE.
+inet.slow|Latencia agregada aguas arriba de la puerta de enlace.
+inet.slow|LAN limpia. Latencia aguas arriba elevada.
+inet.slow|Delta gw a internet: {v}. Lado del proveedor.
+inet.slow|Problema aguas arriba. Ejecuta MTR para hallar el salto.
+busy|Sondeando... {v}
+busy|Recolectando muestras...
+busy|En ejecución. Detener disponible.
+busy|Midiendo...
+busy|Prueba en curso...
+idle|Sin cambios de estado.
+idle|Estable. Línea base sostenida.
+idle|Sin eventos en la última hora.
+idle|El muestreo continúa. Nada nuevo.
+idle|Silencio.
+search.empty|Buscar: mtu, dns, arp, mtr, snmp...
+search.empty|Nombre de herramienta o síntoma.
+search.empty|Consulta una herramienta.
+search.empty|¿Qué capa?
+search.empty|Escribe un protocolo o un síntoma.
+freeze|Hilo de UI bloqueado {v}. Recuperando.
+freeze|Bloqueo de UI {v}. El trabajo continúa.
+freeze|Renderizado retrasado {v}.
+freeze|Hilo principal ocupado {v}.
+freeze|UI poniéndose al día ({v}).
+speedrunner|El trabajo anterior sigue en ejecución.
+speedrunner|Cola llena. Uno a la vez.
+speedrunner|Tasa de solicitudes excedida. Esperando el último.
+speedrunner|Última prueba sin completar.
+speedrunner|Ocupado. Reintenta tras la ejecución actual.
+back.again|{v} eventos desde la última vista.
+back.again|Sin eventos desde la última vista.
+back.again|Delta desde la última vista: ver Cambios.
+back.again|Aquí está el registro de tu ausencia.
+back.again|Bienvenido de vuelta. Resumen de eventos listo.
+dns.slow|DNS {v}. Prueba otro resolver.
+dns.slow|Latencia del resolver alta.
+speed.great|{v} de descarga, RTT bajo.
+speed.great|Rendimiento bueno. Sin pérdida.
+speed.bloat|Latencia cargada +{v}. Bufferbloat. Activa SQM si puedes.
+speed.bloat|Retraso de cola bajo carga.
+game.lag|Picos de RTT del juego correlacionan con caídas de RSSI. RF local.
+game.lag|El jitter se origina en la WLAN.
+game.good|RTT de juego {v}, jitter bajo, 0 % de pérdida.
+game.good|Ruta al servidor de juego limpia.
+vpn.on|Túnel activo.
+vpn.on|Ruta por defecto vía túnel.
+vpn.slow|Sobrecarga del túnel +{v}.
+vpn.slow|Latencia agregada por el headend de la VPN.
+portal|HTTP 302 a un portal. Se requiere autenticación.
+portal|Portal cautivo detectado.
+gw.down|Puerta de enlace inalcanzable. Problema ARP o L2.
+gw.down|Sin ICMP desde la puerta de enlace.
+isp.down|Puerta de enlace activa, aguas arriba inalcanzable.
+isp.down|WAN caída tras el CPE.
+mtu.small|MTU de ruta {v}. Revisa un agujero negro de PMTUD.
+mtu.small|Paquetes DF descartados por encima de {v}.
+port.open|TCP {v} abierto, handshake en {v}.
+port.open|SYN-ACK recibido.
+port.closed|TCP {v} RST o timeout.
+port.closed|Sin SYN-ACK. Filtrado o cerrado.
+cert.ok|Cadena válida, raíz de confianza.
+cert.ok|Cadena TLS OK.
+cert.expired|Hoja expirada {v}.
+cert.expired|Cadena inválida: expirada.
+sec.ok|Las comprobaciones de hardening pasan.
+sec.ok|Sin hallazgos.
+sec.issue|{v} hallazgos.
+sec.issue|Brechas de hardening encontradas.
+mtr.lossy|La pérdida empieza en el salto {v} y persiste hasta el destino.
+mtr.lossy|Pérdida de reenvío a mitad de ruta.
+mtr.clean|0 % de pérdida en todos los saltos.
+mtr.clean|Ruta limpia de extremo a extremo.
+devices.found|{v} entradas ARP.
+devices.found|Tabla de vecinos cargada.
+encrypt.done|Cifrado (AES-256).
+encrypt.done|Carga sellada.
+decrypt.done|Descifrado, integridad verificada.
+decrypt.done|MAC OK.
+points.earned|+{v}.
+points.earned|Puntos +{v}.
+award|500 puntos. Premio Adeebo.
+award|Umbral de premio alcanzado.
+late.night|Fuera de pico. Ruta tranquila.
+late.night|Tarde. Todas las sondas nominales.
+morning|Noche: sin eventos.
+morning|Resumen nocturno listo.
+update.suspect|Regresión tras la actualización del {v}.
+update.suspect|El cambio correlaciona con una actualización de Windows.
+call.on|Flujos RTP detectados. Monitoreando jitter y pérdida.
+call.on|Llamada en curso. Vigilancia QoS activa.
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v}: ruta limpia, sin pérdida, latencia CDN nominal.
+stream.on|Stream sano. Puerta de enlace, ISP y edge dentro de la línea base.
+stream.dip|Degradación del stream. {v}
+stream.dip|Caída registrada con evidencia. {v}
+stream.none|Sin flujos de video detectados.
+stream.none|Sin sesiones de streaming. Detector en reposo.
+trade.ok|RTT del broker nominal, sin pérdida en la ruta.
+trade.ok|TCP connect al broker dentro de la línea base.
+trade.slow|RTT del broker sobre 100 ms. Retén las órdenes.
+trade.slow|Ruta al broker degradada. {v}
+trade.closed|Fuera de horario de mercado. Sonda del broker detenida.
+trade.closed|Mercado cerrado. Sonda en reposo hasta las 09:30 ET.
+view.switch|Aplicando el perfil {v}. Configuración enviada, sin reinicio.
+view.switch|Cargando la plantilla {v}. Confirmando cambios.
+quiz.right|ACK. Correcto.
+quiz.wrong|NACK. Retransmite e inténtalo de nuevo.
+game.streak|{v} seguidas — cero pérdida de paquetes.
+game.timeup|Timeout. TTL expirado.
+market.open|Mercado abierto — vigila el RTT del broker.
+storm.near|Celda de tormenta cerca — espera fluctuaciones.

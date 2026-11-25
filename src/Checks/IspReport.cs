@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -29,6 +29,8 @@ namespace AdeeboMeter
             return b[0] == 10 || b[0] == 127 || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) || (b[0] == 192 && b[1] == 168) || (b[0] == 169 && b[1] == 254) || (b[0] == 100 && b[1] >= 64 && b[1] <= 127);
         }
         static double Avg(PathTools.Hop h) { int got = h.Sent - h.Lost; return got > 0 ? h.Sum / got : double.NaN; }
+        // hunters11 core L-3: a grey loss figure says why it is grey - the summary and the chips, not only the hop table
+        static string LossNote(double l, bool real) { return l >= 1 && !real ? "doesn't carry on past this hop - a router ignoring probes, not real loss" : ""; }
         static double Loss(PathTools.Hop h) { return h.Sent > 0 ? 100.0 * h.Lost / h.Sent : double.NaN; }
 
         sealed class Route { public bool V6Only; public string Label, Host; public IPAddress Ip; public List<PathTools.Hop> Hops = new List<PathTools.Hop>(); }
@@ -65,7 +67,10 @@ namespace AdeeboMeter
             }
             // this report measures IPv4 (the hop probes are IPv4 ICMP): an IPv6 address, or a name with only IPv6 ones, says so
             if (routes.Count > 0 && routes[0].Ip == null && routes[0].V6Only) { rows.Add(R(3, "Target", routes[0].Host + " has only IPv6 addresses - this report measures the IPv4 path only", "", "u")); return rows; }
+            foreach (var r in routes.Skip(1).Where(r => r.Ip == null && r.V6Only)) rows.Add(R(3, r.Label, r.Host + " has only IPv6 addresses - left out (this report measures the IPv4 path)", "", "m"));   // bug-hunt ML-107: said, not silently dropped
             routes.RemoveAll(r => r.Ip == null);
+            // review 1.1.6 P2 #2: one device only - never minutes of probes to a broadcast or multicast address
+            foreach (var r in routes.ToList()) { string why = Lab.NotOne(r.Ip); if (why != "") { rows.Add(R(2, r.Label, why, "", "u")); routes.Remove(r); } }
             if (routes.Count == 0) { rows.Add(R(2, "Target", "the name doesn't resolve - check the spelling, or DNS is down (try What's wrong?)", "", "m")); return rows; }
 
             // 1. trace, then MTR on every route at the same time
@@ -107,15 +112,18 @@ namespace AdeeboMeter
             else if (start >= 0 && vpnOn && gwIdx < 0) finding = "Loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + ") - inside the VPN tunnel or at its server. Try once with the VPN off: if the loss goes away, it's the VPN's side.";
             else if (start >= 0) finding = "Loss starts at hop " + main.Hops[start].N + " - before the provider (" + (wifi ? "Wi-Fi or the router" : "the home network") + "). Fix the home side first.";
             else if (end != null && Loss(end) >= 1 && !silentEnd) finding = "Only the destination drops some probes - it rate-limits pings; the path itself is clean.";
+            else if (silentEnd && end != null && Loss(end) >= 3) finding = "Can't tell: the last router that answers (hop " + end.N + ") loses " + Loss(end).ToString("0", CultureInfo.CurrentCulture) + "% and nothing past it answers pings.";   /* review 1.1.6 P3 #11 */
             else finding = (silentEnd && end != null ? "The destination doesn't answer pings, so this is judged up to the last router that does (hop " + end.N + "). " : "") + "No real loss on the path during the " + min + "-minute run. If it's an evening problem, run it again in the evening - the 7-day pattern below shows when.";
-            rows.Add(R(start >= 0 ? 2 : 0, "Finding", finding, verdict, "m"));
+            rows.Add(R(start >= 0 ? 2 : finding.StartsWith("Can't tell", StringComparison.Ordinal) ? 3 : 0, "Finding", finding, verdict, "m"));
 
             // each part of the path
             rows.Add(R(-1, "EACH PART OF THE PATH", main.Label + " · " + main.Hops.Sum(h => h.Sent) + " probes", "", "m"));
-            if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), "", "m"));
-            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "Provider, first hop (" + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
+            if (router != null) rows.Add(R(Shown(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "Home router (hop " + router.N + ")", F(Avg(router), " ms") + " avg · worst " + F(router.Worst, " ms") + " · jitter " + F(router.Jit, " ms") + " · loss " + F(Loss(router), "%"), LossNote(Loss(router), start >= 0 && router.N >= main.Hops[start].N), "m"));
+            // bug-hunt ML-95: with a VPN on, a private first hop is the tunnel's far end, not the provider
+            IPAddress fa; bool viaTunnel = firstIsp >= 0 && vpnOn && IPAddress.TryParse(main.Hops[firstIsp].Ip, out fa) && Private(fa);
+            if (firstIsp >= 0) { var h = main.Hops[firstIsp]; rows.Add(R(Shown(Loss(h), start >= 0 && h.N >= main.Hops[start].N), (viaTunnel ? "First hop through the VPN tunnel (" : "Provider, first hop (") + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), LossNote(Loss(h), start >= 0 && h.N >= main.Hops[start].N), "m")); }
             if (start >= 0) { var h = main.Hops[start]; rows.Add(R(2, "Where loss starts (hop " + h.N + ")", F(Avg(h), " ms") + " avg · worst " + F(h.Worst, " ms") + " · loss " + F(Loss(h), "%") + " · " + nm(h.Ip), "", "m")); }
-            if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), "", "m"));
+            if (end != null) rows.Add(R(Shown(Loss(end), start >= 0 && end.N >= main.Hops[start].N), (silentEnd ? "Last router that answers (hop " : "Destination (hop ") + end.N + ")", F(Avg(end), " ms") + " avg · worst " + F(end.Worst, " ms") + " · jitter " + F(end.Jit, " ms") + " · loss " + F(Loss(end), "%"), LossNote(Loss(end), start >= 0 && end.N >= main.Hops[start].N), "m"));
 
             // hop by hop
             // who owns each public hop: only with online lookups switched on (public addresses go to RIPEstat) - otherwise said
@@ -129,7 +137,7 @@ namespace AdeeboMeter
             foreach (var h in main.Hops)
             {
                 double l = Loss(h); bool real = start >= 0 && h.N >= main.Hops[start].N; string own; owners.TryGetValue(h.Ip, out own);
-                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 3 ? 1 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + (own != null ? " · " + own : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
+                rows.Add(R(h.Ip == "" ? 3 : real ? 2 : l >= 1 ? 3 : 0, "Hop " + h.N, nm(h.Ip) + (h.Ip != "" && nm(h.Ip) != h.Ip ? " (" + h.Ip + ")" : "") + (own != null ? " · " + own : "") + " · avg " + F(Avg(h), " ms") + " · worst " + F(h.Worst, " ms") + " · loss " + F(l, "%"), l >= 3 && !real ? "doesn't carry on - not real" : "", "m"));
             }
 
             // the same moment over two routes
@@ -171,7 +179,8 @@ namespace AdeeboMeter
             var spd = SpeedTest.Last;
             if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + (double.IsNaN(spd.LoadDown) && double.IsNaN(spd.LoadUp) ? "-" : F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms")) + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
             else rows.Add(R(3, "Speed and queueing", "not measured today - press Test my speed on the home page, then make the report again", "", "u"));
-            if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) && Policy.NoOnline) rows.Add(R(3, "Public IP", "not asked - online lookups are turned off by your IT team", "", "u"));   // review 1.1.6 P2 #10
+            else if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
             {
                 run.Status = "Asking Cloudflare for your public address (you said yes)...";
                 string pub = PublicIp(); rows.Add(R(3, "Your public address", pub != "" ? pub : "couldn't get it", "Your provider can find your line by it. Leave it out if you'll post the report publicly.", "m"));
@@ -229,7 +238,7 @@ namespace AdeeboMeter
             return rows;
         }
         // loss at a hop that doesn't carry on is that router ignoring probes: amber at most, never red
-        static int Shown(double loss, bool real) { int l = Lv(loss); return real || l < 2 ? l : 1; }
+        static int Shown(double loss, bool real) { int l = Lv(loss); return real || l == 0 ? l : 3; }   // release check 24 Nov: loss that stops at that hop is a router ignoring probes - said, not coloured (a report for the provider said "loss 47%" in amber on the home router)
         static int Lv(double loss) { return double.IsNaN(loss) ? 3 : loss >= 3 ? 2 : loss >= 1 ? 1 : 0; }
         // the first hop whose loss carries on to the end (the same rule as MtrVerdict)
         public static int StartOfLoss(List<PathTools.Hop> hops) { return PathTools.LossStart(hops); }
@@ -323,21 +332,20 @@ namespace AdeeboMeter
             {
                 string dir = Path.Combine(Program.DataDir, "reports"); Directory.CreateDirectory(dir);
                 string file = Path.Combine(dir, "ISP-report-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".html");
-                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Connection quality report</title><style>body{font:14px/1.5 'Segoe UI',sans-serif;color:#1B2330;max-width:900px;margin:32px auto;padding:0 16px}h1{font-size:24px;margin:0 0 4px}h2{font-size:13px;letter-spacing:.06em;color:#4A5568;margin:22px 0 6px;border-bottom:1px solid #E3E8EF;padding-bottom:4px}table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #F0F2F5;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#8A5A00}.m{color:#4A5568;font-size:12px}.box{background:#F3F5F9;border-radius:8px;padding:12px}@media print{body{margin:0}}.pb{break-before:page;page-break-before:always;height:0}.tag{font-size:11px;letter-spacing:.08em;font-weight:700;color:#6B7685;margin:28px 0 6px}.big{font-size:22px;font-weight:700;line-height:1.3;margin:6px 0 10px}.v0{border-left:6px solid #2DA44E}.v1{border-left:6px solid #BF8700}.v2{border-left:6px solid #CF222E}.card{border:1px solid #E3E8EF;border-radius:12px;padding:14px 18px;margin:0 0 14px;break-inside:avoid}.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.chip{border-radius:10px;padding:8px 12px;background:#F6F8FB;min-width:150px}.chip b{display:block;font-size:18px}.chip span{font-size:12px;color:#4A5568}.ok{color:#2DA44E;font-weight:700}.ask li{margin:0 0 6px}.cap{font-size:12px;color:#6B7685}svg{max-width:100%;height:auto}@media print{body{margin:0 auto}.card{border-color:#ccc}}</style></head><body>");
+                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Connection quality report</title><style>body{font:15px/1.55 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;color:#16191E;background:#fff;max-width:900px;margin:40px auto;padding:0 20px}h1{font-size:26px;line-height:1.15;margin:0 0 2px;font-weight:700;letter-spacing:-.01em}h2{font-size:19px;line-height:1.25;margin:0 0 6px;font-weight:700}h3{font-size:16px;margin:22px 0 4px;font-weight:700}section{padding:22px 0;border-top:1px solid #DDE1E7;break-inside:avoid}.top{display:flex;gap:14px;align-items:center;margin:0 0 20px}.top .logo{flex:none}.meta{margin:0;color:#5A6270;font-size:13px}.answer{border:0;padding-top:4px}.big{font-size:22px;font-weight:700;line-height:1.3;margin:0 0 18px;max-width:42em}.cap{font-size:13px;color:#5A6270;margin:0 0 12px;max-width:62em}.ruled{list-style:none;margin:6px 0 0;padding:0}.ruled li{display:flex;gap:8px;align-items:center;margin:4px 0}.ask{margin:6px 0 0;padding-left:1.3em}.ask li{margin:0 0 6px}.msg{background:#F1F3F6;border-radius:10px;padding:14px 16px;white-space:pre-wrap}table{border-collapse:collapse;width:100%;font-size:14px}td{padding:6px 8px;border-bottom:1px solid #EEF0F3;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#875A00}.m{color:#5A6270;font-size:12.5px}.box{background:#F1F3F6;border-radius:10px;padding:12px 14px}.pb{break-before:page;page-break-before:always;height:0}.tier{margin-top:28px}svg{max-width:100%;height:auto;display:block}::selection{background:rgba(17,85,224,.25)}@media print{body{margin:0 auto;max-width:none}}</style></head><body>");
                 Func<string, string> XX = z => Esc(GameSession.Redact(z ?? "", ssid));
-                try { sb.Append(Pages(v, XX)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("isp report pictures: " + e.Message); }
-                sb.Append("<div class=\"pb\"></div><div class=\"tag\">FOR TIER 2 · EVERY MEASUREMENT</div>");
-                sb.Append("<h1>Connection quality report</h1><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
+                bool pages = false; try { sb.Append(Pages(v, XX)); pages = true; } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("isp report pictures: " + e.Message); }
+                sb.Append("<div class=\"pb\"></div><section class=\"tier\"><h2>Every measurement, for tier 2</h2><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
                 foreach (var r in rows)
                 {
                     // redacted as text first, then made HTML (a Wi-Fi name "AT&T" is found before it becomes AT&amp;T, and a name like "td" can't break the tags)
                     Func<string, string> X = z => Esc(GameSession.Redact(z ?? "", ssid));
-                    if (r[0] == "-1") { sb.Append("</table><h2>" + X(r[1]) + "</h2>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + X(r[2]) + "</div>" : "") + "<table>"); continue; }
+                    if (r[0] == "-1") { sb.Append("</table><h3>" + X(Sc(r[1])) + "</h3>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + X(r[2]) + "</div>" : "") + "<table>"); continue; }
                     if (r.Length > 5 && r[5].StartsWith("show:", StringComparison.Ordinal)) continue;
-                    if (r[1] == "Message") { sb.Append("</table><div class=\"box\">" + X(r[2]) + "</div><table>"); continue; }
+                    if (r[1] == "Message") { if (pages) continue; sb.Append("</table><div class=\"box\">" + X(r[2]) + "</div><table>"); continue; }
                     sb.Append("<tr><td class=\"n\">" + X(r[1]) + "</td><td class=\"l" + Esc(r[0]) + "\">" + X(r[2]) + (r[3] != "" ? "<div class=\"m\">" + X(r[3]) + "</div>" : "") + "</td></tr>");
                 }
-                sb.Append("</table></body></html>");
+                sb.Append("</table></section></body></html>");
                 File.WriteAllText(file, sb.ToString(), new UTF8Encoding(false));
                 return file;
             }
@@ -366,7 +374,7 @@ namespace AdeeboMeter
         {
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create("https://www.cloudflare.com/cdn-cgi/trace"); req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
+                var req = (HttpWebRequest)WebRequest.Create("https://www.cloudflare.com/cdn-cgi/trace"); req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy();
                 using (var resp = req.GetResponse()) using (var rd = new StreamReader(resp.GetResponseStream()))
                 {
                     var buf = new char[4096]; int n = rd.Read(buf, 0, buf.Length);

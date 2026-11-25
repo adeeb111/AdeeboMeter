@@ -32,7 +32,7 @@ namespace AdeeboMeter
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "Address", "not a web address", "", "u")); return rows; }
             try
             {
-                var p = WebRequest.GetSystemWebProxy(); var via = p.GetProxy(u); bool direct = p.IsBypassed(u) || via == u;
+                var p = HttpSmall.Proxy(); var via = p.GetProxy(u); bool direct = p.IsBypassed(u) || via == u;
                 rows.Add(R(direct ? 0 : 3, "This URL goes", direct ? "direct - no proxy" : "through the proxy " + via.Authority, direct ? "" : "Browsers and most apps send this site to the proxy first. If the site fails only here, the proxy is the suspect.", "w"));
             }
             catch (Exception e) { rows.Add(R(1, "This URL goes", "couldn't ask Windows: " + e.Message, "", "u")); }
@@ -61,7 +61,7 @@ namespace AdeeboMeter
             {
                 var pi = new WinHttpProxyInfo();
                 if (WinHttpGetDefaultProxyConfiguration(ref pi))
-                    try { whText = pi.AccessType == 3 && pi.Proxy != IntPtr.Zero ? Marshal.PtrToStringUni(pi.Proxy) : "direct"; }
+                    try { whText = pi.AccessType == 3 && pi.Proxy != IntPtr.Zero ? Marshal.PtrToStringUni(pi.Proxy) : pi.AccessType == 4 ? "automatic (WPAD / setup script)" : pi.AccessType == 0 ? "Windows' default (from the registry)" : "direct"; }   /* bug-hunt ML-27: 1 no proxy, 3 named, 4 automatic, 0 default */
                     finally { if (pi.Proxy != IntPtr.Zero && GlobalFree(pi.Proxy) != IntPtr.Zero) Program.Log("winhttp free"); if (pi.Bypass != IntPtr.Zero && GlobalFree(pi.Bypass) != IntPtr.Zero) Program.Log("winhttp free"); }
             }
             catch (Exception e) { if (!(e is DllNotFoundException || e is EntryPointNotFoundException)) throw; }
@@ -75,12 +75,12 @@ namespace AdeeboMeter
             var rows = new List<string[]>(); string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc", "hosts");
             try
             {
-                var lines = File.ReadAllLines(f).Select(l => { int c = l.IndexOf('#'); return (c >= 0 ? l.Substring(0, c) : l).Trim(); }).Where(l => l != "").ToList();
+                var lines = File.ReadLines(f).Take(500000).Select(   /* bug-hunt ML-26: an ad-block hosts file is big, but never more than this */l => { int c = l.IndexOf('#'); return (c >= 0 ? l.Substring(0, c) : l).Trim(); }).Where(l => l != "").ToList();
                 if (lines.Count == 0) rows.Add(R(0, "Hosts file", "empty - every name goes to DNS", "", "w"));
                 // every line is checked for your site (an ad-block hosts file has thousands); only the first 40 others are listed
                 Func<string, bool> pins = l => name != "" && l.Split((char[])null, StringSplitOptions.RemoveEmptyEntries).Skip(1).Any(x => string.Equals(x, name, StringComparison.OrdinalIgnoreCase));
-                var show = lines.Where(pins).Take(10).Concat(lines.Where(l => !pins(l)).Take(40)).ToList();
-                if (lines.Count > show.Count) rows.Add(R(3, "Hosts file", lines.Count.ToString(CultureInfo.CurrentCulture) + " entries - every one checked" + (name != "" ? " for " + name : "") + ", the first 40 listed", "", "w"));
+                var pinned = lines.Where(pins).ToList(); var show = pinned.Take(40).Concat(lines.Where(l => !pins(l)).Take(40)).ToList();   // bug-hunt L-202: up to 40 lines for your site too, as the row says
+                if (lines.Count > show.Count) rows.Add(R(3, "Hosts file", lines.Count.ToString(CultureInfo.CurrentCulture) + " entries - every one checked" + (name != "" ? " for " + name + (pinned.Count > 0 ? " (" + pinned.Count + " for it)" : "") : "") + ", the first 40 of each kind listed", "", "w"));
                 foreach (var l in show)
                 {
                     bool hit = pins(l);
@@ -129,7 +129,10 @@ namespace AdeeboMeter
         {
             var rows = new List<string[]>(); string h; int p; bool t; string e;
             if (!DestCheck.Parse(target, out h, out p, out t, out e)) { rows.Add(R(2, "Input", e, "Type host:port, e.g. mail.example.com:587", "u")); return rows; }
-            IPAddress a; try { a = Dns.GetHostAddresses(h).First(); } catch (Exception ex) { rows.Add(R(2, "Name", h + ": " + ex.Message, "", "m")); return rows; }
+            // bug-hunt ML-25: IPv4 first (the address most apps end up on), and the next address when the first doesn't answer
+            IPAddress[] alla; try { alla = Dns.GetHostAddresses(h).OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Take(3).ToArray(); if (alla.Length == 0) throw new SocketException(11001); } catch (Exception ex) { if (!(ex is SocketException || ex is ArgumentException)) throw; rows.Add(R(2, "Name", h + ": " + ex.Message, "", "m")); return rows; }
+            IPAddress a = alla[0];
+            for (int k = 0; k < alla.Length - 1; k++) { using (var probe = Toolkit.Open(alla[k], p, 1500)) if (probe != null) break; a = alla[k + 1]; }
             var sw = Stopwatch.StartNew(); string res; int lv;
             try
             {
@@ -169,7 +172,7 @@ namespace AdeeboMeter
                             sw.Restart(); u.Send(req, req.Length, new IPEndPoint(r, 3478)); var until = DateTime.UtcNow.AddMilliseconds(1500);
                             while (got == null && DateTime.UtcNow < until)
                             {
-                                var from = new IPEndPoint(IPAddress.Any, 0); var resp = u.Receive(ref from);
+                                var from = Toolkit.AnyEp(u); var resp = u.Receive(ref from);
                                 if (from.Address.Equals(r) && from.Port == 3478) got = Mapped(resp, tid);
                             }
                         }
@@ -218,7 +221,7 @@ namespace AdeeboMeter
             try
             {
                 var req = (HttpWebRequest)WebRequest.Create("http://www.msftconnecttest.com/connecttest.txt");
-                req.Method = "HEAD"; req.Timeout = 5000; req.UserAgent = "AdeeboMeter"; req.Proxy = WebRequest.GetSystemWebProxy();
+                req.Method = "HEAD"; req.Timeout = 5000; req.UserAgent = "AdeeboMeter"; req.Proxy = HttpSmall.Proxy();
                 var sw = Stopwatch.StartNew();
                 using (var resp = (HttpWebResponse)req.GetResponse())
                 {
@@ -234,7 +237,7 @@ namespace AdeeboMeter
             // the time zone: a PC set to UTC with its clock moved by hand to look right shows local time, but every time it
             // stamps (logs, links, phone pages, certificates) is hours off
             var tz = TimeZoneInfo.Local; var tzOff = tz.GetUtcOffset(DateTime.Now); bool utcZone = tzOff == TimeSpan.Zero && (tz.Id.IndexOf("UTC", StringComparison.OrdinalIgnoreCase) >= 0 || tz.Id.IndexOf("Coordinated", StringComparison.OrdinalIgnoreCase) >= 0);
-            rows.Add(R(utcZone ? 1 : 3, "Time zone", tz.DisplayName + " · UTC" + (tzOff < TimeSpan.Zero ? "-" : "+") + tzOff.ToString(@"h\:mm", CultureInfo.InvariantCulture), utcZone ? "Set to UTC itself - is that right? If you aren't in a UTC country, pick your zone in Settings > Time & language > Date & time (or turn on 'Set time zone automatically'). Times this PC sends - to phone pages, logs and sign-ins - are off by the difference." : "", "w"));
+            rows.Add(R(utcZone ? 1 : 3, "Time zone", tz.DisplayName + " · UTC" + (tzOff < TimeSpan.Zero ? "-" : "+") + tzOff.Duration().ToString(@"h\:mm", CultureInfo.InvariantCulture)   /* L-194: the sign once */, utcZone ? "Set to UTC itself - is that right? If you aren't in a UTC country, pick your zone in Settings > Time & language > Date & time (or turn on 'Set time zone automatically'). Times this PC sends - to phone pages, logs and sign-ins - are off by the difference." : "", "w"));
             rows.AddRange(WindowsTime());
             return rows;
         }

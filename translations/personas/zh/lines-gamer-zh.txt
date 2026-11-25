@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Gamer persona. key|text.
+app.open|一号玩家就位，网络监测已加载。
+app.open|GG，我们上线了，正在盯着你的连接，{addr}。
+all.good|全绿，零延迟，全力冲。
+all.good|大厅很干净，电脑、Wi-Fi、网络全都在线。
+all.good|没有减益效果，放心去吧。
+pc.busy|你的电脑已到 {v}，马上要掉帧了。
+pc.busy|瓶颈在电脑，不在服务器，关个标签页吧。
+pc.busy|你的配置超载了，网络没问题。
+wifi.drops|Wi-Fi 断了 {v} 次，简直是强退。
+wifi.drops|今天 Wi-Fi 掉了 {v} 次，打排位还是插网线吧。
+net.none|没网了，你现在是单机模式。
+net.none|全断了，插上网线吧，{addr}。
+inet.slow|路由器没问题，延迟从运营商那儿开始。
+inet.slow|家里这套没问题，卡的是运营商。
+inet.slow|路由器之后延迟很高，不是你的错。
+busy|加载中……{v}
+busy|正在检测，别按 Alt+F4。
+busy|正在缓冲结果……
+idle|挂机检查：还在盯着。
+idle|没什么新情况，大厅很安静。
+idle|挂机中，不过网络还在我的视野里。
+search.empty|我们在查什么问题，{addr}？
+search.empty|输入吧：“延迟”“ping”“wifi”。
+freeze|加载画面（{v}），稍等。
+freeze|正在赶进度（{v}），保证不输入延迟。
+speedrunner|检测到速通玩家，上一个还没完呢。
+speedrunner|别连打按钮，一次一个。
+back.again|重生了，你不在时发生了 {v} 件事。
+back.again|欢迎回来，{addr}，这是回顾。
+dns.slow|DNS 要 {v}，查服务器太慢了。
+dns.slow|查名字要 {v}，换个 DNS 吧。
+speed.great|下载 {v}，整个游戏库都能下。
+speed.great|下载 {v}，更新日也不怕。
+speed.bloat|速度快，可有人下载时 ping 会飙 {v}。
+speed.bloat|缓冲膨胀：负载下多 {v}，这就是你的延迟尖峰。
+game.lag|延迟从你的 Wi-Fi 开始，打排位请插网线。
+game.lag|服务器没问题，是你的 Wi-Fi 在拖后腿。
+game.good|Ping {v}，去带飞吧。
+game.good|连接干净，今天网络很给力。
+vpn.on|VPN 已开，注意你的 ping。
+vpn.on|已通过 VPN 连接。
+vpn.slow|VPN 多了 {v}，打比赛时关掉它。
+vpn.slow|VPN 就是你多出来的 {v} 延迟。
+portal|Wi-Fi 要先登录，新手教程关。
+portal|强制门户，先登录，再排队。
+gw.down|路由器没反应，重启它。
+gw.down|你的路由器挂机了。
+isp.down|路由器没问题，运营商那边断网了。
+isp.down|服务器挂了？不，是你的运营商。
+mtu.small|大包被丢了，MTU {v}。
+mtu.small|路径 MTU {v}，有些包塞不下。
+port.open|{v} 开着，连接正常。
+port.open|{v} 应答了。
+port.closed|{v} 关着，NAT 说不行。
+port.closed|{v} 没应答。
+cert.ok|证书有效，是正规网站。
+cert.ok|锁没问题。
+cert.expired|证书在 {v} 过期了，有点可疑。
+cert.expired|自 {v} 起过期，是他们那边的问题。
+sec.ok|安全检查通过，全副武装。
+sec.ok|没发现薄弱点。
+sec.issue|有 {v} 项安全问题，修好它们。
+sec.issue|检查发现 {v} 处，打 Boss 前先修好。
+mtr.lossy|从第 {v} 跳开始丢包，延迟就是从那儿刷出来的。
+mtr.lossy|第 {v} 跳在丢包。
+mtr.clean|每一跳零丢包，路线干净。
+mtr.clean|零丢包，完美路线。
+devices.found|网络上有 {v} 台设备。
+devices.found|在大厅里找到 {v} 名玩家。
+encrypt.done|已加密，战利品锁好了。
+encrypt.done|锁好了。
+decrypt.done|打开了，没动过。
+decrypt.done|已解锁，没被改过。
+points.earned|+{v} 经验。
+points.earned|+{v} 分，快升级了。
+award|500 分，成就解锁：Adeebo 奖。
+award|Adeebo 奖已解锁，GG。
+late.night|深夜场，我还在盯着。
+late.night|再来一局？我帮你盯着 ping。
+morning|早上好，服务器整夜都稳着。
+morning|早上好，整夜零延迟。
+update.suspect|{v} 更新后就坏了，这补丁削得太狠了。
+update.suspect|{v} 更新后情况变糟了。
+call.on|检测到语音聊天，正在盯着通话质量。
+call.on|通话中，正在看抖动。
+# 1.1.5 batch 2: Streaming and Trading (approved by Adeeb 2026-11-14)
+stream.on|{v} 全帧率运行，没有延迟尖峰。
+stream.on|直播很流畅，目前零卡顿。
+stream.dip|直播出现延迟尖峰，{v}。
+stream.dip|检测到掉帧，{v}。
+stream.none|队列里没有直播。
+stream.none|直播大厅是空的，点播放开始。
+trade.ok|到券商的 ping 很低，可以上了。
+trade.ok|到券商延迟低，连接干净。
+trade.slow|到券商的 ping 很高，先别点。
+trade.slow|券商延迟尖峰，{v}。
+trade.closed|市场服务器下线了，9:30 再来。
+trade.closed|市场关门了，9:30 重生。
+view.switch|正在加载 {v} 配置，菜单重生中。
+view.switch|切换到 {v} 配置，马上就好，GG。
+quiz.right|GG，答对了。
+quiz.wrong|没打中，重生再试。
+game.streak|{v} 连胜！正在带飞。
+game.timeup|时间到，本局结束。
+market.open|市场开盘了，新对局开始。
+storm.near|风暴来袭，延迟尖峰可能出现。

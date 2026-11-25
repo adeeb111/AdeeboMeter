@@ -36,14 +36,23 @@ namespace AdeeboMeter
         string LS(string k, string d) { string v; return labS.TryGetValue(k, out v) ? v : d; }
         Control labHost; Form labWin; System.Windows.Forms.Timer labTimer; int labShown = -1;   // TCP: rounds drawn so far while playing (-1 = all)
         readonly Dictionary<int, string> tcpEvents = new Dictionary<int, string>();
-        List<string[]> labDns; bool labBusy; string labCg = ""; bool labCgOk; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
+        List<string[]> labDns; bool labBusy, labNatBusy;   /* finding 11: the DNS walk and the NAT trace each have their own */ string labCg = ""; bool labCgOk; int quizSeed = Environment.TickCount & 0xFFFF, quizRight, quizAll; string quizPick = ""; int quizStreak;
 
+        // one frame of the TCP lab playing: the graph's spot on whichever surface shows it (the page and/or the full-screen window)
+        void LabPlayFrame()
+        {
+            bool any = false;
+            if (labHost != null && !labHost.IsDisposed) { any = true; if (!RedrawSpots(labHost, "lab.play")) labHost.Invalidate(); }
+            if (learnInfo != null && learnPage.Visible && learnSel == "lab:tcp") { any = true; if (!RedrawSpots(learnInfo, "lab.play")) learnInfo.Invalidate(); }
+            if (!any) LabRefresh();
+        }
         void LabRefresh() { if (labHost != null && !labHost.IsDisposed) labHost.Invalidate(); if (learnInfo != null && learnPage.Visible && learnSel.StartsWith("lab:", StringComparison.Ordinal)) learnInfo.Invalidate(); }   // both: a change can come from either window
 
         float PaintLabList(Graphics g, float x, float y, float w, Brush ink, Brush muted, StringFormat nowrap, Func<string, bool> hit)
         {
             var list = Labs.Where(l => hit(l[1]) || hit(l[2]) || hit("lab")).ToList(); if (list.Count == 0) return y;
-            g.DrawString(L.T("LABS - PLAY WITH IT"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+            g.DrawString(Kit.Sent("LABS - PLAY WITH IT"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
+            if (hit("AdeeboLab") || hit("Network Lab") || hit("lab") || hit("break") || hit("path")) y = LearnRow(g, "lab:netlab", L.T("AdeeboLab"), L.T("Draw your network, see the path, break one thing."), x, y, w, ink, muted, nowrap);   // 1.1.6
             foreach (var l in list) y = LearnRow(g, "lab:" + l[0], L.T(l[1]), L.T(l[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
         }
@@ -73,7 +82,7 @@ namespace AdeeboMeter
             Theme.Fill(g, minus, 6 * S, Theme.Soft); Theme.Fill(g, plus, 6 * S, Theme.Soft);
             using (var tb = new SolidBrush(Theme.Ink)) using (var c = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             { g.DrawString("−", Draw.fBodyB, tb, minus, c); g.DrawString("+", Draw.fBodyB, tb, plus, c); g.DrawString(val, Draw.fBodyB, tb, new RectangleF(minus.Right, by, vw, 26 * S), c); }
-            int ii = i; Act(h, minus, delegate { labV[key] = steps[Math.Max(0, ii - 1)]; labShown = -1; LabRefresh(); }); Act(h, plus, delegate { labV[key] = steps[Math.Min(steps.Length - 1, ii + 1)]; labShown = -1; LabRefresh(); });
+            int ii = i; Act(h, minus, delegate { labV[key] = steps[Math.Max(0, ii - 1)]; LabChanged(key); }); Act(h, plus, delegate { labV[key] = steps[Math.Min(steps.Length - 1, ii + 1)]; LabChanged(key); });
             return Math.Max(lw, plus.Right - x) + 22 * S;
         }
         float Choice(Control h, Graphics g, string key, string label, string[][] opts, string def, float x, float y)
@@ -85,7 +94,7 @@ namespace AdeeboMeter
                 string t = L.T(o[1]); var ts = g.MeasureString(t, Draw.fSmall); var r = new RectangleF(cx, y + 18 * S, ts.Width + 20 * S, 26 * S); bool on = o[0] == cur;
                 Theme.Fill(g, r, 13 * S, on ? Theme.BlueSoft : Theme.Soft); if (on) Theme.Stroke(g, r, 13 * S, Theme.Blue, 1);
                 using (var tb = new SolidBrush(on ? Theme.Ink : Theme.Sub)) g.DrawString(t, Draw.fSmall, tb, cx + 10 * S, r.Y + (26 * S - ts.Height) / 2);
-                string v = o[0]; Act(h, r, delegate { labS[key] = v; labShown = -1; LabRefresh(); }); cx = r.Right + 6 * S;
+                string v = o[0]; Act(h, r, delegate { labS[key] = v; if (key == "r.dst") routeSeen.Add(v); LabChanged(key); }); cx = r.Right + 6 * S;
             }
             return cx - x + 16 * S;
         }
@@ -110,9 +119,11 @@ namespace AdeeboMeter
             f.FormClosed += delegate { labHost = null; labWin = null; f.Dispose(); if (learnInfo != null) learnInfo.Invalidate(); };
             f.Show(this);
         }
+        // finding 23: only a TCP lab change stops the TCP animation; the other labs leave it playing
+        void LabChanged(string key) { if (key.StartsWith("tcp.", StringComparison.Ordinal)) labShown = -1; LabRefresh(); }
         void LabPlay(bool on)
         {
-            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized && learnSel == "lab:tcp") || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; labShown = -1; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; } LabRefresh(); }; }
+            if (labTimer == null) { labTimer = new System.Windows.Forms.Timer { Interval = 66 }; labTimer.Tick += delegate { bool vis = (learnPage.Visible && Visible && WindowState != FormWindowState.Minimized && learnSel == "lab:tcp") || (labWin != null && !labWin.IsDisposed && labWin.Visible); if (!vis || labShown < 0) { labTimer.Enabled = false; labShown = -1; return; } labShown++; if (labShown >= (int)LV("tcp.rounds", 240)) { labShown = -1; labTimer.Enabled = false; LabRefresh(); return; } LabPlayFrame(); }; }
             labShown = on ? 0 : -1; labTimer.Enabled = on; LabRefresh();
         }
 
@@ -179,7 +190,7 @@ namespace AdeeboMeter
                         if (!fits && LS("u.df", "on") == "on" && LS("u.icmp", "says") == "silent") { mtuHole = true; return false; }
                         return mtuHole && way != "none" && (fits || LS("u.icmp", "says") == "says");
                     }
-                case "route": routeSeen.Add(LS("r.dst", "8.8.8.8")); return routeTable != null && routeSeen.Count >= 3;
+                case "route": return routeTable != null && routeSeen.Count >= 3;   // finding 22: counted when you choose one, not when the page paints
                 case "game": return LV("g.ping", 30) >= 30 && LabSim.GameBudget(LV("g.ping", 30), (int)LV("g.tick", 64), LV("g.interp", 2), (int)LV("g.fps", 144), LV("g.disp", 8)).Sum() < 60;
                 case "qos": return LabSim.VoiceWaitMs("fifo", LV("q.link", 10), (int)LV("q.burst", 50)) < 10;
             }
@@ -193,7 +204,7 @@ namespace AdeeboMeter
             bool met = id != "quiz" && LabGoalMet(id);
             if (met && Cfg.Points) EarnPts("lab." + id, true, true);
             bool done = id == "quiz" ? Points.Me.Has("quiz.10") : Points.Me.Has("lab." + id) || met;
-            string head = (done ? "✓ " : "") + L.T("CHALLENGE") + (Cfg.Points ? "  ·  " + (id == "quiz" ? "+" + Points.Value("quiz.5") + " / +" + Points.Value("quiz.10") : "+" + Points.Value("lab." + id)) : "");
+            string head = (done ? "✓ " : "") + Kit.Sent("CHALLENGE") + (Cfg.Points ? "  ·  " + (id == "quiz" ? "+" + Points.Value("quiz.5") + " / +" + Points.Value("quiz.10") : "+" + Points.Value("lab." + id)) : "");
             float th = Draw.Measure(L.T(goal), Draw.fBody, (int)(w - 32 * S)).Height;
             var card = new RectangleF(x, y, w, th + 44 * S); Theme.Fill(g, card, 12 * S, done ? Theme.LvSoft(0) : Theme.BlueSoft);
             using (var hb = new SolidBrush(done ? Theme.LvText(0) : Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(head, Draw.fTiny, hb, x + 16 * S, y + 10 * S);
@@ -221,13 +232,26 @@ namespace AdeeboMeter
             cx += Stepper(h, g, "tcp.loss", "Random loss", new double[] { 0, 0.001, 0.01, 0.1, 0.5, 1, 2 }, 0, v => v.ToString("0.###", CultureInfo.CurrentCulture) + "%", cx, y);
             cx += Stepper(h, g, "tcp.rounds", "Length", new double[] { 60, 120, 240, 480 }, 240, v => N0(v) + " RTTs", cx, y);
             y += 74 * S;   /* room for the axis label under the steppers */
+            // while it plays, only the graph and its numbers redraw, by their own painter (motion review, 23 Nov: the whole page
+            // was redrawn 15 times a second); if the numbers' card changes height mid-play, the page redraws once to re-flow
+            float top = y, end = LabTcpBody(h, g, x, y, w), x0 = x, w0 = w;
+            LiveSpot(h, "lab.play", new RectangleF(x - 4 * S, top - 20 * S, w + 8 * S, end - top + 20 * S), Theme.Card, gg => { float e = LabTcpBody(h, gg, x0, top, w0); if (Math.Abs(e - end) > 0.5f) h.Invalidate(); });
+            return end;
+        }
+        // the simulation for these settings, worked out once (it is deterministic: same settings, same seed, same steps)
+        string tcpSimKey; List<LabSim.Step> tcpSimMain, tcpSimOther;
+        float LabTcpBody(Control h, Graphics g, float x, float y, float w)
+        {
             string algo = LS("tcp.algo", "cubic"); int rounds = (int)LV("tcp.rounds", 240);
             Func<string, List<LabSim.Step>> run = a => { var p = new LabSim.TcpIn { Algo = a, Mbps = LV("tcp.mbps", 100), RttMs = LV("tcp.rtt", 40), BufferBdp = LV("tcp.buf", 1), LossPct = LV("tcp.loss", 0), Rounds = rounds }; foreach (var kv in tcpEvents) p.Events[kv.Key] = kv.Value; return LabSim.Tcp(p); };
-            var main = run(algo == "reno" ? "reno" : "cubic"); var other = algo == "both" ? run("reno") : null;
-            double bdp = LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)), cap = bdp * (1 + LV("tcp.buf", 1));
+            string simKey = algo + "|" + rounds + "|" + LV("tcp.mbps", 100) + "|" + LV("tcp.rtt", 40) + "|" + LV("tcp.buf", 1) + "|" + LV("tcp.loss", 0) + "|" + string.Join(",", tcpEvents.OrderBy(kv => kv.Key).Select(kv => kv.Key + kv.Value));
+            if (simKey != tcpSimKey || tcpSimMain == null) { tcpSimMain = run(algo == "reno" ? "reno" : "cubic"); tcpSimOther = algo == "both" ? run("reno") : null; tcpSimKey = simKey; }
+            var main = tcpSimMain; var other = tcpSimOther;
+            double bdp = LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)), cap = LabSim.CapPackets(LV("tcp.mbps", 100), LV("tcp.rtt", 40), LV("tcp.buf", 1));
             int shown = labShown < 0 ? rounds : Math.Min(rounds, labShown + 1);
-            var real = LabSim.LastRealCwnd;
-            double ymax = Math.Max(cap * 1.15, Math.Max(main.Max(s => s.Cwnd), other != null ? other.Max(s => s.Cwnd) : 0)) * 1.05;
+            var real = LabSim.LastRealCwnd; double realStep = LabSim.LastRealRttMs > 0 ? LabSim.LastRealRttMs / LV("tcp.rtt", 40) : 1;   // finding 7: one real point is one of the capture's round trips - put it where it belongs on the sim's axis
+            double realMax = real != null ? real.Where(v => !double.IsNaN(v)).DefaultIfEmpty(0).Max() : 0;
+            double ymax = Math.Max(Math.Max(cap * 1.15, realMax), Math.Max(main.Max(s => s.Cwnd), other != null ? other.Max(s => s.Cwnd) : 0)) * 1.05;
             var plot = new RectangleF(x + 46 * S, y, w - 56 * S, Math.Max(260 * S, Math.Min(460 * S, w * 0.38f)));
             Func<double, float> X = r => plot.X + (float)(r / Math.Max(1, rounds - 1)) * plot.Width; Func<double, float> Y = v => plot.Bottom - (float)(Math.Min(v, ymax) / ymax) * plot.Height;
             // phases shaded under the main algorithm
@@ -257,8 +281,13 @@ namespace AdeeboMeter
             line(main, algo == "reno" ? Theme.C("#0E8A9E") : Theme.C("#8250DF"));
             if (real != null && real.Count > 1)
             {
-                var pts = real.Take(rounds).Select((v, i) => new PointF(X(i), Y(v))).ToArray();
-                using (var p = new Pen(Theme.Green, 2f * S)) g.DrawLines(p, pts);
+                // a gap where the capture had no packets (bug-hunt L-314): the line stops and starts again
+                using (var p = new Pen(Theme.Green, 2f * S))
+                {
+                    var seg = new List<PointF>(); int i = 0;
+                    foreach (var v in real) { double at = i * realStep; if (at > rounds - 1) break; if (double.IsNaN(v)) { if (seg.Count > 1) g.DrawLines(p, seg.ToArray()); seg.Clear(); } else seg.Add(new PointF(X(at), Y(v))); i++; }
+                    if (seg.Count > 1) g.DrawLines(p, seg.ToArray());
+                }
             }
             // a click adds a loss at that round trip
             var hitR = plot; Act(h, hitR, delegate { var pt = h.PointToClient(Cursor.Position); var sc = h is ScrollableControl ? ((ScrollableControl)h).AutoScrollPosition : Point.Empty; int r = (int)Math.Round((pt.X - sc.X - plot.X) / plot.Width * (rounds - 1)); if (r >= 0 && r < rounds) { if (!tcpEvents.Remove(r)) tcpEvents[r] = LS("tcp.click", "soft"); } LabRefresh(); });
@@ -283,7 +312,7 @@ namespace AdeeboMeter
                 new[] { "Now: " + last.Phase, last.Phase == "slow start" ? "The window doubles every round trip until it hits the threshold or a loss. Fast, but it overshoots." : last.Phase == "fast recovery" ? "Three duplicate ACKs said one packet went missing. The window is cut (Reno halves it, CUBIC keeps 70%) and the missing packet is resent - no restart." : (algo == "reno" ? "Reno adds one packet per round trip - the straight slope of the sawtooth." : "CUBIC grows by time since the last loss: fast far from the old maximum, slow and careful near it, then probes past it."), "3" } };
             if (tcpEvents.ContainsValue("hard")) rows.Add(new[] { "A timeout", "No ACKs at all, so TCP waits out its retransmission timer (at least 300 ms on Windows, often 1 s) - drawn here as the very next round trip - then the window goes back to 1 and slow start begins again. Much more costly than a soft loss.", "1" });
             if (main.Take(shown).Any(s2 => s2.Cwnd >= 100000)) rows.Add(new[] { "Window capped", "The window stops at 100,000 packets here - in real life the receiver's window (how much it can buffer) sets this ceiling.", "3" });
-            if (LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)) < 2) rows.Add(new[] { "A tiny pipe", "This link holds less than 2 packets per round trip - in this simulation the window never goes below 2 (real TCP can drop to 1), so the extra waits in the queue.", "3" });
+            if (LabSim.Bdp(LV("tcp.mbps", 100), LV("tcp.rtt", 40)) < 2) rows.Add(new[] { "A tiny pipe", "This link holds less than 2 packets per round trip - in this simulation the window stays at 2 or more except right after a timeout (which drops it to 1, as real TCP does), so the extra waits in the queue.", "3" });
             if (real != null && real.Count > 1) rows.Add(new[] { "Your real download", "Estimated from the packet journey's last capture: data sent but not yet acknowledged, per round trip (" + N0(LabSim.LastRealRttMs) + " ms). Seen from one end, so it's a close guess, not the sender's own number.", "3" });
             return InfoCardOn(h, g, "WHAT IT SHOWS", rows, null, x, y, w);
         }
@@ -432,23 +461,24 @@ namespace AdeeboMeter
             y = DrawLadder(g, h, actors, steps, x, y, w);
             y = Lead2(g, AdeeboMeter.L.T("Your devices share one public address. The router remembers every conversation that started inside, so replies find their way back - and anything that starts outside has nowhere to go. That's why hosting a game or reaching your PC from outside needs port forwarding (or UPnP), and why it fails completely behind CGNAT, where your provider adds a second NAT you don't control."), x, y, w);
             if (conns.Count > 0) y = InfoCardOn(h, g, "YOUR CONVERSATIONS THE ROUTER IS REMEMBERING RIGHT NOW (A FEW)", conns.Select(c => new[] { (c.Proc ?? "") + " :" + c.LocalPort, "→ " + (c.Host != "" ? c.Host : c.RemoteIp) + ":" + c.RemotePort, "3" }).ToList(), null, x, y, w);
-            Button(h, g, labBusy ? "Tracing..." : "Check for CGNAT or double NAT (one short trace)  ›", true, labBusy ? (Action)null : delegate
+            Button(h, g, labNatBusy ? "Tracing..." : "Check for CGNAT or double NAT (one short trace)  ›", true, labNatBusy ? (Action)null : delegate
             {
-                labBusy = true; labCg = ""; labCgOk = false; LabRefresh();
+                labNatBusy = true; labCg = ""; labCgOk = false; LabRefresh();
                 Task.Factory.StartNew(() =>
                 {
                     string res; bool ok = false;
                     try
                     {
                         var all = PathTools.Trace(IPAddress.Parse("1.1.1.1"), 5, () => false).ToList();   // hop positions kept: a silent router is still hop 1
-                        var hops = all.Where(z => z.Ip != "").ToList(); ok = hops.Count > 0;
+                        var hops = all.Where(z => z.Ip != "").ToList();
                         Func<string, bool> cg = ip => { IPAddress a; if (!IPAddress.TryParse(ip, out a)) return false; var b = a.GetAddressBytes(); return b.Length == 4 && b[0] == 100 && b[1] >= 64 && b[1] < 128; };
                         Func<string, bool> priv = ip => !Watch.IsPublic(ip) && !cg(ip);
                         var after = all.Skip(1).Take(3).Where(z => z.Ip != "").ToList();
-                        res = after.Any(z => cg(z.Ip)) ? "CGNAT: a hop right after your router uses 100.64-100.127 - your provider shares one public address between customers. Port forwarding can't work; ask them for a public IP (often free or a few dollars)." : after.Take(1).Any(z => priv(z.Ip)) ? "Possibly double NAT: the hop after your router has a private address (" + after[0].Ip + "). That's often a modem-router in front of your own router (then bridge mode, or forwarding on both, fixes port forwarding) - but some providers number their own first router privately too. If your router's settings page shows a private WAN address, it's double NAT." : hops.Count == 0 ? "No hop answered - couldn't tell." : "Neither: your router's next hop is your provider's public network - port forwarding on your router is all you'd need.";
+                        res = after.Any(z => cg(z.Ip)) ? "CGNAT: a hop right after your router uses 100.64-100.127 - your provider shares one public address between customers. Port forwarding can't work; ask them for a public IP (often free or a few dollars)." : after.Take(1).Any(z => priv(z.Ip)) ? "Possibly double NAT: the hop after your router has a private address (" + after[0].Ip + "). That's often a modem-router in front of your own router (then bridge mode, or forwarding on both, fixes port forwarding) - but some providers number their own first router privately too. If your router's settings page shows a private WAN address, it's double NAT." : hops.Count == 0 ? "No hop answered - couldn't tell." : !after.Any(z => Watch.IsPublic(z.Ip)) ? "Only your own router answered - the hops after it stayed silent, so this can't tell. Your router's settings page shows its WAN address: 100.64-100.127 means CGNAT, a private one means double NAT." : "Neither: your router's next hop is your provider's public network - port forwarding on your router is all you'd need.";
+                        ok = after.Any(z => Watch.IsPublic(z.Ip) || cg(z.Ip) || priv(z.Ip));   // finding 4: the challenge counts only when a hop past the router answered
                     }
                     catch (Exception e) { if (e is OutOfMemoryException) throw; res = "Couldn't trace: " + e.Message; }
-                    try { BeginInvoke((Action)delegate { labBusy = false; labCg = res; labCgOk = ok; LabRefresh(); }); } catch (InvalidOperationException) { labBusy = false; }
+                    try { BeginInvoke((Action)delegate { labNatBusy = false; labCg = res; labCgOk = ok; LabRefresh(); }); } catch (InvalidOperationException) { labNatBusy = false; }
                 });
             }, x, y);
             y += 44 * S;
@@ -548,7 +578,7 @@ namespace AdeeboMeter
                 y += 30 * S;
             }
             y += 6 * S;
-            return Lead2(g, AdeeboMeter.L.T("How long one voice packet waits behind ") + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams marks its audio EF (DSCP 46) when an admin turns QoS on, and Zoom marks its own way - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
+            return Lead2(g, AdeeboMeter.L.T("The longest one voice packet can wait behind ") + burst + " full-size packets on a " + N0(link) + " Mbps upload. Teams marks its audio EF (DSCP 46) when an admin turns QoS on, and Zoom marks its own way - but a mark only helps where a router honours it: company networks often do, most home routers and the internet ignore it. At home, a smart queue (see Bufferbloat) gets most of the benefit without any marks.", x, y, w);
         }
 
         // ================================================================== subnetting practice

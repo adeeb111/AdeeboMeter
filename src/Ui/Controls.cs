@@ -27,8 +27,18 @@ using Microsoft.Win32;
 namespace AdeeboMeter
 {
     // A window drawn with per-pixel alpha that never takes the mouse (clicks go to whatever is below).
-    sealed class LayeredForm : Form
+    sealed class LayeredForm : Form, ITouchDrag, ITouchEnd
     {
+        // the unlocked widget under a finger (hunters13 widget input): the drag follows it, the lift drops it
+        public Func<Point, bool> TouchGrab; public Action<Point> TouchDrag, TouchUp; public event Action<int> HWheel;
+        bool ITouchDrag.Grab(Point screen) { return TouchGrab != null && TouchGrab(screen); }
+        void ITouchDrag.DragTo(Point screen) { if (TouchDrag != null) TouchDrag(screen); }
+        void ITouchEnd.TouchEnd(Point screen) { if (TouchUp != null) TouchUp(screen); }
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x020E) { var h = HWheel; if (h != null) h((short)((m.WParam.ToInt64() >> 16) & 0xFFFF)); m.Result = IntPtr.Zero; return; }   // WM_MOUSEHWHEEL: a sideways scroll (L-7)
+            base.WndProc(ref m);
+        }
         public LayeredForm() { FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual; TopMost = true; }
         protected override CreateParams CreateParams
         {
@@ -69,14 +79,38 @@ namespace AdeeboMeter
         // claim the top layer back without drawing again (Windows can drop a small top-most window after sleep or unlock)
         public void ClaimTop() { if (Placed.Width > 1 && !HoldTop) Native.SetWindowPos(Handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010 | 0x0040); }
         public void Vanish() { using (var b = new Bitmap(1, 1, PixelFormat.Format32bppArgb)) Present(b, 0, -10, -10); Placed = Rectangle.Empty; }
+        // move mode (24 Nov): click-through is lifted only while the widget is unlocked; everything else stays as it was
+        public bool TakesClicks { get; private set; }
+        public void SetClickThrough(bool through)
+        {
+            if (!IsHandleCreated || TakesClicks == !through) return;
+            int ex = Native.GetWindowLong(Handle, -20);
+            Native.SetWindowLong(Handle, -20, through ? ex | 0x20 : ex & ~0x20);
+            Native.SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020);   /* hunters12 L-10: NOSIZE NOMOVE NOZORDER NOACTIVATE FRAMECHANGED - the new style takes now */
+            TakesClicks = !through;
+        }
+        // a drag: move the window without drawing it again
+        public void MoveTo(int x, int y)
+        {
+            if (Placed.Width <= 1) return;
+            Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, 0x0001 | 0x0004 | 0x0010);   /* NOSIZE NOZORDER NOACTIVATE */
+            Placed = new Rectangle(x, y, Placed.Width, Placed.Height);
+        }
     }
 
     // ================================================================== own controls (no stock Windows look - the topogram lesson)
     // what the window was doing last - read by the freeze watchdog so "it hangs" comes with a cause in the log
     static class UiActivity { public static volatile string Doing = ""; public static volatile bool ToolRunning; }
-    sealed class DB : Panel
+    sealed class DB : Panel, ITouchDrag
     {
         public DB() { DoubleBuffered = true; ResizeRedraw = true; }
+        // touch (Touch.cs): a page that has something to drag says where - the rest of the page scrolls with the finger
+        public Func<Point, bool> TouchGrab; public Action<Point> TouchDrag;
+        bool ITouchDrag.Grab(Point screen) { return TouchGrab != null && TouchGrab(PointToClient(screen)); }
+        void ITouchDrag.DragTo(Point screen) { if (TouchDrag != null) TouchDrag(PointToClient(screen)); }
+        // the self-test's paint counter (21 Nov sitting test): how often and how much of this canvas was redrawn
+        public int Paints; public long PaintArea;
+        public long LastFullPaintMs;   // how long the last paint of (nearly) the whole panel took - decides whether a wheel notch glides
         // R2-15: painted buttons named for screen readers and UI automation - the painter lists them (name, place, action)
         // each time it draws, and the panel reports them as buttons a reader can find and press
         public readonly List<Tuple<string, Rectangle, Action>> Acc = new List<Tuple<string, Rectangle, Action>>();
@@ -102,8 +136,22 @@ namespace AdeeboMeter
         // KeyNav: the panel takes focus (click or Tab) and gets the arrow keys - for owner-drawn lists
         bool keyNav;
         public bool KeyNav { get { return keyNav; } set { keyNav = value; SetStyle(ControlStyles.Selectable, value); TabStop = value; } }
-        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || base.IsInputKey(k); }
-        protected override void OnMouseDown(MouseEventArgs e) { if (keyNav && !Focused) Focus(); base.OnMouseDown(e); }
+        protected override bool IsInputKey(Keys k) { var c = k & Keys.KeyCode; bool arrow = c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right; return keyNav && (c == Keys.Up || c == Keys.Down || c == Keys.PageUp || c == Keys.PageDown || c == Keys.Home || c == Keys.End || c == Keys.Enter) || (ArrowStep != null && arrow) || base.IsInputKey(k); }
+        // arrow keys move between the painted tiles and links (Adeeb, 22 Nov: "the keyboard doesn't move between them")
+        public Func<Keys, bool> ArrowStep;
+        public static Func<Control, Keys, bool> Hop;   // FullView's spatial move between controls (1.1.6 test day: "can't go side to side")
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            var c = e.KeyCode;
+            if (!keyNav && ArrowStep != null && e.Modifiers == Keys.None && (c == Keys.Up || c == Keys.Down || c == Keys.Left || c == Keys.Right))
+            {
+                // nothing further that way on this page: the arrow carries on to the control beside it (the sidebar, the tabs above, the header)
+                if (ArrowStep(c) || (Hop != null && Hop(this, c))) { e.Handled = true; return; }
+                e.Handled = true; return;
+            }
+            base.OnKeyDown(e);
+        }
+        protected override void OnMouseDown(MouseEventArgs e) { if ((keyNav || ArrowStep != null) && !Focused) Focus(); base.OnMouseDown(e); }   // a click on a page lets the arrow keys work there next
         // Painted buttons and links reached from the keyboard: Tab / Shift+Tab step through them (then on to the next control),
         // Enter or Space presses the marked one. FullView supplies the steps; the mark is drawn after the page paints.
         Func<bool, bool> tabStep; public Action Press; public Func<RectangleF> Mark;
@@ -118,25 +166,56 @@ namespace AdeeboMeter
         protected override void OnGotFocus(EventArgs e) { base.OnGotFocus(e); Invalidate(); }
         protected override void OnLostFocus(EventArgs e) { base.OnLostFocus(e); Invalidate(); }
         // wheel: 60 px a notch, in proportion for a touchpad's small steps (Windows' default jumps whole screens on some pages)
+        // It glides (Adeeb, 17 Nov: "it's not smooth"): each notch sets a target and a 15 ms timer moves a third of the
+        // way there per step - about 100 ms a notch, quick notches add up. Instant when Windows' "Show animations" is off.
+        int glideTo = -1, glideAt = -1; System.Windows.Forms.Timer glide;
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             if (!AutoScroll || !VerticalScroll.Visible) { base.OnMouseWheel(e); return; }
-            int y = -AutoScrollPosition.Y - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S);
-            AutoScrollPosition = new Point(-AutoScrollPosition.X, Math.Max(0, y));
             var h = e as HandledMouseEventArgs; if (h != null) h.Handled = true;
+            int max = Math.Max(0, DisplayRectangle.Height - ClientSize.Height);
+            int from = glideTo >= 0 ? glideTo : -AutoScrollPosition.Y;
+            int y = Math.Max(0, Math.Min(max, from - (int)Math.Round(e.Delta / 120.0 * 60 * Draw.S)));
+            // no glide when Windows' animations are off, or when this page took long to draw (a slow PC, a long page): every glide
+            // step repaints the page, so 4-8 slow paints per notch felt worse than one jump (motion review, 23 Nov)
+            if (!Typing.On || LastFullPaintMs > 16) { glideTo = -1; AutoScrollPosition = new Point(-AutoScrollPosition.X, y); return; }
+            // time-based (Adeeb, 22 Nov: "laggy" on long pages): the position follows the clock, so a page that takes 30-40 ms
+            // to draw moves in fewer, bigger steps and still arrives in ~130 ms - it never falls behind one paint per step
+            glideFrom = -AutoScrollPosition.Y; glideTo = y; glideClock = System.Diagnostics.Stopwatch.StartNew();
+            if (glide == null) { glide = new System.Windows.Forms.Timer { Interval = 15 }; glide.Tick += delegate { GlideStep(); }; }
+            if (!glide.Enabled) { glideAt = glideFrom; glide.Start(); GlideStep(); }
         }
+        int glideFrom; System.Diagnostics.Stopwatch glideClock;
+        void GlideStep()
+        {
+            if (IsDisposed || glideTo < 0) { if (glide != null) glide.Stop(); return; }
+            int cur = -AutoScrollPosition.Y, d = glideTo - cur;
+            if (cur != glideAt) { glideTo = -1; glide.Stop(); return; }   // the page jumped elsewhere meanwhile (a click, a new page): stop
+            double t = glideClock == null ? 1 : Math.Min(1.0, glideClock.Elapsed.TotalMilliseconds / 130.0);
+            if (t >= 1 || Math.Abs(d) <= 2) { AutoScrollPosition = new Point(-AutoScrollPosition.X, glideTo); glideTo = -1; glideAt = -1; glide.Stop(); return; }
+            double ease = 1 - Math.Pow(1 - t, 3);   // quick start, soft landing
+            int next = glideFrom + (int)Math.Round((glideTo - glideFrom) * ease); if (next == cur) return;   // nothing to move yet: no paint
+            AutoScrollPosition = new Point(-AutoScrollPosition.X, next); glideAt = -AutoScrollPosition.Y;
+            if (glideAt == cur) { glideTo = -1; glide.Stop(); }   // the edge: nowhere further to go
+        }
+        protected override void Dispose(bool disposing) { if (disposing && glide != null) { glide.Stop(); glide.Dispose(); glide = null; } base.Dispose(disposing); }
         public void Announce(string name) { AccessibleName = name; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); AccessibilityNotifyClients(AccessibleEvents.Focus, -1); }
         // a paint slower than 40 ms is written to the log (at most once a minute per panel), so "it feels laggy" has numbers
+        static readonly System.Collections.Generic.HashSet<string> seen = new System.Collections.Generic.HashSet<string>();
         static readonly System.Collections.Generic.Dictionary<string, DateTime> slowAt = new System.Collections.Generic.Dictionary<string, DateTime>();
         protected override void OnPaint(PaintEventArgs e)
         {
+            Paints++; PaintArea += (long)e.ClipRectangle.Width * e.ClipRectangle.Height;
             UiActivity.Doing = "drawing " + Name; var sw = System.Diagnostics.Stopwatch.StartNew(); base.OnPaint(e); sw.Stop();
-            if (Focused && ShowFocusCues && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(Rectangle.Round(r), 2, 2)); } }
+            if ((long)e.ClipRectangle.Width * e.ClipRectangle.Height * 2 >= (long)Math.Max(1, ClientSize.Width) * Math.Max(1, ClientSize.Height)) LastFullPaintMs = sw.ElapsedMilliseconds;
+            if (Focused && Mark != null) { var r = Mark(); if (r.Width > 0) { e.Graphics.ResetTransform(); var sm = e.Graphics.SmoothingMode; e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; Theme.Stroke(e.Graphics, RectangleF.Inflate(r, 2, 2), 12 * Draw.S, Theme.Blue, 2 * Draw.S); e.Graphics.SmoothingMode = sm; } }   // the keyboard's place: an outline in the accent colour, like a hovered tile
+            string pn = Name ?? "";
             if (sw.ElapsedMilliseconds > 40)
             {
-                DateTime t; string n = Name ?? "";
-                if (!slowAt.TryGetValue(n, out t) || (DateTime.UtcNow - t).TotalSeconds > 60) { slowAt[n] = DateTime.UtcNow; Program.Log("slow paint: " + n + " " + sw.ElapsedMilliseconds + " ms"); }
+                DateTime t; string n = pn;
+                if (!slowAt.TryGetValue(n, out t) || (DateTime.UtcNow - t).TotalSeconds > 60) { slowAt[n] = DateTime.UtcNow; Program.Log("slow paint: " + n + " " + sw.ElapsedMilliseconds + " ms" + (seen.Contains(n) ? "" : " (first paint since start)")); }
             }
+            seen.Add(pn);
         }
     }
 
@@ -183,7 +262,7 @@ namespace AdeeboMeter
         protected override void OnTextChanged(EventArgs e) { Fit(); Invalidate(); AccessibleName = Text; AccessibilityNotifyClients(AccessibleEvents.NameChange, -1); base.OnTextChanged(e); }   // "Start live capture" -> "Stop" is announced
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             Color ac = Kit.Accent(accent), acSoft = accent == null ? Theme.BlueSoft : Kit.Soft(accent), acInk = accent == null ? Theme.BlueDark : Kit.Ink(accent);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
@@ -201,10 +280,10 @@ namespace AdeeboMeter
             }
             else
             {
-                if (sel) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, acSoft);
-                else if (hot) Theme.Fill(g, new RectangleF(2, 5 * S, Width - 4, Height - 12 * S), 8 * S, Theme.Soft);
-                fg = sel ? acInk : Theme.Sub;
-                if (sel) Theme.Fill(g, new RectangleF(10 * S, Height - 4 * S, Width - 20 * S, 3 * S), 1.5f * S, ac);
+                // 24 Nov (mockups): a page tab is its words and a line under the open one - no pill, no fill
+                if (hot && !sel) Theme.Fill(g, new RectangleF(2, 6 * S, Width - 4, Height - 14 * S), 8 * S, Theme.Soft);
+                fg = sel ? Theme.Ink : Theme.Sub;
+                if (sel) Theme.Fill(g, new RectangleF(8 * S, Height - 3 * S, Width - 16 * S, 2.5f * S), 1.25f * S, accent == null ? Theme.Blue : ac);
             }
             int bw = BadgeW;
             using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, HotkeyPrefix = System.Drawing.Text.HotkeyPrefix.None, FormatFlags = StringFormatFlags.NoWrap | (L.RunsRtl(Text) ? StringFormatFlags.DirectionRightToLeft : 0) })
@@ -239,7 +318,7 @@ namespace AdeeboMeter
         protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2); float h = r.Height;
             // calm: a soft grey pill with no hard edge; the blue magnifier is what catches the eye
@@ -250,6 +329,7 @@ namespace AdeeboMeter
             string k = "Ctrl K"; var ks = g.MeasureString(k, Draw.fTiny);
             using (var m = new SolidBrush(Theme.Muted)) using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap, LineAlignment = StringAlignment.Center })
             {
+                if (L.RunsRtl(L.T("Search tools, pages, problems"))) sf.FormatFlags |= StringFormatFlags.DirectionRightToLeft;   // review 1.1.6 D1 #16: Arabic keeps its first word, the ellipsis goes at its end
                 g.DrawString(L.T("Search tools, pages, problems"), Draw.fBody, m, new RectangleF(34 * S, 0, Width - 60 * S - ks.Width, Height), sf);
                 var kr = new RectangleF(Width - ks.Width - 22 * S, (Height - 18 * S) / 2, ks.Width + 8 * S, 18 * S);
                 Theme.Fill(g, kr, 4 * S, Theme.Card); Theme.Stroke(g, kr, 4 * S, Theme.Line, 1); g.DrawString(k, Draw.fTiny, m, kr.X + 4 * S, kr.Y + 2 * S);
@@ -330,33 +410,32 @@ namespace AdeeboMeter
             float lh = label != "" ? 18 * Draw.S : 0;
             if (lh > 0) using (var lb = new SolidBrush(Theme.Sub)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(label, Draw.fSmall, lb, new RectangleF(2, 0, Width - 4, lh), nf);
             var r = new RectangleF(0.5f, 0.5f + lh, Width - 2, Height - 2 - lh);
-            Theme.Fill(g, r, 8 * Draw.S, Theme.Card);
-            Theme.Stroke(g, r, 8 * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
+            Theme.Fill(g, r, Kit.RMd * Draw.S, Theme.Card);   // fields: md on the shared corner scale
+            Theme.Stroke(g, r, Kit.RMd * Draw.S, Box.Focused ? Theme.Blue : Theme.Line, Box.Focused ? 2 : 1);
         }
     }
 
     // ================================================================== connection list (owner-drawn, only visible rows painted)
-    sealed class ConnList : Control
+    sealed class ConnList : Control, ITouchPan
     {
         sealed class Row { public Conn C; public DateTime First, Gone = DateTime.MinValue; public bool Initial; }
         readonly Dictionary<string, Row> rows = new Dictionary<string, Row>();
         List<Row> view = new List<Row>();
         readonly VScrollBar sb = new VScrollBar();
         int hover = -1; string selKey;
-        public string Filter = "All", Query = ""; public bool ShowIdle;
+        public string Filter = "All", Query = ""; public bool ShowIdle; public volatile bool ReadFailed;   // review 1.1.6 D1 #17: Windows didn't hand over the table
         public bool CanSniff;
         public event Action<Conn> SniffRequested, JourneyRequested;
         public event Action Changed;
-        public event Action<string> HoverKey;   // "proc:<app>" or "state.<STATE>" under the mouse, null when none
-        string lastKey;
+        public event Action<string> HoverKey;   // "state.<STATE>" while the pointer is on the hovered row's ?, null otherwise
+        string lastKey; RectangleF stateBadge; string stateBadgeKey;
+        public RectangleF BadgeAt { get { return stateBadge; } }
         string KeyAt(Point p)
         {
             int i = RowAt(p.Y); var cols = Cols(Width); float x = 14 * S;
             if (i < 0) return null;
-            float appX = x + cols[0] + 8 * S, stX = appX + cols[1] + 8 * S + cols[2] + 8 * S + cols[3] + 8 * S;
-            if (p.X >= x && p.X < appX + cols[1]) return "proc:" + view[i].C.Proc;
-            if (p.X >= stX && p.X < stX + cols[4]) return "state." + view[i].C.State;
-            return null;
+            // review 24 Nov: like the rest of the app, a card only from the small ? beside the hovered row's state
+            return stateBadge.Width > 0 && RectangleF.Inflate(stateBadge, 3 * S, 3 * S).Contains(p) ? stateBadgeKey : null;
         }
         bool loaded;
         static readonly HashSet<string> named = new HashSet<string> { "Teams", "Chrome", "Edge", "Outlook", "OneDrive" };
@@ -373,16 +452,19 @@ namespace AdeeboMeter
 
         public void Merge(List<Conn> fresh)
         {
-            var now = DateTime.Now; var seen = new HashSet<string>();
+            // bug-hunt L-263: the view is filtered and sorted again only when something that decides the order or the rows changed;
+            // otherwise the same rows are just repainted (their times and the fading of closed ones move on)
+            var now = DateTime.Now; var seen = new HashSet<string>(); bool changed = !loaded;
             foreach (var c in fresh)
             {
                 seen.Add(c.Key); Row r;
-                if (rows.TryGetValue(c.Key, out r)) { r.C = c; r.Gone = DateTime.MinValue; }
-                else rows[c.Key] = new Row { C = c, First = now, Initial = !loaded };
+                if (rows.TryGetValue(c.Key, out r)) { if (r.C.State != c.State || r.C.Host != c.Host || r.C.Proc != c.Proc || r.Gone != DateTime.MinValue) changed = true; r.C = c; r.Gone = DateTime.MinValue; }
+                else { rows[c.Key] = new Row { C = c, First = now, Initial = !loaded }; changed = true; }
             }
-            foreach (var r in rows.Values) if (!seen.Contains(r.C.Key) && r.Gone == DateTime.MinValue) r.Gone = now;
-            foreach (var k in rows.Where(kv => kv.Value.Gone != DateTime.MinValue && (now - kv.Value.Gone).TotalSeconds > 3).Select(kv => kv.Key).ToList()) rows.Remove(k);
-            loaded = true; Rebuild();
+            foreach (var r in rows.Values) if (!seen.Contains(r.C.Key) && r.Gone == DateTime.MinValue) { r.Gone = now; changed = true; }
+            foreach (var k in rows.Where(kv => kv.Value.Gone != DateTime.MinValue && (now - kv.Value.Gone).TotalSeconds > 3).Select(kv => kv.Key).ToList()) { rows.Remove(k); changed = true; }
+            loaded = true;
+            if (changed) Rebuild(); else { Invalidate(); if (Changed != null) Changed(); }
         }
         public void Rebuild()
         {
@@ -394,7 +476,7 @@ namespace AdeeboMeter
                 if (Filter != "All" && (Filter == "Other" ? named.Contains(c.Proc) : c.Proc != Filter)) return false;
                 if (q != "" && (c.Proc + " " + c.Host + " " + c.Remote + " " + c.Local + " " + c.Pid).ToLowerInvariant().IndexOf(q, StringComparison.Ordinal) < 0) return false;
                 return true;
-            }).OrderBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.C.State == "ESTABLISHED" ? 0 : 1).ThenBy(r => r.C.Host).ToList();
+            }).OrderBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.C.Pid).ThenBy(r => r.C.State == "ESTABLISHED" ? 0 : 1).ThenBy(r => r.C.Host).ToList();
             int content = view.Count * RowH, visible = Math.Max(1, Height - HeadH);
             sb.Maximum = Math.Max(0, content); sb.LargeChange = visible; sb.SmallChange = RowH; sb.Enabled = content > visible;
             int maxV = Math.Max(0, content - visible); if (sb.Value > maxV) sb.Value = maxV;
@@ -413,7 +495,17 @@ namespace AdeeboMeter
         }
 
         static readonly Color[] palette = { Theme.C("#0B7A75"), Theme.C("#C2410C"), Theme.C("#4F46E5"), Theme.C("#DC2626"), Theme.C("#2563EB"), Theme.C("#B91C1C"), Theme.C("#0369A1"), Theme.C("#15803D"), Theme.C("#A16207"), Theme.C("#7C3AED") };
-        static Color AppColor(string n) { int h = 0; foreach (char ch in n) h = unchecked(h * 31 + ch); return palette[(h & 0x7fffffff) % palette.Length]; }
+        // how many connections each app has right now (the summary bar above the list), busiest first
+        public List<KeyValuePair<string, int>> ByApp() { return view.Where(r => r.Gone == DateTime.MinValue).GroupBy(r => r.C.Proc, StringComparer.OrdinalIgnoreCase).Select(gr => new KeyValuePair<string, int>(gr.Key, gr.Count())).OrderByDescending(kv => kv.Value).ToList(); }
+        // review 24 Nov (L-2): each app gets the next unused colour the first time it shows up, so the first ten apps never
+        // share one (a hash put svchost, Steam, OneDrive, SearchHost and dwm on the same teal); the same app keeps its colour
+        static readonly Dictionary<string, int> appSlot = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        public static Color AppColor(string n)
+        {
+            n = n ?? ""; int i;
+            lock (appSlot) { if (!appSlot.TryGetValue(n, out i)) { i = appSlot.Count % palette.Length; if (appSlot.Count < 500) appSlot[n] = i; } }
+            return palette[i];
+        }
         static Color[] StateColors(string st)
         {
             switch (st)
@@ -434,13 +526,13 @@ namespace AdeeboMeter
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             int w = Width - sb.Width; var cols = Cols(Width); float x0 = 14 * S;
             using (var muted = new SolidBrush(Theme.Muted)) using (var ink = new SolidBrush(Theme.Ink)) using (var sub = new SolidBrush(Theme.Sub))
             using (var line = new Pen(Theme.Line2))
             using (var center = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             {
-                string[] heads = { "", "APP", "PROTO", "REMOTE", "STATE", "SEEN", "" };
+                string[] heads = { "", "App", "Proto", "Remote", "State", "Seen", "" };
                 float x = x0; for (int i = 0; i < heads.Length; i++) { g.DrawString(heads[i], Draw.fTiny, muted, x, 8 * S); x += cols[i] + 8 * S; }
                 g.DrawLine(line, 0, HeadH - 1, w, HeadH - 1);
                 g.SetClip(new Rectangle(0, HeadH, w, Height - HeadH));
@@ -458,11 +550,20 @@ namespace AdeeboMeter
                     if (bg != Theme.Card) Theme.Fill(g, new RectangleF(4 * S, y + 2 * S, w - 8 * S, RowH - 4 * S), 10 * S, bg);   // rounded row tint
                     else if (i + 1 < view.Count) g.DrawLine(line, x0, y + RowH - 1, w - x0, y + RowH - 1);
                     x = x0; float cy = y + RowH / 2f;
-                    var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
-                    Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
-                    using (var wb = new SolidBrush(Color.White)) g.DrawString(c.Proc.Length > 0 ? c.Proc.Substring(0, 1).ToUpperInvariant() : "?", Draw.fPill, wb, badge, center);
-                    x += cols[0] + 8 * S;
-                    Text2(g, c.Proc, c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
+                    // grouped by app (24 Nov mockup): the badge and the name on an app's first row, with how many it has; its
+                    // other rows leave that column empty so the app reads as one block
+                    // review 24 Nov (ML-1): one block per running copy - two chrome.exe processes are two blocks, each with its PID
+                    bool firstOfApp = i == 0 || !string.Equals(view[i - 1].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase) || view[i - 1].C.Pid != c.Pid;
+                    if (firstOfApp)
+                    {
+                        int many = 1; for (int j = i + 1; j < view.Count && string.Equals(view[j].C.Proc, c.Proc, StringComparison.OrdinalIgnoreCase) && view[j].C.Pid == c.Pid; j++) many++;
+                        var badge = new RectangleF(x, cy - 13 * S, 26 * S, 26 * S);
+                        Theme.Fill(g, badge, 7 * S, AppColor(c.Proc));
+                        using (var wb = new SolidBrush(Color.White)) g.DrawString(c.Proc.Length > 0 ? c.Proc.Substring(0, 1).ToUpperInvariant() : "?", Draw.fPill, wb, badge, center);
+                        x += cols[0] + 8 * S;
+                        Text2(g, c.Proc, many > 1 ? many + " " + AdeeboMeter.L.T("connections") + (c.Pid > 0 ? " · PID " + c.Pid : "") : c.Pid == 0 ? (c.State == "TIME_WAIT" ? "connection being closed" : "owner not reported") : "PID " + c.Pid, x, y, cols[1], ink, muted, Draw.fBodyB, Draw.fSmall);
+                    }
+                    else x += cols[0] + 8 * S;
                     x += cols[1] + 8 * S;
                     var ps = g.MeasureString(c.Proto, Draw.fMonoS); Theme.Fill(g, new RectangleF(x, cy - ps.Height / 2 - 2 * S, ps.Width + 6 * S, ps.Height + 4 * S), 5 * S, Theme.Line2);
                     g.DrawString(c.Proto, Draw.fMonoS, sub, x + 3 * S, cy - ps.Height / 2);
@@ -473,9 +574,11 @@ namespace AdeeboMeter
                     var sc = StateColors(c.State); var ss = g.MeasureString(c.State, Draw.fMonoS);
                     Theme.Fill(g, new RectangleF(x, cy - ss.Height / 2 - 3 * S, ss.Width + 14 * S, ss.Height + 6 * S), (ss.Height + 6 * S) / 2, sc[0]);
                     using (var b = new SolidBrush(sc[1])) g.DrawString(c.State, Draw.fMonoS, b, x + 7 * S, cy - ss.Height / 2);
+                    if (i == hover && !string.IsNullOrEmpty(c.State)) { stateBadge = new RectangleF(x + ss.Width + 20 * S, cy - 9 * S, 18 * S, 18 * S); stateBadgeKey = "state." + c.State; FullView.DrawBadge(g, stateBadge); }
                     x += cols[4] + 8 * S;
                     g.DrawString(Age(r, now), Draw.fMonoS, sub, x, cy - 7 * S);
                     x += cols[5] + 8 * S;
+                    if (i != hover && c.Key != selKey) continue;   // row actions only on the hovered or selected row
                     bool can = CanSniff && c.State != "BOUND";
                     bool jn = Journeyable(c); var jr = new RectangleF(x, cy - 13 * S, 66 * S, 26 * S);
                     Theme.Fill(g, jr, 13 * S, jn ? Theme.BlueSoft : Theme.Line2);
@@ -486,7 +589,7 @@ namespace AdeeboMeter
                     using (var b = new SolidBrush(can ? Theme.OnBlue : Theme.Muted)) g.DrawString(L.T("Sniff"), Draw.fSmall, b, br, center);
                 }
                 g.ResetClip();
-                if (view.Count == 0) g.DrawString(Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);
+                if (view.Count == 0) g.DrawString(ReadFailed && Filter == "All" && Query == "" ? L.T("Couldn't read Windows' connection list just now - trying again.") : Voice.P("Nothing matches. Either the filter's too picky or it's really quiet out there.", "No connections match."), Draw.fBody, muted, x0, HeadH + 14 * S);
             }
         }
         static void Text2(Graphics g, string a, string b, float x, float y, int w, Brush ink, Brush muted, Font fa, Font fb)
@@ -511,12 +614,12 @@ namespace AdeeboMeter
         static bool Journeyable(Conn c) { return c.State != "LISTEN" && ((!string.IsNullOrEmpty(c.RemoteIp) && c.RemotePort > 0) || (c.Proto.StartsWith("UDP", StringComparison.Ordinal) && c.LocalPort > 0)); }
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            int h = RowAt(e.Y); if (h != hover) { hover = h; Invalidate(); }
+            int h = RowAt(e.Y); if (h != hover) { hover = h; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); Update(); }   /* paint now, so the new row's ? is there for KeyAt (review 24 Nov L-9) */
             string k = KeyAt(e.Location);
-            Cursor = h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : k != null ? Cursors.Help : Cursors.Default;
+            Cursor = k != null ? Cursors.Help : h >= 0 && (OnSniffButton(e.X) || OnJourneyButton(e.X)) ? Cursors.Hand : Cursors.Default;
             if (k != lastKey) { lastKey = k; if (HoverKey != null) HoverKey(k); }
         }
-        protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
+        protected override void OnMouseLeave(EventArgs e) { if (hover != -1) { hover = -1; stateBadge = RectangleF.Empty; stateBadgeKey = null; Invalidate(); } lastKey = null; if (HoverKey != null) HoverKey(null); }
         protected override void OnMouseDown(MouseEventArgs e)
         {
             Focus(); int i = RowAt(e.Y); if (i < 0) return;
@@ -549,6 +652,11 @@ namespace AdeeboMeter
             Invalidate();
         }
         int wheelRest;
+        public bool PanBy(int dx, int dy)   /* a finger drag moves the list with the finger, pixel for pixel (Touch.cs) */
+        {
+            if (!sb.Visible || dy == 0) return false; int max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);
+            sb.Value = Math.Max(0, Math.Min(max, sb.Value + dy)); Invalidate(); return true;
+        }
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             int max = Math.Max(0, sb.Maximum - sb.LargeChange + 1);
@@ -580,7 +688,7 @@ namespace AdeeboMeter
     {
         protected override AccessibleObject CreateAccessibilityInstance() { return new SwitchAccess(this, () => on); }
         bool on; float knob; readonly System.Windows.Forms.Timer anim = new System.Windows.Forms.Timer { Interval = 15 };
-        public bool On { get { return on; } set { if (on != value) { on = value; anim.Start(); Invalidate(); AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); } } }
+        public bool On { get { return on; } set { if (on != value) { on = value; if (Motion.On) anim.Start(); else knob = on ? 1 : 0; Invalidate(); AccessibilityNotifyClients(AccessibleEvents.StateChange, -1); } } }
         public SlideSwitch(string label, bool start)
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
@@ -599,7 +707,7 @@ namespace AdeeboMeter
         protected override void Dispose(bool disposing) { if (disposing) anim.Dispose(); base.Dispose(disposing); }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; float S = Draw.S;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast; float S = Draw.S;
             using (var bg = new SolidBrush(Parent != null ? Parent.BackColor : Theme.Card)) g.FillRectangle(bg, ClientRectangle);
             string t = L.T(Text); var ts = g.MeasureString(t, Draw.fBody);
             using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(t, Draw.fBody, ink, 0, (Height - ts.Height) / 2);
@@ -675,16 +783,24 @@ namespace AdeeboMeter
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
         }
         protected override bool ShowWithoutActivation { get { return true; } }
-        protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ExStyle |= 0x08000000 /*NOACTIVATE*/ | 0x80 /*TOOLWINDOW*/ | 0x20 /*TRANSPARENT*/; return cp; } }
+        protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ExStyle |= 0x08000000 /*NOACTIVATE*/ | 0x80 /*TOOLWINDOW*/;   /* takes clicks now: it has a close button (24 Nov) */ return cp; } }
         protected override void OnHandleCreated(EventArgs ev)
         {
             base.OnHandleCreated(ev);
             try { int round = 2; if (Native.DwmSetWindowAttribute(Handle, 33 /*corner preference: round*/, ref round, 4) != 0) Program.Log("rounded tips not supported here"); } catch { }
         }
+        public event Action Dismissed;
+        RectangleF CloseRect { get { float S = Draw.S; return new RectangleF(Width - 34 * S, 8 * S, 26 * S, 26 * S); } }
+        protected override void OnMouseDown(MouseEventArgs me)
+        {
+            base.OnMouseDown(me);
+            if (CloseRect.Contains(me.Location)) { Hide(); if (Dismissed != null) Dismissed(); }
+        }
+        protected override void OnMouseMove(MouseEventArgs me) { base.OnMouseMove(me); Cursor = CloseRect.Contains(me.Location) ? Cursors.Hand : Cursors.Default; }
         public void ShowAt(Explain.Entry en, Point at, Form owner)
         {
             e = en; float S = Draw.S; int w = (int)(400 * S);
-            int h = (int)(ExplainPaint.Paint(null, e, 16 * S, 14 * S, w - 32 * S, true) + 10 * S);
+            int h = (int)(ExplainPaint.Paint(null, e, 16 * S, 14 * S, w - 52 * S, true) + 10 * S);
             var wa = Screen.FromPoint(at).WorkingArea;
             int x = at.X + (int)(18 * S), y = at.Y + (int)(22 * S);
             if (x + w > wa.Right) x = Math.Max(wa.Left, at.X - w - (int)(12 * S));
@@ -697,11 +813,13 @@ namespace AdeeboMeter
         }
         protected override void OnPaint(PaintEventArgs pe)
         {
-            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText;
+            var g = pe.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var b = new SolidBrush(Theme.Card)) g.FillRectangle(b, ClientRectangle);
             using (var p = new Pen(Theme.Line)) g.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
-            using (var a = new SolidBrush(Theme.Blue)) g.FillRectangle(a, 0, 0, 4 * Draw.S, Height);
-            if (e != null) ExplainPaint.Paint(g, e, 16 * Draw.S, 14 * Draw.S, Width - 32 * Draw.S, true);
+            if (e != null) ExplainPaint.Paint(g, e, 16 * Draw.S, 14 * Draw.S, Width - 52 * Draw.S, true);
+            // the close button, top right
+            var cr = CloseRect; float k = 5 * Draw.S, cx = cr.X + cr.Width / 2, cy = cr.Y + cr.Height / 2;
+            using (var p = new Pen(Theme.Sub, 1.6f * Draw.S) { StartCap = LineCap.Round, EndCap = LineCap.Round }) { g.DrawLine(p, cx - k, cy - k, cx + k, cy + k); g.DrawLine(p, cx + k, cy - k, cx - k, cy + k); }
         }
     }
 }

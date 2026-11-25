@@ -39,8 +39,8 @@
   var stored = saved();
   var defaultChoice = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" ? pageCode : "auto";
   var choice = known(query) ? query : pageCode !== "en" ? pageCode : known(stored) ? stored : defaultChoice;
-  if (known(query)) remember(query);
-  else if (pageCode !== "en") remember(pageCode);
+  // 1.1.6 (Adeeb): the language is remembered only when the visitor picks it in the picker - not from a link's ?lang=
+  // or a translated page they happened to land on. A remembered pick then opens the site in that language.
   var code = choice === "auto" ? preferred() : choice;
 
   function t(key) {
@@ -132,7 +132,28 @@
 
   root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" ? pageLanguage : tags[code] || code;
   var mounted = new WeakSet();
+  // 1.1.6 (Adeeb): every page has the language picker at the top, so a wrong pick is one click from undone. Pages whose
+  // header doesn't carry one get it here: inside their top bar when they have one, otherwise pinned to the top corner.
+  function ensurePicker() {
+    if (document.querySelector("[data-language-picker]")) return;
+    var host = document.querySelector("header nav, nav.top, .sitebar .sb-links, nav.links, header .w, header.top");
+    var box = document.createElement("div");
+    box.className = "site-language am-lang" + (host ? "" : " am-lang-float");
+    box.innerHTML = '<span class="lang-face" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3"/></svg><b>EN</b></span><select data-language-picker aria-label="Language"></select>';
+    if (!document.getElementById("am-lang-style")) {
+      var st = document.createElement("style"); st.id = "am-lang-style";
+      st.textContent = ".am-lang{position:relative;display:inline-flex;align-items:center;margin-inline-start:8px;vertical-align:middle}" +
+        ".am-lang .lang-face{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid rgba(127,127,127,.45);border-radius:9px;font:600 14px/1 system-ui,sans-serif;color:inherit;pointer-events:none}" +
+        ".am-lang .lang-face svg{width:18px;height:18px}" +
+        ".am-lang select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}" +
+        ".am-lang select:focus-visible+.lang-face,.am-lang:focus-within .lang-face{outline:2px solid #1155E0;outline-offset:2px}" +
+        ".am-lang-float{position:fixed;top:10px;inset-inline-end:12px;z-index:60;background:Canvas;color:CanvasText;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}";
+      document.head.appendChild(st);
+    }
+    if (host) host.appendChild(box); else document.body.insertBefore(box, document.body.firstChild);
+  }
   function mountPickers() {
+    ensurePicker();
     document.querySelectorAll("[data-language-picker]").forEach(function (select) {
       if (mounted.has(select)) return;
       mounted.add(select);

@@ -60,7 +60,7 @@ namespace AdeeboMeter
             url = Toolkit.OneSlash(url);   // "https:/x" is https://x, never the host "https"
             var rows = new List<string[]>(); if (!(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))) url = "https://" + url.Trim();
             Uri u; if (!Uri.TryCreate(url, UriKind.Absolute, out u)) { rows.Add(R(2, "URL", "not a web address", "", "u")); return rows; }
-            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5);
+            int n = Int(countIn, 5, 1, 50); run.SeriesUnit = "ms"; var all = new List<double[]>(); var allBy = DateTime.UtcNow.AddMinutes(5); string firstStatus = "";
             for (int i = 0; i < n && !run.Stop; i++)
             {
                 if (DateTime.UtcNow > allBy) { rows.Add(R(1, "Stopped", "after 5 minutes - " + i + " of " + n + " requests done", "", "m")); break; }   // one deadline for the whole run
@@ -73,7 +73,7 @@ namespace AdeeboMeter
                     foreach (var a in addrs.OrderBy(x => x.AddressFamily == AddressFamily.InterNetwork ? 0 : 1).Take(4))
                     {
                         var c = new TcpClient(a.AddressFamily);
-                        try { if (c.ConnectAsync(a, u.Port).Wait(addrs.Length > 1 ? 3000 : 5000)) { conn = c; break; } } catch (AggregateException ae) { connErr = (ae.InnerException ?? ae).Message; }
+                        try { if (c.ConnectAsync(a, u.Port).Wait(addrs.Length > 1 ? 3000 : 5000)) { conn = c; break; } } catch (AggregateException ae) { connErr = (ae.InnerException ?? ae).Message; } catch (SocketException se) { connErr = se.Message; }   /* L-16: a synchronous throw closes the socket too */
                         c.Close();
                     }
                     if (conn == null) throw new TimeoutException(connErr);
@@ -85,14 +85,16 @@ namespace AdeeboMeter
                         var req = Encoding.ASCII.GetBytes("GET " + u.PathAndQuery + " HTTP/1.1\r\nHost: " + (u.HostNameType == UriHostNameType.IPv6 ? "[" + u.IdnHost.Trim('[', ']') + "]" : u.IdnHost) + (u.IsDefaultPort ? "" : ":" + u.Port.ToString(CultureInfo.InvariantCulture)) + "\r\nUser-Agent: AdeeboMeter/" + Program.Version + "\r\nAccept: */*\r\nConnection: close\r\n\r\n");
                         st.Write(req, 0, req.Length);
                         var buf = new byte[16384]; int r = st.Read(buf, 0, buf.Length); t[3] = sw.Elapsed.TotalMilliseconds;
-                        status = r > 12 ? Encoding.ASCII.GetString(buf, 0, Math.Min(r, 40)).Split('\r')[0] : "";
-                        long total = r; var dlBy = DateTime.UtcNow.AddSeconds(30); while (r > 0 && total < 4 << 20 && DateTime.UtcNow < dlBy && !run.Stop) { r = st.Read(buf, 0, buf.Length); total += r; }   // 4 MB or 30 s, whichever first
+                        long total = r; int head = r;   // carry-over (round-2 L122): the status line can come in pieces - keep reading until its end
+                        while (r > 0 && head < 64 && Array.IndexOf(buf, (byte)'\n', 0, head) < 0) { r = st.Read(buf, head, buf.Length - head); head += r; total += r; }
+                        status = head > 12 ? Encoding.ASCII.GetString(buf, 0, Math.Min(head, 40)).Split('\r')[0] : ""; var dlBy = DateTime.UtcNow.AddSeconds(30); while (r > 0 && total < 4 << 20 && DateTime.UtcNow < dlBy && !run.Stop) { r = st.Read(buf, 0, buf.Length); total += r; }   // 4 MB or 30 s, whichever first
                         t[4] = sw.Elapsed.TotalMilliseconds; st.Dispose();
                     }
                     all.Add(t); run.Add(t[4]);
                 }
                 catch (Exception e) { run.Add(double.NaN); rows.Add(R(2, "Request " + (i + 1), Draw.Trunc(e.Message, 90), "", "m")); }
-                if (i == 0 && status != "") rows.Add(R(status.Contains(" 2") || status.Contains(" 3") ? 0 : 1, "Answer", status, "", "m"));
+                if (status != "" && (i == 0 || status != firstStatus)) rows.Add(R(status.Contains(" 2") || status.Contains(" 3") ? 0 : 1, i == 0 ? "Answer" : "Answer (request " + (i + 1) + ")", status, i == 0 ? "" : "This one answered differently from the first.", "m"));   // bug-hunt L-218: a later different answer is shown too
+                if (i == 0) firstStatus = status;
             }
             if (all.Count > 0)
             {
@@ -114,13 +116,13 @@ namespace AdeeboMeter
                 var sw = Stopwatch.StartNew();
                 try
                 {
-                    var req = (HttpWebRequest)WebRequest.Create(doh); req.Accept = "application/dns-json"; req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter"; req.Proxy = WebRequest.GetSystemWebProxy();
+                    var req = (HttpWebRequest)WebRequest.Create(doh); req.Accept = "application/dns-json"; req.Timeout = 6000; req.ReadWriteTimeout = 6000; req.UserAgent = "AdeeboMeter"; req.Proxy = HttpSmall.Proxy();
                     using (var resp = req.GetResponse()) using (var rs = resp.GetResponseStream())
                     {
                         // 16 KB and 8 s at most: an intercepting proxy can't feed it a huge or endless page
                         var ms = new MemoryStream(); var bb = new byte[4096]; int got;
                         while (ms.Length < 16384 && sw.ElapsedMilliseconds < 8000 && (got = rs.Read(bb, 0, bb.Length)) > 0) ms.Write(bb, 0, got);
-                        var j = Encoding.UTF8.GetString(ms.ToArray()); bool ok = j.Contains("\"Status\":0") || j.Contains("\"Status\": 0"); rows.Add(R(ok ? 0 : 1, "DNS over HTTPS · " + new Uri(doh).Host, ok ? "works - " + sw.ElapsedMilliseconds + " ms" : "answered, but not with a name", "", "m")); }
+                        var j = Encoding.UTF8.GetString(ms.ToArray()); bool ok = System.Text.RegularExpressions.Regex.IsMatch(j, @"^\s*\{\s*""Status""\s*:\s*0\s*,") && j.Contains("\"Answer\"");   /* bug-hunt ML-10: a JSON DNS answer, status 0 first, with answers */ rows.Add(R(ok ? 0 : 1, "DNS over HTTPS · " + new Uri(doh).Host, ok ? "works - " + sw.ElapsedMilliseconds + " ms" : "answered, but not with a name", "", "m")); }
                 }
                 catch (Exception e) { rows.Add(R(1, "DNS over HTTPS · " + new Uri(doh).Host, "blocked or failed (" + Draw.Trunc(e.Message, 50) + ")", "Company networks often block encrypted DNS so their filters keep working.", "m")); }
             }
@@ -135,8 +137,14 @@ namespace AdeeboMeter
                         ssl.ReadTimeout = 4000; Tls(ssl, "cloudflare-dns.com", tc, 6000);
                         var q = new List<byte> { 0xAB, 0xCD, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 7 }; q.AddRange(Encoding.ASCII.GetBytes("example")); q.Add(3); q.AddRange(Encoding.ASCII.GetBytes("com")); q.AddRange(new byte[] { 0, 0, 1, 0, 1 });
                         var msg = new[] { (byte)(q.Count >> 8), (byte)q.Count }.Concat(q).ToArray(); ssl.Write(msg, 0, msg.Length);
-                        var lb = new byte[2]; int got = ssl.Read(lb, 0, 2);
-                        rows.Add(R(got == 2 ? 0 : 1, "DNS over TLS · 1.1.1.1:853", got == 2 ? "works - " + s2.ElapsedMilliseconds + " ms" : "connected, no answer", "", "m"));
+                        // bug-hunt ML-10: the whole answer - our ID back, marked as a reply, no error, at least one answer
+                        var lb = new byte[2]; int got = 0, g0; while (got < 2 && (g0 = ssl.Read(lb, got, 2 - got)) > 0) got += g0;
+                        if (got == 2)
+                        {
+                            int len = lb[0] << 8 | lb[1]; var ans = new byte[Math.Min(len, 4096)]; int have = 0; while (have < ans.Length && (g0 = ssl.Read(ans, have, ans.Length - have)) > 0) have += g0;
+                            if (!(have >= 12 && have == ans.Length && ans[0] == 0xAB && ans[1] == 0xCD && (ans[2] & 0x80) != 0 && (ans[3] & 0x0F) == 0 && (ans[6] << 8 | ans[7]) > 0)) got = 0;
+                        }
+                        rows.Add(R(got == 2 ? 0 : 1, "DNS over TLS · 1.1.1.1:853", got == 2 ? "works - " + s2.ElapsedMilliseconds + " ms" : "connected, no proper DNS answer", "", "m"));
                     }
                 }
             }
@@ -156,7 +164,7 @@ namespace AdeeboMeter
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p);   // connected: replies from anyone else are dropped by Windows
                     var q = new byte[48]; q[0] = 0x23;   // LI 0, version 4, client
                     var t1 = DateTime.UtcNow; WriteNtp(q, 40, t1); u.Send(q, 48);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
                     if (r.Length < 48) throw new InvalidOperationException("short answer");
                     bool same = true; for (int i = 0; i < 8; i++) if (r[24 + i] != q[40 + i]) same = false;
                     if (!same || (r[0] & 7) != 4) throw new InvalidOperationException("the answer isn't a reply to this question");
@@ -169,8 +177,8 @@ namespace AdeeboMeter
                     double offset = ((t2 - t1).TotalMilliseconds + (t3 - t4).TotalMilliseconds) / 2, delay = (t4 - t1).TotalMilliseconds - (t3 - t2).TotalMilliseconds;
                     string refid = stratum <= 1 ? Encoding.ASCII.GetString(r, 12, 4).TrimEnd('\0') : new IPAddress(new[] { r[12], r[13], r[14], r[15] }).ToString();
                     if (delay < 0 || delay > 10000 || t3 < t2) { rows.Add(R(2, h, "answered with timestamps that don't add up (delay " + Ms(delay) + ")", "This server's time can't be used.", "m")); return rows; }
-                    rows.Add(R(stratum == 0 || stratum > 15 ? 2 : 0, h, "answers · stratum " + stratum + (stratum == 1 ? " (has its own clock: " + refid + ")" : " (gets time from " + refid + ")") + " · round trip " + Ms(delay), stratum == 0 ? "Stratum 0 here means 'kiss of death' - the server refuses to serve you." : "", "m"));
-                    rows.Add(R(Math.Abs(offset) > 5000 ? 2 : Math.Abs(offset) > 500 ? 1 : 0, "Your clock vs this server (an estimate from one server)", (offset >= 0 ? "behind by " : "ahead by ") + Span(Math.Abs(offset)), Math.Abs(offset) > 500 ? "Settings > Time > Sync now. More than 5 minutes breaks sign-in and certificates." : "", "m"));
+                    rows.Add(R(stratum > 15 ? 2 : 0, h, "answers · stratum " + stratum + (stratum == 1 ? " (has its own clock: " + refid + ")" : " (gets time from " + refid + ")") + " · round trip " + Ms(delay), stratum > 15 ? "Stratum 16 means the server has no working time source of its own." : "", "m"));   /* L-14: stratum 0 is handled above as the kiss of death */
+                    rows.Add(R(Math.Abs(offset) > 5000 ? 2 : Math.Abs(offset) > 2000 ? 1 : 0, "Your clock vs this server (an estimate from one server)", (offset >= 0 ? "behind by " : "ahead by ") + Span(Math.Abs(offset)), Math.Abs(offset) > 2000 ? "Settings > Time > Sync now. More than 5 minutes breaks sign-in and certificates." : "", "m"));
                 }
             }
             catch (Exception e) { rows.Add(R(2, h + ":" + p, "no answer (" + Draw.Trunc(e.Message, 50) + ")", "UDP 123 may be blocked on this network - company networks often allow only their own time servers.", "m")); }
@@ -232,11 +240,12 @@ namespace AdeeboMeter
                         if (starttls && !implicitTls)
                         {
                             wr.WriteLine("STARTTLS"); string ok = rd.Next() ?? "";
+                            if (!ok.StartsWith("220", StringComparison.Ordinal)) rows.Add(R(2, "STARTTLS", "offered, but refused when asked: " + Draw.Trunc(ok, 80), "The server says it can encrypt, then won't - mail to it would go unencrypted or bounce.", "m"));   // bug-hunt L-219
                             if (ok.StartsWith("220", StringComparison.Ordinal)) { var ssl = new SslStream(tc.GetStream(), false, (s, c, ch, e) => { if (c != null) cert = new X509Certificate2(c); return e == SslPolicyErrors.None; }); Tls(ssl, h, tc, 8000); var w2 = new StreamWriter(ssl, Encoding.ASCII) { NewLine = "\r\n", AutoFlush = true }; w2.WriteLine("QUIT"); }
                         }
                         else wr.WriteLine("QUIT");
                     }
-                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = rd.Next() ?? ""; rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
+                    else if (kind == "IMAP") { wr.WriteLine("a1 CAPABILITY"); string l = ""; for (int li = 0; li < 12; li++) { string x = rd.Next(); if (x == null || x.StartsWith("a1 ", StringComparison.Ordinal)) break; l += (l == "" ? "" : " ") + x.Replace("* CAPABILITY ", ""); }   /* L-13: every line up to the tagged answer */ rows.Add(R(3, "Offers", Draw.Trunc(l, 160), "", "m")); wr.WriteLine("a2 LOGOUT"); }
                     else { wr.WriteLine("CAPA"); var caps = new List<string>(); string l; while ((l = rd.Next()) != null && l != "." && caps.Count < 20) caps.Add(l); rows.Add(R(3, "Offers", string.Join(" · ", caps.Skip(1)), "", "m")); wr.WriteLine("QUIT"); }
                     if (cert != null) using (var cc = cert) { cert = null; double days = (cc.NotAfter - DateTime.Now).TotalDays; rows.Add(R(days < 0 ? 2 : days < 14 ? 1 : 0, "Certificate", cc.GetNameInfo(X509NameType.SimpleName, false) + " · expires " + cc.NotAfter.ToString("d MMM yyyy", CultureInfo.CurrentCulture), "", "m")); }
                 }
@@ -258,12 +267,22 @@ namespace AdeeboMeter
                     var st = tc.GetStream(); st.ReadTimeout = 5000; var buf = new byte[256]; int n = 0, got;
                     n = st.Read(buf, 0, buf.Length); st.ReadTimeout = 2000;
                     try { while (n > 0 && n < buf.Length && Array.IndexOf(buf, (byte)'\n', 0, n) < 0 && (got = st.Read(buf, n, buf.Length - n)) > 0) n += got; } catch (IOException) { }   // the rest of a banner that came in pieces   // the banner may arrive in pieces
-                    string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0];
+                    string b = Encoding.ASCII.GetString(buf, 0, Math.Max(0, n)).Split('\r', '\n')[0]; string old = SshAge(b);
                     rows.Add(R(b.StartsWith("SSH-", StringComparison.Ordinal) ? 0 : 1, h + ":" + p + " (" + sw.ElapsedMilliseconds + " ms)", b.StartsWith("SSH-", StringComparison.Ordinal) ? b : "connected, but it isn't SSH: " + Draw.Trunc(b, 80), b.StartsWith("SSH-1", StringComparison.Ordinal) ? "SSH version 1 is broken and should be off." : "", "m"));
+                    if (old != null) rows.Add(R(1, "Version", old, "Distributions often patch without changing the number (the banner then carries their own tag, e.g. 'Ubuntu-3ubuntu13.4') - check the server's package updates before worrying.", "m"));
                 }
             }
             catch (Exception e) { rows.Add(R(2, h + ":" + p, Draw.Trunc(e.Message, 90), "", "m")); }
             return rows;
+        }
+        // bug-hunt ML-9: what the banner's own version number says - only OpenSSH, whose public advisories map cleanly to versions
+        static string SshAge(string banner)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(banner ?? "", @"OpenSSH_(\d+)\.(\d+)"); if (!m.Success) return null;
+            int v = int.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) * 100 + int.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
+            if (v >= 805 && v < 908) return "OpenSSH " + m.Groups[1].Value + "." + m.Groups[2].Value + " - in the range of the 2024 'regreSSHion' flaw (CVE-2024-6387, fixed in 9.8)";
+            if (v < 704) return "OpenSSH " + m.Groups[1].Value + "." + m.Groups[2].Value + " - many years old, with several published flaws since";
+            return null;
         }
 
         // ---------- SNMP v2c GET (system group)
@@ -274,7 +293,7 @@ namespace AdeeboMeter
             var a = Addr(h); if (a == null) { rows.Add(R(2, "Name", "couldn't find " + h, "", "m")); return rows; }
             string comm = string.IsNullOrWhiteSpace(community) ? "public" : community.Trim();
             var pdu = new List<byte>(); foreach (var o in SysOids) pdu.AddRange(Tlv(0x30, Oid(o[0]).Concat(new byte[] { 5, 0 }).ToArray()));
-            var reqId = new byte[] { 2, 2, 0x12, 0x34 };
+            var rid = new byte[2]; using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider()) rng.GetBytes(rid); var reqId = new byte[] { 2, 2, (byte)(rid[0] & 0x7F | 0x01), rid[1] };   /* L-12: a fresh request number each time */
             var getReq = Tlv(0xA0, reqId.Concat(new byte[] { 2, 1, 0, 2, 1, 0 }).Concat(Tlv(0x30, pdu.ToArray())).ToArray());
             var msg = Tlv(0x30, new byte[] { 2, 1, 1 }.Concat(Tlv(4, Encoding.ASCII.GetBytes(comm))).Concat(getReq).ToArray());
             try
@@ -282,7 +301,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(a.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(msg, msg.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from);
                     string why = SnmpCheck(r, reqId[2], reqId[3], Encoding.ASCII.GetBytes(comm));
                     if (why != "") { rows.Add(R(2, h, "answered, but " + why, "", "m")); return rows; }
                     var vals = new List<string>(); ParseVarbinds(r, vals);
@@ -406,7 +425,7 @@ namespace AdeeboMeter
                 using (var u = new UdpClient(a.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 3000; u.Connect(a, p); var sw = Stopwatch.StartNew(); u.Send(pkt, pkt.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from);
+                    var from = Toolkit.AnyEp(u); var r = u.Receive(ref from);
                     if (r.Length < 20) { Array.Clear(sec, 0, sec.Length); rows.Add(R(2, h + ":" + p, "answered with " + r.Length + " bytes - not a RADIUS reply", "", "m")); return rows; }
                     bool ma, good = ReplyOk(r, pkt[1], auth, sec, out ma); Array.Clear(sec, 0, sec.Length);
                     if (good && !ma) rows.Add(R(1, "Message-Authenticator", "the reply doesn't carry one", "Not hardened against BlastRADIUS (CVE-2024-3596): turn on require_message_authenticator / limit_proxy_state on the server, or update it.", "m"));
@@ -474,28 +493,29 @@ namespace AdeeboMeter
             using (var u = new UdpClient(a.AddressFamily))
             {
                 u.Client.ReceiveTimeout = 1000; u.Connect(a, p);
+                var wall0 = DateTime.UtcNow; var mono = Stopwatch.StartNew();   /* L-15: times from a steady clock anchored once, so a clock change mid-run can't skew them */
                 for (int i = 0; i < n && !run.Stop; i++)
                 {
                     var pkt = new byte[41]; pkt[0] = (byte)(i >> 24); pkt[1] = (byte)(i >> 16); pkt[2] = (byte)(i >> 8); pkt[3] = (byte)i;
-                    var t1 = DateTime.UtcNow; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
+                    var t1 = wall0 + mono.Elapsed; WriteNtp(pkt, 4, t1); pkt[12] = 0; pkt[13] = 1;   // error estimate (RFC 4656): S bit 0 = this PC can't promise its clock is synced to UTC; scale 0, multiplier 1 (a multiplier of 0 isn't allowed)
                     u.Send(pkt, pkt.Length); sentN++; var sw = Stopwatch.StartNew();
                     try
                     {
                         while (sw.ElapsedMilliseconds < 1000)
                         {
-                            var from = new IPEndPoint(IPAddress.Any, 0); var r = u.Receive(ref from); var t4 = DateTime.UtcNow;
+                            var from = Toolkit.AnyEp(u); var r = u.Receive(ref from); var t4 = wall0 + mono.Elapsed;
                             if (r.Length < 40) continue;
                             int sseq = r[24] << 24 | r[25] << 16 | r[26] << 8 | r[27]; if (sseq != i) continue;
                             bool echoed = true; for (int k = 0; k < 8 && 28 + k < r.Length; k++) if (r[28 + k] != pkt[4 + k]) echoed = false;
                             if (!echoed) continue;   // a late duplicate of an earlier packet
-                            int rseq = r[0] << 24 | r[1] << 16 | r[2] << 8 | r[3];
+                            long rseq = (uint)(r[0] << 24 | r[1] << 16 | r[2] << 8 | r[3]);   /* L-15: unsigned, so it doesn't go negative past 2^31 */
                             var t3 = ReadNtp(r, 4); var t2 = ReadNtp(r, 16);
                             res.Add(new double[] { i, 0, (t2 - t1).TotalMilliseconds, (t4 - t3).TotalMilliseconds, ((t4 - t1) - (t3 - t2)).TotalMilliseconds, rseq });
                             run.Add(((t4 - t1) - (t3 - t2)).TotalMilliseconds); break;
                         }
                     }
                     catch (SocketException) { run.Add(double.NaN); }
-                    if (res.Count == 0 || res.Last()[0] != i) { if (run.Copy().Count <= i) run.Add(double.NaN); }
+                    if (res.Count == 0 || res.Last()[0] != i) { if (run.Count <= i) run.Add(double.NaN); }
                     run.Status = (i + 1) + " / " + n + " packets to " + a + ":" + p;
                     int wait = 100 - (int)sw.ElapsedMilliseconds; if (wait > 0) Thread.Sleep(wait);
                 }
@@ -503,7 +523,7 @@ namespace AdeeboMeter
             if (res.Count == 0) { rows.Add(R(2, a + ":" + p, "no reflected packets", "Is a TWAMP-light reflector running there on UDP " + p + ", and does its prefix list include this PC's address?", "m")); return rows; }
             // loss per direction: the reflector numbers what it reflected, so a gap there means lost on the way out
             int sent = sentN, got = res.Count, lostOut = 0, lostBack = 0;
-            for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]), dr = (int)(res[i][5] - res[i - 1][5]); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
+            for (int i = 1; i < res.Count; i++) { int ds = (int)(res[i][0] - res[i - 1][0]); long drl = (long)(res[i][5] - res[i - 1][5]); if (drl < 0) drl += 4294967296L; int dr = (int)Math.Min(drl, int.MaxValue); if (ds > 1) { int miss = ds - 1, reflected = Math.Max(0, dr - 1); lostBack += Math.Min(miss, reflected); lostOut += miss - Math.Min(miss, reflected); } }
             var rtt = res.Select(x => x[4]).OrderBy(x => x).ToList();
             Func<int, double> ipdv = k => { double s = 0; for (int i = 1; i < res.Count; i++) s += Math.Abs(res[i][k] - res[i - 1][k]); return res.Count > 1 ? s / (res.Count - 1) : 0; };
             int unknown = sent - got - lostOut - lostBack;
@@ -530,7 +550,7 @@ namespace AdeeboMeter
                 double rt = double.NaN; var r = Icmp.Echo(ma.Address, 32, 64, false, 1500, false); if (r.Status == Icmp.Ok) rt = r.Rtt;
                 rows.Add(R(3, "Ping your own public address", double.IsNaN(rt) ? "no answer (many routers ignore ping on their outside)" : Ms(rt) + " - answered by your router itself", "", "m"));
                 var probe = Encoding.ASCII.GetBytes("adeebometer-hairpin"); bool back = false;
-                try { a.Send(probe, probe.Length, mb); var from = new IPEndPoint(IPAddress.Any, 0); var got = b.Receive(ref from); back = got.SequenceEqual(probe); } catch (SocketException) { }
+                try { a.Send(probe, probe.Length, mb); var from = Toolkit.AnyEp(b); var got = b.Receive(ref from); back = got.SequenceEqual(probe); } catch (SocketException) { }
                 rows.Add(R(back ? 0 : 1, "Hairpin (NAT loopback)", back ? "works - a packet sent to your own public address came back in" : "doesn't loop back", back ? "Devices at home can reach each other (a camera, a NAS, a game server) using the public address or a dynamic-DNS name." : "Using your public address or dynamic-DNS name from inside your home won't work - use the local address at home, or turn on 'NAT loopback' / 'NAT reflection' in the router.", "m"));
                 int inner = ((IPEndPoint)a.Client.LocalEndPoint).Port;
                 rows.Add(R(3, "Port kept?", inner + " inside → " + ma.Port + " outside" + (inner == ma.Port ? " (kept)" : " (changed by the router)"), "", "m"));
@@ -544,19 +564,29 @@ namespace AdeeboMeter
             for (int t = 0; t < 3; t++)
                 try
                 {
-                    u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = new IPEndPoint(IPAddress.Any, 0); var m = u.Receive(ref from);
+                    u.Send(req, req.Length, new IPEndPoint(relay, 3478)); var from = Toolkit.AnyEp(u); var m = u.Receive(ref from);
                     if (!from.Address.Equals(relay) || m.Length < 20 || m[0] != 1 || m[1] != 1) continue;   // a Binding Success from the server we asked
                     bool mine = m[4] == 0x21 && m[5] == 0x12 && m[6] == 0xA4 && m[7] == 0x42; for (int k = 0; k < 12; k++) if (m[8 + k] != tid[k]) mine = false;
-                    if (!mine || 20 + (m[2] << 8 | m[3]) > m.Length) continue;
-                    for (int p = 20; p + 4 <= m.Length;)
-                    {
-                        int type = m[p] << 8 | m[p + 1], len = m[p + 2] << 8 | m[p + 3], v = p + 4;
-                        if (v + len > m.Length) break;
-                        if ((type == 0x20 || type == 1) && len >= 8 && m[v + 1] == 1) { int port = m[v + 2] << 8 | m[v + 3]; var ip = new[] { m[v + 4], m[v + 5], m[v + 6], m[v + 7] }; if (type == 0x20) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; } return new IPEndPoint(new IPAddress(ip), port); }
-                        p = v + ((len + 3) & ~3);
-                    }
+                    if (!mine) continue;
+                    var got = StunMapped(m); if (got != null) return got;
                 }
                 catch (SocketException) { }
+            return null;
+        }
+        // the mapped address in a STUN Binding Success, read only inside the length its header declares (RFC 8489) -
+        // bytes after the message are never attributes (review 22 Nov)
+        public static IPEndPoint StunMapped(byte[] m)
+        {
+            if (m == null || m.Length < 20) return null;
+            int end = 20 + (m[2] << 8 | m[3]);
+            if (end > m.Length || (end & 3) != 0) return null;
+            for (int p = 20; p + 4 <= end;)
+            {
+                int type = m[p] << 8 | m[p + 1], len = m[p + 2] << 8 | m[p + 3], v = p + 4;
+                if (v + len > end) break;
+                if ((type == 0x20 || type == 1) && len >= 8 && m[v + 1] == 1) { int port = m[v + 2] << 8 | m[v + 3]; var ip = new[] { m[v + 4], m[v + 5], m[v + 6], m[v + 7] }; if (type == 0x20) { port ^= 0x2112; ip[0] ^= 0x21; ip[1] ^= 0x12; ip[2] ^= 0xA4; ip[3] ^= 0x42; } return new IPEndPoint(new IPAddress(ip), port); }
+                p = v + ((len + 3) & ~3);
+            }
             return null;
         }
     }

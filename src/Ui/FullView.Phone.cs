@@ -33,14 +33,21 @@ namespace AdeeboMeter
             var want = new Size(Sc(1280), Sc(860)); if (Size != want) Size = want;
             tab = page; ShowTab(); if (page == "toolbox") EnsureToolbox();
             Typing.Hold = true;
-            try { return PeekShot(); } finally { Typing.Hold = false; }
+            try { return PeekShot(false); } finally { Typing.Hold = false; }
         }
-        byte[] PeekShot()
+        // --view shot:<page> (website pictures): the same off-screen drawing, at full size and as a PNG - no shrinking, no JPEG
+        internal byte[] ShotPage()
+        {
+            Typing.Hold = true;
+            try { return PeekShot(true); } finally { Typing.Hold = false; }
+        }
+        byte[] PeekShot(bool png)
         {
             PerformLayout(); foreach (Control c in Descendants(this)) c.Invalidate();
             using (var bmp = new Bitmap(Math.Max(200, ClientSize.Width), Math.Max(200, ClientSize.Height)))
             {
                 using (var g = Graphics.FromImage(bmp)) { g.Clear(BackColor); PeekDraw(this, g, Point.Empty, new Rectangle(Point.Empty, bmp.Size)); }
+                if (png) using (var ms = new MemoryStream()) { bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png); return ms.ToArray(); }
                 Bitmap outB = bmp; Bitmap scaled = null;
                 if (bmp.Width > 1200) { scaled = new Bitmap(1200, bmp.Height * 1200 / bmp.Width); using (var g = Graphics.FromImage(scaled)) { g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.DrawImage(bmp, 0, 0, scaled.Width, scaled.Height); } outB = scaled; }
                 try
@@ -66,7 +73,8 @@ namespace AdeeboMeter
             try
             {
                 g.SetClip(clip); g.TranslateTransform(at.X, at.Y);
-                bool native = c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser || c is DataGridView || c is ListView || c is TreeView;
+                bool native = c is TextBoxBase || c is ListBox || c is ComboBox || c is WebBrowser || c is DataGridView || c is ListView || c is TreeView
+                    || c is Label || c is ButtonBase;   // labels and buttons draw text with GDI (TextRenderer), which ignores the offset: in the phone picture they landed top-left (screenshots 21 Nov)
                 if (native)
                 {
                     try { using (var b = new Bitmap(Math.Max(1, c.Width), Math.Max(1, c.Height))) { c.DrawToBitmap(b, new Rectangle(0, 0, b.Width, b.Height)); g.DrawImageUnscaled(b, 0, 0); } }
@@ -101,7 +109,8 @@ namespace AdeeboMeter
             phoneWatch = delegate { try { if (!IsDisposed && IsHandleCreated) BeginInvoke((Action)PhoneChanged); } catch (InvalidOperationException) { } };
             PhoneHub.Watch(phoneWatch); Disposed += delegate { PhoneHub.Unwatch(phoneWatch); if (phoneQr != null) phoneQr.Dispose(); };
             // countdowns (time left, a question's 90 s) and the button's minutes
-            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) phoneCanvas.Invalidate(); }; phoneTick.Start();
+            string phoneKey = "";
+            phoneTick = new Timer { Interval = 1000 }; phoneTick.Tick += delegate { if (linkBtn != null && linkBtn.Sync()) PlaceTop(); if (tab == "phone" && Visible) { var rn = Remote.Now; string pk = (PhoneHub.Pending != null ? "ask" + DateTime.UtcNow.Second : "") + "|" + (rn == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(rn)) + "|" + DateTime.Now.Minute + (rn != null && (rn.St == Remote.State.Waiting || rn.St == Remote.State.Paired) ? ":" + DateTime.Now.Second : "") + "|" + (rn == null ? "" : rn.St.ToString()) + "|" + (phoneCopied > DateTime.Now.AddSeconds(-3)); if (pk != phoneKey) { phoneKey = pk; phoneCanvas.Invalidate(); } } };   /* 21 Nov sitting test: every second only while a question counts down - not always */ phoneTick.Start();
             Disposed += delegate { phoneTick.Stop(); phoneTick.Dispose(); };
             return phonePage;
         }
@@ -109,9 +118,8 @@ namespace AdeeboMeter
         static bool PhoneOn() { var r = Remote.Now; return r != null && r.St == Remote.State.Paired; }
         void LinkClicked()
         {
-            var r = Remote.Now; var st = PhoneHub.Pending;
-            // not linked and no code showing: one click shows the code; otherwise just the page
-            if ((r == null || r.St == Remote.State.Ended) && st == null && PhoneHub.Start != null) PhoneHub.Start(); else ShowPage("phone");
+            // review 1.1.6 D1 #4: opening the page only shows it - nothing reaches the relay until you press Show the QR code there
+            ShowPage("phone");
         }
 
         // ---- painting helpers: a button, a card title
@@ -123,7 +131,7 @@ namespace AdeeboMeter
             using (var b = new SolidBrush(kind == 0 ? Theme.Ink : Color.White)) g.DrawString(t, Draw.fBodyB, b, r.X + 16 * S, r.Y + (40 * S - ts.Height) / 2);
             Act(phoneCanvas, r, a); return r;
         }
-        float PhHead(Graphics g, string t, float x, float y) { using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T(t), Draw.fTiny, m, x, y); return y + 22 * S; }
+        float PhHead(Graphics g, string t, float x, float y) { using (var m = new SolidBrush(Theme.Ink)) g.DrawString(Kit.Sent(t), Draw.fBodyB, m, x, y); return y + 26 * S; }
         float PhText(Graphics g, string t, Font f, Color c, float x, float y, float w) { var h = Draw.Measure(t, f, (int)w).Height; using (var b = new SolidBrush(c)) g.DrawString(t, f, b, new RectangleF(x, y, w, h + 4)); return y + h + 6 * S; }
         static string Mmss(TimeSpan l) { return ((int)l.TotalMinutes).ToString(CultureInfo.CurrentCulture) + ":" + l.Seconds.ToString("00", CultureInfo.InvariantCulture); }
 
@@ -151,8 +159,8 @@ namespace AdeeboMeter
                 string body = (q.Phone != "" ? q.Phone : L.T("A phone")) + " " + q.Text;
                 // matching words (RemoteWords.cs): allow only if your phone shows the same four
                 bool allow = q.Kind == "allow", hasW = allow && q.Words != "";
-                string wHint = hasW ? L.T("Check your phone shows the same words:") : allow ? L.T("This phone page can't show matching words (it's an older version). Allow it only if it's your phone and you just scanned the code.") : "";
-                string wAfter = hasW ? L.T("Different words, or no words on your phone? Press Don't allow - it isn't your phone.") : "";
+                string wHint = hasW ? L.T("Look at the phone in your own hand: does it show the same words?") : allow ? L.T("This phone page can't show matching words (it's an older version). Allow it only if it's your phone and you just scanned the code.") : "";
+                string wAfter = hasW ? L.T("Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.") : "";
                 var fW = Draw.fBig;
                 int left = Math.Max(0, PhoneHub.AskSeconds - (int)(DateTime.UtcNow - q.At).TotalSeconds);
                 float bh = Draw.Measure(body, Draw.fBody, (int)(w - 40 * S)).Height;
@@ -173,8 +181,8 @@ namespace AdeeboMeter
                     cy = PhText(g, wAfter, Draw.fBody, Theme.Sub, x + 20 * S, cy, w - 40 * S);
                 }
                 using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("No answer in") + " " + left + " s " + L.T("means no."), Draw.fSmall, m, x + 20 * S, cy); cy += 26 * S;
-                var yes = PhBtn(g, x + 20 * S, cy, q.Kind == "file" ? L.T("Accept") : q.Kind == "remember" ? L.T("Remember it") : L.T("Allow"), 1, delegate { PhoneHub.Answer(true); });
-                PhBtn(g, yes.Right + 10 * S, cy, q.Kind == "file" ? L.T("Don't accept") : q.Kind == "remember" ? L.T("Not now") : L.T("Don't allow"), 0, delegate { PhoneHub.Answer(false); });
+                var yes = PhBtn(g, x + 20 * S, cy, q.Kind == "file" ? L.T("Accept") : q.Kind == "remember" ? L.T("Remember it") : L.T("Allow"), 1, delegate { PhoneHub.Answer(q, true); });
+                PhBtn(g, yes.Right + 10 * S, cy, q.Kind == "file" ? L.T("Don't accept") : q.Kind == "remember" ? L.T("Not now") : L.T("Don't allow"), 0, delegate { PhoneHub.Answer(q, false); });
                 y = card.Bottom + 16 * S;
             }
             // the link
@@ -199,7 +207,7 @@ namespace AdeeboMeter
                     ly = PhText(g, L.T("1. Point your phone's camera at the code - it opens adeebometer.com/app.") + "\n" + L.T("2. Allow it here when it asks."), Draw.fBody, Theme.Ink, ix, ly, iw);
                     using (var m = new SolidBrush(Theme.Sub)) g.DrawString(L.T("This code works for") + " " + Mmss(r.Left), Draw.fSmall, m, ix, ly); ly += 26 * S;
                     var nb = PhBtn(g, ix, ly, L.T("New code"), 0, delegate { var rr = Remote.Now; if (rr != null) rr.End("a new code"); if (PhoneHub.Start != null) PhoneHub.Start(); });
-                    string link = r.Link; var cb = PhBtn(g, nb.Right + 10 * S, ly, phoneCopied > DateTime.Now.AddSeconds(-3) ? L.T("Copied ✓") : L.T("Copy link"), 0, delegate { try { Clipboard.SetText(link); phoneCopied = DateTime.Now; } catch (System.Runtime.InteropServices.ExternalException) { } phoneCanvas.Invalidate(); });
+                    string link = r.Link; var cb = PhBtn(g, nb.Right + 10 * S, ly, phoneCopied > DateTime.Now.AddSeconds(-3) ? L.T("Copied ✓") : L.T("Copy link"), 0, delegate { try { Program.CopySecret(link); phoneCopied = DateTime.Now; } catch (System.Runtime.InteropServices.ExternalException) { } phoneCanvas.Invalidate(); });
                     PhBtn(g, cb.Right + 10 * S, ly, L.T("Cancel"), 0, delegate { var rr = Remote.Now; if (rr != null) rr.End("cancelled"); PhoneHub.Fire(); }); ly += 40 * S;
                 }
                 else
@@ -212,7 +220,8 @@ namespace AdeeboMeter
             {
                 using (var b = new SolidBrush(Theme.Ink)) g.DrawString(L.T("Link your phone"), Draw.fHead, b, ix, ly); ly += 32 * S;
                 ly = PhText(g, L.T("See this PC and run its checks from your phone - on mobile data or any Wi-Fi. No account. One phone at a time, 30 minutes, and nothing happens until you press Allow here."), Draw.fBody, Theme.Sub, ix, ly, iw);
-                if (r != null && r.Why != "" && r.Why != "you ended it on this PC") ly = PhText(g, L.T("Last session ended") + ": " + L.T(r.Why), Draw.fSmall, Theme.Muted, ix, ly, iw);
+                string lastWhy = r != null ? r.Why : Remote.LastWhy;
+                if (lastWhy != "" && lastWhy != "you ended it on this PC") ly = PhText(g, L.T("Last session ended") + ": " + L.T(lastWhy), Draw.fSmall, lastWhy.StartsWith("couldn't", StringComparison.Ordinal) || lastWhy.StartsWith("Your IT", StringComparison.Ordinal) ? Theme.LvText(1) : Theme.Muted, ix, ly, iw);
                 ly += 4 * S; var sb = PhBtn(g, ix, ly, L.T("Show the QR code"), 1, delegate { if (PhoneHub.Start != null) PhoneHub.Start(); }); ly = sb.Bottom;
             }
             lc.Height = ly + 20 * S - y;
@@ -223,6 +232,7 @@ namespace AdeeboMeter
             // remembered phones
             List<RemotePhones.P> ph; try { ph = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; ph = new List<RemotePhones.P>(); }
             var rc = new RectangleF(x, y, w, 10); float ry = PhHead(g, "REMEMBERED PHONES", x + 22 * S, y + 18 * S);
+            if (RemotePhones.Unreadable > 0) ry = PhText(g, RemotePhones.Unreadable + " " + L.T("remembered phone(s) couldn't be read (the list was damaged, or this is another Windows account) - remember them again from the phone."), Draw.fBody, Theme.LvText(1), x + 22 * S, ry, w - 44 * S);
             if (ph.Count == 0) ry = PhText(g, L.T("None yet. Once linked, a phone can ask to be remembered (Face ID or a fingerprint) and come back without a code."), Draw.fBody, Theme.Sub, x + 22 * S, ry, w - 44 * S);
             foreach (var p in ph)
             {
@@ -233,8 +243,24 @@ namespace AdeeboMeter
                 string id = p.Id; Act(phoneCanvas, rr, delegate { RemotePhones.Remove(id); var now = Remote.Now; if (now != null && now.Known != null && now.Known.Id == id) now.End("forgotten"); PhoneHub.Fire(); });
                 ry += 48 * S;
             }
+            // bug-hunt ML-111: the remembered phones' waiting room is your choice - off, nothing goes to the relay until you make a code
+            if (ph.Count > 0)
+            {
+                string sw = (Cfg.PhoneStandby ? L.T("On") : L.T("Off")) + " · " + L.T("Let remembered phones reconnect while AdeeboMeter runs");
+                var sr = new RectangleF(x + 22 * S, ry + 4 * S, w - 44 * S, 22 * S);
+                using (var lb = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sw, Draw.fBodyB, lb, sr);
+                Act(phoneCanvas, sr, delegate { Cfg.PhoneStandby = !Cfg.PhoneStandby; Cfg.Save(); PhoneHub.Fire(); });
+                ry += 32 * S;
+            }
             rc.Height = ry + 14 * S - y; Theme.Stroke(g, rc, 18 * S, Theme.Line, 1);
             return rc.Bottom + 16 * S;
+        }
+        // a locked .adeebo file to open: Open an encrypted file, with the file filled in - the code is yours to type (bug-hunt ML-127)
+        internal void OpenLocked(string path)
+        {
+            tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("decrypt");
+            if (tbBoxes.Count > 0 && tbBoxes[0] != null) { tbBoxes[0].Box.Text = path; if (tbBoxes.Count > 1 && tbBoxes[1] != null) tbBoxes[1].Box.Focus(); }
+            if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal; Activate();
         }
         // a card's frame and a coloured left edge (drawn after its content, so it never covers it)
         void PhCard(Graphics g, RectangleF r, Color edge)
@@ -269,7 +295,9 @@ namespace AdeeboMeter
             // a locked file and its code both came from the phone (Adeeb, 16 Nov: "yes do that"): open it in one click -
             // Open an encrypted file, filled in and started. The code is only the phone's "XXXX-XXXX-...-XXXX" kind.
             var lockedF = got.FirstOrDefault(z => z.File != "" && z.File.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(z.File));
-            var codeT = got.FirstOrDefault(z => z.File == "" && Regex.IsMatch(z.Text.Trim(), @"^[A-Z0-9]{4}(-[A-Z0-9]{4}){5}$"));
+            // bug-hunt ML-117/118: the code read the way Open an encrypted file reads it (any case, spaces or dashes), and the one sent
+            // nearest in time to that file - within 10 minutes - so a file and a code from two different sends aren't paired
+            var codeT = lockedF == null ? null : got.Where(z => z.File == "" && Regex.IsMatch(FileCrypt.Clean(z.Text), "^[A-Z0-9]{24}$") && Math.Abs((z.T - lockedF.T).TotalMinutes) <= 10).OrderBy(z => Math.Abs((z.T - lockedF.T).TotalSeconds)).FirstOrDefault();
             if (lockedF != null && codeT != null)
             {
                 var oc = new RectangleF(ix, cy, iw, 64 * S); Theme.Fill(g, oc, 14 * S, Theme.LvSoft(0)); Theme.Stroke(g, oc, 14 * S, Theme.Green, 1.5f);
@@ -299,7 +327,8 @@ namespace AdeeboMeter
                 else
                 {
                     lnk(L.T("Copy"), delegate { try { Clipboard.SetText(item.Text); } catch (System.Runtime.InteropServices.ExternalException) { } });
-                    string u = item.Text.Trim(); if (Regex.IsMatch(u, @"^https?://\S+$")) lnk(L.T("Open link"), delegate { try { System.Diagnostics.Process.Start(u); } catch (Exception e) { if (e is OutOfMemoryException) throw; } });
+                    string u = item.Text.Trim(); if (Regex.IsMatch(u, @"^https?://\S+$")) { Uri pu; if (Uri.TryCreate(u, UriKind.Absolute, out pu) && (pu.Scheme == "https" || pu.Scheme == "http") && pu.UserInfo == "") { string safe = pu.AbsoluteUri;   /* security recheck SECN-4: only a real http(s) address, re-written by Uri, goes to the browser - never handed to the shell as typed */
+                        lnk(L.T("Open link"), delegate { try { using (System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(safe) { UseShellExecute = true })) { } } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("open link: " + e.Message); } }); } }
                 }
                 cy += 26 * S;
             }
@@ -329,7 +358,7 @@ namespace AdeeboMeter
             for (int i = 0; i < ph.Count; i++)
             {
                 var t = ph[i]; var rr = new RectangleF(ix + (i % pc2) * (pw + 8 * S), cy + (i / pc2) * 40 * S, pw, 34 * S); Theme.Fill(g, rr, 10 * S, Theme.Soft);
-                string nm = Regex.Replace(L.T(t.Title), @"^On my phone:\s*", ""); nm = char.ToUpperInvariant(nm[0]) + nm.Substring(1);
+                string nm = Regex.Replace(L.T(t.Title), @"^On my phone:\s*", ""); if (nm.Length > 0) nm = char.ToUpperInvariant(nm[0]) + nm.Substring(1);   /* L-229 */
                 using (var b = new SolidBrush(on ? Theme.Ink : Theme.Muted)) using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                     g.DrawString(nm, Draw.fBody, b, new RectangleF(rr.X + 12 * S, rr.Y + 8 * S, rr.Width - 20 * S, 20 * S), nf);
                 string tid = t.Id; Act(phoneCanvas, rr, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(tid); });
@@ -367,7 +396,7 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space) { e.Handled = true; OnClick(EventArgs.Empty); } base.OnKeyDown(e); }
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            var g = e.Graphics; float S = Draw.S; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
             var r = new RectangleF(0.5f, 0.5f, Width - 2, Height - 2);
             Color acc = state == "on" ? Theme.Green : state == "ask" ? Theme.Amber : state == "wait" ? Theme.Blue : Theme.Line;

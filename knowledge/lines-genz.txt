@@ -90,3 +90,17 @@ game.streak|{v} in a row?? Main character.
 game.timeup|Time's up, it's giving speedrun.
 market.open|Markets are open, lowkey.
 storm.near|Storm's coming, Wi-Fi might be mid.
+stream.on|{v} is streaming smooth. Love that.
+stream.on|Stream's vibing. No buffering.
+stream.dip|Stream glitched, not gonna lie. {v}
+stream.dip|Tiny lag moment. {v}
+stream.none|No stream rn.
+stream.none|Nothing playing. Lowkey peaceful.
+trade.ok|Broker line is fast. We're good.
+trade.ok|Line to the broker? Clean.
+trade.slow|Broker's being slow. Maybe don't click yet.
+trade.slow|Broker line kinda slow. {v}
+trade.closed|Market's closed. Touch grass till 9:30.
+trade.closed|Closed. Back at 9:30.
+view.switch|{v} view, here we go.
+view.switch|Switched to {v}. Same settings, new look.

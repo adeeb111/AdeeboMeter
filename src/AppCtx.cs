@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,16 +38,20 @@ namespace AdeeboMeter
         readonly Icon appIcon;
         FullView full;
         readonly Dictionary<string, RectangleF> hits = new Dictionary<string, RectangleF>();
-        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; string balloonUrl, crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
+        bool covered, hovered, revealed, widgetOn = true, autoStart = Setup.RunningInstalled;   /* a downloaded or portable copy never starts with Windows unless you ask */ volatile bool quitting; bool openFirst; string crashNote, balloonTool; HotKey slowKey; Rectangle foldedAt; DateTime insideAt;
         DateTime dwellStart = DateTime.MinValue; double dwell;
+        // move mode (Adeeb, 24 Nov): the widget stays click-through until you rest on it 1.5 s, or pick
+        // Corner widget > Move widget. Then a dashed outline shows; drag moves it, a click opens the full window. It locks
+        // again when the mouse leaves or after 8 s untouched.
+        bool moveOn, moveSpent, moveByTray, dragging, ghost; Point? dragFrom; Point dragOrigin, lastCur;
+        DateTime hoverSince = DateTime.MinValue, moveTouched;
         DateTime lastCover = DateTime.MinValue;
-        string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = ""; int lastLevel = -1;
-        ToolStripMenuItem miWidget, miAuto, miSerious, miBig;
+        string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
+        ToolStripMenuItem miWidget, miBig;
         readonly string settingsPath;
         EventWaitHandle openEvt, ackEvt, quitEvt;
         HotKey hotkey; UserPreferenceChangedEventHandler prefHandler;
         readonly bool forcedByArgs = Program.ForceTheme >= 0;
-        ToolStripMenuItem miThemeAuto, miThemeLight, miThemeDark;
         static byte FADE { get { return (byte)Cfg.Fade; } }      // 30 % by default (Settings)
         static int DWELL_MS { get { return Cfg.DwellMs; } }     // rest the mouse this long on the folded chip to open it
 
@@ -70,12 +74,17 @@ namespace AdeeboMeter
             Microsoft.Win32.SystemEvents.SessionEnding += OnSessionEnding;
             M.Start(); GamePing.Me.Start(M);   /* the Gamer Zone sends nothing until a game is clicked */
 
-            var menu = new ContextMenuStrip { RightToLeft = L.IsRtl ? RightToLeft.Yes : RightToLeft.No };
-            var miFull = new ToolStripMenuItem(L.T("Open engineer view")); miFull.Font = new Font(miFull.Font, FontStyle.Bold); miFull.Click += delegate { OpenFull(); };
+            // 23 Nov polish: seven items with the verdict on top, in AdeeboMeter's colours (Menus.cs). Theme, Serious mode and
+            // Start with Windows live in Settings - set once, not daily; the widget's choices sit under Corner widget ›.
+            var menu = Menus.Make(); menu.RightToLeft = L.IsRtl ? RightToLeft.Yes : RightToLeft.No;
+            var miFull = new ToolStripMenuItem(L.T("Open AdeeboMeter")); miFull.Font = Draw.fBodyB; miFull.Click += delegate { OpenFull(); };
             var miSettings = new ToolStripMenuItem(L.T("Settings...")); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
             miWidget = new ToolStripMenuItem(L.T("Hide widget (keep tray icon)")); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
             miBig = new ToolStripMenuItem(L.T("Bigger widget")); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
-            miSerious = new ToolStripMenuItem(L.T("Serious mode (no jokes)")); miSerious.Click += delegate { Voice.Serious = !Voice.Serious; SaveSettings(); drawnKey = ""; };
+            var miMove = new ToolStripMenuItem(L.T("Move widget")); miMove.Click += delegate { TrayMove(); };
+            var miReset = new ToolStripMenuItem(L.T("Reset widget position")); miReset.Click += delegate { ResetPos(); };
+            var miHold = new ToolStripMenuItem(L.T("Hold this")); miHold.Click += delegate { if (Corner.Holding) Corner.Release(); else { var ls = M.Latest; Corner.Hold(ls != null && ls.Call); } drawnKey = ""; };
+            var miBack = new ToolStripMenuItem(L.T("Back to my widget")); miBack.Click += delegate { Corner.Back(); drawnKey = ""; };
             var miScreen = new ToolStripMenuItem(L.T("Widget on screen"));
             miScreen.DropDownOpening += delegate
             {
@@ -90,77 +99,102 @@ namespace AdeeboMeter
             };
             miScreen.DropDownItems.Add("...");
             var miStyle = new ToolStripMenuItem(L.T("Widget style"));   // the same eight as Settings > Widget, with pictures there
-            foreach (var st in new[] { new[] { "speed", "Speed only" }, new[] { "speedstatus", "Speed + status" }, new[] { "speedapps", "Speed + apps" }, null, new[] { "everyday", "Everyday" }, new[] { "gamer", "Gamer" }, new[] { "calls", "Calls" }, new[] { "engineer", "Engineer" }, new[] { "auto", "Auto" } })
+            foreach (var st in new[] { new[] { "speed", "Speed only" }, new[] { "speedstatus", "Speed + status" }, new[] { "speedapps", "Speed + apps" }, null, new[] { "everyday", "Everyday" }, new[] { "gamer", "Gamer" }, new[] { "calls", "Calls" }, new[] { "engineer", "Engineer" }, new[] { "auto", "Auto" }, null, new[] { "markets", "Markets" }, new[] { "sports", "Sports" }, new[] { "data", "Data use" }, new[] { "weather", "Weather" }, new[] { "mine", "My widget" } })
             {
                 if (st == null) { miStyle.DropDownItems.Add(new ToolStripSeparator()); continue; }
                 string id = st[0]; var it = new ToolStripMenuItem(L.T(st[1])) { Tag = id }; it.Click += delegate { Cfg.WidgetStyle = id; SaveSettings(); drawnKey = ""; };
                 miStyle.DropDownItems.Add(it);
             }
             miStyle.DropDownOpening += delegate { foreach (ToolStripItem it in miStyle.DropDownItems) { var mi = it as ToolStripMenuItem; if (mi != null) mi.Checked = (string)mi.Tag == Cfg.WidgetStyle; } };
-            var miCheckup = new ToolStripMenuItem(L.T("Run full checkup")); miCheckup.Click += delegate { OpenFull(); if (full != null) full.StartCheckup(); };
-            var miSlow = new ToolStripMenuItem(L.T("It feels slow right now   Ctrl+Alt+S")); miSlow.Click += delegate { FeltSlow(); };
+            // "Check now" is the full checkup everywhere (review 24 Nov: it named three different actions); Ctrl+Alt+S stays the
+            // "it feels slow right now" recorder
+            var miSlow = new ToolStripMenuItem(L.T("Check now")); miSlow.Click += delegate { OpenFull(); if (full != null && !full.IsDisposed) full.StartCheckup(); };
+            var miIsp = new ToolStripMenuItem(L.T("Send to my ISP")); miIsp.Click += delegate { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("ispreport", false); };
             var miPhone = new ToolStripMenuItem(L.T("Your phone...")); miPhone.Click += delegate { OpenRemote(); };
             PhoneHub.Start = delegate { try { marshal.BeginInvoke((Action)OpenRemote); } catch (InvalidOperationException) { } };
             PhoneHub.Show = kind => { try { marshal.BeginInvoke((Action)ShowPhonePage); } catch (InvalidOperationException) { } };
             try { slowKey = new HotKey(Keys.S, FeltSlow); if (!slowKey.Ok) Program.Log("Ctrl+Alt+S is taken by another app"); } catch (Exception e) { Program.Log("slow hotkey: " + e.Message); }   // taken = just the menu item
-            var miTheme = new ToolStripMenuItem(L.T("Theme"));
-            miThemeAuto = new ToolStripMenuItem(L.T("Follow Windows")); miThemeLight = new ToolStripMenuItem(L.T("Light")); miThemeDark = new ToolStripMenuItem(L.T("Dark"));
-            miThemeAuto.Click += delegate { SetTheme(-1); }; miThemeLight.Click += delegate { SetTheme(0); }; miThemeDark.Click += delegate { SetTheme(1); };
-            miTheme.DropDownItems.Add(miThemeAuto); miTheme.DropDownItems.Add(miThemeLight); miTheme.DropDownItems.Add(miThemeDark);
-            miTheme.DropDownItems.Add(new ToolStripSeparator());
-            for (int pi = 0; pi < Theme.Palettes.Length; pi++)
-            {
-                int th = pi + 2; string nm = Theme.Palettes[pi]; var it = new ToolStripMenuItem(L.T(char.ToUpperInvariant(nm[0]) + nm.Substring(1))) { Tag = th }; it.Click += delegate { SetTheme(th); };
-                miTheme.DropDownItems.Add(it);
-            }
-            miTheme.DropDownOpening += delegate { foreach (ToolStripItem ti in miTheme.DropDownItems) { var mi = ti as ToolStripMenuItem; if (mi != null && mi.Tag is int) mi.Checked = Program.ForceTheme == (int)mi.Tag; } };   // AM-CG-202
-            miAuto = new ToolStripMenuItem(L.T("Start with Windows")); miAuto.Click += delegate { Cfg.SetAutoStart(!Cfg.GetAutoStart()); };
             var miRemove = new ToolStripMenuItem(L.T("Uninstall AdeeboMeter..."));
             miRemove.Click += delegate { try { using (Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--uninstall") { UseShellExecute = false })) { } } catch (Exception e) { Program.Log("uninstall: " + e.Message); } };
-            var miExit = new ToolStripMenuItem(L.T("Exit AdeeboMeter")); miExit.ForeColor = Theme.Red; miExit.Click += delegate { Quit(); };
-            menu.Items.Add(new ToolStripLabel("AdeeboMeter " + Program.Version + " · " + L.T(Program.Tagline)) { ForeColor = Theme.Muted });
+            var miExit = new ToolStripMenuItem(L.T("Exit AdeeboMeter")) { Tag = "exit" }; miExit.Click += delegate { Quit(); };
+            var miState = Menus.Add(menu, "AdeeboMeter " + Program.Version, "", null); miState.Enabled = false;
+            var miCorner = new ToolStripMenuItem(L.T("Corner widget"));
+            miCorner.DropDownItems.Add(miStyle); miCorner.DropDownItems.Add(miScreen); miCorner.DropDownItems.Add(miBig); miCorner.DropDownItems.Add(new ToolStripSeparator()); miCorner.DropDownItems.Add(miMove); miCorner.DropDownItems.Add(miReset); miCorner.DropDownItems.Add(miHold); miCorner.DropDownItems.Add(miBack); miCorner.DropDownItems.Add(new ToolStripSeparator()); miCorner.DropDownItems.Add(miWidget);
+            foreach (var sub in new[] { miCorner, miStyle, miScreen }) Menus.Style(sub.DropDown);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miPhone); menu.Items.Add(miCheckup); menu.Items.Add(miSettings); menu.Items.Add(miStyle); menu.Items.Add(miWidget); menu.Items.Add(miScreen); menu.Items.Add(miBig); menu.Items.Add(miTheme); menu.Items.Add(miSerious); menu.Items.Add(miAuto); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
+            menu.Items.Add(miFull); menu.Items.Add(miSlow); menu.Items.Add(miIsp); menu.Items.Add(miPhone); menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(miCorner); menu.Items.Add(miSettings); menu.Items.Add(new ToolStripSeparator()); if (Setup.RunningInstalled) menu.Items.Add(miRemove); menu.Items.Add(miExit);
             menu.Opened += delegate { LayeredForm.HoldTop = true; }; menu.Closed += delegate { LayeredForm.HoldTop = false; };
-            menu.Opening += delegate { miWidget.Text = widgetOn ? L.T("Hide widget (keep tray icon)") : L.T("Show widget"); miAuto.Checked = Cfg.GetAutoStart(); miSerious.Checked = Voice.Serious; miBig.Checked = Cfg.BigWidget;
-                miThemeAuto.Checked = Program.ForceTheme < 0; miThemeLight.Checked = Program.ForceTheme == 0; miThemeDark.Checked = Program.ForceTheme == 1; };
+            menu.Opening += delegate { var ls = M.Latest; miState.Text = "AdeeboMeter " + Program.Version; ((Menus.Row)miState).Line = ls == null ? "" : (ls.Level == 1 || ls.Level == 2 ? "● " : "") + ls.Headline;
+                bool past = ls != null && ls.Path.Length > 2 && (ls.Path[0] == 0 || ls.Path[0] == 3) && ls.Path.Skip(2).Any(p => p == 1 || p == 2); miIsp.Visible = past;
+                miHold.Text = Corner.Holding ? L.T("Stop holding") : L.T("Hold this"); miBack.Visible = Corner.TakenOver || Corner.Holding; miWidget.Text = widgetOn ? L.T("Hide widget (keep tray icon)") : L.T("Show widget"); miBig.Checked = Cfg.BigWidget; };
 
             tray.Icon = Theme.MakeIcon(Math.Max(16, (int)(16 * sc)));
             tray.Text = "AdeeboMeter"; tray.ContextMenuStrip = menu;
             tray.MouseClick += delegate(object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) OpenFull(); };
             tray.Visible = true;
             // Alerts: only when there's something to do; never at night (Settings) or while you present / play full screen.
+            Alerts.CanShow = delegate { int hr = DateTime.Now.Hour; return !(Cfg.Quiet && (hr >= 22 || hr < 7)) && DateTime.UtcNow >= Remote.MuteUntil && Native.CanNotify(); };
             Alerts.Show = delegate(string title, string text)
             {
                 int hour = DateTime.Now.Hour;
                 if (Cfg.Quiet && (hour >= 22 || hour < 7)) return;
                 if (DateTime.UtcNow < Remote.MuteUntil) return;   // muted from the phone
                 if (!Native.CanNotify()) return;
-                try { marshal.BeginInvoke((Action)delegate { if (quitting) return; balloonUrl = null; tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
+                try { marshal.BeginInvoke((Action)delegate { if (quitting) return; BalloonIs(null, null); tray.ShowBalloonTip(8000, title, text, ToolTipIcon.Info); }); } catch { }
             };
+            // round 6 ML-1: a click acts on the balloon that was clicked - each balloon sets its own action, and one that closes
+            // unclicked takes its action with it (a crash note no longer hijacks the next alert's click)
+            tray.BalloonTipClosed += delegate { BalloonIs(null, null); };
             tray.BalloonTipClicked += delegate
             {
                 // a crash note: the report box, with the note in it - the person reads it and presses Send
                 if (crashNote != null) { string n = crashNote; crashNote = null; OpenFull(); if (full != null && !full.IsDisposed) full.ReportDialog("bug", "It closed unexpectedly. I was doing: \n\n---\nCrash note (no user names or folders):\n" + n); return; }
                 if (balloonTool != null) { string t = balloonTool; balloonTool = null; OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool(t, true); return; }
-                if (balloonUrl != null) { Crash.OpenUrl(balloonUrl); balloonUrl = null; } else OpenFull();
+                OpenFull();
             };
             Relay.Flush();   // reports written while offline go now
             Task.Factory.StartNew(() => History.Tidy());
+            Task.Factory.StartNew(() => { Remote.Sweep(); OverTime.SweepFriend(); });
             // A crash last time left a note next to the exe: offer to report it (the report box, with the note; you see it before sending).
             try
             {
                 if (File.Exists(Crash.FilePath))
                 {
-                    string note = File.ReadAllText(Crash.FilePath); File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
+                    string note; using (var cr = new StreamReader(Crash.FilePath)) { var cb = new char[6000]; int cn = cr.ReadBlock(cb, 0, cb.Length); note = new string(cb, 0, cn); }   /* L-48: only what's shown is read */ File.Delete(Crash.FilePath + ".seen"); File.Move(Crash.FilePath, Crash.FilePath + ".seen");
                     var once = new System.Windows.Forms.Timer { Interval = 4000 };
-                    once.Tick += delegate { once.Stop(); once.Dispose(); crashNote = note.Length > 6000 ? note.Substring(0, 6000) : note; tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
+                    once.Tick += delegate { once.Stop(); once.Dispose(); BalloonIs(note.Length > 6000 ? note.Substring(0, 6000) : note, null); tray.ShowBalloonTip(15000, "AdeeboMeter closed unexpectedly last time", "Click here to report it - you'll see exactly what is sent before anything goes. No account needed.", ToolTipIcon.Warning); };
                     once.Start();
                 }
             }
             catch (Exception e) { Program.Log("crash note: " + e.Message); }
 
             widget.Show(); detailWin.Show(); widget.Vanish(); detailWin.Vanish();
+            // hunters13 widget input: another button, the wheel or a sideways scroll ends move mode and is passed on to the app under
+            // the widget (ML-4, L-7) - except mid-drag, where another button cancels the drag, as in Windows (L-1)
+            widget.MouseDown += (s2, e2) =>
+            {
+                if (!moveOn) return;
+                if (e2.Button != MouseButtons.Left)
+                {
+                    bool mid = dragFrom != null; if (mid) CancelDrag(); Lock("button-" + e2.Button); widget.Capture = false;
+                    Trace(mid ? "drag cancelled by " + e2.Button : "replay " + e2.Button);
+                    if (!mid) { var b = e2.Button; if (b == MouseButtons.Right) { Native.PassOn(0x0204, 0x0002, 0); UpLater(0x02, 0x0205, 0); } else if (b == MouseButtons.Middle) { Native.PassOn(0x0207, 0x0010, 0); UpLater(0x04, 0x0208, 0); } else if (b == MouseButtons.XButton1) { Native.PassOn(0x020B, 0x0020, 1); UpLater(0x05, 0x020C, 1); } else if (b == MouseButtons.XButton2) { Native.PassOn(0x020B, 0x0040, 2); UpLater(0x06, 0x020C, 2); } }
+                    return;
+                }
+                Native.GetAsyncKeyState(0x01);   /* this press's "pressed since" is read here - a new one later means a new press (L-3) */
+                dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = false;
+            };
+            // hunters14 CORE-L1: the wheel mid-drag drops the widget where it is, then locks and scrolls the app underneath (it was swallowed)
+            widget.MouseWheel += (s2, e2) => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("wheel"); Trace("replay wheel " + e2.Delta); Native.PassOn(0x020A, 0, e2.Delta); };
+            widget.HWheel += d => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("hwheel"); Trace("replay hwheel " + d); Native.PassOn(0x020E, 0, d); };
+            // a finger on the unlocked widget drags it (the tray's Move widget unlocks it for touch)
+            widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; Trace("touch grab"); return true; };
+            widget.TouchDrag = p => { if (dragFrom == null || !touchDrag) return; int dx = p.X - dragFrom.Value.X, dy = p.Y - dragFrom.Value.Y; moveTouched = Clock.Mono; if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); } if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy); };
+            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock("touch-drop"); } else { dragFrom = null; Lock("click"); Trace("open full (tap)"); OpenFull(); } };   // hunters14 CORE-ML2: a tap on the unlocked widget opens AdeeboMeter, like a click
+            widget.MouseMove += (s2, e2) => WidgetDrag(); ResetWidget = ResetPos;
+            widget.MouseUp += (s2, e2) => WidgetDrop(true);
+            widget.MouseCaptureChanged += (s2, e2) => { if (dragFrom != null && Control.MouseButtons != MouseButtons.Left) WidgetDrop(false); };
 
             // Ctrl+Alt+A opens / closes the engineer view from anywhere
             try { hotkey = new HotKey(ToggleFull); if (!hotkey.Ok) Program.Log("Ctrl+Alt+A is taken by another app"); } catch (Exception e) { Program.Log("hotkey: " + e.Message); }
@@ -194,7 +228,7 @@ namespace AdeeboMeter
                         {
                             int w = WaitHandle.WaitAny(both, 30000);   // woken by either event; the timeout only re-checks quitting (a background thread ends with the app anyway)
                             if (quitting) break;
-                            if (w == 0) marshal.BeginInvoke((Action)delegate { ackEvt.Set(); OpenFull(); });
+                            if (w == 0) marshal.BeginInvoke((Action)delegate { ackEvt.Set(); OpenFull(); OpenHandedFile(); });
                             else if (w == 1) { Program.Log("asked to quit (update or removal)"); marshal.BeginInvoke((Action)Quit); }
                         }
                         catch { }
@@ -204,10 +238,28 @@ namespace AdeeboMeter
             }
             catch (Exception e) { Program.Log("single: " + e.Message); }
 
-            if (Program.StartView != null)
+            if (openFirst && !Program.Restarted && Program.StartView == null && Program.StartFile == null)
             {
-                var once = new System.Windows.Forms.Timer { Interval = 1500 };
+                var hello = new System.Windows.Forms.Timer { Interval = 1500 };
+                hello.Tick += delegate { hello.Stop(); hello.Dispose(); OpenFull(); };
+                hello.Start();
+            }
+            else if (Program.Restarted && Program.StartView == null)
+            {
+                var again = new System.Windows.Forms.Timer { Interval = 800 };
+                again.Tick += delegate { again.Stop(); again.Dispose(); OpenFull(); };
+                again.Start();
+            }
+            else if (Program.StartView != null)
+            {
+                var once = new System.Windows.Forms.Timer { Interval = Program.StartViewMs };
                 once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null) full.Debug(Program.StartView, Program.StartTip, Program.StartDest); };
+                once.Start();
+            }
+            else if (Program.StartFile != null)
+            {
+                var once = new System.Windows.Forms.Timer { Interval = 1200 };
+                once.Tick += delegate { once.Stop(); once.Dispose(); OpenFull(); if (full != null && !full.IsDisposed) full.OpenLocked(Program.StartFile); };
                 once.Start();
             }
 
@@ -222,13 +274,13 @@ namespace AdeeboMeter
         // ---------- settings (written atomically: temp file + replace)
         void LoadSettings()
         {
-            bool first = !File.Exists(settingsPath); int keys = 0;   // keys: lines other than the installer's own "autostart"
+            bool first = !File.Exists(settingsPath); int keys = 0, parsed = 0; bool unreadable = false;   // keys: lines other than the installer's own "autostart"
             try
             {
                 if (!first)
-                    foreach (var line in File.ReadAllLines(settingsPath))
+                    foreach (var line in SafeFile.ReadText(settingsPath).Split('\n').Select(x => x.TrimEnd('\r')))   // bug-hunt L-48: capped at 1 MB - a bigger one is treated as damaged
                     {
-                        int eq = line.IndexOf('='); if (eq <= 0) continue;
+                        int eq = line.IndexOf('='); if (eq <= 0) continue; parsed++;
                         var kv = new[] { line.Substring(0, eq), line.Substring(eq + 1) };
                         if (kv[0] != "autostart") keys++;
                         if (kv[0] == "autostart") autoStart = kv[1] == "1";
@@ -238,15 +290,29 @@ namespace AdeeboMeter
                         else Cfg.Read(kv[0], kv[1]);
                     }
             }
-            catch { }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; unreadable = true; Program.Log("settings unreadable: " + e.GetType().Name); }
+            // bug-hunt ML-134: a damaged settings file is kept aside (AdeeboMeter.settings.damaged) and said in the log, never
+            // silently overwritten with defaults as if this were a first start
+            try { if (!first && (unreadable || (parsed == 0 && new FileInfo(settingsPath).Length > 0))) { File.Copy(settingsPath, settingsPath + ".damaged", true); Program.Log("settings file damaged - kept a copy as " + Path.GetFileName(settingsPath) + ".damaged, starting from defaults"); } }
+            catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            // 22 Nov: Sports became its own page - once, it joins a saved bar right after Streaming
+            Func<string, string> sportsNav = nav0 => { var l = nav0.Split(',').ToList(); if (l.Remove("toolbox")) l.Insert(Math.Min(1, l.Count), "toolbox"); int si = l.IndexOf("stream"); if (si >= 0 && !l.Contains("sports") && l.Count(z => z.Trim() != "") < 8) l.Insert(si + 1, "sports"); else if (si >= 0 && !l.Contains("sports")) Program.Log("nav: Sports not added - the bar is full (it's in More)");   /* R2-042: a full bar keeps every tab you chose */ return Cfg.NavClean(string.Join(",", l)); };
+            if (!first && !Cfg.NavSports) { Cfg.Nav = sportsNav(Cfg.Nav); Views.MigrateNav(sportsNav); }   // review 1.1.6 P1 #16: kept views too   // and Toolbox right after Home (Adeeb, 22 Nov) - once; Settings › Navigation can move it again
+            Cfg.NavSports = true;
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
-            if (!first && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
+            // review 1.1.6 P1 #1: a file that says setupdone=0 is a fresh install whose questions are still open - not an upgrade
+            bool pendingSetup = !first && !Cfg.SetupDone;
+            // review 1.1.6 D1 #9 (and Adeeb: "it should open on that language"): a first start speaks the Windows display language
+            // when AdeeboMeter has it; the language button at the top switches back in one click
+            if (first) { string ui = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; if (L.Languages.Any(z => z[0] == ui)) Cfg.Lang = ui; }
+            if (!first && !pendingSetup && Cfg.Mode == "") Cfg.Mode = "pro";   // upgrading: keep every tab it already had
             // a named preset means its timings: an upgrade picks up what the preset is now. Your own mix ("custom") is kept; a named preset sets the game timings too.
             if (Cfg.PresetSaved && Cfg.Preset != "custom") Cfg.ApplyPreset(Cfg.Preset);   // the Gamer Zone rows switch to "custom" when changed, so a named preset means all its timings
             Policy.Load(); Policy.Apply();
             L.Use(Cfg.Lang);   // an IT team's AdeeboMeter.policy wins over the user's settings (it can only switch things off)
             if (first) { Cfg.SetupDone = false; ApplyAutoStart(); SaveSettings(); }
-            else { Views.EnsureStarted(); }   // 1.1.5 views: an upgrade keeps exactly what it had, as "My setup"   // a fresh install gets the 3-question setup on Home; an upgrade never does
+            else if (!pendingSetup) { Views.EnsureStarted(); }
+            if (first) openFirst = true;   // review 1.1.6 D1 #15: the first start shows the window once, so the setup questions are seen   // 1.1.5 views: an upgrade keeps exactly what it had, as "My setup"   // a fresh install gets the 3-question setup on Home; an upgrade never does
             System.Threading.ThreadPool.QueueUserWorkItem(delegate { GameHistory.TidyNow(); });   // old game days go even when nothing writes new ones
         }
         void SaveSettings()
@@ -297,10 +363,17 @@ namespace AdeeboMeter
         }
         void ShowPhonePage() { if (quitting) return; OpenFull(); if (full != null && !full.IsDisposed) full.ShowPage("phone"); }
         static string SizeText(long size) { return size >= 1048576 ? (size / 1048576.0).ToString("0.#", System.Globalization.CultureInfo.CurrentCulture) + " MB" : Math.Max(1, size / 1024) + " KB"; }
+        T OnUi<T>(Func<T> f, int ms)
+        {
+            T v = default(T); var done = new ManualResetEventSlim(false);
+            try { marshal.BeginInvoke((Action)delegate { try { v = f(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("remote ui: " + e.Message); } finally { done.Set(); } }); }
+            catch (InvalidOperationException) { return v; }
+            return done.Wait(ms) ? v : default(T);
+        }
         void Wire(Remote r)
         {
                 r.Ask = phone => PhoneHub.Ask("allow", phone, L.T("wants to watch this PC and start checks for up to 30 minutes."), r.Words);
-                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
+                r.Changed = () => { try { marshal.BeginInvoke((Action)delegate { if (r.St != Remote.State.Waiting && r.St != Remote.State.Connecting && !string.IsNullOrEmpty(r.Link)) try { if (Clipboard.ContainsText() && Clipboard.GetText() == r.Link) Clipboard.Clear(); } catch (System.Runtime.InteropServices.ExternalException) { }   /* review 1.1.6: a copied pairing link doesn't outlive its code */ if (r.Known != null) KnownChanged(r); if (r.St == Remote.State.Ended && PhoneHub.Pending != null && (Remote.Now == null || Remote.Now == r)) PhoneHub.Answer(false); PhoneHub.Fire(); drawnKey = ""; if (r.St == Remote.State.Ended && remoteRunner != null && (Remote.Now == null || Remote.Now == r || Remote.Now.St == Remote.State.Ended)) { remoteRunner.Dispose(); remoteRunner = null; } }); } catch (InvalidOperationException) { } };
                 r.FeltSlow = () => FeltSlow();
                 // a file from the phone: asked on the page first, No by default
                 r.AskFile = (phone, name, size) => PhoneHub.Ask("file", phone, L.T("wants to send a file:") + " " + name + " (" + SizeText(size) + "). " + L.T("It will be saved in Downloads\\AdeeboMeter."));
@@ -309,9 +382,10 @@ namespace AdeeboMeter
                 r.SendState = msg => { PhoneHub.Xfer = msg ?? ""; PhoneHub.Fire(); };
                 // checks run in a view that's never shown, so a game in front isn't interrupted; it also decides what's allowed
                 Func<FullView> runner = () => { if (remoteRunner == null || remoteRunner.IsDisposed) { remoteRunner = new FullView(appIcon, M); var h = remoteRunner.Handle; } return remoteRunner; };
-                r.Peek = page => { byte[] b = null; try { marshal.Invoke((Action)delegate { b = runner().PeekPage(page); }); } catch (InvalidOperationException) { } return b; };
-                r.CanRun = id => { bool ok = false; try { marshal.Invoke((Action)delegate { ok = runner().RemoteAllowed(id); }); } catch (InvalidOperationException) { } return ok; };
-                r.Catalog = () => { List<string> c = null; try { marshal.Invoke((Action)delegate { c = runner().RemoteCatalog(); }); } catch (InvalidOperationException) { } return c; };
+                // bug-hunt L-50: asked of the window thread without blocking on it - a busy or closing window answers "nothing" after 10 s
+                r.Peek = page => OnUi(() => runner().PeekPage(page), 10000);
+                r.CanRun = id => OnUi(() => runner().RemoteAllowed(id), 10000);
+                r.Catalog = () => OnUi(() => runner().RemoteCatalog(), 10000);
                 r.RunTool = (id, a, run, done) =>
                 {
                     if (id == "checkup") { FullView.RemoteCheckup(M, done); return; }
@@ -322,14 +396,18 @@ namespace AdeeboMeter
 
         // ---------- remembered phones: one waiting session per phone while no code session is open (RemoteKnown.cs)
         readonly Dictionary<string, Remote> standby = new Dictionary<string, Remote>(); DateTime standbyAt = DateTime.MinValue;
+        // bug-hunt L-234 (by design): one waiting room per remembered phone (3 at most) - each phone can only find its own room,
+        // and a sleeping room costs nothing at the relay (hibernation); the switch on the phone page turns them all off
         void StandbyTick()
         {
             if (quitting || Remote.Relay == "" || (DateTime.UtcNow - standbyAt).TotalSeconds < 15) return;
             standbyAt = DateTime.UtcNow;
+            if (!Cfg.PhoneStandby || Policy.NoRemote) { if (standby.Count > 0) StopStandby(); if (Policy.NoRemote && Remote.Now != null && Remote.Now.St != Remote.State.Ended) Remote.Now.End("turned off by your IT team"); return; }   // review 1.1.6: phone_remote = off (or online_lookups = off) ends it all   // bug-hunt ML-111: your switch on the Phone page
             var now = Remote.Now; if (now != null && now.St != Remote.State.Ended && now.Known == null) { StopStandby(); return; }   // a code session is open
             if (now != null && now.Known != null && now.St == Remote.State.Paired) return;                                       // a remembered phone is connected
             List<RemotePhones.P> phones; try { phones = RemotePhones.All(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("phones: " + e.Message); return; }
             foreach (var id in standby.Keys.Where(k => phones.All(p => p.Id != k)).ToList()) { standby[id].End("forgotten"); standby.Remove(id); }
+            if (phones.Count == 0) return;   // round 6 TA6-1: no remembered phone, no waiting room - and no hourly clock check either
             long slot = RemotePhones.Slot;
             foreach (var p in phones)
             {
@@ -337,7 +415,7 @@ namespace AdeeboMeter
                 if (s != null && s.St != Remote.State.Ended && s.Slot == slot) continue;
                 int next = s != null && s.Slot == slot ? s.Attempt + 1 : 0;      // a room that closed (used, or timed out) can't be reused
                 if (s != null && s.St != Remote.State.Ended) s.End("a new room");
-                if (next > 4) continue;                                       // wait for the next slot
+                if (next > 11) continue;                                      // wait for the next slot (bug-hunt ML-112: 12 tries a slot, one every 15 s at most - 3 minutes of room changes, not 75 s)
                 var r = Remote.Standby(M, p, slot, next); Wire(r); standby[p.Id] = r;
             }
         }
@@ -346,10 +424,19 @@ namespace AdeeboMeter
         void KnownChanged(Remote r)
         {
             if (r.St != Remote.State.Paired || Remote.Now == r) return;
+            // bug-hunt ML-113: one live session at a time - a code session that's open (linking or linked) keeps the place
+            var cur = Remote.Now; if (cur != null && cur.Known == null && cur.St != Remote.State.Ended) { r.End("another phone is linked with a code"); return; }
             Remote.Now = r;
             foreach (var s in standby.Values) if (s != r && s.St != Remote.State.Ended) s.End("another phone connected");
             PhoneHub.Fire();   // the link button turns green with the phone's name; Your phone has End
-            try { tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
+            try { BalloonIs(null, null); tray.ShowBalloonTip(5000, "AdeeboMeter", r.PhoneName + " " + L.T("connected (remembered phone). The link button at the top shows it; Your phone > End now stops it."), ToolTipIcon.Info); } catch (InvalidOperationException) { }
+        }
+        // a locked file double-clicked while AdeeboMeter already ran: the new copy left its path here and asked us to open
+        void OpenHandedFile()
+        {
+            string f = Path.Combine(Program.DataDir, "open-file.txt"), path = null;
+            try { if (File.Exists(f)) { path = File.ReadAllText(f).Trim(); File.Delete(f); } } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+            if (path != null && path.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(path) && full != null && !full.IsDisposed) full.OpenLocked(path);
         }
         void OpenFull()
         {
@@ -391,7 +478,7 @@ namespace AdeeboMeter
 
         DateTime lastTop, lastCard; string lastHead = ""; volatile bool locked;   // locked: the lock screen is up
         void OnScreens(object s, EventArgs e) { drawnKey = ""; lastCover = DateTime.MinValue; }
-        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; } }
+        void OnPower(object s, Microsoft.Win32.PowerModeChangedEventArgs e) { if (e.Mode == Microsoft.Win32.PowerModes.Resume) { M.Resumed(); drawnKey = ""; lastCover = DateTime.MinValue; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; Lock(); moveSteps = 0; arrivedByMouse = false; if (wasHovered) { Corner.Looked(); sinceLine = ""; wasHovered = false; } } }   /* L-8: a rest before sleep doesn't count after it; hunters13 lifecycle L-6: nor an unlock or a catch-up line */
         void OnSession(object s, Microsoft.Win32.SessionSwitchEventArgs e)
         {
             if (e.Reason == Microsoft.Win32.SessionSwitchReason.SessionLock || e.Reason == Microsoft.Win32.SessionSwitchReason.ConsoleDisconnect) locked = true;   // the lock screen: the widget rests
@@ -403,7 +490,8 @@ namespace AdeeboMeter
         void OnSessionEnding(object s, Microsoft.Win32.SessionEndingEventArgs e)
         {
             Action stop = delegate { try { if (full != null && !full.IsDisposed) full.StopCaptures(); } catch (Exception ex) { Program.Log("session end: " + ex.Message); } };
-            try { if (marshal.InvokeRequired) marshal.Invoke(stop); else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
+            // bug-hunt ML-38: at most 3 s for the UI thread - a blocked one doesn't stop the cleanup below
+            try { if (marshal.InvokeRequired) { var ar = marshal.BeginInvoke(stop); if (!ar.AsyncWaitHandle.WaitOne(3000)) Program.Log("session end: the window didn't answer - cleaning up without it"); } else stop(); } catch (InvalidOperationException ex) { Program.Log("session end: " + ex.Message); }
             Program.CleanCaptures();
             try { Usage.Save(); } catch (Exception ex) { if (ex is OutOfMemoryException) throw; Program.Log("session end: usage " + ex.Message); }   // Windows ends us after this: keep the last minutes of data used
         }
@@ -424,7 +512,7 @@ namespace AdeeboMeter
                 quitWait.Start(); return;
             }
             // a dialog that refused to close in 3 s: quitting now would dispose the view under it - give up this quit instead
-            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle)) { quitTries = 0; Program.Log("quit: a dialog is still open - quit abandoned"); return; }
+            if (!quitting && full != null && !full.IsDisposed && full.IsHandleCreated && !IsWindowEnabled(full.Handle)) { quitTries = 0; Program.Log("quit: a dialog is still open - quit abandoned"); try { System.IO.File.WriteAllText(System.IO.Path.Combine(Program.DataDir, "quit-busy.txt"), DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture)); } catch (Exception e) { if (e is OutOfMemoryException) throw; } try { full.Activate(); } catch (InvalidOperationException) { } return; }   /* round 6 H6-L12: the copy waiting to take over is told why */
             if (quitWait != null) { quitWait.Stop(); quitWait.Dispose(); quitWait = null; }
             Microsoft.Win32.SystemEvents.SessionEnding -= OnSessionEnding;
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnScreens; Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPower; Microsoft.Win32.SystemEvents.SessionSwitch -= OnSession;   // static events: always let go
@@ -449,31 +537,201 @@ namespace AdeeboMeter
         Rectangle Zone()
         {
             var scr = WidgetScreen(); if (scr == null) return Rectangle.Empty;
-            var wa = scr.WorkingArea; int m = (int)(10 * Draw.S);
-            int w = (int)((Cfg.BigWidget ? 343 : 264) * Draw.S), h = (int)(300 * Draw.S);
-            var z = new Rectangle(wa.Right - m - w, wa.Bottom - m - h, w, h);
+            var wa = scr.WorkingArea;   /* hunters12 L-8: the widget's own scale, not whatever the full view painted last */
+            int w = (int)((Cfg.BigWidget ? 343 : 264) * Draw.Base), h = (int)(300 * Draw.Base);
+            var z = new Rectangle(WidgetPos.At(wa, w, h, Draw.Base), new Size(w, h));   /* the corner it's anchored to, opening away from it */
             var p = widget != null ? widget.Placed : Rectangle.Empty;
             return p.Width > 1 && p.Height > 1 ? Rectangle.Union(z, p) : z;
         }
 
+        void BalloonIs(string crash, string tool) { crashNote = crash; balloonTool = tool; }
+        // a takeover arrives with one short fade (150 ms, three steps) - nothing else on the widget animates
+        string lastEff, sinceLine = ""; bool wasHovered; DateTime fadeAt = DateTime.MinValue, presentAt = DateTime.MinValue;
+        bool Fading { get { return (Clock.Mono - fadeAt).TotalMilliseconds < 160; } }
+        int FadeStep { get { return Fading ? (int)((Clock.Mono - fadeAt).TotalMilliseconds / 50) : 9; } }
+        float FadeK { get { return Fading ? (float)Math.Min(1, 0.25 + (Clock.Mono - fadeAt).TotalMilliseconds / 160 * 0.75) : 1f; } }
+        // the data a tile preset shows changed (quotes, scores, the forecast, the minute for the clock and the data counters)
+        static string TileVer()
+        {
+            if (!Corner.IsTile(Corner.Effective)) return "";
+            return MarketData.Ver + "." + System.Threading.Interlocked.Read(ref Sports.Ver) + "." + Weather.Fetched.Ticks + "." + DateTime.Now.ToString("HHmm", CultureInfo.InvariantCulture);
+        }
+
+        // ---------- move mode (hunters12 widget-input fixes, 24 Nov)
+        Point restAt; bool arrivedByMouse, dragGame, touchDrag, lastTouch; int moveSteps; DateTime ctrlSince = DateTime.MinValue, trayUnlockAt = DateTime.MinValue, onItAt = DateTime.MinValue;
+        // --widget-trace (the test script): what move mode does, with the widget's place, to a file next to the log
+        static readonly object traceLock = new object();
+        public static void Trace(string m)
+        {
+            if (!Program.WidgetTrace) return;
+            try { lock (traceLock) File.AppendAllText(Path.Combine(Program.WriteDir, "widget-trace.txt"), DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " " + m + Environment.NewLine); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        // tray > Move widget (M-4: a re-shown widget stays shown)
+        void TrayMove() { bool was = widgetOn; widgetOn = true; if (!was) SaveSettings(); moveByTray = true; trayUnlockAt = Clock.Mono; Unlock("tray"); }
+        // hunters14 LAB-ML3: under --widget-trace only, the test script asks for tray > Move widget by dropping a file named
+        // "move-widget.now" next to the trace - the same code path as the menu item (a script can't click a tray menu reliably)
+        DateTime traceAsk = DateTime.MinValue;
+        void TraceAsks()
+        {
+            if (!Program.WidgetTrace || (Clock.Mono - traceAsk).TotalMilliseconds < 400) return; traceAsk = Clock.Mono;
+            try { string f = Path.Combine(Program.WriteDir, "move-widget.now"); if (File.Exists(f)) { File.Delete(f); Trace("tray move (asked by the test)"); TrayMove(); } } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        void Unlock() { Unlock("other"); }
+        void Unlock(string why)
+        {
+            if (moveOn) { moveTouched = Clock.Mono; return; }
+            Trace("unlock " + why);
+            moveOn = true; ghost = false; moveTouched = Clock.Mono; lastCur = Cursor.Position; onItAt = Clock.Mono;
+            widget.SetClickThrough(false); drawnKey = ""; if (ui.Interval != 50) ui.Interval = 50;
+        }
+        void Lock() { Lock("other"); }
+        void Lock(string why)
+        {
+            if (moveOn) Trace("lock " + why);
+            if (dragging) SaveDrop();   // L-4: the full view opening, a presentation or the lock screen mid-drag keeps the drag
+            dragFrom = null; dragging = false; touchDrag = false; moveByTray = false; hoverSince = DateTime.MinValue; ctrlSince = DateTime.MinValue;
+            if (!moveOn) return;
+            moveOn = false; widget.SetClickThrough(true); drawnKey = "";
+        }
+        // back to the default: the bottom-right corner of the main screen - and the gaming spot back to "same as usual" (M-5)
+        public void ResetPos() { Lock(); Cfg.WPos = ""; Cfg.WidgetScreen = ""; Cfg.WPosGame = ""; SaveSettings(); drawnKey = ""; lastCover = DateTime.MinValue; }
+        public static Action ResetWidget;   // Settings > Widget position > Reset
+        // each tick near the widget. Unlocking:
+        //  - resting: the mouse came onto it by moving (a finger tap teleports the cursor - M-2) and has then stayed still for
+        //    2.5 s (moving across the card to read it restarts the wait - M-1);
+        //  - the tray: Move widget, unlocked for 15 s to reach it (also the way in for touch).
+        //  (No keyboard: the keyboard is never watched - hunters14 CORE-L3; test3's Defender flag is why.)
+        // Locking: the mouse leaves the widget itself (with a short grace), 8 s without moving on it, or another button / the
+        // wheel (they were meant for the app underneath - L-6).
+        void MoveMode(Point cur, bool inside)
+        {
+            bool onIt = widget.Placed.Width > 1 && widget.Placed.Contains(cur);
+            var nearR = widget.Placed; nearR.Inflate((int)(120 * Draw.Base), (int)(120 * Draw.Base));
+            bool near = widget.Placed.Width > 1 && nearR.Contains(cur);
+            // hunters13 input M-1: "came by mouse" is judged by the input itself - Windows hides the pointer while a finger or pen is
+            // used - and by at least two small steps seen on the way in, not one (a second tap a few pixels from the first is one step)
+            bool tch = Native.CursorFromTouch(); if (tch != lastTouch) { lastTouch = tch; Trace("touch cursor " + tch); }
+            if (!near || tch) { arrivedByMouse = false; moveSteps = 0; }
+            else if (cur != lastCur && nearR.Contains(lastCur) && Math.Abs(cur.X - lastCur.X) + Math.Abs(cur.Y - lastCur.Y) < 200 * Draw.Base) { if (++moveSteps >= 2) arrivedByMouse = true; }
+            bool moved = cur != lastCur; lastCur = cur;
+            if (onIt) onItAt = Clock.Mono;
+            if (moveOn)
+            {
+                if (moved && onIt) moveTouched = Clock.Mono;
+                if (onIt) moveByTray = false;
+                if (dragFrom == null && (Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { Lock("esc"); moveSpent = onIt; return; }   /* ML-3: Esc leaves move mode */
+                bool buttons = (Control.MouseButtons & (MouseButtons.Right | MouseButtons.Middle)) != 0;
+                bool tray = moveByTray && (Clock.Mono - trayUnlockAt).TotalSeconds < 15;
+                bool gone = !tray && (Clock.Mono - onItAt).TotalMilliseconds > 350, idle = (Clock.Mono - moveTouched).TotalSeconds > 8 && !tray;
+                if (dragFrom == null && (gone || idle || buttons)) { Lock(gone ? "gone" : idle ? "idle" : "buttons"); moveSpent = onIt; }   // locked while resting on it: not again until you leave
+                else { hovered = true; return; }
+            }
+            if (!onIt) { hoverSince = DateTime.MinValue; moveSpent = false; }
+            var ghostR = widget.Placed; ghostR.Inflate((int)(24 * Draw.Base), (int)(24 * Draw.Base));
+            bool g = Cfg.WHideNear && !covered && widget.Placed.Width > 1 && ghostR.Contains(cur);   // ML-2: a covered corner still opens by resting on it
+            // test3 (24 Nov, Adeeb): no "hold Ctrl" - telling Ctrl alone from Ctrl+C meant watching every key, which is what a
+            // keylogger does, and Defender's heuristics took the build for one. Rest on it, or tray › Move widget.
+            if (g != ghost) { ghost = g; drawnKey = ""; }
+            if (ghost) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; hoverSince = DateTime.MinValue; return; }
+            // resting: no button held (a paused drag in the app underneath isn't a rest on the widget - ML-2), and "still" is Windows'
+            // own double-click box, 4 px each way, so a slight tremor or a drifting trackpoint still counts (L-5)
+            if (onIt && hovered && !moveSpent && arrivedByMouse && Control.MouseButtons == MouseButtons.None)
+            {
+                if (hoverSince == DateTime.MinValue || !Still(cur, restAt, Draw.Base)) { hoverSince = DateTime.UtcNow; restAt = cur; }   // moving: the wait starts again
+                else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 2500) { Unlock("rest"); hovered = true; }   // 24 Nov: 2.5 s of rest (was 1.5) - moving is never an accident
+            }
+            else hoverSince = DateTime.MinValue;
+        }
+        void WidgetDrag()
+        {
+            if (dragFrom == null || !moveOn) return;
+            if (touchDrag) return;
+            // hunters14 CORE-ML1: a re-press may have been made in another app - it ends a drag in progress, but never counts as a click
+            if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(false); return; }
+            if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
+            var c = Cursor.Position; int dx = c.X - dragFrom.Value.X, dy = c.Y - dragFrom.Value.Y; moveTouched = Clock.Mono;
+            if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; Trace("drag start"); if (detailWin.Placed.Width > 1) detailWin.Vanish(); }
+            if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy);
+        }
+        void CancelDrag() { if (dragging) widget.MoveTo(dragOrigin.X, dragOrigin.Y); dragFrom = null; dragging = false; touchDrag = false; drawnKey = ""; }
+        // test5: the app underneath got the right button's down but never its up (the real up still reached the widget), so a
+        // context menu that opens on release never opened. The press is passed on at once; the release follows when that one
+        // button comes back up - only that button is read, every 15 ms, for at most 10 s
+        static void UpLater(int vk, int upMsg, int data)
+        {
+            var t = new System.Windows.Forms.Timer { Interval = 15 }; var sw = Stopwatch.StartNew();
+            t.Tick += (o, e) => { if ((Native.GetAsyncKeyState(vk) & 0x8000) != 0 && sw.ElapsedMilliseconds < 10000) return; t.Stop(); t.Dispose(); Native.PassOn(upMsg, 0, data); Trace("replay up " + upMsg.ToString("X", System.Globalization.CultureInfo.InvariantCulture)); };
+            t.Start();
+        }
+        string hoverLine = ""; int hoverTipN;
+        static readonly string[] HoverTips = { "Rest here a little longer to move it", "With a dashed outline, drag it to move it", "Right-click the tray icon for everything else" };
+        // the left button was pressed again since the drag began (released and pressed between two ticks - hunters13 L-3)
+        static bool RePressed() { return (Native.GetAsyncKeyState(0x01) & 0x0001) != 0; }
+        // still enough to count as resting: inside Windows' double-click box around where the rest began
+        public static bool Still(Point cur, Point at, float scale) { return Math.Abs(cur.X - at.X) <= 4 * scale && Math.Abs(cur.Y - at.Y) <= 4 * scale; }
+        // fromUp: the left button came up on the widget itself - only that is a click. A drop found another way (the button seen up
+        // at a tick, a re-press, capture lost, the wheel) ends the drag but never opens the full window (hunters14 CORE-ML1)
+        void WidgetDrop(bool fromUp)
+        {
+            if (dragFrom == null) return;
+            bool moved = dragging; dragFrom = null; dragging = false; moveTouched = Clock.Mono;
+            if (!moved) { if (fromUp) { Lock("click"); Trace("open full"); OpenFull(); } return; }   // a click, no drag: the full window
+            SaveDrop(true);
+        }
+        // the drop's place: into the slot the drag started in (a game starting or ending mid-drag doesn't move it - L-3)
+        void SaveDrop() { SaveDrop(dragging); }
+        void SaveDrop(bool moved)
+        {
+            if (!moved) return;
+            dragging = false;
+            var r = widget.Placed; var scr = Screen.FromRectangle(r);
+            Cfg.WidgetScreen = scr.Primary ? "" : scr.DeviceName;
+            string pos = WidgetPos.From(r, scr.WorkingArea, Draw.Base);
+            if (dragGame) Cfg.WPosGame = pos == "" ? "br|0|0" : pos;   // dragged while gaming: the gaming corner
+            else Cfg.WPos = pos;
+            Trace("drag saved " + (pos == "" ? "default" : pos) + " at " + r.X + " " + r.Y);
+            SaveSettings(); drawnKey = ""; lastCover = DateTime.MinValue;
+        }
+        // the dashed outline: this widget can move now
+        void Outline(Bitmap bmp)
+        {
+            using (var g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(Theme.Blue, Math.Max(1.5f, 1.5f * Draw.S)) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash })
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                float i = pen.Width; var r = new RectangleF(i, i, bmp.Width - 2 * i, bmp.Height - 2 * i);
+                using (var p = Theme.Round(r, Math.Min(r.Height / 2f, 14 * Draw.S))) g.DrawPath(pen, p);
+            }
+        }
         void OnUi()
         {
-            StandbyTick();
+            StandbyTick(); TraceAsks();
             try
             {
                 uiTick++;
-                if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
-                if (WidgetScreen() == null) { hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
+                if ((uiTick & 15) == 0) { Weather.Tick(); Sectors.WatchTick(); try { Sports.ReminderTick(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("kickoff: " + e.Message); } }   // looks once a minute at most; asks Open-Meteo only when the forecast runs short (Weather.cs)
+                var wscr = WidgetScreen();   // bug-hunt L-49: asked once per tick - a screen unplugged between two calls can't null the second
+                if (wscr == null) { Lock(); hovered = false; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = 1000; return; }   // no screen: nothing to draw on, nothing to log
                 // the view hides the widget only when it's open on the widget's own screen (on two screens it may be elsewhere or buried)
-                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == WidgetScreen().DeviceName && Form.ActiveForm == full;
+                bool viewUp = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized && Screen.FromControl(full).DeviceName == wscr.DeviceName && Form.ActiveForm == full;
                 if ((Clock.Mono - lastTop).TotalSeconds > 30) { lastTop = Clock.Mono; widget.ClaimTop(); }   // every 30 s: claim the top layer back - no redraw
-                if ((uiTick & 7) == 0) presenting = Native.Presenting();   // checked twice a second at most
-                if (!widgetOn || viewUp || presenting || locked) { hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
+                // 24 Nov: the ladder ticks even while the widget is hidden (a game closing while the full view is open still gets its recap)
+                { var cs = M.Latest; if (cs != null) Corner.Tick(cs); }
+                if ((Clock.Mono - presentAt).TotalMilliseconds >= 450) { presentAt = Clock.Mono; presenting = Native.Presenting() && !(Cfg.GameWidget && GameFinder.PlayingInFront()); }   /* 24 Nov: a game you added, in front (borderless): the widget stays over it. hunters12 ML-7: twice a second by the clock, not every 8th tick */
+                // hunters12 ML-8: the feeds keep your corner's numbers fresh while the full view is open too
+                try { Corner.Feeds(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("feeds: " + e.Message); }
+                if (!widgetOn || viewUp || presenting || locked) { if (wasHovered) { Corner.Looked(); sinceLine = ""; wasHovered = false; } /* hunters12 data ML2: a hover cut short by the view still counts as a look */ Lock(); hovered = false; revealed = false; dwell = 0; dwellStart = DateTime.MinValue; M.HoverOpen = false; hoverKey = ""; if (widget.Placed.Width > 1) { widget.Vanish(); detailWin.Vanish(); drawnKey = ""; } ui.Interval = !widgetOn || locked ? 2000 : 500; return; }   // hidden or locked: nothing to draw, a slow tick only
+                // 24 Nov: the ladder (a game, a match, the weather, the day plan) and the feeds for what may show
+                { if (Corner.Effective != lastEff) { if (lastEff != null) fadeAt = Clock.Mono; lastEff = Corner.Effective; drawnKey = ""; } }
                 // Poll fast only when the mouse is near the corner; otherwise 4 times a second is plenty.
-                var near = Zone(); near.Inflate((int)(120 * Draw.S), (int)(120 * Draw.S));
+                var near = Zone(); near.Inflate((int)(120 * Draw.Base), (int)(120 * Draw.Base));
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
+                if (moveOn || Fading) want = 50;
                 if (ui.Interval != want) ui.Interval = want;
-                if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 400 : 2000) && !hovered)   // AM-CG-214   // AM-CG-192: re-judged when folded again, not by the open card's size
+                if (dragFrom != null && !touchDrag && (Control.MouseButtons != MouseButtons.Left || (dragging && RePressed()))) { if (dragging) WidgetDrop(false); else dragFrom = null; }   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here; a new press is a new click (L-3)
+                if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); } return; }   // the window follows the mouse by itself; drawn again on the drop
+                if (dragFrom != null) return;   // pressed, not moved yet: not drawn again, so the press point and the window agree (hunters13 L-2)
+                if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 800 : 2000) && !hovered)   // AM-CG-214; bug-hunt ML-146: the window walk every 0.8 s near the corner, not 0.4   // AM-CG-192: re-judged when folded again, not by the open card's size
                 {
                     lastCover = Clock.Mono;
                     bool c = WindowOver(Zone());
@@ -501,19 +759,45 @@ namespace AdeeboMeter
                     else { revealed = false; dwellStart = DateTime.MinValue; dwell = 0; }
                     hovered = revealed;
                 }
-                else { hovered = inside; dwell = 0; }
+                else
+                {
+                    // 24 Nov (Adeeb: "it pops open too easily"): the open card brightens only after the same short rest as the
+                    // folded chip - a mouse passing over the corner leaves it faded
+                    dwell = 0;
+                    if (!inside) { hovered = false; dwellStart = DateTime.MinValue; }
+                    else if (!hovered) { if (dwellStart == DateTime.MinValue) dwellStart = DateTime.UtcNow; if ((DateTime.UtcNow - dwellStart).TotalMilliseconds >= DWELL_MS) { hovered = true; dwellStart = DateTime.MinValue; } }
+                }
+                MoveMode(cur, inside);
+                // the hint line on the card, by the settings: unlocked - what a drag and a click do; resting on it - that it will unlock
+                // 24 Nov (Adeeb: "tips keep changing every 2 seconds - a different tip every time, not every second"): one line per
+                // hover, picked when the hover starts and kept until you leave - what changed since you looked, else why this card is
+                // showing, else the next of a few short tips (a different one each hover). The dashed outline shows when it can move.
+                if (hovered && !wasHovered)
+                {
+                    sinceLine = Corner.Since(M.Latest ?? new Snap()); string why = Corner.WhyLine();
+                    hoverLine = sinceLine != "" ? sinceLine : why != "" ? why : Cfg.WHint ? L.T(HoverTips[hoverTipN++ % HoverTips.Length]) : "";
+                }
+                else if (!hovered && wasHovered) { Corner.Looked(); sinceLine = ""; hoverLine = ""; }
+                wasHovered = hovered;
+                var lines = new List<string>();
+                if (hovered) { if (hoverLine != "") lines.Add(hoverLine); }
+                else if (Cfg.WHint && moveOn) lines.Add(Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter"));   // moved from the tray, the mouse elsewhere
+                string wh = string.Join("\n", lines);
+                if (wh != Draw.WidgetHint) { Draw.WidgetHint = wh; drawnKey = ""; }
                 M.HoverOpen = hovered;
                 string key = "";
-                if (hovered) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
+                if (hovered && !moveOn) foreach (var kv in hits) { var r = kv.Value; if (new RectangleF(widget.Placed.X + r.X, widget.Placed.Y + r.Y, r.Width, r.Height).Contains(cur)) { key = kv.Key; break; } }
                 hoverKey = key;
                 var rw = Rewind; if (rw != null && Clock.Mono > RewindUntil) { Rewind = null; rw = null; }
                 Snap s = rw ?? M.Latest; bool compact = !hovered && (covered || Draw.SpeedStyle || (s.Level == 0 && !s.Call));   // a speed widget stays a strip until you hover it
-                string state = compact + "|" + hovered + "|" + key + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + Cfg.WidgetStyle + "|" + Cfg.WDir + "|" + Cfg.WUnits + "|" + Cfg.WGraph + "|" + Theme.Palette + "|" + Theme.Dark + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "") + "|" + Moments.FaceFor(s);   /* a moment's face shows and goes */
+                string state = compact + "|" + hovered + "|" + key + "|" + Corner.Effective + "|" + FadeStep + "|" + TileVer() + "|" + covered + "|" + ((int)(dwell * 20)) + "|" + Voice.Serious + "|" + Cfg.BigWidget + "|" + Mood.Name + "|" + Cfg.WidgetStyle + "|" + Cfg.WDir + "|" + moveOn + "|" + ghost + "|" + Cfg.WPos + "|" + Cfg.WidgetScreen + "|" + Cfg.WUnits + "|" + Cfg.WGraph + "|" + Theme.Palette + "|" + Theme.Dark + "|" + (Cfg.Buddy ? Draw.BuddyMood(s) : "") + "|" + (rw != null ? rw.Chip : "") + "|" + Moments.FaceFor(s);   /* a moment's face shows and goes */
                 bool fresh = M.Version != drawnVersion;
                 // The folded chip redraws only when its words or colour change; the open card once a second while you look at it,
                 // and unhovered only when its level or headline changes (or every 10 s for the numbers)
                 bool cardDue = !compact && (hovered || s.Level != lastLevel || s.Headline != lastHead || (Clock.Mono - lastCard).TotalSeconds >= 10);
-                if (state != drawnKey || (fresh && (cardDue || (compact && (Draw.ChipKey(s) != lastChip || s.Level != lastLevel)))))
+                // the folded strip: speeds at most every 2 s, everything else at most every 5 s, a new level at once (Adeeb, 21 Nov)
+                bool chipDue = compact && (s.Level != lastLevel || (Draw.ChipSpeedKey(s) != lastSpeed && (Clock.Mono - speedAt).TotalSeconds >= 2) || (Draw.ChipOtherKey(s) != lastOther && (Clock.Mono - otherAt).TotalSeconds >= 5));
+                if (state != drawnKey || (fresh && (cardDue || chipDue)))
                 {
                     Draw.CardHovered = hovered; Render(s, compact); if (compact) foldedAt = widget.Placed; drawnKey = state; drawnVersion = M.Version; if (!compact) { lastCard = Clock.Mono; lastHead = s.Headline; }
                 }
@@ -526,18 +810,33 @@ namespace AdeeboMeter
             float keep = Draw.S; Draw.Use(Draw.Base);   // the corner widget is drawn at the screen's own scale - the window's zoom isn't for it
             try { RenderAt(s, compact); } finally { Draw.Use(keep); }
         }
+        string traceKey = "";
         void RenderAt(Snap s, bool compact)
         {
-            var wa = WidgetScreen().WorkingArea; int m = (int)(10 * Draw.S);
+            var ws0 = WidgetScreen(); if (ws0 == null) return;   // L-49
+            var wa = ws0.WorkingArea;
             using (var bmp = compact ? Draw.Chip(s, dwell) : Draw.Card(s, hits))
             {
                 if (compact) hits.Clear();
-                widget.Present(bmp, hovered ? (byte)255 : FADE, Math.Max(wa.Left, wa.Right - m - bmp.Width), Math.Max(wa.Top, wa.Bottom - m - bmp.Height));   // AM-CG-201: inside the work area
+                if (moveOn) Outline(bmp);
+                var at = WidgetPos.At(wa, bmp.Width, bmp.Height, Draw.S);   // AM-CG-201: inside the work area
+                byte a0 = ghost ? (byte)0 : hovered ? (byte)255 : FADE; widget.Present(bmp, (byte)(a0 * FadeK), at.X, at.Y);
+                if (Program.WidgetTrace) { string tk = widget.Placed + "|" + compact + "|" + hovered + "|" + moveOn + "|" + covered + "|" + Corner.Effective; if (tk != traceKey) { traceKey = tk; var p = widget.Placed; Trace("rect " + p.X + " " + p.Y + " " + p.Width + " " + p.Height + " folded=" + compact + " open=" + hovered + " unlocked=" + moveOn + " covered=" + covered + " style=" + Corner.Effective + " alpha=" + a0 + " clickthrough=" + !widget.TakesClicks); } }
             }
             lastChip = Draw.ChipKey(s); lastLevel = s.Level;
-            Detail d;
-            if (!compact && hovered && hoverKey != "" && s.Details.TryGetValue(hoverKey, out d))
-                using (var db = Draw.DetailCard(d)) detailWin.Present(db, 255, Math.Max(wa.Left, widget.Placed.X - db.Width - (int)(8 * Draw.S)), Math.Max(wa.Top, wa.Bottom - m - db.Height));   /* on this screen, never above its top */
+            string sk = Draw.ChipSpeedKey(s), ok = Draw.ChipOtherKey(s);
+            if (sk != lastSpeed) { lastSpeed = sk; speedAt = Clock.Mono; }
+            if (ok != lastOther) { lastOther = ok; otherAt = Clock.Mono; }
+            Detail d = null;
+            if (!moveOn && !compact && hovered && hoverKey != "") s.Details.TryGetValue(hoverKey, out d);
+            if (d != null)
+                using (var db = Draw.DetailCard(d))
+                {
+                    // the side facing the screen: left of a widget on the right, right of one on the left; level with its outer edge
+                    bool right = WidgetPos.Right, bottom = WidgetPos.Bottom; var p = widget.Placed; int gap = (int)(8 * Draw.S);
+                    int x = right ? p.X - db.Width - gap : p.Right + gap, y = bottom ? p.Bottom - db.Height : p.Y;
+                    detailWin.Present(db, 255, Math.Max(wa.Left, Math.Min(x, wa.Right - db.Width)), Math.Max(wa.Top, Math.Min(y, wa.Bottom - db.Height)));   /* on this screen, never past its edges */
+                }
             else if (detailWin.Placed.Width > 1) detailWin.Vanish();
             string tip = "AdeeboMeter - " + s.Chip.ToLowerInvariant();
             if (tip.Length > 63) tip = tip.Substring(0, 63);   // Windows keeps 63 characters: compare what it holds, or it is rewritten every second
@@ -581,12 +880,66 @@ namespace AdeeboMeter
                         // the view already open, or Windows won't show a note (notifications off, Focus assist): the answer opens right away
                         bool open = full != null && !full.IsDisposed && full.Visible && full.WindowState != FormWindowState.Minimized;
                         if (open || !Native.CanNotify()) { OpenFull(); if (full != null && !full.IsDisposed) full.ShowTool("feltslow", true); return; }
-                        balloonUrl = null; balloonTool = "feltslow"; tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : c.Who == "notpc" ? "Not this PC" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
+                        BalloonIs(null, "feltslow"); tray.ShowBalloonTip(10000, c.Who == "pc" ? "It's this PC" : c.Who == "internet" ? "It's the internet" : c.Who == "both" ? "This PC and the internet" : c.Who == "app" ? "Not the PC, not the internet" : c.Who == "notpc" ? "Not this PC" : "AdeeboMeter", Draw.Trunc(c.Text, 230), ToolTipIcon.Info);
                     });
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("felt slow: " + e.Message); }
             });
         }
+    }
+
+    // Where the corner widget sits (24 Nov): one corner plus a distance in from it, in 96-DPI pixels, so it keeps its place
+    // at any scaling and a bigger card or chip grows away from that corner. "" is the default, bottom right.
+    static class WidgetPos
+    {
+        static readonly string[] Corners = { "br", "bl", "tr", "tl" };
+        public static string Clean(string v) { return Clean(v, false); }
+        public static string Clean(string v, bool keepDefault)   // keepDefault: the gaming corner can be bottom right on purpose ("" there = same as usual)
+        {
+            var p = (v ?? "").Split('|'); int dx, dy;
+            if (p.Length != 3 || Array.IndexOf(Corners, p[0]) < 0 || !int.TryParse(p[1], NumberStyles.None, CultureInfo.InvariantCulture, out dx) || !int.TryParse(p[2], NumberStyles.None, CultureInfo.InvariantCulture, out dy)) return "";
+            dx = Math.Min(dx, 20000); dy = Math.Min(dy, 20000);
+            return p[0] == "br" && dx == 0 && dy == 0 && !keepDefault ? "" : p[0] + "|" + dx + "|" + dy;
+        }
+        // the saved place - the default when its screen is gone
+        static void Get(out string c, out int dx, out int dy)
+        {
+            c = "br"; dx = dy = 0; var v = AdeeboMeter.Corner.UseGamePos ? Cfg.WPosGame : Cfg.WPos; if (v == "") return;
+            var w = Cfg.WidgetScreen; if (w != "" && !Screen.AllScreens.Any(x => x.DeviceName == w)) return;
+            var p = v.Split('|'); if (p.Length != 3) return;
+            c = p[0]; int.TryParse(p[1], NumberStyles.None, CultureInfo.InvariantCulture, out dx); int.TryParse(p[2], NumberStyles.None, CultureInfo.InvariantCulture, out dy);
+        }
+        public static int CornerIndex { get { string c; int a, b; Get(out c, out a, out b); return Array.IndexOf(Corners, c); } }
+        public static bool Right { get { string c; int a, b; Get(out c, out a, out b); return c[1] == 'r'; } }
+        public static bool Bottom { get { string c; int a, b; Get(out c, out a, out b); return c[0] == 'b'; } }
+        public static Point At(Rectangle wa, int w, int h, float s)
+        {
+            string c; int dx, dy; Get(out c, out dx, out dy);
+            int m = (int)(10 * s), ox = (int)(dx * s), oy = (int)(dy * s);
+            int x = c[1] == 'r' ? wa.Right - m - ox - w : wa.Left + m + ox, y = c[0] == 'b' ? wa.Bottom - m - oy - h : wa.Top + m + oy;
+            return new Point(Math.Max(wa.Left, Math.Min(x, wa.Right - w)), Math.Max(wa.Top, Math.Min(y, wa.Bottom - h)));
+        }
+        // after a drag: the nearest corner, and within 24 px of an edge it snaps to it
+        public static string From(Rectangle r, Rectangle wa, float s)
+        {
+            int m = (int)(10 * s), cx = r.X + r.Width / 2, cy = r.Y + r.Height / 2;
+            bool right = cx >= wa.X + wa.Width / 2, bottom = cy >= wa.Y + wa.Height / 2;
+            int dx = (int)Math.Round((right ? wa.Right - m - r.Right : r.Left - wa.Left - m) / s), dy = (int)Math.Round((bottom ? wa.Bottom - m - r.Bottom : r.Top - wa.Top - m) / s);
+            if (dx < 24) dx = 0; if (dy < 24) dy = 0;
+            return Clean((bottom ? "b" : "t") + (right ? "r" : "l") + "|" + dx + "|" + dy);
+        }
+        // hunters12 L-1: picking the corner it's already in keeps the distance; another corner puts it right in that corner
+        public static string Pick(int corner)
+        {
+            var p = (Cfg.WPos == "" ? "br|0|0" : Cfg.WPos).Split('|');
+            if (corner >= 0 && corner < Corners.Length && p.Length == 3 && p[0] == Corners[corner]) return Clean(Cfg.WPos);
+            return corner <= 0 ? "" : Corners[corner] + "|0|0";
+        }
+        // the normal position's corner, whatever a game is doing (Settings shows and edits the same one - M-6)
+        public static int NormalCornerIndex { get { var v = Cfg.WPos; if (v == "") return 0; var p = v.Split('|'); return Math.Max(0, Array.IndexOf(Corners, p[0])); } }
+        // 0 = same as usual, then the four corners; picking the corner it's already in keeps the distance (hunters13 lifecycle L-2)
+        public static string PickGame(int i) { if (i <= 0) return ""; var p = Cfg.WPosGame.Split('|'); if (p.Length == 3 && p[0] == Corners[i - 1]) return Clean(Cfg.WPosGame, true); return Corners[i - 1] + "|0|0"; }
+        public static int GameIndex { get { var v = Cfg.WPosGame; if (v == "") return 0; var p = v.Split('|'); int i = Array.IndexOf(Corners, p[0]); return i < 0 ? 0 : i + 1; } }
     }
 
     // The Store copy's "Start with Windows": its package declares a startup entry (Package.appxmanifest, TaskId AdeeboMeter).

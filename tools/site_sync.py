@@ -9,9 +9,12 @@
 # window only. Runs last in tools/site.sh: the language scripts and learnsite.py rewrite pages before it.
 import os, re, sys
 root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs')
-SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html', '404.html'}
+SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html'}   # 24 Nov: the missing-page page has the bar too, so you can always get somewhere
 BAR = '<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="{home}"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->'
 CSS = '<link rel="stylesheet" href="/sitebar.css">'
+# the theme rule the home page uses, on every page, before anything is drawn: a kept choice (am-theme) wins, otherwise dark.
+# Inside the PC app's window (a frame) the app's own choice applies, so this stays out of the way there.
+THEME = '<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->'
 OLD = [
     (r'\n?<!--sitebar-->.*?<!--/sitebar-->', 'the bar from the last run'),
     (r'<nav class="top sitebar"[^>]*>.*?</nav>\s*', "the blog's old bar"),
@@ -45,6 +48,12 @@ def sync(p):
     m = re.match(r'(fr|es|ar|bn)/', rel); home = '/' + m.group(1) + '/' if m else '/'
     is_home = rel in ('index.html', 'fr/index.html', 'es/index.html', 'ar/index.html', 'bn/index.html')
     if CSS not in t: t = t.replace('</head>', CSS + '\n</head>', 1); did.append('sitebar.css')
+    if not is_home:
+        t2 = re.sub(r'<!--theme-->.*?<!--/theme-->\n?', '', t, flags=re.S)
+        h = re.search(r'<head[^>]*>', t2)
+        if h: t2 = t2[:h.end()] + '\n' + THEME + t2[h.end():]
+        if t2 != t and THEME not in t: did.append('theme rule')
+        t = t2
     if is_home:
         if '<script src="/site.js" defer></script>' not in t: t = t.replace('</head>', '<script src="/site.js" defer></script>\n</head>', 1); did.append('download window')
         return (t if t != s else None), did

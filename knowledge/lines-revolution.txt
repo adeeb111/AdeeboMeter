@@ -90,3 +90,17 @@ game.streak|{v} in a row - the people rejoice!
 game.timeup|Time's up - regroup!
 market.open|The markets open. Stay vigilant.
 storm.near|A storm gathers - hold the line.
+stream.on|Citizens, {v} plays freely!
+stream.on|The stream belongs to the people, and it flows.
+stream.dip|The stream stumbled. We march on. {v}
+stream.dip|A setback on the stream. {v}
+stream.none|No stream. The square is quiet.
+stream.none|Nothing playing. We wait, united.
+trade.ok|The line to the broker stands strong.
+trade.ok|Broker line: steady, comrades.
+trade.slow|The broker line is slow. Hold the line.
+trade.slow|Slowdown at the broker. {v}
+trade.closed|The market is closed. Rest until 9:30.
+trade.closed|Markets shut. The people rest.
+view.switch|Onward to the {v} view!
+view.switch|The {v} view, for all.

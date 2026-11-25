@@ -38,6 +38,65 @@ namespace AdeeboMeter
             try { if (minutes <= 0) { if (File.Exists(WatchFile)) { File.SetAttributes(WatchFile, FileAttributes.Normal); File.Delete(WatchFile); } return !File.Exists(WatchFile); } WriteWhole(WatchFile, minutes.ToString(CultureInfo.InvariantCulture) + "\n" + (list ?? "").Replace("\n", " ") + "\n"); return true; }
             catch (IOException e) { Program.Log("watch: " + e.Message); return false; } catch (UnauthorizedAccessException e) { Program.Log("watch: " + e.Message); return false; }
         }
+        // ---------- 1.1.6 Home's watch warnings: read from what the board and the calendar already wrote - Home never checks
+        static readonly Dictionary<string, DateTime> seenCerts = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        static string CertFile { get { return Path.Combine(Program.DataDir, "cert-dates.txt"); } }
+        // the calendar's last answer per site (host [tab] expiry, UTC), kept so Home can count the days without a handshake
+        static void SaveCerts()
+        {
+            lock (wk)
+            {
+                try
+                {
+                    foreach (var line in File.Exists(CertFile) ? File.ReadAllLines(CertFile).Take(500) : new string[0]) { var p = line.Split('\t'); DateTime d; if (p.Length == 2 && !seenCerts.ContainsKey(p[0]) && DateTime.TryParse(p[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out d)) seenCerts[p[0]] = d; }
+                    SafeFile.WriteText(CertFile, string.Join("\n", seenCerts.Take(500).Select(kv => kv.Key + "\t" + kv.Value.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture))));
+                }
+                catch (IOException) { } catch (UnauthorizedAccessException) { }
+            }
+        }
+        // sites whose certificate expires within `days` (or already has): host, expiry, when the calendar last looked
+        public static List<Tuple<string, DateTime>> CertsDue(int days, out DateTime checkedAt)
+        {
+            var o = new List<Tuple<string, DateTime>>(); checkedAt = DateTime.MinValue;
+            try
+            {
+                if (!File.Exists(CertFile)) return o; checkedAt = File.GetLastWriteTime(CertFile);
+                // Home paints this every second: the file is read again only when it changed (PC-pass review, 21 Nov)
+                lock (certCacheLock) if (certCache != null && certCacheAt == checkedAt && certCacheDays == days && certCacheDay == DateTime.Today) return new List<Tuple<string, DateTime>>(certCache);
+                foreach (var line in File.ReadAllLines(CertFile).Take(500)) { var p = line.Split('\t'); DateTime d; if (p.Length == 2 && DateTime.TryParse(p[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out d) && (d.ToLocalTime() - DateTime.Now).TotalDays <= days) o.Add(Tuple.Create(p[0], d.ToLocalTime())); }
+            }
+            catch (IOException) { } catch (UnauthorizedAccessException) { }
+            o = o.OrderBy(z => z.Item2).ToList();
+            lock (certCacheLock) { certCache = new List<Tuple<string, DateTime>>(o); certCacheAt = checkedAt; certCacheDays = days; certCacheDay = DateTime.Today; }
+            return o;
+        }
+        static readonly object certCacheLock = new object(); static List<Tuple<string, DateTime>> certCache; static DateTime certCacheAt, certCacheDay; static int certCacheDays;
+        // hosts the board found down at least `run` checks in a row, the newest check last: target, down since, how many
+        static string downKey = ""; static List<Tuple<string, DateTime, int>> downCache = new List<Tuple<string, DateTime, int>>();
+        public static List<Tuple<string, DateTime, int>> DownNow(int run)
+        {
+            try
+            {
+                var fi = new FileInfo(LogFile); if (!fi.Exists) return new List<Tuple<string, DateTime, int>>();
+                string key = fi.Length + "|" + fi.LastWriteTimeUtc.Ticks + "|" + run; lock (wk) if (key == downKey) return downCache;
+                string[] lines; using (var fs = new FileStream(LogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { if (fs.Length > 400000) fs.Seek(-400000, SeekOrigin.End); using (var sr = new StreamReader(fs)) lines = sr.ReadToEnd().Split('\n'); }
+                var last = new Dictionary<string, List<Tuple<DateTime, bool>>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var l in lines)
+                {
+                    var p = l.TrimEnd('\r').Split('\t'); DateTime t; if (p.Length < 3 || !DateTime.TryParseExact(p[0], "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out t)) continue;
+                    List<Tuple<DateTime, bool>> v; if (!last.TryGetValue(p[1], out v)) last[p[1]] = v = new List<Tuple<DateTime, bool>>(); v.Add(Tuple.Create(t, p[2] == "down"));
+                }
+                var o = new List<Tuple<string, DateTime, int>>();
+                foreach (var kv in last)
+                {
+                    int n = 0; DateTime since = DateTime.MinValue;
+                    for (int i = kv.Value.Count - 1; i >= 0 && kv.Value[i].Item2; i--) { n++; since = kv.Value[i].Item1; }
+                    if (n >= run && (DateTime.Now - kv.Value[kv.Value.Count - 1].Item1).TotalDays < 2) o.Add(Tuple.Create(kv.Key, since, n));   // two days old: a host nobody watches any more
+                }
+                lock (wk) { downKey = key; downCache = o.OrderBy(z => z.Item2).ToList(); return downCache; }
+            }
+            catch (IOException) { return new List<Tuple<string, DateTime, int>>(); } catch (UnauthorizedAccessException) { return new List<Tuple<string, DateTime, int>>(); }
+        }
         static void Log(string target, Knocks k) { Log(target, k, true); }
         static void Log(string target, Knocks k, bool auto)
         {
@@ -73,7 +132,10 @@ namespace AdeeboMeter
                     if (!File.Exists(LogFile)) return; string cut = DateTime.Now.AddDays(-35).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                     string first; using (var rd = new StreamReader(LogFile)) first = rd.ReadLine() ?? "";
                     if (string.CompareOrdinal(first, cut) >= 0 && new FileInfo(LogFile).Length < 2000000) return;
-                    WriteWhole(LogFile, string.Join("\n", File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToArray()) + "\n");
+                    // bug-hunt L-269: over 2 MB, the oldest lines go until it's 1.5 MB - so the next pass finds it small and leaves it alone
+                    var keep = File.ReadAllLines(LogFile).Where(l => string.CompareOrdinal(l, cut) >= 0).ToList(); long size = keep.Sum(l => (long)l.Length + 1); int drop = 0;
+                    while (size > 1500000 && drop < keep.Count) { size -= keep[drop].Length + 1; drop++; }
+                    WriteWhole(LogFile, string.Join("\n", keep.Skip(drop).ToArray()) + "\n");
                 }
                 catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
@@ -132,7 +194,9 @@ namespace AdeeboMeter
                 if (na == DateTime.MinValue) { rows.Add(R(3, h, "no certificate read (no TLS on port " + hp + ")", "", "m")); continue; }
                 var left = na - DateTime.Now; int days = left.Ticks < 0 ? -(int)Math.Ceiling(-left.TotalDays) : (int)Math.Floor(left.TotalDays);   // expired an hour ago = expired, not "0 days left"
                 got.Add(Tuple.Create(h, left.Ticks < 0 && days == 0 ? -1 : days, iss));
+                lock (wk) seenCerts[h] = na;
             }
+            SaveCerts();
             foreach (var g in got.OrderBy(z => z.Item2))
                 rows.Insert(rows.Count - rows.Count(r => r[2].StartsWith("no certificate", StringComparison.Ordinal)), R(g.Item2 < 0 ? 2 : g.Item2 < 14 ? 2 : g.Item2 < 30 ? 1 : 0, g.Item1, (g.Item2 < 0 ? "expired" + (g.Item2 <= -2 ? " " + (-g.Item2) + " days ago" : "") : g.Item2 == 0 ? "expires today" : "expires in " + g.Item2 + " days") + " · " + g.Item3, g.Item2 < 30 && g.Item2 >= 0 ? "Renew it now - automatic renewals usually run 30 days ahead; if this one didn't, check why." : "", "m"));
             return rows;
@@ -182,7 +246,7 @@ namespace AdeeboMeter
                     double renDrop = rTot > 0 ? 100 * rLag / rTot : double.NaN; bool rd = renDrop >= 1; if (rd) warn++;
                     rows.Add(R(double.IsNaN(renDrop) ? 3 : rd ? 1 : 0, "Lagged (rendering)", double.IsNaN(renDrop) ? "-" : renDrop.ToString("0.0", CultureInfo.InvariantCulture) + "% of frames" + (!double.IsNaN(fps) ? " · " + Math.Round(fps) + " fps" : ""), rd ? "The GPU is busy (often the game): cap the game's frame rate, or lower OBS's canvas." : "", "m"));
                     rows.Add(R(!double.IsNaN(cpu) && cpu > 80 ? 1 : 3, "OBS's CPU", double.IsNaN(cpu) ? "-" : Math.Round(cpu) + "%", "", "m"));
-                    rows.Add(R(3, "Your network right then", "upload " + SpeedTest.Mbps(s.Up) + " Mbps · router " + (double.IsNaN(s.GwMs) ? "-" : Math.Round(s.GwMs) + " ms") + " · internet " + Math.Round(s.Ping) + " ms", "", "m"));
+                    rows.Add(R(3, "Your network right then", "upload " + SpeedTest.Mbps(s.Up) + " Mbps · router " + (double.IsNaN(s.GwMs) ? "-" : Math.Round(s.GwMs) + " ms") + " · internet " + (double.IsNaN(s.Ping) ? "-" : Math.Round(s.Ping) + " ms")   /* L-270 */, "", "m"));
                     bool known = !double.IsNaN(netDrop) || !double.IsNaN(encDrop) || !double.IsNaN(renDrop);
                     rows.Insert(0, R(!known ? 3 : warn == 0 ? 0 : 1, "OBS link", !known ? "connected, but no frame counts yet - start streaming or recording, then run it again" : warn == 0 ? "connected - no drops worth worrying about" : warn + " thing" + (warn == 1 ? "" : "s") + " dropping frames - each has its cause below", "Only asks OBS; never starts, stops or changes anything.", "i"));
                 }

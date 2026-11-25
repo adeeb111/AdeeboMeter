@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AdeeboMeter
@@ -19,30 +20,35 @@ namespace AdeeboMeter
         internal static readonly int[] Zooms = { 80, 90, 100, 110, 125, 150, 175 };
         void ZoomBy(int dir)
         {
-            int i = Array.IndexOf(Zooms, Cfg.Zoom); if (i < 0) i = Array.IndexOf(Zooms, 100);
-            ZoomTo(Zooms[Math.Max(0, Math.Min(Zooms.Length - 1, i + dir))]);
+            // bug-hunt L-178: a size between the steps (120 from an imported file) moves to the next step in that direction, not to 100
+            int z = Cfg.Zoom, i = Array.IndexOf(Zooms, z);
+            if (i >= 0) ZoomTo(Zooms[Math.Max(0, Math.Min(Zooms.Length - 1, i + dir))]);
+            else ZoomTo(dir > 0 ? Zooms.Where(s => s > z).DefaultIfEmpty(Zooms.Last()).First() : Zooms.Where(s => s < z).DefaultIfEmpty(Zooms[0]).Last());
         }
+        bool zoomPending;
         void ZoomTo(int z)
         {
             if (z == Cfg.Zoom || ReopenAsked == null) return;
             Cfg.Zoom = z; Cfg.Save(); StartTab = tab;
             Program.Log("zoom " + z + "%");
+            if (zoomPending) return; zoomPending = true;   /* review 1.1.6 U4 #7: one rebuild for a burst of steps - it opens at the latest Cfg.Zoom */
             var a = ReopenAsked; BeginInvoke(a);   // after this click is done: the window closes and comes back at the new size
         }
         bool IsPopup(Control c) { return c == viewSheet || c == topMenu || c == buddySheet || c == pageMenu; }
 
         // ---------- the right-click menu: a small card at the mouse
         DB pageMenu; PopFilter pageFilter; readonly List<string[]> pageItems = new List<string[]>(); readonly List<Action> pageActs = new List<Action>();
+        internal void TouchZoom(int d) { ZoomBy(d); }   // a pinch (Touch.cs)
         void PageMenu(Control on, Point at)
         {
             pageItems.Clear(); pageActs.Clear();
             Action<string, string, Action> add = (t, k, a) => { pageItems.Add(new[] { t, k }); pageActs.Add(a); };
             add(L.T("Zoom in"), "Ctrl +", () => ZoomBy(1));
             add(L.T("Zoom out"), "Ctrl -", () => ZoomBy(-1));
-            add(L.T("Actual size") + "  (" + Cfg.Zoom + "%)", "Ctrl 0", () => ZoomTo(100));
+            add(L.T("Actual size") + (Cfg.Zoom != 100 ? "  (" + L.T("now") + " " + Cfg.Zoom + "%)" : ""), "Ctrl 0", () => ZoomTo(100));   // bug-hunt L-177: "now 125%" - the size you're at, not what this item gives
             add("-", "", null);
             add(L.T("Search"), "Ctrl K", OpenPalette);
-            add(L.T("Check again now"), "", () => { if (M != null) M.Nudge(); RefreshConns(true); Invalidate(true); });
+            add(L.T("Refresh readings"), "", () => { if (M != null) M.Nudge(); RefreshConns(true); Invalidate(true); });
             add(L.T("Save a picture of this window"), "", SaveWindowPicture);
             add("-", "", null);
             add(L.T("Report a bug"), "", () => ReportDialog("bug", ""));
@@ -57,7 +63,7 @@ namespace AdeeboMeter
             int w = Sc(270), h = Sc(16); foreach (var it in pageItems) h += it[0] == "-" ? Sc(11) : Sc(34);
             var p = PointToClient(on.PointToScreen(at));
             pageMenu.Bounds = new Rectangle(Math.Max(0, Math.Min(p.X, ClientSize.Width - w - Sc(6))), Math.Max(0, Math.Min(p.Y, ClientSize.Height - h - Sc(6))), w, h);
-            pageMenu.BackColor = header.BackColor; pageMenu.Visible = true; pageMenu.BringToFront(); pageMenu.Invalidate();
+            pageMenu.BackColor = header.BackColor; pageMenu.Visible = true; pageMenu.BringToFront(); pageMenu.Focus(); pageMenu.Invalidate();   // hunters10 M-3
             if (pageFilter == null) pageFilter = new PopFilter(this, () => pageMenu, () => Rectangle.Empty, HidePageMenu);
             Application.AddMessageFilter(pageFilter);
         }

@@ -34,7 +34,7 @@ namespace AdeeboMeter
             if (h.StartsWith("[", StringComparison.Ordinal) && rb > 0) { int p; if (!int.TryParse(h.Substring(rb + 2), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(1, rb - 1); }   // [2001:db8::1]:161
             else if (c > 0 && h.IndexOf(':') == c) { int p; if (!int.TryParse(h.Substring(c + 1), out p) || p < 1 || p > 65535) { err = "port must be 1-65535"; return false; } port = p; h = h.Substring(0, c); }
             if (h == "") { err = "type the device's address"; return false; }
-            IPAddress a; if (!IPAddress.TryParse(h.Trim('[', ']'), out a)) { try { a = Dns.GetHostAddresses(h).FirstOrDefault(); } catch { a = null; } }
+            IPAddress a; if (!IPAddress.TryParse(h.Trim('[', ']'), out a)) { try { a = Dns.GetHostAddresses(h).OrderBy(x => x.AddressFamily == global::System.Net.Sockets.AddressFamily.InterNetwork ? 0 : 1).FirstOrDefault(); } catch (global::System.Net.Sockets.SocketException) { a = null; } catch (ArgumentException) { a = null; }   /* bug-hunt ML-28: SNMP agents answer on IPv4 far more often; UDP has no handshake to try the next with */ }
             if (a == null) { err = "couldn't find " + h; return false; }
             ep = new IPEndPoint(a, port); return true;
         }
@@ -116,10 +116,10 @@ namespace AdeeboMeter
             var now = new IfSnap { At = DateTime.Now, Up = upt };
             foreach (var r in list) { now.P[r.i] = new[] { r.e1, r.e2, r.cr, r.d1, r.d2 }; now.Oper[r.i] = r.o; now.Name[r.i] = r.Name; var dv = V(disc, r.i); if (dv != null) now.Disc[r.i] = Snmp.Text(dv, "", null); }
             IfSnap old; string key = ep.ToString();
-            lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Clear(); ifSnaps[key] = now; }
+            lock (snapLock) { ifSnaps.TryGetValue(key, out old); if (old == null && ifSnaps.Count >= 20) ifSnaps.Remove(ifSnaps.OrderBy(z => z.Value.At).First().Key);   /* L-37: the oldest goes, not all 20 */ ifSnaps[key] = now; }
             if (old != null) Changes(rows, old, now);
             Missing(rows);
-            Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1000000000UL) + "G" : (v / 1000000UL) + "M";
+            Func<ulong, string> sps = v => v == 0 ? "-" : v >= 1000000000UL ? (v / 1e9).ToString("0.#", CultureInfo.InvariantCulture) + "G" : v >= 1000000UL ? (v / 1e6).ToString("0.#", CultureInfo.InvariantCulture) + "M" : (v / 1e3).ToString("0.#", CultureInfo.InvariantCulture) + "k";   /* hunt-5: 2.5G; round 6: 512k, not 0M */
             Table(rows, new[] { "Interface", "Admin", "Oper", "Speed", "In err", "Out err", "CRC", "In disc", "Out disc", "Description" },
                 list.Take(400).Select(r => new[] { r.Name, r.a, r.o, sps(r.sp), Nc(r.e1), Nc(r.e2), Nc(r.cr), Nc(r.d1), Nc(r.d2), r.Alias }).ToList(),
                 list.Take(400).Select(r => r.down || r.errs).ToList());

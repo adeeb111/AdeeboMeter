@@ -3,15 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>AdeeboLab · AdeeboMeter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2222%22%20height%3D%2222%22%20rx%3D%226%22%20fill%3D%22%231155E0%22/%3E%3Cpath%20d%3D%22M6%2015a6%206%200%200%201%2012%200%22%20fill%3D%22none%22%20stroke%3D%22%235EF2B0%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M12%2015l3-4%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
 <meta name="description" content="Draw your network, see the path a packet takes from your PC to a game, broker or stream, then break one thing and watch where it fails. Free, nothing is sent.">
 <style>
-:root{--page:#0B1426;--bar:#0E1A30;--card:#121F38;--line:#22355A;--ink:#E6EAF0;--sub:#93A6C6;--mute:#7D90B0;--blue:#2F7BF6;--blue-s:#1E3E78;--red:#F26464;--amber:#F2B23C;--green:#3FB950;--purple:#C9A7FF;--dot:#1A2B4A}
-:root[data-theme="light"]{--page:#F7F9FC;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE3EC;--ink:#1B2330;--sub:#4A5568;--mute:#6B7685;--blue:#1F6FEB;--blue-s:#E8F0FE;--red:#CF222E;--amber:#B07A00;--green:#2DA44E;--purple:#8250DF;--dot:#D5DDE8}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
+/* 24 Nov: the site's graphite and the logo's colours (base.css), not the old navy */
+:root{--page:#111316;--bar:#15181C;--card:#181B20;--line:#262A31;--ink:#EEF1F5;--sub:#A9B1BD;--mute:#7E8794;--blue:#3B7BF5;--blue-s:#1A2A4A;--red:#FF7A6B;--amber:#FCD34D;--green:#5EF2B0;--purple:#C9A7FF;--dot:#22262D}
+:root[data-theme="light"]{--page:#F1F3F6;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE1E7;--ink:#16191E;--sub:#4B5360;--mute:#5A6270;--blue:#1155E0;--blue-s:#E8EFFC;--red:#B42318;--amber:#875A00;--green:#17794F;--purple:#6D4BD8;--dot:#D3D8DF}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:14px/1.45 "Segoe UI",Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:500 14px/1.45 "Barlow","Segoe UI",system-ui,-apple-system,sans-serif;overflow:hidden}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 #top{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bar);border-bottom:1px solid var(--line)}
@@ -59,7 +61,7 @@ body.break #zoom{top:auto;bottom:80px}
 #home{position:absolute;top:56px;left:0;right:0;bottom:0;background:var(--page);overflow-y:auto;z-index:15;display:none;padding:26px clamp(16px,4vw,48px) 40px}
 body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
 #home h1{margin:0;font-size:26px}#home h1 b{color:var(--blue)}#home .lead{color:var(--sub);margin:4px 0 22px;max-width:720px}
-#home h2{font-size:12px;letter-spacing:.08em;color:var(--mute);margin:26px 0 10px;font-weight:800}
+#home h2{font-size:15px;color:var(--sub);margin:26px 0 10px;font-weight:700}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
 .tile{position:relative;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px;min-height:150px;display:flex;flex-direction:column;gap:6px;transition:transform .12s,border-color .12s,box-shadow .12s}
 .tile:hover:not([aria-disabled="true"]),.tile:focus-visible{transform:translateY(-2px);border-color:var(--blue);box-shadow:0 10px 26px -14px rgba(0,0,0,.55);outline:none}
@@ -97,8 +99,9 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  <div class="menu"><button class="b" id="exBtn" aria-haspopup="true" aria-expanded="false">Examples</button><div id="exMenu" hidden></div></div>
  <div class="menu"><button class="b p" id="fileBtn" aria-haspopup="true" aria-expanded="false">File</button><div id="fileMenu" hidden>
   <button data-f="new">New drawing</button><button data-f="open">Open a lab file…</button><button data-f="save">Save as lab file (.json)</button>
-  <small>EXPORT</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
+  <small>Export</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
  <button class="b i" id="theme" title="Light / dark" aria-label="Light or dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <a class="b" id="getApp" href="/" hidden>AdeeboMeter</a>
  <input type="file" id="openFile" accept=".json,application/json" hidden>
 </header>
 <div id="wrap">
@@ -123,10 +126,10 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
 <section id="home" aria-label="AdeeboLab start page">
  <h1>Adeebo<b>Lab</b></h1>
  <p class="lead">Draw a network, or let AdeeboMeter draw yours - then break one thing and watch where the packet stops. Everything stays on this PC.</p>
- <h2>START</h2><div class="tiles" id="hStart"></div>
- <h2>YOUR NETWORK, AS ADEEBOMETER SEES IT</h2><div class="tiles" id="hViews"></div>
- <h2 id="hMineH">YOUR DIAGRAMS</h2><div class="tiles" id="hMine"></div>
- <h2>EXAMPLES</h2><div class="tiles" id="hEx"></div>
+ <h2>Start</h2><div class="tiles" id="hStart"></div>
+ <h2>Your network, as AdeeboMeter sees it</h2><div class="tiles" id="hViews"></div>
+ <h2 id="hMineH">Your diagrams</h2><div class="tiles" id="hMine"></div>
+ <h2>Examples</h2><div class="tiles" id="hEx"></div>
 </section>
 <script>
 "use strict";
@@ -228,11 +231,11 @@ function valid(d){
   o.cut = Math.max(0, (d.nodes || []).length - 300) + Math.max(0, (d.links || []).length - 600) + Math.max(0, (d.areas || []).length - 60) + Math.max(0, (d.texts || []).length - 200) + Math.max(0, (d.ink || []).length - 200);
   d.nodes.slice(0, 300).forEach(n => { if (!n || ids.has(String(n.id))) return; const id = clean(n.id) || uid("n"); ids.add(id);
     o.nodes.push({id, k: G[n.k] || n.k === "router" ? n.k : "pc", name: clean(n.name), sub: clean(n.sub), ms: clean(n.ms), st: /^(typ|bad|warn|you)$/.test(n.st) ? n.st : "",
-                  info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0}); });
+                  info: String(n.info || "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").slice(0, 400), x: +n.x || 0, y: +n.y || 0, sc: Math.max(.5, Math.min(3, +n.sc || 1))}); });
   (d.links || []).slice(0, 600).forEach(l => { if (l && ids.has(String(l.a)) && ids.has(String(l.b))) o.links.push({id: clean(l.id) || uid("l"), a: String(l.a), b: String(l.b),
     kind: LINKS[l.kind] ? l.kind : "cable", label: clean(l.label)}); });
   (d.areas || []).slice(0, 60).forEach(a => { if (a) o.areas.push({id: clean(a.id) || uid("a"), x: +a.x || 0, y: +a.y || 0, w: Math.max(40, +a.w || 0), h: Math.max(40, +a.h || 0), t: clean(a.t)}); });
-  (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t)}); });
+  (d.texts || []).slice(0, 200).forEach(t => { if (t) o.texts.push({id: clean(t.id) || uid("t"), x: +t.x || 0, y: +t.y || 0, t: clean(t.t), fs: Math.max(9, Math.min(72, +t.fs || 14))}); });
   (d.ink || []).slice(0, 200).forEach(s => { if (s && Array.isArray(s.p)) o.ink.push({id: clean(s.id) || uid("i"), p: pairs(s.p.slice(0, 2000))}); });
   return o;
 }
@@ -256,10 +259,12 @@ const node = id => doc.nodes.find(n => n.id === id);
 function nodeColor(n, C){ return n.st === "bad" ? C.red : n.st === "warn" ? C.amber : n.st === "typ" ? C.mute : n.st === "you" ? C.purple : C.ink; }
 // dragging fires pointermove 100+ times a second: draw at most once per screen frame (the TopoDraw lesson, 21 Nov)
 let drawQ = 0;
+function placeWorld(){ const w = $("#world"); if (w) w.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.z})`); gridAt(); }
+function gridAt(){ const st = $("#stage"), z = Math.max(.25, view.z); if (!st) return; st.style.backgroundSize = (20 * z) + "px " + (20 * z) + "px"; st.style.backgroundPosition = view.x + "px " + view.y + "px"; }
 function drawSoon(){ if (drawQ) return; drawQ = requestAnimationFrame(() => { drawQ = 0; draw(); }); }
 function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
   const C = COL(), svg = $("#svg"); svg.textContent = "";
-  const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g);
+  const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g); gridAt();
   doc.areas.forEach(a => { const s = sel && sel.t === "area" && sel.id === a.id;
     g.appendChild(el("g", {"data-t": "area", "data-id": a.id}, [el("rect", {x: a.x, y: a.y, width: a.w, height: a.h, rx: 14, fill: "transparent", stroke: s ? C.blue : C.mute, "stroke-width": s ? 2 : 1.4, "stroke-dasharray": "6 5"}),
       txt(a.x + 12, a.y + 20, a.t, {"text-anchor": "start", fill: C.sub, "font-size": 12.5, "font-weight": 600}),
@@ -288,9 +293,13 @@ function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
       kids.push(txt(n.x, y, n.ms, {fill: n.st === "bad" ? C.red : n.st === "warn" ? C.amber : C.sub, "font-size": 11.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"})); }
     if (linkFrom === n.id) kids.push(el("circle", {cx: n.x, cy: n.y, r: 34, fill: "none", stroke: C.blue, "stroke-width": 2, "stroke-dasharray": "4 4"}));
     if (n.info) { const t = el("title"); t.textContent = n.info; kids.unshift(t); }
-    g.appendChild(el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, kids)); });
-  doc.texts.forEach(t => { const s = sel && sel.id === t.id;
-    g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": 14, "data-t": "text", "data-id": t.id, style: "cursor:move"})); });
+    const sc = n.sc || 1, ng = el("g", {"data-t": "node", "data-id": n.id, style: "cursor:pointer"}, [el("g", {transform: sc === 1 ? null : `translate(${n.x} ${n.y}) scale(${sc}) translate(${-n.x} ${-n.y})`}, kids)]);
+    if (s && mode === "draw") { const hx = n.k === "router" ? n.x + sc * Math.max(104, Math.min(240, Math.max(textW(n.name, 12.5), textW(n.sub || "", 10.5)) + 22)) / 2 : n.x + 26 * sc, hy = n.y + (n.k === "router" ? (n.sub ? 20 : 10) : 20) * sc;
+      ng.appendChild(el("rect", {x: hx - 6, y: hy - 6, width: 12, height: 12, rx: 3, fill: C.blue, "data-t": "nresize", "data-id": n.id, style: "cursor:nwse-resize"})); }   /* 1.1.6: drag the corner to make a device bigger or smaller, like TopoDraw */
+    g.appendChild(ng); });
+  doc.texts.forEach(t => { const s = sel && sel.id === t.id, fs = t.fs || 14;
+    g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": fs, "data-t": "text", "data-id": t.id, style: "cursor:move"}));
+    if (s && mode === "draw") g.appendChild(el("rect", {x: t.x + textW(t.t, fs) + 4, y: t.y - 4, width: 12, height: 12, rx: 3, fill: C.blue, "data-t": "tresize", "data-id": t.id, style: "cursor:ew-resize"})); });   /* drag it to make the text bigger or smaller */
   if (pk.dot) g.appendChild(pk.dot(C));
   $("#undo").disabled = !undo.length; $("#redo").disabled = !redo.length;
 }
@@ -302,8 +311,9 @@ function persist(){ clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 function saveNow(){ clearTimeout(saveT); saveT = 0; if (!doc.fid) doc.fid = uid("f").slice(0, 21); const one = store.set(KEY, JSON.stringify(doc)), lib = one && keepSoon(doc);
   $("#saved").textContent = !one ? "Not saved - this browser's storage is off or full" : lib === false ? "Saved - but Your diagrams is full (delete some)" : "Saved in this browser"; }
 let keepT = 0, keepDoc = null;
-function keepSoon(d){ keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
-window.addEventListener("pagehide", () => { if (saveT) saveNow(); if (keepDoc) keep(keepDoc); });   /* the last edit is written even if the window closes within 300 ms */
+function keepSoon(d){ if (keepDoc && keepDoc !== d && keepDoc.fid !== d.fid) keep(keepDoc); keepDoc = d; clearTimeout(keepT); keepT = setTimeout(() => { if (keepDoc && !keep(keepDoc)) $("#saved").textContent = "Saved - but Your diagrams is full (delete some)"; keepDoc = null; }, 3000); return true; }   /* the library is rewritten after a pause, not on every edit */
+function flushSaves(){ if (saveT) saveNow(); if (keepDoc) { clearTimeout(keepT); keep(keepDoc); keepDoc = null; } }   /* hunt-5: an edit made just before switching drawings is written first, not lost */
+window.addEventListener("pagehide", flushSaves);   /* the last edit is written even if the window closes within 300 ms */
 /* ---------- your diagrams: every drawing you change is kept here (this browser only), newest first */
 function files(){ try { const l = JSON.parse(store.get(FILES) || "[]"); return Array.isArray(l) ? l.filter(f => f && f.id && f.doc) : []; } catch (e) { return []; } }
 function keep(d){ const l = files().filter(f => f.id !== d.fid); l.unshift({id: d.fid, name: d.name, t: Date.now(), doc: d}); return store.set(FILES, JSON.stringify(l.slice(0, 40))); }
@@ -323,7 +333,7 @@ function buildTools(){
     b.appendChild(s); b.appendChild(document.createTextNode(x[1]));
     b.onclick = () => { tool = x[0]; linkFrom = null; buildTools(); hint(); draw(); }; t.appendChild(b); });
 }
-function hint(){ const h = {select: "Drag to move · double-click to rename · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
+function hint(){ const h = {select: "Drag to move · double-click (or F2) to rename · drag the blue corner to resize · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
   pen: "Drag to draw", delete: "Click anything to remove it"}[tool] || (tool.startsWith("l:") ? (linkFrom ? "Now click the second box" : "Click the first box, then the second") : "Click to place it - double-click to rename");
   $("#hint").textContent = h; }
 
@@ -335,8 +345,13 @@ let drag = null;
 stage.addEventListener("pointerdown", e => {
   if (e.button > 0 || e.target.closest("#zoom,#play,#say,#edit")) return;
   hideEdit(); const p = pt(e), h = hit(e); stage.setPointerCapture(e.pointerId);
+  /* 1.1.6 test day: double-click to rename never fired - the pointer capture above makes the browser aim the dblclick at the stage,
+     and the redraw between the clicks replaces the element. Two quick presses on the same thing are the double-click instead. */
+  const dk = h ? h.t + ":" + h.id : "", now = Date.now();
+  if (mode === "draw" && tool === "select" && h && dk === lastDown.k && now - lastDown.t < 450) { lastDown = {k: "", t: 0}; renameHit(h); return; }
+  lastDown = {k: dk, t: now};
   if (mode === "break") { drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; return; }
-  if (tool === "delete") { if (h && h.t !== "resize") change(() => remove(h)); return; }
+  if (tool === "delete") { if (h && !h.t.endsWith("resize")) change(() => remove(h)); return; }
   if (tool.startsWith("l:")) { if (h && h.t === "node") { if (!linkFrom) { linkFrom = h.id; draw(); } else if (linkFrom !== h.id) { const a = linkFrom; linkFrom = null;
       change(() => doc.links.push({id: uid("l"), a, b: h.id, kind: tool.slice(2), label: ""})); } } hint(); return; }
   if (tool === "text") { const t = {id: uid("t"), x: p.x, y: p.y, t: "Text"}; change(() => doc.texts.push(t)); sel = {t: "text", id: t.id}; editAt(t, "t"); return; }
@@ -344,6 +359,8 @@ stage.addEventListener("pointerdown", e => {
   if (tool === "pen") { undo.push(JSON.stringify(doc)); redo = []; const s = {id: uid("i"), p: [Math.round(p.x), Math.round(p.y)]}; doc.ink.push(s); drag = {ink: s}; return; }
   if (tool !== "select" && (!h || h.t === "area")) { const n = {id: uid("n"), k: tool, name: (TOOLS.find(x => x && x[0] === tool) || [0, "Device"])[1], sub: "", st: doc.measured ? "you" : "", x: Math.round(p.x / 10) * 10, y: Math.round(p.y / 10) * 10};
     change(() => doc.nodes.push(n)); sel = {t: "node", id: n.id}; tool = "select"; buildTools(); hint(); draw(); return; }
+  if (h && h.t === "nresize") { const n = node(h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {nres: n, d0: Math.max(8, Math.hypot(p.x - n.x, p.y - n.y)), s0: n.sc || 1}; return; }
+  if (h && h.t === "tresize") { const t = doc.texts.find(x => x.id === h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {tres: t, x0: t.x, f0: t.fs || 14, w0: Math.max(10, textW(t.t, t.fs || 14))}; return; }
   if (h && h.t === "resize") { const a = doc.areas.find(x => x.id === h.id); undo.push(JSON.stringify(doc)); redo = []; drag = {resize: a, sx: p.x, sy: p.y, w: a.w, h: a.h}; return; }
   if (h && (h.t === "node" || h.t === "text" || h.t === "area")) { sel = h; const o = h.t === "node" ? node(h.id) : h.t === "text" ? doc.texts.find(x => x.id === h.id) : doc.areas.find(x => x.id === h.id);
     undo.push(JSON.stringify(doc)); redo = []; drag = {move: o, sx: p.x, sy: p.y, ox: o.x, oy: o.y, moved: false}; draw(); return; }
@@ -351,23 +368,34 @@ stage.addEventListener("pointerdown", e => {
   sel = null; drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; draw();
 });
 stage.addEventListener("pointermove", e => { if (!drag) return; const p = pt(e);
-  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; drawSoon(); }
-  else if (drag.move) { const snap = v => e.shiftKey ? v : Math.round(v / 10) * 10; drag.move.x = snap(drag.ox + p.x - drag.sx); drag.move.y = snap(drag.oy + p.y - drag.sy); drag.moved = true; drawSoon(); }
+  /* 1.1.6 test day: "doesn't follow my mouse well" - a pan now only moves the picture (no redraw), the dot grid moves with it,
+     and a dragged thing sits exactly under the pointer; it snaps to the 10 px grid when you let go (hold Shift to place it freely) */
+  if (drag.pan) { view.x = drag.vx + e.clientX - drag.sx; view.y = drag.vy + e.clientY - drag.sy; placeWorld(); }
+  else if (drag.move) { drag.move.x = drag.ox + p.x - drag.sx; drag.move.y = drag.oy + p.y - drag.sy; drag.moved = true; drag.shift = e.shiftKey; drawSoon(); }
+  else if (drag.nres) { drag.nres.sc = Math.round(Math.max(.5, Math.min(3, drag.s0 * Math.hypot(p.x - drag.nres.x, p.y - drag.nres.y) / drag.d0)) * 20) / 20; drawSoon(); }
+  else if (drag.tres) { drag.tres.fs = Math.round(Math.max(9, Math.min(72, drag.f0 * Math.max(10, p.x - drag.x0) / drag.w0))); drawSoon(); }
   else if (drag.resize) { drag.resize.w = Math.max(60, Math.round(drag.w + p.x - drag.sx)); drag.resize.h = Math.max(50, Math.round(drag.h + p.y - drag.sy)); drawSoon(); }
   else if (drag.ink) { drag.ink.p.push(Math.round(p.x), Math.round(p.y)); if (drag.ink.p.length > 4000) drag.ink.p.length = 4000; drawSoon(); }
   else if (drag.area) { if (!drag.a) { undo.push(JSON.stringify(doc)); redo = []; drag.a = {id: uid("a"), x: 0, y: 0, w: 0, h: 0, t: "Area"}; doc.areas.push(drag.a); }
     Object.assign(drag.a, {x: Math.round(Math.min(p.x, drag.x0)), y: Math.round(Math.min(p.y, drag.y0)), w: Math.round(Math.abs(p.x - drag.x0)), h: Math.round(Math.abs(p.y - drag.y0))}); drawSoon(); } });
 stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.move && !drag.moved) undo.pop();
-  if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();   /* a click on the handle isn't an undo step */
+  if (drag.move && drag.moved && !drag.shift) { drag.move.x = Math.round(drag.move.x / 10) * 10; drag.move.y = Math.round(drag.move.y / 10) * 10; }
+  if (drag.move && drag.moved && drag.shift) { drag.move.x = Math.round(drag.move.x); drag.move.y = Math.round(drag.move.y); }
+  if (drag.resize && drag.resize.w === drag.w && drag.resize.h === drag.h) undo.pop();
+  if (drag.nres && (drag.nres.sc || 1) === drag.s0) undo.pop(); if (drag.tres && (drag.tres.fs || 14) === drag.f0) undo.pop();   /* a click on the handle isn't an undo step */
   if (drag.area && drag.a) { if (drag.a.w < 30 || drag.a.h < 30) { doc.areas.pop(); undo.pop(); } else { sel = {t: "area", id: drag.a.id}; editAt(drag.a, "t"); } }
   if (drag.ink && drag.ink.p.length < 6) { doc.ink.pop(); undo.pop(); }
   if (!drag.pan) { persist(); draw(); } drag = null; });
-stage.addEventListener("dblclick", e => { if (mode !== "draw") return; const h = hit(e); if (!h) return;
+let lastDown = {k: "", t: 0};
+function renameHit(h){ sel = h; draw();
   if (h.t === "node") editAt(node(h.id), "name"); else if (h.t === "text") editAt(doc.texts.find(x => x.id === h.id), "t");
-  else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); });
+  else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); }
+stage.addEventListener("dblclick", e => { if (mode !== "draw" || editing) return; const h = hit(e); if (h) renameHit(h); });   /* a real dblclick still works where the browser delivers one */
+/* F2 renames what's selected, from the keyboard */
+document.addEventListener("keydown", e => { if (e.key === "F2" && sel && mode === "draw" && !(e.target.closest && e.target.closest("input,select"))) { e.preventDefault(); renameHit(sel); } });
 stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z = Math.min(3, Math.max(.25, view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
-  view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }, {passive: false});
+  view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; placeWorld(); }, {passive: false});   /* the wheel only rescales the picture - smooth under the pointer */
 function zoomBy(f){ const r = stage.getBoundingClientRect(), mx = r.width / 2, my = r.height / 2, z = Math.min(3, Math.max(.25, view.z * f)); view.x = mx - (mx - view.x) * z / view.z; view.y = my - (my - view.y) * z / view.z; view.z = z; draw(); }
 $("#zIn").onclick = () => zoomBy(1.2); $("#zOut").onclick = () => zoomBy(1 / 1.2); $("#zFit").onclick = () => fit();
 function bounds(){ let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const add = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
@@ -501,10 +529,10 @@ function setMode(m){ mode = m; document.body.classList.toggle("break", m === "br
 $("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
 
 /* ---------- the start page: new, open, AdeeboMeter's own drawings of your network, your diagrams, examples */
-function openDoc(d, title){ document.body.classList.remove("home"); if (mode === "break") setMode("draw");
+function openDoc(d, title){ flushSaves(); document.body.classList.remove("home"); if (mode === "break") setMode("draw");
   sel = null; linkFrom = null; undo = []; redo = []; doc = d; $("#name").value = doc.name; accessUi(); buildTools(); hint(); $("#say").className = ""; draw(); setTimeout(fit, 0);
   if (title && doc.note) say(title, " " + doc.note, false); $("#saved").textContent = doc.fid ? "Saved in this browser" : ""; }
-function showHome(){ if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
+function showHome(){ flushSaves(); if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
 $("#homeBtn").onclick = showHome;
 const VIEWS = [["lan", "See my LAN", "cpe", "Every device on your network - address, MAC and maker (up to 50 drawn)"],
   ["path", "Path to anywhere", "internet", "Your last trace or MTR, hop by hop, red where loss is real"],
@@ -546,6 +574,7 @@ function openView(k){ const d = valid(AMV && AMV[k]); if (!d) return; d.measured
 
 /* ---------- go */
 if (location.protocol === "file:") { const br = document.querySelector("a.brand"); if (br) { br.removeAttribute("href"); br.style.cursor = "default"; } }   /* in the app's window "/" is the drive's root, not the website */
+if (location.protocol === "https:") { const ga = $("#getApp"); ga.hidden = false; ga.textContent = "Download AdeeboMeter"; ga.href = "/#install"; }   // hunters14 SITE-L1: on the website the Lab offers the app and the way back to the site; inside the app it doesn't
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
 const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qArg = (location.search.match(/[?&]arg=([A-Za-z0-9_-]{1,40})/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);

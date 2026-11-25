@@ -1,0 +1,107 @@
+# AdeeboMeter buddy lines - Space saga persona (our own lines; no film names or quotes). key|text.
+app.open|Sistemas en línea, {addr}. Escáneres barriendo la red.
+app.open|La computadora de a bordo despierta. Todos los puestos informan.
+all.good|Todos los sistemas nominales. La flota se mantiene.
+all.good|Espacio despejado. Sin anomalías.
+all.good|Escudos arriba, motores en verde, red tranquila.
+pc.busy|El núcleo de tu nave se sobrecalienta. CPU al {v}.
+pc.busy|Computadora de a bordo sobrecargada. Las comunicaciones están bien.
+pc.busy|La energía del PC está al máximo. Apaga un subsistema.
+wifi.drops|Tu enlace Wi-Fi cayó {v} veces. ¿Tormenta de iones cerca?
+wifi.drops|{v} pérdidas de señal. Acerca la nave a la baliza.
+net.none|Sin señal. A la deriva en la oscuridad, {addr}.
+net.none|Comunicaciones caídas. Reconecta el cable de atraque.
+inet.slow|Tu nave está bien. Lentitud en los sectores exteriores.
+inet.slow|Sistemas locales en verde. El repetidor del proveedor es lento.
+inet.slow|El retraso empieza tras tu router. Problema del control de sector.
+busy|Calculando el salto... {v}
+busy|Explorando la ruta.
+busy|Ejecutando diagnósticos, {addr}.
+idle|Manteniendo posición. Todo tranquilo.
+idle|Exploración de largo alcance: nada nuevo.
+idle|Espacio en silencio. Sigo vigilando.
+search.empty|Declara tu misión, {addr}.
+search.empty|¿Qué sector necesita exploración?
+freeze|Redirigiendo energía ({v}). En espera.
+freeze|La computadora de vuelo se pone al día ({v}).
+speedrunner|Con calma, piloto. Aún proceso el último salto.
+speedrunner|Un salto a la vez.
+back.again|Bienvenido a bordo. {v} eventos registrados.
+back.again|De vuelta en el puente. Aquí está el registro.
+dns.slow|Las cartas estelares cargan lentas: DNS al {v}.
+dns.slow|Las consultas de nombres tardan {v}. El archivo es lento.
+speed.great|{v} de descarga. Velocidad hiperespacial.
+speed.great|Descarga {v}. Motor de salto activado.
+speed.bloat|Rápido, pero el retraso salta {v} con carga. Atasco en órbita.
+speed.bloat|La velocidad máxima es buena. Los carriles ocupados te retrasan {v}.
+game.lag|La turbulencia es tu Wi-Fi, no la estación lejana.
+game.lag|El servidor está estable. Tu Wi-Fi tiembla.
+game.good|Ping {v}. Autorizado para despegar.
+game.good|Señal estable. Vuela bien, {addr}.
+vpn.on|Dispositivo de ocultación activado. VPN activa.
+vpn.on|Tráfico dirigido por un repetidor oculto.
+vpn.slow|El repetidor añade {v}. Un largo rodeo.
+vpn.slow|El desvío VPN cuesta {v}.
+portal|Este puerto exige permiso de atraque. Inicia sesión primero.
+portal|El Wi-Fi de la estación pide credenciales.
+gw.down|Baliza de casa en silencio. Reinicia tu router.
+gw.down|Sin respuesta del router. Revisa sus luces.
+isp.down|Tu nave está bien. La red de repetidores está caída.
+isp.down|Sistemas de casa en verde. Proveedor sin conexión.
+mtu.small|Carga demasiado grande para la escotilla. MTU {v}.
+mtu.small|Los paquetes grandes no caben por la esclusa. MTU {v}.
+port.open|El hangar {v} está abierto.
+port.open|{v} respondió a nuestro llamado.
+port.closed|{v} ignoró nuestro llamado.
+port.closed|El hangar {v} está sellado.
+cert.ok|Transpondedor verificado. Certificado válido.
+cert.ok|Identidad confirmada. El candado es real.
+cert.expired|Su permiso caducó el {v}.
+cert.expired|Código de transpondedor caducado {v}.
+sec.ok|Integridad del casco: perfecta. Revisión superada.
+sec.ok|Sin brechas.
+sec.issue|{v} brechas en el casco. Repáralas.
+sec.issue|El escaneo de seguridad halló {v} puntos débiles.
+mtr.lossy|Pérdida de señal desde el repetidor {v}.
+mtr.lossy|Los paquetes se pierden cerca del salto {v}. Campo de asteroides.
+mtr.clean|Ruta despejada, cada repetidor.
+mtr.clean|Sin pérdidas en todo el salto.
+devices.found|{v} naves en tu espacio.
+devices.found|Los escáneres muestran {v} dispositivos.
+encrypt.done|Mensaje codificado. Solo ellos podrán leerlo.
+encrypt.done|Transmisión cifrada.
+decrypt.done|Mensaje decodificado. Sin alterar.
+decrypt.done|Decodificado y verificado.
+points.earned|+{v} puntos. Ascenso pendiente.
+points.earned|+{v}. Tu rango sube, piloto.
+award|500 puntos. Ceremonia de medallas: el Premio Adeebo.
+award|Premio Adeebo ganado. La flota te saluda.
+late.night|Ciclo nocturno. Puente aún con personal.
+late.night|Turno tardío en el puente.
+morning|Ciclo matutino. Noche tranquila en órbita.
+morning|Buenos días, {addr}. Sin incidentes esta noche.
+update.suspect|Sistemas degradados tras la actualización del {v}.
+update.suspect|Los problemas empezaron tras la actualización {v}.
+call.on|Holo-llamada activa. Vigilando la señal.
+call.on|Canal de comunicaciones abierto. Vigilo la calidad.
+quiz.right|Objetivo fijado. Correcto.
+quiz.wrong|Fuera de curso, {addr}. Ajusta y reintenta.
+game.streak|{v} seguidas: motor hiperespacial activado.
+game.timeup|Reloj de misión agotado.
+market.open|Las estaciones de comercio están en línea.
+storm.near|Tormenta de iones cercana: la señal podría degradarse.
+# 1.1.6 - streaming, trading and views
+stream.on|Transmisión de {v} clara, capitán.
+stream.on|La señal del stream se mantiene estable.
+stream.dip|La señal del stream parpadeó. {v}
+stream.dip|Interferencia en el stream. {v}
+stream.none|Sin transmisión en el stream.
+stream.none|Canal de stream en silencio. Escaneando.
+trade.ok|El enlace con la estación del bróker es fuerte.
+trade.ok|Canal del bróker abierto y rápido.
+trade.slow|El canal del bróker se retrasa. Mantengan posición.
+trade.slow|Enlace lento con la estación del bróker. {v}
+trade.closed|Estación del mercado fuera de línea hasta las 9:30.
+trade.closed|Puerto de trading cerrado. Atracados hasta las 9:30.
+view.switch|Pasando el puente a {v}.
+view.switch|Pantalla {v} en línea.

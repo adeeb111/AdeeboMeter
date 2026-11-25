@@ -1,0 +1,92 @@
+# AdeeboMeter buddy lines - Gen-Z persona. Light slang, never forced. key|text.
+app.open|Hey {addr}, मैं on it हूँ। नेटवर्क watch चालू।
+app.open|हम so back हैं। तुम्हारा नेटवर्क देख रहा हूँ।
+all.good|सब green है। Vibes एकदम immaculate हैं।
+all.good|कोई दिक्कत नहीं। तुम्हारा setup lowkey elite है।
+all.good|सब कुछ चल रहा है। Rare W है।
+pc.busy|तुम्हारा PC cooked है। CPU {v} पर है।
+pc.busy|ये PC है, Wi-Fi नहीं। एक-दो टैब बंद कर दो।
+pc.busy|PC पर बहुत लोड है। उसे ब्रेक दो।
+wifi.drops|Wi-Fi ने आज तुम्हें {v} बार ghost कर दिया।
+wifi.drops|{v} ड्रॉप। राउटर बहुत flaky हो रहा है।
+net.none|कोई नेटवर्क नहीं। केबल लगाओ या Wi-Fi चुनो।
+net.none|ऑफलाइन। ये vibe नहीं है।
+inet.slow|तुम्हारा राउटर ठीक है। प्रोवाइडर ही दिक्कत है, fr।
+inet.slow|होम नेटवर्क ने ate किया। आगे का इंटरनेट नहीं।
+inet.slow|तुम्हारी गलती नहीं। स्लोडाउन राउटर के आगे है।
+busy|Cooking हो रहा है... {v}
+busy|On it हूँ, एक sec दो।
+busy|लोड हो रहा है, एक sec।
+idle|अभी भी यहीं हूँ। Chilling कर रहा हूँ।
+idle|कुछ नया नहीं। Quiet era है।
+idle|मेरी तरफ सब quiet है।
+search.empty|Issue क्या है, {addr}?
+search.empty|जैसे text करते हो, वैसे लिखो: "wifi slow"।
+freeze|एक sec ({v})। Catch up कर रहा हूँ।
+freeze|खुद ही lag कर रहा हूँ ({v})। Brb।
+speedrunner|Speedrun any%? अभी पिछले वाले पर हूँ।
+speedrunner|Easy, मैं अभी वो खत्म कर रहा हूँ।
+back.again|तुम वापस आ गए! {v} चीज़ें हुईं।
+back.again|Welcome back। ये रही tea।
+dns.slow|DNS slow है, {v}। यही देरी है।
+dns.slow|लुकअप में {v} लगता है। Mid DNS सर्वर है।
+speed.great|{v} डाउन। स्पीड insane है।
+speed.great|डाउनलोड {v}। Honestly elite है।
+speed.bloat|तेज़ है, पर कोई डाउनलोड करे तो {v} lag होता है। Not ideal।
+speed.bloat|भीड़ तक तेज़ है। फिर +{v}।
+game.lag|लैग तुम्हारे Wi-Fi का है, सर्वर का नहीं। केबल लगाओ।
+game.lag|सर्वर ठीक है। Wi-Fi fumbling कर रहा है।
+game.good|पिंग {v}। तुम पूरी तरह ready हो।
+game.good|कनेक्शन clean है। Go off।
+vpn.on|VPN on है। Incognito mode।
+vpn.on|VPN से चल रहा है।
+vpn.slow|VPN {v} जोड़ देता है। यही lag है।
+vpn.slow|VPN टैक्स {v} है।
+portal|ये Wi-Fi पहले साइन इन चाहता है।
+portal|पहले साइन-इन पेज। होटल Wi-Fi वाली बात है।
+gw.down|राउटर जवाब नहीं दे रहा। रीस्टार्ट करो।
+gw.down|तुम्हारा राउटर ऑफलाइन हो गया।
+isp.down|राउटर ठीक है। प्रोवाइडर डाउन है। उनका big L है।
+isp.down|इंटरनेट प्रोवाइडर पर गया है, तुम पर नहीं।
+mtu.small|बड़े पैकेट फिट नहीं होते। MTU {v} है।
+mtu.small|MTU {v}। पैकेट रास्ते के लिए बड़े हैं।
+port.open|{v} खुला है।
+port.open|{v} ने जवाब दिया। Love that।
+port.closed|{v} ने तुम्हें on read छोड़ दिया।
+port.closed|{v} बंद है।
+cert.ok|सर्टिफिकेट legit है।
+cert.ok|ताला चेक हो गया।
+cert.expired|उनका सर्टिफिकेट {v} को एक्सपायर हो गया। अच्छा नहीं लगा।
+cert.expired|{v} से एक्सपायर है। उनकी गलती है।
+sec.ok|सिक्योरिटी चेकअप पास हो गया। Locked in।
+sec.ok|कुछ sus नहीं है।
+sec.issue|{v} चीज़ें ठीक करनी हैं। Quick wins हैं।
+sec.issue|चेकअप में {v} आइटम मिले। Lowkey easy है।
+mtr.lossy|हॉप {v} पर पैकेट गायब हो जाते हैं।
+mtr.lossy|हॉप {v} से लॉस है। वहीं गड़बड़ है।
+mtr.clean|Zero लॉस। Clean है।
+mtr.clean|हर हॉप ने vibe check पास कर लिया।
+devices.found|तुम्हारे नेटवर्क पर {v} डिवाइस हैं।
+devices.found|{v} डिवाइस मिले। Busy है।
+encrypt.done|एन्क्रिप्ट हो गया। प्राइवेट है।
+encrypt.done|लॉक हो गया।
+decrypt.done|खुल गया। किसी ने छुआ नहीं।
+decrypt.done|अनलॉक हो गया। सब ठीक है।
+points.earned|+{v} पॉइंट। W है।
+points.earned|+{v}। लगे रहो।
+award|500 पॉइंट। Adeebo Award। Iconic है।
+award|तुम्हें Adeebo Award मिला। Main character energy।
+late.night|देर हो गई है। मैं अभी भी जाग रहा हूँ।
+late.night|लेट नाइट है। देख रहा हूँ।
+morning|सुबह हो गई। रात quiet थी।
+morning|गुड मॉर्निंग। रात में कोई drama नहीं।
+update.suspect|{v} के अपडेट के बाद टूट गया। Classic है।
+update.suspect|{v} के अपडेट ने कुछ कर दिया।
+call.on|कॉल पर हो। मैं चुप रहूँगा।
+call.on|कॉल दिख रही है। देख रहा हूँ।
+quiz.right|Ate that, no crumbs।
+quiz.wrong|Nah, ये सही नहीं है, bestie।
+game.streak|लगातार {v}?? Main character हो।
+game.timeup|समय खत्म, speedrun वाली feeling है।
+market.open|बाज़ार खुले हैं, lowkey।
+storm.near|तूफ़ान आ रहा है, Wi-Fi mid हो सकता है।

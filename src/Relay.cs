@@ -18,7 +18,7 @@ namespace AdeeboMeter
     static class Relay
     {
         public const string Url = "https://adeebometer-relay.orkoadeeb.workers.dev/send";   // tools/relay/worker.js on Cloudflare
-        public static bool Ready { get { return Url != "" && !Policy.NoOnline; } }
+        public static bool Ready { get { return !Policy.NoOnline; } }   // bug-hunt L-294: Url is a constant - only the policy decides
         public sealed class Result { public bool Ok, Queued; public int Number; public string Why = ""; }
 
         // one JSON object, built by hand (no library): kind bug / feedback / hof
@@ -44,7 +44,7 @@ namespace AdeeboMeter
                 Result r;
                 try { r = Post(json); }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; r = new Result { Why = e.Message }; }
-                if (!r.Ok && r.Why == "offline") { r.Queued = Keep(BugReport.Scrub(json)); if (!r.Queued) r.Why = "couldn't keep it to send later"; }   // cleaned before it touches the disk
+                if (!r.Ok && (r.Why == "offline" || Retryable(r.Why))) { r.Queued = Keep(BugReport.Scrub(json)); if (!r.Queued) r.Why = "couldn't keep it to send later"; }   // cleaned before it touches the disk
                 if (done != null) done(r);
             }) { IsBackground = true, Name = "relay" }.Start();
         }
@@ -55,25 +55,28 @@ namespace AdeeboMeter
             try
             {
                 var q = (HttpWebRequest)WebRequest.Create(Url); q.Method = "POST"; q.ContentType = "application/json"; q.Timeout = 15000; q.ReadWriteTimeout = 15000;
-                q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = WebRequest.GetSystemWebProxy();
+                q.UserAgent = "AdeeboMeter/" + Program.Version; q.Proxy = HttpSmall.Proxy();
                 var b = Encoding.UTF8.GetBytes(json); q.ContentLength = b.Length;
                 using (var s = q.GetRequestStream()) s.Write(b, 0, b.Length);
-                string body; using (var rs = (HttpWebResponse)q.GetResponse()) using (var rd = new StreamReader(rs.GetResponseStream())) body = rd.ReadToEnd();
+                string body; using (var rs = (HttpWebResponse)q.GetResponse()) using (var rd = new StreamReader(rs.GetResponseStream())) body = Head(rd);
                 return Parse(body);
             }
             catch (WebException e)
             {
                 var hr = e.Response as HttpWebResponse;
                 if (hr == null) return new Result { Why = "offline" };   // no answer at all: try again later
-                string body = ""; try { using (var rd = new StreamReader(hr.GetResponseStream())) body = rd.ReadToEnd(); } catch (IOException) { }
+                string body = ""; try { using (var rd = new StreamReader(hr.GetResponseStream())) body = Head(rd); } catch (IOException) { }
                 var r = Parse(body); if (r.Why == "") r.Why = "the relay said " + (int)hr.StatusCode; return r;
             }
         }
+        // security recheck SECN-3: the relay's answer is a few dozen characters - read 16 KB at most, so a broken or hostile relay can't fill memory
+        static string Head(StreamReader rd) { var cb = new char[16384]; int n = 0, got; while (n < cb.Length && (got = rd.Read(cb, n, cb.Length - n)) > 0) n += got; return new string(cb, 0, n); }
         // {"ok":true,"number":42} or {"ok":false,"why":"..."}
         internal static Result Parse(string body)
         {
             var r = new Result(); body = body ?? "";
-            r.Ok = body.Contains("\"ok\":true");
+            // bug-hunt L-292: the "ok" field itself, read as JSON - never the words "ok":true anywhere in the text
+            object okv; var d = AdeeboMeter.Json.Parse(body) as Dictionary<string, object>; r.Ok = d != null && d.TryGetValue("ok", out okv) && okv is bool && (bool)okv;
             var n = System.Text.RegularExpressions.Regex.Match(body, "\"number\"\\s*:\\s*(\\d{1,9})"); if (n.Success) r.Number = int.Parse(n.Groups[1].Value, CultureInfo.InvariantCulture);
             var w = System.Text.RegularExpressions.Regex.Match(body, "\"why\"\\s*:\\s*\"([^\"]{0,200})\""); if (w.Success) r.Why = w.Groups[1].Value;
             return r;
@@ -91,12 +94,14 @@ namespace AdeeboMeter
                 Directory.CreateDirectory(Box);
                 var old = new DirectoryInfo(Box).GetFiles("*.json").OrderBy(f => f.LastWriteTimeUtc).ToList();
                 while (old.Count >= 3) { old[0].Delete(); old.RemoveAt(0); }
-                File.WriteAllText(Path.Combine(Box, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture) + ".json"), json);
+                SafeFile.WriteText(Path.Combine(Box, DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture) + ".json"), json);   // bug-hunt L-293: never a half-written report
                 return true;
             }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }
         }
         // at start (once online): send what waited; a week-old report is dropped
+        // a 5xx or 429 from the relay is a busy moment, not a refusal: the report waits in the outbox instead of being dropped
+        static bool Retryable(string why) { int c; return why != null && why.StartsWith("the relay said ", StringComparison.Ordinal) && int.TryParse(why.Substring(15).Trim(), out c) && (c >= 500 || c == 429); }
         public static void Flush()
         {
             if (!Ready) return;
@@ -109,9 +114,15 @@ namespace AdeeboMeter
                     {
                         if ((DateTime.UtcNow - f.LastWriteTimeUtc).TotalDays > 7) { f.Delete(); continue; }
                         var r = Post(File.ReadAllText(f.FullName));
-                        if (r.Why == "offline") return;   // still no internet: next time
-                        f.Delete();                          // sent, or refused for good (a refusal won't change by retrying)
-                        Program.Log("outbox: " + (r.Ok ? "sent #" + r.Number : "dropped (" + r.Why + ")"));
+                        if (r.Why == "offline" || Retryable(r.Why)) return;   // still no internet, or the relay busy for a moment (bug-hunt M-24): next time
+                        if (r.Ok) { f.Delete(); Program.Log("outbox: sent #" + r.Number); continue; }
+                        // hunt-5: refused for good - kept in outbox\not-sent (with the reason) and said once, not deleted in silence:
+                        // a Hall of Fame card's claim lives only in this file
+                        string keep = Path.Combine(Box, "not-sent"); Directory.CreateDirectory(keep);
+                        string to = Path.Combine(keep, f.Name); if (File.Exists(to)) File.Delete(to); f.MoveTo(to);
+                        File.WriteAllText(Path.ChangeExtension(to, ".why.txt"), r.Why ?? "");
+                        Program.Log("outbox: not sent (" + r.Why + ") - kept in " + keep);
+                        Alerts.Raise("outbox", "A report you sent earlier wasn't accepted (" + r.Why + "). It's kept in the outbox\\not-sent folder in AdeeboMeter's data folder.", 60 * 24);
                     }
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("outbox: " + e.Message); }

@@ -114,10 +114,10 @@ namespace AdeeboMeter
                 // same text within 2 minutes: once - timed on the clock that never jumps (a DST or clock change must not hide events for an hour)
                 if (list.Count > 0 && list[list.Count - 1].Text == text && (mono - list[list.Count - 1].Mono).TotalSeconds < 120) return;
                 list.Add(new Ev { T = now, Lv = lv, Kind = kind, Text = text, Mono = mono });
-                History.Event(lv, kind, text);
                 var cut = mono.AddHours(-2); list.RemoveAll(e => e.Mono < cut);
                 if (list.Count > 300) list.RemoveRange(0, list.Count - 300);
             }
+            History.Event(lv, kind, text);   // bug-hunt L-73: the file is written after the list's lock is let go
             var ev = new Ev { T = DateTime.Now, Lv = lv, Kind = kind, Text = text };
             try { Alerts.OnEvent(ev); Calls.OnEvent(ev); } catch { }
         }
@@ -135,10 +135,11 @@ namespace AdeeboMeter
     {
         public string Hint = "";
         public List<Timeline.Ev> Recent = new List<Timeline.Ev>();
-        public int Level; public string Headline = "Waking up... give me ten seconds, boss.", Chip = "All quiet", Flow = ""; public int Countdown;
+        // review 1.1.6 D1 #1/#10: a snapshot starts as "checking" - no green verdict, no 0 ms, until something was measured
+        public int Level; public string Headline = AdeeboMeter.L.T("Checking your connection..."), Chip = "Checking", Flow = ""; public int Countdown; public bool Waiting = true, Offline;   // Offline: no network at all (review 1.1.6 P1 #2 - the buddy reads this, not the translated headline)
         public int[] Path = { 3, 3, 3, 3, 3 };
         public string[] PathLabel = { "PC", "LAN", "ISP", "DNS", "Internet" }, PathMain = new string[5], PathSub = new string[5];
-        public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping, Jitter, LossPct, DnsMs;
+        public double Cpu = double.NaN, Mem = double.NaN, Disk = double.NaN, Down = double.NaN, Up = double.NaN, Ping = double.NaN, Jitter = double.NaN, LossPct = double.NaN, DnsMs = double.NaN;
         public double[] DownHist = Array.Empty<double>(), UpHist = Array.Empty<double>(), NetHist = Array.Empty<double>();   // NetHist: the internet check, last 60
         public double GwMs = double.NaN;
         public bool Call; public double TodayDown, TodayUp;   // bytes since midnight (while AdeeboMeter ran)

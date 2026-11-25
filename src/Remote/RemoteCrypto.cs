@@ -57,12 +57,14 @@ namespace AdeeboMeter
         // one direction of a session: its keys and the counter it has reached
         public sealed class Lane
         {
-            readonly byte[] enc, mac; readonly byte dir; long seq;
+            readonly byte[] enc, mac; readonly byte dir; long seq; public long Missed;
             public Lane(byte[] secret, byte[] zHash, byte dir)
             {
                 var k = Hkdf(secret, zHash, "adeebometer remote v1 " + (dir == 1 ? "pc>phone" : "phone>pc"), 64);
-                enc = k.Take(32).ToArray(); mac = k.Skip(32).ToArray(); this.dir = dir;
+                enc = k.Take(32).ToArray(); mac = k.Skip(32).ToArray(); this.dir = dir; Array.Clear(k, 0, k.Length);
             }
+            // bug-hunt ML-29: the session's keys don't outlive it
+            public void Wipe() { lock (this) { Array.Clear(enc, 0, enc.Length); Array.Clear(mac, 0, mac.Length); } }
             static byte[] Be(long v) { var b = new byte[8]; for (int i = 7; i >= 0; i--) { b[i] = (byte)v; v >>= 8; } return b; }
             // seq(8) | iv(16) | ciphertext | tag(32), base64url
             public string Seal(string text)
@@ -79,7 +81,11 @@ namespace AdeeboMeter
                 if (b.Length < 8 + 16 + 16 + 32 || (b.Length - 56) % 16 != 0) return null;
                 var sq = b.Take(8).ToArray(); var iv = b.Skip(8).Take(16).ToArray(); var ct = b.Skip(24).Take(b.Length - 56).ToArray(); var tag = b.Skip(b.Length - 32).ToArray();
                 if (!Same(tag, Hmac(mac, new[] { dir }, sq, iv, ct))) return null;
-                long n = 0; foreach (var x in sq) n = (n << 8) | x; if (n <= seq) return null; seq = n;
+                long n = 0; foreach (var x in sq) n = (n << 8) | x; if (n <= seq) return null;
+                // bug-hunt L-246: a gap means the relay lost (or held back) a message - noted; not fatal, because the phone page seals
+                // asynchronously and two messages can leave it a moment out of order (the later one is then refused above)
+                if (n > seq + 1) { Missed += n - seq - 1; Program.Log("remote: " + (n - seq - 1) + " message(s) never arrived"); }
+                seq = n;
                 using (var a = new AesCryptoServiceProvider { Key = enc, IV = iv, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7 }) using (var d = a.CreateDecryptor())
                     try { return Encoding.UTF8.GetString(d.TransformFinalBlock(ct, 0, ct.Length)); } catch (CryptographicException) { return null; }
             }

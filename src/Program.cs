@@ -1,6 +1,6 @@
 // AdeeboMeter - a small, quiet Windows companion for "is it me or the network?". Created by Adeeb Khan.
 // .NET Framework 4.x, C# 5: builds with the csc.exe that ships with Windows (build_exe.cmd), no admin.
-// No cloud. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
+// No account. No telemetry. Never listens. Every packet it sends is listed in About ("What leaves your PC") - and you can switch
 // each background one off. (It never listens on any port, never updates itself, never downloads anything.)
 // In the background (Balanced, the default - Settings changes the pace): a ping to your gateway every 2 s; a ping to 1.1.1.1 every 15 s and
 // one DNS lookup a minute at most (TCP 443 to it instead when ping never answers); once per network a 6-hop trace toward 1.1.1.1 with
@@ -100,7 +100,7 @@ namespace AdeeboMeter
                 return inDownloads == 1;
             }
         }
-        static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
+        internal static string LocalDir { get { string d = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter"); try { Directory.CreateDirectory(d); } catch (IOException) { } catch (UnauthorizedAccessException) { } return d; } }
         public static bool CanWrite(string dir)
         {
             if (string.IsNullOrEmpty(dir)) return false;
@@ -113,12 +113,15 @@ namespace AdeeboMeter
             try { int n = 0; return Native.GetCurrentPackageFullName(ref n, null) == 122; }   /* 122 = buffer too small: there IS a package; 15700 = none */
             catch (EntryPointNotFoundException) { return false; }
         }
-        public const string Version = "1.1.5";
-        public const string FileVersion = "1.1.5.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
+        public const string Version = "1.1.6";
+        public const string FileVersion = "1.1.6.0";   // Windows wants four numbers - keep it in step with Version (the self-test checks)
         public static bool DllSafety, IsWine;   // true once DLLs can only come from System32
         public const string Tagline = "Know what's wrong. Show anyone.";
         public static int ForceTheme = -1;
-        public static string StartView, StartTip, StartDest;   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
+        public static bool Restarted;   // started by the Restart button: open the big window again once running
+        public static int StartViewMs = 1500;
+        public static readonly int MyPid = System.Diagnostics.Process.GetCurrentProcess().Id;
+        public static string StartView, StartTip, StartDest, StartFile;   // StartFile: a locked .adeebo file to open (bug-hunt ML-127)   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes
 
         [STAThread]
@@ -139,6 +142,8 @@ namespace AdeeboMeter
             if (args.Any(a => string.Equals(a, "--dark", StringComparison.OrdinalIgnoreCase))) ForceTheme = 1;
             if (args.Any(a => string.Equals(a, "--light", StringComparison.OrdinalIgnoreCase))) ForceTheme = 0;
             if (args.Any(a => string.Equals(a, "--selftest", StringComparison.OrdinalIgnoreCase))) return SelfTest.Run();
+            WidgetTrace = args.Any(a => string.Equals(a, "--widget-trace", StringComparison.OrdinalIgnoreCase));   // the test script: move mode's steps to widget-trace.txt
+            int wg = Array.FindIndex(args, a => string.Equals(a, "--widget-gallery", StringComparison.OrdinalIgnoreCase)); if (wg >= 0 && wg + 1 < args.Length) return SelfTest.Gallery(args[wg + 1]);
             if (args.Any(a => string.Equals(a, "--perf", StringComparison.OrdinalIgnoreCase))) return SelfTest.Perf();
             int ri = Array.FindIndex(args, a => string.Equals(a, "--report", StringComparison.OrdinalIgnoreCase));
             if (ri >= 0) { if (ri + 1 >= args.Length) return 4;   /* no file name: the report couldn't be made */ int si = Array.FindIndex(args, a => string.Equals(a, "--seconds", StringComparison.OrdinalIgnoreCase)), sec; if (si < 0 || si + 1 >= args.Length || !int.TryParse(args[si + 1], out sec)) sec = 15; return Report.Run(args[ri + 1], sec); }
@@ -150,8 +155,14 @@ namespace AdeeboMeter
                 return SelfTest.Deep(!args.Any(a => string.Equals(a, "--local", StringComparison.OrdinalIgnoreCase)), Math.Max(2, Math.Min(60, min)));
             }
             int vi = Array.FindIndex(args, a => string.Equals(a, "--view", StringComparison.OrdinalIgnoreCase)); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
+            // --view-after <seconds>: wait for real measurements before opening the view (screenshots; 1.5 s when not given, at most 10 min)
+            int va = Array.FindIndex(args, a => string.Equals(a, "--view-after", StringComparison.OrdinalIgnoreCase)); int vs; if (va >= 0 && va + 1 < args.Length && int.TryParse(args[va + 1], out vs)) StartViewMs = Math.Max(1500, Math.Min(600000, vs * 1000));
             int tpi = Array.FindIndex(args, a => string.Equals(a, "--tip", StringComparison.OrdinalIgnoreCase)); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
             int dsi = Array.FindIndex(args, a => string.Equals(a, "--dest", StringComparison.OrdinalIgnoreCase)); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
+            // a double-clicked .adeebo file ("--open <file>", or the bare path the Store's file association passes)
+            int opi = Array.FindIndex(args, a => string.Equals(a, "--open", StringComparison.OrdinalIgnoreCase));
+            string of = opi >= 0 && opi + 1 < args.Length ? args[opi + 1] : args.FirstOrDefault(a => a.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase));
+            if (of != null && of.EndsWith(".adeebo", StringComparison.OrdinalIgnoreCase) && File.Exists(of)) StartFile = Path.GetFullPath(of);
             int ci = Array.FindIndex(args, a => string.Equals(a, "--check", StringComparison.OrdinalIgnoreCase));
             if (ci >= 0 && ci + 1 < args.Length) return SelfTest.CheckOnce(args[ci + 1]);
             int pi = Array.FindIndex(args, a => string.Equals(a, "--parse-test", StringComparison.OrdinalIgnoreCase));
@@ -180,6 +191,9 @@ namespace AdeeboMeter
 
             bool created;
             var mtx = new Mutex(true, "Local\\AdeeboMeter.single", out created);
+            // the Restart button: this copy was started by the running one, which is closing - wait for it to let go (20 s at most)
+            Restarted = args.Any(a => string.Equals(a, "--restart", StringComparison.OrdinalIgnoreCase));
+            if (!created && Restarted) { try { created = mtx.WaitOne(20000); } catch (AbandonedMutexException) { created = true; } }
             if (!created)
             {
                 // an OLDER copy is running and this one is newer (a fresh download, maybe renamed "AdeeboMeter (1).exe"):
@@ -192,7 +206,16 @@ namespace AdeeboMeter
             }
             if (!created)
             {
+                if (StartFile != null) try { File.WriteAllText(Path.Combine(DataDir, "open-file.txt"), StartFile); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }   // the running copy picks it up when asked to open
                 if (Single.AskRunningToOpen()) return 0;
+                // round 6 H6-L12: the running copy gave up stepping aside because a dialog of yours is open - it isn't stuck
+                try
+                {
+                    string qb = Path.Combine(DataDir, "quit-busy.txt"); DateTime at;
+                    if (File.Exists(qb) && DateTime.TryParse(File.ReadAllText(qb), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out at) && (DateTime.UtcNow - at.ToUniversalTime()).TotalSeconds < 30)
+                    { File.Delete(qb); MessageBox.Show("The AdeeboMeter that's running has a window open that's waiting for you (a dialog), so it didn't step aside.\n\nClose that window, then open this copy again.", "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Information); return 0; }
+                }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
                 var r = MessageBox.Show("AdeeboMeter is already running but isn't answering.\n\nClose the stuck one and start fresh?",
                     "AdeeboMeter", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (r != DialogResult.Yes) return 0;
@@ -200,6 +223,12 @@ namespace AdeeboMeter
                 try { if (!mtx.WaitOne(5000)) return 0; } catch (AbandonedMutexException) { }
             }
             Log("Start " + Version);
+            // release check 24 Nov: the first paint of Home took 250-750 ms cold and 20-40 ms warm - .NET compiling the drawing code
+            // on first use. Multicore JIT remembers what start-up compiles and does it ahead on a spare core next time (a few KB
+            // file beside the settings; method names only)
+            System.Threading.ThreadPool.QueueUserWorkItem(_ => { try { TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); } catch (Exception) { } });   // read once off the window's thread (Home's market hours)
+            try { System.Runtime.ProfileOptimization.SetProfileRoot(WriteDir); System.Runtime.ProfileOptimization.StartProfile("AdeeboMeter-start.jit"); } catch (Exception e) { Log("jit profile: " + e.Message); }
+            TouchPan.Install();   // a finger drag scrolls the pages (Touch.cs)
             Application.Run(new AppCtx());
             Log("Exit");
             GC.KeepAlive(mtx);
@@ -217,7 +246,7 @@ namespace AdeeboMeter
             if (!File.Exists(dst)) { File.Move(tmp, dst); return; }
             try { File.Replace(tmp, dst, null); return; }
             catch (IOException) { } catch (PlatformNotSupportedException) { }
-            string bak = dst + ".bak"; if (File.Exists(bak)) File.Delete(bak);
+            string bak = dst + ".bak"; if (File.Exists(bak)) { try { File.Delete(bak); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; bak = dst + "." + Guid.NewGuid().ToString("N").Substring(0, 6) + ".bak"; } }   // bug-hunt ML-37: a locked old .bak doesn't stop the save
             File.Move(dst, bak);   // if this fails, nothing moved: the old file stays and the error goes up
             try { File.Move(tmp, dst); }
             catch (Exception) { try { if (!File.Exists(dst)) File.Move(bak, dst); } catch (IOException) { } catch (UnauthorizedAccessException) { } throw; }
@@ -241,6 +270,7 @@ namespace AdeeboMeter
             d.SetData("CanUploadToCloudClipboard", new MemoryStream(new byte[4]));
             System.Windows.Forms.Clipboard.SetDataObject(d, false);
         }
+        public static bool WidgetTrace;
         public static void Log(string m)
         {
             try
@@ -303,7 +333,15 @@ namespace AdeeboMeter
         public static volatile int GwSec = 2, NetSec = 15, WifiSec = 30, AppsSec = 5;   /* Wi-Fi every 30 s with the window closed (every 10 s while it is open) - one quick Wi-Fi service query each (netsh only as a fallback) */ /* Balanced (Adeeb, 2026-11-12: Balanced takes the old Engineer timings, Penny is the light plan). The internet check is on from a fresh install (Adeeb, 2026-11-09): it pings 1.1.1.1 / 8.8.8.8 - outbound only, nothing is ever accepted; 0 in Settings turns it fully off */
         public static volatile bool Call = true;
         // engineer view (only while it's open)
+        public static volatile string WPos = "";   // where the widget sits: "corner|dx|dy" (tl tr bl br, 96-DPI pixels in from that corner); "" = bottom right, the default
+        // 24 Nov: the widget's presets and takeovers (WidgetPlus.cs)
+        public static volatile string WSyms = "^GSPC,FX:USD,GCUSD", WMine = "down,ping,weather,market1", WSportKinds = "", WPinGame = "", WPlan = "m=;w=;e=;n=", WPosGame = "", SportsEvery = "5", WHeld = "", WBack = "";
+        public static volatile bool WRainSoon, WSince = true;
+        public static bool WHideNear, WHint = true;   // WHint: the blue "how to move it" line on the card   // fade fully when the mouse comes near (off by default; Ctrl or the tray still unlock it to move)
         public static volatile string WidgetScreen = "";   // the screen the widget sits on ("" = the main screen); falls back to the main one if it's gone
+        // 23 Nov: a problem hidden on Home - "kind|mode|value|level|yyyyMMdd" (mode: day or while); HideNever: kinds never shown on Home
+        public static string HideProblem = "", HideNever = "";
+        public static int SetupStep;   // review 24 Nov (L-6): which first-run question to come back to if the window closed mid-setup
         public static volatile bool IpNames = true, Portal = true, SeenTip, Details, BigWidget;   // BigWidget: the corner widget drawn 1.3x   // Details: the engineer toggle - raw values, sources and times on every finding
         // history on by default (kept HistoryDays, rolling), alerts with quiet hours, watch-and-suggest, data cap, pinned watch
         public static volatile bool History = true, Alerts = true, Quiet = true, Watch = true, PinWatch;
@@ -312,19 +350,19 @@ namespace AdeeboMeter
         public static volatile string View = "";
         public static volatile string Corner = "moments";
         // Weather (Adeeb, 14 Nov): off until you turn it on; the place is one you typed (never located); "lat;lon;name"
-        public static volatile bool WeatherOn, WeatherF, WWeather = true; public static volatile string WeatherPlace = "", WeatherAcc = "normal";
+        public static volatile bool WeatherOn, WeatherF, WWeather;   /* WWeather: the widget shows it only if you ask (Adeeb, 24 Nov) */ public static volatile string WeatherPlace = "", WeatherAcc = "normal", WeatherGeo = "", WeatherApi = "";   // WeatherGeo/Api: another server than Open-Meteo's (24 Nov); empty = Open-Meteo
         public static volatile int Zoom = 100;   // the window's zoom in percent (80-175): Ctrl + / Ctrl - / Ctrl 0, Ctrl+wheel, right-click   // how the corner behaves: quiet (never changes by itself) / moments / view (Moments.cs)   // the view in use (Views.cs): everyday / gamer / streamer / trader / engineer / my-N
         public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer" };
         public static bool Off(string sec) { return ("," + HiddenSecs + ",").Contains("," + sec + ","); }
         static readonly char[] CommaOnly = { ',' };
         public static void SetOff(string sec, bool off) { var l = HiddenSecs.Split(CommaOnly, StringSplitOptions.RemoveEmptyEntries).Where(z => z != sec && Hideable.Contains(z)).ToList(); if (off) l.Add(sec); HiddenSecs = string.Join(",", l); }
         // Trading: the live broker panel is opt-in (a check every 2 s in market hours); end-of-day currencies on by default
-        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = ""; public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
-        public static volatile int DevAlerts;   // new-device pop-ups: 0 off (default - they're still listed), 1 home networks only
+        public static volatile bool TradeLive, TradeCrypto, TradeAlert = true, TradeFx, TradeEvening, Sports; public static volatile string TradeVenue = "both", SportTeams = "", FxList = MarketData.DefaultFx, Paper = "app"; /* Paper: "app" (24 Nov, the app's own look) or the newspaper - "cream", "white", "theme" */ public static volatile bool KickoffRemind, CasualFriday, CasualMoves, PhoneStandby = true; /* 1.1.6: the markets page's currencies; the Sports/Markets paper (cream, theme, white); reminders off until ticked */ public static volatile string TradeHost = "", TradeMode = "active";   // Streaming: notice a stream (by its server names) and keep an eye on it while it plays
+        /* hunt-5: DevAlerts, LineAlertOpen and StreamLinks removed - nothing used them */
         public static volatile int HistoryDays = 3, CapGB, OnlineMin = 30;   // OnlineMin: online lookups switch themselves off after this
         public static volatile int LiveMin = 15, SniffSec = 30;
         // widget
-        public static volatile int Fade = 77, DwellMs = 450;
+        public static volatile int Fade = 77, DwellMs = 800; public static string Follow = "";
         // Gamer Zone: GameIds = games the user clicked (consent to contact their servers); background ping every GameBgSec
         // to up to GameBgServers servers; every second while a game is open (GameFast); history kept GameDays
         public static string GameIds = "";
@@ -335,11 +373,11 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,stream,trade,toolbox,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,toolbox,stream,sports,trade,gamer,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string TbPins = "";   // your own Toolbox pins (Every tool), tool ids, up to 12
-        public static volatile string Mode = "", Lang = "en", TbView = "q", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
+        public static volatile string Mode = "", Lang = "en", TbView = "list", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
         public static volatile bool Points = true;   // Adeebo Points (Settings): on from day 1; off hides the button and pauses earning, the total is kept
         public static volatile string SpeedServer = "auto";   // the speed test's server: "auto" (Cloudflare, nearest) or an id from the list
         public static bool Simple { get { return Mode != "pro"; } }   // auto (follows what you are doing) / everyday / gamer
@@ -378,24 +416,27 @@ namespace AdeeboMeter
         {
             yield return "preset=" + Preset;
             yield return "gw=" + GwSec; yield return "net=" + Policy.Keep("net", NetSec.ToString(CultureInfo.InvariantCulture)); yield return "wifi=" + WifiSec; yield return "apps=" + AppsSec;
-            yield return "streams2=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx2=" + (TradeFx ? 1 : 0); yield return "tradevenue=" + TradeVenue; yield return "sports=" + (Sports ? 1 : 0); yield return "sportteams=" + (SportTeams ?? "").Replace("\n", " "); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "weather=" + (WeatherOn ? 1 : 0); yield return "wplace=" + WeatherPlace; yield return "wacc=" + WeatherAcc; yield return "wtempf=" + (WeatherF ? 1 : 0); yield return "wweather=" + (WWeather ? 1 : 0); yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
-            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "devalerts=" + DevAlerts; yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
-            yield return "wscreen=" + WidgetScreen;
+            yield return "streams2=" + (Streams ? 1 : 0); yield return "hidden=" + HiddenSecs; yield return "tradelive=" + (TradeLive ? 1 : 0); yield return "tradecrypto=" + (TradeCrypto ? 1 : 0); yield return "tradealert=" + (TradeAlert ? 1 : 0); yield return "tradefx2=" + (TradeFx ? 1 : 0); yield return "tradevenue=" + TradeVenue; yield return "sports=" + (Sports ? 1 : 0); yield return "sportteams=" + (SportTeams ?? "").Replace("\n", " "); yield return "tradeeve=" + (TradeEvening ? 1 : 0); yield return "fxlist=" + FxList; yield return "paper=" + Paper; yield return "kickremind=" + (KickoffRemind ? 1 : 0); yield return "phonestandby=" + (PhoneStandby ? 1 : 0); yield return "casualfri=" + (CasualFriday ? 1 : 0); yield return "casualmoves=" + (CasualMoves ? 1 : 0); yield return "view=" + View; yield return "corner=" + Corner; yield return "weather=" + (WeatherOn ? 1 : 0); yield return "wplace=" + WeatherPlace; yield return "wgeo=" + WeatherGeo; yield return "wapi=" + WeatherApi; yield return "wacc=" + WeatherAcc; yield return "wtempf=" + (WeatherF ? 1 : 0); yield return "wweather=" + (WWeather ? 1 : 0); yield return "zoom=" + Zoom.ToString(CultureInfo.InvariantCulture); yield return "views=" + Views.Line(); yield return "tradehost=" + TradeHost; yield return "trademode=" + TradeMode; yield return "call=" + (Call ? 1 : 0); yield return "ipnames=" + (IpNames ? 1 : 0); yield return "mood=" + Mood.Name; yield return "crlrev=" + (CertCfg.Revocation ? 1 : 0); yield return "portal=" + (Portal ? 1 : 0); yield return "seentip=" + (SeenTip ? 1 : 0); yield return "hideprob=" + (HideProblem ?? "").Replace("\n", " "); yield return "hidenever=" + (HideNever ?? "").Replace("\n", " "); yield return "setupstep=" + SetupStep; yield return "details=" + (Details ? 1 : 0); yield return "bigwidget=" + (BigWidget ? 1 : 0); yield return "history2=" + (History ? 1 : 0); yield return "histdays=" + Policy.Keep("histdays", HistoryDays.ToString(CultureInfo.InvariantCulture));
+            yield return "alerts=" + (Alerts ? 1 : 0); yield return "quiet=" + (Quiet ? 1 : 0); yield return "watch=" + (Watch ? 1 : 0); yield return "capgb=" + CapGB; yield return "onlinemin=" + OnlineMin; yield return "pinwatch=" + (PinWatch ? 1 : 0);
+            yield return "wscreen=" + WidgetScreen; yield return "wpos=" + WPos; yield return "whidenear=" + (WHideNear ? 1 : 0); yield return "whint=" + (WHint ? 1 : 0); yield return "wsyms=" + WSyms; yield return "wmine=" + WMine; yield return "wsports=" + WSportKinds; yield return "wpin=" + WPinGame; yield return "wplan=" + WPlan; yield return "wposgame=" + WPosGame; yield return "sportsevery=" + SportsEvery; yield return "wrain=" + (WRainSoon ? 1 : 0); yield return "wsince=" + (WSince ? 1 : 0); yield return "wheld=" + WHeld; yield return "wback=" + WBack;
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
-            yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview=" + TbView; yield return "tbpins=" + TbPins; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
-            yield return "nav=" + Nav; yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "faithlast=" + AdeeboMeter.Lines.LastFaith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0); yield return "setupdone=" + (SetupDone ? 1 : 0);
-            yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell=" + DwellMs;
+            yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview2=" + TbView; yield return "tbpins=" + TbPins; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
+            yield return "fmpevery=" + FmpEvery;   // 21 Nov: how often your FMP key is asked (60, 15, 5 or 1 minutes; 5 and 1 need a paid plan)
+            yield return "nav=" + Nav; yield return "navsports=1"; yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "faithlast=" + AdeeboMeter.Lines.LastFaith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0); yield return "setupdone=" + (SetupDone ? 1 : 0);
+            yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell2=" + DwellMs; yield return "follow=" + (Follow ?? "");
             string[] pins; lock (Pins) pins = Pins.ToArray();
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme" };
+        public static readonly HashSet<string> Known = new HashSet<string> { "wpos", "whidenear", "whint", "wsyms", "wmine", "wsports", "wpin", "wplan", "wposgame", "sportsevery", "wrain", "wsince", "wheld", "wback", "navsports", "tbview2", "fmpevery", "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "dwell2", "follow", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "phonestandby", "linealert", "casualfri", "casualmoves", "hideprob", "hidenever", "setupstep", "wgeo", "wapi" };   // 1.1.6: Markets and Sports
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
-        public static readonly string[] NavIds = { "home", "stream", "trade", "toolbox", "gamer", "time", "learn", "story", "security", "dest", "calc", "reports" };
+        public static readonly string[] NavIds = { "home", "toolbox", "stream", "sports", "trade", "gamer", "time", "learn", "story", "security", "dest", "calc", "lab", "shell" };   // 22 Nov: Outlook is on Home, Reports in the Toolbox ("Make a report") - not pages of their own
+        public static bool NavSports;   // Sports became its own page (22 Nov): added once after Streaming in a saved bar
         public static string NavClean(string v)
         {
             var l = new List<string> { "home" };
-            foreach (var p in (v ?? "").Split(',')) { var t = p.Trim(); if ((NavIds.Contains(t) || (t.StartsWith("mine", StringComparison.Ordinal) && t.Length == 5 && t[4] >= '1' && t[4] <= '3')) && !l.Contains(t) && l.Count < 7) l.Add(t); }
+            var given = (v ?? "").Split(',').Select(p => p.Trim()).ToList();
+            foreach (var t in given) { if ((NavIds.Contains(t) || (t.StartsWith("mine", StringComparison.Ordinal) && t.Length == 5 && t[4] >= '1' && t[4] <= '3')) && !l.Contains(t) && l.Count < 8) l.Add(t); }
             return string.Join(",", l);
         }
         // a host name or an IP only: letters, digits, dots and dashes (a pasted URL loses its scheme and path)
@@ -434,14 +475,23 @@ namespace AdeeboMeter
                 case "sports": Sports = v == "1"; break;
                 case "sportteams": SportTeams = v.Length > 300 ? v.Substring(0, 300) : v; break;
                 case "tradeeve": TradeEvening = v == "1"; break;
+                case "fxlist": FxList = v.Length > 200 ? v.Substring(0, 200) : v; break;   // R2-150: capped like its neighbours
+                case "paper": Paper = v == "white" || v == "theme" || v == "cream" ? v : "app"; break;
+                case "kickremind": KickoffRemind = v == "1"; break;
+                case "phonestandby": PhoneStandby = v != "0"; break;
+                case "linealert": break;   // hunt-5: a 1.1.5 setting nothing reads any more - an old file still loads
+                case "casualfri": CasualFriday = v == "1"; break;
+                case "casualmoves": CasualMoves = v == "1"; break;
                 case "view": View = v.Length <= 24 && (Views.IsBuiltIn(v) || v.StartsWith("my-", StringComparison.Ordinal)) ? v : ""; break;
                 case "views": Views.Load(v); break;
                 case "corner": Corner = v == "quiet" || v == "view" ? v : "moments"; break;
                 case "weather": WeatherOn = v == "1"; break;
                 case "wplace": WeatherPlace = Weather.CleanPlace(v); break;
+                case "wgeo": WeatherGeo = Weather.CleanServer(v); break;
+                case "wapi": WeatherApi = Weather.CleanServer(v); break;
                 case "wacc": WeatherAcc = v == "better" ? "better" : "normal"; break;
                 case "wtempf": WeatherF = v == "1"; break;
-                case "wweather": WWeather = v != "0"; break;
+                case "wweather": WWeather = v == "1"; break;
                 case "zoom": { int z; if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out z)) Zoom = Math.Max(80, Math.Min(175, z)); } break;
                 case "tradehost": TradeHost = CleanHost(v); break;
                 case "trademode": TradeMode = v == "casual" ? "casual" : "active"; break;
@@ -449,14 +499,31 @@ namespace AdeeboMeter
                 case "crlrev": CertCfg.Revocation = v == "1"; break;
                 case "details": Details = v == "1"; break;
                 case "bigwidget": BigWidget = v == "1"; break;
+                case "wpos": WPos = WidgetPos.Clean(v); break;
+                case "whidenear": WHideNear = v == "1"; break;
+                case "whint": WHint = v != "0"; break;
+                case "wsyms": WSyms = AdeeboMeter.Corner.CleanSyms(v); break;
+                case "wmine": WMine = AdeeboMeter.Corner.CleanMine(v); break;
+                case "wsports": WSportKinds = string.Join(",", v.Split(',').Where(z => Array.IndexOf(AdeeboMeter.Sports.Kinds, z) >= 0).Distinct()); break;
+                case "wpin": WPinGame = v.Length < 200 ? v : ""; break;
+                case "wplan": WPlan = AdeeboMeter.Corner.CleanPlan(v); break;
+                case "wposgame": WPosGame = WidgetPos.Clean(v, true); break;
+                case "sportsevery": SportsEvery = v == "1" || v == "2" ? v : "5"; break;
+                case "wrain": WRainSoon = v == "1"; break;
+                case "wsince": WSince = v != "0"; break;
+                case "wheld": WHeld = AdeeboMeter.Corner.Known(v) ? v : ""; break;
+                case "wback": WBack = string.Join(AdeeboMeter.Corner.BackSep, AdeeboMeter.Corner.SplitBacks(v)); break;
                 case "wscreen": WidgetScreen = v.StartsWith(@"\\.\DISPLAY", StringComparison.OrdinalIgnoreCase) && v.Length < 40 ? v : ""; break;
                 case "portal": Portal = v != "0"; break;
                 case "seentip": SeenTip = v == "1"; break;
+                case "hideprob": HideProblem = v; break;
+                case "hidenever": HideNever = v; break;
+                case "setupstep": { int ss; if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ss)) SetupStep = Math.Max(0, Math.Min(3, ss)); } break;
                 case "history2": History = v == "1"; break;     // (the old "history" key from the first preview is ignored: history is on by default)
                 case "histdays": HistoryDays = Pick(v, 3, HistDayChoices); break;
                 case "alerts": Alerts = v != "0"; break;
                 case "quiet": Quiet = v != "0"; break;
-                case "devalerts": DevAlerts = v == "1" ? 1 : 0; break;
+                case "devalerts": break;   // hunt-5: its pop-ups were removed - read and ignored
                 case "watch": Watch = v != "0"; break;
                 case "capgb": CapGB = Pick(v, 0, CapChoices); break;
                 case "onlinemin": OnlineMin = Pick(v, 30, OnlineChoices); break;
@@ -473,20 +540,23 @@ namespace AdeeboMeter
                 case "gwidget": GameWidget = v != "0"; break;
                 case "points": Points = v == "1"; break;
                 case "speedsrv": SpeedServer = System.Text.RegularExpressions.Regex.IsMatch(v ?? "", "^[a-z0-9-]{1,40}$") ? v : "auto"; break;
-                case "tbview": TbView = v == "list" ? "list" : "q"; break;
+                case "tbview": break;   // before 22 Nov 2026: everyone starts again on All tools ("tbview2")
+                case "tbview2": TbView = v == "list" ? "list" : v == "topic" ? "topic" : "q"; break;
                 case "tbpins": TbPins = string.Join(",", (v ?? "").Split(',').Select(s => s.Trim()).Where(s => System.Text.RegularExpressions.Regex.IsMatch(s, "^[a-z0-9]{1,24}$")).Distinct().Take(12)); break;
                 case "nav": Nav = NavClean(v); break;
+                case "navsports": NavSports = v == "1"; break;
                 case "layout": Layout = v == "sidebar" ? "sidebar" : "classic"; break;
                 case "sideopen": SideOpen = v != "0"; break;
-                case "mytabs": MyTabs = v.Length > 2000 ? "" : v; break;
+                case "mytabs": MyTabs = v.Length > 2000 ? "" : Program.Plain(v); break;   // SEC-14: no bidi/format characters in tab names
                 case "sbtried": SidebarTried = v == "1"; break;
                 case "searches": Searches = v.Length > 400 ? "" : v; break;
                 // the companion (1.1.5): mood, who talks, how to address you, how chatty - each checked against its list
                 case "mood2": if (Array.IndexOf(AdeeboMeter.Lines.Moods, v) >= 0) { AdeeboMeter.Lines.Mood = v; mood2Seen = true; } break;
                 case "persona": if (AdeeboMeter.Lines.PersonaKnown(v)) AdeeboMeter.Lines.Persona = v; break;
                 case "addr": if (Array.IndexOf(AdeeboMeter.Lines.Addrs, v) >= 0) AdeeboMeter.Lines.Addr = v; break;
-                case "addrname": AdeeboMeter.Lines.Name = new string(v.Where(c => !char.IsControl(c) && c != '\u202E' && c != '\u202D').Take(24).ToArray()).Trim(); break;
+                case "addrname": AdeeboMeter.Lines.Name = new string(Program.Plain(v).Take(24).ToArray()).Trim(); break;   // SEC-14: every bidi control, isolates too
                 case "chatty": if (Array.IndexOf(AdeeboMeter.Lines.Chatty, v) >= 0) AdeeboMeter.Lines.Chat = v; break;
+                case "fmpevery": FmpEvery = v == "60" || v == "5" || v == "1" ? v : "15"; break;
                 case "wunits": WUnits = v == "bytes" ? "bytes" : "bits"; break;
                 case "wdir": WDir = v == "down" || v == "up" ? v : "both"; break;
                 case "wgraph": WGraph = v != "0"; break;
@@ -499,11 +569,12 @@ namespace AdeeboMeter
                 case "ovat": OverlayAt = System.Text.RegularExpressions.Regex.IsMatch(v, "^-?[0-9]{1,6},-?[0-9]{1,6}$") ? v : ""; break;
                 case "lang": Lang = L.Languages.Any(l => l[0] == v) ? v : "en"; break;
                 case "mode": Mode = v == "simple" || v == "pro" ? v : ""; break;
-                case "wstyle": WidgetStyle = v == "everyday" || v == "gamer" || v == "calls" || v == "engineer" || v == "speed" || v == "speedstatus" || v == "speedapps" ? v : "auto"; break;
+                case "wstyle": WidgetStyle = AdeeboMeter.Corner.Known(v) ? v : "auto"; break;
                 case "livemin": LiveMin = Pick(v, 15, 5, 15, 30); break;
                 case "sniffsec": SniffSec = Pick(v, 30, 30, 60); break;
                 case "fade": Fade = Pick(v, 77, 51, 77, 128, 191, 255); break;
-                case "dwell": DwellMs = Pick(v, 450, 300, 450, 800); break;
+                case "follow": Follow = v ?? ""; break;   // 24 Nov: the companies you follow on the Markets page
+                case "dwell2": DwellMs = Pick(v, 800, 450, 800, 1200); break;   // 24 Nov: a new key - everyone starts at 0.8 s (the old "dwell" was 0.45 s and only for the folded chip)
                 case "pin":
                     string h; int pt; bool t; string e;
                     if (Pins.Count < 5 && DestCheck.Parse(v, out h, out pt, out t, out e) && !Pins.Contains(v, StringComparer.OrdinalIgnoreCase)) lock (Pins) Pins.Add(v.Trim());
@@ -600,26 +671,86 @@ namespace AdeeboMeter
             catch { }
         }
 
+        // reads a helper's stream to the end, keeping at most `cap` characters (the rest is read and dropped)
+        static System.Threading.Tasks.Task<string> Drain(StreamReader r, int cap)
+        {
+            return System.Threading.Tasks.Task.Factory.StartNew(() => { try { return ReadCapped(r, cap); } catch (IOException) { return ""; } catch (ObjectDisposedException) { return ""; } }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
+        }
+        public static string ReadCapped(TextReader r, int cap)
+        {
+            var sb = new System.Text.StringBuilder(); var buf = new char[8192]; int n;
+            while ((n = r.Read(buf, 0, buf.Length)) > 0) if (sb.Length < cap) sb.Append(buf, 0, Math.Min(n, cap - sb.Length));
+            return sb.ToString();
+        }
+
         // Full path, so a netsh.exe planted somewhere on PATH can never be picked up instead.
         public static readonly string Netsh = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "netsh.exe");
         public static string Sys(string exe) { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), exe); }
 
         // Runs a fixed program with fixed arguments (never through cmd or PowerShell) and returns its output.
-        public static string Run(string exe, string args, int timeoutMs)
+        // review 22 Nov: output is capped (a runaway helper - tshark on a busy capture - can't fill the 64 MB budget), a timed-out
+        // helper is killed and reaped, and the caller can tell "timed out" from "printed nothing"
+        public const int MaxOutput = 8 * 1024 * 1024;   // characters kept; the rest is read and dropped so the helper never blocks on a full pipe
+        public static string Run(string exe, string args, int timeoutMs) { bool to; string o = Run(exe, args, timeoutMs, out to); if (to) { Program.Log("helper timed out after " + timeoutMs + " ms: " + System.IO.Path.GetFileName(exe) + " " + (args ?? "").Split(' ')[0]); LastTimedOut = true; } else LastTimedOut = false; return o; }   // R2-138: said in the log, and readable right after the call
+        [ThreadStatic] public static bool LastTimedOut;
+        public static string Run(string exe, string args, int timeoutMs, out bool timedOut)
         {
+            timedOut = false;
             var psi = new ProcessStartInfo(exe, args);
             psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
             psi.WorkingDirectory = Path.GetDirectoryName(exe);   // never the folder AdeeboMeter runs from (Downloads): a child could load a planted DLL from there
             if (Path.GetFileName(exe).Equals("tshark.exe", StringComparison.OrdinalIgnoreCase)) { psi.StandardOutputEncoding = System.Text.Encoding.UTF8; psi.StandardErrorEncoding = System.Text.Encoding.UTF8; }   // tshark writes UTF-8 (→, names); Windows' own tools write the console code page
             else if (Path.GetFileName(exe).Equals("netsh.exe", StringComparison.OrdinalIgnoreCase))
                 try { psi.StandardOutputEncoding = System.Text.Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage); } catch (ArgumentException) { } catch (NotSupportedException) { }   // netsh: the OEM page (a Wi-Fi name with é), not ANSI
+            var bz = Busy.Begin(Busy.Label(exe, args));
+            try {
             using (var p = Process.Start(psi))
             {
                 Add(p);
-                var t = p.StandardOutput.ReadToEndAsync();
-                p.StandardError.ReadToEndAsync();
-                if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } return ""; }
-                return t.Wait(1000) ? t.Result : "";
+                var t = Drain(p.StandardOutput, MaxOutput);
+                var et = Drain(p.StandardError, 64 * 1024);   // bug-hunt L-72: drained and observed - kept now, never left unwatched
+                if (!p.WaitForExit(timeoutMs))
+                {
+                    timedOut = true;
+                    try { p.Kill(); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                    try { p.WaitForExit(3000); } catch (InvalidOperationException) { }   // reaped, so its pipes close and the readers end
+                    t.Wait(1000); et.Wait(1000); return "";
+                }
+                p.WaitForExit();   // the redirected streams reach their end
+                bool done = t.Wait(10000); et.Wait(1000);   // L-72: a long output gets time to finish, not 1 s
+                return done ? t.Result : "";
+            }
+            } finally { bz.End(); }
+        }
+    }
+
+    // What AdeeboMeter is waiting on right now. Anything that has taken 5 s or more shows in the footer of the full view with a
+    // spinner and its seconds, then disappears when it ends (Adeeb, 1.1.6 test day: "anything that takes more than 5-10 seconds should
+    // show a message and disappear" - quiet work looked stuck). English on purpose: it names programs and commands.
+    static class Busy
+    {
+        public sealed class Item { public string What; public DateTime At = DateTime.UtcNow; public void End() { lock (all) all.Remove(this); } }
+        static readonly List<Item> all = new List<Item>();
+        public static Item Begin(string what) { var i = new Item { What = what ?? "" }; lock (all) all.Add(i); return i; }
+        public const int ShowAfterSec = 5;
+        // the longest-waiting item past the threshold, and how many others are past it too
+        public static Item Oldest(out int others)
+        {
+            others = 0; Item o = null; var cut = DateTime.UtcNow.AddSeconds(-ShowAfterSec);
+            lock (all) foreach (var i in all) if (i.At <= cut) { if (o == null || i.At < o.At) o = i; others++; }
+            if (o != null) others--; return o;
+        }
+        public static string Label(string exe, string args)
+        {
+            string n = Path.GetFileNameWithoutExtension(exe ?? "").ToLowerInvariant(), a = (args ?? "").Trim(); if (a.Length > 60) a = a.Substring(0, 59) + "…";
+            switch (n)
+            {
+                case "netsh": return "Waiting on Windows' network settings (netsh " + a + ")";
+                case "tshark": case "dumpcap": return "Waiting on Wireshark (" + n + ")";
+                case "wevtutil": return "Reading the Windows event log";
+                case "powershell": case "pwsh": return "Waiting on Windows PowerShell";
+                case "ping": case "tracert": case "pathping": return "Waiting on " + n + " " + a;
+                default: return "Waiting on Windows (" + n + (a == "" ? "" : " " + a) + ")";
             }
         }
     }
@@ -628,13 +759,13 @@ namespace AdeeboMeter
     static class Voice
     {
         public static volatile bool Serious;
-        public static string P(string fun, string plain) { return Serious ? plain : fun; }
-        public static string Red(string fun, string plain) { return plain; }
-        public static string ByLevel(int level, string fun, string plain) { return level >= 2 ? plain : P(fun, plain); }   // a real problem is never a joke - the plain words, whatever the voice
+        public static string P(string fun, string plain) { return L.T(Serious ? plain : fun); }   // 24 Nov: in your language (the English when a line has no translation yet)
+        public static string Red(string fun, string plain) { return L.T(plain); }
+        public static string ByLevel(int level, string fun, string plain) { return level >= 2 ? L.T(plain) : P(fun, plain); }   // a real problem is never a joke - the plain words, whatever the voice
         public static string Greet()
         {
             int h = DateTime.Now.Hour;
-            return h < 5 ? "Still up, boss?" : h < 12 ? "Good morning, boss." : h < 17 ? "Good afternoon, boss." : "Good evening, boss.";
+            return L.T(h < 5 ? "Still up, boss?" : h < 12 ? "Good morning, boss." : h < 17 ? "Good afternoon, boss." : "Good evening, boss.");
         }
     }
 }

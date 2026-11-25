@@ -1,6 +1,6 @@
 # Arabic localization review — 19 November 2026
 
-Adeeb authorized pushing this Arabic implementation on 19 November 2026. Native Arabic proof review remains pending.
+A one-time push of this Arabic work was approved on 19 November 2026 - that was for that push only; any later push needs Adeeb's own go-ahead. Native Arabic proof review remains pending.
 
 ## Coverage and proof files
 
@@ -8,7 +8,7 @@ Adeeb authorized pushing this Arabic implementation on 19 November 2026. Native 
 - Windows catalog: 4,197 entries. Includes all 2,037 translatable literals found by langcheck, existing variable-based labels, Learn fields, quiz choices and diagram messages. The collector excludes self-test sentinels and punctuation-only strings.
 - The shared inventory contains 6,772 distinct English keys. The proof TXT contains a section for each surface. A separate review-status TXT identifies existing entries, machine drafts and entries with an AI editorial pass. A native Arabic speaker has not proofread the complete catalog; do not treat coverage as linguistic approval.
 - Proof files in the parent workspace: `AdeeboMeter-Arabic-translation-list.txt`, `AdeeboMeter-Arabic-review-status.txt`, `Arabic-homepage-desktop.png`, `Arabic-homepage-phone.png`, `Arabic-mobile-tools.png`, `Arabic-Windows-text-preview.png`.
-- Local HTML proofs: `docs/index-ar.html`, `docs/app-ar.html`, `docs/live-ar.html`, `docs/blog/index-ar.html`. They use the normal components and force Arabic for review. These standalone proof pages are not production routes.
+- Local HTML proofs (not in the repo - they were never committed; review the real pages under `docs/ar/` instead): `docs/index-ar.html`, `docs/app-ar.html`, `docs/live-ar.html`, `docs/blog/index-ar.html`. They use the normal components and force Arabic for review. These standalone proof pages are not production routes.
 
 ## Implementation
 

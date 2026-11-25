@@ -19,6 +19,7 @@ namespace AdeeboMeter
     //   traffic_lab    = off        Toolbox › Traffic Lab (building and sending test packets)
     //   live_capture   = off        Live capture and Find my match server (Wireshark's tshark)
     //   gamer_zone     = off        game pings in the background (the tab says it's off)
+    //   phone_remote   = off        the phone link: pairing, remembered phones and their waiting room (online_lookups = off covers it too)
     //   history_days   = 3          keep at most this many days of history (1-180)
     //   mode           = simple     always Simple mode
     //
@@ -26,7 +27,8 @@ namespace AdeeboMeter
     // %ProgramData%. The policy only changes what runs; the user's own saved settings are kept and come back if it goes.
     static class Policy
     {
-        public static bool NoInternetCheck, NoOnline, NoSpeed, NoLab, NoCapture, NoGamer;
+        public static bool NoInternetCheck, NoOnline, NoSpeed, NoLab, NoCapture, NoGamer, NoPhone;
+        public static bool NoRemote { get { return NoPhone || NoOnline; } }   // review 1.1.6: the phone link reaches a server outside, so online_lookups = off ends it too
         public static int MaxHistoryDays;   // 0 = no limit
         public static string Mode = "", File = "";
         public static bool Any { get { return File != ""; } }
@@ -42,7 +44,7 @@ namespace AdeeboMeter
                     string f = Path.Combine(dir, "AdeeboMeter.policy"); if (!System.IO.File.Exists(f)) continue;
                     // a big file (a long comment header) is read up to 2,000 lines - never ignored whole: IT would think things are off
                     // ... and at most the first 64 KB: a line count alone doesn't stop one 300 MB line filling memory
-                    var info = new FileInfo(f); if (info.Length > 16384) Program.Log("policy: " + f + " is " + info.Length + " bytes - reading its first 64 KB, up to 2,000 lines");
+                    var info = new FileInfo(f); if (info.Length > 65536) Program.Log(   /* bug-hunt L-295: logged when it's really cut - past the 64 KB that's read */ "policy: " + f + " is " + info.Length + " bytes - reading its first 64 KB, up to 2,000 lines");
                     string head; using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) using (var sr = new StreamReader(fs)) { var buf = new char[65536]; int n = sr.ReadBlock(buf, 0, buf.Length); head = new string(buf, 0, n); }
                     Parse(head.Split('\n').Take(2000).Select(l => l.TrimEnd('\r')).ToList()); File = File == "" ? f : File + "; " + f; Program.Log("policy: " + f);
                 }
@@ -68,6 +70,7 @@ namespace AdeeboMeter
                     case "traffic_lab": NoLab |= off; break;
                     case "live_capture": NoCapture |= off; break;
                     case "gamer_zone": NoGamer |= off; break;
+                    case "phone_remote": NoPhone |= off; break;
                     case "history_days": int d; if (int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out d) && d >= 1) { d = Math.Min(d, 180); MaxHistoryDays = MaxHistoryDays == 0 ? d : Math.Min(MaxHistoryDays, d); } else Program.Log("policy: history_days = " + v + " isn't a number of days (1-180) - ignored"); break;
                     case "mode": if (v == "simple") Mode = v; else Program.Log("policy: mode can only be simple"); break;   // only ever narrows: "pro" isn't a policy
                     default: Program.Log("policy: unknown setting \"" + k + "\" - ignored"); break;

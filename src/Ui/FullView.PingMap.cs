@@ -42,7 +42,7 @@ namespace AdeeboMeter
         float PaintPingMap(Graphics g, Game gm, float x, float y, float w)
         {
             if (gm == null || gm.Servers.Count == 0) return y;
-            y = SetHead(g, L.T("PING MAP") + " · " + gm.Name.ToUpperInvariant(), x, y, w);
+            y = SetHead(g, Kit.Sent("PING MAP") + " · " + gm.Name.ToUpperInvariant(), x, y, w);
             float mw = Math.Min(w, 760 * S), mh = mw / 2.2f; var map = new RectangleF(x, y, mw, mh);
             Theme.Fill(g, map, 12 * S, Theme.Soft);
             Func<float, float, PointF> P = (lon, lat) => new PointF(map.X + (lon + 180) / 360f * map.Width, map.Y + (78 - lat) / 140f * map.Height);   // 78N to 62S

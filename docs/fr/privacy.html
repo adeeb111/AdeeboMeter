@@ -1,36 +1,36 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/privacy.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Politique de confidentialité d’AdeeboMeter</title>
 <meta name="description" content="Découvrez comment AdeeboMeter protège les données de l’application Windows et comment le site mesure les visites avec Cloudflare Web Analytics.">
 <link rel="canonical" href="https://adeebometer.com/fr/privacy.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter"><meta property="og:locale" content="fr_CA">
+<meta property="og:url" content="https://adeebometer.com/fr/privacy.html">
+<meta property="og:title" content="Politique de confidentialité d’AdeeboMeter">
+<meta property="og:description" content="Découvrez comment AdeeboMeter protège les données de l’application Windows et comment le site mesure les visites avec Cloudflare Web Analytics.">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
 <style>
-/* Local typography and styles. Website analytics is described below. */
-:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
-:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
-*{box-sizing:border-box}
-body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
-main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
-a{color:var(--blue);overflow-wrap:anywhere}
-h1{font-size:32px;line-height:1.2;margin:0 0 6px}
-h2{font-size:20px;margin:36px 0 8px}
-.date{color:var(--sub);margin:0 0 24px}
-.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
-.short p{margin:0}
-ul{padding-left:22px}
-li{margin:6px 0}
-code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
-footer{margin-top:48px;color:var(--sub);font-size:14px}
+/* the privacy policy: Read mode, the same type and colours as the guides */
+.date{color:var(--muted);font-size:15px;margin:0 0 28px}
+.short{background:color-mix(in srgb,var(--ok) 9%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 35%,var(--line));border-radius:var(--r-lg);padding:18px 22px;margin:0 0 8px}
+.short p{margin:0;max-width:none}
+main ul{padding-left:1.2em}
+main li{margin:8px 0}
+main li::marker{color:var(--muted)}
+main code{padding:.1em .3em}
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<meta property="og:locale" content="fr_CA">
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/privacy.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/privacy.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/privacy.html">
@@ -38,17 +38,17 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/privacy.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/privacy.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/privacy.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
-<main><h1>Politique de confidentialité</h1>
-<p class="date">Application et site Web AdeeboMeter · mise à jour le 18 novembre 2026</p>
+<main>
+<h1>Politique de confidentialité</h1>
+<p class="date">AdeeboMeter app and website · last updated 24 November 2026</p>
 
-<div class="short"><p><b>L’application Windows</b> ne recueille aucune information sur vous. Aucun compte, aucune télémétrie, aucune analyse d’utilisation et aucun serveur. Les données restent sur votre PC et l’application n’accepte aucune connexion entrante.</p></div>
+<div class="short"><p><b>L’application Windows</b> collects nothing about you. There is no account, no telemetry and no analytics. Everything it learns stays on your PC, and it never accepts a connection from anywhere. Its only servers are three small relays (Cloudflare Workers) that carry what you choose to send - a report, your phone link, the phone app's Live service - and keep none of it.</p></div>
 
 <h2>Ce qu’AdeeboMeter recueille</h2>
-<p>Rien. Aucun serveur ne reçoit de données sur vous, votre PC, votre réseau ou votre utilisation.</p>
+<p>Nothing. The developer receives no information about you, your PC, your network or how you use the app. The relays described below pass along only what you choose to send, and store none of it.</p>
 
 <h2>Ce qui reste sur le PC</h2>
 <ul>
@@ -67,7 +67,16 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Walk test</b> (<code>walk.txt</code>): the room names you typed and what each spot measured. Remove a room on the page to delete it.</li>
   <li><b>Programs seen</b> (<code>seen-apps.txt</code>): the names of programs that use the network and when each was first seen, so a newcomer can be pointed out.</li>
   <li><b>Remembered phones</b> (<code>phones.txt</code>, only if you said yes to "Remember this phone"): each phone's name and its own key, locked to your Windows account. Forget my phones empties it.</li>
-  <li><b>Your games</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): the games and servers you added in the Gamer Zone, and Valve's public server list when you refresh it - and, while History is on, a line a minute for each server you watch.</li>
+  <li><b>Vos jeux</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): the games and servers you added in the Gamer Zone, and Valve's public server list when you refresh it - and, while History is on, a line a minute for each server you watch.</li>
+  <li><b>Sports</b> (<code>sportkeys.dat</code>, <code>sporthits.txt</code>): the keys you added for football-data.org or CricketData, locked to your Windows account, and today's count of CricketData calls.</li>
+  <li><b>Marchés</b> (<code>mk-calls.txt</code>, the Bank of Canada history files): today's count of quote calls with your own key, and the exchange-rate history the charts are drawn from.</li>
+  <li><b>Stream Check</b> (<code>streamlinks.bin</code>, <code>streamchecks.txt</code>): the stream links you saved, locked to your Windows account, and the results of your checks.</li>
+  <li><b>Service board</b> (<code>board-watch.txt</code>, <code>board-log.txt</code>): the hosts you asked it to watch, and what each check found.</li>
+  <li><b>Certificates</b> (<code>cert-compare</code>, <code>cert-dates.txt</code>): the chains and expiry dates you asked it to compare or keep an eye on.</li>
+  <li><b>Device list</b> (<code>inventory.txt</code>, only while History is on): the devices you named or watch on each network. It follows History: older entries roll off with it, and turning History off deletes it.</li>
+  <li><b>Moments and time pins</b> (<code>moments.txt</code>, <code>time-pins.txt</code>): which little moments the companion already showed you, and the minutes you pinned in the Time machine.</li>
+  <li><b>Reports waiting to go</b> (dossier <code>outbox</code> folder): at most 3 reports you pressed Send on while offline, already cleaned; they go the next time AdeeboMeter starts online, or after 7 days they're deleted.</li>
+  <li><b>Network Lab</b> (<code>lab.html</code>, <code>edge-profile</code>): the Lab page you open, with your network's device list and this PC's name in it, and the private Edge profile it opens in. They stay on this PC.</li>
   <li><b>Captures</b> et <b>résultats enregistrés</b>, seulement ceux que vous choisissez de créer ou garder.</li>
 </ul>
 <p>Les secrets saisis, comme communauté SNMP, secret RADIUS ou mot de passe de certificat, servent à l’action demandée sans sauvegarde, journalisation ni copie.</p>
@@ -81,26 +90,34 @@ footer{margin-top:48px;color:var(--sub);font-size:14px}
   <li><b>Ping du routeur :</b> un petit ping au routeur toutes les quelques secondes, sur votre réseau local.</li>
   <li><b>Vérification Internet et DNS :</b> un ping vers <code>1.1.1.1</code> (ou <code>8.8.8.8</code>) toutes les 15 secondes en Balanced ou 5 minutes en Penny, et au plus une recherche DNS par minute. Si les pings sont bloqués, une connexion chronométrée au port 443 est ouverte puis fermée immédiatement. Le réglage Désactivé arrête ces échanges Internet.</li>
   <li><b>Nom du fournisseur :</b> une fois par réseau, une trace de 6 sauts vers <code>1.1.1.1</code> et une recherche inverse pour identifier le fournisseur.</li>
-  <li><b>Test de page de connexion :</b> seulement après un échec, une requête à la page de test de Windows (<code>msftconnecttest.com</code>).</li>
+  <li><b>Test de page de connexion :</b> only inside a check you start (What's wrong? and the full checkup), one request to the test page Windows itself uses (<code>msftconnecttest.com</code>).</li>
   <li><b>Surveillance de destination :</b> un ping toutes les 30 secondes vers la destination épinglée, si activée.</li>
   <li><b>Gamer Zone:</b> rien avant de choisir un jeu. Ensuite, pings ou connexions vers ses régions; liste des serveurs Valve depuis <code>api.steampowered.com</code> seulement à l’ajout d’un jeu Valve ou avec Actualiser.</li>
 
   <li><b>Vidéo :</b> pendant la lecture, connexion chronométrée sans données au serveur toutes les 10 secondes, ou 30 en Penny. Au plus six essais sans réponse. Désactivation dans Paramètres › Vidéo ou marchés.</li>
   <li><b>Surveillance du courtier :</b> rien avant le choix du courtier. Ensuite, connexion sans données ni authentification à l’adresse publique, au rythme choisi et pendant les heures du marché, ou en continu pour les cryptos.</li>
   <li><b>Météo</b> (désactivée au départ) : le lieu saisi est envoyé une fois à <code>geocoding-api.open-meteo.com</code> pour le trouver. Ensuite, seules les coordonnées vont à <code>api.open-meteo.com</code> environ tous les 2 jours, ou toutes les 6 heures en mode amélioré. La position du PC n’est jamais utilisée. Open-Meteo est gratuit, sans compte, données CC BY 4.0.</li>
-  <li><b>Données de la Banque du Canada :</b> quand la page des marchés est ouverte ou le résumé activé et que des données récentes sont attendues : une requête pour les taux du jour et environ une par semaine pour l’indice à <code>bankofcanada.ca</code>. Aucune donnée sur vous n’est envoyée.</li>
+  <li><b>Données de la Banque du Canada :</b> only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from <code>bankofcanada.ca</code>. Aucune donnée sur vous n’est envoyée.</li>
+  <li><b>Market quotes</b> (only with your own key): index, company and futures prices from <code>financialmodelingprep.com</code>, <code>finnhub.io</code> ou <code>twelvedata.com</code> - only the services you added a key for - while Markets is open, as often as you set (1-60 minutes). A search in the company picker asks the same service.</li>
+  <li><b>Sports scores</b> (off until you turn them on): while the Sports page is open (about every 5 minutes), or a stream plays while a team you follow is live, the day's fixtures and scores from <code>api-web.nhle.com</code>, <code>site.api.espn.com</code> et <code>feeds.bbci.co.uk</code>, and from <code>api.football-data.org</code> ou <code>api.cricapi.com</code> with your own key. With the kick-off reminder on, your teams' fixtures about every 30 minutes while the PC is on, only when one of their games is near.</li>
+  <li><b>Phone waiting room</b> (only once you remembered a phone): a waiting room at AdeeboMeter's phone relay (<code>adeebometer-remote.orkoadeeb.workers.dev</code>) so the phone can find this PC - sealed, the relay can't read it - and once an hour one request to <code>adeebometer-live.orkoadeeb.workers.dev</code> for the time. Off with the switch on the phone page, or with <code>phone_remote = off</code> in an IT policy.</li>
+  <li><b>Service board watch</b> (only if you set a number of minutes): a connection (no data) to each host on your board every few minutes while the app runs.</li>
+  <li><b>Watched devices</b> (only devices you chose to watch): a ping a minute to each one, on your local network.</li>
 </ul>
 <p><b>À votre demande seulement :</b></p>
 <ul>
   <li><b>Outils :</b> le test contacte seulement la destination saisie, choisie ou indiquée à l’écran, comme <code>msftconnecttest.com</code> pour la vérification de l’heure).</li>
   <li><b>Test de débit :</b> environ 8 secondes de téléchargement et téléversement vers le serveur choisi, celui de Cloudflare le plus proche <code>speed.cloudflare.com</code> par défaut, ou un fichier de test Vultr ou OVHcloud, avec limite en Mo.</li>
-  <li><b>Rapport au fournisseur :</b> pings et traces vers les destinations choisies; votre IP publique, par une requête à <code>www.cloudflare.com/cdn-cgi/trace</code>), seulement si vous saisissez oui.</li>
+  <li><b>Rapport au fournisseur :</b> pings and traces to the destinations you choose (and to <code>1.1.1.1</code> beside a host you type, for comparison); your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>), seulement si vous saisissez oui.</li>
+  <li><b>Phone link:</b> when you press Show the QR code, a sealed connection through AdeeboMeter's phone relay (<code>adeebometer-remote.orkoadeeb.workers.dev</code>). Everything between the phone and the PC is encrypted end to end; the relay passes it along and can't read it.</li>
+  <li><b>Stream Check:</b> when you press Test my stream, the playlist of the link you gave and up to 30 seconds of its video, from that link's own server.</li>
+  <li><b>Certificate revocation</b> (Settings, off by default): when you run Chain check or HTTPS check, one question to the certificate issuer's revocation list or OCSP address.</li>
   <li><b>Recherches en ligne</b> (désactivées au départ, arrêt après la durée choisie) : IP publiques du chemin envoyées à RIPEstat (<code>stat.ripe.net</code>) et PeeringDB en HTTPS. Le bilan de sécurité interroge aussi le DNS chiffré Cloudflare (<code>cloudflare-dns.com</code>) et établit une négociation TLS avec <code>www.microsoft.com</code>. Le test de fuite VPN demande au serveur STUN Cloudflare (<code>stun.cloudflare.com</code>, UDP 3478) l’adresse vue, par la route normale puis directement par Wi-Fi ou câble. L’outil DoH / DoT interroge le serveur choisi au lancement.</li>
   <li><b>Liens sur lesquels vous cliquez</b> (GitHub, Don) ouverts dans le navigateur; aucun envoi par l’application.</li>
   <li><b>Signaler un bogue, envoyer un avis ou une carte :</b> seulement quand vous appuyez sur <b>Envoyer</b> dans le formulaire, après avoir vu les données envoyées. Le relais Cloudflare transmet à Adeeb, sans compte. Le rapport peut inclure versions, page et fin du journal, avec noms, PC, chemins et adresses retirés; le relais retire encore courriels et IP. Votre adresse sert au quota de cinq envois par heure et reste sous forme d’empreinte irréversible pendant un jour. Hors ligne, l’envoi attend sur le PC jusqu’au prochain démarrage connecté. Désactivé si les TI bloquent les recherches en ligne.</li>
   <li><b>Rapports de plantage :</b> au prochain démarrage, l’application propose une page GitHub préremplie. Vous pouvez lire et modifier les détails; rien ne part sans validation.</li>
 </ul>
-<p>Aucun port en écoute ni serveur : seules les réponses aux requêtes sont reçues.</p>
+<p>AdeeboMeter never listens: it opens no ports and runs no server on your PC, and only receives replies to requests it made.</p>
 
 <h2>Microsoft Store</h2>
 <p>Si vous installez depuis le Microsoft Store, Microsoft gère téléchargement, mises à jour et achats selon <a href="https://privacy.microsoft.com/privacystatement">la déclaration de confidentialité de Microsoft</a>. Le développeur reçoit seulement les totaux anonymes fournis aux éditeurs, comme les installations.</p>

@@ -19,11 +19,11 @@ namespace AdeeboMeter
         // id -> name, icon, the colour (Kit.Accents) and where it opens
         static readonly Dictionary<string, string[]> NavInfo = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
-            { "home", new[] { "Home", "home", "home" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
-            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "trade", new[] { "Trading", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
+            { "home", new[] { "Home", "home", "home" } }, { "outlook", new[] { "Outlook", "outlook", "outlook" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
+            { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
             { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
-            { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }
+            { "calc", new[] { "Calculators", "calc", "calc" } }, { "lab", new[] { "AdeeboLab", "route", "learn" } }, { "shell", new[] { "AdeeboShell", "go", "home" } }, { "reports", new[] { "Reports", "report", "reports" } }
         };
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }
         static string NavIcon(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[1] : "star"; }
@@ -43,7 +43,7 @@ namespace AdeeboMeter
             if (page == "mine") return curMine;
             string s = SecOf(page); return s == "" ? "" : s;
         }
-        string curMine = "";
+        string curMine = "", navOwn = "";   // navOwn: Calculators or Reports opened from the bar - shown as their own page
         // Review-1: a search left in the box kept covering Calculators and Reports - each destination opens clean
         void ClearTbSearch() { if (tbSearch != null && tbSearch.Box.Text != "") tbSearch.Box.Text = ""; tbFilter = ""; }
         internal void OpenNav(string id)
@@ -51,13 +51,15 @@ namespace AdeeboMeter
             if (tbBusy && tab == "toolbox" && (id == "calc" || id == "reports" || id == "toolbox")) { BusyNote(); return; }
             switch (id)
             {
-                case "calc": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("calc"); break;
-                case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); if (!ByQuestion) SetTbView("q"); ClearTbSearch(); ShowQuestions("report"); break;
+                // 22 Nov (Adeeb: "why did Calculators open the Toolbox?"): their own page - the tiles of that one section, under its
+                // own title, without the Toolbox's chips; the Toolbox's own view setting is left as it was
+                case "lab": tab = "lab"; ShowTab(); break;   // AdeeboLab's own page in the app; a drawing opens in its window from there (Adeeb, 22 Nov)
+                case "calc": case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); navOwn = id == "calc" ? "calc" : "report"; if (!EveryTool) { Cfg.TbView = "list"; ApplyTbView(); } ClearTbSearch(); ShowQuestions(navOwn); break;
                 default:
                     if (id.StartsWith("mine", StringComparison.Ordinal)) { curMine = id; tab = "mine"; ShowTab(); if (mineCanvas != null) mineCanvas.Invalidate(); break; }
                     var def = Secs.FirstOrDefault(x => x[0] == id); if (def == null) return;
                     string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : def[2];
-                    if (id == "toolbox" && tbQ != "" && (tbQ == "calc" || tbQ == "report")) ShowQuestions("");
+                    if (id == "toolbox") { navOwn = ""; if (tbQ == "calc" || tbQ == "report") ShowQuestions(EveryTool ? "*" : ""); }
                     ShowTab(); break;
             }
             SyncNav();
@@ -90,7 +92,7 @@ namespace AdeeboMeter
         // the More menu: everything not on the bar, with its icon; and a way to the Navigation settings
         void ShowMoreMenu(Control at, Point p)
         {
-            var m = new ContextMenuStrip { ShowImageMargin = true, Font = Draw.fBody, ImageScalingSize = new Size(Sc(18), Sc(18)) };
+            var m = Menus.Make();
             foreach (var id in NavMore())
             {
                 string nid = id; var it = new ToolStripMenuItem(L.T(NavName(id)), NavBitmap(NavIcon(id), Kit.Accent(NavAccent(id))));
@@ -112,12 +114,13 @@ namespace AdeeboMeter
 
         // ---------- Sidebar: the navy column (topogram's look: faint highlight + a 3 px aqua bar, never a solid block)
         DB sideNav;
-        // the rail: navy for the standard themes; the colour themes get a deep shade of their own so it doesn't clash (Sunset was navy-on-plum)
+        // the rail: graphite for the standard themes (23 Nov polish - the website's #15181C, not navy); the colour themes get a
+        // deep shade of their own so it doesn't clash (Sunset was navy-on-plum)
         static bool StdRail { get { return Theme.Palette == "standard" || Theme.Palette == ""; } }
-        static Color Navy { get { return StdRail ? Theme.C("#0B1B3A") : Theme.Dark ? Kit.Mix(Kit.Mix(Theme.Bg, Color.Black, 0.35f), Theme.Blue, 0.05f) : Kit.Mix(Theme.Blue, Color.Black, 0.78f); } }
-        static Color Navy2 { get { return StdRail ? Theme.C("#13284D") : Kit.Mix(Navy, Color.White, 0.08f); } }
-        static Color Aqua { get { return StdRail ? Theme.C("#3DE0C2") : Theme.Blue; } }
-        static Color NavyText { get { return StdRail ? Theme.C("#B5C6E0") : Kit.Mix(Navy, Color.White, 0.72f); } }
+        static Color Navy { get { return StdRail ? Theme.C(Theme.Dark ? "#0C0E10" : "#15181C") : Theme.Dark ? Kit.Mix(Kit.Mix(Theme.Bg, Color.Black, 0.35f), Theme.Blue, 0.05f) : Kit.Mix(Theme.Blue, Color.Black, 0.78f); } }
+        static Color Navy2 { get { return Kit.Mix(Navy, Color.White, 0.08f); } }
+        static Color Aqua { get { return StdRail ? Theme.C("#7FA6F8") : Theme.Blue; } }
+        static Color NavyText { get { return StdRail ? Theme.C("#C9CED6") : Kit.Mix(Navy, Color.White, 0.72f); } }
         DB BuildSideNav()
         {
             sideNav = new DB { Name = "sideNav", Dock = DockStyle.Left, Width = Sc(214), BackColor = Navy, Visible = false };
@@ -132,28 +135,28 @@ namespace AdeeboMeter
             if (!hc && sideNav.BackColor != bg) sideNav.BackColor = bg;
             using (var b = new SolidBrush(bg)) g.FillRectangle(b, r);
             float x = 10 * S, y = 14 * S, w = r.Width - 20 * S; string cur = NavOf(tab);
-            var sr = new RectangleF(x, y, w, 34 * S);
-            Theme.Fill(g, sr, 17 * S, hc ? SystemColors.Window : Navy2);
-            Kit.Icon(g, "search", new RectangleF(sr.X + 12 * S, sr.Y + 9 * S, 16 * S, 16 * S), sub);
-            using (var b = new SolidBrush(sub)) g.DrawString(L.T("Search anything..."), Draw.fBody, b, sr.X + 34 * S, sr.Y + 8 * S);
-            Act(sideNav, sr, OpenPalette); Hint(sideNav, sr, "search.all"); sideNav.Acc.Add(Tuple.Create(L.T("Search anything"), Rectangle.Round(sr), (Action)OpenPalette)); y += 48 * S;
+            // 23 Nov: no search box here - the top bar's search (Ctrl K) is the one way to search everything
             // too many tabs for the height (short screen, 150-200 % scaling): rows get compact, and what still doesn't fit
             // goes behind a "More..." row that opens the same menu as the top bar's More - nothing is ever cut off unreachable
-            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 8 * S - 20 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
-            bool compact = bar.Count * 46 * S + more.Count * 38 * S > room; float bigH = compact ? 36 : 44;
-            int fitMore = more.Count; if (compact) { float left = room - bar.Count * 38 * S; fitMore = Math.Max(0, (int)(left / (38 * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
+            var bar = NavBar().ToList(); var more = NavMore().ToList(); float room = r.Height - y - 6 * S - 18 * S - 4 * S - 44 * S - 40 * S;   // 44: Settings always has its row at the bottom; 40: Your phone above it
+            // 22 Nov (Adeeb: "make it tighter when all is enabled"): tighter rows to start with, and they shrink until everything fits
+            // (40/34 px down to 30/28); only past that does the rest go behind "More..."
+            float bigH = 40, smallH = 34;
+            while ((bar.Count * (bigH + 1) + more.Count * (smallH + 1)) * S > room && bigH > 30) { bigH -= 1; smallH = Math.Max(28, smallH - 1); }
+            bool compact = (bar.Count * (bigH + 1) + more.Count * (smallH + 1)) * S > room;
+            int fitMore = more.Count; if (compact) { float left = room - bar.Count * (bigH + 1) * S; fitMore = Math.Max(0, (int)(left / ((smallH + 1) * S))); if (fitMore < more.Count) fitMore = Math.Max(0, fitMore - 1); }
             Action<string, bool> row = (id, small) =>
             {
-                float h = (small ? 36 : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
-                if (sel) { using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, rr); using (var b = new SolidBrush(hc ? SystemColors.Highlight : Aqua)) g.FillRectangle(b, rr.X, rr.Y + 6 * S, 3 * S, h - 12 * S); }
-                Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Aqua) : sub);
-                using (var b = new SolidBrush(sel ? ink : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
+                float h = (small ? smallH : bigH) * S; var rr = new RectangleF(x, y, w, h); bool sel = cur == id;
+                if (sel) { if (hc) Theme.Stroke(g, rr, 9 * S, SystemColors.Highlight, 2 * S); else Theme.Fill(g, rr, 9 * S, Theme.Blue); }   // the current page: a solid logo-blue row (review 24 Nov: the faint wash was 1.3:1)
+                Kit.Icon(g, NavIcon(id), new RectangleF(x + 14 * S, y + (h - 18 * S) / 2, 18 * S, 18 * S), sel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
+                using (var b = new SolidBrush(sel ? (hc ? ink : Theme.OnBlue) : sub)) g.DrawString(L.T(NavName(id)), small ? Draw.fBody : Draw.fBtn, b, x + 42 * S, y + (h - (small ? Draw.fBody : Draw.fBtn).GetHeight(g)) / 2);
                 string nid = id; Act(sideNav, rr, delegate { OpenNav(nid); }); Hint(sideNav, rr, "nav." + id); sideNav.Acc.Add(Tuple.Create(L.T(NavName(id)), Rectangle.Round(rr), (Action)delegate { OpenNav(nid); }));
-                y += h + 2 * S;
+                y += h + 1 * S;
             };
             foreach (var id in bar) row(id, false);
-            y += 8 * S;
-            using (var b = new SolidBrush(sub)) g.DrawString(L.T("MORE"), Draw.fTiny, b, x + 14 * S, y); y += 20 * S;
+            y += 6 * S;
+            using (var b = new SolidBrush(Kit.Mix(sub, bg, 0.3f))) g.DrawString(L.T("More"), Draw.fTiny, b, x + 14 * S, y); y += 18 * S;
             foreach (var id in more.Take(fitMore)) row(id, true);
             if (fitMore < more.Count)
             {
@@ -166,21 +169,28 @@ namespace AdeeboMeter
             float mh = 96 * S; bool meter = r.Height - 12 * S - mh - 46 * S - 40 * S > y + 8 * S;
             float my = r.Height - mh - 12 * S;
             {
-                var srr = new RectangleF(x, Math.Max(y + 40 * S, (meter ? my : r.Height - 4 * S) - 44 * S), w, 38 * S); bool ssel = tab == "settings";
+                var srr = new RectangleF(x, Math.Max(y + 40 * S, (meter ? my : r.Height - 4 * S) - 44 * S), w - 44 * S, 38 * S); bool ssel = tab == "settings";
+                // the heart beside Settings (Adeeb, 22 Nov): community and support - small, always there, never in the way
+                {
+                    var hr = new RectangleF(x + w - 42 * S, srr.Y + 2 * S, 34 * S, 34 * S);
+                    heartRect = hr; HeartGlow(g, hr);
+                    SupportCard.Heart(g, new RectangleF(hr.X + 8 * S, hr.Y + 9 * S, 18 * S, 16 * S), hc ? SystemColors.WindowText : Color.FromArgb(0xE6, 0x49, 0x80));
+                    Act(sideNav, hr, OpenSupport); sideNav.Acc.Add(Tuple.Create(L.T("Community and support"), Rectangle.Round(hr), (Action)OpenSupport));
+                }
                 // Your phone, the second way in (Adeeb, 16 Nov: "connect option should also be in the left bar") - its state on the right
                 {
                     var prr = new RectangleF(x, srr.Y - 40 * S, w, 38 * S); bool psel = tab == "phone"; string plb; string pst = PhoneHub.StateOf(out plb);
-                    if (psel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, prr);
-                    Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Aqua) : sub);
+                    if (psel) Theme.Fill(g, prr, 9 * S, hc ? SystemColors.Highlight : Theme.Blue);
+                    Color pc = pst == "on" ? Theme.Green : pst == "ask" ? Theme.Amber : pst == "wait" ? Aqua : (psel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
                     Kit.Icon(g, "link", new RectangleF(x + 14 * S, prr.Y + 10 * S, 18 * S, 18 * S), pc);
-                    using (var b = new SolidBrush(psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                    using (var b = new SolidBrush(psel && !hc ? Theme.OnBlue : psel ? ink : sub)) g.DrawString(L.T("Your phone"), Draw.fBody, b, x + 42 * S, prr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                     if (plb != "") using (var b = new SolidBrush(pc)) using (var nf = new StringFormat { Alignment = StringAlignment.Far, FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                         g.DrawString(plb, Draw.fSmall, b, new RectangleF(prr.X + 120 * S, prr.Y + (38 * S - Draw.fSmall.GetHeight(g)) / 2, prr.Width - 128 * S, 20 * S), nf);
                     Act(sideNav, prr, LinkClicked); sideNav.Acc.Add(Tuple.Create(L.T("Your phone"), Rectangle.Round(prr), (Action)LinkClicked));
                 }
-                if (ssel) using (var b = new SolidBrush(Color.FromArgb(hc ? 0 : 26, 255, 255, 255))) g.FillRectangle(b, srr);
-                Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Aqua) : sub);
-                using (var b = new SolidBrush(ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
+                if (ssel) Theme.Fill(g, srr, 9 * S, hc ? SystemColors.Highlight : Theme.Blue);
+                Kit.Icon(g, "settings", new RectangleF(x + 14 * S, srr.Y + 10 * S, 18 * S, 18 * S), ssel ? (hc ? SystemColors.Highlight : Theme.OnBlue) : sub);
+                using (var b = new SolidBrush(ssel && !hc ? Theme.OnBlue : ssel ? ink : sub)) g.DrawString(L.T("Settings"), Draw.fBody, b, x + 42 * S, srr.Y + (38 * S - Draw.fBody.GetHeight(g)) / 2);
                 Act(sideNav, srr, delegate { tab = "settings"; ShowTab(); SyncNav(); }); Hint(sideNav, srr, "nav.settings"); sideNav.Acc.Add(Tuple.Create(L.T("Settings"), Rectangle.Round(srr), (Action)delegate { tab = "settings"; ShowTab(); SyncNav(); }));
             }
             if (meter)
@@ -192,7 +202,7 @@ namespace AdeeboMeter
                 using (var b = new SolidBrush(hc ? SystemColors.GrayText : NavyText))
                 {
                     float ly = mr.Y + 34 * S;
-                    foreach (var kv in new[] { new[] { "CPU", Draw.Fmt(snap.Cpu, "0", "%") }, new[] { "RAM", Draw.Fmt(snap.Mem, "0", "%") }, new[] { L.T("Me"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB" } })
+                    if (selfMem == 0) SelfStats(); foreach (var kv in new[] { new[] { "CPU", Draw.Fmt(snap.Cpu, "0", "%") }, new[] { "RAM", Draw.Fmt(snap.Mem, "0", "%") }, new[] { L.T("Me"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture) + " MB" } })
                     {
                         g.DrawString(kv[0], Draw.fBody, b, mr.X + 12 * S, ly); var vs = g.MeasureString(kv[1], Draw.fBody);
                         g.DrawString(kv[1], Draw.fBody, b, mr.Right - 12 * S - vs.Width, ly); ly += 19 * S;
@@ -200,6 +210,39 @@ namespace AdeeboMeter
                 }
                 Act(sideNav, mr, delegate { tab = "procs"; ShowTab(); SyncNav(); });
             }
+        }
+
+        // the heart's card: community and support (SupportCard.cs); its "share an idea" / "report a bug" open the app's own boxes
+        void OpenSupport() { heartSeen = true; SupportCard.Open(this, k => ReportDialog(k, "")); }
+
+        // the heart glows once (Adeeb, 22 Nov): after about 35 minutes with the window open - three soft pulses, then never again
+        // this run; missing it is fine. Nothing glows if the heart was already opened.
+        RectangleF heartRect; double heartOpenSec; bool heartSeen; DateTime heartGlowAt = DateTime.MinValue; System.Windows.Forms.Timer heartTimer;
+        const double HeartAfterSec = 35 * 60, HeartGlowSec = 3.6;
+        void HeartTick()
+        {
+            if (heartSeen || heartGlowAt != DateTime.MinValue || sideNav == null || !sideNav.Visible || WindowState == FormWindowState.Minimized || !Visible) return;
+            heartOpenSec += 0.5; if (heartOpenSec < HeartAfterSec) return;
+            if (!Motion.On) { heartSeen = true; return; }   // no pulse when Windows animations are off or in Penny
+            heartGlowAt = DateTime.Now;
+            heartTimer = new System.Windows.Forms.Timer { Interval = 33 };
+            heartTimer.Tick += delegate
+            {
+                bool done = (DateTime.Now - heartGlowAt).TotalSeconds > HeartGlowSec;
+                if (sideNav != null && heartRect.Width > 0) sideNav.Invalidate(Rectangle.Round(RectangleF.Inflate(heartRect, 14 * S, 14 * S)));
+                if (done) { heartTimer.Stop(); heartTimer.Dispose(); heartTimer = null; heartSeen = true; }
+            };
+            heartTimer.Start();
+        }
+        void HeartGlow(Graphics g, RectangleF hr)
+        {
+            if (heartGlowAt == DateTime.MinValue || heartSeen || Theme.HighContrast) return;
+            double t = (DateTime.Now - heartGlowAt).TotalSeconds / HeartGlowSec; if (t < 0 || t > 1) return;
+            float ph = (float)((t * 3) % 1.0);   // three pulses
+            float k = 1 + ph * 0.55f; int a = (int)(150 * (1 - ph) * (t > 0.9 ? (1 - t) * 10 : 1));
+            var c = new RectangleF(hr.X + hr.Width / 2 - hr.Width * k / 2, hr.Y + hr.Height / 2 - hr.Height * k / 2, hr.Width * k, hr.Height * k);
+            using (var b = new SolidBrush(Color.FromArgb(Math.Max(0, Math.Min(255, a / 3)), 0xE6, 0x49, 0x80))) g.FillEllipse(b, c);
+            using (var p = new Pen(Color.FromArgb(Math.Max(0, Math.Min(255, a)), 0xE6, 0x49, 0x80), 2 * S)) g.DrawEllipse(p, c);
         }
 
         // ---------- applying a layout: which frame shows, how wide the right-hand panel is
@@ -257,21 +300,6 @@ namespace AdeeboMeter
 
         // ---------- the header: the layout switch (Classic tabs <-> Sidebar). The big search sits at the end of the tab row
         // (Classic) or the top of the sidebar, where there's room - the header keeps its width for the headline.
-        // the buddy's face (the Mood button) in its slot left of the gear; the layout switch moved to the ⋯ menu
-        float PaintMood(Graphics g, float right, float cy)
-        {
-            var lr = new RectangleF(right + 8 * S, cy, 0, 0);
-            // the Mood button (PLAN 11.7): the face of the current mood and who's talking; one click opens the menu
-            string who = Voice.Serious ? L.T("Plain") : Lines.Persona == "none" ? L.T(Lines.MoodName(Lines.Mood)) : L.T(Lines.PersonaName(Lines.Persona == "surprise" ? Lines.Today() : Lines.Persona));
-            who = "";   // the face alone: the top line stays calm (the name is in the menu)
-            var ws = who == "" ? SizeF.Empty : g.MeasureString(who, Draw.fBtn); var mr = new RectangleF(lr.X - 8 * S - ws.Width - (who == "" ? 30 : 40) * S, cy - 15 * S, ws.Width + (who == "" ? 30 : 40) * S, 30 * S);
-            Theme.Fill(g, mr, 15 * S, Voice.Serious ? Theme.Soft : Kit.Soft("mine"));
-            Kit.Icon(g, Voice.Serious ? "check" : "mood", new RectangleF(mr.X + (who == "" ? 7 : 10) * S, mr.Y + 7 * S, 16 * S, 16 * S), Voice.Serious ? Theme.Muted : Kit.Accent("mine"));
-            using (var b = new SolidBrush(Voice.Serious ? Theme.Sub : Kit.Ink("mine"))) g.DrawString(who, Draw.fBtn, b, mr.X + 31 * S, mr.Y + (mr.Height - ws.Height) / 2);
-            Act(header, mr, delegate { BuddySheet(); }); Hint(header, mr, "buddy.mood");
-            return mr.X - 8 * S;
-        }
-
         // ---------- Details off: the plain path - three chips instead of the five-dot strip (11.4)
         void PaintPlainPath(Graphics g, Rectangle r)
         {
@@ -299,7 +327,7 @@ namespace AdeeboMeter
             }
             PaintVerdict(g, pathPanel, x + 10 * S, r.Height / 2f, r.Width - (onlineChip.Visible ? onlineChip.Width + 40 * S : 20 * S));
         }
-        static int PathHeight { get { return Cfg.Details ? Sc(128) : Sc(58); } }
+        static int PathHeight { get { return Sc(58); } }   // 24 Nov (Adeeb: "details feel spamming"): the big path strip repeated Home's card - the status strip only, always
         void OpenSettingsAt(string sec)
         {
             tab = "settings"; ShowTab(); SyncNav();

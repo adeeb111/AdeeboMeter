@@ -29,11 +29,13 @@ namespace AdeeboMeter
             run.Status = "DNS records..."; var now = new SortedDictionary<string, string>(StringComparer.Ordinal);
             try { var a = Dns.GetHostAddresses(host); now["DNS A"] = string.Join(" ", a.Where(x => x.AddressFamily == AddressFamily.InterNetwork).Select(x => x.ToString()).OrderBy(x => x, StringComparer.Ordinal).ToArray()); now["DNS AAAA"] = string.Join(" ", a.Where(x => x.AddressFamily == AddressFamily.InterNetworkV6).Select(x => x.ToString()).OrderBy(x => x, StringComparer.Ordinal).ToArray()); }
             catch (SocketException) { now["DNS A"] = "(no answer)"; } catch (ArgumentException) { now["DNS A"] = "(not a name)"; }
-            foreach (var t in MxNs) { if (run.Stop) return rows; var d = Toolkit.Dig(host, t, "", m).Where(r => r.Length > 2 && r[1] == t).Select(r => r[2].Split(DotS, StringSplitOptions.None)[0]).OrderBy(x => x, StringComparer.Ordinal).ToArray(); if (d.Length > 0) now["DNS " + t] = string.Join(" ", d); }
+            foreach (var t in MxNs) { if (run.Stop) return rows; var d = Toolkit.Dig(host, t, "", m).Where(r => r.Length > 2 && (r[1] == t || r[1].StartsWith(t + " ", StringComparison.Ordinal))).Select(r => System.Text.RegularExpressions.Regex.Replace(r[2].Split(DotS, StringSplitOptions.None)[0], @"\s*\(TTL[^)]*\)", "").Trim())   /* review 1.1.6 P3 #5: rows are "MX  example.com", and the TTL counts down */.OrderBy(x => x, StringComparer.Ordinal).ToArray(); if (d.Length > 0) now["DNS " + t] = string.Join(" ", d); }
             run.Status = "Open ports..."; var open = new List<int>();
             foreach (var p in Watched.Concat(Watched.Contains(port) ? Enumerable.Empty<int>() : new[] { port })) { if (run.Stop) return rows; using (var c = Toolkit.Open(host, p, 2000)) if (c != null) open.Add(p); }
-            now["Open ports"] = open.Count == 0 ? "(none of " + Watched.Length + ")" : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
-            if (open.Contains(443)) { run.Status = "Certificate..."; string iss, exp, fp; Cert(host, out iss, out exp, out fp); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
+            now["Open ports"] = open.Count == 0 ? "(none of " + (Watched.Length + (Watched.Contains(port) ? 0 : 1)) + ")"   /* L-203: the ports really tried */ : string.Join(" ", open.Select(p => p.ToString(CultureInfo.InvariantCulture)).ToArray());
+            // bug-hunt ML-103: the certificate on the port you named too (8443, 993, 636...), not only 443
+            int certPort = open.Contains(port) && port != 22 && port != 25 && port != 80 && port != 53 ? port : open.Contains(443) ? 443 : -1;
+            if (certPort > 0) { run.Status = "Certificate..."; string iss, exp, fp; DateTime na0; Cert(host, certPort, out iss, out exp, out fp, out na0); if (iss != "") { now["Certificate issuer"] = iss; now["Certificate expires"] = exp; now["Certificate fingerprint"] = fp; } }
             if (open.Contains(22)) now["SSH banner"] = Banner(host, 22);
             if (open.Contains(25)) now["SMTP banner"] = Banner(host, 25);
 
@@ -57,7 +59,7 @@ namespace AdeeboMeter
             foreach (var kv in now) rows.Add(R(3, kv.Key, kv.Value, "", "m"));
             // earlier changes, as a timeline (newest first)
             var past = new List<string[]>();
-            for (int i = hist.Count - 2; i >= 1 && past.Count < 8; i--)
+            for (int i = hist.Count - (outage ? 1 : 2); i >= 1 && past.Count < 8; i--)   // bug-hunt L-204: an outage run wasn't added, so the newest pair starts one later
                 foreach (var k in hist[i].Value.Keys.Union(hist[i - 1].Value.Keys)) { string a, b; hist[i - 1].Value.TryGetValue(k, out a); hist[i].Value.TryGetValue(k, out b); if ((a ?? "") != (b ?? "")) past.Add(R(3, hist[i].Key.ToString("d MMM HH:mm", CultureInfo.CurrentCulture), k + ": " + (a ?? "(none)") + " → " + (b ?? "(gone)"), "", "m")); }
             if (past.Count > 0) { rows.Add(R(-1, "EARLIER CHANGES", hist.Count + " checks kept", "", "m")); rows.AddRange(past); }
             return rows;
@@ -68,7 +70,7 @@ namespace AdeeboMeter
         static void Cert(string host, int port, out string issuer, out string expires, out string fp, out DateTime notAfter)
         {
             issuer = expires = fp = ""; notAfter = DateTime.MinValue; System.Security.Cryptography.X509Certificates.X509Certificate2 got = null;
-            try { using (var c = Toolkit.Open(host, port, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) ssl.AuthenticateAsClient(host); } }
+            try { using (var c = Toolkit.Open(host, port, 4000)) { if (c == null) return; using (var ssl = new SslStream(c.GetStream(), false, (o, cert, ch, e) => { if (cert != null) got = new System.Security.Cryptography.X509Certificates.X509Certificate2(cert); return true; })) { var hs = System.Threading.Tasks.Task.Factory.StartNew(() => ssl.AuthenticateAsClient(host)); bool done; try { done = hs.Wait(8000); } catch (AggregateException) { done = true; } if (!done) { c.Close(); try { hs.Wait(1000); } catch (AggregateException) { } } } } }   /* review 1.1.6 P3 #3: an 8 s deadline - a port that accepts and then waits can't hang the tool (closing the socket ends the handshake) */
             catch (IOException) { } catch (System.Security.Authentication.AuthenticationException) { } catch (SocketException) { }
             if (got == null) return;
             using (got) { notAfter = got.NotAfter; issuer = got.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, true); expires = got.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); fp = got.GetCertHashString().Substring(0, 16); }
@@ -92,7 +94,7 @@ namespace AdeeboMeter
             WatchKit.Session live = null;
             if (mode == "trade") lock (Trading.k) live = Trading.Day == null ? null : Trading.Day.Copy();
             else lock (Streams.k) { var n = Streams.Now; if (n != null) live = n.S.Copy(); }
-            var all = WatchKit.Recent(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
+            var all = WatchKit.RecentNow(mode).OrderBy(s => s.Start).ToList(); if (live != null && !all.Contains(live)) all.Add(live);
             string w = (which ?? "").Trim().ToLowerInvariant(); DateTime d;
             if (w == "" || w == "last") return all.LastOrDefault();
             if (w == "today") return all.LastOrDefault(s => s.Start.Date == DateTime.Today);
@@ -115,7 +117,7 @@ namespace AdeeboMeter
             var far = s.Line.Where(p => p.Length > 2 && p[2] >= 0).Select(p => (double)p[2]).ToList(); var down = s.Line.Where(p => p.Length > 1 && p[1] >= 0).Select(p => (double)p[1]).ToList();
             var tally = s.Tally(); int dips = s.Dips.Count;
             string farN = trade ? "your broker" : s.Far;   // AM-CG-123: a shared result names no broker address
-            var sameDay = WatchKit.Recent(mode).Where(o => o.Start.Date == s.Start.Date && Math.Abs((o.Start - s.Start).TotalSeconds) > 1).OrderBy(o => o.Start).ToList();
+            var sameDay = WatchKit.RecentNow(mode).Where(o => o.Start.Date == s.Start.Date && Math.Abs((o.Start - s.Start).TotalSeconds) > 1).OrderBy(o => o.Start).ToList();
             if (sameDay.Count > 0) rows.Add(R(3, "Other sessions that day", string.Join(", ", sameDay.Select(o => o.Start.ToString("HH:mm", CultureInfo.CurrentCulture) + "-" + o.End.ToString("HH:mm", CultureInfo.CurrentCulture)).ToArray()), "Type a start time (like " + sameDay[0].Start.ToString("HH:mm", CultureInfo.CurrentCulture) + ") to see one of them.", "m"));
             // AM-CG-115: a session with no readings at all isn't a clean one
             if (far.Count == 0 && down.Count == 0) { rows.Add(R(3, trade ? "Session" : "Stream", s.Start.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " - " + s.End.ToString("HH:mm", CultureInfo.CurrentCulture) + " · no readings were recorded, so it can't be judged", "", "m")); return rows; }

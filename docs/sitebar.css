@@ -73,3 +73,14 @@ dialog.am-dl.closing::backdrop{animation:am-dl-fade 140ms ease-out reverse forwa
 .am-dl .dl-store:focus-visible{outline-color:var(--sb-ink)}
 .am-dl .dl-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:18px 0 0;font-size:14px}
 .am-dl .dl-foot a{color:var(--sb-blue-ink);text-underline-offset:3px}
+
+/* day / night: the moon shows in the dark theme, the sun in the light one */
+nav.sitebar .sb-theme{display:inline-grid;place-items:center;width:40px;height:40px;margin:0;padding:0;border:0;border-radius:9px;background:none;color:var(--sb-sub);cursor:pointer}
+@media (hover:hover){nav.sitebar .sb-theme:hover{color:var(--sb-ink);background:var(--sb-hover)}}
+nav.sitebar .sb-theme:active{transform:scale(.94)}
+nav.sitebar .sb-theme .sb-moon{display:none}
+:root[data-theme="dark"] nav.sitebar .sb-theme .sb-sun{display:none}:root[data-theme="dark"] nav.sitebar .sb-theme .sb-moon{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav.sitebar .sb-theme .sb-sun{display:none}:root:not([data-theme="light"]) nav.sitebar .sb-theme .sb-moon{display:block}}
+/* presses ease back instead of snapping (Emil: feedback 100-160 ms, the strong ease-out) */
+nav.sitebar .sb-dl,nav.sitebar .sb-theme,.am-dl .dl-opt{transition:transform 140ms cubic-bezier(.23,1,.32,1),background-color 150ms ease}
+@media (prefers-reduced-motion:reduce){nav.sitebar .sb-dl,nav.sitebar .sb-theme,.am-dl .dl-opt{transition:none}}

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es" data-language-route="/trading.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter para bolsa: ¿tu conexión o el bróker?</title>
@@ -8,13 +9,15 @@
 <link rel="canonical" href="https://adeebometer.com/es/trading.html">
 <meta property="og:title" content="AdeeboMeter para bolsa: ¿tu conexión o el bróker?">
 <meta property="og:description" content="Supervisa tu conexión al bróker con AdeeboMeter para Windows y detecta ralentizaciones durante las sesiones de mercado.">
-<meta property="og:image" content="https://adeebometer.com/img/trading.jpg">
+<meta property="og:image" content="https://adeebometer.com/img/trading.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/feature.css">
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="es_ES">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/trading.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/trading.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/trading.html">
@@ -22,8 +25,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/trading.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/trading.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/trading.html">
-<meta property="og:locale" content="es_ES">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-trading">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/es/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,21 +32,24 @@
 <section class="fhero"><div>
 <h1>¿Tu conexión o el bróker?</h1>
 <p>Cada segundo cuenta. AdeeboMeter supervisa el camino al bróker con el mercado abierto y avisa de lentitud antes de pulsar Comprar, no después.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Descargar para Windows gratis</a><a class="more" href="/es/">Todo lo demás que hace ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Descargar para Windows gratis</a><a class="more" href="/es/">Todo lo demás que hace ›</a></div>
 </div>
-<img class="shot" src="/img/trading.jpg" alt="Mercado: divisas al cierre, semana de materias primas y supervisión del bróker abajo" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-markets-ok.png" width="264" height="190" alt="El widget de mercados: tu lista de seguimiento y la conexión con el bróker"></figure>
 </section>
 <div class="grid">
-  <div class="card"><h3>Tu bróker supervisado en vivo</h3><p>Wealthsimple, Questrade, Interactive Brokers, TD, RBC, Robinhood, Coinbase o cualquier dirección. 9:30-16:00 del Este en días bursátiles, sin festivos; todo el día para cripto si lo eliges.</p></div>
-  <div class="card"><h3>Esperar o seguir</h3><p>Retraso, jitter y cortes al bróker y causa de la lentitud: PC, Wi-Fi, red doméstica, proveedor o bróker.</p></div>
-  <div class="card"><h3>Las cifras del día</h3><p>Diez divisas en CAD al cierre y semana de energía, metales, productos forestales y agrícolas del Bank of Canada, gratis y oficial.</p></div>
-  <div class="card"><h3>Resumen de tarde opcional</h3><p>Días laborables 17:30-19:00, el widget puede mostrar el cierre y volver solo después. Desactivado hasta que lo actives.</p></div>
-  <div class="card"><h3>Nunca tu cuenta</h3><p>No inicia sesión, ve tu cuenta ni propone operaciones. Solo mide conexiones a la dirección pública del bróker.</p></div>
-  <div class="card"><h3>Aprende los fundamentos</h3><p>Lecciones y juegos para principiantes: qué mueve precios, cómo leer cifras y detectar fraudes. Solo educativo.</p></div>
-  <div class="card"><h3>Replay the slow moment</h3><p>The day's slowest broker moment opens in the Time machine at that minute - router, internet and PC as they were.</p></div>
-  <div class="card"><h3>Your end, always on top</h3><p>A NOW line on the Markets page: router, internet, Wi-Fi and how busy your PC is, live.</p></div>
-  <div class="card"><h3>Tu clave, tu ritmo</h3><p>Add your own free Financial Modeling Prep key for quotes and choose how often they update: every hour, every 15 minutes, or every 5 minutes or every minute on a paid plan.</p></div>
+  <div class="card"><h2>Tu bróker supervisado en vivo</h2><p>Wealthsimple, Questrade, Interactive Brokers, TD, RBC, Robinhood, Coinbase o cualquier dirección. 9:30-16:00 del Este en días bursátiles, sin festivos; todo el día para cripto si lo eliges.</p></div>
+  <div class="card"><h2>Esperar o seguir</h2><p>Retraso, jitter y cortes al bróker y causa de la lentitud: PC, Wi-Fi, red doméstica, proveedor o bróker.</p></div>
+  <div class="card"><h2>Las cifras del día</h2><p>Diez divisas en CAD al cierre y semana de energía, metales, productos forestales y agrícolas del Bank of Canada, gratis y oficial.</p></div>
+  <div class="card"><h2>Resumen de tarde opcional</h2><p>Días laborables 17:30-19:00, el widget puede mostrar el cierre y volver solo después. Desactivado hasta que lo actives.</p></div>
+  <div class="card"><h2>Nunca tu cuenta</h2><p>No inicia sesión, ve tu cuenta ni propone operaciones. Solo mide conexiones a la dirección pública del bróker.</p></div>
+  <div class="card"><h2>Aprende los fundamentos</h2><p>Lecciones y juegos para principiantes: qué mueve precios, cómo leer cifras y detectar fraudes. Solo educativo.</p></div>
+  <div class="card"><h2>Repite el momento lento</h2><p>El momento más lento del día con el bróker se abre en la Máquina del tiempo en ese minuto: router, internet y PC como estaban.</p></div>
+  <div class="card"><h2>Tu lado, siempre arriba</h2><p>Una línea AHORA en la página Mercados: router, internet, Wi-Fi y lo ocupado que está tu PC, en vivo.</p></div>
+  <div class="card"><h2>Tu clave, tu ritmo</h2><p>Añade tu propia clave gratuita de Financial Modeling Prep, Finnhub o Twelve Data. Si uno no responde, lo hace el siguiente. Elige cada cuánto se actualizan las cotizaciones: cada hora, cada 15 minutos, o cada 5 minutos o cada minuto con un plan de pago.</p></div>
 </div>
+<section class="inapp"><h2>La página Mercados en la ventana completa</h2><p>Una comprobación de la línea hacia tu bróker, y las tasas del Banco de Canadá cuando las quieras.</p>
+<img class="shot" src="/img/trading.png" alt="Página de mercados: comprobación de la línea hacia tu bróker y tasas del Banco de Canadá" width="951" height="448">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>No es asesoramiento financiero. Los tipos del Bank of Canada son indicativos, no para operar. Las materias primas son índices mundiales: mira la variación, no el número.</p></div>
 <div class="others"><p>También: <a href="/es/streaming.html">AdeeboMeter para streaming</a> · <a href="/es/gaming.html">AdeeboMeter para juegos</a> · <a href="/es/privacy.html">Privacidad</a></p>
 <p>AdeeboMeter para Windows · sin cuenta, nube ni telemetría · sin permisos de administrador</p></div>

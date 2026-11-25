@@ -25,7 +25,7 @@ namespace AdeeboMeter
         internal static readonly object k = new object();
         internal static List<Game> Games = new List<Game>(); internal static List<Story> Stories = new List<Story>();
         internal static readonly Dictionary<string, string> Note = new Dictionary<string, string>();   // sport -> why nothing shows ("no key", "limit reached", an error)
-        internal static DateTime FetchedAt = DateTime.MinValue; static volatile bool busy; static int keyGen;
+        internal static DateTime FetchedAt = DateTime.MinValue; static int busy; static int keyGen;   // bug-hunt L-67: taken with one atomic step
         internal static readonly Dictionary<string, DateTime> FeedAt = new Dictionary<string, DateTime>();   // AM-CG-278: when each feed last came in
         internal static long Ver;
         public static readonly string[] Kinds = { "football", "cricket", "hockey" };
@@ -33,8 +33,23 @@ namespace AdeeboMeter
 
         // ---------- the person's own keys, encrypted for this Windows user
         static string KeyFile { get { return Path.Combine(Program.DataDir, "sportkeys.dat"); } }
+        // bug-hunt L-68: a saved key that can't be read (damaged, or from another Windows user) says so - it isn't "no key"
+        internal static readonly HashSet<string> KeyBad = new HashSet<string>();
+        static string NoKey(string sport) { lock (KeyBad) return KeyBad.Contains(sport) ? "Your saved key couldn't be read (the file is damaged or from another Windows account) - type it again." : "nokey"; }
+        // R2-077: read and decrypted once per change of the file, not on every paint
+        static string keySig = ""; static readonly Dictionary<string, string> keyCache = new Dictionary<string, string>(StringComparer.Ordinal);
         internal static string Key(string sport)
         {
+            string sig = "";
+            try { var fi = new FileInfo(KeyFile); sig = fi.Exists ? fi.Length + "|" + fi.LastWriteTimeUtc.Ticks : "none"; } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException || e is ArgumentException)) throw; }
+            lock (keyCache) { string v; if (sig != "" && sig == keySig && keyCache.TryGetValue(sport, out v)) return v; if (sig != keySig) { keyCache.Clear(); keySig = sig; } }
+            string got = Key1(sport);
+            lock (keyCache) if (sig == keySig) keyCache[sport] = got;
+            return got;
+        }
+        static string Key1(string sport)
+        {
+            lock (KeyBad) KeyBad.Remove(sport);
             try
             {
                 if (!File.Exists(KeyFile)) return "";
@@ -44,12 +59,13 @@ namespace AdeeboMeter
                     return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(l.Substring(i + 1)), null, DataProtectionScope.CurrentUser));
                 }
             }
-            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key: " + e.GetType().Name); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("sport key: " + e.GetType().Name); lock (KeyBad) KeyBad.Add(sport); }
             return "";
         }
         // AM-CG-280: says whether the key was saved; a fetch already running with the old key throws its answer away
         internal static bool SetKey(string sport, string key)
         {
+            lock (keyCache) { keyCache.Clear(); keySig = ""; }
             key = (key ?? "").Trim(); bool ok = false;
             try
             {
@@ -70,27 +86,87 @@ namespace AdeeboMeter
         {
             // AM-CG-275: whole words only ("TOR" doesn't match "Toronto FC"'s neighbours, "In" never matches "India"), against the
             // short code and the full name the feed gives
-            foreach (var t in Teams())
-            {
-                var rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(t) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            foreach (var rx in TeamRx())
                 if (rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso)) return true;
-            }
             return false;
+        }
+        // bug-hunt M-16: built once per team list, not once per team per game per paint
+        static string rxFor; static List<Regex> rxList = new List<Regex>(); static readonly object rxLock = new object();
+        static List<Regex> TeamRx()
+        {
+            string now = Cfg.SportTeams ?? "";
+            lock (rxLock)
+            {
+                if (now != rxFor) { rxList = Teams().Select(t => new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(t) + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)).ToList(); rxFor = now; }
+                return rxList;
+            }
+        }
+        // one followed team in one game (My Teams' rows)
+        static readonly Dictionary<string, Regex> teamRx = new Dictionary<string, Regex>(StringComparer.OrdinalIgnoreCase);   // R2-053: one per team, kept
+        internal static bool TeamIn(string team, Game g)
+        {
+            Regex rx; lock (teamRx) if (!teamRx.TryGetValue(team ?? "", out rx)) { if (teamRx.Count > 64) teamRx.Clear(); teamRx[team ?? ""] = rx = new Regex(@"(?<![\p{L}\p{N}])" + Regex.Escape(team ?? "") + @"(?![\p{L}\p{N}])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant); }
+            return rx.IsMatch(g.Home) || rx.IsMatch(g.Away) || rx.IsMatch(g.HomeAlso) || rx.IsMatch(g.AwayAlso);
         }
         internal static Game LiveMine() { lock (k) return Games.FirstOrDefault(g => g.State == "live" && Mine(g)); }
         internal static int LiveMineCount() { lock (k) return Games.Count(g => g.State == "live" && Mine(g)); }
 
         // ---------- cricket's free key: 100 calls a day - stop at 90 so a busy day never runs it dry
         static string HitsFile { get { return Path.Combine(Program.DataDir, "sporthits.txt"); } }
-        static int HitsToday() { try { var l = File.Exists(HitsFile) ? File.ReadAllText(HitsFile).Trim().Split(' ') : Array.Empty<string>(); int n; return l.Length == 2 && l[0] == DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) && int.TryParse(l[1], out n) ? n : 0; } catch (IOException) { return 0; } }
+        static int HitsToday() { try { var l = File.Exists(HitsFile) ? File.ReadAllText(HitsFile).Trim().Split(' ') : Array.Empty<string>(); int n; return l.Length == 2 && l[0] == DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) && int.TryParse(l[1], out n) ? n : 0; } catch (IOException) { return 0; } catch (UnauthorizedAccessException) { return 90; } }   // P4 #5: an unreadable file never ends the app (and counts as used up)
         static void Hit() { try { File.WriteAllText(HitsFile, DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + " " + (HitsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
 
         // ---------- fetching: one background pass for every sport and the headlines, at most every 5 minutes
-        public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= 5; } }
-        public static void Fetch(Action done)
+        public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= EveryMin; } }
+        // 24 Nov (Adeeb): your keys, your pace - every 5 minutes (free keys), 2 or 1 (a paid key); the widget follows it during a game
+        public static int EveryMin { get { return Cfg.SportsEvery == "1" ? 1 : Cfg.SportsEvery == "2" ? 2 : 5; } }
+        public static bool PaidPace { get { return EveryMin < 5; } }
+        public static int CricketCallsToday { get { return HitsToday(); } }
+        // the corner widget wants scores: a followed (or pinned) game is live or starts within 20 minutes - fixtures and scores only,
+        // no headlines; cricket at the key's pace. Nothing at all otherwise (ReminderTick keeps its 30-minute pace).
+        static DateTime lastLive = DateTime.MinValue, lastWarm = DateTime.MinValue;
+        public static void WidgetTick(Func<Game, bool> wanted)
         {
-            if (busy || !Cfg.Sports || Policy.NoOnline || !Due) return;
-            busy = true;
+            if (!Cfg.Sports || Policy.NoOnline) return;
+            // a game with no start time in the feed is never "about to start" (hunters13 data L1)
+            bool hot; lock (k) hot = Games.Any(g => wanted(g) && (g.State == "live" || (g.State == "soon" && g.StartUtc != DateTime.MinValue && (g.StartUtc - DateTime.UtcNow).TotalMinutes < 20)));
+            // hunters12 data M1: a cold feed warms itself - a widget that wants scores looks at today's fixtures when nothing is known
+            // yet (after a start, or the Sports page never opened) and again every 30 minutes, fixtures only (no headlines, no cricket key)
+            if (!hot)
+            {
+                DateTime f; lock (k) f = FetchedAt;
+                if ((DateTime.UtcNow - f).TotalMinutes >= 30 && (DateTime.UtcNow - lastWarm).TotalMinutes >= 30) { lastWarm = DateTime.UtcNow; Fetch(null, true, false); }
+                return;
+            }
+            if ((DateTime.UtcNow - lastLive).TotalMinutes < EveryMin) return;
+            lastLive = DateTime.UtcNow; Fetch(null, true, true);
+        }
+        // round 6 M-1: the kick-off reminder runs whether the window is open or not (AppCtx calls this once a minute or so), and
+        // looks at every followed game - a live one no longer hides the next kick-off. With the window closed the feed is
+        // refreshed every 30 minutes, and only while a reminder is on and a team is followed.
+        static readonly HashSet<string> reminded = new HashSet<string>(); static DateTime lastBgFetch = DateTime.MinValue;
+        public static void ReminderTick()
+        {
+            if (!Cfg.KickoffRemind || !Cfg.Sports || Teams().Count == 0) return;
+            // P4 #2 (review 1.1.6): with the window closed only the fixtures are asked for (no headlines, no cricket key calls), and
+            // only when a game of yours could start within the hour - or nothing is known about today yet
+            bool soon; lock (k) soon = Games.Any(g => g.State == "soon" && Mine(g) && (g.StartUtc - DateTime.UtcNow).TotalMinutes < 75);
+            bool stale = (DateTime.UtcNow - FetchedAt).TotalHours >= 6;
+            if ((soon || stale) && (DateTime.UtcNow - FetchedAt).TotalMinutes >= 30 && (DateTime.UtcNow - lastBgFetch).TotalMinutes >= 30) { lastBgFetch = DateTime.UtcNow; Fetch(null, true); }
+            List<Game> due; lock (k) due = Games.Where(g => g.State == "soon" && Mine(g)).ToList();
+            foreach (var g in due)
+            {
+                double mins = (g.StartUtc - DateTime.UtcNow).TotalMinutes; string gk = g.Home + "|" + g.Away + "|" + g.StartUtc.Ticks;
+                if (mins <= 0 || mins > 15) continue;
+                lock (reminded) { if (reminded.Contains(gk)) continue; reminded.Add(gk); if (reminded.Count > 200) reminded.Clear(); }
+                Alerts.Raise("kickoff|" + gk, g.Home + " " + L.T("vs") + " " + g.Away + " " + L.T("starts in") + " " + Math.Ceiling(mins) + " " + L.T("min") + " · " + L.T("Stream Check is on the Sports page"), 0);
+            }
+        }
+        public static void Fetch(Action done) { Fetch(done, false, false); }
+        static void Fetch(Action done, bool background) { Fetch(done, background, false); }
+        static void Fetch(Action done, bool background, bool live)
+        {
+            if (!Cfg.Sports || Policy.NoOnline || !Due || Interlocked.CompareExchange(ref busy, 1, 0) != 0) return;
             new Thread(() =>
             {
                 int gen; lock (k) gen = keyGen;
@@ -110,11 +186,13 @@ namespace AdeeboMeter
                 try
                 {
                     sport("hockey", Hockey);
-                    if (Key("football") == "") publish("football", new List<Game>(), null, "nokey"); else sport("football", () => Football(Key("football")));
-                    if (Key("cricket") == "") publish("cricket", new List<Game>(), null, "nokey");
-                    else if (HitsToday() >= 90) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
+                    // no key of your own: ESPN's free scoreboards (no key, read once a day - the page says so); your own key turns ESPN off
+                    if (Key("football") == "") sport("football", EspnFootball); else { FromEspn = false; sport("football", () => Football(Key("football"))); }   /* bug-hunt R2-010: a failure keeps what was on screen, with the real reason; hunt-5 H-1: the else was inside the comment - a key turned football off */
+                    if (background && !live) { }   // the kick-off pass: no cricket key calls
+                    else if (Key("cricket") == "") publish("cricket", new List<Game>(), null, NoKey("cricket"));
+                    else if (HitsToday() >= 90 && !PaidPace) publish("cricket", null, null, "Today's 90 calls are used (your free key allows 100) - scores come back after midnight UTC.");
                     else sport("cricket", () => Cricket(Key("cricket")));
-                    foreach (var f in new[] { Tuple.Create("top", "https://feeds.bbci.co.uk/sport/rss.xml"), Tuple.Create("football", "https://feeds.bbci.co.uk/sport/football/rss.xml"), Tuple.Create("cricket", "https://feeds.bbci.co.uk/sport/cricket/rss.xml") })
+                    if (!background) foreach (var f in new[] { Tuple.Create("top", "https://feeds.bbci.co.uk/sport/rss.xml"), Tuple.Create("football", "https://feeds.bbci.co.uk/sport/football/rss.xml"), Tuple.Create("cricket", "https://feeds.bbci.co.uk/sport/cricket/rss.xml") })
                     {
                         string feed = "news-" + f.Item1;
                         try { publish(feed, null, Rss(Get(f.Item2, null, null), f.Item1).Take(10).ToList(), null); }
@@ -122,7 +200,7 @@ namespace AdeeboMeter
                     }
                     lock (k) if (gen == keyGen) FetchedAt = DateTime.UtcNow;
                 }
-                finally { busy = false; if (done != null) done(); }
+                finally { Interlocked.Exchange(ref busy, 0); MarketData.Done(done); }   // bug-hunt M-3
             }) { IsBackground = true, Name = "sports" }.Start();
         }
         static string Why(Exception e) { return e is WebException ? "couldn't reach it (" + ((WebException)e).Status + ")" : "its answer couldn't be read"; }
@@ -151,6 +229,58 @@ namespace AdeeboMeter
             }
             return r;
         }
+        // ESPN's public scoreboards (unofficial, no key, may change): the big leagues, each read at most once a day and kept in the
+        // data folder (ESPN sees one request a day from this PC, not one every 5 minutes)
+        internal static bool FromEspn; internal static volatile string EspnMissing = "";
+        static readonly string[][] EspnLeagues = { new[] { "eng.1", "Premier League" }, new[] { "esp.1", "LaLiga" }, new[] { "ger.1", "Bundesliga" }, new[] { "ita.1", "Serie A" }, new[] { "uefa.champions", "Champions League" }, new[] { "usa.1", "MLS" } };
+        internal static List<Game> EspnFootball()
+        {
+            var r = new List<Game>(); string dir = Path.Combine(Program.WriteDir, "espn"); Directory.CreateDirectory(dir); int ok = 0; var missing = new List<string>();
+            foreach (var lg in EspnLeagues)
+            {
+                string f = Path.Combine(dir, lg[0] + ".json"), json = null;
+                try
+                {
+                    // once a calendar day (R2-011): a file from yesterday is refetched in the morning, not 24 hours later
+                    bool fresh = File.Exists(f) && File.GetLastWriteTime(f).Date == DateTime.Now.Date;
+                    List<Game> got = null;
+                    if (fresh) { try { got = EspnFrom(File.ReadAllText(f), lg[1]); } catch (InvalidDataException) { got = null; } catch (FormatException) { got = null; } catch (ArgumentException) { got = null; } }   // R2-044: a bad cached file is fetched again, not kept for a day
+                    // hunters12 data H1: the day's copy is good for fixtures, not for a score - while a game in it is live (or its kick-off
+                    // has passed), it's read again at the scores' pace, so a 15:00 match never shows its 09:00 score under "Live"
+                    if (got != null && (DateTime.Now - File.GetLastWriteTime(f)).TotalMinutes >= EveryMin && got.Any(z => z.State == "live" || (z.State == "soon" && z.StartUtc != DateTime.MinValue && z.StartUtc <= DateTime.UtcNow))) got = null;
+                    if (got == null)
+                    {
+                        json = Get("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg[0] + "/scoreboard", null, null);
+                        got = EspnFrom(json, lg[1]);   // parsed before it's kept: an error page never poisons the cache
+                        string tmp = f + ".tmp"; File.WriteAllText(tmp, json); if (File.Exists(f)) File.Replace(tmp, f, null); else File.Move(tmp, f);   // whole or not at all
+                    }
+                    r.AddRange(got); ok++;
+                }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("espn " + lg[0] + ": " + e.Message); missing.Add(lg[1]); }
+            }
+            if (ok == 0) throw new InvalidDataException("ESPN's scoreboards couldn't be read");
+            EspnMissing = missing.Count > 0 ? "Not read this time: " + string.Join(", ", missing) + "." : "";   // R2-045: say which leagues are missing
+            FromEspn = true; return r;
+        }
+        internal static List<Game> EspnFrom(string json, string league)
+        {
+            var r = new List<Game>(); var root = D(Json.Parse(json)); var evs = A(V(root, "events"));
+            if (evs == null) throw new InvalidDataException("no events in ESPN's answer");
+            foreach (var o in evs)
+            {
+                var ev = D(o); var comp = D((A(V(ev, "competitions")) ?? new List<object>()).FirstOrDefault()); if (comp == null) continue;
+                Dictionary<string, object> h = null, a = null;
+                foreach (var c in A(V(comp, "competitors")) ?? new List<object>()) { var cd = D(c); if (Sv(cd, "homeAway") == "home") h = cd; else a = cd; }
+                if (h == null || a == null) continue;
+                var ht = D(V(h, "team")); var at = D(V(a, "team")); var st = D(V(D(V(ev, "status")), "type")); string state = Sv(st, "state");
+                var x = new Game { Sport = "football", League = league, Home = Or(Sv(ht, "shortDisplayName"), Sv(ht, "displayName")), Away = Or(Sv(at, "shortDisplayName"), Sv(at, "displayName")), HomeAlso = Sv(ht, "displayName") + " " + Sv(ht, "abbreviation"), AwayAlso = Sv(at, "displayName") + " " + Sv(at, "abbreviation") };
+                string sn = Sv(st, "name"); x.State = state == "in" ? "live" : sn.Contains("POSTPONED") || sn.Contains("CANCELED") || sn.Contains("CANCELLED") || sn.Contains("SUSPENDED") || sn.Contains("ABANDONED") ? "off" : state == "post" ? "done" : "soon";   /* hunt-5: ESPN's postponed games say so */
+                if (x.State == "live" || x.State == "done") { x.HomeScore = Sv(h, "score"); x.AwayScore = Sv(a, "score"); }
+                x.Detail = Sv(st, "shortDetail"); x.StartUtc = Utc(Sv(ev, "date"));
+                if (x.Home != "" && x.Away != "") r.Add(x);
+            }
+            return r;
+        }
         // football-data.org: today's matches in the competitions the free key covers
         internal static List<Game> Football(string key) { return FootballFrom(Get("https://api.football-data.org/v4/matches", "X-Auth-Token", key)); }
         internal static List<Game> FootballFrom(string json)
@@ -162,8 +292,9 @@ namespace AdeeboMeter
                 var m = D(o); if (m == null) continue; var h = D(V(m, "homeTeam")); var a = D(V(m, "awayTeam")); var ft = D(V(D(V(m, "score")), "fullTime")); string st = Sv(m, "status");
                 var x = new Game { Sport = "football", League = Sv(D(V(m, "competition")), "name"), Home = Or(Sv(h, "shortName"), Sv(h, "name")), Away = Or(Sv(a, "shortName"), Sv(a, "name")), HomeAlso = Sv(h, "name") + " " + Sv(h, "tla"), AwayAlso = Sv(a, "name") + " " + Sv(a, "tla"), HomeScore = Sv(ft, "home"), AwayScore = Sv(ft, "away"), StartUtc = Utc(Sv(m, "utcDate")) };
                 x.State = st == "IN_PLAY" || st == "PAUSED" || st == "LIVE" ? "live" : st == "FINISHED" || st == "AWARDED" ? "done" : st == "POSTPONED" || st == "CANCELLED" || st == "SUSPENDED" ? "off" : "soon";
-                x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : "";
-                if (x.Home != "") r.Add(x);
+                string min = Sv(m, "minute");   /* hunters12 data L5: the minute, when the key's plan sends it */
+                x.Detail = st == "PAUSED" ? "half time" : st == "AWARDED" ? "awarded" : x.State == "done" ? "FT" : x.State == "off" ? st.ToLowerInvariant() : x.State == "live" && min != "" ? min + "'" : "";
+                if (x.Home != "" && x.Away != "") r.Add(x);   // bug-hunt L-83: a match needs both sides
             }
             return r;
         }
@@ -171,9 +302,17 @@ namespace AdeeboMeter
         // AM-CG-277: the feed comes in pages - a second page is read when there is one (one more call), never more than two
         internal static List<Game> Cricket(string key)
         {
-            Hit(); int total; var r = CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key), null, null), out total);
-            if (total > r.Count && r.Count > 0 && HitsToday() < 89) { Hit(); int t2; r.AddRange(CricketFrom(Get("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key), null, null), out t2)); }
+            int total; var r = CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=0&apikey=" + Uri.EscapeDataString(key)), out total);
+            if (total > r.Count && r.Count > 0 && HitsToday() < 89) { int t2; r.AddRange(CricketFrom(CricGet("https://api.cricapi.com/v1/currentMatches?offset=" + r.Count + "&apikey=" + Uri.EscapeDataString(key)), out t2)); }
+            // hunt-5: page two starts after the rows page one sent, which can be more than were kept - the same match is listed once
+            r = r.GroupBy(z => z.Home + "|" + z.Away + "|" + z.StartUtc.Ticks + "|" + z.League).Select(z => z.First()).ToList();
             return r;
+        }
+        // bug-hunt ML-40: a call counts against the day only when it reached CricketData - no connection, no count
+        static string CricGet(string url)
+        {
+            try { var s = Get(url, null, null); Hit(); return s; }
+            catch (System.Net.WebException e) { if (e.Response != null) Hit(); throw; }
         }
         internal static List<Game> CricketFrom(string json) { int total; return CricketFrom(json, out total); }
         static List<Game> CricketFrom(string json, out int total)
@@ -201,14 +340,38 @@ namespace AdeeboMeter
         internal static List<Story> Rss(string xml, string sport)
         {
             var r = new List<Story>();
-            foreach (Match it in Regex.Matches(xml ?? "", @"<item\b[^>]*>(.*?)</item>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
+            foreach (var item in Elems(xml ?? "", "item"))
             {
-                Func<string, string> tag = t => { var m = Regex.Match(it.Groups[1].Value, "<" + t + @"\b[^>]*>(.*?)</" + t + ">", RegexOptions.Singleline | RegexOptions.IgnoreCase); return m.Success ? Clean(m.Groups[1].Value) : ""; };
+                Func<string, string> tag = t => { var v = Elems(item, t).FirstOrDefault(); return v == null ? "" : Clean(v); };
                 var s = new Story { Sport = sport, Title = tag("title"), Summary = tag("description"), Link = tag("link") };
                 DateTime w; if (DateTime.TryParse(tag("pubDate"), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out w)) s.When = w;
                 if (s.Title != "" && (s.Link.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || s.Link.StartsWith("http://", StringComparison.OrdinalIgnoreCase))) r.Add(s);
+                if (r.Count >= 200) break;
             }
             return r;
+        }
+        // the text inside each <t ...>...</t>, in one pass: a CDATA section is jumped over whole (L-69: a closing tag inside it is
+        // text), and an unterminated one ends the reading. SEC-08: the old pattern backtracked without end on such a feed.
+        static IEnumerable<string> Elems(string s, string t)
+        {
+            int i = 0; string close = "</" + t + ">";
+            while (i < s.Length)
+            {
+                int open = s.IndexOf("<" + t, i, StringComparison.OrdinalIgnoreCase); if (open < 0) yield break;
+                int after = open + 1 + t.Length; if (after >= s.Length) yield break;
+                char nc = s[after]; if (nc != '>' && nc != '/' && !char.IsWhiteSpace(nc)) { i = after; continue; }   // <items> isn't <item>
+                int gt = s.IndexOf('>', after); if (gt < 0) yield break;
+                if (s[gt - 1] == '/') { i = gt + 1; continue; }   // <link/>
+                int j = gt + 1; bool found = false;
+                while (j < s.Length)
+                {
+                    int lt = s.IndexOf('<', j); if (lt < 0) yield break;
+                    if (string.CompareOrdinal(s, lt, "<![CDATA[", 0, 9) == 0) { int end = s.IndexOf("]]>", lt + 9, StringComparison.Ordinal); if (end < 0) yield break; j = end + 3; continue; }
+                    if (string.Compare(s, lt, close, 0, close.Length, StringComparison.OrdinalIgnoreCase) == 0) { yield return s.Substring(gt + 1, lt - gt - 1); i = lt + close.Length; found = true; break; }
+                    j = lt + 1;
+                }
+                if (!found) yield break;
+            }
         }
         static string Clean(string s)
         {

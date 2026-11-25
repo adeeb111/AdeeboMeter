@@ -29,7 +29,8 @@ namespace AdeeboMeter
     // ================================================================== Monitor: all reading happens here, off the UI thread
     sealed class Monitor : IDisposable
     {
-        public void Dispose() { Stop(); }   // the sampler/probe threads release their own counters and event as they exit
+        // the sampler/probe threads release their own counters as they exit; the two wait handles go once both have (bug-hunt L-42)
+        public void Dispose() { Stop(); if (samplerT == null && probeT == null) { wake.Dispose(); stopping.Dispose(); } try { PcHealth.Release(); } catch (Exception e) { if (e is OutOfMemoryException) throw; } }   // bug-hunt L-278: the health counters go at exit too
         public readonly object L = new object();
         public Ring Cpu = new Ring(120), Mem = new Ring(120), Commit = new Ring(120), Disk = new Ring(120);
         public Ring Down = new Ring(120), Up = new Ring(120);
@@ -45,7 +46,7 @@ namespace AdeeboMeter
         public string Adapter = "", AdapterKind = "LAN", LinkSpeed = "", Gateway = "", DnsServer = "", IfaceId = "", Gateway6 = "";   // Gateway6: an IPv6-only network's router (no IPv4 gateway at all)
         public bool VpnUp; public string VpnName = ""; public int VpnMtu, PrimaryMtu;
         public bool HasWifi; public int WifiSignal = -1; public string Ssid = "", WifiChannel = "";
-        public bool GwEverReplied, NetEverReplied, DnsFailedLast;
+        public bool GwEverReplied, NetEverReplied, DnsFailedLast; public int NetNeverN; /* probes in a row with no answer, on a network that has never answered */ public string Apipa = "";   // an adapter that is up with only a 169.254 address: no answer from DHCP
         // networks that block ping (many company and hotel networks): the internet check falls back to timing a TCP connection
         // to port 443 of the same address - opened and closed at once, nothing is sent over it
         public bool NetIcmpEver, NetViaTcp;
@@ -64,7 +65,7 @@ namespace AdeeboMeter
         string pAdapter, pGw, pDns, pIp, pState, pBssid = "", pCh = ""; bool pVpn; int pRate = -1, pSig = -1;
         DateTime lastRoam = DateTime.MinValue, lastSigDrop = DateTime.MinValue, netDownSince, lastConnT = Clock.Mono, netDownMono;
         public bool NetQuiet { get { return netDown >= 3; } }
-        int netDown, prevLevel = -1; DateTime redFrom = DateTime.MinValue; bool gwFlag, prevCall; double gwBase = double.NaN; string hint = "";
+        int netDown, prevLevel = -1; DateTime redFrom = DateTime.MinValue; bool gwFlag, prevCall; double gwBase = double.NaN; int gwBaseN; string hint = "", gwBaseFor = "";
         HashSet<string> prevKeys; readonly Dictionary<string, DateTime> synFirst = new Dictionary<string, DateTime>();
         readonly Dictionary<string, DateTime> suppress = new Dictionary<string, DateTime>();
         volatile bool netChanged;
@@ -88,8 +89,16 @@ namespace AdeeboMeter
 
         public void Start()
         {
-            if (samplerT != null) return;   // already running: never subscribe twice
-            stop = false; stopping.Reset();
+            // bug-hunt ML-34: a Stop() that timed out leaves its loops finishing - wait for them, never run two pairs at once
+            if (samplerT != null || probeT != null)
+            {
+                if (!stop) return;   // already running: never subscribe twice
+                bool ui = System.Windows.Forms.Application.MessageLoop;   // R2-153: on the window's thread, a short look - never a 6 s freeze
+                foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(ui ? 200 : 3000);
+                if ((samplerT != null && samplerT.IsAlive) || (probeT != null && probeT.IsAlive)) { Program.Log("monitor: the last loops haven't finished - not starting twice"); return; }
+                samplerT = null; probeT = null;
+            }
+            stop = false; stopping.Reset(); Trading.Resume();
             Events.Add(3, "app", "AdeeboMeter started");
             addrHandler = delegate { netChanged = true; wake.Set(); };
             availHandler = delegate(object o, NetworkAvailabilityEventArgs e) { Events.Add(e.IsAvailable ? 0 : 2, "net", e.IsAvailable ? "Network is back" : Voice.P("Every network connection just dropped.", "All network connections dropped.")); netChanged = true; wake.Set(); };
@@ -103,8 +112,11 @@ namespace AdeeboMeter
             stop = true; wake.Set(); stopping.Set();
             Trading.Stop(); try { Streams.End(DateTime.Now); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("streams end: " + e.Message); }   // a stream playing at exit still gets its record
             try { NetworkChange.NetworkAddressChanged -= addrHandler; NetworkChange.NetworkAvailabilityChanged -= availHandler; } catch { }
-            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(1500);   // both finish their tick (the stop event wakes them; quitting never waits long) and release their counters
-            samplerT = null; probeT = null;   // so Start() can run again
+            // both finish their tick (the stop event wakes them) and release their counters - one shared 1.2 s at most, so
+            // quitting never holds the window for long (bug-hunt ML-35: two Joins of 1.5 s each could take 3 s)
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            foreach (var t in new[] { samplerT, probeT }) if (t != null && t != Thread.CurrentThread) t.Join(Math.Max(0, 1200 - (int)sw.ElapsedMilliseconds));
+            if (samplerT != null && !samplerT.IsAlive) samplerT = null; if (probeT != null && !probeT.IsAlive) probeT = null;   // still running: Start() waits for them
         }
         void Once(string key, int seconds, int lv, string kind, string text)
         {
@@ -226,7 +238,7 @@ namespace AdeeboMeter
                 {
                     bool fast = ViewOpen || CallLikely || (Streams.Active && Cfg.Preset != "penny");   // a stream playing counts like a call: the internet check every 5 s
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
-                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? 1 : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? WakeStepSec(t0) : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
                     GwSecNow = gwSec; NetSecNow = netSec;   // the pace the rings fill at (the overlay plots them by time)
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {
@@ -253,7 +265,7 @@ namespace AdeeboMeter
                         // ping answered before but not now: after 3 misses in a row try TCP 443 too - ICMP blocked later (a new
                         // firewall rule, a VPN) while the web still works must not read as "the internet went quiet"
                         else if (!NetIcmpEver || ++icmpMiss >= 3) { IPAddress tip; if (IPAddress.TryParse(tgt, out tip)) { n = GamePing.TcpMs(tip, 443, 1500); if (!double.IsNaN(n)) lock (L) NetViaTcp = true; } }
-                        lock (L) { NetPing.Add(n); netAt = Clock.Mono; if (!double.IsNaN(n)) NetEverReplied = true; if (NetEverReplied) { Loss.Add(double.IsNaN(n) ? 1 : 0); NetTries++; if (double.IsNaN(n)) NetLostN++; } }
+                        lock (L) { NetPing.Add(n); netAt = Clock.Mono; if (!double.IsNaN(n)) NetEverReplied = true; else if (!NetEverReplied) NetNeverN++; if (NetEverReplied) { Loss.Add(double.IsNaN(n) ? 1 : 0); NetTries++; if (double.IsNaN(n)) NetLostN++; } }
                         if (NetEverReplied)
                         {
                             if (double.IsNaN(n)) { if (++netDown == 3) { netDownSince = DateTime.Now; netDownMono = Clock.Mono; Events.Add(2, "inet", Voice.P("The internet went quiet - no replies from " + tgt + ".", "Internet unreachable (no reply from " + tgt + ").")); } }
@@ -262,11 +274,11 @@ namespace AdeeboMeter
                         if (!NetEverReplied && double.IsNaN(n) && ++netFails >= 2) { netFails = 0; ti = (ti + 1) % targets.Length; lock (L) NetTarget = targets[ti]; }
                         string gwNow; lock (L) gwNow = Gateway != "" ? Gateway : Gateway6;
                         // the DNS lookup skips the cache, so it reaches the DNS server: at most once a minute, every 15 s with the view open
-                        if ((gwNow != "" || VpnUp) && ((t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2 || (Waking(t0) && !double.IsNaN(wakeGw)))) { lastDns = t0; ProbeDns(); bool dok; lock (L) dok = !DnsFailedLast; WakeStep(t0, false, dok); }   // no way out: a DNS failure would only be noise
+                        if ((gwNow != "" || VpnUp) && ((t0 - lastDns).TotalSeconds >= (ViewOpen ? 15 : 60) - 0.2 || (Waking(t0) && !double.IsNaN(wakeGw) && (t0 - lastDns).TotalSeconds >= WakeStepSec(t0) - 0.2))) { lastDns = t0; ProbeDns(); bool dok; lock (L) dok = !DnsFailedLast; WakeStep(t0, false, dok); }   // no way out: a DNS failure would only be noise
                     }
                     // internet check turned off: forget what it measured, so old pings and loss are never judged as now
                     if (netSec == 0 && Cfg.NetSec == 0 && netDown >= 3) { Events.Add(1, "inet", "Internet check switched off while the internet was quiet - the outage log stops here"); netDown = 0; }
-                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
+                    if (netSec == 0 && Cfg.NetSec == 0) lock (L) if (NetEverReplied || !double.IsNaN(NetPing.Last)) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetNeverN = 0; NetIcmpEver = false; NetViaTcp = false; netDown = 0; }
                     if (netChanged && netDown >= 3) Events.Add(1, "inet", "Network changed while the internet was quiet (down since " + netDownSince.ToString("HH:mm", CultureInfo.CurrentCulture) + ") - checking afresh");
                     if (netChanged) { netChanged = false; lastIf = DateTime.MinValue; icmpMiss = 0; lock (L) { NetPing.Clear(); Loss.Clear(); NetTries = 0; NetLostN = 0; NetEverReplied = false; NetIcmpEver = false; NetViaTcp = false; netDown = 0; GwPing.Clear(); GwEverReplied = false; } gwMacKey = ""; gwMac = "";   /* a new network: its router is judged on its own, never on the last network's */ /* a new network starts its internet history afresh */ lastIf = t0; lastWifi = t0; RefreshInterfaces(); if (wifiSec > 0) ProbeWifi(); }
                     if ((t0 - lastIf).TotalSeconds >= IfEvery) { lastIf = t0; RefreshInterfaces(); WatchGatewayMac(); LearnIsp(); }
@@ -345,8 +357,18 @@ namespace AdeeboMeter
                         bool global = ip6.UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !u.Address.IsIPv6SiteLocal && !IPAddress.IsLoopback(u.Address));
                         if (g6 != null && global) { best = n; gw6 = g6.ToString(); break; }
                     }
+                // carry-over D1-A3: plugged in / joined, but the router never gave an address - Windows makes one up (169.254.x.x)
+                string apipa = "";
+                if (best == null)
+                    foreach (var n in all)
+                    {
+                        if (n.OperationalStatus != OperationalStatus.Up || (n.NetworkInterfaceType != NetworkInterfaceType.Ethernet && n.NetworkInterfaceType != NetworkInterfaceType.Wireless80211 && n.NetworkInterfaceType != NetworkInterfaceType.GigabitEthernet) || IsVpn(n)) continue;
+                        IPInterfaceProperties ipa; try { ipa = n.GetIPProperties(); } catch (NetworkInformationException) { continue; }
+                        if (ipa.UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetwork && u.Address.GetAddressBytes()[0] == 169 && u.Address.GetAddressBytes()[1] == 254)) { apipa = n.Name; break; }
+                    }
                 lock (L)
                 {
+                    Apipa = apipa;
                     if (best == null || Primary == null || best.Id != Primary.Id) pRx = -1;
                     Primary = best;
                     if (best != null)
@@ -375,11 +397,16 @@ namespace AdeeboMeter
             catch (Exception e) { Program.Log("interfaces: " + e.Message); }
         }
 
+        // D1-A1: at logon Windows may still be joining the network when AdeeboMeter starts - no "offline" verdict and no
+        // "No network connection" event in the first 45 s; if it's still offline after that, both come as before
+        readonly DateTime bornMono = Clock.Mono; const int JoinGraceSec = 45;
+        bool InJoinGrace { get { return (Clock.Mono - bornMono).TotalSeconds < JoinGraceSec; } }
         void IfEvents(string adapter, string kind, string gw, string dns, bool vpn, string vpnName, string ip)
         {
+            if (pAdapter == null && adapter == "" && InJoinGrace) return;   // not decided yet: the first event waits for the network or the grace's end
             if (pAdapter == null)
             {
-                Events.Add(adapter == "" ? 2 : 3, "net", adapter == "" ? "No network connection" : "On " + kind + " (" + adapter + ")" + (gw != "" ? ", gateway " + gw : "") + (vpn ? ", VPN up" : ""));
+                Events.Add(adapter == "" ? 2 : 3, "net", adapter == "" ? "No network connection" : "On " + kind + (adapter != kind ? " (" + adapter + ")" : "") + (gw != "" ? ", gateway " + gw : "") + (vpn ? ", VPN up" : ""));
             }
             else
             {
@@ -417,8 +444,15 @@ namespace AdeeboMeter
         int IfEvery { get { return Cfg.Preset == "penny" ? 60 : ViewOpen ? 10 : 30; } }   /* adapters, the ARP table and drives: 10 s with the window open, 30 s otherwise */
         void ProbeDns()
         {
-            double ms; int rc = DnsTime("www.microsoft.com", out ms);
-            lock (L) { DnsFailedLast = rc != 0 && rc != 9003 && rc != 9501; Dns.Add(DnsFailedLast ? double.NaN : ms); }
+            int r0 = resumes; double ms; int rc = DnsTime("www.microsoft.com", out ms);
+            // tool-run 22 Nov: "DNS is slow (22116417 ms)" - a lookup that spanned sleep is no measurement, answered or failed (R2-038);
+            // a real slow answer stays (only one longer than 2 minutes - Windows gives up long before - is taken as a sleep too)
+            if (resumes != r0 || ms > 120000) return;
+            bool failed = rc != 0 && rc != 9003 && rc != 9501;
+            // carry-over D1-A2: one failure is asked again (another name, 2 s later) before the headline turns red - a single lost
+            // UDP packet isn't "DNS lost the phone book"
+            if (failed) { System.Threading.Thread.Sleep(2000); double ms2; int rc2 = DnsTime("www.cloudflare.com", out ms2); if (resumes != r0) return; if (!(rc2 != 0 && rc2 != 9003 && rc2 != 9501)) { failed = false; ms = ms2; } }
+            lock (L) { DnsFailedLast = failed; Dns.Add(failed ? double.NaN : ms); }
         }
         // A real lookup that skips the local cache, so it measures the DNS server itself.
         public static int DnsTime(string name, out double ms)
@@ -496,14 +530,20 @@ namespace AdeeboMeter
         // ARP spoofing alarm: the router's hardware address should not change while you stay on the same network.
         string gwMacKey = "", gwMac = ""; readonly Dictionary<string, DateTime> gwMacSeen = new Dictionary<string, DateTime>();
         // after sleep the PC may wake on another network with the same router address: start fresh, as on a network change
-        public void Resumed() { wlanApiOk = true; wlanApiFails = 0; netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
+        volatile int resumes;
+        public void Resumed() { resumes++; wlanApiOk = true; wlanApiFails = 0; netChanged = true; wakeAt = Clock.Mono; wakeGw = double.NaN; wake.Set(); }
         // the wake-up report: seconds from waking until the router, then DNS, answered - logged once per wake as a "wake" event
         DateTime wakeAt = DateTime.MinValue; double wakeGw = double.NaN;
+        // review 1.1.6 P1 #9: while waiting for DNS after a wake, back off - every 1, 2, 4, 8 then 16 s - not a lookup and a ping every second for 2 minutes
+        int WakeStepSec(DateTime t0) { int k = Math.Max(0, Math.Min(4, (int)((t0 - wakeAt).TotalSeconds / 10))); return 1 << k; }
         bool Waking(DateTime t0) { return wakeAt != DateTime.MinValue && (t0 - wakeAt).TotalSeconds < 120; }
         void WakeStep(DateTime t0, bool gwOk, bool dnsOk)
         {
             if (wakeAt == DateTime.MinValue) return;
             if (gwOk && double.IsNaN(wakeGw)) wakeGw = (t0 - wakeAt).TotalSeconds;
+            // review 1.1.6 P1 #3: with the internet check off DNS isn't asked - the wake report ends on the router, never "DNS didn't answer"
+            if ((Cfg.NetSec == 0 || Policy.NoInternetCheck) && !double.IsNaN(wakeGw))
+            { Events.Add(wakeGw > 30 ? 1 : 3, "wake", "Back online after waking: router " + wakeGw.ToString("0.#", CultureInfo.InvariantCulture) + " s (DNS not checked - the internet check is off)"); wakeAt = DateTime.MinValue; return; }
             bool timeout = (t0 - wakeAt).TotalSeconds >= 120;
             if ((dnsOk && (!double.IsNaN(wakeGw) || !GwEverReplied)) || timeout)   /* a router that never answers ping: DNS alone says the network is back */
             {
@@ -536,8 +576,9 @@ namespace AdeeboMeter
                     if (first != null)
                     {
                         answered = true;   // a public router answered: its name (or none) is the answer for this network
-                        string name = ""; var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } });
-                        if (t.Wait(3000)) name = t.Result;
+                        // bug-hunt L-75: Windows' name lookup can't be cancelled - so a hung one is never joined by a second
+                        string name = ""; var prev = ptrTask;
+                        if (prev == null || prev.IsCompleted) { var t = Task.Factory.StartNew(() => { try { return Native.PtrName(first); } catch { return ""; } }); ptrTask = t; if (t.Wait(3000)) name = t.Result; }
                         string owner = name != first ? DestCheck.OwnerOf(name) : null;
                         if (owner != null && owner != "cloudflare.com" && owner != "Cloudflare") { Isp = owner; Mood.Isp = owner; Program.Log("provider: " + owner); }
                     }
@@ -548,6 +589,7 @@ namespace AdeeboMeter
                 ispBusy = false;
             });
         }
+        static volatile Task<string> ptrTask;
         void WatchGatewayMac()
         {
             string gw, key; lock (L) { gw = Gateway; key = IfaceId + "|" + Gateway + "|" + Ssid; }
@@ -563,21 +605,44 @@ namespace AdeeboMeter
             }
             else if (mac != gwMac)
             {
-                gwMacSeen[gwMac] = Clock.Mono;
-                Events.Add(2, "net", Voice.P("Your router's hardware address keeps flipping (" + gwMac + " → " + mac + ") on the same network. If nobody swapped the router, someone may be pretending to be it (ARP spoofing). Use the VPN until you know.",
+                gwMacSeen[gwMac] = Clock.Mono; gwFlips++;
+                // round 6 M-2: said once, then at most every 30 minutes with a count - a failover pair (or a real spoof) flipping every
+                // 10 s must not flood the timeline and the day's log that should prove it
+                if ((Clock.Mono - gwFlipSaid).TotalMinutes < 30) { gwMac = mac; return; }
+                int flips = gwFlips; gwFlips = 0; gwFlipSaid = Clock.Mono;
+                Events.Add(2, "net", (flips > 1 ? "[" + flips + " flips since the last note] " : "") + Voice.P("Your router's hardware address keeps flipping (" + gwMac + " → " + mac + ") on the same network. If nobody swapped the router, someone may be pretending to be it (ARP spoofing). Use the VPN until you know.",
                                              "Gateway hardware address (MAC) flips " + gwMac + " → " + mac + " on the same network - possible ARP spoofing."));
                 gwMac = mac;
             }
         }
+        int gwFlips; DateTime gwFlipSaid = DateTime.MinValue;
         // After a drop, ask Windows' own log why (a few seconds later, so the event is written).
         void ExplainWifiDrop()
         {
-            ThreadPool.QueueUserWorkItem(delegate
+            // bug-hunt L-74: a timer waits the 4 s, not a pool thread asleep
+            Task.Delay(4000).ContinueWith(_ =>
             {
-                Thread.Sleep(4000);
-                string err; var rows = EvLog.WifiDrops(0.05, out err);
-                if (rows.Count > 0) Events.Add(1, "wifi", "Why: " + rows[0][1]);
+                try { string err; var rows = EvLog.WifiDrops(0.05, out err); if (rows.Count > 0) Events.Add(1, "wifi", "Why: " + rows[0][1]); }
+                catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wifi drop why: " + e.Message); }
             });
+        }
+        // round 6 H6-M1: a roam, channel, link-rate or signal note is written at most every 5 minutes per kind - a sawtooth signal
+        // or a flapping roam can't fill the timeline (300 entries) and the day's log; the skipped ones are counted in the next note
+        readonly Dictionary<string, DateTime> wifiSaid = new Dictionary<string, DateTime>(); readonly Dictionary<string, int> wifiSkipped = new Dictionary<string, int>();
+        // review 1.1.6 P1 #4: a roam is found by its sentence in English or in the language in use - the event text is translated
+        static readonly string[] RoamEn = { "Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point" };
+        public static bool IsRoamText(string t)
+        {
+            if (string.IsNullOrEmpty(t)) return false;
+            foreach (var en in RoamEn) { if (t.IndexOf(en, StringComparison.OrdinalIgnoreCase) >= 0) return true; string tr = AdeeboMeter.L.T(en); if (tr != en && t.IndexOf(tr, StringComparison.OrdinalIgnoreCase) >= 0) return true; }
+            return t.IndexOf("roam", StringComparison.OrdinalIgnoreCase) >= 0 || t.IndexOf("hopped", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+        void WifiNote(string kind, string text)
+        {
+            DateTime t; int n;
+            if (wifiSaid.TryGetValue(kind, out t) && (Clock.Mono - t).TotalMinutes < 5) { wifiSkipped.TryGetValue(kind, out n); wifiSkipped[kind] = n + 1; return; }
+            wifiSkipped.TryGetValue(kind, out n); wifiSkipped[kind] = 0; wifiSaid[kind] = Clock.Mono;
+            Events.Add(1, "wifi", text + (n > 0 ? " (and " + n + " more like it in the last minutes)" : ""));
         }
         void WifiEvents(string state, string bssid, string ch, int sig, int rate)
         {
@@ -586,10 +651,10 @@ namespace AdeeboMeter
             {
                 if (state != pState && state.StartsWith("disconnected", StringComparison.Ordinal)) { Events.Add(2, "wifi", Voice.P("Wi-Fi dropped.", "Wi-Fi disconnected.")); ExplainWifiDrop(); }
                 else if (state != pState && pState.StartsWith("disconnected", StringComparison.Ordinal) && state == "connected") Events.Add(0, "wifi", "Wi-Fi reconnected");
-                if (bssid != "" && pBssid != "" && bssid != pBssid) { lastRoam = now; Events.Add(1, "wifi", Voice.P("Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point") + " (ch " + ch + ", signal " + sig + "%, from " + pBssid + " to " + bssid + ")"); }
-                else if (ch != "" && pCh != "" && ch != pCh) Events.Add(1, "wifi", "Wi-Fi channel changed " + pCh + " → " + ch);
-                if (rate > 0 && pRate >= 50 && rate < pRate * 0.5) Events.Add(1, "wifi", "Wi-Fi link rate dropped " + pRate + " → " + rate + " Mb/s");
-                if (sig >= 0 && pSig >= 0 && pSig - sig >= 25) { lastSigDrop = now; Events.Add(1, "wifi", "Wi-Fi signal fell to " + sig + "% (was " + pSig + "%)"); }
+                if (bssid != "" && pBssid != "" && bssid != pBssid) { lastRoam = now; WifiNote("roam", Voice.P("Wi-Fi hopped to another access point", "Wi-Fi roamed to another access point") + " (ch " + ch + ", signal " + sig + "%, from " + pBssid + " to " + bssid + ")"); }
+                else if (ch != "" && pCh != "" && ch != pCh) WifiNote("chan", "Wi-Fi channel changed " + pCh + " → " + ch);
+                if (rate > 0 && pRate >= 50 && rate < pRate * 0.5) WifiNote("rate", "Wi-Fi link rate dropped " + pRate + " → " + rate + " Mb/s");
+                if (sig >= 0 && pSig >= 0 && pSig - sig >= 25) { lastSigDrop = now; WifiNote("sig", "Wi-Fi signal fell to " + sig + "% (was " + pSig + "%)"); }
             }
             pState = state; pBssid = bssid; pCh = ch; pRate = rate; pSig = sig;
         }
@@ -671,9 +736,10 @@ namespace AdeeboMeter
         }
 
         // Names for remote IPs, read from Windows' own DNS cache - no network traffic.
-        public void RefreshIpNames()
+        public void RefreshIpNames() { lock (nameLook) RefreshIpNames0(); }   // the Streams page and the engineer view can both ask: one at a time
+        void RefreshIpNames0()
         {
-            var map = new Dictionary<string, string>();
+            var map = new Dictionary<string, string>(); var seen = new HashSet<string>(); int fresh = 0;
             IntPtr table;
             try
             {
@@ -684,16 +750,24 @@ namespace AdeeboMeter
                     IntPtr next = Marshal.ReadIntPtr(e, 0), pName = Marshal.ReadIntPtr(e, P);
                     int type = Marshal.ReadInt16(e, 2 * P) & 0xFFFF;
                     string name = pName != IntPtr.Zero ? Marshal.PtrToStringUni(pName) : null;
-                    if (name != null && (type == 1 || type == 28) && count++ < 3000) LookupCached(name, (short)type, map);
+                    if (name != null && (type == 1 || type == 28) && count++ < 3000)
+                    {
+                        // bug-hunt M-17: a name looked up in the last 5 minutes reuses its answer; at most 200 new lookups a refresh
+                        string nk = type + "|" + name; seen.Add(nk); Tuple<DateTime, Dictionary<string, string>> c;
+                        if (nameLook.TryGetValue(nk, out c) && (Clock.Mono - c.Item1).TotalMinutes < 5) { foreach (var kv in c.Item2) map[kv.Key] = kv.Value; }
+                        else if (fresh < 200) { fresh++; var one = new Dictionary<string, string>(); LookupCached(name, (short)type, one); nameLook[nk] = Tuple.Create(Clock.Mono, one); foreach (var kv in one) map[kv.Key] = kv.Value; }
+                        else if (c != null) foreach (var kv in c.Item2) map[kv.Key] = kv.Value;
+                    }
                     if (pName != IntPtr.Zero) Native.DnsFree(pName, 0);
                     Native.DnsFree(e, 0);
                     e = next;
                 }
             }
             catch (Exception ex) { Program.Log("dns cache: " + ex.Message); }
+            foreach (var gone in nameLook.Keys.Where(z => !seen.Contains(z)).ToList()) nameLook.Remove(gone);   // names that left Windows' cache
             // Some Windows builds hand back an empty table from that API. Then read the same cache the way Windows' own
             // ipconfig /displaydns shows it - still offline, only while the engineer view is open, at most every 30 s.
-            if (map.Count == 0 && !dnsCacheLocked && (Clock.Mono - lastDisplayDns).TotalSeconds >= (emptyDisplayDns >= 2 ? 300 : 30))   /* two empty answers in a row: every 5 min */
+            if (map.Count == 0 && !dnsCacheLocked && (Clock.Mono - lastDisplayDns).TotalSeconds >= (emptyDisplayDns >= 2 ? 300 : 120))   /* every 2 min; two empty answers in a row: every 5 min (bug-hunt M-17) */
             {
                 lastDisplayDns = Clock.Mono;
                 try
@@ -708,6 +782,7 @@ namespace AdeeboMeter
             if (map.Count == 0) { lock (L) if (IpNames.Count > 0) return; }   // keep the last good names rather than blanking them
             lock (L) IpNames = map;
         }
+        readonly Dictionary<string, Tuple<DateTime, Dictionary<string, string>>> nameLook = new Dictionary<string, Tuple<DateTime, Dictionary<string, string>>>();   // guarded by locking itself
         DateTime lastDisplayDns = DateTime.MinValue; int emptyDisplayDns; public volatile bool dnsCacheLocked;
         static readonly char[] IpChars = { '.', ':' };
         // Each block starts with the queried name over a dashed line; any record line whose value is an IP maps that IP to the name.
@@ -781,12 +856,12 @@ namespace AdeeboMeter
         void Judge()
         {
             double cpu = Cpu.Avg(10), mem = Mem.Avg(10), com = Commit.Avg(10);
-            double gw, net, dns, loss, jit; bool hasWifi, vpn, netEver, gwEver, call, dnsFail; int sig; string gwAddr;
+            double gw, net, dns, loss, jit; bool hasWifi, vpn, netEver, gwEver, call, dnsFail; int sig; string gwAddr; string apipaNow;
             lock (L)
             {
                 gwAddr = Gateway != "" ? Gateway : Gateway6;
                 gw = GwPing.Avg(5); net = NetPing.Avg(3); dns = Dns.Last; loss = NetEverReplied ? Loss.Avg(10) * 100 : double.NaN; jit = NetPing.Jitter(10);
-                hasWifi = HasWifi; sig = WifiSignal; vpn = VpnUp; netEver = NetEverReplied; gwEver = GwEverReplied; call = CallLikely; dnsFail = DnsFailedLast;
+                hasWifi = HasWifi; sig = WifiSignal; vpn = VpnUp; netEver = NetEverReplied; gwEver = GwEverReplied; call = CallLikely; dnsFail = DnsFailedLast; apipaNow = Apipa;
             }
             int pc = (cpu > 88 || mem > 90 || com > 92) ? 2 : (cpu > 60 || mem > 80) ? 1 : 0;
             int link = 3;
@@ -794,33 +869,46 @@ namespace AdeeboMeter
             if (!double.IsNaN(gw)) link = Math.Max(link == 3 ? 0 : link, gw > 50 ? 2 : gw > 15 ? 1 : 0);
             else if (!hasWifi) link = gwEver && double.IsNaN(net) ? 2 : 3;   // the router went quiet but the internet still answers: it just ignores ping now - not a dragging link
             bool offline = gwAddr == "" && !vpn;   // no way out at all: Wi-Fi off, cable out, airplane mode
+            bool joining = offline && InJoinGrace && pAdapter == null;   // D1-A1: just started, never been online yet - give Windows a moment
+            if (joining) offline = false;
             if (offline) link = 2;
+            offlineNow = offline;
             int isp = 3;
             if (!double.IsNaN(net) && !double.IsNaN(gw)) { double d = net - gw; isp = d > 100 ? 2 : d > 40 ? 1 : 0; }
             else if (!double.IsNaN(net)) isp = net > 150 ? 2 : net > 60 ? 1 : 0;
             int dn = dnsFail ? 2 : double.IsNaN(dns) ? 3 : dns > 300 ? 2 : dns > 100 ? 1 : 0;
-            int inet = !netEver ? 3 : loss >= 20 ? 2 : loss >= 10 ? 1 : 0;
+            // round 6 H6-L4: the internet never having answered on this network is a finding once enough tries (ping, then port 443)
+            // have failed while the router answers - not "unknown" forever behind a healthy Wi-Fi
+            int never; lock (L) never = NetNeverN;
+            int inet = !netEver ? (gwEver && never >= 6 ? 2 : 3) : loss >= 20 ? 2 : loss >= 10 ? 1 : 0;
             // not checked (Settings › Internet check off) or nothing measured lately: grey, never a verdict
             bool netStale; lock (L) netStale = Cfg.NetSec == 0 || (Clock.Mono - netAt).TotalSeconds > 3 * Math.Max(Cfg.NetSec, 15) + 10;
             if (netStale) { isp = 3; inet = 3; }
             if (link == 2) { isp = 3; dn = 3; inet = 3; }
+            if (joining) { link = 3; isp = 3; dn = 3; inet = 3; }   // nothing judged until the network is up
             path = new[] { pc, link, isp, dn, inet };
 
             var top = TopApps(false, 2, true); var topC = TopApps(true, 1, true);
             string t1 = top.Count > 0 ? top[0].Name + " (" + Draw.MemStr(top[0].Mem) + ")" : "your apps", t2 = top.Count > 1 ? top[1].Name : "";
             string hogs = t1 + (t2 != "" ? " and " + t2 : "");
-            string linkName = hasWifi ? "Wi-Fi" : "local network";
-            if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
-            else if (link == 2 && hasWifi && sig >= 0 && sig < 30) Set(2, Voice.Red("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", "Wi-Fi signal is weak (" + sig + "%). Move closer to the access point or use a cable."));
-            else if (link == 2) Set(2, Voice.Red("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", "The " + linkName + " is slow (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is not the cause."));
-            else if (pc == 2 && (mem > 90 || com > 92)) Set(2, Voice.Red("Your PC is cooked, boss - memory is full (" + mem.ToString("0", CultureInfo.CurrentCulture) + "%), so Windows keeps swapping programs to the disk. " + hogs + " are the hungry ones.", "Memory is almost full (" + mem.ToString("0", CultureInfo.CurrentCulture) + "%), so Windows keeps swapping programs to the disk - that's the slowness. " + hogs + " use the most."));
-            else if (pc == 2) Set(2, Voice.Red("CPU is running a marathon (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "Something") + " is doing the running.", "CPU is pegged (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "An app") + " uses the most."));
-            else if (call && (jit > 30 || loss > 2)) Set(1, Voice.P("Call getting wobbly (jitter " + Draw.Fmt(jit, "0", " ms") + "). If faces freeze, turn video off - audio will survive.", "Call quality dropping (jitter " + Draw.Fmt(jit, "0", " ms") + "). Turn video off if it stutters."));
-            else if (isp == 2 || inet == 2) Set(2, Voice.Red("Not you, not your PC - the internet past your router" + (vpn ? " / VPN" : "") + " is having a bad day.", "The internet past your router" + (vpn ? " / VPN" : "") + " is slow. Your PC and " + linkName + " are fine."));
-            else if (dn == 2) Set(2, dnsFail ? Voice.Red("The internet's there but DNS lost the phone book - sites won't open by name.", "DNS lookups are failing; sites won't open by name.") : Voice.Red("DNS is taking the scenic route (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms) - pages will be slow to start.", "DNS is slow (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms); pages will be slow to start."));
+            string linkName = hasWifi ? "Wi-Fi" : AdeeboMeter.L.T("local network");   /* 24 Nov: the status sentences are templates, so they translate */
+            waiting = false;
+            if (joining) Set(0, Voice.P("Just woke up - waiting for Windows to join the network.", "Starting - waiting for Windows to join the network."));
+            else if (offline && apipaNow != "") Set(2, Voice.Red(apipaNow + " is connected, but the router never gave it an address (it has a 169.254 one) - restart the router, or unplug and replug.", string.Format(AdeeboMeter.L.T("{0} is connected but got no address from the router (169.254.x.x - DHCP didn't answer). Restart the router or reconnect."), apipaNow)));
+            else if (offline) Set(2, Voice.Red("You're not connected to any network, boss - Wi-Fi is off, the cable is out, or airplane mode is on.", "Not connected to any network (no Wi-Fi, no cable, or airplane mode)."));
+            else if (link == 2 && hasWifi && sig >= 0 && sig < 30) Set(2, Voice.Red("Boss, your Wi-Fi is whispering (signal " + sig + "%). Not the PC's fault - move closer or plug in a cable.", string.Format(AdeeboMeter.L.T("Wi-Fi signal is weak ({0}%). Move closer to the access point or use a cable."), sig)));
+            else if (link == 2) Set(2, Voice.Red("Found it: your " + linkName + " is dragging (gateway " + Draw.Fmt(gw, "0", " ms") + "). The PC is innocent.", string.Format(AdeeboMeter.L.T("The {0} is slow (gateway {1}). The PC is not the cause."), linkName, Draw.Fmt(gw, "0", " ms"))));
+            else if (pc == 2 && (mem > 90 || com > 92)) Set(2, Voice.Red("Your PC is cooked, boss - memory is full (" + mem.ToString("0", CultureInfo.CurrentCulture) + "%), so Windows keeps swapping programs to the disk. " + hogs + " are the hungry ones.", string.Format(AdeeboMeter.L.T("Memory is almost full ({0}%), so Windows keeps swapping programs to the disk - that's the slowness. {1} use the most."), mem.ToString("0", CultureInfo.CurrentCulture), hogs)));
+            else if (pc == 2) Set(2, Voice.Red("CPU is running a marathon (" + cpu.ToString("0", CultureInfo.CurrentCulture) + "%). " + (topC.Count > 0 ? topC[0].Name : "Something") + " is doing the running.", string.Format(AdeeboMeter.L.T("CPU is pegged ({0}%). {1} uses the most."), cpu.ToString("0", CultureInfo.CurrentCulture), topC.Count > 0 ? topC[0].Name : AdeeboMeter.L.T("An app"))));
+            else if (call && (jit > 30 || loss > 2)) Set(1, string.Format(Voice.P("Call getting wobbly (jitter {0}). If faces freeze, turn video off - audio will survive.", "Call quality dropping (jitter {0}). Turn video off if it stutters."), Draw.Fmt(jit, "0", " ms")));
+            else if (inet == 2 && !netEver) Set(2, Voice.Red("The internet isn't answering at all - your router is fine, so it's the line or your provider.", "The internet isn't answering (your router does) - the line or the provider."));
+            else if (isp == 2 || inet == 2) Set(2, Voice.Red("Not you, not your PC - the internet past your router" + (vpn ? " / VPN" : "") + " is having a bad day.", string.Format(AdeeboMeter.L.T(vpn ? "The internet past your router / VPN is slow. Your PC and {0} are fine." : "The internet past your router is slow. Your PC and {0} are fine."), linkName)));
+            else if (dn == 2) Set(2, dnsFail ? Voice.Red("The internet's there but DNS lost the phone book - sites won't open by name.", "DNS lookups are failing; sites won't open by name.") : Voice.Red("DNS is taking the scenic route (" + dns.ToString("0", CultureInfo.CurrentCulture) + " ms) - pages will be slow to start.", string.Format(AdeeboMeter.L.T("DNS is slow ({0} ms); pages will be slow to start."), dns.ToString("0", CultureInfo.CurrentCulture))));
             else if (call) Set(0, Voice.P("Call looks smooth. Go impress them.", "Call quality is good."));
             else if (pc == 1) Set(1, Voice.P("Busy, but holding. Maybe don't open another big app just yet.", "Busy but fine. Avoid opening big apps for now."));
             else if (link == 1 || isp == 1 || dn == 1 || inet == 1) Set(1, Voice.P("Network's a bit sleepy; your PC is fine.", "Network a bit slow; your PC is fine."));
+            // review 1.1.6 D1 #1: nothing past this PC measured yet (or every check is off) - say so, never a green "all quiet" from no data
+            else if (link == 3 && isp == 3 && dn == 3 && inet == 3) { Set(0, Cfg.NetSec == 0 && Cfg.GwSec == 0 ? AdeeboMeter.L.T("Nothing measured - the router and internet checks are off in Settings.") : AdeeboMeter.L.T("Checking your connection...")); waiting = true; }
             else Set(0, Voice.P("All quiet. Nothing to fix - go get coffee.", "All quiet."));
             // the Investigate check that fits the headline's cause: a red PC first, then a lost or weak link (drops) vs a slow gateway (slow), then DNS, then a call in progress
             bool linkDown = offline || link == 2 && (double.IsNaN(gw) || hasWifi && sig >= 0 && sig < 30);
@@ -829,10 +917,15 @@ namespace AdeeboMeter
             // gateway latency jumps (against its own calm baseline)
             if (!double.IsNaN(gw))
             {
-                if (double.IsNaN(gwBase)) gwBase = gw;
+                // bug-hunt ML-43: another network (another router, another Wi-Fi) starts its own baseline
+                string gwNow; lock (L) gwNow = Gateway + "|" + Ssid;
+                if (gwNow != gwBaseFor) { gwBaseFor = gwNow; gwBase = double.NaN; gwFlag = false; gwBaseN = 0; }
+                // round 6 H6-L2: "normal" starts from the best of the first 10 answers (joining a busy network doesn't make busy
+                // normal), then climbs slowly and falls quickly - a gateway that gets slower bit by bit still trips the 3x line
+                if (double.IsNaN(gwBase)) gwBase = gw; else if (gwBaseN < 10) gwBase = Math.Min(gwBase, gw); gwBaseN++;
                 if (!gwFlag && gw > Math.Max(30, gwBase * 3)) { gwFlag = true; Events.Add(1, "gw", "Gateway latency jumped to " + gw.ToString("0", CultureInfo.CurrentCulture) + " ms (normally " + gwBase.ToString("0", CultureInfo.CurrentCulture) + " ms)"); }
                 else if (gwFlag && gw < Math.Max(15, gwBase * 2)) { gwFlag = false; Events.Add(0, "gw", "Gateway latency back to " + gw.ToString("0", CultureInfo.CurrentCulture) + " ms"); }
-                if (!gwFlag) gwBase = gwBase * 0.9 + gw * 0.1;
+                if (!gwFlag && gwBaseN >= 10) gwBase = gw > gwBase ? gwBase * 0.99 + gw * 0.01 : gwBase * 0.9 + gw * 0.1;
             }
             // red in / out
             if (prevLevel >= 0 && level == 2 && prevLevel != 2) Events.Add(2, "verdict", headline);
@@ -858,6 +951,7 @@ namespace AdeeboMeter
             hint = h;
         }
         void Set(int l, string h) { level = l; headline = h; }
+        bool waiting = true; volatile bool offlineNow;
         string flow = ""; DateTime netAt;
         public volatile int GwSecNow = 2, NetSecNow = 5;
         public DateTime GwAt; public DateTime NetAt { get { return netAt; } }   // steady-clock time of the newest router / internet sample (old after sleep)
@@ -865,9 +959,10 @@ namespace AdeeboMeter
         Snap BuildSnap()
         {
             var s = new Snap { Level = level, Headline = headline, Flow = flow, Countdown = countdown, Path = path, Hint = hint, Recent = Events.Recent(3) };
-            s.Chip = level == 2 ? Voice.P("Needs you", "Problem") : level == 1 ? "Busy" : Voice.P("All quiet", "OK");
+            s.Waiting = waiting && level == 0; s.Offline = offlineNow;
+            s.Chip = level == 2 ? Voice.ByLevel(2, "Needs you", "Problem") /* hunters13 display L-3: a real problem is named plainly */ : level == 1 ? AdeeboMeter.L.T("Busy") : s.Waiting ? AdeeboMeter.L.T("Checking") : Voice.P("All quiet", "OK");
             if (level == 0) { string eve = Trading.EveningLine() ?? Views.ChipLine(); if (eve != null) s.Chip = eve; }
-            var rm = Remote.Now; if (rm != null && rm.Active) s.Chip = "📱 " + s.Chip;   // the widget shows a phone is connected, the whole time   // opt-in: the day's close, 17:30-19:00 - a problem always wins
+            var rm = Remote.Now; if (rm != null && rm.Active) s.Chip = AdeeboMeter.L.T("Phone linked") + " · " + s.Chip;   /* hunters12 display ML-2: words, not an emoji the font can't draw */   // the widget shows a phone is connected, the whole time   // opt-in: the day's close, 17:30-19:00 - a problem always wins
             s.Cpu = Cpu.Last; s.Mem = Mem.Last; s.Disk = Disk.Last; s.Down = Down.Last; s.Up = Up.Last;
             s.DownHist = Down.Values(60); s.UpHist = Up.Values(60);
             s.MemText = UsedGB.ToString("0.0", CultureInfo.CurrentCulture) + " / " + TotalGB.ToString("0", CultureInfo.CurrentCulture) + " GB";
@@ -918,13 +1013,13 @@ namespace AdeeboMeter
             s.Details["disk"] = new Detail { Title = "Disk", Note = "A busy disk often explains slow app launches.",
                 Lines = new List<string[]> { new[] { "Active time", Draw.Fmt(s.Disk, "0", "%") }, new[] { "Read / write", Draw.Fmt(readMB, "0.0", "") + " / " + Draw.Fmt(writeMB, "0.0", " MB/s") }, new[] { "C:", cfree } } };
             s.Details["net"] = new Detail { Title = "Traffic", Note = "Who's talking to whom: click the tray icon.",
-                Lines = new List<string[]> { new[] { "Adapter", Draw.Trunc(adapter, 24) }, new[] { "Link speed", speed == "" ? "-" : speed }, new[] { "Down / up now", Draw.Fmt(s.Down, "0.0", "") + " / " + Draw.Fmt(s.Up, "0.0", " Mb/s") }, new[] { "Since start", Draw.MemStr((long)downTot) + " down" } } };
+                Lines = new List<string[]> { new[] { "Adapter", Draw.Trunc(adapter, 24) }, new[] { "Link speed", speed == "" ? "-" : speed }, new[] { "Down / up now", Draw.Pair(s.Down, s.Up) }, new[] { "Since start", Draw.MemStr((long)downTot) + " down" } } };
             var pd = new Detail { Title = "Is it me or the network?", Note = "Gateway fast but internet slow = past your PC and " + (hasWifi ? "Wi-Fi" : "LAN") + ". Gateway slow = Wi-Fi or cable." };
             for (int i = 0; i < 5; i++) pd.Lines.Add(new[] { s.PathLabel[i], s.PathMain[i], path[i].ToString(CultureInfo.CurrentCulture) });
             pd.TopTitle = "WHAT CHANGED"; foreach (var e in s.Recent) pd.Top.Add(new[] { e.Text, e.T.ToString("HH:mm", CultureInfo.CurrentCulture) });
             s.Details["path"] = pd;
             s.Details["call"] = new Detail { Title = "Meeting mode", Note = "On only while Teams has call media sockets open (UDP 50000-50059).",
-                Lines = new List<string[]> { new[] { "Upload", Draw.Fmt(s.Up, "0.0", " Mb/s") }, new[] { "Jitter", Draw.Fmt(jit, "0", " ms") }, new[] { "Loss", Draw.Fmt(loss, "0", "%") } } };
+                Lines = new List<string[]> { new[] { "Upload", Draw.Rate(s.Up, true) }, new[] { "Jitter", Draw.Fmt(jit, "0", " ms") }, new[] { "Loss", Draw.Fmt(loss, "0", "%") } } };
             AddAllHealth(s);
             return s;
         }
@@ -994,11 +1089,37 @@ namespace AdeeboMeter
             }
             return r;
         }
-        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names)
+        // every UDP socket with the address it's bound to (AdeeboShell's ss - a 127.0.0.1-only service isn't "all interfaces")
+        public sealed class UdpSock { public string Addr; public int Port, Pid; public bool V6; }
+        public static List<UdpSock> UdpFull()
+        {
+            var r = new List<UdpSock>();
+            foreach (int af in new[] { 2, 23 })
+            {
+                IntPtr b = Get(false, af); if (b == IntPtr.Zero) continue;
+                try
+                {
+                    int n = Marshal.ReadInt32(b), size = af == 2 ? 12 : 28;
+                    for (int i = 0; i < n; i++)
+                    {
+                        IntPtr row = b + 4 + i * size; IPAddress a;
+                        if (af == 2) a = new IPAddress((uint)Marshal.ReadInt32(row, 0)); else { var by = new byte[16]; Marshal.Copy(row, by, 0, 16); a = new IPAddress(by); }
+                        r.Add(new UdpSock { Addr = a.ToString(), V6 = af == 23, Port = Port((uint)Marshal.ReadInt32(row, af == 2 ? 4 : 20)), Pid = Marshal.ReadInt32(row, af == 2 ? 8 : 24) });
+                    }
+                }
+                finally { Marshal.FreeHGlobal(b); }
+            }
+            return r;
+        }
+        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names) { return Tcp(includeIdle, names, false); }
+        // loopback: the monitor leaves out this PC talking to itself; the shell's ss shows it (shell scrutiny #15)
+        public static List<Conn> Tcp(bool includeIdle, Dictionary<int, string> names, bool loopback)
         {
             var list = new List<Conn>();
             Func<int, string> nm = delegate(int pid) { string s; return names.TryGetValue(pid, out s) ? s : (pid == 4 ? "System" : pid == 0 ? "Windows (no owner)" : "pid " + pid); };
             IntPtr b = Get(true, 2);   // v4 row: state, laddr, lport, raddr, rport, pid
+            // bug-hunt ML-133: a table Windows wouldn't hand over is an error, said as one - not an empty, "nothing connected" list
+            if (b == IntPtr.Zero) throw new InvalidOperationException("Windows didn't hand over its connection table just now");
             if (b != IntPtr.Zero)
                 try
                 {
@@ -1011,7 +1132,7 @@ namespace AdeeboMeter
                         if (!includeIdle && idle) continue;
                         var la = new IPAddress((uint)Marshal.ReadInt32(row, 4)); var ra = new IPAddress((uint)Marshal.ReadInt32(row, 12));
                         int lp = Port((uint)Marshal.ReadInt32(row, 8)), rp = Port((uint)Marshal.ReadInt32(row, 16)), pid = Marshal.ReadInt32(row, 20);
-                        if (!idle && IPAddress.IsLoopback(ra)) continue;
+                        if (!idle && !loopback && IPAddress.IsLoopback(ra)) continue;
                         list.Add(new Conn { Key = "T|" + la + ":" + lp + "|" + ra + ":" + rp + "|" + pid, Proto = "TCP", State = State(st), Local = la + ":" + lp, Remote = idle ? "*" : ra + ":" + rp, RemoteIp = idle ? "" : ra.ToString(), RemotePort = rp, LocalPort = lp, Pid = pid, Proc = nm(pid) });
                     }
                 }
@@ -1030,7 +1151,7 @@ namespace AdeeboMeter
                         byte[] l = new byte[16], r = new byte[16]; Marshal.Copy(row, l, 0, 16); Marshal.Copy(row + 24, r, 0, 16);
                         var la = new IPAddress(l); var ra = new IPAddress(r);
                         int lp = Port((uint)Marshal.ReadInt32(row, 20)), rp = Port((uint)Marshal.ReadInt32(row, 44)), pid = Marshal.ReadInt32(row, 52);
-                        if (!idle && IPAddress.IsLoopback(ra)) continue;
+                        if (!idle && !loopback && IPAddress.IsLoopback(ra)) continue;
                         list.Add(new Conn { Key = "T6|" + la + "|" + lp + "|" + ra + "|" + rp + "|" + pid, Proto = "TCP6", State = State(st), Local = "[" + la + "]:" + lp, Remote = idle ? "*" : "[" + ra + "]:" + rp, RemoteIp = idle ? "" : ra.ToString(), RemotePort = rp, LocalPort = lp, Pid = pid, Proc = nm(pid) });
                     }
                 }

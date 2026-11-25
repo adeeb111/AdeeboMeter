@@ -54,7 +54,7 @@ namespace AdeeboMeter
                     {
                         errs = e;
                         if (ch != null) foreach (var el in ch.ChainElements) { var x = el.Certificate; snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), snap.Chain.Count == 0 ? Sans(x) : "" }); }
-                        if (snap.Chain.Count == 0 && c != null) { var x = new X509Certificate2(c); snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Sans(x) }); }
+                        if (snap.Chain.Count == 0 && c != null) using (var x = new X509Certificate2(c)) {   /* bug-hunt ML-31: let go once read */ snap.Chain.Add(new[] { x.GetNameInfo(X509NameType.SimpleName, false), x.GetNameInfo(X509NameType.SimpleName, true), Hex(Sha256(x.RawData)), x.NotAfter.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Sans(x) }); }
                         return e == SslPolicyErrors.None;   // an untrusted certificate is still recorded above - then the handshake stops
                     }))
                     {
@@ -75,7 +75,7 @@ namespace AdeeboMeter
             rows.Add(CertVerdict(prev, snap));
             string sa = prev.Chain[0].Length > 4 ? prev.Chain[0][4] : "", sb = snap.Chain[0].Length > 4 ? snap.Chain[0][4] : "";
             if (sa != "" && sb != "" && sa != sb) rows.Add(R(1, "Names it covers differ", "\"" + prev.Name + "\": " + sa + "  vs  \"" + snap.Name + "\": " + sb, "A certificate made for other names on one path - a different server (DNS points elsewhere there) or a proxy's own certificate.", "i"));
-            if (prev.Chain.Count != snap.Chain.Count) rows.Add(R(1, "Chain length differs", prev.Chain.Count + " certificates vs " + snap.Chain.Count, "One path adds (or leaves out) an intermediate - a missing intermediate breaks some clients but not browsers that fetch it themselves.", "i"));
+            if (prev.Chain.Count != snap.Chain.Count) rows.Add(R(1, "Chain length differs", prev.Chain.Count + " certificates vs " + snap.Chain.Count, "As Windows built each chain (it can fill in an intermediate from its own store) - one path adds (or leaves out) an intermediate - a missing intermediate breaks some clients but not browsers that fetch it themselves.", "i"));
             return rows;
         }
         public static string[] CertVerdict(CertSnap a, CertSnap b)
@@ -119,11 +119,12 @@ namespace AdeeboMeter
                 var e = x.Item2; string kind = Kind(e); int lv = kind == "failed" ? 2 : kind == "succeeded" ? 0 : 3;
                 rows.Add(R(lv, e.T.ToString("ddd HH:mm:ss", CultureInfo.CurrentCulture), x.Item1 + " · " + kind + (Reason(e.Text) != "" ? " · " + Draw.Trunc(Reason(e.Text), 110) : ""), kind == "failed" ? Hint(e.Text) : "", "w"));
             }
-            var last = all.Last(); string lk = Kind(last.Item2);
+            var last = all.LastOrDefault(x => Kind(x.Item2) != "disconnected") ?? all.Last(); string lk = Kind(last.Item2);   // a disconnect isn't a sign-in result: judge the sign-in before it
             string verdict = lk == "failed" ? "The last sign-in failed: " + (Hint(last.Item2.Text) != "" ? Hint(last.Item2.Text) : Draw.Trunc(Reason(last.Item2.Text), 140))
                 : lk == "succeeded" ? "The last 802.1X sign-in worked. If there's still no network, the next step is DHCP - run \"Why didn't this PC join the network?\"."
+                : lk == "disconnected" ? "Only disconnects in the last 2 days - no sign-in to judge. Connect to the network, then run this again."
                 : "The last event was the start of a sign-in with no result after it - the sign-in server (RADIUS) may not be answering the switch / access point.";
-            rows.Insert(0, R(lk == "failed" ? 2 : lk == "succeeded" ? 0 : 1, "Where it stopped", verdict, "", "w"));
+            rows.Insert(0, R(lk == "failed" ? 2 : lk == "succeeded" ? 0 : lk == "disconnected" ? 3 : 1, "Where it stopped", verdict, "", "w"));
             string cat = lk == "succeeded" ? "dhcp" : Category(last.Item2.Text);
             rows.Insert(1, R(3, "Points to", cat == "profile" ? "profile selection - the PC picked the wrong (or no) network profile" : cat == "cert" ? "certificate validation" : cat == "reject" ? "the sign-in server refusing (policy, account or password)" : cat == "timeout" ? "the sign-in server not answering" : cat == "dhcp" ? "after sign-in: getting an address (DHCP)" : "not clear from the event text", "", "i"));
             if (cat == "cert") rows.Insert(2, Next("check the certificate: inspect the file, or compare what the server sends", "tool:certfile"));
@@ -131,12 +132,12 @@ namespace AdeeboMeter
             else if (cat == "reject" || cat == "timeout") rows.Insert(2, Next("test the RADIUS server directly with a test account", "tool:radiuslab"));
             return rows;
         }
-        static string Kind(EvLog.Ev e)
+        internal static string Kind(EvLog.Ev e)
         {
             string t = (e.Text ?? "").ToLowerInvariant();
+            if (e.Id == 8003 || (e.Id == 15503 && t.Contains("disconnect"))) return "disconnected";   // R2-142: 8003 is always a disconnect (WLAN AutoConfig); 15503 only when its text says so   // the tool run, 22 Nov: "has successfully disconnected" read as a sign-in that worked
             if (e.Id == 8002 || e.Id == 12013 || e.Id == 15502 || e.Id == 11006 || t.Contains("failed") || t.Contains("failure")) return "failed";
             if (e.Id == 8001 || e.Id == 12012 || e.Id == 15501 || t.Contains("succeeded") || t.Contains("successfully")) return "succeeded";
-            if (e.Id == 8003) return "disconnected";
             return "started";
         }
         static string[] Next(string text, string act) { return new[] { "3", "Next", text, "", "", act }; }
@@ -194,7 +195,8 @@ namespace AdeeboMeter
             // 4. router
             if (stopAt == "")
             {
-                double g = m.GwPing.Avg(3);
+                double g = m.GwPing.Avg(3); bool gRan = m.GwPing.Values(3).Length > 0 && Cfg.GwSec > 0;   // bug-hunt ML-108: a check that hasn't run yet isn't a failure
+                if (!gRan) rows.Add(R(3, "4. Router", "not checked yet", "", "m")); else
                 rows.Add(R(double.IsNaN(g) ? 1 : 0, "4. Router", double.IsNaN(g) ? "doesn't answer ping (some routers never do)" : Math.Round(g) + " ms", "", "m"));
             }
             // 5. DNS
@@ -207,9 +209,10 @@ namespace AdeeboMeter
             // 6. internet
             if (stopAt == "")
             {
-                double n = m.NetPing.Avg(3); bool tcp; lock (m.L) tcp = m.NetViaTcp;
+                double n = m.NetPing.Avg(3); bool tcp; lock (m.L) tcp = m.NetViaTcp; bool nRan = m.NetPing.Values(3).Length > 0 && Cfg.NetSec > 0;
+                if (!nRan) rows.Add(R(3, "6. Internet", Cfg.NetSec > 0 ? "not checked yet - give it a minute" : "not checked - the internet check is off in Settings", "", "m")); else
                 rows.Add(R(double.IsNaN(n) ? 2 : 0, "6. Internet", double.IsNaN(n) ? "no answer from the internet check" : Math.Round(n) + " ms" + (tcp ? " (TCP - ping is blocked here)" : ""), double.IsNaN(n) ? "A company network may only allow the internet through a proxy - see VPN and company proxy." : "", "m"));
-                if (double.IsNaN(n)) stopAt = "the way out to the internet";
+                if (nRan && double.IsNaN(n)) stopAt = "the way out to the internet";
             }
             rows.Insert(0, R(stopAt == "" ? 0 : 2, "Verdict", stopAt == "" ? "This PC joined the network and reaches the internet - every step checks out." : "It stops at " + stopAt + ". The steps after it can't work until that one does.", "", "i"));
             return rows;
@@ -278,19 +281,19 @@ namespace AdeeboMeter
                 add(32, Encoding.ASCII.GetBytes("AdeeboMeter")); add(61, new byte[] { 0, 0, 0, 5 });   // NAS-Identifier, NAS-Port-Type Virtual
                 var pkt = new byte[20 + attrs.Count]; pkt[0] = 1; pkt[1] = id; pkt[2] = (byte)(pkt.Length >> 8); pkt[3] = (byte)pkt.Length; Array.Copy(auth, 0, pkt, 4, 16); attrs.CopyTo(pkt, 20);
                 using (var hm = new HMACMD5(sec)) { var mac = hm.ComputeHash(pkt); Array.Copy(mac, 0, pkt, 22, 16); }
-                attrs.Clear();
+                for (int i = 0; i < attrs.Count; i++) attrs[i] = 0; attrs.Clear();   /* L-38: zeroed first - Clear alone leaves the bytes in the list's array */
                 Program.Log("radius lab: Access-Request to " + a + ":" + port);
                 using (var u = new UdpClient(a.AddressFamily))
                 {
                     u.Client.ReceiveTimeout = 4000; u.Connect(a, port); var lep = u.Client.LocalEndPoint as IPEndPoint; if (lep != null) srcIp = lep.Address.ToString();
                     var sw = System.Diagnostics.Stopwatch.StartNew(); u.Send(pkt, pkt.Length); Array.Clear(pkt, 0, pkt.Length);
-                    var from = new IPEndPoint(IPAddress.Any, 0); reply = u.Receive(ref from); ms = sw.ElapsedMilliseconds;
+                    var from = Toolkit.AnyEp(u); reply = u.Receive(ref from); ms = sw.ElapsedMilliseconds;
                 }
             }
             catch (SocketException e) { error = e.SocketErrorCode == SocketError.TimedOut ? "no answer in 4 s" : e.SocketErrorCode == SocketError.ConnectionReset ? "refused - nothing listens on UDP " + port : e.Message; }
-            catch { Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); throw; }   // any other failure: the secret still goes
+            catch { Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); Array.Clear(auth, 0, auth.Length); throw; }   // any other failure: the secret still goes
             bool hasMa = false, signed = reply != null && Protocols.ReplyOk(reply, id, auth, sec, out hasMa);
-            Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length);
+            Array.Clear(sec, 0, sec.Length); Array.Clear(pw, 0, pw.Length); Array.Clear(auth, 0, auth.Length);
             string code; var attrRows = new List<string[]>();
             if (srcIp != "") rows.Add(R(3, "Sent from", srcIp + " (the address Windows picked for this route)", "The server must list this address as a client (NAS) with this shared secret - on a VPN or a PC with two networks it may not be the one you expect.", "w"));
             if (reply == null) { code = "Timeout"; rows.Add(R(2, h + ":" + port, error, "Silence usually means: this PC isn't a client (NAS) on the server, the shared secret is wrong (many servers drop those silently), or UDP " + port + " is blocked on the way.", "m")); }
@@ -312,7 +315,8 @@ namespace AdeeboMeter
             {
                 var p = prev.Split('|'); if (p.Length < 6) continue;
                 rows.Add(R(-1, (prev == prevSame ? "BEFORE / AFTER · " : "THE OTHER SERVER · ") + p[1], "earlier run " + When(p[2]), "", "m"));
-                rows.Add(R(p[3] == code ? 0 : 1, "Answer", p[3] + " (" + p[4] + " ms)  >  " + code + " (" + ms + " ms)", p[3] != code ? "The answer changed - a policy, the account or the server changed in between." : "", "m"));
+                Func<string, string> took = t => t.StartsWith("-", StringComparison.Ordinal) || t == "" ? "no answer" : t + " ms";   // bug-hunt L-217: a timeout has no time
+                rows.Add(R(p[3] == code ? 0 : 1, "Answer", p[3] + " (" + took(p[4]) + ")  >  " + code + " (" + took(ms.ToString(CultureInfo.InvariantCulture)) + ")", p[3] != code ? "The answer changed - a policy, the account or the server changed in between." : "", "m"));
                 var before = p[5] == "" ? Array.Empty<string>() : p[5].Split(';'); var after = attrRows.Select(r => Clean(r[1], 40) + "=" + Clean(r[2], 60)).ToArray();
                 var gone = before.Except(after).ToList(); var added = after.Except(before).ToList();
                 if (gone.Count + added.Count > 0) rows.Add(R(1, "Attributes changed", (gone.Count > 0 ? "no longer: " + string.Join(", ", gone) : "") + (gone.Count > 0 && added.Count > 0 ? " · " : "") + (added.Count > 0 ? "new: " + string.Join(", ", added) : ""), "", "m"));
@@ -354,8 +358,11 @@ namespace AdeeboMeter
             run.Status = "Asking for " + d + "'s mail servers (MX)...";
             var msg = Toolkit.Query(dns, d, 15, true);
             var mx = msg == null ? new List<string[]>() : msg.Rrs.Where(r => r.Type == "MX" && r.Section == 1).Select(r => r.Data.Split(' ')).Where(x => x.Length == 2).OrderBy(x => int.Parse(x[0], CultureInfo.InvariantCulture)).ToList();
+            if (mx.Count > 0 && mx.Any(x => x[1].Trim('.') == "") && mx.Any(x => x[1].Trim('.') != "")) mx = mx.Where(x => x[1].Trim('.') != "").ToList();   // R2-140: a null MX beside a real one (against RFC 7505) - the real ones are tested
+            if (mx.Count > 0 && mx.All(x => x[1].Trim('.') == "")) { rows.Add(R(1, "MX", d + " accepts no mail - it publishes a \"null MX\" (RFC 7505)", "The owner says on purpose that nobody should send mail to this domain - nothing to test.", "m")); return rows; }   // tool-run 22 Nov: example.com showed "MX:  (0)"
             if (mx.Count == 0) { rows.Add(R(2, "MX", msg == null ? "no answer from " + dns : "no MX records - mail to " + d + " goes to the domain itself, or nowhere", "", "m")); return rows; }
             rows.Add(R(0, "MX", string.Join(" · ", mx.Take(5).Select(x => x[1].TrimEnd('.') + " (" + x[0] + ")")), "Senders try the lowest number first.", "m"));
+            if (mx.Count > 2) rows.Add(R(3, "Tested", "the first 2 of " + mx.Count + " mail servers (the lowest numbers - the ones senders try first)", "", "m"));   // bug-hunt L-216
             foreach (var x in mx.Take(2))
             {
                 if (run.Stop) break;

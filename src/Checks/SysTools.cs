@@ -26,6 +26,7 @@ namespace AdeeboMeter
         public static List<string[]> Ping6(string target, Toolkit.Run run)
         {
             var rows = new List<string[]>(); var a = Resolve6(target);
+            if (a != null) { string no1 = Lab.NotOne(a); if (no1 != "" || a.IsIPv6Multicast) { rows.Add(R(2, "IPv6 address", no1 != "" ? no1 : a + " is a multicast group - every device in it would answer. Type one device.", "", "u")); return rows; } }   // round-4 #8 / review 1.1.6
             if (a == null) { rows.Add(R(2, "IPv6 address", "couldn't find an IPv6 address for " + target, HasV6() ? "The name may have no AAAA record." : "This PC has no public IPv6 address - your network or provider doesn't give one.", "m")); return rows; }
             run.SeriesUnit = "ms"; int ok = 0;
             for (int i = 0; i < 10 && !run.Stop; i++) { var r = Icmp.Echo6(a, 32, 128, 2000); if (r.Status == Icmp.Ok) { ok++; run.Add(r.Rtt); } else run.Add(double.NaN); run.Status = "Ping " + (i + 1) + " / 10 to " + a; System.Threading.Thread.Sleep(300); }
@@ -79,8 +80,8 @@ namespace AdeeboMeter
                         if (k == null) rows.Add(R(1, "IPv4 lease", "Windows has no lease details for this adapter", "", "w"));
                         else
                         {
-                            Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return a2 != null ? string.Join(" ", a2) : (v ?? "").ToString().Trim(); };
-                            Func<string, DateTime> time = n => { var v = k.GetValue(n); long t; return v != null && long.TryParse(v.ToString(), out t) && t > 0 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
+                            Func<string, string> str = n => { var v = k.GetValue(n); var a2 = v as string[]; return (a2 != null ? string.Join(" ", a2.Select(z => (z ?? "").Trim().Trim('\0').Trim()).Where(z => z != "")) : (v ?? "").ToString()).Trim().Trim('\0').Trim(); };   // the tool run, 22 Nov: a blank domain is stored as "\0" - no empty row
+                            Func<string, DateTime> time = n => { var v = k.GetValue(n); long t = 0; bool okT = v is int ? (t = (uint)(int)v) >= 0 : v != null && long.TryParse(v.ToString(), out t); return okT && t > 0 && t < 0xFFFFFFFFL ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(t).ToLocalTime() : DateTime.MinValue; };
                             DateTime got = time("LeaseObtainedTime"), t1 = time("T1"), t2 = time("T2"), end = time("LeaseTerminatesTime"), now = DateTime.Now;
                             string ip = str("DhcpIPAddress");
                             rows.Add(R(ip == "" || ip.StartsWith("169.254", StringComparison.Ordinal) ? 2 : 0, "Address", ip == "" ? "none from DHCP" : ip + " / " + str("DhcpSubnetMask"), ip.StartsWith("169.254", StringComparison.Ordinal) ? "169.254 means no DHCP server answered - Windows made up an address. Nothing past this PC will work." : "", "w"));
@@ -88,7 +89,7 @@ namespace AdeeboMeter
                             if (got > DateTime.MinValue) rows.Add(R(3, "Obtained", got.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + " (" + Ago(now - got) + " ago)", "", "w"));
                             if (t1 > DateTime.MinValue) rows.Add(R(3, "Renews (T1)", t1.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (t1 > now ? " (in " + Ago(t1 - now) + ")" : " (due - renewing)"), "Halfway through the lease Windows asks the same server to extend it.", "w"));
                             if (t2 > DateTime.MinValue) rows.Add(R(3, "Rebinds (T2)", t2.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture), "If renewing failed, Windows asks any DHCP server.", "w"));
-                            object rawEnd = k.GetValue("LeaseTerminatesTime"); long rawE; bool infinite = rawEnd != null && long.TryParse(rawEnd.ToString(), out rawE) && rawE == 0xFFFFFFFFL;   // RFC 2132: all ones = an infinite lease
+                            object rawEnd = k.GetValue("LeaseTerminatesTime"); long rawE; bool infinite = rawEnd != null && long.TryParse(rawEnd.ToString(), out rawE) && (rawE == 0xFFFFFFFFL || rawE == -1);   /* carry-over (round-2 ML35): a REG_DWORD arrives as a signed int, so all ones reads -1 */   // RFC 2132: all ones = an infinite lease
                             if (infinite) rows.Add(R(0, "Expires", "never (an infinite lease)", "", "w"));
                             else if (end > DateTime.MinValue) rows.Add(R(end < now ? 2 : (end - now).TotalMinutes < 10 ? 1 : 0, "Expires", end.ToString("ddd d MMM HH:mm", CultureInfo.CurrentCulture) + (end > now ? " (in " + Ago(end - now) + ")" : " (expired)"), got > DateTime.MinValue && (end - got).TotalMinutes < 60 ? "A short lease (under an hour) - common on guest Wi-Fi; renewals happen often." : "", "w"));
                             string gw = str("DhcpDefaultGateway"), dns = str("DhcpNameServer"), dom = str("DhcpDomain");
@@ -159,7 +160,18 @@ namespace AdeeboMeter
         }
 
         // ---------- Group Policy (what applied to you)
+        // deep test (23 Nov): gpresult can take 10-30 s, twice - the answer is kept 5 minutes, so asking again (or another
+        // tool that needs it) is instant; policy doesn't change that fast (gpupdate is every 90 minutes)
+        static List<string[]> gpLast; static DateTime gpAt = DateTime.MinValue; static readonly object gpLock = new object();
         public static List<string[]> GroupPolicy()
+        {
+            lock (gpLock)
+            {
+                if (gpLast != null && (DateTime.UtcNow - gpAt).TotalMinutes < 5) return gpLast.Select(z => (string[])z.Clone()).ToList();
+                var fresh = GroupPolicyNow(); gpLast = fresh.Select(z => (string[])z.Clone()).ToList(); gpAt = DateTime.UtcNow; return fresh;
+            }
+        }
+        static List<string[]> GroupPolicyNow()
         {
             var rows = new List<string[]>();
             // the XML report first - its element names are the same in every language (the /r text isn't). Read as plain
@@ -333,7 +345,9 @@ namespace AdeeboMeter
             rows.Add(R(type == "NoSync" ? 2 : 0, "How", how == "" ? "unknown" : how, "", "w"));
             // "The following error occurred: The service has not been started. (0x80070426)" is an error, not a source
             bool w32err = src.IndexOf("0x8007", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (w32err) { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
+            bool denied = src.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0 && src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) < 0;
+            if (w32err && denied) { rows.Add(R(3, "Current source", "Windows shows this to an administrator only - the type above and the server below come from the settings", "", "w")); src = ""; }   // the tool run, 22 Nov: not a fault, so not red
+            if (w32err && src != "") { rows.Add(R(2, "Current source", Draw.Trunc(src.Replace("\r", " ").Replace("\n", " "), 140), src.IndexOf("0x80070426", StringComparison.OrdinalIgnoreCase) >= 0 ? "The Windows Time service isn't running, so the clock isn't being synced. It starts on its own on most PCs; on others it's started by the domain." : "", "w")); src = ""; }
             if (src != "") rows.Add(R(src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 || src.IndexOf("Free-running", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 0, "Current source", src, src.IndexOf("Local CMOS", StringComparison.OrdinalIgnoreCase) >= 0 ? "It runs on its own clock - no server has set it recently. Settings > Time > Sync now." : src.IndexOf("access is denied", StringComparison.OrdinalIgnoreCase) >= 0 ? "" : "", "w"));
             if (server != "") rows.Add(R(3, "Configured server", Regex.Replace(server, @",0x[0-9a-fA-F]+", ""), "", "w"));
             rows.Add(R(3, "Check it", "Use the NTP tool on the same server to see how far off this PC is.", "", "i"));

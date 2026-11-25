@@ -32,6 +32,7 @@ namespace AdeeboMeter
     // like any app), your settings carried over. No administrator rights, no shell, no extra files.
     static class Setup
     {
+        [System.Runtime.InteropServices.DllImport("shell32.dll")] static extern void SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);
         [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)] static extern bool DeleteFileW(string path);
         public static string Base { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "AdeeboMeter"); } }
         public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\AdeeboMeter";
@@ -63,12 +64,39 @@ namespace AdeeboMeter
         // a Run value that starts some AdeeboMeter*.exe (installed, downloaded or renamed)
         public static bool OurRunValue(string v) { try { string f = Path.GetFileName((v ?? "").Trim().Trim('"')); return f.StartsWith("AdeeboMeter", StringComparison.OrdinalIgnoreCase) && f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase); } catch (ArgumentException) { return false; } }
 
+        // the settings file of the copy that's installed now: the folder the Run key starts, else the newest version folder
+        public static string InstalledSettings()
+        {
+            string from = null;
+            try
+            {
+                using (var k = Registry.CurrentUser.OpenSubKey(RunKey))
+                {
+                    var v = k == null ? null : k.GetValue("AdeeboMeter") as string;
+                    if (v != null) { string d = Path.GetDirectoryName(v.Trim('"')); if (File.Exists(Path.Combine(d, "AdeeboMeter.settings"))) from = Path.Combine(d, "AdeeboMeter.settings"); }
+                }
+            }
+            catch { }
+            if (from == null && Directory.Exists(Base))
+                // bug-hunt L-309: the settings of the newest VERSION folder (by its exe's version), not whichever file was touched last
+                from = Directory.GetDirectories(Base).Where(d => File.Exists(Path.Combine(d, "AdeeboMeter.settings")))
+                    .OrderByDescending(d => { var exe0 = Path.Combine(d, "AdeeboMeter.exe"); Version pv; string v0 = File.Exists(exe0) ? FileVersionInfo.GetVersionInfo(exe0).ProductVersion ?? "" : ""; return Version.TryParse(Regex.Match(v0, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); })
+                    .ThenByDescending(d => File.GetLastWriteTimeUtc(Path.Combine(d, "AdeeboMeter.settings"))).Select(d => Path.Combine(d, "AdeeboMeter.settings")).FirstOrDefault();
+            return from;
+        }
         // Offer to install only on a first start of a copy that isn't installed and was never used from where it is.
         public static bool ShouldOffer()
         {
             if (Program.Packaged || RunningInstalled) return false;
+            if (Program.Portable) return false;   // 1.1.6 PC test: a copy with AdeeboMeter.portable beside it is meant to run where it is, with its own data - it was offering to install itself
             // a settings file beside an exe in Downloads isn't trusted (it may have come with the download): only the real one counts
-            if (Program.InDownloads) return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"));
+            if (Program.InDownloads)
+            {
+                if (!File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"))) return true;
+                // review 1.1.6 P1 #8: a newer download than the one last run from here offers again
+                try { Version ran, me; string f = Path.Combine(Program.WriteDir, "ranfrom.txt"); return File.Exists(f) && Version.TryParse(File.ReadAllText(f).Trim(), out ran) && Version.TryParse(Program.Version, out me) && me > ran; }
+                catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; return false; }
+            }
             return !File.Exists(Path.Combine(Program.WriteDir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "AdeeboMeter.settings")) && !File.Exists(Path.Combine(Program.Dir, "Ade" + "boMeter.settings"));
         }
 
@@ -85,8 +113,13 @@ namespace AdeeboMeter
                         if (loc != null && Under(loc, Base) && File.Exists(Path.Combine(loc, "AdeeboMeter.exe"))) { version = v; exe = Path.Combine(loc, "AdeeboMeter.exe"); return; }
                     }
                 if (Directory.Exists(Base))
-                    foreach (var d in Directory.GetDirectories(Base).OrderByDescending(Directory.GetLastWriteTimeUtc))
-                        if (File.Exists(Path.Combine(d, "AdeeboMeter.exe"))) { version = Path.GetFileName(d); exe = Path.Combine(d, "AdeeboMeter.exe"); return; }
+                    // bug-hunt ML-167: the version the exe itself carries, and the newest by that version - not a folder's name or date
+                {
+                    var best = Directory.GetDirectories(Base).Where(f => File.Exists(Path.Combine(f, "AdeeboMeter.exe")))
+                        .Select(f => new { Dir = f, V = FileVersionInfo.GetVersionInfo(Path.Combine(f, "AdeeboMeter.exe")).ProductVersion ?? "" })
+                        .Where(x => x.V != "").OrderByDescending(x => { Version pv; return Version.TryParse(Regex.Match(x.V, @"^\d+(\.\d+){1,3}").Value, out pv) ? pv : new Version(0, 0); }).FirstOrDefault();
+                    if (best != null) { version = best.V; exe = Path.Combine(best.Dir, "AdeeboMeter.exe"); return; }
+                }
             }
             catch (Exception e) { Program.Log("installed: " + e.Message); }
         }
@@ -97,7 +130,7 @@ namespace AdeeboMeter
             var lines = File.Exists(file) ? File.ReadAllLines(file).ToList() : new List<string>();
             int i = lines.FindIndex(l => l.StartsWith(key + "=", StringComparison.Ordinal));
             if (i >= 0) lines[i] = key + "=" + value; else lines.Insert(0, key + "=" + value);
-            File.WriteAllLines(file, lines);
+            SafeFile.WriteText(file, string.Join("\r\n", lines) + "\r\n");   // bug-hunt L-308: temp file, then replace
         }
 
         // Ask running copies to leave; anything that doesn't answer (older versions) is stopped.
@@ -154,18 +187,9 @@ namespace AdeeboMeter
             string settings = Path.Combine(dst, "AdeeboMeter.settings");
             if (!File.Exists(settings))
             {
-                string from = null;
-                try
-                {
-                    using (var k = Registry.CurrentUser.OpenSubKey(RunKey))
-                    {
-                        var v = k == null ? null : k.GetValue("AdeeboMeter") as string;
-                        if (v != null) { string d = Path.GetDirectoryName(v.Trim('"')); if (File.Exists(Path.Combine(d, "AdeeboMeter.settings"))) from = Path.Combine(d, "AdeeboMeter.settings"); }
-                    }
-                }
-                catch { }
-                if (from == null && Directory.Exists(Base))
-                    from = Directory.GetDirectories(Base).Select(d => Path.Combine(d, "AdeeboMeter.settings")).Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
+                // review 1.1.6 P1 #8: also the settings a "run from here" copy kept (they live in %LOCALAPPDATA%\AdeeboMeter)
+                string from = InstalledSettings(); string local = Path.Combine(Program.LocalDir, "AdeeboMeter.settings");
+                if (from == null && File.Exists(local) && !string.Equals(Path.GetFullPath(local), Path.GetFullPath(settings), StringComparison.OrdinalIgnoreCase)) from = local;
                 if (from != null) File.Copy(from, settings, false);
             }
             SetLine(settings, "autostart", autoStart ? "1" : "0");
@@ -187,9 +211,19 @@ namespace AdeeboMeter
             }
             if (!autoStart)
                 try { using (var k = Registry.CurrentUser.OpenSubKey(RunKey, true)) if (k != null && k.GetValue("AdeeboMeter") != null) k.DeleteValue("AdeeboMeter"); } catch { }
+            // bug-hunt ML-127: a locked .adeebo file opens in AdeeboMeter with a double-click (your account only, no admin)
+            try
+            {
+                using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Classes\.adeebo")) k.SetValue("", "AdeeboMeter.locked");
+                using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Classes\AdeeboMeter.locked")) { k.SetValue("", "AdeeboMeter locked file"); using (var i = k.CreateSubKey("DefaultIcon")) i.SetValue("", exe + ",0"); using (var c = k.CreateSubKey(@"shell\open\command")) c.SetValue("", "\"" + exe + "\" --open \"%1\""); }
+                SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);   // SHCNE_ASSOCCHANGED: Explorer picks it up now
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("file type: " + e.Message); }
 
             step("Tidying up older versions...", 0.9f);
-            foreach (var d in Directory.GetDirectories(Base))
+            // carry-over (100-bug:178): only AdeeboMeter's own version folders (a version number for a name, with AdeeboMeter.exe or
+            // nothing in it) - any other folder someone put under the install folder is left alone
+            foreach (var d in Directory.GetDirectories(Base).Where(x => System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(x), @"^\d+(\.\d+){1,3}$") && (File.Exists(Path.Combine(x, "AdeeboMeter.exe")) || !Directory.EnumerateFileSystemEntries(x).Any())))
                 if (!string.Equals(Path.GetFullPath(d).TrimEnd('\\'), Path.GetFullPath(dst).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
                     try { Directory.Delete(d, true); } catch (Exception e) { Program.Log("old version left: " + d + " (" + e.Message + ")"); }
             Program.Log("installed " + Program.Version + " to " + dst);
@@ -210,7 +244,10 @@ namespace AdeeboMeter
             catch { }
             try { if (File.Exists(Shortcut)) File.Delete(Shortcut); } catch { }
             try { Registry.CurrentUser.DeleteSubKeyTree(UninstallKey); } catch { }
-            step("Removing your history and captures (your encryption keys stay)...", 0.75f);
+            try { using (var k = Registry.CurrentUser.OpenSubKey(@"Software\Classes\.adeebo")) if (k != null && (k.GetValue("") as string) == "AdeeboMeter.locked") { k.Close(); Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\.adeebo"); } Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\AdeeboMeter.locked", false); } catch (Exception e) { if (e is OutOfMemoryException) throw; }
+            // bug-hunt L-310: the step says so when unsent reports are among what goes
+            int unsent = Relay.Waiting;
+            step("Removing your history and captures" + (unsent > 0 ? " and " + unsent + " unsent report" + (unsent == 1 ? "" : "s") : "") + " (your encryption keys stay)...", 0.75f);
             // Everything goes except what opens files sent to you: the P-384 key list, saved recipients and key backups. The keys
             // themselves live in Windows' key store, which an uninstall doesn't touch - deleting the list would leave every
             // .adeebo addressed to you unopenable after a reinstall. They're small; delete the folder by hand to wipe them.
@@ -219,7 +256,7 @@ namespace AdeeboMeter
                 string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
                 if (Directory.Exists(data))
                 {
-                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs" };
+                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs", "points.txt", "lines" };   // review 1.1.6 P1 #14: your Adeebo Points and your own buddy lines stay too
                     foreach (var f in Directory.GetFiles(data)) if (!keep.Contains(Path.GetFileName(f))) try { File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     foreach (var d in Directory.GetDirectories(data)) if (!keep.Contains(Path.GetFileName(d))) try { Directory.Delete(d, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 }
@@ -243,6 +280,12 @@ namespace AdeeboMeter
         // --remove-folder <pid>: wait for the uninstaller to exit, then delete the install folder (only ever Base).
         public static int RemoveFolder(string pid)
         {
+            // bug-hunt L-311: only right after an uninstall - the helper runs from a copy outside the install folder, and the
+            // uninstall has already taken AdeeboMeter out of Settings > Apps. Anything else (a stray shortcut, a script) deletes nothing.
+            string me = Path.GetFullPath(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            bool fromInside = me.StartsWith(Path.GetFullPath(Base).TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+            bool stillListed; try { using (var k = Registry.CurrentUser.OpenSubKey(UninstallKey)) stillListed = k != null; } catch (Exception e) { if (e is OutOfMemoryException) throw; stillListed = true; }
+            if (fromInside || stillListed) { Program.Log("remove-folder refused: not after an uninstall"); return 2; }
             int id;
             if (int.TryParse(pid, NumberStyles.Integer, CultureInfo.InvariantCulture, out id))
                 try { using (var p = Process.GetProcessById(id)) p.WaitForExit(600000); } catch { }
@@ -250,6 +293,7 @@ namespace AdeeboMeter
             {
                 try { Directory.Delete(Base, true); } catch { Thread.Sleep(500); }
             }
+            if (Directory.Exists(Base)) { Program.Log("remove-folder: " + Base + " couldn't be deleted (a file is still open)"); return 1; }   // said, not "done"
             return 0;
         }
     }
@@ -266,20 +310,24 @@ namespace AdeeboMeter
         readonly Font fTitle, fTag, fBody, fBtn, fSmall;
         readonly Dictionary<string, RectangleF> hot = new Dictionary<string, RectangleF>();
         string hover = "";
+        string focus; bool kbd, autoTouched;   // hunters10 M-1: Tab/arrows move a focus ring over the painted buttons, Enter/Space press it
         public bool RunHere { get { return startHere; } }
 
         public SetupWindow(bool remove)
         {
 
             using (var g = Graphics.FromHwnd(IntPtr.Zero)) S = g.DpiX / 96f;
+            /* hunters11 core ML-1: the card has no title bar to drag, so it must fit - at 200% on a 768-high screen the whole card scales down */
+            var wa = Screen.FromPoint(Cursor.Position).WorkingArea;
+            S = Math.Max(0.8f, Math.Min(S, Math.Min((wa.Height - 16) / (float)(remove ? 400 : 540), (wa.Width - 16) / 460f)));
             Theme.Apply(Program.WantDark());
             string disp = Draw.Fam("Segoe UI Variable Display", "Segoe UI"), text = Draw.Fam("Segoe UI Variable Text", "Segoe UI"), semi = Draw.Fam("Segoe UI Semibold", "Segoe UI");
             FontStyle semiStyle = semi == "Segoe UI" ? FontStyle.Bold : FontStyle.Regular;
-            fTitle = new Font(disp, 30 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            fTag = new Font(semi, 16 * S, semiStyle, GraphicsUnit.Pixel);
-            fBody = new Font(text, 13.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
-            fBtn = new Font(semi, 14 * S, semiStyle, GraphicsUnit.Pixel);
-            fSmall = new Font(text, 11.5f * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            fTitle = new Font(disp, Draw.Px(30 * S), FontStyle.Bold, GraphicsUnit.Pixel);
+            fTag = new Font(semi, Draw.Px(16 * S), semiStyle, GraphicsUnit.Pixel);
+            fBody = new Font(text, Draw.Px(13.5f * S), FontStyle.Regular, GraphicsUnit.Pixel);
+            fBtn = new Font(semi, Draw.Px(14 * S), semiStyle, GraphicsUnit.Pixel);
+            fSmall = new Font(text, Draw.Px(11.5f * S), FontStyle.Regular, GraphicsUnit.Pixel);
             Setup.Installed(out instVer, out instExe);
             autoStart = Setup.InstalledAutoStart(instExe);   // an update keeps your choice; a first install starts on
             st = remove ? St.AskRemove : St.Offer;
@@ -311,8 +359,21 @@ namespace AdeeboMeter
         protected override void OnKeyDown(KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape && st != St.Working) Close();
-            if (e.KeyCode == Keys.Enter) Press("main");
             base.OnKeyDown(e);
+        }
+        List<string> Order() { return hot.Keys.Where(k => k != "close").ToList(); }   // painting order: the switch, the main button, the second choice
+        string Focused() { if (focus != null && hot.ContainsKey(focus)) return focus; return st == St.AskRemove ? "close2" : "main"; }   // removing: Enter keeps it unless you move to Remove
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            var k = keyData & Keys.KeyCode;
+            if (st != St.Working && (k == Keys.Tab || k == Keys.Up || k == Keys.Down))
+            {
+                var o = Order(); if (o.Count == 0) return true;
+                int i = o.IndexOf(Focused()); bool back = k == Keys.Up || (keyData & Keys.Shift) != 0;
+                focus = o[((i < 0 ? 0 : i) + (back ? o.Count - 1 : 1)) % o.Count]; kbd = true; Invalidate(); return true;
+            }
+            if (k == Keys.Enter || k == Keys.Space) { Press(Focused()); return true; }
+            return base.ProcessDialogKey(keyData);
         }
 
         bool Upgrade { get { return instVer != null && instVer != Program.Version && !Newer; } }
@@ -335,7 +396,7 @@ namespace AdeeboMeter
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float W = ClientSize.Width, H = ClientSize.Height;
             hot.Clear();
             using (var bg = new SolidBrush(Theme.Card)) g.FillRectangle(bg, ClientRectangle);
@@ -361,7 +422,7 @@ namespace AdeeboMeter
                 Center(g, "Know what's wrong. Show anyone.", fTag, Theme.Blue, y, W); y += fTag.Height + 26 * S;
                 string[] lines = {
                     "Lives quietly in the corner of your screen.",
-                    "No cloud. No telemetry. Never listens.",
+                    "No account. No telemetry. Never listens.",
                     "Installs just for you — no administrator rights." };
                 Color[] dots = { Theme.Green, Theme.Blue, Theme.Amber };
                 float bx = 58 * S;
@@ -413,7 +474,7 @@ namespace AdeeboMeter
             else if (st == St.AskRemove)
             {
                 Center(g, "Remove AdeeboMeter?", fTag, Theme.Ink, y, W); y += fTag.Height + 16 * S;
-                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too.", fBody, Theme.Sub, y, W);
+                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too -\nyour keys, Adeebo Points and own buddy lines stay.", fBody, Theme.Sub, y, W);
                 Btn(g, "main", new RectangleF(58 * S, H - 104 * S, W - 116 * S, 46 * S), "Remove", Theme.Red, Color.White, true);
                 Btn(g, "close2", new RectangleF(58 * S, H - 52 * S, W - 116 * S, 32 * S), "Keep it", Theme.Card, Theme.Muted, false);
             }
@@ -423,6 +484,9 @@ namespace AdeeboMeter
                 Center(g, "Thanks for giving it a try.", fBody, Theme.Sub, y, W);
                 Btn(g, "main", new RectangleF(58 * S, H - 86 * S, W - 116 * S, 46 * S), "Close", Theme.Blue, Color.White, true);
             }
+            RectangleF fr;
+            if ((kbd || st == St.AskRemove) && st != St.Working && hot.TryGetValue(Focused(), out fr))
+                Theme.Stroke(g, RectangleF.Inflate(fr, 3 * S, 3 * S), 12 * S, Theme.Blue, 2 * S);   // where Enter goes
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -446,18 +510,24 @@ namespace AdeeboMeter
         {
             if (st == St.Working) return;
             if (key == "close" || key == "close2") { Close(); return; }
-            if (key == "auto" && st == St.Offer) { autoStart = !autoStart; Invalidate(); return; }
+            if (key == "auto" && st == St.Offer) { autoStart = !autoStart; autoTouched = true; Invalidate(); return; }
             if (key == "here" && st == St.Offer)
             {
                 if (Same) { Run(false); return; }
                 // the Start with Windows switch counts here too: written next to this copy before it starts
-                try { Setup.SetLine(Path.Combine(Program.WriteDir, "AdeeboMeter.settings"), "autostart", autoStart ? "1" : "0"); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("run here: " + e.Message); }
+                // review 1.1.6 D1 #5/#8, P1 #7/#8: a copy run from Downloads starts with Windows only if you turned the switch on yourself;
+                // with an installed copy it takes that copy's settings along (not a blank first start), and it notes its version so a
+                // newer download offers to install again
+                string here = Path.Combine(Program.WriteDir, "AdeeboMeter.settings");
+                try { string inst = Setup.InstalledSettings(); if (inst != null && (!File.Exists(here) || File.ReadAllLines(here).Count(l => l.Contains("=")) <= 1) && !string.Equals(Path.GetFullPath(inst), Path.GetFullPath(here), StringComparison.OrdinalIgnoreCase)) File.Copy(inst, here, true); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("here: " + e.Message); }
+                try { File.WriteAllText(Path.Combine(Program.WriteDir, "ranfrom.txt"), Program.Version); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
+                try { Setup.SetLine(here, "autostart", autoStart && autoTouched ? "1" : "0"); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; Program.Log("run here: " + e.Message); }
                 startHere = true; Close(); return;
             }
             if (key != "main") return;
             if (st == St.Offer)
             {
-                if (Same || Newer) { StartExe(instExe); Close(); return; }
+                if (Same || Newer) { string why = StartExe(instExe); if (why == null) { Close(); return; } st = St.Error; err = why; Invalidate(); return; }
                 Run(false);
             }
             else if (st == St.AskRemove) Run(true);
@@ -483,7 +553,7 @@ namespace AdeeboMeter
                     {
                         if (fail != null) { st = St.Error; err = fail; }
                         else if (remove) st = St.Removed;
-                        else { st = St.Done; StartExe(exe); }
+                        else { st = St.Done; string why = StartExe(exe); if (why != null) { st = St.Error; err = "Installed, but it didn't start - " + why + ". Start it from the Start menu."; } }
                         Invalidate();
                     });
                 }
@@ -491,11 +561,12 @@ namespace AdeeboMeter
             });
         }
 
-        static void StartExe(string exe)
+        // bug-hunt L-312: says whether it started - the window shows why when it didn't, instead of just closing
+        static string StartExe(string exe)
         {
-            if (exe == null || !File.Exists(exe)) return;
-            try { using (Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) })) { } }
-            catch (Exception e) { Program.Log("start installed: " + e.Message); }
+            if (exe == null || !File.Exists(exe)) return "the installed copy wasn't found" + (exe != null ? " (" + exe + ")" : "");
+            try { using (Process.Start(new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) })) { } return null; }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("start installed: " + e.Message); return "Windows wouldn't start it: " + e.Message; }
         }
     }
 }

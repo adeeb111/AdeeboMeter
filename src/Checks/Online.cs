@@ -36,13 +36,13 @@ namespace AdeeboMeter
             lock (k) { object c; if (cache.TryGetValue(url, out c)) return c; }
             try
             {
-                var req = (HttpWebRequest)WebRequest.Create(url); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = WebRequest.GetSystemWebProxy();
-                using (var resp = req.GetResponse()) using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
+                using (var resp = HttpSmall.SameSite(new Uri(url), x => { var req = (HttpWebRequest)WebRequest.Create(x); req.Timeout = 8000; req.ReadWriteTimeout = 8000; req.UserAgent = "AdeeboMeter/" + Program.Version; req.Proxy = HttpSmall.Proxy(); return req; }))   // SEC-06: other sites are never asked
+                using (var s = resp.GetResponseStream()) using (var r = new StreamReader(s, Encoding.UTF8))
                 {
                     var sb = new StringBuilder(); var buf = new char[16384]; int n;   // read at most 4 MB, in small pieces - never the whole thing first
-                    while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 4000000) return null; }
+                    while ((n = r.Read(buf, 0, buf.Length)) > 0) { sb.Append(buf, 0, n); if (sb.Length > 1500000) return null; }   // review 1.1.6 P2 #11: 1.5 M characters at most (an answer that big parses to ~10 MB)
                     var text = sb.ToString();
-                    var o = Json.Parse(text); lock (k) cache[url] = o; return o;
+                    var o = Json.Parse(text); if (text.Length <= 300000) lock (k) { if (cache.Count >= 40) cache.Clear(); cache[url] = o; } return o;   // big answers aren't kept; at most 40 small ones
                 }
             }
             catch (Exception e) { Program.Log("online: " + Draw.Trunc(e.Message, 80)); return null; }
@@ -137,6 +137,34 @@ namespace AdeeboMeter
         // nesting deeper than 64 is refused: a hostile server can't run the stack out (that would end the whole app)
         [ThreadStatic] static int depth;
         public static object Parse(string s) { int i = 0; depth = 0; try { return Val(s, ref i); } catch (InvalidDataException) { return null; } }
+        // the whole text must be one value - nothing after it (AdeeboLab finding 1: '{"nodes":[]}};evil()' parsed as a drawing)
+        public static object ParseWhole(string s) { int i = 0; depth = 0; try { var v = Val(s, ref i); Ws(s, ref i); return i >= s.Length ? v : null; } catch (InvalidDataException) { return null; } }
+        // a value written back as JSON that is also safe inside a <script>: < > & and the two line separators escaped
+        public static string Write(object v) { var sb = new StringBuilder(); Write(sb, v, 0); return sb.ToString(); }
+        static void Write(StringBuilder sb, object v, int d)
+        {
+            if (d > 64) throw new InvalidDataException("JSON nested too deep");
+            if (v == null) { sb.Append("null"); return; }
+            if (v is bool) { sb.Append((bool)v ? "true" : "false"); return; }
+            if (v is double) { double x = (double)v; sb.Append(double.IsNaN(x) || double.IsInfinity(x) ? "null" : x.ToString("R", CultureInfo.InvariantCulture)); return; }
+            var str = v as string;
+            if (str != null)
+            {
+                sb.Append('"');
+                foreach (char ch in str)
+                {
+                    if (ch == '"' || ch == '\\') sb.Append('\\').Append(ch);
+                    else if (ch < 0x20 || ch == '<' || ch == '>' || ch == '&' || ch == '\u2028' || ch == '\u2029' || char.IsSurrogate(ch)) sb.Append("\\u").Append(((int)ch).ToString("x4", CultureInfo.InvariantCulture));
+                    else sb.Append(ch);
+                }
+                sb.Append('"'); return;
+            }
+            var dict = v as Dictionary<string, object>;
+            if (dict != null) { sb.Append('{'); bool first = true; foreach (var kv in dict) { if (!first) sb.Append(','); first = false; Write(sb, kv.Key, d + 1); sb.Append(':'); Write(sb, kv.Value, d + 1); } sb.Append('}'); return; }
+            var list = v as List<object>;
+            if (list != null) { sb.Append('['); for (int k = 0; k < list.Count; k++) { if (k > 0) sb.Append(','); Write(sb, list[k], d + 1); } sb.Append(']'); return; }
+            sb.Append("null");
+        }
         static void Ws(string s, ref int i) { while (i < s.Length && char.IsWhiteSpace(s[i])) i++; }
         static object Val(string s, ref int i)
         {

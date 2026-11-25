@@ -15,8 +15,22 @@ namespace AdeeboMeter
         // sends crafted traffic on the network, needs a password or key, works on a local file, or is a hands-on test
         // (screen, keys, sound) that needs someone at the PC.
         // by id: the Toolbox renames its groups for display, so the rule can't lean on group names
+        // B1 (review 1.1.6): an allow-list, so a tool added later is never phone-runnable until someone puts it here.
+        // Left out on purpose: anything that reads a file on the PC (icmpexplain, chain, certcmds - a path can be \\server\share)
+        // or writes one (netsnap's "save"). The deny lists below still apply on top.
+        static readonly HashSet<string> RemoteYes = new HashSet<string> {
+            "mtu", "mtr", "ret", "owners", "route", "gateway", "v6routers", "rlisten", "discover", "ping6", "overlap", "ip46", "vpn", "proxy", "hosts", "dnsrules",
+            "port", "teams", "clock", "ping", "tcpping", "cloud", "dig", "http", "httptime", "doh", "ntp", "mail", "ssh", "stun", "nbname", "allips", "rdpcheck",
+            "ldapcheck", "dnscmp", "srvchange", "board", "uptime", "certcal", "mysites", "svcfail", "speedtest", "gamecompare", "join", "dot1x", "certcmp", "tradetape",
+            "marketopen", "ispreport", "https", "arp", "hairpin", "roams", "dhcp", "subnet", "stack", "vlsm", "bandwidth", "binhex", "wildcard", "v6split", "bdp",
+            "units", "cellular", "wifirate", "linkbudget", "raid", "backup", "ups", "sla", "growth", "datause", "plan", "tdm", "fxconv", "pnl", "possize", "avgcost",
+            "compound", "pctback", "tradelat", "comunits", "futures", "perunit", "tickrate", "timeline", "hotel", "inventory", "drivers", "usb", "lag", "winupdate",
+            "gpn", "afterstream", "golive", "prematch", "besttime", "tonight", "console", "month", "sixmonths", "rushhour", "wakeup", "capfc", "dltime", "ipv6score",
+            "vpnleak", "roast", "therapy", "letter", "bluetooth", "dupip", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "timesrc", "pressure",
+            "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "pcwhy", "hwmap", "feltslow", "diskspeed", "ramcheck", "gpucheck", "cpuheld", "netcap",
+            "hidden", "laptop" };
         static readonly HashSet<string> RemoteNoGroups = new HashSet<string> { "snmp", "snmpif", "snmptraffic", "snmpcpu", "snmplldp", "snmpsens", "snmpsnap", "snmpmac", "snmpvlan", "snmppoe", "snmplag", "snmpprn", "snmpups", "snmpwalk", "mibs", "icmpb", "udpsend", "tcpsend", "arpwho", "dhcpopt", "trap", "netflow", "keys", "newkey", "csrmake", "selfsigned", "certmatch", "certlive", "recipients", "encrypt", "decrypt", "certfile", "pfx", "csr", "certconv", "hashf", "b64" };
-        static readonly HashSet<string> RemoteNo = new HashSet<string> { "phonevs", "phonedown", "phoneweek", "phconn", "phspeed", "phregions", "phwifisafe", "phvpn", "phstun", "phport", "phsite", "phspam", "phdns", "phfastdns", "phemail", "phstatus", "phwho", "phrdap", "phmac", "sweep", "wol", "syslog", "remote", "tidy", "obs", "friend", "qr", "screentest", "keytest", "soundtest", "dhcpreplay", "rareplay", "eapreplay", "samplelab", "beforeafter", "twopc", "radius", "tacacs", "radiuslab", "httpreq", "shares", "mibs", "snmpwalk" };
+        static readonly HashSet<string> RemoteNo = new HashSet<string> { "phonevs", "phonedown", "phoneweek", "phconn", "phspeed", "phregions", "phwifisafe", "phvpn", "phstun", "phport", "phsite", "phspam", "phdns", "phfastdns", "phemail", "phstatus", "phwho", "phrdap", "phmac", "sweep", "wol", "syslog", "remote", "tidy", "obs", "friend", "qr", "screentest", "keytest", "soundtest", "dhcpreplay", "rareplay", "eapreplay", "samplelab", "beforeafter", "twopc", "radius", "tacacs", "radiuslab", "httpreq", "shares", "mibs", "snmpwalk", "iperf", "bloat", "dscp" };   // bug-hunt ML-124: senders (an iperf3 flood, a loaded line, marked packets) stay on the PC - the phone only reads or measures
         // AM-CG-317/318: boxes a phone may not fill - they change something on the PC (start or stop a watch, delete saved runs)
         // or put heavy load on it (the long disk test writes up to 8 GB). The phone never sees them; the PC always runs them empty.
         static readonly Dictionary<string, int[]> RemoteLocked = new Dictionary<string, int[]> { { "board", new[] { 1 } }, { "gamecompare", new[] { 2 } }, { "diskspeed", new[] { 1 } }, { "inventory", new[] { 0, 1 } } };
@@ -24,7 +38,7 @@ namespace AdeeboMeter
         static readonly HashSet<string> RemoteHeavy = new HashSet<string> { "speedtest", "bloat", "mtr", "iperf", "diskspeed", "ramcheck", "cpuheld", "checkup", "gamecompare", "hidden", "pcwhy" };
         bool RemoteOk(Tool t)
         {
-            if (t == null || RemoteNoGroups.Contains(t.Id) || RemoteNo.Contains(t.Id) || LabGate.Contains(t.Id) || SenderGate.Contains(t.Id)) return false;
+            if (t == null || !RemoteYes.Contains(t.Id) || RemoteNoGroups.Contains(t.Id) || RemoteNo.Contains(t.Id) || LabGate.Contains(t.Id) || SenderGate.Contains(t.Id)) return false;
             if (t.Inputs.Any(SecretInput)) return false;
             return t.Do != null || t.Id == "mtu";
         }
@@ -59,7 +73,7 @@ namespace AdeeboMeter
             foreach (char ch in s ?? "") { if (ch == '"' || ch == '\\') b.Append('\\').Append(ch); else if (ch < 0x20) b.Append(' '); else b.Append(ch); }
             return b.ToString();
         }
-        static string GroupTitle(string g) { return g.Length > 1 ? g.Substring(0, 1) + g.Substring(1).ToLowerInvariant() : g; }
+        static string GroupTitle(string g) { g = g ?? ""; return g.Length > 1   /* L-230 */ ? g.Substring(0, 1) + g.Substring(1).ToLowerInvariant() : g; }
         // the same starting values the desktop fills in
         string RemoteDefault(string id, int i)
         {
@@ -137,7 +151,7 @@ namespace AdeeboMeter
                     Investigate.Run("full", m, r, () => { });
                     rows.Add(R4(r.Lv < 0 ? "3" : r.Lv.ToString(CultureInfo.InvariantCulture), "Verdict", r.Finding, r.Next.FirstOrDefault() ?? ""));
                     rows.Add(R4("-1", "What was checked", "", ""));
-                    lock (r.Observed) foreach (var o in r.Observed.Take(60)) rows.Add(R4(o.Length > 1 ? o[1] : "3", o.Length > 2 ? o[2] : "", o.Length > 3 ? o[3] : "", ""));
+                    lock (r.Observed) foreach (var o in r.Observed.Take(60)) rows.Add(R4(o.Length > 1 ? o[1] : "3", o.Length > 2 ? o[2] : "", o.Length > 3 ? Reach.HideSecrets(o[3]) : "", ""));   /* L-21: these rows carry no "k" marker, so anything named like a secret is hidden here */
                     if (r.Next.Count > 1) { rows.Add(R4("-1", "Next steps", "", "")); foreach (var n in r.Next.Take(6)) rows.Add(R4("3", "Next", n, "")); }
                 }
                 catch (Exception e) { if (e is OutOfMemoryException) throw; rows.Add(R4("2", "Didn't finish", e.Message, "")); }

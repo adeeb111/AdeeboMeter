@@ -1,0 +1,291 @@
+// Network Lab hand-off (1.1.6): the measured path of a conversation, drawn in the Network Lab page (docs/lab.html, shipped
+// inside the exe). The page opens in an Edge app window with its own profile; the path rides in the address after the #
+// (the part a browser never sends anywhere). Nothing listens: the page and the app share no channel but that address.
+// Measured stops are drawn white; the provider's equipment a PC can't see (fibre box, OLT, sign-in router, the cell tower)
+// is drawn as the usual setup, grey and dashed, and says so.
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Text;
+using Microsoft.Win32;
+
+namespace AdeeboMeter
+{
+    static class LabLink
+    {
+        public sealed class Stop { public string Id, Kind, Name, Sub = "", Ms = "", St = ""; public int X, Y; }
+        public sealed class Wire { public string A, B, Kind = "cable", Label = ""; }
+
+        // how this PC reaches its router: Wi-Fi, a SIM (mobile broadband) or a cable
+        public static string LinkKind(Monitor m)
+        {
+            string id, kind; lock (m.L) { id = m.IfaceId; kind = m.AdapterKind; }
+            try
+            {
+                foreach (var n in NetworkInterface.GetAllNetworkInterfaces())
+                    if (n.Id == id && (n.NetworkInterfaceType == NetworkInterfaceType.Wwanpp || n.NetworkInterfaceType == NetworkInterfaceType.Wwanpp2)) return "cell";
+            }
+            catch (NetworkInformationException) { }
+            return kind == "Wi-Fi" ? "wifi" : "cable";
+        }
+        static bool Laptop() { try { return System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus != System.Windows.Forms.BatteryChargeStatus.NoSystemBattery; } catch (Exception) { return false; } }
+        static string Ms(double v) { return double.IsNaN(v) ? "" : v.ToString(v < 10 ? "0.#" : "0", CultureInfo.InvariantCulture) + " ms"; }
+
+        // Break it's faults - the page's ids; watching one to the end earns nlab.<id> once (read back from the lab's profile)
+        public static readonly string[][] Faults = { new[] { "dns", "DNS times out" }, new[] { "loss", "Packet loss" }, new[] { "gateway", "Wrong gateway" },
+                                                     new[] { "mtu", "MTU black hole" }, new[] { "loop", "Routing loop" }, new[] { "wifi", "Busy Wi-Fi" } };
+        public static bool KnownFault(string key) { return key.StartsWith("nlab.", StringComparison.Ordinal) && Faults.Any(f => "nlab." + f[0] == key); }
+
+        // the path from this PC to a server: router and internet from the monitor's own pings, the far end from its own check.
+        // who: "game", "view" (watching a stream: the far end is the service's CDN server), "trade" (the far end is the broker's gateway; the exchange behind it), "stream" (the far end is the
+        // ingest server; the platform copies it to viewers - not multicast) or "server" (your own server, seen from outside)
+        public static string PathJson(Monitor m, string server, string serverName, double serverMs, double gwMs, double netMs) { return PathJson(m, "game", server, serverName, serverMs, gwMs, netMs); }
+        public static string PathJson(Monitor m, string who, string server, string serverName, double serverMs, double gwMs, double netMs)
+        {
+            string link = LinkKind(m), gw, ssid; int sig; lock (m.L) { gw = m.Gateway ?? ""; ssid = m.Ssid ?? ""; sig = m.WifiSignal; }
+            var s = new List<Stop>(); var w = new List<Wire>();
+            s.Add(new Stop { Id = "pc", Kind = Laptop() ? "laptop" : "pc", Name = "This PC", Sub = link == "wifi" ? "Wi-Fi" + (sig >= 0 ? " · " + sig + "%" : "") : link == "cell" ? "SIM · 4G / 5G" : "cable", X = 100, Y = 250 });
+            if (link == "cell")
+            {
+                s.Add(new Stop { Id = "tw", Kind = "tower", Name = "Cell tower", Sub = "gNB / eNodeB", St = "typ", X = 330, Y = 250 });
+                s.Add(new Stop { Id = "bh", Kind = "switch", Name = "Backhaul", Sub = "fibre or microwave", St = "typ", X = 480, Y = 150 });
+                s.Add(new Stop { Id = "core", Kind = "server", Name = "Mobile core", Sub = "UPF / P-GW", St = "typ", X = 630, Y = 250 });
+                s.Add(new Stop { Id = "gw", Kind = "router", Name = "Provider edge", Sub = gw, Ms = Ms(gwMs), X = 800, Y = 380 });
+                w.Add(new Wire { A = "pc", B = "tw", Kind = "cell", Label = "4G / 5G" }); w.Add(new Wire { A = "tw", B = "bh", Kind = "fibre" });
+                w.Add(new Wire { A = "bh", B = "core", Kind = "fibre" }); w.Add(new Wire { A = "core", B = "gw", Kind = "fibre", Label = "GTP tunnel" });
+            }
+            else
+            {
+                s.Add(new Stop { Id = "gw", Kind = "cpe", Name = "Your router", Sub = gw, Ms = Ms(gwMs), X = 290, Y = 250 });
+                w.Add(new Wire { A = "pc", B = "gw", Kind = link, Label = link == "wifi" ? "Wi-Fi" : "cable" });
+                string[][] chain = { new[] { "ont", "ont", "Fibre box (ONT)", "light to electric" }, new[] { "spl", "splitter", "Splitter", "1 fibre, ~32 homes" },
+                                     new[] { "olt", "olt", "OLT", "street / exchange" }, new[] { "agg", "switch", "Aggregation switch", "thousands of homes" },
+                                     new[] { "bng", "router", "Sign-in router", "BNG · gives your IP" } };
+                for (int i = 0; i < chain.Length; i++) s.Add(new Stop { Id = chain[i][0], Kind = chain[i][1], Name = chain[i][2], Sub = chain[i][3], St = "typ", X = 450 + i * 120 - (i == 4 ? 10 : 0), Y = i % 2 == 1 ? 150 : 250 });
+                w.Add(new Wire { A = "gw", B = "ont", Kind = "cable" });
+                for (int i = 1; i < chain.Length; i++) w.Add(new Wire { A = chain[i - 1][0], B = chain[i][0], Kind = "fibre", Label = i == 1 ? "fibre" : "" });
+            }
+            string last = link == "cell" ? "gw" : "bng", far = string.IsNullOrEmpty(serverName) ? "Server" : serverName;
+            s.Add(new Stop { Id = "net", Kind = "internet", Name = "Internet", Sub = "", Ms = Ms(netMs), X = 1060, Y = 300 });
+            w.Add(new Wire { A = last, B = "net", Kind = link == "cell" ? "cable" : "fibre" });
+            var areas = new List<string> { link == "cell" ? Area(30, 60, 200, 330, "You") : Area(30, 60, 330, 330, "Your home"),
+                                           link == "cell" ? Area(260, 60, 680, 420, "Mobile provider - usual 4G / 5G setup, not measured") : Area(390, 60, 640, 420, "Your provider - usual setup, not measured") };
+            if (who == "trade")
+            {
+                s.Add(new Stop { Id = "srv", Kind = "router", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1260, Y = 120 });
+                s.Add(new Stop { Id = "ord", Kind = "server", Name = "Order router", Sub = "inside the broker", St = "typ", X = 1260, Y = 280 });
+                s.Add(new Stop { Id = "ex", Kind = "building", Name = "Exchange", Sub = "matching engine", St = "typ", X = 1300, Y = 430 });
+                w.Add(new Wire { A = "net", B = "srv" }); w.Add(new Wire { A = "srv", B = "ord", Kind = "fibre" }); w.Add(new Wire { A = "ord", B = "ex", Kind = "fibre" });
+                areas.Add(Area(1150, 40, 270, 460, "Broker"));
+            }
+            else if (who == "stream")
+            {
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1180, Y = 150 });
+                s.Add(new Stop { Id = "tx", Kind = "server", Name = "Transcoder", Sub = "each quality", St = "typ", X = 1180, Y = 330 });
+                s.Add(new Stop { Id = "cdn", Kind = "cloud", Name = "CDN", Sub = "copies near viewers", St = "typ", X = 1310, Y = 250 });
+                s.Add(new Stop { Id = "view", Kind = "users", Name = "Viewers", Sub = "one copy each - not multicast", St = "typ", X = 1430, Y = 250 });
+                w.Add(new Wire { A = "net", B = "srv" }); w.Add(new Wire { A = "srv", B = "tx", Kind = "fibre" }); w.Add(new Wire { A = "tx", B = "cdn", Kind = "fibre" }); w.Add(new Wire { A = "cdn", B = "view", Kind = "fan" });
+                areas.Add(Area(1100, 40, 400, 460, "Streaming platform"));
+            }
+            else if (who == "server")
+            {
+                s.Add(new Stop { Id = "edge", Kind = "router", Name = "Data centre edge", Sub = "not measured", St = "typ", X = 1200, Y = 300 });
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), St = double.IsNaN(serverMs) ? "bad" : "", X = 1360, Y = 220 });
+                s.Add(new Stop { Id = "us", Kind = "users", Name = "Your users", Sub = "everyone else", St = "typ", X = 1060, Y = 470 });
+                w.Add(new Wire { A = "net", B = "edge" }); w.Add(new Wire { A = "edge", B = "srv", Kind = double.IsNaN(serverMs) ? "bad" : "cable" }); w.Add(new Wire { A = "us", B = "net", Kind = "fibre" });
+                areas.Add(Area(1130, 60, 320, 330, "Your data centre - add your firewall and load balancer"));
+            }
+            else
+            {
+                s.Add(new Stop { Id = "srv", Kind = "server", Name = far, Sub = server ?? "", Ms = Ms(serverMs), X = 1260, Y = 220 });
+                w.Add(new Wire { A = "net", B = "srv", Kind = "cable" });
+                areas.Add(Area(1180, 60, 230, 330, who == "game" ? "Game company" : who == "view" ? "Streaming service (CDN)" : "Far end"));
+            }
+            var sb = new StringBuilder("{\"name\":").Append(Str("Path to " + (string.IsNullOrEmpty(serverName) ? server : serverName))).Append(",\"measured\":true,\"nodes\":[");
+            sb.Append(string.Join(",", s.Select(n => "{\"id\":" + Str(n.Id) + ",\"k\":" + Str(n.Kind) + ",\"name\":" + Str(n.Name) + ",\"sub\":" + Str(n.Sub) + ",\"ms\":" + Str(n.Ms) +
+                ",\"st\":" + Str(n.St) + ",\"x\":" + n.X.ToString(CultureInfo.InvariantCulture) + ",\"y\":" + n.Y.ToString(CultureInfo.InvariantCulture) + "}")));
+            sb.Append("],\"links\":[").Append(string.Join(",", w.Select(l => "{\"a\":" + Str(l.A) + ",\"b\":" + Str(l.B) + ",\"kind\":" + Str(l.Kind) + ",\"label\":" + Str(l.Label) + "}")));
+            sb.Append("],\"areas\":[").Append(string.Join(",", areas.ToArray())).Append("]}");
+            return sb.ToString();
+        }
+        static string Area(int x, int y, int w, int h, string t) { return "{\"x\":" + x + ",\"y\":" + y + ",\"w\":" + w + ",\"h\":" + h + ",\"t\":" + Str(t) + "}"; }
+        static string Str(string v)
+        {
+            var sb = new StringBuilder("\"");
+            string cut = v ?? ""; if (cut.Length > 80) cut = cut.Substring(0, char.IsHighSurrogate(cut[79]) ? 79 : 80);   // finding 21: never half an emoji
+            foreach (char c in cut)
+                if (c == '"' || c == '\\') sb.Append('\\').Append(c); else if (c < ' ') sb.Append(' '); else sb.Append(c);
+            return sb.Append('"').ToString();
+        }
+
+        // ---------- the page: written from the exe next to the data folder, then opened in Edge's app window
+        public static string PagePath() { return PagePath(null); }
+        // views: AdeeboLab's ready-made drawings (LabViews.All) written into the page itself - the page reads no files and
+        // no network (its policy forbids both), and the address has a size limit
+        // R2-026: a path open (no views) keeps the start page's last drawings in the file - and the two writers never overlap
+        static string lastViews; static readonly object pageLock = new object();
+        public static string PagePath(string views)
+        {
+            lock (pageLock) { if (!string.IsNullOrEmpty(views)) lastViews = views; else views = lastViews; return PagePath1(views); }
+        }
+        static string PagePath1(string views)
+        {
+            string dir = Path.Combine(Program.DataDir, "lab"), file = Path.Combine(dir, "lab.html");
+            try
+            {
+                byte[] page;
+                using (var rs = typeof(LabLink).Assembly.GetManifestResourceStream("AdeeboMeter.lab.html"))
+                {
+                    if (rs == null) return null;
+                    using (var ms = new MemoryStream()) { rs.CopyTo(ms); page = ms.ToArray(); }
+                }
+                if (!string.IsNullOrEmpty(views))
+                {
+                    string html = Encoding.UTF8.GetString(page), mark = "/*AM_VIEWS*/null";
+                    int at = html.IndexOf(mark, StringComparison.Ordinal);
+                    if (at >= 0) page = Encoding.UTF8.GetBytes(html.Substring(0, at) + views.Replace("<", "\\u003c").Replace("\u2028", "\\u2028").Replace("\u2029", "\\u2029") + html.Substring(at + mark.Length));
+                }
+                Directory.CreateDirectory(dir);
+                if (!File.Exists(file) || new FileInfo(file).Length != page.Length || !File.ReadAllBytes(file).SequenceEqual(page)) SafeFile.WriteBytes(file, page);
+                return file;
+            }
+            catch (IOException e) { Program.Log("lab page: " + e.Message); return null; }
+            catch (UnauthorizedAccessException e) { Program.Log("lab page: " + e.Message); return null; }
+        }
+        // the lab's own Edge windows (its own profile folder): asked to close, as the window's X would
+        static void CloseOpenWindows()
+        {
+            try
+            {
+                var pids = new HashSet<int>(); string prof = Profile;
+                using (var mos = new System.Management.ManagementObjectSearcher("SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'msedge.exe'"))
+                    foreach (System.Management.ManagementObject mo in mos.Get())
+                        using (mo) { var cl = mo["CommandLine"] as string; if (cl != null && cl.IndexOf(prof, StringComparison.OrdinalIgnoreCase) >= 0) pids.Add(Convert.ToInt32(mo["ProcessId"], System.Globalization.CultureInfo.InvariantCulture)); }
+                if (pids.Count == 0) return;
+                int closed = 0;
+                Native.EnumWindows(delegate(IntPtr hw, IntPtr l)
+                {
+                    if (!Native.IsWindowVisible(hw)) return true; uint pid; GetWindowThreadProcessId(hw, out pid);
+                    if (pids.Contains((int)pid)) { PostMessage(hw, 0x0010 /*WM_CLOSE*/, IntPtr.Zero, IntPtr.Zero); closed++; }
+                    return true;
+                }, IntPtr.Zero);
+                // finding 42: wait for the old window's processes to end (its storage is written as it closes) - a fixed sleep could
+                // hand the new launch to a dying Edge, and the window never appeared
+                if (closed > 0)
+                {
+                    var until = DateTime.UtcNow.AddSeconds(4);
+                    foreach (int pid in pids)
+                        try { using (var pr = Process.GetProcessById(pid)) { int left = (int)(until - DateTime.UtcNow).TotalMilliseconds; if (left > 0) pr.WaitForExit(left); } }
+                        catch (ArgumentException) { } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { }
+                }
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab close: " + e.Message); }
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, int msg, IntPtr w, IntPtr l);
+        // your diagrams, as the lab page keeps them in its own Edge profile: (id, name, when) - read on a background thread
+        public static List<string[]> SavedDiagrams()
+        {
+            var r = new List<string[]>();
+            try
+            {
+                string v; var ls = BrowserStore.LocalStorage(Profile, "adeebometer-lab:"); if (!ls.TryGetValue("adeebometer-lab:files", out v)) return r;
+                var arr = Json.Parse(v) as List<object>; if (arr == null) return r;
+                foreach (var o in arr.Take(40))
+                    try   // finding 12: one bad entry is skipped, not the rest of the list with it
+                {
+                    var d = o as Dictionary<string, object>; if (d == null) continue; object id, nm, t;
+                    if (!d.TryGetValue("id", out id) || id == null) continue; d.TryGetValue("name", out nm); d.TryGetValue("t", out t);
+                    double ms; string when = t != null && double.TryParse(Convert.ToString(t, System.Globalization.CultureInfo.InvariantCulture), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out ms) ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(ms).ToLocalTime().ToString("d MMM HH:mm", System.Globalization.CultureInfo.CurrentCulture) : "";
+                    r.Add(new[] { Convert.ToString(id, System.Globalization.CultureInfo.InvariantCulture), Convert.ToString(nm ?? "My network", System.Globalization.CultureInfo.InvariantCulture), when });
+                }
+                    catch (ArgumentOutOfRangeException) { }   // a time out of range (a hand-edited or corrupt index)
+            }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab diagrams: " + e.Message); }
+            return r;
+        }
+        // finding 10: every kept diagram written to a file (one drawing each, the shape "Open a file..." takes) - -1 if unreadable
+        public static int ExportDiagrams(string file)
+        {
+            string v; if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:files", out v)) return -1;
+            var arr = Json.ParseWhole(v) as List<object>; if (arr == null) return -1;
+            var docs = new List<object>();
+            foreach (var o in arr) { var d = o as Dictionary<string, object>; object doc; if (d != null && d.TryGetValue("doc", out doc) && doc is Dictionary<string, object>) docs.Add(doc); }
+            var all = new Dictionary<string, object> { { "adeebolab", "diagrams" }, { "saved", DateTime.UtcNow.ToString("o", System.Globalization.CultureInfo.InvariantCulture) }, { "diagrams", docs } };
+            SafeFile.WriteBytes(file, Encoding.UTF8.GetBytes(Json.Write(all)));
+            return docs.Count;
+        }
+        static string Edge()
+        {
+            foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
+                try { using (var k = hive.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe")) { var p = k == null ? null : k.GetValue("") as string; if (!string.IsNullOrEmpty(p) && File.Exists(p)) return p; } }
+                catch (System.Security.SecurityException) { }
+            foreach (var root in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles) })
+            {
+                string p = Path.Combine(root, @"Microsoft\Edge\Application\msedge.exe"); if (File.Exists(p)) return p;
+            }
+            return null;
+        }
+        public static string Profile { get { return Path.Combine(Program.DataDir, "lab", "edge-profile"); } }
+        static string lastStamp = "", missStamp = ""; static int missCount; static readonly object pickLock = new object();
+        // the faults watched to the end, read from the lab window's own storage: each earns its points once (Points keeps
+        // the record, so reading again never pays twice). Cheap when nothing changed: a folder fingerprint first.
+        public static int Pickup()
+        {
+            lock (pickLock)
+            {
+                string st = BrowserStore.Stamp(Profile); if (st == "" || st == lastStamp) return 0;
+                // finding 9: the folder's stamp is only used up once the read worked - a read that came back without the list
+                // (Edge mid-write) is tried again on the next look, up to three times for the same stamp
+                string v;
+                if (!BrowserStore.LocalStorage(Profile, "adeebometer-lab:").TryGetValue("adeebometer-lab:solved", out v))
+                {
+                    if (st == missStamp) missCount++; else { missStamp = st; missCount = 1; }
+                    if (missCount >= 3) lastStamp = st;
+                    return 0;
+                }
+                lastStamp = st;
+                int got = 0;
+                foreach (System.Text.RegularExpressions.Match x in System.Text.RegularExpressions.Regex.Matches(v ?? "", "\"([a-z]{2,12})\""))
+                    if (KnownFault("nlab." + x.Groups[1].Value)) got += Points.Me.Award("nlab." + x.Groups[1].Value, true, Cfg.Points, DateTime.UtcNow);
+                return got;
+            }
+        }
+        // json: a path to start from (or null for the lab as it was); returns what went wrong, or null
+        public static string Open(string json, bool breakIt) { return Open(json, breakIt, null, null); }
+        // views: LabViews.All (the start page's own drawings); view: open straight into one of them ("lan", "path" ...)
+        public static string Open(string json, bool breakIt, string views, string view) { return Open(json, breakIt, views, view, null); }
+        // arg: which diagram or example (view=file / view=ex); one lab window at a time - the last one is closed first, which
+        // lets the page save what it has (Adeeb, 22 Nov: "every click opens a new window")
+        public static string Open(string json, bool breakIt, string views, string view, string arg)
+        {
+            string page = PagePath(views); if (page == null) return "The lab page couldn't be written to the data folder.";
+            var q = new List<string>(); if (breakIt) q.Add("mode=break"); if (!string.IsNullOrEmpty(view) && System.Text.RegularExpressions.Regex.IsMatch(view, "^[a-z]{2,8}$")) q.Add("view=" + view);
+            if (!string.IsNullOrEmpty(arg) && System.Text.RegularExpressions.Regex.IsMatch(arg, "^[A-Za-z0-9_-]{1,40}$")) q.Add("arg=" + arg);
+            string url = new Uri(page).AbsoluteUri + (q.Count > 0 ? "?" + string.Join("&", q) : "");
+            if (json != null) url += "#path=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            if (url.Length > 30000) return "This path is too big to hand over.";   // finding 39: checked before the open window is closed
+            string edge = Edge(), profile = Profile;
+            if (edge != null) CloseOpenWindows();
+            try
+            {
+                if (edge != null)
+                {
+                    var psi = new ProcessStartInfo(edge, "--app=\"" + url + "\" --user-data-dir=\"" + profile + "\" --no-first-run --no-default-browser-check --disable-sync") { UseShellExecute = false };
+                    var p = Process.Start(psi);
+                    if (p == null) { Program.Log("lab open: Edge didn't start"); return "Edge didn't start - try again, or open lab.html from the data folder's lab folder."; }   // R2-115: never a silent nothing
+                    p.EnableRaisingEvents = true; p.Exited += delegate { try { System.Threading.Thread.Sleep(800); Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.GetType().Name + " " + e.Message); } finally { p.Dispose(); } };   /* review 1.1.6 P5 #8: nothing from a damaged profile ends the app */   // Edge writes its storage out as the window closes
+                    return null;
+                }
+                using (Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })) { }   // no Edge: the default browser, without the path (a file link loses the #)
+                // finding 40: say what's lost - the chosen drawing, and that what's drawn or solved there stays in that browser
+                return "Edge wasn't found, so the lab opened in your browser as a plain page" + (json != null || !string.IsNullOrEmpty(view) || breakIt ? ", without the drawing you picked" : "") + ". Drawings and faults done there stay in that browser - AdeeboMeter can't list them or give points for them.";   // R2-116
+            }
+            catch (System.ComponentModel.Win32Exception e) { Program.Log("lab open: " + e.Message); return "The lab couldn't be opened: " + e.Message; }
+        }
+    }
+}
