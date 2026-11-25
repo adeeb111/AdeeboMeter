@@ -6,9 +6,11 @@
   then the next tool. It writes tour-chapters.csv: when each tool started, so one recording becomes a clip per tool.
 
   1) RECORD (about an hour for all 232 tools):
-       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -Exe "C:\path\AdeeboMeter.exe"
-       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -Exe ... -From mtr -Count 1    (redo one tool)
-       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -Exe ... -Hold 8               (8 s on each result)
+       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1                     (AdeeboMeter.exe in the same folder)
+       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -Count 5            (a short test run first)
+       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -From mtr -Count 1  (redo one tool)
+       powershell -ExecutionPolicy Bypass -File Record-Tour.ps1 -Hold 8             (8 s on each result)
+     -Exe "D:\Apps\AdeeboMeter.exe" only when the exe is somewhere else.
      The script asks you to start OBS first, then starts the tour. Don't touch the mouse or keyboard while it runs;
      Esc stops the tour. At the end it copies tour-chapters.csv into a folder on your Desktop.
 
@@ -74,8 +76,14 @@ if ($Split -ne "") {
 }
 
 # ------------------------------------------------------------------ 1) record: start the tour
-if ($Exe -eq "") { $Exe = Join-Path (Get-Location) 'AdeeboMeter.exe' }
-if (-not (Test-Path $Exe)) { Say "AdeeboMeter.exe not found. Give its path: -Exe ""C:\...\AdeeboMeter.exe"""; exit 2 }
+# 25 Nov (Adeeb): the example path from the help was taken literally - look next to this script and in the current
+# folder before giving up, and say where we looked
+if ($Exe -ne "" -and -not (Test-Path $Exe)) { Say "Not found: $Exe - looking next to this script instead." ; $Exe = "" }
+if ($Exe -eq "") {
+    foreach ($d in @($PSScriptRoot, (Get-Location).Path)) { if ($d -and (Test-Path (Join-Path $d 'AdeeboMeter.exe'))) { $Exe = Join-Path $d 'AdeeboMeter.exe'; break } }
+}
+if ($Exe -eq "" -or -not (Test-Path $Exe)) { Say "AdeeboMeter.exe isn't next to this script or in this folder. Put them together, or add -Exe ""D:\where\it\is\AdeeboMeter.exe"""; exit 2 }
+Say "Using $Exe"
 $Exe = (Resolve-Path $Exe).Path
 $dirs = @((Split-Path $Exe), (Join-Path $env:LOCALAPPDATA 'AdeeboMeter'))   # where the app writes: beside the exe, or its own folder
 
