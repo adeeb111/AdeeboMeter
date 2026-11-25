@@ -199,8 +199,10 @@ with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8', newline='\n') 
 
 # sitemap: keep the hand-written pages, replace the learn ones
 sm = os.path.join(root, 'docs/sitemap.xml'); today = datetime.date.today().isoformat()
+# A rebuild is not a content change. Preserve reviewed dates; update the sitemap when content changes.
+previous_dates = dict(re.findall(r'<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>', open(sm, encoding='utf-8').read()))
 keep = [l for l in open(sm, encoding='utf-8').read().splitlines() if '<url>' in l and '/learn/' not in l and 'games.html' not in l and 'live.html' not in l and 'app.html' not in l and 'files.html' not in l]
-new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{today}</lastmod></url>' for p in ['app.html', 'files.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
+new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{previous_dates.get(SITE + p, today)}</lastmod></url>' for p in ['app.html', 'files.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
 with open(sm, 'w', encoding='utf-8', newline='\n') as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(keep + new) + '\n</urlset>\n')
 print(len(topics), 'lesson pages + index; sitemap', len(keep) + len(new), 'urls')

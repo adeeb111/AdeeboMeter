@@ -6,6 +6,7 @@ import html
 import json
 import re
 from html.parser import HTMLParser
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 
@@ -79,6 +80,7 @@ def translate(text):
             translated = (prefix or "") + translated_title + (suffix or "")
     return text.replace(key, translated or key, 1) if key else text
 
+@lru_cache(maxsize=None)
 def language_links(url):
     english = re.sub(r"/(?:bn|fr|es|ar)/", "/", url, count=1)
     relative = english.removeprefix(SITE)
@@ -97,6 +99,7 @@ def language_links(url):
                    for code, href in links)
 
 
+@lru_cache(maxsize=None)
 def route_languages(url):
     return " ".join(dict.fromkeys(code.split("-")[0]
                     for code in re.findall(r'hreflang="([^"]+)"', language_links(url))
@@ -293,6 +296,16 @@ for source in files:
     url = SITE + route
     if "<loc>" + url + "</loc>" not in xml:
         xml = xml.replace("</urlset>", "  <url><loc>" + url + "</loc></url>\n</urlset>")
+# The localized copies are rebuilt from English: carry its content date rather than the build date.
+source_dates = dict(re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", xml))
+for source in files:
+    relative = source.relative_to(DOCS).as_posix()
+    relative = relative[:-10] if relative.endswith("index.html") else relative
+    date = source_dates.get(SITE + relative)
+    if date:
+        url = SITE + LANGUAGE + "/" + relative
+        xml = re.sub(r"(<loc>" + re.escape(url) + r"</loc>)(?:<lastmod>[^<]+</lastmod>)?",
+                     lambda m: m[1] + "<lastmod>" + date + "</lastmod>", xml)
 sitemap.write_text(xml, encoding="utf-8", newline="\n")
 print(f"Generated {len(files)} {LANG_TAG} pages.")
 
