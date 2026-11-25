@@ -241,8 +241,10 @@ for page in ['index.html', 'games.html', 'live.html', 'app.html', 'r.html', 'fil
 core = ['locale-surfaces.js', 'locale.js', 'locale-messages.js', 'locale.css', 'img/canada.svg', 'fr/index.html', 'app.html', 'ui.css', 'ui.js', 'calc.js', 'journey.js', 'qr.js', 'img/logo.svg', 'files.html', 'index.html', 'games.html', 'live.html', 'remote.html', 'r.html', 'learn/index.html', 'kb/learn1.json', 'kb/r1.json',
         'favicon.svg', 'manifest.webmanifest', 'img/app/icon-192.png', 'img/app/apple-touch-icon.png',
         'base.css', 'brand.css', 'brand-app.css', 'fonts/barlow-latin-500-normal.woff2', 'fonts/barlow-latin-600-normal.woff2',
-        'fonts/barlow-semi-condensed-latin-600-normal.woff2', 'fonts/barlow-semi-condensed-latin-700-normal.woff2', 'sample.js', 'home.js']   # 23 Nov: the brand look and its fonts work offline
-extra = ['bn/index.html', 'bn/blog/index.html', 'bn/wifi-or-isp.html', 'bn/internet-speed-monitor.html', 'bn/pc-monitoring.html', 'bn/isp-report.html', 'bn/video-calls-freeze.html', 'guide.css', 'feature.css', 'lab.html'] + ['bn/learn/index.html'] + [f'bn/learn/{t["id"]}.html' for t in topics] + [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
+        'fonts/barlow-semi-condensed-latin-600-normal.woff2', 'fonts/barlow-semi-condensed-latin-700-normal.woff2', 'sample.js', 'home.js',
+        'site.js', 'sitebar.css', 'fonts/barlow-latin-700-normal.woff2']   # hunters15 SITE-M2: the site bar and its bold font offline (dropped by a regeneration)   # 23 Nov: the brand look and its fonts work offline
+extra = ['blog/index.html', 'gaming.html', 'streaming.html', 'trading.html', 'privacy.html', 'hall-of-fame.html', 'wifi-or-isp.html', 'internet-speed-monitor.html', 'pc-monitoring.html', 'isp-report.html',
+         'img/gaming.png', 'img/streaming.png', 'img/trading.png', 'img/isp-report-example.png', 'img/poster-sm.webp'] + sorted('img/widgets/' + f for f in os.listdir(os.path.join(root, 'docs/img/widgets')) if f.endswith('.png')) + ['bn/index.html', 'bn/blog/index.html', 'bn/wifi-or-isp.html', 'bn/internet-speed-monitor.html', 'bn/pc-monitoring.html', 'bn/isp-report.html', 'bn/video-calls-freeze.html', 'guide.css', 'feature.css', 'lab.html'] + ['bn/learn/index.html'] + [f'bn/learn/{t["id"]}.html' for t in topics] + [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
 # Restore the public-page analytics loader after lesson generation.
 runpy.run_path(os.path.join(root, 'tools/web-analytics.py'), run_name='__main__')
 core.append('analytics.js')
@@ -276,9 +278,9 @@ self.addEventListener("fetch", e => {
   // a page that isn't kept says it's offline instead of showing a different page (AM-CG-334)
   if (r.mode === "navigate") {
     e.respondWith(caches.open(V).then(c => new Promise(done => {
-      const t = setTimeout(() => { c.match(k).then(h => h && done(h)); }, 4000);
+      const t = setTimeout(() => { c.match(k).then(h => h && done(h)).catch(() => {}); }, 4000);   // hunters15 LAB-ML2: a cache read that fails never leaves the page hanging
       fetch(r).then(res => { clearTimeout(t); if (res.ok) { const copy = res.clone(); e.waitUntil(c.match(k).then(h => { if (h && same(res, h)) return c.put(k, copy); }).catch(() => {})); } done(res); })   // the page goes to the screen first, always; keeping a copy is a side job
-        .catch(() => { clearTimeout(t); c.match(k).then(h => done(h || OFF())); });
+        .catch(() => { clearTimeout(t); c.match(k).then(h => done(h || OFF()), () => done(OFF())); });
     })));
     return;
   }
