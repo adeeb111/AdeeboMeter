@@ -4,15 +4,16 @@ Written 24 Nov 2026 (after 1.1.6 shipped). **Work starts Saturday 28 Nov.** Noth
 
 Released together as one 1.1.7:
 
-- **A. The look** - Topogram's type and drawing, copied (Inter, Medium weight, drawn at 2x).
+- **A. The look** - dropped 25 Nov: Adeeb, "font looks ok now". Barlow and today's drawing stay.
 - **B. The fixes** - the hunters15 "last final check" findings on 1.1.6 (84 new + the leftovers), minus what was
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
-- **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Cellular Lab, Windows
-  internals and hardware tools (D6), Markets for every country (D7). Dropped: Flow, PCAP Theater. Parked: Fleet, Remote Help.
+- **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Flow (a tab in AdeeboShell -
+  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7).
+  Dropped: PCAP Theater, the Topogram look. Parked: Fleet, Remote Help.
 
 ```
-Saturday ─► B1 blockers (site live now, widget Alt+Tab) ─► A. the look ─► B2-B6 fixes ─► tester script on Adeeb's PC ─► 1.1.7
+Saturday ─► B1 blockers (widget Alt+Tab, hover line) ─► D new features ─► B2-B6 fixes ─► tester script on Adeeb's PC ─► 1.1.7
 ```
 
 Rules that hold all the way: the real app on Adeeb's PC is the only mockup (no browser mockups as targets); no
@@ -21,42 +22,10 @@ released until the tester script's pictures are approved.
 
 ---
 
-## A. The look - copy Topogram's type and drawing
+## A. The look - dropped (25 Nov)
 
-Read from Topogram beta-2.9.1 (`src/app/paint.py`, `themes.py`, `topogram_app.py`). Its dark/light colours already
-are AdeeboMeter's palettes; the difference is type, weight and how text is drawn.
-
-| | Topogram (copy this) | AdeeboMeter 1.1.6 |
-|---|---|---|
-| Font | Inter (Regular, Medium, SemiBold, Bold - its own .ttf files, private to the process; OFL) | Barlow SemiBold / Bold |
-| Body weight | Medium 500; SemiBold 600 for the open item and headings | 600-700 almost everywhere |
-| Drawing | drawn at 2x, shrunk with high-quality filtering (only below 145 % scaling) | 1x, grid-fitted to whole pixels |
-| Small text (<= 15.5 px) | drawn after the shrink, anti-aliased, **not** grid-fitted | grid-fitted |
-| Spacing | GDI+ GenericTypographic string format | default format |
-| Corners | 6 px | mixed |
-| Sidebar | floating rounded panel (r 18), 13.5 px at 500 (600 open), rows 24-38 px fitting the height, 10.5 px group labels | 17 px bold, rows 43-50 px |
-
-Adeeb's refinement (24 Nov): **the first paint of a page draws the whole page at 2x; after that only the rectangle
-that changed is drawn at 2x and shrunk into place.** WinForms already hands each paint its changed rectangle, so:
-
-```
-open a page    ─► whole page at 2x ─► shrink ─► the 2x picture is freed (about 16 MB for a split second)
-a number ticks ─► only its box at 2x ─► shrink into place (a few KB)
-corner widget  ─► stays 1x (tiny, always on, every second)
-```
-
-Steps:
-1. `Theme.cs`: load Inter from the exe (as Barlow is loaded now); `UiFam` = Inter Medium, `UiSemi` = Inter SemiBold;
-   Barlow kept only for the wordmark (and big numbers, if Adeeb wants them).
-2. One shared paint wrapper (`Draw.Paint2x(e, paintFn)`): 2x bitmap of the clip rectangle, `ScaleTransform(2)`,
-   paint, `DrawImage` back with HighQualityBicubic; skipped at >= 145 % scaling; small text deferred to after the shrink.
-3. Put the wrapper into the ~12 custom-painted controls and page classes (not every page separately).
-4. Convert the 22 `TextRenderer.DrawText` calls (they ignore scaling) to the GDI+ path.
-5. Weights down: body 500, labels 500, only titles and the open item 600; muted grey for second lines.
-6. Sidebar: Topogram's measurements. Chips: status stays a pill; IP/app chip grids become plain lists or tables.
-7. Memory and CPU check: widget-only CPU near 0 %, page open within budget, GDI handles flat after visiting every page.
-8. Tester script: new step that saves **every page** at 100 % and 150 % (dark and light) as drawn on the PC - these
-   pictures are the approval, not a mockup.
+Adeeb: "font looks ok now, drop that". Barlow and the current drawing stay; no Inter, no 2x wrapper. The Topogram
+comparison stays in git history (commit 730f44e) if it comes back.
 
 ---
 
@@ -140,10 +109,10 @@ SITE-M2 + ML-1 offline site bar, font and pictures (generator fixed), LAB-ML2 sw
 ## D. New in 1.1.7 (Adeeb's picks, 24 Nov)
 
 Built on what exists - no second engine for anything. Each feature ships complete or moves to 1.1.8 without blocking
-the rest; the order below is the build order after A and B1.
+the rest; the order below is the build order after B1.
 
 ```
-A + B1 ─► D1 Network Doctor ─► D3 Lab: Failure Lab + challenges + Multicast
+B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failure Lab + challenges + Multicast
        ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► D7 Your market ─► B2-B6
        ─► tester script (+ tour) ─► 1.1.7
 ```
@@ -164,6 +133,16 @@ A + B1 ─► D1 Network Doctor ─► D3 Lab: Failure Lab + challenges + Multic
   for IT.
 - **Rules:** no admin rights (what Windows hides says "not readable here"); everything stays on the PC; history follows
   the History setting.
+
+### D2. Flow - a tab in AdeeboShell
+- **What:** build a check visually - tool blocks, if / else, repeat, wait, run in parallel, compare, report - and see
+  the same thing as an AdeeboShell script beside it. Edit either side; the other follows (for what the blocks can say).
+- **Engine:** none new. A flow *is* a shell script; the Run button runs it through AdeeboShell, with its fence (only
+  `/data` is writable, nothing starts another program, test traffic needs the typed `--yes`).
+- **Blocks:** every Toolbox tool (from the same registry), plus variables, conditions, loops, retries, timeouts,
+  dry run. Starts with the ready scripts (`network-check`, `wifi-check`, `isp-evidence`...) as editable flows.
+- **Drawing:** in the Shell window's own canvas, partial repaints only; keyboard-operable like the rest.
+- **Direction (25 Nov):** automation is where AdeeboMeter pushes next - Flow is its first step.
 
 ### D3. AdeeboLab additions (in `tools/lab/lab.src.html` -> `docs/lab.html`, also opened by the app)
 - **Failure Lab:** more things to break - DNS, gateway, MTU, firewall rule, duplex, Wi-Fi interference - each with the
@@ -225,6 +204,8 @@ holidays, and the free keys price US shares only.
   exchange's hours and holidays (holiday tables for the ~10 biggest exchanges, others say "holidays not checked");
   commodities - Canada keeps its index, everyone else gets gold, oil and gas from the futures list; the corner
   widget's default symbols and the "loonie" lines become your currency's.
+- **Sports stays its own view:** it never follows Your market - leagues and teams are picked on the Sports page
+  only (someone in Canada may follow cricket and the Bangladesh team).
 - **Honest limits:** a currency or exchange the free services don't cover (e.g. the taka, Dhaka shares) says so in one
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
@@ -255,13 +236,13 @@ holidays, and the free keys price US shares only.
   built-in markets, and Poland as a Custom market.
 
 ### Dropped (25 Nov)
-- D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
+- D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
 
 ### D - done when
 - Each feature has its own tester-script checks and appears in the tour (`--view tour`).
-- Self-test covers the new parsers; deep test feeds them hostile input.
+- Self-test covers the new parsers and the Flow <-> script round trip; deep test feeds them hostile input.
 - Memory/CPU: nothing new runs in the background except the Doctor's daily snapshot (seconds, at low priority).
-- Five languages, keyboard, touch, both themes, the 2x drawing from part A.
+- Five languages, keyboard, touch, both themes.
 - HOW-TO-USE, Theory of Everything and the website feature pages updated at release (only then).
 
 ## C. Already in 1.1.7 (24 Nov)
@@ -274,10 +255,9 @@ holidays, and the free keys price US shares only.
 ## Decisions for Adeeb (before or on Saturday)
 1. Widget hover line: which wins when several apply - why (takeover/hold), since (what changed), move (when unlocked)?
    Suggested: unlocked -> the move line; else why; else since; tips only when nothing else.
-2. Big numbers: keep Barlow for them, or Inter everywhere except the wordmark?
-3. Pace buttons: hide "every minute / 5 min" unless the key's plan allows it, or keep them with an honest note?
-4. What's-new tiles on the home page: give all five a real widget picture, or none?
-5. The relay's `namespace_id`.
+2. Pace buttons: hide "every minute / 5 min" unless the key's plan allows it, or keep them with an honest note?
+3. What's-new tiles on the home page: give all five a real widget picture, or none?
+4. The relay's `namespace_id`.
 
 ## Done when
 - Tester script on Adeeb's PC: all PASS, every page picture approved at 100 % and 150 %, dark and light.
