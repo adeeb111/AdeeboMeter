@@ -5632,3 +5632,46 @@ New year, same old internet hiccups.	عام جديد، نفس عثرات الإ�
 Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	أسفل اليمين، الافتراضي. لنقلها، أبقِ الفأرة ثابتة عليها لحظة ثم اسحب - أو شريط المهام › أداة الزاوية › نقل الأداة. النقر يفتح AdeeboMeter.
 Keep resting to move it	ابقَ ثابتًا لنقلها
 On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	مفعّل: تختفي الأداة عند اقتراب الفأرة، فلا تغطي ما تشير إليه أبدًا - إلا عندما تغطي نافذة زاويتها، حيث يفتحها البقاء عليها. لنقلها، استخدم شريط المهام: أداة الزاوية > نقل الأداة.
+Hover wait	مهلة التحويم
+How long to rest the mouse on the widget before it brightens or opens - a mouse just passing over leaves it alone.	المدة التي تُبقي فيها الفأرة على الأداة قبل أن تضيء أو تنفتح - مرور الفأرة فقط لا يغيّر شيئًا.
+Rest here a little longer to move it	ابقَ هنا قليلًا لتحريكها
+With a dashed outline, drag it to move it	عندما يظهر إطار متقطع، اسحبها لتحريكها
+Right-click the tray icon for everything else	انقر بزر الفأرة الأيمن على أيقونة شريط المهام لكل شيء آخر
+(needs a free price key)	(يحتاج مفتاح أسعار مجانيًا)
+Add or change...	إضافة أو تغيير...
+Add to widget	أضف إلى الأداة
+AdeeboMeter - live prices	AdeeboMeter - الأسعار المباشرة
+AdeeboMeter - your companies	AdeeboMeter - شركاتك
+Check and save	تحقّق واحفظ
+Checking the key with one price...	جارٍ التحقق من المفتاح بسعر واحد...
+Couldn't reach the service just now - the key was kept and will be tried again.	تعذّر الوصول إلى الخدمة الآن - حُفظ المفتاح وستُعاد المحاولة.
+Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name.	تابع الشركات والمؤشرات - اختر من أسماء معروفة مثل Google وMeta وShopify، أو ابحث عن أي اسم.
+Following	متابَع
+Get a free key	احصل على مفتاح مجاني
+Get a free key from any one of these, then paste it below. It stays encrypted on this PC. With keys from two, the second answers when the first can't.	احصل على مفتاح مجاني من أي واحدة من هذه الخدمات، ثم الصقه أدناه. يبقى مشفّرًا على هذا الكمبيوتر. ومع مفتاحين، تجيب الثانية حين تعجز الأولى.
+To remove the chosen service's key, leave the box empty and press Check and save.	لإزالة مفتاح الخدمة المختارة، اترك الحقل فارغًا واضغط تحقّق واحفظ.
+Nothing found - try the company's name or its ticker (GOOGL, SHOP.TO).	لم يُعثر على شيء - جرّب اسم الشركة أو رمزها (GOOGL، SHOP.TO).
+Numbers only - never advice.	أرقام فقط - لا نصائح أبدًا.
+Pick a few, or search any company by name or ticker.	اختر بعضها، أو ابحث عن أي شركة بالاسم أو الرمز.
+Pick companies...	اختر شركات...
+Prices show once a free price key is added.	تظهر الأسعار بعد إضافة مفتاح أسعار مجاني.
+Searching...	جارٍ البحث...
+The service didn't accept that key. Check you picked the right service above.	لم تقبل الخدمة هذا المفتاح. تأكد أنك اخترت الخدمة الصحيحة أعلاه.
+Turn on live prices...	فعّل الأسعار المباشرة...
+With your own key, while Markets is open: index, company and futures prices from financialmodelingprep.com, finnhub.io or twelvedata.com - only the services you added a key for - as often as you set (1-60 min). A search in the company picker asks the same service.	بمفتاحك الخاص، أثناء فتح صفحة الأسواق: أسعار المؤشرات والشركات والعقود الآجلة من financialmodelingprep.com أو finnhub.io أو twelvedata.com - فقط الخدمات التي أضفت مفتاحها - بالوتيرة التي تحددها (1-60 دقيقة). والبحث في منتقي الشركات يسأل الخدمة نفسها.
+following	متابَعة
+key saved	المفتاح محفوظ
+no price	لا سعر
+of 4 widget places used	من 4 أماكن في الأداة مستخدمة
+on the widget	على الأداة
+private - no public shares to follow	خاصة - لا أسهم عامة لمتابعتها
+the ticker you typed	الرمز الذي كتبته
+Your Companies	شركاتك
+Popular	الأشهر
+AI and tech	الذكاء الاصطناعي والتقنية
+Canada	كندا
+Indexes	المؤشرات
+Crypto	العملات المشفرة
+250 calls a day - indexes, shares, futures	250 طلبًا يوميًا - مؤشرات وأسهم وعقود آجلة
+60 calls a minute - US shares	60 طلبًا في الدقيقة - أسهم أمريكية
+800 calls a day - US shares and crypto	800 طلب يوميًا - أسهم أمريكية وعملات مشفرة

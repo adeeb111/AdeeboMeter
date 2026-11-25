@@ -43,6 +43,19 @@ namespace AdeeboMeter
         public static string PlaceName() { var p = Current; return p == null ? "" : p.Name.Split(',')[0].Trim(); }
         // the forecast hour nearest a moment (a kick-off), within 90 minutes - or null
         public static Hour HourAt(DateTime utc) { return Ahead(DateTime.UtcNow, 96).Where(h => Math.Abs((h.Utc - utc).TotalMinutes) <= 90).OrderBy(h => Math.Abs((h.Utc - utc).TotalMinutes)).FirstOrDefault(); }
+        // is the sun up at the place, at that moment? (24 Nov, his PC: a sun at 7:43 pm in November) - the sun's height worked out
+        // from the date and the place (the usual low-precision formula, good to a few minutes); -0.83 degrees is sunrise/sunset
+        public static bool DayAt(DateTime utc)
+        {
+            var p = Current; if (p == null) { int hr = utc.ToLocalTime().Hour; return hr >= 7 && hr < 18; }
+            double n = (utc - new DateTime(2000, 1, 1, 12, 0, 0, DateTimeKind.Utc)).TotalDays, rad = Math.PI / 180;
+            double L0 = (280.460 + 0.9856474 * n) % 360, g0 = ((357.528 + 0.9856003 * n) % 360) * rad;
+            double lam = (L0 + 1.915 * Math.Sin(g0) + 0.020 * Math.Sin(2 * g0)) * rad, eps = (23.439 - 0.0000004 * n) * rad;
+            double ra = Math.Atan2(Math.Cos(eps) * Math.Sin(lam), Math.Cos(lam)), dec = Math.Asin(Math.Sin(eps) * Math.Sin(lam));
+            double gmst = ((18.697374558 + 24.06570982441908 * n) % 24 + 24) % 24, ha = (gmst * 15 + p.Lon) * rad - ra, lat = p.Lat * rad;
+            double el = Math.Asin(Math.Sin(lat) * Math.Sin(dec) + Math.Cos(lat) * Math.Cos(dec) * Math.Cos(ha)) / rad;
+            return el > -0.83;
+        }
         public static Place Current
         {
             get

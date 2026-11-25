@@ -62,7 +62,7 @@ namespace AdeeboMeter
         sealed class ShOut { public StringBuilder Cap, ErrCap; public bool ErrNull, Tee; public long LastTee;   // Tee: captured AND shown as it comes (alltools)
         public ShOut ErrTo; public ShJob Job; public bool Screen { get { return Cap == null; } } }
         sealed class ShIn { public string Rest; }   // hunt-5: one input stream, shared by a function, its caller and $( ) - read takes a line from it for all of them
-        sealed class ShCtx { public ShJob Job; public ShOut Out; public ShIn In; public string Stdin { get { return In == null ? null : In.Rest; } set { In = value == null ? null : new ShIn { Rest = value }; } } public List<string> Args = new List<string>(); public bool Yes, Script, Sub; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, In = ReferenceEquals(stdin, Stdin) ? In : stdin == null ? null : new ShIn { Rest = stdin }, Args = Args, Yes = Yes, Script = Script, Sub = Sub, Frame = Frame }; } }   // Frame: a function's local variables
+        sealed class ShCtx { public ShJob Job; public ShOut Out; public ShIn In; public string Stdin { get { return In == null ? null : In.Rest; } set { In = value == null ? null : new ShIn { Rest = value }; } } public List<string> Args = new List<string>(); public bool Yes, Script, Sub; public int SkippedLinks; public Dictionary<string, string> Frame; public ShCtx With(ShOut o, string stdin) { return new ShCtx { Job = Job, Out = o, In = ReferenceEquals(stdin, Stdin) ? In : stdin == null ? null : new ShIn { Rest = stdin }, Args = Args, Yes = Yes, Script = Script, Sub = Sub, Frame = Frame }; } }   // Frame: a function's local variables
         // exit / return / break / continue: unwinds to the script, the function of the loop that owns it (#6, #23)
         sealed class ShFlow : Exception { public readonly string Kind; public readonly int Code; public int Level; public ShFlow(string kind, int code, int level) : base(kind) { Kind = kind; Code = code; Level = level; } }
         // hunters11 shell ML-6: Ctrl+C stops the text tools too - the next line they write ends them
@@ -2025,7 +2025,8 @@ namespace AdeeboMeter
                 if (!move && !rec) { Err(c, "cp: " + s + " is a folder - use cp -r"); ex = 1; continue; }
                 if (move && sameVol && !Directory.Exists(to)) { Directory.Move(src, to); continue; }
                 if (move && Directory.Exists(to)) { Err(c, "mv: " + p[p.Count - 1] + "/" + Path.GetFileName(src) + " already exists"); ex = 1; continue; }
-                try { CopyDir(src, to, c); } catch (UnauthorizedAccessException ue) { Err(c, (move ? "mv: " : "cp: ") + ue.Message); ex = 1; continue; }
+                c.SkippedLinks = 0; try { CopyDir(src, to, c); } catch (UnauthorizedAccessException ue) { Err(c, (move ? "mv: " : "cp: ") + ue.Message); ex = 1; continue; }
+                if (c.SkippedLinks > 0) Err(c, (move ? "mv: " : "cp: ") + s + ": skipped " + c.SkippedLinks + " linked folder" + (c.SkippedLinks == 1 ? "" : "s") + " - links are not followed");
                 if (c.Job.Cancel) return 130;
                 if (move && HasLinkInside(src)) { Err(c, "mv: " + s + " has a link (junction or symlink) inside - copied, but the original is kept"); ex = 1; continue; }
                 if (move) Directory.Delete(src, true);
@@ -2037,7 +2038,7 @@ namespace AdeeboMeter
             if (!InData(b)) throw new UnauthorizedAccessException(b.Replace(Program.DataDir, "/data").Replace('\\', '/') + ReadOnlyNote);   /* hunters11 shell M-2 */
             Directory.CreateDirectory(b);
             foreach (var f in Directory.GetFiles(a)) { if (c.Job.Cancel) return; string t = Path.Combine(b, Path.GetFileName(f)); if (!InData(t)) throw new UnauthorizedAccessException(t.Replace(Program.DataDir, "/data").Replace('\\', '/') + ReadOnlyNote); File.Copy(f, t, true); }
-            foreach (var d in Directory.GetDirectories(a)) { if (IsLink(d)) continue; CopyDir(d, Path.Combine(b, Path.GetFileName(d)), c); }
+            foreach (var d in Directory.GetDirectories(a)) { if (IsLink(d)) { c.SkippedLinks++; continue; } CopyDir(d, Path.Combine(b, Path.GetFileName(d)), c); }   // hunters14 SHELL-L1: counted, and said at the end
         }
         int Rm(List<string> args, ShCtx c)
         {

@@ -119,11 +119,11 @@ namespace AdeeboMeter
                 int lv; string head = Trading.Headline(out lv); var et = Trading.EasternNow(); bool open = Trading.MarketOpen(et);
                 List<WatchKit.Sample> samples; WatchKit.Session day; lock (Trading.k) { samples = Trading.Samples.ToList(); day = Trading.Day == null ? null : Trading.Day.Copy(); }   // AM-CG-131: a copy, read while the watch adds
                 bool live = samples.Count > 0 && (DateTime.Now - samples.Last().T).TotalSeconds < Math.Max(15, Trading.Sec * 3);   // AM-CG-116: fresh for three rounds of the watch, whatever its pace
-                float hh = big ? 300 * S : 120 * S; var c2 = new RectangleF(x, y, w, hh); Kit.Box(g, c2); if (live) Theme.Stroke(g, c2, 16 * S, Theme.Lv(lv), 2);
+                float hh = big ? 324 * S : 144 * S; var c2 = new RectangleF(x, y, w, hh);   /* 24 Nov: + room for the Market: row under the tag (it ran into the tiles) */ Kit.Box(g, c2); if (live) Theme.Stroke(g, c2, 16 * S, Theme.Lv(lv), 2);
                 float cx2 = x + 22 * S, cy2 = y + 18 * S;
                 Draw.LvDot(g, live ? lv : 3, cx2, cy2 + 8 * S, 14 * S, 14 * S);
                 g.DrawString(live ? (head.Contains("answering in") ? L.T(head.Split('·')[0].Trim()) + " · " + BrokerName(Cfg.TradeHost) + head.Substring(head.IndexOf("answering", StringComparison.Ordinal) - 1) : L.T(head)) : BrokerName(Cfg.TradeHost) + (open || Cfg.TradeCrypto ? L.T(" · starting...") : L.T(" · market closed - the live check sleeps until 9:30 Eastern")), Draw.fTitle, ink, cx2 + 24 * S, cy2);
-                string tag = open ? Kit.Sent("LIVE") + " · " + L.T(Trading.VenueName) + " " + Kit.Sent("OPEN") : Cfg.TradeCrypto ? Kit.Sent("LIVE · CRYPTO 24/7") : L.T(Trading.VenueName) + " " + Kit.Sent("CLOSED"); var tgs = g.MeasureString(tag, Draw.fTiny);
+                string tag = open ? Kit.Sent("LIVE") + " · " + Kit.Sent(Trading.VenueName) + " " + Kit.Sent("OPEN").ToLower(CultureInfo.CurrentCulture) : Cfg.TradeCrypto ? Kit.Sent("LIVE · CRYPTO 24/7") : Kit.Sent(Trading.VenueName) + " " + Kit.Sent("CLOSED").ToLower(CultureInfo.CurrentCulture); var tgs = g.MeasureString(tag, Draw.fTiny);
                 var tgr = new RectangleF(x + w - tgs.Width - 40 * S, cy2 + 2 * S, tgs.Width + 18 * S, 22 * S); Theme.Fill(g, tgr, 11 * S, open || Cfg.TradeCrypto ? Theme.Red : Theme.Soft);
                 using (var tb = new SolidBrush(open || Cfg.TradeCrypto ? Color.White : Theme.Sub)) g.DrawString(tag, Draw.fTiny, tb, tgr.X + 9 * S, tgr.Y + (22 * S - tgs.Height) / 2);
                 // which market "open" means (AM-CG-108): a US-only trader picks US, a Toronto-only trader Toronto
@@ -138,7 +138,7 @@ namespace AdeeboMeter
                     }
                     using (var mb = new SolidBrush(Theme.Muted)) { var ms = g.MeasureString(L.T("Market:"), Draw.fTiny); g.DrawString(L.T("Market:"), Draw.fTiny, mb, vx - ms.Width - 6 * S, tgr.Bottom + 7 * S); }
                 }
-                cy2 += 40 * S;
+                cy2 += 64 * S;
                 if (big)
                 {
                     var far = samples.Where(z => !double.IsNaN(z.Far)).Select(z => z.Far).ToList(); var last = samples.LastOrDefault();
@@ -155,7 +155,7 @@ namespace AdeeboMeter
                     for (int i = 0; i < 5; i++)
                     {
                         var tr = new RectangleF(cx2 + i * (tw + 10 * S), cy2, tw, 66 * S); Theme.Fill(g, tr, 12 * S, Theme.Soft);
-                        g.DrawString(L.T(tiles[i][0]), Draw.fTiny, muted, tr.X + 12 * S, tr.Y + 9 * S); g.DrawString(tiles[i][1], Draw.fName, ink, tr.X + 12 * S, tr.Y + 25 * S);
+                        g.DrawString(Kit.Sent(tiles[i][0]), Draw.fTiny, muted, tr.X + 12 * S, tr.Y + 9 * S); g.DrawString(tiles[i][1], Draw.fName, ink, tr.X + 12 * S, tr.Y + 25 * S);
                         if (tiles[i][2] != "") using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(tiles[i][2], Draw.fSmall, sub, new RectangleF(tr.X + 12 * S, tr.Y + 47 * S, tw - 20 * S, 18 * S), nf);
                     }
                     cy2 += 80 * S;

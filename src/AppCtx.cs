@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -81,7 +81,7 @@ namespace AdeeboMeter
             var miSettings = new ToolStripMenuItem(L.T("Settings...")); miSettings.Click += delegate { OpenFull(); if (full != null) full.ShowPage("settings"); };
             miWidget = new ToolStripMenuItem(L.T("Hide widget (keep tray icon)")); miWidget.Click += delegate { widgetOn = !widgetOn; SaveSettings(); drawnKey = ""; };
             miBig = new ToolStripMenuItem(L.T("Bigger widget")); miBig.Click += delegate { Cfg.BigWidget = !Cfg.BigWidget; SaveSettings(); drawnKey = ""; };
-            var miMove = new ToolStripMenuItem(L.T("Move widget")); miMove.Click += delegate { bool was = widgetOn; widgetOn = true; if (!was) SaveSettings(); moveByTray = true; trayUnlockAt = Clock.Mono; Unlock("tray"); };   /* M-4: a re-shown widget stays shown */
+            var miMove = new ToolStripMenuItem(L.T("Move widget")); miMove.Click += delegate { TrayMove(); };
             var miReset = new ToolStripMenuItem(L.T("Reset widget position")); miReset.Click += delegate { ResetPos(); };
             var miHold = new ToolStripMenuItem(L.T("Hold this")); miHold.Click += delegate { if (Corner.Holding) Corner.Release(); else { var ls = M.Latest; Corner.Hold(ls != null && ls.Call); } drawnKey = ""; };
             var miBack = new ToolStripMenuItem(L.T("Back to my widget")); miBack.Click += delegate { Corner.Back(); drawnKey = ""; };
@@ -179,21 +179,22 @@ namespace AdeeboMeter
                 {
                     bool mid = dragFrom != null; if (mid) CancelDrag(); Lock("button-" + e2.Button); widget.Capture = false;
                     Trace(mid ? "drag cancelled by " + e2.Button : "replay " + e2.Button);
-                    if (!mid) { var b = e2.Button; if (b == MouseButtons.Right) Native.PassOn(0x0204, 0x0002, 0); else if (b == MouseButtons.Middle) Native.PassOn(0x0207, 0x0010, 0); else if (b == MouseButtons.XButton1) Native.PassOn(0x020B, 0x0020, 1); else if (b == MouseButtons.XButton2) Native.PassOn(0x020B, 0x0040, 2); }
+                    if (!mid) { var b = e2.Button; if (b == MouseButtons.Right) { Native.PassOn(0x0204, 0x0002, 0); UpLater(0x02, 0x0205, 0); } else if (b == MouseButtons.Middle) { Native.PassOn(0x0207, 0x0010, 0); UpLater(0x04, 0x0208, 0); } else if (b == MouseButtons.XButton1) { Native.PassOn(0x020B, 0x0020, 1); UpLater(0x05, 0x020C, 1); } else if (b == MouseButtons.XButton2) { Native.PassOn(0x020B, 0x0040, 2); UpLater(0x06, 0x020C, 2); } }
                     return;
                 }
                 Native.GetAsyncKeyState(0x01);   /* this press's "pressed since" is read here - a new one later means a new press (L-3) */
                 dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = false;
             };
-            widget.MouseWheel += (s2, e2) => { if (moveOn && dragFrom == null) { Lock("wheel"); Trace("replay wheel " + e2.Delta); Native.PassOn(0x020A, 0, e2.Delta); } };
-            widget.HWheel += d => { if (moveOn && dragFrom == null) { Lock("hwheel"); Trace("replay hwheel " + d); Native.PassOn(0x020E, 0, d); } };
+            // hunters14 CORE-L1: the wheel mid-drag drops the widget where it is, then locks and scrolls the app underneath (it was swallowed)
+            widget.MouseWheel += (s2, e2) => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("wheel"); Trace("replay wheel " + e2.Delta); Native.PassOn(0x020A, 0, e2.Delta); };
+            widget.HWheel += d => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("hwheel"); Trace("replay hwheel " + d); Native.PassOn(0x020E, 0, d); };
             // a finger on the unlocked widget drags it (the tray's Move widget unlocks it for touch)
             widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; Trace("touch grab"); return true; };
             widget.TouchDrag = p => { if (dragFrom == null || !touchDrag) return; int dx = p.X - dragFrom.Value.X, dy = p.Y - dragFrom.Value.Y; moveTouched = Clock.Mono; if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); } if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy); };
-            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock("touch-drop"); } else dragFrom = null; };
+            widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock("touch-drop"); } else { dragFrom = null; Lock("click"); Trace("open full (tap)"); OpenFull(); } };   // hunters14 CORE-ML2: a tap on the unlocked widget opens AdeeboMeter, like a click
             widget.MouseMove += (s2, e2) => WidgetDrag(); ResetWidget = ResetPos;
-            widget.MouseUp += (s2, e2) => WidgetDrop();
-            widget.MouseCaptureChanged += (s2, e2) => { if (dragFrom != null && Control.MouseButtons != MouseButtons.Left) WidgetDrop(); };
+            widget.MouseUp += (s2, e2) => WidgetDrop(true);
+            widget.MouseCaptureChanged += (s2, e2) => { if (dragFrom != null && Control.MouseButtons != MouseButtons.Left) WidgetDrop(false); };
 
             // Ctrl+Alt+A opens / closes the engineer view from anywhere
             try { hotkey = new HotKey(ToggleFull); if (!hotkey.Ok) Program.Log("Ctrl+Alt+A is taken by another app"); } catch (Exception e) { Program.Log("hotkey: " + e.Message); }
@@ -565,6 +566,16 @@ namespace AdeeboMeter
             if (!Program.WidgetTrace) return;
             try { lock (traceLock) File.AppendAllText(Path.Combine(Program.WriteDir, "widget-trace.txt"), DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " " + m + Environment.NewLine); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
+        // tray > Move widget (M-4: a re-shown widget stays shown)
+        void TrayMove() { bool was = widgetOn; widgetOn = true; if (!was) SaveSettings(); moveByTray = true; trayUnlockAt = Clock.Mono; Unlock("tray"); }
+        // hunters14 LAB-ML3: under --widget-trace only, the test script asks for tray > Move widget by dropping a file named
+        // "move-widget.now" next to the trace - the same code path as the menu item (a script can't click a tray menu reliably)
+        DateTime traceAsk = DateTime.MinValue;
+        void TraceAsks()
+        {
+            if (!Program.WidgetTrace || (Clock.Mono - traceAsk).TotalMilliseconds < 400) return; traceAsk = Clock.Mono;
+            try { string f = Path.Combine(Program.WriteDir, "move-widget.now"); if (File.Exists(f)) { File.Delete(f); Trace("tray move (asked by the test)"); TrayMove(); } } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
         void Unlock() { Unlock("other"); }
         void Unlock(string why)
         {
@@ -587,10 +598,9 @@ namespace AdeeboMeter
         public static Action ResetWidget;   // Settings > Widget position > Reset
         // each tick near the widget. Unlocking:
         //  - resting: the mouse came onto it by moving (a finger tap teleports the cursor - M-2) and has then stayed still for
-        //    1.5 s (moving across the card to read it restarts the wait - M-1);
-        //  - Ctrl: held alone for 0.7 s while on it (a quick Ctrl+click for the app underneath never unlocks - M-3), and never
-        //    while a game you added is in front (Ctrl is crouch);
-        //  - the tray: unlocked for 15 s to reach it.
+        //    2.5 s (moving across the card to read it restarts the wait - M-1);
+        //  - the tray: Move widget, unlocked for 15 s to reach it (also the way in for touch).
+        //  (No keyboard: the keyboard is never watched - hunters14 CORE-L3; test3's Defender flag is why.)
         // Locking: the mouse leaves the widget itself (with a short grace), 8 s without moving on it, or another button / the
         // wheel (they were meant for the app underneath - L-6).
         void MoveMode(Point cur, bool inside)
@@ -628,7 +638,7 @@ namespace AdeeboMeter
             if (onIt && hovered && !moveSpent && arrivedByMouse && Control.MouseButtons == MouseButtons.None)
             {
                 if (hoverSince == DateTime.MinValue || !Still(cur, restAt, Draw.Base)) { hoverSince = DateTime.UtcNow; restAt = cur; }   // moving: the wait starts again
-                else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 1500) { Unlock("rest"); hovered = true; }
+                else if ((DateTime.UtcNow - hoverSince).TotalMilliseconds >= 2500) { Unlock("rest"); hovered = true; }   // 24 Nov: 2.5 s of rest (was 1.5) - moving is never an accident
             }
             else hoverSince = DateTime.MinValue;
         }
@@ -636,22 +646,36 @@ namespace AdeeboMeter
         {
             if (dragFrom == null || !moveOn) return;
             if (touchDrag) return;
-            if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(); return; }
+            // hunters14 CORE-ML1: a re-press may have been made in another app - it ends a drag in progress, but never counts as a click
+            if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(false); return; }
             if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
             var c = Cursor.Position; int dx = c.X - dragFrom.Value.X, dy = c.Y - dragFrom.Value.Y; moveTouched = Clock.Mono;
             if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; Trace("drag start"); if (detailWin.Placed.Width > 1) detailWin.Vanish(); }
             if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy);
         }
         void CancelDrag() { if (dragging) widget.MoveTo(dragOrigin.X, dragOrigin.Y); dragFrom = null; dragging = false; touchDrag = false; drawnKey = ""; }
+        // test5: the app underneath got the right button's down but never its up (the real up still reached the widget), so a
+        // context menu that opens on release never opened. The press is passed on at once; the release follows when that one
+        // button comes back up - only that button is read, every 15 ms, for at most 10 s
+        static void UpLater(int vk, int upMsg, int data)
+        {
+            var t = new System.Windows.Forms.Timer { Interval = 15 }; var sw = Stopwatch.StartNew();
+            t.Tick += (o, e) => { if ((Native.GetAsyncKeyState(vk) & 0x8000) != 0 && sw.ElapsedMilliseconds < 10000) return; t.Stop(); t.Dispose(); Native.PassOn(upMsg, 0, data); Trace("replay up " + upMsg.ToString("X", System.Globalization.CultureInfo.InvariantCulture)); };
+            t.Start();
+        }
+        string hoverLine = ""; int hoverTipN;
+        static readonly string[] HoverTips = { "Rest here a little longer to move it", "With a dashed outline, drag it to move it", "Right-click the tray icon for everything else" };
         // the left button was pressed again since the drag began (released and pressed between two ticks - hunters13 L-3)
         static bool RePressed() { return (Native.GetAsyncKeyState(0x01) & 0x0001) != 0; }
         // still enough to count as resting: inside Windows' double-click box around where the rest began
         public static bool Still(Point cur, Point at, float scale) { return Math.Abs(cur.X - at.X) <= 4 * scale && Math.Abs(cur.Y - at.Y) <= 4 * scale; }
-        void WidgetDrop()
+        // fromUp: the left button came up on the widget itself - only that is a click. A drop found another way (the button seen up
+        // at a tick, a re-press, capture lost, the wheel) ends the drag but never opens the full window (hunters14 CORE-ML1)
+        void WidgetDrop(bool fromUp)
         {
             if (dragFrom == null) return;
             bool moved = dragging; dragFrom = null; dragging = false; moveTouched = Clock.Mono;
-            if (!moved) { Lock("click"); Trace("open full"); OpenFull(); return; }   // a click, no drag: the full window
+            if (!moved) { if (fromUp) { Lock("click"); Trace("open full"); OpenFull(); } return; }   // a click, no drag: the full window
             SaveDrop(true);
         }
         // the drop's place: into the slot the drag started in (a game starting or ending mid-drag doesn't move it - L-3)
@@ -681,7 +705,7 @@ namespace AdeeboMeter
         }
         void OnUi()
         {
-            StandbyTick();
+            StandbyTick(); TraceAsks();
             try
             {
                 uiTick++;
@@ -704,7 +728,7 @@ namespace AdeeboMeter
                 int want = near.Contains(Cursor.Position) || hovered || dwell > 0 ? 50 : Cfg.Preset == "penny" ? 1000 : 500;   // the mouse far away: twice a second, once on Penny
                 if (moveOn || Fading) want = 50;
                 if (ui.Interval != want) ui.Interval = want;
-                if (dragFrom != null && !touchDrag && (Control.MouseButtons != MouseButtons.Left || (dragging && RePressed()))) { if (dragging) WidgetDrop(); else dragFrom = null; }   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here; a new press is a new click (L-3)
+                if (dragFrom != null && !touchDrag && (Control.MouseButtons != MouseButtons.Left || (dragging && RePressed()))) { if (dragging) WidgetDrop(false); else dragFrom = null; }   // ML-3: the button came up somewhere else (Alt+Tab, UAC) - the drag ends here; a new press is a new click (L-3)
                 if (dragging) { if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); } return; }   // the window follows the mouse by itself; drawn again on the drop
                 if (dragFrom != null) return;   // pressed, not moved yet: not drawn again, so the press point and the window agree (hunters13 L-2)
                 if ((Clock.Mono - lastCover).TotalMilliseconds >= (want == 50 ? 800 : 2000) && !hovered)   // AM-CG-214; bug-hunt ML-146: the window walk every 0.8 s near the corner, not 0.4   // AM-CG-192: re-judged when folded again, not by the open card's size
@@ -735,20 +759,29 @@ namespace AdeeboMeter
                     else { revealed = false; dwellStart = DateTime.MinValue; dwell = 0; }
                     hovered = revealed;
                 }
-                else { hovered = inside; dwell = 0; }
+                else
+                {
+                    // 24 Nov (Adeeb: "it pops open too easily"): the open card brightens only after the same short rest as the
+                    // folded chip - a mouse passing over the corner leaves it faded
+                    dwell = 0;
+                    if (!inside) { hovered = false; dwellStart = DateTime.MinValue; }
+                    else if (!hovered) { if (dwellStart == DateTime.MinValue) dwellStart = DateTime.UtcNow; if ((DateTime.UtcNow - dwellStart).TotalMilliseconds >= DWELL_MS) { hovered = true; dwellStart = DateTime.MinValue; } }
+                }
                 MoveMode(cur, inside);
                 // the hint line on the card, by the settings: unlocked - what a drag and a click do; resting on it - that it will unlock
-                if (hovered && !wasHovered) sinceLine = Corner.Since(M.Latest ?? new Snap()); else if (!hovered && wasHovered) { Corner.Looked(); sinceLine = ""; }
+                // 24 Nov (Adeeb: "tips keep changing every 2 seconds - a different tip every time, not every second"): one line per
+                // hover, picked when the hover starts and kept until you leave - what changed since you looked, else why this card is
+                // showing, else the next of a few short tips (a different one each hover). The dashed outline shows when it can move.
+                if (hovered && !wasHovered)
+                {
+                    sinceLine = Corner.Since(M.Latest ?? new Snap()); string why = Corner.WhyLine();
+                    hoverLine = sinceLine != "" ? sinceLine : why != "" ? why : Cfg.WHint ? L.T(HoverTips[hoverTipN++ % HoverTips.Length]) : "";
+                }
+                else if (!hovered && wasHovered) { Corner.Looked(); sinceLine = ""; hoverLine = ""; }
                 wasHovered = hovered;
-                // hunters12: one blue line, in this order - unlocked: how to move; what changed since you looked (it stays for the whole
-                // hover, the move hint no longer replaces it - ML-4); why this card is showing (a takeover, the day plan, a hold - ML-3);
-                // then, resting still, that it's about to unlock. Move hints off hides only the move lines (ML-5).
-                // hunters13 display ML-3 / ML-4: each line keeps its place for as long as it's true - what changed, why this card, and
-                // (resting or unlocked) how to move it - one under the other, so none of them pushes another off the card
                 var lines = new List<string>();
-                if (hovered || moveOn) { if (sinceLine != "") lines.Add(sinceLine); var why = Corner.WhyLine(); if (why != "") lines.Add(why); }
-                if (Cfg.WHint && moveOn) lines.Add(Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter"));
-                else if (Cfg.WHint && hovered && hoverSince != DateTime.MinValue && (DateTime.UtcNow - hoverSince).TotalMilliseconds >= 400) lines.Add(L.T("Keep resting to move it"));
+                if (hovered) { if (hoverLine != "") lines.Add(hoverLine); }
+                else if (Cfg.WHint && moveOn) lines.Add(Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter"));   // moved from the tray, the mouse elsewhere
                 string wh = string.Join("\n", lines);
                 if (wh != Draw.WidgetHint) { Draw.WidgetHint = wh; drawnKey = ""; }
                 M.HoverOpen = hovered;

@@ -151,7 +151,7 @@ namespace AdeeboMeter
                 var ok = new Button { Text = L.T("Make the card"), DialogResult = DialogResult.OK, Location = new Point(Sc(250), Sc(118)), Size = new Size(Sc(110), Sc(32)) };
                 var no = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(368), Sc(118)), Size = new Size(Sc(74), Sc(32)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, no }); f.AcceptButton = ok; f.CancelButton = no;
-                return f.ShowDialog(this) == DialogResult.OK ? tb.Text : null;
+                Kit.Polish(f); return f.ShowDialog(this) == DialogResult.OK ? tb.Text : null;
             }
         }
 

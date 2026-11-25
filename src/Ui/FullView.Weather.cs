@@ -121,7 +121,7 @@ namespace AdeeboMeter
                 say(L.T("Type a place and press Enter."), false);
                 var cur = Weather.Current; if (cur != null) box.Box.Text = cur.Name.Split(',')[0];
                 f.Shown += delegate { box.Box.Focus(); box.Box.SelectAll(); };
-                if (f.ShowDialog(this) != DialogResult.OK) { Cfg.WeatherGeo = geo0; Cfg.WeatherApi = api0; return null; }   // Cancel: the servers go back too
+                Kit.Polish(f); if (f.ShowDialog(this) != DialogResult.OK) { Cfg.WeatherGeo = geo0; Cfg.WeatherApi = api0; return null; }   // Cancel: the servers go back too
                 if (keepServers() != "") { Cfg.WeatherGeo = geo0; Cfg.WeatherApi = api0; }
                 Cfg.Save();
                 if (list.SelectedIndex >= 0 && list.SelectedIndex < found.Count) picked = found[list.SelectedIndex];

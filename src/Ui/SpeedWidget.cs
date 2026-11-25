@@ -131,7 +131,7 @@ namespace AdeeboMeter
                 if (Cfg.Buddy) Buddy(g, new RectangleF(W - pad - 22 * S, y - 2 * S, 22 * S, 22 * S), s, false);
                 y += 24 * S;
                 if (status) { using (var hb = new SolidBrush(s.Level >= 1 && s.Level <= 2 ? Theme.LvText(s.Level) : Theme.Sub)) g.DrawString(s.Headline, fSmall, hb, new RectangleF(pad, y, inner, headH)); y += headH; }
-                HintLine(g, pad, y, inner, wh); y += wh;
+                HintLine(g, pad, H, inner, wh);
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 // the two big numbers
                 float half = inner / 2;

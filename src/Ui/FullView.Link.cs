@@ -36,6 +36,7 @@ namespace AdeeboMeter
             return L.T(v);
         }
         // ---------- Your connection
+        Rectangle linkAskRect;   // test6 (his PC: 4 whole-page paints in 5 s while Windows kept not answering): the waiting line alone repaints
         string linkErr;   // why the last read failed - shown instead of a "still asking" that never ends
         void RefreshLink(bool now)
         {
@@ -47,7 +48,7 @@ namespace AdeeboMeter
                 LinkSnap ls = null; WifiAdvisor.Extra ex = null;
                 string err = null; try { ls = LinkInfo.Collect(M); } catch (Exception e) { err = e.Message; Program.Log("link: " + e.Message); } if (ls != null) try { ex = WifiAdvisor.Fill(ls, M); } catch (Exception e) { Program.Log("link advisor: " + e.Message); }
                 if (IsDisposed || !IsHandleCreated) { linkBusy = false; return; }
-                try { BeginInvoke((Action)delegate { linkBusy = false; if (IsDisposed) return; linkErr = ls == null ? (err ?? "no answer") : null; if (ls != null) { linkSnap = ls; linkExtra = ex; } else lastLink = DateTime.UtcNow.AddSeconds(-5); linkCanvas.Invalidate(); }); } catch { linkBusy = false; }   // 1.1.6 walk: a failed read left "Asking Windows..." up for good
+                try { BeginInvoke((Action)delegate { linkBusy = false; if (IsDisposed) return; string was = linkErr; linkErr = ls == null ? (err ?? "no answer") : null; if (ls != null) { linkSnap = ls; linkExtra = ex; } else lastLink = DateTime.UtcNow.AddSeconds(-5); if (ls == null && linkSnap == null && was == linkErr && !linkAskRect.IsEmpty) linkCanvas.Invalidate(linkAskRect); else linkCanvas.Invalidate(); }); } catch { linkBusy = false; }   // 1.1.6 walk: a failed read left "Asking Windows..." up for good
             } finally { __bz.End(); } });
         }
         float RowsCard(Graphics g, string title, List<string[]> rows, RectangleF cr, string keyPrefix)
@@ -74,7 +75,7 @@ namespace AdeeboMeter
             Begin(linkCanvas);
             float x = 14 * S, y = 6 * S, w = linkCanvas.ClientSize.Width - 28 * S;
             var ls = linkSnap;
-            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) { int secs = (int)(DateTime.UtcNow - lastLink).TotalSeconds; g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading...") + (secs >= 2 ? "  " + secs + " s" : ""), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 30 * S));
+            if (ls == null) { using (var mb = new SolidBrush(Theme.Muted)) { int secs = (int)(DateTime.UtcNow - lastLink).TotalSeconds; linkAskRect = Rectangle.Ceiling(new RectangleF(x + linkCanvas.AutoScrollPosition.X, y + 10 * S + linkCanvas.AutoScrollPosition.Y, w, 30 * S)); g.DrawString(linkErr != null ? L.T("Windows didn't answer about your connection - asking again in a few seconds.") + "  (" + linkErr + ")" : Voice.P("Asking Windows about your connection...", "Reading...") + (secs >= 2 ? "  " + secs + " s" : ""), Draw.fBody, mb, new RectangleF(x, y + 10 * S, w, 30 * S));
                   if (linkErr == null && secs >= 2) using (var db = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Windows' own Wi-Fi report (netsh wlan) can take 10 to 15 seconds - the adapter, the networks around you, then the band and channel."), Draw.fSmall, db, new RectangleF(x, y + 40 * S, w, 40 * S)); } return; }   // 1.1.6 test: a still line read as stuck
             string title = L.T(ls.Wifi ? "Your Wi-Fi" : "Your cable") + "  ·  " + Draw.Trunc(ls.Adapter, 50) + "  ·  " + L.T("updated") + " " + ls.At.ToString("HH:mm:ss", CultureInfo.CurrentCulture);   // v8: sentence case
             float vh = Draw.Measure(ls.Verdict, Draw.fTitle, (int)(w - 32 * S)).Height;

@@ -163,7 +163,7 @@ namespace AdeeboMeter
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(62)), Width = Sc(430), UseSystemPasswordChar = true };
                 var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(104)), Size = new Size(Sc(80), Sc(30)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, cancel }); f.AcceptButton = ok; f.CancelButton = cancel;
-                if (f.ShowDialog(this) == DialogResult.OK) { if (!Sports.SetKey(sport, tb.Text)) AskCard.Show(this, L.T("The key couldn't be saved - check that AdeeboMeter's data folder isn't read-only, then try again."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
+                Kit.Polish(f); if (f.ShowDialog(this) == DialogResult.OK) { if (!Sports.SetKey(sport, tb.Text)) AskCard.Show(this, L.T("The key couldn't be saved - check that AdeeboMeter's data folder isn't read-only, then try again."), "AdeeboMeter", MessageBoxButtons.OK, MessageBoxIcon.Warning); Sports.Fetch(() => { try { if (!IsDisposed) BeginInvoke((Action)delegate { sportsCanvas.Invalidate(); }); } catch (InvalidOperationException) { } }); }
                 tb.Text = "";
             }
         }
@@ -180,7 +180,7 @@ namespace AdeeboMeter
                 var tb = new TextBox { Location = new Point(Sc(14), Sc(turnOn ? 126 : 62)), Width = Sc(430), Text = Cfg.SportTeams ?? "" };
                 var ok = new Button { Text = L.T("Save"), DialogResult = DialogResult.OK, Location = new Point(Sc(274), Sc(turnOn ? 168 : 104)), Size = new Size(Sc(80), Sc(30)) }; var cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Location = new Point(Sc(364), Sc(turnOn ? 168 : 104)), Size = new Size(Sc(80), Sc(30)) };
                 f.Controls.AddRange(new Control[] { lb, tb, ok, cancel }); f.AcceptButton = ok; f.CancelButton = cancel;
-                if (f.ShowDialog(this) == DialogResult.OK) { if (turnOn && !Policy.NoOnline) Cfg.Sports = true; Cfg.SportTeams = string.Join(", ", tb.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length >= 2 && t.Length <= 40).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToArray()); Cfg.Save(); sportsCanvas.Invalidate(); }
+                Kit.Polish(f); if (f.ShowDialog(this) == DialogResult.OK) { if (turnOn && !Policy.NoOnline) Cfg.Sports = true; Cfg.SportTeams = string.Join(", ", tb.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length >= 2 && t.Length <= 40).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToArray()); Cfg.Save(); sportsCanvas.Invalidate(); }
             }
         }
     }

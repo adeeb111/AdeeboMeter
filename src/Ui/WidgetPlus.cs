@@ -523,7 +523,7 @@ namespace AdeeboMeter
                 using (var hb = new SolidBrush(problem ? Theme.LvText(2) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), sf);
                 y += headH;
                 if (subH > 0) { g.DrawString(title, fSmall, muted, new RectangleF(pad, y + 2 * S, inner, subH), sf); y += subH; }
-                HintLine(g, pad, y, inner, wh); y += wh;   // L-6: under the heading, where the other cards have it
+                HintLine(g, pad, H, inner, wh);   // at the foot of the card (24 Nov)
                 y += 8 * S;
                 using (var lp = new Pen(Theme.Line2))
                     for (int i = 0; i < tiles.Count; i++)

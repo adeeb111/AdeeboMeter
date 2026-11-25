@@ -19,6 +19,7 @@ namespace AdeeboMeter
         readonly Dictionary<string, string> vars = new Dictionary<string, string>(StringComparer.Ordinal);
         readonly Dictionary<string, Dictionary<string, string>> arrs = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
         List<string> f = new List<string> { "" }; long nr, fnr; long steps;
+        internal bool BeginOnly { get { return rules.Count == 0 && ends.Count == 0; } }   // test6: awk 'BEGIN{...}' reads nothing (POSIX), so it never asks for input
         readonly List<Action> begins = new List<Action>(), ends = new List<Action>(); readonly List<KeyValuePair<Func<bool>, Action>> rules = new List<KeyValuePair<Func<bool>, Action>>();
         sealed class Next : Exception { } sealed class NextFile : Exception { } sealed class Exit : Exception { public int Code; } sealed class Brk : Exception { } sealed class Cont : Exception { }
         sealed class LV { public Func<string> Get; public Action<string> Set; }
@@ -412,8 +413,8 @@ namespace AdeeboMeter
             ShellAwk awk;
             try { awk = new ShellAwk(prog, fs, pre); } catch (FormatException e) { Err(c, "awk: " + e.Message); return 2; } catch (ArgumentException e) { Err(c, "awk: a pattern isn't valid - " + e.Message); return 2; }
             var outp = new StringBuilder(); awk.Out = s => { outp.Append(s); if (outp.Length > 65536) { O(c, outp.ToString(), ShFg); outp.Clear(); } }; awk.Cancelled = () => c.Job.Cancel;
-            if (files.Count == 0 && NoInput(c)) return 1;
-            IEnumerable<string> lines = files.Count == 0 ? SplitLines(c.Stdin) : null;
+            if (files.Count == 0 && !awk.BeginOnly && NoInput(c)) return 1;
+            IEnumerable<string> lines = files.Count == 0 ? (awk.BeginOnly ? new List<string>() : SplitLines(c.Stdin)) : null;
             var inputs = new List<KeyValuePair<string, IEnumerable<string>>>();
             if (files.Count == 0) inputs.Add(new KeyValuePair<string, IEnumerable<string>>("", lines));
             else foreach (var f in files) { var ls = StreamLines(f, c); if (ls == null) return 2; inputs.Add(new KeyValuePair<string, IEnumerable<string>>(f, ls)); }

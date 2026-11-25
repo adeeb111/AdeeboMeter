@@ -103,7 +103,7 @@ namespace AdeeboMeter
                 f.Controls.Add(canvas);
                 f.Load += delegate { try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
                 f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter) f.Close(); };
-                f.ShowDialog(this);
+                Kit.Polish(f); f.ShowDialog(this);
             }
         }
     }

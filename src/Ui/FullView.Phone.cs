@@ -33,14 +33,21 @@ namespace AdeeboMeter
             var want = new Size(Sc(1280), Sc(860)); if (Size != want) Size = want;
             tab = page; ShowTab(); if (page == "toolbox") EnsureToolbox();
             Typing.Hold = true;
-            try { return PeekShot(); } finally { Typing.Hold = false; }
+            try { return PeekShot(false); } finally { Typing.Hold = false; }
         }
-        byte[] PeekShot()
+        // --view shot:<page> (website pictures): the same off-screen drawing, at full size and as a PNG - no shrinking, no JPEG
+        internal byte[] ShotPage()
+        {
+            Typing.Hold = true;
+            try { return PeekShot(true); } finally { Typing.Hold = false; }
+        }
+        byte[] PeekShot(bool png)
         {
             PerformLayout(); foreach (Control c in Descendants(this)) c.Invalidate();
             using (var bmp = new Bitmap(Math.Max(200, ClientSize.Width), Math.Max(200, ClientSize.Height)))
             {
                 using (var g = Graphics.FromImage(bmp)) { g.Clear(BackColor); PeekDraw(this, g, Point.Empty, new Rectangle(Point.Empty, bmp.Size)); }
+                if (png) using (var ms = new MemoryStream()) { bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png); return ms.ToArray(); }
                 Bitmap outB = bmp; Bitmap scaled = null;
                 if (bmp.Width > 1200) { scaled = new Bitmap(1200, bmp.Height * 1200 / bmp.Width); using (var g = Graphics.FromImage(scaled)) { g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic; g.DrawImage(bmp, 0, 0, scaled.Width, scaled.Height); } outB = scaled; }
                 try

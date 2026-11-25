@@ -123,15 +123,18 @@ namespace AdeeboMeter
         // secret: a key or password - shown as dots (SEC-04), and as long as such keys are (SEC-11: never cut short silently)
         string Ask(string title, string start, bool secret, int max)
         {
-            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(360), Sc(130)) })
+            using (var f = new Form { Text = AdeeboMeter.L.T("AdeeboMeter"), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false, StartPosition = FormStartPosition.CenterParent, BackColor = Theme.Card, ClientSize = new Size(Sc(400), Sc(130)) })
             {
-                var lb = new Label { Text = title, Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true };
-                var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, MaxLength = max, UseSystemPasswordChar = secret, Location = new Point(Sc(16), Sc(44)), Width = Sc(328) };
-                var ok = new PillButton("OK", PillButton.K.Primary) { Location = new Point(Sc(16), Sc(84)) }; ok.Click += delegate { f.DialogResult = DialogResult.OK; };
-                var no = new PillButton("Cancel", PillButton.K.Chip) { Location = new Point(Sc(110), Sc(86)) }; no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
+                // 24 Nov (his PC: "...free at financialmodelingp" was cut off): the question wraps, and the box grows to fit it
+                var lb = new Label { Text = title, Font = Draw.fBodyB, ForeColor = Theme.Ink, Location = new Point(Sc(16), Sc(14)), AutoSize = true, MaximumSize = new Size(Sc(368), 0) };
+                int lh = lb.GetPreferredSize(new Size(Sc(368), 0)).Height;
+                var tb = new TextBox { Text = start ?? "", Font = Draw.fInput, MaxLength = max, UseSystemPasswordChar = secret, Location = new Point(Sc(16), Sc(14) + lh + Sc(10)), Width = Sc(368) };
+                var ok = new PillButton("OK", PillButton.K.Primary) { Location = new Point(Sc(16), tb.Bottom + Sc(14)) }; ok.Click += delegate { f.DialogResult = DialogResult.OK; };
+                var no = new PillButton("Cancel", PillButton.K.Chip) { Location = new Point(Sc(110), tb.Bottom + Sc(16)) }; no.Click += delegate { f.DialogResult = DialogResult.Cancel; };
+                f.ClientSize = new Size(Sc(400), Math.Max(ok.Bottom, no.Bottom) + Sc(16));
                 f.Controls.Add(lb); f.Controls.Add(tb); f.Controls.Add(ok); f.Controls.Add(no);
                 tb.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; f.DialogResult = DialogResult.OK; } else if (e.KeyCode == Keys.Escape) f.DialogResult = DialogResult.Cancel; };
-                if (f.ShowDialog(this) != DialogResult.OK) return null;
+                Kit.Polish(f); if (f.ShowDialog(this) != DialogResult.OK) return null;
                 string v = new string(tb.Text.Where(c => c != '|' && c != '=' && c != ';' && !char.IsControl(c)).ToArray()).Trim();
                 return v.Length == 0 ? null : v.Length > max ? v.Substring(0, max) : v;
             }

@@ -296,9 +296,97 @@ namespace AdeeboMeter
             new[] { "CLUSD", "WTI crude oil", "USD per barrel" }, new[] { "BZUSD", "Brent crude oil", "USD per barrel" }, new[] { "NGUSD", "Natural gas", "USD per MMBtu" },
             new[] { "GCUSD", "Gold", "USD per ounce" }, new[] { "SIUSD", "Silver", "USD per ounce" }, new[] { "HGUSD", "Copper", "USD per pound" } };
         public static Dictionary<string, Quote> Quotes = new Dictionary<string, Quote>(); public static string QuoteNote = "";
-        static volatile bool qBusy; static readonly DateTime[] qTried = { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue };   // R2-066: the indexes and the futures each keep their own clock
-        public static void QuoteKeyChanged() { qTried[0] = qTried[1] = qTried[2] = DateTime.MinValue; }   // R2-067: a new key is tried at once
-        public static bool HasQuoteKey() { return Sports.Key("fmp") != ""; }
+        static volatile bool qBusy; static readonly DateTime[] qTried = { DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue };   /* [3]: your companies */   // R2-066: the indexes and the futures each keep their own clock
+        public static void QuoteKeyChanged() { qTried[0] = qTried[1] = qTried[2] = qTried[3] = DateTime.MinValue; }   // R2-067: a new key is tried at once
+        // ---------- companies to follow (24 Nov, Adeeb: "how do I even add Anthropic, Google, Meta?"): well-known names to pick from,
+        // by group - ticker, name, group, exchange. A name with "-" as its ticker has no public shares (it is shown, and says so).
+        public static readonly string[][] Companies = {
+            new[] { "AAPL", "Apple", "Popular", "Nasdaq" }, new[] { "MSFT", "Microsoft", "Popular", "Nasdaq" }, new[] { "GOOGL", "Alphabet (Google)", "Popular", "Nasdaq" },
+            new[] { "AMZN", "Amazon", "Popular", "Nasdaq" }, new[] { "META", "Meta Platforms", "Popular", "Nasdaq" }, new[] { "NVDA", "NVIDIA", "Popular", "Nasdaq" },
+            new[] { "TSLA", "Tesla", "Popular", "Nasdaq" }, new[] { "NFLX", "Netflix", "Popular", "Nasdaq" }, new[] { "JPM", "JPMorgan Chase", "Popular", "New York" },
+            new[] { "AMD", "AMD", "AI and tech", "Nasdaq" }, new[] { "AVGO", "Broadcom", "AI and tech", "Nasdaq" }, new[] { "TSM", "TSMC", "AI and tech", "New York" },
+            new[] { "ORCL", "Oracle", "AI and tech", "New York" }, new[] { "PLTR", "Palantir", "AI and tech", "Nasdaq" }, new[] { "IBM", "IBM", "AI and tech", "New York" },
+            new[] { "CRM", "Salesforce", "AI and tech", "New York" }, new[] { "INTC", "Intel", "AI and tech", "Nasdaq" }, new[] { "ADBE", "Adobe", "AI and tech", "Nasdaq" },
+            new[] { "-", "Anthropic", "AI and tech", "private" }, new[] { "-", "OpenAI", "AI and tech", "private" }, new[] { "-", "SpaceX", "AI and tech", "private" },
+            new[] { "SHOP.TO", "Shopify", "Canada", "Toronto" }, new[] { "RY.TO", "Royal Bank of Canada", "Canada", "Toronto" }, new[] { "TD.TO", "TD Bank", "Canada", "Toronto" },
+            new[] { "BNS.TO", "Scotiabank", "Canada", "Toronto" }, new[] { "BMO.TO", "BMO", "Canada", "Toronto" }, new[] { "ENB.TO", "Enbridge", "Canada", "Toronto" },
+            new[] { "CNR.TO", "CN Rail", "Canada", "Toronto" }, new[] { "BCE.TO", "BCE (Bell)", "Canada", "Toronto" }, new[] { "CSU.TO", "Constellation Software", "Canada", "Toronto" },
+            new[] { "^GSPC", "S&P 500", "Indexes", "New York" }, new[] { "^IXIC", "Nasdaq Composite", "Indexes", "New York" }, new[] { "^DJI", "Dow Jones", "Indexes", "New York" },
+            new[] { "^GSPTSE", "S&P/TSX Composite", "Indexes", "Toronto" }, new[] { "^FTSE", "FTSE 100 (London)", "Indexes", "London" }, new[] { "^N225", "Nikkei 225 (Tokyo)", "Indexes", "Tokyo" },
+            new[] { "BTCUSD", "Bitcoin", "Crypto", "24/7" }, new[] { "ETHUSD", "Ethereum", "Crypto", "24/7" }, new[] { "GCUSD", "Gold", "Crypto", "futures" } };
+        public static readonly string[] CompanyGroups = { "Popular", "AI and tech", "Canada", "Indexes", "Crypto" };
+        // your list (Cfg.Follow): at most 20, in your order, junk dropped
+        public static List<string> Follow() { return (Cfg.Follow ?? "").Split(',').Select(z => z.Trim()).Where(ValidSym).Distinct().Take(20).ToList(); }
+        public static void SetFollow(IEnumerable<string> l) { Cfg.Follow = string.Join(",", l.Where(ValidSym).Distinct().Take(20)); Cfg.Save(); }
+        public static void FetchFollow(Action done) { var l = Follow(); if (l.Count > 0) FetchList(3, l, done); }
+        // a name or ticker search at the service you have a key for (the picker's search box) - [ticker, name, exchange]
+        public static List<string[]> Search(string q)
+        {
+            var res = new List<string[]>(); q = (q ?? "").Trim(); if (q.Length < 2 || Policy.NoOnline) return res;
+            try
+            {
+                string k1 = Sports.Key("fmp"), k2 = Sports.Key("finnhub"), k3 = Sports.Key("twelve");
+                if (k1 != "")
+                {
+                    string b = HttpSmall.Get("https://financialmodelingprep.com/stable/search-name?query=" + Uri.EscapeDataString(q) + "&limit=15&apikey=" + Uri.EscapeDataString(k1), 128); Call();
+                    foreach (Match m in Regex.Matches(b ?? "", "\\{[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"[^{}]*?\"name\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\\}")) { string ex = Regex.Match(m.Value, "\"exchange\"\\s*:\\s*\"([^\"]{1,20})\"").Groups[1].Value; res.Add(new[] { m.Groups[1].Value, m.Groups[2].Value, ex }); }
+                }
+                else if (k2 != "")
+                {
+                    string b = HttpSmall.Get("https://finnhub.io/api/v1/search?q=" + Uri.EscapeDataString(q) + "&token=" + Uri.EscapeDataString(k2), 128);
+                    foreach (Match m in Regex.Matches(b ?? "", "\"description\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"")) res.Add(new[] { m.Groups[2].Value, m.Groups[1].Value, "" });
+                }
+                else if (k3 != "")
+                {
+                    string b = HttpSmall.Get("https://api.twelvedata.com/symbol_search?symbol=" + Uri.EscapeDataString(q) + "&apikey=" + Uri.EscapeDataString(k3), 128);
+                    foreach (Match m in Regex.Matches(b ?? "", "\\{[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"[^{}]*?\"instrument_name\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\"exchange\"\\s*:\\s*\"([^\"]{1,20})\"")) res.Add(new[] { m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value });
+                }
+            }
+            catch (Exception e) { if (!(e is System.Net.WebException || e is IOException)) throw; Program.Log("search: " + e.GetType().Name); }
+            return res.Where(r => ValidSym(r[0])).GroupBy(r => r[0]).Select(gr => gr.First()).Take(15).ToList();
+        }
+        // the price services, in the order they're asked: key name, name, where to get a free key, what the free plan gives
+        public static readonly string[][] Providers = {
+            new[] { "fmp", "Financial Modeling Prep", "https://site.financialmodelingprep.com/developer/docs", "250 calls a day - indexes, shares, futures" },
+            new[] { "finnhub", "Finnhub", "https://finnhub.io/register", "60 calls a minute - US shares" },
+            new[] { "twelve", "Twelve Data", "https://twelvedata.com/register", "800 calls a day - US shares and crypto" } };
+        public static bool HasQuoteKey() { return KeyCount() > 0; }
+        static int KeyCount() { return Providers.Count(p => Sports.Key(p[0]) != ""); }
+        // what each service can price on its free plan: FMP anything; Finnhub plain US tickers; Twelve Data plain US tickers and BTC/ETH
+        static bool Covers(string prov, string sym)
+        {
+            if (prov == "fmp") return true;
+            bool plain = Regex.IsMatch(sym ?? "", "^[A-Z]{1,5}$") && !FuturesList.Any(f => f[0] == sym);
+            if (prov == "finnhub") return plain;
+            return plain || sym == "BTCUSD" || sym == "ETHUSD";
+        }
+        // one price from one service (throws WebException when the service can't be reached or refuses the key)
+        internal static Quote Ask(string prov, string key, string sym)
+        {
+            if (prov == "fmp") return ParseFmp(HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64), sym);
+            if (prov == "finnhub") return ParseFinnhub(HttpSmall.Get("https://finnhub.io/api/v1/quote?symbol=" + Uri.EscapeDataString(sym) + "&token=" + Uri.EscapeDataString(key), 16), sym);
+            string ts = sym == "BTCUSD" ? "BTC/USD" : sym == "ETHUSD" ? "ETH/USD" : sym;
+            return ParseTwelve(HttpSmall.Get("https://api.twelvedata.com/quote?symbol=" + Uri.EscapeDataString(ts) + "&apikey=" + Uri.EscapeDataString(key), 32), sym);
+        }
+        static double JNum(string json, string key) { var m = Regex.Match(json ?? "", "\"" + key + "\"\\s*:\\s*\"?(-?[0-9]+(?:\\.[0-9]+)?(?:[eE][-+]?[0-9]+)?)\"?"); double v; return m.Success && double.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : double.NaN; }
+        static Quote Named(Quote q, string json)
+        {
+            var c = Companies.FirstOrDefault(z => z[0] == q.Sym); if (c != null) { q.Name = c[1]; return q; }
+            var nm = Regex.Match(json ?? "", "\"(?:name|instrument_name)\"\\s*:\\s*\"([^\"]{1,60})\""); q.Name = nm.Success ? nm.Groups[1].Value : q.Sym; return q;
+        }
+        public static Quote ParseFinnhub(string json, string sym)
+        {
+            double price = JNum(json, "c"), pct = JNum(json, "dp"), ts = JNum(json, "t");
+            if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;   // Finnhub answers 0 for a symbol it doesn't know
+            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 50 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+        }
+        public static Quote ParseTwelve(string json, string sym)
+        {
+            if ((json ?? "").IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0) return null;
+            double price = JNum(json, "close"), pct = JNum(json, "percent_change"), ts = JNum(json, "timestamp");
+            if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;
+            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 50 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+        }
         // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
         public static int EveryMin { get { int m; return int.TryParse(Cfg.FmpEvery, out m) && m >= 1 ? m : 15; } }
         public static bool FreePace { get { return EveryMin >= 15; } }
@@ -331,7 +419,7 @@ namespace AdeeboMeter
                 if (d == DayOfWeek.Saturday) return false; if (d == DayOfWeek.Sunday) return t >= new TimeSpan(18, 0, 0); if (d == DayOfWeek.Friday) return t < new TimeSpan(17, 0, 0);
                 return t < new TimeSpan(17, 0, 0) || t >= new TimeSpan(18, 0, 0);
             }
-            string v = Venue(sym); var x = Exchanges.FirstOrDefault(e => e.Name == v); return x != null && State(x, utc) != "closed";
+            string v = Venue(sym); var x = Exchanges.FirstOrDefault(e => e.Name == v); return x != null && State(x, utc) == "open";   // hunters14 CORE-L2: a lunch break is not open for fetching (the price can't change). Holidays are known for New York and Toronto only - elsewhere a holiday still counts as a trading day
         }
         public static string Venue(string sym)
         {
@@ -345,7 +433,7 @@ namespace AdeeboMeter
         static void FetchList(int qi, List<string> list, Action done)
         {
             if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried[qi]).TotalMinutes < EveryMin) return;
-            string key = Sports.Key("fmp"); if (key == "") return;
+            if (!HasQuoteKey()) return;
             qBusy = true; qTried[qi] = DateTime.UtcNow;
             new Thread(() =>
             {
@@ -354,14 +442,24 @@ namespace AdeeboMeter
                 {
                     foreach (var sym in list)
                     {
-                        if (FreePace && CallsToday() >= 230) {   /* the free plan: 250 a day; every 5 or every minute means a paid plan, which has no daily cap */ lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
+                        // 24 Nov (Adeeb: "give 2-3 websites in case 1 doesn't work"): each symbol is asked of the services you have a key
+                        // for, in order (Financial Modeling Prep, Finnhub, Twelve Data), skipping one that can't price it; the next one
+                        // answers when one fails. The free FMP plan's 250 a day still counts: past 230, FMP is skipped for the day.
                         // round 6: a call is counted when the service answered (even with an error) - never for a request that didn't leave
-                        // hunt-5: one symbol that fails doesn't cost the rest - the next is still asked; a wrong key (401) or two
-                        // failures in a row (offline) stop the round, so no calls are spent on a line that isn't there
-                        string body;
-                        try { body = HttpSmall.Get("https://financialmodelingprep.com/stable/quote?symbol=" + Uri.EscapeDataString(sym) + "&apikey=" + Uri.EscapeDataString(key), 64); fails = 0; Call(); }
-                        catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null) Call(); if ((hr != null && (int)hr.StatusCode == 401) || ++fails >= 2) throw; Program.Log("quotes: " + sym + " " + we.Status); continue; }
-                        var q = ParseFmp(body, sym);
+                        // hunt-5: one symbol that fails doesn't cost the rest; a wrong key (401) on the only service, or two symbols in a
+                        // row that no service answered (offline), stop the round, so no calls are spent on a line that isn't there
+                        Quote q = null; System.Net.WebException err = null; bool tried = false, fmpCapped = false;
+                        foreach (var pv in Providers)
+                        {
+                            string pk = Sports.Key(pv[0]); if (pk == "" || !Covers(pv[0], sym)) continue;
+                            if (pv[0] == "fmp" && FreePace && CallsToday() >= 230) { fmpCapped = true; continue; }
+                            tried = true;
+                            try { q = Ask(pv[0], pk, sym); if (pv[0] == "fmp") Call(); err = null; if (q != null) break; }
+                            catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null && pv[0] == "fmp") Call(); err = we; Program.Log("quotes: " + pv[0] + " " + sym + " " + we.Status); }
+                        }
+                        if (!tried && fmpCapped) { lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
+                        if (q == null && err != null) { var hr = err.Response as System.Net.HttpWebResponse; if ((hr != null && (int)hr.StatusCode == 401 && KeyCount() == 1) || ++fails >= 2) throw err; continue; }
+                        fails = 0;
                         if (q == null) { if (qi == 2) lock (k) { NoQuoteDay(); int n; noQuote.TryGetValue(sym, out n); noQuote[sym] = n + 1; } continue; }
                         if (qi == 2) lock (k) noQuote.Remove(sym);
                         lock (k) { Quotes[sym] = q; Ver++; List<double> h; if (!Hist.TryGetValue(sym, out h)) Hist[sym] = h = new List<double>(); if (h.Count == 0 || h[h.Count - 1] != q.Price) h.Add(q.Price); if (h.Count > 40) h.RemoveAt(0); } got++;

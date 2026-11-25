@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -332,21 +332,20 @@ namespace AdeeboMeter
             {
                 string dir = Path.Combine(Program.DataDir, "reports"); Directory.CreateDirectory(dir);
                 string file = Path.Combine(dir, "ISP-report-" + DateTime.Now.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".html");
-                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Connection quality report</title><style>body{font:14px/1.5 'Segoe UI',sans-serif;color:#1B2330;max-width:900px;margin:32px auto;padding:0 16px}h1{font-size:24px;margin:0 0 4px}h2{font-size:13px;letter-spacing:.06em;color:#4A5568;margin:22px 0 6px;border-bottom:1px solid #E3E8EF;padding-bottom:4px}table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #F0F2F5;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#8A5A00}.m{color:#4A5568;font-size:12px}.box{background:#F3F5F9;border-radius:8px;padding:12px}@media print{body{margin:0}}.pb{break-before:page;page-break-before:always;height:0}.tag{font-size:11px;letter-spacing:.08em;font-weight:700;color:#6B7685;margin:28px 0 6px}.big{font-size:22px;font-weight:700;line-height:1.3;margin:6px 0 10px}.v0{border-left:6px solid #2DA44E}.v1{border-left:6px solid #BF8700}.v2{border-left:6px solid #CF222E}.card{border:1px solid #E3E8EF;border-radius:12px;padding:14px 18px;margin:0 0 14px;break-inside:avoid}.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.chip{border-radius:10px;padding:8px 12px;background:#F6F8FB;min-width:150px}.chip b{display:block;font-size:18px}.chip span{font-size:12px;color:#4A5568}.ok{color:#2DA44E;font-weight:700}.ask li{margin:0 0 6px}.cap{font-size:12px;color:#6B7685}svg{max-width:100%;height:auto}@media print{body{margin:0 auto}.card{border-color:#ccc}}</style></head><body>");
+                var sb = new StringBuilder("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Connection quality report</title><style>body{font:15px/1.55 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;color:#16191E;background:#fff;max-width:900px;margin:40px auto;padding:0 20px}h1{font-size:26px;line-height:1.15;margin:0 0 2px;font-weight:700;letter-spacing:-.01em}h2{font-size:19px;line-height:1.25;margin:0 0 6px;font-weight:700}h3{font-size:16px;margin:22px 0 4px;font-weight:700}section{padding:22px 0;border-top:1px solid #DDE1E7;break-inside:avoid}.top{display:flex;gap:14px;align-items:center;margin:0 0 20px}.top .logo{flex:none}.meta{margin:0;color:#5A6270;font-size:13px}.answer{border:0;padding-top:4px}.big{font-size:22px;font-weight:700;line-height:1.3;margin:0 0 18px;max-width:42em}.cap{font-size:13px;color:#5A6270;margin:0 0 12px;max-width:62em}.ruled{list-style:none;margin:6px 0 0;padding:0}.ruled li{display:flex;gap:8px;align-items:center;margin:4px 0}.ask{margin:6px 0 0;padding-left:1.3em}.ask li{margin:0 0 6px}.msg{background:#F1F3F6;border-radius:10px;padding:14px 16px;white-space:pre-wrap}table{border-collapse:collapse;width:100%;font-size:14px}td{padding:6px 8px;border-bottom:1px solid #EEF0F3;vertical-align:top}td.n{font-weight:600;width:240px}.l2{color:#B42318}.l1{color:#875A00}.m{color:#5A6270;font-size:12.5px}.box{background:#F1F3F6;border-radius:10px;padding:12px 14px}.pb{break-before:page;page-break-before:always;height:0}.tier{margin-top:28px}svg{max-width:100%;height:auto;display:block}::selection{background:rgba(17,85,224,.25)}@media print{body{margin:0 auto;max-width:none}}</style></head><body>");
                 Func<string, string> XX = z => Esc(GameSession.Redact(z ?? "", ssid));
-                try { sb.Append(Pages(v, XX)); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("isp report pictures: " + e.Message); }
-                sb.Append("<div class=\"pb\"></div><div class=\"tag\">FOR TIER 2 · EVERY MEASUREMENT</div>");
-                sb.Append("<h1>Connection quality report</h1><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
+                bool pages = false; try { sb.Append(Pages(v, XX)); pages = true; } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("isp report pictures: " + e.Message); }
+                sb.Append("<div class=\"pb\"></div><section class=\"tier\"><h2>Every measurement, for tier 2</h2><div class=\"m\">Measured from the customer's PC with AdeeboMeter (free, open source) on " + Esc(DateTime.Now.ToString("ddd d MMM yyyy HH:mm", CultureInfo.CurrentCulture)) + ". Pings and TCP connects from this PC - not the game's own data.</div><table>");
                 foreach (var r in rows)
                 {
                     // redacted as text first, then made HTML (a Wi-Fi name "AT&T" is found before it becomes AT&amp;T, and a name like "td" can't break the tags)
                     Func<string, string> X = z => Esc(GameSession.Redact(z ?? "", ssid));
-                    if (r[0] == "-1") { sb.Append("</table><h2>" + X(r[1]) + "</h2>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + X(r[2]) + "</div>" : "") + "<table>"); continue; }
+                    if (r[0] == "-1") { sb.Append("</table><h3>" + X(Sc(r[1])) + "</h3>" + (r[2] != "" && r[2] != "click to copy" ? "<div class=\"m\">" + X(r[2]) + "</div>" : "") + "<table>"); continue; }
                     if (r.Length > 5 && r[5].StartsWith("show:", StringComparison.Ordinal)) continue;
-                    if (r[1] == "Message") { sb.Append("</table><div class=\"box\">" + X(r[2]) + "</div><table>"); continue; }
+                    if (r[1] == "Message") { if (pages) continue; sb.Append("</table><div class=\"box\">" + X(r[2]) + "</div><table>"); continue; }
                     sb.Append("<tr><td class=\"n\">" + X(r[1]) + "</td><td class=\"l" + Esc(r[0]) + "\">" + X(r[2]) + (r[3] != "" ? "<div class=\"m\">" + X(r[3]) + "</div>" : "") + "</td></tr>");
                 }
-                sb.Append("</table></body></html>");
+                sb.Append("</table></section></body></html>");
                 File.WriteAllText(file, sb.ToString(), new UTF8Encoding(false));
                 return file;
             }

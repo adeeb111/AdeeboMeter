@@ -5644,3 +5644,46 @@ New year, same old internet hiccups.	Nouvelle année, mêmes petits hoquets d'in
 Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	En bas à droite, par défaut. Pour le déplacer, laissez la souris immobile dessus un instant, puis faites glisser - ou zone de notification › Widget de coin › Déplacer le widget. Un clic ouvre AdeeboMeter.
 Keep resting to move it	Restez immobile pour le déplacer
 On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	Activé : le widget disparaît quand la souris approche, pour ne jamais couvrir ce que vous pointez - sauf quand une fenêtre couvre son coin, où rester dessus l'ouvre encore. Pour le déplacer, utilisez la zone de notification : Widget de coin > Déplacer le widget.
+Hover wait	Délai de survol
+How long to rest the mouse on the widget before it brightens or opens - a mouse just passing over leaves it alone.	Combien de temps garder la souris sur le widget avant qu'il s'éclaire ou s'ouvre - une souris qui ne fait que passer le laisse tranquille.
+Rest here a little longer to move it	Restez un peu plus ici pour le déplacer
+With a dashed outline, drag it to move it	Avec un contour en pointillé, faites-le glisser pour le déplacer
+Right-click the tray icon for everything else	Clic droit sur l'icône de la barre des tâches pour tout le reste
+(needs a free price key)	(il faut une clé de prix gratuite)
+Add or change...	Ajouter ou modifier...
+Add to widget	Ajouter au widget
+AdeeboMeter - live prices	AdeeboMeter - prix en direct
+AdeeboMeter - your companies	AdeeboMeter - vos entreprises
+Check and save	Vérifier et enregistrer
+Checking the key with one price...	Vérification de la clé avec un prix...
+Couldn't reach the service just now - the key was kept and will be tried again.	Impossible de joindre le service pour l'instant - la clé est gardée et sera réessayée.
+Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name.	Suivez des entreprises et des indices - choisissez des noms connus comme Google, Meta ou Shopify, ou cherchez-en par nom.
+Following	Suivi
+Get a free key	Obtenir une clé gratuite
+Get a free key from any one of these, then paste it below. It stays encrypted on this PC. With keys from two, the second answers when the first can't.	Obtenez une clé gratuite chez l'un de ces services, puis collez-la ci-dessous. Elle reste chiffrée sur ce PC. Avec des clés de deux services, le second répond quand le premier ne peut pas.
+To remove the chosen service's key, leave the box empty and press Check and save.	Pour retirer la clé du service choisi, laissez la case vide et appuyez sur Vérifier et enregistrer.
+Nothing found - try the company's name or its ticker (GOOGL, SHOP.TO).	Rien trouvé - essayez le nom de l'entreprise ou son symbole (GOOGL, SHOP.TO).
+Numbers only - never advice.	Des chiffres seulement - jamais de conseils.
+Pick a few, or search any company by name or ticker.	Choisissez-en quelques-unes, ou cherchez une entreprise par nom ou symbole.
+Pick companies...	Choisir des entreprises...
+Prices show once a free price key is added.	Les prix s'affichent une fois une clé de prix gratuite ajoutée.
+Searching...	Recherche...
+The service didn't accept that key. Check you picked the right service above.	Le service n'a pas accepté cette clé. Vérifiez que vous avez choisi le bon service ci-dessus.
+Turn on live prices...	Activer les prix en direct...
+With your own key, while Markets is open: index, company and futures prices from financialmodelingprep.com, finnhub.io or twelvedata.com - only the services you added a key for - as often as you set (1-60 min). A search in the company picker asks the same service.	Avec votre propre clé, pendant que Marchés est ouvert : prix d'indices, d'entreprises et de contrats à terme depuis financialmodelingprep.com, finnhub.io ou twelvedata.com - seulement les services dont vous avez ajouté une clé - aussi souvent que vous le réglez (1 à 60 min). Une recherche dans le sélecteur d'entreprises interroge le même service.
+following	suivies
+key saved	clé enregistrée
+no price	pas de prix
+of 4 widget places used	des 4 places du widget utilisées
+on the widget	sur le widget
+private - no public shares to follow	privée - pas d'actions en bourse à suivre
+the ticker you typed	le symbole que vous avez tapé
+Your Companies	Vos entreprises
+Popular	Populaires
+AI and tech	IA et techno
+Canada	Canada
+Indexes	Indices
+Crypto	Crypto
+250 calls a day - indexes, shares, futures	250 appels par jour - indices, actions, contrats à terme
+60 calls a minute - US shares	60 appels par minute - actions américaines
+800 calls a day - US shares and crypto	800 appels par jour - actions américaines et crypto

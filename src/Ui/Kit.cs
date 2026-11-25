@@ -13,6 +13,38 @@ namespace AdeeboMeter
     // their own boxes, so a change of look is made once. All of it is plain GDI+ - drawn only when a page repaints.
     static class Kit
     {
+        // ---------- one look for every small window (24 Nov, Adeeb: "make the pop-ups go with our flow"): the card colour, a dark
+        // title bar in the dark theme, calm text boxes, one blue button (the window's OK) and quiet outlined ones for the rest.
+        // Called just before ShowDialog; the window's own layout is kept.
+        public static void Polish(Form f)
+        {
+            if (f == null) return;
+            f.BackColor = Theme.Card; f.ForeColor = Theme.Ink;
+            f.HandleCreated += delegate { try { int on = Theme.Dark ? 1 : 0; Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
+            PolishAll(f, f);
+        }
+        static void PolishAll(Control parent, Form f)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                var tb = c as TextBox; var lb = c as ListBox; var cb = c as ComboBox; var bt = c as Button; var la = c as Label; var ck = c as CheckBox; var rb = c as RadioButton;
+                if (tb != null) { tb.BackColor = Theme.Dark ? Theme.Soft : Color.White; tb.ForeColor = Theme.Ink; tb.BorderStyle = BorderStyle.FixedSingle; }
+                else if (lb != null) { lb.BackColor = Theme.Card; lb.ForeColor = Theme.Ink; lb.BorderStyle = BorderStyle.FixedSingle; }
+                else if (cb != null) { cb.BackColor = Theme.Dark ? Theme.Soft : Color.White; cb.ForeColor = Theme.Ink; cb.FlatStyle = FlatStyle.Flat; }
+                else if (bt != null)
+                {
+                    bool main = ReferenceEquals(f.AcceptButton, bt) || (f.AcceptButton == null && bt.DialogResult == DialogResult.OK);
+                    bt.FlatStyle = FlatStyle.Flat; bt.Cursor = Cursors.Hand; bt.UseVisualStyleBackColor = false;
+                    bt.BackColor = main ? Theme.Blue : Theme.Card; bt.ForeColor = main ? Color.White : Theme.Ink;
+                    bt.FlatAppearance.BorderSize = main ? 0 : 1; bt.FlatAppearance.BorderColor = Theme.Line;
+                    bt.FlatAppearance.MouseOverBackColor = main ? Theme.BlueHot : Theme.Soft; bt.FlatAppearance.MouseDownBackColor = main ? Theme.BlueHot : Theme.Line;
+                    if (main) bt.Font = new Font(bt.Font, FontStyle.Bold);
+                }
+                else if (la != null) { if (la.ForeColor == SystemColors.ControlText || la.ForeColor.ToArgb() == Color.Black.ToArgb()) la.ForeColor = Theme.Ink; }
+                else if (ck != null || rb != null) { c.ForeColor = Theme.Ink; }
+                if (c.HasChildren && !(c is PillButton)) PolishAll(c, f);
+            }
+        }
         // 23 Nov polish: labels in sentence case, never shouting capitals ("YOUR ROUTER" -> "Your router"). Only text that has
         // no lower-case letters at all is changed, so translations and names typed in mixed case pass through untouched;
         // acronyms and product names keep their own spelling.

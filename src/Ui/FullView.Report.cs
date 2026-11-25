@@ -70,7 +70,7 @@ namespace AdeeboMeter
                     };
                     f.Controls.Add(wl); f.ClientSize = new Size(f.ClientSize.Width, Math.Max(f.ClientSize.Height, wl.Bottom + Sc(14)));
                 }
-                Draw.FitOnShow(f, true); f.ShowDialog(this);
+                Kit.Polish(f); Draw.FitOnShow(f, true); f.ShowDialog(this);
             }
         }
         // the Hall of Fame card, sent the same way (the check runs by itself and the issue closes on a match)

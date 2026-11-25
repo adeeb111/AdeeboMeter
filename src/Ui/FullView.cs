@@ -625,7 +625,7 @@ namespace AdeeboMeter
             if (tab == "procs" && (DateTime.UtcNow - lastProcs).TotalSeconds >= 2) RefreshProcs();
             if (tab == "shell") ShStatusTick();
             { int bzMore; bool bzOn = Busy.Oldest(out bzMore) != null; if (bzOn || footBusy) footer.Invalidate(); footBusy = bzOn; }   // the footer's "waiting on" note ticks, then clears
-            if (tab == "link") { RefreshLink(false); if (switchBusy || (linkSnap == null && linkBusy)) linkCanvas.Invalidate(); }   // the first read ticks its seconds
+            if (tab == "link") { RefreshLink(false); if (switchBusy) linkCanvas.Invalidate(); else if (linkSnap == null && linkBusy && footTick % 2 == 0) { if (linkAskRect.IsEmpty) linkCanvas.Invalidate(); else linkCanvas.Invalidate(linkAskRect); } }   // the first read ticks its seconds
             if (tab == "changes") changesSeen = DateTime.Now;
             UpdateBadges();
             if (live.Running && ++liveTick % 2 == 0)
@@ -767,6 +767,22 @@ namespace AdeeboMeter
             string sub = null; int c = page.IndexOf(':'); if (c > 0) { sub = page.Substring(c + 1); page = page.Substring(0, c); }   // toolbox:dev or toolbox:snmpif
             // --view peek:toolbox writes what screen peek would send for that page to peek-test.jpg beside the exe
             if (page == "peek" && sub != null) { var jb = PeekPage(sub); if (jb != null) File.WriteAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "peek-test.jpg"), jb); page = sub; }
+            // --view shot:gamer (website pictures) opens the page at 1280 x 860, waits 8 s for its numbers to come in, then writes
+            // shot-gamer.png beside the exe (or in the portable folder) at full size. Add --dark for the dark theme.
+            if (page == "shot" && sub != null)
+            {
+                string want = sub; page = sub; sub = null;
+                if (WindowState != FormWindowState.Normal) WindowState = FormWindowState.Normal;
+                var size = new Size(Sc(1280), Sc(860)); if (Size != size) Size = size;
+                var wait = new System.Windows.Forms.Timer { Interval = 8000 };
+                wait.Tick += (o, e) =>
+                {
+                    wait.Stop(); wait.Dispose();
+                    try { var pb = ShotPage(); string f = Path.Combine(Program.WriteDir, "shot-" + want + ".png"); File.WriteAllBytes(f, pb); Program.Log("shot: wrote " + f); }
+                    catch (Exception x) { if (x is OutOfMemoryException) throw; Program.Log("shot: " + x.Message); }
+                };
+                wait.Start();
+            }
             // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
             if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
             var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell", "lab" };

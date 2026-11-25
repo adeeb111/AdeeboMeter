@@ -5632,3 +5632,46 @@ New year, same old internet hiccups.	Año nuevo, los mismos hipos de internet.
 Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	Abajo a la derecha, por defecto. Para moverlo, deja el ratón quieto sobre él un momento y arrastra - o bandeja › Widget de esquina › Mover widget. Un clic abre AdeeboMeter.
 Keep resting to move it	Sigue quieto para moverlo
 On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	Activado: el widget desaparece cuando el ratón se acerca, para no tapar lo que señalas - salvo cuando una ventana cubre su esquina, donde quedarte encima aún lo abre. Para moverlo, usa la bandeja: Widget de esquina > Mover widget.
+Hover wait	Espera al pasar el cursor
+How long to rest the mouse on the widget before it brightens or opens - a mouse just passing over leaves it alone.	Cuánto tiempo dejar el ratón sobre el widget antes de que se ilumine o se abra: un ratón que solo pasa lo deja tranquilo.
+Rest here a little longer to move it	Quédate un poco más aquí para moverlo
+With a dashed outline, drag it to move it	Con un contorno discontinuo, arrástralo para moverlo
+Right-click the tray icon for everything else	Haz clic derecho en el icono de la bandeja para todo lo demás
+(needs a free price key)	(necesita una clave de precios gratuita)
+Add or change...	Añadir o cambiar...
+Add to widget	Añadir al widget
+AdeeboMeter - live prices	AdeeboMeter - precios en vivo
+AdeeboMeter - your companies	AdeeboMeter - tus empresas
+Check and save	Comprobar y guardar
+Checking the key with one price...	Comprobando la clave con un precio...
+Couldn't reach the service just now - the key was kept and will be tried again.	No se pudo contactar con el servicio ahora: la clave se guardó y se volverá a probar.
+Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name.	Sigue empresas e índices: elige nombres conocidos como Google, Meta o Shopify, o busca cualquiera por nombre.
+Following	Siguiendo
+Get a free key	Obtener una clave gratuita
+Get a free key from any one of these, then paste it below. It stays encrypted on this PC. With keys from two, the second answers when the first can't.	Consigue una clave gratuita de cualquiera de estos servicios y pégala abajo. Se guarda cifrada en este PC. Con claves de dos, el segundo responde cuando el primero no puede.
+To remove the chosen service's key, leave the box empty and press Check and save.	Para quitar la clave del servicio elegido, deja el cuadro vacío y pulsa Comprobar y guardar.
+Nothing found - try the company's name or its ticker (GOOGL, SHOP.TO).	No se encontró nada: prueba el nombre de la empresa o su símbolo (GOOGL, SHOP.TO).
+Numbers only - never advice.	Solo cifras, nunca consejos.
+Pick a few, or search any company by name or ticker.	Elige algunas o busca cualquier empresa por nombre o símbolo.
+Pick companies...	Elegir empresas...
+Prices show once a free price key is added.	Los precios aparecen al añadir una clave de precios gratuita.
+Searching...	Buscando...
+The service didn't accept that key. Check you picked the right service above.	El servicio no aceptó esa clave. Comprueba que elegiste el servicio correcto arriba.
+Turn on live prices...	Activar precios en vivo...
+With your own key, while Markets is open: index, company and futures prices from financialmodelingprep.com, finnhub.io or twelvedata.com - only the services you added a key for - as often as you set (1-60 min). A search in the company picker asks the same service.	Con tu propia clave, mientras Mercados está abierto: precios de índices, empresas y futuros de financialmodelingprep.com, finnhub.io o twelvedata.com (solo los servicios cuya clave añadiste), con la frecuencia que elijas (1-60 min). Una búsqueda en el selector de empresas consulta el mismo servicio.
+following	siguiendo
+key saved	clave guardada
+no price	sin precio
+of 4 widget places used	de 4 lugares del widget usados
+on the widget	en el widget
+private - no public shares to follow	privada: no tiene acciones en bolsa que seguir
+the ticker you typed	el símbolo que escribiste
+Your Companies	Tus empresas
+Popular	Populares
+AI and tech	IA y tecnología
+Canada	Canadá
+Indexes	Índices
+Crypto	Cripto
+250 calls a day - indexes, shares, futures	250 llamadas al día: índices, acciones, futuros
+60 calls a minute - US shares	60 llamadas por minuto: acciones de EE. UU.
+800 calls a day - US shares and crypto	800 llamadas al día: acciones de EE. UU. y cripto

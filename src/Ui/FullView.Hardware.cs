@@ -463,7 +463,7 @@ namespace AdeeboMeter
                     Theme.Fill(g, dn, dn.Height / 2, Theme.Blue); VTextC(g, L.T("Finish"), Draw.fBtn, Theme.OnBlue, dn.X + dn.Width / 2, dn.Y + 8 * S, dn.Width);
                     VText(g, f.Away ? L.T("Windows took the keyboard (Win, Alt+Tab or a notification) - click here or Alt+Tab back to carry on.") : f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h))) + " / " + KeyRows.Sum(r => r.Split(' ').Length), Draw.fSmall, f.Away ? Theme.LvText(1) : Theme.Sub, 16 * S, cs.Height - 40 * S);
                 };
-                Draw.FitOnShow(f, true); f.ShowDialog(this);
+                Kit.Polish(f); Draw.FitOnShow(f, true); f.ShowDialog(this);
                 foreach (var row in KeyRows) foreach (var k in row.Split(' ')) if (!f.Hit.Contains(k) && k != "PrtSc") missing.Add(k);   /* review 1.1.6 U1 #18: Windows 11's screen capture takes PrtSc, and many laptops have none - not a dead key */
                 return f.Hit.Count(h => KeyRows.Any(r => r.Split(' ').Contains(h)));
             }

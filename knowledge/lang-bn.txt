@@ -5632,3 +5632,46 @@ New year, same old internet hiccups.	নতুন বছর, ইন্টার�
 Bottom right, the default. To move it, rest the mouse still on it for a moment, then drag - or tray › Corner widget › Move widget. A click opens AdeeboMeter.	নিচে ডানে, ডিফল্ট। সরাতে, মাউস কিছুক্ষণ এর ওপর স্থির রাখুন, তারপর টানুন - অথবা ট্রে › কোণের উইজেট › উইজেট সরান। ক্লিক করলে AdeeboMeter খোলে।
 Keep resting to move it	সরাতে স্থির থাকুন
 On: the widget disappears as the mouse comes near, so it never covers what you point at - except when a window covers its corner, where resting on it still opens it. To move it, use the tray: Corner widget > Move widget.	চালু: মাউস কাছে এলে উইজেট মিলিয়ে যায়, তাই আপনি যেখানে দেখাচ্ছেন তা কখনো ঢাকে না - তবে কোনো উইন্ডো এর কোণ ঢাকলে, এর ওপর স্থির থাকলে এখনও খোলে। সরাতে ট্রে ব্যবহার করুন: কোণের উইজেট > উইজেট সরান।
+Hover wait	হোভারের অপেক্ষা
+How long to rest the mouse on the widget before it brightens or opens - a mouse just passing over leaves it alone.	উইজেট উজ্জ্বল হওয়া বা খোলার আগে মাউস কতক্ষণ এর ওপর রাখতে হবে - শুধু মাউস পার হয়ে গেলে কিছু হয় না।
+Rest here a little longer to move it	সরাতে এখানে আরেকটু থামুন
+With a dashed outline, drag it to move it	ড্যাশ দেওয়া রেখা দেখা গেলে টেনে সরান
+Right-click the tray icon for everything else	বাকি সবকিছুর জন্য ট্রে আইকনে রাইট-ক্লিক করুন
+(needs a free price key)	(বিনামূল্যের দামের কী লাগবে)
+Add or change...	যোগ বা বদল করুন...
+Add to widget	উইজেটে যোগ করুন
+AdeeboMeter - live prices	AdeeboMeter - লাইভ দাম
+AdeeboMeter - your companies	AdeeboMeter - আপনার কোম্পানি
+Check and save	যাচাই করে সেভ করুন
+Checking the key with one price...	একটি দাম দিয়ে কী যাচাই হচ্ছে...
+Couldn't reach the service just now - the key was kept and will be tried again.	এখন সেবাটিতে পৌঁছানো গেল না - কী রাখা হয়েছে, আবার চেষ্টা করা হবে।
+Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name.	কোম্পানি ও সূচক অনুসরণ করুন - Google, Meta বা Shopify-এর মতো পরিচিত নাম থেকে বাছুন, বা নাম দিয়ে খুঁজুন।
+Following	অনুসরণ করছেন
+Get a free key	বিনামূল্যের কী নিন
+Get a free key from any one of these, then paste it below. It stays encrypted on this PC. With keys from two, the second answers when the first can't.	এগুলোর যেকোনো একটি থেকে বিনামূল্যের কী নিন, তারপর নিচে পেস্ট করুন। এটি এই পিসিতে এনক্রিপ্ট করা থাকে। দুটি সেবার কী থাকলে প্রথমটি না পারলে দ্বিতীয়টি উত্তর দেয়।
+To remove the chosen service's key, leave the box empty and press Check and save.	বাছাই করা সেবার কী সরাতে ঘরটি খালি রেখে যাচাই করে সেভ করুন চাপুন।
+Nothing found - try the company's name or its ticker (GOOGL, SHOP.TO).	কিছু পাওয়া যায়নি - কোম্পানির নাম বা টিকার দিয়ে চেষ্টা করুন (GOOGL, SHOP.TO)।
+Numbers only - never advice.	শুধু সংখ্যা - কখনো পরামর্শ নয়।
+Pick a few, or search any company by name or ticker.	কয়েকটি বাছুন, বা নাম বা টিকার দিয়ে যেকোনো কোম্পানি খুঁজুন।
+Pick companies...	কোম্পানি বাছুন...
+Prices show once a free price key is added.	বিনামূল্যের দামের কী যোগ করলে দাম দেখা যাবে।
+Searching...	খোঁজা হচ্ছে...
+The service didn't accept that key. Check you picked the right service above.	সেবাটি এই কী নেয়নি। ওপরে সঠিক সেবা বেছেছেন কি না দেখুন।
+Turn on live prices...	লাইভ দাম চালু করুন...
+With your own key, while Markets is open: index, company and futures prices from financialmodelingprep.com, finnhub.io or twelvedata.com - only the services you added a key for - as often as you set (1-60 min). A search in the company picker asks the same service.	নিজের কী দিয়ে, Markets খোলা থাকলে: financialmodelingprep.com, finnhub.io বা twelvedata.com থেকে সূচক, কোম্পানি ও ফিউচারের দাম - শুধু যেসব সেবার কী যোগ করেছেন - আপনার ঠিক করা হারে (১-৬০ মিনিট)। কোম্পানি বাছাইয়ের খোঁজও একই সেবাকে জিজ্ঞেস করে।
+following	অনুসরণে
+key saved	কী সেভ করা
+no price	দাম নেই
+of 4 widget places used	উইজেটের ৪টি জায়গার মধ্যে ব্যবহৃত
+on the widget	উইজেটে
+private - no public shares to follow	বেসরকারি - অনুসরণ করার মতো শেয়ার নেই
+the ticker you typed	আপনার লেখা টিকার
+Your Companies	আপনার কোম্পানি
+Popular	জনপ্রিয়
+AI and tech	এআই ও প্রযুক্তি
+Canada	কানাডা
+Indexes	সূচক
+Crypto	ক্রিপ্টো
+250 calls a day - indexes, shares, futures	দিনে ২৫০টি কল - সূচক, শেয়ার, ফিউচার
+60 calls a minute - US shares	মিনিটে ৬০টি কল - মার্কিন শেয়ার
+800 calls a day - US shares and crypto	দিনে ৮০০টি কল - মার্কিন শেয়ার ও ক্রিপ্টো

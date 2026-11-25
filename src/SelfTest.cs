@@ -94,11 +94,11 @@ namespace AdeeboMeter
                     return s;
                 };
                 var states = new[] { Tuple.Create("checking", -1, false), Tuple.Create("ok", 0, false), Tuple.Create("busy", 1, false), Tuple.Create("problem", 2, false), Tuple.Create("ok+lines", 0, true) };
-                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL\nYour team is playing - back to yours 5 min after the end\nKeep resting to move it";
+                const string lines = "Since you looked: S&P +0.6% · TOR 2–1 MTL";   // 24 Nov: one line per hover, at the foot of the card
                 var styles = Corner.AllStyles.ToList(); styles.Add("recap");
                 var csv = new List<string> { "theme,scale,style,state,chip_w,chip_h,card_w,card_h" };
                 foreach (bool dark in new[] { false, true })
-                    foreach (float sc in new[] { 1.5f, 1f })
+                    foreach (float sc in new[] { 1.5f, 1f, 2f })
                     {
                         Program.ForceTheme = dark ? 1 : 0; Theme.Apply(dark); Draw.Init(sc); Draw.Use(sc); Draw.Base = sc;
                         var cells = new List<Tuple<string, string, Bitmap, Bitmap>>();
@@ -113,6 +113,8 @@ namespace AdeeboMeter
                                 cells.Add(Tuple.Create(st, stt.Item1, chip, card));
                             }
                         Draw.WidgetHint = "";
+                        // at 200% every open card is also saved on its own (cards\dark-gamer-problem.png) - the website's pictures
+                        if (sc == 2f) { string cd = Path.Combine(dir, "cards"); Directory.CreateDirectory(cd); foreach (var c in cells) c.Item4.Save(Path.Combine(cd, (dark ? "dark" : "light") + "-" + c.Item1 + "-" + c.Item2.Replace("+", "-") + ".png"), ImageFormat.Png); }
                         int colW = (int)cells.Max(c => Math.Max(c.Item3.Width, c.Item4.Width)) + 30, label = 150, head = 40, gap = 16;
                         var rowH = styles.Select(st => cells.Where(c => c.Item1 == st).Select(c => c.Item3.Height + 8 + c.Item4.Height).DefaultIfEmpty(40).Max() + gap).ToList();
                         using (var sheet = new Bitmap(label + colW * states.Length, head + rowH.Sum() + 10))
@@ -136,7 +138,7 @@ namespace AdeeboMeter
                                     y += rowH[r];
                                 }
                             }
-                            sheet.Save(Path.Combine(dir, "widgets-" + (dark ? "dark" : "light") + "-" + (sc == 1f ? "100" : "150") + ".png"), ImageFormat.Png);
+                            sheet.Save(Path.Combine(dir, "widgets-" + (dark ? "dark" : "light") + "-" + ((int)Math.Round(sc * 100)).ToString(CultureInfo.InvariantCulture) + ".png"), ImageFormat.Png);
                         }
                         foreach (var c in cells) { c.Item3.Dispose(); c.Item4.Dispose(); }
                     }

@@ -69,7 +69,7 @@ namespace AdeeboMeter
             if (now == null) using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(Weather.Active ? L.T("The forecast is on its way...") : Policy.NoOnline ? L.T("Weather is off: your IT team turned online lookups off.") : L.T("Choose a place above and the forecast shows here (Open-Meteo: free, no account)."), Draw.fBody, sb, new RectangleF(x + 20 * S, y + 56 * S, cw - 40 * S, 120 * S));
             else
             {
-                Paper.WeatherGlyph(g, now.Code, new RectangleF(x + 18 * S, y + 52 * S, 72 * S, 72 * S));
+                Paper.WeatherGlyph(g, now.Code, new RectangleF(x + 18 * S, y + 52 * S, 72 * S, 72 * S), Weather.DayAt(now.Utc));
                 OlText(g, Weather.Temp(now.Temp), Draw.fHero, Theme.Ink, x + 100 * S, y + 54 * S);
                 OlText(g, L.T(Weather.Words(now.Code)) + " · " + L.T("feels like") + " " + Weather.Temp(now.Feels), Draw.fSmall, Theme.Sub, x + 100 * S, y + 104 * S);
                 var day = hours.Where(h => h.Utc < DateTime.UtcNow.AddHours(24)).ToList(); var wet = day.Where(h => h.Pop >= 0).OrderByDescending(h => h.Pop).FirstOrDefault();

@@ -769,7 +769,7 @@ namespace AdeeboMeter
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(Kit.Sent("GAME"), fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(Kit.Sent("GAME"), fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, y, inner, wh); y += wh + 8 * S;
+                using (var hb = new SolidBrush(last != null ? Theme.LvText(1) : Theme.Ink)) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, H, inner, wh); y += 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 string big = double.IsNaN(now) ? "-" : Math.Round(now).ToString(CultureInfo.InvariantCulture);
                 var bf = fCardNum; using (var bb = new SolidBrush(gt))
@@ -836,7 +836,7 @@ namespace AdeeboMeter
                 var tag = new RectangleF(pad + 24 * S + nw + 4 * S, y + 2 * S, Measure(tagText, fTiny, 0).Width + 10 * S, 15 * S);
                 Theme.Fill(g, tag, tag.Height / 2, Theme.BlueSoft); using (var tb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark)) g.DrawString(tagText, fTiny, tb, tag.X + 5 * S, tag.Y + 1 * S);
                 y += 24 * S;
-                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, y, inner, wh); y += wh + 8 * S;
+                g.DrawString(head, fHead, ink, new RectangleF(pad, y, inner, headH + 2)); y += headH; HintLine(g, pad, H, inner, wh); y += 8 * S;
                 // (AM-CG-207: no hover area here - there's no detail card for it)
                 var bf = fCardNum; using (var bb = new SolidBrush(lv == 3 ? Theme.Ink : gc))
                 {
@@ -861,8 +861,15 @@ namespace AdeeboMeter
         public static volatile bool CardHovered = true;   // set by the widget before it draws the card
         // the hint line (24 Nov): where the second, grey fun line used to be - how to move the widget, by its settings; "" = none
         public static volatile string WidgetHint = "";
-        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 4 * S; }
-        static void HintLine(Graphics g, float pad, float y, float inner, float h) { if (h <= 0) return; using (var sf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0)) using (var b = new SolidBrush(Theme.BlueText)) g.DrawString(WidgetHint, fSmall, b, new RectangleF(pad, y + 4 * S, inner, h), sf); }
+        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 10 * S; }
+        // 24 Nov (Adeeb: "writing on top of it doesn't feel natural"): the one hint line sits at the foot of the card, quiet grey under a
+        // hairline - the card reads as itself, the hint is a footnote. H is the card's height; the room was counted into it
+        static void HintLine(Graphics g, float pad, int H, float inner, float h)
+        {
+            if (h <= 0) return; float y = H - pad - h + 6 * S;
+            using (var lp = new Pen(Theme.Line, 1f)) g.DrawLine(lp, pad, y - 2 * S, pad + inner, y - 2 * S);
+            using (var sf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0)) using (var b = new SolidBrush(Theme.Muted)) g.DrawString(WidgetHint, fSmall, b, new RectangleF(pad, y + 2 * S, inner, h), sf);
+        }
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)
         {
             if (SpeedStyle) return SpeedCard(s, hits);
@@ -904,7 +911,7 @@ namespace AdeeboMeter
                     using (var hb = new SolidBrush(s.Level == 0 ? Theme.Ink : Theme.LvText(s.Level))) g.DrawString(head, fHead, hb, new RectangleF(pad, y, inner, headH + 2), rsf);
                     y += headH;
                     if (hintH > 0) { using (var wb = new SolidBrush(Theme.Sub)) g.DrawString(AdeeboMeter.L.T("Why: ") + s.Hint, fSmall, wb, new RectangleF(pad, y + 4 * S, inner, hintH), rsf); y += hintH; }
-                    HintLine(g, pad, y, inner, quipH); y += quipH;   // the move hint, by the settings - after the verdict and its Why
+                    HintLine(g, pad, H, inner, quipH);   // the move hint (at the foot of the card), by the settings - after the verdict and its Why
                 }
                 y += 10 * S;
                 // 24 Nov (widget mockup): the same four readings as Home, in the same order - this PC, the router, the internet,

@@ -249,29 +249,13 @@ namespace AdeeboMeter
             var look = LookOfLang(code); Color a = Hex(look[2], 255), b = Hex(look[3], 255); bool rtl = code == "ar";
             if (hot && !cur) { r.Offset(0, -3 * S); for (int i = 1; i <= 4; i++) Theme.Fill(g, new RectangleF(r.X - i * S + 2 * S, r.Y + i * 2 * S, r.Width + 2 * i * S - 4 * S, r.Height), 16 * S + i * S, Color.FromArgb(Theme.Dark ? 22 : 10, 20, 30, 60)); }
             Theme.Fill(g, r, 16 * S, Theme.Card);
-            // the pattern, top corner, faded
-            using (var clip = Theme.Round(r, 16 * S))
-            {
-                var st = g.Save(); g.SetClip(clip);
-                // the pattern is drawn once into a picture and reused (the first open took 400 ms on a real PC)
-                var ab = new RectangleF(r.Right - 150 * S, r.Y - 34 * S, 160 * S, 124 * S);
-                string key = code + "|" + (hot || cur) + "|" + (int)ab.Width + "|" + (int)ab.Height;
-                Bitmap art; if (!langArt.TryGetValue(key, out art))
-                {
-                    art = new Bitmap(Math.Max(1, (int)Math.Ceiling(ab.Width)), Math.Max(1, (int)Math.Ceiling(ab.Height)), System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-                    using (var ag = Graphics.FromImage(art)) { ag.SmoothingMode = SmoothingMode.AntiAlias; PaintLangArt(ag, look[4], new RectangleF(0, 0, ab.Width, ab.Height), Color.FromArgb(hot || cur ? 170 : 120, a), Color.FromArgb(hot || cur ? 170 : 120, b)); }
-                    if (langArt.Count > 40) { foreach (var o in langArt.Values) o.Dispose(); langArt.Clear(); }
-                    langArt[key] = art;
-                }
-                g.DrawImage(art, ab.X, ab.Y, ab.Width, ab.Height);
-                g.Restore(st);
-            }
-            if (cur) using (var path = Theme.Round(new RectangleF(r.X + 1, r.Y + 1, r.Width - 2, r.Height - 2), 15 * S)) using (var lg = new LinearGradientBrush(r, Hex("#7C4DFF", 255), Hex("#EC4899", 255), 45f)) using (var pen = new Pen(lg, 2.5f * S)) g.DrawPath(pen, path);
-            else Theme.Stroke(g, r, 16 * S, hot ? Kit.Mix(a, Theme.Card, 0.4f) : Theme.Line, hot ? 1.5f * S : 1);
+            // 24 Nov (Adeeb: "like the website's calm one"): plain tiles - no pattern, no gradient; the chosen one has the blue edge and tick
+            if (cur) Theme.Stroke(g, r, 16 * S, Theme.Blue, 2 * S);
+            else Theme.Stroke(g, r, 16 * S, hot ? Kit.Mix(Theme.Blue, Theme.Card, 0.4f) : Theme.Line, hot ? 1.5f * S : 1);
             if (cur)   // the tick
             {
                 var tk = new RectangleF(r.X + 14 * S, r.Y + 14 * S, 26 * S, 26 * S);
-                using (var lg = new LinearGradientBrush(tk, Hex("#7C4DFF", 255), Hex("#EC4899", 255), 45f)) g.FillEllipse(lg, tk);
+                using (var tb = new SolidBrush(Theme.Blue)) g.FillEllipse(tb, tk);
                 using (var p = new Pen(Color.White, 2.2f * S) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
                     g.DrawLines(p, new[] { new PointF(tk.X + 7.5f * S, tk.Y + 13.5f * S), new PointF(tk.X + 11.5f * S, tk.Y + 17.5f * S), new PointF(tk.X + 18.5f * S, tk.Y + 9 * S) });
             }
@@ -282,7 +266,7 @@ namespace AdeeboMeter
                 float gpx = (code == "bn" ? 28 : 27) * S; var gf = LangFont(code, gpx, true);
                 while (gpx > 15 * S && g.MeasureString(look[0], gf).Width > pw) { gpx -= 1.5f * S; gf = LangFont(code, gpx, true); }   // a narrow tile: the greeting shrinks, never cut
                 var gr = new RectangleF(px, y, pw, gf.GetHeight(g) + 4 * S);
-                using (var lg = new LinearGradientBrush(new RectangleF(gr.X - 1, gr.Y, gr.Width + 2, gr.Height), a, b, 0f)) g.DrawString(look[0], gf, lg, gr, sf);
+                using (var gb = new SolidBrush(Theme.Ink)) g.DrawString(look[0], gf, gb, gr, sf);
                 y = gr.Bottom + 6 * S;
                 var nf = LangFont(code, 15 * S, true); using (var ib = new SolidBrush(Theme.Ink)) g.DrawString(NativeName(code), nf, ib, new RectangleF(px, y, pw, nf.GetHeight(g) + 2), sf);
                 y += nf.GetHeight(g) + 2 * S;
@@ -293,7 +277,7 @@ namespace AdeeboMeter
             float by = r.Bottom - 22 * S;
             using (var sb = new SolidBrush(Theme.Sub)) g.DrawString(code == "en" ? L.T("Complete") : pct >= 0 ? pct + "% " + L.T("translated") : L.T("Partly translated"), Draw.fSmall, sb, px, by - 20 * S);
             var track = new RectangleF(px, by, pw, 6 * S); Theme.Fill(g, track, 3 * S, Theme.Line);
-            if (pct > 0) { var fill = new RectangleF(px, by, Math.Max(6 * S, pw * Math.Min(100, pct) / 100f), 6 * S); using (var lg = new LinearGradientBrush(new RectangleF(fill.X - 1, fill.Y, fill.Width + 2, fill.Height), a, b, 0f)) using (var path = Theme.Round(fill, 3 * S)) g.FillPath(lg, path); }
+            if (pct > 0) { var fill = new RectangleF(px, by, Math.Max(6 * S, pw * Math.Min(100, pct) / 100f), 6 * S); using (var lg = new SolidBrush(Theme.Blue)) using (var path = Theme.Round(fill, 3 * S)) g.FillPath(lg, path); }
             if (hot && langKey >= 0) Theme.Stroke(g, new RectangleF(r.X - 3 * S, r.Y - 3 * S, r.Width + 6 * S, r.Height + 6 * S), 19 * S, Theme.BlueDark, 2);   // keyboard focus
         }
 
@@ -360,7 +344,7 @@ namespace AdeeboMeter
         {
             code = c; name = n ?? c; AccessibleName = L.T("Language: ") + name;
             float S = Draw.S;
-            Width = (int)(Draw.Measure(name, FullView.LangFont(code, 15.5f * S, true), 0).Width + 72 * S); Height = (int)(38 * S);
+            Width = (int)(Draw.Measure(name, FullView.LangFont(code, 14.5f * S, true), 0).Width + 64 * S); Height = (int)(36 * S);
             Invalidate();
         }
         protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
@@ -371,33 +355,24 @@ namespace AdeeboMeter
             var g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
             float S = Draw.S; var r = new RectangleF(1.5f, 1.5f, Width - 4, Height - 4);
             using (var b = new SolidBrush(Parent != null ? Parent.BackColor : BackColor)) g.FillRectangle(b, ClientRectangle);
-            Color v = ColorTranslator.FromHtml("#7C4DFF"), p = ColorTranslator.FromHtml("#EC4899");
-            using (var path = Theme.Round(r, r.Height / 2))
+            // 24 Nov (Adeeb: "it should be treated like the website's calm one"): the site bar's language button - a quiet outlined
+            // button, a line globe, the name and a chevron; no gradient, no rainbow
+            float rad = 9 * S;
+            Theme.Fill(g, r, rad, hot || sel ? Theme.Soft : Theme.Card);
+            Theme.Stroke(g, r, rad, sel ? Theme.Blue : Theme.Line, sel ? 1.5f * S : 1f);
+            var gr = new RectangleF(12 * S, (Height - 16 * S) / 2, 16 * S, 16 * S);
+            using (var pen = new Pen(Theme.Ink, 1.5f * S) { StartCap = LineCap.Round, EndCap = LineCap.Round })
             {
-                using (var lg = new LinearGradientBrush(r, Kit.Mix(Theme.Card, v, hot || sel ? 0.26f : 0.16f), Kit.Mix(Theme.Card, p, hot || sel ? 0.24f : 0.14f), 0f)) g.FillPath(lg, path);
-                using (var lg = new LinearGradientBrush(r, v, p, 0f)) using (var pen = new Pen(lg, (sel ? 2.5f : 2f) * S)) g.DrawPath(pen, path);
+                g.DrawEllipse(pen, gr); g.DrawEllipse(pen, gr.X + 4.5f * S, gr.Y, 7 * S, 16 * S);
+                g.DrawLine(pen, gr.X + 0.5f * S, gr.Y + 8 * S, gr.Right - 0.5f * S, gr.Y + 8 * S);
             }
-            // the globe in a rainbow circle
-            var ic = new RectangleF(6 * S, (Height - 27 * S) / 2, 27 * S, 27 * S);
-            using (var gp = new GraphicsPath())
-            {
-                gp.AddEllipse(ic);
-                using (var pg = new PathGradientBrush(gp) { CenterColor = ColorTranslator.FromHtml("#F59E0B"), SurroundColors = new[] { v, p, v, p }, CenterPoint = new PointF(ic.X + ic.Width * 0.7f, ic.Y + ic.Height * 0.75f) }) g.FillPath(pg, gp);
-            }
-            using (var pen = new Pen(Color.White, 1.4f * S))
-            {
-                var gr = new RectangleF(ic.X + 6.5f * S, ic.Y + 6.5f * S, 14 * S, 14 * S);
-                g.DrawEllipse(pen, gr); g.DrawEllipse(pen, gr.X + 4 * S, gr.Y, 6 * S, 14 * S);
-                g.DrawLine(pen, gr.X, gr.Y + 7 * S, gr.Right, gr.Y + 7 * S);
-                g.DrawLine(pen, gr.X + 1.5f * S, gr.Y + 3.5f * S, gr.Right - 1.5f * S, gr.Y + 3.5f * S); g.DrawLine(pen, gr.X + 1.5f * S, gr.Y + 10.5f * S, gr.Right - 1.5f * S, gr.Y + 10.5f * S);
-            }
-            var f = FullView.LangFont(code, 15.5f * S, true);
+            var f = FullView.LangFont(code, 14.5f * S, true);
             var ts = g.MeasureString(name, f);
-            using (var nb = new SolidBrush(Theme.Ink)) g.DrawString(name, f, nb, ic.Right + 9 * S, (Height - ts.Height) / 2);
-            float cx = Width - 20 * S, cy = Height / 2f + (sel ? -1 : 1) * 1.5f * S, d = 4 * S;
-            using (var pen = new Pen(Kit.Mix(v, Theme.Ink, Theme.Dark ? 0.5f : 0.1f), 1.8f * S) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
+            using (var nb = new SolidBrush(Theme.Ink)) g.DrawString(name, f, nb, gr.Right + 8 * S, (Height - ts.Height) / 2);
+            float cx = Width - 18 * S, cy = Height / 2f + (sel ? -1 : 1) * 1.5f * S, d = 4 * S;
+            using (var pen = new Pen(Theme.Muted, 1.6f * S) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
                 g.DrawLines(pen, sel ? new[] { new PointF(cx - d, cy + d / 2), new PointF(cx, cy - d / 2), new PointF(cx + d, cy + d / 2) } : new[] { new PointF(cx - d, cy - d / 2), new PointF(cx, cy + d / 2), new PointF(cx + d, cy - d / 2) });
-            if (Focused && ShowFocusCues) Theme.Stroke(g, new RectangleF(1.5f, 1.5f, Width - 3, Height - 3), (Height - 3) / 2f, Theme.BlueDark, 2);
+            if (Focused && ShowFocusCues) Theme.Stroke(g, new RectangleF(1.5f, 1.5f, Width - 3, Height - 3), 9 * S, Theme.BlueDark, 2);
         }
     }
 }

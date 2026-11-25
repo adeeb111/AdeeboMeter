@@ -296,10 +296,22 @@ namespace AdeeboMeter
         }
 
         // a flat weather glyph from the forecast's code (no emoji on the newspaper pages): sun, cloud, rain, snow, storm, fog
-        public static void WeatherGlyph(Graphics g, int code, RectangleF r)
+        public static void WeatherGlyph(Graphics g, int code, RectangleF r) { WeatherGlyph(g, code, r, true); }
+        // day = false: a moon where the sun would be (24 Nov - a clear night showed a sun)
+        public static void WeatherGlyph(Graphics g, int code, RectangleF r, bool day)
         {
             float u = r.Width / 64f; bool sun = code == 0 || code == 1 || code == 2, cloud = code != 0, rain = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95, snow = (code >= 71 && code <= 77) || code == 85 || code == 86;
-            if (sun) using (var b = new SolidBrush(C("#F5B82E"))) g.FillEllipse(b, r.X + (cloud ? 8 : 14) * u, r.Y + (cloud ? 6 : 12) * u, (cloud ? 26 : 36) * u, (cloud ? 26 : 36) * u);
+            if (sun && day) using (var b = new SolidBrush(C("#F5B82E"))) g.FillEllipse(b, r.X + (cloud ? 8 : 14) * u, r.Y + (cloud ? 6 : 12) * u, (cloud ? 26 : 36) * u, (cloud ? 26 : 36) * u);
+            if (sun && !day)
+            {
+                // a crescent: a pale disc with a second disc cut out of it
+                float d = (cloud ? 26 : 36) * u; var mr = new RectangleF(r.X + (cloud ? 8 : 14) * u, r.Y + (cloud ? 6 : 12) * u, d, d);
+                using (var gp = new GraphicsPath()) using (var cut = new GraphicsPath()) using (var b = new SolidBrush(Dark ? C("#D6DEE8") : C("#8C98A8")))
+                {
+                    gp.AddEllipse(mr); cut.AddEllipse(mr.X + d * 0.34f, mr.Y - d * 0.12f, d * 0.86f, d * 0.86f);
+                    using (var rg = new Region(gp)) { rg.Exclude(cut); g.FillRegion(b, rg); }
+                }
+            }
             if (cloud && code != 0 && code != 1)
                 using (var b = new SolidBrush(Dark ? C("#9AA7B4") : C("#DCE5F0"))) using (var p = new Pen(C("#8C98A8"), 1.2f * u))
                 using (var gp = new GraphicsPath())

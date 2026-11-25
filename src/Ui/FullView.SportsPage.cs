@@ -213,7 +213,7 @@ namespace AdeeboMeter
             Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Weather at Kick-off", Cfg.WeatherOn && Cfg.WeatherPlace != "" ? "(" + Weather.PlaceName() + ")" : null);
             var h = Weather.HourAt(at.ToUniversalTime());
             if (!Cfg.WeatherOn || h == null) { using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Turn on Weather in Settings to see the weather for your place at kick-off."), Paper.Body, ib, new RectangleF(x + 16 * S, y + 56 * S, w - 32 * S, 80 * S)); return r.Bottom + 16 * S; }
-            Paper.WeatherGlyph(g, h.Code, new RectangleF(x + 16 * S, y + 58 * S, 64 * S, 64 * S));
+            Paper.WeatherGlyph(g, h.Code, new RectangleF(x + 16 * S, y + 58 * S, 64 * S, 64 * S), Weather.DayAt(h.Utc));
             MkSpText(g, Weather.Temp(h.Temp), Paper.Num, Paper.Head, x + 92 * S, y + 60 * S); MkSpText(g, L.T(Weather.Words(h.Code)), Paper.Body, Paper.Ink, x + 92 * S, y + 100 * S);
             float dx = x + w * 0.62f, dy = y + 60 * S;
             foreach (var kv in new[] { new[] { L.T("Rain:"), h.Pop < 0 ? "-" : h.Pop + "%" }, new[] { L.T("Wind:"), double.IsNaN(h.Wind) ? "-" : h.Wind.ToString("0", CultureInfo.CurrentCulture) + " km/h" }, new[] { L.T("Feels like:"), double.IsNaN(h.Feels) ? "-" : Weather.Temp(h.Feels) } }) { MkSpText(g, kv[0] + " " + kv[1], Paper.Small, Paper.Ink, dx, dy); dy += 22 * S; }
