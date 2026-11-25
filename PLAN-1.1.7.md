@@ -204,8 +204,25 @@ holidays, and the free keys price US shares only.
   exchange's hours and holidays (holiday tables for the ~10 biggest exchanges, others say "holidays not checked");
   commodities - Canada keeps its index, everyone else gets gold, oil and gas from the futures list; the corner
   widget's default symbols and the "loonie" lines become your currency's.
-- **Sports stays its own view:** it never follows Your market - leagues and teams are picked on the Sports page
-  only (someone in Canada may follow cricket and the Bangladesh team).
+- **Sports follows the country too** (Adeeb, 25 Nov): the market's built-in sports lead (on, first on Overview and
+  the widget); anyone can still add any league or any sports key from the Sports page, and their own picks stay
+  when the country changes.
+  | Market | Leads with |
+  |---|---|
+  | Canada | NHL, NBA, MLS |
+  | United States | NFL, NBA, MLB, NHL, MLS |
+  | United Kingdom | Premier League, cricket, Champions League |
+  | Bangladesh | cricket (internationals, BPL), Premier League |
+  | France | Ligue 1, Champions League |
+  | Mexico | Liga MX |
+  | Spain | LaLiga, Champions League |
+  | Saudi Arabia | Saudi Pro League |
+  | China | Chinese Super League, CBA |
+  | Germany | Bundesliga, Champions League |
+  | Japan | J1 League, NPB |
+  - Sources as today (NHL public feed, ESPN scoreboards with no key, BBC headlines, football-data.org / CricketData
+    with a key); each new league checked on Saturday for a no-key feed - where there's none (likely cricket, CBA,
+    NPB), the Sports page asks for that key first instead of showing an empty tab.
 - **Honest limits:** a currency or exchange the free services don't cover (e.g. the taka, Dhaka shares) says so in one
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
