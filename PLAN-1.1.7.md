@@ -144,7 +144,8 @@ the rest; the order below is the build order after A and B1.
 
 ```
 A + B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failure Lab + challenges + Multicast
-       ─► D4 Cellular Lab ─► D5 PCAP Theater ─► B2-B6 ─► tester script (+ tour) ─► 1.1.7
+       ─► D4 Cellular Lab ─► D5 PCAP Theater ─► D6 Windows + hardware tools ─► B2-B6
+       ─► tester script (+ tour) ─► 1.1.7
 ```
 
 ### D1. Network Doctor (was "AdeeboDoctor") - "it broke after something changed"
@@ -191,6 +192,43 @@ A + B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failur
 - **Engine:** the app's own capture reader (`src/Checks/Pcap.cs` - limits: 64 MB / 50k packets, malformed data
   skipped) gains TCP/TLS/DNS summaries; the Lab page draws them. Live capture (Wireshark, optional) can hand its file
   over. The file is read on this PC only - never uploaded.
+
+### D6. Windows internals and hardware (Adeeb's 20, all in 1.1.7)
+No admin rights anywhere: what Windows hides says "not readable here" instead of guessing. Read-only - nothing is
+changed, killed or written. Everything stays on the PC.
+
+**Into Network Doctor (evidence pins on its timeline, not separate pages):**
+- Driver history (PnP drivers + `setupapi.dev.log`), Windows update correlation (update history vs incidents),
+  hardware change history (device arrive/remove in the daily snapshot), startup timeline (boot/logon/service-start
+  events, slow-boot culprits), scheduled tasks (which task ran when the problem started).
+
+**New "PC" group in the Toolbox:**
+- **Process ancestry explorer:** parent/child tree, start time, which ones use the network (joins per-app usage).
+  Other users' command lines are hidden without admin - shown as such.
+- **DLL dependency viewer:** static PE import table of a chosen .exe/.dll, missing DLLs in red. Reads the file only.
+- **USB topology + USB power budget** (one tool): hubs and ports as a tree, speed per device, power drawn vs the
+  hub's budget.
+- **Handle usage viewer:** handle/GDI/USER counts per process, top growers over time (leak hunting). Counts only;
+  the handle list itself needs admin and is not attempted.
+- **Environment variable inspector:** user vs system vs process, PATH split per entry with dead folders flagged;
+  also `env` in AdeeboShell.
+- **Registry comparison:** a fixed list of network-relevant keys only (TCP/IP, DNS, proxy, Winsock, NIC settings),
+  snapshot vs snapshot. No free browsing of the registry.
+- **PCIe link check + bandwidth calculator:** current vs max link speed/width per device (GPU or SSD in the wrong slot),
+  the calculator for "what would x4 Gen3 give me".
+- **Storage endurance estimator:** real wear and TBW when Windows exposes the reliability counters; otherwise a
+  calculator from the drive's rated TBW and this PC's measured writes, labelled as an estimate.
+- **Battery wear history:** design vs full-charge capacity over time (from the battery report data), cycles.
+- **Memory channel inspector:** sticks, slots, speed, size; "single or dual channel" only as a likely layout from the
+  slot labels, never stated as fact.
+- **Thermal throttling correlation:** CPU % of max frequency vs load (and temperature where readable) on the Time
+  machine graph; "the game lagged at 21:40 while the CPU ran at 62 % speed".
+- **Disk latency analyzer:** read/write latency and queue per disk, freezes over 100 ms pinned.
+- **Monitor EDID decoder:** maker, model, size, native mode, refresh rates, HDR from the registry EDID.
+- **Hardware bottleneck estimator:** built only on the measured evidence above (throttling, disk latency, PCIe link,
+  memory channels, network) - "what held this PC back in the last hour", with the numbers. No benchmark-table guesses.
+
+Penny rule: nothing samples while its page is closed, except what the Time machine already keeps.
 
 ### D - done when
 - Each feature has its own tester-script checks and appears in the tour (`--view tour`).
