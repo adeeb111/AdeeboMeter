@@ -36,7 +36,7 @@ html[lang="ar"] .row > .chev > svg { transform: scaleX(-1); }
   html[lang="ar"] #toast { left: calc(50% - 112px); }
   html[lang="ar"] .phone-locale-bar { padding-inline: 256px 32px; }
 }
-[data-language-picker][hidden], [data-i18n-preview][hidden], .locale-ready [data-language-fallback] { display: none; }
+[data-language-picker][hidden], [data-i18n-preview][hidden], .locale-js [data-language-fallback], .locale-ready [data-language-fallback] { display: none; }
 .locale-preview { font-size: .8rem; color: var(--sub); margin: .5rem 0; }
 .phone-locale { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
 .phone-locale-bar { max-width: 480px; margin: 0 auto; padding: calc(.5rem + env(safe-area-inset-top)) 16px 0; }

@@ -8,6 +8,7 @@
   var tags = { fr: "fr-CA", zh: "zh-Hans" };
   var storageKey = "adeebometer-language";
   var root = document.documentElement;
+  root.classList.add("locale-js");   // 24 Nov: hide the plain-link fallback from the first paint, not only after DOMContentLoaded (it flashed "Français  বাংলা" on reload)
   var query = new URLSearchParams(location.search).get("lang");
   var messages = window.AdeeboMeterMessages || {};
   var languageRoute = root.dataset.languageRoute;
