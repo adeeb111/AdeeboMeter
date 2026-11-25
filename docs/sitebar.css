@@ -71,6 +71,15 @@ dialog.am-dl.closing::backdrop{animation:am-dl-fade 140ms ease-out reverse forwa
 .am-dl .dl-opt:active{transform:scale(.985)}
 .am-dl :focus-visible{outline:2px solid var(--sb-focus);outline-offset:2px}
 .am-dl .dl-store:focus-visible{outline-color:var(--sb-ink)}
+button.dl-opt{width:100%;font:inherit;text-align:start;cursor:pointer}
+.am-new .nw-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.am-new .nw-list li{display:flex;gap:12px;align-items:flex-start}
+.am-new .nw-list svg{flex:none;margin-top:3px;color:var(--sb-blue-ink)}
+.am-new .nw-list span{display:grid;gap:1px}
+.am-new .nw-list b{font-weight:700;font-size:15px}
+.am-new .nw-list small{color:var(--sb-sub);font-size:14px}
+.am-new .nw-foot{margin:18px 0 0;color:var(--sb-sub);font-size:14px}
+.am-new .nw-get{margin-top:12px;align-items:center}
 .am-dl .dl-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:18px 0 0;font-size:14px}
 .am-dl .dl-foot a{color:var(--sb-blue-ink);text-underline-offset:3px}
 
