@@ -198,7 +198,7 @@ namespace AdeeboMeter
 
             // Ctrl+Alt+A opens / closes the engineer view from anywhere
             try { hotkey = new HotKey(ToggleFull); if (!hotkey.Ok) Program.Log("Ctrl+Alt+A is taken by another app"); } catch (Exception e) { Program.Log("hotkey: " + e.Message); }
-            miFull.ShortcutKeyDisplayString = hotkey != null && hotkey.Ok ? "Ctrl+Alt+A" : "(Ctrl+Alt+A taken)";
+            miFull.ShortcutKeyDisplayString = hotkey != null && hotkey.Ok ? "Ctrl+Alt+A" : L.T("(Ctrl+Alt+A taken)");
 
             // Light / dark follows Windows and switches live
             prefHandler = delegate

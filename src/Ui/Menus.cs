@@ -47,9 +47,20 @@ namespace AdeeboMeter
                     sub = value ?? ""; int w = Sc(320); float lineH = Draw.fSmall.GetHeight(), lines = 1;
                     if (sub != "")
                     {
-                        float tw = Math.Max(Draw.Measure(Text ?? "", Draw.fBodyB, 0).Width, Draw.Measure(sub, Draw.fSmall, 0).Width) + Sc(56);
-                        if (tw > w) w = Math.Min(Sc(440), (int)Math.Ceiling(tw));
-                        if (Draw.Measure(sub, Draw.fSmall, w - Sc(56)).Height > lineH * 1.5f) lines = 2;
+                        // 25 Nov (Adeeb's screenshot): Windows sizes a menu by its items' Text only and stretches every row to that
+                        // width, so this row's own width is ignored - wrap the line to the width the menu will really have
+                        w = Sc(220);
+                        var own = Owner;
+                        if (own != null) foreach (ToolStripItem o in own.Items)
+                        {
+                            var mi = o as ToolStripMenuItem; if (mi == null || mi == this || !mi.Available) continue;
+                            int ow = TextRenderer.MeasureText(mi.Text ?? "", mi.Font ?? Draw.fBody).Width;
+                            if (mi.ShowShortcutKeys && !string.IsNullOrEmpty(mi.ShortcutKeyDisplayString)) ow += TextRenderer.MeasureText(mi.ShortcutKeyDisplayString, Draw.fSmall).Width + Sc(24);
+                            if (mi.HasDropDownItems) ow += Sc(20);
+                            if (ow > w) w = ow;
+                        }
+                        float h = Draw.Measure(sub, Draw.fSmall, w).Height;
+                        lines = Math.Min(3, Math.Max(1, (int)Math.Round(h / lineH)));
                     }
                     SubLines = (int)lines;
                     Size = new Size(w, sub == "" ? Sc(34) : (int)Math.Ceiling(Sc(30) + lineH * lines + Sc(6)));
@@ -86,6 +97,10 @@ namespace AdeeboMeter
             {
                 var g = e.Graphics; g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                 var row = e.Item as Row; bool red = e.Item.Tag as string == "exit";
+                var mi = e.Item as ToolStripMenuItem;
+                // 25 Nov (Adeeb's screenshot): Windows calls this twice for an item with a shortcut - once with the name, once with
+                // the shortcut text - and the second call was drawn at the name's place, over it. The shortcut is drawn below.
+                if (mi != null && !string.IsNullOrEmpty(mi.ShortcutKeyDisplayString) && e.Text == mi.ShortcutKeyDisplayString && e.Text != mi.Text) return;
                 bool hcSel = Theme.HighContrast && e.Item.Selected && e.Item.Enabled;
                 Color ink = hcSel ? SystemColors.HighlightText : !e.Item.Enabled && row == null ? Theme.Muted : red ? Theme.LvText(2) : Theme.Ink;
                 float x = e.TextRectangle.X;
@@ -117,7 +132,6 @@ namespace AdeeboMeter
                 }
                 var f = e.Item.Font ?? Draw.fBody;
                 using (var b = new SolidBrush(ink)) g.DrawString(e.Text, f, b, x, (e.Item.Height - f.GetHeight(g)) / 2);
-                var mi = e.Item as ToolStripMenuItem;
                 if (mi != null && mi.ShortcutKeyDisplayString != null && mi.ShowShortcutKeys)
                 {
                     var ks = g.MeasureString(mi.ShortcutKeyDisplayString, Draw.fSmall);
