@@ -143,8 +143,8 @@ Built on what exists - no second engine for anything. Each feature ships complet
 the rest; the order below is the build order after A and B1.
 
 ```
-A + B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failure Lab + challenges + Multicast
-       ─► D4 Cellular Lab ─► D5 PCAP Theater ─► D6 Windows + hardware tools ─► B2-B6
+A + B1 ─► D1 Network Doctor ─► D3 Lab: Failure Lab + challenges + Multicast
+       ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► B2-B6
        ─► tester script (+ tour) ─► 1.1.7
 ```
 
@@ -165,15 +165,6 @@ A + B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failur
 - **Rules:** no admin rights (what Windows hides says "not readable here"); everything stays on the PC; history follows
   the History setting.
 
-### D2. Flow - a tab in AdeeboShell
-- **What:** build a check visually - tool blocks, if / else, repeat, wait, run in parallel, compare, report - and see
-  the same thing as an AdeeboShell script beside it. Edit either side; the other follows (for what the blocks can say).
-- **Engine:** none new. A flow *is* a shell script; the Run button runs it through AdeeboShell, with its fence (only
-  `/data` is writable, nothing starts another program, test traffic needs the typed `--yes`).
-- **Blocks:** every Toolbox tool (from the same registry), plus variables, conditions, loops, retries, timeouts,
-  dry run. Starts with the ready scripts (`network-check`, `wifi-check`, `isp-evidence`...) as editable flows.
-- **Drawing:** in the Shell window's own canvas, partial repaints only; keyboard-operable like the rest.
-
 ### D3. AdeeboLab additions (in `tools/lab/lab.src.html` -> `docs/lab.html`, also opened by the app)
 - **Failure Lab:** more things to break - DNS, gateway, MTU, firewall rule, duplex, Wi-Fi interference - each with the
   symptom the user would see and the AdeeboMeter tool that would catch it.
@@ -185,13 +176,6 @@ A + B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failur
 - LTE and 5G: attach / registration, the bearer, and a packet's journey from phone or modem through the radio, core
   and out to the internet; what breaks where (no signal, no attach, no data, slow). From the Topogram mobile-core
   reference (allowed - both projects are Adeeb's), simplified for everyday users; deep detail behind "more".
-
-### D5. PCAP Theater
-- **What:** open a capture (.pcap / .pcapng) and watch its packets play as an animation between the hosts, with the
-  conversation list, timing and the protocol of each step (DNS, TCP handshake, TLS hello, DHCP, ICMP...).
-- **Engine:** the app's own capture reader (`src/Checks/Pcap.cs` - limits: 64 MB / 50k packets, malformed data
-  skipped) gains TCP/TLS/DNS summaries; the Lab page draws them. Live capture (Wireshark, optional) can hand its file
-  over. The file is read on this PC only - never uploaded.
 
 ### D6. Windows internals and hardware (Adeeb's 20, all in 1.1.7)
 No admin rights anywhere: what Windows hides says "not readable here" instead of guessing. Read-only - nothing is
@@ -230,9 +214,12 @@ changed, killed or written. Everything stays on the PC.
 
 Penny rule: nothing samples while its page is closed, except what the Time machine already keeps.
 
+### Dropped (25 Nov)
+- D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
+
 ### D - done when
 - Each feature has its own tester-script checks and appears in the tour (`--view tour`).
-- Self-test covers the new parsers and the Flow <-> script round trip; deep test feeds them hostile input.
+- Self-test covers the new parsers; deep test feeds them hostile input.
 - Memory/CPU: nothing new runs in the background except the Doctor's daily snapshot (seconds, at low priority).
 - Five languages, keyboard, touch, both themes, the 2x drawing from part A.
 - HOW-TO-USE, Theory of Everything and the website feature pages updated at release (only then).
