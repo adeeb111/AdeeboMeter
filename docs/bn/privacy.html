@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter-এর গোপনীয়তা নীতি</title>
-<meta name="description" content="টুলে লেখা পাসওয়ার্ড ও গোপন তথ্য, যেমন SNMP community, RADIUS secret বা সার্টিফিকেট পাসওয়ার্ড, শুধু ওই কাজেই লাগে। সেভ, লগ বা কপি করা হয় না।">
+<meta name="description" content="AdeeboMeter অ্যাপ ও ওয়েবসাইট · সর্বশেষ হালনাগাদ ২৪ নভেম্বর ২০২৬">
 <link rel="canonical" href="https://adeebometer.com/bn/privacy.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AdeeboMeter"><meta property="og:locale" content="bn_BD">
 <meta property="og:url" content="https://adeebometer.com/bn/privacy.html">
 <meta property="og:title" content="AdeeboMeter-এর গোপনীয়তা নীতি">
-<meta property="og:description" content="টুলে লেখা পাসওয়ার্ড ও গোপন তথ্য, যেমন SNMP community, RADIUS secret বা সার্টিফিকেট পাসওয়ার্ড, শুধু ওই কাজেই লাগে। সেভ, লগ বা কপি করা হয় না।">
+<meta property="og:description" content="AdeeboMeter অ্যাপ ও ওয়েবসাইট · সর্বশেষ হালনাগাদ ২৪ নভেম্বর ২০২৬">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/guide.css">
@@ -43,40 +43,40 @@ footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:v
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/bn/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>গোপনীয়তা নীতি</h1>
-<p class="date">AdeeboMeter app and website · last updated 24 November 2026</p>
+<p class="date">AdeeboMeter অ্যাপ ও ওয়েবসাইট · সর্বশেষ হালনাগাদ ২৪ নভেম্বর ২০২৬</p>
 
-<div class="short"><p><b>The Windows app</b> collects nothing about you. There is no account, no telemetry and no analytics. Everything it learns stays on your PC, and it never accepts a connection from anywhere. Its only servers are three small relays (Cloudflare Workers) that carry what you choose to send - a report, your phone link, the phone app's Live service - and keep none of it.</p></div>
+<div class="short"><p><b>Windows অ্যাপটি</b> আপনার সম্পর্কে কিছুই সংগ্রহ করে না। কোনো অ্যাকাউন্ট নেই, টেলিমেট্রি নেই, অ্যানালিটিক্স নেই। যা শেখে সব আপনার পিসিতেই থাকে, আর বাইরে থেকে কোনো সংযোগ কখনো গ্রহণ করে না। এর নিজের সার্ভার বলতে শুধু তিনটি ছোট রিলে (Cloudflare Workers), যারা আপনি যা পাঠাতে চান তা বয়ে নেয় - একটি রিপোর্ট, আপনার ফোনের সংযোগ, ফোন অ্যাপের Live সেবা - আর কিছুই রেখে দেয় না।</p></div>
 
 <h2>AdeeboMeter কী সংগ্রহ করে</h2>
-<p>Nothing. The developer receives no information about you, your PC, your network or how you use the app. The relays described below pass along only what you choose to send, and store none of it.</p>
+<p>কিছুই না। ডেভেলপার আপনার, আপনার পিসি, নেটওয়ার্ক বা অ্যাপ ব্যবহার সম্পর্কে কোনো তথ্য পান না। নিচে বর্ণিত রিলেগুলো শুধু আপনি যা পাঠাতে চান তা পৌঁছে দেয়, কিছুই জমিয়ে রাখে না।</p>
 
 <h2>আপনার পিসিতে যা থাকে</h2>
 <ul>
   <li><b>সেটিংস</b> (<code>AdeeboMeter.settings</code>) ও একটি ছোট <b>লগ</b> , শুধু অ্যাপের নিজের সমস্যা খোঁজার জন্য।</li>
   <li><b>ইতিহাস</b> নেটওয়ার্কের গতি ও অবস্থার সাম্প্রতিক ইতিহাস। সমস্যা হওয়া মিনিটে ফিরে দেখতে পারবেন। AppData ফোল্ডারে থাকে। পোর্টেবল কপিতে প্রোগ্রামের পাশের data ফোল্ডারে থাকে। পুরোনো দিনের তথ্য নিজে থেকেই সরানো হয়।</li>
-  <li><b>Neighbour wars</b> (শুধু History চালু থাকলে): প্রতি ঘণ্টায় Windows যে Wi-Fi নেটওয়ার্কগুলো দেখায়, তাদের নাম, ঠিকানা (BSSIDs), চ্যানেল ও সিগন্যাল 7 দিন ধরে রাখা হয় এখানে: <code>air.txt</code>। History বন্ধ করলে এক ঘণ্টার মধ্যে সেটি মুছে যায়। Wi-Fi নেটওয়ার্কগুলো নিজেরাই আশপাশে এসব নাম ও ঠিকানা জানায়। ওই নেটওয়ার্কের ডিভাইস সম্পর্কে কিছু দেখা হয় না।</li>
-  <li><b>Adeebo Points</b> (<code>points.txt</code>): কোন ফিচার কখন ব্যবহার করেছেন। আর কিছু থাকে না।</li>
+  <li><b>প্রতিবেশীদের লড়াই</b> (শুধু History চালু থাকলে): প্রতি ঘণ্টায় Windows যে Wi-Fi নেটওয়ার্কগুলো দেখায়, তাদের নাম, ঠিকানা (BSSIDs), চ্যানেল ও সিগন্যাল 7 দিন ধরে রাখা হয় এখানে: <code>air.txt</code>। History বন্ধ করলে এক ঘণ্টার মধ্যে সেটি মুছে যায়। Wi-Fi নেটওয়ার্কগুলো নিজেরাই আশপাশে এসব নাম ও ঠিকানা জানায়। ওই নেটওয়ার্কের ডিভাইস সম্পর্কে কিছু দেখা হয় না।</li>
+  <li><b>Adeebo পয়েন্ট</b> (<code>points.txt</code>): কোন ফিচার কখন ব্যবহার করেছেন। আর কিছু থাকে না।</li>
   <li><b>নেটওয়ার্ক সেটিংসের স্ন্যাপশট</b> (<code>netsnap.txt</code>, শুধু Save চাপলে): অ্যাডাপ্টারের ঠিকানা, রাউটার ও DNS সার্ভার, প্রক্সি ও hosts ফাইলের ফিঙ্গারপ্রিন্ট, যাতে পরে কী বদলেছে বোঝা যায়।</li>
   <li><b>পর্যালোচনা</b> ( <code>reports</code> ফোল্ডার): আপনার সেভ করা ছয় মাসের রিভিউ। History 6 মাস রাখলে পুরোনো দিন বাদ পড়ার আগেও AdeeboMeter একটি রিভিউ লেখে। নাম, Wi-Fi-এর নাম ও ঠিকানা বাদ যায়। আপনি মুছে না দেওয়া পর্যন্ত থাকে।</li>
   <li><b>স্ট্রিম ও ব্রোকারের রেকর্ড</b> (History-তে 90 দিন থাকে): স্ট্রিমের সেবার নাম, যা সার্ভারের নাম থেকে জানা যায়, আপনার ট্যাব বা শিরোনাম থেকে নয়। স্ট্রিমের সময় ও গতি কমার ঘটনাও থাকে। ব্রোকারের ক্ষেত্রে প্রতি লেনদেন দিনের ধীর সময়গুলো থাকে। আপনার অ্যাকাউন্ট বা সেবায় কী দেখেন, তা দেখা হয় না।</li>
   <li><b>আবহাওয়া</b> (<code>weather.txt</code>, শুধু আবহাওয়া চালু করলে): বেছে নেওয়া এলাকার ঘণ্টাভিত্তিক পূর্বাভাস, আগের দিন ও সামনের দিনগুলোর জন্য, প্রায় 2 KB। ইতিহাস নেই। সরিয়ে দিলে বা আবহাওয়া বন্ধ করলে মুছে যায়।</li>
   <li><b>দিনের বাজারদর</b> (<code>fx.txt</code>, <code>bcpi.txt</code>): Bank of Canada-এর শেষ বিনিময়হার ও পণ্যমূল্য সূচক, যাতে Trading পেজ খুলতে আবার অনুরোধ পাঠাতে না হয়।</li>
-  <li><b>Outage log</b> (in History): when your internet went quiet and when it came back, so the Outages list and the Report for my ISP can show them. Times only - nothing about what you were doing. It goes with History: turning History off stops it, and old days roll off with the rest.</li>
+  <li><b>বিভ্রাটের লগ</b> (ইতিহাসে): কখন ইন্টারনেট চুপ হলো আর কখন ফিরল, বিভ্রাটের তালিকা ও ISP রিপোর্টের জন্য। শুধু সময় - আপনি কী করছিলেন তা নয়। এটি ইতিহাসের সঙ্গে চলে।</li>
   <li><b>স্লিপ থেকে ফেরার হিসাব</b> (History-তে): পিসি জেগে ওঠার কত সেকেন্ড পর রাউটার ও DNS সাড়া দিয়েছিল।</li>
-  <li><b>Devices on your networks</b> (<code>devices.txt</code>, <code>device-nets.txt</code>, only while History is on): the hardware addresses already seen on each network and when the network was first met, so a new device can be listed. At most 40 networks; turning History off deletes both.</li>
-  <li><b>Walk test</b> (<code>walk.txt</code>): the room names you typed and what each spot measured. Remove a room on the page to delete it.</li>
-  <li><b>Programs seen</b> (<code>seen-apps.txt</code>): the names of programs that use the network and when each was first seen, so a newcomer can be pointed out.</li>
-  <li><b>Remembered phones</b> (<code>phones.txt</code>, only if you said yes to "Remember this phone"): each phone's name and its own key, locked to your Windows account. Forget my phones empties it.</li>
-  <li><b>আপনার গেমগুলো</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): the games and servers you added in the Gamer Zone, and Valve's public server list when you refresh it - and, while History is on, a line a minute for each server you watch.</li>
-  <li><b>Sports</b> (<code>sportkeys.dat</code>, <code>sporthits.txt</code>): the keys you added for football-data.org or CricketData, locked to your Windows account, and today's count of CricketData calls.</li>
-  <li><b>বাজার</b> (<code>mk-calls.txt</code>, the Bank of Canada history files): today's count of quote calls with your own key, and the exchange-rate history the charts are drawn from.</li>
-  <li><b>Stream Check</b> (<code>streamlinks.bin</code>, <code>streamchecks.txt</code>): the stream links you saved, locked to your Windows account, and the results of your checks.</li>
-  <li><b>Service board</b> (<code>board-watch.txt</code>, <code>board-log.txt</code>): the hosts you asked it to watch, and what each check found.</li>
-  <li><b>Certificates</b> (<code>cert-compare</code>, <code>cert-dates.txt</code>): the chains and expiry dates you asked it to compare or keep an eye on.</li>
-  <li><b>Device list</b> (<code>inventory.txt</code>, only while History is on): the devices you named or watch on each network. It follows History: older entries roll off with it, and turning History off deletes it.</li>
-  <li><b>Moments and time pins</b> (<code>moments.txt</code>, <code>time-pins.txt</code>): which little moments the companion already showed you, and the minutes you pinned in the Time machine.</li>
-  <li><b>Reports waiting to go</b> ( <code>outbox</code> folder): at most 3 reports you pressed Send on while offline, already cleaned; they go the next time AdeeboMeter starts online, or after 7 days they're deleted.</li>
-  <li><b>Network Lab</b> (<code>lab.html</code>, <code>edge-profile</code>): the Lab page you open, with your network's device list and this PC's name in it, and the private Edge profile it opens in. They stay on this PC.</li>
+  <li><b>আপনার নেটওয়ার্কের ডিভাইস</b> (<code>devices.txt</code>, <code>device-nets.txt</code>, শুধু ইতিহাস চালু থাকলে): প্রতিটি নেটওয়ার্কে আগে দেখা হার্ডওয়্যার ঠিকানা, যাতে নতুন ডিভাইস জানানো যায়। সর্বোচ্চ ৪০টি নেটওয়ার্ক; ইতিহাস বন্ধ করলে দুটোই মুছে যায়।</li>
+  <li><b>হাঁটার পরীক্ষা</b> (<code>walk.txt</code>): আপনার লেখা ঘরের নাম আর প্রতিটি জায়গায় কী মাপা হয়েছে।</li>
+  <li><b>দেখা প্রোগ্রাম</b> (<code>seen-apps.txt</code>): যেসব প্রোগ্রাম নেটওয়ার্ক ব্যবহার করে তাদের নাম আর প্রথম কবে দেখা গেছে।</li>
+  <li><b>মনে রাখা ফোন</b> (<code>phones.txt</code>, শুধু «এই ফোনটি মনে রাখুন»-এ হ্যাঁ বললে): প্রতিটি ফোনের নাম ও তার নিজস্ব চাবি, আপনার Windows অ্যাকাউন্টে তালাবদ্ধ। «আমার ফোনগুলো ভুলে যান» এটি খালি করে।</li>
+  <li><b>আপনার গেমগুলো</b> (<code>games.txt</code>, <code>valve-servers.txt</code>): গেমার জোনে যোগ করা গেম ও সার্ভার, রিফ্রেশ করলে Valve-এর পাবলিক তালিকা, আর ইতিহাস চালু থাকলে নজরে রাখা প্রতিটি সার্ভারের জন্য মিনিটে একটি লাইন।</li>
+  <li><b>খেলা</b> (<code>sportkeys.dat</code>, <code>sporthits.txt</code>): football-data.org বা CricketData-র জন্য আপনার যোগ করা চাবি, Windows অ্যাকাউন্টে তালাবদ্ধ, আর আজকের CricketData কলের সংখ্যা।</li>
+  <li><b>বাজার</b> (<code>mk-calls.txt</code>, ব্যাংক অব কানাডার ইতিহাস): আপনার চাবি দিয়ে আজকের কোট কলের সংখ্যা, আর চার্টের জন্য বিনিময় হারের ইতিহাস।</li>
+  <li><b>স্ট্রিম যাচাই</b> (<code>streamlinks.bin</code>, <code>streamchecks.txt</code>): সেভ করা স্ট্রিম লিংক, Windows অ্যাকাউন্টে তালাবদ্ধ, আর আপনার যাচাইয়ের ফল।</li>
+  <li><b>সার্ভিস বোর্ড</b> (<code>board-watch.txt</code>, <code>board-log.txt</code>): যেসব হোস্ট নজরে রাখতে বলেছেন আর প্রতিটি যাচাইয়ে কী পাওয়া গেছে।</li>
+  <li><b>সার্টিফিকেট</b> (<code>cert-compare</code>, <code>cert-dates.txt</code>): যেসব চেইন ও মেয়াদ শেষের তারিখ তুলনা বা নজরে রাখতে বলেছেন।</li>
+  <li><b>ডিভাইসের তালিকা</b> (<code>inventory.txt</code>, শুধু ইতিহাস চালু থাকলে): প্রতিটি নেটওয়ার্কে যেসব ডিভাইসের নাম দিয়েছেন বা নজরে রাখছেন। এটি ইতিহাসের সঙ্গে চলে; ইতিহাস বন্ধ করলে মুছে যায়।</li>
+  <li><b>মুহূর্ত ও চিহ্ন</b> (<code>moments.txt</code>, <code>time-pins.txt</code>): সঙ্গী আপনাকে যেসব ছোট মুহূর্ত দেখিয়েছে, আর টাইম মেশিনে পিন করা মিনিট।</li>
+  <li><b>পাঠানোর অপেক্ষায় রিপোর্ট</b> ( <code>outbox</code> ফোল্ডার): অফলাইনে পাঠাতে চাপা সর্বোচ্চ ৩টি রিপোর্ট, আগেই পরিষ্কার করা; পরের বার অনলাইনে চালু হলে যায়, নয়তো ৭ দিন পরে মুছে যায়।</li>
+  <li><b>নেটওয়ার্ক ল্যাব</b> (<code>lab.html</code>, <code>edge-profile</code>): ল্যাবের পেজ, যাতে আপনার নেটওয়ার্কের ডিভাইসের তালিকা ও এই পিসির নাম থাকে, আর যে ব্যক্তিগত Edge প্রোফাইলে এটি খোলে। এগুলো এই পিসিতেই থাকে।</li>
   <li><b>ক্যাপচার</b> ও <b>সেভ করা ফলাফল</b>, তবে শুধু যেগুলো তৈরি বা সেভ করতে বলেছেন।</li>
 </ul>
 <p>টুলে লেখা পাসওয়ার্ড ও গোপন তথ্য, যেমন SNMP community, RADIUS secret বা সার্টিফিকেট পাসওয়ার্ড, শুধু ওই কাজেই লাগে। সেভ, লগ বা কপি করা হয় না।</p>
@@ -90,48 +90,48 @@ footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:v
   <li><b>রাউটার পিং:</b> প্রতি কয়েক সেকেন্ডে আপনার রাউটারে ছোট একটি পিং। এটি লোকাল নেটওয়ার্ক ছাড়ায় না।</li>
   <li><b>ইন্টারনেট ও DNS পরীক্ষা:</b> একটি পিং যায় <code>1.1.1.1</code> (অথবা <code>8.8.8.8</code>)-এ, Balanced-এ প্রতি 15 সেকেন্ডে বা Penny-তে প্রতি 5 মিনিটে। প্রতি মিনিটে সর্বোচ্চ একবার নাম খোঁজে। পিং বন্ধ থাকলে একই ঠিকানার পোর্ট 443-এ সংযোগের সময় মাপে এবং সঙ্গে সঙ্গে বন্ধ করে। Off করলে ব্যাকগ্রাউন্ডে ইন্টারনেটে কিছু যায় না।</li>
   <li><b>সেবাদাতার নাম:</b> প্রতি নেটওয়ার্কে একবার, 6 হপের ছোট ট্রেস যায় <code>1.1.1.1</code> -এর দিকে, আর সেবাদাতার নাম জানতে রিভার্স DNS অনুসন্ধান হয়।</li>
-  <li><b>সাইন-ইন পেজ পরীক্ষা:</b> only inside a check you start (What's wrong? and the full checkup), one request to the test page Windows itself uses (<code>msftconnecttest.com</code>).</li>
+  <li><b>সাইন-ইন পেজ পরীক্ষা:</b> শুধু আপনার শুরু করা কোনো যাচাইয়ের ভেতরে (কী সমস্যা? ও পূর্ণ পরীক্ষা), Windows নিজে যে পরীক্ষার পেজ ব্যবহার করে (<code>msftconnecttest.com</code>).</li>
   <li><b>পিন করা গন্তব্যে নজর:</b> চালু করলেই পিন করা গন্তব্যে প্রতি 30 সেকেন্ডে একটি পিং যায়।</li>
-  <li><b>Gamer Zone:</b> গেমে ক্লিক করার আগে কিছু যায় না। এরপর ওই গেমের অঞ্চলে পিং বা সংযোগের সময় মাপে। Valve সার্ভারের তালিকা আসে <code>api.steampowered.com</code> থেকে, শুধু Valve গেম যোগ করলে বা Refresh চাপলে।</li>
+  <li><b>গেমার জোন:</b> গেমে ক্লিক করার আগে কিছু যায় না। এরপর ওই গেমের অঞ্চলে পিং বা সংযোগের সময় মাপে। Valve সার্ভারের তালিকা আসে <code>api.steampowered.com</code> থেকে, শুধু Valve গেম যোগ করলে বা Refresh চাপলে।</li>
 
   <li><b>স্ট্রিমিং:</b> কিছু চললেই প্রতি 10 সেকেন্ডে (Penny-তে 30) স্ট্রিমের সার্ভারের সঙ্গে সংযোগের সময় মাপে। কোনো ডেটা পাঠায় না। উদ্দেশ্য, সার্ভারের ধীরতা আর আপনার সংযোগের ধীরতা আলাদা করা। উত্তর না এলে সর্বোচ্চ ছয়বার চেষ্টা হয়। বন্ধ করতে Settings › “Do you stream or trade?” দেখুন।</li>
   <li><b>ব্রোকারের সংযোগে নজর:</b> ব্রোকার বেছে নেওয়ার আগে কিছু যায় না। এরপর প্রিসেটে ঠিক করা বিরতিতে তার পাবলিক ঠিকানায় সংযোগের সময় মাপে। ডেটা পাঠায় না বা সাইন-ইন করে না। শুধু বাজার খোলা থাকলে চলে, তবে ক্রিপ্টোর জন্য চাইলে সব সময় চলতে পারে।</li>
   <li><b>আবহাওয়া</b> (চালু না করলে বন্ধ): আপনি এলাকার নাম লিখবেন। সেটি খুঁজতে একবার নামটি যায় <code>geocoding-api.open-meteo.com</code> -এ। তারপর শুধু এলাকার স্থানাঙ্ক যায় <code>api.open-meteo.com</code> -এ, প্রায় প্রতি 2 দিনে, অথবা Better-এ প্রতি 6 ঘণ্টায়। পিসির অবস্থান ব্যবহার করা হয় না। Open-Meteo বিনামূল্যে এবং অ্যাকাউন্ট লাগে না। ডেটা CC BY 4.0।</li>
-  <li><b>Bank of Canada-এর বাজারদর:</b> only when Markets is open (or the evening summary is on) and newer numbers should be out: one request per currency on your list (its history back to 2017 the first time) and, about weekly, the commodity index, the policy rate and inflation, from <code>bankofcanada.ca</code>-এ। আপনার সম্পর্কে কিছু পাঠানো হয় না।</li>
-  <li><b>Market quotes</b> (only with your own key): index, company and futures prices from <code>financialmodelingprep.com</code>, <code>finnhub.io</code> অথবা <code>twelvedata.com</code> - only the services you added a key for - while Markets is open, as often as you set (1-60 minutes). A search in the company picker asks the same service.</li>
-  <li><b>Sports scores</b> (off until you turn them on): while the Sports page is open (about every 5 minutes), or a stream plays while a team you follow is live, the day's fixtures and scores from <code>api-web.nhle.com</code>, <code>site.api.espn.com</code> ও <code>feeds.bbci.co.uk</code>, and from <code>api.football-data.org</code> অথবা <code>api.cricapi.com</code> with your own key. With the kick-off reminder on, your teams' fixtures about every 30 minutes while the PC is on, only when one of their games is near.</li>
-  <li><b>Phone waiting room</b> (only once you remembered a phone): a waiting room at AdeeboMeter's phone relay (<code>adeebometer-remote.orkoadeeb.workers.dev</code>) so the phone can find this PC - sealed, the relay can't read it - and once an hour one request to <code>adeebometer-live.orkoadeeb.workers.dev</code> for the time. Off with the switch on the phone page, or with <code>phone_remote = off</code> in an IT policy.</li>
-  <li><b>Service board watch</b> (only if you set a number of minutes): a connection (no data) to each host on your board every few minutes while the app runs.</li>
-  <li><b>Watched devices</b> (only devices you chose to watch): a ping a minute to each one, on your local network.</li>
+  <li><b>Bank of Canada-এর বাজারদর:</b> শুধু মার্কেট পেজ খোলা থাকলে (বা সন্ধ্যার সারাংশ চালু থাকলে) আর নতুন সংখ্যা বেরোনোর কথা থাকলে: আপনার তালিকার প্রতিটি মুদ্রার জন্য একটি অনুরোধ (প্রথমবার ২০১৭ থেকে তার ইতিহাস), আর মোটামুটি সপ্তাহে একবার পণ্য সূচক, নীতি সুদহার ও মূল্যস্ফীতি, <code>bankofcanada.ca</code>-এ। আপনার সম্পর্কে কিছু পাঠানো হয় না।</li>
+  <li><b>মার্কেট কোট</b> (শুধু আপনার নিজের কী থাকলে): সূচক, কোম্পানি ও ফিউচারসের দাম আসে <code>financialmodelingprep.com</code>, <code>finnhub.io</code> অথবা <code>twelvedata.com</code> থেকে - শুধু যেসব সেবার কী আপনি যোগ করেছেন (Finnhub ও Twelve Data কোম্পানির দাম দেয়, সূচক বা ফিউচারস নয়) - Markets খোলা থাকলে, আপনি যতবার ঠিক করেন (১-৬০ মিনিট)। কোম্পানি বাছাইয়ের খোঁজও একই সেবাকে জিজ্ঞেস করে।</li>
+  <li><b>খেলার স্কোর</b> (চালু না করা পর্যন্ত বন্ধ): খেলার পেজ খোলা থাকলে (মোটামুটি প্রতি ৫ মিনিটে), বা আপনার অনুসরণ করা দল খেলার সময় স্ট্রিম চললে, <code>api-web.nhle.com</code>, <code>site.api.espn.com</code> ও <code>feeds.bbci.co.uk</code>থেকে দিনের সূচি ও স্কোর, আর নিজের চাবি দিয়ে <code>api.football-data.org</code> অথবা <code>api.cricapi.com</code> থেকে। কিক-অফ রিমাইন্ডার চালু থাকলে, পিসি চালু থাকা অবস্থায় মোটামুটি প্রতি ৩০ মিনিটে আপনার দলের সূচি, শুধু যখন তাদের কোনো খেলা কাছে আসে।</li>
+  <li><b>ফোনের অপেক্ষার ঘর</b> (শুধু কোনো ফোন মনে রাখার পরে): AdeeboMeter-এর ফোন রিলেতে (<code>adeebometer-remote.orkoadeeb.workers.dev</code>) একটি অপেক্ষার ঘর, যাতে ফোন এই পিসি খুঁজে পায় - সিল করা, রিলে পড়তে পারে না - আর ঘণ্টায় একবার <code>adeebometer-live.orkoadeeb.workers.dev</code> -এর কাছে সময় জানার একটি অনুরোধ। ফোন পেজের সুইচে, বা আইটি নীতিতে <code>phone_remote = off</code> দিয়ে বন্ধ হয়।</li>
+  <li><b>সার্ভিস বোর্ডে নজর</b> (শুধু মিনিটের সংখ্যা দিলে): অ্যাপ চলার সময় সেই ব্যবধানে বোর্ডের প্রতিটি হোস্টে একটি সংযোগ (ডেটা ছাড়া)।</li>
+  <li><b>নজরে রাখা ডিভাইস</b> (শুধু যেগুলো বেছে নিয়েছেন): লোকাল নেটওয়ার্কে প্রতিটিতে মিনিটে একটি পিং।</li>
 </ul>
 <p><b>শুধু আপনি চালালে:</b></p>
 <ul>
   <li><b>টুল:</b> পরীক্ষা শুধু আপনি যে গন্তব্য লিখেছেন বা বেছেছেন, অথবা স্ক্রিনে দেখানো গন্তব্যে যায়। যেমন, <code>msftconnecttest.com</code> ঘড়ি পরীক্ষার জন্য।</li>
   <li><b>গতির পরীক্ষা:</b> বেছে নেওয়া সার্ভারে প্রায় 8 সেকেন্ড ধরে ডাউনলোড ও আপলোড হয়। শুরুতে Cloudflare-এর কাছের <code>speed.cloudflare.com</code> ব্যবহার হয়, অথবা কোনো শহরের Vultr বা OVHcloud টেস্ট ফাইল। MB-তে একটি সীমা থাকে।</li>
-  <li><b>আমার ইন্টারনেট সেবাদাতার জন্য রিপোর্ট:</b> pings and traces to the destinations you choose (and to <code>1.1.1.1</code> beside a host you type, for comparison); your public IP (one request to <code>www.cloudflare.com/cdn-cgi/trace</code>-এ, শুধু আপনি yes লিখলে।</li>
-  <li><b>Phone link:</b> when you press Show the QR code, a sealed connection through AdeeboMeter's phone relay (<code>adeebometer-remote.orkoadeeb.workers.dev</code>). Everything between the phone and the PC is encrypted end to end; the relay passes it along and can't read it.</li>
-  <li><b>Stream Check:</b> when you press Test my stream, the playlist of the link you gave and up to 30 seconds of its video, from that link's own server.</li>
-  <li><b>Certificate revocation</b> (Settings, off by default): when you run Chain check or HTTPS check, one question to the certificate issuer's revocation list or OCSP address.</li>
+  <li><b>আমার ইন্টারনেট সেবাদাতার জন্য রিপোর্ট:</b> আপনার বেছে নেওয়া গন্তব্যে পিং ও ট্রেস (আর তুলনার জন্য লেখা হোস্টের পাশে <code>1.1.1.1</code> -এ); আপনার পাবলিক IP ( <code>www.cloudflare.com/cdn-cgi/trace</code>-এ, শুধু আপনি yes লিখলে।</li>
+  <li><b>ফোনের সংযোগ:</b> QR কোড দেখান চাপলে, AdeeboMeter-এর ফোন রিলের (<code>adeebometer-remote.orkoadeeb.workers.dev</code>) মধ্য দিয়ে একটি সিল করা সংযোগ। ফোন আর পিসির মধ্যে সবকিছু এক প্রান্ত থেকে অন্য প্রান্ত পর্যন্ত এনক্রিপ্ট করা; রিলে তা পৌঁছে দেয় কিন্তু পড়তে পারে না।</li>
+  <li><b>স্ট্রিম যাচাই:</b> আমার স্ট্রিম পরীক্ষা চাপলে, আপনার দেওয়া লিংকের প্লেলিস্ট আর তার ভিডিওর সর্বোচ্চ ৩০ সেকেন্ড, সেই লিংকের নিজের সার্ভার থেকে।</li>
+  <li><b>সার্টিফিকেট বাতিল যাচাই</b> (সেটিংস, ডিফল্টে বন্ধ): চেইন যাচাই বা HTTPS যাচাই চালালে, ইস্যুকারীর বাতিল তালিকা বা OCSP ঠিকানায় একটি প্রশ্ন।</li>
   <li><b>অনলাইন অনুসন্ধান</b> (শুরুতে বন্ধ, আর আপনার ঠিক করা সময় পরে নিজে থেকেই বন্ধ হয়): পথের পাবলিক IP ঠিকানা যায় RIPEstat (<code>stat.ripe.net</code>) ও PeeringDB-তে HTTPS দিয়ে। Security checkup তখন Cloudflare-এর এনক্রিপ্ট করা DNS (<code>cloudflare-dns.com</code>)-এ একটি প্রশ্ন পাঠায় এবং একটি TLS হ্যান্ডশেক করে <code>www.microsoft.com</code>-এর সঙ্গে। টুলবক্স থেকে VPN লিক পরীক্ষা চালালে Cloudflare-এর STUN সার্ভারকে জিজ্ঞেস করে (<code>stun.cloudflare.com</code>, UDP 3478) সে কোন ঠিকানা দেখছে। একবার স্বাভাবিক পথে, আরেকবার সরাসরি Wi-Fi বা কেবল দিয়ে। Encrypted DNS (DoH / DoT) টুল চালালে আপনি যে সার্ভার বাছেন, সেখানেই প্রশ্ন যায়।</li>
   <li><b>যে লিঙ্কে ক্লিক করেন</b> (GitHub, Donate) ব্রাউজারে খোলে। অ্যাপ নিজে কিছু পাঠায় না।</li>
   <li><b>বাগ রিপোর্ট, মতামত বা স্বীকৃতির কার্ড পাঠানো:</b> বক্সে কী যাবে দেখে তারপর <b>পাঠান</b> চাপলেই শুধু যায়। AdeeboMeter-এর রিলে (একটি ছোট Cloudflare Worker) আদিবের জন্য সেটি জমা দেয়। অ্যাকাউন্ট লাগে না। বাগ রিপোর্টে অ্যাপ ও Windows-এর সংস্করণ, আপনি যে পেজে ছিলেন আর লগের শেষ কয়েক লাইন যোগ হতে পারে। নাম, পিসির নাম, ফাইলের পাথ ও ঠিকানা বাদ দেওয়া হয়। রিলে ইমেইল ও IP ঠিকানা আবার সরায়। ইন্টারনেট ঠিকানা শুধু পাঠানোর সংখ্যা গুনতে লাগে (ঘণ্টায় পাঁচটি), আর এক দিনের জন্য একমুখী হ্যাশ হিসেবে থাকে। ইন্টারনেট না থাকলে রিপোর্ট পিসিতে অপেক্ষা করে এবং পরেরবার অনলাইনে অ্যাপ চালু হলে যায়। আপনার IT টিম অনলাইন অনুসন্ধান বন্ধ করলে এটিও বন্ধ থাকে।</li>
   <li><b>ক্র্যাশ রিপোর্ট:</b> অ্যাপ ক্র্যাশ করলে পরেরবার চালু হওয়ার পর ব্রাউজারে বিস্তারিতসহ GitHub issue খোলার অপশন দেখায়। আপনি জমা দেওয়ার আগে কিছু যায় না। আগে পড়ে সম্পাদনাও করতে পারেন।</li>
 </ul>
-<p>AdeeboMeter never listens: it opens no ports and runs no server on your PC, and only receives replies to requests it made.</p>
+<p>AdeeboMeter কখনো শোনে না: কোনো পোর্ট খোলে না, আপনার পিসিতে কোনো সার্ভার চালায় না, আর শুধু নিজের অনুরোধের উত্তরই গ্রহণ করে।</p>
 
 <h2>Microsoft Store</h2>
 <p>AdeeboMeter Microsoft Store-এ থাকলে এবং সেখান থেকে ইনস্টল করলে, ডাউনলোড, আপডেট ও কেনাকাটার তথ্য Microsoft সামলায়, তাদের <a href="https://privacy.microsoft.com/privacystatement">গোপনীয়তা বিবৃতি</a>অনুযায়ী। ডেভেলপার শুধু Microsoft-এর দেওয়া মোট বেনামি হিসাব দেখেন, যেমন কতবার ইনস্টল হয়েছে।</p>
 
 <h2>এই ওয়েবসাইট</h2>
-<p>Public website pages use Cloudflare Web Analytics to measure page views, visits, referring websites and page performance. These totals help us understand which guides people find and improve the website. Cloudflare Web Analytics uses no analytics cookies or browser fingerprinting. A visit count is an estimate based on page requests and referrals.</p>
-<p>The analytics script loads from <code>static.cloudflareinsights.com</code> and sends measurements to Cloudflare. Cloudflare receives the network request as the service provider. Read <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">Cloudflare's data collection documentation</a>. The website respects Do Not Track and Global Privacy Control by skipping analytics when either signal is enabled.</p>
-<p>The website also uses these other external services: the home page asks <code>api.github.com</code> for the latest version number and shows the Microsoft Store badge from <code>get.microsoft.com</code>; the feedback and Hall of Fame forms load Cloudflare Turnstile (<code>challenges.cloudflare.com</code>) - a free check that a person, not a robot, is sending, with no puzzle and no tracking cookies; the Live page and the phone app ask AdeeboMeter's own Live service (<code>adeebometer-live.orkoadeeb.workers.dev</code>) for weather, scores and site checks; and the phone app's checks, when you run them, contact the sites they test (for example Google, Cloudflare, Microsoft and Apple test pages, the streaming and call services you pick, public DNS resolvers, <code>rdap.org</code> for who owns an address, and Cloudflare's speed test). Those sites see your IP address the way any website you visit does. A message you send goes through AdeeboMeter's relay, as described above.</p>
+<p>পাবলিক পেজগুলো পেজ ভিউ, ভিজিট, কোন সাইট থেকে আসা আর পেজের পারফরম্যান্স মাপতে Cloudflare Web Analytics ব্যবহার করে। এই মোট সংখ্যাগুলো আমাদের বুঝতে সাহায্য করে মানুষ কোন গাইড খুঁজে পায়। Cloudflare Web Analytics কোনো অ্যানালিটিক্স কুকি বা ব্রাউজার ফিঙ্গারপ্রিন্টিং ব্যবহার করে না।</p>
+<p>অ্যানালিটিক্স স্ক্রিপ্ট <code>static.cloudflareinsights.com</code> থেকে লোড হয় আর মাপগুলো Cloudflare-এ পাঠায়। <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">Cloudflare-এর তথ্য সংগ্রহের নথি</a>পড়ুন। Do Not Track বা Global Privacy Control চালু থাকলে সাইটটি অ্যানালিটিক্স বাদ দেয়।</p>
+<p>ওয়েবসাইট আরও কিছু বাইরের সেবা ব্যবহার করে: হোম পেজ <code>api.github.com</code> -কে সর্বশেষ সংস্করণ নম্বর জিজ্ঞেস করে আর Microsoft Store-এর ব্যাজ দেখায় <code>get.microsoft.com</code>থেকে; ফিডব্যাক ও হল অব ফেমের ফর্ম Cloudflare Turnstile লোড করে (<code>challenges.cloudflare.com</code>) - একটি বিনামূল্যের যাচাই যে পাঠাচ্ছেন একজন মানুষ, রোবট নয়, কোনো ধাঁধা বা ট্র্যাকিং কুকি ছাড়া; লাইভ পেজ ও ফোন অ্যাপ AdeeboMeter-এর নিজস্ব Live সেবা (<code>adeebometer-live.orkoadeeb.workers.dev</code>)-কে আবহাওয়া, স্কোর ও সাইট যাচাইয়ের জন্য জিজ্ঞেস করে; আর ফোন অ্যাপের যাচাই চালালে সেগুলো যে সাইট পরীক্ষা করে তার সঙ্গে যোগাযোগ করে (যেমন Google, Cloudflare, Microsoft ও Apple-এর টেস্ট পেজ, আপনার বেছে নেওয়া স্ট্রিমিং ও কলের সেবা, পাবলিক DNS রিজলভার, <code>rdap.org</code> দিয়ে ঠিকানার মালিক দেখা, আর Cloudflare-এর স্পিড টেস্ট)। যেকোনো ওয়েবসাইটের মতোই এই সাইটগুলো আপনার IP ঠিকানা দেখে। আপনার পাঠানো বার্তা AdeeboMeter-এর রিলে দিয়ে যায়, ওপরে যেমন বলা আছে।</p>
 
 <h2>শিশু</h2>
 <p>AdeeboMeter শিশু বা অন্য কারও ব্যক্তিগত তথ্য সংগ্রহ করে না।</p>
 
 <h2>পরিবর্তন ও যোগাযোগ</h2>
-<p>নীতি বদলালে নতুন তারিখসহ এই পেজে প্রকাশ হবে। সোর্স কোড সবার জন্য খোলা আছে <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>, so anyone can check what the app does. For questions, write to Adeeb through the <a href="/bn/#feedback">form on the home page</a> - no account needed.</p>
+<p>নীতি বদলালে নতুন তারিখসহ এই পেজে প্রকাশ হবে। সোর্স কোড সবার জন্য খোলা আছে <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>-এ, তাই যে কেউ অ্যাপটি কী করে দেখতে পারেন। প্রশ্ন থাকলে Adeeb-কে লিখুন <a href="/bn/#feedback">হোম পেজের ফর্ম দিয়ে</a> - অ্যাকাউন্ট লাগে না।</p>
 
 <footer>Adeeb Khan-এর AdeeboMeter · MIT লাইসেন্স</footer>
 </main>
