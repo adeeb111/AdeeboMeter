@@ -9,7 +9,7 @@ Released together as one 1.1.7:
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
 - **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Cellular Lab, Windows
-  internals and hardware tools (D6). Dropped: Flow, PCAP Theater. Parked: Fleet, Remote Help.
+  internals and hardware tools (D6), Markets for every country (D7). Dropped: Flow, PCAP Theater. Parked: Fleet, Remote Help.
 
 ```
 Saturday ─► B1 blockers (site live now, widget Alt+Tab) ─► A. the look ─► B2-B6 fixes ─► tester script on Adeeb's PC ─► 1.1.7
@@ -144,7 +144,7 @@ the rest; the order below is the build order after A and B1.
 
 ```
 A + B1 ─► D1 Network Doctor ─► D3 Lab: Failure Lab + challenges + Multicast
-       ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► B2-B6
+       ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► D7 Your market ─► B2-B6
        ─► tester script (+ tour) ─► 1.1.7
 ```
 
@@ -213,6 +213,24 @@ changed, killed or written. Everything stays on the PC.
   memory channels, network) - "what held this PC back in the last hour", with the numbers. No benchmark-table guesses.
 
 Penny rule: nothing samples while its page is closed, except what the Time machine already keeps.
+
+### D7. Markets for every country - "Your market" (Adeeb, 25 Nov)
+Today the page is Canada's: Bank of Canada rates against CAD, the Canadian commodity index, New York + Toronto
+holidays, and the free keys price US shares only.
+- **Your market:** picked from the Windows region on first run; changeable **on the Markets page itself** (a
+  "Market: Canada ▾" button in the page header, a searchable list of countries; the choice redraws the page at once)
+  and in Settings. Stored per user; nothing sent anywhere.
+- **What follows the choice:** currency rates against your own currency (European Central Bank reference rates, no
+  key, ~30 currencies; Bank of Canada stays for Canada); your exchange's index first, then the world list; your
+  exchange's hours and holidays (holiday tables for the ~10 biggest exchanges, others say "holidays not checked");
+  commodities - Canada keeps its index, everyone else gets gold, oil and gas from the futures list; the corner
+  widget's default symbols and the "loonie" lines become your currency's.
+- **Honest limits:** a currency or exchange the free services don't cover (e.g. the taka, Dhaka shares) says so in one
+  line - "not on the free price services" - instead of dashes that look broken.
+- **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
+  a one-month line where the key gives one. Fixes the wide row with the empty middle.
+- Checks: self-test for region -> market mapping and the ECB parser; tester-script pictures for Canada, France,
+  India and Bangladesh.
 
 ### Dropped (25 Nov)
 - D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
