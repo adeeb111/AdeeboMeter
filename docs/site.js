@@ -95,6 +95,34 @@
     if (!d.open) d.showModal(); d.querySelector('.dl-store').focus();
   }
   window.AdeeboMeterDownload = open;
+
+  // ---- what's new, in plain words (24 Nov: "Everything that changed" went to GitHub's CHANGELOG - that list is for the nerds)
+  var NEW = {"en": {"t": "What's new in 1.1.6", "s": "In plain words.", "i": [["Speaks your language", "English, French, Spanish, Arabic and Bengali - switch with the globe button."], ["A calmer corner", "It brightens only when you rest the mouse on it, and never gets in your way."], ["Follow companies", "Pick from the big names and keep up to four on the widget."], ["A clearer report for your provider", "One page: what's wrong, where it starts, and a message ready to send."], ["For gamers, streamers and traders", "Game ping, dips in your streams, and the line to your broker."], ["Draw your network", "Break one piece and see what stops working."], ["Steadier everywhere", "Hundreds of fixes from testing on real PCs."]], "f": "Still free. No account, nothing about you collected."}, "fr": {"t": "Nouveautés de la 1.1.6", "s": "En mots simples.", "i": [["Parle votre langue", "Anglais, français, espagnol, arabe et bengali : changez avec le bouton globe."], ["Un coin plus calme", "Il ne s'éclaire que quand la souris s'y pose, et ne vous gêne jamais."], ["Suivez des entreprises", "Choisissez parmi les grands noms et gardez-en jusqu'à quatre sur le widget."], ["Un rapport plus clair pour votre fournisseur", "Une page : ce qui ne va pas, où ça commence, et un message prêt à envoyer."], ["Pour les joueurs, le streaming et le trading", "Le ping des jeux, les baisses de vos diffusions et la ligne vers votre courtier."], ["Dessinez votre réseau", "Cassez un élément et voyez ce qui cesse de fonctionner."], ["Plus stable partout", "Des centaines de corrections après des tests sur de vrais PC."]], "f": "Toujours gratuit. Pas de compte, rien sur vous n'est collecté."}, "es": {"t": "Novedades de la 1.1.6", "s": "En palabras sencillas.", "i": [["Habla tu idioma", "Inglés, francés, español, árabe y bengalí: cambia con el botón del globo."], ["Una esquina más tranquila", "Solo se ilumina cuando apoyas el ratón encima y nunca estorba."], ["Sigue empresas", "Elige entre los grandes nombres y deja hasta cuatro en el widget."], ["Un informe más claro para tu proveedor", "Una página: qué falla, dónde empieza y un mensaje listo para enviar."], ["Para jugadores, streaming y trading", "El ping de los juegos, las caídas de tus emisiones y la línea a tu bróker."], ["Dibuja tu red", "Rompe una pieza y mira qué deja de funcionar."], ["Más estable en todo", "Cientos de correcciones tras probarlo en PC reales."]], "f": "Sigue siendo gratis. Sin cuenta, sin recopilar nada sobre ti."}, "ar": {"t": "الجديد في 1.1.6", "s": "بكلمات بسيطة.", "i": [["يتحدث لغتك", "الإنجليزية والفرنسية والإسبانية والعربية والبنغالية - بدّل من زر الكرة الأرضية."], ["زاوية أهدأ", "لا تضيء إلا عندما تريح الفأرة عليها، ولا تعترض طريقك أبدًا."], ["تابع الشركات", "اختر من الأسماء الكبيرة واحتفظ بأربع منها على الأداة."], ["تقرير أوضح لمزوّد الخدمة", "صفحة واحدة: ما الخلل، وأين يبدأ، ورسالة جاهزة للإرسال."], ["للاعبين والبث والتداول", "زمن استجابة الألعاب، وانقطاعات البث، والخط إلى وسيطك."], ["ارسم شبكتك", "عطّل جزءًا واحدًا وشاهد ما الذي يتوقف."], ["أكثر ثباتًا في كل مكان", "مئات الإصلاحات بعد الاختبار على أجهزة حقيقية."]], "f": "ما زال مجانيًا. بلا حساب، ولا يجمع أي شيء عنك."}, "bn": {"t": "1.1.6-এ নতুন কী", "s": "সহজ ভাষায়।", "i": [["আপনার ভাষায় কথা বলে", "ইংরেজি, ফরাসি, স্প্যানিশ, আরবি ও বাংলা - গ্লোব বোতাম দিয়ে বদলান।"], ["আরও শান্ত কোণ", "মাউস একটু থামালে তবেই উজ্জ্বল হয়, কখনো পথ আটকায় না।"], ["কোম্পানি অনুসরণ করুন", "বড় নামগুলো থেকে বেছে নিন, উইজেটে চারটি পর্যন্ত রাখুন।"], ["ISP-র জন্য আরও পরিষ্কার রিপোর্ট", "এক পাতায়: কী সমস্যা, কোথা থেকে শুরু, আর পাঠানোর মতো তৈরি বার্তা।"], ["গেমার, স্ট্রিমার ও ট্রেডারদের জন্য", "গেমের পিং, স্ট্রিমের ড্রপ, আর ব্রোকার পর্যন্ত লাইন।"], ["আপনার নেটওয়ার্ক আঁকুন", "একটি অংশ ভাঙুন, দেখুন কী বন্ধ হয়ে যায়।"], ["সবখানে আরও স্থির", "আসল পিসিতে পরীক্ষার পর শত শত সংশোধন।"]], "f": "এখনও বিনামূল্যে। অ্যাকাউন্ট নেই, আপনার কিছুই সংগ্রহ করা হয় না।"}}[lang];
+  function newDialog() {
+    var d = document.getElementById('am-new'); if (d) return d;
+    d = document.createElement('dialog'); d.id = 'am-new'; d.className = 'am-dl am-new'; d.setAttribute('aria-labelledby', 'am-new-t');
+    if (lang === 'ar') d.dir = 'rtl';
+    d.innerHTML = '<div class="dl-card"><button class="dl-x" type="button" aria-label="' + esc(T.close) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+      '<img src="/img/logo.svg" width="40" height="40" alt=""><h2 id="am-new-t">' + esc(NEW.t) + '</h2><p class="dl-sub">' + esc(NEW.s) + '</p><ul class="nw-list">' +
+      NEW.i.map(function (x) { return '<li><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span></li>'; }).join('') +
+      '</ul><p class="nw-foot">' + esc(NEW.f) + '</p><button class="dl-opt dl-store nw-get" type="button"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>' + esc(T.download) + '</b></span></button></div>';
+    document.body.appendChild(d);
+    d.querySelector('.dl-x').addEventListener('click', function () { close(d); });
+    d.querySelector('.nw-get').addEventListener('click', function () { d.close(); open(null); });
+    d.addEventListener('click', function (e) { if (e.target === d) close(d); });
+    d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
+    return d;
+  }
+  function openNew() {
+    var d = newDialog();
+    if (typeof d.showModal !== 'function') { location.hash = 'new'; return; }
+    if (!d.open) d.showModal(); d.querySelector('.dl-x').focus();
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    var el = e.target.closest && e.target.closest('a[data-whatsnew]'); if (!el) return;
+    e.preventDefault(); openNew();
+  });
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     var el = e.target.closest && e.target.closest('a[data-download], a.dl, a.sb-dl, a[href="' + RELEASES + '"]');
