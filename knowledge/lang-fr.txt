@@ -5687,3 +5687,4 @@ Crypto	Crypto
 250 calls a day - indexes, shares, futures	250 appels par jour - indices, actions, contrats à terme
 60 calls a minute - US shares	60 appels par minute - actions américaines
 800 calls a day - US shares and crypto	800 appels par jour - actions américaines et crypto
+(Ctrl+Alt+A taken)	(Ctrl+Alt+A déjà pris)

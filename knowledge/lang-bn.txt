@@ -5675,3 +5675,4 @@ Crypto	ক্রিপ্টো
 250 calls a day - indexes, shares, futures	দিনে ২৫০টি কল - সূচক, শেয়ার, ফিউচার
 60 calls a minute - US shares	মিনিটে ৬০টি কল - মার্কিন শেয়ার
 800 calls a day - US shares and crypto	দিনে ৮০০টি কল - মার্কিন শেয়ার ও ক্রিপ্টো
+(Ctrl+Alt+A taken)	(Ctrl+Alt+A আগেই ব্যবহৃত)

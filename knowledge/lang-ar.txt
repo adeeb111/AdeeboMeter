@@ -5675,3 +5675,4 @@ Crypto	العملات المشفرة
 250 calls a day - indexes, shares, futures	250 طلبًا يوميًا - مؤشرات وأسهم وعقود آجلة
 60 calls a minute - US shares	60 طلبًا في الدقيقة - أسهم أمريكية
 800 calls a day - US shares and crypto	800 طلب يوميًا - أسهم أمريكية وعملات مشفرة
+(Ctrl+Alt+A taken)	(Ctrl+Alt+A مستخدم بالفعل)
