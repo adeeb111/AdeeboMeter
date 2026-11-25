@@ -62,6 +62,15 @@ NEW = [
                        ("", "", "Then it's gone", "The note clears the moment the work ends."),
                        ("", "", "Calm at logon", "The first 45 s while Windows joins the network show \"waiting\", not \"Not connected\"."),
                        ("", "", "Judged on enough", "Grades, the provider letter and the six-month review wait for a day of history.")])),
+    slide("New in 1.1.6 · the corner, Markets and your ISP", "Calmer corner. More to watch. Proof on one page.",
+          cards("g4", [("b", "", "Rest, then it brightens", "The widget wakes after a short rest (0.8 s, Settings › Widget › Hover wait) and shows one quiet hint."),
+                       ("b", "", "Never in the way", "Clicks, right-clicks, the wheel and taps go to the app underneath. The keyboard is never watched."),
+                       ("", "", "Move it on purpose", "Rest 2.5 s to unlock it, or tray › Move widget. Then drag, or tap to open AdeeboMeter."),
+                       ("", "", "Night sky", "The weather shows a moon after sunset."),
+                       ("g", "", "Companies", "Pick from the big names or search; follow them and put up to four on the widget."),
+                       ("g", "", "Three price services", "Your own free key from Financial Modeling Prep, Finnhub or Twelve Data - if one can't answer, the next does."),
+                       ("", "", "A new ISP report", "The answer and the five stops on page one, then the message to paste, hop by hop and when it happens."),
+                       ("", "", "One pop-up style", "Every question box in the same calm card, dark title bar and one blue OK.")])),
 ]
 marker = '<div class="frame"><section class="slide"><div class="in">\n  <div class="kicker">Get it</div>'
 assert marker in html, "the Get it slide moved"

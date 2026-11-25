@@ -2,7 +2,7 @@
 
 Facts only: what each version reads, shows and checks. Created by Adeeb Khan.
 
-## 1.1.6 (2026-11-23)
+## 1.1.6 (2026-11-24)
 
 Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets, Sports and Outlook, a Gamer HUD and a calmer Home - 232 tools in six Toolbox sections - plus the fixes from two bug hunts, a security hunt and a shell review.
 
@@ -51,6 +51,7 @@ Speaks five languages, a keyboard shell, AdeeboLab, newspaper pages for Markets,
 - From a result on What's wrong?: open it as a script in AdeeboShell, or as your network in AdeeboLab.
 - 24 Nov, final review: "What's wrong?" buttons work in every language; memory budget 99 MB; the replay bonus is +2; the language button is back at the top of the window, and every page of the site has the language picker at the top (a picked language is remembered, a visited one isn't); AdeeboShell leaves with Esc, Ctrl+Tab or Shift+Tab, never follows a broken link out of /data, masks secrets in every echo, keeps the scrollback on Ctrl+L and keeps a line typed while a command runs; dialogs and the install card fit small screens at 200%; the phone's calculators read 1,5 as one and a half, like the PC's.
 - 24 Nov, release gate: the widget is moved by resting on it for 2.5 s or by tray › Move widget - "hold Ctrl" is gone, because telling Ctrl alone from Ctrl+C meant watching every key and Windows Defender's machine-learning check flagged that build (Trojan:Win32/Bearfoos.A!ml, a false alarm); the keyboard is never watched. The widget brightens only after a short rest (Settings › Widget › Hover wait, 0.8 s), shows one quiet hint line at its foot that stays put for the whole hover, passes a right-click's press and release, the wheel and a tap to the app underneath, and a finger tap on the unlocked widget opens AdeeboMeter. A new ISP report: the answer and the five stops on page one, the message to paste, hop by hop, lost probes stop by stop, when it happens. The weather shows a moon at night. Small question boxes wrap their text. A tester script (Run-AdeeboMeterTests.ps1) checks Defender, the self-test, every widget style and a live widget run. The website: one site bar on every page (Home, Learn, Blog, Games, Live, More, day/night, Download), a download window instead of GitHub's page, the blog and guides rewritten around the same five stops, the feature pages showing the real widget; the relay's rate-limit store is in place.
+- 24 Nov, last round: Markets › Overview has a Companies desk - pick from groups of big names or search, Follow them, put up to four on the widget (private companies are marked); quotes come from your own free key at Financial Modeling Prep, Finnhub or Twelve Data, tried in turn, and a key is checked before it's saved. One pop-up style for every question box (card colours, dark title bar, one blue OK). The language button is calm, like the website's. The Trading card and the key box no longer overlap. Hunters round 14: only a real button release on the widget opens AdeeboMeter; `cp` says which linked folders it skipped. The website's widget pictures are the app's own at 2x, and the Gamer, Streaming and Markets pages show the real full window.
 
 ## 1.1.5 (2026-11-17)
 

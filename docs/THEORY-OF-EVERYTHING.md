@@ -135,9 +135,10 @@ It walks the path from you outwards — *PC → Wi-Fi/LAN → ISP/VPN → DNS �
 
 ### 5.10 The corner widget (`AppCtx` + `LayeredForm`)
 - **What:** a small card that is **painted as an image** and shown with per-pixel transparency (`UpdateLayeredWindow`).
-- **Never takes clicks:** the window is marked *transparent* to the mouse, so whatever is underneath keeps working. All clicking happens on the tray icon.
-- **30% faded** unless you hover.
-- **Folds away** when a window covers the corner — into a tiny chip. Rest the mouse on the chip for 0.45 s and the card comes back.
+- **Never takes clicks:** the window is marked *transparent* to the mouse, so whatever is underneath keeps working - clicks, right-clicks (press and release), the wheel and finger taps. Opening AdeeboMeter is the tray icon's job (or Ctrl+Alt+A).
+- **30% faded** until the mouse rests on it for the *Hover wait* (0.8 s by default; 0.45 or 1.2 in Settings › Widget). Then it brightens and shows one hint line at its foot, which stays the same for the whole hover.
+- **Moving is on purpose:** after 2.5 s of rest (or tray › Move widget) the widget unlocks and takes the mouse for a moment - drag to move it, click or tap to open AdeeboMeter. Only a real button release counts as a click; a press made elsewhere, the wheel or a lost capture just ends the drag. It locks again by itself. The keyboard is never watched (an earlier "hold Ctrl" made Windows Defender's machine-learning check flag the build).
+- **Folds away** when a window covers the corner — into a tiny chip. Rest the mouse on the chip for the same Hover wait and the card comes back.
 - **Light on the CPU:** it checks the mouse 20×/s only when the mouse is near the corner, 4×/s otherwise, and 2×/s when hidden. It repaints only when the snapshot actually changed.
 
 ### 5.11 The engineer view (`FullView`)
@@ -577,8 +578,23 @@ by edge distance first and the middle of where you are second. Text boxes and th
 - **lsblk** reads partitions from Windows' Storage view when the older disk links fail (Intel RST RAID).
 - **Every window** that can reach the taskbar carries the AdeeboMeter icon.
 
+- **Companies and three price services** (`MarketData`, `FullView.Markets`). A Companies desk on Markets › Overview and a
+  picker with groups of big names and a search; *Follow* keeps a company on the page, *Add to widget* puts up to four on the
+  Markets widget, and private companies are marked. Quotes come from your own key at Financial Modeling Prep, Finnhub or
+  Twelve Data (`AskQuoteKey` checks a key on AAPL before saving it, encrypted with DPAPI); `FetchList` tries them in turn,
+  so if one can't answer the next one does. "Open" counts only the market's open hours, not a lunch break.
+- **A new ISP report** (`IspReport`, `IspReport.Visual`): the answer and the five stops on page one, what was ruled out,
+  the message to paste, then the path hop by hop with lost probes marked stop by stop, the hours and the week.
+- **Night and day** (`Weather.DayAt`): the sun's height at the forecast's place decides; after sunset the weather glyph is a moon.
+- **One pop-up style** (`Kit.Polish`): every question box gets the card colours, a dark title bar in dark themes, flat
+  buttons and one blue OK; long questions wrap and the box grows to fit.
+- **The language button** is calm: outlined, with a line globe, like the website's.
+
 ### 13.9 Testing 1.1.6
 `--selftest` (the CI gate; now also the /data fence and the shell's dot-and-space case),
 `--deeptest`, `--perf`, and the RC check (`rc-walk.ps1`, `rc-leak.ps1`, `rc-local.ps1` in the test kit; `.github/workflows/rc.yml`
 on the `rc-check` branch): every page in five languages with memory, handles, GDI objects and idle CPU per page, and a
-10-minute page-cycling run to catch leaks.
+10-minute page-cycling run to catch leaks. On a tester's own PC, `tools\test\Run-AdeeboMeterTests.ps1` runs it all in one go:
+Windows Defender's scan of the exe, the self-test, every widget style at 100-200% in both themes, a sample ISP report, and
+a live run of the widget (hover, unlock, drag with the mouse and a finger, tap, tray › Move widget, right-click and wheel
+passed on), plus the website's pictures.

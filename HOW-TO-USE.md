@@ -36,7 +36,7 @@ fault it is and what to do. When you want more, one click opens everything behin
  ┌──────────────────────────────────┐      ┌───────────────────────────────┐
  │ (•‿•) All quiet │ ↓ 12 ↑ 1 Mb/s │4°│      │ AdeeboMeter  SPEED        (•‿•)│
  └──────────────────────────────────┘      │ verdict · why · what to do     │
-   buddy · status · speed · weather         │ ↓ download   ↑ upload  graph   │
+   buddy · status · speed · weather (if on) │ ↓ download   ↑ upload  graph   │
                                             │ Today ↓ 1.2 GB  ↑ 90 MB        │
                                             │ 4°C · rain from 3 pm           │
                                             │ ● PC ● LAN ● ISP ● DNS ● Net   │
@@ -44,13 +44,18 @@ fault it is and what to do. When you want more, one click opens everything behin
 ```
 
 - **Glance, don't click.** Green and quiet means fine. A colour and a short sentence means something needs you.
-- **Hover** to open the card; **click** it (or the tray icon, or **Ctrl+Alt+A**) to open the engineer view.
+- **Rest the mouse** on it for a moment (0.8 s - Settings > Widget > *Hover wait*) and the card brightens, with one quiet hint
+  at its foot. Clicks, right-clicks, the wheel and finger taps go to whatever is underneath: the widget never gets in your way.
+- **Open AdeeboMeter** from the tray icon or **Ctrl+Alt+A** from anywhere.
+- **Move it**: keep resting on it for 2.5 s and it unlocks (or tray > *Move widget*). Then drag it - with the mouse or a
+  finger - or click/tap it to open AdeeboMeter. It locks again on its own.
 - **The five dots** are the path from your PC to the internet. The first one that isn't green is where the trouble starts.
 - **The buddy** shows how your network feels: smug when all is green, dizzy on bad Wi-Fi, betrayed when your provider
   lets you down. Click the face in the engineer view to change its mood, voice and words of comfort.
 - **How it behaves** (Settings > Widget): *Quiet* never changes by itself; *Quiet + moments* shows a face for 12 seconds when
   something good happens (a clean game, a new speed record); *Follows my view* also shows what your view cares about.
-- **Widget style**: everyday card, speed (DU-Meter style, with or without status), gamer, calls or engineer.
+- **Widget style**: everyday card, speed (DU-Meter style, with or without status or apps), gamer, calls, engineer, markets,
+  sports, data use, weather, or *My widget* with the lines you pick.
 
 ---
 
@@ -163,11 +168,16 @@ The heatmap shows when your streams dip across the month; *For your provider* su
 
 ---
 
-## 8. Trading
+## 8. Markets (trading)
 
 - **Your broker** - name the broker; AdeeboMeter knocks lightly on its servers while the market is open (holidays and half
   days known) and records every slow moment. *Crypto, around the clock* watches 24/7.
 - **Day's numbers** - the Bank of Canada's daily currencies and weekly commodity index, with what moved.
+- **Companies** - Markets > Overview > *Companies*: pick from groups of big names or search by name or ticker (a private
+  company such as Anthropic is marked, since it has no share price). *Follow* keeps it on the page; *Add to widget* puts up
+  to four on the Markets widget.
+- **Quotes** need your own free key from Financial Modeling Prep, Finnhub or Twelve Data - Markets asks once, and *Check and
+  save* tries it before keeping it. Add more than one and, if one can't answer, the next one does. Keys stay encrypted on this PC.
 - **Evening summary** (opt-in) - after the close the folded widget shows the day's close for an hour and a half.
 
 Everything here is **numbers, never advice** - AdeeboMeter never says what to buy or sell.
@@ -376,6 +386,8 @@ Open with **⚙**. Settings start as questions ("How should the corner widget lo
 setting says what it touches - *on this PC*, *your network*, *the internet* or *online lookup* - and **Right now this PC
 sends** sums up everything that leaves your PC.
 
+**Hover wait** (Settings > Widget): how long the mouse rests before the widget brightens - 0.45, 0.8 (default) or 1.2 s.
+
 **Weather** (Settings > Weather, off by default): type a city or a country, pick the match, and the buddy shows hot, cold,
 rain, snow or storm for 2-3 minutes a few times an hour; the widget can show the temperature. Normal accuracy asks about
 every 2 days, Better every 6 hours. Your PC's location is never used.
@@ -405,6 +417,8 @@ switch off in Settings, all listed in *About > What leaves your PC*. No cloud, n
 | find any tool | Ctrl+K and type a word |
 | make text bigger | Ctrl + (or right-click > Zoom) |
 | stop the corner from changing | Settings > Widget > How it behaves > Quiet |
+| move the widget | rest on it for 2.5 s (or tray > Move widget), then drag |
+| follow a company's price | Markets > Overview > Companies, then Follow or Add to widget |
 | see what a tool does before using it | open it and press Example |
 | learn the basics | Learn > Start here |
 | check everything about the connection in one go | AdeeboShell: `cd /data/scripts` then `./network-check.sh` |
