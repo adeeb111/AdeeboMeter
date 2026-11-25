@@ -112,3 +112,12 @@ trade.closed|Mercado cerrado. La revisión del bróker descansa hasta las 9:30.
 trade.closed|Cerrado. Descansa y reporta a las 9:30.
 view.switch|Vista {v}. Ya.
 view.switch|Cambiando a {v}. Sigue el ritmo.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Revisado. Sin fallos. Sigue.
+tool.ok|Inspección completa. Todo en norma.
+tool.warn|Un punto fuera de línea. Mira la fila amarilla.
+tool.warn|Casi conforme. Atiende la fila marcada.
+tool.fail|Fallo. Fila roja. Mírala ya.
+tool.fail|Esto falló. La fila roja dice por qué.
+tool.done|Calculado. Respuesta abajo.
+tool.done|Hecho. Lee el resultado abajo.

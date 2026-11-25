@@ -105,3 +105,12 @@ trade.closed|market.isOpen() == false. Sleep hasta las 9:30.
 trade.closed|Mercado cerrado. El cron job sigue a las 9:30.
 view.switch|Cargando vista: {v}.
 view.switch|Cambio de contexto a {v}. Ajustes restaurados.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Código de salida 0. Sin problemas.
+tool.ok|Todas las pruebas pasaron.
+tool.warn|Pasó con advertencias. Mira la fila amarilla.
+tool.warn|Build OK, una advertencia. Revisa la fila marcada.
+tool.fail|Código de salida 1. El error en la fila roja.
+tool.fail|Prueba fallida. La fila roja tiene el error.
+tool.done|Calculado. Salida abajo.
+tool.done|La función devolvió. Resultado abajo.

@@ -105,3 +105,12 @@ trade.closed|El mercado está cerrado. Descansen hasta las 9:30.
 trade.closed|Mercados cerrados. El pueblo descansa.
 view.switch|¡Adelante, a la vista {v}!
 view.switch|La vista {v}, para todos.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|¡Victoria! Ningún problema.
+tool.ok|Revisado por el pueblo. Todo libre y claro.
+tool.warn|Una fila resiste. Mira la fila amarilla.
+tool.warn|Casi unidos. Una fila necesita atención.
+tool.fail|¡Un bloqueo! La fila roja lo expone.
+tool.fail|Esta prueba cayó. La fila roja nombra la causa.
+tool.done|La aritmética del pueblo está hecha. Abajo.
+tool.done|Calculado para todos. Respuesta abajo.

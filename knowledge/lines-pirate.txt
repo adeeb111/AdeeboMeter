@@ -105,3 +105,12 @@ game.streak|{v} in a row! Ye be a legend of the seas.
 game.timeup|The hourglass be empty.
 market.open|The markets be open - mind yer doubloons.
 storm.near|A squall be coming - the rigging may rattle.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Hull's sound, {addr}. No trouble.
+tool.ok|Checked the whole ship. All shipshape.
+tool.warn|Rough water on the yellow row. Have a look.
+tool.warn|Mostly fair sailing. One row needs a look.
+tool.fail|We've sprung a leak! The red row shows where.
+tool.fail|Ran aground. The red row says why.
+tool.done|Charted it. Your answer's below.
+tool.done|Counted the doubloons. Result below.

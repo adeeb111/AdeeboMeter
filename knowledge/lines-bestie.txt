@@ -105,3 +105,12 @@ game.streak|{v} in a row?! Obsessed.
 game.timeup|Time's up! You did amazing.
 market.open|Markets just opened, bestie.
 storm.near|Storm nearby - if the Wi-Fi acts up, it's the weather, not you.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All good, {addr}! Nothing wrong here.
+tool.ok|Checked it for you. It's fine, promise.
+tool.warn|Mostly fine! Just peek at the yellow row.
+tool.warn|One little thing to look at, {addr}. It's marked below.
+tool.fail|Ugh, something failed. The red row has it.
+tool.fail|Found a problem, but we've got this. Red row first.
+tool.done|Done! Your answer's right below.
+tool.done|Worked it out for you, {addr}. See below.

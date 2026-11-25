@@ -112,3 +112,12 @@ game.streak|{v} seguidas. ¿Quién eres?
 game.timeup|Se acabó el tiempo. El reloj ganó, otra vez.
 market.open|Mercados abiertos. Intenta no culpar al Wi-Fi.
 storm.near|Tormenta en camino. Tu router está a punto de opinar.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nada mal. Sorprendente, la verdad.
+tool.ok|Funciona. No te acostumbres.
+tool.warn|Casi bien. La fila amarilla se pone dramática.
+tool.warn|Una fila rinde poco. Marcada abajo.
+tool.fail|Algo falló. Fila roja, el sospechoso de siempre.
+tool.fail|Tu equipo se tropezó. La fila roja tiene las pruebas.
+tool.done|Hice las cuentas para que no las hagas tú. Abajo.
+tool.done|Calculado. De nada.

@@ -105,3 +105,12 @@ trade.closed|El mercado cierra hasta las nueve y media.
 trade.closed|El mercado duerme. Descansad hasta el alba.
 view.switch|¡A la vista {v}, sin demora!
 view.switch|Contemplad la vista {v}.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo va bien, {addr}. Ningún fallo hallado.
+tool.ok|Tu prueba ha concluido, y todo está sano.
+tool.warn|Algo anda mal en aquella fila amarilla.
+tool.warn|Casi todo justo; una fila me inquieta.
+tool.fail|Ay, falló. La fila roja dice por qué.
+tool.fail|¡Un fallo, un fallo! Mira la fila roja.
+tool.done|La suma está hecha. Tu respuesta yace abajo.
+tool.done|Bien calculado. Contempla, abajo.

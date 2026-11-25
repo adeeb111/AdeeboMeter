@@ -105,3 +105,12 @@ game.streak|¡Racha de {v}! Llevando la partida.
 game.timeup|Se acabó el tiempo, ronda terminada.
 market.open|Los mercados están en vivo. Nueva partida empezada.
 storm.near|Tormenta en camino, posibles picos de lag.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|GG. Ningún problema.
+tool.ok|Partida limpia. Nada que arreglar.
+tool.warn|Casi limpia. Una fila amarilla, revísala.
+tool.warn|Pequeño debuff en la fila marcada.
+tool.fail|Wipe. Mira la fila roja.
+tool.fail|Esta falló. La fila roja tiene el motivo.
+tool.done|Cálculo hecho. Números abajo.
+tool.done|Stats calculadas. Aquí está el resultado.

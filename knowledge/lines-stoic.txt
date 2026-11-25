@@ -55,3 +55,12 @@ game.streak|{v} in a row. Remain humble.
 game.timeup|Time is up. It was never ours to keep.
 market.open|The markets open. Act, don't react.
 storm.near|A storm approaches. Prepare, then be calm.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|It is well. Accept it calmly.
+tool.ok|No fault found. Carry on.
+tool.warn|One small thing is off. See the marked row.
+tool.warn|Mostly well. Attend to the yellow row.
+tool.fail|It failed. What is in your control: the red row.
+tool.fail|A problem, plainly stated in the red row.
+tool.done|Reckoned. The answer is below.
+tool.done|Done. Look below.

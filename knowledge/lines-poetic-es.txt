@@ -105,3 +105,12 @@ trade.closed|El mercado duerme hasta las 9:30.
 trade.closed|Cerrado está el mercado; la noche es larga.
 view.switch|Pasamos la página a {v}.
 view.switch|La vista {v} se despliega.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo está en calma. Nada falta.
+tool.ok|Como agua quieta, el resultado es claro.
+tool.warn|Una nubecilla en la fila amarilla.
+tool.warn|Casi todo luminoso, con una fila en sombra.
+tool.fail|Aquí hay tormenta. La fila roja la guarda.
+tool.fail|Vaciló. La fila roja cuenta la historia.
+tool.done|Las cuentas cantan. La respuesta descansa abajo.
+tool.done|Contado y claro. Mira abajo.

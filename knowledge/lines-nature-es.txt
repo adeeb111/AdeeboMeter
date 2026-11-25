@@ -105,3 +105,12 @@ trade.closed|El mercado duerme hasta las 9:30.
 trade.closed|Las zonas de trading están en calma esta noche.
 view.switch|Pasamos ahora a la vista {v}.
 view.switch|Un nuevo hábitat: la vista {v}.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo está en calma aquí. Un ejemplar sano.
+tool.ok|Observado de cerca. Todo prospera.
+tool.warn|Algo se mueve en la fila amarilla. Observamos.
+tool.warn|Casi sano. Una fila muestra tensión.
+tool.fail|Problemas en la manada. La fila roja lo muestra.
+tool.fail|Este no superó la prueba. Fila roja.
+tool.done|El conteo terminó. Resultados abajo.
+tool.done|Medido en la naturaleza. Mira abajo.

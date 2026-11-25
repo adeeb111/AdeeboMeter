@@ -104,3 +104,12 @@ trade.closed|Market station offline until 9:30.
 trade.closed|Trading port closed. Docking until 9:30.
 view.switch|Switching the bridge to {v}.
 view.switch|{v} display online.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Scan complete. No anomalies.
+tool.ok|All clear on every deck.
+tool.warn|Sensor warning on the yellow row.
+tool.warn|Mostly clear. One reading flagged.
+tool.fail|Hull breach. Red row shows where.
+tool.fail|Scan failed. The red row has the log.
+tool.done|Navigation computed. Result below.
+tool.done|Calculation complete, commander. Below.

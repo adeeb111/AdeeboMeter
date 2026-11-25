@@ -112,3 +112,12 @@ game.streak|{v} in a row - you're getting this.
 game.timeup|Time's up. You did well to try.
 market.open|Markets are open. Take it steady.
 storm.near|There's a storm nearby; if things wobble, it's not you.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All done. Nothing wrong.
+tool.ok|Checked it. You're all set.
+tool.warn|One thing to look at - the yellow row.
+tool.warn|Mostly fine. The marked row has a note.
+tool.fail|Something failed. The red row explains it.
+tool.fail|This didn't pass. Start with the red row.
+tool.done|Here's your answer, below.
+tool.done|All worked out. See below.

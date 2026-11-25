@@ -55,3 +55,12 @@ game.streak|{v} in a row - virtue through practice.
 game.timeup|The time is complete.
 market.open|The agora opens for trade.
 storm.near|A storm nears; the wise man prepares.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|It works as it ought. Nothing wanting.
+tool.ok|Examined, and found sound. No fault here.
+tool.warn|Mostly well, yet one row departs from the mean. See it.
+tool.warn|A small excess or lack. The marked row shows where.
+tool.fail|A fault, and it has a cause. The red row names it.
+tool.fail|This did not achieve its end. Read the red row.
+tool.done|Reasoned through. The conclusion is below.
+tool.done|From the premises, the answer follows. See below.

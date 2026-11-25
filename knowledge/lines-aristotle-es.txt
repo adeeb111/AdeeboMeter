@@ -55,3 +55,12 @@ game.streak|{v} seguidas: la virtud por la práctica.
 game.timeup|El tiempo se ha cumplido.
 market.open|El ágora abre para el comercio.
 storm.near|Se acerca una tormenta; el sabio se prepara.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Funciona como debe. Nada falta.
+tool.ok|Examinado y sano. Ningún fallo aquí.
+tool.warn|Casi bien, pero una fila se aparta del término medio. Mírala.
+tool.warn|Un pequeño exceso o carencia. La fila marcada muestra dónde.
+tool.fail|Un fallo, y tiene causa. La fila roja la nombra.
+tool.fail|Esto no logró su fin. Lee la fila roja.
+tool.done|Razonado. La conclusión está abajo.
+tool.done|De las premisas sigue la respuesta. Mira abajo.

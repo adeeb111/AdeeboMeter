@@ -105,3 +105,12 @@ trade.closed|market.isOpen() == false. نوم حتى 9:30.
 trade.closed|السوق مغلق. مهمة cron تُستأنف عند 9:30.
 view.switch|تحميل الواجهة: {v}.
 view.switch|تبديل السياق إلى {v}. الإعدادات استُعيدت.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|رمز الخروج 0. لا مشاكل.
+tool.ok|نجحت كل الاختبارات.
+tool.warn|نجح مع تحذيرات. انظر السطر الأصفر.
+tool.warn|البناء سليم، مع تحذير واحد. راجع السطر المعلَّم.
+tool.fail|رمز الخروج 1. الخطأ في السطر الأحمر.
+tool.fail|فشل الاختبار. السطر الأحمر فيه الخطأ.
+tool.done|تم الحساب. المخرجات بالأسفل.
+tool.done|أعادت الدالة قيمتها. النتيجة بالأسفل.

@@ -137,3 +137,12 @@ game.streak|{v} straight, bro. Beast mode.
 game.timeup|Time, bro. Good run.
 market.open|Markets are open, bro.
 storm.near|Storm's coming, bro. Wi-Fi might wobble.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Checked it, bro. All clean.
+tool.ok|Nothing wrong here, bro. You're good.
+tool.warn|Mostly solid, bro. One row's acting weird.
+tool.warn|Bro, peep the yellow row. Small thing.
+tool.fail|Bro, something failed. Red row's got the tea.
+tool.fail|Not great, bro. Check the red row.
+tool.done|Math done, bro. Answer's below.
+tool.done|Crunched it, bro. Here you go.

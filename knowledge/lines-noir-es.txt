@@ -105,3 +105,12 @@ game.streak|{v} seguidas. Eres bueno en esto.
 game.timeup|Se acabó el tiempo. Siempre se acaba.
 market.open|El mercado abrió. La ciudad despierta.
 storm.near|Se acerca la tormenta. Las líneas podrían callar.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nada turbio aquí. Caso cerrado.
+tool.ok|Revisé cada callejón. Limpio.
+tool.warn|Algo huele mal en la fila amarilla.
+tool.warn|Casi limpio. Una fila esconde algo.
+tool.fail|Encontré al culpable. Fila roja.
+tool.fail|Salió mal. La fila roja tiene los detalles.
+tool.done|Hice los números. La respuesta abajo.
+tool.done|Saqué la cuenta. Esto es lo que tengo.

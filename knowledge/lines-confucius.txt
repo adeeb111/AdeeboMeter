@@ -55,3 +55,12 @@ game.streak|{v} in a row - study bears fruit.
 game.timeup|The time is finished.
 market.open|The market gates open.
 storm.near|A storm draws near; the prudent prepare.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All is in its proper place.
+tool.ok|Examined with care. Nothing to correct.
+tool.warn|One matter is out of order. See the marked row.
+tool.warn|Mostly proper. Attend to the yellow row.
+tool.fail|A fault is found. The red row names it; correct it.
+tool.fail|This did not pass. Look first at the red row.
+tool.done|The reckoning is complete. See below.
+tool.done|Measured and weighed. The answer is below.

@@ -112,3 +112,12 @@ trade.closed|El mercado cerró. Todos se toman un respiro.
 trade.closed|Cerrado hasta las 9:30. Descansa.
 view.switch|Vista {v}. Un ánimo nuevo.
 view.switch|Cambiando a {v}. Me parece bien.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|No hay nada mal. Eso es nuevo.
+tool.ok|Está bien. Raramente bien.
+tool.warn|Casi todo bien. Una fila no. Me identifico.
+tool.warn|Algo está un poco mal. La fila amarilla lo entiende.
+tool.fail|Algo falló. Lo veía venir. Fila roja.
+tool.fail|No salió bien. La fila roja lo explica.
+tool.done|Hice las cuentas. Aquí está, supongo.
+tool.done|Lo calculé. Está abajo.

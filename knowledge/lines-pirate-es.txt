@@ -105,3 +105,12 @@ game.streak|¡{v} seguidas! Eres una leyenda de los mares.
 game.timeup|El reloj de arena está vacío.
 market.open|Los mercados están abiertos, cuida tus doblones.
 storm.near|Se acerca un chubasco, el aparejo puede temblar.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|El casco está sano, {addr}. Sin problemas.
+tool.ok|Revisé todo el barco. Todo en orden.
+tool.warn|Aguas agitadas en la fila amarilla. Échale un ojo.
+tool.warn|Casi buena navegación. Una fila necesita un vistazo.
+tool.fail|¡Tenemos una vía de agua! La fila roja muestra dónde.
+tool.fail|Encallamos. La fila roja dice por qué.
+tool.done|Trazado en la carta. Tu respuesta abajo.
+tool.done|Doblones contados. Resultado abajo.

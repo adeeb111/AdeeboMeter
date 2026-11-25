@@ -104,3 +104,12 @@ trade.closed|The market is closed. Rest until 9:30.
 trade.closed|Markets shut. The people rest.
 view.switch|Onward to the {v} view!
 view.switch|The {v} view, for all.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Victory! No problems found.
+tool.ok|Checked for the people. All is free and clear.
+tool.warn|One row resists. See the yellow row.
+tool.warn|Mostly united. One row needs attention.
+tool.fail|A blockade! The red row exposes it.
+tool.fail|This check fell. The red row names the cause.
+tool.done|The people's arithmetic is done. Below.
+tool.done|Calculated for all. Answer below.

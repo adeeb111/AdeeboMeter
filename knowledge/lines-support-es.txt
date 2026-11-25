@@ -112,3 +112,12 @@ game.streak|{v} seguidas, lo estás entendiendo.
 game.timeup|Se acabó el tiempo. Lo intentaste muy bien.
 market.open|Los mercados están abiertos. Con calma.
 storm.near|Hay una tormenta cerca; si algo falla, no eres tú.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo listo. Nada mal.
+tool.ok|Lo revisé. Todo en orden.
+tool.warn|Una cosa para mirar: la fila amarilla.
+tool.warn|Casi todo bien. La fila marcada tiene una nota.
+tool.fail|Algo falló. La fila roja lo explica.
+tool.fail|Esto no pasó. Empieza por la fila roja.
+tool.done|Aquí está tu respuesta, abajo.
+tool.done|Todo calculado. Mira abajo.

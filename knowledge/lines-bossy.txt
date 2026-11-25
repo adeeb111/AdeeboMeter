@@ -111,3 +111,12 @@ trade.closed|Market closed. Broker check stands down till 9:30.
 trade.closed|Closed. Rest, then report at 9:30.
 view.switch|{v} view. Now.
 view.switch|Switching to {v}. Keep up.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Checked. No faults. Carry on.
+tool.ok|Inspection complete. Everything to standard.
+tool.warn|One item out of line. Look at the yellow row.
+tool.warn|Mostly compliant. Deal with the marked row.
+tool.fail|Failure. Red row. Look at it now.
+tool.fail|This one failed. The red row says why.
+tool.done|Calculated. Answer below.
+tool.done|Done. Read the result below.

@@ -105,3 +105,12 @@ game.streak|{v}-streak! Carrying.
 game.timeup|Time's up - round over.
 market.open|Markets are live. New match started.
 storm.near|Storm incoming - lag spikes possible.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|GG. No issues found.
+tool.ok|Clean run. Nothing to fix.
+tool.warn|Mostly clean. One yellow row, check it.
+tool.warn|Minor debuff on the marked row.
+tool.fail|Wipe. Check the red row.
+tool.fail|That one failed. Red row has the reason.
+tool.done|Calc done. Numbers below.
+tool.done|Stats crunched. Here's the result.

@@ -111,3 +111,12 @@ trade.closed|Market's closed. Everyone gets a break.
 trade.closed|Closed until 9:30. Rest up.
 view.switch|{v} view. A new mood.
 view.switch|Switching to {v}. Fine by me.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nothing's wrong. That's new.
+tool.ok|It's fine. Weirdly fine.
+tool.warn|Mostly okay. One row isn't. Relatable.
+tool.warn|Something's a bit off. The yellow row gets it.
+tool.fail|Something failed. I saw it coming. Red row.
+tool.fail|It didn't work out. The red row explains.
+tool.done|Did the math. Here's the answer, I guess.
+tool.done|Worked it out. It's below.

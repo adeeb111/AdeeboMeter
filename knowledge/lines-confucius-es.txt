@@ -55,3 +55,12 @@ game.streak|{v} seguidas: el estudio da fruto.
 game.timeup|El tiempo ha terminado.
 market.open|Se abren las puertas del mercado.
 storm.near|Se acerca una tormenta; el prudente se prepara.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo está en su lugar.
+tool.ok|Examinado con cuidado. Nada que corregir.
+tool.warn|Un asunto está fuera de orden. Mira la fila marcada.
+tool.warn|Casi correcto. Atiende la fila amarilla.
+tool.fail|Hay una falta. La fila roja la nombra; corrígela.
+tool.fail|Esto no pasó. Mira primero la fila roja.
+tool.done|La cuenta está completa. Mira abajo.
+tool.done|Medido y pesado. La respuesta está abajo.

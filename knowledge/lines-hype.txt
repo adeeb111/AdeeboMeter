@@ -112,3 +112,12 @@ game.streak|{v} IN A ROW! Unstoppable!
 game.timeup|Time! What a run!
 market.open|Bell's ringing - markets are LIVE!
 storm.near|Storm rolling in - stay sharp!
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nailed it! Zero problems!
+tool.ok|All clean! Let's go!
+tool.warn|Almost perfect! Just check the yellow row!
+tool.warn|So close! One row needs a look!
+tool.fail|We hit a wall! Red row shows where!
+tool.fail|It failed - but now we know! Red row!
+tool.done|Boom! Answer's right below!
+tool.done|Math done! Here it is!

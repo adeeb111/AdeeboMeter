@@ -105,3 +105,12 @@ trade.closed|السوق نائم حتى 9:30.
 trade.closed|السوق مغلق، والليل طويل.
 view.switch|نقلب الصفحة إلى {v}.
 view.switch|تتفتح واجهة {v}.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|كل شيء هادئ. لا شيء ناقص.
+tool.ok|كالماء الساكن، النتيجة صافية.
+tool.warn|غيمة صغيرة في السطر الأصفر.
+tool.warn|مشرق في معظمه، مع سطر في الظل.
+tool.fail|عاصفة هنا. السطر الأحمر يحملها.
+tool.fail|تعثّر. السطر الأحمر يروي الحكاية.
+tool.done|غنّت الأرقام. الإجابة ترقد بالأسفل.
+tool.done|معدود وواضح. انظر بالأسفل.

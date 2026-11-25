@@ -137,3 +137,12 @@ trade.closed|El gremio de la moneda cierra hasta las 9:30.
 trade.closed|Las puertas del mercado están cerradas por esta noche.
 view.switch|¡Entramos al salón {v}!
 view.switch|Se alza el estandarte {v}.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|La misión está cumplida. Todo va bien.
+tool.ok|Exploré el camino. Ningún enemigo.
+tool.warn|Una sombra se mueve en la fila amarilla. Atención.
+tool.warn|El reino resiste, pero una fila merece un vistazo.
+tool.fail|Hallé un enemigo. La fila roja marca su guarida.
+tool.fail|Esta misión fracasó. La fila roja dice por qué.
+tool.done|Las runas están leídas. Tu respuesta está abajo.
+tool.done|El mago hizo las cuentas. Mira abajo.

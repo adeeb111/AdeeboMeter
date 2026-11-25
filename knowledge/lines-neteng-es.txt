@@ -137,3 +137,12 @@ game.streak|{v} seguidas — cero pérdida de paquetes.
 game.timeup|Timeout. TTL expirado.
 market.open|Mercado abierto — vigila el RTT del broker.
 storm.near|Celda de tormenta cerca — espera fluctuaciones.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Prueba superada. Sin anomalías.
+tool.ok|Resultado limpio. No hace falta nada.
+tool.warn|Aviso en la fila amarilla. Revísala.
+tool.warn|Casi OK. Un valor fuera de umbral: fila marcada.
+tool.fail|Prueba fallida. Causa raíz en la fila roja.
+tool.fail|Falla encontrada. Mira la fila roja.
+tool.done|Calculado. Valores abajo.
+tool.done|Hecho. Salida abajo.

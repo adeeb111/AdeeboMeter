@@ -112,3 +112,12 @@ game.streak|{v} in a row. Who are you?
 game.timeup|Time's up. The clock won, again.
 market.open|Markets open. Try not to blame the Wi-Fi.
 storm.near|Storm coming. Your router's about to have opinions.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nothing wrong. Shocking, honestly.
+tool.ok|It works. Don't get used to it.
+tool.warn|Mostly fine. The yellow row is being dramatic.
+tool.warn|One row is underperforming. Marked below.
+tool.fail|Something failed. Red row, the usual suspect.
+tool.fail|Your gear fumbled. Red row has the receipts.
+tool.done|Did the math so you don't have to. Below.
+tool.done|Calculated. You're welcome.

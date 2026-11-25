@@ -105,3 +105,12 @@ game.streak|{v} in a row. You're good at this.
 game.timeup|Time ran out. It always does.
 market.open|The market opened. The city's awake.
 storm.near|Storm's rolling in. Lines might go quiet.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Nothing shady here. Case closed.
+tool.ok|Checked every alley. Clean.
+tool.warn|Something smells off in the yellow row.
+tool.warn|Mostly clean. One row's hiding something.
+tool.fail|Found the culprit. Red row.
+tool.fail|It went bad. The red row has the details.
+tool.done|Ran the numbers. Answer's below.
+tool.done|Did the math. Here's what I got.

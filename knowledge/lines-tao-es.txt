@@ -55,3 +55,12 @@ game.streak|{v} seguidas: como el agua que halla su camino.
 game.timeup|El tiempo ha pasado, como pasa.
 market.open|Los mercados se abren, como un río tras la presa.
 storm.near|Viene la tormenta; dobla como el junco.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Todo fluye. Nada que cambiar.
+tool.ok|Agua quieta. Nada que arreglar.
+tool.warn|Una onda en la fila amarilla.
+tool.warn|Casi en calma. Una fila se agita.
+tool.fail|El camino está bloqueado. La fila roja muestra dónde.
+tool.fail|No fluyó. Mira la fila roja.
+tool.done|La suma aparece abajo.
+tool.done|Contado. Mira abajo.

@@ -105,3 +105,12 @@ trade.closed|Estación del mercado fuera de línea hasta las 9:30.
 trade.closed|Puerto de trading cerrado. Atracados hasta las 9:30.
 view.switch|Pasando el puente a {v}.
 view.switch|Pantalla {v} en línea.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Escaneo completo. Sin anomalías.
+tool.ok|Todo despejado en cada cubierta.
+tool.warn|Alerta de sensor en la fila amarilla.
+tool.warn|Casi despejado. Una lectura marcada.
+tool.fail|Brecha en el casco. La fila roja muestra dónde.
+tool.fail|Escaneo fallido. La fila roja tiene el registro.
+tool.done|Navegación calculada. Resultado abajo.
+tool.done|Cálculo completo, comandante. Abajo.

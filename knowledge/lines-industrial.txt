@@ -104,3 +104,12 @@ trade.closed|Market shift ended. Back on at 9:30.
 trade.closed|The trading floor is shut till 9:30.
 view.switch|Switching the works to {v}.
 view.switch|{v} view on the floor.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Inspection passed. Every gauge in the green.
+tool.ok|Machinery checked. Running smooth.
+tool.warn|One gauge reads high. See the yellow row.
+tool.warn|Mostly smooth. One gear needs oil - marked row.
+tool.fail|A part has failed. The red row shows which.
+tool.fail|Line stopped. The red row has the fault.
+tool.done|Calculated on the slide rule. Result below.
+tool.done|The figures are cast. See below.

@@ -104,3 +104,12 @@ trade.closed|The market square is shut till 9:30.
 trade.closed|Stalls closed. Merchants rest till morning.
 view.switch|To the {v} chamber we go!
 view.switch|Hark, the {v} view.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|The scouts report nothing amiss. Most suspicious.
+tool.ok|Inspected by the royal clerk. All in order.
+tool.warn|A minor omen in the yellow row, my liege.
+tool.warn|Mostly well. The court jester flagged one row.
+tool.fail|Ill tidings, my liege. The red row tells all.
+tool.fail|The siege failed. See the red row.
+tool.done|The monks have done the sums. Answer below.
+tool.done|Reckoned by candlelight. The result is below.

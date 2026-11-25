@@ -104,3 +104,12 @@ trade.closed|Market's closed. Touch grass till 9:30.
 trade.closed|Closed. Back at 9:30.
 view.switch|{v} view, here we go.
 view.switch|Switched to {v}. Same settings, new look.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|No issues. It's giving stable.
+tool.ok|Checked. Lowkey perfect.
+tool.warn|Mostly fine, but the yellow row is sus.
+tool.warn|Small issue. Check the marked row, no cap.
+tool.fail|It failed, not gonna lie. Red row.
+tool.fail|Something flopped. Red row explains.
+tool.done|Did the math. Answer's below.
+tool.done|Calculated. It's below.

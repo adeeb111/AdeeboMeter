@@ -437,6 +437,7 @@ namespace AdeeboMeter
         string bugPage = "overview"; DateTime bugCopied = DateTime.MinValue;   // the page a bug report names: the last one before About
         void ShowTab()
         {
+            if (linePages.Count > 0 && pathPanel != null) pathPanel.Invalidate();   /* the strip's line depends on whether the new page speaks (25 Nov) */
             if (tab == "toolbox" && animTimer != null && !animTimer.Enabled) animTimer.Start();   /* review 1.1.6 U1 #13: the picture animation stopped itself off the Toolbox */
             UiActivity.Doing = "switching to " + tab; idxListKey = null; if (tab != "replay") replayFrom = ""; if (tab != "about") bugPage = tab;   // leaving the Time machine ends an "Opened from" visit (review 21 Nov)
             if (tab == "points" || tab == "learn") System.Threading.ThreadPool.QueueUserWorkItem(delegate { try { LabLink.Pickup(); } catch (Exception e) { Program.Log("lab pickup: " + e.Message); } });   // Network Lab faults watched since (a folder check when nothing changed)

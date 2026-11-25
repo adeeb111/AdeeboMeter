@@ -105,3 +105,12 @@ game.streak|¡{v} seguidas?! Me encanta.
 game.timeup|¡Se acabó el tiempo! Lo hiciste increíble.
 market.open|Los mercados acaban de abrir.
 storm.near|Tormenta cerca: si el Wi-Fi falla, es el clima, no tú.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|¡Todo bien, {addr}! Nada mal aquí.
+tool.ok|Lo revisé por ti. Está bien, te lo prometo.
+tool.warn|¡Casi todo bien! Solo mira la fila amarilla.
+tool.warn|Una cosita que mirar, {addr}. Está marcada abajo.
+tool.fail|Uf, algo falló. La fila roja lo tiene.
+tool.fail|Encontré un problema, pero podemos. Primero la fila roja.
+tool.done|¡Listo! Tu respuesta está justo abajo.
+tool.done|Lo calculé por ti, {addr}. Mira abajo.

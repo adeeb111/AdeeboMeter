@@ -104,3 +104,12 @@ trade.closed|Market closed. Observation resumes at 9:30.
 trade.closed|No market data until 9:30.
 view.switch|Switching the instrument to {v}.
 view.switch|{v} view. New variables, same method.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Result: within normal range.
+tool.ok|Data clean. No anomalies.
+tool.warn|One outlier. See the yellow row.
+tool.warn|Mostly within range. One reading flagged.
+tool.fail|Anomaly detected. Red row.
+tool.fail|Test failed. Observations in the red row.
+tool.done|Computed. Result below.
+tool.done|Calculation complete. See below.

@@ -136,3 +136,12 @@ trade.closed|The guild of coin is closed till 9:30.
 trade.closed|The market gates are shut for the night.
 view.switch|Into the {v} hall we stride.
 view.switch|The {v} banner is raised.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|The quest is complete. All is well.
+tool.ok|Scouted the path. No foe found.
+tool.warn|A shadow stirs in the yellow row. Take heed.
+tool.warn|The realm holds, but one row needs a look.
+tool.fail|A foe was found. The red row marks its lair.
+tool.fail|This quest failed. The red row tells why.
+tool.done|The runes are read. Your answer lies below.
+tool.done|The wizard has done the sums. See below.

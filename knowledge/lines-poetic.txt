@@ -104,3 +104,12 @@ trade.closed|The market sleeps until 9:30.
 trade.closed|Closed is the market; the night is long.
 view.switch|We turn the page to {v}.
 view.switch|The {v} view unfolds.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All is calm. Nothing amiss.
+tool.ok|Like still water, the result is clear.
+tool.warn|A small cloud in the yellow row.
+tool.warn|Mostly bright, with one shaded row.
+tool.fail|A storm here. The red row holds it.
+tool.fail|It faltered. The red row tells the tale.
+tool.done|The sums are sung. The answer rests below.
+tool.done|Counted and clear. See below.

@@ -104,3 +104,12 @@ trade.closed|The market sleeps until 9:30.
 trade.closed|The trading grounds are quiet tonight.
 view.switch|We move now to the {v} view.
 view.switch|A new habitat: the {v} view.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All is calm here. A healthy specimen.
+tool.ok|Observed closely. Everything thrives.
+tool.warn|Something stirs in the yellow row. We watch.
+tool.warn|Mostly healthy. One row shows strain.
+tool.fail|Trouble in the herd. The red row shows it.
+tool.fail|This one did not survive the test. Red row.
+tool.done|The count is done. Results below.
+tool.done|Measured in the wild. See below.

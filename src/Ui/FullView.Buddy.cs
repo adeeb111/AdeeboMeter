@@ -15,11 +15,13 @@ namespace AdeeboMeter
         // a mode's buddy line (Streaming, Trading): one steady line for the state it's in; quiet when the buddy is quiet
         float PaintModeLine(Graphics g, string key, string v, bool problem, float x, float y, float w)
         {
-            if (!Lines.Speaks(problem ? "problem" : "state")) return y;
             bool money = key.StartsWith("trade.", StringComparison.Ordinal);
+            var tc = money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas;
+            if (!Lines.Speaks(problem ? "problem" : "state")) { PageLine(tc, false); return y; }
             string text = money && Lines.Faith != "off" ? Lines.SteadyAs(key, v, "plain") : Lines.Steady(key, v);
+            PageLine(tc, text != "");
             if (text == "") return y;
-            var tc = money ? (System.Windows.Forms.Control)tradeCanvas : streamCanvas; var r = new RectangleF(x, y, w, 34 * S);
+            var r = new RectangleF(x, y, w, 34 * S);
             text = Typing.Show(money ? "trade" : "stream", text, tc, OnScreen(tc, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
@@ -50,9 +52,21 @@ namespace AdeeboMeter
             }
             return DrawBuddy(g, "tool", tbCanvas, text, x, y, w);
         }
+        // only one buddy line on screen (Adeeb, 25 Nov): while the open page shows its own line, the top strip says the plain
+        // verdict instead of a second buddy line
+        readonly HashSet<System.Windows.Forms.Control> linePages = new HashSet<System.Windows.Forms.Control>();
+        void PageLine(System.Windows.Forms.Control on, bool shown)
+        {
+            if (on == null) return;
+            bool was = linePages.Contains(on); if (was == shown) return;
+            if (shown) linePages.Add(on); else linePages.Remove(on);
+            if (header != null && !header.IsDisposed) header.Invalidate(); if (pathPanel != null && !pathPanel.IsDisposed) pathPanel.Invalidate();
+        }
+        bool PageSpeaks() { foreach (var c in linePages) if (!c.IsDisposed && c.Visible) return true; return false; }
         // the one line, drawn the same on every page that runs something
         float DrawBuddy(Graphics g, string typing, System.Windows.Forms.Control on, string text, float x, float y, float w)
         {
+            PageLine(on, text != "");
             if (text == "") return y;
             var r = new RectangleF(x, y, w, 34 * S);
             text = Typing.Show(typing, text, on, OnScreen(on, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
@@ -67,7 +81,7 @@ namespace AdeeboMeter
         string destBuddyFor, destBuddyText = "";
         float PaintDestBuddy(Graphics g, DestResult d, float x, float y, float w)
         {
-            if (d == null) return y;
+            if (d == null) { PageLine(destCanvas, false); return y; }
             string k = (d.Done ? "done|" + d.Level : "busy") + "|" + d.GetHashCode() + "|" + Lines.Who() + "|" + Lines.Chat + "|" + Voice.Serious;
             if (destBuddyFor != k)
             {

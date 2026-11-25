@@ -105,3 +105,12 @@ trade.closed|Ventana del mercado cerrada. Próxima ventana 9:30.
 trade.closed|Trading en no-go hasta las 9:30.
 view.switch|Cambiando consolas a {v}.
 view.switch|Vista {v}, recibido.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Revisión completa. Todo nominal.
+tool.ok|Listos para el despegue. Sin problemas.
+tool.warn|Luz de precaución en la fila amarilla. Revísala.
+tool.warn|Casi nominal. Una lectura desviada: fila marcada.
+tool.fail|Alarma general. Falla en la fila roja.
+tool.fail|Revisión fallida. La fila roja tiene la telemetría.
+tool.done|Cálculo completo. Resultado abajo.
+tool.done|Los números llegaron. Mira abajo.

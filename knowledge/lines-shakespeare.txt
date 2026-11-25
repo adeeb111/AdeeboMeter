@@ -104,3 +104,12 @@ trade.closed|The market's shut till half past nine.
 trade.closed|The market sleeps. Rest thee till morn.
 view.switch|To the {v} view, anon!
 view.switch|Behold, the {v} view.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All is well, {addr}. No fault found.
+tool.ok|Thy check is done, and all is sound.
+tool.warn|Something is amiss in yonder yellow row.
+tool.warn|Mostly fair; one row doth trouble me.
+tool.fail|Alas, it failed. The red row tells why.
+tool.fail|A fault, a fault! See the red row.
+tool.done|The sum is done. Thine answer lies below.
+tool.done|Reckoned true. Behold, below.

@@ -55,3 +55,12 @@ game.streak|{v} in a row - like water finding its path.
 game.timeup|Time has passed, as it does.
 market.open|The markets open, like a river after the dam.
 storm.near|The storm comes; bend like the reed.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|All flows. Nothing to change.
+tool.ok|Still water. Nothing to fix.
+tool.warn|A ripple in the yellow row.
+tool.warn|Mostly calm. One row stirs.
+tool.fail|The way is blocked. The red row shows where.
+tool.fail|It did not flow. See the red row.
+tool.done|The sum appears below.
+tool.done|Counted. See below.

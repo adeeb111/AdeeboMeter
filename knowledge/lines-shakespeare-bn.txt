@@ -105,3 +105,12 @@ trade.closed|সাড়ে নয়টা পর্যন্ত বাজা�
 trade.closed|বাজার ঘুমায়। ভোর পর্যন্ত বিশ্রাম নাও।
 view.switch|{v} ভিউতে, এখনই!
 view.switch|দেখো, {v} ভিউ।
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|সব কুশল, {addr}। কোনো দোষ মেলেনি।
+tool.ok|তব পরীক্ষা সমাপ্ত, আর সবই অটুট।
+tool.warn|ওই হলুদ সারিতে কিছু একটা গরমিল।
+tool.warn|প্রায় সবই সুন্দর; একটি সারি আমায় ভাবায়।
+tool.fail|হায়, ব্যর্থ হলো। লাল সারি কারণ জানায়।
+tool.fail|দোষ, দোষ! লাল সারিটা দেখো।
+tool.done|যোগফল সম্পন্ন। তব উত্তর নিচে।
+tool.done|সঠিক গণনা। দেখো, নিচে।

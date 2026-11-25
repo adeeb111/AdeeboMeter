@@ -74,7 +74,8 @@ namespace AdeeboMeter
         {
             // 25 Nov (Adeeb): one line, not two - the buddy's line when the buddy speaks (it carries the same fact in its voice),
             // the plain verdict when it doesn't (Serious, face only, quiet with no problem)
-            string quip = Mood.Quip(snap); string head = quip != "" ? Typing.Show("verdict", quip, on) : (snap.Level == 0 && !Voice.Serious ? Voice.Greet() + " " : "") + snap.Headline; quip = "";
+            // a problem keeps the plain verdict (as the widget's hover card does), and so does a page showing its own line
+            string quip = snap.Level == 2 && !snap.Waiting || PageSpeaks() ? "" : Mood.Quip(snap); string head = quip != "" ? Typing.Show("verdict", quip, on) : (snap.Level == 0 && !Voice.Serious ? Voice.Greet() + " " : "") + snap.Headline; quip = "";
             string link = L.T("Investigate") + "  ›"; float lw = snap.Level > 0 && snap.Flow != "" ? g.MeasureString(link, Draw.fBodyB).Width + 16 * S : 0;
             float room = Math.Max(0, right - x - lw); if (room < 60 * S) return x;
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })

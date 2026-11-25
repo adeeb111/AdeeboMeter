@@ -104,3 +104,12 @@ trade.closed|Market window closed. Next window 9:30.
 trade.closed|Trading is no-go until 9:30.
 view.switch|Switching consoles to {v}.
 view.switch|{v} view, copy that.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Check complete. All nominal.
+tool.ok|Go for launch. No issues.
+tool.warn|Caution light on the yellow row. Review it.
+tool.warn|Mostly nominal. One reading off - marked row.
+tool.fail|Master alarm. Fault in the red row.
+tool.fail|Check failed. Red row has the telemetry.
+tool.done|Computation complete. Result below.
+tool.done|Numbers are in. See below.

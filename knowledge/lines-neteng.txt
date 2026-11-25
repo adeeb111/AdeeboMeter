@@ -137,3 +137,12 @@ game.streak|{v} in a row - zero packet loss.
 game.timeup|Timeout. TTL expired.
 market.open|Market open - watch the broker RTT.
 storm.near|Storm cell nearby - expect flaps.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Check passed. No anomalies.
+tool.ok|Clean result. No action needed.
+tool.warn|Warning on the yellow row. Review it.
+tool.warn|Mostly OK. One value out of threshold - marked row.
+tool.fail|Check failed. Root cause in the red row.
+tool.fail|Fault found. See the red row.
+tool.done|Computed. Values below.
+tool.done|Done. Output below.

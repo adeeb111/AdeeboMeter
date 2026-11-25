@@ -105,3 +105,12 @@ trade.closed|El mercado cerró. Sal a tocar pasto hasta las 9:30.
 trade.closed|Cerrado. Vuelve a las 9:30.
 view.switch|Vista {v}, allá vamos.
 view.switch|Cambié a {v}. Mismos ajustes, nuevo look.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Sin problemas. Todo estable.
+tool.ok|Revisado. Literal perfecto.
+tool.warn|Casi bien, pero la fila amarilla es sospechosa.
+tool.warn|Un detalle. Mira la fila marcada, en serio.
+tool.fail|Falló, no voy a mentir. Fila roja.
+tool.fail|Algo flopeó. La fila roja lo explica.
+tool.done|Hice las cuentas. La respuesta abajo.
+tool.done|Calculado. Está abajo.

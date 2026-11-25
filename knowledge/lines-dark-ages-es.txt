@@ -105,3 +105,12 @@ trade.closed|La plaza del mercado cierra hasta las 9:30.
 trade.closed|Puestos cerrados. Los mercaderes descansan hasta el alba.
 view.switch|¡Vamos a la cámara {v}!
 view.switch|Atención: la vista {v}.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Los exploradores no ven nada raro. Muy sospechoso.
+tool.ok|Inspeccionado por el escribano real. Todo en orden.
+tool.warn|Un pequeño presagio en la fila amarilla, mi señor.
+tool.warn|Casi bien. El bufón de la corte marcó una fila.
+tool.fail|Malas noticias, mi señor. La fila roja lo cuenta todo.
+tool.fail|El asedio fracasó. Mira la fila roja.
+tool.done|Los monjes hicieron las cuentas. Respuesta abajo.
+tool.done|Calculado a la luz de la vela. El resultado abajo.

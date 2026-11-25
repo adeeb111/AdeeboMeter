@@ -105,3 +105,12 @@ trade.closed|Terminó el turno del mercado. Volvemos a las 9:30.
 trade.closed|El parqué cierra hasta las 9:30.
 view.switch|Pasando la planta a {v}.
 view.switch|Vista {v} en la planta.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Inspección superada. Todos los indicadores en verde.
+tool.ok|Maquinaria revisada. Funciona suave.
+tool.warn|Un indicador marca alto. Mira la fila amarilla.
+tool.warn|Casi suave. Un engranaje necesita aceite: fila marcada.
+tool.fail|Una pieza falló. La fila roja muestra cuál.
+tool.fail|Línea detenida. La fila roja tiene la falla.
+tool.done|Calculado con regla de cálculo. Resultado abajo.
+tool.done|Las cifras están listas. Mira abajo.

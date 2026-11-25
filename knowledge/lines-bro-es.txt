@@ -137,3 +137,12 @@ game.streak|{v} seguidas, bro. Modo bestia.
 game.timeup|Tiempo, bro. Buena racha.
 market.open|Los mercados están abiertos, bro.
 storm.near|Se acerca una tormenta, bro. El Wi-Fi puede fallar.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Revisado, bro. Todo limpio.
+tool.ok|Nada mal aquí, bro. Estás bien.
+tool.warn|Casi todo sólido, bro. Una fila está rara.
+tool.warn|Bro, mira la fila amarilla. Cosa pequeña.
+tool.fail|Bro, algo falló. La fila roja lo cuenta.
+tool.fail|No pinta bien, bro. Mira la fila roja.
+tool.done|Cuentas hechas, bro. La respuesta abajo.
+tool.done|Calculado, bro. Aquí lo tienes.

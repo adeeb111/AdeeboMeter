@@ -55,3 +55,12 @@ game.streak|{v} seguidas. Mantén la humildad.
 game.timeup|Se acabó el tiempo. Nunca fue nuestro.
 market.open|Los mercados abren. Actúa, no reacciones.
 storm.near|Se acerca una tormenta. Prepárate y mantén la calma.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Está bien. Acéptalo con calma.
+tool.ok|Ningún fallo. Sigue adelante.
+tool.warn|Una cosa pequeña está mal. Mira la fila marcada.
+tool.warn|Casi bien. Atiende la fila amarilla.
+tool.fail|Falló. Lo que está en tu mano: la fila roja.
+tool.fail|Un problema, dicho con claridad en la fila roja.
+tool.done|Calculado. La respuesta está abajo.
+tool.done|Hecho. Mira abajo.

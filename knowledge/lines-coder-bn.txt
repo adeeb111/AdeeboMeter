@@ -105,3 +105,12 @@ trade.closed|market.isOpen() == false। 9:30 পর্যন্ত sleep।
 trade.closed|বাজার বন্ধ। ক্রন জব আবার 9:30-এ।
 view.switch|ভিউ লোড হচ্ছে: {v}।
 view.switch|{v}-এ কনটেক্সট সুইচ। সেটিংস ফিরিয়ে আনা হলো।
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|এক্সিট কোড 0। কোনো সমস্যা নেই।
+tool.ok|সব টেস্ট পাস।
+tool.warn|ওয়ার্নিংসহ পাস। হলুদ সারিটা দেখুন।
+tool.warn|বিল্ড ঠিক, একটা ওয়ার্নিং। চিহ্নিত সারিটা দেখুন।
+tool.fail|এক্সিট কোড 1। এরর লাল সারিতে।
+tool.fail|টেস্ট ফেল। লাল সারিতে এরর।
+tool.done|হিসাব শেষ। আউটপুট নিচে।
+tool.done|ফাংশন রিটার্ন করেছে। ফলাফল নিচে।

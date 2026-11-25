@@ -55,3 +55,12 @@ game.streak|{v} على التوالي - كالماء يجد طريقه.
 game.timeup|مر الوقت، كما يمر دائما.
 market.open|الأسواق تفتح، كنهر بعد السد.
 storm.near|العاصفة تأتي؛ انحنِ كالقصب.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|كل شيء يجري. لا شيء يتغير.
+tool.ok|ماء ساكن. لا شيء يُصلح.
+tool.warn|تموّج في السطر الأصفر.
+tool.warn|هادئ في معظمه. سطر واحد يضطرب.
+tool.fail|الطريق مسدود. السطر الأحمر يبيّن أين.
+tool.fail|لم يجرِ. انظر السطر الأحمر.
+tool.done|يظهر المجموع بالأسفل.
+tool.done|عُدّ. انظر بالأسفل.

@@ -104,3 +104,12 @@ trade.closed|market.isOpen() == false. Sleep until 9:30.
 trade.closed|Market closed. Cron job resumes at 9:30.
 view.switch|Loading view: {v}.
 view.switch|Context switch to {v}. Settings restored.
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|Exit code 0. No issues.
+tool.ok|All checks passed.
+tool.warn|Passed with warnings. See the yellow row.
+tool.warn|Build OK, one warning. Check the marked row.
+tool.fail|Exit code 1. Stack trace in the red row.
+tool.fail|Test failed. The red row has the error.
+tool.done|Computed. Output below.
+tool.done|Function returned. Result below.

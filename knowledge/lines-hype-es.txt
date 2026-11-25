@@ -112,3 +112,12 @@ game.streak|¡{v} SEGUIDAS! ¡Imparable!
 game.timeup|¡Tiempo! ¡Qué racha!
 market.open|¡Suena la campana, los mercados están EN VIVO!
 storm.near|¡Tormenta en camino, mantente alerta!
+# 25 Nov 2026 (approved): one line for every tool without its own
+tool.ok|¡Lo clavamos! ¡Cero problemas!
+tool.ok|¡Todo limpio! ¡Vamos!
+tool.warn|¡Casi perfecto! ¡Solo mira la fila amarilla!
+tool.warn|¡Tan cerca! ¡Una fila necesita un vistazo!
+tool.fail|¡Chocamos con un muro! ¡La fila roja muestra dónde!
+tool.fail|¡Falló, pero ya sabemos por qué! ¡Fila roja!
+tool.done|¡Bum! ¡La respuesta está justo abajo!
+tool.done|¡Cuentas hechas! ¡Aquí está!
