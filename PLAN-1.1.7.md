@@ -229,15 +229,21 @@ holidays, and the free keys price US shares only.
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
   a one-month line where the key gives one. Fixes the wide row with the empty middle.
-- **Order by who uses it** (site requests by country, 25 Nov: Canada 2.28k, Bangladesh 232, US 224, Poland 29):
-  Canada (as today) -> Bangladesh -> United States -> Poland -> the rest.
-  - Bangladesh: the taka isn't in the ECB list - find a free, no-key source that has BDT (check on Saturday; if none,
-    say so on the page). Dhaka shares (DSE) are not on the free price services: the page says it, and suggests the
-    world/US list instead of showing dashes. Dhaka hours (Sun-Thu) and holidays in the table.
-  - United States: USD as home currency, New York first, US holidays (already known).
-  - Poland: PLN (in the ECB list), Warsaw index and hours, `.WA` added to the suffix list, Warsaw holidays.
+- **Built in: three markets** (site requests by country, 25 Nov: Canada 2.28k, Bangladesh 232, US 224, Poland 29).
+  Built in = hand-checked presets that work with no key: currency, exchange hours and holidays, index list, default
+  widget symbols.
+  - Canada: as today.
+  - United States: USD, New York first, US holidays (already known).
+  - Bangladesh: Dhaka hours (Sun-Thu) and holidays; taka rates from a free, no-key source that has BDT (find it on
+    Saturday; if none, the page says so). Leads with the rates people send money on: USD/BDT, CAD/BDT, GBP/BDT,
+    EUR/BDT, MYR/BDT, SAR/BDT. Dhaka shares (DSE) aren't on the free price services: one plain line, not dashes.
+- **Every other country: "Custom market"**, like the other key-based places (quote keys, sports): pick your currency
+  and exchange from a list; rates from the ECB (~30 currencies, no key); prices with your own key (FMP / Finnhub /
+  Twelve Data, whichever covers that exchange - the add-key sheet says which); hours from the exchange list;
+  holidays say "not checked" unless the key's service gives them. Poland is the first test of this path (PLN, `.WA`
+  added to the suffix list).
 - Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for Canada,
-  Bangladesh, United States and Poland.
+  Bangladesh, United States, and Poland as a Custom market.
 
 ### Dropped (25 Nov)
 - D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
