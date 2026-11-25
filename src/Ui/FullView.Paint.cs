@@ -72,7 +72,9 @@ namespace AdeeboMeter
         // the verdict, beside the path it explains: "Not connected to any network · ...   Investigate ›" - returns where it ends
         float PaintVerdict(Graphics g, Control on, float x, float cy, float right)
         {
-            string quip = Mood.Quip(snap); string head = (snap.Level == 0 && !Voice.Serious && quip == "" ? Voice.Greet() + " " : "") + snap.Headline;
+            // 25 Nov (Adeeb): one line, not two - the buddy's line when the buddy speaks (it carries the same fact in its voice),
+            // the plain verdict when it doesn't (Serious, face only, quiet with no problem)
+            string quip = Mood.Quip(snap); string head = quip != "" ? Typing.Show("verdict", quip, on) : (snap.Level == 0 && !Voice.Serious ? Voice.Greet() + " " : "") + snap.Headline; quip = "";
             string link = L.T("Investigate") + "  ›"; float lw = snap.Level > 0 && snap.Flow != "" ? g.MeasureString(link, Draw.fBodyB).Width + 16 * S : 0;
             float room = Math.Max(0, right - x - lw); if (room < 60 * S) return x;
             using (var sf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
@@ -241,6 +243,7 @@ namespace AdeeboMeter
             Theme.Fill(g, vb, 10 * S, bg);
             using (var b = new SolidBrush(fg)) { g.DrawString(Kit.Sent(title), Draw.fBodyB, b, x + 16 * S, y + 12 * S); g.DrawString(verdict, vf, b, new RectangleF(x + 16 * S, y + 34 * S, w - 32 * S, vh + 4)); }
             y += vb.Height + 20 * S;
+            y = PaintDestBuddy(g, d, x, y - 8 * S, w);
             if (d == null)
             {
                 // one tap to check again: this session's checks and your pinned places (PLAN 11.5)

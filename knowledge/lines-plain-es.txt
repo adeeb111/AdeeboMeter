@@ -137,3 +137,16 @@ game.streak|{v} correctas seguidas.
 game.timeup|Se acabó el tiempo.
 market.open|Los mercados están abiertos.
 storm.near|Tormenta cerca. Las conexiones pueden caer.
+# 25 Nov 2026: one line for every tool without its own (how it went, in general words)
+tool.ok|Listo. No encontré nada mal.
+tool.ok|Terminado. Los resultados se ven normales.
+tool.ok|Todo revisado. Sin problemas.
+tool.warn|Listo. Algo no se ve bien: mira la fila amarilla.
+tool.warn|Terminado, con un aviso. Detalles abajo.
+tool.warn|Casi todo bien. Revisa la fila marcada.
+tool.fail|Listo. Algo falló: mira la fila roja.
+tool.fail|Terminado. Hay un problema abajo.
+tool.fail|Esto no pasó. La fila roja dice por qué.
+tool.done|Calculado. El resultado está abajo.
+tool.done|Listo. Aquí está el resultado.
+tool.done|Hecho. Los números están abajo.

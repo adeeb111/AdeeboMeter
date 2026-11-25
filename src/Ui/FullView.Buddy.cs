@@ -42,17 +42,40 @@ namespace AdeeboMeter
                 {
                     buddyFor = k1; string v; string key = VerdictKey(tbSel, tbRows, Inputs(), out v);
                     int worst = WorstLevel(tbRows);
-                    buddyText = key == null || !Lines.Speaks(worst >= 2 ? "problem" : "state") ? "" : Lines.Line(key, v);
+                    // 25 Nov (Adeeb): every tool gets its one line - a tool without its own verdict gets the general one for how it went
+                    if (key == null) { key = GeneralKey(worst, IsCalc(tbSel)); v = null; }
+                    buddyText = !Lines.Speaks(worst >= 2 ? "problem" : "state") ? "" : Lines.Line(key, v);
                 }
                 text = buddyText;
             }
+            return DrawBuddy(g, "tool", tbCanvas, text, x, y, w);
+        }
+        // the one line, drawn the same on every page that runs something
+        float DrawBuddy(Graphics g, string typing, System.Windows.Forms.Control on, string text, float x, float y, float w)
+        {
             if (text == "") return y;
             var r = new RectangleF(x, y, w, 34 * S);
-            text = Typing.Show("tool", text, tbCanvas, OnScreen(tbCanvas, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
+            text = Typing.Show(typing, text, on, OnScreen(on, r)); Theme.Fill(g, r, 10 * S, Kit.Soft("mine"));
             Kit.Icon(g, "mood", new RectangleF(r.X + 10 * S, r.Y + 9 * S, 16 * S, 16 * S), Kit.Accent("mine"));
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var sf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter })
                 g.DrawString(text, Draw.fBody, b, new RectangleF(r.X + 34 * S, r.Y + 8 * S, r.Width - 44 * S, 20 * S), sf);
             return y + r.Height + 12 * S;
+        }
+        // a result without a line of its own: how it went, in general words (the rows say the specifics)
+        internal static string GeneralKey(int worst, bool calc) { return calc ? "tool.done" : worst >= 2 ? "tool.fail" : worst == 1 ? "tool.warn" : "tool.ok"; }
+        // Check a destination: the same one line while it checks and when it's done
+        string destBuddyFor, destBuddyText = "";
+        float PaintDestBuddy(Graphics g, DestResult d, float x, float y, float w)
+        {
+            if (d == null) return y;
+            string k = (d.Done ? "done|" + d.Level : "busy") + "|" + d.GetHashCode() + "|" + Lines.Who() + "|" + Lines.Chat + "|" + Voice.Serious;
+            if (destBuddyFor != k)
+            {
+                destBuddyFor = k;
+                destBuddyText = !d.Done ? (Lines.Speaks("state") ? Lines.Line("busy", null) : "")
+                              : Lines.Speaks(d.Level >= 2 ? "problem" : "state") ? Lines.Line(GeneralKey(Math.Max(0, Math.Min(2, d.Level)), false), null) : "";
+            }
+            return DrawBuddy(g, "dest", destCanvas, destBuddyText, x, y, w);
         }
         static int WorstLevel(List<string[]> rows)
         {

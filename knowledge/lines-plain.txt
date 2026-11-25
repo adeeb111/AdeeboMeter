@@ -137,3 +137,16 @@ game.streak|{v} correct in a row.
 game.timeup|Time's up.
 market.open|Markets are open.
 storm.near|Storm nearby. Connections may drop.
+# 25 Nov 2026: one line for every tool without its own (how it went, in general words)
+tool.ok|Done. Nothing wrong found.
+tool.ok|Finished. The results look normal.
+tool.ok|All checked. No problems here.
+tool.warn|Done. One thing looks off - see the yellow row.
+tool.warn|Finished, with a warning. Details below.
+tool.warn|Mostly fine. Check the marked row.
+tool.fail|Done. Something failed - see the red row.
+tool.fail|Finished. There's a problem below.
+tool.fail|This one didn't pass. The red row says why.
+tool.done|Worked out. The answer is below.
+tool.done|Done. Here's the result.
+tool.done|Calculated. Numbers below.

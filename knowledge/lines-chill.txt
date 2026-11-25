@@ -112,3 +112,16 @@ game.streak|On a roll, {addr}.
 game.timeup|Time's up. All good.
 market.open|Markets are open. Easy does it.
 storm.near|Storm nearby - the connection might wobble a bit.
+# 25 Nov 2026: one line for every tool without its own (how it went, in general words)
+tool.ok|All good here. Nothing to worry about.
+tool.ok|Smooth. Results look normal.
+tool.ok|Checked it. You're fine.
+tool.warn|Mostly fine. One row wants a look.
+tool.warn|Nothing broken, but see the yellow row.
+tool.warn|Done. A small thing to check below.
+tool.fail|Found a problem. The red row has it.
+tool.fail|That didn't go well. See below.
+tool.fail|Something's not right. Red row first.
+tool.done|There you go. Answer's below.
+tool.done|Worked it out for you.
+tool.done|Done. Numbers below.

@@ -112,3 +112,16 @@ game.streak|En racha, {addr}.
 game.timeup|Se acabó el tiempo. Todo bien.
 market.open|Los mercados están abiertos. Con calma.
 storm.near|Tormenta cerca: la conexión podría fallar un poco.
+# 25 Nov 2026: one line for every tool without its own (how it went, in general words)
+tool.ok|Todo bien aquí. Nada de qué preocuparse.
+tool.ok|Tranquilo. Los resultados se ven normales.
+tool.ok|Lo revisé. Estás bien.
+tool.warn|Casi todo bien. Una fila merece un vistazo.
+tool.warn|Nada roto, pero mira la fila amarilla.
+tool.warn|Listo. Hay algo pequeño que revisar abajo.
+tool.fail|Encontré un problema. Está en la fila roja.
+tool.fail|Eso no salió bien. Mira abajo.
+tool.fail|Algo no está bien. Primero la fila roja.
+tool.done|Ahí lo tienes. La respuesta está abajo.
+tool.done|Ya lo calculé por ti.
+tool.done|Listo. Los números están abajo.
