@@ -1,118 +1,109 @@
-main{max-width:940px}
-main>nav:first-child{margin-bottom:1.2rem}
-.summary,.example{background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--green);border-radius:12px;padding:1rem 1.15rem;margin:1.2rem 0}
-.example{border-inline-start-color:var(--blue)}
-.summary h2,.example h2{margin:0 0 .35rem}
-.summary p,.example p,.signal p{margin:.35rem 0 0}
-.guide-toc{display:flex;gap:.5rem 1rem;flex-wrap:wrap;margin:1.25rem 0}
-.map,.signal{margin:1.35rem 0}
-.map ol,.signal,.guide-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),1fr));gap:.7rem}
-.map ol{padding:0;list-style:none;margin:0;counter-reset:stage}
-.map li,.signal>div,.guide-cards>section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.9rem;min-width:0}
-.map li{counter-increment:stage;margin:0}
-.map li::before{content:counter(stage);display:grid;place-items:center;width:1.55rem;height:1.55rem;border-radius:50%;border:1px solid var(--line);color:var(--blue);font-weight:700;margin-bottom:.35rem}
-.map strong,.map span,.signal strong,.signal span{display:block}
-.signal>figcaption{grid-column:1/-1}
-.map span,.signal span,.guide-cards span{color:var(--sub);font-size:.9em}
-.guide-cta{display:inline-block;padding:.5rem .8rem;border:1px solid var(--blue);border-radius:8px;font-weight:650}
-.guide-cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,275px),1fr));margin-top:1.35rem}
-.guide-cards h2{margin:.25rem 0 .45rem;line-height:1.3}
-.guide-cards p{margin:.35rem 0}
+/* The blog and its guides, on the home page's system (24 Nov, Adeeb: "the blog isn't following the theme").
+   Same tokens as the home page (base.css: graphite and white, the faceplate blue, the gauge's three colours, Barlow), Read
+   mode: one column of 68ch, the headings in Barlow's semi-condensed cut, and one picture that means something - the same
+   five-stop path the app's widget shows (PC, Wi-Fi, router, provider, the far end), with the stops a guide is about lit. */
+@import url("/base.css");
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--page)}
+body{margin:0;background:var(--page);color:var(--ink);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+main{max-width:760px;margin:0 auto;padding:clamp(28px,5vw,56px) 20px 88px}
+main.troubleshooting{max-width:960px}
+a{color:var(--blue)}
+@media (hover:hover){a:hover{color:var(--blue-d)}}
+h1,h2,h3{color:var(--ink);font-weight:700;letter-spacing:-.005em;text-wrap:balance}
+h1{font-size:clamp(38px,5.4vw,60px);line-height:1.02;margin:0 0 18px}
+h2{font-size:clamp(24px,2.6vw,30px);line-height:1.15;margin:2.4em 0 .55em}
+h3{font-size:20px;margin:1.8em 0 .4em}
+p,li{max-width:68ch}
+p{margin:0 0 1em}
+strong{font-weight:700}
+code{font:500 .9em/1 "Cascadia Mono",Consolas,monospace;background:var(--soft);border-radius:6px;padding:.15em .4em}
+img{max-width:100%;height:auto}
 
-.troubleshooting{max-width:1100px}
-.guide-home{display:flex;justify-content:space-between;align-items:center}
-.guide-home a:first-child{display:flex;gap:.5rem;align-items:center;font-weight:700;text-decoration:none}
-.story-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;align-items:center;padding:clamp(1.5rem,5vw,4rem);border:1px solid #334e70;border-radius:22px;background:var(--card);color:#f2f7ff}
-.story-hero h1{font-size:clamp(2.45rem,6vw,5.2rem);letter-spacing:-.064em;line-height:.96;margin:.35rem 0 .9rem}
-.story-hero p{margin:0;color:#bdcee8}
-.story-hero .story-kicker{font-size:.9rem;font-weight:700;color:#7de6c8}
-.hero-route{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:relative;text-align:center;color:#c9d8ec;font-size:.81rem;gap:.25rem}
-.hero-route::before{content:"";position:absolute;top:.46rem;left:12%;right:12%;height:1px;background:#658bb5}
-.hero-route span{position:relative}
-.hero-route span::before{content:"";display:block;width:.9rem;height:.9rem;margin:0 auto .6rem;border:2px solid #bbffed;border-radius:50%;background:#28ba91}
-.hero-route span:nth-child(2)::before{background:#ffbd71;border-color:#ffe1ae}
-.guide-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem}
-.scenario-card{display:block;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);text-decoration:none;color:var(--ink)}
-.scenario-card:hover,.scenario-card:focus-visible{border-color:var(--blue);outline-offset:3px}
-.scenario-copy{position:relative;padding:.75rem 2.7rem .85rem 1rem}
-.scenario-copy h2{font-size:clamp(1.03rem,2vw,1.25rem);margin:0}
-.scenario-copy p{margin:.2rem 0 0;color:var(--sub)}
-.scenario-copy>span{position:absolute;right:1.1rem;top:.9rem;color:var(--blue);font-size:1.1rem}
-.scenario-art{display:grid;align-content:center;gap:.52rem;background:#10243c;color:#e2eeff;min-height:138px;padding:1rem}
-.art-speed{background:#112b38}.art-pc{background:#191f42}.art-isp{background:#2b2037}
-.route,.art-note,.plot-label,.plot-axis,.hopline{display:flex;justify-content:space-between;align-items:center;gap:.35rem}
-.route span{border:1px solid #537aa4;background:#152d49;padding:.5rem .35rem;border-radius:8px;flex:1;text-align:center}
-.route b{color:#94b7e1}.art-note{justify-content:center;gap:1rem}
-.scenario-art span,.scenario-art p{color:#e2eeff;font-size:.82rem}
-.art-note i,.hopline i{display:inline-block;width:.64rem;height:.64rem;background:#78ebc4;border-radius:50%;margin-right:.25rem}
-.art-note span:first-child i,.hopline span:nth-child(n+2) i{background:#ffc282}
-.plot-label{font-size:.87rem;font-weight:700}
-.plot-label span:last-child,.plot-axis{opacity:.78;font-size:.7rem}
-.plot-bars{display:flex;gap:.25rem;align-items:flex-end;height:45px;border-bottom:1px solid #68949d}
-.plot-bars i{flex:1;height:var(--h);background:#79e5c7;border-radius:3px 3px 0 0}
-.plot-bars i:nth-child(n+6):nth-child(-n+11){background:#ffc282}
-.meters{display:grid;gap:.33rem}
-.meters span{display:grid;grid-template-columns:4.5rem 1fr;align-items:center}
-.meters i{display:block;height:.42rem;border-radius:4px;background:linear-gradient(to right,#aaabff var(--h),#404c73 var(--h))}
-.meters span:last-child i{background:linear-gradient(to right,#ffc282 var(--h),#404c73 var(--h))}
-.hopline{position:relative;align-items:start}
-.hopline::before{content:"";height:1px;position:absolute;top:.32rem;left:10%;right:10%;background:#9b7c9a}
-.hopline span{position:relative;text-align:center;flex:1}
-.hopline i{display:block;margin:0 auto .42rem}
-.guide-visual{display:grid;grid-template-columns:1fr 1.05fr;gap:.7rem 1rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:1rem;margin:1rem 0}
-.guide-visual h2{font-size:clamp(1.25rem,3vw,1.95rem);line-height:1.13;letter-spacing:-.035em;margin:0}
-.guide-visual p{margin:.45rem 0 0;color:var(--sub)}
-.guide-visual .scenario-art{border-radius:10px;min-height:118px;padding:.8rem}
-.guide-visual figcaption{grid-column:1/-1;margin:0}
-.guide-detail{margin:1.1rem 0;border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem}
-.guide-detail summary{cursor:pointer;font-weight:650}
-@media(max-width:620px){.story-hero,.guide-visual{grid-template-columns:1fr;gap:1rem}.guide-cards{grid-template-columns:1fr}.hero-route{max-width:360px}}
+/* ---- the article's head: title, the answer in one sentence, what you'll do */
+.dek{font-size:clamp(19px,2vw,22px);line-height:1.45;color:var(--sub);margin:0 0 22px;max-width:40em}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 36px;padding:0;list-style:none;color:var(--muted);font-size:15px}
+.meta li{display:inline-flex;align-items:center;gap:7px;max-width:none}
+.meta svg{width:16px;height:16px;color:var(--sub)}
 
-.scenario-art{min-height:164px;gap:.65rem;border-top:3px solid #75b7ff}
-.art-speed{border-color:#77e7cd}.art-pc{border-color:#b8aeff}.art-isp{border-color:#ffc282}
-.scenario-label{display:flex;align-items:center;gap:.55rem;color:#f3f7ff;font-size:.9rem;line-height:1.15}
-.scenario-emoji{display:grid;place-items:center;width:2.05rem;height:2.05rem;border:1px solid #ffffff38;border-radius:9px;background:#ffffff12;font-family:"Segoe UI Emoji","Apple Color Emoji",sans-serif;font-size:1.02rem!important}
-.hopline small{display:block;color:#d4bce1;font-size:.7rem}
-.guide-visual .scenario-art{min-height:150px}
-.scenario-card:focus-visible{outline:2px solid var(--blue)}
+/* ---- the path: the app's five stops, the ones this guide is about lit in the gauge's colours */
+.path{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:relative}
+.path::before{content:"";position:absolute;top:7px;left:10%;right:10%;height:2px;background:var(--line);border-radius:2px}
+.path li{position:relative;display:grid;justify-items:center;gap:6px;text-align:center;font:600 14px/1.25 "Barlow",system-ui,sans-serif;color:var(--muted);max-width:none}
+.path li::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--card);border:2px solid var(--line)}
+.path li.ok::before{background:var(--ok);border-color:var(--ok)}
+.path li.warn::before{background:var(--warn);border-color:var(--warn)}
+.path li.bad::before{background:var(--bad);border-color:var(--bad)}
+.path li.ok,.path li.warn,.path li.bad{color:var(--ink)}
+.path small{display:block;font:500 13px/1.3 "Barlow",system-ui,sans-serif;color:var(--sub)}
+.path-fig{margin:0 0 40px;padding:26px 22px 20px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg)}
+.path-fig figcaption{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:15px;color:var(--sub);max-width:none}
 
-/* Flat diagnostic layers share the same order on the hub and in each guide. */
-.story-hero{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:clamp(1rem,3.5vw,2.2rem)}
-.story-hero h1{font-size:clamp(2.15rem,5vw,4rem);letter-spacing:-.045em;line-height:1.02}
-.story-hero p,.story-hero .story-kicker{color:var(--sub)}
-.hero-route{color:var(--ink)}
-.hero-route::before{background:var(--line)}
-.hero-route span::before{border:0;box-shadow:none;background:var(--green)}
-.hero-route span:nth-child(2)::before{background:#d58718}
-.scenario-card,.guide-visual{border-radius:10px}
-.scenario-art{background:var(--card);color:var(--ink);border-top:3px solid var(--layer);border-bottom:1px solid var(--line);padding:.9rem;min-height:154px}
-.art-wifi{--layer:#2568ce}.art-speed{--layer:#16816e}.art-pc{--layer:#7550bb}.art-isp{--layer:#b26a16}
-.scenario-art span,.scenario-label{color:var(--ink)}
-.scenario-emoji,.route span{background:var(--page);border:1px solid var(--line)}
-.route b{color:var(--sub)}
-.route span,.scenario-emoji{border-radius:5px}
-.plot-label span:last-child,.plot-axis,.hopline small{color:var(--sub);opacity:1}
-.plot-bars{border-color:var(--line)}
-.plot-bars i{background:#16816e;border-radius:0}
-.plot-bars i:nth-child(n+6):nth-child(-n+11){background:#d58718}
-.meters i{border-radius:0;background:var(--line)}
-.meters i::before{content:"";display:block;width:var(--h);height:100%;background:#7550bb}
-.meters span:last-child i::before{background:#d58718}
-.hopline::before{background:var(--line)}
-.art-note i,.hopline i{background:#16816e}
-.art-note span:first-child i,.hopline span:nth-child(n+2) i{background:#d58718}
-.guide-visual .scenario-art{border:1px solid var(--line);border-left:3px solid var(--layer);border-radius:6px;min-height:130px}
-.next-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;list-style:none;padding:0}
-.next-checks li{margin:0;padding:.65rem .8rem;border:1px solid var(--line);border-radius:6px}
-.next-checks strong,.next-checks span{display:block}
+/* ---- the blog's list: one row per question, the path says where it lives */
+.blog-head{margin:0 0 40px}
+.blog-head .dek{margin:0}
+.posts{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.posts>li{max-width:none;border-bottom:1px solid var(--line)}
+.posts a{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px 40px;align-items:center;padding:28px 12px;margin:0 -12px;border-radius:var(--r-md);color:inherit;text-decoration:none}
+@media (hover:hover){.posts a:hover{background:var(--card)}.posts a:hover h2{color:var(--blue)}}
+.posts a:active{background:var(--soft)}
+.posts h2{margin:0 0 8px;font-size:clamp(22px,2.4vw,27px)}
+.posts p{margin:0;color:var(--sub)}
+.posts .meta{margin:12px 0 0;font-size:14px}
+.posts .path li{font-size:13px}
+.posts .path li::before{width:14px;height:14px}
+.posts .path::before{top:6px}
+@media (max-width:720px){.posts a{grid-template-columns:1fr;padding:24px 8px;margin:0 -8px}.posts .path{order:-1;max-width:420px}}
+
+/* ---- inside an article */
+main>ol:not(.posts){counter-reset:step;list-style:none;padding:0;margin:0 0 1.2em}
+main>ol:not(.posts)>li{counter-increment:step;position:relative;padding:0 0 0 46px;margin:0 0 16px}
+main>ol:not(.posts)>li::before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--soft);color:var(--ink);font:700 15px/1 "Barlow SC","Barlow",sans-serif}
+main>ul:not(.next-checks):not(.meta):not(.path){padding-left:1.2em}
+.next-checks{list-style:none;padding:0;margin:0 0 1.2em;border-top:1px solid var(--line)}
+.next-checks li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:4px 28px;padding:14px 0;border-bottom:1px solid var(--line);max-width:none}
+.next-checks strong{font-weight:700}
 .next-checks span{color:var(--sub)}
-@media(max-width:620px){.next-checks{grid-template-columns:1fr}}
+@media (max-width:620px){.next-checks li{grid-template-columns:1fr}}
+.summary,.example{margin:32px 0;padding:20px 22px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--card)}
+.summary{background:color-mix(in srgb,var(--ok) 9%,var(--card));border-color:color-mix(in srgb,var(--ok) 35%,var(--line))}
+.summary h2,.example h2{margin:0 0 6px;font-size:20px}
+.summary p,.example p{margin:0}
+figure{margin:32px 0}
+figure img{display:block;border-radius:var(--r-md);border:1px solid var(--line)}
+figcaption{margin-top:10px;font-size:15px;color:var(--sub)}
+.guide-detail{margin:28px 0;border:1px solid var(--line);border-radius:var(--r-md);background:var(--card)}
+.guide-detail summary{cursor:pointer;padding:14px 18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.guide-detail summary::-webkit-details-marker{display:none}
+.guide-detail summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(45deg) translateY(-2px)}
+.guide-detail[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.guide-detail>p{padding:0 18px;margin:0 0 14px}
+.guide-cta,.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border-radius:var(--r-md);background:var(--face);color:#fff!important;font-weight:600;text-decoration:none;transition:transform .14s var(--ease-out),background-color .15s ease}
+@media (hover:hover){.guide-cta:hover,.btn:hover{background:var(--blue-d)}}
+.guide-cta:active,.btn:active{transform:scale(.97)}
+.end{margin:56px 0 0;padding:28px;border-radius:var(--r-xl);background:var(--face);color:#fff}
+.end h2{color:#fff;margin:0 0 6px}
+.end p{color:#CFE0FF;margin:0 0 18px}
+.end .btn{background:#fff;color:#0D2E7A!important}
+@media (hover:hover){.end .btn:hover{background:#E8EFFF}}
 
-/* Keep diagnostic steps and outcomes distinguishable in localized guides. */
-main>ol li{border-inline-start:3px solid #1f6feb;padding-inline-start:.6rem;margin-block:.6rem}
-main>ol li:nth-child(2){border-color:#8250df}
-main>ol li:nth-child(3){border-color:#2da44e}
-.next-checks li:nth-child(4n+1){border-inline-start:3px solid #1f6feb}
-.next-checks li:nth-child(4n+2){border-inline-start:3px solid #8250df}
-.next-checks li:nth-child(4n+3){border-inline-start:3px solid #2da44e}
-.next-checks li:nth-child(4n){border-inline-start:3px solid #bf8700}
+/* ---- pages not rewritten yet (the other languages, until they're moved over): the old pieces on the new colours */
+.story-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;align-items:center;padding:clamp(1.5rem,5vw,3rem);border:1px solid var(--line);border-radius:var(--r-xl);background:var(--card)}
+.story-hero h1{margin:0 0 .6rem}.story-hero p{color:var(--sub);margin:0}
+.hero-route{display:none}
+.guide-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;margin-top:20px}
+.scenario-card{display:block;padding:22px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);color:inherit;text-decoration:none}
+@media (hover:hover){.scenario-card:hover h2{color:var(--blue)}}
+.scenario-card .scenario-art,.guide-visual .scenario-art{display:none}
+.scenario-copy h2{margin:0 0 6px;font-size:22px}.scenario-copy p{margin:0;color:var(--sub)}.scenario-copy>span{display:none}
+.guide-visual{margin:24px 0 36px;padding:22px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.guide-visual h2{margin:0 0 6px;font-size:22px}.guide-visual p{margin:0;color:var(--sub)}.guide-visual figcaption{display:none}
+
+/* ---- the app, shown off: the real widget cards (drawn by the app itself) beside the pitch */
+.showcase{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px 40px;align-items:center;margin-top:64px;padding:clamp(24px,4vw,40px);overflow:hidden}
+.showcase .sc-note{margin:14px 0 0;font-size:14px;color:#CFE0FF}
+.sc-shots{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.sc-shots img{display:block;width:100%;height:auto;border:0;border-radius:16px;box-shadow:0 18px 36px -14px rgba(4,16,48,.6),0 2px 6px rgba(4,16,48,.3)}
+.sc-shots img:first-child{grid-row:span 2}
+@media (max-width:760px){.showcase{grid-template-columns:1fr}.sc-shots{max-width:440px}}
+main:not(.troubleshooting) .showcase{grid-template-columns:1fr}main:not(.troubleshooting) .sc-shots{max-width:560px}

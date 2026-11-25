@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/trading.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/trading.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter للتداول — هل المشكلة في اتصالك أم لدى الوسيط؟</title>
@@ -15,7 +16,7 @@
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<meta property="og:locale" content="ar_AR">
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/trading.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/trading.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/trading.html">
@@ -23,7 +24,7 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/trading.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/trading.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/trading.html">
-<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
 </head>
 <body class="f-trading">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,9 +32,9 @@
 <section class="fhero"><div>
 <h1>هل هو اتصالك أو الوسيط؟</h1>
 <p>كل ثانية تعتبر عندما تتداول. يراقب AdeeboMeter الخط من جهاز الكمبيوتر الخاص بك إلى وسيطك أثناء فتح السوق، ويخبرك بالانتظار عندما يكون البيع بطيء - قبل النقر على شراء، وليس بعد ذلك.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><a class="more" href="/ar/">كل ما يفعله</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><a class="more" href="/ar/">كل ما يفعله</a></div>
 </div>
-<img class="shot" src="/img/trading.jpg" alt="صفحة التداول: العملات في نهاية اليوم والاسبوع في أسعار السلع، مع مراقبة الاتصال الوسيط أدناه" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-markets-ok.png" width="264" height="191" alt="أداة الأسواق: قائمة المتابعة واتصال الوسيط"></figure>
 </section>
 <div class="grid">
   <div class="card"><h2>وسيطك، مشاهدة على الهواء مباشرة</h2><p>و (ويثس سيمبل) ، (كوسترايد) ، (تاي دي) ، (ر بي سي) ، (روبن هود) ، (كويين بايس) وأكثر من ذلك - أو أي عنوان تكتب. 9:30-16:00 شرقية في أيام التداول، عطلة تمر؛ حول الساعة للكريبتو إذا كنت ترغب.</p></div>
@@ -42,10 +43,13 @@
   <div class="card"><h2>خلاصة مساء، إذا كنت تريد ذلك</h2><p>في أيام الأسبوع، يمكن لـ 17:30-19:00 أن يظهر الوسيلة الإغلاقية، ثم يعود بمفرده. أطفئ الا اذا قمت بتشغيله</p></div>
   <div class="card"><h2>أبداً حسابك</h2><p>لا تسجل أبداً، ولا ترى حسابك ولا تقترح التجارة إنه يضع فقط اتصال مع عنوان الوسيط العام الخاص بك.</p></div>
   <div class="card"><h2>تعلم الأساسيات</h2><p>دروس وألعاب للمستثمرين المبتدئين: ما الذي يحرك السعر، كيفية قراءة الأرقام، كيفية اكتشاف عملية احتيال. التعليم فقط</p></div>
-  <div class="card"><h2>Replay the slow moment</h2><p>The day's slowest broker moment opens in the Time machine at that minute - router, internet and PC as they were.</p></div>
-  <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Markets page: router, internet, Wi-Fi and how busy your PC is, live.</p></div>
-  <div class="card"><h2>Your key, your pace</h2><p>Add your own free Financial Modeling Prep key for quotes and choose how often they update: every hour, every 15 minutes, or every 5 minutes or every minute on a paid plan.</p></div>
+  <div class="card"><h2>أعد عرض اللحظة البطيئة</h2><p>تُفتح أبطأ لحظة مع الوسيط خلال اليوم في آلة الزمن عند تلك الدقيقة - الراوتر والإنترنت والكمبيوتر كما كانت.</p></div>
+  <div class="card"><h2>طرفك، دائمًا في الأعلى</h2><p>سطر «الآن» في صفحة الأسواق: الراوتر والإنترنت وWi-Fi ومدى انشغال الكمبيوتر، مباشرة.</p></div>
+  <div class="card"><h2>مفتاحك، وإيقاعك</h2><p>أضف مفتاحك المجاني من Financial Modeling Prep للأسعار واختر عدد مرات التحديث: كل ساعة، أو كل 15 دقيقة، أو كل 5 دقائق أو كل دقيقة مع خطة مدفوعة.</p></div>
 </div>
+<section class="inapp"><h2>صفحة الأسواق في النافذة الكاملة</h2><p>العملات في نهاية اليوم، وأسعار السلع خلال الأسبوع، ومراقبة اتصال الوسيط.</p>
+<img class="shot" src="/img/trading.jpg" alt="صفحة التداول: العملات في نهاية اليوم والاسبوع في أسعار السلع، مع مراقبة الاتصال الوسيط أدناه" width="951">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>ليس نصيحة مالية أسعار الصرف هي إرشادية (بنك كندا) وليس للتداول. أرقام السلع هي مؤشر أسعار العالم - اقرأ التغيير، وليس العدد.</p></div>
 <div class="others"><p>أيضاً: <a href="/ar/streaming.html">AdeeboMeter للتدفق</a> · <a href="/ar/gaming.html">AdeeboMeter للعبة</a> · <a href="/ar/privacy.html">الخصوصية</a></p>
 <p>AdeeboMeter لـ Windows · لا حساب، لا سحابة، لا قياس عن بعد · تشغيل دون حقوق إدارة</p></div>

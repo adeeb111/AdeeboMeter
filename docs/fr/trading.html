@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/trading.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter pour les marchés : connexion ou courtier?</title>
@@ -15,6 +16,7 @@
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/trading.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/trading.html">
@@ -23,7 +25,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/trading.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/trading.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/trading.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-trading">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,9 +32,9 @@
 <section class="fhero"><div>
 <h1>Votre connexion ou le courtier?</h1>
 <p>AdeeboMeter surveille le trajet du PC au courtier pendant les heures du marché et indique les ralentissements avant l’envoi d’un ordre.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
 </div>
-<img class="shot" src="/img/trading.jpg" alt="Page Marchés : devises à la clôture, produits de base sur la semaine et surveillance du courtier" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-markets-ok.png" width="264" height="191" alt="Le widget des marchés : votre liste de suivi et la connexion au courtier"></figure>
 </section>
 <div class="grid">
   <div class="card"><h2>Votre courtier surveillé en direct</h2><p>Wealthsimple, Questrade, Interactive Brokers, TD, RBC, Robinhood, Coinbase ou une adresse saisie. De 9:30 à 16:00, heure de l’Est, jours de négociation hors congés; en continu pour les cryptos si choisi.</p></div>
@@ -42,10 +43,13 @@
   <div class="card"><h2>Résumé du soir facultatif</h2><p>En semaine de 17:30 à 19:00, le widget peut afficher la clôture puis revenir à sa vue. Désactivé au départ.</p></div>
   <div class="card"><h2>Aucun accès au compte</h2><p>Aucune connexion au compte ni suggestion de transaction. Seul le temps de connexion à l’adresse publique est mesuré.</p></div>
   <div class="card"><h2>Apprendre les bases</h2><p>Leçons et jeux pour comprendre cours, données et arnaques. À des fins éducatives.</p></div>
-  <div class="card"><h2>Replay the slow moment</h2><p>The day's slowest broker moment opens in the Time machine at that minute - router, internet and PC as they were.</p></div>
-  <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Markets page: router, internet, Wi-Fi and how busy your PC is, live.</p></div>
-  <div class="card"><h2>Votre clé, votre rythme</h2><p>Add your own free Financial Modeling Prep key for quotes and choose how often they update: every hour, every 15 minutes, or every 5 minutes or every minute on a paid plan.</p></div>
+  <div class="card"><h2>Rejouer le moment lent</h2><p>Le moment le plus lent de la journée avec le courtier s'ouvre dans la Machine à remonter le temps à cette minute - routeur, Internet et PC tels qu'ils étaient.</p></div>
+  <div class="card"><h2>Votre côté, toujours en haut</h2><p>Une ligne MAINTENANT sur la page Marchés : routeur, Internet, Wi-Fi et la charge de votre PC, en direct.</p></div>
+  <div class="card"><h2>Votre clé, votre rythme</h2><p>Ajoutez votre propre clé gratuite Financial Modeling Prep pour les cours et choisissez la fréquence de mise à jour : chaque heure, toutes les 15 minutes, ou toutes les 5 minutes ou chaque minute avec un forfait payant.</p></div>
 </div>
+<section class="inapp"><h2>La page Marchés dans la grande fenêtre</h2><p>Les devises en fin de journée, la semaine des prix des matières premières, et la surveillance de la connexion au courtier.</p>
+<img class="shot" src="/img/trading.jpg" alt="Page Marchés : devises à la clôture, produits de base sur la semaine et surveillance du courtier" width="951">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>Aucun conseil financier. Les taux de la Banque du Canada sont indicatifs. L’indice des produits de base suit la variation des prix mondiaux.</p></div>
 <div class="others"><p>Aussi : <a href="/fr/streaming.html">AdeeboMeter pour la vidéo</a> · <a href="/fr/gaming.html">AdeeboMeter pour les jeux</a> · <a href="/fr/privacy.html">Confidentialité</a></p>
 <p>AdeeboMeter pour Windows · sans compte, service infonuagique ni télémétrie · sans droits d’administrateur</p></div>

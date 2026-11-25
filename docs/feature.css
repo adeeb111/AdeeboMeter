@@ -1,37 +1,43 @@
-/* Feature pages (gaming, streaming, trading) - the home page's navy cards. Nothing loaded from anywhere else. */
-:root{--ink:#1B2330;--sub:#4A5568;--muted:#5F6B7A;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--soft:#F3F6FA;--blue:#1F6FEB;--blue-d:#1A5FCC;--green:#2DA44E;--green-s:#E6F4EA;--k:#8250DF;--k-s:#F1EAFE}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--muted:#7D90B0;--line:#22355A;--page:#0B1426;--card:#121F38;--soft:#182844;--blue:#2F7BF6;--blue-d:#4A8CFF;--green:#3FB950;--green-s:#123D2E;--k-s:#2A2150}}
-:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--muted:#7D90B0;--line:#22355A;--page:#0B1426;--card:#121F38;--soft:#182844;--blue:#2F7BF6;--blue-d:#4A8CFF;--green:#3FB950;--green-s:#123D2E;--k-s:#2A2150}
-body.f-streaming{--k:#CF3D5E}body.f-trading{--k:#1A8F5A}
+/* Feature pages (gaming, streaming, trading): the same instrument look as the home page and the guides -
+   Barlow, the faceplate blue, and the real corner widget up front. */
+@import url("/base.css");
+:root{--r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:22px}
 *{box-sizing:border-box}
-body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
-a{color:var(--blue-d);overflow-wrap:anywhere}
-.ftop{border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--page) 88%,transparent)}
-.ftop .w{max-width:1160px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.fbrand{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-weight:800;font-size:18px}.fbrand b{color:var(--blue-d)}
-.ftop nav{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:flex-end;align-items:center;font-size:14px}
-.ftop nav a{text-decoration:none;color:var(--sub);border-radius:99px;padding:8px 14px}
-.ftop nav a[aria-current]{color:var(--ink);font-weight:700;background:var(--k-s)}
-.ftop nav a.dl{background:var(--blue);color:#fff;font-weight:700}
-main{max-width:1160px;margin:0 auto;padding:0 24px 64px}
-.fhero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:center;padding:52px 0 28px}
-.ftag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--k);background:var(--k-s);border-radius:8px;padding:5px 10px}
-:root[data-theme="dark"] .ftag{color:color-mix(in srgb,var(--k) 55%,#fff)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ftag{color:color-mix(in srgb,var(--k) 55%,#fff)}}
-.fhero h1{font-size:clamp(38px,5vw,56px);line-height:1.04;letter-spacing:-.035em;margin:18px 0 16px;font-weight:850}
-.fhero p{font-size:18px;color:var(--sub);margin:0 0 26px;line-height:1.55}
+body{margin:0;background:var(--page);color:var(--ink);font-size:17px;line-height:1.6}
+a{color:var(--blue-d);text-underline-offset:3px;overflow-wrap:anywhere}
+main{max-width:1120px;margin:0 auto;padding:0 24px 88px}
+h1,h2{text-wrap:balance}
+.fhero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:center;padding:clamp(32px,6vw,72px) 0 clamp(40px,6vw,72px)}
+.fhero h1{font-size:clamp(40px,5.4vw,64px);line-height:1.02;letter-spacing:-.02em;margin:0 0 18px;font-weight:700}
+.fhero p{font-size:19px;color:var(--sub);margin:0 0 28px;line-height:1.55;max-width:34em}
+.ftag{display:none}
 .fbtns{display:flex;gap:12px;flex-wrap:wrap}
-.cta,.more{display:inline-flex;align-items:center;height:50px;padding:0 22px;border-radius:14px;font-weight:700;text-decoration:none}
-.cta{background:var(--blue);color:#fff}.cta:hover{background:var(--blue-d)}
-.more{border:1px solid var(--line);color:var(--ink)}.more:hover{background:var(--soft)}
-.shot{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:22px;box-shadow:0 30px 80px -34px rgba(0,0,0,.55)}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
-.card h2,.card h3{margin:0 0 8px;font-size:17px}.card p{margin:0;color:var(--sub);font-size:15px;line-height:1.5}
-.short{display:flex;gap:14px;align-items:flex-start;background:var(--green-s);border-radius:16px;padding:18px 20px;margin:24px 0 0}
-.short svg{flex:none;width:22px;height:22px;margin-top:2px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cta,.more{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:var(--r-md);font-weight:600;text-decoration:none;transition:transform .14s var(--ease-out),background-color .15s ease}
+.cta{background:var(--face);color:#fff}
+.more{border:1px solid var(--line);color:var(--ink);background:var(--card)}
+@media (hover:hover){.cta:hover{background:var(--blue-d)}.more:hover{background:var(--soft)}}
+.cta:active,.more:active{transform:scale(.97)}
+.cta:focus-visible,.more:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+/* the faceplate: the real widget, at its real size, on the logo's blue */
+.fwidgets{position:relative;margin:0;display:flex;justify-content:center;align-items:center;gap:16px;padding:clamp(28px,4vw,48px) clamp(20px,3vw,36px);border-radius:var(--r-xl);background:var(--face);min-height:100%}
+.fwidgets img{display:block;width:min(100%,340px);flex:0 1 auto;min-width:0;height:auto;border-radius:16px;box-shadow:0 18px 36px -14px rgba(4,16,48,.6),0 2px 6px rgba(4,16,48,.3)}
+.fwidgets img+img{margin-top:36px}
+.fwidgets figcaption{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:14px;color:#CFE0FF}
+.fwidgets.cap{padding-bottom:56px}
+/* what it does: plain rows, not a wall of boxes */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 56px;border-top:1px solid var(--line)}
+.card{padding:22px 0;border-bottom:1px solid var(--line);background:none;border-radius:0}
+.card h2,.card h3{margin:0 0 6px;font-size:21px;line-height:1.25;font-weight:700}
+.card p{margin:0;color:var(--sub);font-size:16px;line-height:1.55;max-width:36em}
+.inapp{margin:64px 0 0}
+.inapp h2{font-size:28px;margin:0 0 6px}
+.inapp>p{margin:0 0 20px;color:var(--sub)}
+.shot{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.short{display:flex;gap:14px;align-items:flex-start;background:color-mix(in srgb,var(--ok) 12%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 30%,var(--line));border-radius:var(--r-lg);padding:18px 20px;margin:40px 0 0}
+.short svg{flex:none;width:22px;height:22px;margin-top:2px;stroke:var(--ok);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .short p{margin:0}
-.others{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:32px;color:var(--muted);font-size:14px}
+.others{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
 .others p{margin:0}
-@media (max-width:900px){.fhero{grid-template-columns:1fr;gap:26px;padding:32px 0 20px}.grid{grid-template-columns:1fr}.fbtns a{flex:1 1 220px;justify-content:center}main,.ftop .w{padding-left:16px;padding-right:16px}}
-@media (max-width:600px){.ftop nav{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;margin:0 -4px}.ftop nav a{white-space:nowrap}}
+@media (max-width:900px){.fhero{grid-template-columns:1fr;gap:32px}.grid{grid-template-columns:1fr}.fbtns a{flex:1 1 220px}main{padding-left:16px;padding-right:16px}}
+@media (max-width:520px){.fwidgets img+img{display:none}}
+@media (prefers-reduced-motion:reduce){.cta,.more{transition:none}}

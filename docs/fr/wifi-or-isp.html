@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wi-Fi ou fournisseur Internet? | AdeeboMeter</title>
@@ -48,6 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
@@ -56,37 +58,36 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/wifi-or-isp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/wifi-or-isp.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>Votre Wi-Fi ou votre fournisseur Internet?</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Essayez Ethernet d’abord.</h2><p>Si la tâche fonctionne par Ethernet et peine en Wi-Fi, vérifiez la couverture.</p></div>
-<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.3" r=".9" fill="currentColor"/></svg></span><strong>Test Wi-Fi</strong></div><div class="route"><span>PC</span><b>→</b><span>Routeur</span><b>→</b><span>Internet</span></div><div class="art-note"><span><i></i> Wi-Fi · saccades</span><span><i></i> Ethernet · fluide</span></div></div>
-<figcaption>Testez du PC vers Internet pour localiser le problème.</figcaption>
+<p class="dek">Refaites la même chose avec un câble. Si c'est fluide avec le câble et saccadé en Wi-Fi, réglez le sans-fil avant d'appeler qui que ce soit.</p>
+<ul class="meta"><li>Il vous faut : un câble réseau</li><li>Environ 10 minutes</li><li>4 min de lecture</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Où est le problème dans cet exemple"><li class="ok">PC<small>correct</small></li><li class="warn">Wi-Fi<small>se fige</small></li><li class="ok">Routeur<small>répond</small></li><li>Fournisseur</li><li>Autre bout</li></ol>
+<figcaption>Le Wi-Fi se fige, pas le câble : le problème est entre le portable et le routeur, pas au-delà.</figcaption>
 </figure>
-
-
 <h2 id="checks">Lancer les vérifications</h2>
-<ol><li>Notez l’heure et reproduisez le problème avec le même site, appel ou téléchargement.</li><li>Refaites la tâche sur un autre appareil du même Wi-Fi. Sur téléphone, vérifiez qu’il utilise bien le Wi-Fi.</li><li>Branchez le PC au routeur par Ethernet, désactivez son Wi-Fi et refaites la tâche pendant le problème.</li></ol>
-<h2 id="readings">Quoi vérifier ensuite</h2>
+<ol><li>Notez l'heure et refaites apparaître le problème avec le même site, appel ou téléchargement.</li><li>Essayez la même chose sur un deuxième appareil sur le même Wi-Fi. Sur un téléphone, vérifiez qu'il est en Wi-Fi et non en données mobiles.</li><li>Branchez le PC au routeur avec un câble, coupez son Wi-Fi et recommencez pendant le ralentissement.</li></ol>
+<h2 id="readings">Comment lire le résultat</h2>
 <ul class="next-checks">
-  <li><strong>Ethernet fonctionne</strong><span>Vérifiez la couverture Wi-Fi.</span></li>
-  <li><strong>Un seul appareil peine</strong><span>Vérifiez téléchargements et VPN sur cet appareil.</span></li>
-  <li><strong>Les deux connexions peinent</strong><span>Vérifiez le routeur et les pannes du fournisseur.</span></li>
-  <li><strong>Un seul site peine</strong><span>Essayez un autre service.</span></li>
+  <li><strong>Fluide avec le câble</strong><span>Le problème vient du sans-fil : la distance, les murs ou un canal encombré.</span></li>
+  <li><strong>Un seul appareil a du mal</strong><span>Regardez cet appareil : un téléchargement, une mise à jour ou un VPN.</span></li>
+  <li><strong>Lent aussi avec le câble</strong><span>Regardez le routeur, puis la page des pannes de votre fournisseur.</span></li>
+  <li><strong>Un seul site a du mal</strong><span>Essayez un autre service. S'il fonctionne bien, le problème est du côté de ce site.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Exemple concret</h2><p>Le soir, un appel vidéo fige à l’étage. Le même portable fonctionne par Ethernet et s’améliore près du routeur en Wi-Fi. Vérifiez la couverture. Si Ethernet et un autre appareil sont aussi touchés, examinez routeur et connexion externe.</p></aside>
-<details class="guide-detail"><summary>Pourquoi ça aide</summary>
-<p>Lancer <code>ipconfig</code> et trouvez <strong>Default Gateway</strong> sous l’adaptateur actif. Faites un ping vers cette adresse quand tout va bien puis pendant le ralentissement. Comparez à une destination Internet qui répond normalement. Répétez si possible. Le routeur peut donner peu de priorité aux pings; tenez aussi compte du test Ethernet et du service touché.</p><p>Un routeur stable avec problèmes au-delà sur plusieurs appareils aide le soutien à cibler la recherche. Modem, fournisseur et chemin plus éloigné restent des causes possibles.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">Un exemple</h2><p>Un appel vidéo du soir se fige à l'étage. Avec un câble, le même portable tient l'appel, et en Wi-Fi ça s'améliore près du routeur. Commencez par la couverture. Si l'appel se figeait aussi avec le câble et sur un autre appareil, regardez plutôt le routeur et la ligne.</p></aside>
+<details class="guide-detail"><summary>Vérifier le routeur à la main</summary>
+<p>Lancez ipconfig et trouvez la Passerelle par défaut sous la carte que vous utilisez. Faites un ping quand tout va bien et un autre pendant un ralentissement, et comparez avec une adresse Internet qui répond d'habitude. Les routeurs répondent parfois aux pings en dernier, alors tenez compte du test au câble.</p><p>Des réponses régulières de votre routeur pendant que plusieurs appareils peinent au-delà donnent au support un meilleur point de départ. Le modem, le fournisseur et le reste du trajet restent possibles.</p>
 </details>
-<h2>Utiliser AdeeboMeter sur Windows</h2>
-<p>Ouvrir <strong>Investigate → The internet is slow</strong>. Comparez PC, Wi-Fi, routeur, DNS et Internet sur la même période. Pour un problème récurrent, <a href="/fr/internet-speed-monitor.html">surveillez la connexion dans le temps</a> et <a href="/fr/isp-report.html">créez un rapport au fournisseur</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtenir AdeeboMeter pour Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Quoi conserver</h2><p>Gardez un test normal et un test pendant le problème, avec type de connexion et services touchés.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Quoi conserver</h2><p>Une comparaison d'un bon moment et une du ralentissement, avec le type de connexion et les services touchés.</p></aside>
+<p>Dans AdeeboMeter, Enquêter › Internet est lent fait ces vérifications pour vous. Pour un problème qui revient, <a href="/fr/internet-speed-monitor.html">surveillez la vitesse et le délai dans le temps</a> ou <a href="/fr/isp-report.html">créez un rapport au fournisseur</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">Il sait déjà quel arrêt a flanché</h2><p>Le widget du quotidien montre votre PC, votre routeur et Internet côte à côte, toute la journée. Quand le Wi-Fi est le maillon faible, il le dit - avant que vous cherchiez un câble.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><p class="sc-note">Windows 10 et 11 · sans droits d'administrateur · rien sur vous ne quitte votre PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""><img src="/img/widgets/light-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

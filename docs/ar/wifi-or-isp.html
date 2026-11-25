@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>هل المشكلة في Wi-Fi أم لدى مزوّد الإنترنت؟ | AdeeboMeter</title>
-<meta name="description" content="إذا كانت نفس المهمة تعمل على إيثرنت ولكن تعثر على Wi-Fi، ابدأ بتغطية لاسلكية.">
+<meta name="description" content="جرّب الشيء نفسه عبر كابل. إذا كان سلسًا عبر الكابل ومتقطعًا عبر Wi-Fi، فأصلح الاتصال اللاسلكي قبل أن تتصل بأحد.">
 <link rel="canonical" href="https://adeebometer.com/ar/wifi-or-isp.html">
 <meta property="og:title" content="هل المشكلة في Wi-Fi أم لدى مزوّد الإنترنت؟ | AdeeboMeter">
-<meta property="og:description" content="إذا كانت نفس المهمة تعمل على إيثرنت ولكن تعثر على Wi-Fi، ابدأ بتغطية لاسلكية.">
+<meta property="og:description" content="جرّب الشيء نفسه عبر كابل. إذا كان سلسًا عبر الكابل ومتقطعًا عبر Wi-Fi، فأصلح الاتصال اللاسلكي قبل أن تتصل بأحد.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://adeebometer.com/ar/wifi-or-isp.html">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
@@ -48,7 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<meta property="og:locale" content="ar_AR">
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
@@ -56,37 +57,37 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/wifi-or-isp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/wifi-or-isp.html">
-<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>هل هو Wi-Fi الخاص بك أو مزود الإنترنت الخاص بك؟</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">جرب إيثرنت أولاً</h2><p>إذا كانت نفس المهمة تعمل على إيثرنت ولكن تعثر على Wi-Fi، ابدأ بتغطية لاسلكية.</p></div>
-<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.3" r=".9" fill="currentColor"/></svg></span><strong>التحقق من Wi-Fi</strong></div><div class="route"><span>الكمبيوتر</span><b>→</b><span>الراوتر</span><b>→</b><span>الإنترنت</span></div><div class="art-note"><span><i></i> Wi-Fi · مراكز</span><span><i></i> إيثرنت · سلس</span></div></div>
-<figcaption>اختبار من جهاز الكمبيوتر إلى الخارج لتضييق المشكلة.</figcaption>
+<p class="dek">جرّب الشيء نفسه عبر كابل. إذا كان سلسًا عبر الكابل ومتقطعًا عبر Wi-Fi، فأصلح الاتصال اللاسلكي قبل أن تتصل بأحد.</p>
+<ul class="meta"><li>تحتاج: كابل شبكة</li><li>نحو 10 دقائق</li><li>قراءة 4 دقائق</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="أين المشكلة في هذا المثال"><li class="ok">الكمبيوتر<small>سليم</small></li><li class="warn">Wi-Fi<small>يتوقف</small></li><li class="ok">الراوتر<small>يستجيب</small></li><li>المزود</li><li>الطرف البعيد</li></ol>
+<figcaption>يتوقف Wi-Fi ولا يتوقف الكابل: المشكلة بين الحاسوب المحمول والراوتر، وليست بعده.</figcaption>
 </figure>
-
-
 <h2 id="checks">اجري الشيكات</h2>
-<ol><li>اكتب الوقت وكرر المشكلة بنفس الموقع أو اتصل بها أو تنزلها.</li><li>حاول نفس المهمة على جهاز آخر متصل بنفس Wi-Fi. على الهاتف، تأكد من أنه يستخدم Wi-Fi أثناء المقارنة.</li><li>قم بتوصيل جهاز الكمبيوتر مباشرة إلى جهاز التوجيه الخاص بك عن طريق إيثرنت، وأطفئ Wi-Fi على ذلك الكمبيوس، ثم كرر نفس المهمة بينما يحدث التباطؤ.</li></ol>
-<h2 id="readings">ما الذي يجب التحقق منه</h2>
+<ol><li>دوّن الوقت وكرّر المشكلة بالموقع أو المكالمة أو التنزيل نفسه.</li><li>جرّب الشيء نفسه على جهاز ثانٍ متصل بشبكة Wi-Fi نفسها. على الهاتف، تأكد أنه على Wi-Fi لا على بيانات الجوال.</li><li>صِل الكمبيوتر بالراوتر بكابل، وأوقف Wi-Fi فيه، وكرّر أثناء حدوث البطء.</li></ol>
+<h2 id="readings">كيف تقرأ النتيجة</h2>
 <ul class="next-checks">
-  <li><strong>يعمل إيرثنتر</strong><span>تحقق من تغطية Wi-Fi.</span></li>
-  <li><strong>جهاز واحد يكافح</strong><span>تحقق من التنزيلات و VPN على هذا الجهاز.</span></li>
-  <li><strong>كلاهما يكافح</strong><span>تحقق من جهاز التوجيه وحالة انقطاع ISP.</span></li>
-  <li><strong>موقع واحد يكافح</strong><span>جرب خدمة أخرى</span></li>
+  <li><strong>سلس عبر الكابل</strong><span>المشكلة في الاتصال اللاسلكي: المسافة أو الجدران أو قناة مزدحمة.</span></li>
+  <li><strong>جهاز واحد فقط يعاني</strong><span>افحص ذلك الجهاز: تنزيل أو تحديث أو VPN.</span></li>
+  <li><strong>بطيء عبر الكابل أيضًا</strong><span>افحص الراوتر، ثم صفحة الأعطال لدى مزوّد الخدمة.</span></li>
+  <li><strong>موقع واحد فقط يعاني</strong><span>جرّب خدمة أخرى. إذا عملت جيدًا، فالمشكلة من جهة ذلك الموقع.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">مثال عمل</h2><p>مكالمة فيديو مساء تجمد فوق. نفس الكمبيوتر المحمول يعمل على الاتصال بسلاسة على إيثرنت، وتحسن الاتصال أيضا عندما يتقرب الكمبوب المحمول من جهاز التوجيه على Wi-Fi. ابدأ بتغطية اللاسلكية إذا تم تجميد المكالمة أيضاً على إيثرنت و جهاز آخر، تحقق من جهاز التوجيه والاتصال الأوسع بدلاً من ذلك.</p></aside>
-<details class="guide-detail"><summary>لماذا يعمل</summary>
-<p>تشغيل <code>ipconfig</code> وأجد <strong>البوابة الافتراضية</strong> تحت المعدل النشط أرسلي هذا العنوان خلال فترة جيدة ومرة أخرى خلال تباطؤ مقارنة مع وجهة الإنترنت التي تستجيب عادة للنغ. كرر المقارنة عندما يكون ذلك ممكناً. يمكن للجهاز التوجيه أن يضع الأولوية على إجابات البينغ، لذا قم بتقييم الإجابات إلى جانب مقارنة إيثرنت وما تفعله الخدمة المتضررة.</p><p>الإجابات المستمرة من جهاز التوجيه الخاص بك مع مشاكل خارج ذلك على أجهزة متعددة يعطي الدعم نقطة بداية أكثر فائدة. لا يزال الاختبار قد يترك المودم، المزود، والمسار الشبكة الأخرى في حالة نزاع.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">مثال</h2><p>تتجمد مكالمة فيديو مسائية في الطابق العلوي. عبر الكابل يحافظ الحاسوب نفسه على المكالمة، وعبر Wi-Fi تتحسن بجوار الراوتر. ابدأ بالتغطية. وإذا تجمدت المكالمة عبر الكابل وعلى جهاز آخر أيضًا، فافحص الراوتر والخط بدلًا من ذلك.</p></aside>
+<details class="guide-detail"><summary>فحص الراوتر يدويًا</summary>
+<p>شغّل ipconfig وابحث عن البوابة الافتراضية تحت المحوّل الذي تستخدمه. أرسل ping إليها مرة والأمور جيدة ومرة أثناء البطء، وقارن بعنوان على الإنترنت يستجيب عادة. أحيانًا تجيب الراوترات على ping في آخر الأولويات، فقيّم ذلك مع اختبار الكابل.</p><p>إجابات ثابتة من الراوتر بينما تعاني عدة أجهزة بعده تعطي الدعم الفني نقطة بداية أفضل. ويظل المودم ومزوّد الخدمة والمسار الأبعد احتمالات قائمة.</p>
 </details>
-<h2>استخدم AdeeboMeter على Windows</h2>
-<p>فتح <strong>تحقق → إنترنت بطيء</strong>. راجع نتائج الجهاز وWi-Fi والراوتر وDNS والإنترنت للفترة نفسها. وللمشكلات المتكرّرة، <a href="/ar/internet-speed-monitor.html">مراقبة سرعة الإنترنت مع مرور الوقت</a> و <a href="/ar/isp-report.html">قم بإعداد تقرير لمقدمك</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">ما الذي يجب الاحتفاظ به</h2><p>احفظ مقارنة واحدة من فترة جيدة وآخر من التباطؤ. سجل نوع الاتصال والخدمات المتضررة حتى تتمكن من تكرار الاختبار.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">ما الذي يجب الاحتفاظ به</h2><p>مقارنة من لحظة جيدة وأخرى من وقت البطء، مع نوع الاتصال والخدمات المتأثرة.</p></aside>
+<p>في AdeeboMeter، يُجري «تحقّق › الإنترنت بطيء» هذه الفحوص نيابة عنك. وللمشكلة التي تتكرر، <a href="/ar/internet-speed-monitor.html">راقب السرعة والتأخير بمرور الوقت</a> أو <a href="/ar/isp-report.html">قم بإعداد تقرير لمقدمك</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">يعرف مسبقًا أي محطة تعثّرت</h2><p>تعرض الأداة اليومية الكمبيوتر والراوتر والإنترنت جنبًا إلى جنب طوال اليوم. وعندما يكون Wi-Fi الحلقة الأضعف تقول ذلك - قبل أن تبحث عن كابل.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><p class="sc-note">Windows 10 و11 · بلا صلاحيات المسؤول · لا شيء عنك يغادر جهازك</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""><img src="/img/widgets/light-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

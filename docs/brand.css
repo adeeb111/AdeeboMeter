@@ -232,7 +232,7 @@ a{text-underline-offset:.18em}
   .v4l h1{align-self:flex-start}
   .v4l{display:contents}
   .v4l>*{margin-block:0}
-  .v4l h1{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
+  .v4l h1{order:1}.v4verbs{order:1}.v4stage{order:2}.v4lead{order:3}.v4ctas{order:4}.v4trust{order:5}.v4l .locale-preview{order:6}
 }
 
 /* ---- review 24 Nov ---------------------------------------------------------------------------------------------------- */
@@ -275,3 +275,10 @@ a{text-underline-offset:.18em}
 .v4btn.sm,.seg button,.iconbtn,.top select,.site-language .lang-face,.v5words span,.v5chips span,.v4tag,.v5tag,.v3tag{border-radius:var(--r-sm)}
 /* the line under the headline (24 Nov): what the app does, in five verbs */
 .v4verbs{margin:.3em 0 .7em;font-family:"Barlow SC","Barlow",sans-serif;font-weight:600;font-size:clamp(17px,1.6vw,21px);color:var(--blue-d);letter-spacing:0}
+
+/* ---- 24 Nov (Adeeb: "the yellow line and design doesn't go with our philosophy"): What's new shows the real widget, not
+   made-up charts, and the changelog link sits under the intro instead of floating at the far right */
+.v5head a{display:inline-flex;margin-top:14px}
+.v5real{margin:0;flex:1 1 280px;display:grid;place-items:center;padding:28px;border-radius:22px;background:var(--face)}
+.v5real img{display:block;width:min(100%,300px);height:auto;border-radius:16px;box-shadow:0 18px 36px -14px rgba(4,16,48,.6),0 2px 6px rgba(4,16,48,.3)}
+.v5grid .v5t{border-radius:0!important}

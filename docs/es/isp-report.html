@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cómo mostrar al proveedor dónde empieza la pérdida | AdeeboMeter</title>
@@ -48,6 +49,8 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="es_ES">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
@@ -55,38 +58,37 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
-<meta property="og:locale" content="es_ES">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/es/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
-<h1>Cómo mostrar al proveedor dónde empieza la pérdida</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Comprueba si la pérdida continúa.</h2><p>Compara router y destino. Envía pruebas de un periodo malo y uno bueno.</p></div>
-<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg></span><strong>Informe al proveedor</strong></div><div class="plot-label"><span>Pérdida de paquetes</span><span>Ejemplo</span></div><div class="hopline"><span><i></i>Router<small>estable</small></span><span><i></i>Salto posterior<small>La pérdida empieza</small></span><span><i></i>Destino<small>La pérdida continúa</small></span></div></div>
-<figcaption>Ejemplo: router estable y pérdida más adelante, también en el destino.</figcaption>
+<h1>Cómo mostrar a tu proveedor dónde empieza la pérdida de paquetes</h1>
+<p class="dek">Si tu router responde siempre y la pérdida empieza unas paradas después, el problema está fuera de tu casa. Un informe corto lo demuestra y da al soporte algo con qué actuar.</p>
+<ul class="meta"><li>App de Windows: Caja de herramientas › Informe para mi proveedor</li><li>Una prueba de 1, 2 o 5 minutos</li><li>4 min de lectura</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Dónde está la pérdida en este ejemplo"><li class="ok">PC<small>estable</small></li><li class="ok">Wi-Fi<small>con cable aquí</small></li><li class="ok">Router<small>0 % de pérdida</small></li><li class="bad">Proveedor<small>empieza la pérdida</small></li><li class="bad">Otro extremo<small>sigue la pérdida</small></li></ol>
+<figcaption>El patrón que vale la pena enviar: limpio hasta tu router, y pérdida desde una parada dentro de la red de tu proveedor hasta el destino.</figcaption>
 </figure>
-
-<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="El informe de ejemplo de AdeeboMeter no muestra pérdidas en el router doméstico, pero sí desde un salto posterior hasta el destino."><figcaption>Ejemplo generado con mediciones y direcciones simuladas. En un informe real, empieza por router y destino.</figcaption></figure>
-<h2 id="checks">Ejecuta las pruebas</h2>
-<ol><li>En AdeeboMeter de Windows, abre <strong>Herramientas</strong> y busca <strong>Informe para mi proveedor</strong>.</li><li>Escribe host o IP del servicio afectado o elige un juego. Haz una prueba de 1, 2 o 5 minutos durante la lentitud.</li><li>Repite por Ethernet si puedes y guarda una comparación buena. Revisa antes de adjuntar a soporte o enviar captura.</li></ol>
-<h2 id="readings">Qué revisar después</h2>
+<figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="El informe de ejemplo de AdeeboMeter no muestra pérdidas en el router doméstico, pero sí desde un salto posterior hasta el destino."><figcaption>Un informe hecho por la app, con mediciones y direcciones simuladas. En el tuyo, lee primero la fila del router y la del destino.</figcaption></figure>
+<h2 id="checks">Hacer el informe</h2>
+<ol><li>En AdeeboMeter para Windows, abre <strong>Herramientas</strong> y busca <strong>Informe para mi proveedor</strong>.</li><li>Escribe la dirección del servicio que falla o elige un juego que hayas añadido. Ejecútalo 1, 2 o 5 minutos mientras ocurre el problema.</li><li>Si puedes, repítelo con cable y una vez más cuando todo vaya bien. Revisa el informe antes de adjuntarlo a tu ticket.</li></ol>
+<h2 id="readings">Cómo leerlo</h2>
 <ul class="next-checks">
-  <li><strong>Un salto no responde a veces</strong><span>Comprueba si la pérdida llega al destino.</span></li>
-  <li><strong>La pérdida empieza cerca de casa</strong><span>Compara Wi-Fi y Ethernet.</span></li>
-  <li><strong>Router estable, destino pierde paquetes</strong><span>Repite y comparte ambos resultados.</span></li>
-  <li><strong>Solo afecta a un destino</strong><span>Compara un servicio independiente.</span></li>
+  <li><strong>Una parada pierde respuestas, las siguientes no</strong><span>Esa parada está ocupada respondiendo pings, no pierde tu tráfico. Mira la fila del destino.</span></li>
+  <li><strong>La pérdida empieza en tu router o antes</strong><span>Está dentro de tu casa. Compara primero el Wi-Fi con un cable.</span></li>
+  <li><strong>Router limpio, el destino pierde paquetes</strong><span>Ejecútalo dos veces más y envía ambos informes a tu proveedor.</span></li>
+  <li><strong>Solo un servicio está afectado</strong><span>Prueba un destino sin relación. Si está limpio, el problema está del lado de ese servicio.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Ejemplo práctico</h2><p>En el ejemplo, PC por cable y router van bien. La pérdida aparece después y llega al destino. Envía el patrón con hora y servicio. Otra prueba muestra si se repite.</p></aside>
-<details class="guide-detail"><summary>Por qué funciona</summary>
-<p>Traceroute y los informes observan un equipo y destino en un momento concreto. Los routers pueden limitar respuestas a sondeos; ida y vuelta también varían. Un número de salto es una pista para soporte, no una conclusión definitiva.</p><p>Mira <a href="/es/learn/icmp.html">cómo funcionan ping y traceroute</a> y <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">la explicación de Microsoft sobre pérdida de respuestas en saltos intermedios</a>.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">El ejemplo de arriba</h2><p>El PC está con cable y el router está limpio. La pérdida empieza más adelante y sigue en el destino. Envía ese patrón con la hora de la prueba y el servicio afectado; una segunda prueba muestra si se repite.</p></aside>
+<details class="guide-detail"><summary>Por qué una sola parada puede parecer peor de lo que es</summary>
+<p>Un informe es lo que un PC vio camino de un destino en un momento. Los routers del camino suelen responder despacio a los paquetes de prueba o los ignoran a propósito, y la vuelta puede ir por otra ruta, así que un número de parada es una pista para el soporte, no un veredicto.</p><p>Más: <a href="/es/learn/icmp.html">cómo funcionan ping y traceroute</a>, y <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft sobre la pérdida en saltos intermedios</a>.</p>
 </details>
-<h2>Usa AdeeboMeter en Windows</h2>
-<p>El resumen identifica qué mediciones compartir. Si dudas si contactar al proveedor, empieza con <a href="/es/wifi-or-isp.html">la comparación Wi-Fi y Ethernet</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtén AdeeboMeter para Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Qué guardar</h2><p>Una incidencia útil incluye hora y zona, tipo de conexión, destino, frecuencia del fallo e informes de un periodo bueno y uno malo.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Lo que tiene un ticket útil</h2><p>La hora y la zona horaria, cable o Wi-Fi, el servicio afectado, con qué frecuencia ocurre, y un informe de un mal momento y otro de uno bueno.</p></aside>
+<p>¿Aún no sabes si es tu proveedor? Empieza con <a href="/es/wifi-or-isp.html">Wi-Fi contra cable</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">Atrápalo mientras ocurre</h2><p>El widget en la esquina de tu pantalla vigila las mismas paradas todo el día y se pone ámbar o rojo en la que falla, así el informe está a un clic cuando importa.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Descargar para Windows gratis</a><p class="sc-note">Windows 10 y 11 · sin permisos de administrador · nada sobre ti sale de tu PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-engineer-busy.png" width="264" height="220" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

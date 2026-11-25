@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/pc-monitoring.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Surveillance gratuite du PC Windows | AdeeboMeter</title>
@@ -50,6 +51,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/pc-monitoring.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/pc-monitoring.html">
@@ -58,37 +60,36 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;heigh
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/pc-monitoring.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/pc-monitoring.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/pc-monitoring.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>Surveillance gratuite du PC Windows</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Repérez ce qui reste occupé.</h2><p>Comparez CPU, mémoire, disque et réseau pendant le ralentissement.</p></div>
-<div class="scenario-art art-pc"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><strong>Test du PC</strong></div><div class="plot-label"><span>Activité du PC</span><span>Exemple</span></div><div class="meters"><span>CPU<i style="--h:39%"></i></span><span>Mémoire<i style="--h:64%"></i></span><span>Disque<i style="--h:94%"></i></span></div></div>
-<figcaption>Exemple : un disque occupé pendant les pauses indique une tâche à examiner.</figcaption>
+<p class="dek">Quand tout se fige en même temps, quelque chose sur le PC est souvent occupé. Trouvez l'application, et si c'est le processeur, la mémoire ou le disque, pendant que ça arrive.</p>
+<ul class="meta"><li>Il vous faut : rien d'autre</li><li>Environ 5 minutes</li><li>3 min de lecture</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Où est le problème dans cet exemple"><li class="bad">PC<small>disque occupé</small></li><li class="ok">Wi-Fi<small>correct</small></li><li class="ok">Routeur<small>correct</small></li><li class="ok">Fournisseur<small>correct</small></li><li class="ok">Autre bout<small>correct</small></li></ol>
+<figcaption>Le réseau va bien jusqu'au bout. Le blocage est sur le PC lui-même - ici, une sauvegarde qui occupe le disque.</figcaption>
 </figure>
-
-
 <h2 id="checks">Lancer les vérifications</h2>
-<ol><li>Déterminez si tout le PC ralentit ou seulement une activité en ligne.</li><li>Pendant le problème, ouvrez AdeeboMeter ou le gestionnaire des tâches et observez CPU, mémoire, disque et réseau.</li><li>Identifiez la tâche active et comparez au même PC quand il répond bien.</li></ol>
-<h2 id="readings">Quoi vérifier ensuite</h2>
+<ol><li>Décidez si tout le PC semble lent ou seulement ce qui est en ligne.</li><li>Pendant que ça arrive, ouvrez AdeeboMeter ou le Gestionnaire des tâches de Windows et regardez le processeur, la mémoire, le disque et le réseau.</li><li>Notez l'application occupée, et comparez avec le même PC quand il est rapide.</li></ol>
+<h2 id="readings">Comment lire le résultat</h2>
 <ul class="next-checks">
-  <li><strong>CPU toujours élevé</strong><span>Trouvez le processus le plus actif.</span></li>
-  <li><strong>Peu de mémoire, disque occupé</strong><span>Enregistrez, fermez une grosse application et réessayez.</span></li>
-  <li><strong>Disque toujours occupé</strong><span>Cherchez une sauvegarde ou une mise à jour.</span></li>
-  <li><strong>Seules les tâches en ligne bloquent</strong><span>Vérifiez les délais du routeur et d’Internet.</span></li>
+  <li><strong>Le processeur reste élevé</strong><span>Trouvez l'application la plus occupée et fermez-la ou mettez-la en pause.</span></li>
+  <li><strong>La mémoire est basse et le disque occupé</strong><span>Enregistrez votre travail, fermez une grosse application et réessayez.</span></li>
+  <li><strong>Le disque reste occupé</strong><span>Cherchez une sauvegarde, une mise à jour ou une analyse antivirus.</span></li>
+  <li><strong>Seul ce qui est en ligne se fige</strong><span>Ce n'est pas le PC. Vérifiez le délai vers votre routeur et Internet.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Exemple concret</h2><p>Navigateur et explorateur hésitent pendant une sauvegarde. Le disque reste occupé, puis se calme à la fin. Recommencez ensuite; si tout revient, vous avez une comparaison reproductible.</p></aside>
-<details class="guide-detail"><summary>Pourquoi ça aide</summary>
-<p>La mémoire occupée peut être du cache. Peu de mémoire disponible, pauses et activité disque simultanées suggèrent une pression mémoire. Temps actif et débit disque diffèrent; de petites requêtes peuvent occuper le disque sans gros débit.</p><p>Pour approfondir, consultez <a href="/fr/learn/memory-pressure.html">la leçon sur la pression mémoire</a> et comparez les ressources sur le même intervalle.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">Un exemple</h2><p>Le navigateur et l'Explorateur de fichiers bloquent tous deux pendant une grosse sauvegarde. Le disque reste occupé à chaque blocage et se calme à la fin de la sauvegarde. Refaites les mêmes choses ensuite : si c'est rapide, vous avez trouvé la cause et un test reproductible.</p></aside>
+<details class="guide-detail"><summary>Pourquoi une mémoire élevée n'est pas toujours un problème</summary>
+<p>Windows remplit la mémoire libre avec du cache, donc un chiffre élevé seul veut dire peu. Peu de mémoire disponible, des blocages et un disque occupé ensemble indiquent une pression mémoire. Un disque peut aussi être occupé sans déplacer beaucoup de données, quand de nombreuses petites requêtes le font travailler. Plus dans <a href="/fr/learn/memory-pressure.html">la leçon sur la pression mémoire</a>.</p>
 </details>
-<h2>Utiliser AdeeboMeter sur Windows</h2>
-<p>Gardez le widget visible, puis ouvrez les processus actifs. Avec l’historique, utilisez <strong>Historique</strong> pour revoir PC et réseau à la même minute. Si seules les tâches en ligne sont touchées, <a href="/fr/wifi-or-isp.html">vérifiez le chemin de connexion</a>.</p>
-<figure><img src="/media/trailer-poster.jpg" width="1280" height="720" loading="lazy" alt="AdeeboMeter overview with live CPU, memory, disk, traffic and network readings."><figcaption>Vue complète dans une démonstration d’AdeeboMeter.</figcaption></figure>
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtenir AdeeboMeter pour Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Quoi conserver</h2><p>Notez tâche, heure, ressource occupée et changement au retour à la normale.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Quoi conserver</h2><p>Ce que vous faisiez, l'heure, ce qui est resté occupé, et ce qui a changé quand ça s'est calmé.</p></aside>
+<p>Avec l'historique activé, la Machine à remonter le temps d'AdeeboMeter montre le PC et le réseau de la même minute. Si seul ce qui est en ligne est lent, <a href="/fr/wifi-or-isp.html">vérifiez le chemin de connexion</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">L'application la plus occupée, nommée sur votre bureau</h2><p>Le widget vitesse + applications liste les applications qui travaillent le plus en ce moment, à côté de votre vitesse et des cinq arrêts - un blocage a un nom dès qu'il arrive.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><p class="sc-note">Windows 10 et 11 · sans droits d'administrateur · rien sur vous ne quitte votre PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-speedapps-ok.png" width="264" height="252" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

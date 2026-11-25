@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Is it your Wi-Fi or your internet provider? | AdeeboMeter</title>
@@ -48,6 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
@@ -55,37 +57,36 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/wifi-or-isp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/wifi-or-isp.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>Is it your Wi-Fi or your internet provider?</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Try Ethernet first.</h2><p>If the same task works on Ethernet but stumbles on Wi-Fi, start with wireless coverage.</p></div>
-<div class="scenario-art art-wifi"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.3" r=".9" fill="currentColor"/></svg></span><strong>Wi-Fi check</strong></div><div class="route"><span>PC</span><b>→</b><span>Router</span><b>→</b><span>Internet</span></div><div class="art-note"><span><i></i> Wi-Fi · stalls</span><span><i></i> Ethernet · smooth</span></div></div>
-<figcaption>Test from the PC outward to narrow down the problem.</figcaption>
+<p class="dek">Run the same thing over a cable. If it's smooth on the cable and stutters on Wi-Fi, fix the wireless link before you call anyone.</p>
+<ul class="meta"><li>You need: a network cable</li><li>About 10 minutes</li><li>4 min read</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Where the trouble is in this example"><li class="ok">PC<small>fine</small></li><li class="warn">Wi-Fi<small>stalls</small></li><li class="ok">Router<small>answers</small></li><li>Provider</li><li>Far end</li></ol>
+<figcaption>Wi-Fi stalls, the cable doesn't: the trouble is between the laptop and the router, not past it.</figcaption>
 </figure>
-
-
 <h2 id="checks">Run the checks</h2>
-<ol><li>Write down the time and reproduce the issue with the same site, call, or download.</li><li>Try the same task on a second device connected to the same Wi-Fi. On a phone, make sure it is using Wi-Fi during the comparison.</li><li>Connect the PC directly to your router by Ethernet, turn off Wi-Fi on that PC, then repeat the same task while the slowdown is happening.</li></ol>
-<h2 id="readings">What to check next</h2>
+<ol><li>Write down the time and make the problem happen again with the same site, call or download.</li><li>Try the same thing on a second device on the same Wi-Fi. On a phone, check it's on Wi-Fi, not mobile data.</li><li>Plug the PC into the router with a cable, turn its Wi-Fi off, and repeat while the slowdown is happening.</li></ol>
+<h2 id="readings">Reading it</h2>
 <ul class="next-checks">
-  <li><strong>Ethernet works</strong><span>Check Wi-Fi coverage.</span></li>
-  <li><strong>One device struggles</strong><span>Check downloads and VPN on that device.</span></li>
-  <li><strong>Both connections struggle</strong><span>Check the router and ISP outage status.</span></li>
-  <li><strong>One site struggles</strong><span>Try another service.</span></li>
+  <li><strong>Smooth on the cable</strong><span>The wireless link is the problem: distance, walls, or a crowded channel.</span></li>
+  <li><strong>Only one device struggles</strong><span>Look at that device: a download, an update or a VPN.</span></li>
+  <li><strong>Slow on the cable too</strong><span>Look at the router, then your provider's outage page.</span></li>
+  <li><strong>Only one site struggles</strong><span>Try another service. If it's fine, the problem is on that site's side.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Worked example</h2><p>An evening video call freezes upstairs. The same laptop runs the call smoothly on Ethernet, and the call also improves when the laptop moves closer to the router on Wi-Fi. Start with wireless coverage. If the call also freezes on Ethernet and another device, check the router and the wider connection instead.</p></aside>
-<details class="guide-detail"><summary>Why it works</summary>
-<p>Run <code>ipconfig</code> and find <strong>Default Gateway</strong> under the active adapter. Ping that address during a good period and again during a slowdown. Compare with an internet destination that normally answers ping. Repeat the comparison when possible. A router can de-prioritize ping replies, so weigh the replies alongside the Ethernet comparison and what the affected service is doing.</p><p>Steady replies from your router with trouble beyond it on multiple devices gives support a more useful starting point. The test can still leave the modem, provider, and farther network path in contention.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">An example</h2><p>An evening video call freezes upstairs. On a cable the same laptop holds the call, and on Wi-Fi it improves next to the router. Start with coverage. If the call froze on the cable and on another device too, look at the router and the line instead.</p></aside>
+<details class="guide-detail"><summary>Checking the router by hand</summary>
+<p>Run ipconfig and find the Default Gateway under the adapter you're using. Ping it once when things are fine and again during a slowdown, and compare with an internet address that usually answers. Routers sometimes answer pings last, so weigh this with the cable test.</p><p>Steady answers from your router while several devices struggle beyond it give support a better starting point. The modem, the provider and the wider path are still possible.</p>
 </details>
-<h2>Use AdeeboMeter on Windows</h2>
-<p>Open <strong>Investigate → The internet is slow</strong>. Check the PC, Wi-Fi, router, DNS, and internet results from the same period. For recurring trouble, <a href="/internet-speed-monitor.html">monitor internet speed over time</a> and <a href="/isp-report.html">make a report for your provider</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Get AdeeboMeter for Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>Keep one comparison from a good period and one from the slowdown. Record the connection type and affected services so you can repeat the test.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">What to keep</h2><p>One comparison from a good moment and one from the slowdown, with the connection type and the services that were affected.</p></aside>
+<p>In AdeeboMeter, Investigate › The internet is slow runs these checks for you. For trouble that comes back, <a href="/internet-speed-monitor.html">watch speed and delay over time</a> or <a href="/isp-report.html">make a report for your provider</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">It already knows which stop slipped</h2><p>The everyday widget shows your PC, your router and the internet side by side, all day. When Wi-Fi is the weak link it says so - before you reach for a cable.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><p class="sc-note">Windows 10 and 11 · no admin rights · nothing about you leaves your PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""><img src="/img/widgets/light-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>

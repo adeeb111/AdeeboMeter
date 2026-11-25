@@ -11,15 +11,15 @@
   if (self !== top) html.classList.add('inapp');
   var m = /^\/(fr|es|ar|bn)\//.exec(location.pathname), lang = m ? m[1] : 'en', pre = m ? '/' + m[1] : '';
   var T = {
-    en: { site: 'Site', learn: 'Learn', blog: 'Blog', games: 'Games', live: 'Live', more: 'More', files: 'Files', phone: 'Phone app', gaming: 'Gaming', streaming: 'Streaming', trading: 'Trading', isp: 'ISP report', hof: 'Hall of Fame', privacy: 'Privacy', donate: 'Donate', download: 'Download',
+    en: { theme: 'Dark or light', home: 'Home', site: 'Site', learn: 'Learn', blog: 'Blog', games: 'Games', live: 'Live', more: 'More', files: 'Files', phone: 'Phone app', gaming: 'Gaming', streaming: 'Streaming', trading: 'Trading', isp: 'ISP report', hof: 'Hall of Fame', privacy: 'Privacy', donate: 'Donate', download: 'Download',
       dlTitle: 'Download AdeeboMeter', dlSub: 'Free for Windows 10 and 11. No admin rights needed, nothing about you collected.', store: 'Microsoft Store', storeSub: 'Signed and kept up to date by Windows.', direct: 'Direct download', directSub: 'A zip with the app - unzip and run, it offers to install itself.', directVer: 'Version {v}', all: 'Every version and its notes', phoneLink: 'On a phone? Open the phone app', close: 'Close' },
-    fr: { site: 'Site', learn: 'Apprendre', blog: 'Blogue', games: 'Jeux', live: 'En direct', more: 'Plus', files: 'Fichiers', phone: 'App mobile', gaming: 'Jeux vidéo', streaming: 'Streaming', trading: 'Trading', isp: 'Rapport pour le FAI', hof: 'Temple de la renommée', privacy: 'Confidentialité', donate: 'Faire un don', download: 'Télécharger',
+    fr: { theme: 'Sombre ou clair', home: 'Accueil', site: 'Site', learn: 'Apprendre', blog: 'Blogue', games: 'Jeux', live: 'En direct', more: 'Plus', files: 'Fichiers', phone: 'App mobile', gaming: 'Jeux vidéo', streaming: 'Streaming', trading: 'Trading', isp: 'Rapport pour le FAI', hof: 'Temple de la renommée', privacy: 'Confidentialité', donate: 'Faire un don', download: 'Télécharger',
       dlTitle: 'Télécharger AdeeboMeter', dlSub: 'Gratuit pour Windows 10 et 11. Aucun droit d’administrateur, rien sur vous n’est collecté.', store: 'Microsoft Store', storeSub: 'Signé et tenu à jour par Windows.', direct: 'Téléchargement direct', directSub: 'Un zip avec l’app : décompressez et lancez, elle propose de s’installer.', directVer: 'Version {v}', all: 'Toutes les versions et leurs notes', phoneLink: 'Sur un téléphone ? Ouvrir l’app mobile', close: 'Fermer' },
-    es: { site: 'Sitio', learn: 'Aprender', blog: 'Blog', games: 'Juegos', live: 'En vivo', more: 'Más', files: 'Archivos', phone: 'App móvil', gaming: 'Videojuegos', streaming: 'Streaming', trading: 'Trading', isp: 'Informe al proveedor', hof: 'Salón de la fama', privacy: 'Privacidad', donate: 'Donar', download: 'Descargar',
+    es: { theme: 'Oscuro o claro', home: 'Inicio', site: 'Sitio', learn: 'Aprender', blog: 'Blog', games: 'Juegos', live: 'En vivo', more: 'Más', files: 'Archivos', phone: 'App móvil', gaming: 'Videojuegos', streaming: 'Streaming', trading: 'Trading', isp: 'Informe al proveedor', hof: 'Salón de la fama', privacy: 'Privacidad', donate: 'Donar', download: 'Descargar',
       dlTitle: 'Descargar AdeeboMeter', dlSub: 'Gratis para Windows 10 y 11. Sin permisos de administrador y sin recopilar nada sobre ti.', store: 'Microsoft Store', storeSub: 'Firmada y actualizada por Windows.', direct: 'Descarga directa', directSub: 'Un zip con la app: descomprímelo y ábrela, te ofrece instalarse.', directVer: 'Versión {v}', all: 'Todas las versiones y sus notas', phoneLink: '¿En un teléfono? Abre la app móvil', close: 'Cerrar' },
-    ar: { site: 'الموقع', learn: 'تعلّم', blog: 'المدونة', games: 'الألعاب', live: 'مباشر', more: 'المزيد', files: 'الملفات', phone: 'تطبيق الهاتف', gaming: 'الألعاب الإلكترونية', streaming: 'البث', trading: 'التداول', isp: 'تقرير لمزوّد الخدمة', hof: 'قاعة المشاهير', privacy: 'الخصوصية', donate: 'تبرّع', download: 'تنزيل',
+    ar: { theme: 'داكن أو فاتح', home: 'الرئيسية', site: 'الموقع', learn: 'تعلّم', blog: 'المدونة', games: 'الألعاب', live: 'مباشر', more: 'المزيد', files: 'الملفات', phone: 'تطبيق الهاتف', gaming: 'الألعاب الإلكترونية', streaming: 'البث', trading: 'التداول', isp: 'تقرير لمزوّد الخدمة', hof: 'قاعة المشاهير', privacy: 'الخصوصية', donate: 'تبرّع', download: 'تنزيل',
       dlTitle: 'تنزيل AdeeboMeter', dlSub: 'مجاني لنظامي Windows 10 و11. لا يحتاج صلاحيات المسؤول، ولا يجمع أي شيء عنك.', store: 'Microsoft Store', storeSub: 'موقّع ويحدّثه Windows تلقائيًا.', direct: 'تنزيل مباشر', directSub: 'ملف zip فيه التطبيق: فكّ الضغط وشغّله، وسيعرض تثبيت نفسه.', directVer: 'الإصدار {v}', all: 'كل الإصدارات وملاحظاتها', phoneLink: 'على الهاتف؟ افتح تطبيق الهاتف', close: 'إغلاق' },
-    bn: { site: 'সাইট', learn: 'শিখুন', blog: 'ব্লগ', games: 'গেম', live: 'লাইভ', more: 'আরও', files: 'ফাইল', phone: 'ফোন অ্যাপ', gaming: 'গেমিং', streaming: 'স্ট্রিমিং', trading: 'ট্রেডিং', isp: 'ISP রিপোর্ট', hof: 'হল অব ফেম', privacy: 'গোপনীয়তা', donate: 'দান করুন', download: 'ডাউনলোড',
+    bn: { theme: 'ডার্ক বা লাইট', home: 'হোম', site: 'সাইট', learn: 'শিখুন', blog: 'ব্লগ', games: 'গেম', live: 'লাইভ', more: 'আরও', files: 'ফাইল', phone: 'ফোন অ্যাপ', gaming: 'গেমিং', streaming: 'স্ট্রিমিং', trading: 'ট্রেডিং', isp: 'ISP রিপোর্ট', hof: 'হল অব ফেম', privacy: 'গোপনীয়তা', donate: 'দান করুন', download: 'ডাউনলোড',
       dlTitle: 'AdeeboMeter ডাউনলোড', dlSub: 'Windows 10 ও 11-এর জন্য বিনামূল্যে। অ্যাডমিন অনুমতি লাগে না, আপনার কিছুই সংগ্রহ করা হয় না।', store: 'Microsoft Store', storeSub: 'সাইন করা, আর Windows নিজেই হালনাগাদ রাখে।', direct: 'সরাসরি ডাউনলোড', directSub: 'অ্যাপসহ একটি zip: আনজিপ করে চালান, নিজেই ইনস্টল করার প্রস্তাব দেবে।', directVer: 'সংস্করণ {v}', all: 'সব সংস্করণ ও সেগুলোর নোট', phoneLink: 'ফোনে আছেন? ফোন অ্যাপ খুলুন', close: 'বন্ধ করুন' }
   }[lang];
   var STORE = 'https://apps.microsoft.com/detail/9PFGXJPL9CLJ?mode=direct', RELEASES = 'https://github.com/adeeb111/AdeeboMeter/releases/latest';
@@ -27,7 +27,7 @@
   var path = location.pathname.replace(/index\.html$/, '');
   function cur(href) { var h = href.replace(/index\.html$/, ''); return h === path || (h.length > pre.length + 1 && h.slice(-1) === '/' && path.indexOf(h) === 0) ? ' aria-current="page"' : ''; }
   function a(href, label, cls) { return '<a' + (cls ? ' class="' + cls + '"' : '') + ' href="' + href + '"' + cur(href) + '>' + esc(label) + '</a>'; }
-  var gaming = pre + '/gaming.html', main = [[pre + '/learn/', T.learn], [pre + '/blog/', T.blog], ['/games.html', T.games], ['/live.html', T.live]];
+  var gaming = pre + '/gaming.html', main = [[pre + '/', T.home], [pre + '/learn/', T.learn], [pre + '/blog/', T.blog], ['/games.html', T.games], ['/live.html', T.live]];
   var more = [['/files.html', T.files], ['/app.html', T.phone], [gaming, T.gaming], [pre + '/streaming.html', T.streaming], [pre + '/trading.html', T.trading], [pre + '/isp-report.html', T.isp], ['/hall-of-fame.html', T.hof], [pre + '/privacy.html', T.privacy]];
   var bar = document.getElementById('sitebar');
   if (bar && !bar.getAttribute('data-filled')) {
@@ -38,7 +38,13 @@
       '<details class="sb-more"><summary' + (moreHere ? ' aria-current="true"' : '') + '><span>' + esc(T.more) + '</span><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="sb-pop">' +
       main.map(function (x) { return a(x[0], x[1], 'sb-narrow'); }).join('') + more.map(function (x) { return a(x[0], x[1]); }).join('') + '</div></details>' +
       '<a class="sb-heart" href="' + pre + '/#donate" title="' + esc(T.donate) + '" aria-label="' + esc(T.donate) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor"/></svg></a>' +
+      '<button class="sb-theme" type="button" aria-label="' + esc(T.theme) + '" title="' + esc(T.theme) + '"><svg class="sb-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="sb-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button>' +
       '<a class="sb-dl" data-download href="' + RELEASES + '">' + esc(T.download) + '</a></div>';
+    // day / night, the same switch as the home page's: the choice is kept (am-theme) and every page reads it
+    var html = document.documentElement, tb = bar.querySelector('.sb-theme');
+    function isDark() { var t = html.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+    tb.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    tb.addEventListener('click', function () { var d = isDark() ? 'light' : 'dark'; html.setAttribute('data-theme', d); try { localStorage.setItem('am-theme', d); } catch (e) {} tb.setAttribute('aria-pressed', d === 'dark' ? 'true' : 'false'); });
     // a menu closes on Esc, on a click outside, and when another opens - like the home page's More
     document.addEventListener('click', function (e) { var d = bar.querySelector('details[open]'); if (d && !d.contains(e.target)) d.removeAttribute('open'); });
     document.addEventListener('keydown', function (e) { var d = bar.querySelector('details[open]'); if (e.key === 'Escape' && d) { d.removeAttribute('open'); d.querySelector('summary').focus(); } });
@@ -46,18 +52,20 @@
 
   // ---- the download window
   var zip = null, ver = '';
+  // hunters14 SITE-L3: 10 s at most, and a failed look is tried again on the next open (it used to give up for good)
   function latest() {
-    if (latest.asked) return; latest.asked = true;
+    if (latest.asked || zip) return; latest.asked = true;
     try {
-      fetch('https://api.github.com/repos/adeeb111/AdeeboMeter/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+      var ctl = typeof AbortController === 'function' ? new AbortController() : null; if (ctl) setTimeout(function () { ctl.abort(); }, 10000);
+      fetch('https://api.github.com/repos/adeeb111/AdeeboMeter/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, signal: ctl ? ctl.signal : undefined })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (rel) {
           if (!rel || !rel.assets) return;
           var z = rel.assets.filter(function (x) { return /-win64\.zip$/.test(x.name); })[0]; if (!z) return;
           zip = z.browser_download_url; ver = (rel.tag_name || '').replace(/^v/, '');
           var d = document.getElementById('am-dl'); if (d) fill(d);
-        }).catch(function () {});
-    } catch (e) {}
+        }).catch(function () {}).then(function () { if (!zip) latest.asked = false; });
+    } catch (e) { latest.asked = false; }
   }
   function fill(d) {
     var link = d.querySelector('.dl-direct'); link.href = zip || RELEASES;
@@ -78,11 +86,13 @@
     d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });  // Esc: the same short exit
     fill(d); return d;
   }
-  function close(d) { if (!d.open || d.classList.contains('closing')) return; d.classList.add('closing'); setTimeout(function () { d.classList.remove('closing'); d.close(); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 140); }
+  var closing = 0;
+  function close(d) { if (!d.open || d.classList.contains('closing')) return; d.classList.add('closing'); closing = setTimeout(function () { closing = 0; d.classList.remove('closing'); d.close(); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 140); }
   function open(from) {
     latest(); var d = dialog();
     if (typeof d.showModal !== 'function') { location.href = (from && from.href) || RELEASES; return; }   // a very old browser: the link itself
-    d.showModal(); d.querySelector('.dl-store').focus();
+    if (closing) { clearTimeout(closing); closing = 0; d.classList.remove('closing'); }   // hunters14 SITE-L2: reopened mid-close - it simply stays open
+    if (!d.open) d.showModal(); d.querySelector('.dl-store').focus();
   }
   window.AdeeboMeterDownload = open;
   document.addEventListener('click', function (e) {

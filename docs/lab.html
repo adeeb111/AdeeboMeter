@@ -3,15 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>AdeeboLab · AdeeboMeter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2222%22%20height%3D%2222%22%20rx%3D%226%22%20fill%3D%22%231155E0%22/%3E%3Cpath%20d%3D%22M6%2015a6%206%200%200%201%2012%200%22%20fill%3D%22none%22%20stroke%3D%22%235EF2B0%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M12%2015l3-4%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
 <meta name="description" content="Draw your network, see the path a packet takes from your PC to a game, broker or stream, then break one thing and watch where it fails. Free, nothing is sent.">
 <style>
-:root{--page:#0B1426;--bar:#0E1A30;--card:#121F38;--line:#22355A;--ink:#E6EAF0;--sub:#93A6C6;--mute:#7D90B0;--blue:#2F7BF6;--blue-s:#1E3E78;--red:#F26464;--amber:#F2B23C;--green:#3FB950;--purple:#C9A7FF;--dot:#1A2B4A}
-:root[data-theme="light"]{--page:#F7F9FC;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE3EC;--ink:#1B2330;--sub:#4A5568;--mute:#6B7685;--blue:#1F6FEB;--blue-s:#E8F0FE;--red:#CF222E;--amber:#B07A00;--green:#2DA44E;--purple:#8250DF;--dot:#D5DDE8}
+@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
+/* 24 Nov: the site's graphite and the logo's colours (base.css), not the old navy */
+:root{--page:#111316;--bar:#15181C;--card:#181B20;--line:#262A31;--ink:#EEF1F5;--sub:#A9B1BD;--mute:#7E8794;--blue:#3B7BF5;--blue-s:#1A2A4A;--red:#FF7A6B;--amber:#FCD34D;--green:#5EF2B0;--purple:#C9A7FF;--dot:#22262D}
+:root[data-theme="light"]{--page:#F1F3F6;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE1E7;--ink:#16191E;--sub:#4B5360;--mute:#5A6270;--blue:#1155E0;--blue-s:#E8EFFC;--red:#B42318;--amber:#875A00;--green:#17794F;--purple:#6D4BD8;--dot:#D3D8DF}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:14px/1.45 "Segoe UI",Inter,system-ui,-apple-system,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:500 14px/1.45 "Barlow","Segoe UI",system-ui,-apple-system,sans-serif;overflow:hidden}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 #top{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bar);border-bottom:1px solid var(--line)}
@@ -59,7 +61,7 @@ body.break #zoom{top:auto;bottom:80px}
 #home{position:absolute;top:56px;left:0;right:0;bottom:0;background:var(--page);overflow-y:auto;z-index:15;display:none;padding:26px clamp(16px,4vw,48px) 40px}
 body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
 #home h1{margin:0;font-size:26px}#home h1 b{color:var(--blue)}#home .lead{color:var(--sub);margin:4px 0 22px;max-width:720px}
-#home h2{font-size:12px;letter-spacing:.08em;color:var(--mute);margin:26px 0 10px;font-weight:800}
+#home h2{font-size:15px;color:var(--sub);margin:26px 0 10px;font-weight:700}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
 .tile{position:relative;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px;min-height:150px;display:flex;flex-direction:column;gap:6px;transition:transform .12s,border-color .12s,box-shadow .12s}
 .tile:hover:not([aria-disabled="true"]),.tile:focus-visible{transform:translateY(-2px);border-color:var(--blue);box-shadow:0 10px 26px -14px rgba(0,0,0,.55);outline:none}
@@ -97,8 +99,9 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  <div class="menu"><button class="b" id="exBtn" aria-haspopup="true" aria-expanded="false">Examples</button><div id="exMenu" hidden></div></div>
  <div class="menu"><button class="b p" id="fileBtn" aria-haspopup="true" aria-expanded="false">File</button><div id="fileMenu" hidden>
   <button data-f="new">New drawing</button><button data-f="open">Open a lab file…</button><button data-f="save">Save as lab file (.json)</button>
-  <small>EXPORT</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
+  <small>Export</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
  <button class="b i" id="theme" title="Light / dark" aria-label="Light or dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <a class="b" id="getApp" href="/" hidden>AdeeboMeter</a>
  <input type="file" id="openFile" accept=".json,application/json" hidden>
 </header>
 <div id="wrap">
@@ -123,10 +126,10 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
 <section id="home" aria-label="AdeeboLab start page">
  <h1>Adeebo<b>Lab</b></h1>
  <p class="lead">Draw a network, or let AdeeboMeter draw yours - then break one thing and watch where the packet stops. Everything stays on this PC.</p>
- <h2>START</h2><div class="tiles" id="hStart"></div>
- <h2>YOUR NETWORK, AS ADEEBOMETER SEES IT</h2><div class="tiles" id="hViews"></div>
- <h2 id="hMineH">YOUR DIAGRAMS</h2><div class="tiles" id="hMine"></div>
- <h2>EXAMPLES</h2><div class="tiles" id="hEx"></div>
+ <h2>Start</h2><div class="tiles" id="hStart"></div>
+ <h2>Your network, as AdeeboMeter sees it</h2><div class="tiles" id="hViews"></div>
+ <h2 id="hMineH">Your diagrams</h2><div class="tiles" id="hMine"></div>
+ <h2>Examples</h2><div class="tiles" id="hEx"></div>
 </section>
 <script>
 "use strict";
@@ -571,6 +574,7 @@ function openView(k){ const d = valid(AMV && AMV[k]); if (!d) return; d.measured
 
 /* ---------- go */
 if (location.protocol === "file:") { const br = document.querySelector("a.brand"); if (br) { br.removeAttribute("href"); br.style.cursor = "default"; } }   /* in the app's window "/" is the drive's root, not the website */
+if (location.protocol === "https:") { const ga = $("#getApp"); ga.hidden = false; ga.textContent = "Download AdeeboMeter"; ga.href = "/#install"; }   // hunters14 SITE-L1: on the website the Lab offers the app and the way back to the site; inside the app it doesn't
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
 const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qArg = (location.search.match(/[?&]arg=([A-Za-z0-9_-]{1,40})/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);

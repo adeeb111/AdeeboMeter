@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/streaming.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter pour la vidéo : pourquoi ça charge?</title>
@@ -15,6 +16,7 @@
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/streaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/streaming.html">
@@ -23,7 +25,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/streaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/streaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/streaming.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-streaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,9 +32,9 @@
 <section class="fhero"><div>
 <h1>Pourquoi la lecture s’est-elle arrêtée?</h1>
 <p>Netflix, YouTube, Prime, Twitch, Crunchyroll et IPTV : AdeeboMeter détecte la lecture dans l’application ou le navigateur et localise les ralentissements.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><a class="more" href="/fr/">Toutes les autres fonctions ›</a></div>
 </div>
-<img class="shot" src="/img/streaming.jpg" alt="Page Vidéo : lectures récentes, baisses et origine des problèmes" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-speed-ok.png" width="264" height="168" alt="Le widget de vitesse : réception, envoi et la dernière minute en graphique"></figure>
 </section>
 <div class="grid">
   <div class="card"><h2>Détection automatique</h2><p>D’après les noms de serveurs connus de Windows, sans lire onglets, titres ni contenu. Ajoutez un service absent en une ligne.</p></div>
@@ -42,9 +43,12 @@
   <div class="card"><h2>Puis-je regarder en 4K maintenant?</h2><p>Un bouton classe SD, HD, Full HD et 4K selon un test de débit réel et votre Wi-Fi.</p></div>
   <div class="card"><h2>Prêt pour le fournisseur</h2><p>Dates, heures et mesures copiées en un clic pour le clavardage ou le courriel.</p></div>
   <div class="card"><h2>Comprendre pourquoi</h2><p>Leçons et jeux sur la qualité adaptative, les CDN et la distinction Wi-Fi/fournisseur.</p></div>
-  <div class="card"><h2>Replay the dip</h2><p>Each buffering dip has a Replay link: the Time machine opens at that minute so you see what changed on your side and beyond.</p></div>
-  <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Streaming page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
+  <div class="card"><h2>Rejouer la baisse</h2><p>Chaque baisse de mise en mémoire tampon a un lien Rejouer : la Machine à remonter le temps s'ouvre à cette minute pour voir ce qui a changé de votre côté et au-delà.</p></div>
+  <div class="card"><h2>Votre côté, toujours en haut</h2><p>Une ligne MAINTENANT sur la page Streaming : routeur, Internet, Wi-Fi et la charge de votre PC, en direct, avec l'Accueil à un clic.</p></div>
 </div>
+<section class="inapp"><h2>La page Streaming dans la grande fenêtre</h2><p>Ce que vous avez regardé ces derniers jours, les baisses de chaque flux et à qui la faute.</p>
+<img class="shot" src="/img/streaming.jpg" alt="Page Vidéo : lectures récentes, baisses et origine des problèmes" width="951">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>Aucun contenu regardé n’est lu. Une connexion minuscule sans données mesure le serveur toutes les 10 secondes pendant la lecture, avec arrêt après six échecs.</p></div>
 <div class="others"><p>Aussi : <a href="/fr/trading.html">AdeeboMeter pour les marchés</a> · <a href="/fr/gaming.html">AdeeboMeter pour les jeux</a> · <a href="/fr/privacy.html">Confidentialité</a></p>
 <p>AdeeboMeter pour Windows · sans compte, service infonuagique ni télémétrie · sans droits d’administrateur</p></div>

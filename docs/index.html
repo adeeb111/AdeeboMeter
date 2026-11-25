@@ -219,7 +219,7 @@ footer a{text-decoration:none;color:var(--sub)}footer a:hover{color:var(--ink)}
 .slide{--blue:#1155E0; --blue-d:#1A5FCC; --blue-s:#E8F0FE; --green:#2DA44E; --green-s:#E6F4EA; --amber:#BF8700; --amber-s:#FFF4D6;  --red:#CF222E; --red-s:#FDE7E9; --purple:#8250DF; --purple-s:#F1EAFE;  --ink:#1B2330; --sub:#4A5568; --muted:#6B7685; --line:#E3E8EF; --card:#FFFFFF; --page:#FBFCFE; --soft:#F6F8FB;color:var(--ink);position:relative;background:var(--card);border-radius:22px;box-shadow:0 1px 2px rgba(27,35,48,.06),0 8px 28px rgba(27,35,48,.08);
   aspect-ratio:16/9;container-type:inline-size;overflow:hidden}
 .slide .in{position:absolute;inset:0;padding:4.2cqw 5cqw 3.6cqw;font-size:1.32cqw;display:flex;flex-direction:column}
-.slide .kicker{font-size:.82em;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.slide .kicker{font-size:.9em;font-weight:600;color:var(--blue)}
 .slide h1,.slide .h1{font-size:4.2em;line-height:1.02;letter-spacing:-.025em;font-weight:700}
 .slide h2{font-size:2.45em;line-height:1.1;letter-spacing:-.02em;font-weight:700;margin:.25em 0 .2em}
 .slide h3{font-size:1.12em;font-weight:700;margin-bottom:.3em}
@@ -406,17 +406,17 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AdeeboMeter","alternateName":"আদীবওমিটার","url":"https://adeebometer.com/"}</script><link rel="alternate" hreflang="en" href="https://adeebometer.com/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AdeeboMeter","alternateName":"আদীবওমিটার","url":"https://adeebometer.com/"}</script><link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/brand.css"><script src="/sample.js" defer></script><script src="/home.js" defer></script>
+<link rel="stylesheet" href="/sitebar.css">
+<script src="/site.js" defer></script>
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/">
-<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
-<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/brand.css"><script src="/sample.js" defer></script><script src="/home.js" defer></script>
-<link rel="stylesheet" href="/sitebar.css">
-<script src="/site.js" defer></script>
 </head>
 <body>
 
@@ -424,7 +424,7 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
   <a class="brand" href="#"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark"/></svg><span>Adeebo<b>Meter</b></span></a>
   <nav class="links">
     <div class="site-language"><span class="lang-face" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3"/></svg><b>EN</b></span><select data-language-picker aria-label="Language" hidden></select><a data-language-fallback href="/fr/" lang="fr-CA" hreflang="fr-CA">Français</a><a data-language-fallback href="/bn/" lang="bn" hreflang="bn">বাংলা</a></div>
-    <a data-nav-secondary data-i18n="How it works" href="#theory">How it works</a><a data-nav-secondary data-i18n="Learn" href="learn/">Learn</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/blog/">Blog</a><details class="navmore"><summary data-i18n="More">More</summary><div><a class="nm-narrow" data-i18n="How it works" href="#theory">How it works</a><a class="nm-narrow" data-i18n="Learn" href="learn/">Learn</a><a class="nm-narrow" data-blog-link data-i18n="Blog" href="/blog/">Blog</a><a data-i18n="What's new" href="#new">What's new</a><a data-i18n="Games" href="games.html">Games</a><a data-i18n="Live" href="live.html">Live</a><a data-i18n="Files" href="files.html">Files</a><a data-i18n="Open phone app ↗" href="/app.html" class="arr-ext">Open phone app</a></div></details>
+    <a data-nav-secondary data-i18n="How it works" href="#theory">How it works</a><a data-nav-secondary data-i18n="Learn" href="learn/">Learn</a><a data-nav-secondary data-blog-link data-i18n="Blog" href="/blog/">Blog</a><details class="navmore"><summary data-i18n="More">More</summary><div><a class="nm-narrow" data-i18n="How it works" href="#theory">How it works</a><a class="nm-narrow" data-i18n="Learn" href="learn/">Learn</a><a class="nm-narrow" data-blog-link data-i18n="Blog" href="/blog/">Blog</a><a data-i18n="What's new" href="#new">What's new</a><a data-i18n="Games" href="games.html">Games</a><a data-i18n="Live" href="live.html">Live</a><a data-i18n="Files" href="files.html">Files</a><a data-i18n="Open phone app ↗" href="/app.html" class="arr-ext">Open phone app</a><a data-i18n="Gaming" href="gaming.html">Gaming</a><a data-i18n="Streaming" href="streaming.html">Streaming</a><a data-i18n="Trading" href="trading.html">Trading</a><a data-i18n="ISP report" href="isp-report.html">ISP report</a><a data-i18n="Hall of Fame" href="hall-of-fame.html">Hall of Fame</a><a data-i18n="Privacy" href="privacy.html">Privacy</a></div></details>
     <a class="donate-top" href="#donate" aria-label="Donate" title="Donate" data-i18n-label="Donate">&#9829;</a>
     <button class="theme" type="button" aria-label="Switch day / night"><span class="knob"><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="#BF8700" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" fill="#9CC2FF"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></span></button>
     <a class="pill dl" href="https://github.com/adeeb111/AdeeboMeter/releases/latest"><span data-i18n="Download">Download</span></a>
@@ -507,8 +507,8 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
    <span class="v5tag" data-i18n="NEW IN 1.1.5 AND 1.1.6">NEW IN 1.1.5 AND 1.1.6</span>
    <h2 data-i18n="One sentence for every slow thing.">One sentence for every slow thing.</h2>
    <p data-i18n="Games, your phone, your provider, your hardware - each one gets its own answer, in plain words.">Games, your phone, your provider, your hardware - each one gets its own answer, in plain words.</p>
+   <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md" rel="noopener" data-i18n="Everything that changed ›" class="arr">Everything that changed</a>
   </div>
-  <a href="https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md" rel="noopener" data-i18n="Everything that changed ›" class="arr">Everything that changed</a>
  </div>
  <div class="v5grid">
   <a class="v5t v5big" href="/gaming.html" style="--k:var(--purple)">
@@ -518,42 +518,29 @@ a.v5l:hover{transform:translateY(-2px);color:#fff}
     <p data-i18n="Finds your Steam, Epic and Riot games, pings their servers and blames every spike on your Wi-Fi, your provider or the game's side. Nothing goes to a game company until you click a game.">Finds your Steam, Epic and Riot games, pings their servers and blames every spike on your Wi-Fi, your provider or the game's side. Nothing goes to a game company until you click a game.</p>
     <span class="arr v5more" data-i18n="See the Gamer Zone ›">See the Gamer Zone</span>
    </div>
-   <div class="v5box" role="img" aria-label="Example: three game servers with their ping and grade, and a spike blamed on Wi-Fi">
-    <div class="v5row m" aria-hidden="true"><b class="m" data-i18n="Example · servers">Example · servers</b><span data-i18n="ping · worst · grade">ping · worst · grade</span></div>
-    <div class="v5row" aria-hidden="true"><b>US East</b><span>31 ms</span><span class="m">44</span><span class="v5g">A</span></div>
-    <div class="v5row" aria-hidden="true"><b>US Central</b><span>48 ms</span><span class="m">71</span><span class="v5g">B</span></div>
-    <div class="v5row" aria-hidden="true"><b>US West</b><span>82 ms</span><span class="m">190</span><span class="v5g c">C</span></div>
-    <div class="v5bars" aria-hidden="true"><i style="height:30%"></i><i style="height:34%"></i><i style="height:28%"></i><i style="height:32%"></i><i class="s" style="height:95%"></i><i class="s" style="height:80%"></i><i style="height:31%"></i><i style="height:29%"></i><i style="height:33%"></i><i style="height:30%"></i><i style="height:27%"></i><i style="height:32%"></i></div>
-    <div class="v5warn" aria-hidden="true" data-i18n="Spike at 21:14 - your Wi-Fi (signal fell to 38%)">Spike at 21:14 - your Wi-Fi (signal fell to 38%)</div>
-   </div>
+   <figure class="v5real" aria-hidden="true"><img src="/img/widgets/dark-gamer-problem.png" width="264" height="243" alt=""></figure>
   </a>
   <a class="v5t" href="/app.html" style="--k:var(--blue)">
    <span class="k" data-i18n="YOUR PHONE">YOUR PHONE</span>
    <h3 data-i18n="Your PC, in your pocket">Your PC, in your pocket</h3>
    <p data-i18n="Link with a QR code. Both screens show the same four words - if they differ, it isn't your phone. Send files, run 16 checks, peek at any AdeeboMeter page.">Link with a QR code. Both screens show the same four words - if they differ, it isn't your phone. Send files, run 16 checks, peek at any AdeeboMeter page.</p>
-   <div class="v5words ft" aria-hidden="true"><span>river</span><span>tiger</span><span>lamp</span><span>orbit</span></div>
   </a>
   
   <a class="v5t" href="/isp-report.html" style="--k:var(--amber)">
    <span class="k" data-i18n="REPORT FOR MY ISP">REPORT FOR MY ISP</span>
    <h3 data-i18n="Proof your provider can't brush off">Proof your provider can't brush off</h3>
    <p data-i18n="The path hop by hop, loss only where it starts, a week of bad hours, what's already ruled out and a message ready to paste. Private addresses and your Wi-Fi name are left out.">The path hop by hop, loss only where it starts, a week of bad hours, what's already ruled out and a message ready to paste. Private addresses and your Wi-Fi name are left out.</p>
-   <div class="ft" aria-hidden="true"><div class="v5heat"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i class="b"></i><i class="r"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="b"></i><i class="r"></i><i class="r"></i><i class="b"></i></div></div>
-   <small data-i18n="Example: evenings, every day this week">Example: evenings, every day this week</small>
   </a>
   <div class="v5t" style="--k:#F0883E">
    <span class="k" data-i18n="HARDWARE NERDS">HARDWARE NERDS</span>
    <h3 data-i18n="Every part against its own ceiling">Every part against its own ceiling</h3>
    <p data-i18n="Reads each part's specs, works out what it should do, measures what it does - and tells you the gap, and why the PC is struggling.">Reads each part's specs, works out what it should do, measures what it does - and tells you the gap, and why the PC is struggling.</p>
-   <div class="v5meter ft" aria-hidden="true"><div><span data-i18n="Disk">Disk</span><em><b class="o" style="width:38%"></b></em><u>38%</u></div><div><span data-i18n="Memory">Memory</span><em><b style="width:91%"></b></em><u>91%</u></div><div><span>Wi-Fi</span><em><b style="width:64%"></b></em><u>64%</u></div></div>
   </div>
   <a class="v5t" href="/lab.html" style="--k:#39C5CF">
    <span class="k" data-i18n="LABS">LABS</span>
    <h3 data-i18n="Play with the network, safely">Play with the network, safely</h3>
    <p data-i18n="New: the Network Lab - draw your network, see the path a packet takes, then break one thing and watch where it fails. Try it here ›"><b>New: the Network Lab</b> - draw your network, see the path a packet takes, then break one thing and watch where it fails. Try it here ›</p>
    <p data-i18n="TCP Reno and CUBIC side by side, bufferbloat, CGNAT, MTU black holes, QoS queues, subnetting practice. Click the graph to drop a packet and watch what happens.">TCP Reno and CUBIC side by side, bufferbloat, CGNAT, MTU black holes, QoS queues, subnetting practice. Click the graph to drop a packet and watch what happens.</p>
-   <svg class="v5lab ft" viewBox="0 0 300 60" aria-hidden="true"><path d="M0 55 L60 15 L64 35 L120 8 L124 32 L190 4 L194 30 L260 6 L264 33 L300 20" fill="none" stroke="#39C5CF" stroke-width="2.5"/><path d="M0 55 C40 30 55 22 64 35 C90 20 110 16 124 32 C150 18 175 12 194 30 C220 16 245 12 264 33" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="5 4"/></svg>
-   <small data-i18n="Reno (solid) and CUBIC (dashed) after a loss">Reno (solid) and CUBIC (dashed) after a loss</small>
   </a>
   
   

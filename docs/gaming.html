@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" data-language-route="/gaming.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter for gaming - whose lag is it?</title>
@@ -15,6 +16,7 @@
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/gaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/gaming.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/gaming.html">
@@ -22,7 +24,6 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/gaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/gaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/gaming.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body class="f-gaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -30,9 +31,9 @@
 <section class="fhero"><div>
 <h1>Whose lag is it?</h1>
 <p>Valorant, Fortnite, League of Legends, Counter-Strike 2, Roblox and more - AdeeboMeter knows their servers. It watches the ones you play on, notices when a game opens, and tells you whether the lag was you, your Wi-Fi, your provider or the game.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><a class="more" href="./">Everything else it does ›</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><a class="more" href="./">Everything else it does ›</a></div>
 </div>
-<img class="shot" src="img/gaming.jpg" alt="The Gamer Zone: popular games to add, and the servers of the one being watched" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-gamer-problem.png" width="264" height="243" alt="The corner widget naming whose fault it is: your router answers, the internet doesn't - your provider's side"></figure>
 </section>
 <div class="grid">
   <div class="card"><h2>Your best server</h2><p>Each region&#x27;s ping, jitter and loss, and the one that suits you - measured over a week, evenings included.</p></div>
@@ -45,6 +46,9 @@
   <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Gamer page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
   <div class="card"><h2>Your path, drawn</h2><p>Show my path opens the Network Lab with your measured route to the game&#x27;s server - your stops in white, your provider&#x27;s in grey - and Break it shows what each fault looks like.</p></div>
 </div>
+<section class="inapp"><h2>The Gamer page in the full window</h2><p>Every game you added, its regions and the one being watched.</p>
+<img class="shot" src="img/gaming.jpg" alt="The Gamer Zone: popular games to add, and the servers of the one being watched" width="951">
+</section>
 <div class="short"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><p>Nothing is sent to game servers until you add a game. Then: pings (or timed connections) to its regions, at the pace you choose in Settings.</p></div>
 <div class="others"><p>Also: <a href="streaming.html">AdeeboMeter for streaming</a> · <a href="trading.html">AdeeboMeter for trading</a> · <a href="privacy.html">Privacy</a></p>
 <p>AdeeboMeter for Windows · no account, no cloud, no telemetry · runs without admin rights</p></div>

@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-language-route="/gaming.html" data-language-variants="en bn fr es ar">
+<html lang="ar" data-language-route="/gaming.html" data-language-variants="en bn fr es ar" dir="rtl">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AdeeboMeter للألعاب — من أين يأتي التأخير؟</title>
@@ -15,7 +16,7 @@
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
-<meta property="og:locale" content="ar_AR">
+<link rel="stylesheet" href="/sitebar.css">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/gaming.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/gaming.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/gaming.html">
@@ -23,7 +24,7 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/gaming.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/gaming.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/gaming.html">
-<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
 </head>
 <body class="f-gaming">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -31,9 +32,9 @@
 <section class="fhero"><div>
 <h1>من هو التأخير؟</h1>
 <p>يعرف AdeeboMeter خوادم Valorant وFortnite وLeague of Legends وCounter-Strike 2 وRoblox وغيرها. يراقب الخوادم التي تلعب عليها، ويرصد بدء اللعبة، ويحدّد إن كان التأخير من جهازك أو Wi-Fi أو مزوّد الخدمة أو اللعبة.</p>
-<div class="fbtns"><a class="cta" href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><a class="more" href="/ar/">كل ما يفعله</a></div>
+<div class="fbtns"><a class="cta" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">تحميل لـ Windows - مجاني</a><a class="more" href="/ar/">كل ما يفعله</a></div>
 </div>
-<img class="shot" src="/img/gaming.jpg" alt="منطقة اللاعبين: الألعاب الشعبية لإضافة، والخوادم من واحد يشاهد" width="951">
+<figure class="fwidgets"><img src="/img/widgets/dark-gamer-problem.png" width="264" height="243" alt="أداة الزاوية تحدد المسؤول: الراوتر يستجيب والإنترنت لا - جهة مزوّد الخدمة"></figure>
 </section>
 <div class="grid">
   <div class="card"><h2>أفضل خادمك</h2><p>كل منطقة من النوم والقلق والخسارة، والتي تناسبك - مقاس على مدى أسبوع، بما في ذلك المساء.</p></div>
@@ -42,10 +43,13 @@
   <div class="card"><h2>اختبار تحت الحمل</h2><p>هل تنزيل في المنزل يفسد جهازك؟ اختبار واحد يظهر ذلك.</p></div>
   <div class="card"><h2>تقرير لـ ISP</h2><p>الطريق إلى خادم لعبةك، قفزًا عن بعد، و أين تبدأ الخسارة - مع كل دقيقة قاسية من الأسبوع من سجلاتك.</p></div>
   <div class="card"><h2>أي لعبة</h2><p>إضافة لعبة خاصتك مع أي عنوان خادم.</p></div>
-  <div class="card"><h2>See the spike again</h2><p>Every spike and lag moment has a link to the Time machine at that exact minute - the router, the internet and your PC as they were, then Back to where you were.</p></div>
-  <div class="card"><h2>Your end, always on top</h2><p>A NOW line on the Gamer page: router, internet, Wi-Fi and how busy your PC is, live, with Home one click away.</p></div>
-  <div class="card"><h2>Your path, drawn</h2><p>Show my path opens the Network Lab with your measured route to the game's server - your stops in white, your provider's in grey - and Break it shows what each fault looks like.</p></div>
+  <div class="card"><h2>شاهد الارتفاع مجددًا</h2><p>لكل ارتفاع ولحظة تأخير رابط إلى آلة الزمن في تلك الدقيقة بالضبط - الراوتر والإنترنت والكمبيوتر كما كانت، ثم «رجوع» إلى حيث كنت.</p></div>
+  <div class="card"><h2>طرفك، دائمًا في الأعلى</h2><p>سطر «الآن» في صفحة اللاعب: الراوتر والإنترنت وWi-Fi ومدى انشغال الكمبيوتر، مباشرة، والرئيسية على بُعد نقرة.</p></div>
+  <div class="card"><h2>مسارك، مرسومًا</h2><p>«أظهر مساري» يفتح مختبر الشبكة بمسارك المقيس إلى خادم اللعبة - محطاتك بالأبيض ومحطات مزوّد الخدمة بالرمادي - و«اكسره» يُظهر شكل كل عطل.</p></div>
 </div>
+<section class="inapp"><h2>صفحة اللاعب في النافذة الكاملة</h2><p>كل لعبة أضفتها، ومناطقها، واللعبة التي تُراقَب الآن.</p>
+<img class="shot" src="/img/gaming.jpg" alt="منطقة اللاعبين: الألعاب الشعبية لإضافة، والخوادم من واحد يشاهد" width="951">
+</section>
 <div class="short"><svg viewbox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg><p>لا شيء يتم إرساله إلى خوادم اللعبة حتى تضيف لعبة. ثم: إرسال خطط (أو اتصالات زمنية) إلى مناطقها، في سرعة تختارها في الإعدادات.</p></div>
 <div class="others"><p>أيضاً: <a href="/ar/streaming.html">AdeeboMeter للتدفق</a> · <a href="/ar/trading.html">AdeeboMeter للتداول</a> · <a href="/ar/privacy.html">الخصوصية</a></p>
 <p>AdeeboMeter لـ Windows · لا حساب، لا سحابة، لا قياس عن بعد · تشغيل دون حقوق إدارة</p></div>

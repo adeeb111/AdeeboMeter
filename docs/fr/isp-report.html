@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr-CA" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
 <head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Montrer au fournisseur où commencent les pertes | AdeeboMeter</title>
@@ -48,6 +49,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale-messages.js"></script>
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
 <meta property="og:locale" content="fr_CA">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
@@ -56,37 +58,37 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
-<h1>Montrer au fournisseur où commencent les pertes</h1>
-<figure class="guide-visual" aria-labelledby="quick-title">
-<div class="visual-copy"><h2 id="quick-title">Vérifiez si les pertes persistent.</h2><p>Comparez routeur et destination. Gardez tests normal et problématique.</p></div>
-<div class="scenario-art art-isp"><div class="scenario-label"><span class="scenario-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg></span><strong>Rapport au fournisseur</strong></div><div class="plot-label"><span>Pertes de paquets</span><span>Exemple</span></div><div class="hopline"><span><i></i>Routeur<small>Stable</small></span><span><i></i>Saut suivant<small>Début des pertes</small></span><span><i></i>Destination<small>Pertes persistantes</small></span></div></div>
-<figcaption>Illustration : routeur stable, pertes plus loin et à destination.</figcaption>
+<h1>Comment montrer à votre fournisseur où commence la perte de paquets</h1>
+<p class="dek">Si votre routeur répond à chaque fois et que la perte commence quelques arrêts plus loin, le problème est au-delà de chez vous. Un court rapport le prouve et donne au support de quoi agir.</p>
+<ul class="meta"><li>Application Windows : Boîte à outils › Rapport pour mon FAI</li><li>Un essai de 1, 2 ou 5 minutes</li><li>4 min de lecture</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="Où est la perte dans cet exemple"><li class="ok">PC<small>stable</small></li><li class="ok">Wi-Fi<small>câblé ici</small></li><li class="ok">Routeur<small>0 % de perte</small></li><li class="bad">Fournisseur<small>la perte commence</small></li><li class="bad">Autre bout<small>la perte continue</small></li></ol>
+<figcaption>Le schéma qui vaut la peine d'être envoyé : propre jusqu'à votre routeur, puis une perte à partir d'un arrêt dans le réseau de votre fournisseur jusqu'à la destination.</figcaption>
 </figure>
-
-<figure><img src="/img/isp-report-example.png" width="591" height="507" loading="lazy" alt="AdeeboMeter’s sample report shows no loss at the home router and packet loss continuing from a later hop to the destination."><figcaption>Exemple de mesures et d’adresses simulées. Dans le vrai rapport, commencez par routeur et destination.</figcaption></figure>
-<h2 id="checks">Lancer les vérifications</h2>
-<ol><li>Sur Windows, ouvrez <strong>Boîte à outils</strong> et cherchez <strong>Rapport pour mon fournisseur</strong>.</li><li>Entrez hôte ou IP du service touché, ou choisissez un jeu ajouté. Testez 1, 2 ou 5 minutes pendant le problème.</li><li>Refaites par Ethernet si possible et gardez un test normal. Relisez avant de joindre le rapport ou une capture.</li></ol>
-<h2 id="readings">Quoi vérifier ensuite</h2>
+<figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="Le rapport d&#x27;exemple d&#x27;AdeeboMeter ne montre aucune perte au routeur de la maison et une perte de paquets qui continue d&#x27;un saut plus loin jusqu&#x27;à la destination."><figcaption>Un rapport fait par l'application, avec des mesures et des adresses simulées. Dans le vôtre, lisez d'abord la ligne du routeur et celle de la destination.</figcaption></figure>
+<h2 id="checks">Faire le rapport</h2>
+<ol><li>Dans AdeeboMeter sous Windows, ouvrez <strong>Boîte à outils</strong> et cherchez <strong>Rapport pour mon fournisseur</strong>.</li><li>Tapez l'adresse du service qui flanche, ou choisissez un jeu que vous avez ajouté. Lancez-le 1, 2 ou 5 minutes pendant que le problème se produit.</li><li>Si vous pouvez, relancez-le avec un câble, puis une fois quand tout va bien. Vérifiez le rapport avant de le joindre à votre demande.</li></ol>
+<h2 id="readings">Comment lire le résultat</h2>
 <ul class="next-checks">
-  <li><strong>Un saut manque des réponses</strong><span>Voyez si la destination perd aussi des paquets.</span></li>
-  <li><strong>Les pertes commencent près de chez vous</strong><span>Comparez Wi-Fi et Ethernet.</span></li>
-  <li><strong>Routeur stable, pertes à destination</strong><span>Répétez et partagez les deux tests.</span></li>
-  <li><strong>Une seule destination touchée</strong><span>Comparez avec un autre service.</span></li>
+  <li><strong>Un arrêt manque des réponses, les suivants non</strong><span>Cet arrêt est occupé à répondre aux pings, il ne perd pas votre trafic. Regardez plutôt la ligne de la destination.</span></li>
+  <li><strong>La perte commence à votre routeur ou avant</strong><span>C'est chez vous. Comparez d'abord le Wi-Fi et un câble.</span></li>
+  <li><strong>Routeur propre, la destination perd des paquets</strong><span>Relancez-le deux fois et envoyez les deux rapports à votre fournisseur.</span></li>
+  <li><strong>Un seul service est touché</strong><span>Essayez une destination sans rapport. Si elle est propre, le problème est du côté de ce service.</span></li>
 </ul>
-<aside class="example" aria-labelledby="example"><h2 id="example">Exemple concret</h2><p>Dans l’exemple, PC câblé et routeur sont stables; les pertes apparaissent plus loin et à destination. Partagez ce schéma, l’heure et le service touché. Un second test confirme sa répétition.</p></aside>
-<details class="guide-detail"><summary>Pourquoi ça aide</summary>
-<p>Traceroute décrit une machine, une destination et un moment. Les routeurs peuvent limiter leurs réponses; trajet et retour peuvent varier. Un numéro de saut est un indice à examiner.</p><p>Voir <a href="/fr/learn/icmp.html">le fonctionnement de ping et traceroute</a> et <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">l’explication de Microsoft sur les réponses perdues aux sauts intermédiaires</a>.</p>
+<aside class="example" aria-labelledby="example"><h2 id="example">L'exemple ci-dessus</h2><p>Le PC est câblé et le routeur est propre. La perte commence plus loin et est toujours là à la destination. Envoyez ce schéma avec l'heure de l'essai et le service touché ; un deuxième essai montre si ça se répète.</p></aside>
+<details class="guide-detail"><summary>Pourquoi un seul arrêt peut paraître pire qu'il ne l'est</summary>
+<p>Un rapport, c'est ce qu'un PC a vu sur le chemin d'une destination à un moment donné. Les routeurs en route répondent souvent lentement aux paquets de test ou les ignorent exprès, et le retour peut prendre un autre chemin : un numéro d'arrêt est une piste pour le support, pas un verdict.</p><p>Plus : <a href="/fr/learn/icmp.html">le fonctionnement de ping et traceroute</a>, et <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft sur la perte aux sauts intermédiaires</a>.</p>
 </details>
-<h2>Utiliser AdeeboMeter sur Windows</h2>
-<p>Le résumé indique les mesures utiles à partager. Avant de contacter le fournisseur, commencez par la <a href="/fr/wifi-or-isp.html">comparaison Wi-Fi et Ethernet</a>.</p>
-
-<p><a class="guide-cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtenir AdeeboMeter pour Windows</a></p>
-<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Quoi conserver</h2><p>Un billet utile précise heure et fuseau, connexion, destination, fréquence et tests pendant le problème et en période normale.</p></aside>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">Ce que contient une demande utile</h2><p>L'heure et le fuseau horaire, câble ou Wi-Fi, le service touché, la fréquence, et un rapport d'un mauvais moment et d'un bon.</p></aside>
+<p>Pas encore sûr que ce soit votre fournisseur? Commencez par <a href="/fr/wifi-or-isp.html">Wi-Fi contre câble</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">Prenez-le sur le fait</h2><p>Le widget dans un coin de votre écran surveille les mêmes arrêts toute la journée et passe à l'ambre ou au rouge sur celui qui flanche - le rapport est à un clic quand ça compte.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Télécharger pour Windows, gratuitement</a><p class="sc-note">Windows 10 et 11 · sans droits d'administrateur · rien sur vous ne quitte votre PC</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-engineer-busy.png" width="264" height="220" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
 </main>
 </body>
 </html>
