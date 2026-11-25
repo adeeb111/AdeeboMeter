@@ -79,6 +79,9 @@ button.dl-opt{width:100%;font:inherit;text-align:start;cursor:pointer}
 .am-new .nw-list b{font-weight:700;font-size:15px}
 .am-new .nw-list small{color:var(--sb-sub);font-size:14px}
 .am-new .nw-foot{margin:18px 0 0;color:var(--sb-sub);font-size:14px}
+.am-new .lic-full{margin-top:16px;font-size:14px}
+.am-new .lic-full summary{cursor:pointer;color:var(--sb-blue-ink);font-weight:600}
+.am-new .lic-full pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Consolas,monospace;color:var(--sb-sub);background:var(--sb-hover);border-radius:10px;padding:12px;margin:10px 0 0;max-height:240px;overflow:auto;text-align:left}
 .am-new .nw-get{margin-top:12px;align-items:center}
 .am-dl .dl-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:18px 0 0;font-size:14px}
 .am-dl .dl-foot a{color:var(--sb-blue-ink);text-underline-offset:3px}

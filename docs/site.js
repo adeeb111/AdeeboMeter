@@ -51,10 +51,10 @@
   }
 
   // ---- the download window
-  var zip = null, ver = '';
+  var ver = '1.1.6', zip = 'https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip';   // 24 Nov: always a direct file, even before GitHub answers (it used to fall back to the release page); the newest release replaces it when it answers
   // hunters14 SITE-L3: 10 s at most, and a failed look is tried again on the next open (it used to give up for good)
   function latest() {
-    if (latest.asked || zip) return; latest.asked = true;
+    if (latest.asked) return; latest.asked = true;
     try {
       var ctl = typeof AbortController === 'function' ? new AbortController() : null; if (ctl) setTimeout(function () { ctl.abort(); }, 10000);
       fetch('https://api.github.com/repos/adeeb111/AdeeboMeter/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, signal: ctl ? ctl.signal : undefined })
@@ -64,7 +64,7 @@
           var z = rel.assets.filter(function (x) { return /-win64\.zip$/.test(x.name); })[0]; if (!z) return;
           zip = z.browser_download_url; ver = (rel.tag_name || '').replace(/^v/, '');
           var d = document.getElementById('am-dl'); if (d) fill(d);
-        }).catch(function () {}).then(function () { if (!zip) latest.asked = false; });
+        }).catch(function () { latest.asked = false; });
     } catch (e) { latest.asked = false; }
   }
   function fill(d) {
@@ -79,9 +79,10 @@
       '<img src="/img/logo.svg" width="40" height="40" alt=""><h2 id="am-dl-t">' + esc(T.dlTitle) + '</h2><p class="dl-sub">' + esc(T.dlSub) + '</p>' +
       '<a class="dl-opt dl-store" href="' + STORE + '" rel="noopener"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 8h16l-1.2 11.2a1 1 0 0 1-1 .8H6.2a1 1 0 0 1-1-.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span><b>' + esc(T.store) + '</b><small>' + esc(T.storeSub) + '</small></span></a>' +
       '<a class="dl-opt dl-direct" href="' + RELEASES + '"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>' + esc(T.direct) + '</b><small>' + esc(T.directSub) + '</small><small class="dl-ver" hidden></small></span></a>' +
-      '<p class="dl-foot"><a href="/app.html">' + esc(T.phoneLink) + '</a><a href="' + RELEASES + '" rel="noopener">' + esc(T.all) + '</a></p></div>';
+      '<p class="dl-foot"><a href="/app.html">' + esc(T.phoneLink) + '</a><a href="#new" class="dl-new">' + esc(NEW.t) + '</a></p></div>';
     document.body.appendChild(d);
     d.querySelector('.dl-x').addEventListener('click', function () { close(d); });
+    d.querySelector('.dl-new').addEventListener('click', function (e) { e.preventDefault(); d.close(); openNew(); });
     d.addEventListener('click', function (e) { if (e.target === d) close(d); });   // the backdrop
     d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });  // Esc: the same short exit
     fill(d); return d;
@@ -113,6 +114,25 @@
     d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
     return d;
   }
+  // ---- the MIT License, in plain words (24 Nov: the footer link went to GitHub)
+  var LIC = {"en": {"t": "MIT License", "s": "AdeeboMeter is free and open source. In plain words:", "i": [["Free to use", "At home, at work, anywhere - for as long as you like."], ["Free to share", "Give copies to anyone."], ["Free to change", "The code is open. Adapt it as you like, as long as the copyright line and this license go with it."], ["No warranty", "It comes as it is. Adeeb Khan isn't liable for problems that come from using it."]], "full": "The full license text"}, "fr": {"t": "Licence MIT", "s": "AdeeboMeter est gratuit et open source. En mots simples :", "i": [["Libre d'utilisation", "À la maison, au travail, partout, aussi longtemps que vous voulez."], ["Libre de partage", "Donnez-en des copies à qui vous voulez."], ["Libre de modification", "Le code est ouvert. Adaptez-le à votre guise, tant que la mention de droit d'auteur et cette licence l'accompagnent."], ["Sans garantie", "Il est fourni tel quel. Adeeb Khan n'est pas responsable des problèmes liés à son utilisation."]], "full": "Le texte complet de la licence (en anglais)"}, "es": {"t": "Licencia MIT", "s": "AdeeboMeter es gratis y de código abierto. En palabras sencillas:", "i": [["Libre para usar", "En casa, en el trabajo, donde sea, todo el tiempo que quieras."], ["Libre para compartir", "Dale copias a quien quieras."], ["Libre para cambiar", "El código es abierto. Adáptalo como quieras, siempre que lo acompañen la línea de derechos de autor y esta licencia."], ["Sin garantía", "Se ofrece tal cual. Adeeb Khan no se hace responsable de los problemas que surjan por usarlo."]], "full": "El texto completo de la licencia (en inglés)"}, "ar": {"t": "رخصة MIT", "s": "AdeeboMeter مجاني ومفتوح المصدر. بكلمات بسيطة:", "i": [["حر في الاستخدام", "في البيت، في العمل، في أي مكان، ولأي مدة تريدها."], ["حر في المشاركة", "أعطِ نسخًا لمن تشاء."], ["حر في التعديل", "الشيفرة مفتوحة. عدّلها كما تشاء، بشرط أن يبقى معها سطر حقوق النشر وهذه الرخصة."], ["بلا ضمان", "يُقدَّم كما هو. لا يتحمل Adeeb Khan مسؤولية المشكلات الناتجة عن استخدامه."]], "full": "النص الكامل للرخصة (بالإنجليزية)"}, "bn": {"t": "MIT লাইসেন্স", "s": "AdeeboMeter বিনামূল্যে ও ওপেন সোর্স। সহজ ভাষায়:", "i": [["ব্যবহারে স্বাধীন", "বাড়িতে, অফিসে, যেকোনো জায়গায় - যতদিন খুশি।"], ["শেয়ারে স্বাধীন", "যাকে খুশি কপি দিন।"], ["বদলাতে স্বাধীন", "কোড খোলা। ইচ্ছেমতো বদলান, শুধু কপিরাইট লাইন আর এই লাইসেন্স সঙ্গে রাখুন।"], ["কোনো ওয়ারেন্টি নেই", "যেমন আছে তেমনই দেওয়া। ব্যবহার থেকে কোনো সমস্যা হলে Adeeb Khan দায়ী নন।"]], "full": "লাইসেন্সের পুরো লেখা (ইংরেজিতে)"}}[lang], MIT = "MIT License\n\nCopyright (c) 2026 Adeeb Khan\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.";
+  function openLicense() {
+    var d = document.getElementById('am-lic');
+    if (!d) {
+      d = document.createElement('dialog'); d.id = 'am-lic'; d.className = 'am-dl am-new'; d.setAttribute('aria-labelledby', 'am-lic-t');
+      if (lang === 'ar') d.dir = 'rtl';
+      d.innerHTML = '<div class="dl-card"><button class="dl-x" type="button" aria-label="' + esc(T.close) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+        '<img src="/img/logo.svg" width="40" height="40" alt=""><h2 id="am-lic-t">' + esc(LIC.t) + '</h2><p class="dl-sub">' + esc(LIC.s) + '</p><ul class="nw-list">' +
+        LIC.i.map(function (x) { return '<li><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span></li>'; }).join('') +
+        '</ul><details class="lic-full"><summary>' + esc(LIC.full) + '</summary><pre dir="ltr" lang="en">' + esc(MIT) + '</pre></details><p class="nw-foot">© 2026 Adeeb Khan</p></div>';
+      document.body.appendChild(d);
+      d.querySelector('.dl-x').addEventListener('click', function () { close(d); });
+      d.addEventListener('click', function (e) { if (e.target === d) close(d); });
+      d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
+    }
+    if (typeof d.showModal !== 'function') return;
+    if (!d.open) d.showModal(); d.querySelector('.dl-x').focus();
+  }
   function openNew() {
     var d = newDialog();
     if (typeof d.showModal !== 'function') { location.hash = 'new'; return; }
@@ -120,8 +140,8 @@
   }
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-    var el = e.target.closest && e.target.closest('a[data-whatsnew]'); if (!el) return;
-    e.preventDefault(); openNew();
+    var el = e.target.closest && e.target.closest('a[data-whatsnew], a[href$="/LICENSE"]'); if (!el) return;
+    e.preventDefault(); if (el.hasAttribute('data-whatsnew')) openNew(); else openLicense();
   });
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
