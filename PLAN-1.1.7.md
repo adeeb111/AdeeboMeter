@@ -229,21 +229,30 @@ holidays, and the free keys price US shares only.
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
   a one-month line where the key gives one. Fixes the wide row with the empty middle.
-- **Built in: three markets** (site requests by country, 25 Nov: Canada 2.28k, Bangladesh 232, US 224, Poland 29).
-  Built in = hand-checked presets that work with no key: currency, exchange hours and holidays, index list, default
-  widget symbols.
-  - Canada: as today.
-  - United States: USD, New York first, US holidays (already known).
-  - Bangladesh: Dhaka hours (Sun-Thu) and holidays; taka rates from a free, no-key source that has BDT (find it on
-    Saturday; if none, the page says so). Leads with the rates people send money on: USD/BDT, CAD/BDT, GBP/BDT,
-    EUR/BDT, MYR/BDT, SAR/BDT. Dhaka shares (DSE) aren't on the free price services: one plain line, not dashes.
+- **Built in: 10 markets - one per app language plus the big economies** (Adeeb, 25 Nov). Built in = hand-checked
+  presets that work with no key: currency, exchange hours and holidays, index list, default widget symbols.
+  | Why | Markets |
+  |---|---|
+  | English + the current audience (Canada 2.28k, Bangladesh 232, US 224 requests) | Canada, United States, United Kingdom |
+  | Bengali | Bangladesh |
+  | French | France |
+  | Spanish | Mexico, Spain |
+  | Arabic | Saudi Arabia |
+  | Chinese (when zh ships) | China |
+  | Largest economies (IMF Apr 2026 top 5: US, China, Germany, Japan, UK) | Germany, Japan |
+  - Rates: ECB reference rates (no key) cover most; the taka and the riyal need one more free, no-key source (find it
+    on Saturday; if none, the page says so).
+  - Bangladesh leads with the rates people send money on: USD, CAD, GBP, EUR, MYR, SAR against the taka. Dhaka
+    (Sun-Thu) and Riyadh (Sun-Thu) hours; local shares there aren't on the free price services - one plain line.
+  - Holidays: ten exchange tables (Toronto, New York, London, Dhaka, Paris, Mexico, Madrid, Riyadh, Shanghai,
+    Frankfurt, Tokyo), checked by hand once a year - a release-checklist item.
 - **Every other country: "Custom market"**, like the other key-based places (quote keys, sports): pick your currency
   and exchange from a list; rates from the ECB (~30 currencies, no key); prices with your own key (FMP / Finnhub /
   Twelve Data, whichever covers that exchange - the add-key sheet says which); hours from the exchange list;
-  holidays say "not checked" unless the key's service gives them. Poland is the first test of this path (PLN, `.WA`
+  holidays say "not checked" unless the key's service gives them. Poland (29 requests) is the first test of this path (PLN, `.WA`
   added to the suffix list).
-- Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for Canada,
-  Bangladesh, United States, and Poland as a Custom market.
+- Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for all 10
+  built-in markets, and Poland as a Custom market.
 
 ### Dropped (25 Nov)
 - D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
