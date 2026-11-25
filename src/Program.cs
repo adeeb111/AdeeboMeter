@@ -120,6 +120,7 @@ namespace AdeeboMeter
         public static int ForceTheme = -1;
         public static bool Restarted;   // started by the Restart button: open the big window again once running
         public static int StartViewMs = 1500;
+        public static int TourHoldMs = 5000, TourCount;   // --view tour: seconds on each finished result (--hold), how many tools (--count)
         public static readonly int MyPid = System.Diagnostics.Process.GetCurrentProcess().Id;
         public static string StartView, StartTip, StartDest, StartFile;   // StartFile: a locked .adeebo file to open (bug-hunt ML-127)   // debug: --view <page> [--tip <key>] [--dest <host>] opens the engineer view there (used for screenshots)   // -1 follow Windows, 0 light, 1 dark
         public static bool WantDark() { return ForceTheme >= 2 && ForceTheme < Theme.Palettes.Length + 2 ? Theme.PaletteDark[ForceTheme - 2] : ForceTheme >= 0 ? ForceTheme == 1 : Theme.SystemDark(); }   // 0 light, 1 dark, 2+ the named themes
@@ -157,6 +158,8 @@ namespace AdeeboMeter
             int vi = Array.FindIndex(args, a => string.Equals(a, "--view", StringComparison.OrdinalIgnoreCase)); if (vi >= 0 && vi + 1 < args.Length) StartView = args[vi + 1];
             // --view-after <seconds>: wait for real measurements before opening the view (screenshots; 1.5 s when not given, at most 10 min)
             int va = Array.FindIndex(args, a => string.Equals(a, "--view-after", StringComparison.OrdinalIgnoreCase)); int vs; if (va >= 0 && va + 1 < args.Length && int.TryParse(args[va + 1], out vs)) StartViewMs = Math.Max(1500, Math.Min(600000, vs * 1000));
+            int thi = Array.FindIndex(args, a => string.Equals(a, "--hold", StringComparison.OrdinalIgnoreCase)), th; if (thi >= 0 && thi + 1 < args.Length && int.TryParse(args[thi + 1], out th)) TourHoldMs = Math.Max(1, Math.Min(60, th)) * 1000;
+            int tci = Array.FindIndex(args, a => string.Equals(a, "--count", StringComparison.OrdinalIgnoreCase)), tc; if (tci >= 0 && tci + 1 < args.Length && int.TryParse(args[tci + 1], out tc)) TourCount = Math.Max(0, tc);
             int tpi = Array.FindIndex(args, a => string.Equals(a, "--tip", StringComparison.OrdinalIgnoreCase)); if (tpi >= 0 && tpi + 1 < args.Length) StartTip = args[tpi + 1];
             int dsi = Array.FindIndex(args, a => string.Equals(a, "--dest", StringComparison.OrdinalIgnoreCase)); if (dsi >= 0 && dsi + 1 < args.Length) StartDest = args[dsi + 1];
             // a double-clicked .adeebo file ("--open <file>", or the bare path the Store's file association passes)

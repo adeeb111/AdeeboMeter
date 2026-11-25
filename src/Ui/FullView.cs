@@ -783,6 +783,8 @@ namespace AdeeboMeter
                 };
                 wait.Start();
             }
+            // --view tour[:tool] walks every Toolbox tool for a screen recording (FullView.DemoTour.cs)
+            if (page == "tour") { DemoTour(sub); return; }
             // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
             if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
             var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell", "lab" };

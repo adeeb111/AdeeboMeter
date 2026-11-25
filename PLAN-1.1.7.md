@@ -64,11 +64,11 @@ CHANGELOG dated 24 Nov with the last round; website widget pictures; GitHub link
 license, Source, privacy questions); language links flashing on reload.
 
 ### B1 - blockers (first on Saturday)
+Done 24 Nov and live (PR #42): SITE-M1 privacy translations (the missing pieces added to the translation table),
+SITE-M2 + ML-1 offline site bar, font and pictures (generator fixed), LAB-ML2 sw.js hang, L-6 privacy wording.
+
 | ID | What | Where |
 |---|---|---|
-| SITE-M1 | **Live now:** 18 privacy list items + 4 paragraphs reverted to English in fr/es/ar/bn | `docs/*/privacy.html` - restore the 225c1b9 translations, keep the new layout |
-| SITE-M2 | **Live now:** offline copy dropped `/site.js`, `/sitebar.css`, Barlow 700 (bar unstyled offline) | `tools/learnsite.py:244-246` generator + `docs/sw.js` |
-| LAB-ML2 | sw.js navigate: a cache-read rejection never calls `done` (hang) | `docs/sw.js:20,22` + generator `learnsite.py:280-281`: `.catch(() => done(OFF()))` |
 | W-ML2 | Press on the widget, Alt+Tab, release elsewhere: the full window opens | `AppCtx.cs:196` - open only if the release is over the widget |
 | W-CALM-M1 | One hover line hides why/move: the why-line and "Drag to move · Esc" never show | `AppCtx.cs:777-790` - decide the order (see Decisions) |
 
@@ -133,6 +133,13 @@ license, Source, privacy questions); language links flashing on reload.
 - CHANGELOG: name the hunters13 / test4 items still missing (LAB-ML1 remainder).
 
 ---
+
+## C. Already in 1.1.7 (24 Nov)
+- **Tour mode for recordings** (`--view tour`, `src/Ui/FullView.DemoTour.cs`, `tools/demo/Record-Tour.ps1`): walks every
+  tool (open, Example inputs, run or show the example, scroll, hold), writes `tour-chapters.csv`; the script records with
+  OBS and cuts one clip per tool with ffmpeg. Adeeb has a test build (`AdeeboMeter-tour-test.zip`, 1.1.6 + tour).
+  To check on Windows: a full run, the chapter times against the recording, nothing popping over the tour (awards, tips).
+- Handovers updated: `HANDOVER-SEO.md`, `HANDOVER-CONTENT.md` (this week's changes, the tour, the channels).
 
 ## Decisions for Adeeb (before or on Saturday)
 1. Widget hover line: which wins when several apply - why (takeover/hold), since (what changed), move (when unlocked)?
