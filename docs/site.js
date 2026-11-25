@@ -28,7 +28,7 @@
   function cur(href) { var h = href.replace(/index\.html$/, ''); return h === path || (h.length > pre.length + 1 && h.slice(-1) === '/' && path.indexOf(h) === 0) ? ' aria-current="page"' : ''; }
   function a(href, label, cls) { return '<a' + (cls ? ' class="' + cls + '"' : '') + ' href="' + href + '"' + cur(href) + '>' + esc(label) + '</a>'; }
   var gaming = pre + '/gaming.html', main = [[pre + '/', T.home], [pre + '/learn/', T.learn], [pre + '/blog/', T.blog], ['/games.html', T.games], ['/live.html', T.live]];
-  var more = [['/files.html', T.files], ['/app.html', T.phone], [gaming, T.gaming], [pre + '/streaming.html', T.streaming], [pre + '/trading.html', T.trading], [pre + '/isp-report.html', T.isp], ['/hall-of-fame.html', T.hof], [pre + '/privacy.html', T.privacy]];
+  var more = [['/files.html', T.files], ['/app.html', T.phone], [gaming, T.gaming], [pre + '/streaming.html', T.streaming], [pre + '/trading.html', T.trading], [pre + '/isp-report.html', T.isp], ['/hall-of-fame.html', T.hof], [pre + '/privacy.html', T.privacy], ['/img/poster.png', {"en": {"poster": "Poster", "line": "Everything AdeeboMeter does, on one page.", "see": "See the poster", "get": "Download the poster", "alt": "The AdeeboMeter poster: what it does - the corner widget, What's wrong?, the ISP report, 232 tools, AdeeboShell, AdeeboLab and more"}, "fr": {"poster": "Affiche", "line": "Tout ce que fait AdeeboMeter, sur une page.", "see": "Voir l’affiche", "get": "Télécharger l’affiche", "alt": "L’affiche d’AdeeboMeter : ce qu’il fait - le widget, Qu’est-ce qui ne va pas ?, le rapport pour le fournisseur, 232 outils, AdeeboShell, AdeeboLab et plus"}, "es": {"poster": "Póster", "line": "Todo lo que hace AdeeboMeter, en una página.", "see": "Ver el póster", "get": "Descargar el póster", "alt": "El póster de AdeeboMeter: lo que hace - el widget, ¿Qué pasa?, el informe para el proveedor, 232 herramientas, AdeeboShell, AdeeboLab y más"}, "ar": {"poster": "الملصق", "line": "كل ما يفعله AdeeboMeter في صفحة واحدة.", "see": "شاهد الملصق", "get": "نزّل الملصق", "alt": "ملصق AdeeboMeter: ما يفعله - أداة الزاوية، ما الخلل؟، تقرير مزوّد الخدمة، 232 أداة، AdeeboShell، AdeeboLab والمزيد"}, "bn": {"poster": "পোস্টার", "line": "AdeeboMeter যা যা করে, এক পাতায়।", "see": "পোস্টার দেখুন", "get": "পোস্টার ডাউনলোড করুন", "alt": "AdeeboMeter-এর পোস্টার: এটি কী করে - কোণের উইজেট, What's wrong?, ISP রিপোর্ট, ২৩২টি টুল, AdeeboShell, AdeeboLab ও আরও"}}[lang].poster]];
   var bar = document.getElementById('sitebar');
   if (bar && !bar.getAttribute('data-filled')) {
     bar.setAttribute('data-filled', '1'); bar.setAttribute('aria-label', T.site);
@@ -133,6 +133,49 @@
     if (typeof d.showModal !== 'function') return;
     if (!d.open) d.showModal(); d.querySelector('.dl-x').focus();
   }
+  // ---- the poster: once, for a first visit - a small corner card, never over the page (24 Nov)
+  var PO = {"en": {"poster": "Poster", "line": "Everything AdeeboMeter does, on one page.", "see": "See the poster", "get": "Download the poster", "alt": "The AdeeboMeter poster: what it does - the corner widget, What's wrong?, the ISP report, 232 tools, AdeeboShell, AdeeboLab and more"}, "fr": {"poster": "Affiche", "line": "Tout ce que fait AdeeboMeter, sur une page.", "see": "Voir l’affiche", "get": "Télécharger l’affiche", "alt": "L’affiche d’AdeeboMeter : ce qu’il fait - le widget, Qu’est-ce qui ne va pas ?, le rapport pour le fournisseur, 232 outils, AdeeboShell, AdeeboLab et plus"}, "es": {"poster": "Póster", "line": "Todo lo que hace AdeeboMeter, en una página.", "see": "Ver el póster", "get": "Descargar el póster", "alt": "El póster de AdeeboMeter: lo que hace - el widget, ¿Qué pasa?, el informe para el proveedor, 232 herramientas, AdeeboShell, AdeeboLab y más"}, "ar": {"poster": "الملصق", "line": "كل ما يفعله AdeeboMeter في صفحة واحدة.", "see": "شاهد الملصق", "get": "نزّل الملصق", "alt": "ملصق AdeeboMeter: ما يفعله - أداة الزاوية، ما الخلل؟، تقرير مزوّد الخدمة، 232 أداة، AdeeboShell، AdeeboLab والمزيد"}, "bn": {"poster": "পোস্টার", "line": "AdeeboMeter যা যা করে, এক পাতায়।", "see": "পোস্টার দেখুন", "get": "পোস্টার ডাউনলোড করুন", "alt": "AdeeboMeter-এর পোস্টার: এটি কী করে - কোণের উইজেট, What's wrong?, ISP রিপোর্ট, ২৩২টি টুল, AdeeboShell, AdeeboLab ও আরও"}}[lang];
+  function openPoster() {
+    var d = document.getElementById('am-poster');
+    if (!d) {
+      d = document.createElement('dialog'); d.id = 'am-poster'; d.className = 'am-dl am-pv'; d.setAttribute('aria-label', PO.poster);
+      if (lang === 'ar') d.dir = 'rtl';
+      d.innerHTML = '<div class="dl-card"><button class="dl-x" type="button" aria-label="' + esc(T.close) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+        '<img class="pv-img" src="/img/poster.png" width="1080" height="1350" alt="' + esc(PO.alt) + '"><p class="dl-foot"><a href="/img/poster.png" download="AdeeboMeter-poster.png">' + esc(PO.get) + '</a></p></div>';
+      document.body.appendChild(d);
+      d.querySelector('.dl-x').addEventListener('click', function () { close(d); });
+      d.addEventListener('click', function (e) { if (e.target === d) close(d); });
+      d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
+    }
+    if (typeof d.showModal !== 'function') { location.href = '/img/poster.png'; return; }
+    if (!d.open) d.showModal(); d.querySelector('.dl-x').focus();
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    var el = e.target.closest && e.target.closest('a[href="/img/poster.png"]'); if (!el || el.hasAttribute('download')) return;
+    e.preventDefault(); [].forEach.call(document.querySelectorAll('details.sb-more[open], details.navmore[open]'), function (dd) { dd.removeAttribute('open'); }); openPoster();
+  });
+  (function () {
+    var seen = true; try { seen = !!localStorage.getItem('am-poster'); } catch (e) {}
+    if (seen || html.classList.contains('inapp') || /^\/(app|r|remote)\.html$/.test(location.pathname)) return;
+    setTimeout(function () {
+      if (document.querySelector('dialog[open]')) return;   // never over a window someone opened
+      try { localStorage.setItem('am-poster', '1'); } catch (e) {}
+      var c = document.createElement('aside'); c.className = 'am-pc'; c.setAttribute('aria-label', PO.poster); if (lang === 'ar') c.dir = 'rtl';
+      c.innerHTML = '<button class="pc-x" type="button" aria-label="' + esc(T.close) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><img src="/img/poster-sm.webp" width="96" height="120" alt="">' +
+        '<div><p>' + esc(PO.line) + '</p><button class="pc-see" type="button">' + esc(PO.see) + '</button></div><i class="pc-bar" aria-hidden="true"></i>';
+      document.body.appendChild(c);
+      var left = 8000, t0 = 0, timer = 0;
+      function hide() { clearTimeout(timer); c.classList.add('out'); setTimeout(function () { c.remove(); }, 180); }
+      function run() { t0 = Date.now(); c.classList.remove('hold'); timer = setTimeout(hide, left); }
+      function hold() { if (!t0) return; clearTimeout(timer); left = Math.max(1500, left - (Date.now() - t0)); t0 = 0; c.classList.add('hold'); }
+      c.addEventListener('mouseenter', hold); c.addEventListener('focusin', hold);
+      c.addEventListener('mouseleave', function () { if (!c.contains(document.activeElement)) run(); });
+      c.querySelector('.pc-x').addEventListener('click', hide);
+      c.querySelector('.pc-see').addEventListener('click', function () { hide(); openPoster(); });
+      requestAnimationFrame(function () { c.classList.add('in'); run(); });
+    }, 3000);
+  })();
   function openNew() {
     var d = newDialog();
     if (typeof d.showModal !== 'function') { location.hash = 'new'; return; }

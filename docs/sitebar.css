@@ -79,6 +79,23 @@ button.dl-opt{width:100%;font:inherit;text-align:start;cursor:pointer}
 .am-new .nw-list b{font-weight:700;font-size:15px}
 .am-new .nw-list small{color:var(--sb-sub);font-size:14px}
 .am-new .nw-foot{margin:18px 0 0;color:var(--sb-sub);font-size:14px}
+.am-pv{width:min(560px,calc(100vw - 28px))}
+.am-pv .pv-img{display:block;width:100%;height:auto;max-height:calc(100vh - 140px);object-fit:contain;border-radius:10px;margin:28px 0 0}
+.am-pc{position:fixed;bottom:16px;inset-inline-end:16px;z-index:60;width:min(340px,calc(100vw - 32px));box-sizing:border-box;display:flex;gap:14px;align-items:center;padding:12px 40px 14px 12px;border-radius:16px;background:var(--sb-pop);color:var(--sb-ink);box-shadow:var(--sb-shadow);font:500 15px/1.4 Barlow,"Segoe UI","Nirmala UI",system-ui,sans-serif;overflow:hidden;opacity:0;transform:translateY(12px);transition:opacity 220ms cubic-bezier(.23,1,.32,1),transform 220ms cubic-bezier(.23,1,.32,1)}
+.am-pc[dir=rtl]{padding:12px 12px 14px 40px}
+.am-pc.in{opacity:1;transform:none}.am-pc.out{opacity:0;transform:translateY(8px);transition-duration:160ms}
+.am-pc img{flex:none;border-radius:8px;display:block}
+.am-pc p{margin:0 0 8px}
+.am-pc .pc-see{border:0;border-radius:10px;padding:8px 14px;background:var(--sb-blue);color:#fff;font:inherit;font-weight:600;cursor:pointer;min-height:40px}
+.am-pc .pc-see:active{transform:scale(.97)}
+.am-pc .pc-x{position:absolute;top:6px;inset-inline-end:6px;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--sb-sub);cursor:pointer}
+@media (hover:hover){.am-pc .pc-x:hover{background:var(--sb-hover);color:var(--sb-ink)}.am-pc .pc-see:hover{background:#0D47BD}}
+.am-pc :focus-visible{outline:2px solid var(--sb-focus);outline-offset:2px}
+.am-pc .pc-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--sb-blue);transform-origin:left;animation:am-pc-bar 8s linear forwards}
+.am-pc.hold .pc-bar{animation-play-state:paused}
+.am-pc[dir=rtl] .pc-bar{transform-origin:right}
+@keyframes am-pc-bar{to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.am-pc{transition:opacity 160ms}.am-pc,.am-pc.out{transform:none}}
 .am-new .lic-full{margin-top:16px;font-size:14px}
 .am-new .lic-full summary{cursor:pointer;color:var(--sb-blue-ink);font-weight:600}
 .am-new .lic-full pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Consolas,monospace;color:var(--sb-sub);background:var(--sb-hover);border-radius:10px;padding:12px;margin:10px 0 0;max-height:240px;overflow:auto;text-align:left}
