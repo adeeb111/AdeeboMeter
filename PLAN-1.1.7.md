@@ -8,8 +8,8 @@ Released together as one 1.1.7:
 - **B. The fixes** - the hunters15 "last final check" findings on 1.1.6 (84 new + the leftovers), minus what was
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
-- **D. New:** Network Doctor, Flow (a tab in AdeeboShell), Lab additions (Failure Lab, challenges, Multicast Theater),
-  Cellular Lab, PCAP Theater. Parked: new Toolbox tools (no user has asked yet), Fleet, Remote Help.
+- **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Cellular Lab, Windows
+  internals and hardware tools (D6). Dropped: Flow, PCAP Theater. Parked: Fleet, Remote Help.
 
 ```
 Saturday ─► B1 blockers (site live now, widget Alt+Tab) ─► A. the look ─► B2-B6 fixes ─► tester script on Adeeb's PC ─► 1.1.7
