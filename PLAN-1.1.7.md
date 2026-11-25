@@ -229,8 +229,15 @@ holidays, and the free keys price US shares only.
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
   a one-month line where the key gives one. Fixes the wide row with the empty middle.
-- Checks: self-test for region -> market mapping and the ECB parser; tester-script pictures for Canada, France,
-  India and Bangladesh.
+- **Order by who uses it** (site requests by country, 25 Nov: Canada 2.28k, Bangladesh 232, US 224, Poland 29):
+  Canada (as today) -> Bangladesh -> United States -> Poland -> the rest.
+  - Bangladesh: the taka isn't in the ECB list - find a free, no-key source that has BDT (check on Saturday; if none,
+    say so on the page). Dhaka shares (DSE) are not on the free price services: the page says it, and suggests the
+    world/US list instead of showing dashes. Dhaka hours (Sun-Thu) and holidays in the table.
+  - United States: USD as home currency, New York first, US holidays (already known).
+  - Poland: PLN (in the ECB list), Warsaw index and hours, `.WA` added to the suffix list, Warsaw holidays.
+- Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for Canada,
+  Bangladesh, United States and Poland.
 
 ### Dropped (25 Nov)
 - D2 Flow (AdeeboShell tab) and D5 PCAP Theater - dropped by Adeeb.
