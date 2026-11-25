@@ -229,7 +229,7 @@ holidays, and the free keys price US shares only.
   line - "not on the free price services" - instead of dashes that look broken.
 - **Your companies:** each company a small card - price and change in its own currency, open/closed dot, day range,
   a one-month line where the key gives one. Fixes the wide row with the empty middle.
-- **Built in: 10 markets - one per app language plus the big economies** (Adeeb, 25 Nov). Built in = hand-checked
+- **Built in: 11 markets - one per app language plus the big economies** (Adeeb, 25 Nov). Built in = hand-checked
   presets that work with no key: currency, exchange hours and holidays, index list, default widget symbols.
   | Why | Markets |
   |---|---|
@@ -244,14 +244,14 @@ holidays, and the free keys price US shares only.
     on Saturday; if none, the page says so).
   - Bangladesh leads with the rates people send money on: USD, CAD, GBP, EUR, MYR, SAR against the taka. Dhaka
     (Sun-Thu) and Riyadh (Sun-Thu) hours; local shares there aren't on the free price services - one plain line.
-  - Holidays: ten exchange tables (Toronto, New York, London, Dhaka, Paris, Mexico, Madrid, Riyadh, Shanghai,
+  - Holidays: eleven exchange tables (Toronto, New York, London, Dhaka, Paris, Mexico, Madrid, Riyadh, Shanghai,
     Frankfurt, Tokyo), checked by hand once a year - a release-checklist item.
 - **Every other country: "Custom market"**, like the other key-based places (quote keys, sports): pick your currency
   and exchange from a list; rates from the ECB (~30 currencies, no key); prices with your own key (FMP / Finnhub /
   Twelve Data, whichever covers that exchange - the add-key sheet says which); hours from the exchange list;
   holidays say "not checked" unless the key's service gives them. Poland (29 requests) is the first test of this path (PLN, `.WA`
   added to the suffix list).
-- Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for all 10
+- Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for all 11
   built-in markets, and Poland as a Custom market.
 
 ### Dropped (25 Nov)
