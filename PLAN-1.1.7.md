@@ -9,7 +9,7 @@ Released together as one 1.1.7:
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
 - **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Flow (a tab in AdeeboShell -
-  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7), easier for non-engineers (D8).
+  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7), easier for non-engineers (D8), Send it to my PC for phone visitors (D9).
   Dropped: PCAP Theater, the Topogram look. Parked: Fleet, Remote Help.
 
 ```
@@ -266,6 +266,29 @@ Review: "Too information savvy. Hard to use and understand for non-networking au
    is your provider"); the numbers are one click deeper. Lines in all five languages.
 - Checks: tester-script pictures of the welcome cards and the simple sidebar in every language; self-test that an
   upgrade keeps every page visible and that a fresh install starts simple.
+
+### D9. Website: "Send it to my PC" for phone visitors (SEO review 25 Nov: 37 of 42 visits on phones, mostly from Facebook)
+A phone visitor can't install a Windows app; today they meet a Download button that does nothing useful for them, and most
+never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server, no email collected, nothing stored.
+- **Who sees it:** phones and tablets (coarse pointer + narrow screen, or a mobile user agent). Desktop is unchanged.
+- **The swap:** on phones the hero's Download becomes **"Send it to my PC"**; a small "Download anyway" stays under it.
+  Same on the feature pages, the guides, the poster card and the What's new window.
+- **What "Send it to my PC" offers** (a bottom sheet, one tap each):
+  1. **Share** - the phone's own share sheet (send yourself the link by WhatsApp, Messenger, email...).
+     Facebook's and Instagram's in-app browsers often have no share sheet: then this button is hidden.
+  2. **Email it to me** - opens their own mail app with subject and body filled in (a mailto link); nothing passes
+     through us.
+  3. **Remind me later** - a calendar reminder file (.ics): "Install AdeeboMeter on your PC", tomorrow 19:00, with
+     the link; works offline in every phone calendar.
+  4. **Copy the short link** - `adeebometer.com/get`, big and easy to type on the PC. `/get` is a new page that
+     starts the download on a PC and on a phone shows this same sheet.
+- **While they're on the phone:** "Meanwhile, learn how your internet works" -> Learn (it works well on phones) and
+  the Lab demo. No phone-app push: the phone app needs the PC app first.
+- **Counting it honestly:** `/get?via=share|mail|ics|copy` - Cloudflare's page counts show how many phone visitors
+  came back on a PC, by route. No cookies, no IDs.
+- **Five languages**, through the translation table; Arabic sheet mirrored.
+- **Checks:** browser tests at 320/390 px in Chrome, Safari and Facebook's in-app browser (share hidden there);
+  desktop pages unchanged byte for byte apart from the shared script.
 
 ### Dropped (25 Nov)
 - D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
