@@ -34,3 +34,19 @@ The handover's claim that every page has five copies is incomplete. Lab, Hall of
 5. After the owner merges, verify live metadata and request indexing for the four troubleshooting guides and three feature pages.
 
 No Emil design-principles skill/file was found in the installed skills or this repository. The shipped design is the reference. No automatic merge or deployment.
+
+## Content and language expansion — 25 November
+
+Prepared on codex/shell-lab-guides; owner merge required.
+
+- Two new English source guides: /adeeboshell.html and /adeebolab-guide.html. Uses guide.css, the existing site bar, flat coloured command rows and the five-stop diagram. Both have French, Spanish, Arabic and Bengali copies generated from the shared translation table, with localized titles, descriptions, canonical URLs, hreflang and TechArticle metadata.
+- Five missing utility page families added to the language generator: phone app, Files, Live, Games and Hall of Fame. Twenty new language copies; shared scripts and cryptography remain unchanged in generated copies. Root data-file paths and dynamic lesson links work from language folders. The phone app keeps its full-screen layout and the embedded viewer retains its language.
+- AdeeboLab’s interactive simulator remains the existing English tool. Its five-language guide explicitly discloses English simulator labels and explanations. Full simulator narrative translation belongs to the product/content translation pass; do not invent localized simulator URLs or claim that its UI is translated.
+- Sitemap expected total: 583 unique URLs (553 previous + 10 guide pages + 20 utility copies). Updated content dates; private relay/result routes remain excluded.
+- MTR full tutorial: https://www.youtube.com/watch?v=5IEcPIedL2I — How to Read MTR Results on Windows | Packet Loss Explained, published25Nov,2:22,Englishaudio. The visible description says the walkthrough uses the built-in sample; preserve that disclosure.
+- MTR Short: https://www.youtube.com/shorts/L8fN2w5TXWQ — One Hop Shows Packet Loss. Is It Really a Problem? Facebook supplied share link resolves to https://www.facebook.com/reel/1128060556600411. Facebook body could not be read reliably; link retained as provided by owner, no Facebook metadata edits claimed.
+- Full video, Short and reel linked from /learn/icmp.html (the existing ping/traceroute lesson) and /isp-report.html in five languages: ten localized cards. No YouTube/Facebook iframe, script or thumbnail before a click. CreativeWork subjects link to external watch pages; these articles are not video watch pages. Platform titles and chapters preserved.
+- Final offline-cache refresh now runs after all language copies and site bars, so new Bengali pages are included and the hash describes the shipped HTML.
+- New English copy is stored in the English pages; translations live in docs/locale-messages.js. Do not hand-edit generated language HTML.
+
+After merge: verify the new live URLs, resubmit the 583-URL sitemap, and request indexing for the two new guides. Search discovery is not a guarantee of indexing or rankings.

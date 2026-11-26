@@ -53,6 +53,73 @@ def install():
             page.write_text(content, encoding="utf-8", newline="\n")
         count += 1
     print(f"Published DNS tutorial linked on {count} lesson pages.")
+    install_mtr()
+
+
+MTR_URL = "https://www.youtube.com/watch?v=5IEcPIedL2I"
+MTR_TITLE = "How to Read MTR Results on Windows | Packet Loss Explained"
+MTR_SHORT = "https://www.youtube.com/shorts/L8fN2w5TXWQ"
+MTR_REEL = "https://www.facebook.com/reel/1128060556600411"
+MTR_SHORT_TITLE = "One Hop Shows Packet Loss. Is It Really a Problem?"
+SHORT_COPY = {"en": ("Watch the Short", "Watch the Facebook clip"), "fr": ("Voir le Short", "Voir le clip Facebook"), "es": ("Ver el Short", "Ver el vídeo en Facebook"), "ar": ("شاهد المقطع القصير", "شاهد مقطع Facebook"), "bn": ("শর্টস দেখুন", "Facebook-এ ভিডিও দেখুন")}
+MTR_COPY = {
+    "en": ("Read an MTR result", "Compare an intermediate hop with the destination before blaming packet loss on that hop.", "English audio · 2:22 · uses the built-in example", "Watch on YouTube"),
+    "fr": ("Lire un résultat MTR", "Comparez un saut intermédiaire à la destination avant de lui attribuer une perte de paquets.", "Audio en anglais · 2:22 · utilise l’exemple intégré", "Regarder sur YouTube"),
+    "es": ("Cómo leer un resultado MTR", "Compara un salto intermedio con el destino antes de atribuirle la pérdida de paquetes.", "Audio en inglés · 2:22 · usa el ejemplo integrado", "Ver en YouTube"),
+    "ar": ("فهم نتيجة MTR", "قارن القفزة الوسيطة بالوجهة قبل نسبة فقد الحزم إلى تلك القفزة.", "الصوت بالإنجليزية · 2:22 · يستخدم المثال المدمج", "شاهد على YouTube"),
+    "bn": ("MTR-এর ফল বুঝুন", "কোনো ধাপে প্যাকেট হারানোর সিদ্ধান্ত নেওয়ার আগে মাঝের ধাপটি গন্তব্যের সঙ্গে তুলনা করুন।", "ইংরেজি অডিও · ২:২২ · বিল্ট-ইন উদাহরণ ব্যবহার করা হয়েছে", "YouTube-এ দেখুন"),
+}
+
+
+def install_mtr():
+    count = 0
+    for language, (heading, summary, audio, watch) in MTR_COPY.items():
+        for route in ("learn/icmp.html", "isp-report.html"):
+            page = DOCS / ("" if language == "en" else language) / route
+            if not page.exists():
+                continue
+            content = page.read_text(encoding="utf-8-sig")
+            content = re.sub(r"<!--mtr-video:start-->.*?<!--mtr-video:end-->\s*", "", content, flags=re.S)
+            card_class = "card" if route.startswith("learn/") else "example"
+            card = (f'<!--mtr-video:start--><section class="{card_class}" id="mtr-video-tutorial" aria-labelledby="mtr-video-heading">'
+                    f'<h2 id="mtr-video-heading">{html.escape(heading)}</h2>'
+                    f'<p lang="en">{MTR_TITLE}</p><p>{html.escape(summary)}</p><p>{html.escape(audio)}</p>'
+                    f'<p><a href="{MTR_URL}">{html.escape(watch)}</a></p>'
+                    f'<p lang="en">{MTR_SHORT_TITLE}</p><p><a href="{MTR_SHORT}">{html.escape(SHORT_COPY[language][0])}</a> · '
+                    f'<a href="{MTR_REEL}">{html.escape(SHORT_COPY[language][1])}</a></p></section><!--mtr-video:end-->\n')
+            if route.startswith("learn/"):
+                content, n = re.subn(r'(<div class="card one">.*?</div>\s*)', lambda m: m[1] + card, content, count=1, flags=re.S)
+                if not n:
+                    raise ValueError(f"Missing lesson introduction: {page}")
+            else:
+                content = content.replace('<h2 id="checks">', card + '<h2 id="checks">', 1)
+                if 'id="mtr-video-tutorial"' not in content:
+                    raise ValueError(f"Missing guide checks: {page}")
+            work = {"@type": "CreativeWork", "name": MTR_TITLE, "genre": "Video tutorial", "url": MTR_URL,
+                    "inLanguage": "en", "datePublished": "2026-11-25", "publisher": {"@type": "Organization", "name": "AdeeboMeter"}}
+            short_work = {"@type": "CreativeWork", "name": MTR_SHORT_TITLE, "genre": "Short video", "url": MTR_SHORT,
+                          "inLanguage": "en", "sameAs": MTR_REEL, "publisher": {"@type": "Organization", "name": "AdeeboMeter"}}
+            linked = [False]
+            def add_subject(match):
+                data = json.loads(match[1])
+                if data.get("@type") in ("LearningResource", "WebPage"):
+                    subjects = data.get("subjectOf", [])
+                    subjects = subjects if isinstance(subjects, list) else [subjects]
+                    data["subjectOf"] = [x for x in subjects if x.get("url") not in (MTR_URL, MTR_SHORT)] + [work, short_work]
+                    if data.get("@type") == "WebPage":
+                        data["url"] = "https://adeebometer.com/" + ("" if language == "en" else language + "/") + route
+                        data["inLanguage"] = "fr-CA" if language == "fr" else language
+                    linked[0] = True
+                return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + '</script>'
+            content = re.sub(r'<script type="application/ld\+json">(.*?)</script>', add_subject, content, flags=re.S)
+            if not linked[0]:
+                relative = ("" if language == "en" else language + "/") + route
+                data = {"@context": "https://schema.org", "@type": "WebPage", "url": "https://adeebometer.com/" + relative,
+                        "inLanguage": "fr-CA" if language == "fr" else language, "subjectOf": [work, short_work]}
+                content = content.replace("</head>", '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + '</script>\n</head>')
+            page.write_text(content, encoding="utf-8", newline="\n")
+            count += 1
+    print(f"Published MTR tutorial linked on {count} pages.")
 
 
 if __name__ == "__main__":
