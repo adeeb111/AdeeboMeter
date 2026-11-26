@@ -26,6 +26,7 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeebolab-guide.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeebolab-guide.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeebolab-guide.html">
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/adeebolab-guide.html#faq","url":"https://adeebometer.com/adeebolab-guide.html","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Does AdeeboLab test my real connection?","acceptedAnswer":{"@type":"Answer","text":"No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC."}},{"@type":"Question","name":"Do I need to install AdeeboLab?","acceptedAnswer":{"@type":"Answer","text":"No. Open the simulator in your browser. Its labels and explanations are currently in English."}}]}</script>
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -38,6 +39,8 @@
 <p>The simulator currently uses English labels and explanations.</p>
 <p><a class="guide-cta" href="/lab.html">Open the network simulator</a></p>
 <h2>What the experiment shows</h2><ul class="next-checks"><li><strong>The packet cannot leave the PC</strong><span>Start with the local path and gateway settings in this simulation.</span></li><li><strong>Names stop answering</strong><span>DNS can fail while other parts of a connection still work.</span></li><li><strong>The real connection is slow</strong><span>Use a real measurement. A simulated fault does not diagnose your PC, Wi-Fi or provider.</span></li></ul>
+<details class="guide-detail" data-guide-faq><summary>Does AdeeboLab test my real connection?</summary><p>No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.</p></details>
+<details class="guide-detail" data-guide-faq><summary>Do I need to install AdeeboLab?</summary><p>No. Open the simulator in your browser. Its labels and explanations are currently in English.</p></details>
 <aside class="summary"><h2>One change. One explanation.</h2><p>Keep the same drawing and endpoints while you change the fault. It makes the layer that failed easier to recognise.</p></aside>
 <p><a href="/adeeboshell.html">Run a real check with AdeeboShell</a> <a href="/wifi-or-isp.html">or compare Wi-Fi with a cable</a>.</p>
 <section class="end"><h2>Learn the failure. Then check the real thing.</h2><p>Use AdeeboLab for the explanation and AdeeboMeter for readings from your Windows PC.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>

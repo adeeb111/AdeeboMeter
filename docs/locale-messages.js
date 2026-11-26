@@ -4615,7 +4615,19 @@ window.AdeeboMeterMessages = {
     "End of day": "Fin de journée",
     "(every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.": "(autres devises), ESPN (résultats, classements et actualités ; flux non officiel susceptible de changer), BBC Sport (cricket, tennis et F1), Alpaca (variations boursières américaines, copie quotidienne partagée), Alpha Vantage (avec votre clé) et Open-Meteo (météo, CC BY 4.0). Avec vos clés : football-data.org, CricketData et GNews. Un cache évite de transmettre votre adresse aux sources ; rien n’est conservé.",
     "The simulator currently uses English labels and explanations.": "Le simulateur utilise actuellement des libellés et des explications en anglais.",
-    "No one yet - the first Adeebo Award is still out there. Will it be you?": "Personne pour le moment. Le premier Adeebo Award attend encore son gagnant. Et si c’était vous ?"
+    "No one yet - the first Adeebo Award is still out there. Will it be you?": "Personne pour le moment. Le premier Adeebo Award attend encore son gagnant. Et si c’était vous ?",
+    "Can AdeeboShell change my Windows files?": "AdeeboShell peut-il modifier mes fichiers Windows ?",
+    "No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.": "Non. Les dossiers et les lecteurs Windows sont en lecture seule dans AdeeboShell. Les modifications de fichiers restent dans le dossier /data d’AdeeboMeter.",
+    "How do I stop an AdeeboShell command?": "Comment arrêter une commande AdeeboShell ?",
+    "Press Ctrl+C to stop the current command.": "Appuyez sur Ctrl+C pour arrêter la commande en cours.",
+    "Does AdeeboLab test my real connection?": "AdeeboLab teste-t-il ma connexion réelle ?",
+    "No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.": "Non. AdeeboLab simule des paquets sur un schéma. Il n’envoie aucun trafic réseau réel. Utilisez AdeeboMeter pour mesurer la connexion de votre PC Windows.",
+    "Do I need to install AdeeboLab?": "Faut-il installer AdeeboLab ?",
+    "No. Open the simulator in your browser. Its labels and explanations are currently in English.": "Non. Ouvrez le simulateur dans votre navigateur. Ses libellés et ses explications sont actuellement en anglais.",
+    "Wi-Fi or your internet provider?": "Votre Wi-Fi ou votre fournisseur Internet ?",
+    "English audio": "Audio en anglais",
+    "Read the Wi-Fi guide": "Lire le guide Wi-Fi",
+    "Wi-Fi or your internet provider? A Windows connection check.": "Votre Wi-Fi ou votre fournisseur Internet ? Une vérification sous Windows."
   },
   "es": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} ya está disponible - tienes la {mine}. Descárgala abajo y elige Actualizar.",
@@ -9360,7 +9372,19 @@ window.AdeeboMeterMessages = {
     "End of day": "Cierre del día",
     "(every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.": "(otras divisas), ESPN (resultados, clasificaciones y noticias; fuente no oficial que puede cambiar), BBC Sport (críquet, tenis y F1), Alpaca (movimientos bursátiles de EE. UU., copia diaria compartida), Alpha Vantage (con tu clave) y Open-Meteo (tiempo, CC BY 4.0). Con tus claves: football-data.org, CricketData y GNews. Una caché evita revelar tu dirección a las fuentes; no se guarda nada.",
     "The simulator currently uses English labels and explanations.": "El simulador utiliza actualmente etiquetas y explicaciones en inglés.",
-    "No one yet - the first Adeebo Award is still out there. Will it be you?": "Todavía nadie. El primer Adeebo Award sigue esperando a su ganador. ¿Serás tú?"
+    "No one yet - the first Adeebo Award is still out there. Will it be you?": "Todavía nadie. El primer Adeebo Award sigue esperando a su ganador. ¿Serás tú?",
+    "Can AdeeboShell change my Windows files?": "¿Puede AdeeboShell modificar mis archivos de Windows?",
+    "No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.": "No. Las carpetas y unidades de Windows son de solo lectura en AdeeboShell. Los cambios en archivos se limitan a la carpeta /data de AdeeboMeter.",
+    "How do I stop an AdeeboShell command?": "¿Cómo detengo un comando de AdeeboShell?",
+    "Press Ctrl+C to stop the current command.": "Pulsa Ctrl+C para detener el comando actual.",
+    "Does AdeeboLab test my real connection?": "¿AdeeboLab prueba mi conexión real?",
+    "No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.": "No. AdeeboLab simula paquetes en un diagrama. No envía tráfico de red real. Usa AdeeboMeter para obtener mediciones de tu PC con Windows.",
+    "Do I need to install AdeeboLab?": "¿Tengo que instalar AdeeboLab?",
+    "No. Open the simulator in your browser. Its labels and explanations are currently in English.": "No. Abre el simulador en tu navegador. Sus etiquetas y explicaciones están actualmente en inglés.",
+    "Wi-Fi or your internet provider?": "¿Tu Wi-Fi o tu proveedor de internet?",
+    "English audio": "Audio en inglés",
+    "Read the Wi-Fi guide": "Leer la guía de Wi-Fi",
+    "Wi-Fi or your internet provider? A Windows connection check.": "¿Tu Wi-Fi o tu proveedor de internet? Una comprobación en Windows."
   },
   "ar": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "صدر AdeeboMeter {v} - لديك {mine}. نزّله من الأسفل واختر تحديث.",
@@ -14105,7 +14129,19 @@ window.AdeeboMeterMessages = {
     "End of day": "نهاية اليوم",
     "(every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.": "(العملات الأخرى)، ESPN (النتائج والترتيب والأخبار؛ مصدر غير رسمي قابل للتغيير)، BBC Sport (الكريكيت والتنس وF1)، Alpaca (تحركات الأسهم الأمريكية، نسخة يومية مشتركة)، Alpha Vantage (بمفتاحك)، وOpen-Meteo (الطقس، CC BY 4.0). بمفاتيحك: football-data.org وCricketData وGNews. يجري الجلب عبر ذاكرة مؤقتة فلا ترى المصادر عنوانك؛ لا يُحفظ شيء.",
     "The simulator currently uses English labels and explanations.": "يستخدم المحاكي حاليًا تسميات وشروحًا باللغة الإنجليزية.",
-    "No one yet - the first Adeebo Award is still out there. Will it be you?": "لا أحد بعد. ما زالت جائزة Adeebo Award الأولى تنتظر فائزًا. هل ستكون أنت؟"
+    "No one yet - the first Adeebo Award is still out there. Will it be you?": "لا أحد بعد. ما زالت جائزة Adeebo Award الأولى تنتظر فائزًا. هل ستكون أنت؟",
+    "Can AdeeboShell change my Windows files?": "هل يستطيع AdeeboShell تعديل ملفات Windows؟",
+    "No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.": "لا. مجلدات Windows ومحركات الأقراص للقراءة فقط في AdeeboShell. تقتصر تغييرات الملفات على مجلد /data في AdeeboMeter.",
+    "How do I stop an AdeeboShell command?": "كيف أوقف أمرًا في AdeeboShell؟",
+    "Press Ctrl+C to stop the current command.": "اضغط Ctrl+C لإيقاف الأمر الحالي.",
+    "Does AdeeboLab test my real connection?": "هل يختبر AdeeboLab اتصالي الحقيقي؟",
+    "No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.": "لا. يحاكي AdeeboLab الحزم على رسم توضيحي. ولا يرسل حركة مرور حقيقية عبر الشبكة. استخدم AdeeboMeter للحصول على قياسات من كمبيوتر Windows.",
+    "Do I need to install AdeeboLab?": "هل أحتاج إلى تثبيت AdeeboLab؟",
+    "No. Open the simulator in your browser. Its labels and explanations are currently in English.": "لا. افتح المحاكي في متصفحك. تسمياته وشروحه حاليًا باللغة الإنجليزية.",
+    "Wi-Fi or your internet provider?": "هل المشكلة في Wi-Fi أم مزوّد الإنترنت؟",
+    "English audio": "الصوت بالإنجليزية",
+    "Read the Wi-Fi guide": "اقرأ دليل Wi-Fi",
+    "Wi-Fi or your internet provider? A Windows connection check.": "هل المشكلة في Wi-Fi أم مزوّد الإنترنت؟ فحص الاتصال على Windows."
   },
   "bn": {
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} এসেছে - আপনার কাছে আছে {mine}। নিচ থেকে ডাউনলোড করে আপডেট বেছে নিন।",
@@ -18723,7 +18759,19 @@ window.AdeeboMeterMessages = {
     "End of day": "দিনের শেষে",
     "(every other currency), ESPN (scores, standings and league headlines - an unofficial feed that can change), BBC Sport (cricket, tennis and F1 headlines), Alpaca (US stock movers, the shared daily copy), Alpha Vantage (US stock movers with your own key), Open-Meteo (weather, CC BY 4.0). With your own keys: football-data.org, CricketData and GNews. Fetched through a small cache so the sources never see your address; nothing is saved.": "(অন্য মুদ্রা), ESPN (ফল, অবস্থান ও খবর; অনানুষ্ঠানিক ফিড, বদলাতে পারে), BBC Sport (ক্রিকেট, টেনিস ও F1), Alpaca (যুক্তরাষ্ট্রের শেয়ারের ওঠানামার যৌথ দৈনিক কপি), Alpha Vantage (নিজের কী দিয়ে) ও Open-Meteo (আবহাওয়া, CC BY 4.0)। নিজের কী দিয়ে: football-data.org, CricketData ও GNews। ক্যাশের মাধ্যমে তথ্য আসে, তাই উৎস আপনার ঠিকানা দেখে না; কিছু সংরক্ষণ হয় না।",
     "The simulator currently uses English labels and explanations.": "সিমুলেটরের বোতাম ও ব্যাখ্যা বর্তমানে ইংরেজিতে আছে।",
-    "No one yet - the first Adeebo Award is still out there. Will it be you?": "এখনও কেউ পাননি। প্রথম Adeebo Award এখনও অপেক্ষায়। আপনি কি হবেন প্রথম?"
+    "No one yet - the first Adeebo Award is still out there. Will it be you?": "এখনও কেউ পাননি। প্রথম Adeebo Award এখনও অপেক্ষায়। আপনি কি হবেন প্রথম?",
+    "Can AdeeboShell change my Windows files?": "AdeeboShell কি আমার Windows ফাইল বদলাতে পারে?",
+    "No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.": "না। AdeeboShell-এ Windows ফোল্ডার ও ড্রাইভ শুধু পড়া যায়। ফাইলের পরিবর্তন AdeeboMeter-এর /data ফোল্ডারের মধ্যেই থাকে।",
+    "How do I stop an AdeeboShell command?": "AdeeboShell-এর কমান্ড কীভাবে থামাব?",
+    "Press Ctrl+C to stop the current command.": "চলমান কমান্ড থামাতে Ctrl+C চাপুন।",
+    "Does AdeeboLab test my real connection?": "AdeeboLab কি আমার আসল সংযোগ পরীক্ষা করে?",
+    "No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.": "না। AdeeboLab একটি আঁকা নেটওয়ার্কে প্যাকেট চলার অনুকরণ করে। এটি আসল নেটওয়ার্ক ট্র্যাফিক পাঠায় না। আপনার Windows পিসির সংযোগ মাপতে AdeeboMeter ব্যবহার করুন।",
+    "Do I need to install AdeeboLab?": "AdeeboLab কি ইনস্টল করতে হবে?",
+    "No. Open the simulator in your browser. Its labels and explanations are currently in English.": "না। ব্রাউজারে সিমুলেটরটি খুলুন। এর বোতাম ও ব্যাখ্যা বর্তমানে ইংরেজিতে আছে।",
+    "Wi-Fi or your internet provider?": "আপনার Wi-Fi, নাকি ইন্টারনেট সেবাদাতা?",
+    "English audio": "ইংরেজি অডিও",
+    "Read the Wi-Fi guide": "Wi-Fi নির্দেশিকা পড়ুন",
+    "Wi-Fi or your internet provider? A Windows connection check.": "আপনার Wi-Fi, নাকি ইন্টারনেট সেবাদাতা? Windows-এ সংযোগ পরীক্ষা।"
   },
   "zh": {
     "Language": "语言",
