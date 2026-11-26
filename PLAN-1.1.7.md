@@ -292,6 +292,9 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
 
 ### D10. Website: a checkup in any browser - for phones, Macs, Chromebooks, locked work PCs (Adeeb, 25 Nov)
 `adeebometer.com/check` in all five languages. No install, no account, nothing stored; results stay in the browser.
+- **Where it lives (Adeeb, 25 Nov):** a fifth card in the home page's "Try it in your browser" row - Learn, Games,
+  Live, Files, **Check** - built and styled like those pages (installable the same way, works offline for the parts
+  that can). Not a separate product.
 - **What a browser can measure** (each in plain words first, numbers one tap deeper):
   - latency and jitter to the nearest edge (the relay's `/ping`, as Live Data already does);
   - download and upload speed;
@@ -313,8 +316,7 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
   when it feels slow and compare".
 - Learn links from each result ("What is jitter?") - those lessons already exist in five languages.
 - Checks: Chrome, Safari (Mac and iPhone), Firefox, Facebook's in-app browser; 320 / 390 / 1280 px; Arabic mirrored.
-- Not in 1.1.7: a Mac app (the Windows app can't run on Mac; it would be a new app - a separate decision, like
-  Android).
+- A Mac app: Adeeb wants Mac as a focus (Mac users pay better) - planned separately in PLAN-MAC.md, not inside 1.1.7.
 
 ### Dropped (25 Nov)
 - D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
