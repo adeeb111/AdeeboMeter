@@ -9,7 +9,7 @@ Released together as one 1.1.7:
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
 - **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Flow (a tab in AdeeboShell -
-  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7).
+  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7), easier for non-engineers (D8).
   Dropped: PCAP Theater, the Topogram look. Parked: Fleet, Remote Help.
 
 ```
@@ -113,7 +113,7 @@ the rest; the order below is the build order after B1.
 
 ```
 B1 ─► D1 Network Doctor ─► D2 Flow (Shell tab) ─► D3 Lab: Failure Lab + challenges + Multicast
-       ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► D7 Your market ─► B2-B6
+       ─► D4 Cellular Lab ─► D6 Windows + hardware tools ─► D7 Your market ─► D8 easier to use ─► B2-B6
        ─► tester script (+ tour) ─► 1.1.7
 ```
 
@@ -251,6 +251,21 @@ holidays, and the free keys price US shares only.
   added to the suffix list).
 - Checks: self-test for region -> market mapping and the rate parsers; tester-script pictures for all 11
   built-in markets, and Poland as a Custom market.
+
+### D8. Easier for people who aren't network engineers (user review, 25 Nov)
+Review: "Too information savvy. Hard to use and understand for non-networking audiences." All four agreed by Adeeb.
+1. **Learn starts with "Using AdeeboMeter"** - four lessons first in Learn (app and website): what it does (the five
+   dots, the corner widget, green/yellow/red); getting around (sidebar, What's wrong?, Check a destination, Toolbox);
+   changing things (language, theme, buddy, widget, quiet hours); when something's wrong (from the dot to the ISP report).
+2. **First-run welcome** - four cards on the same four topics, shown once, Skip on every card, each ends with
+   "More in Learn > Using AdeeboMeter". Never shown again after Skip or the last card; reachable from Help.
+3. **Simple sidebar by default** - new users see Home, What's wrong?, Check a destination, Learn, Settings and
+   "More" (Toolbox, Shell, Lab, Gamer, Streaming, Markets, Sports...). Opening More keeps it open; Settings > "Show every
+   page" brings back today's sidebar. Existing users keep the sidebar they have (upgrade = everything shown).
+4. **Plain words on Home** - each check gets one line saying what it means for you ("Your Wi-Fi is fine - the slowdown
+   is your provider"); the numbers are one click deeper. Lines in all five languages.
+- Checks: tester-script pictures of the welcome cards and the simple sidebar in every language; self-test that an
+  upgrade keeps every page visible and that a fresh install starts simple.
 
 ### Dropped (25 Nov)
 - D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
