@@ -4,11 +4,11 @@
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>svchost.exe : un hôte pour plusieurs services | Apprendre | AdeeboMeter</title>
-<meta name="description" content="Pourquoi il y en a tant et ce qu’ils contiennent.">
+<title>Qu’est-ce que svchost.exe ? Services Windows et processeur | AdeeboMeter</title>
+<meta name="description" content="svchost.exe héberge des services Windows. Découvrez pourquoi plusieurs instances fonctionnent et comparez leur activité processeur et disque.">
 <link rel="canonical" href="https://adeebometer.com/fr/learn/svchost.html">
-<meta property="og:title" content="svchost.exe : un hôte pour plusieurs services | Apprendre | AdeeboMeter">
-<meta property="og:description" content="Pourquoi il y en a tant et ce qu’ils contiennent.">
+<meta property="og:title" content="Qu’est-ce que svchost.exe ? Services Windows et processeur | AdeeboMeter">
+<meta property="og:description" content="svchost.exe héberge des services Windows. Découvrez pourquoi plusieurs instances fonctionnent et comparez leur activité processeur et disque.">
 <meta property="og:type" content="article">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
@@ -80,7 +80,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <a class="chip" href="/fr/learn/#windows">Votre PC Windows</a>
 <h1>svchost.exe : un hôte pour plusieurs services</h1>
 <p class="tag">Pourquoi il y en a tant et ce qu’ils contiennent.</p>
-<div class="card one"><p>Un hôte partagé pour de petits services Windows.</p></div>
+<div class="card one"><p>svchost.exe est l’hôte de services Windows. Chaque instance héberge un ou plusieurs services. Plusieurs instances peuvent être normales; identifiez le service actif avant toute modification.</p></div>
 <h2>Déroulement des échanges</h2>
 <div class="ladder"><div class="lanes" aria-hidden="true"><span>services</span><span>svchost</span></div><ol aria-label="Échanges entre services et svchost, dans l’ordre">
 <li class="msg"><p><span class="sr">services vers svchost : </span>héberger ces services</p><div class="arrow" aria-hidden="true"></div></li>
@@ -96,6 +96,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>Un par onglet</button>
 <button>Un par utilisateur</button>
 <p class="say" aria-live="polite"></p></div>
+<!--process-check:start--><section class="card" id="process-next-check" aria-labelledby="process-check-heading"><h2 id="process-check-heading">PC lent ? Commencez par un processus actif.</h2><ol><li>Repérez le processus qui utilise le plus le processeur.</li><li>Comparez son activité disque au même moment.</li><li>Recommencez lorsque le PC fonctionne normalement. Notez l’heure et votre activité.</li></ol><p><a href="/fr/pc-monitoring.html">Comparer le processeur, la mémoire et le disque sous Windows</a></p><p><a href="https://learn.microsoft.com/en-us/windows/win32/services/service-programs">Comment Windows héberge les services</a></p></section><!--process-check:end-->
 <p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Obtenir AdeeboMeter pour Windows</a><a class="cta ghost" href="/fr/games.html">Jouer aux jeux</a></p>
 <h2>Autres leçons Windows</h2>
 <div class="ui-rows"><a class="ui-row" href="/fr/learn/boot-chain.html" data-id="boot-chain"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>Le démarrage de Windows, du bouton au bureau</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/fr/learn/lsass.html" data-id="lsass"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>lsass.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/fr/learn/csrss.html" data-id="csrss"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>csrss.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/fr/learn/wininit.html" data-id="wininit"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>wininit.exe</b><small>Windows</small></span><span data-ic="chev"></span></a></div>

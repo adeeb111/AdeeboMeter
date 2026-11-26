@@ -295,4 +295,5 @@ self.addEventListener("fetch", e => {
 """ % (ver, json.dumps(['/' + x for x in core]), json.dumps(['/' + x for x in extra]))
 with open(os.path.join(root, 'docs/sw.js'), 'w', encoding='utf-8', newline='\n') as f: f.write(sw)
 print('sw.js', ver, len(core) + len(extra), 'files')
+__import__('runpy').run_path(os.path.join(root, 'tools', 'search_entrypoints.py'))['install']()
 
