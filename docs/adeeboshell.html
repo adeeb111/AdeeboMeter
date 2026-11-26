@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-language-route="/adeeboshell.html" data-language-variants="en bn fr es ar">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network commands on Windows with AdeeboShell | AdeeboMeter</title>
+<meta name="description" content="Use AdeeboShell inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
+<link rel="canonical" href="https://adeebometer.com/adeeboshell.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Network commands on Windows with AdeeboShell | AdeeboMeter">
+<meta property="og:description" content="Use AdeeboShell inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
+<meta property="og:url" content="https://adeebometer.com/adeeboshell.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeeboshell.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeeboshell.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeeboshell.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>Your network check, one command at a time.</h1>
+<p class="dek">Open AdeeboShell inside AdeeboMeter. Read the current status, find a tool, then run the check you need.</p>
+<ul class="meta"><li>Windows 10 and 11</li><li>AdeeboMeter 1.1.6</li><li>3 min read</li></ul>
+<figure class="command-map" aria-labelledby="commands">
+<h2 id="commands">Three commands to start with</h2>
+<div class="command-row command-status"><code dir="ltr">status</code><span>Read the current connection</span></div>
+<div class="command-row command-tools"><code dir="ltr">ls /tools</code><span>Find the available tools</span></div>
+<div class="command-row command-help"><code dir="ltr">help ping</code><span>Read the help before a check</span></div>
+<figcaption>Commands to type, not example results. Your readings come from your own PC.</figcaption>
+</figure>
+<h2>Try your first check</h2>
+<ol><li>Open the full AdeeboMeter window and choose AdeeboShell. Ctrl + ` opens it from another page in the app.</li><li>Type status and press Enter. Read what the app has measured so far; an unavailable reading is not a pass.</li><li>Type ls /tools to explore the tool groups. Use help before trying an unfamiliar command.</li></ol>
+<p>Tab completes a command. Ctrl+C stops the current command.</p>
+<h2>Read the result</h2>
+<ul class="next-checks"><li><strong>A slow or missing answer</strong><span>Compare it with another destination and a good moment. One failed check does not identify the cause on its own.</span></li><li><strong>A command you do not recognise</strong><span>Read its help first. Commands can send network traffic or work with files.</span></li></ul>
+<details class="guide-detail"><summary>Where files can change</summary><p>Built into AdeeboMeter, with its own commands. Your Windows folders and drives are read-only here; file changes stay inside AdeeboMeter’s /data folder.</p></details>
+<aside class="summary"><h2>Keep one useful comparison</h2><p>Start with status. Repeat the same check when the problem happens, and keep the time and destination with the result.</p></aside>
+<p><span>Need the picture instead?</span> <a href="/adeebolab-guide.html">Try a simulated fault in AdeeboLab</a> <a href="/isp-report.html">or make a report for your provider</a>.</p>
+<section class="end"><h2>Open AdeeboShell in the free Windows app</h2><p>The app and its built-in tools are free. No ads or administrator rights required.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>
+</main>
+</body>
+</html>

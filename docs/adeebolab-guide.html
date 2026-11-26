@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-language-route="/adeebolab-guide.html" data-language-variants="en bn fr es ar">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free browser network simulator: AdeeboLab | AdeeboMeter</title>
+<meta name="description" content="Draw a network in AdeeboLab, choose a simulated fault and follow a packet step by step. A free browser network simulator with no real traffic sent.">
+<link rel="canonical" href="https://adeebometer.com/adeebolab-guide.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Free browser network simulator: AdeeboLab | AdeeboMeter">
+<meta property="og:description" content="Draw a network in AdeeboLab, choose a simulated fault and follow a packet step by step. A free browser network simulator with no real traffic sent.">
+<meta property="og:url" content="https://adeebometer.com/adeebolab-guide.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeebolab-guide.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeebolab-guide.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeebolab-guide.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeebolab-guide.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeebolab-guide.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeebolab-guide.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeebolab-guide.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>Break a network. See where it stops.</h1>
+<p class="dek">Try a fault on a drawing before you investigate a real connection. AdeeboLab simulates the journey; it does not measure your network.</p>
+<ul class="meta"><li>In your browser</li><li>No installation</li><li>2 min read</li></ul>
+<figure class="path-fig"><ol class="path" aria-label="A simulated packet path"><li class="bad">PC<small>wrong gateway</small></li><li>Wi-Fi<small>link</small></li><li>Router<small>not reached</small></li><li>Provider<small>not reached</small></li><li>Far end<small>not reached</small></li></ol><figcaption>A teaching picture: the wrong gateway stops this example before the packet reaches the provider. It is not a reading from your connection.</figcaption></figure>
+<h2>Try a two-minute experiment</h2><ol><li>Open AdeeboLab and choose the Gamer example. The provider equipment is an illustration, not discovered hardware.</li><li>Choose Break it, then Wrong gateway. Keep the same starting device and destination.</li><li>Press Play. Use Step or Step back to follow the explanation at your own pace.</li><li>Try DNS times out next. Notice how a name lookup failure differs from a packet that cannot leave the PC.</li></ol>
+<p>The simulator currently uses English labels and explanations.</p>
+<p><a class="guide-cta" href="/lab.html">Open the network simulator</a></p>
+<h2>What the experiment shows</h2><ul class="next-checks"><li><strong>The packet cannot leave the PC</strong><span>Start with the local path and gateway settings in this simulation.</span></li><li><strong>Names stop answering</strong><span>DNS can fail while other parts of a connection still work.</span></li><li><strong>The real connection is slow</strong><span>Use a real measurement. A simulated fault does not diagnose your PC, Wi-Fi or provider.</span></li></ul>
+<aside class="summary"><h2>One change. One explanation.</h2><p>Keep the same drawing and endpoints while you change the fault. It makes the layer that failed easier to recognise.</p></aside>
+<p><a href="/adeeboshell.html">Run a real check with AdeeboShell</a> <a href="/wifi-or-isp.html">or compare Wi-Fi with a cable</a>.</p>
+<section class="end"><h2>Learn the failure. Then check the real thing.</h2><p>Use AdeeboLab for the explanation and AdeeboMeter for readings from your Windows PC.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>
+</main>
+</body>
+</html>

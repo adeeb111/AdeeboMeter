@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-language-route="/hall-of-fame.html" data-language-variants="en bn fr es ar">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -81,6 +81,13 @@ footer a{color:inherit}
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/hall-of-fame.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/hall-of-fame.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/hall-of-fame.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/hall-of-fame.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/hall-of-fame.html">
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -238,7 +245,7 @@ footer a{color:inherit}
   // the winners: read from hall-of-fame.json (same site), every field written as text - never as HTML
   var grid = document.getElementById('grid'), count = document.getElementById('count');
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  fetch('hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+  fetch('/hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
     var all = (d && d.entries) || [], list = all.filter(function (w) { return !w.disputed; }), held = all.length - list.length;   // hunt-5: a disputed claim waits for review - not shown as a winner
     list = list.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
     if (!list.length) { count.textContent = ''; grid.appendChild(el('p', 'empty', 'No one yet - the first Adeebo Award is still out there. Will it be you?')); return; }

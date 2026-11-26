@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr-CA" data-language-route="/adeeboshell.html" data-language-variants="en bn fr es ar">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commandes réseau sur Windows avec AdeeboShell | AdeeboMeter</title>
+<meta name="description" content="Utilisez AdeeboShell dans AdeeboMeter pour lire l’état de la connexion, explorer les outils intégrés et vérifier le réseau sous Windows. Un guide court avec des commandes à essayer.">
+<link rel="canonical" href="https://adeebometer.com/fr/adeeboshell.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Commandes réseau sur Windows avec AdeeboShell | AdeeboMeter">
+<meta property="og:description" content="Utilisez AdeeboShell dans AdeeboMeter pour lire l’état de la connexion, explorer les outils intégrés et vérifier le réseau sous Windows. Un guide court avec des commandes à essayer.">
+<meta property="og:url" content="https://adeebometer.com/fr/adeeboshell.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="fr_CA">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeeboshell.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeeboshell.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeeboshell.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>Votre réseau, une commande à la fois.</h1>
+<p class="dek">Ouvrez AdeeboShell dans AdeeboMeter. Lisez l’état actuel, trouvez un outil, puis lancez la vérification voulue.</p>
+<ul class="meta"><li>Windows 10 et 11</li><li>AdeeboMeter 1.1.6</li><li>3 min de lecture</li></ul>
+<figure class="command-map" aria-labelledby="commands">
+<h2 id="commands">Trois commandes pour commencer</h2>
+<div class="command-row command-status"><code dir="ltr">status</code><span>Lire l’état actuel de la connexion</span></div>
+<div class="command-row command-tools"><code dir="ltr">ls /tools</code><span>Trouver les outils disponibles</span></div>
+<div class="command-row command-help"><code dir="ltr">help ping</code><span>Lire l’aide avant une vérification</span></div>
+<figcaption>Des commandes à saisir, pas des résultats d’exemple. Vos mesures viennent de votre PC.</figcaption>
+</figure>
+<h2>Essayez votre première vérification</h2>
+<ol><li>Ouvrez la fenêtre complète d’AdeeboMeter et choisissez AdeeboShell. Ctrl + ` l’ouvre depuis une autre page de l’application.</li><li>Saisissez status puis appuyez sur Entrée. Lisez les mesures déjà disponibles ; une mesure indisponible ne signifie pas que tout va bien.</li><li>Saisissez ls /tools pour explorer les groupes d’outils. Utilisez help avant d’essayer une commande inconnue.</li></ol>
+<p>Tab complète une commande. Ctrl+C arrête la commande en cours.</p>
+<h2>Lisez le résultat</h2>
+<ul class="next-checks"><li><strong>Une réponse lente ou absente</strong><span>Comparez avec une autre destination et une période normale. Un seul échec ne suffit pas à établir la cause.</span></li><li><strong>Une commande inconnue</strong><span>Lisez d’abord son aide. Les commandes peuvent envoyer du trafic réseau ou manipuler des fichiers.</span></li></ul>
+<details class="guide-detail"><summary>Où les fichiers peuvent changer</summary><p>Intégré à AdeeboMeter, avec ses propres commandes. Vos dossiers et lecteurs Windows sont en lecture seule ici ; les modifications restent dans le dossier /data d’AdeeboMeter.</p></details>
+<aside class="summary"><h2>Gardez une comparaison utile</h2><p>Commencez par status. Refaites la même vérification pendant le problème et conservez l’heure et la destination avec le résultat.</p></aside>
+<p><span>Vous préférez une image ?</span> <a href="/fr/adeebolab-guide.html">Essayez une panne simulée dans AdeeboLab</a> <a href="/fr/isp-report.html">ou préparez un rapport pour votre fournisseur</a>.</p>
+<section class="end"><h2>Ouvrez AdeeboShell dans l’application Windows gratuite</h2><p>L’application et ses outils intégrés sont gratuits. Sans publicité ni droits d’administration.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Télécharger pour Windows, gratuitement</a></section>
+</main>
+</body>
+</html>
