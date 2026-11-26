@@ -9,7 +9,7 @@ Released together as one 1.1.7:
   already fixed after that review.
 - **C. Tour mode** for recordings (done).
 - **D. New:** Network Doctor, Lab additions (Failure Lab, challenges, Multicast Theater), Flow (a tab in AdeeboShell -
-  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7), easier for non-engineers (D8), Send it to my PC for phone visitors (D9).
+  automation is the push), Cellular Lab, Windows internals and hardware tools (D6), Markets for every country (D7), easier for non-engineers (D8), Send it to my PC for phone visitors (D9), a checkup in any browser (D10).
   Dropped: PCAP Theater, the Topogram look. Parked: Fleet, Remote Help.
 
 ```
@@ -289,6 +289,32 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
 - **Five languages**, through the translation table; Arabic sheet mirrored.
 - **Checks:** browser tests at 320/390 px in Chrome, Safari and Facebook's in-app browser (share hidden there);
   desktop pages unchanged byte for byte apart from the shared script.
+
+### D10. Website: a checkup in any browser - for phones, Macs, Chromebooks, locked work PCs (Adeeb, 25 Nov)
+`adeebometer.com/check` in all five languages. No install, no account, nothing stored; results stay in the browser.
+- **What a browser can measure** (each in plain words first, numbers one tap deeper):
+  - latency and jitter to the nearest edge (the relay's `/ping`, as Live Data already does);
+  - download and upload speed;
+  - **latency under load** - "will a video call stutter while someone downloads?" (the bufferbloat test);
+  - DNS: does it answer, and how fast (DNS-over-HTTPS lookups timed);
+  - IPv6: yes or no;
+  - what a video stream would get (SD / HD / 4K) from the measured speed.
+- **What it can't see, said plainly:** your Wi-Fi signal, your router, your PC. That's the bridge to the next step.
+- **Next step by device:**
+  - Windows: "Get the full picture" -> download (desktop) or Send it to my PC (D9, on a phone).
+  - **Mac (extra):** no Windows-app pitch. Instead, Mac's own tools explained the AdeeboMeter way: hold Option and
+    click the Wi-Fi icon (signal, noise, channel - what good looks like); `networkQuality` in Terminal (macOS 12+,
+    built in: speed and responsiveness); Wireless Diagnostics for a dropping Wi-Fi. Safari differences handled
+    (no connection-type info; the tests use plain fetch timing only).
+  - Android / iPhone: where to find Wi-Fi details in Settings, and Send it to my PC.
+  - Chromebook / Linux: the same browser results, plus where their Wi-Fi details live.
+- **Phone data:** on mobile data it asks first and offers a light test (~5 MB) instead of the full one (~50 MB).
+- **Honesty:** the speed is "to the nearest test server", not "your plan"; one run is a snapshot - "run it again
+  when it feels slow and compare".
+- Learn links from each result ("What is jitter?") - those lessons already exist in five languages.
+- Checks: Chrome, Safari (Mac and iPhone), Firefox, Facebook's in-app browser; 320 / 390 / 1280 px; Arabic mirrored.
+- Not in 1.1.7: a Mac app (the Windows app can't run on Mac; it would be a new app - a separate decision, like
+  Android).
 
 ### Dropped (25 Nov)
 - D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
