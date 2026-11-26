@@ -5,6 +5,7 @@ Run after tools/learnsite.py. Uses only the Python standard library.
 import html
 import json
 import re
+import sys
 from html.parser import HTMLParser
 from functools import lru_cache
 from pathlib import Path
@@ -59,6 +60,10 @@ french_sources = [DOCS / name for name in (
 )] + sorted((DOCS / "learn").glob("*.html"))
 files = sorted((DOCS / "learn").glob("*.html"))
 files = french_sources   # 21 Nov: every language gets the same pages, made from the English ones (Bangla had its own hand-made home page and guides)
+if "--guides-only" in sys.argv:
+    files = [page for page in files if page.name in {"adeeboshell.html", "adeebolab-guide.html"}]
+if "--home-only" in sys.argv:
+    files = [page for page in files if page == DOCS / "index.html"]
 localized = {"/" + p.relative_to(DOCS).as_posix() for p in files}
 localized.update(route[:-10] for route in list(localized) if route.endswith("index.html"))
 localized.update({"/learn/", "/", "/blog/", "/wifi-or-isp.html",
@@ -336,3 +341,4 @@ print(f"Generated {len(files)} {LANG_TAG} pages.")
 # English page put it back in English (21 Nov) - so add the translated box again, now that this language's pages exist.
 runpy_tutorials = __import__("runpy").run_path(str(Path(__file__).with_name("published-tutorials.py")))
 runpy_tutorials["install"]()
+__import__("runpy").run_path(str(Path(__file__).with_name("guide_faq.py")))["install"]()

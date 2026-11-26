@@ -26,6 +26,7 @@
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeeboshell.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/adeeboshell.html#faq","url":"https://adeebometer.com/adeeboshell.html","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Can AdeeboShell change my Windows files?","acceptedAnswer":{"@type":"Answer","text":"No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder."}},{"@type":"Question","name":"How do I stop an AdeeboShell command?","acceptedAnswer":{"@type":"Answer","text":"Press Ctrl+C to stop the current command."}}]}</script>
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -45,7 +46,8 @@
 <p>Tab completes a command. Ctrl+C stops the current command.</p>
 <h2>Read the result</h2>
 <ul class="next-checks"><li><strong>A slow or missing answer</strong><span>Compare it with another destination and a good moment. One failed check does not identify the cause on its own.</span></li><li><strong>A command you do not recognise</strong><span>Read its help first. Commands can send network traffic or work with files.</span></li></ul>
-<details class="guide-detail"><summary>Where files can change</summary><p>Built into AdeeboMeter, with its own commands. Your Windows folders and drives are read-only here; file changes stay inside AdeeboMeter’s /data folder.</p></details>
+<details class="guide-detail" data-guide-faq><summary>Can AdeeboShell change my Windows files?</summary><p>No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.</p></details>
+<details class="guide-detail" data-guide-faq><summary>How do I stop an AdeeboShell command?</summary><p>Press Ctrl+C to stop the current command.</p></details>
 <aside class="summary"><h2>Keep one useful comparison</h2><p>Start with status. Repeat the same check when the problem happens, and keep the time and destination with the result.</p></aside>
 <p><span>Need the picture instead?</span> <a href="/adeebolab-guide.html">Try a simulated fault in AdeeboLab</a> <a href="/isp-report.html">or make a report for your provider</a>.</p>
 <section class="end"><h2>Open AdeeboShell in the free Windows app</h2><p>The app and its built-in tools are free. No ads or administrator rights required.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>
