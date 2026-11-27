@@ -35,3 +35,5 @@
 @media(max-width:560px){.task-flow{grid-template-columns:1fr}.task-flow>div{padding:14px}.terminal-example{padding:14px}}
 
 @media(max-width:520px){.article-visual .network-lab-visual text{font-size:30px}}
+
+.article-explainer h2{margin:0 0 12px;font-size:24px}.article-explainer .explainer-art{max-width:510px;margin:auto}.article-explainer figcaption{font-size:16px}

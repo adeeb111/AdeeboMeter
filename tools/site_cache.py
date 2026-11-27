@@ -14,6 +14,7 @@ core, extra = (json.loads(group) for group in match.groups())
 extra.extend("/" + name for name in ("adeeboshell.html", "adeebolab-guide.html", "shell.html"))
 extra.append("/media/wifi-or-provider-poster.jpg")  # the small local poster, not the full MP4
 extra.append("/blog-articles.css")
+extra.append("/blog-index.css")
 extra.extend("/blog/" + p.name for p in sorted((DOCS / "blog").glob("*.html")) if p.name != "index.html")
 for language in ("bn", "fr", "es", "ar", "zh"):
     extra.extend("/" + p.relative_to(DOCS).as_posix() for p in sorted((DOCS / language).rglob("*.html")))
