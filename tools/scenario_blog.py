@@ -59,6 +59,8 @@ def install():
         source = strip(page.read_text(encoding="utf-8"))
         links = ''.join('<p><a href="' + items[slug][1] + '">' + html.escape(items[slug][0]) + '</a></p>' for slug in slugs)
         block = '<!--english-scenarios:start--><nav aria-labelledby="scenario-guides-heading"><h2 id="scenario-guides-heading">Try a real scenario</h2>' + links + '</nav><!--english-scenarios:end-->\n'
+        if route == "wifi-or-isp.html":
+            block = block.replace('<!--english-scenarios:start-->', '<!--english-scenarios:start-->' + "<section class=\"example\" id=\"connected-no-internet\" aria-labelledby=\"connected-no-internet-heading\"><h2 id=\"connected-no-internet-heading\">Wi-Fi connected, but nothing loads?</h2><p>Check three stops: your router, a destination beyond it, then DNS name lookups. In AdeeboMeter, open Home → Today → I have no internet.</p><p>English audio · about 1 minute. In this demo the connection was up and the PC had high CPU usage; your results may differ.</p><p><a href=\"https://www.youtube.com/watch?v=bp-w00rHs60\">Watch: Wi-Fi Connected but No Internet? 3 Checks on Windows</a> · <a href=\"/learn/dns.html\">Understand DNS</a></p></section>")
         source = source.replace('</main>', block + '</main>', 1)
         page.write_text(source, encoding="utf-8", newline="\n")
     page = DOCS / "sitemap.xml"
