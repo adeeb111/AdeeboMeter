@@ -5,6 +5,7 @@ set -e
 cd "$(dirname "$0")/.."
 python3 tools/lab/build.py
 python3 tools/learnsite.py
+python3 tools/scenario_blog.py
 for l in bengali french spanish arabic; do python3 tools/$l-seo.py; done
 python3 tools/site_languages.py # new families must include the language generated last
 python3 tools/site_sync.py   # last: the one site bar on every page (the scripts above rewrite pages)

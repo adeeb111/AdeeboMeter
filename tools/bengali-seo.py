@@ -188,6 +188,9 @@ for source in files:
     parser = LocalizedPage(url)
     # Decode character references before text translation without altering markup.
     content = source.read_text(encoding="utf-8-sig")
+    # These new scenario articles are English source pending reviewed translations.
+    content = re.sub(r'<!--english-scenarios:start-->.*?<!--english-scenarios:end-->\s*', '', content, flags=re.S)
+    content = re.sub(r'<script[^>]*id="scenario-blog-list"[^>]*>.*?</script>\s*', '', content, flags=re.S)
     content = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|x-default)"[^>]*>\s*', "", content)
     # Only text between tags - never the code inside <script> or <style>: escaping it there turned "a > b" into
     # "a &gt; b" and broke every inline script on the translated pages (21 Nov).
