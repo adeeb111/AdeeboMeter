@@ -4,19 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>AdeeboLab — Free Browser Network Simulator | AdeeboMeter</title>
+<title>AdeeboLab — Network Playground: Draw, Save and Share | AdeeboMeter</title>
 <link rel="canonical" href="https://adeebometer.com/lab.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2222%22%20height%3D%2222%22%20rx%3D%226%22%20fill%3D%22%231155E0%22/%3E%3Cpath%20d%3D%22M6%2015a6%206%200%200%201%2012%200%22%20fill%3D%22none%22%20stroke%3D%22%235EF2B0%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M12%2015l3-4%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
-<meta name="description" content="Try DNS timeouts, a wrong gateway or packet loss in AdeeboLab. Draw a network and step through simulated packets in your browser. Free, no installation.">
+<meta name="description" content="Build network diagrams in your browser on phone or PC. Save project files, open a copy by QR code and try simulated faults. Free, no account or installation.">
 <style>
 @font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}@font-face{font-family:"Barlow";src:url(/fonts/barlow-latin-700-normal.woff2) format("woff2");font-weight:700 800;font-display:swap}
 /* 24 Nov: the site's graphite and the logo's colours (base.css), not the old navy */
 :root{--page:#111316;--bar:#15181C;--card:#181B20;--line:#262A31;--ink:#EEF1F5;--sub:#A9B1BD;--mute:#7E8794;--blue:#3B7BF5;--blue-s:#1A2A4A;--red:#FF7A6B;--amber:#FCD34D;--green:#5EF2B0;--purple:#C9A7FF;--dot:#22262D}
 :root[data-theme="light"]{--page:#F1F3F6;--bar:#FFFFFF;--card:#FFFFFF;--line:#DDE1E7;--ink:#16191E;--sub:#4B5360;--mute:#5A6270;--blue:#1155E0;--blue-s:#E8EFFC;--red:#B42318;--amber:#875A00;--green:#17794F;--purple:#6D4BD8;--dot:#D3D8DF}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+body.home #wrap{visibility:hidden}body.home .top-actions>*:not(#saved){display:none}
 html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:500 14px/1.45 "Barlow","Segoe UI",system-ui,-apple-system,sans-serif;overflow:hidden}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
 #top{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bar);border-bottom:1px solid var(--line)}
 #top .brand{display:flex;align-items:center;gap:8px;font-weight:800;text-decoration:none;color:var(--ink);white-space:nowrap}#top .brand b{color:var(--blue)}
 #name{border:1px solid transparent;background:none;border-radius:8px;padding:5px 8px;font-weight:700;font-size:15px;width:200px;min-width:80px}
@@ -82,15 +85,25 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  #tools button{flex:0 0 58px;height:50px}#tools hr{display:none}
  #side{width:auto;max-height:42%;border-left:0;border-top:1px solid var(--line)}
  body.break #wrap{flex-direction:column}#say{right:16px;max-width:none}#hint{display:none}}
+#top{height:108px;display:block;padding:0 12px}.top-main,.top-actions{display:flex;align-items:center;gap:8px;min-height:54px}.top-main #name{flex:1;max-width:360px;min-width:40px}.top-actions #saved{margin-right:auto;max-width:40%;white-space:normal}.top-actions .sp{display:none}#wrap,#home{top:108px}
+.menu>div{box-shadow:none;max-height:70vh;overflow-y:auto}.menu>div button{min-height:44px}.tile:hover:not([aria-disabled="true"]),.tile:focus-visible{transform:none;box-shadow:none}.tile .x{display:grid}
+.save-note{max-width:720px;color:var(--sub);font-size:13px;line-height:1.6}#selectionTools{position:absolute;left:16px;top:14px;display:flex;gap:8px;background:var(--bar);padding:6px;border:1px solid var(--line);border-radius:12px}#selectionTools[hidden]{display:none}body.home #selectionTools,body.break #selectionTools{display:none}
+dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--bar);color:var(--ink);padding:18px}dialog::backdrop{background:#0009}.dialog-head,.dialog-actions{display:flex;gap:10px;align-items:center;justify-content:space-between}.dialog-head h2{font-size:19px;margin:0}dialog p{color:var(--sub)}dialog label{font-size:13px}#shareLink{display:block;width:100%;resize:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0 14px}#shareQR{max-width:340px;margin:12px auto}#shareQR svg{display:block;width:100%;height:auto}
+@media(max-width:760px){#top{padding:0 8px;overflow:visible}.top-main{gap:6px}.top-main .brand span{display:none}#name{font-size:14px;padding:5px 4px;width:60px}#saveProject,#fileBtn{padding:0 10px;height:44px}.top-actions{gap:5px;overflow-x:auto;min-height:54px}.top-actions #saved{display:block;min-width:100px;max-width:140px;font-size:11px}.top-actions #exBtn,.top-actions #getApp{display:none}.top-actions .b.i{min-width:36px}.seg button{padding:0 9px;height:38px}.menu>div{position:fixed;top:56px;right:8px;width:min(300px,calc(100vw - 16px))}#tools button{min-height:48px}#selectionTools{top:8px;left:8px}#say{max-height:32%;overflow:auto}#play{left:8px;right:8px;bottom:8px;gap:5px;flex-wrap:wrap}#play .b{padding:0 9px;min-height:40px}#play .bar{min-width:40px}#side{max-height:44%}#home{padding-top:22px}.tiles{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}.dialog-actions{flex-wrap:wrap}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<header id="top">
+<header id="top"><div class="top-main">
  <a class="brand" href="/" title="AdeeboMeter"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#1155E0"/><path d="M6 15a6 6 0 0 1 12 0" fill="none" stroke="#5EF2B0" stroke-width="2.2" stroke-linecap="round"/><path d="M12 15l3-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Adeebo<b>Lab</b></span></a>
  <button class="b i" id="homeBtn" title="AdeeboLab start page" aria-label="Start page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/></svg></button>
  <input id="name" aria-label="Drawing name" value="My network">
- <span id="saved"></span>
+ <button class="b p" id="saveProject">Save project</button>
+ <div class="menu"><button class="b" id="fileBtn" aria-haspopup="true" aria-expanded="false">Project</button><div id="fileMenu" hidden>
+  <button data-f="new">Start fresh</button><button data-f="open">Open project file…</button><button data-f="save">Save project file (.json)</button><button data-f="share">Share by QR code</button>
+  <small>Export a picture</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
+ </div><div class="top-actions">
+ <span id="saved" role="status"></span>
  <div class="sp"></div>
  <label id="accessBox" hidden style="display:flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;white-space:nowrap">Provider
   <select id="access" class="b" style="padding:0 8px" title="How your provider reaches your home - redraws the grey, not-measured part"><option value="fibre">Fibre</option><option value="cable">Cable (coax)</option><option value="dsl">DSL (phone line)</option></select></label>
@@ -98,13 +111,10 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  <button class="b i" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
  <div class="seg" role="group" aria-label="Mode"><button id="mDraw" aria-pressed="true">Draw</button><button id="mBreak" aria-pressed="false">Break it</button></div>
  <div class="menu"><button class="b" id="exBtn" aria-haspopup="true" aria-expanded="false">Examples</button><div id="exMenu" hidden></div></div>
- <div class="menu"><button class="b p" id="fileBtn" aria-haspopup="true" aria-expanded="false">File</button><div id="fileMenu" hidden>
-  <button data-f="new">New drawing</button><button data-f="open">Open a lab file…</button><button data-f="save">Save as lab file (.json)</button>
-  <small>Export</small><button data-f="png">Picture (PNG)</button><button data-f="svg">Drawing (SVG)</button></div></div>
  <button class="b i" id="theme" title="Light / dark" aria-label="Light or dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
  <a class="b" id="getApp" href="/" hidden>AdeeboMeter</a>
  <input type="file" id="openFile" accept=".json,application/json" hidden>
-</header>
+</div></header>
 <div id="wrap">
  <nav id="tools" aria-label="Tools"></nav>
  <div id="stage">
@@ -112,6 +122,7 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
   <div id="say" role="status" aria-live="polite"></div>
   <div id="zoom"><button class="b i" id="zIn" aria-label="Zoom in">+</button><button class="b i" id="zOut" aria-label="Zoom out">−</button><button class="b i" id="zFit" aria-label="Fit to screen" title="Fit">⤢</button></div>
   <div id="hint"></div>
+  <div id="selectionTools" hidden aria-label="Selected item"><button class="b" id="renameSelection">Rename</button><button class="b" id="deleteSelection">Delete</button></div>
   <div id="play"><button class="b p" id="pPlay" aria-label="Play">Play</button><button class="b" id="pBack">Step back</button><button class="b" id="pStep">Step</button><div class="bar"><i id="pBar"></i></div><span id="pNum" style="color:var(--sub);font-size:13px;min-width:44px;text-align:right"></span></div>
   <div id="edit"><input id="editIn" aria-label="Text"></div>
  </div>
@@ -125,13 +136,18 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  </aside>
 </div>
 <section id="home" aria-label="AdeeboLab start page">
- <h1>Adeebo<b>Lab</b></h1>
- <p class="lead">Draw a network, or let AdeeboMeter draw yours - then break one thing and watch where the packet stops. Everything stays on this PC.</p>
+ <h1>Adeebo<b>Lab</b> Playground</h1>
+ <p class="lead">Your network playground. Build a diagram on your phone or computer, then try a simulated fault. No account. No installation.</p>
+ <p class="save-note">Projects are cached only in this browser. Save a project file to keep it, or use a QR code to open a copy on another device. Clearing browser data can remove cached diagrams.</p>
  <h2>Start</h2><div class="tiles" id="hStart"></div>
- <h2>Your network, as AdeeboMeter sees it</h2><div class="tiles" id="hViews"></div>
- <h2 id="hMineH">Your diagrams</h2><div class="tiles" id="hMine"></div>
+ <h2 id="hViewsH">Your network, as AdeeboMeter sees it</h2><div class="tiles" id="hViews"></div>
+ <h2 id="hMineH">On this browser</h2><div class="tiles" id="hMine"></div>
  <h2>Examples</h2><div class="tiles" id="hEx"></div>
+ <p class="save-note">Start fresh opens an empty project. Your other cached diagrams stay here until you remove them. Use your phone’s camera to open a project QR code.</p>
 </section>
+<dialog id="shareDialog" aria-labelledby="shareTitle"><div class="dialog-head"><h2 id="shareTitle">Open a copy on another device</h2><button class="b" id="closeShare">Close</button></div><p>This is a snapshot, not live sync. Anyone with the QR code or link can read this project.</p><div id="shareQR"></div><p id="shareStatus" role="status"></p><label for="shareLink">Project link</label><textarea id="shareLink" readonly rows="3"></textarea><div class="dialog-actions"><button class="b p" id="copyShare">Copy link</button><button class="b" id="shareSave">Save project instead</button></div></dialog>
+<script>/*__QR__*/</script>
+<script>/*__PROJECT_TRANSFER__*/</script>
 <script>
 "use strict";
 (function () {
@@ -263,7 +279,8 @@ let drawQ = 0;
 function placeWorld(){ const w = $("#world"); if (w) w.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.z})`); gridAt(); }
 function gridAt(){ const st = $("#stage"), z = Math.max(.25, view.z); if (!st) return; st.style.backgroundSize = (20 * z) + "px " + (20 * z) + "px"; st.style.backgroundPosition = view.x + "px " + view.y + "px"; }
 function drawSoon(){ if (drawQ) return; drawQ = requestAnimationFrame(() => { drawQ = 0; draw(); }); }
-function draw(){ if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
+function draw(){
+  $("#selectionTools").hidden = !sel || mode !== "draw"; if (drawQ) { cancelAnimationFrame(drawQ); drawQ = 0; }
   const C = COL(), svg = $("#svg"); svg.textContent = "";
   const g = el("g", {transform: `translate(${view.x} ${view.y}) scale(${view.z})`, id: "world"}); svg.appendChild(g); gridAt();
   doc.areas.forEach(a => { const s = sel && sel.t === "area" && sel.id === a.id;
@@ -335,7 +352,7 @@ function buildTools(){
     b.onclick = () => { tool = x[0]; linkFrom = null; buildTools(); hint(); draw(); }; t.appendChild(b); });
 }
 function hint(){ const h = {select: "Drag to move · double-click (or F2) to rename · drag the blue corner to resize · drag empty space to pan · Delete removes", text: "Click where the text goes", area: "Drag to draw an area",
-  pen: "Drag to draw", delete: "Click anything to remove it"}[tool] || (tool.startsWith("l:") ? (linkFrom ? "Now click the second box" : "Click the first box, then the second") : "Click to place it - double-click to rename");
+  pen: "Drag to draw", delete: "Click anything to remove it"}[tool] || (tool.startsWith("l:") ? (linkFrom ? "Now click the second box" : "Click the first box, then the second") : "Tap to place it, then select Rename to label it");
   $("#hint").textContent = h; }
 
 /* ---------- pointer: place, link, move, pan, draw */
@@ -344,7 +361,7 @@ function pt(e){ const r = stage.getBoundingClientRect(); return {x: (e.clientX -
 function hit(e){ let t = e.target; while (t && t !== stage) { if (t.getAttribute && t.getAttribute("data-t")) return {t: t.getAttribute("data-t"), id: t.getAttribute("data-id")}; t = t.parentNode; } return null; }
 let drag = null;
 stage.addEventListener("pointerdown", e => {
-  if (e.button > 0 || e.target.closest("#zoom,#play,#say,#edit")) return;
+  if (e.button > 0 || e.target.closest("#zoom,#play,#say,#edit,#selectionTools")) return;
   hideEdit(); const p = pt(e), h = hit(e); stage.setPointerCapture(e.pointerId);
   /* 1.1.6 test day: double-click to rename never fired - the pointer capture above makes the browser aim the dblclick at the stage,
      and the redraw between the clicks replaces the element. Two quick presses on the same thing are the double-click instead. */
@@ -389,6 +406,8 @@ stage.addEventListener("pointerup", () => { if (!drag) return;
   if (drag.ink && drag.ink.p.length < 6) { doc.ink.pop(); undo.pop(); }
   if (!drag.pan) { persist(); draw(); } drag = null; });
 let lastDown = {k: "", t: 0};
+$("#renameSelection").onclick = () => { if (sel) renameHit(sel); };
+$("#deleteSelection").onclick = () => { if (sel) { const h = sel; change(() => remove(h)); } };
 function renameHit(h){ sel = h; draw();
   if (h.t === "node") editAt(node(h.id), "name"); else if (h.t === "text") editAt(doc.texts.find(x => x.id === h.id), "t");
   else if (h.t === "area") editAt(doc.areas.find(x => x.id === h.id), "t"); else if (h.t === "link") editAt(doc.links.find(x => x.id === h.id), "label"); }
@@ -421,36 +440,75 @@ $("#editIn").addEventListener("blur", () => hideEdit());
 document.addEventListener("keydown", e => { if (e.target.closest && e.target.closest("input,select")) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); back(e.shiftKey ? redo : undo, e.shiftKey ? undo : redo); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); back(redo, undo); }
-  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); persist(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (!document.body.classList.contains("home")) saveProject(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && sel && mode === "draw") { e.preventDefault(); const h = sel; change(() => remove(h)); }
   else if (e.key === "Escape") { linkFrom = null; sel = null; draw(); }
   else if (mode === "break" && e.key === " " && !(e.target.closest && e.target.closest("button,a,[tabindex]"))) { e.preventDefault(); toggle(); } });   /* a focused button keeps its Space */
 
 /* ---------- menus */
-function menu(btn, box){ btn.onclick = e => { e.stopPropagation(); const open = box.hidden; document.querySelectorAll(".menu>div").forEach(m => m.hidden = true);
+function menu(btn, box){ btn.onclick = e => { e.stopPropagation(); const open = box.hidden;
+  if (box.id === "fileMenu") box.querySelectorAll("[data-f]").forEach(b => { b.disabled = document.body.classList.contains("home") && !["new","open"].includes(b.getAttribute("data-f")); }); document.querySelectorAll(".menu>div").forEach(m => m.hidden = true);
   document.querySelectorAll(".menu>button").forEach(b => b.setAttribute("aria-expanded", "false")); box.hidden = !open; btn.setAttribute("aria-expanded", String(open)); }; }
-document.addEventListener("click", () => { document.querySelectorAll(".menu>div").forEach(m => m.hidden = true); });
+document.addEventListener("click", () => { document.querySelectorAll(".menu>div").forEach(m => m.hidden = true); document.querySelectorAll(".menu>button").forEach(b => b.setAttribute("aria-expanded", "false")); });
 menu($("#exBtn"), $("#exMenu")); menu($("#fileBtn"), $("#fileMenu"));
 EXNAMES.forEach(([k, n]) => { const b = document.createElement("button"); b.textContent = n; b.onclick = () => { change(() => { doc = fromExample(k); applyAccess(doc, store.get("adeebometer-lab:access") || "fibre"); }); $("#name").value = doc.name; accessUi(); fit(); if (mode === "break") fillPick(); }; $("#exMenu").appendChild(b); });
 function download(name, blob){ const a = document.createElement("a"), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); }
-const fname = ext => (doc.name || "network").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) + ext;
+const fname = ext => ((doc.name || "network").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "network") + ext;
 function svgText(){ const b = bounds(), C = COL(), keep = {x: view.x, y: view.y, z: view.z}, s0 = sel, d0 = pk.dot; sel = null; pk.dot = null; view = {x: -b.x, y: -b.y, z: 1}; draw();
   const s = $("#svg").cloneNode(true); view = keep; sel = s0; pk.dot = d0; draw();   /* the picture, not the animation frame */
   s.setAttribute("width", Math.ceil(b.w)); s.setAttribute("height", Math.ceil(b.h)); s.setAttribute("viewBox", `0 0 ${Math.ceil(b.w)} ${Math.ceil(b.h)}`);
   s.insertBefore(el("rect", {width: "100%", height: "100%", fill: C.page}), s.firstChild);
   s.setAttribute("font-family", "Segoe UI, Inter, Arial, sans-serif"); return {t: new XMLSerializer().serializeToString(s), w: Math.ceil(b.w), h: Math.ceil(b.h)}; }
-$("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute("data-f"); if (!f) return;
-  if (f === "new") { openDoc(blank()); }
+$("#fileMenu").addEventListener("click", e => { const f = e.target.getAttribute("data-f"); if (!f || (document.body.classList.contains("home") && !["new","open"].includes(f))) return;
+  if (f === "new") { openDoc(blank()); saveNow(); }
   else if (f === "open") $("#openFile").click();
-  else if (f === "save") download(fname(".json"), new Blob([JSON.stringify(doc, null, 1)], {type: "application/json"}));
+  else if (f === "save") saveProject();
+  else if (f === "share") shareProject();
   else if (f === "svg") download(fname(".svg"), new Blob([svgText().t], {type: "image/svg+xml"}));
   else if (f === "png") { const s = svgText(), img = new Image(), u = URL.createObjectURL(new Blob([s.t], {type: "image/svg+xml"}));
     img.onload = () => { const c = document.createElement("canvas"), k = 2; c.width = s.w * k; c.height = s.h * k; const x = c.getContext("2d"); x.scale(k, k); x.drawImage(img, 0, 0);
       URL.revokeObjectURL(u); c.toBlob(b => b && download(fname(".png"), b)); }; img.src = u; } });
+$("#saveProject").onclick = saveProject;
+function saveProject(){ if (document.body.classList.contains("home")) return; hideEdit(); flushSaves(); download(fname(".json"), new Blob([JSON.stringify(doc, null, 1)], {type:"application/json"})); $("#saved").textContent = "Project download requested"; }
 $("#openFile").onchange = () => { const f = $("#openFile").files[0]; if (!f) return; if (f.size > 2e6) { $("#saved").textContent = "That file is over 2 MB - too big for a lab drawing"; $("#openFile").value = ""; return; } f.text().then(t => { let d = null; try { d = valid(JSON.parse(t)); } catch (e) {}
   if (d && d.cut) { d.fid = uid("f").slice(0, 21); say("Opened part of it.", ` ${d.cut} item(s) over the lab's limits were left out - the file itself is unchanged; this copy is saved separately.`, true); }   /* never overwrite the full one in Your diagrams */
-  if (d) { delete d.cut; document.body.classList.remove("home"); change(() => { doc = d; }); $("#name").value = doc.name; accessUi(); fit(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }); };
+  if (d) { delete d.cut; d.fid = uid("f").slice(0,21); openDoc(d); saveNow(); } else $("#saved").textContent = "That file isn't a lab drawing"; $("#openFile").value = ""; }).catch(() => { $("#saved").textContent = "Could not read this file. Your current project is unchanged."; $("#openFile").value = ""; }); };
 $("#theme").onclick = () => { const r = document.documentElement, l = r.getAttribute("data-theme") !== "light"; r.setAttribute("data-theme", l ? "light" : "dark"); store.set("am-theme", l ? "light" : "dark"); draw(); };
+
+/* ---------- account-free project transfer */
+let shareTicket = 0;
+$("#closeShare").onclick = () => { shareTicket++; $("#shareDialog").close(); };
+$("#shareSave").onclick = saveProject;
+$("#copyShare").onclick = async () => {
+  const input = $("#shareLink"); if (!input.value) return;
+  try { await navigator.clipboard.writeText(input.value); $("#shareStatus").textContent = "Project link copied. It opens a separate copy."; }
+  catch (e) { input.focus(); input.select(); $("#shareStatus").textContent = "Select and copy this project link."; }
+};
+async function shareProject(){
+  if (document.body.classList.contains("home")) { $("#saved").textContent = "Start fresh or open a project first."; return; }
+  hideEdit(); flushSaves(); const snapshot = JSON.parse(JSON.stringify(doc)), ticket = ++shareTicket;
+  $("#shareQR").textContent = ""; $("#shareLink").value = ""; $("#copyShare").disabled = true;
+  $("#shareStatus").textContent = "Preparing a copy…"; $("#shareDialog").showModal();
+  try {
+    const token = await AMLabTransfer.encode(snapshot); if (ticket !== shareTicket || !$("#shareDialog").open) return;
+    const url = "https://adeebometer.com/lab.html#project=" + token;
+    $("#shareLink").value = url; $("#copyShare").disabled = false;
+    const qr = url.length <= 1500 ? AMQR.svg(url) : "";
+    if (qr) { $("#shareQR").innerHTML = qr; $("#shareStatus").textContent = "Scan with the other device’s camera, or copy the link."; }
+    else $("#shareStatus").textContent = "This project is too detailed for a readable QR code. Copy the link or save the project file.";
+  } catch (e) { if (ticket === shareTicket) $("#shareStatus").textContent = e.message || "Could not create a link. Save the project file instead."; }
+}
+async function openSharedProject(token){
+  // A link never overwrites a cached project: validation happens first, then a new local ID is assigned.
+  try {
+    const data = await AMLabTransfer.decode(token), copy = valid(data);
+    if (!copy || copy.cut) throw new Error("This project exceeds the playground limits. Ask for a project file instead.");
+    copy.fid = uid("f").slice(0,21); delete copy.cut; openDoc(copy); saveNow();
+    $("#saved").textContent = "Opened a shared copy · save a project file to keep it";
+  } catch (e) { showHome(); $("#saved").textContent = e.message || "Could not open this project link. Your cached diagrams are unchanged."; }
+  // Reloading must not reopen an old shared snapshot over later edits.
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+}
 
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
 const FAULTS = [
@@ -530,10 +588,10 @@ function setMode(m){ mode = m; document.body.classList.toggle("break", m === "br
 $("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
 
 /* ---------- the start page: new, open, AdeeboMeter's own drawings of your network, your diagrams, examples */
-function openDoc(d, title){ flushSaves(); document.body.classList.remove("home"); if (mode === "break") setMode("draw");
+function openDoc(d, title){ hideEdit(); flushSaves(); $("#saveProject").disabled = false; $("#name").disabled = false; document.body.classList.remove("home"); if (mode === "break") setMode("draw");
   sel = null; linkFrom = null; undo = []; redo = []; doc = d; $("#name").value = doc.name; accessUi(); buildTools(); hint(); $("#say").className = ""; draw(); setTimeout(fit, 0);
   if (title && doc.note) say(title, " " + doc.note, false); $("#saved").textContent = doc.fid ? "Saved in this browser" : ""; }
-function showHome(){ flushSaves(); if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
+function showHome(){ hideEdit(); flushSaves(); $("#saveProject").disabled = true; $("#name").disabled = true; if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
 $("#homeBtn").onclick = showHome;
 const VIEWS = [["lan", "See my LAN", "cpe", "Every device on your network - address, MAC and maker (up to 50 drawn)"],
   ["path", "Path to anywhere", "internet", "Your last trace or MTR, hop by hop, red where loss is real"],
@@ -560,9 +618,9 @@ let confirmDel = null, confirmT = 0;
 document.addEventListener("click", () => { if (confirmDel) { confirmDel = null; renderHome(); } });   /* "Sure?" disarms on any other click */
 function renderHome(){ const C = COL();
   const st = $("#hStart"); st.textContent = "";
-  tile(st, {big: true, title: "New diagram", sub: "An empty page - pick devices on the left and click to place them", go: () => openDoc(blank())});
-  tile(st, {icon: "database", col: C.purple, title: "Open a file", sub: "A lab file (.json) you saved before", go: () => $("#openFile").click()});
-  const vw = $("#hViews"); vw.textContent = "";
+  tile(st, {big: true, title: "Start fresh", sub: "A blank canvas. Pick a device, then tap or click to place it.", go: () => { openDoc(blank()); saveNow(); }});
+  tile(st, {icon: "database", col: C.purple, title: "Open project", sub: "Import a project file (.json) from this device", go: () => $("#openFile").click()});
+  const vw = $("#hViews"); vw.textContent = ""; vw.hidden = $("#hViewsH").hidden = !AMV;
   VIEWS.forEach(([k, n, ic, sub]) => { const d = AMV && AMV[k];
     tile(vw, {icon: ic, col: k === "lan" ? C.green : k === "path" ? C.blue : k === "wifi" ? C.wifi : k === "phone" ? C.cell : C.purple, title: n, off: !d,
       sub: !AMV ? "Open AdeeboLab from AdeeboMeter to draw yours" : !d ? (k === "path" ? "Run a trace or MTR in AdeeboMeter first (mtr 1.1.1.1 in AdeeboShell)" : "Not available on this PC") : sub,
@@ -579,7 +637,7 @@ if (location.protocol === "https:") { const ga = $("#getApp"); ga.hidden = false
 try { const t = localStorage.getItem("am-theme"); if (t === "light") document.documentElement.setAttribute("data-theme", "light"); } catch (e) {}
 if (!files().length) try { const d = valid(JSON.parse(store.get(KEY) || "null")); if (d && d.nodes.length) { d.fid = uid("f").slice(0, 21); keep(d); } } catch (e) {}   /* the one drawing kept before 1.1.6 becomes your first diagram */
 const qView = (location.search.match(/[?&]view=([a-z]+)/) || [])[1], qArg = (location.search.match(/[?&]arg=([A-Za-z0-9_-]{1,40})/) || [])[1], qBreak = /[?&]mode=break/.test(location.search), qPath = /^#path=/.test(location.hash);
-doc = start(); if (doc.measured && !doc.access) applyAccess(doc, store.get("adeebometer-lab:access") || "fibre");
+doc = /^#project=/.test(location.hash) ? blank() : start(); if (doc.measured && !doc.access) applyAccess(doc, store.get("adeebometer-lab:access") || "fibre");
 $("#name").value = doc.name; buildTools(); hint(); accessUi();
 if (qPath && doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
 setTimeout(fit, 0); addEventListener("resize", () => fit());
@@ -590,6 +648,7 @@ else if (qView === "file" && qArg) { const f = files().find(x => x.id === qArg);
 else if (qView === "ex" && qArg && EX[qArg]) { const d = fromExample(qArg); applyAccess(d, store.get("adeebometer-lab:access") || "fibre"); openDoc(d); }
 else if (qView === "open" && AMV && AMV.open) { const d = valid(AMV.open); if (d) { d.fid = uid("f").slice(0, 21); openDoc(d, "Opened from AdeeboMeter."); } else showHome(); }
 else if (!qPath) showHome();
+if (/^#project=/.test(location.hash)) openSharedProject(location.hash.slice(9));
 })();
 </script>
 </body>
