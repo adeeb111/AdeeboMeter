@@ -11,6 +11,10 @@ DOCS = Path(__file__).resolve().parents[1] / "docs"
 SITE = "https://adeebometer.com/"
 DATE = "2026-11-27"
 POSTS = (
+    ('network-lab-online-no-install', ('Build', 'Test')),
+    ('practise-terminal-commands-online', ('Type', 'Create')),
+    ('encrypt-file-without-uploading', ('File', 'Code')),
+    ('open-adeebo-file-phone-pc', ('Code', 'Key')),
     ("fast-speed-test-buffering", ("Test", "Playback")),
     ("game-lag-or-low-fps", ("PC", "Network")),
     ("internet-slow-every-evening", ("Earlier", "Evening")),
@@ -18,6 +22,9 @@ POSTS = (
     ("mtr-one-hop-packet-loss", ("Middle hop", "Destination")),
 )
 RELATED = {
+ "adeebolab-guide.html": ("network-lab-online-no-install", "practise-terminal-commands-online"),
+ "adeeboshell.html": ("practise-terminal-commands-online", "network-lab-online-no-install"),
+ "files.html": ("encrypt-file-without-uploading", "open-adeebo-file-phone-pc"),
     "streaming.html": ("fast-speed-test-buffering", "internet-slow-every-evening"),
     "gaming.html": ("game-lag-or-low-fps", "mtr-one-hop-packet-loss"),
     "wifi-or-isp.html": ("wifi-disconnects-ethernet-works", "internet-slow-every-evening"),
@@ -50,7 +57,7 @@ def install():
         raise ValueError("Missing blog list")
     source = re.sub(r'<script[^>]*id="scenario-blog-list"[^>]*>.*?</script>\s*', '', source, flags=re.S)
     rows = re.findall(r'<li><a href="([^"]+)"><div><h2>(.*?)</h2>', source, re.S)
-    data = {"@context": "https://schema.org", "@type": "ItemList", "name": "AdeeboMeter troubleshooting guides",
+    data = {"@context": "https://schema.org", "@type": "ItemList", "name": "AdeeboMeter practical guides",
             "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": SITE.rstrip('/') + route, "name": html.unescape(title)} for i, (route, title) in enumerate(rows)]}
     source = source.replace('</head>', '<script type="application/ld+json" id="scenario-blog-list">' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + '</script>\n</head>', 1)
     page.write_text(source, encoding="utf-8", newline="\n")
