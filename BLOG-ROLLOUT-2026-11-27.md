@@ -12,7 +12,7 @@ Each article contains a short answer, labeled explanatory visual, practical comp
 
 ## Discovery and maintenance
 
-Five new cards lead the English blog index (11 total). Five existing feature guides link relevant stories. Each article has a self-canonical, English and x-default alternates, social metadata and BlogPosting data. The index ItemList follows its actual cards. The sitemap now contains 588 unique URLs.
+Five new cards lead the English blog index (11 total). Five existing feature guides link relevant stories. Each article has a self-canonical, English and x-default alternates, social metadata and BlogPosting data. The index ItemList follows its actual cards. The sitemap now contains 704 unique URLs.
 
 `tools/scenario_blog.py` maintains cards, related links and sitemap entries; article HTML remains authored source. It runs in `tools/site.sh` before localization. Localization removes the marked English-only blocks so unreviewed articles are not advertised as translated content. The offline cache includes the new pages and stylesheet.
 
@@ -23,7 +23,7 @@ Separate translation review owns Bengali, French, Spanish and Arabic versions. T
 ## Validation
 
 - Generator rerun is byte-for-byte idempotent.
-- All 588 unique sitemap destinations resolve to local files.
+- All 704 unique sitemap destinations resolve to local files.
 - Five article canonical URLs, English alternates, JSON-LD and local asset/navigation links checked.
 - English index ItemList contains 11 items.
 - Repository CI checks clean; diff whitespace check clean.
@@ -32,3 +32,5 @@ Separate translation review owns Bengali, French, Spanish and Arabic versions. T
 ## After owner merges
 
 Verify the five production URLs return 200 and inspect their rendered mobile layouts. Submit the updated sitemap to Google and Bing, then request discovery of the five canonical article URLs where the tools allow. Record actual submission results separately; this PR does not claim indexing or rankings.
+
+Conflict resolution: preserved main cb18c834 localization changes, Chinese build step, sitemap entries and offline assets. Both commit histories are retained. Cache version refreshed from the main cache plus changed article content; full build recomputes the standard full-content hash.

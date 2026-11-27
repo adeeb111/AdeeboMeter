@@ -15,8 +15,9 @@ extra.extend("/" + name for name in ("adeeboshell.html", "adeebolab-guide.html")
 extra.append("/media/wifi-or-provider-poster.jpg")  # the small local poster, not the full MP4
 extra.append("/blog-articles.css")
 extra.extend("/blog/" + p.name for p in sorted((DOCS / "blog").glob("*.html")) if p.name != "index.html")
-for language in ("bn", "fr", "es", "ar"):
+for language in ("bn", "fr", "es", "ar", "zh"):
     extra.extend("/" + p.relative_to(DOCS).as_posix() for p in sorted((DOCS / language).rglob("*.html")))
+extra.extend("/" + p.relative_to(DOCS).as_posix() for p in sorted((DOCS / "kb/voice/zh").glob("*.json")))
 extra = list(dict.fromkeys(path for path in extra if path not in core))
 version = hashlib.sha256(b"".join((DOCS / path.lstrip("/")).read_bytes() for path in core + extra)).hexdigest()[:12]
 source = re.sub(r'const V = "am-[a-f0-9]+"', 'const V = "am-' + version + '"', source)

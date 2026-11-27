@@ -11,6 +11,9 @@
   cursor: pointer;
 }
 [data-language-picker]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+html:lang(zh) body { font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+html:lang(zh) :is(h1,h2,h3,h4,b,strong) { font-family: inherit; letter-spacing: normal; }
+html:lang(zh) :is(p,li,.fine,.tx) { line-height: 1.65; }
 /* Arabic uses the same components with a logical reading direction. Keep
    addresses, code and measurement diagrams in their original technical order. */
 html[lang="ar"] { direction: rtl; }

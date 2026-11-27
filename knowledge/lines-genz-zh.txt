@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|嗨 {addr}，我来搞定，网络守护已启动。
+app.open|我们回来了，正在盯着你的网络。
+all.good|全绿，氛围感直接拉满。
+all.good|没问题，你这套配置属实有点东西。
+all.good|一切正常，罕见的好消息。
+pc.busy|你的电脑顶不住了，CPU 占用 {v}。
+pc.busy|是电脑的问题，不是 Wi-Fi，关几个标签页吧。
+pc.busy|电脑扛太多了，让它歇会儿。
+wifi.drops|Wi-Fi 今天放了你 {v} 次鸽子。
+wifi.drops|断了 {v} 次，路由器也太不稳了。
+net.none|没网络了，插线或者连个 Wi-Fi 吧。
+net.none|断网了，这感觉真不对。
+inet.slow|路由器没问题，问题在运营商，真的。
+inet.slow|家里网络很能打，路由器外面的网不行。
+inet.slow|不是你的错，慢在路由器外面。
+busy|正在肝……{v}
+busy|交给我，等我一下。
+busy|加载中，等一秒。
+idle|我还在呢，躺平中。
+idle|没什么新消息，安静模式。
+idle|我这边很安静。
+search.empty|出什么问题了，{addr}？
+search.empty|像发消息一样打出来：“wifi 好慢”。
+freeze|等一秒（{v}），我在赶进度。
+freeze|我自己也卡了（{v}），马上回来。
+speedrunner|速通吗？我上一个还没跑完。
+speedrunner|别急，我还在收尾呢。
+back.again|你回来啦！发生了 {v} 件事。
+back.again|欢迎回来，给你讲讲八卦。
+dns.slow|DNS 好慢，要 {v}，延迟就是这么来的。
+dns.slow|查询要花 {v}，这 DNS 服务器有点拉。
+speed.great|下载 {v}，这速度绝了。
+speed.great|下载 {v}，说实话很顶。
+speed.bloat|速度很快，但有人下载时就卡 {v}，不太行。
+speed.bloat|不忙的时候很快，一忙就多 {v}。
+game.lag|卡顿是 Wi-Fi 的问题，不是服务器，插网线吧。
+game.lag|服务器没问题，是 Wi-Fi 掉链子了。
+game.good|Ping {v}，你稳了。
+game.good|连接很干净，冲吧。
+vpn.on|VPN 已开启，隐身模式。
+vpn.on|正在走 VPN。
+vpn.slow|VPN 要多花 {v}，卡顿就是这么来的。
+vpn.slow|VPN 的代价是 {v}。
+portal|这个 Wi-Fi 想让你先登录。
+portal|先打开登录页，酒店 Wi-Fi 都这样。
+gw.down|路由器没回应，重启一下吧。
+gw.down|你的路由器掉线了。
+isp.down|路由器没问题，是运营商挂了，他们输麻了。
+isp.down|是运营商那边断网了，不是你的问题。
+mtu.small|大包塞不进去，MTU 是 {v}。
+mtu.small|MTU 是 {v}，包对这条路来说太大了。
+port.open|{v} 开着。
+port.open|{v} 回应了，爱了爱了。
+port.closed|{v} 已读不回。
+port.closed|{v} 关着。
+cert.ok|证书没问题，是真的。
+cert.ok|小锁检查通过。
+cert.expired|他们的证书在 {v} 过期了，真的很拉。
+cert.expired|自从 {v} 就过期了，是他们的错。
+sec.ok|安全检查通过，稳了。
+sec.ok|没什么可疑的。
+sec.issue|有 {v} 件事要修，都是小问题。
+sec.issue|检查发现了 {v} 项，挺好搞定的。
+mtr.lossy|数据包在第 {v} 跳丢了。
+mtr.lossy|丢包从第 {v} 跳开始，问题就在那儿。
+mtr.clean|零丢包，很干净。
+mtr.clean|每一跳都通过了检查。
+devices.found|你的网络上有 {v} 台设备。
+devices.found|找到了 {v} 台设备，挺热闹的。
+encrypt.done|已加密，私密。
+encrypt.done|已上锁。
+decrypt.done|已打开，没人动过。
+decrypt.done|已解锁，一切正常。
+points.earned|+{v} 分，赢麻了。
+points.earned|+{v}，继续冲。
+award|500 分，Adeebo 奖，太有排面了。
+award|你拿到了 Adeebo 奖，主角光环拉满。
+late.night|这么晚了，我还醒着。
+late.night|深夜了，还在盯着呢。
+morning|早上好，夜里很安静。
+morning|早上好，夜里没出什么幺蛾子。
+update.suspect|在 {v} 更新之后坏了，经典操作。
+update.suspect|{v} 那个更新肯定动了手脚。
+call.on|正在通话，我会保持安静。
+call.on|检测到通话，正在看着。
+quiz.right|这题拿下了，稳稳的。
+quiz.wrong|不对不对，宝，再想想。
+game.streak|连续 {v} 次？？主角就是你。
+game.timeup|时间到了，这波是速通。
+market.open|市场开盘了，还行。
+storm.near|暴风雨要来了，Wi-Fi 可能会拉胯。
+stream.on|{v} 播放丝滑，爱了。
+stream.on|播放状态在线，没有缓冲。
+stream.dip|说真的，播放卡了。{v}
+stream.dip|小小卡顿了一下。{v}
+stream.none|现在没有播放。
+stream.none|没有播放，倒也清静。
+trade.ok|券商连接很快，稳了。
+trade.ok|券商连接？很顺。
+trade.slow|券商有点慢，先别点。
+trade.slow|券商连接有点拖。{v}
+trade.closed|市场收盘了。9:30 前去透透气。
+trade.closed|已收盘，9:30 再来。
+view.switch|{v} 视图，走起。
+view.switch|切到 {v}，设置没变，换个样子。

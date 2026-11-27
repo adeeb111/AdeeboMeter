@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|此地，网络于其栖息地中苏醒。
+app.open|黎明时分，我们与网络相会，万籁俱寂。
+all.good|网络安然栖息，难得一见。
+all.good|万物生机勃勃：电脑、Wi-Fi、网络。
+all.good|整个生态和谐共生。
+pc.busy|电脑负重前行，CPU 已达 {v}。
+pc.busy|不堪重负，电脑渐缓，网络无恙。
+pc.busy|电脑须轻装求生，请关闭一个应用。
+wifi.drops|今日 Wi-Fi 已遁去 {v} 次，行踪难觅。
+wifi.drops|断线 {v} 次，远离路由器信号渐弱。
+net.none|网络全无，栖息地一片寂静。
+net.none|与族群失联，请重连归队。
+inet.slow|家中网络康健，险情在路由器之外。
+inet.slow|迟缓生于运营商的领地。
+inet.slow|越过路由器，数据包在此放慢脚步。
+busy|仔细观察中……{v}
+busy|我们耐心等候。
+busy|测量仍在继续。
+idle|寂静，网络沉睡。
+idle|万物不动。
+idle|野外静谧的一小时。
+search.empty|今日想观察什么？
+search.empty|说出你要寻找的生灵。
+freeze|稍作停顿（{v}），系统正在追赶。
+freeze|片刻静止（{v}）。
+speedrunner|耐心点，上一次观察尚未结束。
+speedrunner|轻一点，一次只做一件事。
+back.again|你回来了，期间发生了 {v} 件事。
+back.again|欢迎回来，这是我们的所见。
+dns.slow|域名查询缓慢，耗时 {v}。
+dns.slow|DNS 慢如树懒：{v}。
+speed.great|下载 {v}，迅如猎隼。
+speed.great|下载 {v}，速度惊人。
+speed.bloat|速度虽快，族群繁忙时却会迟滞 {v}。
+speed.bloat|压力之下，延迟增至 {v}。
+game.lag|延迟来自 Wi-Fi，而非远方的服务器。
+game.lag|服务器稳如磐石，Wi-Fi 却在摇摆。
+game.good|Ping {v}，狩猎可以开始了。
+game.good|连接稳定，条件理想。
+vpn.on|流量藏身隧道，VPN 已开启。
+vpn.on|隐身成功，VPN 已连接。
+vpn.slow|隧道为旅程增添 {v}。
+vpn.slow|VPN 绕行：{v}。
+portal|这处水源地需要先登录。
+portal|饮水之前，旅人须先登录。
+gw.down|路由器沉寂了，请重启它。
+gw.down|路由器杳无音信。
+isp.down|家中安然无恙，广阔世界却无法抵达。
+isp.down|运营商的领地一片黑暗。
+mtu.small|大包无法通过，MTU 为 {v}。
+mtu.small|通道收窄至 {v}。
+port.open|{v} 已开放，联系上了。
+port.open|{v} 有回应。
+port.closed|{v} 依然隐藏。
+port.closed|{v} 处毫无生机。
+cert.ok|标记真实，证书有效。
+cert.ok|挂锁是真的。
+cert.expired|标记褪色：证书已于 {v} 过期。
+cert.expired|自 {v} 起已过期。
+sec.ok|未发现捕食者，检查通过。
+sec.ok|巢穴安全。
+sec.issue|观察到 {v} 处弱点。
+sec.issue|检查发现 {v} 项。
+mtr.lossy|数据包在第 {v} 跳丢失。
+mtr.lossy|自第 {v} 跳起，队伍渐渐稀疏。
+mtr.clean|迁徙完成，零丢失。
+mtr.clean|每一跳都安全抵达。
+devices.found|{v} 台设备共享这片栖息地。
+devices.found|我们数到 {v} 台设备。
+encrypt.done|妥善隐藏，已加密。
+encrypt.done|文件受到保护。
+decrypt.done|已打开，原封未动。
+decrypt.done|已解锁，毫无改变。
+points.earned|+{v} 分，罕见的技艺展示。
+points.earned|+{v} 分，成长可见。
+award|500 分，壮丽成就：Adeebo 奖。
+award|Adeebo 奖，真正了不起。
+late.night|夜幕降临，守望者仍在。
+late.night|夜行时分，仍在观察。
+morning|清晨来临，夜里一片安宁。
+morning|黎明，网络整夜安然无恙。
+update.suspect|{v} 更新之后，行为变了。
+update.suspect|自 {v} 更新以来，系统举步维艰。
+call.on|通话开始，我们静静观察。
+call.on|声音在传送，正在观察通话。
+quiz.right|看哪——正确答案，就在它的栖息地。
+quiz.wrong|答错了，连猎豹有时也会失手。
+game.streak|连续 {v} 次，野外罕见的连胜。
+game.timeup|季节结束了。
+market.open|市场苏醒，如黎明时分的兽群。
+storm.near|风暴正逼近聚居地。
+stream.on|此刻，{v} 平缓流淌，不受打扰。
+stream.on|播放流平静地穿过网络。
+stream.dip|播放流泛起短暂涟漪。{v}
+stream.dip|播放顿了一下，随后恢复。{v}
+stream.none|没有播放，四下静谧。
+stream.none|今日没有播放，森林正在歇息。
+trade.ok|通往券商的路径畅通迅速。
+trade.ok|券商迅速应答，正如预期。
+trade.slow|券商慢了下来，耐心些。
+trade.slow|午后般慵懒的券商连接。{v}
+trade.closed|市场歇息至 9:30。
+trade.closed|今夜交易场地一片安静。
+view.switch|现在移步至 {v} 视图。
+view.switch|新的栖息地：{v} 视图。

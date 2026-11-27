@@ -54,7 +54,7 @@ class Questions(HTMLParser):
 
 def install():
     count = 0
-    for lang in ("", "bn", "fr", "es", "ar"):
+    for lang in ("", "bn", "fr", "es", "ar", "zh"):
         for name in ("adeeboshell.html", "adeebolab-guide.html"):
             path = DOCS / lang / name
             if not path.exists():

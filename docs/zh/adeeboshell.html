@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/adeeboshell.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用 AdeeboShell 在 Windows 上运行网络命令 | AdeeboMeter</title>
+<meta name="description" content="在 AdeeboMeter 中使用 AdeeboShell 查看连接状态、探索内置工具并运行 Windows 网络检查。本指南提供可尝试的命令。">
+<link rel="canonical" href="https://adeebometer.com/zh/adeeboshell.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 AdeeboShell 在 Windows 上运行网络命令 | AdeeboMeter">
+<meta property="og:description" content="在 AdeeboMeter 中使用 AdeeboShell 查看连接状态、探索内置工具并运行 Windows 网络检查。本指南提供可尝试的命令。">
+<meta property="og:url" content="https://adeebometer.com/zh/adeeboshell.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeeboshell.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeeboshell.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeeboshell.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/adeeboshell.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/zh/adeeboshell.html#faq","url":"https://adeebometer.com/zh/adeeboshell.html","inLanguage":"zh-Hans","mainEntity":[{"@type":"Question","name":"AdeeboShell 能修改我的 Windows 文件吗？","acceptedAnswer":{"@type":"Answer","text":"不能。AdeeboShell 中的 Windows 文件夹和磁盘为只读，文件修改仅限 AdeeboMeter 的 /data 文件夹。"}},{"@type":"Question","name":"如何停止 AdeeboShell 命令？","acceptedAnswer":{"@type":"Answer","text":"按 Ctrl+C 停止当前命令。"}}]}</script>
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>一条命令，完成一项网络检查。</h1>
+<p class="dek">在 AdeeboMeter 中打开 AdeeboShell，查看当前状态、查找工具，再运行所需的检查。</p>
+<ul class="meta"><li>Windows 10 和 11</li><li>AdeeboMeter 1.1.6</li><li>阅读约 3 min</li></ul>
+<figure class="command-map" aria-labelledby="commands">
+<h2 id="commands">从这三条命令开始</h2>
+<div class="command-row command-status"><code dir="ltr">status</code><span>查看当前连接</span></div>
+<div class="command-row command-tools"><code dir="ltr">ls /tools</code><span>查找可用工具</span></div>
+<div class="command-row command-help"><code dir="ltr">help ping</code><span>检查前先阅读帮助</span></div>
+<figcaption>这些是可输入的命令，并非示例结果。测量数据来自您自己的电脑。</figcaption>
+</figure>
+<h2>开始第一次检查</h2>
+<ol><li>打开 AdeeboMeter 完整窗口，选择 AdeeboShell。在应用的其他页面中，可按 Ctrl + ` 打开。</li><li>输入 status 并按 Enter，查看已有的测量结果；没有测量结果并不代表检查通过。</li><li>输入 ls /tools 浏览工具分组。尝试不熟悉的命令前，请先使用 help。</li></ol>
+<p>Tab 可补全命令，Ctrl+C 可停止当前命令。</p>
+<h2>查看结果</h2>
+<ul class="next-checks"><li><strong>响应慢或没有响应</strong><span>换一个目标，并在连接正常时再次比较。单次检查失败不能独立确定原因。</span></li><li><strong>不熟悉的命令</strong><span>先阅读帮助。命令可能会发送网络流量或处理文件。</span></li></ul>
+<details class="guide-detail" data-guide-faq><summary>AdeeboShell 能修改我的 Windows 文件吗？</summary><p>不能。AdeeboShell 中的 Windows 文件夹和磁盘为只读，文件修改仅限 AdeeboMeter 的 /data 文件夹。</p></details>
+<details class="guide-detail" data-guide-faq><summary>如何停止 AdeeboShell 命令？</summary><p>按 Ctrl+C 停止当前命令。</p></details>
+<aside class="summary"><h2>保留一组有用的对比</h2><p>先运行 status。出现问题时重复相同检查，并记录时间、目标和结果。</p></aside>
+<p><span>想通过图示理解？</span> <a href="/zh/adeebolab-guide.html">在 AdeeboLab 中尝试模拟故障</a> <a href="/zh/isp-report.html">或为运营商生成报告</a>.</p>
+<section class="end"><h2>在免费 Windows 应用中打开 AdeeboShell</h2><p>应用及其内置工具均免费，无广告，无需管理员权限。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">下载 Windows - 免费</a></section>
+</main>
+</body>
+</html>

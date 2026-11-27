@@ -9,6 +9,7 @@ YOUTUBE = "https://www.youtube.com/watch?v=ebIGcO6hWmo"
 FACEBOOK = "https://www.facebook.com/reel/1911120453369179"
 TITLE = "What Is DNS? Follow a Real Lookup on Windows"
 COPY = {
+    "zh": ("观看 DNS 教程", "了解查询、解析器和应答，再运行真实的 Windows 检查。", "英语音频 · 3 分钟教程", "在 YouTube 观看", "在 Facebook 观看"),
     "en": ("Watch the DNS tutorial", "Follow the query, resolver and reply, then run a real Windows check.", "English audio · 3-minute tutorial", "Watch on YouTube", "Watch on Facebook"),
     "bn": ("DNS-এর ভিডিও নির্দেশনা দেখুন", "DNS প্রশ্ন, রিজলভার ও উত্তর কীভাবে কাজ করে দেখুন, তারপর Windows-এ পরীক্ষা করুন।", "ইংরেজি অডিও · প্রায় ৩ মিনিট", "YouTube-এ দেখুন", "Facebook-এ দেখুন"),
     "fr": ("Regardez le tutoriel DNS", "Suivez la requête, le résolveur et la réponse, puis faites une vérification sous Windows.", "Audio en anglais · tutoriel de 3 minutes", "Regarder sur YouTube", "Regarder sur Facebook"),

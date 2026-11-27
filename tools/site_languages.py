@@ -1,10 +1,10 @@
-"""Annotate complete page families after all four language generators have finished."""
+"""Annotate complete page families after all language generators have finished."""
 import re
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
 SITE = "https://adeebometer.com/"
-languages = ("en", "bn", "fr", "es", "ar")
+languages = ("en", "bn", "fr", "es", "ar", "zh")
 count = 0
 for translated in sorted((DOCS / "bn").rglob("*.html")):
     relative = translated.relative_to(DOCS / "bn")
@@ -13,14 +13,14 @@ for translated in sorted((DOCS / "bn").rglob("*.html")):
         continue
     route = relative.as_posix()
     route = route[:-10] if route.endswith("index.html") else route
-    alternates = [(lang, SITE + ("" if lang == "en" else lang + "/") + route) for lang in languages]
+    alternates = [("zh-Hans" if lang == "zh" else lang, SITE + ("" if lang == "en" else lang + "/") + route) for lang in languages]
     alternates.insert(3, ("fr-CA", SITE + "fr/" + route))
     alternates.append(("x-default", SITE + route))
     tags = "".join(f'<link rel="alternate" hreflang="{lang}" href="{url}">\n' for lang, url in alternates)
     for page in pages.values():
         source = page.read_text(encoding="utf-8-sig")
-        updated = re.sub(r' data-language-variants="[^"]*"', ' data-language-variants="en bn fr es ar"', source, count=1)
-        updated = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|x-default)"[^>]*>\s*', "", updated)
+        updated = re.sub(r' data-language-variants="[^"]*"', ' data-language-variants="en bn fr es ar zh"', source, count=1)
+        updated = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|zh(?:-Hans)?|x-default)"[^>]*>\s*', "", updated)
         updated = updated.replace("</head>", tags + "</head>", 1)
         if updated != source:
             page.write_text(updated, encoding="utf-8", newline="\n")

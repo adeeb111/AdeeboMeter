@@ -1,0 +1,137 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|监控已启动，网关、DNS 与外网探针均已上线。
+app.open|探针已启动，2 秒后出首批采样。
+app.open|轮询中：网关 2 秒，外网 15 秒。
+app.open|基线采集已开始。
+app.open|探针已布防，只出站，不监听。
+all.good|各路径均为绿色，无需处理。
+all.good|RTT 正常，丢包 0%，无闪断。
+all.good|L1–L7 均为绿色。
+all.good|网关、DNS、外网均无异常。
+all.good|状态平稳，无需排查。
+pc.busy|CPU 为{v}，瓶颈在主机，不在链路。
+pc.busy|主机已饱和，应用侧延迟在所难免。
+pc.busy|内存压力偏高，可能已开始换页。
+pc.busy|本地资源争用，建议减负。
+pc.busy|CPU 偏高，网络数值可能失真。
+wifi.drops|WLAN 抖动 ×{v}，请检查 RSSI 与漫游。
+wifi.drops|今日解除关联{v}次，请查看原因码。
+wifi.drops|链路抖动 ×{v}，疑似射频问题或 AP 解除认证。
+wifi.drops|Wi-Fi 断线{v}次，请检查同频干扰与漫游阈值。
+wifi.drops|WLAN 链路中断 ×{v}，请查看事件日志。
+net.none|无 IP，无网关，链路中断。
+net.none|全部接口均已关闭。
+net.none|无默认路由，探针已暂停。
+net.none|全部适配器 L1 均中断。
+net.none|无载波。
+inet.slow|网关 RTT 偏低，外网 RTT 为{v}，延迟在 CPE 之外。
+inet.slow|延迟产生于网关上游。
+inet.slow|局域网正常，上游延迟偏高。
+inet.slow|网关到外网的差值为{v}，属于运营商侧。
+inet.slow|上游问题，请跑 MTR 定位故障跳。
+busy|探测中……{v}
+busy|采集中……
+busy|运行中，可随时停止。
+busy|测量中……
+busy|测试进行中……
+idle|无状态变化。
+idle|平稳，基线保持。
+idle|最近一小时无事件。
+idle|轮询继续，无新情况。
+idle|安静。
+search.empty|搜索：mtu、dns、arp、mtr、snmp……
+search.empty|工具名或故障现象。
+search.empty|查询工具。
+search.empty|哪一层？
+search.empty|输入协议或故障现象。
+freeze|UI 线程阻塞{v}，正在恢复。
+freeze|UI 卡顿{v}，工作继续。
+freeze|渲染延迟{v}。
+freeze|主线程繁忙{v}。
+freeze|UI 正在追赶（{v}）。
+speedrunner|上一个任务仍在运行。
+speedrunner|队列已满，一次一个。
+speedrunner|请求速率超限，正在等待上一个。
+speedrunner|上次测试尚未完成。
+speedrunner|忙碌中，请等当前任务结束再试。
+back.again|自上次查看以来新增{v}个事件。
+back.again|自上次查看以来无事件。
+back.again|自上次查看以来的变化：见“更改”。
+back.again|这是你离开期间的日志。
+back.again|欢迎回来，事件摘要已就绪。
+dns.slow|DNS 为{v}，请换个解析器试试。
+dns.slow|解析器延迟偏高。
+speed.great|下行{v}，RTT 偏低。
+speed.great|吞吐良好，无丢包。
+speed.bloat|满载延迟 +{v}，缓冲膨胀，如有条件请启用 SQM。
+speed.bloat|负载下的排队延迟。
+game.lag|游戏 RTT 尖峰与 RSSI 下降相关，属于本地射频问题。
+game.lag|抖动源于 WLAN。
+game.good|游戏 RTT 为{v}，抖动低，丢包 0%。
+game.good|到游戏服务器的路径干净。
+vpn.on|隧道已建立。
+vpn.on|默认路由走隧道。
+vpn.slow|隧道开销 +{v}。
+vpn.slow|延迟由 VPN 网关引入。
+portal|HTTP 302 跳转至认证页，需要先登录。
+portal|检测到强制门户。
+gw.down|网关不可达，疑似 ARP 或 L2 问题。
+gw.down|网关无 ICMP 回应。
+isp.down|网关正常，上游不可达。
+isp.down|CPE 之外的 WAN 中断。
+mtu.small|路径 MTU 为{v}，请排查 PMTUD 黑洞。
+mtu.small|超过{v}的 DF 包被丢弃。
+port.open|TCP {v}已开放，握手耗时{v}。
+port.open|已收到 SYN-ACK。
+port.closed|TCP {v}收到 RST 或超时。
+port.closed|未收到 SYN-ACK，已过滤或已关闭。
+cert.ok|证书链有效，根证书可信。
+cert.ok|TLS 证书链正常。
+cert.expired|叶证书已于{v}过期。
+cert.expired|证书链无效：已过期。
+sec.ok|加固检查全部通过。
+sec.ok|未发现问题。
+sec.issue|发现{v}项问题。
+sec.issue|发现加固缺口。
+mtr.lossy|丢包自第{v}跳开始，并持续至目的地。
+mtr.lossy|路径中段转发丢包。
+mtr.clean|各跳丢包率均为 0%。
+mtr.clean|路径全程干净。
+devices.found|{v}条 ARP 记录。
+devices.found|邻居表已加载。
+encrypt.done|已加密（AES-256）。
+encrypt.done|负载已密封。
+decrypt.done|已解密，完整性已验证。
+decrypt.done|MAC 校验通过。
+points.earned|+{v}。
+points.earned|积分 +{v}。
+award|500 分，Adeebo 奖。
+award|已达到奖励阈值。
+late.night|非高峰时段，路径安静。
+late.night|深夜，各探针均正常。
+morning|夜间：无事件。
+morning|夜间摘要已就绪。
+update.suspect|{v}更新后出现回归。
+update.suspect|变化与一次 Windows 更新相关。
+call.on|检测到 RTP 流，正在监控抖动与丢包。
+call.on|通话进行中，已开启 QoS 监控。
+stream.on|{v}：路径干净，无丢包，CDN 延迟正常。
+stream.on|直播健康，网关、ISP 与边缘节点均在基线内。
+stream.dip|直播质量下降，{v}。
+stream.dip|已记录卡顿及证据，{v}。
+stream.none|未检测到视频流。
+stream.none|无直播会话，检测器空闲。
+trade.ok|到券商的 RTT 正常，路径无丢包。
+trade.ok|到券商的 TCP 连接在基线内。
+trade.slow|到券商的 RTT 超过 100 毫秒，请暂缓下单。
+trade.slow|到券商的路径劣化，{v}。
+trade.closed|非交易时段，券商探针已停止。
+trade.closed|市场已收盘，探针空闲至美国东部时间 09:30。
+view.switch|正在应用{v}配置，已下发，无需重启。
+view.switch|正在加载{v}模板，正在提交更改。
+quiz.right|ACK，答对了。
+quiz.wrong|NACK，请重传并再试一次。
+game.streak|连胜{v}场，丢包为零。
+game.timeup|超时，TTL 已耗尽。
+market.open|市场已开盘，请关注券商 RTT。
+storm.near|附近有雷暴云，预计链路会抖动。
