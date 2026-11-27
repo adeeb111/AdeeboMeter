@@ -1,0 +1,34 @@
+Search-intent content handover — 27 Nov 2026
+
+Search phrases below describe intended intent, not measured keyword volumes or ranking promises.
+
+/blog/network-lab-online-no-install.html
+Intent: network lab online; free browser network simulator; build a network diagram on phone.
+Task-first positioning: draw one path, change one fault, explain the result.
+Limits: teaching simulation; no real device discovery, network OS images, production validation or live collaboration.
+Links: /lab.html, Lab guide, terminal-practice article.
+
+/blog/practise-terminal-commands-online.html
+Intent: practise terminal commands online; browser terminal; command-line practice on phone.
+Task-first positioning: create a note, read it, pipe it to a counter.
+Limits: bounded supported commands; virtual /data files; no Bash scripting, OS commands, real ping or package installation.
+Links: /shell.html, Windows Shell guide, browser-lab article.
+
+/blog/encrypt-file-without-uploading.html
+Intent: encrypt file without uploading; local browser file encryption; AES-256 file encryption.
+Task-first positioning: encrypt locally, send file and generated code separately, verify with a test file.
+Verified code mode: AES-256-CBC + HMAC-SHA256; PBKDF2-HMAC-SHA256 600,000 iterations on new files; random salt/IV.
+Limits: proprietary container; no unbreakable/certified/audited promises; secret/device risks; originals and decrypted copies persist; no reset service.
+Browser: 100 MiB detected mobile/low-memory, otherwise 300 MiB; Windows code mode streams up to 4 GiB.
+
+/blog/open-adeebo-file-phone-pc.html
+Intent: open .adeebo file; decrypt file on phone; open encrypted file on another device.
+Code files: browser or Windows app + code. No second device required.
+P-384 recipient files: Windows app + matching private key; new installation alone cannot recover it.
+Key backup: Windows restore workflow + recovery passphrase. RSA .p7m: compatible CMS reader + private key.
+Errors: wrong code vs tampering not distinguished; unsupported file mode; browser memory limits; missing secrets.
+
+Sources reviewed: repository docs/files.html, src/Checks/FileCrypt.cs and EcKeys.cs at merge 3b69d3a0f6119bd7ee5eff0052b4c68843926ac3; NIST FIPS 197; OWASP Cryptographic Storage; MDN Web Crypto.
+
+Delivery: English only, existing flat visual design. BlogPosting metadata, canonical, English/x-default alternates, Blog ItemList, internal links, sitemap and offline cache. Generic Files title/description improved.
+Post-merge: verify actual URLs, request discovery/indexing through available webmaster tools, then compare query impressions, clicks and tool-entry visits over subsequent weeks. Do not report indexing or tiny samples as user adoption.
