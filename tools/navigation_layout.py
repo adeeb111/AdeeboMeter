@@ -31,6 +31,17 @@ for lang,l in labels.items():
  pre='' if lang=='en' else '/'+lang
  p=DOCS/(pre.strip('/')+'/' if pre else '')/'index.html'
  s=p.read_text(encoding='utf-8')
+ # Six languages share one desktop row; compact screens retain a swipeable row.
+ s=re.sub(r'<style id="language-row-layout">.*?</style>', '', s, flags=re.S)
+ s=s.replace('</head>', '<style id="language-row-layout">@media(min-width:901px){.v5lcard{flex-wrap:nowrap;gap:24px}.v5lcard>div:first-child{flex:0 1 30%}.v5ltiles{flex:1 1 0;min-width:0;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.v5l{min-width:0;padding:14px 10px}.v5l>b{font-size:clamp(18px,1.65vw,26px);white-space:nowrap}.v5l span{font-size:14px}}@media(min-width:901px) and (max-width:1199px){.v5lcard{flex-wrap:wrap}.v5lcard>div:first-child{flex:1 1 100%}.v5ltiles{flex:1 1 100%}}</style></head>',1)
+ # Complete the six-language card family without translating the greetings.
+ tiles=re.search(r'(<div class="v5ltiles">)(.*?)(</div>)',s,re.S)
+ if not tiles:raise SystemExit('Missing language cards: '+str(p))
+ content=tiles[2]
+ content=re.sub(r'(<a class="v5l"[^>]*href=")[^"]*("[^>]*hreflang="en")',r'\1/?lang=en\2',content,count=1)
+ if 'hreflang="zh-Hans"' not in content:
+  content+='<a class="v5l" href="/zh/" hreflang="zh-Hans" style="--a:#D97706;--b:#DC2626"><b lang="zh-Hans">欢迎</b><span lang="zh-Hans">简体中文<small data-cov="zh">100%</small></span></a>'
+ s=s[:tiles.start()]+tiles[1]+content+tiles[3]+s[tiles.end():]
  # Preserve the narrow-screen copies of primary links, but put mobile first.
  m=re.search(r'(<details class="navmore">.*?<div>)(.*?)(</div></details>)',s,re.S)
  if not m:raise SystemExit('Missing home More menu: '+str(p))
