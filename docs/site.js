@@ -158,7 +158,7 @@
   });
   (function () {
     var seen = true; try { seen = !!localStorage.getItem('am-poster'); } catch (e) {}
-    if (seen || html.classList.contains('inapp') || /^\/(app|r|remote)\.html$/.test(location.pathname)) return;
+    if (/^\/(?:bn\/|fr\/|es\/|ar\/|zh\/)?blog(?:\/|$)/.test(location.pathname) || seen || html.classList.contains('inapp') || /^\/(app|r|remote)\.html$/.test(location.pathname)) return;
     setTimeout(function () {
       if (document.querySelector('dialog[open]')) return;   // never over a window someone opened
       try { localStorage.setItem('am-poster', '1'); } catch (e) {}
