@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|系统上线，{addr}，扫描器正在扫过网络。
+app.open|舰载电脑已苏醒，各站均已就绪。
+all.good|所有系统正常，舰队稳固。
+all.good|前方空域清明，无异常。
+all.good|护盾开启，引擎正常，网络平静。
+pc.busy|舰船核心过热，CPU 已达 {v}。
+pc.busy|舰载电脑超载，通讯正常。
+pc.busy|电脑功率已满，请关闭一个子系统。
+wifi.drops|你的 Wi-Fi 断开 {v} 次，附近有离子风暴？
+wifi.drops|信号丢失 {v} 次，请靠近信标。
+net.none|没有信号，{addr}，正在黑暗中漂流。
+net.none|通讯全部离线，请重新接上对接线缆。
+inet.slow|你的舰船无恙，迟缓在外围星区。
+inet.slow|本地系统正常，运营商的中继迟缓。
+inet.slow|延迟始于路由器之外，是星区管制的问题。
+busy|正在计算跃迁……{v}
+busy|正在扫描航线。
+busy|正在运行诊断，{addr}。
+idle|保持位置，一切安静。
+idle|远程扫描：并无新发现。
+idle|太空寂静，仍在守望。
+search.empty|请陈述你的任务，{addr}。
+search.empty|哪个星区需要扫描？
+freeze|正在重新分配能源（{v}），请待命。
+freeze|飞行电脑正在追赶（{v}）。
+speedrunner|慢点，舰长，上一次跃迁还在处理。
+speedrunner|一次只跃迁一次。
+back.again|欢迎归舰，已记录 {v} 件事。
+back.again|回到舰桥，这是日志。
+dns.slow|星图加载缓慢：DNS 耗时 {v}。
+dns.slow|域名查询耗时 {v}，档案库很慢。
+speed.great|下载 {v}，超空间速度。
+speed.great|下载 {v}，跃迁引擎已启动。
+speed.bloat|速度虽快，负载之下延迟却跃升 {v}，轨道上堵车了。
+speed.bloat|最高速度很棒，繁忙航道会拖慢你 {v}。
+game.lag|颠簸来自你的 Wi-Fi，而非远方的空间站。
+game.lag|服务器稳定，你的 Wi-Fi 在摇晃。
+game.good|Ping {v}，获准发射。
+game.good|信号稳定，飞行顺利，{addr}。
+vpn.on|隐形装置已启动，VPN 已开启。
+vpn.on|流量经由隐秘中继传输。
+vpn.slow|中继多耗时 {v}，绕了远路。
+vpn.slow|VPN 绕行耗费 {v}。
+portal|此港口需要停靠许可，请先登录。
+portal|空间站 Wi-Fi 需要凭证。
+gw.down|家中信标沉默了，请重启路由器。
+gw.down|路由器没有回应，检查它的指示灯。
+isp.down|你的舰船无恙，中继网络中断了。
+isp.down|家中系统正常，运营商离线。
+mtu.small|货物太大，舱门装不下，MTU 为 {v}。
+mtu.small|大包穿不过气闸，MTU 为 {v}。
+port.open|{v} 号机库已开放。
+port.open|{v} 回应了我们的呼叫。
+port.closed|{v} 没有回应我们的呼叫。
+port.closed|{v} 号机库已封闭。
+cert.ok|应答器已验证，证书有效。
+cert.ok|身份已确认，挂锁是真的。
+cert.expired|他们的许可已于 {v} 过期。
+cert.expired|应答器代码已于 {v} 过期。
+sec.ok|船体完整无缺，检查通过。
+sec.ok|未发现破口。
+sec.issue|{v} 处船体破口已标记，请修补。
+sec.issue|安全扫描发现 {v} 处弱点。
+mtr.lossy|自中继 {v} 起信号丢失。
+mtr.lossy|数据包在第 {v} 跳附近消失，小行星带。
+mtr.clean|航线畅通，每个中继都正常。
+mtr.clean|整段跃迁零丢失。
+devices.found|你的空域中有 {v} 艘舰船。
+devices.found|扫描器显示 {v} 台设备。
+encrypt.done|消息已编码，只有他们能读。
+encrypt.done|传输已加密。
+decrypt.done|消息已解码，未被篡改。
+decrypt.done|已解码并验证。
+points.earned|+{v} 分，晋升待定。
+points.earned|+{v} 分，军衔上升，飞行员。
+award|500 分，授勋仪式：Adeebo 奖。
+award|Adeebo 奖已获得，舰队向你致敬。
+late.night|夜间循环，舰桥仍有人值守。
+late.night|舰桥夜班。
+morning|晨间循环，轨道上夜里安静。
+morning|早上好，{addr}，夜间无事故。
+update.suspect|{v} 更新之后系统性能下降。
+update.suspect|麻烦始于 {v} 更新之后。
+call.on|全息通话进行中，正在监测信号。
+call.on|通讯频道已打开，正在观察质量。
+quiz.right|目标锁定，答对了。
+quiz.wrong|偏离航向，{addr}，请调整后重试。
+game.streak|连续 {v} 次——超光速引擎已启动。
+game.timeup|任务时钟已到时。
+market.open|贸易站已上线。
+storm.near|附近有离子风暴——信号可能减弱。
+stream.on|舰长，{v} 传输清晰。
+stream.on|播放信号保持稳定。
+stream.dip|播放信号闪了一下。{v}
+stream.dip|播放频道受到干扰。{v}
+stream.none|播放频道没有传输。
+stream.none|播放频道静默，正在扫描。
+trade.ok|券商空间站链路强劲。
+trade.ok|券商频道畅通，响应迅速。
+trade.slow|券商频道延迟升高，保持位置。
+trade.slow|券商空间站链路较慢。{v}
+trade.closed|市场空间站离线至 9:30。
+trade.closed|交易港关闭，停靠至 9:30。
+view.switch|将舰桥切换到 {v}。
+view.switch|{v} 显示已上线。

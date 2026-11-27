@@ -28,6 +28,7 @@ namespace AdeeboMeter
             { "es", new[] { "Bienvenido", "Spanish", "#F59E0B", "#EF4444", "waves" } },
             { "ar", new[] { "أهلاً وسهلاً", "Arabic", "#059669", "#14B8A6", "arches" } },
             { "bn", new[] { "স্বাগতম", "Bangla", "#E11D48", "#16A34A", "petals" } },
+            { "zh", new[] { "欢迎", "Chinese (Simplified)", "#D97706", "#DC2626", "waves" } },
         };
         static readonly string[] PreviewWords = { "Settings", "Details", "Speed", "Back to corner" };
         static string[] LookOfLang(string code) { string[] l; return LangLook.TryGetValue(code, out l) ? l : new[] { code, code, "#1F6FEB", "#16C2A3", "rings" }; }
@@ -39,7 +40,7 @@ namespace AdeeboMeter
         {
             string key = code + "|" + px.ToString("0.#", CultureInfo.InvariantCulture) + "|" + bold;
             Font f; if (langFonts.TryGetValue(key, out f)) return f;
-            string fam = code == "bn" ? Draw.Fam("Nirmala UI", "Vrinda", "Segoe UI") : code == "ar" ? Draw.Fam("Segoe UI", "Tahoma") : Draw.Fam("Segoe UI Variable Display", "Segoe UI");
+            string fam = code == "bn" ? Draw.Fam("Nirmala UI", "Vrinda", "Segoe UI") : code == "zh" ? Draw.ChineseFontFamily : code == "ar" ? Draw.Fam("Segoe UI", "Tahoma") : Draw.Fam("Segoe UI Variable Display", "Segoe UI");
             f = new Font(fam, px, bold ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Pixel);
             if (langFonts.Count > 60) { foreach (var o in langFonts.Values) o.Dispose(); langFonts.Clear(); }
             langFonts[key] = f; return f;

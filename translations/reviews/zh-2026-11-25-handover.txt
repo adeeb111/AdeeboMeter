@@ -1,0 +1,9 @@
+Simplified Chinese handover - 25 November 2026
+Baseline: f479a27, branch codex/chinese-translation-start.
+Catalog: 249 to 476 entries; 220 newly translated and 7 reused translations. No entries removed.
+Frozen inventory: 5,667 Windows keys; 5,191 remain. Website, lessons and persona translations are not completed by this batch.
+Placeholder, numeric substring and edge whitespace validation passed. Draft requires native Chinese review.
+Chinese stays hidden in both language pickers. langcheck.py refuses hidden languages, so no checker coverage claim is made.
+Proof: AdeeboMeter-zh-Windows-proof.html and AdeeboMeter-zh-Windows-translations.txt in the parent workspace.
+Continuation: parent zh-20261125-inventory.json and zh-20261125-missing.json freeze key order; batch 0000 covers missing indices 0 through 219. Continue at index 220. Do not regenerate the frozen inventory.
+Change record: translations/reviews/zh-2026-11-25.txt.

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>如何显示你的 ISP 丢包开始的位置 | AdeeboMeter</title>
+<meta name="description" content="使用 AdeeboMeter 在 Windows 测量丢包，生成可分享给运营商的连接报告。">
+<link rel="canonical" href="https://adeebometer.com/zh/isp-report.html">
+<meta property="og:title" content="如何显示 ISP 丢包开始的位置">
+<meta property="og:description" content="路由器每次都应答，而丢包在更远几跳开始，说明问题在家中网络之外。简短报告能呈现此证据，帮助客服处理。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/zh/isp-report.html">
+<meta property="og:image" content="https://adeebometer.com/img/isp-report-example.png">
+<meta property="og:image:width" content="591">
+<meta property="og:image:height" content="507">
+<meta property="og:image:alt" content="Sample AdeeboMeter report showing packet loss beginning after the home router">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/isp-report.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/isp-report.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
+<meta property="og:locale" content="zh_CN">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="网站"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a> · <a href="https://adeebometer.com/isp-report.html?lang=en" lang="en">English</a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>如何向运营商说明丢包起点</h1>
+<p class="dek">路由器每次都应答，而丢包在更远几跳开始，说明问题在家中网络之外。简短报告能呈现此证据，帮助客服处理。</p>
+<ul class="meta"><li>Windows 应用：工具箱 › 给运营商的报告</li><li>运行 1、2 或 5 分钟</li><li>阅读约 4 min</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="本示例中的丢包位置"><li class="ok">电脑<small>稳定</small></li><li class="ok">Wi-Fi<small>此处使用网线</small></li><li class="ok">路由器<small>0% 丢包</small></li><li class="bad">运营商<small>丢包开始</small></li><li class="bad">远端<small>丢包持续</small></li></ol>
+<figcaption>值得发送的模式：到路由器均正常，从运营商内部某一跳起持续丢包，直到目的地。</figcaption>
+</figure>
+<figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="AdeeboMeter 示例报告中，家用路由器没有丢包，后续某跳开始丢包并持续到目的地。"><figcaption>这是应用使用模拟数据和地址生成的报告。查看自己的报告时，先看路由器行与目的地行。</figcaption></figure>
+<h2 id="checks">生成报告</h2>
+<ol><li>在 Windows 版 AdeeboMeter 中打开 <strong>工具箱</strong> 并搜索 <strong>给网络运营商的报告</strong>.</li><li>输入故障服务的地址，或选择已添加的游戏。问题发生时运行 1、2 或 5 分钟。</li><li>条件允许时，改用网线再测，并在恢复正常后再测一次。提交工单前先阅读报告。</li></ol>
+<h2 id="readings">如何理解结果</h2>
+<ul class="next-checks">
+  <li><strong>某一跳漏应答，后续却正常</strong><span>该路由器只是没有优先响应 ping，并非丢弃转发流量。应查看目的地行。</span></li>
+  <li><strong>丢包从路由器或之前开始</strong><span>问题在家中网络，先比较 Wi-Fi 与网线。</span></li>
+  <li><strong>路由器正常，目的地丢包</strong><span>再运行两次，将两份报告发送给运营商。</span></li>
+  <li><strong>只有一个服务异常</strong><span>测试无关的目的地。其他目标正常，则问题在该服务一侧。</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">上方示例</h2><p>电脑使用网线，路由器正常。丢包在更远处开始，并持续到目的地。发送这种模式，注明测试时间与受影响服务；第二次测试可说明是否重复出现。</p></aside>
+<details class="guide-detail"><summary>为什么单个跳点可能看起来更糟</summary>
+<p>报告反映某台电脑在某时刻访问一个目的地的观察。路由器可能故意慢答或忽略探测，返程也可能走不同道路。因此跳点编号是排查线索，而非最终定论。</p><p>更多： <a href="/zh/learn/icmp.html">ping 和traceroute 的工作原理</a>，以及 <a href="https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/pathping">Microsoft 关于中间跳点丢包的说明</a>.</p>
+</details>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">有用的工单应包含什么</h2><p>时间和时区、网线或 Wi-Fi、受影响服务、发生频率，以及异常和正常时各一份报告。</p></aside>
+<p>还不确定是否运营商的问题？先从这里开始： <a href="/zh/wifi-or-isp.html">Wi-Fi 与网线对比</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">趁问题发生时捕捉证据</h2><p>角落小组件全天监测相同环节，异常环节会变橙或变红，让你在关键时刻一键生成报告。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">下载 Windows - 免费</a><p class="sc-note">Windows 10 和 11 · 无需管理员权限 · 个人信息不离开本机</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-engineer-busy.png" width="264" height="240" alt=""><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""></div>
+</section>
+</main>
+</body>
+</html>

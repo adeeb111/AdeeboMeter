@@ -1,0 +1,57 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|{addr}，你好，我静静地看着，如止水一般。
+app.open|网络在流动，我只是留意。
+all.good|一切流动自如，无须推，无须拉。
+all.good|线路安静，顺其自然吧。
+pc.busy|电脑在{v}的重压下挣扎，减负之后，它自会重新流动。
+pc.busy|一次抓得太多，放下一些吧。
+wifi.drops|Wi-Fi 断了{v}次，靠近些吧，像水总会找到自己的水平。
+net.none|没有网络，路断了，从断处开始：网线或 Wi-Fi。
+inet.slow|家中清明，缓慢来自下游更远处。
+busy|流动中……{v}
+idle|静寂，无事可报。
+search.empty|简单地问，答案便简单地来。
+freeze|吸一口气（{v}），窗口自会跟上。
+speedrunner|上一个任务尚未完成，等等，它自会完成。
+back.again|你回来了，这是你离开时变了的地方。
+dns.slow|解析名字很慢（{v}），溪流中有一处小小的阻塞。
+speed.great|下行{v}，江河宽广。
+speed.bloat|速度快，但江河一满，延迟便上升{v}。
+game.lag|卡顿始于你家附近的 Wi-Fi。
+game.good|稳定在{v}，毫不费力地玩吧。
+vpn.on|VPN 已连接。
+vpn.slow|VPN 增加了{v}，这是更远的路。
+portal|这个 Wi-Fi 须先登录，路上的小小关口。
+gw.down|路由器沉默了，从源头查起。
+isp.down|路由器有回应，路由器之外的世界没有，阻塞在运营商那里。
+mtu.small|大包超过{v}便丢失，小包却轻松通过。
+port.open|{v}是开着的。
+port.closed|{v}是关着的。
+cert.ok|证书完好。
+cert.expired|证书在{v}到期了，万物终将归根。
+sec.ok|一切都有守护。
+sec.issue|有{v}件事需要关照。
+mtr.lossy|丢包始于第{v}跳。
+mtr.clean|路径全程畅通。
+devices.found|有{v}台设备共享你的溪流。
+encrypt.done|已封存。
+decrypt.done|已打开，未被改动。
+points.earned|+{v}分，不争而得。
+award|500 分：Adeebo 奖。
+late.night|夜深了，休息吧，如江河在夜里安歇。
+morning|早上好，夜里安静。
+update.suspect|{v}那次更新后情况变了，从那里看起。
+call.on|通话中，我留意它的流动。
+stream.on|{v}流动顺畅。
+stream.dip|直播晃了一下，{v}。
+stream.none|现在没有在播的东西。
+trade.ok|到券商的线路平静而稳定。
+trade.slow|券商很慢，等等，心静者方能在恰当的时机行动。
+trade.closed|市场歇息了，9:30 再开。
+view.switch|正在切换到{v}。
+quiz.right|正是如此。
+quiz.wrong|不是这条路，顺流而行，再试一次。
+game.streak|连对{v}次，如水总能找到自己的路。
+game.timeup|时间过去了，一如既往。
+market.open|市场开张了，如大坝开启后的江河。
+storm.near|暴风雨来了，如芦苇般弯曲吧。

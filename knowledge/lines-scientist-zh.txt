@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|实验进行中，正在观测你的网络。
+app.open|数据收集开始，假设：一切正常。
+all.good|结果：正常，假设成立。
+all.good|所有变量均在正常范围。
+all.good|电脑、Wi-Fi 与网络：未见异常。
+pc.busy|CPU 为 {v}，电脑是瓶颈所在。
+pc.busy|对照试验：网络正常，电脑不正常。
+pc.busy|降低负载，关闭一个进程后重新测量。
+wifi.drops|今日观测到 {v} 次 Wi-Fi 断开。
+wifi.drops|断线 {v} 次，与信号强度相关。
+net.none|没有网络，零数据点。
+net.none|离线，需要连接才能继续。
+inet.slow|本地链路很快，延迟源于路由器之外。
+inet.slow|变量已隔离：运营商很慢。
+inet.slow|迟缓在家庭网络之外。
+busy|测量中……{v}
+busy|正在收集样本。
+busy|正在进行试验。
+idle|无显著变化。
+idle|基线稳定。
+idle|观测中，暂无报告。
+search.empty|研究问题是什么？
+search.empty|请描述症状。
+freeze|正在处理数据（{v}）。
+freeze|分析进行中（{v}）。
+speedrunner|请一次只改变一个变量。
+speedrunner|上一次试验仍在进行。
+back.again|你回来了，已记录 {v} 件事。
+back.again|欢迎回来，结果如下。
+dns.slow|DNS 查询耗时 {v}，高于正常值。
+dns.slow|域名解析缓慢：{v}。
+speed.great|下载 {v}，结果优秀。
+speed.great|下载 {v}，统计上令人印象深刻。
+speed.bloat|负载之下延迟增加 {v}，缓冲膨胀。
+speed.bloat|空闲快、负载慢，相差 {v}。
+game.lag|延迟来源已确认：你的 Wi-Fi。
+game.lag|服务器稳定，Wi-Fi 波动大。
+game.good|Ping {v}，波动很小。
+game.good|连接稳定，请继续。
+vpn.on|VPN 已激活，引入了新变量。
+vpn.on|流量已封装。
+vpn.slow|VPN 增加 {v} 延迟。
+vpn.slow|封装开销：{v}。
+portal|检测到强制门户，请先登录。
+portal|需要身份验证。
+gw.down|路由器无响应，请重启后重新测试。
+gw.down|网关没有回应。
+isp.down|本地网络正常，运营商无法到达。
+isp.down|故障定位在运营商。
+mtu.small|路径 MTU 测得为 {v}。
+mtu.small|超过 {v} 字节的数据包会被丢弃。
+port.open|{v} 有回应。
+port.open|{v} 已开放。
+port.closed|{v}：无回应。
+port.closed|{v} 已关闭。
+cert.ok|证书有效，证书链已验证。
+cert.ok|信任已验证。
+cert.expired|证书已于 {v} 过期。
+cert.expired|自 {v} 起已过期。
+sec.ok|未观测到漏洞。
+sec.ok|检查通过。
+sec.issue|{v} 项发现需要注意。
+sec.issue|检查记录了 {v} 项。
+mtr.lossy|丢失始于第 {v} 跳。
+mtr.lossy|自第 {v} 跳起检测到丢包。
+mtr.clean|零丢失，数据干净。
+mtr.clean|未观测到丢失。
+devices.found|样本量：{v} 台设备。
+devices.found|检测到 {v} 台设备。
+encrypt.done|已加密，完整性受保护。
+encrypt.done|已封存。
+decrypt.done|已解密，完整性已验证。
+decrypt.done|未改变，已验证。
+points.earned|+{v} 分。
+points.earned|+{v} 分，学习曲线上升。
+award|500 分，同行评审通过：Adeebo 奖。
+award|Adeebo 奖已授予。
+late.night|深夜数据收集。
+late.night|观测持续整夜。
+morning|早上好，夜间数据：安静。
+morning|早上好，夜间无异常。
+update.suspect|{v} 更新之后观测到变化。
+update.suspect|与 {v} 更新强相关。
+call.on|检测到通话，正在测量质量。
+call.on|语音通话进行中，正在采样抖动。
+quiz.right|假设成立。
+quiz.wrong|结果被否决，请修正后重复试验。
+game.streak|连续 {v} 次，统计上令人印象深刻。
+game.timeup|时间到，实验结束。
+market.open|市场开市，正在收集数据。
+storm.near|附近有风暴：预计会有干扰。
+stream.on|观测结果：{v} 播放无丢包。
+stream.on|播放稳定，结果可复现。
+stream.dip|已记录播放异常。{v}
+stream.dip|观察到短暂降速。{v}
+stream.none|没有可观测的播放流。
+stream.none|播放样本量：零。
+trade.ok|券商延迟在对照范围内。
+trade.ok|券商连接实测：响应迅速。
+trade.slow|券商延迟升高，暂缓提交。
+trade.slow|券商测量值超出范围。{v}
+trade.closed|市场已收盘，9:30 恢复观测。
+trade.closed|9:30 前没有市场数据。
+view.switch|将仪器切换到 {v}。
+view.switch|{v} 视图。变量变了，方法不变。

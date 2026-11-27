@@ -13,7 +13,7 @@ namespace AdeeboMeter
     {
         public static readonly string[][] Languages = {
             new[] { "en", "English" }, new[] { "fr", "Français (Canada)" },
-            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }   // Chinese (lang-zh.txt, 4% done) is kept in the repo but not offered until it is translated - a saved "zh" opens in English
+            new[] { "es", "Español" }, new[] { "ar", "العربية" }, new[] { "bn", "বাংলা" }, new[] { "zh", "简体中文" }
         };
         public static bool IsRtl { get { return Code == "ar"; } }
 

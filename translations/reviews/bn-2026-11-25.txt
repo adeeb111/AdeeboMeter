@@ -1,0 +1,42 @@
+﻿Surface	English source or persona key	Previous Bengali	Revised Bengali
+Windows	Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন পরীক্ষা। পেছনে, আপনার গেমগুলোর সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময়, প্রতি সেকেন্ডে 16টি পর্যন্ত সার্ভার।	ঘন ঘন চেক। ব্যাকগ্রাউন্ডে গেমের সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময় সর্বোচ্চ 16টি সার্ভার প্রতি সেকেন্ডে।
+Windows	There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 1000 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।	সব মিলিয়ে প্রায় 1,000 পয়েন্ট পাওয়া যায়। অসম্ভব মোট পয়েন্ট হলে কোড যাচাইয়ের আগেই বাতিল হয়।
+Windows	A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	পরিবর্তন মানে কানাডীয় ডলারে ওই মুদ্রার দাম কতটা নড়েছে। চার্ট দেখতে একটি সারিতে ক্লিক করুন।	পরিবর্তন মানে কানাডীয় ডলারে ওই মুদ্রার দাম কতটা বেড়েছে বা কমেছে। গ্রাফ দেখতে একটি সারিতে ক্লিক করুন।
+Windows	An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	এটি একটি সূচক, প্রতি ব্যারেল বা আউন্সের দাম নয়: কানাডার একদল রপ্তানি কোন দিকে আর কতটা নড়ছে, তা দেখায়।	এটি একটি সূচক, প্রতি ব্যারেল বা আউন্সের দাম নয়। কানাডার কিছু রপ্তানি পণ্যের দাম কোন দিকে কতটা বদলেছে তা দেখায়।
+Windows	At kick-off: dry, most likely.	খেলা শুরুর সময়: সম্ভবত শুকনো।	খেলা শুরুর সময় সম্ভবত বৃষ্টি হবে না।
+Windows	Draw your network, see the path, break one thing.	আপনার নেটওয়ার্ক আঁকুন, পথ দেখুন, একটা জিনিস ভাঙুন।	নেটওয়ার্ক আঁকুন, পথ দেখুন, একটি সংযোগে সমস্যা তৈরি করে পরীক্ষা করুন।
+Windows	Dry	শুকনো	বৃষ্টির সম্ভাবনা নেই
+Windows	Expect the usual slow stretch:	স্বাভাবিক ধীর সময়টা আশা করুন:	সাধারণত যে সময়ে ধীর হয়:
+Windows	Feels like:	অনুভূত:	অনুভূত তাপমাত্রা:
+Windows	Healthy	সুস্থ	ঠিক আছে
+Windows	Loonie Firms	লুনি শক্ত হলো	কানাডীয় ডলার শক্তিশালী হয়েছে
+Windows	Loonie Holds Steady	লুনি স্থির আছে	কানাডীয় ডলার স্থিতিশীল
+Windows	Loonie Slips	লুনি পিছিয়ে পড়ল	কানাডীয় ডলার দুর্বল হয়েছে
+Windows	Next open:	পরের খোলা:	আবার খুলবে:
+Windows	No finished games in today's feeds.	আজকের ফিডে কোনো শেষ হওয়া খেলা নেই।	আজকের ফিডে শেষ হওয়া কোনো ম্যাচ নেই।
+Windows	No hour stands out: your line is about as quick all day.	কোনো ঘণ্টা আলাদা নয়: আপনার লাইন সারা দিন প্রায় একই রকম দ্রুত।	দিনের কোনো সময় আলাদা নয়: সংযোগের গতি সারাদিন প্রায় একই থাকে।
+Windows	No upcoming games in today's feeds.	আজকের ফিডে সামনে কোনো খেলা নেই।	আজকের ফিডে আসন্ন কোনো ম্যাচ নেই।
+Windows	Nothing planned - follow a team or turn on the markets numbers.	কিছু পরিকল্পনা নেই—একটি দল অনুসরণ করুন বা বাজারের সংখ্যা চালু করুন।	আপাতত কিছু দেখানোর নেই। একটি দল ফলো করুন বা বাজারের তথ্য চালু করুন।
+Windows	OUTLOOK  ·  NOW AND NEXT	আউটলুক  ·  এখন ও পরে	পূর্বাভাস  ·  এখন ও পরে
+Windows	Outlook for kick-off	খেলা শুরুর আউটলুক	খেলা শুরুর পূর্বাভাস
+Windows	Show my path in the Lab  ›	Lab-এ আমার পথ দেখান  ›	ল্যাবে আমার সংযোগের পথ দেখান  ›
+Windows	Stable	স্থির	স্থিতিশীল
+Windows	The next day, in short	পরের দিন, সংক্ষেপে	আগামী দিনের সংক্ষিপ্ত চিত্র
+Windows	The numbers arrive after the first fetch.	প্রথমবার আনার পর সংখ্যা আসবে।	প্রথমবার তথ্য আনার পর সংখ্যাগুলো দেখাবে।
+Windows	Unsteady	অস্থির	অস্থিতিশীল
+Windows	Verdict	রায়	ফলাফল
+Windows	When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	জ্বালানির দাম বাড়লে কানাডীয় ডলারও প্রায়ই সঙ্গে বাড়ে। একই সময়ের দুটোই, শুরুতে 100 ধরে।	জ্বালানির দাম বাড়লে কানাডীয় ডলারও প্রায়ই বাড়ে। একই সময়ের দুটি গ্রাফ, দুটির শুরুর মানই 100 ধরা হয়েছে।
+Windows	Would buffer	বাফার করবে	মাঝে মাঝে থেমে লোড হবে
+Windows	about 30 seconds · it downloads the real video to see what your line can carry	প্রায় 30 সেকেন্ড · আপনার লাইন কতটা বইতে পারে দেখতে আসল ভিডিও ডাউনলোড করে	প্রায় 30 সেকেন্ড · সংযোগে কতটা ডেটা চলতে পারে, তা দেখতে আসল ভিডিও ডাউনলোড করে
+Windows	any page, please - what time do you have?	যেকোনো পেজ, দয়া করে—আপনার কাছে কয়টা বাজে?	যেকোনো একটি পেজ দিন—আপনার সার্ভারে এখন কয়টা বাজে?
+Windows	Before a ranked match: one check of Wi-Fi, background downloads and the line.	র‍্যাঙ্কড ম্যাচের আগে: Wi-Fi, পেছনের ডাউনলোড আর লাইনের এক পরীক্ষা।	র‍্যাঙ্কড ম্যাচের আগে Wi-Fi, ব্যাকগ্রাউন্ড ডাউনলোড ও সংযোগ একবার চেক করুন।
+Windows	Draw a network, break one thing. 	একটি নেটওয়ার্ক আঁকুন, একটা জিনিস ভাঙুন। 	নেটওয়ার্ক আঁকুন, একটি সংযোগে সমস্যা তৈরি করে দেখুন। 
+Windows	BACKGROUND	পেছনে	ব্যাকগ্রাউন্ড
+Windows	Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপ, ড্রাইভার, জমে যাওয়া অ্যাপ আর ব্যাকগ্রাউন্ডের কাজ - এই ক্রমে।	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপমাত্রা, ড্রাইভার, আটকে থাকা অ্যাপ ও ব্যাকগ্রাউন্ড কাজ—এই ক্রমে।
+Windows	turn the internet check on (a ping to 1.1.1.1 in the background)	ইন্টারনেট পরীক্ষা চালু করা (পটভূমিতে 1.1.1.1-এ পিং)	ইন্টারনেট চেক চালু করুন (ব্যাকগ্রাউন্ডে 1.1.1.1-এ একটি পিং)
+Website/mobile	Enter the hostname or IP for the affected service, or select a game you’ve added. Choose a 1-, 2-, or 5-minute run during the slowdown.	রাউটার থেকে গন্তব্য পর্যন্ত কোথায় প্যাকেট হারাচ্ছে দেখুন।	যে সেবায় সমস্যা হচ্ছে তার হোস্টনেম বা IP লিখুন, অথবা যোগ করা কোনো গেম বাছুন। সংযোগ ধীর থাকার সময় 1, 2 বা 5 মিনিটের পরীক্ষা চালান।
+Website/mobile	, then run the tool for real and get a result	 খুলুন। এরপর আসল টুলটি চালিয়ে ফলাফল দেখে নিন।	, এরপর আসল টুলটি চালিয়ে ফলাফল দেখুন
+Website/mobile	 - but it may stutter when the line is busy	। তবে সংযোগ ব্যস্ত থাকলে মাঝে মাঝে আটকে যেতে পারে।	 — তবে সংযোগ ব্যস্ত থাকলে মাঝে মাঝে আটকে যেতে পারে
+lines-bro-bn.txt	wifi.drops	তোমার Wi-Fi আসল না, ব্রো। {v} বার ড্রপ।	তোমার Wi-Fi ভরসার না, ব্রো। {v} বার ড্রপ।
+lines-neteng-bn.txt	pc.busy	CPU বেশি। নেটওয়ার্ক সংখ্যা ভুল হতে পারে।	CPU ব্যস্ত। নেটওয়ার্কের মাপ প্রভাবিত হতে পারে।
+lines-neteng-bn.txt	portal	HTTP 302 পোর্টালের দিকে। অথ লাগবে।	HTTP 302 পোর্টালে পাঠাচ্ছে। সাইন-ইন লাগবে।

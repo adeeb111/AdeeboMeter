@@ -1,0 +1,72 @@
+Simplified Chinese handover - 26 November 2026
+
+Branch: codex/chinese-translation-start. Prepared for the owner's requested push.
+No merge or deployment performed.
+Baseline: f479a27 (latest dev snapshot plus Bengali polish).
+
+Windows: 5,668 catalog entries. langcheck.py: 2,851 / 2,851 detectable texts,
+zero missing. Other entries cover variable lookups and runtime fragments.
+Chinese is available in the local Windows picker. Font fallback: Microsoft YaHei
+UI, Microsoft YaHei, SimSun, Segoe UI. Native verification checks every embedded
+value, persona rules and fonts at 100/125/100% scaling.
+
+Personas: 29 packs, 3,015 lines. Imported existing 2,819-line Chinese drafts and
+translated 196 missing streaming, broker and view-switch variants. Native line
+rules pass. Native-language proofreading is still pending.
+
+Web/mobile: 4,937 entries, covering all 4,652 reference keys plus current page
+text, accessibility and metadata. 118 English source pages audited with zero
+missing visible keys. 109 Chinese static pages include home, blog, guides and
+Learn. Phone app, live data, games and files share this dictionary and picker.
+Automatic language uses navigator language; an explicit saved choice takes
+priority. No IP location service was added.
+
+Records:
+- zh-2026-11-25.txt: Windows English / previous Chinese / current Chinese.
+- zh-web-2026-11-26.txt: web English / previous Chinese / current Chinese.
+- zh-validation-2026-11-26.json: catalog and persona format validation.
+- tools/windows-proof.cjs and tools/localization-proof.cjs export proof files.
+- tools/chinese-seo.py rebuilds pages; --home-only rebuilds the home.
+- tools/verify-chinese-build.ps1 checks the native build and draws a sample.
+- Parent workspace AdeeboMeter-Chinese-full-translations.txt contains web,
+  Windows and bilingual persona lines for owner review.
+- docs/index-zh-review.html is a self-contained styled home-page proof and is
+  excluded from production commits.
+
+Quality:
+Windows additions and missing persona variants were translated directly. Web
+combines reviewed shared text, direct translations and machine first drafts.
+The local NLLB experiment failed terminology checks and was discarded; never
+import its separate draft files. A translation service supplied remaining web
+drafts. Technical markers and terminology were checked, with manual corrections.
+Complete catalog coverage does not mean native-speaker certification. The owner
+reviews and decides what ships.
+
+Names, protocols, commands, paths, units and four security matching words may
+intentionally remain unchanged. English video audio and original downloadable
+English documents were not re-recorded or rewritten by this localization.
+
+Navigation/layout:
+- Chinese fonts in web/native UI, including newspaper cards.
+- Shared top picker and native picker include Simplified Chinese.
+- Canadian flag and full language name in the compact web picker.
+- Internal shared-page links retain the active language without silently saving
+  a preference. Blog brand links retain Chinese.
+- Chinese preview warning removed after catalog completion.
+- Chinese canonical, alternate-language and learning schema metadata generated.
+- Page generator avoids rewriting unchanged files.
+- Phone/web voices now load the same 29 Chinese persona packs as Windows,
+  including Chinese forms of address; language switches invalidate voice caches.
+- Chinese pages and companion packs are included in the offline cache.
+- Shared navigation, download dialog, late poster prompt and image/tooltips have
+  Chinese support. Keep these secondary catalogs in scope for future languages.
+
+Validation limits: the focused native verifier and static CI checks passed.
+The broader interactive --selftest did not produce a report in this execution
+environment and was stopped. Do not describe that broader run as passing.
+
+Continuation: the parent zh-20261125-*.tsv files and frozen inventories are
+historical assembly inputs. Do not rerun the early Windows assembler over the
+final catalog: its inventory predates the language-name entry and coverage
+header. Committed catalogs are the source of truth. Earlier handover notes
+describe the starting state and are superseded by this file.

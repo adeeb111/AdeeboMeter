@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/privacy.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdeeboMeter 隐私政策</title>
+<meta name="description" content="了解 Windows 版 AdeeboMeter 如何处理数据，以及网站如何使用 Cloudflare Web Analytics 统计访问。">
+<link rel="canonical" href="https://adeebometer.com/zh/privacy.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter"><meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://adeebometer.com/zh/privacy.html">
+<meta property="og:title" content="AdeeboMeter 隐私政策">
+<meta property="og:description" content="AdeeboMeter 应用与网站 · 更新于 2026 年 11 月 24 日">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<style>
+/* the privacy policy: Read mode, the same type and colours as the guides */
+.date{color:var(--muted);font-size:15px;margin:0 0 28px}
+.short{background:color-mix(in srgb,var(--ok) 9%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 35%,var(--line));border-radius:var(--r-lg);padding:18px 22px;margin:0 0 8px}
+.short p{margin:0;max-width:none}
+main ul{padding-left:1.2em}
+main li{margin:8px 0}
+main li::marker{color:var(--muted)}
+main code{padding:.1em .3em}
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/privacy.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/privacy.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/privacy.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/privacy.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/privacy.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/privacy.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/privacy.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="网站"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a> · <a href="https://adeebometer.com/privacy.html?lang=en" lang="en">English</a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>隐私政策</h1>
+<p class="date">AdeeboMeter 应用与网站 · 更新于 2026 年 11 月 24 日</p>
+
+<div class="short"><p><b>Windows 应用</b> 不收集个人信息，无账号、遥测或使用分析。所有观察结果留在本机，不接受任何入站连接。仅有三个小型 Cloudflare Workers 中继，转发你主动发送的报告、手机连接或手机应用实时信息服务内容，均不保留数据。</p></div>
+
+<h2>AdeeboMeter收集什么</h2>
+<p>不收集任何内容。开发者不会收到关于你、电脑、网络或使用方式的信息。下述中继仅转发你主动发送的内容，不保存。</p>
+
+<h2>哪些内容会保留在你的电脑上</h2>
+<ul>
+  <li><b>设置</b> (<code>AdeeboMeter.settings</code>）和一个小 <b>日志</b> 用于对应用程序本身进行故障排除。</li>
+  <li><b>历史记录</b> 过去几天的网络速度和健康状况，以便你可以重播出现问题的一分钟。它保存在你的 AppData 文件夹中（标记为便携式的副本将其保存在程序旁边的数据文件夹中），旧的日子会自动删除。</li>
+  <li><b>邻居信道大战</b> （仅当历史记录打开时）：每小时一次，Wi-Fi 网络 Windows 已列出 - 它们的名称、地址 (BSSID)、通道和​​信号 - 保留 7 天 <code>air.txt</code>。关闭历史记录会在一小时内将其删除。这些是每个 Wi-Fi 网络向附近的任何人广播的名称和地址；他们身上的设备什么也看不到。</li>
+  <li><b>Adeebo Points</b> (<code>points.txt</code>)：你尝试过哪些功能以及何时尝试过。没有别的了。</li>
+  <li><b>网络设置快照</b> (<code>netsnap.txt</code>，仅当你按“保存”时）：适配器的地址、路由器和 DNS 服务器、代理以及主机文件的指纹 - 以显示稍后更改的内容。</li>
+  <li><b>评论</b> （这 <code>reports</code> 文件夹）：你保存的六个月评论 - 并且，当历史记录保存 6 个月时，AdeeboMeter 在最旧的日期滚动之前写入的评论。姓名、Wi-Fi 姓名和地址均被省略。它们会一直保留到你将其删除为止。</li>
+  <li><b>流和代理记录</b> （在历史记录中，保留 90 天）：对于每个流 - 服务的名称（来自其服务器的名称，而不是你的标签或标题）、播放时间和下降时间；经纪商观察 - 每个交易日的缓慢时刻。你的账号和你在服务中观看的内容永远不会被看到。</li>
+  <li><b>天气</b> (<code>weather.txt</code>，仅当你打开天气）：你选择的地点的每小时天气预报 - 最后一天和未来一天，大约 2 KB。没有历史。删除（或关闭天气）会将其删除。</li>
+  <li><b>当天的数字</b> (<code>fx.txt</code>, <code>bcpi.txt</code>)：来自加拿大央行的最新汇率和商品指数，因此交易页面将打开，无需再次询问。</li>
+  <li><b>断网日志</b> （属于历史记录）：记录断网和恢复时间，供断网列表和运营商报告使用。只记时间，不记你在做什么。关闭历史也会停止此记录，旧数据随历史一起清理。</li>
+  <li><b>唤醒</b> （历史记录）：唤醒路由器并DNS应答后多少秒。</li>
+  <li><b>各网络中的设备</b> (<code>devices.txt</code>, <code>device-nets.txt</code>，仅历史开启时保存）：保存各网络已见的硬件地址及首次发现网络的时间，用于识别新设备。最多 40 个网络，关闭历史会同时删除。</li>
+  <li><b>走动测试</b> (<code>walk.txt</code>）：你输入的房间名及各位置测量结果。在页面移除房间即可删除。</li>
+  <li><b>已见程序</b> (<code>seen-apps.txt</code>）：联网程序的名称及首次发现时间，用于指出新程序。</li>
+  <li><b>已记住的手机</b> (<code>phones.txt</code>，仅在你同意“记住此手机”后）：各手机的名称与专属密钥，绑定你的 Windows 账户。“忘记我的手机”可清空。</li>
+  <li><b>你的游戏</b> (<code>games.txt</code>, <code>valve-servers.txt</code>）：玩家专区中添加的游戏与服务器，以及刷新时获得的 Valve 公共服务器列表。开启历史时，还会每分钟记录所监测服务器。</li>
+  <li><b>体育</b> (<code>sportkeys.dat</code>, <code>sporthits.txt</code>）：你添加的 football-data.org 或 CricketData 密钥，绑定 Windows 账户，以及当天 CricketData 请求次数。</li>
+  <li><b>市场</b> (<code>mk-calls.txt</code>，加拿大银行历史文件）：当天使用自有密钥的行情请求次数，以及绘图所需的汇率历史。</li>
+  <li><b>播放流检查</b> (<code>streamlinks.bin</code>, <code>streamchecks.txt</code>）：你保存的播放链接，绑定 Windows 账户，以及检查结果。</li>
+  <li><b>服务看板</b> (<code>board-watch.txt</code>, <code>board-log.txt</code>）：你要求监测的主机，以及各次检查结果。</li>
+  <li><b>证书</b> (<code>cert-compare</code>, <code>cert-dates.txt</code>）：你要求比较或关注的证书链和到期日期。</li>
+  <li><b>设备列表</b> (<code>inventory.txt</code>，仅历史开启时保存）：各网络中你命名或监测的设备。旧条目随历史清理，关闭历史会删除。</li>
+  <li><b>精彩时刻与固定时间点</b> (<code>moments.txt</code>, <code>time-pins.txt</code>）：小助手已展示的小事件，以及你在时光机固定的分钟。</li>
+  <li><b>等待发送的报告</b> （这 <code>outbox</code> 文件夹）：离线时点击发送、且已去除隐私的报告，最多 3 份。下次 AdeeboMeter 联网启动时发送，7 天后仍未发送则删除。</li>
+  <li><b>网络实验室</b> (<code>lab.html</code>, <code>edge-profile</code>）：你打开的实验页面，包含网络设备列表和本机名称，以及所用的私有 Edge 配置，均保留在本机。</li>
+  <li><b>捕获</b> 和 <b>保存的结果</b>，但仅限你选择制作或保存的内容。</li>
+</ul>
+<p>你在工具中输入的密码和机密（例如 SNMP 社区、RADIUS 机密或证书密码）将用于该一项操作，并且永远不会保存、记录或复制。</p>
+<p>当捕获停止、下次开始以及你退出 Windows 时，实时捕获都会被删除。</p>
+<p>卸载 AdeeboMeter 会将其删除，但你的加密密钥列表和密钥备份除外（因此发送给你的文件在重新安装后仍然打开；删除 <code>%LOCALAPPDATA%\AdeeboMeter</code> 和 <code>Documents\AdeeboMeter</code> 也将它们删除）。你自己保存的文件保留在你放置的位置。</p>
+
+<h2>发送内容以及发送时间</h2>
+<p>这些都不包含有关你的信息。每个项目都在应用程序中的“关于”&gt;“什么离开你的电脑”下实时列出，每个后台项目都可以在“设置”中关闭。</p>
+<p><b>在后台（应用程序运行时）：</b></p>
+<ul>
+  <li><b>路由器ping：</b> 每隔几秒就会对你自己的路由器进行一次微小的 ping 操作。它保留在你的本地网络上。</li>
+  <li><b>上网和DNS检查：</b> 一次 ping 到 <code>1.1.1.1</code> （或者 <code>8.8.8.8</code>）在 Balanced 上每 15 秒（在 Penny 上每 5 分钟），并且每分钟最多查找一次名称。在阻止 ping 的网络上，与同一地址的端口 443 的定时连接会立即关闭。将其设置为“关闭”，则后台不会有任何内容访问互联网。</li>
+  <li><b>运营商名称：</b> 每个网络一次，一条短踪迹（6 跳） <code>1.1.1.1</code> 以及反向名称查找，以命名你的运营商。</li>
+  <li><b>登录页面检查：</b> 仅在你发起的“哪里不对劲？”或全面检查中，向 Windows 同款测试页面发一次请求（<code>msftconnecttest.com</code>).</li>
+  <li><b>固定目的地手表：</b> 每 30 秒 ping 一次到你固定的目的地，前提是你将其打开。</li>
+  <li><b>玩家专区：</b> 在你单击游戏之前什么都没有。然后 ping（或定时连接）到该游戏的区域； Valve 服务器列表来自 <code>api.steampowered.com</code> 仅当你添加 Valve 游戏或按“刷新”时。</li>
+
+  <li><b>流媒体：</b> 仅当某些内容流时，每 10 秒（Penny 上的 30）与流自己的服务器进行定时连接（无数据），以区分其速度减慢与你的速度 - 如果它从未应答，则最多尝试六次。在“设置”中关闭 ›“你进行直播还是交易？”。</li>
+  <li><b>券商观察：</b> 在你选择券商之前什么都没有。然后，仅在市场开放时（或全天候，如果你选择加密货币）按照你预设的速度定时连接（无数据，无需登录）到其公共地址。</li>
+  <li><b>天气</b> （关闭直到你将其打开）：你键入一个地点；它的名字曾经出现过一次 <code>geocoding-api.open-meteo.com</code> 找到它。然后只有它的坐标去 <code>api.open-meteo.com</code> - Better 上大约每 2 天或每 6 小时。你的电脑的位置永远不会被使用。 Open-Meteo是免费的，无需账号；数据抄送 4.0。</li>
+  <li><b>加拿大银行号码：</b> 仅市场页面打开或晚间总结开启，且应有较新数据时：列表中每种货币请求一次，首次获取自 2017 起的历史；约每周获取商品指数、政策利率和通胀，来源为 <code>bankofcanada.ca</code>。没有发送任何有关你的信息。</li>
+  <li><b>市场行情</b> （需你自己的密钥）：指数、公司和期货价格来自 <code>financialmodelingprep.com</code>, <code>finnhub.io</code> 或 <code>twelvedata.com</code> ，仅使用你添加了密钥的服务。Finnhub 和 Twelve Data 提供公司价格，不提供指数或期货。市场页面打开时按设定间隔 1-60 分钟获取，公司选择器也查询同一服务。</li>
+  <li><b>体育比分</b> （默认关闭）：体育页面打开时约每 5 分钟，或关注球队比赛且正在播放时，获取当天赛程与比分，来源为 <code>api-web.nhle.com</code>, <code>site.api.espn.com</code> 和 <code>feeds.bbci.co.uk</code>，以及 <code>api.football-data.org</code> 或 <code>api.cricapi.com</code> ，使用你自己的密钥。开启开赛提醒后，仅在所关注比赛临近时，电脑开机期间约每 30 分钟获取赛程。</li>
+  <li><b>手机等待室</b> （仅记住手机后）：在 AdeeboMeter 手机中继建立等待室（<code>adeebometer-remote.orkoadeeb.workers.dev</code>），供手机找到本机。内容已加密，中继无法读取。每小时还会请求一次 <code>adeebometer-live.orkoadeeb.workers.dev</code> 以校准时间。可用手机页面开关关闭，或在 IT 策略中设置 <code>phone_remote = off</code> 。</li>
+  <li><b>服务看板监测</b> （仅设置分钟间隔后）：应用运行时，每隔几分钟与看板各主机建立一次不发送数据的连接。</li>
+  <li><b>监测的设备</b> （仅你选择监测的设备）：在本地网络中每分钟向各设备发送一次 ping。</li>
+</ul>
+<p><b>仅当你启动它们时：</b></p>
+<ul>
+  <li><b>工具：</b> 测试仅联系你键入或选择的目标（或其在屏幕上命名的目标，例如 <code>msftconnecttest.com</code> 用于时钟检查）。</li>
+  <li><b>测速：</b> 大约 8 秒下载并上传到你选择的服务器（Cloudflare 最近的服务器） <code>speed.cloudflare.com</code> 默认情况下，或城市中的 Vultr 或 OVHcloud 测试文件），上限为 MB。</li>
+  <li><b>我的 ISP 的报告：</b> 向你选择的目标发出 ping 和路由追踪，并向 <code>1.1.1.1</code> 进行并排测试，供手动输入的主机比较；查询公网 IP 时请求一次 <code>www.cloudflare.com/cdn-cgi/trace</code>) 仅当你键入 yes 时。</li>
+  <li><b>手机连接：</b> 点击“显示二维码”时，通过 AdeeboMeter 手机中继建立加密连接（<code>adeebometer-remote.orkoadeeb.workers.dev</code>）。手机与电脑之间全程端到端加密，中继只转发，无法读取。</li>
+  <li><b>播放流检查：</b> 点击“测试播放流”时，向所提供链接的服务器获取播放列表和最多 30 秒视频。</li>
+  <li><b>证书撤销状态</b> （设置中默认关闭）：运行证书链或 HTTPS 检查时，向签发机构的 CRL 或 OCSP 地址查询一次。</li>
+  <li><b>在线查询</b> （默认情况下关闭，它们会在你选择的时间后自行关闭）：路径的公共 IP 地址转到 RIPEstat（<code>stat.ripe.net</code>) 和 HTTPS 上的 PeeringDB；然后安全检查还会询问 Cloudflare 的加密 DNS (<code>cloudflare-dns.com</code>) 提出一个问题并打开一次 TLS 握手 <code>www.microsoft.com</code>。 VPN 泄漏测试（工具箱，当你按下它时）询问 Cloudflare 的 STUN 服务器（<code>stun.cloudflare.com</code>，UDP 3478），一次通过正常路线，一次通过你的 Wi-Fi 或直接电缆，它会看到哪个地址。加密的 DNS (DoH / DoT) 工具会在运行时询问你选择的服务器。</li>
+  <li><b>你点击的链接</b> （GitHub，捐赠）在浏览器中打开；应用程序本身不发送任何内容。</li>
+  <li><b>报告错误、发送反馈、发送你的名人堂卡：</b> 仅当你按下时 <b>发送</b> 在看到盒子里到底装了什么之后。它发送到 AdeeboMeter 的中继（一个小型​​ Cloudflare Worker），该中继将其归档给 Adeeb - 无需账号。错误报告可以添加应用程序的版本、Windows版本、你所在的页面及其日志的最后几行，并删除名称、PC的名称、路径和地址；中继再次剥离电子邮件和 IP 地址。你的互联网地址仅用于计算发送次数（每小时五次），并且仅作为单向哈希保留一天。如果没有互联网，报告会在你的 PC 上等待，并在 AdeeboMeter 下次在线启动时发送。当你的 IT 团队关闭在线查找时关闭。</li>
+  <li><b>崩溃报告：</b> 如果应用程序崩溃，下次启动时会在浏览器中打开一个 GitHub 问题页面，并填写详细信息。除非你选择提交，否则不会发送任何内容，你可以先阅读和编辑它。</li>
+</ul>
+<p>AdeeboMeter 不监听入站：不开放端口，不在电脑上运行服务器，只接收自己发起请求的应答。</p>
+
+<h2>Microsoft Store</h2>
+<p>如果 Microsoft Store 中提供了 AdeeboMeter，并且你从 Microsoft Store 安装了 AdeeboMeter，则 Microsoft 将根据以下条件处理下载、更新和任何购买数据： <a href="https://privacy.microsoft.com/privacystatement">微软的隐私声明</a>。开发人员只能看到 Microsoft 向每个发行商提供的匿名总数，例如安装数量。</p>
+
+<h2>这个网站</h2>
+<p>公开网站使用 Cloudflare Web Analytics 测量浏览量、访问量、来源网站和页面性能，帮助了解哪些指南有用并改进网站。不使用分析 Cookie 或浏览器指纹，访问数是根据页面请求和来源估算的。</p>
+<p>分析脚本加载自 <code>static.cloudflareinsights.com</code> ，并向 Cloudflare 发送测量数据。Cloudflare 作为服务提供商接收网络请求。详情请阅读 <a href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/">Cloudflare 数据收集文档</a>。网站尊重 Do Not Track 和 Global Privacy Control，任一信号开启时都会跳过分析。</p>
+<p>网站还使用以下外部服务：主页请求 <code>api.github.com</code> 获取最新版本号，并从以下来源显示 Microsoft Store 徽章： <code>get.microsoft.com</code>；反馈和名人堂表单加载 Cloudflare Turnstile（<code>challenges.cloudflare.com</code>），免费验证发送者是真人而非机器人，无需解谜，也不用追踪 Cookie。实时信息页面和手机应用查询 AdeeboMeter 的实时服务（<code>adeebometer-live.orkoadeeb.workers.dev</code>），获取天气、比分和网站检查；主动运行手机检查时，会联系所测试的目标，例如 Google、Cloudflare、Microsoft 和 Apple 的测试页面、你选择的流媒体与通话服务、公共 DNS 解析器、 <code>rdap.org</code> 以查询地址所有者，以及 Cloudflare 测速服务。与访问普通网站一样，这些服务能看到你的 IP。你发送的消息通过上文所述的 AdeeboMeter 中继转发。</p>
+
+<h2>孩子们</h2>
+<p>AdeeboMeter 不会收集任何人的个人信息，包括儿童。</p>
+
+<h2>变更及联系方式</h2>
+<p>如果此政策发生更改，新版本将在此页面上发布并注明新日期。源代码公开于 <a href="https://github.com/adeeb111/AdeeboMeter">GitHub</a>，任何人都可检查应用的行为。若有问题，可通过主页的 <a href="/zh/#feedback">表单联系 Adeeb</a> ，无需账号。</p>
+
+<footer>AdeeboMeter 由 Adeeb Khan · 麻省理工学院许可</footer>
+</main>
+</body>
+</html>

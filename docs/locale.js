@@ -3,8 +3,8 @@
 
   var languages = {
     en: "English", fr: "Français", es: "Español", ar: "العربية",
-    bn: "বাংলা"
-  };   // R2-201: Chinese (73 strings) isn't offered until it's translated - as in the app; a saved "zh" reads as English
+    bn: "বাংলা", zh: "简体中文"
+  };
   var tags = { fr: "fr-CA", zh: "zh-Hans" };
   var storageKey = "adeebometer-language";
   var root = document.documentElement;
@@ -38,7 +38,7 @@
   }
 
   var stored = saved();
-  var defaultChoice = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" ? pageCode : "auto";
+  var defaultChoice = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" || pageCode === "zh" ? pageCode : "auto";
   var choice = known(query) ? query : pageCode !== "en" ? pageCode : known(stored) ? stored : defaultChoice;
   // 1.1.6 (Adeeb): the language is remembered only when the visitor picks it in the picker - not from a link's ?lang=
   // or a translated page they happened to land on. A remembered pick then opens the site in that language.
@@ -70,10 +70,10 @@
   function apply() {
     if (followLanguageRoute()) return;
     root.dir = code === "ar" ? "rtl" : "ltr";
-    root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" ? pageLanguage : tags[code] || code;
+    root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" || pageCode === "zh" ? pageLanguage : tags[code] || code;
     root.dataset.locale = code;
     document.querySelectorAll("[data-blog-link]").forEach(function (link) {
-      link.href = code === "bn" || code === "fr" || code === "es" || code === "ar" ? "/" + code + "/blog/" : "/blog/";
+      link.href = code === "bn" || code === "fr" || code === "es" || code === "ar" || code === "zh" ? "/" + code + "/blog/" : "/blog/";
     });
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       var key = node.dataset.i18n;
@@ -91,7 +91,7 @@
       node.setAttribute("aria-label", t(node.dataset.i18nLabel));
     });
     document.querySelectorAll("[data-i18n-preview]").forEach(function (node) {
-      node.hidden = code === "en" || code === "bn" || code === "fr" || code === "ar" || code === "es";
+      node.hidden = code === "en" || code === "bn" || code === "fr" || code === "ar" || code === "es" || code === "zh";
     });
     document.querySelectorAll("[data-i18n-direction]").forEach(function (node) {
       node.dir = code === "ar" ? "rtl" : "ltr";
@@ -104,17 +104,25 @@
       select.value = choice;
       select.hidden = false;
       var face = select.parentNode.querySelector(".lang-face b");
-      if (face) face.textContent = code.toUpperCase();
+      if (face) face.textContent = languages[code] || code.toUpperCase();
+      var badge = select.parentNode.querySelector(".lang-face");
+      if (badge && !select.parentNode.querySelector('img[src*="canada"]')) {
+        var flag = document.createElement("img");
+        flag.src = "/img/canada.svg"; flag.width = 20; flag.height = 14;
+        flag.alt = "Canada"; flag.title = "Canada";
+        var globe = badge.querySelector("svg");
+        if (globe) globe.replaceWith(flag); else badge.insertBefore(flag, badge.firstChild);
+      }
     });
   }
 
   function change(value) {
     if (!known(value)) return;
     remember(value);
-    var routed = /^\/(bn|fr|es|ar)\//.exec(location.pathname);
+    var routed = /^\/(bn|fr|es|ar|zh)\//.exec(location.pathname);
     if (routed && value !== routed[1]) {
       var destination = new URL(location.href);
-      destination.pathname = destination.pathname.replace(/^\/(bn|fr|es|ar)\//, "/");
+      destination.pathname = destination.pathname.replace(/^\/(bn|fr|es|ar|zh)\//, "/");
       destination.searchParams.set("lang", value);
       location.assign(destination.href);
       return;
@@ -131,7 +139,7 @@
     document.dispatchEvent(new Event("adeebometerlanguagechange"));
   }
 
-  root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" ? pageLanguage : tags[code] || code;
+  root.lang = pageCode === "bn" || pageCode === "fr" || pageCode === "es" || pageCode === "ar" || pageCode === "zh" ? pageLanguage : tags[code] || code;
   var mounted = new WeakSet();
   // 1.1.6 (Adeeb): every page has the language picker at the top, so a wrong pick is one click from undone. Pages whose
   // header doesn't carry one get it here: inside their top bar when they have one, otherwise pinned to the top corner.
@@ -140,7 +148,7 @@
     var host = document.querySelector("header nav, nav.top, .sitebar .sb-links, nav.links, header .w, header.top");
     var box = document.createElement("div");
     box.className = "site-language am-lang" + (host ? "" : " am-lang-float");
-    box.innerHTML = '<span class="lang-face" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3"/></svg><b>EN</b></span><select data-language-picker aria-label="Language"></select>';
+    box.innerHTML = '<span class="lang-face" aria-hidden="true"><img src="/img/canada.svg" width="20" height="14" alt="Canada" title="Canada"><b>English</b></span><select data-language-picker aria-label="Language"></select>';
     if (!document.getElementById("am-lang-style")) {
       var st = document.createElement("style"); st.id = "am-lang-style";
       st.textContent = ".am-lang{position:relative;display:inline-flex;align-items:center;margin-inline-start:8px;vertical-align:middle}" +
@@ -171,6 +179,19 @@
   }
 
   window.AdeeboMeterLocale = { t: t, format: format, code: function () { return code; }, mountPickers: mountPickers };
+  // Retain the displayed language even when a translated route was opened
+  // directly, without changing the visitor's saved language preference.
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest && event.target.closest("a[href]");
+    if (!link || event.defaultPrevented || event.button !== 0 || code === "en") return;
+    var href = link.getAttribute("href");
+    if (!href || href.charAt(0) === "#" || link.hasAttribute("download")) return;
+    var target = new URL(href, location.href);
+    if (target.origin !== location.origin || target.searchParams.has("lang") || /^\/(bn|fr|es|ar|zh)\//.test(target.pathname)) return;
+    if (!/\/$|\.html$/.test(target.pathname)) return;
+    target.searchParams.set("lang", code);
+    link.href = target.href;
+  }, true);
   document.addEventListener("DOMContentLoaded", function () {
     mountPickers();
     root.classList.add("locale-ready");

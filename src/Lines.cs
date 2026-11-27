@@ -213,6 +213,8 @@ namespace AdeeboMeter
         }
         // the words the personas call you by, in each language with persona lines (drafts - a native speaker checks them)
         static readonly Dictionary<string, Dictionary<string, string>> AddrWords = new Dictionary<string, Dictionary<string, string>> {
+            { "zh", new Dictionary<string, string> { { "my lord", "阁下" }, { "my lady", "女士" }, { "bro", "兄弟" }, { "sis", "姐妹" }, { "captain", "船长" }, { "sir", "先生" }, { "ma'am", "女士" },
+                     { "bestie", "好友" }, { "friend", "朋友" }, { "matey", "伙计" }, { "player", "玩家" }, { "pal", "朋友" }, { "pilot", "飞行员" }, { "flight", "指挥中心" }, { "boss", "老板" } } },
             { "es", new Dictionary<string, string> { { "my lord", "mi señor" }, { "my lady", "mi señora" }, { "bro", "bro" }, { "sis", "hermana" }, { "captain", "capitán" }, { "sir", "señor" }, { "ma'am", "señora" },
                      { "bestie", "bestie" }, { "friend", "amigo" }, { "matey", "grumete" }, { "player", "jugador" }, { "pal", "compañero" }, { "pilot", "piloto" }, { "flight", "director de vuelo" }, { "boss", "jefe" } } },
             { "ar", new Dictionary<string, string> { { "my lord", "مولاي" }, { "my lady", "سيدتي" }, { "bro", "صاحبي" }, { "sis", "أختي" }, { "captain", "قبطان" }, { "sir", "سيدي" }, { "ma'am", "سيدتي" },
