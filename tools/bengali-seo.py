@@ -194,6 +194,7 @@ for source in files:
     # Decode character references before text translation without altering markup.
     content = source.read_text(encoding="utf-8-sig")
     # English scenario articles await reviewed translations.
+    content = re.sub(r"<!--english-search-paths:start-->.*?<!--english-search-paths:end-->\s*", "", content, flags=re.S)
     content = re.sub(r"<!--english-scenarios:start-->.*?<!--english-scenarios:end-->\s*", "", content, flags=re.S)
     content = re.sub(r'<script[^>]*id="scenario-blog-list"[^>]*>.*?</script>\s*', "", content, flags=re.S)
     content = re.sub(r'<link rel="alternate" hreflang="(?:en|bn|fr(?:-CA)?|es|ar|zh(?:-Hans)?|x-default)"[^>]*>\s*', "", content)
