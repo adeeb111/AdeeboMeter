@@ -1,0 +1,22 @@
+Shell and Lab discovery — 27 November 2026
+
+Purpose: connect existing lesson readers to useful experiments and Windows troubleshooting, rather than adding unrelated pages for traffic.
+
+Changes
+- Eight relevant lessons link to Shell, Lab or the matching practical guide: DNS, ICMP, Wi-Fi, path MTU, streaming faults, speed versus delay, opening a website and apps using the internet.
+- Learn and blog indexes link both product guides.
+- AdeeboShell guide adds three question-led starting points: status, ls /tools and help ping. It identifies Shell as part of the Windows app.
+- AdeeboLab guide adds DNS timeout, gateway and packet-loss experiments. The simulator title/description now identify it as a free browser network simulator.
+- Existing flat components, styling and interactive simulator behavior are preserved. No app behavior or translation work is included.
+
+Build and languages
+tools/search_paths.py runs after Learn and scenario generation, before locale generation. Its output is idempotent. New English sections use english-search-paths markers, removed before translation generation so unreviewed English text does not appear on localized pages. Existing reviewed headings and metadata for the product guides stay unchanged. The simulator metadata source is tools/lab/lab.src.html; rebuild with tools/lab/build.py. Full build is tools/site.sh. Sitemap dates change only for edited pages; total remains 704 URLs.
+
+Validation
+Repository CI clean. New generator rerun is byte-for-byte stable. Twelve new sections have unique IDs, valid local links/anchors and parsable existing JSON-LD. Sitemap XML parses with 704 unique URLs. Final cache includes 818 files. Local browser preview timed out, so rendered visual verification remains pending; no new CSS or layout system was added.
+
+After owner merge
+Check live Shell/Lab guides, lab.html and sample lessons on mobile/desktop. Request discovery of the two updated product guides and simulator if eligible; do not repeatedly resubmit unchanged lessons. Track non-brand guide clicks and Windows/desktop visits, not index count alone.
+
+Outreach
+Separate owner-review preparation includes an AlternativeTo listing draft, educational-resource and Windows-writer pitches, and HN factual notes. No messages or third-party submissions were sent. HN requires human-written text; do not use a generated post. No guarantees about links, rankings or download attribution.
