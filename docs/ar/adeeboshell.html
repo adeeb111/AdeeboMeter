@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-language-route="/adeeboshell.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أوامر الشبكة على Windows باستخدام AdeeboShell | AdeeboMeter</title>
+<meta name="description" content="استخدم AdeeboShell داخل AdeeboMeter لقراءة حالة الاتصال واستكشاف الأدوات المدمجة وفحص الشبكة على Windows. دليل قصير مع أوامر لتجربتها.">
+<link rel="canonical" href="https://adeebometer.com/ar/adeeboshell.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="أوامر الشبكة على Windows باستخدام AdeeboShell | AdeeboMeter">
+<meta property="og:description" content="استخدم AdeeboShell داخل AdeeboMeter لقراءة حالة الاتصال واستكشاف الأدوات المدمجة وفحص الشبكة على Windows. دليل قصير مع أوامر لتجربتها.">
+<meta property="og:url" content="https://adeebometer.com/ar/adeeboshell.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeeboshell.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeeboshell.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeeboshell.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeeboshell.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/adeeboshell.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/ar/adeeboshell.html#faq","url":"https://adeebometer.com/ar/adeeboshell.html","inLanguage":"ar","mainEntity":[{"@type":"Question","name":"هل يستطيع AdeeboShell تعديل ملفات Windows؟","acceptedAnswer":{"@type":"Answer","text":"لا. مجلدات Windows ومحركات الأقراص للقراءة فقط في AdeeboShell. تقتصر تغييرات الملفات على مجلد /data في AdeeboMeter."}},{"@type":"Question","name":"كيف أوقف أمرًا في AdeeboShell؟","acceptedAnswer":{"@type":"Answer","text":"اضغط Ctrl+C لإيقاف الأمر الحالي."}}]}</script>
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>افحص شبكتك، أمرًا بعد أمر.</h1>
+<p class="dek">افتح AdeeboShell داخل AdeeboMeter. اقرأ الحالة الحالية، وابحث عن أداة، ثم شغّل الفحص الذي تحتاجه.</p>
+<ul class="meta"><li>Windows 10 و11</li><li>AdeeboMeter 1.1.6</li><li>قراءة في 3 دقائق</li></ul>
+<figure class="command-map" aria-labelledby="commands">
+<h2 id="commands">ثلاثة أوامر للبدء</h2>
+<div class="command-row command-status"><code dir="ltr">status</code><span>اقرأ حالة الاتصال الحالية</span></div>
+<div class="command-row command-tools"><code dir="ltr">ls /tools</code><span>اعثر على الأدوات المتاحة</span></div>
+<div class="command-row command-help"><code dir="ltr">help ping</code><span>اقرأ المساعدة قبل الفحص</span></div>
+<figcaption>هذه أوامر تكتبها وليست نتائج نموذجية. تأتي القراءات من جهازك أنت.</figcaption>
+</figure>
+<h2>جرّب فحصك الأول</h2>
+<ol><li>افتح نافذة AdeeboMeter الكاملة واختر AdeeboShell. يفتحه الاختصار Ctrl + ` من صفحة أخرى في التطبيق.</li><li>اكتب status واضغط Enter. اقرأ ما قاسه التطبيق حتى الآن؛ عدم توفر قراءة لا يعني اجتياز الفحص.</li><li>اكتب ls /tools لاستكشاف مجموعات الأدوات. استخدم help قبل تجربة أمر لا تعرفه.</li></ol>
+<p>يكمل Tab الأمر. ويوقف Ctrl+C الأمر الجاري.</p>
+<h2>افهم النتيجة</h2>
+<ul class="next-checks"><li><strong>استجابة بطيئة أو غائبة</strong><span>قارن بوجهة أخرى وبوقت يعمل فيه الاتصال جيدًا. فشل فحص واحد لا يحدد السبب وحده.</span></li><li><strong>أمر لا تعرفه</strong><span>اقرأ مساعدته أولًا. قد ترسل الأوامر حركة مرور على الشبكة أو تتعامل مع الملفات.</span></li></ul>
+<details class="guide-detail" data-guide-faq><summary>هل يستطيع AdeeboShell تعديل ملفات Windows؟</summary><p>لا. مجلدات Windows ومحركات الأقراص للقراءة فقط في AdeeboShell. تقتصر تغييرات الملفات على مجلد /data في AdeeboMeter.</p></details>
+<details class="guide-detail" data-guide-faq><summary>كيف أوقف أمرًا في AdeeboShell؟</summary><p>اضغط Ctrl+C لإيقاف الأمر الحالي.</p></details>
+<aside class="summary"><h2>احتفظ بمقارنة مفيدة</h2><p>ابدأ بـ status. أعد الفحص نفسه عند حدوث المشكلة، واحفظ الوقت والوجهة مع النتيجة.</p></aside>
+<p><span>هل تفضّل الشرح بالصورة؟</span> <a href="/ar/adeebolab-guide.html">جرّب عطلًا محاكى في AdeeboLab</a> <a href="/ar/isp-report.html">أو أنشئ تقريرًا لمزوّد الخدمة</a>.</p>
+<section class="end"><h2>افتح AdeeboShell في تطبيق Windows المجاني</h2><p>التطبيق وأدواته المدمجة مجانية. بلا إعلانات ولا حاجة لصلاحيات المسؤول.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">تحميل لـ Windows - مجاني</a></section>
+</main>
+</body>
+</html>

@@ -5,7 +5,9 @@ Run after tools/learnsite.py. Uses only the Python standard library.
 import html
 import json
 import re
+import sys
 from html.parser import HTMLParser
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 
@@ -53,10 +55,15 @@ if LANGUAGE == "es":
 french_sources = [DOCS / name for name in (
     "index.html", "blog/index.html", "wifi-or-isp.html", "internet-speed-monitor.html",
     "pc-monitoring.html", "isp-report.html", "privacy.html", "gaming.html",
-    "streaming.html", "trading.html",
+    "streaming.html", "trading.html", "adeeboshell.html", "adeebolab-guide.html",
+    "hall-of-fame.html", "app.html", "files.html", "live.html", "games.html",
 )] + sorted((DOCS / "learn").glob("*.html"))
 files = sorted((DOCS / "learn").glob("*.html"))
 files = french_sources   # 21 Nov: every language gets the same pages, made from the English ones (Bangla had its own hand-made home page and guides)
+if "--guides-only" in sys.argv:
+    files = [page for page in files if page.name in {"adeeboshell.html", "adeebolab-guide.html"}]
+if "--home-only" in sys.argv:
+    files = [page for page in files if page == DOCS / "index.html"]
 localized = {"/" + p.relative_to(DOCS).as_posix() for p in files}
 localized.update(route[:-10] for route in list(localized) if route.endswith("index.html"))
 localized.update({"/learn/", "/", "/blog/", "/wifi-or-isp.html",
@@ -79,18 +86,19 @@ def translate(text):
             translated = (prefix or "") + translated_title + (suffix or "")
     return text.replace(key, translated or key, 1) if key else text
 
+@lru_cache(maxsize=None)
 def language_links(url):
     english = re.sub(r"/(?:bn|fr|es|ar|zh)/", "/", url, count=1)
     relative = english.removeprefix(SITE)
     file = relative + "index.html" if relative.endswith("/") or not relative else relative
     links = [("en", english)]
-    if (DOCS / "bn" / file).exists():
+    if DOCS / file in french_sources or (DOCS / "bn" / file).exists():
         links.append(("bn", SITE + "bn/" + relative))
     if DOCS / file in french_sources:
         links.extend([("fr", SITE + "fr/" + relative), ("fr-CA", SITE + "fr/" + relative)])
     if DOCS / file in french_sources:
         links.append(("es", SITE + "es/" + relative))
-    if (DOCS / "ar" / file).exists():
+    if DOCS / file in french_sources or (DOCS / "ar" / file).exists():
         links.append(("ar", SITE + "ar/" + relative))
     if DOCS / file in french_sources:
         links.append(("zh-Hans", SITE + "zh/" + relative))
@@ -99,6 +107,7 @@ def language_links(url):
                    for code, href in links)
 
 
+@lru_cache(maxsize=None)
 def route_languages(url):
     return " ".join(dict.fromkeys(code.split("-")[0]
                     for code in re.findall(r'hreflang="([^"]+)"', language_links(url))
@@ -194,7 +203,7 @@ for source in files:
     parser.convert_charrefs = True
     parser.feed(content)
     rendered = "".join(parser.output)
-    mt = re.search(r"<title>(.*?)</title>", rendered, re.S)
+    mt = re.search(r"<title\b[^>]*>(.*?)</title>", rendered, re.S)
     if not mt: raise SystemExit("no <title> in " + str(source) + " - nothing was written")
     title = mt[1]
     paragraphs = re.findall(r"<p[^>]*>(.*?)</p>", rendered, re.S)
@@ -260,6 +269,28 @@ for source in files:
                 rendered = rendered.replace("</nav>", " · " + english_link + "</nav>", 1)
             else:
                 rendered = re.sub(r"(<main[^>]*>)", lambda m: m[1] + '<nav class="language-links" aria-label="' + {"fr": "Langue", "es": "Idioma", "ar": "اللغة", "bn": "ভাষা", "zh": "语言"}[LANGUAGE] + '">' + english_link + "</nav>", rendered, count=1)
+    if relative in {"adeeboshell.html", "adeebolab-guide.html", "hall-of-fame.html", "app.html", "files.html", "live.html", "games.html"}:
+        original_meta = re.search(r'<meta name="description" content="([^"]*)"', content)
+        if original_meta:
+            description = html.escape(translate(html.unescape(original_meta[1])), quote=True)
+            rendered = re.sub(r'(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*',
+                              lambda m: m[1] + description, rendered)
+    # Every static language copy describes itself; external tutorial subjects keep their own English audio language.
+    def page_schema(match):
+        data = json.loads(match[1])
+        if data.get("@type") in {"WebPage", "WebSite", "LearningResource", "SoftwareApplication", "BlogPosting", "TechArticle"}:
+            data["url"] = SITE + LANGUAGE + "/" + (relative[:-10] if relative.endswith("index.html") else relative)
+            data["inLanguage"] = LANG_TAG
+            if "name" in data:
+                data["name"] = translate(data["name"])
+            if "headline" in data:
+                data["headline"] = translate(data["headline"])
+            if "about" in data and isinstance(data["about"], str):
+                data["about"] = translate(data["about"])
+            if isinstance(data.get("isPartOf"), dict):
+                data["isPartOf"]["url"] = SITE + LANGUAGE + ("/blog/" if data["isPartOf"].get("@type") == "Blog" else "/")
+        return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + '</script>'
+    rendered = re.sub(r'<script type="application/ld\+json">(.*?)</script>', page_schema, rendered, flags=re.S)
     target = DOCS / LANGUAGE / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     lt = json.loads((ROOT / "tools/learn-tags.json").read_text(encoding="utf-8")).get(LANGUAGE, {}).get(Path(relative).stem) if relative.startswith("learn/") else None
@@ -301,6 +332,16 @@ for source in files:
     url = SITE + route
     if "<loc>" + url + "</loc>" not in xml:
         xml = xml.replace("</urlset>", "  <url><loc>" + url + "</loc></url>\n</urlset>")
+# The localized copies are rebuilt from English: carry its content date rather than the build date.
+source_dates = dict(re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", xml))
+for source in files:
+    relative = source.relative_to(DOCS).as_posix()
+    relative = relative[:-10] if relative.endswith("index.html") else relative
+    date = source_dates.get(SITE + relative)
+    if date:
+        url = SITE + LANGUAGE + "/" + relative
+        xml = re.sub(r"(<loc>" + re.escape(url) + r"</loc>)(?:<lastmod>[^<]+</lastmod>)?",
+                     lambda m: m[1] + "<lastmod>" + date + "</lastmod>", xml)
 sitemap.write_text(xml, encoding="utf-8", newline="\n")
 print(f"Generated {len(files)} {LANG_TAG} pages.")
 
@@ -308,3 +349,5 @@ print(f"Generated {len(files)} {LANG_TAG} pages.")
 # English page put it back in English (21 Nov) - so add the translated box again, now that this language's pages exist.
 runpy_tutorials = __import__("runpy").run_path(str(Path(__file__).with_name("published-tutorials.py")))
 runpy_tutorials["install"]()
+__import__("runpy").run_path(str(Path(__file__).with_name("guide_faq.py")))["install"]()
+__import__("runpy").run_path(str(Path(__file__).with_name("search_entrypoints.py")))["install"]()

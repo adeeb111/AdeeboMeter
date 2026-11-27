@@ -50,6 +50,8 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","url":"https://adeebometer.com/zh/isp-report.html","inLanguage":"zh-Hans","subjectOf":[{"@type":"CreativeWork","name":"How to Read MTR Results on Windows | Packet Loss Explained","genre":"Video tutorial","url":"https://www.youtube.com/watch?v=5IEcPIedL2I","inLanguage":"en","datePublished":"2026-11-25","publisher":{"@type":"Organization","name":"AdeeboMeter"}},{"@type":"CreativeWork","name":"One Hop Shows Packet Loss. Is It Really a Problem?","genre":"Short video","url":"https://www.youtube.com/shorts/L8fN2w5TXWQ","inLanguage":"en","sameAs":"https://www.facebook.com/reel/1128060556600411","publisher":{"@type":"Organization","name":"AdeeboMeter"}}]}</script>
+<meta property="og:locale" content="zh_CN">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/isp-report.html">
@@ -58,10 +60,9 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
 <link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
-<meta property="og:locale" content="zh_CN">
 </head>
 <body>
-<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="网站"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a> · <a href="https://adeebometer.com/isp-report.html?lang=en" lang="en">English</a></nav><script src="/site.js"></script><!--/sitebar-->
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>如何向运营商说明丢包起点</h1>
 <p class="dek">路由器每次都应答，而丢包在更远几跳开始，说明问题在家中网络之外。简短报告能呈现此证据，帮助客服处理。</p>
@@ -71,6 +72,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <figcaption>值得发送的模式：到路由器均正常，从运营商内部某一跳起持续丢包，直到目的地。</figcaption>
 </figure>
 <figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="AdeeboMeter 示例报告中，家用路由器没有丢包，后续某跳开始丢包并持续到目的地。"><figcaption>这是应用使用模拟数据和地址生成的报告。查看自己的报告时，先看路由器行与目的地行。</figcaption></figure>
+<!--mtr-video:start--><section class="example" id="mtr-video-tutorial" aria-labelledby="mtr-video-heading"><h2 id="mtr-video-heading">看懂 MTR 结果</h2><p lang="en">如何看懂 Windows 上的 MTR 结果 | 详解丢包</p><p>先比较中间节点与最终目标的结果，再判断是否是该节点造成丢包。</p><p>英文音频 · 2 分 22 秒 · 使用内置示例</p><p><a href="https://www.youtube.com/watch?v=5IEcPIedL2I">在 YouTube 观看</a></p><p lang="en">只有一个节点显示丢包，真的有问题吗？</p><p><a href="https://www.youtube.com/shorts/L8fN2w5TXWQ">观看短视频</a> · <a href="https://www.facebook.com/reel/1128060556600411">观看 Facebook 短视频</a></p></section><!--mtr-video:end-->
 <h2 id="checks">生成报告</h2>
 <ol><li>在 Windows 版 AdeeboMeter 中打开 <strong>工具箱</strong> 并搜索 <strong>给网络运营商的报告</strong>.</li><li>输入故障服务的地址，或选择已添加的游戏。问题发生时运行 1、2 或 5 分钟。</li><li>条件允许时，改用网线再测，并在恢复正常后再测一次。提交工单前先阅读报告。</li></ol>
 <h2 id="readings">如何理解结果</h2>

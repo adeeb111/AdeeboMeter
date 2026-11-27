@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="bn" data-language-route="/files.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>.adeebo ফাইল লক করুন ও খুলুন | AdeeboMeter</title>
+<meta name="description" content="কোড দিয়ে ফাইল লক করুন বা পাওয়া .adeebo ফাইল ফোনে অফলাইনে খুলুন। কিছু আপলোড হয় না; সব ব্রাউজারেই হয়।">
+<link rel="canonical" href="https://adeebometer.com/bn/files.html">
+<meta property="og:title" content=".adeebo ফাইল লক করুন ও খুলুন | AdeeboMeter">
+<meta property="og:description" content="কোড দিয়ে ফাইল লক করুন বা পাওয়া .adeebo ফাইল ফোনে অফলাইনে খুলুন। কিছু আপলোড হয় না; সব ব্রাউজারেই হয়।">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/bn/files.html">
+<meta property="og:image" content="https://adeebometer.com/img/social/files.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content=".adeebo ফাইল লক করুন ও খুলুন">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<!-- .adeebo v1, the same as the PC (src/Checks/FileCrypt.cs): "ADEEBO" 1 1 | iterations (4, big-endian) | salt (16) | IV (16)
+     | AES-256-CBC( name length (2) | name | file ) | HMAC-SHA256 (32) over everything before it.
+     Keys: PBKDF2-HMAC-SHA256(code without spaces or dashes, upper case, salt, iterations) -> 64 bytes: AES key, then HMAC key.
+     Everything happens in this browser: the file and the code never leave the phone. --&gt;
+<style>
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}.facts span{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--sub)}.facts .ui-i{color:var(--blue)}
+.done{margin:14px 0 12px;border-radius:18px;padding:12px;background:rgba(63,185,80,.10);border:1.5px solid rgba(63,185,80,.55)}.done .dh{display:flex;align-items:center;gap:8px;font-weight:800;color:#3FB950;margin:0 0 10px}
+.done .dh .ui-i{background:#3FB950;color:#fff;border-radius:50%;padding:2px}.codebox{display:flex;align-items:center;gap:10px;border-radius:14px;padding:12px;border:1px solid rgba(63,185,80,.45);background:rgba(0,0,0,.12)}
+.codebox .ki{color:#3FB950;flex:none}.codebox .code{flex:1;margin:0;background:none;padding:0;text-align:center;font-size:clamp(17px,5vw,23px);letter-spacing:1px;line-height:1.35}.cpy{flex:none;background:none;border:0;color:var(--sub);padding:6px;border-radius:10px}.cpy:active{transform:scale(.92)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.act{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;font-size:15px;font-family:inherit;transition:transform .12s}.act:active{transform:scale(.96)}.act .ui-i{color:var(--blue)}
+.lnk{display:block;margin:10px auto 0;background:none;border:0;color:var(--blue);font-weight:600;font-size:15px;font-family:inherit;text-decoration:underline}
+.tip{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:14px;border-left:3px solid var(--blue);background:rgba(47,123,246,.08);color:var(--sub);font-size:14px;line-height:1.45}.tip .ui-i{flex:none;color:var(--blue)}
+@media (prefers-reduced-motion:no-preference){.done{animation:fdone .45s cubic-bezier(.2,.8,.2,1)}@keyframes fdone{0%{opacity:0;transform:translateY(10px) scale(.98)}100%{opacity:1;transform:none}}.done .dh .ui-i{animation:fpop .5s .15s cubic-bezier(.3,1.6,.5,1) backwards}@keyframes fpop{0%{transform:scale(0)}100%{transform:none}}}
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:640px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom))}
+a{color:var(--blue)}
+.top{display:flex;gap:14px;flex-wrap:wrap;font-size:15px;margin-bottom:14px}.top b{margin-right:auto}
+h1{font-size:26px;line-height:1.2;margin:0 0 6px}
+.tag{color:var(--sub);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px}
+.card h2{font-size:18px;margin:0 0 4px}.card p{margin:0 0 10px;color:var(--sub);font-size:15px}
+.pick{display:block;border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;cursor:pointer;color:var(--blue);font-weight:600;overflow-wrap:anywhere}
+.pick input{display:none}
+input[type=text]{width:100%;font:18px ui-monospace,Consolas,monospace;letter-spacing:.04em;color:var(--ink);background:var(--page);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;text-transform:uppercase}
+.btn{font:inherit;font-weight:600;border:0;border-radius:999px;padding:11px 20px;cursor:pointer;background:var(--blue);color:#fff;margin:4px 8px 0 0}
+.btn:disabled{opacity:.5}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+.code{font:22px ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.06em;background:var(--tint);border-radius:10px;padding:12px;text-align:center;margin:10px 0;overflow-wrap:anywhere}
+.say{font-weight:600;margin:10px 0 0;min-height:1.5em}.say.ok{color:var(--green)}.say.no{color:var(--red)}
+.hint{font-size:14px;color:var(--sub)}
+footer{margin-top:26px;color:var(--sub);font-size:13px}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/files.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/files.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/files.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/files.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/files.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/files.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/files.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/files.html">
+</head>
+<body data-sec="files">
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/bn/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<header class="ui-head"><span class="ui-chip" style="--k:var(--c-files)" data-ic="folder" data-sz="28"></span><div><h1>ফাইল</h1><p>এই ডিভাইসেই ফাইল লক করুন অথবা খুলুন।</p></div></header>
+<div class="ui-seg" role="tablist"><button role="tab" data-fs="lock" aria-selected="true" data-ic="lock" data-sz="18">ফাইল লক করুন</button><button role="tab" data-fs="open" aria-selected="false" data-ic="unlock" data-sz="18">লক করা ফাইল খুলুন</button></div>
+
+<section class="card" data-fp="lock">
+<h2>ফাইল লক করুন</h2>
+<p class="hint">একটি কোড পাবেন। ফাইল আর কোড আলাদাভাবে পাঠান।</p>
+<label class="pick ui-row"><input type="file" id="lf"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="lfn">ফাইল বেছে নিন</b><small id="lfs">ফোনে সর্বোচ্চ 100 MB</small></span><span data-ic="chev"></span></label>
+<div class="facts"><span data-ic="lock" data-sz="15">AES-256</span><span data-ic="check" data-sz="15">ফাইল বদলেছে কি না যাচাই</span><span data-ic="clock" data-sz="15">600,000 দফা</span><span data-ic="globe" data-sz="15">কখনও আপলোড হয় না</span></div>
+<button class="btn" id="lb" disabled data-ic="lock" data-sz="18">ফাইল লক করুন</button>
+<div id="lr" style="display:none">
+<div class="done"><div class="dh" data-ic="check" data-sz="18">ফাইল লক হয়েছে</div>
+<div class="codebox"><span class="ki" data-ic="key" data-sz="26"></span><div class="code" id="lc"></div><button class="cpy" id="lcopy2" aria-label="কোডটি কপি করুন" data-ic="copy" data-sz="20"></button></div></div>
+<div class="acts"><button class="act" id="lcopy" data-ic="copy"><span>কোড কপি করুন</span></button><button class="act" id="lsave" data-ic="down"><span>.adeebo সেভ করুন</span></button><button class="act" id="lshare" data-ic="share" hidden><span>ফাইল শেয়ার করুন</span></button><button class="act" id="lpc" data-ic="monitor" hidden><span>পিসিতে পাঠান</span></button></div>
+<button class="lnk" id="lcodepc" hidden>কোডটিও আমার পিসিতে পাঠান</button>
+<p class="hint" id="lsent" hidden></p>
+<div class="tip" data-ic="info" data-sz="20"><span>ফাইল ও কোড আলাদা মাধ্যমে পাঠান। যেমন, ফাইল ইমেইলে আর কোড ফোনে বা মেসেজে। কোড কোথাও সেভ হয় না। পেজ বন্ধ করার আগে লিখে রাখুন বা পাঠিয়ে দিন।</span></div></div>
+<p class="say" id="ls" aria-live="polite"></p>
+</section>
+
+<section class="card" data-fp="open" hidden>
+<h2>লক করা ফাইল খুলুন</h2>
+<p class="hint">.adeebo ফাইলটি বেছে নিয়ে তার কোড লিখুন।</p>
+<label class="pick ui-row"><input type="file" id="of"><span class="ui-chip sm" style="--k:var(--c-files)" data-ic="file"></span><span class="t"><b id="ofn">লক করা ফাইল বেছে নিন</b><small>.adeebo</small></span><span data-ic="chev"></span></label>
+<input type="text" id="oc" placeholder="কোড, যেমন ABCD-EFGH-…" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="কোড">
+<button class="btn" id="ob" disabled data-ic="unlock" data-sz="18">খুলুন</button>
+<p class="say" id="os" aria-live="polite"></p>
+</section>
+
+<div id="amv-pick-at" style="margin:18px 0 0"></div>
+<footer>এই ডিভাইসেই থাকে · AES-256 · পিসিতেও খোলা যায়</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)},S=window.crypto&&crypto.subtle,te=new TextEncoder(),td=new TextDecoder();
+var MAGIC=[65,68,69,69,66,79,1,1],ITER=600000,MAX=(navigator.deviceMemory&&navigator.deviceMemory<=4)||/iPhone|iPad|Android/.test(navigator.userAgent)?100*1024*1024:300*1024*1024,MAXOPEN=MAX+4096,ALPH="23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+if(!S){$("os").textContent=$("ls").textContent="This browser can't do the encryption - use Safari or Chrome.";return}
+function clean(c){return String(c||"").toUpperCase().replace(/[\s-]/g,"")}
+async function keys(code,salt,iter){var base=await S.importKey("raw",te.encode(clean(code)),"PBKDF2",false,["deriveBits"]);
+  var k=new Uint8Array(await S.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:salt,iterations:iter},base,512));
+  return{enc:await S.importKey("raw",k.slice(0,32),"AES-CBC",false,["encrypt","decrypt"]),mac:await S.importKey("raw",k.slice(32),{name:"HMAC",hash:"SHA-256"},false,["sign","verify"])}}
+function newCode(){var s="",b=new Uint8Array(1);while(s.length<24){crypto.getRandomValues(b);if(b[0]<248)s+=ALPH[b[0]%31]}return s.match(/.{4}/g).join("-")}
+function save(blob,name){var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},4000)}
+function say(id,t,ok){var e=$(id);e.textContent=t;e.className="say"+(ok===true?" ok":ok===false?" no":"")}
+
+// ---- open
+var of=null;
+$("of").onchange=function(){of=this.files[0]||null;$("ofn").textContent=of?of.name:"Choose the .adeebo file";$("ob").disabled=!of;say("os","")};
+$("oc").oninput=function(){var v=clean(this.value);if(v.length>24)v=v.slice(0,24);var g=v.match(/.{1,4}/g);this.value=g?g.join("-"):""};
+$("ob").onclick=async function(){
+  if(!of)return;var file=of;if(file.size>MAXOPEN)return say("os","That file is too big to open on this device ("+Math.round(MAXOPEN/1048576)+" MB at most) - open it on your PC.",false);$("of").disabled=true;
+  if(clean($("oc").value).length<8){$("of").disabled=false;return say("os","Type the code that came with the file.",false)}
+  $("ob").disabled=true;say("os","Checking…");
+  try{
+    var b=new Uint8Array(await file.arrayBuffer());
+    if(b.length<44+16+32)throw"This isn't an AdeeboMeter file.";
+    for(var i=0;i<8;i++)if(b[i]!==MAGIC[i])throw i<6?"This isn't an AdeeboMeter file.":i===7?"This kind of .adeebo file opens on a PC only (it's locked for a person's key, not a code).":"Made by a newer AdeeboMeter - open it on your PC.";
+    var iter=(b[8]<<24|b[9]<<16|b[10]<<8|b[11])>>>0;if(iter<100000||iter>2000000)throw"The file is damaged.";
+    var k=await keys($("oc").value,b.slice(12,28),iter),body=b.subarray(0,b.length-32),tag=b.subarray(b.length-32);
+    // the tag first: a wrong code or a changed file never decrypts a byte
+    if(!await S.verify("HMAC",k.mac,tag,body))throw"Wrong code, or the file was changed on the way. Nothing was opened.";
+    var p=new Uint8Array(await S.decrypt({name:"AES-CBC",iv:b.slice(28,44)},k.enc,b.subarray(44,b.length-32)));
+    var nl=p[0]<<8|p[1];if(2+nl>p.length)throw"The file is damaged.";
+    var name=td.decode(p.subarray(2,2+nl)).replace(/[\\/:*?"<>|\x00-\x1f]/g,"_")||"opened-file";
+    save(new Blob([p.subarray(2+nl)]),name);say("os",(window.AMV&&AMV.line("decrypt.done")?AMV.line("decrypt.done")+" ":"")+"Opened: "+name+" - your browser is downloading it.",true);
+  }catch(e){say("os",typeof e==="string"?e:"Wrong code, or the file was changed on the way. Nothing was opened.",false)}
+  $("ob").disabled=false;$("of").disabled=false};
+
+// ---- lock
+var lf=null,made=null;
+function sz(n){return n>=1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB"}
+$("lf").onchange=function(){lf=this.files[0]||null;$("lfn").textContent=lf?lf.name:"Choose a file to lock";$("lfs").textContent=lf?((lf.name.split(".").pop()||"file").toUpperCase()+" · "+sz(lf.size)):"Up to 100 MB on a phone";$("lb").disabled=!lf;$("lr").style.display="none";say("ls","")};
+$("lb").onclick=async function(){
+  if(!lf)return;var file=lf;if(file.size>MAX)return say("ls","That file is over "+Math.round(MAX/1048576)+" MB - lock it on your PC.",false);$("lf").disabled=true;   // AM-CG-378: this file, even if another is picked meanwhile
+  $("lb").disabled=true;say("ls","Locking…");
+  try{
+    var code=newCode(),salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(16)),k=await keys(code,salt,ITER);
+    var nm=file.name;while(te.encode(nm).length>255)nm=nm.slice(0,-1);var nb=te.encode(nm),data=new Uint8Array(await file.arrayBuffer());
+    var plain=new Uint8Array(2+nb.length+data.length);plain[0]=nb.length>>8;plain[1]=nb.length&255;plain.set(nb,2);plain.set(data,2+nb.length);data=null;
+    var ct=new Uint8Array(await S.encrypt({name:"AES-CBC",iv:iv},k.enc,plain));plain=null;
+    var head=new Uint8Array(44);head.set(MAGIC,0);head[8]=ITER>>>24;head[9]=ITER>>16&255;head[10]=ITER>>8&255;head[11]=ITER&255;head.set(salt,12);head.set(iv,28);
+    var body=new Uint8Array(44+ct.length);body.set(head,0);body.set(ct,44);ct=null;
+    var tag=new Uint8Array(await S.sign("HMAC",k.mac,body));
+    made={blob:new Blob([body,tag],{type:"application/octet-stream"}),name:file.name.replace(/\.[^.]*$/,"")+".adeebo",code:code};
+    $("lc").textContent=code;$("lr").style.display="block";showSend();say("ls",(window.AMV&&AMV.line("encrypt.done")?AMV.line("encrypt.done")+" ":"")+"Locked. Save the file, then send the code a different way.",true);
+  }catch(e){say("ls","Couldn't lock it on this phone - try a smaller file.",false)}
+  $("lb").disabled=false;$("lf").disabled=false};
+$("lsave").onclick=function(){if(made)save(made.blob,made.name)};
+// 16 Nov (Adeeb: "no send to pc or any send/email button"): the phone's share sheet (Mail, Messages, AirDrop...) - the file only,
+// never the code with it; and straight to the linked PC through the app's sealed session
+function asFile(){try{return new File([made.blob],made.name,{type:"application/octet-stream"})}catch(e){return null}}
+function canShare(){var f=made&&asFile();try{return !!(f&&navigator.canShare&&navigator.canShare({files:[f]}))}catch(e){return false}}
+function pcLive(){try{return window.parent!==window&&parent.AMPcLive&&parent.AMPcLive()}catch(e){return false}}
+function inApp(){try{return window.parent!==window&&!!parent.AMSendPC}catch(e){return false}}
+function lab(id,t){var s=$(id).querySelector("span");if(s)s.textContent=t;else $(id).textContent=t}
+function showSend(){$("lshare").hidden=!canShare();$("lpc").hidden=!inApp();lab("lpc",pcLive()?"Send to PC":"Send to PC · connect");$("lcodepc").hidden=!pcLive()}
+// the code to YOUR OWN PC: over the same sealed link, into Your phone › From the phone on the PC (one tap to copy it there).
+// For anyone else the code goes another way - a call or a text - never with the file.
+$("lcodepc").onclick=function(){if(!made||!pcLive())return;try{parent.AMSendText(made.code);$("lsent").hidden=false;$("lsent").textContent="Code sent to your PC - it's under Your phone › From the phone, with Copy."}catch(e){}};
+$("lcopy2").onclick=function(){$("lcopy").click()};
+$("lshare").onclick=function(){var f=made&&asFile();if(!f)return;navigator.share({files:[f],title:made.name}).catch(function(){})};
+$("lpc").onclick=function(){if(!made||!inApp())return;try{var r=parent.AMSendPC(made.blob,made.name);$("lsent").hidden=false;$("lsent").textContent=r==="sent"?"Sending to your PC - accept it there. It lands in Downloads\\AdeeboMeter.":"Connect your PC - the file goes as soon as it's linked."}catch(e){$("lsent").hidden=false;$("lsent").textContent="Couldn't hand it to the app - save it and send it from PC › Files."}};
+setInterval(function(){if(made)showSend()},2000);
+// AM-CG-380: if the clipboard says no, the code is selected so it can be copied by hand
+function byHand(){var e=$("lc"),r=document.createRange();r.selectNodeContents(e);var s=getSelection();s.removeAllRanges();s.addRange(r);lab("lcopy","Selected - copy by hand")}
+$("lcopy").onclick=function(){if(!made)return;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(made.code).then(function(){lab("lcopy","Copied ✓")},byHand);else byHand()};
+addEventListener("pagehide",function(){made=null});
+})();
+</script>
+<script src="/voice.js"></script>
+<script>AMV.picker(document.getElementById("amv-pick-at"))</script>
+<script src="/ui.js"></script>
+<script>[].forEach.call(document.querySelectorAll("[data-fs]"),function(b){b.onclick=function(){var k=b.getAttribute("data-fs");[].forEach.call(document.querySelectorAll("[data-fs]"),function(x){x.setAttribute("aria-selected",x===b)});[].forEach.call(document.querySelectorAll("[data-fp]"),function(p){p.hidden=p.getAttribute("data-fp")!==k})}});if(/\.adeebo|open/.test(location.hash))document.querySelector('[data-fs="open"]').click();;(function(){function go(){var h=location.hash.slice(1),b=document.querySelector(h==="of"||h==="open"?"[data-fs=open]":h==="lock"?"[data-fs=lock]":"#none");if(b)b.click()}go();addEventListener("hashchange",go)})();</script>
+</body>
+</html>

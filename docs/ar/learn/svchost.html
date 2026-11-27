@@ -4,11 +4,11 @@
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>svchost.exe - مضيف واحد، العديد من الخدمات | تعلّم | AdeeboMeter</title>
-<meta name="description" content="لماذا هناك عشرون منهم، وما بداخلهم.">
+<title>ما هو svchost.exe؟ خدمات Windows واستخدام المعالج | AdeeboMeter</title>
+<meta name="description" content="يستضيف svchost.exe خدمات Windows. تعرّف إلى سبب تشغيل عدة نسخ وقارن نشاط المعالج والقرص للنسخة المشغولة.">
 <link rel="canonical" href="https://adeebometer.com/ar/learn/svchost.html">
-<meta property="og:title" content="svchost.exe - مضيف واحد، العديد من الخدمات | تعلّم | AdeeboMeter">
-<meta property="og:description" content="لماذا هناك عشرون منهم، وما بداخلهم.">
+<meta property="og:title" content="ما هو svchost.exe؟ خدمات Windows واستخدام المعالج | AdeeboMeter">
+<meta property="og:description" content="يستضيف svchost.exe خدمات Windows. تعرّف إلى سبب تشغيل عدة نسخ وقارن نشاط المعالج والقرص للنسخة المشغولة.">
 <meta property="og:type" content="article">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
@@ -63,9 +63,9 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"svchost.exe - one host, many services","description":"Why there are twenty of them, and what's inside each. A shared host: many small Windows services run inside each","url":"https://adeebometer.com/learn/svchost.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"Your Windows PC","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><meta property="og:locale" content="ar_AR">
-<link rel="stylesheet" href="/sitebar.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"svchost.exe - مضيف واحد، العديد من الخدمات","description":"Why there are twenty of them, and what's inside each. A shared host: many small Windows services run inside each","url":"https://adeebometer.com/ar/learn/svchost.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"ar","isAccessibleForFree":true,"about":"جهاز الكمبيوتر الخاص بك Windows","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/ar/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/svchost.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/svchost.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/svchost.html">
@@ -77,10 +77,11 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </head>
 <body data-sec="learn">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
-<main><a class="chip" href="/ar/learn/#windows">جهاز الكمبيوتر الخاص بك Windows</a>
+<main>
+<a class="chip" href="/ar/learn/#windows">جهاز الكمبيوتر الخاص بك Windows</a>
 <h1>svchost.exe - مضيف واحد، العديد من الخدمات</h1>
 <p class="tag">لماذا هناك عشرون منهم، وما بداخلهم.</p>
-<div class="card one"><p>مضيف مشترك: العديد من الخدمات الصغيرة Windows تعمل داخل كل svchost.exe.</p></div>
+<div class="card one"><p>svchost.exe هو مضيف خدمات Windows. تستضيف كل نسخة خدمة واحدة أو أكثر. قد يكون تعدد النسخ طبيعيًا؛ حدّد الخدمة المشغولة قبل إجراء أي تغيير.</p></div>
 <h2>كيف تجري المحادثة</h2>
 <div class="ladder"><div class="lanes" aria-hidden="true"><span>services</span><span>svchost</span></div><ol aria-label="تبادل الرسائل بين services وsvchost، بالترتيب">
 <li class="msg"><p><span class="sr">الخدمات إلى svchost: </span>استضافة هذه الخدمات</p><div class="arrow" aria-hidden="true"></div></li>
@@ -96,7 +97,8 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>واحد لكل علامة التبويب</button>
 <button>واحد لكل مستخدم</button>
 <p class="say" aria-live="polite"></p></div>
-<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/games.html">لعب الألعاب</a></p>
+<!--process-check:start--><section class="card" id="process-next-check" aria-labelledby="process-check-heading"><h2 id="process-check-heading">الكمبيوتر بطيء؟ ابدأ بعملية مشغولة واحدة.</h2><ol><li>ابحث عن العملية الأكثر استخدامًا للمعالج.</li><li>قارن نشاط القرص لتلك العملية في الوقت نفسه.</li><li>كرّر المقارنة عندما يعمل الكمبيوتر بصورة طبيعية. دوّن الوقت وما كنت تفعله.</li></ol><p><a href="/ar/pc-monitoring.html">قارن المعالج والذاكرة والقرص على Windows</a></p><p><a href="https://learn.microsoft.com/en-us/windows/win32/services/service-programs">كيف يستضيف Windows الخدمات</a></p></section><!--process-check:end-->
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/ar/games.html">لعب الألعاب</a></p>
 <h2>المزيد في Windows</h2>
 <div class="ui-rows"><a class="ui-row" href="/ar/learn/boot-chain.html" data-id="boot-chain"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>كيف يبدأ Windows، من الطاقة إلى سطح المكتب</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/lsass.html" data-id="lsass"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>lsass.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/csrss.html" data-id="csrss"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>csrss.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/wininit.html" data-id="wininit"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>wininit.exe</b><small>Windows</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="/ar/learn/boot-chain.html">← كيف يبدأ Windows، من الطاقة إلى سطح المكتب</a><a href="/ar/learn/lsass.html">lsass.exe →</a></div>

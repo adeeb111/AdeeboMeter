@@ -63,8 +63,9 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Ping 与路由追踪（ICMP）","description":"你在线吗？有多远？走哪条路？网络自身的消息：ping 问“你在线吗？”，路由追踪则询问沿途各路由器。","url":"https://adeebometer.com/zh/learn/icmp.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"zh-Hans","isAccessibleForFree":true,"about":"互联网如何通信","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/zh/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Ping 与路由追踪（ICMP）","description":"你在线吗？有多远？走哪条路？网络自身的消息：ping 问“你在线吗？”，路由追踪则询问沿途各路由器。","url":"https://adeebometer.com/zh/learn/icmp.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"zh-Hans","isAccessibleForFree":true,"about":"互联网如何通信","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/zh/"},"subjectOf":[{"@type":"CreativeWork","name":"How to Read MTR Results on Windows | Packet Loss Explained","genre":"Video tutorial","url":"https://www.youtube.com/watch?v=5IEcPIedL2I","inLanguage":"en","datePublished":"2026-11-25","publisher":{"@type":"Organization","name":"AdeeboMeter"}},{"@type":"CreativeWork","name":"One Hop Shows Packet Loss. Is It Really a Problem?","genre":"Short video","url":"https://www.youtube.com/shorts/L8fN2w5TXWQ","inLanguage":"en","sameAs":"https://www.facebook.com/reel/1128060556600411","publisher":{"@type":"Organization","name":"AdeeboMeter"}}]}</script>
 <script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/icmp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/icmp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/icmp.html">
@@ -73,15 +74,15 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/icmp.html">
 <link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/learn/icmp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/icmp.html">
-<meta property="og:locale" content="zh_CN">
 </head>
 <body data-sec="learn">
-<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="网站"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a> · <a href="https://adeebometer.com/learn/icmp.html?lang=en" lang="en">English</a></nav><script src="/site.js"></script><!--/sitebar-->
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <a class="chip" href="/zh/learn/#protocol">互联网如何通信</a>
 <h1>Ping 与路由追踪（ICMP）</h1>
 <p class="tag">你在线吗？有多远？走哪条路？</p>
 <div class="card one"><p>网络自身的消息：ping 问“你在线吗？”，路由追踪则询问沿途各路由器。</p></div>
+<!--mtr-video:start--><section class="card" id="mtr-video-tutorial" aria-labelledby="mtr-video-heading"><h2 id="mtr-video-heading">看懂 MTR 结果</h2><p lang="en">如何看懂 Windows 上的 MTR 结果 | 详解丢包</p><p>先比较中间节点与最终目标的结果，再判断是否是该节点造成丢包。</p><p>英文音频 · 2 分 22 秒 · 使用内置示例</p><p><a href="https://www.youtube.com/watch?v=5IEcPIedL2I">在 YouTube 观看</a></p><p lang="en">只有一个节点显示丢包，真的有问题吗？</p><p><a href="https://www.youtube.com/shorts/L8fN2w5TXWQ">观看短视频</a> · <a href="https://www.facebook.com/reel/1128060556600411">观看 Facebook 短视频</a></p></section><!--mtr-video:end-->
 <h2>通信如何进行</h2>
 <div class="ladder"><div class="lanes" aria-hidden="true"><span>你的电脑</span><span>路由器</span></div><ol aria-label="你的 PC 和路由器之间的消息（按顺序）">
 <li class="msg"><p><span class="sr">你的电脑到路由器： </span>回显请求（TTL 1）</p><div class="arrow" aria-hidden="true"></div></li>
@@ -99,7 +100,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>哪些应用在联网</button>
 <button>网站证书</button>
 <p class="say" aria-live="polite"></p></div>
-<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">获取 AdeeboMeter 换成 Windows</a><a class="cta ghost" href="/games.html">开始游戏</a></p>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">获取 AdeeboMeter 换成 Windows</a><a class="cta ghost" href="/zh/games.html">开始游戏</a></p>
 <h2>更多协议内容</h2>
 <div class="ui-rows"><a class="ui-row" href="/zh/learn/dns.html" data-id="dns"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DNS</b><small>协议</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/zh/learn/dhcp.html" data-id="dhcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DHCP</b><small>协议</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/zh/learn/arp.html" data-id="arp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>ARP</b><small>协议</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/zh/learn/tcp.html" data-id="tcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>TCP</b><small>协议</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="/zh/learn/http.html">← HTTP</a><a href="/zh/learn/ipv6.html">IPv6 与电脑的地址获取 →</a></div>

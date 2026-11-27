@@ -199,8 +199,10 @@ with open(os.path.join(out, 'index.html'), 'w', encoding='utf-8', newline='\n') 
 
 # sitemap: keep the hand-written pages, replace the learn ones
 sm = os.path.join(root, 'docs/sitemap.xml'); today = datetime.date.today().isoformat()
+# A rebuild is not a content change. Preserve reviewed dates; update the sitemap when content changes.
+previous_dates = dict(re.findall(r'<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>', open(sm, encoding='utf-8').read()))
 keep = [l for l in open(sm, encoding='utf-8').read().splitlines() if '<url>' in l and '/learn/' not in l and 'games.html' not in l and 'live.html' not in l and 'app.html' not in l and 'files.html' not in l]
-new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{today}</lastmod></url>' for p in ['app.html', 'files.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
+new = [f'  <url><loc>{SITE}{p}</loc><lastmod>{previous_dates.get(SITE + p, today)}</lastmod></url>' for p in ['app.html', 'files.html', 'learn/', 'games.html', 'live.html'] + [f'learn/{t["id"]}.html' for t in topics]]
 with open(sm, 'w', encoding='utf-8', newline='\n') as f:
     f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(keep + new) + '\n</urlset>\n')
 print(len(topics), 'lesson pages + index; sitemap', len(keep) + len(new), 'urls')
@@ -243,7 +245,7 @@ core = ['locale-surfaces.js', 'locale.js', 'locale-messages.js', 'locale.css', '
         'base.css', 'brand.css', 'brand-app.css', 'fonts/barlow-latin-500-normal.woff2', 'fonts/barlow-latin-600-normal.woff2',
         'fonts/barlow-semi-condensed-latin-600-normal.woff2', 'fonts/barlow-semi-condensed-latin-700-normal.woff2', 'sample.js', 'home.js',
         'site.js', 'sitebar.css', 'fonts/barlow-latin-700-normal.woff2']   # hunters15 SITE-M2: the site bar and its bold font offline (dropped by a regeneration)   # 23 Nov: the brand look and its fonts work offline
-extra = ['blog/index.html', 'gaming.html', 'streaming.html', 'trading.html', 'privacy.html', 'hall-of-fame.html', 'wifi-or-isp.html', 'internet-speed-monitor.html', 'pc-monitoring.html', 'isp-report.html',
+extra = ['adeeboshell.html', 'adeebolab-guide.html', 'blog/index.html', 'gaming.html', 'streaming.html', 'trading.html', 'privacy.html', 'hall-of-fame.html', 'wifi-or-isp.html', 'internet-speed-monitor.html', 'pc-monitoring.html', 'isp-report.html',
          'img/gaming.png', 'img/streaming.png', 'img/trading.png', 'img/isp-report-example.png', 'img/poster-sm.webp'] + sorted('img/widgets/' + f for f in os.listdir(os.path.join(root, 'docs/img/widgets')) if f.endswith('.png')) + ['bn/index.html', 'bn/blog/index.html', 'bn/wifi-or-isp.html', 'bn/internet-speed-monitor.html', 'bn/pc-monitoring.html', 'bn/isp-report.html', 'bn/video-calls-freeze.html', 'guide.css', 'feature.css', 'lab.html'] + ['bn/learn/index.html'] + [f'bn/learn/{t["id"]}.html' for t in topics] + [f'learn/{t["id"]}.html' for t in topics] + ['voice.js', 'kb/voice/index.json'] + [f'kb/voice/{v}.json' for v in have]
 # Restore the public-page analytics loader after lesson generation.
 runpy.run_path(os.path.join(root, 'tools/web-analytics.py'), run_name='__main__')
@@ -293,4 +295,5 @@ self.addEventListener("fetch", e => {
 """ % (ver, json.dumps(['/' + x for x in core]), json.dumps(['/' + x for x in extra]))
 with open(os.path.join(root, 'docs/sw.js'), 'w', encoding='utf-8', newline='\n') as f: f.write(sw)
 print('sw.js', ver, len(core) + len(extra), 'files')
+__import__('runpy').run_path(os.path.join(root, 'tools', 'search_entrypoints.py'))['install']()
 

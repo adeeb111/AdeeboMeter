@@ -50,6 +50,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/blog/">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/blog/">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/blog/">
@@ -58,10 +59,9 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/blog/">
 <link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/blog/">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/blog/">
-<meta property="og:locale" content="zh_CN">
 </head>
 <body>
-<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="网站"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a> · <a href="https://adeebometer.com/blog/?lang=en" lang="en">English</a></nav><script src="/site.js"></script><!--/sitebar-->
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main class="troubleshooting">
 <header class="blog-head">
 <h1>为什么慢？</h1>
@@ -72,6 +72,8 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <li><a href="/zh/internet-speed-monitor.html"><div><h2>有人上传时，网络为什么会变慢？</h2><p>同时观察速度和延迟。上传一开始延迟就升高，说明线路满载，而非损坏。</p><ul class="meta"><li>测试：上传时的延迟</li><li>阅读约 4 min</li></ul></div><ol class="path" aria-label="本指南检查哪里"><li class="ok">电脑</li><li class="ok">Wi-Fi</li><li class="warn">路由器</li><li class="warn">运营商</li><li>远端</li></ol></a></li>
 <li><a href="/zh/pc-monitoring.html"><div><h2>为什么我的电脑速度很慢？</h2><p>找出整体卡住时仍持续繁忙的应用，并判断瓶颈在处理器、内存还是磁盘。</p><ul class="meta"><li>测试：实时查看最繁忙应用</li><li>阅读约 3 min</li></ul></div><ol class="path" aria-label="本指南检查哪里"><li class="bad">电脑</li><li>Wi-Fi</li><li>路由器</li><li>运营商</li><li>远端</li></ol></a></li>
 <li><a href="/zh/isp-report.html"><div><h2>如何向运营商说明丢包从哪里开始？</h2><p>生成两分钟报告，标出首个丢包位置，附到工单中。</p><ul class="meta"><li>测试：给运营商的报告</li><li>阅读约 4 min</li></ul></div><ol class="path" aria-label="本指南检查哪里"><li class="ok">电脑</li><li class="ok">Wi-Fi</li><li class="ok">路由器</li><li class="bad">运营商</li><li class="bad">远端</li></ol></a></li>
+<li><a href="/zh/adeeboshell.html"><div><h2>如何用键盘检查网络？</h2><p>先在 AdeeboShell 中运行 status，再探索内置工具，无需离开应用。</p><ul class="meta"><li>试一试：三条内置命令</li><li>阅读约 3 min</li></ul></div><div class="blog-command" aria-hidden="true"><code dir="ltr">status</code><code dir="ltr">ls /tools</code><code dir="ltr">help ping</code></div></a></li>
+<li><a href="/zh/adeebolab-guide.html"><div><h2>数据包为什么会卡住？</h2><p>在 AdeeboLab 中更改一项模拟故障，逐步跟踪数据包。</p><ul class="meta"><li>试一试：浏览器网络模拟</li><li>阅读约 2 分钟</li></ul></div><ol class="path" aria-label="模拟的数据包路径"><li class="bad">电脑</li><li>Wi-Fi</li><li>路由器</li><li>运营商</li><li>远端</li></ol></a></li>
 </ol>
 <section class="end showcase" aria-labelledby="sc-t">
 <div class="sc-copy"><h2 id="sc-t">相同五个环节，就在屏幕角落</h2><p>工作时 AdeeboMeter 持续监测。变慢时，小组件直接指出 Wi-Fi、路由器或运营商等环节及数值，无需先打开指南。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">下载 Windows - 免费</a><p class="sc-note">Windows 10 和 11 · 无需管理员权限 · 个人信息不离开本机</p></div>

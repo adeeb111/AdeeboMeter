@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 TAG = '<script defer src="/analytics.js"></script>'
 # Companion tools can display private network details and sharing links.
-EXCLUDED = {"app.html", "files.html", "live.html", "remote.html", "r.html", "games.html"}
+EXCLUDED = {"app.html", "files.html", "live.html", "remote.html", "r.html", "games.html", "lab.html"}
 
 def install():
     count = changed = viaLocale = 0; skipped = []
