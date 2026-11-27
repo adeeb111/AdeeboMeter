@@ -11,4 +11,5 @@ python3 tools/search_paths.py
 for l in bengali french spanish arabic chinese; do python3 tools/$l-seo.py; done
 python3 tools/site_languages.py # new families must include the language generated last
 python3 tools/site_sync.py   # last: the one site bar on every page (the scripts above rewrite pages)
+python3 tools/navigation_layout.py # final menu and browser-playground layout
 python3 tools/site_cache.py  # hash the final pages, including all new language copies
