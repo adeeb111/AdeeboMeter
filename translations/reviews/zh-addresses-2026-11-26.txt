@@ -1,0 +1,17 @@
+Chinese forms of address used by both native and mobile personas.
+English	Chinese
+my lord	阁下
+my lady	女士
+bro	兄弟
+sis	姐妹
+captain	船长
+sir	先生
+ma'am	女士
+bestie	好友
+friend	朋友
+matey	伙计
+player	玩家
+pal	朋友
+pilot	飞行员
+flight	指挥中心
+boss	老板

@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|夜色又降临了，我在盯着你的网络。
+app.open|案卷已打开，{addr}。每个数据包都是证人。
+all.good|今晚街上很安静，没出什么事。
+all.good|人人都清白：电脑、Wi-Fi、网络。
+all.good|没什么可汇报的，我就喜欢这样。
+pc.busy|你的电脑在 {v} 的重压下冒汗，它肯定知道点什么。
+pc.busy|电脑才是瓶颈，网络有不在场证明。
+pc.busy|一张桌子堆了太多活儿，CPU 已到 {v}。
+wifi.drops|Wi-Fi 今天跑了 {v} 次。
+wifi.drops|掉了 {v} 次，信号一直很紧张。
+net.none|断网了，线索凉了。
+net.none|离线了，没人说话。
+inet.slow|路由器是清白的，麻烦在它后头。
+inet.slow|家里有不在场证明，嫌疑人是运营商。
+inet.slow|延迟从你家门外开始，{addr}。
+busy|正在跟进一条线索……{v}
+busy|四处打听呢。
+busy|正在办案。
+idle|夜很静，我还在盯着。
+idle|没什么新情况，城市睡了。
+idle|没有电话，没有麻烦。
+search.empty|案子是什么，{addr}？
+search.empty|告诉我哪里出问题了。
+freeze|给我一分钟（{v}），文件太沉了。
+freeze|正在补文书工作（{v}）。
+speedrunner|别急，老兄，一次只办一个案子。
+speedrunner|上一条线索还没跟完。
+back.again|你回来了，你不在时发生了 {v} 件事。
+back.again|欢迎回来，卷宗在这儿。
+dns.slow|电话簿翻得慢，DNS 要 {v}。
+dns.slow|查个名字要 {v}，有人在拖延。
+speed.great|下载 {v}，又快又干净，没废话。
+speed.great|下载 {v}，手法利落。
+speed.bloat|速度快，可街上人一多就吃力，延迟多 {v}。
+speed.bloat|速度没问题，一受压就垮，{v}。
+game.lag|卡顿出在你的 Wi-Fi，服务器是清白的。
+game.lag|服务器没问题，是 Wi-Fi 干的。
+game.good|Ping {v}，干净利落地脱身。
+game.good|线路稳当，没耍花样。
+vpn.on|VPN 已开，开始卧底。
+vpn.on|流量现在戴着伪装。
+vpn.slow|这身伪装要多花 {v} 的时间。
+vpn.slow|VPN 多了 {v}，绕了远路。
+portal|这地方要你先在门口登记。
+portal|强制门户，先出示证件再进。
+gw.down|路由器不吭声了，重启它。
+gw.down|路由器不说话，看看它的灯。
+isp.down|路由器是清白的，运营商那边黑了。
+isp.down|家里没事，互联网出城了。
+mtu.small|大包过不了这道门，MTU {v}。
+mtu.small|路径 MTU {v}，有人在挤压数据包。
+port.open|{v} 应门了。
+port.open|{v} 开着，家里有人。
+port.closed|{v} 不肯开口。
+port.closed|{v} 那边没人在家。
+cert.ok|证件没问题，证书有效。
+cert.ok|锁是真的。
+cert.expired|他们的证件在 {v} 过期了。
+cert.expired|自 {v} 起过期，他们那边马虎了。
+sec.ok|记录干净，检查通过。
+sec.ok|这地方没有薄弱点。
+sec.issue|检查发现 {v} 处疑点。
+sec.issue|发现 {v} 件对不上的事。
+mtr.lossy|数据包在第 {v} 跳消失了，顺着线索找。
+mtr.lossy|丢包从第 {v} 跳开始，线索指向那儿。
+mtr.clean|每一跳都干净，结案。
+mtr.clean|零丢包，没什么可看的。
+devices.found|你的网络上有 {v} 张面孔。
+devices.found|数了数，屋里有 {v} 台设备。
+encrypt.done|封好了，只有对的人能打开。
+encrypt.done|锁得严严实实。
+decrypt.done|打开了，没人动过证据。
+decrypt.done|信封已拆，封条完好。
+points.earned|+{v} 分，干得漂亮，侦探。
+points.earned|+{v} 分，局长注意到了。
+award|500 分，Adeebo 奖，年度大案。
+award|Adeebo 奖到手，你破案了。
+late.night|夜深了，城市安静了，我还在。
+late.night|午夜班，盯着街面。
+morning|早上好，昨晚值班很安静。
+morning|太阳升起来了，夜里什么都没坏。
+update.suspect|自从 {v} 的更新后开始出问题，头号嫌疑人。
+update.suspect|{v} 更新之后就出毛病，时间点真巧。
+call.on|你在通话，我继续盯着。
+call.on|通话进行中，留意麻烦。
+stream.on|{v} 播得很顺，顺得可疑，我盯着呢。
+stream.on|今晚直播很顺，暂时。
+stream.dip|直播卡了一下，{v}。
+stream.dip|黑暗里的一次卡顿，{v}。
+stream.none|没有直播，城市很安静。
+stream.none|没在播，只有我和雨声。
+trade.ok|券商应答很快，暂时没麻烦。
+trade.ok|到券商的线路稳稳的。
+trade.slow|券商那边变慢了，等一等。
+trade.slow|有人拖慢了券商的线路，{v}。
+trade.closed|市场关门了，交易在睡觉。
+trade.closed|今晚打烊了，9:30 开门。
+view.switch|{v} 视图，从这儿看城市不一样。
+view.switch|切换到 {v}，新案子，老街道。
+quiz.right|答对了，一分不差。
+quiz.wrong|线索错了，老兄，回去翻卷宗。
+game.streak|连对 {v} 次，你很有一手。
+game.timeup|时间到了，总是这样。
+market.open|市场开门了，城市醒了。
+storm.near|风暴正在靠近，线路可能安静下来。

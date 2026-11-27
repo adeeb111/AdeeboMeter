@@ -43,10 +43,10 @@ def pages():
             if f.endswith('.html'): yield os.path.join(d, f)
 def sync(p):
     rel = os.path.relpath(p, root).replace(os.sep, '/'); name = os.path.basename(p)
-    if rel in SKIP or re.sub(r"^(?:fr|es|ar|bn)/", "", rel) in {"app.html", "lab.html"}: return None, []
+    if rel in SKIP or re.sub(r"^(?:fr|es|ar|bn|zh)/", "", rel) in {"app.html", "lab.html"}: return None, []
     s = open(p, encoding='utf-8').read(); t = s; did = []
-    m = re.match(r'(fr|es|ar|bn)/', rel); home = '/' + m.group(1) + '/' if m else '/'
-    is_home = rel in ('index.html', 'fr/index.html', 'es/index.html', 'ar/index.html', 'bn/index.html')
+    m = re.match(r'(fr|es|ar|bn|zh)/', rel); home = '/' + m.group(1) + '/' if m else '/'
+    is_home = rel in ('index.html', 'fr/index.html', 'es/index.html', 'ar/index.html', 'bn/index.html', 'zh/index.html')
     if CSS not in t: t = t.replace('</head>', CSS + '\n</head>', 1); did.append('sitebar.css')
     if not is_home:
         t2 = re.sub(r'<!--theme-->.*?<!--/theme-->\n?', '', t, flags=re.S)

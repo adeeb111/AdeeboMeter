@@ -1,0 +1,105 @@
+Free browser network simulator: AdeeboLab | AdeeboMeter	免费浏览器网络模拟器：AdeeboLab | AdeeboMeter
+Draw a network in AdeeboLab, choose a simulated fault and follow a packet step by step. A free browser network simulator with no real traffic sent.	在 AdeeboLab 中绘制网络、设置模拟故障，并逐步跟踪数据包。免费的浏览器网络模拟器，不会发送真实网络流量。
+Break a network. See where it stops.	模拟网络故障，看看数据包停在哪里。
+Try a fault on a drawing before you investigate a real connection. AdeeboLab simulates the journey; it does not measure your network.	先在图中模拟故障，再排查真实连接。AdeeboLab 模拟数据包的传输过程，不测量实际网络。
+In your browser	在浏览器中使用
+No installation	无需安装
+2 min read	阅读约 2 分钟
+A simulated packet path	模拟的数据包路径
+wrong gateway	网关错误
+link	链路
+not reached	未到达
+A teaching picture: the wrong gateway stops this example before the packet reaches the provider. It is not a reading from your connection.	教学示意图：此处网关设置错误，数据包无法到达运营商。这并非您实际连接的测量结果。
+Try a two-minute experiment	用两分钟做个实验
+Open AdeeboLab and choose the Gamer example. The provider equipment is an illustration, not discovered hardware.	打开 AdeeboLab，选择 Gamer 示例。图中的运营商设备仅作示意，并非探测到的实际硬件。
+Choose Break it, then Wrong gateway. Keep the same starting device and destination.	选择 Break it，再选择 Wrong gateway。保持起始设备和目标不变。
+Press Play. Use Step or Step back to follow the explanation at your own pace.	按 Play 开始。使用 Step 或 Step back，按自己的节奏查看每一步说明。
+Try DNS times out next. Notice how a name lookup failure differs from a packet that cannot leave the PC.	接着尝试 DNS times out，比较域名查询失败与数据包无法离开电脑的区别。
+The simulator currently uses English labels and explanations.	模拟器目前的标签和说明为英文。
+Open the network simulator	打开网络模拟器
+What the experiment shows	实验说明了什么
+The packet cannot leave the PC	数据包无法离开电脑
+Start with the local path and gateway settings in this simulation.	在此模拟中，先检查本地路径和网关设置。
+Names stop answering	域名查询没有响应
+DNS can fail while other parts of a connection still work.	即使连接的其他部分正常，DNS 也可能出错。
+The real connection is slow	实际连接很慢
+Use a real measurement. A simulated fault does not diagnose your PC, Wi-Fi or provider.	请进行实际测量。模拟故障不能诊断您的电脑、Wi-Fi 或运营商。
+Does AdeeboLab test my real connection?	AdeeboLab 会测试我的实际连接吗？
+No. AdeeboLab simulates packets on a drawing. It sends no real network traffic. Use AdeeboMeter for measurements from your Windows PC.	不会。AdeeboLab 只在图中模拟数据包，不发送真实网络流量。请使用 AdeeboMeter 测量 Windows 电脑的实际连接。
+Do I need to install AdeeboLab?	需要安装 AdeeboLab 吗？
+No. Open the simulator in your browser. Its labels and explanations are currently in English.	不需要，在浏览器中打开即可。目前的标签和说明为英文。
+One change. One explanation.	一次改一项，看清原因。
+Keep the same drawing and endpoints while you change the fault. It makes the layer that failed easier to recognise.	更改故障时保持网络图和两端设备不变，更容易看清是哪一层出了问题。
+Run a real check with AdeeboShell	用 AdeeboShell 进行实际检查
+or compare Wi-Fi with a cable	或比较 Wi-Fi 与有线连接
+Learn the failure. Then check the real thing.	先理解故障，再检查实际连接。
+Use AdeeboLab for the explanation and AdeeboMeter for readings from your Windows PC.	用 AdeeboLab 理解原理，用 AdeeboMeter 获取 Windows 电脑的实际测量结果。
+Network commands on Windows with AdeeboShell | AdeeboMeter	用 AdeeboShell 在 Windows 上运行网络命令 | AdeeboMeter
+Use AdeeboShell inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.	在 AdeeboMeter 中使用 AdeeboShell 查看连接状态、探索内置工具并运行 Windows 网络检查。本指南提供可尝试的命令。
+Your network check, one command at a time.	一条命令，完成一项网络检查。
+Open AdeeboShell inside AdeeboMeter. Read the current status, find a tool, then run the check you need.	在 AdeeboMeter 中打开 AdeeboShell，查看当前状态、查找工具，再运行所需的检查。
+Windows 10 and 11	Windows 10 和 11
+AdeeboMeter 1.1.6	AdeeboMeter 1.1.6
+Three commands to start with	从这三条命令开始
+Read the current connection	查看当前连接
+Find the available tools	查找可用工具
+Read the help before a check	检查前先阅读帮助
+Commands to type, not example results. Your readings come from your own PC.	这些是可输入的命令，并非示例结果。测量数据来自您自己的电脑。
+Try your first check	开始第一次检查
+Open the full AdeeboMeter window and choose AdeeboShell. Ctrl + ` opens it from another page in the app.	打开 AdeeboMeter 完整窗口，选择 AdeeboShell。在应用的其他页面中，可按 Ctrl + ` 打开。
+Type status and press Enter. Read what the app has measured so far; an unavailable reading is not a pass.	输入 status 并按 Enter，查看已有的测量结果；没有测量结果并不代表检查通过。
+Type ls /tools to explore the tool groups. Use help before trying an unfamiliar command.	输入 ls /tools 浏览工具分组。尝试不熟悉的命令前，请先使用 help。
+Tab completes a command. Ctrl+C stops the current command.	Tab 可补全命令，Ctrl+C 可停止当前命令。
+Read the result	查看结果
+A slow or missing answer	响应慢或没有响应
+Compare it with another destination and a good moment. One failed check does not identify the cause on its own.	换一个目标，并在连接正常时再次比较。单次检查失败不能独立确定原因。
+A command you do not recognise	不熟悉的命令
+Read its help first. Commands can send network traffic or work with files.	先阅读帮助。命令可能会发送网络流量或处理文件。
+Can AdeeboShell change my Windows files?	AdeeboShell 能修改我的 Windows 文件吗？
+No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.	不能。AdeeboShell 中的 Windows 文件夹和磁盘为只读，文件修改仅限 AdeeboMeter 的 /data 文件夹。
+How do I stop an AdeeboShell command?	如何停止 AdeeboShell 命令？
+Press Ctrl+C to stop the current command.	按 Ctrl+C 停止当前命令。
+Keep one useful comparison	保留一组有用的对比
+Start with status. Repeat the same check when the problem happens, and keep the time and destination with the result.	先运行 status。出现问题时重复相同检查，并记录时间、目标和结果。
+Need the picture instead?	想通过图示理解？
+Try a simulated fault in AdeeboLab	在 AdeeboLab 中尝试模拟故障
+or make a report for your provider	或为运营商生成报告
+Open AdeeboShell in the free Windows app	在免费 Windows 应用中打开 AdeeboShell
+The app and its built-in tools are free. No ads or administrator rights required.	应用及其内置工具均免费，无广告，无需管理员权限。
+Wi-Fi or your internet provider?	是 Wi-Fi 还是运营商的问题？
+Wi-Fi or your internet provider? A Windows connection check.	是 Wi-Fi 还是运营商的问题？在 Windows 上检查连接。
+· 1 min 21 s ·	· 1 分 21 秒 ·
+English audio	英文音频
+Read the Wi-Fi guide	阅读 Wi-Fi 指南
+Read an MTR result	看懂 MTR 结果
+How to Read MTR Results on Windows | Packet Loss Explained	如何看懂 Windows 上的 MTR 结果 | 详解丢包
+Compare an intermediate hop with the destination before blaming packet loss on that hop.	先比较中间节点与最终目标的结果，再判断是否是该节点造成丢包。
+English audio · 2:22 · uses the built-in example	英文音频 · 2 分 22 秒 · 使用内置示例
+One Hop Shows Packet Loss. Is It Really a Problem?	只有一个节点显示丢包，真的有问题吗？
+Watch the Short	观看短视频
+Watch the Facebook clip	观看 Facebook 短视频
+A Windows process using CPU?	某个 Windows 进程占用 CPU？
+What Is MsMpEng.exe? Defender CPU Usage Explained	MsMpEng.exe 是什么？详解 Defender 的 CPU 占用
+What Is svchost.exe? Service Host and CPU Usage Explained	svchost.exe 是什么？详解服务主机与 CPU 占用
+Watch the Wi-Fi and Ethernet comparison	观看 Wi-Fi 与有线连接对比
+Compare the round trip to your router with the round trip to an internet server. A faster router response on Ethernet does not prove that your provider is at fault.	比较数据往返路由器和互联网服务器的耗时。有线连接下路由器响应更快，并不能证明故障在运营商。
+English audio · 1:21	英文音频 · 1 分 21 秒
+What Is MsMpEng.exe? Defender CPU Usage Explained | AdeeboMeter	MsMpEng.exe 是什么？详解 Defender 的 CPU 占用 | AdeeboMeter
+MsMpEng.exe is Microsoft Defender's Antimalware Service Executable. Learn what it does and compare CPU and disk use when Windows feels slow.	MsMpEng.exe 是 Microsoft Defender 的反恶意软件服务进程。了解它的作用，并在 Windows 变慢时比较 CPU 和磁盘占用。
+MsMpEng.exe is Microsoft Defender’s Antimalware Service Executable. It checks files for malware; scan activity can use CPU and disk.	MsMpEng.exe 是 Microsoft Defender 的反恶意软件服务进程，负责检查文件中的恶意软件；扫描时可能占用 CPU 和磁盘。
+PC slow? Start with one busy process.	电脑变慢？先找出一个繁忙的进程。
+Find the process using the most CPU.	找出 CPU 占用最高的进程。
+Compare its disk activity at the same time.	同时比较它的磁盘活动。
+Repeat when the PC feels normal. Keep the time and what you were doing.	电脑恢复正常时再检查一次，记录时间和当时进行的操作。
+Compare CPU, memory and disk on Windows	比较 Windows 的 CPU、内存和磁盘占用
+Microsoft’s Defender performance guide	Microsoft 的 Defender 性能指南
+What Is svchost.exe? Service Host and CPU Usage Explained | AdeeboMeter	svchost.exe 是什么？详解服务主机与 CPU 占用 | AdeeboMeter
+svchost.exe hosts Windows services. Learn why several copies run and how to compare a busy instance's CPU and disk activity.	svchost.exe 承载 Windows 服务。了解为何会有多个实例，以及如何比较繁忙实例的 CPU 和磁盘活动。
+svchost.exe is Windows Service Host. Each instance hosts one or more services. Several instances can be normal; identify the busy service before changing anything.	svchost.exe 是 Windows 服务主机，每个实例承载一项或多项服务。多个实例通常属于正常情况；更改设置前，请先找出繁忙的服务。
+How Windows hosts services	Windows 如何承载服务
+How do I check a network from the keyboard?	如何用键盘检查网络？
+Start with status in AdeeboShell, then explore the built-in tools without leaving the app.	先在 AdeeboShell 中运行 status，再探索内置工具，无需离开应用。
+Try: three built-in commands	试一试：三条内置命令
+How does a packet get stuck?	数据包为什么会卡住？
+Change one simulated fault in AdeeboLab and follow the packet, one step at a time.	在 AdeeboLab 中更改一项模拟故障，逐步跟踪数据包。
+Try: a browser network simulation	试一试：浏览器网络模拟

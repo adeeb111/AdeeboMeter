@@ -8,7 +8,8 @@
   function rd(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function wr(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
   var mine = rd("am-voice"), chat = rd("am-voice-chat") || "normal", call = rd("am-voice-addr") || "neutral", name = rd("am-voice-name") || "";
-  var pc = null, packs = {}, list = null, fns = [], last = {}, sticky = {};
+  var pc = null, packs = {}, list = null, fns = [], last = {}, sticky = {}, packLanguage = "";
+  function language() { return window.AdeeboMeterLocale ? window.AdeeboMeterLocale.code() : (document.documentElement.lang || "en").split("-")[0]; }
   function get(u) { return fetch(base + u).then(function (r) { if (!r.ok) throw 0; return r.json(); }); }
   function index() { return list ? Promise.resolve(list) : get("kb/voice/index.json").then(function (j) { list = j; return j; }); }
   // Surprise me: one persona a day - the same pick the app makes that day
@@ -24,6 +25,11 @@
   function addr(w) {
     if (call === "name" && name.trim()) return name.trim();
     var epic = w === "epic-fantasy" || w === "shakespeare" || w === "dark-ages";
+    if (language() === "zh") {
+      if (call === "sir") return epic ? "阁下" : w === "bro" || w === "genz" ? "兄弟" : w === "pirate" ? "船长" : "先生";
+      if (call === "maam") return epic ? "女士" : w === "bro" ? "姐妹" : w === "genz" ? "好友" : w === "pirate" ? "船长" : "女士";
+      return { "epic-fantasy": "朋友", shakespeare: "朋友", "dark-ages": "朋友", bro: "兄弟", pirate: "伙计", gamer: "玩家", noir: "朋友", "space-saga": "飞行员", mission: "指挥中心", bestie: "好友", genz: "好友" }[w] || "老板";
+    }
     if (call === "sir") return epic ? "my lord" : w === "bro" || w === "genz" ? "bro" : w === "pirate" ? "captain" : "sir";
     if (call === "maam") return epic ? "my lady" : w === "bro" ? "sis" : w === "genz" ? "bestie" : w === "pirate" ? "captain" : "ma'am";
     return { "epic-fantasy": "friend", shakespeare: "friend", "dark-ages": "friend", bro: "bro", pirate: "matey", gamer: "player", noir: "pal", "space-saga": "pilot", mission: "flight", bestie: "bestie", genz: "bestie" }[w] || "boss";
@@ -34,7 +40,12 @@
   function speaks(key) { var k = KIND[key] || "state"; return chat === "face" ? false : chat === "quiet" ? k === "problem" || k === "greet" : chat === "chatty" ? true : k !== "idle"; }
   // a greeting or a state line stays for 5 minutes (a line that changes every time you look is noise); reactions are fresh
   var STICK = { "app.open": 1, morning: 1, "late.night": 1, "all.good": 1, idle: 1, "market.open": 1, "trade.closed": 1, "storm.near": 1 };
-  function load() { return index().then(function () { return Promise.all(chain().map(function (id) { return packs[id] ? 0 : get("kb/voice/" + id + ".json").then(function (p) { packs[id] = p; }).catch(function () {}); })); }); }   // a failed pack isn't kept as empty: it's tried again (AM-CG-381)
+  function load() { return index().then(function () {
+    var lang = language() === "zh" ? "zh" : "en";
+    if (lang !== packLanguage) { packs = {}; sticky = {}; last = {}; packLanguage = lang; }
+    return Promise.all(chain().map(function (id) { return packs[id] ? 0 : get("kb/voice/" + (lang === "zh" ? "zh/" : "") + id + ".json").then(function (p) { if (packLanguage === lang) packs[id] = p; }).catch(function () {}); }));
+  }); }   // failed packs are retried; a late response cannot replace another language
+  document.addEventListener("adeebometerlanguagechange", function () { load().then(fire, function () {}); });
   if (typeof addEventListener === "function") addEventListener("online", function () { load().then(fire, function () {}); });
   function fire() { sticky = {}; fns.forEach(function (f) { try { f(); } catch (e) {} }); }
   function save() { wr("am-voice", mine); wr("am-voice-chat", chat === "normal" ? "" : chat); wr("am-voice-addr", call === "neutral" ? "" : call); wr("am-voice-name", name); }   // FRESH-098: switching back to "My name" finds it again

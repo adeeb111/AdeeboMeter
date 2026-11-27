@@ -38,7 +38,7 @@ def install():
     raw = (DOCS / "locale-messages.js").read_text(encoding="utf-8-sig")
     messages = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
     dates = []
-    for lang in ("en", "bn", "fr", "es", "ar"):
+    for lang in ("en", "bn", "fr", "es", "ar", "zh"):
         prefix = "" if lang == "en" else lang + "/"
         def t(key):
             return key if lang == "en" else messages[lang][key]

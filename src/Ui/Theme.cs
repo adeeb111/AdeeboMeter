@@ -358,7 +358,7 @@ namespace AdeeboMeter
         // the newspaper mastheads (Sports, Markets): Windows' Georgia - a serif every PC has, no extra font in the exe
         public static Font Serif(float px, bool black)
         {
-            return new Font(L.IsRtl ? "Segoe UI" : L.Code == "bn" ? BengaliFontFamily : "Georgia", px, FontStyle.Bold, GraphicsUnit.Pixel);
+            return new Font(L.IsRtl || L.Code == "bn" || L.Code == "zh" ? LangFamily : "Georgia", px, FontStyle.Bold, GraphicsUnit.Pixel);
         }
         public static FontFamily UiFamilyName() { return UiFamily(UiFam); }
         static FontFamily UiFamily(string name)
@@ -367,19 +367,21 @@ namespace AdeeboMeter
             return new FontFamily(name);
         }
         static string bengaliFontFamily;
-        public static string LangFamily { get { return L.Code == "bn" ? BengaliFontFamily : "Segoe UI"; } }   /* review 1.1.6 U1 #16: report and freeze card */
+        static string chineseFontFamily;
+        public static string ChineseFontFamily { get { return chineseFontFamily ?? (chineseFontFamily = Fam("Microsoft YaHei UI", "Microsoft YaHei", "SimSun", "Segoe UI")); } }
+        public static string LangFamily { get { return L.Code == "bn" ? BengaliFontFamily : L.Code == "zh" ? ChineseFontFamily : "Segoe UI"; } }   /* review 1.1.6 U1 #16: report and freeze card */
         static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
         // 24 Nov (Adeeb: "very small fonts still have the pixelated issue"): ClearType grid-fitting snaps each letter to whole
         // pixels, and a size like 11.5 or 13.75 px (half sizes times 125%) leaves the strokes landing between pixels - the small
         // text came out uneven. Every size is now a whole pixel, and nothing goes under 12 px.
         public static float Px(float px) { return Math.Max(12f, (float)Math.Round(px)); }
-        static Font Ui(string fam, float px, FontStyle st) { px = Px(px); return L.IsRtl || L.Code == "bn" ? new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
+        static Font Ui(string fam, float px, FontStyle st) { px = Px(px); return L.IsRtl || L.Code == "bn" || L.Code == "zh" ? new Font(LangFamily, px, st, GraphicsUnit.Pixel) : new Font(UiFamily(fam), px, st, GraphicsUnit.Pixel); }
         // the self-test's language pass switches fonts for bn / ar and back: it keeps the set it started with and puts it back
         public static object SaveFonts() { return new object[] { Grab(), S }; }
         public static void RestoreFonts(object saved) { var o = (object[])saved; Put((Font[])o[0]); S = (float)o[1]; sets.Clear(); }
         public static void UseLanguageFonts()
         {
-            if (!L.IsRtl && L.Code != "bn") return;
+            if (!L.IsRtl && L.Code != "bn" && L.Code != "zh") return;
             // R2-079: the zoom cache may hold these very fonts - empty it first (fonts not in use now are let go), so a zoom back
             // never puts a disposed font in use
             sets.Clear();   // fonts aren't disposed here: a window or button made earlier may still hold one (a disposed font throws on paint)
@@ -394,7 +396,7 @@ namespace AdeeboMeter
         static Font ArabicFont(Font old)
         {
             if (old == null) return old;
-            var font = new Font(L.IsRtl ? "Segoe UI" : BengaliFontFamily, old.Size, old.Style, GraphicsUnit.Pixel);
+            var font = new Font(LangFamily, old.Size, old.Style, GraphicsUnit.Pixel);
             return font;   // the old one stays valid for whoever holds it
         }
         public static void Init(float s)
