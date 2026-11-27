@@ -9,7 +9,7 @@
 # window only. Runs last in tools/site.sh: the language scripts and learnsite.py rewrite pages before it.
 import os, re, sys
 root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs')
-SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html'}   # 24 Nov: the missing-page page has the bar too, so you can always get somewhere
+SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html', 'shell.html'}   # 24 Nov: the missing-page page has the bar too, so you can always get somewhere
 BAR = '<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="{home}"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->'
 CSS = '<link rel="stylesheet" href="/sitebar.css">'
 # the theme rule the home page uses, on every page, before anything is drawn: a kept choice (am-theme) wins, otherwise dark.

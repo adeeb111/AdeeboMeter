@@ -4,6 +4,7 @@
 set -e
 cd "$(dirname "$0")/.."
 python3 tools/lab/build.py
+python3 tools/shell/build.py
 python3 tools/learnsite.py
 python3 tools/scenario_blog.py
 python3 tools/search_paths.py
