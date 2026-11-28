@@ -265,7 +265,7 @@ namespace AdeeboMeter
             var head = MkHeadline(); var hs = g.MeasureString(head, Paper.Head1, (int)lw);
             MkText(g, "", Paper.Head1, Paper.Head, x, ly); using (var hb = new SolidBrush(Paper.Head)) g.DrawString(head, Paper.Head1, hb, new RectangleF(x, ly, lw, hs.Height + 4)); ly += hs.Height + 6 * S;
             var et = Trading.EasternNow(); bool open = Trading.MarketOpen(et);
-            string stand = (open ? L.T("Markets are open.") : et.DayOfWeek == DayOfWeek.Saturday || et.DayOfWeek == DayOfWeek.Sunday ? L.T("Markets are closed for the weekend.") : L.T("Markets are closed right now.")) + " " + (MyMarket.Canada ? L.T("The Bank of Canada's numbers, in plain words.") : L.T("Today's numbers, in plain words."));
+            string stand = (open ? L.T("Markets are open.") : et.DayOfWeek == DayOfWeek.Saturday || et.DayOfWeek == DayOfWeek.Sunday ? L.T("Markets are closed for the weekend.") : L.T("Markets are closed right now.")) + " " + (MyMarket.Canada ? L.T("The Bank of Canada's numbers.") : L.T("Today's numbers."));
             var ss = g.MeasureString(stand, Paper.Italic, (int)lw); using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(stand, Paper.Italic, ib, new RectangleF(x, ly, lw, ss.Height + 4)); ly += ss.Height + 8 * S;
             float gy = y, gh = 210 * S; var gr = new RectangleF(gx, gy, gw, gh); Paper.Desk(g, gr);
             float cy = Paper.DeskTitle(g, gx + 16 * S, gy + 12 * S, "At a Glance", "(" + RateSrc(MarketData.MyFx().FirstOrDefault() ?? "USD") + ")") + 4 * S;

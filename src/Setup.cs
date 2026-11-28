@@ -256,7 +256,7 @@ namespace AdeeboMeter
                 string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AdeeboMeter");
                 if (Directory.Exists(data))
                 {
-                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs", "points.txt", "lines" };   // review 1.1.6 P1 #14: your Adeebo Points and your own buddy lines stay too
+                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "keys-ec.txt", "recipients", "certs", "points.txt", "lines" };   // review 1.1.6 P1 #14: your points and your own buddy lines stay too
                     foreach (var f in Directory.GetFiles(data)) if (!keep.Contains(Path.GetFileName(f))) try { File.Delete(f); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     foreach (var d in Directory.GetDirectories(data)) if (!keep.Contains(Path.GetFileName(d))) try { Directory.Delete(d, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 }
@@ -474,7 +474,7 @@ namespace AdeeboMeter
             else if (st == St.AskRemove)
             {
                 Center(g, "Remove AdeeboMeter?", fTag, Theme.Ink, y, W); y += fTag.Height + 16 * S;
-                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too -\nyour keys, Adeebo Points and own buddy lines stay.", fBody, Theme.Sub, y, W);
+                Center(g, "It stops, leaves your Start menu and stops starting\nwith Windows. Its settings and history go too -\nyour keys, points and own buddy lines stay.", fBody, Theme.Sub, y, W);
                 Btn(g, "main", new RectangleF(58 * S, H - 104 * S, W - 116 * S, 46 * S), "Remove", Theme.Red, Color.White, true);
                 Btn(g, "close2", new RectangleF(58 * S, H - 52 * S, W - 116 * S, 32 * S), "Keep it", Theme.Card, Theme.Muted, false);
             }

@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // AdeeboLab's page in the app (Adeeb, 22 Nov: "open that in the app like the way we do, then from a click we open the webpage").
+    // Network Lab's page in the app (Adeeb, 22 Nov: "open that in the app like the way we do, then from a click we open the webpage").
     // What to draw is chosen here - a new diagram, one of yours, AdeeboMeter's own drawings of your network, an example, a file -
     // and only that click opens the lab's window (one at a time: the last one is closed first, and keeps what you drew).
     sealed partial class FullView
@@ -53,7 +53,7 @@ namespace AdeeboMeter
         }
         void LabExport()
         {
-            using (var dlg = new SaveFileDialog { Title = L.T("Save a copy of all my diagrams"), Filter = L.T("AdeeboLab drawings") + " (*.json)|*.json", FileName = "AdeeboLab diagrams " + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) + ".json" })
+            using (var dlg = new SaveFileDialog { Title = L.T("Save a copy of all my diagrams"), Filter = L.T("Network Lab drawings") + " (*.json)|*.json", FileName = "Network Lab diagrams " + DateTime.Now.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) + ".json" })
             {
                 if (dlg.ShowDialog(this) != DialogResult.OK) return;
                 string file = dlg.FileName;
@@ -68,7 +68,7 @@ namespace AdeeboMeter
         }
         void LabOpenFile()
         {
-            using (var dlg = new OpenFileDialog { Title = L.T("Open a lab drawing"), Filter = L.T("AdeeboLab drawings") + " (*.json;*.adeebolab)|*.json;*.adeebolab|" + L.T("All files") + " (*.*)|*.*" })
+            using (var dlg = new OpenFileDialog { Title = L.T("Open a lab drawing"), Filter = L.T("Network Lab drawings") + " (*.json;*.adeebolab)|*.json;*.adeebolab|" + L.T("All files") + " (*.*)|*.*" })
             {
                 if (dlg.ShowDialog(this) != DialogResult.OK) return;
                 try
@@ -94,7 +94,7 @@ namespace AdeeboMeter
             {
                 // the head
                 Glyphs.Tile(g, "lab", new RectangleF(x, y, 56 * S, 56 * S), acc, 16 * S);
-                g.DrawString(L.T("AdeeboLab"), Draw.fHero, ink, x + 72 * S, y - 2 * S);
+                g.DrawString(L.T("Network Lab"), Draw.fHero, ink, x + 72 * S, y - 2 * S);
                 string intro = L.T("Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.");
                 float ih = Draw.Measure(intro, Draw.fBody, (int)(w - 72 * S)).Height;
                 g.DrawString(intro, Draw.fBody, sub, new RectangleF(x + 72 * S, y + 38 * S, w - 72 * S, ih + 4));

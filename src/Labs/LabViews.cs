@@ -1,7 +1,7 @@
-// AdeeboLab views (1.1.6): drawings the app makes from what it already knows, handed to the lab page when it opens -
+// Network Lab views (1.1.6): drawings the app makes from what it already knows, handed to the lab page when it opens -
 // See my LAN (the kept device list), Path to anywhere (the last trace or MTR), Wi-Fi around you (the last Wi-Fi list),
 // Phone vs this PC, and VPN split. Nothing new is sent to build them: every number is one the app measured already
-// (See my LAN can ask the devices again when started from AdeeboShell: "lab lan --ask").
+// (See my LAN can ask the devices again when started from Terminal: "lab lan --ask").
 // The views ride inside the lab page the app writes to its data folder (LabLink.PagePath) - not in the address,
 // which has a size limit; the page reads them from window data, never from the network.
 using System;
@@ -103,7 +103,7 @@ namespace AdeeboMeter
             if (all.Count == 0) { d.Note = "Not connected to a network right now."; pc.X = 300; pc.Y = 200; d.Nodes.Add(pc); return Json(d); }
             var drawn = all.Where(x => !x.Router).Take(LanMax).ToList(); int more = all.Count(x => !x.Router) - drawn.Count;
             var router = all.FirstOrDefault(x => x.Router);
-            d.Note = all.Count + " devices seen on this network · " + all.Count(x => x.Here) + " here now · " + (asked == DateTime.MinValue ? "names: run Devices on this network once (or lab lan --ask in AdeeboShell) to ask the devices who they are" : "names and times from " + Ago(asked)) +
+            d.Note = all.Count + " devices seen on this network · " + all.Count(x => x.Here) + " here now · " + (asked == DateTime.MinValue ? "names: run Devices on this network once (or lab lan --ask in Terminal) to ask the devices who they are" : "names and times from " + Ago(asked)) +
                      (more > 0 ? " · " + LanMax + " drawn, the other " + more + " are in Devices on this network" : "") + ". White = here now, grey = seen before. Hover a device for its address and maker.";
             // the router on top, This PC beside it; each group a box below, packed in shelves
             int cx = 640;

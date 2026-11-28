@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // AdeeboShell's screen (Adeeb, 22 Nov: "top to bottom writing, it should look cool, maybe a blinking cursor"): a real
+    // Terminal's screen (Adeeb, 22 Nov: "top to bottom writing, it should look cool, maybe a blinking cursor"): a real
     // terminal surface - the text flows down from the top, the prompt and what you type sit right after the last line, a blinking
     // block cursor, a live region a running tool redraws in place, scroll back with the wheel, drag to select, right-click pastes.
     //

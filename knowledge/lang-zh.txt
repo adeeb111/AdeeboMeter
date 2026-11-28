@@ -247,14 +247,14 @@ See an example	查看示例
 Hide the example	隐藏示例
 See an example day	查看示例日期
 Adeebo Point	Adeebo Point
-Adeebo Points	Adeebo Points
+points	积分
 of	共
 Beginner	新手
 Learner	学习者
 Troubleshooter	排障能手
 Expert	专家
 Already earned.	已获得。
-Doesn't earn Adeebo Points - it sends test traffic.	不提供 Adeebo Points，因为会发送测试流量。
+Doesn't earn points - it sends test traffic.	不提供 积分，因为会发送测试流量。
 HOW TO EARN	如何获取积分
 Open a tool's Example, then run it for real	打开工具的示例，再实际运行一次
 Run a tool marked replay again, 10 minutes or more later	首次运行至少 10 分钟后，再运行标有重复奖励的工具
@@ -269,7 +269,7 @@ done	完成
 to	至
 Pages	页面
 Nothing matches - try another word.	没有匹配项，请换个词。
-Earning is off (Settings › Adeebo Points) - your points are kept.	积分获取已关闭（设置 › Adeebo Points），现有积分会保留。
+Earning is off (Settings › Points) - your points are kept.	积分获取已关闭（设置 › 积分），现有积分会保留。
 Community and support	社区与支持
 Ask a question or share an idea	提问或分享想法
 Report a bug	报告问题
@@ -724,7 +724,6 @@ your own mix	你的自定义组合
 plus about	另外约
 game pings a minute for the games you watch (one a second per server while you play)	次游戏 ping/分钟，用于你关注的游戏（游戏时每台服务器每秒一次）
 on top of the widget's once-a-second read of Windows' own counters.	此外，小组件每秒读取一次 Windows 自带的计数器。
-The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	小组件始终保持轻量。深入功能（实时抓包、完整连接列表、路径检查）仅在此窗口打开时运行。以下设置决定后台每分钟检查次数，以及关注游戏后额外进行的游戏 ping。
 The DNS server is down	DNS 服务器不可用
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	换用其他 DNS 服务器（如 1.1.1.1），或重启路由器，因为这里的 DNS 由路由器提供
 Addresses work. Names don't.	IP 地址能通，域名不行。
@@ -1028,7 +1027,6 @@ Nothing pinned yet. Open a tool and press the pin, or pin a search result.	尚�
 Pinned	已固定
 Pinned to your tab	已固定到你的标签页
 Earned	已获得
-points	积分
 fine	正常
 to watch	需关注
 problems	个问题
@@ -1121,7 +1119,6 @@ PREVIEW	预览
 TALK LIKE...	说话风格……
 What should I call you?	我该怎么称呼你？
 Just the facts (Plain, Details on, face only)	只说事实（简洁风格、开启详情、仅表情）
-Fun lines are off - plain words everywhere.	已关闭趣味台词，所有内容使用直白表达。
 MOOD	心情
 Words of comfort	安慰的话
 Buddy face	小伙伴的脸
@@ -1324,7 +1321,6 @@ Actual size	实际大小
 Add my key...	添加我的密钥……
 Add the technical details below (names, PC name, paths and addresses are taken out - read them first)	附上以下技术详情（已去除姓名、电脑名、路径和地址，请先阅读）
 Add your own: press ☆ on any tool in a question on the left - it shows up here and above that question's tools. Up to 12.	添加常用工具：在左侧问题中的工具旁点击 ☆，它会显示在这里及该问题工具列表顶部。最多 12 个。
-Adeebo points	Adeebo Points
 AdeeboMeter	AdeeboMeter
 AdeeboMeter diagnosis report	AdeeboMeter 诊断报告
 AdeeboMeter is free and open source. A report goes only when you press Send in its box.	AdeeboMeter 免费且开源。只有在报告框中点击“发送”才会发送报告。
@@ -2247,7 +2243,6 @@ the most specific route wins	匹配最具体的路由优先
 the name	域名
 the network	网络
 the numbers behind the feeling	体验背后的数据
-the numbers in plain words	用简单的话说明数据
 the original file	原始文件
 the page	页面
 the path	路径
@@ -2396,7 +2391,6 @@ Temperature in	温度单位
 How temperatures show in the widget and here.	小组件和此处的温度显示方式。
 Weather in the widget	小组件中的天气
 Off: only the buddy's face shows the weather.	关闭：只有小助手的表情反映天气。
-Off: plain words everywhere, the buddy's face stays.	关闭：所有内容直白表达，保留小助手表情。
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	开启：小助手按下面的心情和角色说话。事实、数值和报告不变。
 How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.	小助手的心情：佛系轻松、吐槽只调侃设备不针对你、打气充满鼓励、暖心温和、指挥官爱发号施令、多愁善感容易共情。
 Your name: 	你的名字： 
@@ -2441,7 +2435,6 @@ Always the everyday card: the verdict, the five dots, CPU, memory and speed.	始
 Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up.	始终显示通话卡片：Teams、Zoom、WhatsApp 关心的抖动、丢包和延迟，以及已连接的 VPN。
 Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.	始终显示工程师卡片：路由器、互联网和 DNS 延迟、抖动、丢包、TCP 重传与重置、吞吐量、CPU 和内存。
 Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.	跟随当前活动：已添加的游戏打开时显示玩家卡片（需开启游戏 ping），通话时显示通话卡片，其余时间显示日常卡片。
-A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip.	小组件上的小表情随网络状态变化：全绿时得意、电脑忙时冒汗、Wi-Fi 差时晕头转向、运营商掉链子时委屈。折叠后会睡觉。
 Off: the widget shows the logo and the coloured dot.	关闭：小组件显示标志和彩色状态点。
 Locked - you have 	尚未解锁，你有 
  points. 	 积分。 
@@ -2548,7 +2541,6 @@ Listens to your own adapter only while you press Start. Nothing is sent; capture
 Open this view	打开此视图
 Click the tray icon, or press Ctrl+Alt+A from anywhere.	点击托盘图标，或在任意位置按 Ctrl+Alt+A。
 Back to the corner	返回角落
-Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.	Esc、最小化、X 和“返回角落”效果相同：关闭此视图并释放内存，小组件继续监测。
 Quit completely	完全退出
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	右键点击托盘图标，选择“退出”。所有进程都会停止，包括辅助进程。
 Learn anything	探索学习内容
@@ -2556,7 +2548,6 @@ Settings decides how much AdeeboMeter watches in the background - from Penny to 
 Readable source	可阅读的源码
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	整个应用的源代码都可在运行前阅读，使用 Windows 自带的编译器构建。
 No admin rights	无需管理员权限
-Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show.	所显示的信息均来自普通 Windows 用户已有的权限。若无权查看，就不显示。
 Secure by default	默认安全
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	检查使用 TLS 和 Windows 自带证书验证（由 Windows 选择 TLS 1.2 或 1.3），绝不跳过证书检查。所有输入均验证，绝不调用 shell。
 Light as a feather	轻巧运行
@@ -2565,17 +2556,9 @@ Leaves no trace	干净退出
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	设置和小日志保存在 exe 旁边，安装版则保存在 AppData。退出时删除抓包，绝不记录窗口标题或流量内容。默认开启仅本机保存的数天历史，随时可关闭或一键删除。
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	查看电脑当前的每条通信：哪个应用、与谁、哪个端口、什么状态。新连接闪现，关闭的逐渐淡出。悬停状态可看解释；点击某行的 Sniff 只抓取该连接，供 Wireshark 分析。
 Your Wi-Fi / cable	你的 Wi-Fi / 网线
-Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	连接的完整信息：频段、信道、dBm 信号、速率、安全性、共享信道的邻居及信道图、地址、错误和到路由器这一跳的健康情况。点击 Wi-Fi 状态点即可进入。
-Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.	用简单的话解释每个程序：作用、工作方式、为何存在、缺少它的影响，以及是否能安全关闭。AdeeboMeter 只解释，绝不替你关闭程序。
-Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.	输入域名、IP 或网址。AdeeboMeter 像工程师一样检查 DNS、路由、ping、TCP、TLS、HTTP、包大小及沿途路由器，再用一句话指出问题位置。还会说明谁在传输流量、网络在何处交接（BGP 决策处）、NAT、隧道和防火墙。可固定常用目的地并一起测试。
 Health check	健康检查
-A one-click check-up of the things that quietly cause trouble: days since restart, pending updates, disk space, adapter errors, crowded Wi-Fi, proxies, VPN, DNS, memory and power.	一键检查常见隐患：距重启天数、待更新项目、磁盘空间、网卡错误、Wi-Fi 拥挤、代理、VPN、DNS、内存和电源。
-The diary. Every roam, drop, DNS change, VPN flap and app hiccup in the last two hours, with the time it happened - so 'it was slow at 2:15' finally has an answer.	网络日记：记录最近两小时的漫游、断线、DNS 变化、VPN 波动和应用异常，以及发生时间，让“2:15 时很慢”终于有迹可查。
 How it travels	传输方式
-Your own connection, one layer at a time: which route won and why, your router's hardware address, MTU and packet anatomy, the handshake as a ladder with the time of each step, and with Wireshark the real packets explained field by field. Plus Teams and Office end to end.	逐层查看你自己的连接：路由为何胜出、路由器硬件地址、MTU、数据包结构和每步计时的握手图。配合 Wireshark，可逐字段解读真实数据包，还能端到端了解 Teams 和 Office。
-Who started whom (the process tree), what each svchost is hosting, what a program is doing right now (CPU, memory, disk, connections) and why it started, everything that starts with Windows - and the deep dives on the processes people ask about.	谁启动了谁（进程树）、每个 svchost 托管什么、程序当前的 CPU、内存、磁盘和连接活动、启动原因、所有开机启动项，以及常见进程的深入说明。
 Learn (Ctrl+K)	学习（Ctrl+K）
-Press Ctrl+K anywhere in this window to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds.	在此窗口任意位置按 Ctrl+K，跳转到标签页、程序、术语或协议。学习模式以时序图解释协议；安装 Wireshark 后，还能实时观察本机十秒钟的活动。
 Wireshark's engine (tshark), only if you have Wireshark installed and only while you press Start. It shows what your traffic is made of, who you talk to by name, and Wireshark's own warnings. It stops by itself.	使用 Wireshark 引擎 tshark，仅在已安装 Wireshark 且点击“开始”后运行。显示流量组成、通信对象名称和 Wireshark 自身的警告，并会自行停止。
 straight to Adeeb - no account needed	直接发给 Adeeb，无需账号
 say what you did and what you expected - no account needed	说明操作和预期结果，无需账号
@@ -2583,12 +2566,9 @@ Source code on GitHub	GitHub 上的源码
 everything AdeeboMeter does can be read there	可在此阅读 AdeeboMeter 的全部行为
 Copied - paste it into the page that opened	已复制，请粘贴到刚打开的页面
 Found a bug? Report it	发现 Bug？请反馈
-When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	网络感觉慢时，我们通常打开任务管理器、命令提示符，再运行 ping，最后靠猜。AdeeboMeter 每秒静默完成这些检查，再用一句简单的话告诉你哪里有问题、该怎么做。
 The corner widget	角落小组件
-A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	右下角的小卡片，默认不透明度为 30%，避免打扰。一眼查看整体是否正常，以及 CPU、内存、磁盘和网络。不会拦截点击，底下的内容照常可用。有窗口遮住角落时会折叠为小图标，悬停半秒即可展开。
 Getting around	界面导航
 Is it me or the network?	是电脑还是网络的问题？
-The five dots at the top follow your traffic out of the building: your PC, your Wi-Fi or cable to the router, your provider (or VPN), DNS - the internet's phone book - and the internet itself. The first dot that isn't green is where the trouble starts. Everything before it is fine; everything after it is a victim, not a cause. That's the whole trick.	顶部五个状态点沿着流量路径排列：电脑、到路由器的 Wi-Fi 或网线、运营商或 VPN、DNS，以及互联网。第一个非绿色点就是问题起点。之前的环节正常，之后的环节只是受影响，并非原因。原理就是这么简单。
 What each tab does	各标签页的作用
 What leaves your PC - and what never does	哪些内容会离开本机，哪些绝不会
 A tiny ping to your own router, 	向自己的路由器发送一次轻量 ping，间隔为 
@@ -4026,9 +4006,7 @@ WHERE THE TIME GOES	时间花在哪里
 The server didn't answer pings - many game and call servers ignore them. Capture the conversation instead: its own packets show the rhythm and the stalls.	服务器没有回应 ping，很多游戏和通话服务器都会忽略它。可以改为抓取该通信，其自身的数据包能显示节奏和停顿。
 THE REAL PACKETS	真实数据包
 No network adapter is up right now - connect, then capture again.	当前没有启用的网卡，请联网后再抓包。
-Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first.	只记录当前通信，过滤在抓包驱动中完成，其他流量不会到达 AdeeboMeter。仅记录报头，并自行停止。随后按字节大小缩放、慢速回放沿途数据包，标出重传和停顿，用简单的话逐个说明。请先开始通话、对局或下载。
 IN PLAIN WORDS	通俗解释
-Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.	按固定规则解读数据包，每次一致、不靠猜测，也不外发。说明数据能证明什么、发现对应的时间，以及无法证明什么。
 WHAT THESE PACKETS SHOW	这些数据包说明什么
 One TCP connection can't go faster than about MSS ÷ round trip × 1.22 ÷ √loss, however fast your plan is - every loss halves its window and it climbs back one packet per round trip. Farther servers suffer more, which is why the same loss hurts a far download more than a near one.	无论套餐多快，单条 TCP 连接的速度大约受 MSS ÷ 往返时间 × 1.22 ÷ √丢包率 限制。丢包会让窗口减半，再每个往返逐步恢复。服务器越远，影响越大，所以同样丢包更伤远距离下载。
 Packets of a call leave every 20 ms but arrive unevenly. The jitter buffer holds them a little so they play smoothly: a packet later than the buffer is thrown away (a gap in the sound); a bigger buffer catches more of them but delays the whole conversation (people start talking over each other above about 250 ms). Teams and Zoom size it themselves - jitter is what forces them to choose.	通话数据包每 20 ms 发出一次，但到达时间不均。抖动缓冲区稍作等待，让播放平顺。晚于缓冲期限的包被丢弃，形成断音；扩大缓冲能接住更多包，却会增加整段对话延迟，超过约 250 ms 时容易互相抢话。Teams 和 Zoom 会自行调整，而抖动迫使它们作取舍。
@@ -4110,7 +4088,7 @@ Add a currency	添加货币
 Add a quote key...	添加行情密钥……
 Add currency	添加货币
 Add each month ($)	每月追加（$）
-AdeeboLab	AdeeboLab
+Network Lab	网络实验室
 AdeeboMeter Daily Financial Edition	AdeeboMeter 每日财经版
 AdeeboMeter Matchday Edition	AdeeboMeter 比赛日版
 After	之后
@@ -4329,7 +4307,6 @@ Tested	已测试
 Testing...	正在测试……
 That doesn't look like a key: letters and digits only.	不像有效密钥，只能包含字母和数字。
 That spot was removed - nothing to rename.	该地点已移除，没有可重命名的项目。
-The Bank of Canada's numbers, in plain words.	用简单的话说明加拿大银行的数据。
 The Week in Numbers	本周数据
 The forecast is on its way...	正在获取预报……
 The groups arrive from the Bank of Canada in a moment.	即将从加拿大银行获取分组。
@@ -4659,11 +4636,11 @@ Your broker's connection, the day's numbers.	券商连接和当日数据。
 All quiet	一切平静
 Your tab	你的标签页
 Pin tools here from any tool page or search result.	从任意工具页面或搜索结果将工具固定到这里。
-Open the AdeeboLab  ›	打开 AdeeboLab  ›
+Open the Network Lab  ›	打开 网络实验室  ›
 Break it	模拟故障
 Break it: 	模拟故障： 
  faults watched to the end · +	 个故障已观察到最后 · 每个首次获得 +
- Adeebo Points each, the first time.	 Adeebo Points。
+ points each, the first time.	 积分。
 nothing to wait for - it answers as you type	无需等待，输入时即计算
 as many minutes as you choose	时长由你选择
 the seconds you choose (10-120)	秒数由你选择（10-120）
@@ -4854,7 +4831,7 @@ ping your pinned addresses in the background	在后台 ping 固定地址
 check these games' servers in the background: 	在后台检查这些游戏服务器： 
 replace your pinned addresses with: 	将固定地址替换为： 
 A lab drawing someone sent you (.json)	别人发来的实验网络图（.json）
-AdeeboLab drawings	AdeeboLab 网络图
+Network Lab drawings	网络实验室 网络图
 An empty page - pick devices and click to place them	空白页面，选择设备后点击放置
 Couldn't read that file:	无法读取文件：
 Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	画出网络，查看数据包路径，再模拟一处故障，观察在哪一步失败。网络图在独立窗口中打开，所有内容留在本机。
@@ -4908,7 +4885,7 @@ Router 2 ms. Past the router everything loses about 4 of 10 replies - the intern
 Your home answers instantly; the losses start right after your router and every far end shares them - so it isn't one server, it's the road to all of them.	家中网络立即响应，丢包在路由器之后开始，所有远端都有同样情况，因此不是某台服务器，而是通往它们的公共路径。
 On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	首次租约顺序应为 Discover、Offer、Request、Ack。此电脑先发 Discover，说明正在请求新地址，却在收到 Offer 前就发出了 Request，顺序错误。续租已有地址时可以直接发 Request，但不是先发 Discover 之后。
 Echo reply to the TTL 2 ping, straight from 1.1.1.1	1.1.1.1 直接应答 TTL 2 的 ping
-Couldn't open the AdeeboLab:	无法打开 AdeeboLab：
+Couldn't open the Network Lab:	无法打开 网络实验室：
 Couldn't read your diagrams just now - try again in a moment.	暂时无法读取网络图，请稍后重试。
 Couldn't save:	无法保存：
 Save a copy of all my diagrams	保存所有网络图的副本
@@ -5046,7 +5023,7 @@ OR TAP WHAT YOU SEE	或点击你看到的情况
 WHAT'S WRONG?	哪里不对劲？
 WHERE EVERYTHING LIVES	各项功能在哪里
 connected, but nothing works	已连接，但什么都不能用
-Earn Adeebo Points	获取 Adeebo Points
+Earn points	获取 积分
 Scan with your phone	用手机扫码
 Older:	更早：
 Open engineer view	打开工程师视图
@@ -5058,7 +5035,6 @@ LAGGY	卡顿
 ms PING	ms PING
 LAST 60 SECONDS	最近 60 秒
 Esc takes you back to the corner	按 Esc 返回角落
-Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	查看电脑当前所有通信：哪个应用、与谁、哪个端口、什么状态。新连接闪现，关闭的逐渐淡出。指向状态旁的 ? 可查看解释，点击某行 Sniff 只记录该通信，供 Wireshark 分析。
 updated	已更新
 access point nearby	个附近接入点
 access points nearby	个附近接入点
@@ -5068,7 +5044,7 @@ tool	工具
 No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	无需账号，无遥测、自动更新、广告和崩溃上报。不监听端口，每次启动还会自检这一点。
 No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	无需账号，无遥测，不监听端口。下方列出发送的每种数据包，每项都可关闭。
 Open as script	作为脚本打开
-Open in AdeeboLab	在 AdeeboLab 中打开
+Open in Network Lab	在 网络实验室 中打开
 Monitor, diagnose, automate, visualize, learn.	监测、诊断、自动化、可视化、学习。
 Finish	完成
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows 接管了键盘，可能按了 Win、Alt+Tab 或出现通知，请点击这里继续。
@@ -5078,7 +5054,6 @@ An app	一个应用
 CPU is pegged ({0}%). {1} uses the most.	CPU 已满载（{0}%），{1} 占用最多。
 Capturing packets is turned off by your IT team (AdeeboMeter.policy).	你的 IT 团队禁用了抓包（AdeeboMeter.policy）。
 Checking the destination	正在检查目的地
-Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	点击左侧任意一行，我会说明它的作用、原理、存在原因、缺少它的影响，以及是否能安全关闭。
 Collecting - one row a second while the session is open.	正在收集，会话打开时每秒记录一行。
 Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	颜色含义：绿色可安全关闭，橙色建议保留但可重启，红色为 Windows 必需，紫色由 IT 管理，灰色未收录在指南中。
 Copy match report (internal addresses removed)	复制对局报告（已移除内网地址）
@@ -5113,7 +5088,6 @@ Needs Wireshark and Npcap on this PC.	本机需要安装 Wireshark 和 Npcap。
 No Valve servers yet - press Refresh Valve list (one request to Valve).	尚无 Valve 服务器，点击“刷新 Valve 列表”，会向 Valve 请求一次。
 No servers yet - press Edit servers and add your server's address.	尚无服务器，点击“编辑服务器”添加服务器地址。
 No streams recorded yet	尚无播放记录
-No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	未发现本机安装支持的游戏。仍可点击游戏监测其服务器，在你点击前不会向游戏公司服务器发送任何内容。
 None - the internet answered every time AdeeboMeter checked.	没有，每次 AdeeboMeter 检查时互联网都正常应答。
 None in Windows' table yet.	Windows 表中尚无记录。
 Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	明确不做的事：尝试默认密码、将个人信息发送到泄漏数据库查询网站、扫描他人的设备，或替你更改设置。
@@ -5121,7 +5095,6 @@ Off (Settings > Weather). Your PC's location is never used.	已关闭（设置 >
 Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	了解每个进程后，任务管理器就不再可怕，电脑吃力时也能清楚知道该关闭什么。
 Phone waiting room	手机等待室
 Pick a game to watch	选择要监测的游戏
-Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	播放比赛、节目或直播几分钟，记录会出现在这里，标明每次降速及其原因。
 Prices per Barrel and Ounce	每桶与每盎司价格
 Rates and Prices in Canada	加拿大利率与价格
 Reading that day...	正在读取当天记录……
@@ -5721,10 +5694,7 @@ No updates, drivers, hardware or settings changes in the last two weeks.	最近�
 Nothing changed between them.	两者之间没有变化。
 Open that day in History	在历史中打开那一天
 Settings, apps and services - compared	设置、应用和服务——对比
-Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	快照只保存在这台电脑上（30 天），且仅在开启历史时保存。Windows 对普通用户隐藏的内容不会出现在其中。
-The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	网络医生每天保存一份小快照（网络设置、应用、服务、启动项、计划任务）。明天再来对比。
 The last two weeks	最近两周
-What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	这台电脑上的变化——更新、驱动、硬件、重启、设置和应用——与每天的网络状况对照。它会给出一个嫌疑及证据，从不下结论。
 {0} compared with {1}	{0} 与 {1} 对比
 since yesterday	自昨天
 since a week ago	自一周前
@@ -5747,7 +5717,7 @@ New	新建
 Open...	打开...
 Run ▶	运行 ▶
 Terminal	终端
-The same flow as an AdeeboShell script - edit either side	同一流程的 AdeeboShell 脚本——两边都可以编辑
+The same flow as a Terminal script - edit either side	同一流程的 终端 脚本——两边都可以编辑
 if it didn't work:	如果没成功：
 works?	成功？
 {0} seconds	{0} 秒
@@ -5787,7 +5757,6 @@ In {0}	以 {0} 计
 Only today's rate is available for this pair - no history to chart.	这对货币只有今日汇率，没有历史可画图。
 Rates and Prices in {0}	利率与物价：{0}
 The {0} moved {1:0.0}% against the {2} this week.	本周 {0} 兑 {2} 变动了 {1:0.0}%。
-Today's numbers, in plain words.	今天的数字，用大白话说。
 Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	你所在国家央行的利率和通胀暂时没有免费、免密钥的来源，这一栏只为加拿大显示。
 Your currency	你的货币
 Your market:	你的市场：
@@ -5898,3 +5867,34 @@ It starts inside your network, not in my home.	问题出在你们的网络里，
 My PC and router were checked and are fine.	我的电脑和路由器都检查过了，没有问题。
 Could you check my line? I have a full report if you need it.	能帮我检查一下线路吗？如有需要，我有完整报告。
 For their network team	给他们的网络团队
+Type a name, an IP or a URL. It checks every step on the way and says in one sentence where it breaks. Pin the places you check often.	输入名称、IP 或网址。它会检查路径上的每一步，并用一句话告诉你哪里出了问题。可以把常查的地址固定下来。
+It watches your connection every second and tells you what's wrong and what to do.	它每秒都在关注你的网络，并告诉你哪里出了问题、该怎么做。
+A faded card in the corner: is everything OK, plus CPU, memory, disk and network. Clicks pass through it. When a window covers it, it folds into a small chip; rest the mouse on it to open.	角落里一张半透明的卡片：显示一切是否正常，以及 CPU、内存、磁盘和网络。点击会直接穿过它。被窗口挡住时会收成一个小标签；把鼠标停在上面即可打开。
+The five dots follow your traffic: your PC, Wi-Fi or cable, your provider (or VPN), DNS and the internet. The first dot that isn't green is where the trouble starts.	五个圆点沿着你的流量走：你的电脑、Wi-Fi 或网线、你的运营商（或 VPN）、DNS 和互联网。第一个不是绿色的圆点，就是问题开始的地方。
+Checks the things that quietly cause trouble: restarts, updates, disk space, adapter errors, crowded Wi-Fi, proxy, VPN, DNS, memory and power.	检查那些悄悄制造麻烦的地方：重启、更新、磁盘空间、网卡错误、拥挤的 Wi-Fi、代理、VPN、DNS、内存和电源。
+Every drop, roam, DNS change and VPN flap in the last two hours, with the time.	过去两小时内的每一次断线、漫游、DNS 变化和 VPN 波动，都附有时间。
+Your connection one layer at a time: the route, your router's address, MTU, the handshake step by step, and with Wireshark the real packets.	逐层查看你的连接：路由、路由器地址、MTU、逐步的握手过程，装了 Wireshark 还能看到真实的数据包。
+Which program started which, what each svchost runs, what a program is doing now, and what starts with Windows.	哪个程序启动了哪个、每个 svchost 在运行什么、某个程序现在在做什么，以及哪些程序随 Windows 启动。
+Press Ctrl+K anywhere to jump to a page, a program, a term or a protocol.	在任意位置按 Ctrl+K，可跳转到页面、程序、术语或协议。
+Every connection your PC has right now: which app, with whom, on which port. Press Sniff on a row to record just that one for Wireshark.	你的电脑此刻的每一条连接：哪个应用、和谁、在哪个端口。在某一行按 Sniff，就只为 Wireshark 录下这一条。
+Your Wi-Fi or cable: band, channel, signal, speed, security, who else shares the air, and how healthy the hop to your router is.	你的 Wi-Fi 或网线：频段、信道、信号、速度、安全性、还有谁在共用信道，以及到路由器这一跳是否健康。
+A small face on the widget that shows how your network feels. It sleeps on the folded chip.	小组件上的一张小脸，显示你的网络状态。收起成小标签时它会睡觉。
+What changed on this PC (updates, drivers, apps, settings), next to how each day went. It names a suspect and shows why.	这台电脑上发生了哪些变化（更新、驱动、应用、设置），并与每天的网络情况并排显示。它会指出一个嫌疑对象并说明原因。
+The Network Doctor saves a small snapshot each day. Come back tomorrow to compare.	网络医生每天保存一份小快照。明天再来对比。
+Click a row on the left to see what it does and whether it's safe to close.	点击左侧任意一行，查看它的作用以及能否安全关闭。
+What each program on your PC does, and whether it's safe to close. It only explains; it never closes anything.	电脑上每个程序是做什么的，以及能否安全关闭。它只做解释，从不关闭任何程序。
+Play a match, a show or a live channel for a couple of minutes. Every dip shows up here, with whose fault it was.	播放一场比赛、一部剧或一个直播频道几分钟。每次卡顿都会显示在这里，并注明是谁的问题。
+Esc, minimise, X or Back to corner all close this view and free its memory. The widget keeps watching.	按 Esc、最小化、点 X 或“返回角落”都会关闭此视图并释放内存。小组件会继续监测。
+It shows only what Windows lets a normal user see. If something is locked, it isn't shown.	它只显示 Windows 允许普通用户看到的内容。被锁定的内容不会显示。
+No supported game found on this PC. Click one to watch its servers anyway. Nothing is sent until you do.	这台电脑上没有找到支持的游戏。点击任意一个也能监测它的服务器。点击之前不会发送任何内容。
+Records only this conversation, headers only, and stops by itself. Then it replays the packets along the path, with resends and stalls marked. Start the call, match or download first.	只录制这一段对话，仅记录包头，并会自动停止。随后沿路径回放数据包，并标出重传和卡顿。请先开始通话、比赛或下载。
+Reads these packets with fixed rules (nothing guessed, nothing sent) and says what they show, and what they can't.	按固定规则读取这些数据包（不猜测、不外发），说明它们显示了什么，以及无法显示什么。
+The widget stays light. Heavy tools run only while this window is open. These set how much it watches in the background.	小组件始终保持轻量。重型工具只在此窗口打开时运行。这些设置决定后台监测的程度。
+Snapshots stay on this PC for 30 days, only while History is on.	快照在这台电脑上保留 30 天，仅在开启历史记录时保存。
+Fun lines are off.	趣味台词已关闭。
+Off: no fun lines. The face stays.	关闭：不显示趣味台词，小脸保留。
+The Bank of Canada's numbers.	加拿大银行的数据。
+Today's numbers.	今天的数据。
+what the numbers mean	这些数字的含义
+ALSO HERE	这里还有
+Points	积分

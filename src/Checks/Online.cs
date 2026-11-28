@@ -137,7 +137,7 @@ namespace AdeeboMeter
         // nesting deeper than 64 is refused: a hostile server can't run the stack out (that would end the whole app)
         [ThreadStatic] static int depth;
         public static object Parse(string s) { int i = 0; depth = 0; try { return Val(s, ref i); } catch (InvalidDataException) { return null; } }
-        // the whole text must be one value - nothing after it (AdeeboLab finding 1: '{"nodes":[]}};evil()' parsed as a drawing)
+        // the whole text must be one value - nothing after it (Network Lab finding 1: '{"nodes":[]}};evil()' parsed as a drawing)
         public static object ParseWhole(string s) { int i = 0; depth = 0; try { var v = Val(s, ref i); Ws(s, ref i); return i >= s.Length ? v : null; } catch (InvalidDataException) { return null; } }
         // a value written back as JSON that is also safe inside a <script>: < > & and the two line separators escaped
         public static string Write(object v) { var sb = new StringBuilder(); Write(sb, v, 0); return sb.ToString(); }

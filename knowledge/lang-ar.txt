@@ -248,14 +248,14 @@ See an example	انظر مثال
 Hide the example	إخفاء المثال
 See an example day	انظر مثال اليوم
 Adeebo Point	نقطة Adeebo
-Adeebo Points	Adeebo Points
+points	النقاط
 of	من
 Beginner	مبتدئ
 Learner	متعلّم
 Troubleshooter	محلّل المشكلات
 Expert	خبير
 Already earned.	لقد كسبتها بالفعل
-Doesn't earn Adeebo Points - it sends test traffic.	لا يكسب Adeebo Points - فإنه يرسل حركة مرور اختبارية.
+Doesn't earn points - it sends test traffic.	لا يكسب النقاط - فإنه يرسل حركة مرور اختبارية.
 HOW TO EARN	كيفية كسب المال
 Open a tool's Example, then run it for real	افتح مثال الأداة، ثم تشغيله حقيقيا
 Run a tool marked replay again, 10 minutes or more later	تشغيل أداة معينة إعادة تشغيل مرة أخرى، 10 دقائق أو أكثر بعد ذلك
@@ -270,7 +270,7 @@ done	تمت
 to	إلى
 Pages	الصفحة
 Nothing matches - try another word.	لا شيء يطابق - حاول كلمة أخرى.
-Earning is off (Settings › Adeebo Points) - your points are kept.	الأرباح غير موجودة (الوضعات › Adeebo Points) - تم الاحتفاظ بنقاطك.
+Earning is off (Settings › Points) - your points are kept.	الأرباح غير موجودة (الوضعات › النقاط) - تم الاحتفاظ بنقاطك.
 Community and support	المجتمع والدعم
 Ask a question or share an idea	أسأل سؤال أو شارك فكرة
 Report a bug	أبلغ عن حشرة
@@ -725,7 +725,6 @@ your own mix	خليطك الخاص
 plus about	إضافة إلى نحو
 game pings a minute for the games you watch (one a second per server while you play)	اللعبة تعطي دقيقة للاعبات التي تشاهدها (واحدة في الثانية لكل خادم أثناء اللعب)
 on top of the widget's once-a-second read of Windows' own counters.	على رأس الوسائط القراءة مرة في الثانية من العدادات الخاصة Windows.
-The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	الوسائط دائماً تطبيق بنس المواد العميقة (التقاط الحي، قائمة الاتصال الكاملة، فحص المسار) تعمل فقط بينما هذه النافذة مفتوحة. هذه تحدد كم من المشاهدة يحدث في الخلفية - تحقق دقيقة، بالإضافة إلى اللعبة pings مرة واحدة تشاهد لعبة.
 The DNS server is down	خادم DNS لا يعمل
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	استخدم خادم DNS آخر، مثل 1.1.1.1، أو أعد تشغيل الراوتر الذي يعمل هنا خادمًا لـ DNS
 Addresses work. Names don't.	تناول العمل. الأسماء لا تفعل.
@@ -1029,7 +1028,6 @@ Nothing pinned yet. Open a tool and press the pin, or pin a search result.	لا 
 Pinned	مثبّت
 Pinned to your tab	معلقة على حسابك
 Earned	المكتسب
-points	النقاط
 fine	سليم
 to watch	لمراقبة
 problems	المشاكل
@@ -1122,7 +1120,6 @@ PREVIEW	المراجعة
 TALK LIKE...	تحدث مثل...
 What should I call you?	بماذا أناديك؟
 Just the facts (Plain, Details on, face only)	فقط الحقائق (الملحومة، التفاصيل على، وجهها فقط)
-Fun lines are off - plain words everywhere.	التعليقات المرحة معطّلة — أسلوب مباشر في كل مكان.
 MOOD	المزاج
 Words of comfort	كلمات مواساة
 Buddy face	وجه الرفيق
@@ -1325,7 +1322,6 @@ Actual size	الحجم الفعلي
 Add my key...	إضافة مفتاحي...
 Add the technical details below (names, PC name, paths and addresses are taken out - read them first)	إضافة التفاصيل التقنية أدناه (تم إزالة الأسماء، اسم الكمبيوتر، المسارات والعناوين - اقرأها أولاً)
 Add your own: press ☆ on any tool in a question on the left - it shows up here and above that question's tools. Up to 12.	أضف ما تختاره: اضغط ☆ بجوار أي أداة ضمن سؤال على اليسار، لتظهر هنا وفوق أدوات ذلك السؤال. الحد الأقصى 12.
-Adeebo points	Adeebo Points
 AdeeboMeter	AdeeboMeter
 AdeeboMeter diagnosis report	تقرير تشخيص AdeeboMeter
 AdeeboMeter is free and open source. A report goes only when you press Send in its box.	AdeeboMeter مجاني ومصدر مفتوح. تقرير يبدأ فقط عندما تضغط على إرسال في مربعها.
@@ -2248,7 +2244,6 @@ the most specific route wins	الطريق الأكثر تحديدًا يفوز
 the name	الاسم
 the network	الشبكة
 the numbers behind the feeling	الأرقام وراء الشعور
-the numbers in plain words	الأرقام بالكلمات البسيطة
 the original file	الملف الأصلي
 the page	الصفحة
 the path	الطريق
@@ -2397,7 +2392,6 @@ Temperature in	وحدة الحرارة
 How temperatures show in the widget and here.	كيف تظهر درجات الحرارة في الويجيت وهنا.
 Weather in the widget	الطقس في الويدجت
 Off: only the buddy's face shows the weather.	خارج: فقط وجه الرفيق يظهر الطقس.
-Off: plain words everywhere, the buddy's face stays.	لا، لا، لا. لا، لا!
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	على: الصديق يتحدث في المزاج والشخصية أدناه. الحقائق والأرقام والتقارير لا تتغير أبداً
 How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.	مزاج الرفيق: هادئ مسترخٍ، وساخر يمازح الأجهزة (لا يمازحك أبدًا)، وحماسي يشجّع، والدعم لطيف، وآمر يعطي الأوامر، وإيمو قريب منك.
 Your name: 	اسمك: 
@@ -2442,7 +2436,6 @@ Always the everyday card: the verdict, the five dots, CPU, memory and speed.	د�
 Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up.	بطاقة المكالمات دائمًا: التذبذب والفقد والتأخير - ما يهمّ Teams وZoom وWhatsApp - وVPN حين يعمل.
 Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.	بطاقة المختصين دائمًا: زمن استجابة الراوتر والإنترنت وDNS، والتذبذب وفقد الحزم، وإعادة إرسال TCP وإعادة ضبطه، ومعدل النقل وCPU والذاكرة.
 Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.	يتبع ما تفعله: بطاقة اللاعب بينما تكون اللعبة التي أضفتها مفتوحة (إذا كان عرض اللعبة على) ، بطاقة المكالمات أثناء المكالمة، بطاقة اليومية في باقي الوقت.
-A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip.	وجهه صغير على الويجيت الذي يشعر بما تشعر به شبكتك: متفرغ عندما يكون كل شيء أخضر، متعرق عندما يكون جهاز الكمبيوتر مشغولًا، مشوشًا عندما يكون Wi-Fi سيئاً، وخائنًا عندما يخيبك مقدمك. نَامُ على رقاقة مُثبتة.
 Off: the widget shows the logo and the coloured dot.	المقطوعة: الوسائط تظهر الشعار والنقطة الملونة.
 Locked - you have 	مقفل - لديك 
  points. 	 النقاط 
@@ -2549,7 +2542,6 @@ Listens to your own adapter only while you press Start. Nothing is sent; capture
 Open this view	افتح هذا العرض
 Click the tray icon, or press Ctrl+Alt+A from anywhere.	انقر أيقونة AdeeboMeter في شريط المهام (بجوار الساعة)، أو اضغط Ctrl+Alt+A من أي مكان.
 Back to the corner	العودة إلى الزاوية
-Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.	Esc، تقليل، الزر X أو الزر للعودة إلى الزاوية - كلّها تفعل الشيء نفسه: هذا المشهد يغلق، يعيد ذاكرة، والوجيط يستمر في المشاهدة.
 Quit completely	خروج نهائي
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	اضغط على الرمز الأيمن على الصندوق واختيار الخروج لا شيء يمرّ - حتى مساعد.
 Learn anything	تعلم أي شيء
@@ -2557,7 +2549,6 @@ Settings decides how much AdeeboMeter watches in the background - from Penny to 
 Readable source	شفرة مصدرية واضحة
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	التطبيق كله هو رمز مصدر بسيط يمكنك قراءته قبل تشغيله، بنيت مع المجمع الذي يرسل بالفعل داخل Windows.
 No admin rights	لا يحتاج إلى صلاحيات مسؤول
-Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show.	كل ما يظهر يأتي من ما يسمح له Windows المستخدم العادي بالفعل أن يراه. إذا كان شيء مغلق، فإنه ببساطة لا تظهر.
 Secure by default	أمن افتراضي
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	تستخدم الفحوصات TLS والتحقّق من الشهادات في Windows نفسه، الذي يختار TLS 1.2 أو 1.3. لا يُتجاوز فحص الشهادة مطلقًا. تُفحص المدخلات، ولا يُستخدم مفسّر أوامر النظام أبدًا.
 Light as a feather	خفيف كالريشة
@@ -2566,17 +2557,9 @@ Leaves no trace	لا يترك أثر
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	الإعدادات و سجل صغير يعيش بجوار exe (نسخة مثبتة تحتفظ بها في مجلد AppData الخاص بك). يتم حذف التقاطات عند الخروج لا يتم تسجيل عناوين النافذة ومحتوى المرور أبداً. التاريخ (بعد بضعة أيام، على هذا الكمبيوتر فقط) يعمل ما لم تطفئها - و تنقر واحدة تحذفها.
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	كل محادثة يقوم بها جهاز الكمبيوتر الخاص بك الآن - أي تطبيق، مع من، على أي منفذ، في أي حالة. الجدد تدخل، والغلق يزول. ضع الحالة لتعلم معناها، اضغط على "سنيف" على صف لتسجيل تلك المحادثة فقط لـ "وايرشارك".
 Your Wi-Fi / cable	اتصال Wi-Fi أو الكابل
-Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	كل شيء عن رابطك: النطاق، القناة، الإشارة في ديبل، السرعات، الأمن، من الذي يشارك الهواء الخاص بك (مع خريطة القناة) ، العناوين، الأخطاء، وكيف الصحة القفز إلى الراوتر. اضغط على نقطة Wi-Fi للذهاب إلى هنا
-Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.	شرح مبسّط لكل برنامج على جهازك: ما الذي يفعله، وكيف يعمل، وسبب وجوده، وما الذي يحدث بدونه، وهل يمكن إغلاقه بأمان. يشرح AdeeboMeter فقط، ولا يُغلق أي برنامج.
-Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.	اكتب اسمًا أو عنوان IP أو URL. يتتبّع AdeeboMeter المسار كاملًا كما يفعل المختص: DNS والمسار وPing وTCP وTLS وHTTP وحجم الحزم وكل راوتر في الطريق، ثم يحدّد موضع العطل بجملة واحدة. ويشرح أيضًا من ينقل بياناتك، وأين تتبادل الشبكات تسليمها ويختار BGP المسار، وطبقات NAT والأنفاق والجدران النارية. ثبّت الوجهات التي تفحصها كثيرًا وشغّل فحوصاتها معًا.
 Health check	فحص الجهاز
-A one-click check-up of the things that quietly cause trouble: days since restart, pending updates, disk space, adapter errors, crowded Wi-Fi, proxies, VPN, DNS, memory and power.	فحص بنقرة واحدة للأمور التي قد تسبّب مشكلات دون أن تلاحظها: الأيام منذ إعادة التشغيل، والتحديثات المعلّقة، ومساحة القرص وأخطاء المحوّل وازدحام Wi-Fi والوكلاء وVPN وDNS والذاكرة والطاقة.
-The diary. Every roam, drop, DNS change, VPN flap and app hiccup in the last two hours, with the time it happened - so 'it was slow at 2:15' finally has an answer.	سجل الأحداث: كل انتقال بين نقاط الوصول أو انقطاع أو تغيير DNS أو اضطراب VPN أو تعثّر تطبيق خلال آخر ساعتين، مع توقيته. وأخيرًا تجد إجابة لعبارة «كان الاتصال بطيئًا عند 2:15».
 How it travels	كيف تنتقل البيانات
-Your own connection, one layer at a time: which route won and why, your router's hardware address, MTU and packet anatomy, the handshake as a ladder with the time of each step, and with Wireshark the real packets explained field by field. Plus Teams and Office end to end.	اتصالك طبقة بطبقة: المسار الذي اختير وسببه، وعنوان الراوتر المادي، وMTU وتشريح الحزمة، وتسلسل المصافحة مع زمن كل خطوة. ومع Wireshark تحصل على شرح للحزم الفعلية حقلًا بحقل، إلى جانب مسار Teams وOffice كاملًا.
-Who started whom (the process tree), what each svchost is hosting, what a program is doing right now (CPU, memory, disk, connections) and why it started, everything that starts with Windows - and the deep dives on the processes people ask about.	أي عملية شغّلت غيرها في شجرة العمليات، والخدمات التي تستضيفها كل عملية svchost، وما يفعله البرنامج الآن من استخدام CPU والذاكرة والقرص والاتصالات وسبب تشغيله. ويشمل كل ما يبدأ مع Windows، وشروحات تفصيلية للعمليات التي يتساءل الناس عنها.
 Learn (Ctrl+K)	تعلم (Ctrl+K)
-Press Ctrl+K anywhere in this window to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds.	اضغط على Ctrl+K في أي مكان في هذه النافذة للقفز إلى علامة التبويب أو برنامج أو مصطلح أو بروتوكول. وضع التعلم يفسر كل بروتوكول مع مخطط السلم و، مع Wireshark، يظهر على الهاتف على جهاز الكمبيوتر الخاص بك لمدة عشر ثواني.
 Wireshark's engine (tshark), only if you have Wireshark installed and only while you press Start. It shows what your traffic is made of, who you talk to by name, and Wireshark's own warnings. It stops by itself.	محرك Wireshark (tshark) ، فقط إذا كنت قد قمت بتثبيت Wiresharks و فقط أثناء الضغط على Start. يظهر ما هي حركة المرور الخاصة بك من، من تتحدث مع اسم، وحذيرات ويرشارك نفسه. إنه يتوقف لوحده
 straight to Adeeb - no account needed	مباشرة إلى أديب - لا حاجة للحساب
 say what you did and what you expected - no account needed	قول ما فعلت وما توقعته - لا حاجة إلى حساب
@@ -2584,12 +2567,9 @@ Source code on GitHub	الرمز المصدر على GitHub
 everything AdeeboMeter does can be read there	كل ما يفعله AdeeboMeter يمكن قراءته هناك
 Copied - paste it into the page that opened	نسخة - ضعه في الصفحة التي فتحت
 Found a bug? Report it	وجدت خللًا؟ أبلغ عنه
-When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	عندما يبدوا الإنترنت بطيئًا، أغلبنا نفتح مدير المهام، ثم عرض إرشادي، ثم النقاش، ثم تخمين. يقوم AdeeboMeter بكل هذا من أجلك - بهدوء، كل ثانية - ويقول لك في جملة واحدة واضحة ما هو الخطأ وما يجب فعله حيال ذلك.
 The corner widget	أداة الزاوية
-A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	بطاقة صغيرة في الزاوية اليمنى السفلى، تُهلك إلى 30% حتى لا يشتت. يظهر الشيء الوحيد الذي يهم - هو كل شيء OK - بالإضافة إلى CPU، الذاكرة، القرص والشبكة في نظرة واحدة. لا يستغرق النقر أبداً، لذا أيّ شيء من تحتها يظل يعمل عندما تغطي النافذة الزاوية فإنها تطويق إلى رقاقة صغيرة؛ ركز فأرك عليها لمدة نصف ثانية وتفتح.
 Getting around	التنقّل
 Is it me or the network?	هل أنا أم الشبكة؟
-The five dots at the top follow your traffic out of the building: your PC, your Wi-Fi or cable to the router, your provider (or VPN), DNS - the internet's phone book - and the internet itself. The first dot that isn't green is where the trouble starts. Everything before it is fine; everything after it is a victim, not a cause. That's the whole trick.	تتتبّع النقاط الخمس في الأعلى بياناتك من جهازك إلى الخارج: جهازك، ثم Wi-Fi أو الكابل إلى الراوتر، ثم مزوّد الخدمة أو VPN، ثم DNS الذي يعمل كدليل عناوين الإنترنت، ثم الإنترنت نفسه. أول نقطة غير خضراء هي موضع بدء المشكلة. ما قبلها سليم، وما بعدها متأثّر بالمشكلة وليس سببها. هذه هي الفكرة كلها.
 What each tab does	ما تفعله كل علامة
 What leaves your PC - and what never does	ما يترك جهاز الكمبيوتر الخاص بك - وما لا يفعل
 A tiny ping to your own router, 	إشارة صغيرة إلى الراوتر 
@@ -4027,9 +4007,7 @@ WHERE THE TIME GOES	أين يذهب الوقت؟
 The server didn't answer pings - many game and call servers ignore them. Capture the conversation instead: its own packets show the rhythm and the stalls.	لم يستجب الخادم لطلبات Ping — تتجاهلها خوادم ألعاب ومكالمات كثيرة. التقط بيانات الاتصال بدلًا من ذلك، فحزمه الفعلية تكشف نمط الحركة والتوقّفات.
 THE REAL PACKETS	الحزم الفعلية
 No network adapter is up right now - connect, then capture again.	لا توجد واجهة شبكة متصلة حاليًا — اتصل بالشبكة ثم أعد الالتقاط.
-Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first.	يسجّل هذا الاتصال فقط، وترويـسات الحزم فقط، ثم يتوقّف تلقائيًا. تعمل التصفية داخل برنامج تشغيل الالتقاط، فلا تصل بيانات الاتصالات الأخرى إلى AdeeboMeter. ثم يعرض حركة الحزم ببطء على المسار أعلاه، بأحجام تعكس عدد بايتاتها، مع تحديد إعادة الإرسال والتوقّفات وشرح كل حزمة بكلمات بسيطة. ابدأ المكالمة أو المباراة أو التنزيل أولًا.
 IN PLAIN WORDS	بكلمات بسيطة
-Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.	يقرأ هذه الحزم بقواعد ثابتة تتكرّر في كل مرة، دون تخمين أو إرسال شيء إلى الخارج. يشرح ما تكشفه، وتوقيت كل نتيجة، وما لا يمكن استنتاجه منها.
 WHAT THESE PACKETS SHOW	ما الذي تكشفه هذه الحزم؟
 One TCP connection can't go faster than about MSS ÷ round trip × 1.22 ÷ √loss, however fast your plan is - every loss halves its window and it climbs back one packet per round trip. Farther servers suffer more, which is why the same loss hurts a far download more than a near one.	مهما بلغت سرعة باقتك، لا تتجاوز سرعة اتصال TCP واحد تقريبًا: MSS ÷ زمن الذهاب والإياب × 1.22 ÷ الجذر التربيعي لنسبة الفقد. يُنصّف كل فقد نافذة الإرسال، ثم تزيد مجدّدًا بمقدار حزمة واحدة في كل رحلة ذهاب وإياب. تتأثّر الخوادم البعيدة أكثر؛ لذلك يضرّ الفقد نفسه بتنزيل بعيد أكثر من تنزيل قريب.
 Packets of a call leave every 20 ms but arrive unevenly. The jitter buffer holds them a little so they play smoothly: a packet later than the buffer is thrown away (a gap in the sound); a bigger buffer catches more of them but delays the whole conversation (people start talking over each other above about 250 ms). Teams and Zoom size it themselves - jitter is what forces them to choose.	تُرسل حزم المكالمة كل 20 ms، لكنها تصل بفواصل غير منتظمة. يحتفظ بها مخزن تعويض التذبذب قليلًا لتشغيل الصوت بسلاسة. تُهمل الحزمة التي تتأخّر أكثر من مدة المخزن، فيحدث انقطاع بالصوت. يستوعب المخزن الأكبر مزيدًا من الحزم المتأخّرة، لكنه يؤخّر المكالمة كلها؛ وعند نحو 250 ms يبدأ المتحدّثون بمقاطعة بعضهم. يضبط Teams وZoom حجم المخزن تلقائيًا، والتذبذب هو ما يفرض هذه المفاضلة.
@@ -4112,7 +4090,7 @@ Add a currency	إضافة عملة
 Add a quote key...	إضافة مفتاح أسعار...
 Add currency	إضافة عملة
 Add each month ($)	الإضافة الشهرية ($)
-AdeeboLab	AdeeboLab
+Network Lab	مختبر الشبكة
 AdeeboMeter Daily Financial Edition	AdeeboMeter — الإصدار المالي اليومي
 AdeeboMeter Matchday Edition	AdeeboMeter — إصدار يوم المباراة
 After	بعد
@@ -4331,7 +4309,6 @@ Tested	مُختبَر
 Testing...	نختبر...
 That doesn't look like a key: letters and digits only.	لا يبدو هذا مفتاحًا: حروف وأرقام فقط.
 That spot was removed - nothing to rename.	أُزيل ذلك المكان — لا شيء لإعادة تسميته.
-The Bank of Canada's numbers, in plain words.	أرقام بنك كندا، بكلمات بسيطة.
 The Week in Numbers	الأسبوع بالأرقام
 The forecast is on its way...	التوقعات في الطريق...
 The groups arrive from the Bank of Canada in a moment.	تصل المجموعات من بنك كندا بعد لحظة.
@@ -4661,11 +4638,11 @@ Your broker's connection, the day's numbers.	اتصال وسيطك، وأرقا�
 All quiet	كل شيء هادئ
 Your tab	تبويبك
 Pin tools here from any tool page or search result.	ثبّت الأدوات هنا من أي صفحة أداة أو نتيجة بحث.
-Open the AdeeboLab  ›	افتح AdeeboLab  ›
+Open the Network Lab  ›	افتح مختبر الشبكة  ›
 Break it	اكسرها
 Break it: 	اكسرها: 
  faults watched to the end · +	 أعطال شوهدت حتى النهاية · +
- Adeebo Points each, the first time.	 من Adeebo Points لكل منها، في المرة الأولى.
+ points each, the first time.	 من النقاط لكل منها، في المرة الأولى.
 nothing to wait for - it answers as you type	لا شيء للانتظار — يجيب أثناء الكتابة
 as many minutes as you choose	عدد الدقائق الذي تختاره
 the seconds you choose (10-120)	الثواني التي تختارها (10-120)
@@ -4860,7 +4837,7 @@ check these games' servers in the background: 	فحص خوادم هذه الأل
 replace your pinned addresses with: 	استبدال عناوينك المثبّتة بـ: 
 
 A lab drawing someone sent you (.json)	رسم مختبر أرسله لك أحدهم (.json)
-AdeeboLab drawings	رسوم AdeeboLab
+Network Lab drawings	رسوم مختبر الشبكة
 An empty page - pick devices and click to place them	صفحة فارغة - اختر الأجهزة وانقر لوضعها
 Couldn't read that file:	تعذّرت قراءة هذا الملف:
 Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	ارسم شبكتك، وشاهد المسار الذي تسلكه الحزمة، ثم اكسر شيئًا واحدًا وشاهد أين يفشل. يُفتح الرسم في نافذته الخاصة؛ ويبقى كل شيء على هذا الجهاز.
@@ -4918,7 +4895,7 @@ Your home answers instantly; the losses start right after your router and every 
 On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	في أول عقد إيجار يكون الترتيب Discover ثم Offer ثم Request ثم Ack - وهذا الكمبيوتر بدأ بـ Discover، أي أنه يطلب عنوانًا جديدًا: جاء Request قبل أن يعرض أحد عنوانًا. (الكمبيوتر الذي يجدد عنوانًا كان لديه قد يبدأ بـ Request مباشرةً - لكن ليس بعد Discover.)
 Echo reply to the TTL 2 ping, straight from 1.1.1.1	رد صدى على ping بـ TTL 2، مباشرةً من 1.1.1.1
 
-Couldn't open the AdeeboLab:	تعذّر فتح AdeeboLab:
+Couldn't open the Network Lab:	تعذّر فتح مختبر الشبكة:
 Couldn't read your diagrams just now - try again in a moment.	تعذّرت قراءة مخططاتك الآن - حاول مرة أخرى بعد قليل.
 Couldn't save:	تعذّر الحفظ:
 Save a copy of all my diagrams	حفظ نسخة من كل مخططاتي
@@ -5056,7 +5033,7 @@ OR TAP WHAT YOU SEE	أو ضغط على ما ترينه
 WHAT'S WRONG?	ما الخطأ؟
 WHERE EVERYTHING LIVES	أين كل شيء يعيش
 connected, but nothing works	متصلة، ولكن لا شيء يعمل
-Earn Adeebo Points	كسب Adeebo Points
+Earn points	كسب النقاط
 Scan with your phone	فحص هاتفك
 Older:	الأقدم:
 Open engineer view	افتح عرض المختصين
@@ -5068,7 +5045,6 @@ LAGGY	متأخر
 ms PING	ms PING
 LAST 60 SECONDS	آخر 60 ثانية
 Esc takes you back to the corner	Esc يعيدك إلى الزاوية
-Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	كل محادثة يجريها جهازك الآن - أي تطبيق، مع من، على أي منفذ، وفي أي حالة. الجديدة تظهر والمغلقة تتلاشى. أشر إلى ? بجانب الحالة لمعرفة معناها، واضغط Sniff على صف لتسجيل تلك المحادثة فقط لـ Wireshark.
 updated	آخر تحديث
 access point nearby	نقطة وصول قريبة
 access points nearby	نقاط وصول قريبة
@@ -5078,7 +5054,7 @@ tool	أداة
 No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	لا حساب، لا قياسات عن بُعد، لا تحديثات، لا إعلانات، لا تقارير أعطال. لا يستمع أبدًا على أي منفذ، ويتحقق من ذلك بنفسه في كل تشغيل.
 No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	لا حساب. لا جمع بيانات عن بُعد. لا يستمع أبدًا. كل حزمة يرسلها مذكورة أدناه - ويمكنك إيقاف كل واحدة منها.
 Open as script	افتح كسكربت
-Open in AdeeboLab	افتح في AdeeboLab
+Open in Network Lab	افتح في مختبر الشبكة
 Monitor, diagnose, automate, visualize, learn.	راقب، شخّص، أتمت، اعرض، تعلّم.
 Finish	إنهاء
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	أخذ Windows لوحة المفاتيح (Win أو Alt+Tab أو إشعار) - انقر هنا للمتابعة.
@@ -5088,7 +5064,6 @@ An app	تطبيق
 CPU is pegged ({0}%). {1} uses the most.	المعالج في أقصى طاقته ({0}%). {1} يستهلك أكثر من غيره.
 Capturing packets is turned off by your IT team (AdeeboMeter.policy).	أوقف فريق تقنية المعلومات التقاط الحزم (AdeeboMeter.policy).
 Checking the destination	جارٍ فحص الوجهة
-Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	انقر أي صف على اليسار. سأخبرك بما يفعله وكيف يعمل ولماذا هو موجود وما الذي سيحدث بدونه - وهل إغلاقه آمن.
 Collecting - one row a second while the session is open.	جارٍ الجمع - صف كل ثانية ما دامت الجلسة مفتوحة.
 Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	النقاط الملونة: أخضر = آمن للإغلاق، كهرماني = اتركه (لا بأس بإعادة تشغيله)، أحمر = يحتاجه Windows، بنفسجي = تديره تقنية المعلومات، رمادي = ليس في دليلي.
 Copy match report (internal addresses removed)	نسخ تقرير المباراة (دون العناوين الداخلية)
@@ -5123,7 +5098,6 @@ Needs Wireshark and Npcap on this PC.	يحتاج Wireshark وNpcap على هذا
 No Valve servers yet - press Refresh Valve list (one request to Valve).	لا توجد خوادم Valve بعد - اضغط «تحديث قائمة Valve» (طلب واحد إلى Valve).
 No servers yet - press Edit servers and add your server's address.	لا توجد خوادم بعد - اضغط «تعديل الخوادم» وأضف عنوان خادمك.
 No streams recorded yet	لم يُسجَّل أي بث بعد
-No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	لم يُعثر على لعبة مدعومة مثبتة على هذا الحاسوب. انقر أيًّا منها لمراقبة خوادمها على أي حال - لا يُرسل شيء إلى خوادم شركة ألعاب حتى تفعل.
 None - the internet answered every time AdeeboMeter checked.	لا شيء - أجاب الإنترنت في كل مرة تحقق فيها AdeeboMeter.
 None in Windows' table yet.	لا شيء في جدول Windows بعد.
 Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	ما لا نفعله عمدًا: تجربة كلمات المرور الافتراضية، أو البحث عنك في قواعد بيانات التسريبات (فذلك يرسل بياناتك إلى موقع ويب)، أو فحص أجهزة الآخرين، أو تغيير أي شيء نيابةً عنك.
@@ -5131,7 +5105,6 @@ Off (Settings > Weather). Your PC's location is never used.	متوقف (الإع
 Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	حين تعرف من هو من، يكفّ مدير المهام عن إخافتك - وستعرف بالضبط ما تغلقه حين يتعب الحاسوب.
 Phone waiting room	غرفة انتظار الهاتف
 Pick a game to watch	اختر لعبة لمراقبتها
-Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	شغّل شيئًا - مباراة أو برنامجًا أو قناة مباشرة - لبضع دقائق. يصل السجل إلى هنا مع كل هبوط ومن المتسبب فيه.
 Prices per Barrel and Ounce	الأسعار لكل برميل وأونصة
 Rates and Prices in Canada	الأسعار والفوائد في كندا
 Reading that day...	جارٍ قراءة ذلك اليوم...
@@ -5728,10 +5701,7 @@ No updates, drivers, hardware or settings changes in the last two weeks.	لا ت
 Nothing changed between them.	لم يتغيّر شيء بينهما.
 Open that day in History	افتح ذلك اليوم في السجل
 Settings, apps and services - compared	الإعدادات والتطبيقات والخدمات - مقارنة
-Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	تبقى اللقطات على هذا الجهاز (30 يومًا)، فقط عندما يكون السجل مفعّلًا. ما يحجبه Windows عن المستخدم العادي ليس فيها ببساطة.
-The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	يحفظ الطبيب لقطة صغيرة كل يوم (إعدادات الشبكة والتطبيقات والخدمات وعناصر بدء التشغيل والمهام المجدولة). عد غدًا للمقارنة.
 The last two weeks	الأسبوعان الأخيران
-What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	ما تغيّر على هذا الجهاز - التحديثات والتعريفات والعتاد وإعادة التشغيل والإعدادات والتطبيقات - مقابل ما حدث في كل يوم. يسمّي مشتبهًا به مع دليله، لا حكمًا.
 {0} compared with {1}	{0} مقارنة بـ {1}
 since yesterday	منذ أمس
 since a week ago	منذ أسبوع
@@ -5754,7 +5724,7 @@ New	جديد
 Open...	فتح...
 Run ▶	تشغيل ▶
 Terminal	الطرفية
-The same flow as an AdeeboShell script - edit either side	المسار نفسه كسكربت AdeeboShell - عدّل أي جانب
+The same flow as a Terminal script - edit either side	المسار نفسه كسكربت الطرفية - عدّل أي جانب
 if it didn't work:	إذا لم ينجح:
 works?	ينجح؟
 {0} seconds	{0} ثوانٍ
@@ -5794,7 +5764,6 @@ In {0}	بـ {0}
 Only today's rate is available for this pair - no history to chart.	يتوفر سعر اليوم فقط لهذا الزوج - لا يوجد سجل لرسمه.
 Rates and Prices in {0}	الأسعار والفائدة: {0}
 The {0} moved {1:0.0}% against the {2} this week.	تحرّك {0} بنسبة {1:0.0}% مقابل {2} هذا الأسبوع.
-Today's numbers, in plain words.	أرقام اليوم بكلمات بسيطة.
 Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	سعر الفائدة لدى بنكك المركزي والتضخّم غير متاحين بعد من مصدر مجاني بلا مفتاح - هذا القسم يمتلئ لكندا فقط.
 Your currency	عملتك
 Your market:	سوقك:
@@ -5905,3 +5874,34 @@ It starts inside your network, not in my home.	تبدأ المشكلة داخل 
 My PC and router were checked and are fine.	تم فحص حاسوبي وجهاز التوجيه وهما سليمان.
 Could you check my line? I have a full report if you need it.	هل يمكنكم فحص خطي؟ لديّ تقرير كامل إن احتجتم إليه.
 For their network team	لفريق الشبكة لديهم
+Type a name, an IP or a URL. It checks every step on the way and says in one sentence where it breaks. Pin the places you check often.	اكتب اسمًا أو عنوان IP أو رابطًا. يفحص كل خطوة على الطريق ويخبرك في جملة واحدة أين يتعطل. ثبّت الوجهات التي تفحصها كثيرًا.
+It watches your connection every second and tells you what's wrong and what to do.	يراقب اتصالك كل ثانية ويخبرك بما هو خطأ وماذا تفعل.
+A faded card in the corner: is everything OK, plus CPU, memory, disk and network. Clicks pass through it. When a window covers it, it folds into a small chip; rest the mouse on it to open.	بطاقة باهتة في الزاوية: هل كل شيء على ما يرام، مع المعالج والذاكرة والقرص والشبكة. النقرات تمر عبرها. إذا غطتها نافذة تنطوي إلى شارة صغيرة؛ ضع الفأرة عليها لفتحها.
+The five dots follow your traffic: your PC, Wi-Fi or cable, your provider (or VPN), DNS and the internet. The first dot that isn't green is where the trouble starts.	تتبع النقاط الخمس حركة بياناتك: حاسوبك، والواي فاي أو الكابل، ومزوّدك (أو VPN)، وDNS، والإنترنت. أول نقطة ليست خضراء هي حيث تبدأ المشكلة.
+Checks the things that quietly cause trouble: restarts, updates, disk space, adapter errors, crowded Wi-Fi, proxy, VPN, DNS, memory and power.	يفحص ما يسبب المشاكل بصمت: إعادة التشغيل، والتحديثات، ومساحة القرص، وأخطاء المحوّل، وازدحام الواي فاي، والوكيل، وVPN، وDNS، والذاكرة، والطاقة.
+Every drop, roam, DNS change and VPN flap in the last two hours, with the time.	كل انقطاع وتنقّل وتغيير في DNS وتقلّب في VPN خلال آخر ساعتين، مع الوقت.
+Your connection one layer at a time: the route, your router's address, MTU, the handshake step by step, and with Wireshark the real packets.	اتصالك طبقة بعد طبقة: المسار، وعنوان جهاز التوجيه، وMTU، والمصافحة خطوة بخطوة، ومع Wireshark الحزم الحقيقية.
+Which program started which, what each svchost runs, what a program is doing now, and what starts with Windows.	أي برنامج شغّل أيّها، وما يشغّله كل svchost، وما يفعله برنامج الآن، وما يبدأ مع Windows.
+Press Ctrl+K anywhere to jump to a page, a program, a term or a protocol.	اضغط Ctrl+K في أي مكان للانتقال إلى صفحة أو برنامج أو مصطلح أو بروتوكول.
+Every connection your PC has right now: which app, with whom, on which port. Press Sniff on a row to record just that one for Wireshark.	كل اتصال لحاسوبك الآن: أي تطبيق، ومع من، وعلى أي منفذ. اضغط Sniff على سطر لتسجيل هذا الاتصال وحده لـ Wireshark.
+Your Wi-Fi or cable: band, channel, signal, speed, security, who else shares the air, and how healthy the hop to your router is.	الواي فاي أو الكابل: النطاق، والقناة، والإشارة، والسرعة، والأمان، ومن يشاركك الأثير، ومدى سلامة الوصلة إلى جهاز التوجيه.
+A small face on the widget that shows how your network feels. It sleeps on the folded chip.	وجه صغير على الأداة يُظهر حال شبكتك. ينام على الشارة المطوية.
+What changed on this PC (updates, drivers, apps, settings), next to how each day went. It names a suspect and shows why.	ما تغيّر على هذا الحاسوب (التحديثات، والتعريفات، والتطبيقات، والإعدادات) بجانب كيف مرّ كل يوم. يسمّي مشتبهًا ويوضح السبب.
+The Network Doctor saves a small snapshot each day. Come back tomorrow to compare.	يحفظ طبيب الشبكة لقطة صغيرة كل يوم. عد غدًا للمقارنة.
+Click a row on the left to see what it does and whether it's safe to close.	انقر على سطر في اليسار لترى ما يفعله وهل إغلاقه آمن.
+What each program on your PC does, and whether it's safe to close. It only explains; it never closes anything.	ما يفعله كل برنامج على حاسوبك وهل إغلاقه آمن. يشرح فقط؛ لا يغلق أي شيء أبدًا.
+Play a match, a show or a live channel for a couple of minutes. Every dip shows up here, with whose fault it was.	شغّل مباراة أو مسلسلًا أو قناة مباشرة لبضع دقائق. يظهر هنا كل هبوط ومن المسؤول عنه.
+Esc, minimise, X or Back to corner all close this view and free its memory. The widget keeps watching.	Esc أو التصغير أو X أو العودة إلى الزاوية كلها تغلق هذه الواجهة وتحرر ذاكرتها. وتواصل الأداة المراقبة.
+It shows only what Windows lets a normal user see. If something is locked, it isn't shown.	يعرض فقط ما يسمح Windows للمستخدم العادي برؤيته. ما هو مقفل لا يظهر.
+No supported game found on this PC. Click one to watch its servers anyway. Nothing is sent until you do.	لم يُعثر على لعبة مدعومة على هذا الحاسوب. انقر على إحداها لمراقبة خوادمها على أي حال. لا يُرسل شيء قبل ذلك.
+Records only this conversation, headers only, and stops by itself. Then it replays the packets along the path, with resends and stalls marked. Start the call, match or download first.	يسجّل هذه المحادثة فقط، الترويسات وحدها، ويتوقف من تلقاء نفسه. ثم يعيد عرض الحزم على المسار مع تعليم الإعادات والتوقفات. ابدأ المكالمة أو المباراة أو التنزيل أولًا.
+Reads these packets with fixed rules (nothing guessed, nothing sent) and says what they show, and what they can't.	يقرأ هذه الحزم بقواعد ثابتة (لا تخمين ولا إرسال) ويقول ما تُظهره وما لا تستطيع إظهاره.
+The widget stays light. Heavy tools run only while this window is open. These set how much it watches in the background.	تبقى الأداة خفيفة. الأدوات الثقيلة تعمل فقط أثناء فتح هذه النافذة. هذه الإعدادات تحدد مقدار المراقبة في الخلفية.
+Snapshots stay on this PC for 30 days, only while History is on.	تبقى اللقطات على هذا الحاسوب 30 يومًا، فقط أثناء تشغيل السجل.
+Fun lines are off.	العبارات المرحة متوقفة.
+Off: no fun lines. The face stays.	متوقف: لا عبارات مرحة. يبقى الوجه.
+The Bank of Canada's numbers.	أرقام بنك كندا.
+Today's numbers.	أرقام اليوم.
+what the numbers mean	ماذا تعني الأرقام
+ALSO HERE	هنا أيضًا
+Points	النقاط

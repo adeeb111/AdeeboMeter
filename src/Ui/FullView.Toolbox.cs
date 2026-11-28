@@ -383,16 +383,16 @@ namespace AdeeboMeter
         static readonly HashSet<string> UrlTools = new HashSet<string> { "certcmp", "http", "httptime", "httpreq", "proxy", "speedtest", "b64", "certfile", "chain", "https", "csr", "pfx", "certconv", "certcmds", "hashf", "twopc", "encrypt", "decrypt", "recipients", "dhcpreplay", "rareplay", "eapreplay", "icmpexplain", "samplelab", "events", "fw", "hosts", "mibs", "certmatch", "certlive" };
         static bool PayloadBox(string id, int i) { return (id == "udpsend" || id == "tcpsend" || id == "syslog") && i >= 1; }
         PillButton tbEx; string tbAward = ""; readonly HashSet<string> exOpened = new HashSet<string>();
-        // a finished real run: Adeebo Points once (only after the Example was opened; replay bonus once, 10+ minutes later)
+        // a finished real run: points once (only after the Example was opened; replay bonus once, 10+ minutes later)
         void Earn(string id, bool completed) { tbAward = EarnPts(id, exOpened.Contains(id), completed); }
         void ShowExample()
         {
             if (tbBusy) return; var ex = Examples.Get(tbSel); if (ex == null) return;
-            exOpened.Add(tbSel);   // Adeebo Points: a real run after this counts
+            exOpened.Add(tbSel);   // points: a real run after this counts
             tbRows = Examples.Rows(ex, tbBoxes.Any(b => b != null)); tbAward = "";
             if (Cfg.Points && tbRows.Count > 0)
             {
-                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn Adeebo Points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) && !Points.Me.Replayed(tbSel) ? L.T("Replay bonus · +2 - run it again at least 10 minutes after your first run.") : L.T("Already earned."))   /* review 1.1.6 U3 #12 */ : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Adeebo Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +2") : "");
+                string note = Points.NoEarn.Contains(tbSel) ? L.T("Doesn't earn points - it sends test traffic.") : Points.Me.Has(tbSel) ? (Points.Replay.Contains(tbSel) && !Points.Me.Replayed(tbSel) ? L.T("Replay bonus · +2 - run it again at least 10 minutes after your first run.") : L.T("Already earned."))   /* review 1.1.6 U3 #12 */ : L.T("Run it for real:") + " +" + Points.Value(tbSel) + " " + L.T("Points") + "." + (Points.Replay.Contains(tbSel) ? "  " + L.T("Replay bonus · +2") : "");
                 tbRows[0][3] = (tbRows[0][3] + "  " + note).Trim();
             } tbRowsKey = "example"; tbAt = DateTime.Now; tbRun0 = null; tbShown = null; tbCompare = false;
             tbCanvas.AutoScrollPosition = Point.Empty; tbCanvas.Invalidate();

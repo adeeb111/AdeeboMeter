@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace AdeeboMeter
 {
-    // awk for AdeeboShell (shell scrutiny #28/#29/#74): a small, honest awk - BEGIN and END run once, patterns (/re/, comparisons,
+    // awk for Terminal (shell scrutiny #28/#29/#74): a small, honest awk - BEGIN and END run once, patterns (/re/, comparisons,
     // && || !), expressions with concatenation and arithmetic, fields ($1, $NF, $(i+1), assignable), variables, arrays
     // (count[$1]++ ... for (k in count)), if / while / for, next / exit / break / continue, print and printf, and the usual
     // functions: length substr index split tolower toupper sprintf int sqrt sub gsub match. FS " " (the default) splits on runs of

@@ -317,7 +317,7 @@ namespace AdeeboMeter
             if (qrBmp != null) { g.InterpolationMode = InterpolationMode.NearestNeighbor; g.DrawImage(qrBmp, r.X + 24 * S, r.Y + 44 * S, side, side); }
             float tx = r.X + 48 * S + side, ty = r.Y + 48 * S, tw = r.Right - tx - 24 * S;
             VText(g, L.T("One tap opens your result"), Draw.fBtn, Theme.Ink, tx, ty); ty += 34 * S;
-            string[] lines = { L.T("the verdict and where the trouble is"), L.T("the numbers in plain words"), L.T("charts of the last checks and minutes"), L.T("what to do next"), L.T("Send to my provider · Share · Save as PDF") };
+            string[] lines = { L.T("the verdict and where the trouble is"), L.T("what the numbers mean"), L.T("charts of the last checks and minutes"), L.T("what to do next"), L.T("Send to my provider · Share · Save as PDF") };
             foreach (var l in lines) { Theme.Fill(g, new RectangleF(tx, ty + 6 * S, 8 * S, 8 * S), 4 * S, Theme.Green); VText(g, l, Draw.fBody, Theme.Ink, tx + 16 * S, ty); ty += 24 * S; }
             using (var b = new SolidBrush(Theme.Sub)) g.DrawString(L.T("It opens adeebometer.com/r. Your numbers ride in the link after the # - that part never leaves the phone, so the site never sees them. Names and addresses are left out."), Draw.fSmall, b, new RectangleF(tx, ty + 8 * S, tw, 60 * S));
             return r.Bottom + 14 * S;

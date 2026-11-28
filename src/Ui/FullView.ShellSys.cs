@@ -16,7 +16,7 @@ using System.Threading;
 
 namespace AdeeboMeter
 {
-    // AdeeboShell, the "look at the machine" half (Adeeb, 22 Nov: "the go-to place for every Linux user to see disk and everything
+    // Terminal, the "look at the machine" half (Adeeb, 22 Nov: "the go-to place for every Linux user to see disk and everything
     // as they do from the command line"): df du free ps top uptime ip ifconfig ss netstat lsblk lscpu nproc id who watch, /proc as
     // files, and the text tools people pipe into (cut tr sed awk xargs). All of it only reads - nothing here changes Windows,
     // stops a program or starts one.
@@ -637,7 +637,7 @@ namespace AdeeboMeter
                         long idle, k0, u0; double idleSecs = Native.GetSystemTimes(out idle, out k0, out u0) ? idle / 1e7 : 0;   // idle time summed over every CPU, as Linux counts it
                         sb.AppendLine((DateTime.Now - BootTime()).TotalSeconds.ToString("0.00", CultureInfo.InvariantCulture) + " " + idleSecs.ToString("0.00", CultureInfo.InvariantCulture)); break;
                     }
-                case "version": sb.AppendLine("Windows " + Environment.OSVersion.Version + " (" + Environment.OSVersion + ") · AdeeboShell " + Program.Version); break;
+                case "version": sb.AppendLine("Windows " + Environment.OSVersion.Version + " (" + Environment.OSVersion + ") · Terminal " + Program.Version); break;
                 case "loadavg":
                     {
                         int count = 0, newest = 0; DateTime newestAt = DateTime.MinValue;

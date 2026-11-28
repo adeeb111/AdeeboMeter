@@ -714,9 +714,9 @@ namespace AdeeboMeter
                 if (EngPack.Kind(new EvLog.Ev { Id = 8001, Text = "WLAN AutoConfig service has successfully connected to a wireless network." }) != "succeeded") throw new InvalidOperationException("8001");
                 if (!Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 ." }) || !Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "0 " }) || Toolkit.NullMx(new Toolkit.Rr { Type = "MX", Data = "10 mx.example.com" })) throw new InvalidOperationException("null MX");
             });
-            T("AdeeboLab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
+            T("Network Lab See my LAN: 50 devices drawn, the rest one +N more box, no loose links", () =>
             {
-                // AdeeboLab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops
+                // Network Lab's See my LAN: 70 devices draw as 50 plus one "+19 more" box, every link joins two drawn stops
                 var devs = Enumerable.Range(0, 70).Select(i => new Picks.LanDev { Ip = "192.168.1." + (i + 1), Mac = "00:11:22:33:44:" + i.ToString("x2"), Router = i == 0, Here = i % 3 != 0, Maker = i % 2 == 0 ? "Apple" : "Espressif", Name = "dev" + i }).ToList();
                 string lj = LabViews.LanDoc(devs, "192.168.1.1", "Test", DateTime.Now, LabViews.TestPc(), "wifi");
                 int nodes = System.Text.RegularExpressions.Regex.Matches(lj, "\\{\"id\":\"d\\d+\"").Count;
@@ -1035,7 +1035,7 @@ namespace AdeeboMeter
                 foreach (var ok in new[] { "https://github.com/adeeb111/AdeeboMeter/discussions", "https://paypal.me/adeeb1111", "https://paypal.me/adeeb1111/5CAD", "https://adeeb111.github.io/AdeeboMeter/#update" }) if (!Crash.Allowed(ok)) throw new InvalidOperationException("refused " + ok);
                 foreach (var no in new[] { "https://paypal.me/adeeb11112", "https://paypal.me/someone", "http://paypal.me/adeeb1111", "https://github.com/other/AdeeboMeter", "https://evil.example/https://paypal.me/adeeb1111", "", "https://github.com/adeeb111/AdeeboMeterEvil", "https://github.com/adeeb111/AdeeboMeter@evil.example", "https://x@github.com/adeeb111/AdeeboMeter", "https://adeeb111.github.io/AdeeboMeterX/" }) if (Crash.Allowed(no)) throw new InvalidOperationException("allowed " + no);
             });
-            T("Adeebo Points: +2 / +4 once, replay +2 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
+            T("points: +2 / +4 once, replay +2 once, survives a restart, off keeps the total, 500 is the Adeebo Award", () =>
             {
                 var bad = new List<string>();
                 if (!Cfg.Known.Contains("points")) bad.Add("setting not known");
@@ -1095,7 +1095,7 @@ namespace AdeeboMeter
                 finally { try { File.Delete(f); } catch (IOException) { } }
                 if (bad.Count > 0) throw new InvalidOperationException(string.Join("; ", bad));
             });
-            T("Adeebo Points 1.1.5: a check question per Learn topic, a challenge per lab, learning paths that exist", () =>
+            T("points 1.1.5: a check question per Learn topic, a challenge per lab, learning paths that exist", () =>
             {
                 var bad = new List<string>();
                 foreach (var t in Knowledge.Learn())
@@ -1320,7 +1320,7 @@ namespace AdeeboMeter
                 for (int sd = 0; sd < 200; sd++) { var q = LabSim.Subnet(sd); if (q.Options.Length != 4 || q.Options.Count(o => o == q.Answer) != 1 || q.Options.Distinct().Count() != 4) throw new InvalidOperationException("quiz " + sd + ": " + q.Question + " " + string.Join(",", q.Options)); }
                 var qn = LabSim.Subnet(3); if (qn.Question.IndexOf("network address", StringComparison.Ordinal) >= 0) { var part = qn.Question.Split(' ').First(z => z.Contains("/")).TrimEnd('?'); var sub = Toolkit.Subnet(part, ""); if (!sub.Any(r => r[2].StartsWith(qn.Answer + "/", StringComparison.Ordinal))) throw new InvalidOperationException("quiz answer disagrees with the calculator"); }
                 var wnd = LabSim.CwndFromCapture(Journey.Sample(), 0.05); if (wnd == null) throw new InvalidOperationException("cwnd estimate failed");
-                // AdeeboLab deep check (finding 15): the places the sim was wrong are tested now
+                // Network Lab deep check (finding 15): the places the sim was wrong are tested now
                 { var c10 = LabSim.Tcp(new LabSim.TcpIn { Algo = "cubic", Mbps = 10, RttMs = 10, BufferBdp = 1, Rounds = 30 }); var l1 = c10.First(z => z.Loss != ""); double g1 = c10[l1.Round + 3].Cwnd - c10[l1.Round + 2].Cwnd; if (Math.Abs(g1 - 0.529) > 0.03) throw new InvalidOperationException("CUBIC's Reno-friendly growth should be 0.529 a round trip (RFC 9438), was " + g1.ToString("0.###", CultureInfo.InvariantCulture)); }
                 { var lossy = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1000, RttMs = 100, BufferBdp = 8, LossPct = 0.01, Rounds = 3000 }); double avg = lossy.Skip(200).Average(z => z.Cwnd); if (avg < 122 * 0.8 || avg > 122 * 1.25) throw new InvalidOperationException("Reno under 0.01% random loss should average near Mathis' 1.22/sqrt(p) = 122 packets, was " + avg.ToString("0", CultureInfo.InvariantCulture)); }
                 { var tiny = LabSim.Tcp(new LabSim.TcpIn { Algo = "reno", Mbps = 1, RttMs = 5, BufferBdp = 0.1, Rounds = 40 }); var qd = tiny.First(z => z.Queue > 0); if (Math.Abs(qd.QueueMs - qd.Queue * 1460 * 8 / 1e6 * 1000) > 0.01) throw new InvalidOperationException("queue delay isn't the queue's drain time on a tiny link"); if (LabSim.CapPackets(1, 5, 0.1) < 8) throw new InvalidOperationException("the chart's buffer line lost the 8-packet floor"); }
@@ -1414,7 +1414,7 @@ namespace AdeeboMeter
                     var fv = new FullView(icon, M); fv.WindowState = FormWindowState.Normal; fv.Opacity = 0; fv.ShowInTaskbar = false; fv.Size = new Size(1280, 860); fv.Show(); pump(1500);
                     try
                     {
-                        // AdeeboShell (22 Nov rewrite): folders, pipes, redirects, loops, $VAR splitting, && ||, parallel, a script with $1
+                        // Terminal (22 Nov rewrite): folders, pipes, redirects, loops, $VAR splitting, && ||, parallel, a script with $1
                         {
                             string tdir = System.IO.Path.Combine(Program.DataDir, "selftest-shell");
                             try { if (System.IO.Directory.Exists(tdir)) System.IO.Directory.Delete(tdir, true); } catch (System.IO.IOException) { }

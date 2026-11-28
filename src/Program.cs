@@ -382,7 +382,7 @@ namespace AdeeboMeter
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
         public static volatile string TbPins = "";   // your own Toolbox pins (Every tool), tool ids, up to 12
         public static volatile string Mode = "", Lang = "en", TbView = "list", LearnView = "goal", OverlayAt = "";   /* OverlayAt: where the stream overlay was left ("x,y") */   // TbView: the Toolbox by question ("q") or the classic list ("list")   // Lang: the UI language (L.Languages)
-        public static volatile bool Points = true;   // Adeebo Points (Settings): on from day 1; off hides the button and pauses earning, the total is kept
+        public static volatile bool Points = true;   // points (Settings): on from day 1; off hides the button and pauses earning, the total is kept
         public static volatile string SpeedServer = "auto";   // the speed test's server: "auto" (Cloudflare, nearest) or an id from the list
         public static bool Simple { get { return Mode != "pro"; } }   // auto (follows what you are doing) / everyday / gamer
         public static string Preset = "balanced";

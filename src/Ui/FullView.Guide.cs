@@ -238,7 +238,7 @@ namespace AdeeboMeter
                         // for everyone: did it help, try again, or hand it to someone who can help
                         float lx = x; var r2 = r;
                         using (var lb = new SolidBrush(Theme.Dark ? Theme.Ink : Theme.BlueDark))
-                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? "Report saved - show it" : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", "Still broken - check again", "Open as script" })   /* review 1.1.6 U1 #1: English keys, translated when drawn */.Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in AdeeboLab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for someone who can help") }))
+                            foreach (var a in (CaseShowing ? new[] { (DateTime.Now - reportAt).TotalSeconds < 6 ? "Report saved - show it" : "Make a report (PDF)", "Learn why" } : Array.Empty<string>()).Concat(new[] { "It's fixed", "Still broken - check again", "Open as script" })   /* review 1.1.6 U1 #1: English keys, translated when drawn */.Concat(r.Id == "pc" ? Array.Empty<string>() : new[] { "Open in Network Lab" }).Concat(new[] { (DateTime.Now - guideCopied).TotalSeconds < 3 ? "Copied" : L.T("Copy for someone who can help") }))
                             {
                                 var asz = g.MeasureString(L.T(a), Draw.fBodyB); var ar = new RectangleF(lx, y, asz.Width + 28 * S, 34 * S);
                                 if (ar.Right > x + w && lx > x) { lx = x; y += 44 * S; ar = new RectangleF(lx, y, ar.Width, ar.Height); }
@@ -261,7 +261,7 @@ namespace AdeeboMeter
                                 else if (a == "It's fixed") Act(guideCanvas, ar, delegate { guideNote = L.T("Good. AdeeboMeter keeps watching - if it comes back, it'll tell you."); guideRun = null; guideCanvas.Invalidate(); });
                                 else if (a.StartsWith("Still", StringComparison.Ordinal)) Act(guideCanvas, ar, delegate { if (!guideBusy) StartGuide(r2.Id, false); });
                                 else if (a == "Open as script") Act(guideCanvas, ar, delegate { ShellPrefill(GuideScript(r2)); });   // Monitor -> Shell (FullView.Linked.cs)
-                                else if (a == "Open in AdeeboLab") Act(guideCanvas, ar, delegate { OpenLab(null, false, GuideLabView(r2.Id), false); });   // Monitor -> Lab
+                                else if (a == "Open in Network Lab") Act(guideCanvas, ar, delegate { OpenLab(null, false, GuideLabView(r2.Id), false); });   // Monitor -> Lab
                                 else Act(guideCanvas, ar, delegate { try { string ssid; lock (M.L) ssid = M.Ssid; Clipboard.SetText(GameSession.Redact(GuideText(r2), ssid)); guideCopied = DateTime.Now; } catch (Exception ce) { CopyFailed(ce); } guideCanvas.Invalidate(); });
                                 lx += ar.Width + 10 * S;
                             }

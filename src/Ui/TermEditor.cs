@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // nano and vim inside AdeeboShell (Adeeb, 22 Nov: "have vim and nano, otherwise how will I write those scripts"). Our own
+    // nano and vim inside Terminal (Adeeb, 22 Nov: "have vim and nano, otherwise how will I write those scripts"). Our own
     // editor drawn on the shell's screen - no other program is started. One buffer, two keymaps:
     //   nano  type away; ^S/^O save, ^X exit, ^K cut line, ^U paste it, ^W find, ^G help, ^C where am I, ^V paste
     //   vim   NORMAL hjkl w b 0 ^ $ gg G x dd yy p P u i a A I o O / n N, counts (3dd, 5j), :w :q :q! :wq :x ZZ :set nu :N
@@ -344,7 +344,7 @@ namespace AdeeboMeter
             if (!Vim)
             {   // nano's title bar: reversed
                 using (var b = new SolidBrush(BarBg)) g.FillRectangle(b, pad - 4, Y(0), cols * cw + 8, chh);
-                string title = "  AdeeboShell nano", name = Path == null ? "New Buffer" : Shown, right = dirty ? "Modified  " : "";
+                string title = "  Terminal nano", name = Path == null ? "New Buffer" : Shown, right = dirty ? "Modified  " : "";
                 TextRenderer.DrawText(g, title, mono, new Point((int)pad, (int)Y(0)), BarFg, tf);
                 TextRenderer.DrawText(g, name, mono, new Point((int)(pad + Math.Max(title.Length + 2, (cols - name.Length) / 2) * cw), (int)Y(0)), BarFg, tf);
                 TextRenderer.DrawText(g, right, mono, new Point((int)(pad + (cols - right.Length) * cw), (int)Y(0)), BarFg, tf);

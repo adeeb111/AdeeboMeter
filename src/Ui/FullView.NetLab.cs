@@ -26,7 +26,7 @@ namespace AdeeboMeter
             {
                 System.Threading.Tasks.Task.Factory.StartNew(() =>
                 {
-                    string n1; try { n1 = LabLink.Open(json, breakIt); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab open: " + e.Message); n1 = L.T("Couldn't open the AdeeboLab:") + " " + e.Message; } finally { alabBusy = false; }
+                    string n1; try { n1 = LabLink.Open(json, breakIt); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("lab open: " + e.Message); n1 = L.T("Couldn't open the Network Lab:") + " " + e.Message; } finally { alabBusy = false; }
                     try { BeginInvoke((Action)(() => LabDone(n1))); } catch (InvalidOperationException) { }
                 }, System.Threading.Tasks.TaskCreationOptions.LongRunning);
                 return;
@@ -72,15 +72,15 @@ namespace AdeeboMeter
         }
         float PaintNetLab(Graphics g, float x, float y, float w)
         {
-            y = Title2(g, "AdeeboLab", x, y, w);
+            y = Title2(g, "Network Lab", x, y, w);
             y = Lead2(g, "Draw your network the way an engineer would - your PC, Wi-Fi, router, the provider's boxes, the internet and the server - then break one thing and watch the packet stop where it fails. It opens in its own window; nothing is sent.", x, y, w);
             y += 10 * S;
-            var a = LabPill(g, learnInfo, "Open the AdeeboLab  ›", x, y, true, delegate { OpenNav("lab"); });
+            var a = LabPill(g, learnInfo, "Open the Network Lab  ›", x, y, true, delegate { OpenNav("lab"); });
             LabPill(g, learnInfo, "Break it", a.Right + 10 * S, y, false, delegate { OpenLab(null, true); });
             y = a.Bottom + 16 * S;
             y = Lead2(g, "Your own path: in Packet journey, Gamer, Trading, Streaming or the Service board, press \"Show my path\" - the stops AdeeboMeter measured are drawn white, the provider's equipment it can't see is grey and dashed.", x, y, w);
             int done = LabLink.Faults.Count(f => Points.Me.Has("nlab." + f[0]));
-            if (Cfg.Points) y = Lead2(g, "Break it: " + done + " of " + LabLink.Faults.Length + " faults watched to the end · +" + Points.Value("nlab.dns") + " Adeebo Points each, the first time.", x, y + 4 * S, w);
+            if (Cfg.Points) y = Lead2(g, "Break it: " + done + " of " + LabLink.Faults.Length + " faults watched to the end · +" + Points.Value("nlab.dns") + " points each, the first time.", x, y + 4 * S, w);
             if (labNote != null) using (var mb = new SolidBrush(Theme.LvText(1))) { g.DrawString(labNote, Draw.fSmall, mb, x, y + 4 * S); y += 22 * S; }
             return y;
         }

@@ -100,7 +100,7 @@ namespace AdeeboMeter
             }
             var topic = Knowledge.Topic(learnSel.Substring(6));
             y = PaintTopic(g, learnInfo, topic, x, y, w);
-            if (topic != null) LearnRead(y);   // Adeebo Points: the topic's text read to the end
+            if (topic != null) LearnRead(y);   // points: the topic's text read to the end
             if (topic != null && topic["check"] != "") y = PaintCheck(g, topic, x, y + 8 * S, w);
             if (topic != null && topic["live"] != "")
             {

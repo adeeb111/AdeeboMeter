@@ -8,7 +8,7 @@ namespace AdeeboMeter
 {
     // ================================================================== the top line (Adeeb, 14 Nov: "crowded - simplify")
     // 23 Nov polish: logo · your view · search · theme · ⋯ · Back to corner. The ⋯ menu holds your phone, the companion,
-    // the language, Details, the layout, Adeebo points and About; it closes on a click anywhere else, on Esc, or when the
+    // the language, Details, the layout, points and About; it closes on a click anywhere else, on Esc, or when the
     // window loses focus. Settings is in the ⋯ menu (and at the foot of the side bar).
     sealed partial class FullView
     {
@@ -116,7 +116,7 @@ namespace AdeeboMeter
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
             row(L.T("Sidebar layout"), null, Cfg.Layout == "sidebar", delegate { HideTopMenu(); SetLayout(Cfg.Layout == "sidebar" ? "classic" : "sidebar"); PlaceTop(); });
             using (var p = new Pen(Theme.Line2)) g.DrawLine(p, x + 6 * S, y + 6 * S, x + w - 6 * S, y + 6 * S); y += 12 * S;
-            if (Cfg.Points) row(L.T("Adeebo points"), Points.Me.Total.ToString(CultureInfo.CurrentCulture) + " · " + L.T(Points.Rank(Points.Me.Total)), null, delegate { HideTopMenu(); tab = "points"; ShowTab(); });
+            if (Cfg.Points) row(L.T("points"), Points.Me.Total.ToString(CultureInfo.CurrentCulture) + " · " + L.T(Points.Rank(Points.Me.Total)), null, delegate { HideTopMenu(); tab = "points"; ShowTab(); });
             row(L.T("About · Report a bug"), null, null, delegate { HideTopMenu(); tab = "about"; ShowTab(); });
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(L.T("Esc closes this menu"), Draw.fTiny, m, x + 12 * S, y + 8 * S);
         }

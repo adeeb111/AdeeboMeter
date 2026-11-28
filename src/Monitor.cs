@@ -1089,7 +1089,7 @@ namespace AdeeboMeter
             }
             return r;
         }
-        // every UDP socket with the address it's bound to (AdeeboShell's ss - a 127.0.0.1-only service isn't "all interfaces")
+        // every UDP socket with the address it's bound to (Terminal's ss - a 127.0.0.1-only service isn't "all interfaces")
         public sealed class UdpSock { public string Addr; public int Port, Pid; public bool V6; }
         public static List<UdpSock> UdpFull()
         {

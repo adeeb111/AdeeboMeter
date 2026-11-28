@@ -4,8 +4,8 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // Monitor -> AdeeboShell -> AdeeboLab (24 Nov, Adeeb: "build it"): a finished investigation can be re-run as commands in
-    // the shell (the line is typed in, not run - Enter is yours), and opened in AdeeboLab as your own network, drawn from what
+    // Monitor -> Terminal -> Network Lab (24 Nov, Adeeb: "build it"): a finished investigation can be re-run as commands in
+    // the shell (the line is typed in, not run - Enter is yours), and opened in Network Lab as your own network, drawn from what
     // was measured, ready to Break it. From a prompt, the shell's own "lab" command (FullView.Shell.cs) opens the same views.
     sealed partial class FullView
     {
@@ -23,7 +23,7 @@ namespace AdeeboMeter
                 default: return "cd /data/scripts ; ./network-check.sh";
             }
         }
-        // which AdeeboLab view fits the investigation: the measured path when one was traced, otherwise your network
+        // which Network Lab view fits the investigation: the measured path when one was traced, otherwise your network
         static string GuideLabView(string id)
         {
             switch (id)
@@ -33,7 +33,7 @@ namespace AdeeboMeter
                 default: return LabViews.HasPath() ? "path" : "lan";
             }
         }
-        // opens AdeeboShell with the line typed at the prompt, the caret at its end
+        // opens Terminal with the line typed at the prompt, the caret at its end
         void ShellPrefill(string line)
         {
             tab = "shell"; ShowTab(); SyncNav();

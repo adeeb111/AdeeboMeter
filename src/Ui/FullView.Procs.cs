@@ -173,7 +173,7 @@ namespace AdeeboMeter
                     Friendly = Voice.P("Meet the crew running your PC.", "What's running on this PC"), Close = -1,
                     Tag = total + " processes, grouped into " + procs.Count + " programs. I know " + known + " of them by heart.",
                     What = L.T("Every program on your PC is one or more 'processes' - a running copy with its own memory. Windows itself is dozens of them, each with one job."),
-                    How = L.T("Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close."),
+                    How = L.T("Click a row on the left to see what it does and whether it's safe to close."),
                     Why = L.T("Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling."),
                     Without = L.T("Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.")
                 };

@@ -248,14 +248,14 @@ See an example	Voir un exemple
 Hide the example	Masquer l'exemple
 See an example day	Voir une journée d'exemple
 Adeebo Point	point Adeebo
-Adeebo Points	points Adeebo
+points	points
 of	sur
 Beginner	Débutant
 Learner	Apprenti
 Troubleshooter	Dépanneur
 Expert	Expert
 Already earned.	Déjà gagné.
-Doesn't earn Adeebo Points - it sends test traffic.	Ne rapporte pas de points Adeebo - il envoie du trafic de test.
+Doesn't earn points - it sends test traffic.	Ne rapporte pas de points - il envoie du trafic de test.
 HOW TO EARN	COMMENT GAGNER
 Open a tool's Example, then run it for real	Ouvrez l'exemple d'un outil, puis lancez-le pour de vrai
 Run a tool marked replay again, 10 minutes or more later	Relancez un outil marqué relance, 10 minutes ou plus après
@@ -270,7 +270,7 @@ done	faits
 to	avant
 Pages	Pages
 Nothing matches - try another word.	Aucun résultat - essayez un autre mot.
-Earning is off (Settings › Adeebo Points) - your points are kept.	Les gains sont coupés (Paramètres › Points Adeebo) - vos points sont gardés.
+Earning is off (Settings › Points) - your points are kept.	Les gains sont coupés (Paramètres › Points) - vos points sont gardés.
 Community and support	Communauté et soutien
 Ask a question or share an idea	Poser une question ou proposer une idée
 Report a bug	Signaler un bug
@@ -725,7 +725,6 @@ your own mix	vos réglages
 plus about	plus environ
 game pings a minute for the games you watch (one a second per server while you play)	pings de jeu par minute pour vos jeux suivis (un par seconde et par serveur pendant que vous jouez)
 on top of the widget's once-a-second read of Windows' own counters.	en plus de la lecture des compteurs de Windows par le widget, une fois par seconde.
-The widget always stays light on the PC. The deep stuff (live capture, the full connection list, path checks) only runs while this window is open. These decide how much watching happens in the background - checks a minute, plus game pings once you watch a game.	Le widget reste toujours léger. Le travail de fond (capture en direct, liste complète des connexions, chemins) ne tourne que fenêtre ouverte. Ces réglages décident de la surveillance en arrière-plan - vérifications par minute, plus les pings de jeu dès que vous suivez un jeu.
 # Learn games (escape room, catch the thief, packet detective, quick-fire)
 The DNS server is down	Le serveur DNS est en panne
 Use another DNS server (1.1.1.1, for example) - or restart the router, which is the DNS server here	Utilisez un autre serveur DNS (1.1.1.1, par exemple) - ou redémarrez le routeur, qui est le serveur DNS ici
@@ -1033,7 +1032,6 @@ Nothing pinned yet. Open a tool and press the pin, or pin a search result.	Rien 
 Pinned	Épinglé
 Pinned to your tab	Épinglé à votre onglet
 Earned	Gagné
-points	points
 fine	OK
 to watch	à surveiller
 problems	problèmes
@@ -1126,7 +1124,6 @@ PREVIEW	APERÇU
 TALK LIKE...	PARLER COMME...
 What should I call you?	Comment dois-je vous appeler ?
 Just the facts (Plain, Details on, face only)	Juste les faits (neutre, détails, visage seulement)
-Fun lines are off - plain words everywhere.	Répliques désactivées - mots simples partout.
 MOOD	HUMEUR
 Words of comfort	Mots de réconfort
 Buddy face	Visage du compagnon
@@ -1334,7 +1331,6 @@ Actual size	Taille réelle
 Add my key...	Ajouter ma clé...
 Add the technical details below (names, PC name, paths and addresses are taken out - read them first)	Ajouter les détails techniques ci-dessous; noms, PC, chemins et adresses sont retirés. Relisez-les.
 Add your own: press ☆ on any tool in a question on the left - it shows up here and above that question's tools. Up to 12.	Appuyez sur ☆ dans un outil pour l’ajouter ici et au-dessus des outils de sa question. Maximum 12.
-Adeebo points	Adeebo Points
 AdeeboMeter	AdeeboMeter
 AdeeboMeter diagnosis report	Rapport de diagnostic AdeeboMeter
 AdeeboMeter is free and open source. A report goes only when you press Send in its box.	AdeeboMeter est gratuit et libre. Le rapport part seulement avec le bouton Envoyer.
@@ -2257,7 +2253,6 @@ the most specific route wins	la route la plus précise gagne
 the name	le nom
 the network	le réseau
 the numbers behind the feeling	les mesures derrière la sensation
-the numbers in plain words	les chiffres en mots simples
 the original file	le fichier original
 the page	la page
 the path	le chemin
@@ -2408,7 +2403,6 @@ Temperature in	Température en
 How temperatures show in the widget and here.	Unités de température ici et dans le widget.
 Weather in the widget	Météo dans le widget
 Off: only the buddy's face shows the weather.	Désactivée : seul le visage reflète la météo.
-Off: plain words everywhere, the buddy's face stays.	Désactivé : langage direct, visage conservé.
 On: the buddy talks in the mood and persona below. Facts, numbers and reports never change.	Activé : paroles selon humeur et personnage. Faits, chiffres et rapports identiques.
 How the buddy feels: Chill is easy-going, Roast teases the gear (never you), Hype cheers, Support is kind, Bossy gives orders, Emo is relatable.	Chill détend, Roast taquine le matériel, Hype encourage, Support rassure, Bossy commande, Emo partage ses émotions.
 Your name: 	Votre nom : 
@@ -2453,7 +2447,6 @@ Always the everyday card: the verdict, the five dots, CPU, memory and speed.	Tou
 Always the calls card: jitter, loss and delay - what Teams, Zoom and WhatsApp care about - and the VPN when it's up.	Toujours la fiche Appels : gigue, pertes, délai et VPN.
 Always the engineer card: router, internet and DNS delay, jitter, loss, TCP retransmits and resets, throughput, CPU and memory.	Toujours la fiche Ingénieur : délais routeur, Internet, DNS, gigue, pertes, retransmissions, débit, CPU et mémoire.
 Follows what you're doing: the gamer card while a game you added is open (if Show game ping is on), the calls card during a call, the everyday card the rest of the time.	Selon l’activité : jeu ajouté, appel ou fiche quotidienne.
-A little face on the widget that feels what your network feels: smug when all is green, sweaty when your PC is busy, dizzy when your Wi-Fi is bad, betrayed when your provider lets you down. Asleep on the folded chip.	Le visage exprime l’état du réseau et dort dans la barre repliée.
 Off: the widget shows the logo and the coloured dot.	Désactivé : logo et point coloré.
 Locked - you have 	Verrouillé, vous avez 
  points. 	 points. 
@@ -2560,7 +2553,6 @@ Listens to your own adapter only while you press Start. Nothing is sent; capture
 Open this view	Ouvrir cette vue
 Click the tray icon, or press Ctrl+Alt+A from anywhere.	Cliquez sur l’icône ou utilisez Ctrl+Alt+A.
 Back to the corner	Retour au coin
-Esc, minimise, the X or the Back to corner button - they all do the same thing: this view closes, gives its memory back, and the widget keeps watching.	Esc, réduire, X ou Retour au coin ferme la vue, libère la mémoire et garde le widget.
 Quit completely	Quitter complètement
 Right-click the tray icon and choose Exit. Nothing keeps running - not even a helper.	Clic droit sur l’icône, puis Quitter. Tous les processus auxiliaires s’arrêtent.
 Learn anything	Tout apprendre
@@ -2568,7 +2560,6 @@ Settings decides how much AdeeboMeter watches in the background - from Penny to 
 Readable source	Code source lisible
 The whole app is plain source code you can read before you run it, built with the compiler that already ships inside Windows.	Tout le code est lisible avant exécution et compilé avec le compilateur Windows.
 No admin rights	Sans droits d’administrateur
-Everything it shows comes from what Windows already lets a normal user see. If something is locked, it simply doesn't show.	Les données viennent des accès ordinaires de Windows; les données verrouillées restent indisponibles.
 Secure by default	Sécurisé au départ
 Checks use TLS with Windows' own certificate validation (Windows picks TLS 1.2 or 1.3) - it never skips a certificate check. Inputs are validated; no shell is ever used.	TLS validé par Windows en 1.2 ou 1.3, sans contournement des certificats. Entrées validées, aucun interpréteur de commandes.
 Light as a feather	Très léger
@@ -2577,17 +2568,9 @@ Leaves no trace	Nettoyage à la fermeture
 Settings and a small log live next to the exe (an installed copy keeps them in your AppData folder). Captures are deleted on exit. Window titles and traffic content are never logged. History (a few days, on this PC only) is on unless you switch it off - and one click deletes it.	Paramètres et petit journal près de l’EXE ou dans AppData si installé. Captures supprimées à la fermeture; ni titres de fenêtre ni contenu du trafic conservés. Historique local activé au départ et supprimable en un clic.
 Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Hover a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	Toutes les connexions du PC : application, destinataire, port et état. Nouvelles mises en évidence, fermées estompées. Survolez l’état ou utilisez Sniff pour Wireshark.
 Your Wi-Fi / cable	Votre Wi-Fi ou câble
-Everything about your link: band, channel, signal in dBm, speeds, security, who else shares your air (with a channel map), addresses, errors, and how healthy the hop to your router is. Click the Wi-Fi dot to get here.	Bande, canal, signal, débit, sécurité, voisins, carte des canaux, adresses, erreurs et routeur. Cliquez sur le point Wi-Fi.
-Every program on your PC, in plain English: what it does, how it works, why it's there, what happens without it - and whether it's safe to close. AdeeboMeter only explains; it never closes anything.	Chaque programme expliqué : rôle, fonctionnement, utilité, conséquences de l’arrêt et sécurité de fermeture. AdeeboMeter explique sans arrêter les programmes.
-Type a name, an IP or a URL. AdeeboMeter walks the whole path like an engineer would - DNS, route, ping, TCP, TLS, HTTP, packet size, every router on the way - and tells you in one sentence where it breaks. It also tells the path's story: who carries your traffic, where networks hand over (that's where BGP decides), NAT, tunnels and firewalls. Pin the places you check often and run them all at once.	Entrez nom, IP ou URL. DNS, route, ping, TCP, TLS, HTTP, taille et sauts sont vérifiés, puis résumés. Le parcours montre opérateurs, interconnexions BGP, NAT, tunnels et pare-feu. Épinglez plusieurs destinations.
 Health check	Bilan du PC
-A one-click check-up of the things that quietly cause trouble: days since restart, pending updates, disk space, adapter errors, crowded Wi-Fi, proxies, VPN, DNS, memory and power.	Vérifie redémarrage, mises à jour, disque, erreurs, Wi-Fi, proxy, VPN, DNS, mémoire et alimentation.
-The diary. Every roam, drop, DNS change, VPN flap and app hiccup in the last two hours, with the time it happened - so 'it was slow at 2:15' finally has an answer.	Journal des 2 dernières heures : itinérance, coupures, DNS, VPN et applications, pour expliquer un incident à 2:15.
 How it travels	Le trajet
-Your own connection, one layer at a time: which route won and why, your router's hardware address, MTU and packet anatomy, the handshake as a ladder with the time of each step, and with Wireshark the real packets explained field by field. Plus Teams and Office end to end.	Route et choix, MAC du routeur, MTU, contenu du paquet, étapes chronométrées et explication des paquets Wireshark. Teams et Office de bout en bout.
-Who started whom (the process tree), what each svchost is hosting, what a program is doing right now (CPU, memory, disk, connections) and why it started, everything that starts with Windows - and the deep dives on the processes people ask about.	Arbre des processus, services svchost, CPU, mémoire, disque, connexions, raisons du démarrage et programmes automatiques.
 Learn (Ctrl+K)	Apprendre (Ctrl+K)
-Press Ctrl+K anywhere in this window to jump to a tab, a program, a term or a protocol. Learn mode explains each protocol with its ladder diagram and, with Wireshark, shows it live on your PC for ten seconds.	Ctrl+K rejoint page, programme, terme ou protocole. Le mode Apprendre explique les échanges et montre dix secondes sur votre PC avec Wireshark.
 Wireshark's engine (tshark), only if you have Wireshark installed and only while you press Start. It shows what your traffic is made of, who you talk to by name, and Wireshark's own warnings. It stops by itself.	Utilise tshark si Wireshark est installé et à votre demande. Composition, noms et alertes du trafic. Arrêt automatique.
 straight to Adeeb - no account needed	directement à Adeeb, sans compte
 say what you did and what you expected - no account needed	décrivez action et résultat attendu, sans compte
@@ -2595,12 +2578,9 @@ Source code on GitHub	Code source sur GitHub
 everything AdeeboMeter does can be read there	tout le fonctionnement y est lisible
 Copied - paste it into the page that opened	Copié; collez sur la page ouverte
 Found a bug? Report it	Un bogue? Signalez-le
-When the internet feels slow, most of us open Task Manager, then a command prompt, then ping, then guess. AdeeboMeter does all of that for you - quietly, every second - and tells you in one plain sentence what's wrong and what to do about it.	En cas de lenteur, on consulte souvent gestionnaire, commandes et ping avant de deviner. AdeeboMeter vérifie chaque seconde et résume problème et solution.
 The corner widget	Le widget de coin
-A small card in the bottom-right corner, faded to 30% so it never distracts. It shows the one thing that matters - is everything OK - plus CPU, memory, disk and network at a glance. It never takes clicks, so whatever is underneath keeps working. When a window covers the corner it folds into a tiny chip; rest your mouse on it for half a second and it opens.	Petite fiche atténuée à 30% en bas à droite : état, CPU, mémoire, disque et réseau. Les clics passent en dessous. Une fenêtre la couvre? Elle se replie; survolez une demi-seconde pour l’ouvrir.
 Getting around	Navigation
 Is it me or the network?	Mon appareil ou le réseau?
-The five dots at the top follow your traffic out of the building: your PC, your Wi-Fi or cable to the router, your provider (or VPN), DNS - the internet's phone book - and the internet itself. The first dot that isn't green is where the trouble starts. Everything before it is fine; everything after it is a victim, not a cause. That's the whole trick.	Cinq points suivent PC, Wi-Fi ou câble, fournisseur ou VPN, DNS et Internet. Le premier point non vert indique le début du problème; les suivants peuvent en subir les effets.
 What each tab does	Rôle des onglets
 What leaves your PC - and what never does	Les données qui quittent votre PC
 A tiny ping to your own router, 	Un petit ping au routeur, 
@@ -2731,7 +2711,7 @@ Add a currency	Ajouter une devise
 Add a quote key...	Ajouter une clé de cotations...
 Add currency	Ajouter une devise
 Add each month ($)	Ajout chaque mois ($)
-AdeeboLab	AdeeboLab
+Network Lab	Labo réseau
 AdeeboMeter Daily Financial Edition	AdeeboMeter Édition financière du jour
 AdeeboMeter Matchday Edition	AdeeboMeter Édition jour de match
 After	Après
@@ -2950,7 +2930,6 @@ Tested	Testé
 Testing...	Test en cours...
 That doesn't look like a key: letters and digits only.	Ça ne ressemble pas à une clé : lettres et chiffres seulement.
 That spot was removed - nothing to rename.	Cet endroit a été retiré : rien à renommer.
-The Bank of Canada's numbers, in plain words.	Les chiffres de la Banque du Canada, en mots simples.
 The Week in Numbers	La semaine en chiffres
 The forecast is on its way...	Les prévisions arrivent...
 The groups arrive from the Bank of Canada in a moment.	Les groupes arrivent de la Banque du Canada dans un instant.
@@ -3193,11 +3172,9 @@ Packets of a call leave every 20 ms but arrive unevenly. The jitter buffer holds
 Pick a conversation: an app above, or the Journey button on any row in Connections (a game, a call, a download, a printer - anything).	Choisissez une conversation : une appli ci-dessus, ou le bouton Voyage sur n'importe quelle ligne de Connexions (un jeu, un appel, un téléchargement, une imprimante, n'importe quoi).
 Reading the routing table...	Lecture de la table de routage...
 Reading your route table...	Lecture de votre table de routes...
-Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show.	Lit ces paquets avec des règles fixes, toujours les mêmes, rien de deviné, rien d'envoyé, et dit ce qu'ils montrent, avec le moment visé par chaque constat, et ce qu'ils ne peuvent pas montrer.
 Real packets need Wireshark (with Npcap). Everything else on this tab works without it.	Les vrais paquets ont besoin de Wireshark (avec Npcap). Tout le reste de cet onglet fonctionne sans lui.
 Recorded 	Enregistré 
 Records 6 seconds of your PC's traffic to 	Enregistre 6 secondes du trafic de votre PC vers 
-Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first.	Enregistre seulement cette conversation (le filtre tourne dans le pilote de capture : rien d'autre n'atteint AdeeboMeter), les en-têtes seulement, et s'arrête tout seul. Ensuite, il rejoue les paquets le long du chemin ci-dessus, au ralenti, à la taille de leurs octets, avec les renvois et les blocages marqués, et traduit chacun en mots simples. Lancez d'abord l'appel, le match ou le téléchargement.
 Records this lesson's traffic (	Enregistre le trafic de cette leçon (
 Removed 	Retiré 
 Renamed 	Renommé 
@@ -3378,11 +3355,11 @@ Your broker's connection, the day's numbers.	La connexion à votre courtier, les
 All quiet	Tout est calme
 Your tab	Votre onglet
 Pin tools here from any tool page or search result.	Épinglez des outils ici depuis n'importe quelle page d'outil ou résultat de recherche.
-Open the AdeeboLab  ›	Ouvrir l'AdeeboLab  ›
+Open the Network Lab  ›	Ouvrir le Labo réseau  ›
 Break it	Brisez-le
 Break it: 	Brisez-le : 
  faults watched to the end · +	 pannes vues jusqu'au bout · +
- Adeebo Points each, the first time.	 Adeebo Points chacune, la première fois.
+ points each, the first time.	 points chacune, la première fois.
 nothing to wait for - it answers as you type	rien à attendre : répond pendant que vous tapez
 as many minutes as you choose	autant de minutes que vous voulez
 the seconds you choose (10-120)	les secondes que vous choisissez (10-120)
@@ -3577,7 +3554,7 @@ check these games' servers in the background: 	vérifier les serveurs de ces jeu
 replace your pinned addresses with: 	remplacer vos adresses épinglées par : 
 
 A lab drawing someone sent you (.json)	Un schéma du labo qu'on vous a envoyé (.json)
-AdeeboLab drawings	Schémas AdeeboLab
+Network Lab drawings	Schémas du Labo réseau
 An empty page - pick devices and click to place them	Une page vide - choisissez des appareils et cliquez pour les placer
 Couldn't read that file:	Impossible de lire ce fichier :
 Draw your network, see the path a packet takes, then break one thing and watch where it fails. A drawing opens in its own window; everything stays on this PC.	Dessinez votre réseau, voyez le chemin d'un paquet, puis cassez une chose et regardez où ça échoue. Un schéma s'ouvre dans sa propre fenêtre ; tout reste sur ce PC.
@@ -3635,7 +3612,7 @@ Your home answers instantly; the losses start right after your router and every 
 On a first lease the order is Discover, Offer, Request, Ack - and this PC started with Discover, so it was asking for a new one: the Request came before anyone offered an address. (A PC renewing an address it already had may skip straight to Request - but not after a Discover.)	Pour un premier bail, l’ordre est Discover, Offer, Request, Ack - et ce PC a commencé par Discover, il demandait donc une nouvelle adresse : le Request est arrivé avant toute offre. (Un PC qui renouvelle une adresse qu’il avait déjà peut passer directement au Request - mais pas après un Discover.)
 Echo reply to the TTL 2 ping, straight from 1.1.1.1	Réponse d’écho au ping TTL 2, directement de 1.1.1.1
 
-Couldn't open the AdeeboLab:	Impossible d’ouvrir AdeeboLab :
+Couldn't open the Network Lab:	Impossible d’ouvrir le Labo réseau :
 Couldn't read your diagrams just now - try again in a moment.	Impossible de lire vos schémas pour l’instant - réessayez dans un moment.
 Couldn't save:	Impossible d’enregistrer :
 Save a copy of all my diagrams	Enregistrer une copie de tous mes schémas
@@ -3775,7 +3752,7 @@ OR TAP WHAT YOU SEE	OU TOUCHEZ CE QUE VOUS VOYEZ
 WHAT'S WRONG?	QU'EST-CE QUI CLOCHE ?
 WHERE EVERYTHING LIVES	OÙ SE TROUVE CHAQUE CHOSE
 connected, but nothing works	connecté, mais rien ne marche
-Earn Adeebo Points	Gagner des points Adeebo
+Earn points	Gagner des points
 Scan with your phone	Scannez avec votre téléphone
 Older:	Avant :
 Open engineer view	Ouvrir la vue ingénieur
@@ -3787,7 +3764,6 @@ LAGGY	ÇA LAG
 ms PING	ms PING
 LAST 60 SECONDS	60 DERNIÈRES SECONDES
 Esc takes you back to the corner	Échap vous ramène au coin
-Every conversation your PC is having right now - which app, with whom, on which port, in what state. New ones flash in, closed ones fade out. Point at the ? beside a state to learn what it means; press Sniff on a row to record just that conversation for Wireshark.	Toutes les connexions du PC : application, destinataire, port et état. Nouvelles mises en évidence, fermées estompées. Pointez le ? à côté d'un état pour comprendre ; Sniff enregistre une connexion pour Wireshark.
 updated	mis à jour
 access point nearby	point d'accès à proximité
 access points nearby	points d'accès à proximité
@@ -3797,7 +3773,7 @@ tool	outil
 No account, no telemetry, no updates, no ads, no crash reports. It never listens on a port - and checks that about itself every time it starts.	Pas de compte, pas de télémétrie, pas de mises à jour, pas de pubs, pas de rapports de plantage. Il n'écoute jamais sur un port - et le vérifie lui-même à chaque démarrage.
 No account. No telemetry. Never listens. Every packet it sends is listed below - and you can switch each one off.	Sans compte, télémétrie ni port en écoute. Chaque échange est décrit ci-dessous et désactivable.
 Open as script	Ouvrir en script
-Open in AdeeboLab	Ouvrir dans AdeeboLab
+Open in Network Lab	Ouvrir dans le Labo réseau
 Monitor, diagnose, automate, visualize, learn.	Surveiller, diagnostiquer, automatiser, visualiser, apprendre.
 Finish	Terminer
 Windows took the keyboard (Win, Alt+Tab or a notification) - click here to carry on.	Windows a pris le clavier (Win, Alt+Tab ou une notification) - cliquez ici pour continuer.
@@ -3807,7 +3783,6 @@ An app	Une appli
 CPU is pegged ({0}%). {1} uses the most.	Le processeur est à fond ({0} %). {1} en utilise le plus.
 Capturing packets is turned off by your IT team (AdeeboMeter.policy).	La capture de paquets est désactivée par votre équipe TI (AdeeboMeter.policy).
 Checking the destination	Vérification de la destination
-Click any row on the left. I'll tell you what it does, how it works, why it's there, what would happen without it - and whether it's safe to close.	Cliquez sur une ligne à gauche. Je vous dirai ce qu’elle fait, comment elle fonctionne, pourquoi elle est là, ce qui arriverait sans elle - et s’il est sûr de la fermer.
 Collecting - one row a second while the session is open.	Collecte - une ligne par seconde tant que la session est ouverte.
 Coloured dots: green = safe to close, amber = leave it (OK to restart), red = Windows needs it, purple = managed by IT, grey = not in my guide.	Points de couleur : vert = sûr à fermer, ambre = laissez-le (OK de redémarrer), rouge = Windows en a besoin, violet = géré par les TI, gris = absent de mon guide.
 Copy match report (internal addresses removed)	Copier le rapport de match (adresses internes retirées)
@@ -3842,7 +3817,6 @@ Needs Wireshark and Npcap on this PC.	Nécessite Wireshark et Npcap sur ce PC.
 No Valve servers yet - press Refresh Valve list (one request to Valve).	Aucun serveur Valve pour l’instant - appuyez sur Actualiser la liste Valve (une requête à Valve).
 No servers yet - press Edit servers and add your server's address.	Aucun serveur pour l’instant - appuyez sur Modifier les serveurs et ajoutez l’adresse de votre serveur.
 No streams recorded yet	Aucun flux enregistré pour l’instant
-No supported game was found installed on this PC. Click any of them to watch its servers anyway - nothing is sent to a game company's servers until you do.	Aucun jeu pris en charge n’a été trouvé sur ce PC. Cliquez sur l’un d’eux pour surveiller ses serveurs quand même - rien n’est envoyé aux serveurs d’un éditeur de jeux avant que vous le fassiez.
 None - the internet answered every time AdeeboMeter checked.	Aucune - Internet a répondu chaque fois qu’AdeeboMeter a vérifié.
 None in Windows' table yet.	Rien encore dans la table de Windows.
 Not done on purpose: trying default passwords, looking you up in breach databases (that would send your details to a website), scanning other people's devices, or changing anything for you.	Volontairement non fait : essayer des mots de passe par défaut, vous chercher dans des bases de fuites (cela enverrait vos données à un site Web), analyser les appareils des autres ou changer quoi que ce soit à votre place.
@@ -3850,7 +3824,6 @@ Off (Settings > Weather). Your PC's location is never used.	Désactivé (Paramè
 Once you know who's who, Task Manager stops being scary - and you'll know exactly what to close when the PC is struggling.	Une fois que vous savez qui est qui, le Gestionnaire des tâches ne fait plus peur - et vous saurez exactement quoi fermer quand le PC peine.
 Phone waiting room	Salle d’attente du téléphone
 Pick a game to watch	Choisissez un jeu à surveiller
-Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was.	Faites jouer quelque chose - un match, une émission, une chaîne en direct - pendant quelques minutes. Le relevé arrive ici avec chaque baisse et à qui la faute.
 Prices per Barrel and Ounce	Prix au baril et à l’once
 Rates and Prices in Canada	Taux et prix au Canada
 Reading that day...	Lecture de cette journée...
@@ -5740,10 +5713,7 @@ No updates, drivers, hardware or settings changes in the last two weeks.	Aucune 
 Nothing changed between them.	Rien n'a changé entre les deux.
 Open that day in History	Ouvrir ce jour dans l'historique
 Settings, apps and services - compared	Réglages, applis et services - comparés
-Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	Les instantanés restent sur ce PC (30 jours), seulement si l'historique est activé. Ce que Windows cache à un utilisateur normal n'y figure tout simplement pas.
-The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	Le docteur garde un petit instantané chaque jour (réglages réseau, applis, services, démarrage, tâches planifiées). Revenez demain pour comparer.
 The last two weeks	Les deux dernières semaines
-What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	Ce qui a changé sur ce PC - mises à jour, pilotes, matériel, redémarrages, réglages et applis - mis en face de chaque journée. Il désigne un suspect avec ses preuves, jamais un verdict.
 {0} compared with {1}	{0} comparé à {1}
 since yesterday	depuis hier
 since a week ago	depuis une semaine
@@ -5766,7 +5736,7 @@ New	Nouveau
 Open...	Ouvrir...
 Run ▶	Lancer ▶
 Terminal	Terminal
-The same flow as an AdeeboShell script - edit either side	Le même flux en script AdeeboShell - modifiez l'un ou l'autre côté
+The same flow as a Terminal script - edit either side	Le même flux en script Terminal - modifiez l'un ou l'autre côté
 if it didn't work:	si ça n'a pas marché :
 works?	marche ?
 {0} seconds	{0} secondes
@@ -5806,7 +5776,6 @@ In {0}	En {0}
 Only today's rate is available for this pair - no history to chart.	Seul le taux du jour est disponible pour cette paire - pas d’historique à tracer.
 Rates and Prices in {0}	Taux et prix : {0}
 The {0} moved {1:0.0}% against the {2} this week.	Le {0} a bougé de {1:0.0} % face au {2} cette semaine.
-Today's numbers, in plain words.	Les chiffres du jour, en clair.
 Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	Le taux de votre banque centrale et l’inflation ne sont pas encore sur une source gratuite sans clé - ce bloc ne se remplit que pour le Canada.
 Your currency	Votre devise
 Your market:	Votre marché :
@@ -5917,3 +5886,34 @@ It starts inside your network, not in my home.	Ça commence dans votre réseau, 
 My PC and router were checked and are fine.	Mon PC et mon routeur ont été vérifiés et vont bien.
 Could you check my line? I have a full report if you need it.	Pouvez-vous vérifier ma ligne ? J’ai un rapport complet si besoin.
 For their network team	Pour leur équipe réseau
+Type a name, an IP or a URL. It checks every step on the way and says in one sentence where it breaks. Pin the places you check often.	Tapez un nom, une IP ou une URL. Il vérifie chaque étape du chemin et dit en une phrase où ça casse. Épinglez les adresses que vous vérifiez souvent.
+It watches your connection every second and tells you what's wrong and what to do.	Il surveille votre connexion chaque seconde et vous dit ce qui ne va pas et quoi faire.
+A faded card in the corner: is everything OK, plus CPU, memory, disk and network. Clicks pass through it. When a window covers it, it folds into a small chip; rest the mouse on it to open.	Une carte estompée dans le coin : tout va-t-il bien, plus processeur, mémoire, disque et réseau. Les clics passent au travers. Si une fenêtre la couvre, elle se replie en petite pastille ; posez la souris dessus pour l'ouvrir.
+The five dots follow your traffic: your PC, Wi-Fi or cable, your provider (or VPN), DNS and the internet. The first dot that isn't green is where the trouble starts.	Les cinq points suivent votre trafic : votre PC, le Wi-Fi ou le câble, votre fournisseur (ou VPN), le DNS et Internet. Le premier point qui n'est pas vert, c'est là que le problème commence.
+Checks the things that quietly cause trouble: restarts, updates, disk space, adapter errors, crowded Wi-Fi, proxy, VPN, DNS, memory and power.	Vérifie ce qui cause des soucis en silence : redémarrages, mises à jour, espace disque, erreurs de carte réseau, Wi-Fi encombré, proxy, VPN, DNS, mémoire et alimentation.
+Every drop, roam, DNS change and VPN flap in the last two hours, with the time.	Chaque coupure, changement de borne, changement DNS et décrochage VPN des deux dernières heures, avec l'heure.
+Your connection one layer at a time: the route, your router's address, MTU, the handshake step by step, and with Wireshark the real packets.	Votre connexion couche par couche : la route, l'adresse de votre routeur, la MTU, la négociation étape par étape et, avec Wireshark, les vrais paquets.
+Which program started which, what each svchost runs, what a program is doing now, and what starts with Windows.	Quel programme a lancé lequel, ce que fait chaque svchost, ce qu'un programme fait maintenant et ce qui démarre avec Windows.
+Press Ctrl+K anywhere to jump to a page, a program, a term or a protocol.	Appuyez sur Ctrl+K n'importe où pour aller à une page, un programme, un terme ou un protocole.
+Every connection your PC has right now: which app, with whom, on which port. Press Sniff on a row to record just that one for Wireshark.	Chaque connexion de votre PC en ce moment : quelle appli, avec qui, sur quel port. Appuyez sur Sniff sur une ligne pour n'enregistrer qu'elle pour Wireshark.
+Your Wi-Fi or cable: band, channel, signal, speed, security, who else shares the air, and how healthy the hop to your router is.	Votre Wi-Fi ou câble : bande, canal, signal, débit, sécurité, qui partage les ondes et la santé du lien vers le routeur.
+A small face on the widget that shows how your network feels. It sleeps on the folded chip.	Un petit visage sur le widget qui montre comment va votre réseau. Il dort sur la pastille repliée.
+What changed on this PC (updates, drivers, apps, settings), next to how each day went. It names a suspect and shows why.	Ce qui a changé sur ce PC (mises à jour, pilotes, applis, paramètres), à côté du déroulé de chaque jour. Il désigne un suspect et montre pourquoi.
+The Network Doctor saves a small snapshot each day. Come back tomorrow to compare.	Le Docteur réseau garde un petit instantané chaque jour. Revenez demain pour comparer.
+Click a row on the left to see what it does and whether it's safe to close.	Cliquez sur une ligne à gauche pour voir ce qu'elle fait et si on peut la fermer sans risque.
+What each program on your PC does, and whether it's safe to close. It only explains; it never closes anything.	Ce que fait chaque programme de votre PC et s'il peut être fermé sans risque. Il explique seulement ; il ne ferme jamais rien.
+Play a match, a show or a live channel for a couple of minutes. Every dip shows up here, with whose fault it was.	Lancez un match, une série ou une chaîne en direct pendant quelques minutes. Chaque baisse s'affiche ici, avec le responsable.
+Esc, minimise, X or Back to corner all close this view and free its memory. The widget keeps watching.	Échap, réduire, X ou Retour au coin ferment tous cette vue et libèrent sa mémoire. Le widget continue de surveiller.
+It shows only what Windows lets a normal user see. If something is locked, it isn't shown.	Il n'affiche que ce que Windows laisse voir à un utilisateur standard. Ce qui est verrouillé n'apparaît pas.
+No supported game found on this PC. Click one to watch its servers anyway. Nothing is sent until you do.	Aucun jeu pris en charge trouvé sur ce PC. Cliquez sur l'un d'eux pour surveiller ses serveurs quand même. Rien n'est envoyé avant.
+Records only this conversation, headers only, and stops by itself. Then it replays the packets along the path, with resends and stalls marked. Start the call, match or download first.	N'enregistre que cette conversation, en-têtes seulement, et s'arrête tout seul. Puis rejoue les paquets le long du chemin, avec les renvois et les blocages marqués. Lancez d'abord l'appel, le match ou le téléchargement.
+Reads these packets with fixed rules (nothing guessed, nothing sent) and says what they show, and what they can't.	Lit ces paquets avec des règles fixes (rien de deviné, rien d'envoyé) et dit ce qu'ils montrent, et ce qu'ils ne peuvent pas montrer.
+The widget stays light. Heavy tools run only while this window is open. These set how much it watches in the background.	Le widget reste léger. Les outils lourds ne tournent que pendant que cette fenêtre est ouverte. Ces réglages fixent la surveillance en arrière-plan.
+Snapshots stay on this PC for 30 days, only while History is on.	Les instantanés restent sur ce PC 30 jours, seulement si l'Historique est activé.
+Fun lines are off.	Les phrases drôles sont désactivées.
+Off: no fun lines. The face stays.	Désactivé : pas de phrases drôles. Le visage reste.
+The Bank of Canada's numbers.	Les chiffres de la Banque du Canada.
+Today's numbers.	Les chiffres du jour.
+what the numbers mean	ce que veulent dire les chiffres
+ALSO HERE	AUSSI ICI
+Points	Points

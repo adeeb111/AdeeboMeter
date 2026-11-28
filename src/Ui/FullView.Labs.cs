@@ -52,7 +52,7 @@ namespace AdeeboMeter
         {
             var list = Labs.Where(l => hit(l[1]) || hit(l[2]) || hit("lab")).ToList(); if (list.Count == 0) return y;
             g.DrawString(Kit.Sent("LABS - PLAY WITH IT"), Draw.fTiny, muted, x, y + 6 * S); y += 26 * S;
-            if (hit("AdeeboLab") || hit("Network Lab") || hit("lab") || hit("break") || hit("path")) y = LearnRow(g, "lab:netlab", L.T("AdeeboLab"), L.T("Draw your network, see the path, break one thing."), x, y, w, ink, muted, nowrap);   // 1.1.6
+            if (hit("Network Lab") || hit("Network Lab") || hit("lab") || hit("break") || hit("path")) y = LearnRow(g, "lab:netlab", L.T("Network Lab"), L.T("Draw your network, see the path, break one thing."), x, y, w, ink, muted, nowrap);   // 1.1.6
             foreach (var l in list) y = LearnRow(g, "lab:" + l[0], L.T(l[1]), L.T(l[2]), x, y, w, ink, muted, nowrap);
             return y + 8 * S;
         }
@@ -149,7 +149,7 @@ namespace AdeeboMeter
             return y;
         }
 
-        // ================================================================== Adeebo Points: one challenge per lab (+2, once)
+        // ================================================================== points: one challenge per lab (+2, once)
         // Each lab asks for one thing worth discovering. Met = the lab's own settings show it; checked as the lab is drawn.
         static readonly Dictionary<string, string> LabGoals = new Dictionary<string, string>
         {

@@ -123,7 +123,7 @@ namespace AdeeboMeter
         // ---------- the go-to tiles: a big icon, a name, one live line
         float PaintGateway(Graphics g, float x, float y, float w)
         {
-            using (var gb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("GO TO"), Draw.fTiny, gb, x, y); y += 24 * S;
+            using (var gb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("ALSO HERE"), Draw.fTiny, gb, x, y); y += 24 * S;
             var down = Sectors.DownNow(3); DateTime certAt; var certs = Sectors.CertsDue(30, out certAt);
             int done = LabLink.Faults.Count(f => Points.Me.Has("nlab." + f[0]));
             // id, icon, accent, name, live line, go
@@ -138,11 +138,13 @@ namespace AdeeboMeter
             add("security", "shield", "security", "Security", "This PC's locks, your network and sites.", delegate { OpenNav("security"); });
             add("story", "route", "story", "Network story", "Your traffic layer by layer, real packets.", delegate { OpenNav("story"); });
             add("learn", "book", "learn", "Learn", "Protocols, Windows inside, every term.", delegate { OpenNav("learn"); });
-            add("netlab", "lab", "learn", "AdeeboLab", "Draw a network, break one thing. " + done + " of " + LabLink.Faults.Length + " faults seen.", delegate { OpenNav("lab"); });
+            add("netlab", "lab", "learn", "Network Lab", "Draw a network, break one thing. " + done + " of " + LabLink.Faults.Length + " faults seen.", delegate { OpenNav("lab"); });
             add("gamer", "game", "gamer", "Gamer", "Game servers live, lag spikes and whose fault.", delegate { OpenNav("gamer"); });
             add("stream", "play", "stream", "Streaming", "Is the stream ready - and why it stalled.", delegate { OpenNav("stream"); });
             add("trade", "chart", "trade", "Markets", "Your broker's connection, the day's numbers.", delegate { OpenNav("trade"); });
-            if (Cfg.Points) add("points", "star", "home", "Adeebo Points", Points.Rank(Points.Me.Total) + " · " + Points.Me.Total + " points", delegate { tab = "points"; ShowTab(); SyncNav(); });
+            if (Cfg.Points) add("points", "star", "home", "Points", Points.Rank(Points.Me.Total) + " · " + Points.Me.Total + " points", delegate { tab = "points"; ShowTab(); SyncNav(); });
+            // 28 Nov (Adeeb: fewer doors): only what the side bar doesn't already open - the tools with a live line, and Points
+            l = l.Where(o => { string id = (string)o[0]; return id == "encrypt" || id == "board" || id == "certcal" || id == "points"; }).ToList();
             // the current VIEW's hidden pages stay hidden here too
             l = l.Where(o => { string id = (string)o[0]; return Secs.All(s => s[0] != id) || !Cfg.Off(id); }).ToList();
             if (Cfg.Off("toolbox")) l = l.Where(o => (string)o[0] != "encrypt" && (string)o[0] != "board" && (string)o[0] != "certcal").ToList();

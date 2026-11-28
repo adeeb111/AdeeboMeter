@@ -130,7 +130,7 @@ namespace AdeeboMeter
                     y += 22 * S;
                     y = PaintStreamPatterns(g, all, x, y, w);
                 }
-                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", L.T("No streams recorded yet"), L.T("Play something - a match, a show, a live channel - for a couple of minutes. The record lands here with every dip and whose fault it was."), StreamPoints);
+                else y = Kit.Empty(g, x, y, Math.Min(w, 760 * S), "time", "stream", L.T("No streams recorded yet"), L.T("Play a match, a show or a live channel for a couple of minutes. Every dip shows up here, with whose fault it was."), StreamPoints);
             }
             Need(streamCanvas, y + 10 * S);
         }

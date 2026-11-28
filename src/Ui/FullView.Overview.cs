@@ -129,7 +129,7 @@ namespace AdeeboMeter
         // ---------- the four checks people ask for most, one tap each (28 Nov)
         static readonly string[][] Quick = {
             new[] { "run:mypc", "pc", "Check my PC", "Speed, disk, battery, stability - one report" },
-            new[] { "guide:whats", "wifi", "Check my connection", "Wi-Fi, router, provider, names - where it breaks" },
+            new[] { "checkup", "wifi", "Check my connection", "Wi-Fi, router, provider, names - where it breaks" },   // 28 Nov: the full checkup - the card that did it is gone from Home
             new[] { "dest", "internet", "Check a website", "One site or app, end to end" },
             new[] { "tool:ispreport", "mail", "Report for my ISP", "Proof your provider can't brush off" } };
         float PaintQuickChecks(Graphics g, float x, float y, float w)
@@ -153,6 +153,7 @@ namespace AdeeboMeter
         void FixGo(string go)
         {
             if (go.StartsWith("case:", StringComparison.Ordinal)) { OpenCase(go.Substring(5), "home", "", null, null); return; }
+            if (go == "checkup") { StartCheckup(); return; }
             if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
             else if (go == "gamer" || go == "link" || go == "changes") { tab = go; ShowTab(); }
             else if (go.StartsWith("tool:", StringComparison.Ordinal) || go.StartsWith("run:", StringComparison.Ordinal))
@@ -322,7 +323,7 @@ namespace AdeeboMeter
                 }
                 // then the do-everything button, then the front door (Adeeb, 22 Nov: verdict on top, Full checkup, then "What's going on?")
                 y = PaintQuickChecks(g, x, y, w); OvLap("quick");   // 28 Nov (Adeeb): ready-made buttons - check my PC, my connection, a website, proof for my ISP
-                y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
+                // 28 Nov (Adeeb: fewer doors): the Full checkup card went - "Check my connection" above runs it
                 y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the problem tiles (FullView.Case.cs)
 
                 // first open: Simple or Pro (asked once; Settings › General › Mode changes it)

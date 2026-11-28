@@ -222,7 +222,7 @@ namespace AdeeboMeter
             if (can) Act(travelCanvas, lr, delegate { if (jSess != null && !jSess.Done) jSess.Stop(); else JCapture(); });
             y += 44 * S;
             var recs = jSess != null ? jSess.Snapshot() : new List<Journey.Rec>();
-            if (jSess == null) return Lead(g, AdeeboMeter.L.T("Records only this conversation (the filter runs in the capture driver - nothing else reaches AdeeboMeter), headers only, and stops by itself. Then it plays the packets along the path above, slowed down, sized by their bytes, with resends and stalls marked, and translates each one into plain words. Start the call, the match or the download first."), x, y, w, true);
+            if (jSess == null) return Lead(g, AdeeboMeter.L.T("Records only this conversation, headers only, and stops by itself. Then it replays the packets along the path, with resends and stalls marked. Start the call, match or download first."), x, y, w, true);
             string status = rec ? "Recording... " + recs.Count + " packets" + (jSess.Before > 0 ? " (" + jSess.Before + " from just before you clicked)" : "") + " · stops by itself at " + jSess.Cap.ToString("N0", CultureInfo.CurrentCulture) + " packets or " + jSess.Secs + " s"
                           : jSess.Error != "" ? jSess.Error : recs.Count + " packets recorded" + (jSess.Before > 0 ? ", " + jSess.Before + " of them from the rewind buffer" : "") + " · nothing runs now";
             y = Lead(g, status, x, y, w, jSess.Error == "");
@@ -376,9 +376,9 @@ namespace AdeeboMeter
             {
                 var ls = g.MeasureString(L.T("Explain this capture"), Draw.fBodyB); var lr = new RectangleF(x, y, ls.Width + 28 * S, 34 * S);
                 Theme.Fill(g, lr, 17 * S, Theme.Blue); using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(L.T("Explain this capture"), Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
-                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); if (rs.Count > 0) EarnPts("journey.explain", true, true); /* Adeebo Points: the first capture explained */ travelCanvas.Invalidate(); });
+                Act(travelCanvas, lr, delegate { string k; lock (M.L) k = M.AdapterKind; var rs = jSess.Snapshot(); jNotes = Journey.Explain(jSess.F, rs, jKind, k == "Wi-Fi"); JKeepCwnd(rs); if (rs.Count > 0) EarnPts("journey.explain", true, true); /* points: the first capture explained */ travelCanvas.Invalidate(); });
                 y += 42 * S;
-                return Lead(g, AdeeboMeter.L.T("Reads these packets with fixed rules - the same every time, nothing guessed, nothing sent anywhere - and says what they show, with the moment each finding is about, and what they can't show."), x, y, w, true);
+                return Lead(g, AdeeboMeter.L.T("Reads these packets with fixed rules (nothing guessed, nothing sent) and says what they show, and what they can't."), x, y, w, true);
             }
             y = Head(g, AdeeboMeter.Kit.Sent("WHAT THESE PACKETS SHOW"), x, y, w, "travel.JEXPLAIN");
             foreach (var n in jNotes)

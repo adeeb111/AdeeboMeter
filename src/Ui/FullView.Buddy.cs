@@ -147,7 +147,7 @@ namespace AdeeboMeter
             using (var b = new SolidBrush(Kit.Ink("mine"))) using (var m = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(Kit.Sent("PREVIEW") + "  ·  " + L.T(Lines.PersonaName(Lines.Persona == "surprise" ? who : Lines.Persona == "none" ? Lines.Mood : Lines.Persona)), Draw.fTiny, m, pr.X + 46 * S, pr.Y + 9 * S);
-                g.DrawString(Voice.Serious ? L.T("Fun lines are off - plain words everywhere.") : sample, Draw.fBody, b, new RectangleF(pr.X + 46 * S, pr.Y + 26 * S, pr.Width - 56 * S, 22 * S));
+                g.DrawString(Voice.Serious ? L.T("Fun lines are off.") : sample, Draw.fBody, b, new RectangleF(pr.X + 46 * S, pr.Y + 26 * S, pr.Width - 56 * S, 22 * S));
             }
             y = pr.Bottom + 18 * S;
             using (var m = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("TALK LIKE..."), Draw.fTiny, m, x, y); y += 22 * S;

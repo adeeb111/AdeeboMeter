@@ -124,7 +124,7 @@ namespace AdeeboMeter
 
         // ---------- the page: written from the exe next to the data folder, then opened in Edge's app window
         public static string PagePath() { return PagePath(null); }
-        // views: AdeeboLab's ready-made drawings (LabViews.All) written into the page itself - the page reads no files and
+        // views: Network Lab's ready-made drawings (LabViews.All) written into the page itself - the page reads no files and
         // no network (its policy forbids both), and the address has a size limit
         // R2-026: a path open (no views) keeps the start page's last drawings in the file - and the two writers never overlap
         static string lastViews; static readonly object pageLock = new object();

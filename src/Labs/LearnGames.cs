@@ -9,7 +9,7 @@ namespace AdeeboMeter
 {
     // Learn › Games: an escape room, catch the thief, packet detective and two quick-fire rounds. Everything here is made up:
     // a simulated network answers the simulated commands - nothing real is sent, read or changed. The first solve of each
-    // scenario earns Adeebo Points (game.<kind>.<id>), so replaying can't farm them.
+    // scenario earns points (game.<kind>.<id>), so replaying can't farm them.
     static class LearnGames
     {
         static readonly string[][] Base = {

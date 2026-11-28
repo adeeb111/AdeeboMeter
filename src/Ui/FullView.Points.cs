@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // ================================================================== Adeebo Points dashboard
+    // ================================================================== points dashboard
     // One place for every feature: your rank, how to earn, and every tool, Learn topic and page as a row with its points
     // and a Go that takes you straight there (a tool opens with its Example). The Adeebo button in the header opens it.
     sealed partial class FullView
@@ -90,7 +90,7 @@ namespace AdeeboMeter
                 l.Add(new PtItem { Key = k2, Title = title, Tag = gd != null ? gd[2] : "", Group = "Games", Value = Points.Value(k2), Go = delegate { tab = "learn"; ShowTab(); learnSel = "game:" + gid; learnInfo.AutoScrollPosition = Point.Empty; learnList.Invalidate(); learnInfo.Invalidate(); } });
             }
             // 1.1.6 Network Lab: each fault watched to the end in Break it (read back from the lab window's storage)
-            foreach (var fl in LabLink.Faults) l.Add(new PtItem { Key = "nlab." + fl[0], Title = "AdeeboLab: " + fl[1], Tag = "Break it - watch the packet to where it fails", Group = "Challenges", Value = Points.Value("nlab." + fl[0]), Go = delegate { OpenLab(null, true); } });
+            foreach (var fl in LabLink.Faults) l.Add(new PtItem { Key = "nlab." + fl[0], Title = "Network Lab: " + fl[1], Tag = "Break it - watch the packet to where it fails", Group = "Challenges", Value = Points.Value("nlab." + fl[0]), Go = delegate { OpenLab(null, true); } });
             foreach (var pg in PtPages) { string tb = pg[1]; l.Add(new PtItem { Key = pg[0], Title = pg[2], Tag = pg[3], Group = "Pages", Value = Points.Value(pg[0]), Go = delegate { tab = tb; ShowTab(); } }); }
             foreach (var pa in Paths) { var p2 = pa; l.Add(new PtItem { Key = "path." + pa.Id, Title = pa.Title, Tag = pa.Tag, Group = "Learning paths", Value = Points.Value("path." + pa.Id), Go = delegate { tab = "points"; ShowTab(); pointsSearch.Box.Text = ""; pointsCanvas.AutoScrollPosition = Point.Empty; pointsCanvas.Invalidate(); } }); }
             return ptItems = l;
@@ -192,14 +192,14 @@ namespace AdeeboMeter
             return PtAll().Where(i => words.All(wd => (i.Title + " " + L.T(i.Title) + " " + i.Tag + " " + i.Group + " " + L.T(i.Group) + " " + i.Key).IndexOf(wd, StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
-        // award once, flash it on the header button; returns the line to show ("+2 Adeebo Points", "+2 replay bonus" or "")
+        // award once, flash it on the header button; returns the line to show ("+2 points", "+2 replay bonus" or "")
         string EarnPts(string id, bool opened, bool completed)
         {
             if (!Cfg.Points || !completed) return "";
             bool had = Points.Me.Has(id); int before = Points.Me.Total, n = Points.Me.Award(id, opened, true, DateTime.UtcNow);
             if (n <= 0) return "";
             Program.Log("adeebo points: " + id + " +" + n + " (total " + Points.Me.Total + ")");
-            string line = had ? "+" + n + " " + L.T("replay bonus") : id.StartsWith("path.", StringComparison.Ordinal) ? "+" + n + " " + L.T("path finished") : "+" + n + " " + L.T("Adeebo Points");
+            string line = had ? "+" + n + " " + L.T("replay bonus") : id.StartsWith("path.", StringComparison.Ordinal) ? "+" + n + " " + L.T("path finished") : "+" + n + " " + L.T("Points");
             pointsFlash = line; pointsFlashUntil = DateTime.Now.AddSeconds(5);
             if (before < Points.AwardAt && Points.Me.Total >= Points.AwardAt) { pointsFlash = L.T("You got the Adeebo Award!"); pointsFlashUntil = DateTime.Now.AddSeconds(12); Program.Log("adeebo points: the Adeebo Award"); }
             SyncPointsBtn();
@@ -291,7 +291,7 @@ namespace AdeeboMeter
                     bool award = total >= Points.AwardAt;
                     var card = new RectangleF(x, y, w, 96 * S); Theme.Fill(g, card, 14 * S, award ? Theme.LvSoft(1) : Theme.BlueSoft);
                     if (award) Theme.Stroke(g, card, 14 * S, Theme.Amber, 2);
-                    g.DrawString(award ? "★  " + L.T("You got the Adeebo Award") + "  ·  " + total + " " + L.T("Adeebo Points") : L.T(rank) + "  ·  " + total + " " + L.T(total == 1 ? "Adeebo Point" : "Adeebo Points"), Draw.fTitle, ink, x + 18 * S, y + 14 * S);
+                    g.DrawString(award ? "★  " + L.T("You got the Adeebo Award") + "  ·  " + total + " " + L.T("Points") : L.T(rank) + "  ·  " + total + " " + L.T(total == 1 ? "Adeebo Point" : "Points"), Draw.fTitle, ink, x + 18 * S, y + 14 * S);
                     if (award)
                     {
                         // the award card: make it, then send it to the Hall of Fame
@@ -299,7 +299,7 @@ namespace AdeeboMeter
                         Theme.Fill(g, mr, 17 * S, Theme.Amber); using (var wb = new SolidBrush(Color.White)) g.DrawString(mk, Draw.fBodyB, wb, mr.X + 14 * S, mr.Y + (34 * S - ms.Height) / 2);
                         Act(pointsCanvas, mr, delegate { MakeAwardCard(); });
                     }
-                    if (!Cfg.Points) g.DrawString(L.T("Earning is off (Settings › Adeebo Points) - your points are kept."), Draw.fSmall, sub, x + 18 * S, y + 46 * S);
+                    if (!Cfg.Points) g.DrawString(L.T("Earning is off (Settings › Points) - your points are kept."), Draw.fSmall, sub, x + 18 * S, y + 46 * S);
                     else
                     {
                         float bw = Math.Min(360 * S, w - 36 * S), frac = next == "" ? 1f : 1f - (float)left / Math.Max(1, left + total - RankFloor(total));

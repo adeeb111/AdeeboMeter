@@ -285,7 +285,7 @@ namespace AdeeboMeter
             }
             TidyInventory(!Cfg.History);
         }
-        // ---------- AdeeboLab's See my LAN: the same list, as data. identify = ask the devices and ping them now (about 8 s);
+        // ---------- Network Lab's See my LAN: the same list, as data. identify = ask the devices and ping them now (about 8 s);
         // otherwise names and times come from the last time Devices on this network ran (lastAt), and nothing is sent.
         public sealed class LanDev { public string Ip = "", Mac = "", Name = "", Maker = "", Kind = "", Model = "", Label = "", Via = ""; public bool Here, Watch, Router, Random; public double Ms = double.NaN; public DateTime First, Last; }
         static Dictionary<string, DevId.Info> lastIds = new Dictionary<string, DevId.Info>(); static Dictionary<string, string> lastDns = new Dictionary<string, string>();
@@ -358,7 +358,7 @@ namespace AdeeboMeter
             System.Threading.Tasks.Task.WaitAll(new[] { tid, tdn, tpg }, 8000);
             var ids = tid.IsCompleted && idsT != null ? idsT : new Dictionary<string, DevId.Info>(); var dns = tdn.IsCompleted && dnsT != null ? dnsT : new Dictionary<string, string>();
             Dictionary<string, double> ping; lock (pl) ping = new Dictionary<string, double>(pingT);   // a copy - a late ping can't change it mid-draw
-            lock (ik) { lastIds = ids; lastDns = dns; lastPing = ping; lastAt = DateTime.Now; }   // AdeeboLab's See my LAN draws from these without asking again
+            lock (ik) { lastIds = ids; lastDns = dns; lastPing = ping; lastAt = DateTime.Now; }   // Network Lab's See my LAN draws from these without asking again
             if (hereIps.Count > 64) rows.Add(R(3, "Pinged", "the first 64 of " + hereIps.Count + " devices here now", "A ping each for the rest would flood a big network - the others show as seen, without a time.", "i"));   // bug-hunt L-97
             lock (ik)
             {

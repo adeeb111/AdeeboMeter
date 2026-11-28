@@ -118,7 +118,7 @@ namespace AdeeboMeter
                 using (var fk = new Font("Segoe UI", 22f, FontStyle.Bold, GraphicsUnit.Pixel)) g.DrawString("ADEEBO AWARD", fk, gold, 60, 150);
                 string nm = CleanName(name); if (nm == "") nm = "A network detective";
                 using (var fn = Fit(g, ref nm, 880, 76)) g.DrawString(nm, fn, white, 54, 182);
-                using (var fp = new Font("Segoe UI", 30f, FontStyle.Regular, GraphicsUnit.Pixel)) g.DrawString(total.ToString(CultureInfo.InvariantCulture) + " Adeebo Points  ·  " + date, fp, soft, 60, 290);
+                using (var fp = new Font("Segoe UI", 30f, FontStyle.Regular, GraphicsUnit.Pixel)) g.DrawString(total.ToString(CultureInfo.InvariantCulture) + " points  ·  " + date, fp, soft, 60, 290);
                 // what it took
                 float y = 370;
                 using (var fs = new Font("Segoe UI", 24f, FontStyle.Regular, GraphicsUnit.Pixel)) using (var fsb = new Font("Segoe UI", 24f, FontStyle.Bold, GraphicsUnit.Pixel))

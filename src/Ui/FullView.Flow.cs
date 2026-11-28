@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace AdeeboMeter
 {
-    // Flow (PLAN-1.1.7 D2, 28 Nov): AdeeboShell's second tab - build a check from blocks and see the same thing as a script
+    // Flow (PLAN-1.1.7 D2, 28 Nov): Terminal's second tab - build a check from blocks and see the same thing as a script
     // beside it. A flow IS a shell script: Run saves it to /data/flows and runs it in the Terminal tab, inside the shell's
     // own fence. Edit either side; the other follows (comments, echo, sleep, for, if/else, VAR="..." become blocks;
     // anything else is a command block, kept as written).
@@ -67,7 +67,7 @@ namespace AdeeboMeter
             var ttimer = new Timer { Interval = 500 }; ttimer.Tick += delegate { ttimer.Stop(); if (!flowSync) { flow = FlowParse(flowText.Text); flowSel = null; flowCanvas.Invalidate(); } };
             flowText.TextChanged += delegate { if (flowSync) return; ttimer.Stop(); ttimer.Start(); };   // typing in the script: the blocks follow half a second later
             var right = new Panel { Dock = DockStyle.Fill, BackColor = ShBg, Padding = new Padding(Sc(10)) }; right.Controls.Add(flowText);
-            var rhead = new Label { Dock = DockStyle.Top, Height = Sc(26), Text = L.T("The same flow as an AdeeboShell script - edit either side"), ForeColor = ShDim, BackColor = ShBg, Font = Draw.fSmall }; right.Controls.Add(rhead);
+            var rhead = new Label { Dock = DockStyle.Top, Height = Sc(26), Text = L.T("The same flow as a Terminal script - edit either side"), ForeColor = ShDim, BackColor = ShBg, Font = Draw.fSmall }; right.Controls.Add(rhead);
             split.Controls.Add(flowCanvas, 0, 0); split.Controls.Add(right, 1, 0);
             p.Controls.Add(split); p.Controls.Add(add); p.Controls.Add(tools);
             open.Click += delegate

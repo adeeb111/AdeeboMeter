@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace AdeeboMeter
 {
-    // ================================================================== Adeebo Points
+    // ================================================================== points
     // A small reward for learning: open a tool's Example, then run it for real and get a result -> +2 (+4 the longer
     // tests), once. Learn topics, their check questions, lab challenges, subnetting streaks, the packet journey and the
     // learning paths earn too (see Value). 500 is the Adeebo Award. Tools where a second look teaches something carry a

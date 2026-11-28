@@ -330,7 +330,7 @@ namespace AdeeboMeter
                 if (e.Control && (e.KeyCode == Keys.OemMinus || e.KeyCode == Keys.Subtract)) { e.SuppressKeyPress = true; ZoomBy(-1); return; }
                 if (e.Control && (e.KeyCode == Keys.D0 || e.KeyCode == Keys.NumPad0)) { e.SuppressKeyPress = true; ZoomTo(100); return; }
                 bool pageKey = e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7;   // hunters10 H-1: Ctrl+1-7 still switch pages from the shell
-                if (term != null && term.Focused && !pageKey) return;   /* hunters11 ML-8: inside nano / vim / less too - the edit stays open on the shell page */   // AdeeboShell (and its nano/vim) owns every other key: / ^K Esc are its own there
+                if (term != null && term.Focused && !pageKey) return;   /* hunters11 ML-8: inside nano / vim / less too - the edit stays open on the shell page */   // Terminal (and its nano/vim) owns every other key: / ^K Esc are its own there
                 if (e.KeyCode == Keys.Escape)
                 {
                     if (tip != null && tip.Visible) { e.SuppressKeyPress = true; tipKey = null; tipWatch = false; tip.Hide(); return; }   // hunters10 ML-2: Esc closes an open explanation first, not the window
@@ -359,7 +359,7 @@ namespace AdeeboMeter
                 }   // Esc in a filled search box clears it (its own handler), it doesn't close the view
                 else if (e.KeyCode == Keys.K && e.Control) { e.SuppressKeyPress = true; OpenPalette(); }
                 else if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && e.Shift && !e.Control && !e.Alt)) { e.SuppressKeyPress = true; e.Handled = true; var on = ActiveControl != null && !IsPopup(ActiveControl) ? ActiveControl : (Control)this; PageMenu(on, new Point(Sc(24), Sc(24))); }   // hunters10 M-3: the Menu key or Shift+F10 opens the page menu
-                else if (e.KeyCode == Keys.Oemtilde && e.Control) { e.SuppressKeyPress = true; OpenNav("shell"); }   // Ctrl+` : AdeeboShell from anywhere
+                else if (e.KeyCode == Keys.Oemtilde && e.Control) { e.SuppressKeyPress = true; OpenNav("shell"); }   // Ctrl+` : Terminal from anywhere
                 else if (e.KeyCode == Keys.OemQuestion && !e.Shift && !e.Control && !e.Alt && ActiveTextBox() == null) { e.SuppressKeyPress = true; OpenPalette(); }   // "/" = search anything
                 else if (e.Control && !e.Alt && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D7) { var bar = NavBar(); int k = e.KeyCode - Keys.D1; if (k < bar.Count) { e.SuppressKeyPress = true; OpenNav(bar[k]); } }
                 else if (e.KeyCode == Keys.F1)
@@ -534,7 +534,7 @@ namespace AdeeboMeter
             { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
             { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Destination" } }, { "health", new[] { "Hardware & health", "Hardware" } },
-            { "shell", new[] { "AdeeboShell", "Shell" } }, { "lab", new[] { "AdeeboLab", "Lab" } }, { "doctor", new[] { "Network Doctor", "Doctor" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
+            { "shell", new[] { "Terminal", "Shell" } }, { "lab", new[] { "Network Lab", "Lab" } }, { "doctor", new[] { "Network Doctor", "Doctor" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };
@@ -1117,7 +1117,7 @@ namespace AdeeboMeter
                 // doesn't also press the tile or row underneath
                 if (badgeOn == c && badgeKey != null && RectangleF.Inflate(badgeAt, 3 * S, 3 * S).Contains(e.Location)) { tipClosed.Remove(badgeKey); SetTipKey(null); SetTipKey(badgeKey); return; }
                 List<KeyValuePair<RectangleF, Action>> l; if (!acts.TryGetValue(c, out l)) return;
-                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* Adeebo Points: a page counts as used when something on it was really clicked */
+                for (int i = l.Count - 1; i >= 0; i--) if (l[i].Key.Contains(e.Location)) { SetTipKey(null); UiActivity.Doing = "click on " + c.Name + " (" + tab + ")"; string usedTab = tab; l[i].Value(); PageUsed(usedTab); return; }   /* points: a page counts as used when something on it was really clicked */
             };
             c.MouseWheel += delegate(object s, MouseEventArgs e) { SetTipKey(null); if (ModifierKeys == Keys.Control && e.Delta != 0) ZoomBy(e.Delta > 0 ? 1 : -1); };   // Ctrl + wheel zooms
             c.MouseClick += delegate(object s, MouseEventArgs e)

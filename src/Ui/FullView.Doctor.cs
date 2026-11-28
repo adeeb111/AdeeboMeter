@@ -61,7 +61,7 @@ namespace AdeeboMeter
             using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
             {
                 g.DrawString(L.T("Network Doctor"), Draw.fTitle, ink, x, y); y += 38 * S;
-                string intro = L.T("What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.");
+                string intro = L.T("What changed on this PC (updates, drivers, apps, settings), next to how each day went. It names a suspect and shows why.");
                 float ih = Draw.Measure(intro, Draw.fBody, (int)w).Height; g.DrawString(intro, Draw.fBody, sub, new RectangleF(x, y, w, ih + 4)); y += ih + 16 * S;
                 var r = docRes;
                 if (r == null) { g.DrawString(L.T(docBusy ? "Looking through two weeks of changes..." : "Opening..."), Draw.fBody, muted, x, y); SetNeed(doctorCanvas, new Size(0, (int)(y + 60 * S))); return; }
@@ -146,7 +146,7 @@ namespace AdeeboMeter
                 {
                     g.DrawString(L.T("Settings, apps and services - compared"), Draw.fHead, ink, x, y); y += 30 * S;
                     var days = Doctor.SnapDays();
-                    if (days.Count < 2) { g.DrawString(L.T("The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare."), Draw.fBody, muted, new RectangleF(x, y, w, 44 * S)); y += 50 * S; }
+                    if (days.Count < 2) { g.DrawString(L.T("The Network Doctor saves a small snapshot each day. Come back tomorrow to compare."), Draw.fBody, muted, new RectangleF(x, y, w, 44 * S)); y += 50 * S; }
                     else
                     {
                         float px = x;
@@ -169,7 +169,7 @@ namespace AdeeboMeter
                             }
                         if (docDiff != null && docDiff.Count > 80) { g.DrawString(string.Format(L.T("...and {0} more"), docDiff.Count - 80), Draw.fSmall, muted, x, y); y += 24 * S; }
                     }
-                    g.DrawString(L.T("Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them."), Draw.fSmall, muted, new RectangleF(x, y + 6 * S, w, 36 * S)); y += 44 * S;
+                    g.DrawString(L.T("Snapshots stay on this PC for 30 days, only while History is on."), Draw.fSmall, muted, new RectangleF(x, y + 6 * S, w, 36 * S)); y += 44 * S;
                 }
             }
             SetNeed(doctorCanvas, new Size(0, (int)(y + 20 * S)));
