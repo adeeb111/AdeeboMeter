@@ -4,12 +4,12 @@
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Network commands on Windows with AdeeboShell | AdeeboMeter</title>
-<meta name="description" content="Use AdeeboShell inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
+<title>Network commands on Windows with Terminal | AdeeboMeter</title>
+<meta name="description" content="Use the Terminal inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
 <link rel="canonical" href="https://adeebometer.com/adeeboshell.html">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Network commands on Windows with AdeeboShell | AdeeboMeter">
-<meta property="og:description" content="Use AdeeboShell inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
+<meta property="og:title" content="Network commands on Windows with Terminal | AdeeboMeter">
+<meta property="og:description" content="Use the Terminal inside AdeeboMeter to read connection status, explore built-in tools and run network checks on Windows. A short guide with commands to try.">
 <meta property="og:url" content="https://adeebometer.com/adeeboshell.html">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -27,13 +27,13 @@
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeeboshell.html">
 <link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/adeeboshell.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeeboshell.html">
-<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/adeeboshell.html#faq","url":"https://adeebometer.com/adeeboshell.html","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Can AdeeboShell change my Windows files?","acceptedAnswer":{"@type":"Answer","text":"No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder."}},{"@type":"Question","name":"How do I stop an AdeeboShell command?","acceptedAnswer":{"@type":"Answer","text":"Press Ctrl+C to stop the current command."}}]}</script>
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/adeeboshell.html#faq","url":"https://adeebometer.com/adeeboshell.html","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Can Terminal change my Windows files?","acceptedAnswer":{"@type":"Answer","text":"No. Windows folders and drives are read-only in the Terminal. File changes stay inside AdeeboMeter’s /data folder."}},{"@type":"Question","name":"How do I stop an Terminal command?","acceptedAnswer":{"@type":"Answer","text":"Press Ctrl+C to stop the current command."}}]}</script>
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>Your network check, one command at a time.</h1>
-<p class="dek">Open AdeeboShell inside AdeeboMeter. Read the current status, find a tool, then run the check you need.</p>
+<p class="dek">Open the Terminal inside AdeeboMeter. Read the current status, find a tool, then run the check you need.</p>
 <ul class="meta"><li>Windows 10 and 11</li><li>AdeeboMeter 1.1.6</li><li>3 min read</li></ul>
 <figure class="command-map" aria-labelledby="commands">
 <h2 id="commands">Three commands to start with</h2>
@@ -42,18 +42,18 @@
 <div class="command-row command-help"><code dir="ltr">help ping</code><span>Read the help before a check</span></div>
 <figcaption>Commands to type, not example results. Your readings come from your own PC.</figcaption>
 </figure>
-<section class="summary"><h2>Try Shell in your browser</h2><p>Create text files, use pipes and explore simulated network checks on phone or PC. No account or installation. The browser edition uses example network data.</p><p><a href="/shell.html">Open AdeeboShell Playground</a></p></section>
+<section class="summary"><h2>Try Shell in your browser</h2><p>Create text files, use pipes and explore simulated network checks on phone or PC. No account or installation. The browser edition uses example network data.</p><p><a href="/shell.html">Open Terminal Playground</a></p></section>
 <h2>Try your first check</h2>
-<ol><li>Open the full AdeeboMeter window and choose AdeeboShell. Ctrl + ` opens it from another page in the app.</li><li>Type status and press Enter. Read what the app has measured so far; an unavailable reading is not a pass.</li><li>Type ls /tools to explore the tool groups. Use help before trying an unfamiliar command.</li></ol>
+<ol><li>Open the full AdeeboMeter window and choose Terminal. Ctrl + ` opens it from another page in the app.</li><li>Type status and press Enter. Read what the app has measured so far; an unavailable reading is not a pass.</li><li>Type ls /tools to explore the tool groups. Use help before trying an unfamiliar command.</li></ol>
 <p>Tab completes a command. Ctrl+C stops the current command.</p>
-<!--english-search-paths:start--><section class="example" aria-labelledby="shell-use-cases"><h2 id="shell-use-cases">Start with the question</h2><ul class="next-checks"><li><strong>Is my connection up?</strong><span>Type <code>status</code>. Read the current measurements before choosing the next check.</span></li><li><strong>Which check should I run?</strong><span>Type <code>ls /tools</code>. Explore the built-in groups, then read the command’s help.</span></li><li><strong>What does ping tell me?</strong><span>Type <code>help ping</code>. A probe reply is one clue; compare it with what your application is doing.</span></li></ul><p>AdeeboShell is built into the Windows app. These are AdeeboShell commands, not instructions for PowerShell or Command Prompt.</p><p><a href="/learn/icmp.html">Understand probe replies</a> · <a href="/blog/mtr-one-hop-packet-loss.html">Read loss at one MTR hop</a></p></section><!--english-search-paths:end-->
+<!--english-search-paths:start--><section class="example" aria-labelledby="shell-use-cases"><h2 id="shell-use-cases">Start with the question</h2><ul class="next-checks"><li><strong>Is my connection up?</strong><span>Type <code>status</code>. Read the current measurements before choosing the next check.</span></li><li><strong>Which check should I run?</strong><span>Type <code>ls /tools</code>. Explore the built-in groups, then read the command’s help.</span></li><li><strong>What does ping tell me?</strong><span>Type <code>help ping</code>. A probe reply is one clue; compare it with what your application is doing.</span></li></ul><p>Terminal is built into the Windows app. These are Terminal commands, not instructions for PowerShell or Command Prompt.</p><p><a href="/learn/icmp.html">Understand probe replies</a> · <a href="/blog/mtr-one-hop-packet-loss.html">Read loss at one MTR hop</a></p></section><!--english-search-paths:end-->
 <h2>Read the result</h2>
 <ul class="next-checks"><li><strong>A slow or missing answer</strong><span>Compare it with another destination and a good moment. One failed check does not identify the cause on its own.</span></li><li><strong>A command you do not recognise</strong><span>Read its help first. Commands can send network traffic or work with files.</span></li></ul>
-<details class="guide-detail" data-guide-faq><summary>Can AdeeboShell change my Windows files?</summary><p>No. Windows folders and drives are read-only in AdeeboShell. File changes stay inside AdeeboMeter’s /data folder.</p></details>
-<details class="guide-detail" data-guide-faq><summary>How do I stop an AdeeboShell command?</summary><p>Press Ctrl+C to stop the current command.</p></details>
+<details class="guide-detail" data-guide-faq><summary>Can Terminal change my Windows files?</summary><p>No. Windows folders and drives are read-only in the Terminal. File changes stay inside AdeeboMeter’s /data folder.</p></details>
+<details class="guide-detail" data-guide-faq><summary>How do I stop an Terminal command?</summary><p>Press Ctrl+C to stop the current command.</p></details>
 <aside class="summary"><h2>Keep one useful comparison</h2><p>Start with status. Repeat the same check when the problem happens, and keep the time and destination with the result.</p></aside>
-<p><span>Need the picture instead?</span> <a href="/adeebolab-guide.html">Try a simulated fault in AdeeboLab</a> <a href="/isp-report.html">or make a report for your provider</a>.</p>
-<section class="end"><h2>Open AdeeboShell in the free Windows app</h2><p>The app and its built-in tools are free. No ads or administrator rights required.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>
+<p><span>Need the picture instead?</span> <a href="/adeebolab-guide.html">Try a simulated fault in the Network Lab</a> <a href="/isp-report.html">or make a report for your provider</a>.</p>
+<section class="end"><h2>Open the Terminal in the free Windows app</h2><p>The app and its built-in tools are free. No ads or administrator rights required.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Download for Windows - free</a></section>
 <!--english-scenarios:start--><nav aria-labelledby="scenario-guides-heading"><h2 id="scenario-guides-heading">Try a real scenario</h2><p><a href="/blog/practise-terminal-commands-online.html">Your first terminal session. Nothing to install.</a></p><p><a href="/blog/network-lab-online-no-install.html">Build a network. Break one link. See what stops.</a></p></nav><!--english-scenarios:end-->
 </main>
 </body>

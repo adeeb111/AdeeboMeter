@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const LIMIT=200000, MAXFILES=100;
-function fresh(){return {version:1,cwd:'/data',files:{'/data/readme.txt':'Welcome to AdeeboShell Playground.\nThese files live only in your browser.\nTry: echo "my first note" > notes.txt\nThen: cat notes.txt\n', '/data/latency.txt':'router 2\ninternet 24\nnames 18\n'},dirs:['/','/data'],scenario:'healthy'};}
+function fresh(){return {version:1,cwd:'/data',files:{'/data/readme.txt':'Welcome to Terminal Playground.\nThese files live only in your browser.\nTry: echo "my first note" > notes.txt\nThen: cat notes.txt\n', '/data/latency.txt':'router 2\ninternet 24\nnames 18\n'},dirs:['/','/data'],scenario:'healthy'};}
 function validate(x){if(!x||x.version!==1||!Array.isArray(x.dirs)||!x.files||typeof x.files!=='object'||Array.isArray(x.files))throw Error('Not a Playground project.');
 if(JSON.stringify(x).length>LIMIT||Object.keys(x.files).length>MAXFILES||x.dirs.length>MAXFILES)throw Error('Project is too large.');
 const safe=p=>typeof p==='string'&&/^\/data(?:\/[\w .-]+)*$/.test(p)&&!p.split('/').some(s=>s==='.'||s==='..');

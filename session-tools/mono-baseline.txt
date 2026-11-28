@@ -1,0 +1,25 @@
+FAIL  .adeebo: round trip, wrong code refused, a changed byt
+FAIL  Ctrl+Alt+A shortcut (a note about this PC, never a fai
+FAIL  DLLs load only from System32            InvalidOperati
+FAIL  GDI / user handles                      EntryPointNotF
+FAIL  Learn games, the QR code and the over-time toolsInvali
+FAIL  UI 1.1.5 wave 3: search finds tools, forgives typos, g
+FAIL  core review fixes: Wi-Fi in any language, one key per 
+FAIL  counters x3                             EntryPointNotF
+FAIL  engineer view opens in under 2 s        EntryPointNotF
+FAIL  examples: every tool has one, it fits its boxes, it's 
+FAIL  health check                            EntryPointNotF
+FAIL  install: paths, settings line, icon     InvalidOperati
+FAIL  memory after everything                 InvalidOperati
+FAIL  never listens                           DllNotFoundExc
+FAIL  never slow, never silent: pages draw fast in both layo
+FAIL  no leaks: open + close the view 30 timesEntryPointNotF
+FAIL  process file paths without admin        EntryPointNotF
+FAIL  review 22 Nov: big pings, STUN read inside its declare
+FAIL  sitting: idle pages don't keep redrawing, nothing is w
+FAIL  speed widgets and full checkup: every style draws, the
+FAIL  tcp table (every state known)           DllNotFoundExc
+FAIL  tool pictures: each one draws before a run and with it
+FAIL  toolbox: local tools and PC checks run  EntryPointNotF
+FAIL  udp table                               DllNotFoundExc
+FAIL  untrusted files: damaged captures, .adeebo, .adeebokey

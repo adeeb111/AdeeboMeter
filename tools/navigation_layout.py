@@ -26,7 +26,7 @@ icons={
 'lab':'<rect x="3" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M6 8v10h9M6 12h12v4"/>'}
 def card(kind,title,text,color):
  return '<a class="v3card v3tile" data-playground="'+kind+'" href="/'+kind+'.html"><span class="v3top"><span class="v3chip" style="--k:var(--'+color+')"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icons[kind]+'</svg></span><b>'+title+'</b></span><span class="d">'+text+'</span></a>'
-cards=card('shell','AdeeboShell Playground','Run commands. Create text files. Try simulated network checks. English · no installation.','green')+card('lab','AdeeboLab Playground','Draw a network. Break one thing. Follow the packet. English · no account.','blue')
+cards=card('shell','Terminal Playground','Run commands. Create text files. Try simulated network checks. English · no installation.','green')+card('lab','Network Lab Playground','Draw a network. Break one thing. Follow the packet. English · no account.','blue')
 for lang,l in labels.items():
  pre='' if lang=='en' else '/'+lang
  p=DOCS/(pre.strip('/')+'/' if pre else '')/'index.html'
@@ -46,13 +46,13 @@ for lang,l in labels.items():
  m=re.search(r'(<details class="navmore">.*?<div>)(.*?)(</div></details>)',s,re.S)
  if not m:raise SystemExit('Missing home More menu: '+str(p))
  narrow=''.join(re.findall(r'<a\b[^>]*class="nm-narrow"[^>]*>.*?</a>',m[2],re.S))
- menu=link(pre+'/app.html',l[0])+narrow+link('/shell.html','AdeeboShell Playground')+link('/lab.html','AdeeboLab Playground')+link(pre+'/files.html',l[1])+link(pre+'/games.html',l[2])+link(pre+'/live.html',l[3])+link(pre+'/privacy.html',l[4])
+ menu=link(pre+'/app.html',l[0])+narrow+link('/shell.html','Terminal Playground')+link('/lab.html','Network Lab Playground')+link(pre+'/files.html',l[1])+link(pre+'/games.html',l[2])+link(pre+'/live.html',l[3])+link(pre+'/privacy.html',l[4])
  s=s[:m.start()]+m[1]+menu+m[3]+s[m.end():]
  s=re.sub(r'<a class="v3card v3tile" data-playground="(?:shell|lab)".*?</a>','',s,flags=re.S)
  if '<div class="v3four">' not in s:raise SystemExit('Missing browser cards: '+str(p))
  s=s.replace('<div class="v3four">','<div class="v3four">'+cards,1)
  # Remove the temporary one-line Shell link; dedicated browser cards replace it.
- s=re.sub(r'\s*<p class="v5also">Try <a href="/shell.html">AdeeboShell Playground</a>:.*?</p>','',s)
+ s=re.sub(r'\s*<p class="v5also">Try <a href="/shell.html">Terminal Playground</a>:.*?</p>','',s)
  p.write_text(s,encoding='utf-8',newline='\n')
  p=p.parent/'blog/index.html';s=p.read_text(encoding='utf-8')
  s=re.sub(r'<!--blog-resources:start-->.*?<!--blog-resources:end-->\s*','',s,flags=re.S)

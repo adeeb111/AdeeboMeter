@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>AdeeboLab — Network Playground: Draw, Save and Share | AdeeboMeter</title>
+<title>Network Lab — Network Playground: Draw, Save and Share | AdeeboMeter</title>
 <link rel="canonical" href="https://adeebometer.com/lab.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2222%22%20height%3D%2222%22%20rx%3D%226%22%20fill%3D%22%231155E0%22/%3E%3Cpath%20d%3D%22M6%2015a6%206%200%200%201%2012%200%22%20fill%3D%22none%22%20stroke%3D%22%235EF2B0%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M12%2015l3-4%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
 <meta name="description" content="Build network diagrams in your browser on phone or PC. Save project files, open a copy by QR code and try simulated faults. Free, no account or installation.">
@@ -100,8 +100,8 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
 </head>
 <body>
 <header id="top"><div class="top-main">
- <a class="brand" href="/" title="AdeeboMeter"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#1155E0"/><path d="M6 15a6 6 0 0 1 12 0" fill="none" stroke="#5EF2B0" stroke-width="2.2" stroke-linecap="round"/><path d="M12 15l3-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Adeebo<b>Lab</b></span></a>
- <button class="b i" id="homeBtn" title="AdeeboLab start page" aria-label="Start page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/></svg></button>
+ <a class="brand" href="/" title="AdeeboMeter"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#1155E0"/><path d="M6 15a6 6 0 0 1 12 0" fill="none" stroke="#5EF2B0" stroke-width="2.2" stroke-linecap="round"/><path d="M12 15l3-4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span>Adeebo<b>Meter</b></span></a>
+ <button class="b i" id="homeBtn" title="Network Lab start page" aria-label="Start page"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/></svg></button>
  <input id="name" aria-label="Drawing name" value="My network">
  <button class="b p" id="saveProject">Save project</button>
  <div class="menu"><button class="b" id="fileBtn" aria-haspopup="true" aria-expanded="false">Project</button><div id="fileMenu" hidden>
@@ -139,14 +139,14 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
   <div><label for="to">To</label><select id="to"></select></div>
   <div id="faults" style="display:flex;flex-direction:column;gap:8px"></div>
   <div id="fCatch" class="catch"></div>
-  <p id="pts" style="margin-top:auto;border-top:1px solid var(--line);padding-top:10px">First time you watch a fault to the end: <b style="color:var(--amber)">+2 Adeebo Points</b> in the app.</p>
+  <p id="pts" style="margin-top:auto;border-top:1px solid var(--line);padding-top:10px">First time you watch a fault to the end: <b style="color:var(--amber)">+2 points</b> in the app.</p>
   </div>
   <div id="chalBox" class="box"></div>
   <div id="showBox" class="box"></div>
  </aside>
 </div>
-<section id="home" aria-label="AdeeboLab start page">
- <h1>Adeebo<b>Lab</b> Playground</h1>
+<section id="home" aria-label="Network Lab start page">
+ <h1>Network Lab Playground</h1>
  <p class="lead">Your network playground. Build a diagram on your phone or computer, then try a simulated fault. No account. No installation.</p>
  <p class="save-note">Projects are cached only in this browser. Save a project file to keep it, or use a QR code to open a copy on another device. Clearing browser data can remove cached diagrams.</p>
  <h2>Start</h2><div class="tiles" id="hStart"></div>
@@ -526,9 +526,9 @@ async function openSharedProject(token){
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
 const FAULTS = [
  {id: "dns", n: "DNS times out", d: "names stop answering", sym: "Every site says “server not found”, but a game that connects by address still works.", tool: "Check a destination → DNS lookup, or the Network Doctor."},
- {id: "loss", n: "Packet loss", d: "a link drops some packets", sym: "Calls break up and games rubber-band, yet a speed test looks fine.", tool: "MTR in AdeeboShell, or Report for my ISP (the hop where loss starts)."},
+ {id: "loss", n: "Packet loss", d: "a link drops some packets", sym: "Calls break up and games rubber-band, yet a speed test looks fine.", tool: "MTR in the Terminal, or Report for my ISP (the hop where loss starts)."},
  {id: "gateway", n: "Wrong gateway", d: "the PC points at the wrong box", sym: "“No internet” even though Wi-Fi or the cable says connected.", tool: "Fix my connection in Check - it tests the gateway first."},
- {id: "mtu", n: "MTU black hole", d: "big packets vanish", sym: "Small sites open, big pages half-load, downloads hang at 0%.", tool: "ping -f -l 1472 in AdeeboShell, and the MTU calculator."},
+ {id: "mtu", n: "MTU black hole", d: "big packets vanish", sym: "Small sites open, big pages half-load, downloads hang at 0%.", tool: "ping -f -l 1472 in the Terminal, and the MTU calculator."},
  {id: "loop", n: "Routing loop", d: "TTL runs out", sym: "One site never loads for anybody at home; traceroute takes forever.", tool: "traceroute or MTR - the same two hops repeat."},
  {id: "wifi", n: "Busy Wi-Fi", d: "airtime and retries", sym: "Ping jumps from 3 ms to 100 ms and back; on a cable it’s calm.", tool: "The Wi-Fi page - channels, signal and who shares your air."},
  {id: "firewall", n: "Firewall rule", d: "one port is blocked", sym: "Web and video work, but the game can’t reach its matchmaking service.", tool: "Check a destination → Port test says “filtered”."},
@@ -783,7 +783,7 @@ function renderHome(){ const C = COL();
   const vw = $("#hViews"); vw.textContent = ""; vw.hidden = $("#hViewsH").hidden = !AMV;
   VIEWS.forEach(([k, n, ic, sub]) => { const d = AMV && AMV[k];
     tile(vw, {icon: ic, col: k === "lan" ? C.green : k === "path" ? C.blue : k === "wifi" ? C.wifi : k === "phone" ? C.cell : C.purple, title: n, off: !d,
-      sub: !AMV ? "Open AdeeboLab from AdeeboMeter to draw yours" : !d ? (k === "path" ? "Run a trace or MTR in AdeeboMeter first (mtr 1.1.1.1 in AdeeboShell)" : "Not available on this PC") : sub,
+      sub: !AMV ? "Open the Network Lab from AdeeboMeter to draw yours" : !d ? (k === "path" ? "Run a trace or MTR in AdeeboMeter first (mtr 1.1.1.1 in the Terminal)" : "Not available on this PC") : sub,
       go: () => openView(k)}); });
   const mine = files(), mb = $("#hMine"); mb.textContent = ""; $("#hMineH").hidden = mb.hidden = !mine.length;
   mine.forEach(f => tile(mb, {thumb: thumb(f.doc), title: f.name || "My network", sub: "edited " + ago(f.t), del: true, id: f.id, go: () => { const d = valid(f.doc); if (d) { d.fid = f.id; openDoc(d); } }}));
@@ -805,7 +805,7 @@ if (qBreak) setMode("break");
 else if (/[?&]mode=chal/.test(location.search) || qView === "chal") setMode("chal");
 else if (qView === "mcast" || qView === "cell") openScene(qView);
 else if (qView && AMV && AMV[qView]) openView(qView);
-else if (qView === "new") openDoc(blank());   /* the app's AdeeboLab page chose these (1.1.6, 22 Nov): new, one of your diagrams, an example, a file */
+else if (qView === "new") openDoc(blank());   /* the app's Network Lab page chose these (1.1.6, 22 Nov): new, one of your diagrams, an example, a file */
 else if (qView === "file" && qArg) { const f = files().find(x => x.id === qArg); const d = f && valid(f.doc); if (d) { d.fid = f.id; openDoc(d); } else showHome(); }
 else if (qView === "ex" && qArg && EX[qArg]) { const d = fromExample(qArg); applyAccess(d, store.get("adeebometer-lab:access") || "fibre"); openDoc(d); }
 else if (qView === "open" && AMV && AMV.open) { const d = valid(AMV.open); if (d) { d.fid = uid("f").slice(0, 21); openDoc(d, "Opened from AdeeboMeter."); } else showHome(); }

@@ -4,12 +4,12 @@
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>免费浏览器网络模拟器：AdeeboLab | AdeeboMeter</title>
-<meta name="description" content="在 AdeeboLab 中绘制网络、设置模拟故障，并逐步跟踪数据包。免费的浏览器网络模拟器，不会发送真实网络流量。">
+<title>免费浏览器网络模拟器：网络实验室 | AdeeboMeter</title>
+<meta name="description" content="在 网络实验室 中绘制网络、设置模拟故障，并逐步跟踪数据包。免费的浏览器网络模拟器，不会发送真实网络流量。">
 <link rel="canonical" href="https://adeebometer.com/zh/adeebolab-guide.html">
 <meta property="og:type" content="article">
-<meta property="og:title" content="免费浏览器网络模拟器：AdeeboLab | AdeeboMeter">
-<meta property="og:description" content="在 AdeeboLab 中绘制网络、设置模拟故障，并逐步跟踪数据包。免费的浏览器网络模拟器，不会发送真实网络流量。">
+<meta property="og:title" content="免费浏览器网络模拟器：网络实验室 | AdeeboMeter">
+<meta property="og:description" content="在 网络实验室 中绘制网络、设置模拟故障，并逐步跟踪数据包。免费的浏览器网络模拟器，不会发送真实网络流量。">
 <meta property="og:url" content="https://adeebometer.com/zh/adeebolab-guide.html">
 <meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -28,24 +28,24 @@
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeebolab-guide.html">
 <link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/adeebolab-guide.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeebolab-guide.html">
-<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/zh/adeebolab-guide.html#faq","url":"https://adeebometer.com/zh/adeebolab-guide.html","inLanguage":"zh-Hans","mainEntity":[{"@type":"Question","name":"AdeeboLab 会测试我的实际连接吗？","acceptedAnswer":{"@type":"Answer","text":"不会。AdeeboLab 只在图中模拟数据包，不发送真实网络流量。请使用 AdeeboMeter 测量 Windows 电脑的实际连接。"}},{"@type":"Question","name":"需要安装 AdeeboLab 吗？","acceptedAnswer":{"@type":"Answer","text":"不需要，在浏览器中打开即可。目前的标签和说明为英文。"}}]}</script>
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/zh/adeebolab-guide.html#faq","url":"https://adeebometer.com/zh/adeebolab-guide.html","inLanguage":"zh-Hans","mainEntity":[{"@type":"Question","name":"网络实验室 会测试我的实际连接吗？","acceptedAnswer":{"@type":"Answer","text":"不会。网络实验室 只在图中模拟数据包，不发送真实网络流量。请使用 AdeeboMeter 测量 Windows 电脑的实际连接。"}},{"@type":"Question","name":"需要安装 网络实验室 吗？","acceptedAnswer":{"@type":"Answer","text":"不需要，在浏览器中打开即可。目前的标签和说明为英文。"}}]}</script>
 </head>
 <body>
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
 <main>
 <h1>模拟网络故障，看看数据包停在哪里。</h1>
-<p class="dek">先在图中模拟故障，再排查真实连接。AdeeboLab 模拟数据包的传输过程，不测量实际网络。</p>
+<p class="dek">先在图中模拟故障，再排查真实连接。网络实验室 模拟数据包的传输过程，不测量实际网络。</p>
 <ul class="meta"><li>在浏览器中使用</li><li>无需安装</li><li>阅读约 2 分钟</li></ul>
 <figure class="path-fig"><ol class="path" aria-label="模拟的数据包路径"><li class="bad">电脑<small>网关错误</small></li><li>Wi-Fi<small>链路</small></li><li>路由器<small>未到达</small></li><li>运营商<small>未到达</small></li><li>远端<small>未到达</small></li></ol><figcaption>教学示意图：此处网关设置错误，数据包无法到达运营商。这并非您实际连接的测量结果。</figcaption></figure>
-<h2>用两分钟做个实验</h2><ol><li>打开 AdeeboLab，选择 Gamer 示例。图中的运营商设备仅作示意，并非探测到的实际硬件。</li><li>选择 Break it，再选择 Wrong gateway。保持起始设备和目标不变。</li><li>按 Play 开始。使用 Step 或 Step back，按自己的节奏查看每一步说明。</li><li>接着尝试 DNS times out，比较域名查询失败与数据包无法离开电脑的区别。</li></ol>
+<h2>用两分钟做个实验</h2><ol><li>打开 网络实验室，选择 Gamer 示例。图中的运营商设备仅作示意，并非探测到的实际硬件。</li><li>选择 Break it，再选择 Wrong gateway。保持起始设备和目标不变。</li><li>按 Play 开始。使用 Step 或 Step back，按自己的节奏查看每一步说明。</li><li>接着尝试 DNS times out，比较域名查询失败与数据包无法离开电脑的区别。</li></ol>
 <p>模拟器目前的标签和说明为英文。</p>
 <p><a class="guide-cta" href="/lab.html">打开网络模拟器</a></p>
 <h2>实验说明了什么</h2><ul class="next-checks"><li><strong>数据包无法离开电脑</strong><span>在此模拟中，先检查本地路径和网关设置。</span></li><li><strong>域名查询没有响应</strong><span>即使连接的其他部分正常，DNS 也可能出错。</span></li><li><strong>实际连接很慢</strong><span>请进行实际测量。模拟故障不能诊断您的电脑、Wi-Fi 或运营商。</span></li></ul>
-<details class="guide-detail" data-guide-faq><summary>AdeeboLab 会测试我的实际连接吗？</summary><p>不会。AdeeboLab 只在图中模拟数据包，不发送真实网络流量。请使用 AdeeboMeter 测量 Windows 电脑的实际连接。</p></details>
-<details class="guide-detail" data-guide-faq><summary>需要安装 AdeeboLab 吗？</summary><p>不需要，在浏览器中打开即可。目前的标签和说明为英文。</p></details>
+<details class="guide-detail" data-guide-faq><summary>网络实验室 会测试我的实际连接吗？</summary><p>不会。网络实验室 只在图中模拟数据包，不发送真实网络流量。请使用 AdeeboMeter 测量 Windows 电脑的实际连接。</p></details>
+<details class="guide-detail" data-guide-faq><summary>需要安装 网络实验室 吗？</summary><p>不需要，在浏览器中打开即可。目前的标签和说明为英文。</p></details>
 <aside class="summary"><h2>一次改一项，看清原因。</h2><p>更改故障时保持网络图和两端设备不变，更容易看清是哪一层出了问题。</p></aside>
-<p><a href="/zh/adeeboshell.html">用 AdeeboShell 进行实际检查</a> <a href="/zh/wifi-or-isp.html">或比较 Wi-Fi 与有线连接</a>.</p>
-<section class="end"><h2>先理解故障，再检查实际连接。</h2><p>用 AdeeboLab 理解原理，用 AdeeboMeter 获取 Windows 电脑的实际测量结果。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">下载 Windows - 免费</a></section>
+<p><a href="/zh/adeeboshell.html">用 终端 进行实际检查</a> <a href="/zh/wifi-or-isp.html">或比较 Wi-Fi 与有线连接</a>.</p>
+<section class="end"><h2>先理解故障，再检查实际连接。</h2><p>用 网络实验室 理解原理，用 AdeeboMeter 获取 Windows 电脑的实际测量结果。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">下载 Windows - 免费</a></section>
 </main>
 </body>
 </html>
