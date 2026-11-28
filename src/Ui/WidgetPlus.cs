@@ -191,7 +191,7 @@ namespace AdeeboMeter
                 bool lookClosed = (now - closedLook).TotalMinutes >= 60;
                 List<string> ask; lock (MarketData.k) ask = fmp.Where(z => MarketData.OpenNow(z, now) || (lookClosed && !MarketData.Quotes.ContainsKey(z))).ToList();
                 if (ask.Count > 0) { if (ask.Any(z => !MarketData.OpenNow(z, now))) closedLook = now; MarketData.FetchWidget(ask, null); }
-                foreach (var fx in syms.Where(z => z.StartsWith("FX:", StringComparison.Ordinal))) { MarketData.Load(fx); if (MarketData.Stale(fx)) MarketData.Fetch(fx, null); }
+                foreach (var fx in syms.Where(z => z.StartsWith("FX:", StringComparison.Ordinal))) { MarketData.LoadFx(fx.Substring(3)); MarketData.FetchFx(fx.Substring(3), null); }   // 1.1.7 (D7): in your market's currency
             }
             if ((Cfg.WPinGame != "" || Kinds().Count > 0 || st == "sports" || mineSt == "sports" || tiles.Contains("team")) && Sports.Teams().Count + (Cfg.WPinGame != "" ? 1 : 0) > 0)
                 Sports.WidgetTick(g => Wanted(g) || ((st == "sports" || mineSt == "sports" || tiles.Contains("team")) && Sports.Mine(g)));
@@ -371,14 +371,14 @@ namespace AdeeboMeter
         {
             if (sym.StartsWith("FX:", StringComparison.Ordinal))
             {
-                var ser = MarketData.Get(sym); string code = sym.Substring(3);
-                var t = new Tile { Label = code + "/CAD" };
-                if (ser == null || ser.Count == 0) { t.Value = "-"; t.Sub = L.T("Bank of Canada, daily"); return t; }
+                string code = sym.Substring(3); var ser = MarketData.FxIn(code);
+                var t = new Tile { Label = code + "/" + MyMarket.Home };
+                if (ser == null || ser.Count == 0) { t.Value = "-"; t.Sub = MarketData.FxSource(code) == "Bank of Canada" ? L.T("Bank of Canada, daily") : L.T(MarketData.FxSource(code)); return t; }
                 double pct = MarketData.ChangeOver(ser, TimeSpan.FromDays(1)); int dir = Dir(pct);
                 t.Value = ser.Last.ToString(ser.Last < 10 ? "0.0000" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(pct) ? "" : "  " + Signed(pct) + " " + L.T("day"));   /* hunters12 data L2: which change it is */
                 t.Lv = dir == 0 ? 3 : dir > 0 ? 0 : 2; t.Tint = dir == 0 ? (Color?)null : dir > 0 ? Theme.LvText(0) : Theme.LvText(2);
                 if (graph) t.Series = ser.V.Skip(Math.Max(0, ser.Count - 30)).ToArray();
-                t.Sub = L.T("Bank of Canada") + " · " + (ser.LastDay.Date == DateTime.Today ? L.T("today") : ser.LastDay.ToString((DateTime.Today - ser.LastDay.Date).TotalDays < 6 ? "ddd" : "d MMM", CultureInfo.CurrentCulture));
+                t.Sub = L.T(MarketData.FxSource(code)) + " · " + (ser.LastDay.Date == DateTime.Today ? L.T("today") : ser.LastDay.ToString((DateTime.Today - ser.LastDay.Date).TotalDays < 6 ? "ddd" : "d MMM", CultureInfo.CurrentCulture));
                 return t;
             }
             MarketData.Quote q; List<double> h; lock (MarketData.k) { MarketData.Quotes.TryGetValue(sym, out q); MarketData.Hist.TryGetValue(sym, out h); h = h == null ? null : h.ToList(); }

@@ -5775,3 +5775,56 @@ PCIe links and calculator	PCIe 链路和计算器
 USB tree and power budget	USB 树和供电预算
 What my screens say about themselves (EDID)	我的屏幕如何描述自己（EDID）
 Which DLLs does a program need?	一个程序需要哪些 DLL？
+A change is how much that currency's price in {0} moved. Click a row to chart it.	变化是指该货币以{0}计的价格变动了多少。点击一行即可查看图表。
+At today's reference rate. Banks and exchange shops add a margin.	按今日参考汇率。银行和兑换点会另加差价。
+Currencies and commodities	货币和大宗商品
+Custom market	自定义市场
+Custom market...	自定义市场…
+Energy and the {0}	能源与{0}
+Energy prices and the {0} against the {1}, over the same time, set to 100 at the start.	能源价格与{0}兑{1}，同一时期，起点设为 100。
+Football leagues · {0} first	足球联赛 · {0} 优先
+In {0}	以 {0} 计
+Only today's rate is available for this pair - no history to chart.	这对货币只有今日汇率，没有历史可画图。
+Rates and Prices in {0}	利率与物价：{0}
+The {0} moved {1:0.0}% against the {2} this week.	本周 {0} 兑 {2} 变动了 {1:0.0}%。
+Today's numbers, in plain words.	今天的数字，用大白话说。
+Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	你所在国家央行的利率和通胀暂时没有免费、免密钥的来源，这一栏只为加拿大显示。
+Your currency	你的货币
+Your market:	你的市场：
+Your market	你的市场
+a rise abroad can grow or shrink once it's turned into {0}	海外的涨幅换算成{0}后可能放大也可能缩小
+closed	休市
+holidays not checked	节假日未核对
+in {0}	以 {0} 计
+local shares aren't on the free price services	本地股票不在免费行情服务中
+lunch break	午间休市
+on its way...	正在获取…
+one unit, in {0}	一单位，以{0}计
+today's rate only	仅今日汇率
+vs {0}	兑 {0}
+{0} Firms	{0} 走强
+{0} Holds Steady	{0} 持稳
+{0} Slips	{0} 走弱
+{0} {1} {2:0.0}% against the {3} this week.	本周 {0} 兑 {3} {1} {2:0.0}%。
+{0}, in {1}	{0}，以{1}计
+{0}: prices in {1}, {2}'s hours and holidays, its football first. Also on the Markets page itself.	{0}：价格以{1}计，{2}的交易时间和节假日，它的足球优先。也可以在市场页面上直接更改。
+United States	美国
+United Kingdom	英国
+Bangladesh	孟加拉国
+France	法国
+Mexico	墨西哥
+Spain	西班牙
+Saudi Arabia	沙特阿拉伯
+China	中国
+Germany	德国
+Japan	日本
+London	伦敦
+Dhaka	达卡
+Paris	巴黎
+Mexico City	墨西哥城
+Madrid	马德里
+Riyadh	利雅得
+Shanghai	上海
+Frankfurt	法兰克福
+Tokyo	东京
+Warsaw	华沙

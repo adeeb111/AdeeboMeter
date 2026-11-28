@@ -117,6 +117,7 @@ namespace AdeeboMeter
         static void Hit() { try { File.WriteAllText(HitsFile, DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + " " + (HitsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
 
         // ---------- fetching: one background pass for every sport and the headlines, at most every 5 minutes
+        public static void LeaguesChanged() { lock (k) FetchedAt = DateTime.MinValue; }   // 1.1.7 (D7): a league turned on or off is fetched now
         public static bool Due { get { lock (k) return (DateTime.UtcNow - FetchedAt).TotalMinutes >= EveryMin; } }
         // 24 Nov (Adeeb): your keys, your pace - every 5 minutes (free keys), 2 or 1 (a paid key); the widget follows it during a game
         public static int EveryMin { get { return Cfg.SportsEvery == "1" ? 1 : Cfg.SportsEvery == "2" ? 2 : 5; } }
@@ -232,11 +233,11 @@ namespace AdeeboMeter
         // ESPN's public scoreboards (unofficial, no key, may change): the big leagues, each read at most once a day and kept in the
         // data folder (ESPN sees one request a day from this PC, not one every 5 minutes)
         internal static bool FromEspn; internal static volatile string EspnMissing = "";
-        static readonly string[][] EspnLeagues = { new[] { "eng.1", "Premier League" }, new[] { "esp.1", "LaLiga" }, new[] { "ger.1", "Bundesliga" }, new[] { "ita.1", "Serie A" }, new[] { "uefa.champions", "Champions League" }, new[] { "usa.1", "MLS" } };
+        // 1.1.7 (D7): which leagues follows your market (MyMarket.LeaguesOn) - its own first, then the classic six, plus any you turned on
         internal static List<Game> EspnFootball()
         {
             var r = new List<Game>(); string dir = Path.Combine(Program.WriteDir, "espn"); Directory.CreateDirectory(dir); int ok = 0; var missing = new List<string>();
-            foreach (var lg in EspnLeagues)
+            foreach (var lg in MyMarket.LeaguesOn())
             {
                 string f = Path.Combine(dir, lg[0] + ".json"), json = null;
                 try

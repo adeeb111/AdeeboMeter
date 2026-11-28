@@ -32,20 +32,25 @@ namespace AdeeboMeter
             new[] { "THB", "Thai baht" }, new[] { "IDR", "Indonesian rupiah" }, new[] { "MYR", "Malaysian ringgit" }, new[] { "PEN", "Peruvian sol" },
             new[] { "VND", "Vietnamese dong" }, new[] { "PLN", "Polish zloty" } };
         public const string DefaultFx = "USD,EUR,GBP,JPY,CNY,INR";
-        public static string FxName(string code) { var f = AllFx.FirstOrDefault(a => a[0] == code); return f == null ? code : f[1]; }
-        public static bool KnownFx(string code) { return AllFx.Any(a => a[0] == code); }
+        // 1.1.7 (D7): the Canadian dollar is a currency like the others once your market isn't Canada; a few more come from MyMarket's keyless source
+        static IEnumerable<string[]> AllFxPlus { get { return AllFx.Concat(new[] { new[] { "CAD", "Canadian dollar" } }).Concat(MyMarket.ExtraFx); } }
+        public static string FxName(string code) { var f = AllFxPlus.FirstOrDefault(a => a[0] == code); return f == null ? code : f[1]; }
+        public static bool KnownFx(string code) { return AllFxPlus.Any(a => a[0] == code); }
+        public static bool Boc(string code) { return AllFx.Any(a => a[0] == code); }
         // the person's list, in their order; junk and duplicates dropped, at most 12
         public static List<string> MyFx()
         {
             var l = new List<string>();
-            foreach (var c in (Cfg.FxList ?? DefaultFx).Split(',').Select(z => z.Trim().ToUpperInvariant()))
-                if (KnownFx(c) && !l.Contains(c) && l.Count < 12) l.Add(c);
+            string home = MyMarket.Home, src = Cfg.FxList ?? DefaultFx; if (src == DefaultFx && !MyMarket.Canada) src = MyMarket.Current.Fx;
+            foreach (var c in src.Split(',').Select(z => z.Trim().ToUpperInvariant()))
+                if (KnownFx(c) && c != home && !l.Contains(c) && l.Count < 12) l.Add(c);
+            if (l.Count == 0) l.Add(MyMarket.Anchor);
             return l;
         }
         public static bool AddFx(string code)
         {
             code = (code ?? "").Trim().ToUpperInvariant(); var l = MyFx();
-            if (!KnownFx(code) || l.Contains(code) || l.Count >= 12) return false;
+            if (!KnownFx(code) || code == MyMarket.Home || l.Contains(code) || l.Count >= 12) return false;
             l.Add(code); Cfg.FxList = string.Join(",", l); Cfg.Save(); return true;
         }
         public static bool RemoveFx(string code)
@@ -56,9 +61,10 @@ namespace AdeeboMeter
         // the picker's search: code or name, start of a word first
         public static List<string[]> FindFx(string q)
         {
-            q = (q ?? "").Trim(); if (q == "") return AllFx.ToList();
-            return AllFx.Where(a => a[0].StartsWith(q, StringComparison.OrdinalIgnoreCase) || a[1].Split(' ').Any(w => w.StartsWith(q, StringComparison.OrdinalIgnoreCase)))
-                .Concat(AllFx.Where(a => a[1].IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)).Distinct().ToList();
+            var all = AllFxPlus.Where(a => a[0] != MyMarket.Home).ToList();
+            q = (q ?? "").Trim(); if (q == "") return all;
+            return all.Where(a => a[0].StartsWith(q, StringComparison.OrdinalIgnoreCase) || a[1].Split(' ').Any(w => w.StartsWith(q, StringComparison.OrdinalIgnoreCase)))
+                .Concat(all.Where(a => a[1].IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)).Distinct().ToList();
         }
 
         // ---------- the Bank's Valet answers, read without a JSON library: {"observations":[{"d":"2026-11-20","FXUSDCAD":{"v":"1.3982"}},...]}
@@ -161,6 +167,7 @@ namespace AdeeboMeter
         // fetch in the background when stale; done() runs on that thread (callers marshal to the UI, guarded - see Done())
         public static void Fetch(string what, Action done)
         {
+            if (what.StartsWith("FX:", StringComparison.Ordinal) && !Boc(what.Substring(3))) return;   // CAD itself and the keyless extras: FetchFx
             Load(what);
             if (Policy.NoOnline || !Stale(what)) return;
             lock (k)
@@ -223,6 +230,48 @@ namespace AdeeboMeter
             return i == 0 ? DateTime.MinValue : s.D[i];
         }
         // one unit of a buys this much b, through the Canadian dollar (CAD = 1)
+        // ---------- 1.1.7 (D7): one unit of a currency in your market's currency, day by day. Canada: the Bank's own series.
+        // Elsewhere: two Bank of Canada series crossed on the same days (USD in CAD / BDT... in CAD), or - when either side is a
+        // currency the Bank doesn't publish - today's rate only, from the keyless source.
+        static readonly Dictionary<string, Series> crossCache = new Dictionary<string, Series>(StringComparer.Ordinal); static long crossVer = -1; static string crossHome = "";
+        public static Series FxIn(string c)
+        {
+            string h = MyMarket.Home; if (c == h) return null;
+            if (h == "CAD" && Boc(c)) return Get("FX:" + c);
+            lock (k) { if (crossVer != Ver || crossHome != h) { crossCache.Clear(); crossVer = Ver; crossHome = h; } Series cs; if (crossCache.TryGetValue(c, out cs)) return cs; }
+            Series r = null;
+            if (!(Boc(c) || c == "CAD") || !(Boc(h) || h == "CAD"))
+            {
+                double vc = c == "CAD" ? 1 : MyMarket.ErCad(c), vh = h == "CAD" ? 1 : MyMarket.ErCad(h);
+                if (!double.IsNaN(vc) && !double.IsNaN(vh) && vh > 0) { r = new Series { Code = c + "/" + h }; r.D.Add(MyMarket.ErDay == DateTime.MinValue ? DateTime.Today : MyMarket.ErDay); r.V.Add(vc / vh); }
+            }
+            else r = CrossSeries(c == "CAD" ? null : Get("FX:" + c), h == "CAD" ? null : Get("FX:" + h), c + "/" + h);
+            lock (k) crossCache[c] = r; return r;
+        }
+        // a in CAD over b in CAD on b's days (a null side is the Canadian dollar itself, worth 1)
+        internal static Series CrossSeries(Series a, Series b, string code)
+        {
+            var bb = b; if (bb == null) return a;   // home is the Canadian dollar: the Bank's series as it is
+            if (bb.Count == 0 || (a != null && a.Count == 0)) return null;
+            var r = new Series { Code = code }; int j = 0;
+            for (int i = 0; i < bb.Count; i++)
+            {
+                double va = 1;
+                if (a != null) { while (j + 1 < a.Count && a.D[j + 1] <= bb.D[i]) j++; if (a.D[j] > bb.D[i]) continue; va = a.V[j]; }
+                if (bb.V[i] > 0) { r.D.Add(bb.D[i]); r.V.Add(va / bb.V[i]); }
+            }
+            return r;
+        }
+        // fetch / load what FxIn(c) needs
+        public static void FetchFx(string c, Action done)
+        {
+            string h = MyMarket.Home;
+            if (!(Boc(c) || c == "CAD") || !(Boc(h) || h == "CAD")) { MyMarket.ErFetch(done); return; }
+            if (c != "CAD") Fetch("FX:" + c, done); if (h != "CAD" && h != c) Fetch("FX:" + h, done);
+        }
+        public static void LoadFx(string c) { if (Boc(c)) Load("FX:" + c); if (Boc(MyMarket.Home)) Load("FX:" + MyMarket.Home); }
+        // who the rate comes from, for the line under it
+        public static string FxSource(string c) { string h = MyMarket.Home; return (Boc(c) || c == "CAD") && (Boc(h) || h == "CAD") ? "Bank of Canada" : "open.er-api.com"; }
         public static double Cross(string a, string b)
         {
             double va = a == "CAD" ? 1 : At(Get("FX:" + a), DateTime.MaxValue), vb = b == "CAD" ? 1 : At(Get("FX:" + b), DateTime.MaxValue);
@@ -230,7 +279,10 @@ namespace AdeeboMeter
         }
 
         // ---------- the world's exchanges (regular hours, local time) - holidays are known only for New York and Toronto (Markets.cs)
-        public sealed class Exchange { public string Name, City, Zone, Ccy; public TimeSpan Open, Close, LunchFrom, LunchTo; }
+        public sealed class Exchange { public string Name, City, Zone, Ccy; public TimeSpan Open, Close, LunchFrom, LunchTo; public bool FriSat; }   // FriSat: the weekend is Friday and Saturday (Dhaka, Riyadh)
+        public static bool Weekend(Exchange x, DateTime local) { var d = local.DayOfWeek; return x.FriSat ? d == DayOfWeek.Friday || d == DayOfWeek.Saturday : d == DayOfWeek.Saturday || d == DayOfWeek.Sunday; }
+        // a closed day: New York and Toronto from their rules (Markets.cs), the others from MyMarket's rules and tables
+        static bool HolidayAt(Exchange x, DateTime localDay) { if (x.Name == "New York" || x.Name == "Toronto") return Markets.Holiday(localDay, x.Name == "New York" ? "us" : "ca") != null; return !string.IsNullOrEmpty(MyMarket.Holiday(x.Name, localDay)); }
         public static readonly Exchange[] Exchanges = {
             new Exchange { Name = "Tokyo", City = "Tokyo", Zone = "Tokyo Standard Time", Ccy = "JPY", Open = new TimeSpan(9, 0, 0), Close = new TimeSpan(15, 30, 0), LunchFrom = new TimeSpan(11, 30, 0), LunchTo = new TimeSpan(12, 30, 0) },
             new Exchange { Name = "Shanghai", City = "Shanghai", Zone = "China Standard Time", Ccy = "CNY", Open = new TimeSpan(9, 30, 0), Close = new TimeSpan(15, 0, 0), LunchFrom = new TimeSpan(11, 30, 0), LunchTo = new TimeSpan(13, 0, 0) },
@@ -240,7 +292,13 @@ namespace AdeeboMeter
             new Exchange { Name = "Paris", City = "Paris", Zone = "Romance Standard Time", Ccy = "EUR", Open = new TimeSpan(9, 0, 0), Close = new TimeSpan(17, 30, 0) },
             new Exchange { Name = "London", City = "London", Zone = "GMT Standard Time", Ccy = "GBP", Open = new TimeSpan(8, 0, 0), Close = new TimeSpan(16, 30, 0) },
             new Exchange { Name = "Toronto", City = "Toronto", Zone = "Eastern Standard Time", Ccy = "CAD", Open = new TimeSpan(9, 30, 0), Close = new TimeSpan(16, 0, 0) },
-            new Exchange { Name = "New York", City = "New York", Zone = "Eastern Standard Time", Ccy = "USD", Open = new TimeSpan(9, 30, 0), Close = new TimeSpan(16, 0, 0) } };
+            new Exchange { Name = "New York", City = "New York", Zone = "Eastern Standard Time", Ccy = "USD", Open = new TimeSpan(9, 30, 0), Close = new TimeSpan(16, 0, 0) },
+            // 1.1.7 (D7): the built-in markets' own exchanges, and Warsaw for the first Custom market
+            new Exchange { Name = "Madrid", City = "Madrid", Zone = "Romance Standard Time", Ccy = "EUR", Open = new TimeSpan(9, 0, 0), Close = new TimeSpan(17, 30, 0) },
+            new Exchange { Name = "Mexico City", City = "Mexico City", Zone = "Central Standard Time (Mexico)", Ccy = "MXN", Open = new TimeSpan(8, 30, 0), Close = new TimeSpan(15, 0, 0) },
+            new Exchange { Name = "Riyadh", City = "Riyadh", Zone = "Arab Standard Time", Ccy = "SAR", Open = new TimeSpan(10, 0, 0), Close = new TimeSpan(15, 0, 0), FriSat = true },
+            new Exchange { Name = "Dhaka", City = "Dhaka", Zone = "Bangladesh Standard Time", Ccy = "BDT", Open = new TimeSpan(10, 0, 0), Close = new TimeSpan(14, 30, 0), FriSat = true },
+            new Exchange { Name = "Warsaw", City = "Warsaw", Zone = "Central European Standard Time", Ccy = "PLN", Open = new TimeSpan(9, 0, 0), Close = new TimeSpan(17, 0, 0) } };
         public static DateTime LocalTo(Exchange x, DateTime utc)
         {
             try { return TimeZoneInfo.ConvertTimeFromUtc(utc, TimeZoneInfo.FindSystemTimeZoneById(x.Zone)); }
@@ -250,14 +308,9 @@ namespace AdeeboMeter
         public static string State(Exchange x, DateTime utc)
         {
             var t = LocalTo(x, utc); if (t == DateTime.MinValue) return "unknown";
-            if (t.DayOfWeek == DayOfWeek.Saturday || t.DayOfWeek == DayOfWeek.Sunday) return "closed";
+            if (Weekend(x, t) || HolidayAt(x, t.Date)) return "closed";
             var close = x.Close;
-            if (x.Name == "New York" || x.Name == "Toronto")
-            {
-                string venue = x.Name == "New York" ? "us" : "ca";
-                if (Markets.Holiday(t.Date, venue) != null) return "closed";
-                close = Markets.Close(t.Date, venue);
-            }
+            if (x.Name == "New York" || x.Name == "Toronto") close = Markets.Close(t.Date, x.Name == "New York" ? "us" : "ca");
             var tod = t.TimeOfDay;
             if (tod < x.Open || tod >= close) return "closed";
             if (x.LunchTo > x.LunchFrom && tod >= x.LunchFrom && tod < x.LunchTo) return "lunch";
@@ -271,9 +324,8 @@ namespace AdeeboMeter
             for (int add = 0; add < 8; add++)
             {
                 var d = t.Date.AddDays(add);
-                if (d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday) continue;
+                if (Weekend(x, d) || HolidayAt(x, d)) continue;
                 bool na = x.Name == "New York" || x.Name == "Toronto"; string venue = x.Name == "New York" ? "us" : "ca";
-                if (na && Markets.Holiday(d, venue) != null) continue;
                 var close = na ? Markets.Close(d, venue) : x.Close;
                 if (add == 0 && t.TimeOfDay >= close) continue;
                 var o = TimeZoneInfo.ConvertTimeToUtc(d + x.Open, tz).ToLocalTime(); var c = TimeZoneInfo.ConvertTimeToUtc(d + close, tz).ToLocalTime();
@@ -284,14 +336,17 @@ namespace AdeeboMeter
 
         // ---------- index levels and futures: only with the person's own Financial Modeling Prep key (kept encrypted with the
         // sports keys). 250 calls a day on the free plan: one call per symbol, every 15 minutes at most, stops at 230.
-        public sealed class Quote { public string Sym, Name, Region, Ccy, Unit = ""; public double Price = double.NaN, Pct = double.NaN, WeekPct = double.NaN; public DateTime When; }
+        public sealed class Quote { public string Sym, Name, Region, Ccy, Unit = ""; public double Price = double.NaN, Pct = double.NaN, WeekPct = double.NaN, Lo = double.NaN, Hi = double.NaN; public DateTime When; }   // Lo/Hi: the day's range (1.1.7 company cards)
         public static readonly string[][] IndexList = {   // symbol, name, region, currency, exchange
             new[] { "^GSPC", "S&P 500", "Americas", "USD", "New York" }, new[] { "^IXIC", "Nasdaq Composite", "Americas", "USD", "New York" },
             new[] { "^DJI", "Dow Jones", "Americas", "USD", "New York" }, new[] { "^GSPTSE", "S&P/TSX Composite", "Americas", "CAD", "Toronto" },
             new[] { "^FTSE", "FTSE 100 (London)", "Europe", "GBP", "London" }, new[] { "^GDAXI", "DAX (Frankfurt)", "Europe", "EUR", "Frankfurt" },
             new[] { "^FCHI", "CAC 40 (Paris)", "Europe", "EUR", "Paris" }, new[] { "^STOXX50E", "Euro Stoxx 50", "Europe", "EUR", "Frankfurt" },
             new[] { "^N225", "Nikkei 225 (Tokyo)", "Asia", "JPY", "Tokyo" }, new[] { "000001.SS", "Shanghai Composite", "Asia", "CNY", "Shanghai" },
-            new[] { "^HSI", "Hang Seng (Hong Kong)", "Asia", "HKD", "Hong Kong" }, new[] { "^NSEI", "Nifty 50 (Mumbai)", "Asia", "INR", "Mumbai" } };
+            new[] { "^HSI", "Hang Seng (Hong Kong)", "Asia", "HKD", "Hong Kong" }, new[] { "^NSEI", "Nifty 50 (Mumbai)", "Asia", "INR", "Mumbai" },
+            // 1.1.7 (D7): fetched and shown only when they're your market's own ("x") - the free plan's calls stay where they were
+            new[] { "^IBEX", "IBEX 35 (Madrid)", "Europe", "EUR", "Madrid", "x" }, new[] { "^MXX", "IPC (Mexico)", "Americas", "MXN", "Mexico City", "x" }, new[] { "^TASI.SR", "Tadawul All Share (Riyadh)", "Asia", "SAR", "Riyadh", "x" } };
+        public static IEnumerable<string[]> IndexShown { get { string home = MyMarket.Current.Index; return IndexList.Where(i => i.Length < 6 || i[0] == home).OrderBy(i => i[0] == home ? 0 : 1); } }
         public static readonly string[][] FuturesList = {   // symbol, name, unit
             new[] { "CLUSD", "WTI crude oil", "USD per barrel" }, new[] { "BZUSD", "Brent crude oil", "USD per barrel" }, new[] { "NGUSD", "Natural gas", "USD per MMBtu" },
             new[] { "GCUSD", "Gold", "USD per ounce" }, new[] { "SIUSD", "Silver", "USD per ounce" }, new[] { "HGUSD", "Copper", "USD per pound" } };
@@ -392,8 +447,10 @@ namespace AdeeboMeter
         {
             double price = JNum(json, "c"), pct = JNum(json, "dp"), ts = JNum(json, "t");
             if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;   // Finnhub answers 0 for a symbol it doesn't know
-            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+            var fq = Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+            Range(fq, JNum(json, "l"), JNum(json, "h")); return fq;
         }
+        static void Range(Quote q, double lo, double hi) { if (q != null && !double.IsNaN(lo) && !double.IsNaN(hi) && lo > 0 && hi >= lo && hi < 1e7) { q.Lo = lo; q.Hi = hi; } }
         public static Quote ParseTwelve(string json, string sym)
         {
             if ((json ?? "").IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0) return null;
@@ -401,6 +458,7 @@ namespace AdeeboMeter
             if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;
             var q = Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
             var cc = Regex.Match(json ?? "", "\"currency\"\\s*:\\s*\"([A-Z]{3})\""); if (cc.Success) q.Ccy = cc.Groups[1].Value;   // PX-ML7
+            Range(q, JNum(json, "low"), JNum(json, "high"));
             return q;
         }
         // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
@@ -416,7 +474,7 @@ namespace AdeeboMeter
         }
         static void Call() { Call("fmp"); }
         static void Call(string prov) { try { File.WriteAllText(CallsFile(prov), DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday(prov) + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
-        public static void FetchQuotes(bool futures, Action done) { FetchList(futures ? 1 : 0, futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList(), done); }
+        public static void FetchQuotes(bool futures, Action done) { FetchList(futures ? 1 : 0, futures ? FuturesList.Select(f => f[0]).ToList() : IndexShown.Select(f => f[0]).ToList(), done); }
         // the corner widget's own symbols (24 Nov): any the person typed (AAPL, SHOP.TO) plus the listed ones, at the key's pace
         public static int CallsUsedToday { get { return CallsToday(); } }
         public static readonly Dictionary<string, List<double>> Hist = new Dictionary<string, List<double>>();   // the widget's little graph: the last 40 prices seen
@@ -444,7 +502,7 @@ namespace AdeeboMeter
         {
             var ix = IndexList.FirstOrDefault(i => i[0] == sym); if (ix != null) return ix[4];
             string u = (sym ?? "").ToUpperInvariant();
-            foreach (var p in new[] { new[] { ".TO", "Toronto" }, new[] { ".V", "Toronto" }, new[] { ".NE", "Toronto" }, new[] { ".CN", "Toronto" }, new[] { ".L", "London" }, new[] { ".T", "Tokyo" }, new[] { ".SS", "Shanghai" }, new[] { ".SZ", "Shanghai" }, new[] { ".HK", "Hong Kong" }, new[] { ".NS", "Mumbai" }, new[] { ".BO", "Mumbai" }, new[] { ".DE", "Frankfurt" }, new[] { ".F", "Frankfurt" }, new[] { ".PA", "Paris" } })
+            foreach (var p in new[] { new[] { ".TO", "Toronto" }, new[] { ".V", "Toronto" }, new[] { ".NE", "Toronto" }, new[] { ".CN", "Toronto" }, new[] { ".L", "London" }, new[] { ".T", "Tokyo" }, new[] { ".SS", "Shanghai" }, new[] { ".SZ", "Shanghai" }, new[] { ".HK", "Hong Kong" }, new[] { ".NS", "Mumbai" }, new[] { ".BO", "Mumbai" }, new[] { ".DE", "Frankfurt" }, new[] { ".F", "Frankfurt" }, new[] { ".PA", "Paris" }, new[] { ".MC", "Madrid" }, new[] { ".MX", "Mexico City" }, new[] { ".SR", "Riyadh" }, new[] { ".WA", "Warsaw" } })
                 if (u.EndsWith(p[0], StringComparison.Ordinal)) return p[1];
             return "New York";
         }
@@ -541,6 +599,7 @@ namespace AdeeboMeter
             if (ix != null) { q.Name = ix[1]; q.Region = ix[2]; q.Ccy = ix[3]; }
             if (fu != null) { q.Name = fu[1]; q.Unit = fu[2]; q.Ccy = "USD"; }
             if (ix == null && fu == null) { var nm = Regex.Match(json, "\"name\"\\s*:\\s*\"([^\"]{1,60})\""); q.Name = nm.Success ? nm.Groups[1].Value : sym; }   // a typed symbol: the company's name
+            Range(q, num("dayLow"), num("dayHigh"));
             return q;
         }
     }

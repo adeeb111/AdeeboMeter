@@ -324,7 +324,7 @@ namespace AdeeboMeter
             }
             y = r.Bottom + 16 * S;
             // where the scores come from
-            var sr = new RectangleF(x, y, w, 210 * S); Paper.Desk(g, sr);
+            var sr = new RectangleF(x, y, w, 290 * S); Paper.Desk(g, sr);
             float sy = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Where the Scores Come From", L.T("fetched only while a Sports page is open, every 5 minutes at most")) + 8 * S;
             foreach (var src in new[] { new[] { "hockey", L.T("Hockey · the NHL's public feed") }, new[] { "football", Sports.HasKey("football") ? L.T("Football · football-data.org") : L.T("Football · ESPN's scoreboards (or your own key)") }, new[] { "cricket", L.T("Cricket · CricketData") }, new[] { "news", L.T("Headlines · BBC Sport") } })
             {
@@ -336,7 +336,20 @@ namespace AdeeboMeter
                 if (src[0] == "football" || src[0] == "cricket") { var kb = MkSpButton(g, keyed ? L.T("Change key...") : L.T("Add my key..."), x + w - 170 * S, sy - 8 * S, false); string sp = src[0]; Act(sportsCanvas, kb, delegate { AskSportKey(sp); sportsCanvas.Invalidate(); }); }
                 sy += 40 * S;
             }
-            return sr.Bottom + 16 * S;
+            // 1.1.7 (D7): the football leagues - your market's lead (marked), the classic ones, and any other you turn on
+            MkSpText(g, string.Format(CultureInfo.CurrentCulture, L.T("Football leagues · {0} first"), MyMarket.Name(MyMarket.Current)), Paper.Body, Paper.Ink, x + 16 * S, sy); sy += 30 * S;
+            float lx = x + 16 * S; var onL = MyMarket.LeaguesOn().Select(l => l[0]).ToList();
+            foreach (var lg in MyMarket.Leagues)
+            {
+                bool on = onL.Contains(lg[0]), lead = MyMarket.LeadLeague(lg[0]); string txt = L.T(lg[1]) + (lead ? " ★" : "");
+                var ts = g.MeasureString(txt, Draw.fSmall); var lr = new RectangleF(lx, sy, ts.Width + 24 * S, 30 * S);
+                if (lr.Right > x + w - 16 * S) { lx = x + 16 * S; sy += 36 * S; lr = new RectangleF(lx, sy, lr.Width, lr.Height); }
+                if (on) Theme.Fill(g, lr, 15 * S, Paper.Navy); else { Theme.Fill(g, lr, 15 * S, Paper.DeskBg); Theme.Stroke(g, lr, 15 * S, Paper.Line, 1); }
+                MkSpText(g, txt, Draw.fSmall, on ? Color.White : Paper.Ink, lr.X + 12 * S, lr.Y + (lr.Height - ts.Height) / 2);
+                string code = lg[0]; Act(sportsCanvas, lr, delegate { MyMarket.ToggleLeague(code); Sports.LeaguesChanged(); sportsCanvas.Invalidate(); }); lx = lr.Right + 8 * S;
+            }
+            sy += 40 * S;
+            return Math.Max(sr.Bottom, sy) + 16 * S;
         }
 
         // ---------- Live Scores / Fixtures

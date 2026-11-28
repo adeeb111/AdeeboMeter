@@ -5782,3 +5782,56 @@ PCIe links and calculator	Enlaces PCIe y calculadora
 USB tree and power budget	Árbol USB y presupuesto de energía
 What my screens say about themselves (EDID)	Lo que mis pantallas dicen de sí mismas (EDID)
 Which DLLs does a program need?	¿Qué DLL necesita un programa?
+A change is how much that currency's price in {0} moved. Click a row to chart it.	Un cambio es cuánto se movió el precio de esa moneda {0}. Haz clic en una fila para verla en el gráfico.
+At today's reference rate. Banks and exchange shops add a margin.	Al tipo de referencia de hoy. Bancos y casas de cambio añaden un margen.
+Currencies and commodities	Divisas y materias primas
+Custom market	Mercado personalizado
+Custom market...	Mercado personalizado…
+Energy and the {0}	La energía y el {0}
+Energy prices and the {0} against the {1}, over the same time, set to 100 at the start.	Los precios de la energía y el/la {0} frente al/a la {1}, en el mismo periodo, con base 100 al inicio.
+Football leagues · {0} first	Ligas de fútbol · {0} primero
+In {0}	En {0}
+Only today's rate is available for this pair - no history to chart.	Solo hay el tipo de hoy para este par: no hay historial que graficar.
+Rates and Prices in {0}	Tipos y precios: {0}
+The {0} moved {1:0.0}% against the {2} this week.	El {0} se movió un {1:0.0} % frente al {2} esta semana.
+Today's numbers, in plain words.	Los números de hoy, en palabras sencillas.
+Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	El tipo de tu banco central y la inflación aún no están en una fuente gratuita sin clave: este bloque solo se rellena para Canadá.
+Your currency	Tu moneda
+Your market:	Tu mercado:
+Your market	Tu mercado
+a rise abroad can grow or shrink once it's turned into {0}	una subida en el extranjero puede crecer o encogerse al pasarla {0}
+closed	cerrado
+holidays not checked	festivos sin comprobar
+in {0}	en {0}
+local shares aren't on the free price services	las acciones locales no están en los servicios de precios gratuitos
+lunch break	pausa de mediodía
+on its way...	en camino…
+one unit, in {0}	una unidad, en {0}
+today's rate only	solo el tipo de hoy
+vs {0}	frente a {0}
+{0} Firms	El {0} se afianza
+{0} Holds Steady	El {0} se mantiene
+{0} Slips	El {0} cede
+{0} {1} {2:0.0}% against the {3} this week.	{0} {1} un {2:0.0} % frente al {3} esta semana.
+{0}, in {1}	{0}, en {1}
+{0}: prices in {1}, {2}'s hours and holidays, its football first. Also on the Markets page itself.	{0}: precios en {1}, horario y festivos de {2}, su fútbol primero. También en la propia página Mercados.
+United States	Estados Unidos
+United Kingdom	Reino Unido
+Bangladesh	Bangladés
+France	Francia
+Mexico	México
+Spain	España
+Saudi Arabia	Arabia Saudí
+China	China
+Germany	Alemania
+Japan	Japón
+London	Londres
+Dhaka	Daca
+Paris	París
+Mexico City	Ciudad de México
+Madrid	Madrid
+Riyadh	Riad
+Shanghai	Shanghái
+Frankfurt	Fráncfort
+Tokyo	Tokio
+Warsaw	Varsovia

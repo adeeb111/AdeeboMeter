@@ -151,7 +151,7 @@ namespace AdeeboMeter
 
         // ---------- currencies, end of day: the Bank of Canada's daily rates (official, free, no key)
         // One fetch a day, after the Bank publishes (about 16:30 Eastern), only while the Trading page is open.
-        public static string[] Fx { get { return MarketData.MyFx().ToArray(); } }   // 1.1.6: the person's own list (Markets › Currencies › Add)
+        public static string[] Fx { get { return MarketData.MyFx().Concat(new[] { "USD" }).Where(MarketData.Boc).Distinct().ToArray(); } }   // 1.1.7: the Bank's own list only, USD always (your market's home currency is left out of MyFx)   // 1.1.6: the person's own list (Markets › Currencies › Add)
         public sealed class Rate { public string Code; public DateTime Day; public double Cad, Prev = double.NaN; }
         public static List<Rate> Rates = new List<Rate>(); public static string FxNote = ""; static volatile bool fxBusy; static bool fxLoaded; static DateTime fxTried = DateTime.MinValue;
         static string FxFile { get { return Path.Combine(Program.DataDir, "fx.txt"); } }

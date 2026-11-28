@@ -5782,3 +5782,56 @@ PCIe links and calculator	PCIe লিংক ও ক্যালকুলেট�
 USB tree and power budget	USB ট্রি ও পাওয়ার বাজেট
 What my screens say about themselves (EDID)	আমার স্ক্রিন নিজের সম্পর্কে কী বলে (EDID)
 Which DLLs does a program need?	একটি প্রোগ্রামের কোন DLL লাগে?
+A change is how much that currency's price in {0} moved. Click a row to chart it.	পরিবর্তন মানে সেই মুদ্রার দাম {0} কতটা নড়েছে। চার্টে দেখতে একটি সারিতে ক্লিক করুন।
+At today's reference rate. Banks and exchange shops add a margin.	আজকের রেফারেন্স রেটে। ব্যাংক আর মানি এক্সচেঞ্জ একটা মার্জিন যোগ করে।
+Currencies and commodities	মুদ্রা ও পণ্য
+Custom market	নিজের মতো বাজার
+Custom market...	নিজের মতো বাজার…
+Energy and the {0}	জ্বালানি ও {0}
+Energy prices and the {0} against the {1}, over the same time, set to 100 at the start.	জ্বালানির দাম আর {1}-এর বিপরীতে {0}, একই সময়ে, শুরুতে ১০০ ধরে।
+Football leagues · {0} first	ফুটবল লিগ · আগে {0}
+In {0}	{0}-এ
+Only today's rate is available for this pair - no history to chart.	এই জোড়ার শুধু আজকের রেট আছে - চার্ট করার মতো ইতিহাস নেই।
+Rates and Prices in {0}	হার ও দাম: {0}
+The {0} moved {1:0.0}% against the {2} this week.	এই সপ্তাহে {2}-এর বিপরীতে {0} {1:0.0}% নড়েছে।
+Today's numbers, in plain words.	আজকের সংখ্যা, সহজ কথায়।
+Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	আপনার কেন্দ্রীয় ব্যাংকের হার আর মূল্যস্ফীতি এখনও বিনা কী-র ফ্রি উৎসে নেই - এই অংশ শুধু কানাডার জন্য ভরে।
+Your currency	আপনার মুদ্রা
+Your market:	আপনার বাজার:
+Your market	আপনার বাজার
+a rise abroad can grow or shrink once it's turned into {0}	বিদেশের উত্থান {0} বদলালে বাড়তে বা কমতে পারে
+closed	বন্ধ
+holidays not checked	ছুটি যাচাই করা হয়নি
+in {0}	{0}-এ
+local shares aren't on the free price services	স্থানীয় শেয়ার ফ্রি দামের সেবায় নেই
+lunch break	দুপুরের বিরতি
+on its way...	আসছে…
+one unit, in {0}	এক একক, {0}-এ
+today's rate only	শুধু আজকের রেট
+vs {0}	{0}-এর বিপরীতে
+{0} Firms	{0} মজবুত
+{0} Holds Steady	{0} স্থির
+{0} Slips	{0} পিছলাল
+{0} {1} {2:0.0}% against the {3} this week.	এই সপ্তাহে {3}-এর বিপরীতে {0} {2:0.0}% {1}।
+{0}, in {1}	{0}, {1}-এ
+{0}: prices in {1}, {2}'s hours and holidays, its football first. Also on the Markets page itself.	{0}: দাম {1}-এ, {2}-এর সময় ও ছুটি, আগে সেখানকার ফুটবল। মার্কেটস পাতাতেও বদলানো যায়।
+United States	যুক্তরাষ্ট্র
+United Kingdom	যুক্তরাজ্য
+Bangladesh	বাংলাদেশ
+France	ফ্রান্স
+Mexico	মেক্সিকো
+Spain	স্পেন
+Saudi Arabia	সৌদি আরব
+China	চীন
+Germany	জার্মানি
+Japan	জাপান
+London	লন্ডন
+Dhaka	ঢাকা
+Paris	প্যারিস
+Mexico City	মেক্সিকো সিটি
+Madrid	মাদ্রিদ
+Riyadh	রিয়াদ
+Shanghai	সাংহাই
+Frankfurt	ফ্রাঙ্কফুর্ট
+Tokyo	টোকিও
+Warsaw	ওয়ারশ

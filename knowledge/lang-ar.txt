@@ -5782,3 +5782,56 @@ PCIe links and calculator	وصلات PCIe والحاسبة
 USB tree and power budget	شجرة USB وميزانية الطاقة
 What my screens say about themselves (EDID)	ما تقوله شاشاتي عن نفسها (EDID)
 Which DLLs does a program need?	ما ملفات DLL التي يحتاجها البرنامج؟
+A change is how much that currency's price in {0} moved. Click a row to chart it.	التغيّر هو مقدار تحرّك سعر تلك العملة {0}. انقر على صف لعرضه في الرسم.
+At today's reference rate. Banks and exchange shops add a margin.	بسعر المرجع اليوم. تضيف البنوك ومحلات الصرافة هامشًا.
+Currencies and commodities	العملات والسلع
+Custom market	سوق مخصّص
+Custom market...	سوق مخصّص…
+Energy and the {0}	الطاقة و{0}
+Energy prices and the {0} against the {1}, over the same time, set to 100 at the start.	أسعار الطاقة و{0} مقابل {1} خلال الفترة نفسها، مع ضبطهما على 100 في البداية.
+Football leagues · {0} first	دوريات كرة القدم · {0} أولًا
+In {0}	بـ {0}
+Only today's rate is available for this pair - no history to chart.	يتوفر سعر اليوم فقط لهذا الزوج - لا يوجد سجل لرسمه.
+Rates and Prices in {0}	الأسعار والفائدة: {0}
+The {0} moved {1:0.0}% against the {2} this week.	تحرّك {0} بنسبة {1:0.0}% مقابل {2} هذا الأسبوع.
+Today's numbers, in plain words.	أرقام اليوم بكلمات بسيطة.
+Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	سعر الفائدة لدى بنكك المركزي والتضخّم غير متاحين بعد من مصدر مجاني بلا مفتاح - هذا القسم يمتلئ لكندا فقط.
+Your currency	عملتك
+Your market:	سوقك:
+Your market	سوقك
+a rise abroad can grow or shrink once it's turned into {0}	قد يكبر الارتفاع في الخارج أو يصغر بعد تحويله {0}
+closed	مغلق
+holidays not checked	العطل غير مُتحقّق منها
+in {0}	بـ {0}
+local shares aren't on the free price services	الأسهم المحلية غير موجودة في خدمات الأسعار المجانية
+lunch break	استراحة الغداء
+on its way...	في الطريق…
+one unit, in {0}	وحدة واحدة بـ {0}
+today's rate only	سعر اليوم فقط
+vs {0}	مقابل {0}
+{0} Firms	{0} يتماسك
+{0} Holds Steady	{0} مستقر
+{0} Slips	{0} يتراجع
+{0} {1} {2:0.0}% against the {3} this week.	{0} {1} بنسبة {2:0.0}% مقابل {3} هذا الأسبوع.
+{0}, in {1}	{0} بـ {1}
+{0}: prices in {1}, {2}'s hours and holidays, its football first. Also on the Markets page itself.	{0}: الأسعار بـ {1}، ساعات {2} وعطلها، وكرة قدمها أولًا. ومتاح أيضًا في صفحة الأسواق نفسها.
+United States	الولايات المتحدة
+United Kingdom	المملكة المتحدة
+Bangladesh	بنغلاديش
+France	فرنسا
+Mexico	المكسيك
+Spain	إسبانيا
+Saudi Arabia	السعودية
+China	الصين
+Germany	ألمانيا
+Japan	اليابان
+London	لندن
+Dhaka	دكا
+Paris	باريس
+Mexico City	مكسيكو سيتي
+Madrid	مدريد
+Riyadh	الرياض
+Shanghai	شنغهاي
+Frankfurt	فرانكفورت
+Tokyo	طوكيو
+Warsaw	وارسو

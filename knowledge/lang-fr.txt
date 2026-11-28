@@ -5794,3 +5794,56 @@ PCIe links and calculator	Liaisons PCIe et calculateur
 USB tree and power budget	Arbre USB et budget d’alimentation
 What my screens say about themselves (EDID)	Ce que mes écrans disent d’eux-mêmes (EDID)
 Which DLLs does a program need?	De quelles DLL un programme a-t-il besoin ?
+A change is how much that currency's price in {0} moved. Click a row to chart it.	Une variation, c’est le mouvement du prix de cette devise {0}. Cliquez sur une ligne pour la tracer.
+At today's reference rate. Banks and exchange shops add a margin.	Au taux de référence du jour. Les banques et bureaux de change ajoutent une marge.
+Currencies and commodities	Devises et matières premières
+Custom market	Marché personnalisé
+Custom market...	Marché personnalisé…
+Energy and the {0}	L’énergie et le {0}
+Energy prices and the {0} against the {1}, over the same time, set to 100 at the start.	Les prix de l’énergie et le/la {0} face au/à la {1}, sur la même période, ramenés à 100 au départ.
+Football leagues · {0} first	Ligues de football · {0} d’abord
+In {0}	En {0}
+Only today's rate is available for this pair - no history to chart.	Seul le taux du jour est disponible pour cette paire - pas d’historique à tracer.
+Rates and Prices in {0}	Taux et prix : {0}
+The {0} moved {1:0.0}% against the {2} this week.	Le {0} a bougé de {1:0.0} % face au {2} cette semaine.
+Today's numbers, in plain words.	Les chiffres du jour, en clair.
+Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only.	Le taux de votre banque centrale et l’inflation ne sont pas encore sur une source gratuite sans clé - ce bloc ne se remplit que pour le Canada.
+Your currency	Votre devise
+Your market:	Votre marché :
+Your market	Votre marché
+a rise abroad can grow or shrink once it's turned into {0}	une hausse à l’étranger peut grandir ou fondre une fois convertie {0}
+closed	fermé
+holidays not checked	jours fériés non vérifiés
+in {0}	en {0}
+local shares aren't on the free price services	les actions locales ne sont pas sur les services de prix gratuits
+lunch break	pause déjeuner
+on its way...	en route…
+one unit, in {0}	une unité, en {0}
+today's rate only	taux du jour seulement
+vs {0}	face à {0}
+{0} Firms	Le {0} se raffermit
+{0} Holds Steady	Le {0} reste stable
+{0} Slips	Le {0} recule
+{0} {1} {2:0.0}% against the {3} this week.	{0} {1} de {2:0.0} % face au {3} cette semaine.
+{0}, in {1}	{0}, en {1}
+{0}: prices in {1}, {2}'s hours and holidays, its football first. Also on the Markets page itself.	{0} : prix en {1}, horaires et jours fériés de {2}, son football d’abord. Aussi sur la page Marchés elle-même.
+United States	États-Unis
+United Kingdom	Royaume-Uni
+Bangladesh	Bangladesh
+France	France
+Mexico	Mexique
+Spain	Espagne
+Saudi Arabia	Arabie saoudite
+China	Chine
+Germany	Allemagne
+Japan	Japon
+London	Londres
+Dhaka	Dacca
+Paris	Paris
+Mexico City	Mexico
+Madrid	Madrid
+Riyadh	Riyad
+Shanghai	Shanghai
+Frankfurt	Francfort
+Tokyo	Tokyo
+Warsaw	Varsovie

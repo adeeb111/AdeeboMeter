@@ -1,4 +1,4 @@
-// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
+﻿// AdeeboMeter - part of the source; see src/Program.cs for the overview and docs/THEORY-OF-EVERYTHING.md for the story.
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,7 +15,7 @@ namespace AdeeboMeter
     // key). Fetched only while this page is open and the person has turned the numbers on. Numbers only - never advice.
     sealed partial class FullView
     {
-        string mkTab = "", mkFx = "USD", mkRange = "1y", mkCvFrom = "CAD", mkCvTo = "USD"; double mkCvAmt = 500;
+        string mkTab = "", mkFx = "USD", mkRange = "1y", mkCvFrom = "", mkCvTo = "USD"; double mkCvAmt = 500;
         double svStart = 5000, svMonthly = 200, svRate = 5, svYears = 20; double abAmt = 2000; string abCcy = "EUR";
         static readonly string[][] MkTabs = { new[] { "overview", "Overview" }, new[] { "world", "World Markets" }, new[] { "fx", "Currencies" }, new[] { "commod", "Commodities" }, new[] { "line", "Line Check", "hl" }, new[] { "casual", "Casual Investor" } };
         Monitor MkMon { get { return M; } }
@@ -23,11 +23,12 @@ namespace AdeeboMeter
         void MarketsFetch()
         {
             Action again = () => { try { if (!IsDisposed) BeginInvoke((Action)delegate { if (tradeCanvas != null) tradeCanvas.Invalidate(); }); } catch (Exception e) { if (!(e is InvalidOperationException || e is ObjectDisposedException)) throw; } };
+            MyMarket.Settle();   // 1.1.7 (D7): the first visit writes the market Windows' region points to
             if (!Cfg.TradeFx || Policy.NoOnline) return;
-            Trading.LoadFx(); Trading.FetchFx(again);
-            MarketData.Fetch("CANADA", again); MarketData.Fetch("BCPI", again);
-            if (mkTab == "fx" || mkTab == "casual" || mkTab == "overview") foreach (var c in MarketData.MyFx().Concat(new[] { mkFx, abCcy }).Distinct()) MarketData.Fetch("FX:" + c, again);
-            if (mkTab == "commod") MarketData.Fetch("FX:USD", again);
+            if (MyMarket.Canada) { Trading.LoadFx(); Trading.FetchFx(again); MarketData.Fetch("CANADA", again); }
+            MarketData.Fetch("BCPI", again);
+            if (mkTab == "fx" || mkTab == "casual" || mkTab == "overview") foreach (var c in MarketData.MyFx().Concat(new[] { mkFx, abCcy, MyMarket.Anchor }).Distinct()) MarketData.FetchFx(c, again);
+            if (mkTab == "commod") MarketData.FetchFx(MyMarket.Anchor, again);
             if (MarketData.HasQuoteKey() && (mkTab == "world" || mkTab == "overview")) MarketData.FetchQuotes(false, again);
             if (MarketData.HasQuoteKey() && mkTab == "overview") MarketData.FetchFollow(again);
             if (MarketData.HasQuoteKey() && mkTab == "commod") MarketData.FetchQuotes(true, again);
@@ -44,6 +45,7 @@ namespace AdeeboMeter
             y = Paper.Masthead(g, x, y, w, Kit.Sent("THE MARKETS PAGE"), L.T("AdeeboMeter Daily Financial Edition"), L.T("Your PC · Your Network · Your Markets"), L.T("All in One Place"), mkTab != "overview");
             List<Tuple<string, RectangleF>> hits; y = Paper.TabBar(g, x, y, w, MkTabs, mkTab, out hits);
             foreach (var h in hits) { string id = h.Item1; Act(tradeCanvas, h.Item2, delegate { mkTab = id; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); }); }
+            y = MkMarketBar(g, x, y + 4 * S, w);
             y = TryThis(g, tradeCanvas, "trade", x, y + 6 * S, w, true);
             y = NowLine(g, tradeCanvas, x, y, w);   // router, internet, Wi-Fi and how busy the PC is, live (back 24 Nov)
             if (mkTab != "line") y = LineStrip(g, x, y, w);
@@ -62,10 +64,48 @@ namespace AdeeboMeter
             Need(tradeCanvas, y);
         }
 
+        // ---------- 1.1.7 (D7): "Your market: Canada ▾" - change it right here; the whole page redraws in that market
+        float MkMarketBar(Graphics g, float x, float y, float w)
+        {
+            var p = MyMarket.Current; string lab = L.T("Your market:"); float lw = g.MeasureString(lab, Paper.Small).Width;
+            MkText(g, lab, Paper.Small, Paper.Muted, x, y + 9 * S);
+            var b = MkButton(g, MyMarket.Name(p) + "  ▾", x + lw + 8 * S, y, false); Act(tradeCanvas, b, delegate { PickMarket(b); });
+            var ex = MarketData.Exchanges.FirstOrDefault(e => e.Name == p.Exchange); string st = ex == null ? "" : MarketData.State(ex, DateTime.UtcNow);
+            var local = ex == null ? DateTime.Today : MarketData.LocalTo(ex, DateTime.UtcNow); string hol = local == DateTime.MinValue ? null : p.Exchange == "New York" || p.Exchange == "Toronto" ? Markets.Holiday(local, p.Exchange == "New York" ? "us" : "ca") : MyMarket.Holiday(p.Exchange, local);
+            var bits = new List<string> { p.Ccy, L.T(p.Exchange) + " " + (st == "open" ? L.T("open now") : st == "lunch" ? L.T("lunch break") : L.T("closed now")) };
+            if (!string.IsNullOrEmpty(hol) && hol != "Weekend") bits.Add(L.T(hol));
+            if (hol == null && st != "unknown") bits.Add(L.T("holidays not checked"));
+            if (p.Index == "") bits.Add(L.T("local shares aren't on the free price services"));
+            MkText(g, string.Join(" · ", bits), Paper.Small, Paper.Muted, b.Right + 12 * S, y + 9 * S);
+            return b.Bottom + 10 * S;
+        }
+        void PickMarket(RectangleF at)
+        {
+            var m = Menus.Make();
+            foreach (var p in MyMarket.All)
+            {
+                string id = p.Id; var it = new ToolStripMenuItem(L.T(p.Name) + "  ·  " + p.Ccy) { Checked = MyMarket.Id == id };
+                it.Click += delegate { MyMarket.Set(id, null, null); MarketData.QuoteKeyChanged(); mkFx = MarketData.MyFx().First(); tradeCanvas.Invalidate(); }; m.Items.Add(it);
+            }
+            m.Items.Add(new ToolStripSeparator());
+            var cu = new ToolStripMenuItem(L.T("Custom market...") + (MyMarket.Id == "custom" ? "  (" + MyMarket.Home + ")" : "")) { Checked = MyMarket.Id == "custom" };
+            cu.Click += delegate
+            {
+                var c = PickCurrency(L.T("Your currency"), null); if (c == null) return;
+                var em = Menus.Make();
+                foreach (var e in MarketData.Exchanges) { string n = e.Name; em.Items.Add(L.T(n) + "  ·  " + e.Ccy, null, delegate { MyMarket.Set("custom", c, n); MarketData.QuoteKeyChanged(); mkFx = MarketData.MyFx().First(); tradeCanvas.Invalidate(); }); }
+                em.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)em.Dispose); else em.Dispose(); } catch (InvalidOperationException) { em.Dispose(); } };
+                em.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
+            };
+            m.Items.Add(cu);
+            m.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)m.Dispose); else m.Dispose(); } catch (InvalidOperationException) { m.Dispose(); } };
+            m.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
+        }
+
         float MkTurnOn(Graphics g, float x, float y, float w)
         {
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, L.T("Currencies, commodities and Canada's rates"), null);
+            Paper.DeskTitle(g, x + 18 * S, y + 14 * S, MyMarket.Canada ? L.T("Currencies, commodities and Canada's rates") : L.T("Currencies and commodities"), null);
             using (var ink = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on."), Paper.Body, ink, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
             if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); }); }
             return r.Bottom + 16 * S;
@@ -84,11 +124,17 @@ namespace AdeeboMeter
 
         // ---------- shared pieces
         static string F4(double v) { return double.IsNaN(v) ? "-" : v >= 100 ? v.ToString("N1", CultureInfo.CurrentCulture) : v >= 1 ? v.ToString("0.0000", CultureInfo.CurrentCulture) : v >= 0.01 ? v.ToString("0.00000", CultureInfo.CurrentCulture) : v.ToString("0.000000", CultureInfo.CurrentCulture); }
-        static double FxNow(string c) { if (c == "CAD") return 1; var s = MarketData.Get("FX:" + c); if (s != null && s.Count > 0) return s.Last; lock (Trading.k) { var r = Trading.Rates.FirstOrDefault(z => z.Code == c); return r == null ? double.NaN : r.Cad; } }
+        // 1.1.7 (D7): every number below is in your market's currency (Hm); Canada keeps the Bank of Canada's own day-to-day list as before
+        static string Hm { get { return MyMarket.Home; } }
+        static string InHome { get { return string.Format(CultureInfo.CurrentCulture, L.T("In {0}"), Hm); } }
+        static string HomeWords { get { return MyMarket.Canada ? L.T("in Canadian dollars") : string.Format(CultureInfo.CurrentCulture, L.T("in {0}"), L.T(MyMarket.HomeName)); } }
+        static string Money(double v) { return MyMarket.Canada || Hm == "USD" ? "$" + v.ToString("N0", CultureInfo.CurrentCulture) : v.ToString("N0", CultureInfo.CurrentCulture) + " " + Hm; }
+        static string RateSrc(string c) { return L.T(MarketData.FxSource(c)); }
+        static double FxNow(string c) { if (c == Hm) return 1; var s = MarketData.FxIn(c); if (s != null && s.Count > 0) return s.Last; if (!MyMarket.Canada) return double.NaN; lock (Trading.k) { var r = Trading.Rates.FirstOrDefault(z => z.Code == c); return r == null ? double.NaN : r.Cad; } }
         static double FxDay(string c)
         {
-            lock (Trading.k) { var r = Trading.Rates.FirstOrDefault(z => z.Code == c); if (r != null && !double.IsNaN(r.Prev)) return MarketData.Pct(r.Cad, r.Prev); }
-            var s = MarketData.Get("FX:" + c); return s != null && s.Count > 1 ? MarketData.Pct(s.V[s.Count - 1], s.V[s.Count - 2]) : double.NaN;
+            if (MyMarket.Canada) lock (Trading.k) { var r = Trading.Rates.FirstOrDefault(z => z.Code == c); if (r != null && !double.IsNaN(r.Prev)) return MarketData.Pct(r.Cad, r.Prev); }
+            var s = MarketData.FxIn(c); return s != null && s.Count > 1 ? MarketData.Pct(s.V[s.Count - 1], s.V[s.Count - 2]) : double.NaN;
         }
         // Keep It Light (R2-068: the two ticks did nothing): once a minute at most - a Friday-evening note in the corner, and a note
         // when a currency on your list moved more than 2% in a week (once a week each). From the numbers already kept; a fetch only
@@ -104,15 +150,15 @@ namespace AdeeboMeter
                 if (Cfg.CasualMoves)
                     foreach (var c in MarketData.MyFx())
                     {
-                        if (Cfg.TradeFx && !Policy.NoOnline) MarketData.Fetch("FX:" + c, null); else MarketData.Load("FX:" + c);
+                        if (Cfg.TradeFx && !Policy.NoOnline) MarketData.FetchFx(c, null); else MarketData.LoadFx(c);
                         double ch = FxOver(c, 7); DateTime was;
                         if (double.IsNaN(ch) || Math.Abs(ch) <= 2 || (casualMoved.TryGetValue(c, out was) && (now - was).TotalDays < 7)) continue;
                         casualMoved[c] = now;
-                        Alerts.Raise("casualfx", string.Format(CultureInfo.CurrentCulture, L.T("The {0} moved {1:0.0}% against the Canadian dollar this week."), c, ch), 0);
+                        Alerts.Raise("casualfx", MyMarket.Canada ? string.Format(CultureInfo.CurrentCulture, L.T("The {0} moved {1:0.0}% against the Canadian dollar this week."), c, ch) : string.Format(CultureInfo.CurrentCulture, L.T("The {0} moved {1:0.0}% against the {2} this week."), c, ch, L.T(MyMarket.HomeName)), 0);
                     }
                 if (Cfg.CasualFriday && now.DayOfWeek == DayOfWeek.Friday && now.Hour >= 17 && casualFriDone.Date != now.Date)
                 {
-                    foreach (var c in new[] { "USD" }.Concat(MarketData.MyFx())) MarketData.Load("FX:" + c);
+                    foreach (var c in new[] { MyMarket.Anchor }.Concat(MarketData.MyFx())) MarketData.LoadFx(c);
                     var facts = MkWeekFacts(); if (facts.Count == 0) return;
                     casualFriDone = now;
                     Alerts.Raise("casualfri", MkHeadline() + " - " + facts[0].Item2, 0);
@@ -121,7 +167,7 @@ namespace AdeeboMeter
             catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("keep it light: " + e.Message); }
         }
         // a kept series that stopped more than 10 days ago has no "this week" (U2 #2: the numbers turned off, weeks back)
-        static double FxOver(string c, int days) { var s = MarketData.Get("FX:" + c); if (s == null || s.LastDay < DateTime.Today.AddDays(-10)) return double.NaN; return MarketData.ChangeOver(s, TimeSpan.FromDays(days)); }
+        static double FxOver(string c, int days) { var s = MarketData.FxIn(c); if (s == null || s.LastDay < DateTime.Today.AddDays(-10)) return double.NaN; return MarketData.ChangeOver(s, TimeSpan.FromDays(days)); }
         void MkText(Graphics g, string t, Font f, Color c, float x, float y) { using (var b = new SolidBrush(c)) g.DrawString(t, f, b, x, y); }
         void MkTextR(Graphics g, string t, Font f, Color c, float right, float y) { var s = g.MeasureString(t, f); using (var b = new SolidBrush(c)) g.DrawString(t, f, b, right - s.Width, y); }
         RectangleF MkButton(Graphics g, string t, float x, float y, bool primary)
@@ -167,7 +213,7 @@ namespace AdeeboMeter
         }
         void PickFrom(RectangleF at, IEnumerable<string> codes, Action<string> pick)
         {
-            var m = Menus.Make(); foreach (var c in codes) { string cc = c; m.Items.Add(cc + "  " + (cc == "CAD" ? L.T("Canadian dollar") : L.T(MarketData.FxName(cc))), null, delegate { pick(cc); tradeCanvas.Invalidate(); }); }
+            var m = Menus.Make(); foreach (var c in codes) { string cc = c; m.Items.Add(cc + "  " + L.T(MarketData.FxName(cc)), null, delegate { pick(cc); tradeCanvas.Invalidate(); }); }
             m.Closed += delegate { try { if (!IsDisposed) BeginInvoke((Action)m.Dispose); else m.Dispose(); } catch (InvalidOperationException) { m.Dispose(); } };   /* review 1.1.6 U1 #11 */ m.Show(tradeCanvas, new Point((int)at.X, (int)(at.Bottom + tradeCanvas.AutoScrollPosition.Y)));
         }
         double? AskNumber(string title, double now)
@@ -183,17 +229,19 @@ namespace AdeeboMeter
         // ---------- the week in plain words (pure facts from the numbers - never a forecast)
         string MkHeadline()
         {
-            double usdWk = FxOver("USD", 7); var groups = new[] { "ENER", "MTLS", "AGRI", "FOPR", "FISH" }.Select(c => Tuple.Create(c, MarketData.ChangeOver(MarketData.Get(c), TimeSpan.FromDays(7)))).Where(t => !double.IsNaN(t.Item2)).OrderByDescending(t => Math.Abs(t.Item2)).ToList();
+            double usdWk = FxOver(MyMarket.Anchor, 7); var groups = new[] { "ENER", "MTLS", "AGRI", "FOPR", "FISH" }.Select(c => Tuple.Create(c, MarketData.ChangeOver(MarketData.Get(c), TimeSpan.FromDays(7)))).Where(t => !double.IsNaN(t.Item2)).OrderByDescending(t => Math.Abs(t.Item2)).ToList();
             if (double.IsNaN(usdWk) && groups.Count == 0) return L.T("The Week in Numbers");
-            string loonie = double.IsNaN(usdWk) ? null : usdWk < -0.15 ? L.T("Loonie Firms") : usdWk > 0.15 ? L.T("Loonie Slips") : L.T("Loonie Holds Steady");
+            string loonie = double.IsNaN(usdWk) ? null : MyMarket.Canada ? (usdWk < -0.15 ? L.T("Loonie Firms") : usdWk > 0.15 ? L.T("Loonie Slips") : L.T("Loonie Holds Steady"))
+                : string.Format(CultureInfo.CurrentCulture, usdWk < -0.15 ? L.T("{0} Firms") : usdWk > 0.15 ? L.T("{0} Slips") : L.T("{0} Holds Steady"), Hm);
             string com = groups.Count == 0 ? null : L.T(MarketData.GroupInfo[groups[0].Item1][0]) + " " + (groups[0].Item2 >= 0 ? L.T("Leads Commodities") : L.T("Weighs on Commodities"));
             return loonie != null && com != null ? loonie + " " + L.T("as") + " " + com : loonie ?? com;
         }
         List<Tuple<int, string>> MkWeekFacts()
         {
             var l = new List<Tuple<int, string>>();
-            double usdWk = FxOver("USD", 7);
-            if (!double.IsNaN(usdWk)) l.Add(Tuple.Create(usdWk < 0 ? 1 : usdWk > 0 ? -1 : 0, string.Format(CultureInfo.CurrentCulture, L.T("Loonie {0} {1:0.0}% against the US dollar this week."), usdWk <= 0 ? L.T("up") : L.T("down"), Math.Abs(usdWk))));
+            double usdWk = FxOver(MyMarket.Anchor, 7);
+            if (!double.IsNaN(usdWk)) l.Add(Tuple.Create(usdWk < 0 ? 1 : usdWk > 0 ? -1 : 0, MyMarket.Canada ? string.Format(CultureInfo.CurrentCulture, L.T("Loonie {0} {1:0.0}% against the US dollar this week."), usdWk <= 0 ? L.T("up") : L.T("down"), Math.Abs(usdWk))
+                : string.Format(CultureInfo.CurrentCulture, L.T("{0} {1} {2:0.0}% against the {3} this week."), Hm, usdWk <= 0 ? L.T("up") : L.T("down"), Math.Abs(usdWk), L.T(MarketData.FxName(MyMarket.Anchor)))));
             foreach (var c in new[] { "ENER", "FOPR", "MTLS", "AGRI" })
             {
                 var s = MarketData.Get(c); int st = MarketData.Streak(s); double wk = MarketData.ChangeOver(s, TimeSpan.FromDays(7));
@@ -202,7 +250,9 @@ namespace AdeeboMeter
                 if (l.Count >= 4) break;
             }
             var et = Trading.EasternNow();
-            for (int d = 1; d <= 7 && l.Count < 5; d++) { var day = et.Date.AddDays(d); foreach (var v in new[] { "us", "ca" }) { var h = Markets.Holiday(day, v); if (h != null && h != "Weekend") l.Add(Tuple.Create(0, string.Format(CultureInfo.CurrentCulture, L.T("{0} closed {1} ({2})."), v == "us" ? L.T("New York") : L.T("Toronto"), day.ToString("dddd", CultureInfo.CurrentCulture), L.T(h)))); } }
+            for (int d = 1; d <= 7 && l.Count < 5; d++) { var day = et.Date.AddDays(d); foreach (var v in new[] { "us", "ca" }) { if (v == "ca" && !MyMarket.Canada) continue; var h = Markets.Holiday(day, v); if (h != null && h != "Weekend") l.Add(Tuple.Create(0, string.Format(CultureInfo.CurrentCulture, L.T("{0} closed {1} ({2})."), v == "us" ? L.T("New York") : L.T("Toronto"), day.ToString("dddd", CultureInfo.CurrentCulture), L.T(h)))); } }
+            string hx = MyMarket.Current.Exchange;   // your own exchange's closings, when it's not New York or Toronto
+            if (hx != "New York" && hx != "Toronto") for (int d = 1; d <= 7 && l.Count < 5; d++) { var day = DateTime.Today.AddDays(d); var h = MyMarket.Holiday(hx, day); if (!string.IsNullOrEmpty(h)) l.Add(Tuple.Create(0, string.Format(CultureInfo.CurrentCulture, L.T("{0} closed {1} ({2})."), L.T(hx), day.ToString("dddd", CultureInfo.CurrentCulture), L.T(h)))); }
             return l;
         }
 
@@ -215,11 +265,11 @@ namespace AdeeboMeter
             var head = MkHeadline(); var hs = g.MeasureString(head, Paper.Head1, (int)lw);
             MkText(g, "", Paper.Head1, Paper.Head, x, ly); using (var hb = new SolidBrush(Paper.Head)) g.DrawString(head, Paper.Head1, hb, new RectangleF(x, ly, lw, hs.Height + 4)); ly += hs.Height + 6 * S;
             var et = Trading.EasternNow(); bool open = Trading.MarketOpen(et);
-            string stand = (open ? L.T("Markets are open.") : et.DayOfWeek == DayOfWeek.Saturday || et.DayOfWeek == DayOfWeek.Sunday ? L.T("Markets are closed for the weekend.") : L.T("Markets are closed right now.")) + " " + L.T("The Bank of Canada's numbers, in plain words.");
+            string stand = (open ? L.T("Markets are open.") : et.DayOfWeek == DayOfWeek.Saturday || et.DayOfWeek == DayOfWeek.Sunday ? L.T("Markets are closed for the weekend.") : L.T("Markets are closed right now.")) + " " + (MyMarket.Canada ? L.T("The Bank of Canada's numbers, in plain words.") : L.T("Today's numbers, in plain words."));
             var ss = g.MeasureString(stand, Paper.Italic, (int)lw); using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(stand, Paper.Italic, ib, new RectangleF(x, ly, lw, ss.Height + 4)); ly += ss.Height + 8 * S;
             float gy = y, gh = 210 * S; var gr = new RectangleF(gx, gy, gw, gh); Paper.Desk(g, gr);
-            float cy = Paper.DeskTitle(g, gx + 16 * S, gy + 12 * S, "At a Glance", L.T("(Bank of Canada)")) + 4 * S;
-            foreach (var c in MarketData.MyFx().Take(3)) { MkText(g, c + " " + L.T("in CAD"), Paper.Head3, Paper.Head, gx + 16 * S, cy); MkTextR(g, F4(FxNow(c)), Paper.Body, Paper.Ink, gx + gw - 110 * S, cy + 1 * S); Paper.Change(g, FxDay(c), Paper.BodyB, gx + gw - 16 * S, cy + 1 * S, "0.00"); cy += 30 * S; }
+            float cy = Paper.DeskTitle(g, gx + 16 * S, gy + 12 * S, "At a Glance", "(" + RateSrc(MarketData.MyFx().FirstOrDefault() ?? "USD") + ")") + 4 * S;
+            foreach (var c in MarketData.MyFx().Take(3)) { MkText(g, c + " " + (MyMarket.Canada ? L.T("in CAD") : string.Format(CultureInfo.CurrentCulture, L.T("in {0}"), Hm)), Paper.Head3, Paper.Head, gx + 16 * S, cy); MkTextR(g, F4(FxNow(c)), Paper.Body, Paper.Ink, gx + gw - 110 * S, cy + 1 * S); Paper.Change(g, FxDay(c), Paper.BodyB, gx + gw - 16 * S, cy + 1 * S, "0.00"); cy += 30 * S; }
             var bc = MarketData.Get("BCPI"); MkText(g, L.T("Commodity index"), Paper.Head3, Paper.Head, gx + 16 * S, cy); MkTextR(g, bc == null ? "-" : bc.Last.ToString("N1", CultureInfo.CurrentCulture), Paper.Body, Paper.Ink, gx + gw - 110 * S, cy + 1 * S); Paper.Change(g, MarketData.ChangeOver(bc, TimeSpan.FromDays(7)), Paper.BodyB, gx + gw - 16 * S, cy + 1 * S, "0.00"); cy += 30 * S;
             MkText(g, L.T("Changes vs the day before; the commodity index vs last week."), Paper.Small, Paper.Muted, gx + 16 * S, cy + 2 * S);
             y = Math.Max(ly, gr.Bottom) + 18 * S;
@@ -243,12 +293,12 @@ namespace AdeeboMeter
         float MkFxDesk(Graphics g, float x, float y, float w, bool compact)
         {
             var list = MarketData.MyFx(); float rh = 40 * S, h = 70 * S + 34 * S + list.Count * rh + 16 * S; var r = new RectangleF(x, y, w, h); Paper.Desk(g, r);
-            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Currencies Desk", L.T("one unit, in Canadian dollars"));
+            Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Currencies Desk", MyMarket.Canada ? L.T("one unit, in Canadian dollars") : string.Format(CultureInfo.CurrentCulture, L.T("one unit, in {0}"), L.T(MyMarket.HomeName)));
             var ab = MkButton(g, "+ " + L.T("Add currency"), x + w - 16 * S - g.MeasureString("+ " + L.T("Add currency"), Draw.fBtn).Width - 28 * S, y + 12 * S, true);
-            Act(tradeCanvas, ab, delegate { var c = PickCurrency(L.T("Add a currency"), list); if (c != null && MarketData.AddFx(c)) { Trading.FetchFx(null); tradeCanvas.Invalidate(); } });
+            Act(tradeCanvas, ab, delegate { var c = PickCurrency(L.T("Add a currency"), list); if (c != null && MarketData.AddFx(c)) { if (MyMarket.Canada) Trading.FetchFx(null); MarketData.FetchFx(c, null); tradeCanvas.Invalidate(); } });
             float ty = y + 58 * S, c0 = x + 16 * S, c1 = x + w * 0.42f, c2 = x + w * 0.53f, c3 = x + w * 0.64f, c4 = x + w * 0.68f, c5 = x + w - 60 * S;
             using (var hb = new SolidBrush(Paper.Soft)) g.FillRectangle(hb, x + 8 * S, ty, w - 16 * S, 28 * S);
-            MkText(g, L.T("Currency"), Draw.fSmall, Paper.Ink, c0, ty + 6 * S); MkTextR(g, L.T("In CAD"), Draw.fSmall, Paper.Ink, c1, ty + 6 * S); MkTextR(g, L.T("Day"), Draw.fSmall, Paper.Ink, c2, ty + 6 * S); MkTextR(g, L.T("Week"), Draw.fSmall, Paper.Ink, c3, ty + 6 * S); MkText(g, L.T("Last 30 days"), Draw.fSmall, Paper.Ink, c4, ty + 6 * S);
+            MkText(g, L.T("Currency"), Draw.fSmall, Paper.Ink, c0, ty + 6 * S); MkTextR(g, MyMarket.Canada ? L.T("In CAD") : InHome, Draw.fSmall, Paper.Ink, c1, ty + 6 * S); MkTextR(g, L.T("Day"), Draw.fSmall, Paper.Ink, c2, ty + 6 * S); MkTextR(g, L.T("Week"), Draw.fSmall, Paper.Ink, c3, ty + 6 * S); MkText(g, L.T("Last 30 days"), Draw.fSmall, Paper.Ink, c4, ty + 6 * S);
             ty += 32 * S;
             foreach (var c in list)
             {
@@ -257,7 +307,7 @@ namespace AdeeboMeter
                 MkText(g, L.T(MarketData.FxName(c)), Paper.Body, Paper.Ink, c0 + 48 * S, ty + 10 * S);
                 MkTextR(g, F4(FxNow(c)), Paper.BodyB, Paper.Head, c1, ty + 10 * S);
                 Paper.Change(g, FxDay(c), Paper.Small, c2, ty + 12 * S, "0.00"); Paper.Change(g, FxOver(c, 7), Paper.Small, c3, ty + 12 * S, "0.00");
-                var hs = MarketData.Window(MarketData.Get("FX:" + c), DateTime.Today.AddDays(-30));
+                var hs = MarketData.Window(MarketData.FxIn(c), DateTime.Today.AddDays(-30));
                 if (hs.Count >= 2) { double wk = FxOver(c, 30); Paper.Spark(g, new RectangleF(c4, ty + 8 * S, Math.Min(130 * S, c5 - c4 - 120 * S), 24 * S), hs.V, double.IsNaN(wk) || Math.Abs(wk) < 0.05 ? Paper.Muted : wk > 0 ? Paper.Up : Paper.Down, false); MkTextR(g, F4(hs.V.Min()) + " – " + F4(hs.V.Max()), Paper.Small, Paper.Muted, c5 - 8 * S, ty + 12 * S); }
                 else MkText(g, L.T("history on its way"), Paper.Small, Paper.Muted, c4, ty + 12 * S);
                 var xr = new RectangleF(x + w - 48 * S, ty + 5 * S, 30 * S, 30 * S); Theme.Fill(g, xr, 6 * S, Paper.DeskBg); Theme.Stroke(g, xr, 6 * S, Paper.Line, 1); MkText(g, "×", Paper.BodyB, Paper.Muted, xr.X + 10 * S, xr.Y + 5 * S);
@@ -270,16 +320,17 @@ namespace AdeeboMeter
         {
             var r = new RectangleF(x, y, w, 196 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Converter", null);
+            var codes = new[] { Hm }.Concat(MarketData.MyFx()).ToList(); if (!codes.Contains(mkCvFrom)) mkCvFrom = Hm; if (!codes.Contains(mkCvTo)) mkCvTo = codes.FirstOrDefault(c => c != mkCvFrom) ?? Hm;
             double a = FxNow(mkCvFrom), b = FxNow(mkCvTo), res = double.IsNaN(a) || double.IsNaN(b) || b <= 0 ? double.NaN : mkCvAmt * a / b;
             var amt = MkButton(g, mkCvAmt.ToString("N2", CultureInfo.CurrentCulture), x + 16 * S, y + 52 * S, false);
             Act(tradeCanvas, amt, delegate { var v = AskNumber(L.T("Amount"), mkCvAmt); if (v.HasValue) { mkCvAmt = v.Value; tradeCanvas.Invalidate(); } });
-            var fr = MkButton(g, mkCvFrom + " ▾", amt.Right + 10 * S, amt.Y, false); var codes = new[] { "CAD" }.Concat(MarketData.MyFx()).ToList();
+            var fr = MkButton(g, mkCvFrom + " ▾", amt.Right + 10 * S, amt.Y, false);
             Act(tradeCanvas, fr, delegate { PickFrom(fr, codes, c => mkCvFrom = c); });
             MkText(g, L.T("comes to"), Paper.Small, Paper.Muted, x + 16 * S, y + 100 * S);
             MkText(g, double.IsNaN(res) ? "-" : res.ToString("N2", CultureInfo.CurrentCulture), Paper.Num, Paper.Head, x + 16 * S, y + 116 * S);
             var to = MkButton(g, mkCvTo + " ▾", x + w - 16 * S - g.MeasureString(mkCvTo + " ▾", Draw.fBtn).Width - 28 * S, y + 122 * S, false);
             Act(tradeCanvas, to, delegate { PickFrom(to, codes, c => mkCvTo = c); });
-            MkText(g, L.T("At the Bank of Canada's rate. Banks and exchange shops add a margin."), Paper.Small, Paper.Muted, x + 16 * S, y + 168 * S);
+            MkText(g, MarketData.FxSource(mkCvTo) == "Bank of Canada" && MarketData.FxSource(mkCvFrom) == "Bank of Canada" ? L.T("At the Bank of Canada's rate. Banks and exchange shops add a margin.") : L.T("At today's reference rate. Banks and exchange shops add a margin."), Paper.Small, Paper.Muted, x + 16 * S, y + 168 * S);
             return r.Bottom + 16 * S;
         }
         float MkWeekDesk(Graphics g, float x, float y, float w)
@@ -360,7 +411,7 @@ namespace AdeeboMeter
             else
             {
                 List<MarketData.Quote> qs; lock (MarketData.k) qs = MarketData.Quotes.Values.Where(q => q.Region != null).ToList();
-                foreach (var sym in new[] { "^GSPC", "^GSPTSE", "^FTSE", "^N225" }) { var q = qs.FirstOrDefault(z => z.Sym == sym); var info = MarketData.IndexList.First(i => i[0] == sym); MkText(g, L.T(info[1]), Paper.Body, Paper.Ink, x + 16 * S, ty); MkTextR(g, q == null ? "-" : q.Price.ToString("N1", CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, x + w - 90 * S, ty); Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Small, x + w - 16 * S, ty + 2 * S, "0.00"); ty += 26 * S; }
+                foreach (var sym in new[] { MyMarket.Current.Index, "^GSPC", "^GSPTSE", "^FTSE", "^N225" }.Where(z => z != "").Distinct().Take(4)) { var q = qs.FirstOrDefault(z => z.Sym == sym); var info = MarketData.IndexList.First(i => i[0] == sym); MkText(g, L.T(info[1]), Paper.Body, Paper.Ink, x + 16 * S, ty); MkTextR(g, q == null ? "-" : q.Price.ToString("N1", CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, x + w - 90 * S, ty); Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Small, x + w - 16 * S, ty + 2 * S, "0.00"); ty += 26 * S; }
                 var more = MkButton(g, L.T("All world markets") + " ›", x + 16 * S, r.Bottom - 46 * S, false); Act(tradeCanvas, more, delegate { mkTab = "world"; tradeCanvas.Invalidate(); });
             }
             return r.Bottom + 16 * S;
@@ -368,23 +419,32 @@ namespace AdeeboMeter
         // ---------- your companies (24 Nov, Adeeb): the names you follow, their price and day - and the way to add more
         float MkCompaniesDesk(Graphics g, float x, float y, float w)
         {
+            // 1.1.7 (D7): each company its own small card - price in its own currency, the day's change and range, open or closed, a little line of recent prices
             var fol = MarketData.Follow(); var on = Corner.Syms();
-            int rows = Math.Max(1, (fol.Count + 1) / 2); var r = new RectangleF(x, y, w, (fol.Count == 0 ? 132 : 78 + rows * 26 + 52) * S); Paper.Desk(g, r);
+            int per = w > 1100 * S ? 4 : w > 760 * S ? 3 : 2; float gap = 12 * S, cw = (w - 32 * S - (per - 1) * gap) / per, chh = 112 * S; int rows = Math.Max(1, (fol.Count + per - 1) / per);
+            var r = new RectangleF(x, y, w, fol.Count == 0 ? 132 * S : 60 * S + rows * (chh + gap) + 56 * S); Paper.Desk(g, r);
             float ty = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Your Companies", MarketData.HasQuoteKey() ? null : L.T("(needs a free price key)")) + 6 * S;
             if (fol.Count == 0)
                 using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("Follow companies and indexes - pick from well-known names like Google, Meta or Shopify, or search any by name."), Paper.Body, ib, new RectangleF(x + 16 * S, ty, w - 32 * S, 40 * S));
             else
             {
                 List<MarketData.Quote> qs; lock (MarketData.k) qs = MarketData.Quotes.Values.ToList();
-                float colW = (w - 48 * S) / 2;
                 for (int i = 0; i < fol.Count; i++)
                 {
-                    string sym = fol[i]; float cx = x + 16 * S + (i % 2) * (colW + 16 * S), cy = ty + (i / 2) * 26 * S;
+                    string sym = fol[i]; var cr = new RectangleF(x + 16 * S + (i % per) * (cw + gap), ty + (i / per) * (chh + gap), cw, chh);
+                    Theme.Fill(g, cr, 8 * S, Paper.CardBg); Theme.Stroke(g, cr, 8 * S, Paper.Line2, 1);
                     var q = qs.FirstOrDefault(z => z.Sym == sym); var info = MarketData.Companies.FirstOrDefault(c => c[0] == sym);
                     string name = info != null ? info[1] : q != null && !string.IsNullOrEmpty(q.Name) ? q.Name : sym;
-                    MkText(g, (name.Length > 26 ? name.Substring(0, 25) + "…" : name) + (on.Contains(sym) ? "  ·  " + L.T("on the widget") : ""), Paper.Body, Paper.Ink, cx, cy);
-                    MkTextR(g, q == null ? (MarketData.Dead(sym) ? L.T("no price") : "-") : q.Price.ToString("N2", CultureInfo.CurrentCulture) + (string.IsNullOrEmpty(q.Ccy) ? "" : " " + q.Ccy), Paper.BodyB, Paper.Head, cx + colW - 70 * S, cy);   // PX-ML7: in its own currency
-                    Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Small, cx + colW, cy + 2 * S, "0.00");
+                    bool open = MarketData.OpenNow(sym, DateTime.UtcNow);
+                    using (var db = new SolidBrush(open ? Paper.Up : Paper.Muted)) g.FillEllipse(db, cr.X + 12 * S, cr.Y + 15 * S, 8 * S, 8 * S);
+                    using (var nb = new SolidBrush(Paper.Head)) g.DrawString(name, Paper.BodyB, nb, new RectangleF(cr.X + 26 * S, cr.Y + 9 * S, cr.Width - 36 * S, 22 * S), new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap });
+                    MkText(g, sym.TrimStart('^') + " · " + L.T(MarketData.Venue(sym)) + " · " + (open ? L.T("open") : L.T("closed")) + (on.Contains(sym) ? " · " + L.T("on the widget") : ""), Paper.Small, Paper.Muted, cr.X + 12 * S, cr.Y + 32 * S);
+                    string price = q == null ? (MarketData.Dead(sym) ? L.T("no price") : "-") : q.Price.ToString("N2", CultureInfo.CurrentCulture) + (string.IsNullOrEmpty(q.Ccy) ? "" : " " + q.Ccy);   // PX-ML7: in its own currency
+                    MkText(g, price, Paper.Head3, Paper.Head, cr.X + 12 * S, cr.Y + 52 * S);
+                    Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.BodyB, cr.Right - 12 * S, cr.Y + 54 * S, "0.00");
+                    if (q != null && !double.IsNaN(q.Lo)) MkText(g, L.T("Day") + " " + q.Lo.ToString("N2", CultureInfo.CurrentCulture) + " – " + q.Hi.ToString("N2", CultureInfo.CurrentCulture), Paper.Small, Paper.Muted, cr.X + 12 * S, cr.Y + 84 * S);
+                    List<double> h; lock (MarketData.k) { MarketData.Hist.TryGetValue(sym, out h); h = h == null ? null : h.ToList(); }
+                    if (h != null && h.Count >= 3) Paper.Spark(g, new RectangleF(cr.Right - Math.Min(110 * S, cr.Width * 0.42f) - 12 * S, cr.Y + 82 * S, Math.Min(110 * S, cr.Width * 0.42f), 20 * S), h, h.Last() >= h.First() ? Paper.Up : Paper.Down, false);
                 }
             }
             float bx = x + 16 * S, by = r.Bottom - 48 * S;
@@ -545,7 +605,7 @@ namespace AdeeboMeter
             int col = 0;
             foreach (var region in new[] { "Americas", "Europe", "Asia" })
             {
-                var items = MarketData.IndexList.Where(i => i[2] == region).ToList(); float dh = 60 * S + items.Count * 30 * S + 10 * S;
+                var items = MarketData.IndexShown.Where(i => i[2] == region).ToList(); float dh = 60 * S + items.Count * 30 * S + 10 * S;
                 var dr = new RectangleF(x + col * (colW + 16 * S), y, colW, dh); Paper.Desk(g, dr); float iy = Paper.DeskTitle(g, dr.X + 16 * S, y + 12 * S, region, null) + 4 * S;
                 foreach (var it in items)
                 {
@@ -578,12 +638,12 @@ namespace AdeeboMeter
             }
             // how they're linked: each market's index and its currency against the Canadian dollar
             var lr = new RectangleF(x, y, w, 60 * S + 6 * 30 * S); Paper.Desk(g, lr);
-            float ly = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "How They're Linked", L.T("a rise abroad can grow or shrink once it's turned into Canadian dollars")) + 4 * S;
-            foreach (var pair in new[] { new[] { "^N225", "JPY" }, new[] { "^GDAXI", "EUR" }, new[] { "000001.SS", "CNY" }, new[] { "^FTSE", "GBP" }, new[] { "^GSPC", "USD" }, new[] { "^NSEI", "INR" } })
+            float ly = Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "How They're Linked", MyMarket.Canada ? L.T("a rise abroad can grow or shrink once it's turned into Canadian dollars") : string.Format(CultureInfo.CurrentCulture, L.T("a rise abroad can grow or shrink once it's turned into {0}"), L.T(MyMarket.HomeName))) + 4 * S;
+            foreach (var pair in new[] { new[] { "^N225", "JPY" }, new[] { "^GDAXI", "EUR" }, new[] { "000001.SS", "CNY" }, new[] { "^FTSE", "GBP" }, new[] { "^GSPC", "USD" }, new[] { "^NSEI", "INR" }, new[] { "^GSPTSE", "CAD" } }.Where(p => p[1] != Hm).Take(6))
             {
                 var q = qs.FirstOrDefault(z => z.Sym == pair[0]); var info = MarketData.IndexList.First(i => i[0] == pair[0]);
                 MkText(g, L.T(info[4]), Paper.BodyB, Paper.Head, x + 16 * S, ly); MkText(g, L.T("index"), Paper.Small, Paper.Muted, x + w * 0.35f, ly + 2 * S); Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Body, x + w * 0.55f, ly, "0.00");
-                MkText(g, pair[1] + " " + L.T("vs CAD"), Paper.Small, Paper.Muted, x + w * 0.62f, ly + 2 * S); Paper.Change(g, FxDay(pair[1]), Paper.Body, x + w - 20 * S, ly, "0.00");
+                MkText(g, pair[1] + " " + (MyMarket.Canada ? L.T("vs CAD") : string.Format(CultureInfo.CurrentCulture, L.T("vs {0}"), Hm)), Paper.Small, Paper.Muted, x + w * 0.62f, ly + 2 * S); Paper.Change(g, FxDay(pair[1]), Paper.Body, x + w - 20 * S, ly, "0.00");
                 ly += 30 * S;
             }
             return lr.Bottom + 16 * S;
@@ -592,17 +652,18 @@ namespace AdeeboMeter
         // ---------- Currencies: one currency's long chart, the stats, all of yours, cross rates, the converter
         float MkCurrencies(Graphics g, float x, float y, float w)
         {
-            var s = MarketData.Get("FX:" + mkFx); var from = mkRange == "1m" ? DateTime.Today.AddMonths(-1) : mkRange == "3m" ? DateTime.Today.AddMonths(-3) : mkRange == "5y" ? DateTime.Today.AddYears(-5) : mkRange == "all" ? DateTime.MinValue : DateTime.Today.AddYears(-1);
+            if (mkFx == Hm || !MarketData.KnownFx(mkFx)) mkFx = MarketData.MyFx().First();
+            var s = MarketData.FxIn(mkFx); var from = mkRange == "1m" ? DateTime.Today.AddMonths(-1) : mkRange == "3m" ? DateTime.Today.AddMonths(-3) : mkRange == "5y" ? DateTime.Today.AddYears(-5) : mkRange == "all" ? DateTime.MinValue : DateTime.Today.AddYears(-1);
             var win = MarketData.Window(s, from);
             var r = new RectangleF(x, y, w, 470 * S); Paper.Desk(g, r);
             var pick = MkButton(g, mkFx + " · " + L.T(MarketData.FxName(mkFx)) + "  ▾", x + 16 * S, y + 14 * S, false);
             Act(tradeCanvas, pick, delegate { PickFrom(pick, MarketData.MyFx(), c => mkFx = c); });
-            MkText(g, L.T("in Canadian dollars"), Paper.Body, Paper.Ink, pick.Right + 10 * S, y + 22 * S);
+            MkText(g, HomeWords, Paper.Body, Paper.Ink, pick.Right + 10 * S, y + 22 * S);
             MkRange(g, x + w - 16 * S, y + 16 * S, new[] { new[] { "1m", "1 month" }, new[] { "3m", "3 months" }, new[] { "1y", "1 year" }, new[] { "5y", "5 years" }, new[] { "all", "Since 2017" } }, mkRange, id => mkRange = id);
             double last = s == null ? double.NaN : s.Last; double day = FxDay(mkFx);
             MkText(g, F4(last), Paper.Num, Paper.Head, x + 16 * S, y + 60 * S);
             Paper.Change(g, day, Paper.BodyB, x + 16 * S + g.MeasureString(F4(last), Paper.Num).Width + 90 * S, y + 72 * S, "0.00");
-            MkText(g, s == null ? L.T("on its way from the Bank of Canada...") : L.T("Bank of Canada") + ", " + s.LastDay.ToString("ddd MMM d", CultureInfo.CurrentCulture), Paper.Small, Paper.Muted, x + w * 0.45f, y + 80 * S);
+            MkText(g, s == null ? (MarketData.FxSource(mkFx) == "Bank of Canada" ? L.T("on its way from the Bank of Canada...") : L.T("on its way...")) : RateSrc(mkFx) + (s.Count == 1 ? " · " + L.T("today's rate only") : "") + ", " + s.LastDay.ToString("ddd MMM d", CultureInfo.CurrentCulture), Paper.Small, Paper.Muted, x + w * 0.45f, y + 80 * S);
             var ch = new RectangleF(x + 60 * S, y + 120 * S, w - 80 * S, 220 * S);
             if (win.Count >= 2)
             {
@@ -621,7 +682,7 @@ namespace AdeeboMeter
                 float sw = (w - 32 * S - 4 * 10 * S) / 5;
                 for (int i = 0; i < 5; i++) { var sr = new RectangleF(x + 16 * S + i * (sw + 10 * S), ch.Bottom + 30 * S, sw, 64 * S); Theme.Fill(g, sr, 6 * S, Paper.CardBg); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, stats[i][0], Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, stats[i][1], Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 26 * S); if (stats[i][2] != "") MkTextR(g, stats[i][2], Paper.Small, Paper.Muted, sr.Right - 8 * S, sr.Y + 30 * S); }
             }
-            else MkText(g, L.T("The history arrives from the Bank of Canada in a moment."), Paper.Body, Paper.Muted, ch.X, ch.Y + 60 * S);
+            else MkText(g, s != null && s.Count == 1 ? L.T("Only today's rate is available for this pair - no history to chart.") : L.T("The history arrives from the Bank of Canada in a moment."), Paper.Body, Paper.Muted, ch.X, ch.Y + 60 * S);
             y = r.Bottom + 16 * S;
             float lw = w * 0.6f; float y1 = MkFxTable(g, x, y, lw); float y2 = MkCross(g, x + lw + 16 * S, y, w - lw - 16 * S); y2 = MkConverter(g, x + lw + 16 * S, y2, w - lw - 16 * S);
             return Math.Max(y1, y2);
@@ -631,10 +692,10 @@ namespace AdeeboMeter
             var list = MarketData.MyFx(); var r = new RectangleF(x, y, w, 100 * S + list.Count * 34 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "All Your Currencies", null);
             var ab = MkButton(g, "+ " + L.T("Add currency"), x + w - 16 * S - g.MeasureString("+ " + L.T("Add currency"), Draw.fBtn).Width - 28 * S, y + 12 * S, true);
-            Act(tradeCanvas, ab, delegate { var c = PickCurrency(L.T("Add a currency"), list); if (c != null && MarketData.AddFx(c)) { Trading.FetchFx(null); tradeCanvas.Invalidate(); } });
+            Act(tradeCanvas, ab, delegate { var c = PickCurrency(L.T("Add a currency"), list); if (c != null && MarketData.AddFx(c)) { if (MyMarket.Canada) Trading.FetchFx(null); MarketData.FetchFx(c, null); tradeCanvas.Invalidate(); } });
             float ty = y + 58 * S, c1 = x + w * 0.5f, c2 = x + w * 0.64f, c3 = x + w * 0.79f, c4 = x + w - 16 * S;
             using (var hb = new SolidBrush(Paper.Soft)) g.FillRectangle(hb, x + 8 * S, ty, w - 16 * S, 26 * S);
-            MkText(g, L.T("Currency"), Draw.fSmall, Paper.Ink, x + 16 * S, ty + 5 * S); MkTextR(g, L.T("In CAD"), Draw.fSmall, Paper.Ink, c1, ty + 5 * S); MkTextR(g, L.T("Week"), Draw.fSmall, Paper.Ink, c2, ty + 5 * S); MkTextR(g, L.T("Month"), Draw.fSmall, Paper.Ink, c3, ty + 5 * S); MkTextR(g, L.T("Year"), Draw.fSmall, Paper.Ink, c4, ty + 5 * S);
+            MkText(g, L.T("Currency"), Draw.fSmall, Paper.Ink, x + 16 * S, ty + 5 * S); MkTextR(g, MyMarket.Canada ? L.T("In CAD") : InHome, Draw.fSmall, Paper.Ink, c1, ty + 5 * S); MkTextR(g, L.T("Week"), Draw.fSmall, Paper.Ink, c2, ty + 5 * S); MkTextR(g, L.T("Month"), Draw.fSmall, Paper.Ink, c3, ty + 5 * S); MkTextR(g, L.T("Year"), Draw.fSmall, Paper.Ink, c4, ty + 5 * S);
             ty += 30 * S;
             foreach (var c in list)
             {
@@ -644,12 +705,12 @@ namespace AdeeboMeter
                 string cc = c; Act(tradeCanvas, rr, delegate { mkFx = cc; tradeCanvas.AutoScrollPosition = Point.Empty; tradeCanvas.Invalidate(); });
                 ty += 34 * S;
             }
-            MkText(g, L.T("A change is how much that currency's price in Canadian dollars moved. Click a row to chart it."), Paper.Small, Paper.Muted, x + 16 * S, ty + 4 * S);
+            MkText(g, MyMarket.Canada ? L.T("A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.") : string.Format(CultureInfo.CurrentCulture, L.T("A change is how much that currency's price in {0} moved. Click a row to chart it."), L.T(MyMarket.HomeName)), Paper.Small, Paper.Muted, x + 16 * S, ty + 4 * S);
             return r.Bottom + 16 * S;
         }
         float MkCross(Graphics g, float x, float y, float w)
         {
-            var codes = new[] { "CAD" }.Concat(MarketData.MyFx().Take(3)).ToList(); float cell = (w - 32 * S) / (codes.Count + 1);
+            var codes = new[] { Hm }.Concat(MarketData.MyFx().Take(3)).ToList(); float cell = (w - 32 * S) / (codes.Count + 1);
             var r = new RectangleF(x, y, w, 90 * S + codes.Count * 30 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 16 * S, y + 12 * S, "Cross Rates", null);
             MkText(g, L.T("One of the row buys this much of the column."), Paper.Small, Paper.Muted, x + 16 * S, y + 44 * S);
@@ -711,9 +772,9 @@ namespace AdeeboMeter
             }
             float ex = x + lw + 16 * S, ew = w - lw - 16 * S;
             var er = new RectangleF(ex, y, ew, 320 * S); Paper.Desk(g, er);
-            Paper.DeskTitle(g, ex + 16 * S, y + 12 * S, L.T("Energy and the Loonie"), null);
-            using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(L.T("When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start."), Paper.Small, ib, new RectangleF(ex + 16 * S, y + 46 * S, ew - 32 * S, 40 * S));
-            var en = MarketData.Window(MarketData.Get("ENER"), from); var usd = MarketData.Window(MarketData.Get("FX:USD"), from);
+            Paper.DeskTitle(g, ex + 16 * S, y + 12 * S, MyMarket.Canada ? L.T("Energy and the Loonie") : string.Format(CultureInfo.CurrentCulture, L.T("Energy and the {0}"), Hm), null);
+            using (var ib = new SolidBrush(Paper.Ink)) g.DrawString(MyMarket.Canada ? L.T("When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.") : string.Format(CultureInfo.CurrentCulture, L.T("Energy prices and the {0} against the {1}, over the same time, set to 100 at the start."), L.T(MyMarket.HomeName), L.T(MarketData.FxName(MyMarket.Anchor))), Paper.Small, ib, new RectangleF(ex + 16 * S, y + 46 * S, ew - 32 * S, 40 * S));
+            var en = MarketData.Window(MarketData.Get("ENER"), from); var usd = MarketData.Window(MarketData.FxIn(MyMarket.Anchor), from);
             var ec = new RectangleF(ex + 16 * S, y + 96 * S, ew - 32 * S, 170 * S);
             if (en.Count >= 2 && usd.Count >= 2)
             {
@@ -728,7 +789,7 @@ namespace AdeeboMeter
                 if (pc.Length >= 2) using (var p = new Pen(Paper.Down, 2.4f * S) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }) g.DrawLines(p, pc);
             }
             using (var b = new SolidBrush(Paper.Up)) g.FillRectangle(b, ex + 16 * S, er.Bottom - 40 * S, 16 * S, 4 * S); MkText(g, L.T("Energy index"), Draw.fSmall, Paper.Ink, ex + 38 * S, er.Bottom - 48 * S);
-            using (var b = new SolidBrush(Paper.Down)) g.FillRectangle(b, ex + ew / 2, er.Bottom - 40 * S, 16 * S, 4 * S); MkText(g, L.T("Canadian dollar, in US dollars"), Draw.fSmall, Paper.Ink, ex + ew / 2 + 22 * S, er.Bottom - 48 * S);
+            using (var b = new SolidBrush(Paper.Down)) g.FillRectangle(b, ex + ew / 2, er.Bottom - 40 * S, 16 * S, 4 * S); MkText(g, MyMarket.Canada ? L.T("Canadian dollar, in US dollars") : string.Format(CultureInfo.CurrentCulture, L.T("{0}, in {1}"), L.T(MyMarket.HomeName), L.T(MarketData.FxName(MyMarket.Anchor))), Draw.fSmall, Paper.Ink, ex + ew / 2 + 22 * S, er.Bottom - 48 * S);
             y = Math.Max(tr.Bottom, er.Bottom) + 16 * S;
             // prices per barrel and ounce, with a key
             if (MarketData.HasQuoteKey())
@@ -790,8 +851,14 @@ namespace AdeeboMeter
             foreach (var f in MkWeekFacts()) { using (var b = new SolidBrush(Paper.Ink)) { g.FillEllipse(b, x + 4 * S, ly + 8 * S, 6 * S, 6 * S); g.DrawString(f.Item2, Paper.Body, b, new RectangleF(x + 18 * S, ly, lw - 18 * S, 24 * S)); } ly += 26 * S; }
             // Canada
             var rate = MarketData.Get("V39079"); var cpi = MarketData.Get("STATIC_TOTALCPICHANGE");
-            var cr = new RectangleF(rx, y, rw, 250 * S); Paper.Desk(g, cr);
-            Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, L.T("Rates and Prices in Canada"), null);
+            var cr = new RectangleF(rx, y, rw, MyMarket.Canada ? 250 * S : 120 * S); Paper.Desk(g, cr);
+            if (!MyMarket.Canada)   // 1.1.7 (D7): the Bank of Canada's rate and Statistics Canada's inflation are Canada's; other markets say so plainly
+            {
+                Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, string.Format(CultureInfo.CurrentCulture, L.T("Rates and Prices in {0}"), MyMarket.Name(MyMarket.Current)), null);
+                using (var ib = new SolidBrush(Paper.Muted)) g.DrawString(L.T("Your central bank's rate and inflation aren't on a free, keyless source here yet - this desk fills in for Canada only."), Paper.Small, ib, new RectangleF(rx + 16 * S, y + 52 * S, rw - 32 * S, 60 * S));
+            }
+            else Paper.DeskTitle(g, rx + 16 * S, y + 12 * S, L.T("Rates and Prices in Canada"), null);
+            if (MyMarket.Canada) {
             float sw = (rw - 42 * S) / 2;
             Action<float, float, string, string, string> stat = (sx, sy, a, b, c) => { var sr = new RectangleF(sx, sy, sw, 84 * S); Theme.Fill(g, sr, 6 * S, Paper.CardBg); Theme.Stroke(g, sr, 6 * S, Paper.Line2, 1); MkText(g, a, Paper.Small, Paper.Muted, sr.X + 10 * S, sr.Y + 8 * S); MkText(g, b, Paper.NumS, Paper.Head, sr.X + 10 * S, sr.Y + 30 * S); MkText(g, c, Draw.fTiny, Paper.Muted, sr.X + 10 * S, sr.Y + 62 * S); };
             var since = MarketData.RateSince(rate);
@@ -800,7 +867,7 @@ namespace AdeeboMeter
             double buys = cpi == null ? double.NaN : 100 / (1 + cpi.Last / 100);
             stat(rx + 16 * S, y + 148 * S, L.T("What $100 buys now"), double.IsNaN(buys) ? "-" : "$" + buys.ToString("0.00", CultureInfo.CurrentCulture), L.T("of what it bought a year ago"));
             double prevRate = rate == null || since == DateTime.MinValue ? double.NaN : MarketData.At(rate, since.AddDays(-1));
-            stat(rx + 26 * S + sw, y + 148 * S, L.T("Last move"), double.IsNaN(prevRate) ? "-" : (rate.Last > prevRate ? "+" : "−") + Math.Abs(rate.Last - prevRate).ToString("0.00", CultureInfo.CurrentCulture) + " " + L.T("points"), since == DateTime.MinValue ? "" : since.ToString("MMM d, yyyy", CultureInfo.CurrentCulture));
+            stat(rx + 26 * S + sw, y + 148 * S, L.T("Last move"), double.IsNaN(prevRate) ? "-" : (rate.Last > prevRate ? "+" : "−") + Math.Abs(rate.Last - prevRate).ToString("0.00", CultureInfo.CurrentCulture) + " " + L.T("points"), since == DateTime.MinValue ? "" : since.ToString("MMM d, yyyy", CultureInfo.CurrentCulture)); }
             y = Math.Max(ly, cr.Bottom) + 18 * S;
             // savings | money abroad
             float hw = (w - 16 * S) / 2;
@@ -827,15 +894,16 @@ namespace AdeeboMeter
             Act(tradeCanvas, amb, delegate { var v = AskNumber(L.T("Amount"), abAmt); if (v.HasValue) { abAmt = v.Value; tradeCanvas.Invalidate(); } });
             MkText(g, L.T("Currency"), Paper.Small, Paper.Muted, ax + hw / 2, y + 54 * S); var acb = MkButton(g, abCcy + " · " + L.T(MarketData.FxName(abCcy)) + " ▾", ax + hw / 2, y + 72 * S, false);
             Act(tradeCanvas, acb, delegate { var c = PickCurrency(L.T("Which currency?"), null); if (c != null) { abCcy = c; tradeCanvas.Invalidate(); } });
-            var hs2 = MarketData.Get("FX:" + abCcy); double now = MarketData.At(hs2, DateTime.MaxValue), mo = MarketData.At(hs2, hs2 == null ? DateTime.MinValue : hs2.LastDay.AddMonths(-1)), yr = MarketData.At(hs2, hs2 == null ? DateTime.MinValue : hs2.LastDay.AddYears(-1));
+            if (abCcy == Hm) abCcy = MyMarket.Anchor;
+            var hs2 = MarketData.FxIn(abCcy); double now = MarketData.At(hs2, DateTime.MaxValue), mo = MarketData.At(hs2, hs2 == null ? DateTime.MinValue : hs2.LastDay.AddMonths(-1)), yr = MarketData.At(hs2, hs2 == null ? DateTime.MinValue : hs2.LastDay.AddYears(-1));
             float bw3 = (hw - 52 * S) / 3; var labels = new[] { L.T("Today"), L.T("A month ago"), L.T("A year ago") }; var vals = new[] { now, mo, yr };
             for (int i = 0; i < 3; i++)
             {
                 var br2 = new RectangleF(ax + 16 * S + i * (bw3 + 10 * S), y + 130 * S, bw3, 100 * S); Theme.Fill(g, br2, 6 * S, Paper.CardBg); Theme.Stroke(g, br2, 6 * S, Paper.Line2, 1);
                 MkText(g, labels[i], Paper.Small, Paper.Muted, br2.X + 10 * S, br2.Y + 8 * S);
-                MkText(g, double.IsNaN(vals[i]) ? "-" : "$" + (abAmt * vals[i]).ToString("N0", CultureInfo.CurrentCulture), Paper.NumS, Paper.Head, br2.X + 10 * S, br2.Y + 30 * S);
-                if (i > 0 && !double.IsNaN(vals[i]) && !double.IsNaN(now)) { double d = abAmt * (now - vals[i]); MkText(g, "$" + Math.Abs(d).ToString("N0", CultureInfo.CurrentCulture) + " " + (d >= 0 ? L.T("more now") : L.T("less now")), Paper.Small, d > 0 ? Paper.Down : Paper.Up, br2.X + 10 * S, br2.Y + 62 * S); }
-                else if (i == 0) MkText(g, L.T("in Canadian dollars"), Paper.Small, Paper.Muted, br2.X + 10 * S, br2.Y + 62 * S);
+                MkText(g, double.IsNaN(vals[i]) ? "-" : Money(abAmt * vals[i]), Paper.NumS, Paper.Head, br2.X + 10 * S, br2.Y + 30 * S);
+                if (i > 0 && !double.IsNaN(vals[i]) && !double.IsNaN(now)) { double d = abAmt * (now - vals[i]); MkText(g, Money(Math.Abs(d)) + " " + (d >= 0 ? L.T("more now") : L.T("less now")), Paper.Small, d > 0 ? Paper.Down : Paper.Up, br2.X + 10 * S, br2.Y + 62 * S); }
+                else if (i == 0) MkText(g, HomeWords, Paper.Small, Paper.Muted, br2.X + 10 * S, br2.Y + 62 * S);
             }
             y = Math.Max(sr2.Bottom, ar.Bottom) + 16 * S;
             // keep it light: two opt-in nudges

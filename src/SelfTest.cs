@@ -300,6 +300,18 @@ namespace AdeeboMeter
                 }
                 var fl = FullView.FlowParse("# check\nSITES=\"a b\"\nfor s in $SITES; do\n  if ping $s 3; then\n    echo \"ok\"\n  else\n    sleep 2\n  fi\ndone\nfor i in $(seq 1 4); do\n  dig x\ndone");
                 if (fl.Count != 4 || fl[0].Kind != "note" || fl[1].Kind != "set" || fl[2].Kind != "each" || fl[2].Kids[0].Kind != "if" || fl[2].Kids[0].Else[0].Kind != "wait" || fl[3].Kind != "repeat" || fl[3].Text != "4") throw new InvalidOperationException("flow parse: blocks");
+                // Your market (D7): region -> market, the keyless rates, crossing two Bank series, holidays by rule and table, Fri-Sat weekends
+                if (MyMarket.ForRegion("BD") != "bd" || MyMarket.ForRegion("gb") != "uk" || MyMarket.ForRegion("PL") != "custom" || MyMarket.All.Length != 11) throw new InvalidOperationException("market from region");
+                DateTime erD; var er0 = MyMarket.ParseEr("{\"result\":\"success\",\"time_last_update_unix\":1764288001,\"base_code\":\"CAD\",\"rates\":{\"CAD\":1,\"BDT\":87.1,\"USD\":0.7138}}", out erD);
+                if (er0.Count != 3 || er0["BDT"] != 87.1 || erD.Year != 2025 || MyMarket.ParseEr("{\"result\":\"error\"}", out erD).Count != 0) throw new InvalidOperationException("er-api parse");
+                var sa = new MarketData.Series(); sa.D.Add(new DateTime(2026, 11, 2)); sa.V.Add(1.40); sa.D.Add(new DateTime(2026, 11, 3)); sa.V.Add(1.41);   // USD in CAD
+                var sb2 = new MarketData.Series(); sb2.D.Add(new DateTime(2026, 11, 3)); sb2.V.Add(0.0935); sb2.D.Add(new DateTime(2026, 11, 4)); sb2.V.Add(0.0940);   // MXN in CAD (a day later too)
+                var cx = MarketData.CrossSeries(sa, sb2, "USD/MXN");
+                if (cx == null || cx.Count != 2 || Math.Abs(cx.V[0] - 1.41 / 0.0935) > 1e-9 || Math.Abs(cx.V[1] - 1.41 / 0.0940) > 1e-9) throw new InvalidOperationException("cross series");
+                if (MyMarket.Japan(new DateTime(2026, 9, 22)) == "" || MyMarket.Japan(new DateTime(2027, 5, 4)) == "" || MyMarket.Japan(new DateTime(2026, 11, 24)) != "" || MyMarket.Japan(new DateTime(2025, 5, 6)) != "Substitute holiday") throw new InvalidOperationException("Japan holidays");
+                if (MyMarket.Holiday("London", new DateTime(2026, 12, 28)) != "Boxing Day" || MyMarket.Holiday("Riyadh", new DateTime(2027, 3, 9)) != "Eid al-Fitr" || MyMarket.Holiday("Shanghai", new DateTime(2027, 2, 8)) != null || MyMarket.Holiday("Mumbai", DateTime.Today) != null || MyMarket.Holiday("Mexico City", new DateTime(2026, 11, 16)) != "Revolution Day") throw new InvalidOperationException("exchange holidays");
+                var dh = MarketData.Exchanges.First(e => e.Name == "Dhaka"); if (!MarketData.Weekend(dh, new DateTime(2026, 11, 27)) || MarketData.Weekend(dh, new DateTime(2026, 11, 29))) throw new InvalidOperationException("Fri-Sat weekend");
+                if (MarketData.Venue("2222.SR") != "Riyadh" || MarketData.Venue("PKO.WA") != "Warsaw") throw new InvalidOperationException("venue suffixes");
                 // PC insides (D6): the PE reader finds this exe's own imports; an EDID decodes; the battery history parses; PCIe maths; secrets stay hidden
                 var pe0 = PcInside.ReadPe(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 if (pe0.Error != "" || !pe0.Imports.Any(x => x.Equals("mscoree.dll", StringComparison.OrdinalIgnoreCase))) throw new InvalidOperationException("PE imports: " + pe0.Error + " " + string.Join(",", pe0.Imports));
