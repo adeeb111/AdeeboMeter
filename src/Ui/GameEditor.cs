@@ -56,6 +56,7 @@ namespace AdeeboMeter
             foreach (var s in game.Servers.Take(12)) AddLine(s);
             if (lines.Count == 0) AddLine(new GameServer { Name = "", Where = "", Host = "", Port = 0, Kind = "exact" });
             KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape) Close(); };
+            Kit.Polish(this);   // B3 ML-3: the dark title bar and the shared dialog look, like every other pop-up
         }
 
         void AddLine(GameServer s)

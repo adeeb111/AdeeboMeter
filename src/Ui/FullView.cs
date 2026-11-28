@@ -667,7 +667,7 @@ namespace AdeeboMeter
         public void ApplyTheme()
         {
             SetTipKey(null); BackColor = Theme.Bg; Recolor(this); themedScroll.Clear(); foreach (var nb in navBmps.Values) nb.Dispose(); navBmps.Clear();   // icons are cached per colour; a new theme starts fresh ThemeScrollbars(this);
-            try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(Handle, 20 /*immersive dark title bar*/, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch { }
+            Kit.DarkTitle(Handle);   // B3 ML-6: 20, then 19 for Windows 10 1809-1909
             Refresh();
         }
         string changesKey = "", tbBusyKey = "", travelKey = "";   // repaint only on change (What changed, a running tool, the story's connection list)

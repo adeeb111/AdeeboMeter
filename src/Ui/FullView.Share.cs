@@ -101,9 +101,8 @@ namespace AdeeboMeter
                     using (var sb2 = new SolidBrush(Theme.Sub)) g.DrawString("🔒 " + privacy, Draw.fSmall, sb2, new RectangleF(pad, yPriv, w, hPriv + Sc(4)));
                 };
                 f.Controls.Add(canvas);
-                f.Load += delegate { try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) Program.Log("dark title bar not supported here"); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
                 f.KeyPreview = true; f.KeyDown += delegate(object s, KeyEventArgs e) { if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter) f.Close(); };
-                Kit.Polish(f); f.ShowDialog(this);
+                Kit.Polish(f); f.BackColor = Theme.Bg; f.ShowDialog(this);   // B3 L-4: one colour behind the card and the button row
             }
         }
     }

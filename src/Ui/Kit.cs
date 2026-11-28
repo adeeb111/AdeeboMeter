@@ -20,13 +20,41 @@ namespace AdeeboMeter
         {
             if (f == null) return;
             f.BackColor = Theme.Card; f.ForeColor = Theme.Ink;
-            f.HandleCreated += delegate { try { int on = Theme.Dark ? 1 : 0; Native.DwmSetWindowAttribute(f.Handle, 20, ref on, 4); } catch (Exception e) { if (e is OutOfMemoryException) throw; } };
+            f.HandleCreated += delegate { DarkTitle(f.Handle); };
             PolishAll(f, f);
+        }
+        static void PaintPill(Button b, Graphics g, bool main)
+        {
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; g.TextRenderingHint = Draw.WindowText; g.TextContrast = Draw.Contrast;
+            float S = Draw.S; var r = new RectangleF(0.5f, 0.5f, b.Width - 2, b.Height - 2);
+            bool hot = b.Enabled && b.ClientRectangle.Contains(b.PointToClient(Control.MousePosition)), down = hot && Control.MouseButtons == MouseButtons.Left;
+            using (var bg = new SolidBrush(b.Parent != null ? b.Parent.BackColor : Theme.Card)) g.FillRectangle(bg, b.ClientRectangle);
+            Color fg;
+            if (main) { Theme.Fill(g, r, 10 * S, !b.Enabled ? Theme.Grey : down ? Mix(Theme.Blue, Color.Black, 0.25f) : hot ? Mix(Theme.Blue, Color.Black, 0.12f) : Theme.Blue); fg = Theme.OnBlue; }
+            else { Theme.Fill(g, r, r.Height / 2, hot ? Theme.Soft : Theme.Card); Theme.Stroke(g, r, r.Height / 2, Theme.Line, 1); fg = b.Enabled ? Theme.Ink : Theme.Muted; }
+            using (var tb = new SolidBrush(fg)) using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
+                g.DrawString(b.Text, b.Font, tb, new RectangleF(4 * S, 0, b.Width - 8 * S, b.Height), sf);
+            if (b.Focused) Theme.Stroke(g, new RectangleF(1.5f, 1.5f, b.Width - 3, b.Height - 3), main ? 8 * S : r.Height / 2, Theme.BlueDark, 2);
+        }
+        // B3 ML-6: the dark title bar - attribute 20 on Windows 10 2004 and later, 19 on 1809-1909
+        public static void DarkTitle(IntPtr h)
+        {
+            try { int on = Theme.Dark ? 1 : 0; if (Native.DwmSetWindowAttribute(h, 20, ref on, 4) != 0) Native.DwmSetWindowAttribute(h, 19, ref on, 4); }
+            catch (Exception e) { if (e is OutOfMemoryException) throw; }
         }
         static void PolishAll(Control parent, Form f)
         {
             foreach (Control c in parent.Controls)
             {
+                if (c is RoundBox) continue;   // B3 ML-4: it draws its own rounded border - a square one inside it looked doubled
+                var mc = c as MonthCalendar;
+                if (mc != null)
+                {
+                    // B3 ML-5: the calendar follows the theme too - Windows' visual style is taken off it so its colours apply
+                    Action paint = () => { try { Native.SetWindowTheme(mc.Handle, "", ""); } catch (Exception e) { if (e is OutOfMemoryException) throw; } mc.BackColor = Theme.Card; mc.ForeColor = Theme.Ink; mc.TitleBackColor = Theme.Blue; mc.TitleForeColor = Color.White; mc.TrailingForeColor = Theme.Muted; };
+                    if (mc.IsHandleCreated) paint(); else mc.HandleCreated += delegate { paint(); };
+                    continue;
+                }
                 var tb = c as TextBox; var lb = c as ListBox; var cb = c as ComboBox; var bt = c as Button; var la = c as Label; var ck = c as CheckBox; var rb = c as RadioButton;
                 if (tb != null) { tb.BackColor = Theme.Dark ? Theme.Soft : Color.White; tb.ForeColor = Theme.Ink; tb.BorderStyle = BorderStyle.FixedSingle; }
                 else if (lb != null) { lb.BackColor = Theme.Card; lb.ForeColor = Theme.Ink; lb.BorderStyle = BorderStyle.FixedSingle; }
@@ -34,11 +62,18 @@ namespace AdeeboMeter
                 else if (bt != null)
                 {
                     bool main = ReferenceEquals(f.AcceptButton, bt) || (f.AcceptButton == null && bt.DialogResult == DialogResult.OK);
-                    bt.FlatStyle = FlatStyle.Flat; bt.Cursor = Cursors.Hand; bt.UseVisualStyleBackColor = false;
+                    // B3 ML-1: a button the dialog has already coloured (a selected state, the company picker's choices) keeps
+                    // its colours - only its frame is made flat
+                    bool own = !main && !bt.UseVisualStyleBackColor && bt.BackColor != SystemColors.Control && bt.BackColor != Color.Transparent;
+                    bt.FlatStyle = FlatStyle.Flat; bt.Cursor = Cursors.Hand;
+                    if (own) { bt.FlatAppearance.BorderColor = Theme.Line; continue; }
+                    bt.UseVisualStyleBackColor = false;
                     bt.BackColor = main ? Theme.Blue : Theme.Card; bt.ForeColor = main ? Color.White : Theme.Ink;
                     bt.FlatAppearance.BorderSize = main ? 0 : 1; bt.FlatAppearance.BorderColor = Theme.Line;
                     bt.FlatAppearance.MouseOverBackColor = main ? Theme.BlueHot : Theme.Soft; bt.FlatAppearance.MouseDownBackColor = main ? Theme.BlueHot : Theme.Line;
-                    if (main) bt.Font = new Font(bt.Font, FontStyle.Bold);
+                    // B3 L-3: no bold on the main button - it clipped longer translations; the blue says which one it is
+                    // B3 L-6: one button style - a dialog's own buttons are drawn as the app's pills (main = the blue one)
+                    if (!(bt.Tag is string && (string)bt.Tag == "pilled")) { bt.Tag = bt.Tag ?? "pilled"; bool mainB = main; bt.Paint += (s, e) => PaintPill((Button)s, e.Graphics, mainB); bt.MouseEnter += delegate { bt.Invalidate(); }; bt.MouseLeave += delegate { bt.Invalidate(); }; }
                 }
                 else if (la != null) { if (la.ForeColor == SystemColors.ControlText || la.ForeColor.ToArgb() == Color.Black.ToArgb()) la.ForeColor = Theme.Ink; }
                 else if (ck != null || rb != null) { c.ForeColor = Theme.Ink; }

@@ -83,7 +83,7 @@ namespace AdeeboMeter
             {
                 var cal = new MonthCalendar { MaxSelectionCount = 1, MinDate = days.Min(), MaxDate = days.Max(), BoldedDates = days.ToArray(), Dock = DockStyle.Fill };
                 DateTime? got = null; cal.DateSelected += (s, e) => { if (days.Contains(e.Start.Date)) { got = e.Start.Date; f.DialogResult = DialogResult.OK; } };
-                Kit.Polish(f); f.Controls.Add(cal); f.ShowDialog(this); return got;
+                f.Controls.Add(cal); Kit.Polish(f); f.ShowDialog(this); return got;
             }
         }
         void ReplayOpen()

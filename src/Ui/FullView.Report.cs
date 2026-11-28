@@ -61,7 +61,7 @@ namespace AdeeboMeter
                 {
                     // bug-hunt L-330: built from its parts, so the two links sit exactly on the words whatever the language
                     string lead = Relay.Waiting + " " + L.T("earlier report(s) waiting to send when you're online") + " - ", rd = L.T("Read"), dl = L.T("Delete");
-                    var wl = new LinkLabel { Text = lead + rd + " · " + dl, AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.Blue };
+                    var wl = new LinkLabel { Text = lead + rd + " · " + dl, AutoSize = true, Location = new Point(x, send.Bottom + Sc(10)), LinkColor = Theme.BlueText, ActiveLinkColor = Theme.BlueText, VisitedLinkColor = Theme.BlueText };   /* B3 L-5: readable in dark (was 2.79:1) */
                     wl.Links.Clear(); wl.Links.Add(lead.Length, rd.Length, "read"); wl.Links.Add(lead.Length + rd.Length + 3, dl.Length, "del");
                     wl.LinkClicked += delegate(object s2, LinkLabelLinkClickedEventArgs e2)
                     {
