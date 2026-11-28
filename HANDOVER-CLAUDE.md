@@ -1,6 +1,6 @@
 # AdeeboMeter - handover to the next Claude chat
 
-Written 28 Nov 2026, 10:40 Toronto. Replaces the 21 Nov handover. Read this file first, then `PLAN-1.1.7.md`.
+Written 28 Nov 2026, 10:40 Toronto. Replaces the 21 Nov handover. Read this file first, then `PLAN-1.1.7.md`. `CLAUDE.md` has the short version for Claude Code.
 Owner: Adeeb Khan (adeeb111). Repo: github.com/adeeb111/AdeeboMeter. Website: adeebometer.com.
 
 ## Where things stand
@@ -24,7 +24,7 @@ The goal of 1.1.7 (Adeeb, 28 Nov): **simplify**. Everything in PLAN-1.1.7 sectio
  5cc7fcfe  Check my PC report; 4 quick buttons on Home; "Needs attention" removed; checks share one evidence layer
  6862425d  ISP report: short message in the app's language + full English detail for the ISP's network team
  034045bf  plain names, shorter text, fewer doors on Home (below)
- (next)    website: the same plain names; Mono self-test helper in session-tools/
+ ccf3dab7  website: the same plain names; Mono self-test helper in session-tools/; CLAUDE.md for Claude Code
 ```
 
 ### The "simplify" pass (Adeeb: "people call this app AI slop")
@@ -74,9 +74,7 @@ Your market picker; the browser checkup's endpoints (speed.cloudflare.com, dns.g
 - **Design first, wait for an explicit go.** Show mockups/ideas and wait; include a diagram when explaining a build.
 - **Push back** when something's wrong or there's a better way. Short, plain words; he's a network engineer.
 - **One release for everything.** Don't build or share packages unless he asks; test builds go as a zip.
-- **Never re-author his commits** or force-push. Commit attribution: this session's commits end with the
-  `Co-Authored-By: Claude ...` and `Claude-Session:` lines the harness asked for; the 21 Nov handover said "no Claude
-  co-author line" - **ask Adeeb which he wants** and follow his answer.
+- **Never re-author his commits** or force-push. Co-author lines on commits: either way is fine (Adeeb, 28 Nov).
 - Don't regenerate README/docs/handovers unless asked. Timeouts on long work. Don't change repo settings.
 - Don't use his PC screen unless asked. No admin rights needed anywhere. No Defender exclusions, no keylogger-like
   scanning, no SendInput replay. The widget never takes clicks except in move mode. No full-window redraws.
