@@ -383,13 +383,15 @@ namespace AdeeboMeter
                     var q = qs.FirstOrDefault(z => z.Sym == sym); var info = MarketData.Companies.FirstOrDefault(c => c[0] == sym);
                     string name = info != null ? info[1] : q != null && !string.IsNullOrEmpty(q.Name) ? q.Name : sym;
                     MkText(g, (name.Length > 26 ? name.Substring(0, 25) + "…" : name) + (on.Contains(sym) ? "  ·  " + L.T("on the widget") : ""), Paper.Body, Paper.Ink, cx, cy);
-                    MkTextR(g, q == null ? (MarketData.Dead(sym) ? L.T("no price") : "-") : q.Price.ToString("N2", CultureInfo.CurrentCulture), Paper.BodyB, Paper.Head, cx + colW - 70 * S, cy);
+                    MkTextR(g, q == null ? (MarketData.Dead(sym) ? L.T("no price") : "-") : q.Price.ToString("N2", CultureInfo.CurrentCulture) + (string.IsNullOrEmpty(q.Ccy) ? "" : " " + q.Ccy), Paper.BodyB, Paper.Head, cx + colW - 70 * S, cy);   // PX-ML7: in its own currency
                     Paper.Change(g, q == null ? double.NaN : q.Pct, Paper.Small, cx + colW, cy + 2 * S, "0.00");
                 }
             }
             float bx = x + 16 * S, by = r.Bottom - 48 * S;
             var add = MkButton(g, fol.Count == 0 ? L.T("Pick companies...") : L.T("Add or change..."), bx, by, true); Act(tradeCanvas, add, delegate { PickCompanies(); });
             if (!MarketData.HasQuoteKey()) { var kb = MkButton(g, L.T("Turn on live prices..."), add.Right + 10 * S, by, false); Act(tradeCanvas, kb, delegate { AskQuoteKey(); }); }
+            string cn; lock (MarketData.k) cn = MarketData.QuoteNote;   // PX-ML8: why prices are old or missing, here too
+            if (fol.Count > 0 && !string.IsNullOrEmpty(cn)) MkText(g, L.T(cn), Paper.Small, Paper.Amber, x + 16 * S, by - 24 * S);
             if (fol.Count > 0) MkText(g, L.T("Numbers only - never advice."), Paper.Small, Paper.Muted, x + w - 16 * S - g.MeasureString(L.T("Numbers only - never advice."), Paper.Small).Width, by + 10 * S);
             return r.Bottom + 16 * S;
         }
@@ -402,7 +404,7 @@ namespace AdeeboMeter
                 var head = new Label { Text = L.T("Pick a few, or search any company by name or ticker."), Location = new Point(Sc(16), Sc(14)), AutoSize = true, ForeColor = Theme.Sub };
                 var sb = new TextBox { Location = new Point(Sc(16), Sc(42)), Width = Sc(420), Font = Draw.fInput };
                 var go = new Button { Text = L.T("Search"), Location = new Point(Sc(446), Sc(40)), Size = new Size(Sc(98), Sc(30)) };
-                var chips = new FlowLayoutPanel { Location = new Point(Sc(12), Sc(80)), Size = new Size(Sc(536), Sc(38)), WrapContents = false };
+                var chips = new FlowLayoutPanel { Location = new Point(Sc(12), Sc(76)), Size = new Size(Sc(536), Sc(46)), WrapContents = false, AutoScroll = true };   // DAY1-L2: longer names (Arabic) scroll instead of being cut
                 var list = new Panel { Location = new Point(Sc(16), Sc(124)), Size = new Size(Sc(528), Sc(372)), AutoScroll = true };
                 var note = new Label { Location = new Point(Sc(16), Sc(512)), Size = new Size(Sc(360), Sc(36)), ForeColor = Theme.Muted };
                 var done = new Button { Text = L.T("Done"), DialogResult = DialogResult.OK, Location = new Point(Sc(446), Sc(512)), Size = new Size(Sc(98), Sc(32)) };
@@ -437,15 +439,18 @@ namespace AdeeboMeter
                         y0 += Sc(38);
                     }
                     list.ResumeLayout();
-                    note.Text = fol.Count + " " + L.T("following") + " · " + wid.Count + " " + L.T("of 4 widget places used") + (MarketData.HasQuoteKey() ? "" : "\n" + L.T("Prices show once a free price key is added."));
+                    // DAY1-ML3: both limits said, not discovered
+                    note.Text = fol.Count + " " + L.T("of 20 followed") + " · " + wid.Count + " " + L.T("of 4 widget places used") + (fol.Count >= 20 ? "\n" + L.T("That's the most you can follow - unfollow one to add another.") : MarketData.HasQuoteKey() ? "" : "\n" + L.T("Prices show once a free price key is added."));
                 };
                 Action search = () =>
                 {
-                    string q = sb.Text.Trim(); if (q.Length < 2) return;
+                    string q = sb.Text.Trim(); if (q.Length < 2) { note.Text = L.T("Type at least two letters, or a ticker like GOOGL."); return; }   // DAY1-L4: never silent
                     var local = MarketData.Companies.Where(c => c[1].IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || string.Equals(c[0], q, StringComparison.OrdinalIgnoreCase)).Select(c => new[] { c[0], c[1], c[3] }).ToList();
-                    if (!MarketData.HasQuoteKey()) { found = local; if (MarketData.ValidSym(q.ToUpperInvariant()) && !local.Any(c => c[0] == q.ToUpperInvariant())) found.Add(new[] { q.ToUpperInvariant(), L.T("the ticker you typed"), "" }); fill(); return; }
+                    // PX-ML10 / DAY1-L3: the ticker you typed is always offered (with or without a key), labelled as such
+                    string tq = q.ToUpperInvariant(); string[] typed = MarketData.ValidSym(tq) && !local.Any(c => c[0] == tq) ? new[] { tq, L.T("Ticker as typed:"), MarketData.Venue(tq) } : null;
+                    if (!MarketData.HasQuoteKey()) { found = local; if (typed != null) found.Add(typed); fill(); return; }
                     go.Enabled = false; go.Text = L.T("Searching...");
-                    System.Threading.Tasks.Task.Factory.StartNew(() => MarketData.Search(q)).ContinueWith(t => { try { f.BeginInvoke((Action)delegate { if (f.IsDisposed) return; go.Enabled = true; go.Text = L.T("Search"); found = local.Concat(t.Result.Where(z => !local.Any(c => c[0] == z[0]))).Take(20).ToList(); fill(); }); } catch (InvalidOperationException) { } });
+                    System.Threading.Tasks.Task.Factory.StartNew(() => MarketData.Search(q)).ContinueWith(t => { try { f.BeginInvoke((Action)delegate { if (f.IsDisposed) return; go.Enabled = true; go.Text = L.T("Search"); found = local.Concat(t.Result.Where(z => !local.Any(c => c[0] == z[0]))).Take(20).ToList(); if (typed != null && !found.Any(z => z[0] == typed[0])) found.Add(typed); fill(); }); } catch (InvalidOperationException) { } });
                 };
                 go.Click += delegate { search(); };
                 sb.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; search(); } };
@@ -552,11 +557,18 @@ namespace AdeeboMeter
             }
             y = bottom + 10 * S;
             string qn; lock (MarketData.k) qn = MarketData.QuoteNote;
-            MkText(g, qn != "" ? L.T(qn) : L.T("From your Financial Modeling Prep key · delayed while markets are open"), Paper.Small, qn != "" ? Paper.Amber : Paper.Muted, x, y); y += 26 * S;
-            if (MarketData.HasQuoteKey())   // how often: your key, your choice (5 and 1 minute need FMP's paid plan)
+            // PX-ML8 / DAY1-ML2: which services these came from, and as of when (the oldest price shown); indexes and futures need
+            // Financial Modeling Prep - said plainly when you only have Finnhub or Twelve Data, instead of dashes with no reason
+            string src = string.Join(", ", MarketData.Providers.Where(p => Sports.Key(p[0]) != "").Select(p => p[1]));
+            var shown = qs.Where(z => z != null && z.When > DateTime.MinValue).ToList();
+            string asOf = shown.Count > 0 ? " · " + L.T("as of") + " " + shown.Min(z => z.When).ToLocalTime().ToString("t", CultureInfo.CurrentCulture) : "";
+            MkText(g, qn != "" ? L.T(qn) : L.T("From") + " " + src + asOf + " · " + L.T("delayed while markets are open"), Paper.Small, qn != "" ? Paper.Amber : Paper.Muted, x, y); y += 26 * S;
+            if (MarketData.HasQuoteKey() && Sports.Key("fmp") == "") { MkText(g, L.T("Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only."), Paper.Small, Paper.Muted, x, y); y += 26 * S; }
+            if (MarketData.HasQuoteKey())   // how often: your key, your choice
             {
                 float px = x; MkText(g, L.T("Update:"), Paper.Small, Paper.Muted, px, y + 4 * S); px += 64 * S;
-                foreach (var o in new[] { new[] { "60", "every hour" }, new[] { "15", "every 15 min (free)" }, new[] { "5", "every 5 min (paid)" }, new[] { "1", "every minute (paid)" } })
+                // Adeeb 28 Nov: the faster paces need a paid plan the app can't see - they're offered only once chosen (to switch back)
+                foreach (var o in new[] { new[] { "60", "every hour" }, new[] { "15", "every 15 min (free)" }, new[] { "5", "every 5 min (paid)" }, new[] { "1", "every minute (paid)" } }.Where(o => (o[0] != "5" && o[0] != "1") || Cfg.FmpEvery == o[0]))
                 {
                     bool on = Cfg.FmpEvery == o[0]; var ob = MkButton(g, L.T(o[1]), px, y, on); string v = o[0];
                     Act(tradeCanvas, ob, delegate { Cfg.FmpEvery = v; Cfg.Save(); tradeCanvas.Invalidate(); }); px = ob.Right + 8 * S;

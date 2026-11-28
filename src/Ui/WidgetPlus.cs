@@ -383,7 +383,7 @@ namespace AdeeboMeter
             }
             MarketData.Quote q; List<double> h; lock (MarketData.k) { MarketData.Quotes.TryGetValue(sym, out q); MarketData.Hist.TryGetValue(sym, out h); h = h == null ? null : h.ToList(); }
             var tq = new Tile { Label = q != null && !string.IsNullOrEmpty(q.Name) ? Trunc(q.Name, 22) : sym.TrimStart('^') };
-            if (q == null) { tq.Value = "-"; tq.Sub = Policy.NoOnline ? L.T("Online lookups are off on this PC (your IT team's policy)") : !MarketData.HasQuoteKey() ? L.T("Needs your Financial Modeling Prep key (Settings › Markets)") : MarketData.Dead(sym) ? L.T("No price for this symbol - check it in Settings › Widget") : QuoteWhy() != "" ? QuoteWhy() : L.T("Waiting for the first price"); return tq; }   // lifecycle L-5; hunters13 data M1
+            if (q == null) { tq.Value = "-"; tq.Sub = Policy.NoOnline ? L.T("Online lookups are off on this PC (your IT team's policy)") : !MarketData.HasQuoteKey() ? L.T("Needs a free price key (Settings › Markets)") : MarketData.Dead(sym) ? L.T("No price for this symbol - check it in Settings › Widget") : QuoteWhy() != "" ? QuoteWhy() : L.T("Waiting for the first price"); return tq; }   // lifecycle L-5; hunters13 data M1
             tq.Value = q.Price.ToString(q.Price >= 1000 ? "#,0.00" : "0.00", CultureInfo.CurrentCulture) + (double.IsNaN(q.Pct) ? "" : "  " + Signed(q.Pct) + " " + L.T("day"));   /* hunters12 L3: cents kept past $1,000 */
             int qd = Dir(q.Pct); tq.Tint = qd == 0 ? (Color?)null : qd > 0 ? Theme.LvText(0) : Theme.LvText(2);
             if (graph && h != null && h.Count >= 2) tq.Series = h.ToArray();

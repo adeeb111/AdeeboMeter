@@ -292,6 +292,13 @@ namespace AdeeboMeter
                 var q = MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"name\":\"x\",\"price\":6812.4,\"changePercentage\":0.42,\"timestamp\":1763740800}]", sym);
                 if (q == null || q.Price != 6812.4 || q.Pct != 0.42 || q.When.Year != 2025) throw new InvalidOperationException("FMP quote");
                 if (MarketData.ParseFmp("[{\"symbol\":\"OTHER\",\"price\":1}]", sym) != null || MarketData.ParseFmp("{\"Error Message\":\"Invalid API KEY\"}", sym) != null || MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"price\":-5}]", sym) != null) throw new InvalidOperationException("FMP bad answers");
+                // PX-L4 (hunters15): the other two services' parsers, what each covers, crypto hours and big moves
+                var fh = MarketData.ParseFinnhub("{\"c\":231.5,\"dp\":-0.8,\"t\":1763740800}", "AAPL");
+                if (fh == null || fh.Price != 231.5 || fh.Pct != -0.8 || MarketData.ParseFinnhub("{\"c\":0,\"dp\":0}", "ZZZZ") != null) throw new InvalidOperationException("Finnhub quote");
+                var tw = MarketData.ParseTwelve("{\"symbol\":\"AAPL\",\"close\":\"231.5\",\"percent_change\":\"120.5\",\"currency\":\"USD\"}", "AAPL");
+                if (tw == null || tw.Ccy != "USD" || tw.Pct != 120.5 || MarketData.ParseTwelve("{\"status\":\"error\"}", "AAPL") != null) throw new InvalidOperationException("Twelve Data quote (currency, a move over 50 %)");
+                if (!MarketData.Covers("finnhub", "BRK.B") || MarketData.Covers("finnhub", "SHOP.TO") || !MarketData.Covers("twelve", "BTCUSD") || MarketData.Covers("finnhub", "GCUSD") || !MarketData.Covers("fmp", "^GSPC")) throw new InvalidOperationException("what each service covers");
+                if (!MarketData.OpenNow("BTCUSD", new DateTime(2026, 11, 28, 6, 0, 0, DateTimeKind.Utc)) || MarketData.Venue("BRK.B") != "New York") throw new InvalidOperationException("crypto is 24/7; BRK.B is New York");
                 // the TSX stays open on Sep 30 (a banking holiday only - TMX notices 2021-2026)
                 if (Markets.Holiday(new DateTime(2026, 9, 30), "ca") != null) throw new InvalidOperationException("Sep 30 is a TSX trading day");
             });

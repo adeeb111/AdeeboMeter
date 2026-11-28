@@ -313,8 +313,8 @@ namespace AdeeboMeter
             new[] { "CNR.TO", "CN Rail", "Canada", "Toronto" }, new[] { "BCE.TO", "BCE (Bell)", "Canada", "Toronto" }, new[] { "CSU.TO", "Constellation Software", "Canada", "Toronto" },
             new[] { "^GSPC", "S&P 500", "Indexes", "New York" }, new[] { "^IXIC", "Nasdaq Composite", "Indexes", "New York" }, new[] { "^DJI", "Dow Jones", "Indexes", "New York" },
             new[] { "^GSPTSE", "S&P/TSX Composite", "Indexes", "Toronto" }, new[] { "^FTSE", "FTSE 100 (London)", "Indexes", "London" }, new[] { "^N225", "Nikkei 225 (Tokyo)", "Indexes", "Tokyo" },
-            new[] { "BTCUSD", "Bitcoin", "Crypto", "24/7" }, new[] { "ETHUSD", "Ethereum", "Crypto", "24/7" }, new[] { "GCUSD", "Gold", "Crypto", "futures" } };
-        public static readonly string[] CompanyGroups = { "Popular", "AI and tech", "Canada", "Indexes", "Crypto" };
+            new[] { "BTCUSD", "Bitcoin", "Crypto", "24/7" }, new[] { "ETHUSD", "Ethereum", "Crypto", "24/7" }, new[] { "GCUSD", "Gold", "Commodities", "futures" }, new[] { "SIUSD", "Silver", "Commodities", "futures" }, new[] { "CLUSD", "WTI crude oil", "Commodities", "futures" } };
+        public static readonly string[] CompanyGroups = { "Popular", "AI and tech", "Canada", "Indexes", "Crypto", "Commodities" };
         // your list (Cfg.Follow): at most 20, in your order, junk dropped
         public static List<string> Follow() { return (Cfg.Follow ?? "").Split(',').Select(z => z.Trim()).Where(ValidSym).Distinct().Take(20).ToList(); }
         public static void SetFollow(IEnumerable<string> l) { Cfg.Follow = string.Join(",", l.Where(ValidSym).Distinct().Take(20)); Cfg.Save(); }
@@ -326,37 +326,51 @@ namespace AdeeboMeter
             try
             {
                 string k1 = Sports.Key("fmp"), k2 = Sports.Key("finnhub"), k3 = Sports.Key("twelve");
+                // PX-ML10: each service you have a key for is tried in turn until one finds something
                 if (k1 != "")
+                {
+                try
                 {
                     string b = HttpSmall.Get("https://financialmodelingprep.com/stable/search-name?query=" + Uri.EscapeDataString(q) + "&limit=15&apikey=" + Uri.EscapeDataString(k1), 128); Call();
                     foreach (Match m in Regex.Matches(b ?? "", "\\{[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"[^{}]*?\"name\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\\}")) { string ex = Regex.Match(m.Value, "\"exchange\"\\s*:\\s*\"([^\"]{1,20})\"").Groups[1].Value; res.Add(new[] { m.Groups[1].Value, m.Groups[2].Value, ex }); }
                 }
-                else if (k2 != "")
+                catch (Exception e) { if (!(e is System.Net.WebException || e is IOException)) throw; Program.Log("search: " + e.GetType().Name); }
+                }
+                if (res.Count == 0 && k2 != "")
+                {
+                try
                 {
                     string b = HttpSmall.Get("https://finnhub.io/api/v1/search?q=" + Uri.EscapeDataString(q) + "&token=" + Uri.EscapeDataString(k2), 128);
                     foreach (Match m in Regex.Matches(b ?? "", "\"description\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"")) res.Add(new[] { m.Groups[2].Value, m.Groups[1].Value, "" });
                 }
-                else if (k3 != "")
+                catch (Exception e) { if (!(e is System.Net.WebException || e is IOException)) throw; Program.Log("search: " + e.GetType().Name); }
+                }
+                if (res.Count == 0 && k3 != "")
+                {
+                try
                 {
                     string b = HttpSmall.Get("https://api.twelvedata.com/symbol_search?symbol=" + Uri.EscapeDataString(q) + "&apikey=" + Uri.EscapeDataString(k3), 128);
                     foreach (Match m in Regex.Matches(b ?? "", "\\{[^{}]*?\"symbol\"\\s*:\\s*\"([^\"]{1,20})\"[^{}]*?\"instrument_name\"\\s*:\\s*\"([^\"]{1,80})\"[^{}]*?\"exchange\"\\s*:\\s*\"([^\"]{1,20})\"")) res.Add(new[] { m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value });
                 }
+                catch (Exception e) { if (!(e is System.Net.WebException || e is IOException)) throw; Program.Log("search: " + e.GetType().Name); }
+                }
             }
             catch (Exception e) { if (!(e is System.Net.WebException || e is IOException)) throw; Program.Log("search: " + e.GetType().Name); }
+            foreach (var r in res) if (string.IsNullOrEmpty(r[2])) r[2] = Venue(r[0]);   // PX-L2: the exchange column is never empty
             return res.Where(r => ValidSym(r[0])).GroupBy(r => r[0]).Select(gr => gr.First()).Take(15).ToList();
         }
         // the price services, in the order they're asked: key name, name, where to get a free key, what the free plan gives
         public static readonly string[][] Providers = {
-            new[] { "fmp", "Financial Modeling Prep", "https://site.financialmodelingprep.com/developer/docs", "250 calls a day - indexes, shares, futures" },
+            new[] { "fmp", "Financial Modeling Prep", "https://site.financialmodelingprep.com/register", "250 calls a day - indexes, shares, futures" },
             new[] { "finnhub", "Finnhub", "https://finnhub.io/register", "60 calls a minute - US shares" },
             new[] { "twelve", "Twelve Data", "https://twelvedata.com/register", "800 calls a day - US shares and crypto" } };
         public static bool HasQuoteKey() { return KeyCount() > 0; }
         static int KeyCount() { return Providers.Count(p => Sports.Key(p[0]) != ""); }
         // what each service can price on its free plan: FMP anything; Finnhub plain US tickers; Twelve Data plain US tickers and BTC/ETH
-        static bool Covers(string prov, string sym)
+        internal static bool Covers(string prov, string sym)
         {
             if (prov == "fmp") return true;
-            bool plain = Regex.IsMatch(sym ?? "", "^[A-Z]{1,5}$") && !FuturesList.Any(f => f[0] == sym);
+            bool plain = Regex.IsMatch(sym ?? "", "^[A-Z]{1,5}(\\.[AB])?$") && !FuturesList.Any(f => f[0] == sym);   // PX-L1: BRK.B, BF.A - share classes, still New York
             if (prov == "finnhub") return plain;
             return plain || sym == "BTCUSD" || sym == "ETHUSD";
         }
@@ -378,26 +392,30 @@ namespace AdeeboMeter
         {
             double price = JNum(json, "c"), pct = JNum(json, "dp"), ts = JNum(json, "t");
             if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;   // Finnhub answers 0 for a symbol it doesn't know
-            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 50 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
         }
         public static Quote ParseTwelve(string json, string sym)
         {
             if ((json ?? "").IndexOf("\"status\":\"error\"", StringComparison.Ordinal) >= 0) return null;
             double price = JNum(json, "close"), pct = JNum(json, "percent_change"), ts = JNum(json, "timestamp");
             if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;
-            return Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 50 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+            var q = Named(new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow }, json);
+            var cc = Regex.Match(json ?? "", "\"currency\"\\s*:\\s*\"([A-Z]{3})\""); if (cc.Success) q.Ccy = cc.Groups[1].Value;   // PX-ML7
+            return q;
         }
         // 21 Nov (Adeeb): your own key, your own speed - every hour, 15 minutes (the free plan's pace), 5 minutes or every minute (paid)
         public static int EveryMin { get { int m; return int.TryParse(Cfg.FmpEvery, out m) && m >= 1 ? m : 15; } }
         public static bool FreePace { get { return EveryMin >= 15; } }
-        static string CallsFile { get { return Path.Combine(Program.DataDir, "mk-calls.txt"); } }
-        static int CallsToday()
+        static string CallsFile(string prov) { return Path.Combine(Program.DataDir, prov == "fmp" ? "mk-calls.txt" : "mk-calls-" + prov + ".txt"); }   // FMP keeps its old file
+        static int CallsToday() { return CallsToday("fmp"); }
+        static int CallsToday(string prov)
         {
-            try { if (File.Exists(CallsFile)) { var p = File.ReadAllText(CallsFile).Split(' '); int n; if (p.Length == 2 && p[0] == DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) && int.TryParse(p[1], out n)) return n; } }
+            try { string f = CallsFile(prov); if (File.Exists(f)) { var p = File.ReadAllText(f).Split(' '); int n; if (p.Length == 2 && p[0] == DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) && int.TryParse(p[1], out n)) return n; } }
             catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; }
             return 0;
         }
-        static void Call() { try { File.WriteAllText(CallsFile, DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday() + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
+        static void Call() { Call("fmp"); }
+        static void Call(string prov) { try { File.WriteAllText(CallsFile(prov), DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + " " + (CallsToday(prov) + 1).ToString(CultureInfo.InvariantCulture)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; } }
         public static void FetchQuotes(bool futures, Action done) { FetchList(futures ? 1 : 0, futures ? FuturesList.Select(f => f[0]).ToList() : IndexList.Select(f => f[0]).ToList(), done); }
         // the corner widget's own symbols (24 Nov): any the person typed (AAPL, SHOP.TO) plus the listed ones, at the key's pace
         public static int CallsUsedToday { get { return CallsToday(); } }
@@ -413,6 +431,7 @@ namespace AdeeboMeter
         public static bool OpenNow(string sym, DateTime utc)
         {
             if (string.IsNullOrEmpty(sym) || sym.StartsWith("FX:", StringComparison.Ordinal)) return false;
+            if (sym == "BTCUSD" || sym == "ETHUSD") return true;   // PX-ML9: crypto trades around the clock
             if (FuturesList.Any(f => f[0] == sym))
             {
                 var et = Trading.EasternNow(); var t = et.TimeOfDay; var d = et.DayOfWeek;
@@ -430,48 +449,80 @@ namespace AdeeboMeter
             return "New York";
         }
         public static bool ValidSym(string s) { return !string.IsNullOrEmpty(s) && s.Length <= 20 && Regex.IsMatch(s, @"^[\^A-Za-z0-9.=\-]{1,20}$"); }
+        // hunters15 B4: one clock per symbol, shared by the four callers (Markets indexes, futures, the widget, your companies) -
+        // a symbol fetched a minute ago by one isn't fetched again by another (PX-ML2)
+        static readonly Dictionary<string, DateTime> fetchedAt = new Dictionary<string, DateTime>(StringComparer.Ordinal);
+        // per-service pace (PX-ML5): Twelve Data 800 a day and 8 a minute, Finnhub 60 a minute, FMP 250 a day (free plan)
+        static readonly Dictionary<string, Queue<DateTime>> perMin = new Dictionary<string, Queue<DateTime>>();
+        static int MinuteCap(string prov) { return prov == "twelve" ? 8 : prov == "finnhub" ? 60 : int.MaxValue; }
+        static int DayCap(string prov) { return prov == "fmp" ? 230 : prov == "twelve" ? 780 : int.MaxValue; }
+        static bool Room(string prov)
+        {
+            if (FreePace && CallsToday(prov) >= DayCap(prov)) return false;
+            lock (k) { Queue<DateTime> q; if (!perMin.TryGetValue(prov, out q)) perMin[prov] = q = new Queue<DateTime>(); while (q.Count > 0 && (DateTime.UtcNow - q.Peek()).TotalSeconds >= 60) q.Dequeue(); return q.Count < MinuteCap(prov); }
+        }
+        static void Spent(string prov) { lock (k) { Queue<DateTime> q; if (!perMin.TryGetValue(prov, out q)) perMin[prov] = q = new Queue<DateTime>(); q.Enqueue(DateTime.UtcNow); } if (prov != "finnhub") Call(prov); }
+        // is it worth asking for this symbol now? (PX-ML1) - its market open, or no price yet since it last closed
+        static bool Due(string sym)
+        {
+            DateTime at; lock (k) fetchedAt.TryGetValue(sym, out at);
+            if ((DateTime.UtcNow - at).TotalMinutes < EveryMin) return false;
+            if (OpenNow(sym, DateTime.UtcNow)) return true;
+            return (DateTime.UtcNow - at).TotalHours >= 12;   // closed: one look for the closing price, then rest until it opens
+        }
         static void FetchList(int qi, List<string> list, Action done)
         {
             if (qBusy || Policy.NoOnline || (DateTime.UtcNow - qTried[qi]).TotalMinutes < EveryMin) return;
             if (!HasQuoteKey()) return;
+            var todo = list.Where(Due).ToList(); if (todo.Count == 0) return;
             qBusy = true; qTried[qi] = DateTime.UtcNow;
             new Thread(() =>
             {
-                int got = 0, fails = 0; bool capped = false;
+                int got = 0, unreached = 0; bool capped = false, limited = false, badKey = false;
+                var dead = new HashSet<string>();   // PX-ML6: a service that failed this round isn't asked again this round
+                var fails = new Dictionary<string, int>();   // PX-ML3: failures counted per service, not per round
                 try
                 {
-                    foreach (var sym in list)
+                    foreach (var sym in todo)
                     {
                         // 24 Nov (Adeeb: "give 2-3 websites in case 1 doesn't work"): each symbol is asked of the services you have a key
-                        // for, in order (Financial Modeling Prep, Finnhub, Twelve Data), skipping one that can't price it; the next one
-                        // answers when one fails. The free FMP plan's 250 a day still counts: past 230, FMP is skipped for the day.
-                        // round 6: a call is counted when the service answered (even with an error) - never for a request that didn't leave
-                        // hunt-5: one symbol that fails doesn't cost the rest; a wrong key (401) on the only service, or two symbols in a
-                        // row that no service answered (offline), stop the round, so no calls are spent on a line that isn't there
-                        Quote q = null; System.Net.WebException err = null; bool tried = false, fmpCapped = false;
+                        // for, in order, skipping one that can't price it, is out of calls (PX-ML4/5: skip and go on - never end the round)
+                        // or failed this round; the next one answers. A call is counted only when the service answered.
+                        Quote q = null; bool tried = false;
                         foreach (var pv in Providers)
                         {
-                            string pk = Sports.Key(pv[0]); if (pk == "" || !Covers(pv[0], sym)) continue;
-                            if (pv[0] == "fmp" && FreePace && CallsToday() >= 230) { fmpCapped = true; continue; }
+                            string pk = Sports.Key(pv[0]); if (pk == "" || !Covers(pv[0], sym) || dead.Contains(pv[0])) continue;
+                            if (!Room(pv[0])) { capped = true; continue; }
                             tried = true;
-                            try { q = Ask(pv[0], pk, sym); if (pv[0] == "fmp") Call(); err = null; if (q != null) break; }
-                            catch (System.Net.WebException we) { var hr = we.Response as System.Net.HttpWebResponse; if (hr != null && pv[0] == "fmp") Call(); err = we; Program.Log("quotes: " + pv[0] + " " + sym + " " + we.Status); }
+                            try { q = Ask(pv[0], pk, sym); Spent(pv[0]); if (q != null) break; }
+                            catch (System.Net.WebException we)
+                            {
+                                var hr = we.Response as System.Net.HttpWebResponse; if (hr != null) Spent(pv[0]);
+                                int code = hr == null ? 0 : (int)hr.StatusCode;
+                                if (code == 429) { limited = true; dead.Add(pv[0]); }
+                                else if (code == 401 || code == 403) { badKey = KeyCount() == 1; dead.Add(pv[0]); }
+                                else { int n; fails.TryGetValue(pv[0], out n); fails[pv[0]] = ++n; if (n >= 2 || hr == null) dead.Add(pv[0]); }
+                                Program.Log("quotes: " + pv[0] + " " + sym + " " + we.Status + (code > 0 ? " " + code : ""));
+                            }
                         }
-                        if (!tried && fmpCapped) { lock (k) QuoteNote = "Today's free calls are used up - the numbers are from earlier today."; capped = true; break; }
-                        if (q == null && err != null) { var hr = err.Response as System.Net.HttpWebResponse; if ((hr != null && (int)hr.StatusCode == 401 && KeyCount() == 1) || ++fails >= 2) throw err; continue; }
-                        fails = 0;
+                        if (!tried) { if (!Providers.Any(pv => Sports.Key(pv[0]) != "" && Covers(pv[0], sym))) continue; unreached++; if (unreached >= 3 && got == 0) break; continue; }
+                        lock (k) fetchedAt[sym] = DateTime.UtcNow;
                         if (q == null) { if (qi == 2) lock (k) { NoQuoteDay(); int n; noQuote.TryGetValue(sym, out n); noQuote[sym] = n + 1; } continue; }
+                        if (string.IsNullOrEmpty(q.Ccy)) { var ex = Exchanges.FirstOrDefault(e => e.Name == Venue(sym)); q.Ccy = sym.EndsWith("USD", StringComparison.Ordinal) ? "USD" : ex != null ? ex.Ccy : "USD"; }   // PX-ML7
                         if (qi == 2) lock (k) noQuote.Remove(sym);
                         lock (k) { Quotes[sym] = q; Ver++; List<double> h; if (!Hist.TryGetValue(sym, out h)) Hist[sym] = h = new List<double>(); if (h.Count == 0 || h[h.Count - 1] != q.Price) h.Add(q.Price); if (h.Count > 40) h.RemoveAt(0); } got++;
                     }
-                    if (got > 0 && !capped) lock (k) QuoteNote = "";   // R2-065: the cap note stays when the cap is why the rest are old
+                    // one honest note for the round, most important first (never the provider's own text: it can carry the key)
+                    string note = badKey ? "The quote service didn't accept the key. Check it in Settings › Markets."
+                        : limited ? "The price service says too many requests (its rate limit) - it tries again in " + EveryMin + " minutes."
+                        : capped ? "Today's free calls are used up - the numbers are from earlier today."
+                        : got == 0 && dead.Count > 0 ? "Couldn't reach the quote service just now - it tries again in " + EveryMin + " minutes." : "";
+                    lock (k) QuoteNote = note;
                 }
                 catch (Exception e)
                 {
                     if (e is OutOfMemoryException) throw;
-                    // never repeat the provider's error text: it can carry the key (the Live worker leaked one that way)
-                    lock (k) QuoteNote = e is System.Net.WebException && ((System.Net.WebException)e).Response is System.Net.HttpWebResponse && (int)((System.Net.HttpWebResponse)((System.Net.WebException)e).Response).StatusCode == 401
-                        ? "The quote service didn't accept the key. Check it in Settings › Markets." : "Couldn't reach the quote service just now - it tries again in " + EveryMin + " minutes.";   // R2-172
+                    lock (k) QuoteNote = "Couldn't reach the quote service just now - it tries again in " + EveryMin + " minutes.";   // R2-172
                     Program.Log("quotes: " + e.GetType().Name);
                 }
                 finally { qBusy = false; Done(done); }
@@ -485,7 +536,7 @@ namespace AdeeboMeter
             var s = Regex.Match(json, "\"symbol\"\\s*:\\s*\"([^\"]{1,20})\""); if (!s.Success || s.Groups[1].Value != sym) return null;
             double price = num("price"), pct = num("changePercentage"), ts = num("timestamp");
             if (double.IsNaN(price) || price <= 0 || price > 1e7) return null;
-            var q = new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 50 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow };
+            var q = new Quote { Sym = sym, Price = price, Pct = Math.Abs(pct) < 1000 ? pct : double.NaN, When = !double.IsNaN(ts) && ts > 946684800 && ts < 4102444800 ? new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(ts) : DateTime.UtcNow };
             var ix = IndexList.FirstOrDefault(i => i[0] == sym); var fu = FuturesList.FirstOrDefault(f => f[0] == sym);
             if (ix != null) { q.Name = ix[1]; q.Region = ix[2]; q.Ccy = ix[3]; }
             if (fu != null) { q.Name = fu[1]; q.Unit = fu[2]; q.Ccy = "USD"; }
