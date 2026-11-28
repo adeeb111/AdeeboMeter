@@ -5892,3 +5892,9 @@ Check a website	检查一个网站
 One site or app, end to end	一个网站或应用，从头到尾
 Proof your provider can't brush off	运营商无法搪塞的证据
 Check my PC - one report, everything that matters	检查我的电脑——一份报告，涵盖所有要点
+Hi - my internet loses packets at {0} this week.	您好——这周 {0} 时段我的网络在丢包。
+Hi - my internet keeps losing packets.	您好——我的网络一直在丢包。
+It starts inside your network, not in my home.	问题出在你们的网络里，不在我家。
+My PC and router were checked and are fine.	我的电脑和路由器都检查过了，没有问题。
+Could you check my line? I have a full report if you need it.	能帮我检查一下线路吗？如有需要，我有完整报告。
+For their network team	给他们的网络团队

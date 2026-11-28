@@ -230,9 +230,12 @@ namespace AdeeboMeter
             foreach (var r in ruled) rows.Add(R(0, "Checked", r, "", "m"));
 
             // the message to paste, and the report file
-            string msg = GameSession.Redact(Message(finding, routes, main, start, firstIsp, wifi, nm, heat), ssid);   // pasted into a support chat: no home addresses, no Wi-Fi name
+            string full = GameSession.Redact(Message(finding, routes, main, start, firstIsp, wifi, nm, heat), ssid);   // pasted into a support chat: no home addresses, no Wi-Fi name
+            // 28 Nov (Adeeb): the message people actually send is a few words, in their own language; the detailed one stays for a network team
+            string msg = Short(heat, start >= 0 && firstIsp >= 0 && start >= firstIsp, ruled.Count > 0, wifi);
             rows.Add(R(-1, "MESSAGE FOR YOUR PROVIDER'S SUPPORT CHAT", "click to copy", "", "i"));
             rows.Add(new[] { "3", "Message", msg, "", "i", "copy:" + msg });
+            rows.Add(new[] { "3", "For their network team", full, "", "i", "copy:" + full });
             string file = Save(rows, ssid, new Visual { Main = main, Routes = routes, Start = start, FirstIsp = firstIsp, GwIdx = gwIdx, Nm = nm, Owners = owners, Heat = heat, Wifi = wifi, Finding = finding, Ruled = ruled, Msg = msg, Minutes = min, Game = game });
             if (file != null) rows.Add(new[] { "0", "Report saved", Path.GetFileName(file) + " - open it in your browser and Print > Save as PDF to attach it", "", "m", "show:" + file });
             string csv = SaveCsv(routes, file);
@@ -319,6 +322,15 @@ namespace AdeeboMeter
             var parts = new List<string>(); int i = 0;
             while (i < hours.Count) { int a = hours[i], b = a; while (i + 1 < hours.Count && hours[i + 1] == b + 1) { i++; b++; } parts.Add(a.ToString("00", CultureInfo.InvariantCulture) + ":00-" + ((b + 1) % 24).ToString("00", CultureInfo.InvariantCulture) + ":00"); i++; }
             return string.Join(", ", parts);
+        }
+        // a few words in the app's language: what, when, that the home side is ruled out, the ask
+        internal static string Short(Dictionary<int, double> heat, bool inTheirs, bool homeChecked, bool wifi)
+        {
+            var bad = heat.Where(kv => kv.Value >= 1).Select(kv => kv.Key).OrderBy(k => k).ToList();
+            string s = bad.Count > 0 ? string.Format(CultureInfo.CurrentCulture, L.T("Hi - my internet loses packets at {0} this week."), Runs(bad)) : L.T("Hi - my internet keeps losing packets.");
+            if (inTheirs) s += " " + L.T("It starts inside your network, not in my home.");
+            else if (homeChecked && !wifi) s += " " + L.T("My PC and router were checked and are fine.");
+            return s + " " + L.T("Could you check my line? I have a full report if you need it.");
         }
         static string Message(string finding, List<Route> routes, Route main, int start, int firstIsp, bool wifi, Func<string, string> nm, Dictionary<int, double> heat)
         {

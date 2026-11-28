@@ -300,6 +300,9 @@ namespace AdeeboMeter
                 }
                 var fl = FullView.FlowParse("# check\nSITES=\"a b\"\nfor s in $SITES; do\n  if ping $s 3; then\n    echo \"ok\"\n  else\n    sleep 2\n  fi\ndone\nfor i in $(seq 1 4); do\n  dig x\ndone");
                 if (fl.Count != 4 || fl[0].Kind != "note" || fl[1].Kind != "set" || fl[2].Kind != "each" || fl[2].Kids[0].Kind != "if" || fl[2].Kids[0].Else[0].Kind != "wait" || fl[3].Kind != "repeat" || fl[3].Text != "4") throw new InvalidOperationException("flow parse: blocks");
+                // ISP message (28 Nov): a few words - the bad hours as runs, the home side ruled out, the ask
+                var hm = new Dictionary<int, double> { { 18, 2 }, { 19, 1.5 }, { 22, 1 }, { 3, 0.2 } }; string sm = IspReport.Short(hm, true, true, false);
+                if (sm.IndexOf("18:00", StringComparison.Ordinal) < 0 || sm.IndexOf("inside your network", StringComparison.Ordinal) < 0 || sm.IndexOf("03:00", StringComparison.Ordinal) >= 0 || sm.Length > 220) throw new InvalidOperationException("short ISP message: " + sm);
                 // Your market (D7): region -> market, the keyless rates, crossing two Bank series, holidays by rule and table, Fri-Sat weekends
                 if (MyMarket.ForRegion("BD") != "bd" || MyMarket.ForRegion("gb") != "uk" || MyMarket.ForRegion("PL") != "custom" || MyMarket.All.Length != 11) throw new InvalidOperationException("market from region");
                 DateTime erD; var er0 = MyMarket.ParseEr("{\"result\":\"success\",\"time_last_update_unix\":1764288001,\"base_code\":\"CAD\",\"rates\":{\"CAD\":1,\"BDT\":87.1,\"USD\":0.7138}}", out erD);

@@ -5899,3 +5899,9 @@ Check a website	Revisar un sitio web
 One site or app, end to end	Un sitio o app, de punta a punta
 Proof your provider can't brush off	Una prueba que tu proveedor no podrá ignorar
 Check my PC - one report, everything that matters	Revisar mi PC: un solo informe con todo lo importante
+Hi - my internet loses packets at {0} this week.	Hola: mi internet pierde paquetes a las {0} esta semana.
+Hi - my internet keeps losing packets.	Hola: mi internet pierde paquetes una y otra vez.
+It starts inside your network, not in my home.	Empieza dentro de vuestra red, no en mi casa.
+My PC and router were checked and are fine.	Mi PC y mi router están revisados y funcionan bien.
+Could you check my line? I have a full report if you need it.	¿Podéis revisar mi línea? Tengo un informe completo si lo necesitáis.
+For their network team	Para su equipo de red

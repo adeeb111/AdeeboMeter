@@ -5911,3 +5911,9 @@ Check a website	Vérifier un site
 One site or app, end to end	Un site ou une appli, de bout en bout
 Proof your provider can't brush off	Une preuve que votre fournisseur ne pourra pas écarter
 Check my PC - one report, everything that matters	Vérifier mon PC - un seul rapport, tout ce qui compte
+Hi - my internet loses packets at {0} this week.	Bonjour - ma connexion perd des paquets à {0} cette semaine.
+Hi - my internet keeps losing packets.	Bonjour - ma connexion perd régulièrement des paquets.
+It starts inside your network, not in my home.	Ça commence dans votre réseau, pas chez moi.
+My PC and router were checked and are fine.	Mon PC et mon routeur ont été vérifiés et vont bien.
+Could you check my line? I have a full report if you need it.	Pouvez-vous vérifier ma ligne ? J’ai un rapport complet si besoin.
+For their network team	Pour leur équipe réseau

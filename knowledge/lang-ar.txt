@@ -5899,3 +5899,9 @@ Check a website	افحص موقعًا
 One site or app, end to end	موقع أو تطبيق واحد، من طرف إلى طرف
 Proof your provider can't brush off	دليل لا يستطيع مزوّدك تجاهله
 Check my PC - one report, everything that matters	افحص حاسوبي - تقرير واحد بكل ما يهم
+Hi - my internet loses packets at {0} this week.	مرحبًا - يفقد الإنترنت لديّ حزمًا في {0} هذا الأسبوع.
+Hi - my internet keeps losing packets.	مرحبًا - يستمر الإنترنت لديّ في فقدان الحزم.
+It starts inside your network, not in my home.	تبدأ المشكلة داخل شبكتكم، لا في منزلي.
+My PC and router were checked and are fine.	تم فحص حاسوبي وجهاز التوجيه وهما سليمان.
+Could you check my line? I have a full report if you need it.	هل يمكنكم فحص خطي؟ لديّ تقرير كامل إن احتجتم إليه.
+For their network team	لفريق الشبكة لديهم

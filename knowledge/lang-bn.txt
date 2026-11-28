@@ -5899,3 +5899,9 @@ Check a website	একটি ওয়েবসাইট চেক করুন
 One site or app, end to end	একটি সাইট বা অ্যাপ, শুরু থেকে শেষ
 Proof your provider can't brush off	এমন প্রমাণ যা প্রোভাইডার উড়িয়ে দিতে পারবে না
 Check my PC - one report, everything that matters	আমার পিসি চেক করুন - এক রিপোর্টে দরকারি সবকিছু
+Hi - my internet loses packets at {0} this week.	হ্যালো - এই সপ্তাহে {0} সময়ে আমার ইন্টারনেটে প্যাকেট হারাচ্ছে।
+Hi - my internet keeps losing packets.	হ্যালো - আমার ইন্টারনেটে বারবার প্যাকেট হারাচ্ছে।
+It starts inside your network, not in my home.	সমস্যা শুরু হচ্ছে আপনাদের নেটওয়ার্কে, আমার বাসায় নয়।
+My PC and router were checked and are fine.	আমার পিসি আর রাউটার চেক করা হয়েছে, ঠিক আছে।
+Could you check my line? I have a full report if you need it.	আমার লাইনটা একটু দেখবেন? দরকার হলে পুরো রিপোর্ট আছে।
+For their network team	তাদের নেটওয়ার্ক টিমের জন্য
