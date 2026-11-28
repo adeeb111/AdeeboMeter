@@ -318,6 +318,12 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
 - Checks: Chrome, Safari (Mac and iPhone), Firefox, Facebook's in-app browser; 320 / 390 / 1280 px; Arabic mirrored.
 - A Mac app: Adeeb wants Mac as a focus (Mac users pay better) - planned separately in PLAN-MAC.md, not inside 1.1.7.
 
+### Release notes for the site (28 Nov)
+- The four "Using AdeeboMeter" lessons are in the app (knowledge/learn.txt) and in tools/learnsite.py, but the website's
+  Learn pages were NOT regenerated: running tools/site.sh or learnsite.py on its own rewrites ~500-670 committed pages
+  (Codex's later passes are missing from that output). Reconcile the generators with Codex before the release build,
+  then regenerate once.
+
 ### Dropped (25 Nov)
 - D5 PCAP Theater - dropped by Adeeb. (Flow was dropped and brought back the same morning.)
 
