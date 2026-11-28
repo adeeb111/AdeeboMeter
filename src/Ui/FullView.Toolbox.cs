@@ -204,6 +204,7 @@ namespace AdeeboMeter
                 T("dnsrace", "NAMES", "DNS race - which server is fastest here", "Extra servers to race (optional) - e.g. 208.67.222.222", (a, r) => Picks.DnsRace(M, a[0], r)),
                 T("inventory", "YOUR NETWORK", "Devices on this network", "Label one (optional) - e.g. aa:bb:cc:dd:ee:ff = Living room TV|Watch one (optional) - its address or label, pinged every minute; -name stops", (a, r) => Picks.Inventory(M, a[0], a[1], r)),
                 T("drivers", "THE PC", "Drivers, device problems and USB history", null, (a, r) => Picks.Drivers()),
+                T("mypc", "THE PC", "Check my PC - one report, everything that matters", null, (a, r) => PcReport.Run(M, r)),   // 28 Nov (Adeeb): your own PC, like the used-laptop check
                 T("usb", "THE PC", "Why isn't my USB device working?", "Which device (optional) - part of its name, e.g. headset, mouse, disk", (a, r) => Guided.Usb(a[0])),
                 T("lag", "SPEED", "Why is my game lagging?", "Game (optional) - e.g. valorant (empty = the one you play)", (a, r) => Guided.Lag(M, a[0])),
                 T("winupdate", "THE PC", "What did Windows Update break?", null, (a, r) => UpdateBreak.Run()),
@@ -316,7 +317,7 @@ namespace AdeeboMeter
             new[] { "INSIDE WINDOWS", "dlls", "handles", "envvars" },
             new[] { "PARTS & LINKS", "usbtree", "pcie", "endurance", "disklat", "edid" },
             new[] { "HARDWARE NERDS", "pcwhy", "hwmap", "feltslow", "hidden", "diskspeed", "ramcheck", "gpucheck", "cpuheld", "netcap", "laptop", "screentest", "keytest", "soundtest" },
-            new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
+            new[] { "THE PC", "mypc", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" }, { "MONEY & MARKETS MATHS", "net" }, { "COMMODITY MATHS", "net" }, { "GAMING MATHS", "net" },
             { "INSIDE WINDOWS", "pc" }, { "PARTS & LINKS", "hw" }, { "THIS PC AND YOUR PHONE", "net" } /* bug-hunt L-220: on purpose - they compare the two connections */, { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
@@ -444,6 +445,7 @@ namespace AdeeboMeter
         void RowAction(string act)
         {
             if (tbBusy) return;
+            if (act.StartsWith("tool:", StringComparison.Ordinal) || act.StartsWith("run:", StringComparison.Ordinal) || act.StartsWith("guide:", StringComparison.Ordinal) || act.IndexOf(':') < 0) { FixGo(act); return; }   // 28 Nov: "the tool that digs deeper"
             if (act.StartsWith("key:", StringComparison.Ordinal))
             {
                 var p = act.Split(':');
@@ -698,6 +700,7 @@ namespace AdeeboMeter
                 case "udpsend": if (!int.TryParse(a[2], out n)) n = 1; return RunSecs(Math.Max(1, Math.Min(1000, n)) / 10 + 1);
                 case "cloud": case "owners": case "ret": return "about 20-40 seconds";
                 case "ping6": return "about 10-30 seconds";
+                case "mypc": return "about 30-60 seconds";
                 case "handles": return "about 25 seconds"; case "disklat": return "about 30 seconds";
                 case "space": return "up to 20 seconds on a big disk";
                 case "teams": return "about 10 seconds";

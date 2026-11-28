@@ -5891,3 +5891,11 @@ the path, the hours, the message	পথ, সময়, বার্তা
 Open What's wrong? and pick the problem you have.	What's wrong? খুলে আপনার সমস্যাটি বেছে নিন।
 Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	ISP রিপোর্ট কয়েক মিনিট পথ মাপে, এক সপ্তাহের ইতিহাসের সাথে মেলায়, কী কী বাদ দেওয়া গেছে (আপনার পিসি, ওয়াই-ফাই, রাউটার) তা তালিকা করে, আর সাপোর্ট চ্যাটে পেস্ট করার মতো বার্তা লেখে। প্রাইভেট ঠিকানা আর ওয়াই-ফাইয়ের নাম বাদ থাকে।
 You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	আপনার কাছে {0} আছে। এখনই দেখুন ওয়েবসাইট খোলে, যা সবচেয়ে নতুনটির সাথে তুলনা করে - AdeeboMeter নিজে কখনও চেক করে না।
+Check my PC	আমার পিসি চেক করুন
+Speed, disk, battery, stability - one report	স্পিড, ডিস্ক, ব্যাটারি, স্থিতিশীলতা - এক রিপোর্টে
+Check my connection	আমার কানেকশন চেক করুন
+Wi-Fi, router, provider, names - where it breaks	ওয়াই-ফাই, রাউটার, প্রোভাইডার, নাম - কোথায় ভাঙছে
+Check a website	একটি ওয়েবসাইট চেক করুন
+One site or app, end to end	একটি সাইট বা অ্যাপ, শুরু থেকে শেষ
+Proof your provider can't brush off	এমন প্রমাণ যা প্রোভাইডার উড়িয়ে দিতে পারবে না
+Check my PC - one report, everything that matters	আমার পিসি চেক করুন - এক রিপোর্টে দরকারি সবকিছু

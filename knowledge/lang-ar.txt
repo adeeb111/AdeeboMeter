@@ -5891,3 +5891,11 @@ the path, the hours, the message	المسار والساعات والرسالة
 Open What's wrong? and pick the problem you have.	افتح «ما الخطأ؟» واختر مشكلتك.
 Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	يقيس تقرير المزوّد المسار لبضع دقائق، ويقارنه بسجل أسبوع، ويسرد ما تم استبعاده (حاسوبك وWi-Fi وجهاز التوجيه)، ويكتب رسالة يمكنك لصقها في محادثة الدعم. تُستبعد العناوين الخاصة واسم شبكة Wi-Fi لديك.
 You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	لديك الإصدار {0}. «تحقق الآن» يفتح الموقع الذي يقارنه بالأحدث - لا يتحقق AdeeboMeter بنفسه أبدًا.
+Check my PC	افحص حاسوبي
+Speed, disk, battery, stability - one report	السرعة والقرص والبطارية والاستقرار - تقرير واحد
+Check my connection	افحص اتصالي
+Wi-Fi, router, provider, names - where it breaks	Wi-Fi وجهاز التوجيه والمزوّد والأسماء - أين ينقطع
+Check a website	افحص موقعًا
+One site or app, end to end	موقع أو تطبيق واحد، من طرف إلى طرف
+Proof your provider can't brush off	دليل لا يستطيع مزوّدك تجاهله
+Check my PC - one report, everything that matters	افحص حاسوبي - تقرير واحد بكل ما يهم

@@ -231,7 +231,7 @@ namespace AdeeboMeter
                             var ls = g.MeasureString(r.GoLabel + "  >", Draw.fBodyB); var br = new RectangleF(x, y, side ? w : ls.Width + 28 * S, 38 * S);
                             Theme.Fill(g, br, 10 * S, Theme.Blue);
                             using (var wb = new SolidBrush(Theme.OnBlue)) g.DrawString(r.GoLabel + "  >", Draw.fBodyB, wb, x + 14 * S, y + (34 * S - ls.Height) / 2);
-                            string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else { tab = go; ShowTab(); } });
+                            string go = r.GoTab; Act(guideCanvas, br, delegate { if (go.StartsWith("guide:", StringComparison.Ordinal)) StartGuide(go.Substring(6), false); else FixGo(go); });
                             y += 50 * S;
                         }
                         if (side) { float rightEnd = y; x = lx0s; w = fullW - sideW - 16 * S; y = leftEnd; y = list("NOT ESTABLISHED", r.NotEst); y = Math.Max(y, rightEnd); w = fullW; }

@@ -57,6 +57,7 @@ namespace AdeeboMeter
                 else if (id == "full") Full(m, r, changed);
             }
             catch (Exception e) { Program.Log("investigate " + id + ": " + e); if (r.Finding == "") r.Conclude(3, "Couldn't finish: " + e.Message); }
+            try { Connect(id, m, r); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("connect " + id + ": " + e.Message); }   // 28 Nov: this PC, what changed, the next tool
             r.Status = ""; r.Done = true; changed();
         }
 

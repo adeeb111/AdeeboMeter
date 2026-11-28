@@ -126,12 +126,43 @@ namespace AdeeboMeter
                     if (t.Contains(" " + wd + " ") || (wd.Length >= 6 && t.Contains(" " + wd))) return r;
             return null;
         }
+        // ---------- the four checks people ask for most, one tap each (28 Nov)
+        static readonly string[][] Quick = {
+            new[] { "run:mypc", "pc", "Check my PC", "Speed, disk, battery, stability - one report" },
+            new[] { "guide:whats", "wifi", "Check my connection", "Wi-Fi, router, provider, names - where it breaks" },
+            new[] { "dest", "internet", "Check a website", "One site or app, end to end" },
+            new[] { "tool:ispreport", "mail", "Report for my ISP", "Proof your provider can't brush off" } };
+        float PaintQuickChecks(Graphics g, float x, float y, float w)
+        {
+            int cols = w > 900 * S ? 4 : 2; float gap = 10 * S, cw = (w - (cols - 1) * gap) / cols, chh = 64 * S;
+            for (int i = 0; i < Quick.Length; i++)
+            {
+                var q = Quick[i]; var r = new RectangleF(x + (i % cols) * (cw + gap), y + (i / cols) * (chh + gap), cw, chh);
+                Theme.Fill(g, r, 12 * S, i == 0 ? Theme.BlueSoft : Theme.Card); Theme.Stroke(g, r, 12 * S, i == 0 ? Theme.Blue : Theme.Line, i == 0 ? 1.5f : 1);
+                Glyphs.Tile(g, q[1], new RectangleF(r.X + 12 * S, r.Y + (chh - 40 * S) / 2, 40 * S, 40 * S), Theme.Blue, 10 * S);
+                bool rtl = L.IsRtl; float tx = r.X + 62 * S, tw = r.Width - 72 * S;
+                using (var ink = new SolidBrush(Theme.Ink)) using (var mut = new SolidBrush(Theme.Muted)) using (var nf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap | (rtl ? StringFormatFlags.DirectionRightToLeft : 0) })
+                {
+                    g.DrawString(L.T(q[2]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S), nf);
+                    g.DrawString(L.T(q[3]), Draw.fSmall, mut, new RectangleF(tx, r.Y + 34 * S, tw, 20 * S), nf);
+                }
+                string go = q[0]; Act(overviewCanvas, r, delegate { FixGo(go); });
+            }
+            return y + ((Quick.Length + cols - 1) / cols) * (chh + gap) + 8 * S;
+        }
         void FixGo(string go)
         {
             if (go.StartsWith("case:", StringComparison.Ordinal)) { OpenCase(go.Substring(5), "home", "", null, null); return; }
             if (go.StartsWith("guide:", StringComparison.Ordinal)) GoGuide(go.Substring(6));
             else if (go == "gamer" || go == "link" || go == "changes") { tab = go; ShowTab(); }
-            else if (go.StartsWith("tool:", StringComparison.Ordinal)) { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(go.Substring(5)); }
+            else if (go.StartsWith("tool:", StringComparison.Ordinal) || go.StartsWith("run:", StringComparison.Ordinal))
+            {
+                // 28 Nov: "tool:mtr|1.1.1.1" opens it with the boxes filled; "run:" also starts it (a button that says Check runs the check)
+                var p = go.Substring(go.IndexOf(':') + 1).Split('|'); tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool(p[0]);
+                for (int i = 1; i < p.Length && i - 1 < tbBoxes.Count; i++) if (tbBoxes[i - 1] != null) tbBoxes[i - 1].Box.Text = p[i];
+                if (go.StartsWith("run:", StringComparison.Ordinal) && !tbBusy) StartTool();
+            }
+            else if (go != "") { tab = go; ShowTab(); SyncNav(); }   // any page by its id (doctor, health, dest...)
         }
 
         // the weather sentence reads the outage log (files, when History is on): never on the paint, never more than twice a minute
@@ -290,6 +321,7 @@ namespace AdeeboMeter
                     y += vr.Height + 18 * S; OvLap("verdict");
                 }
                 // then the do-everything button, then the front door (Adeeb, 22 Nov: verdict on top, Full checkup, then "What's going on?")
+                y = PaintQuickChecks(g, x, y, w); OvLap("quick");   // 28 Nov (Adeeb): ready-made buttons - check my PC, my connection, a website, proof for my ISP
                 y = PaintCheckupCard(g, x, y, w); OvLap("checkup");
                 y = PaintFrontDoor(g, x, y, w); OvLap("front");   // the problem tiles (FullView.Case.cs)
 
@@ -333,35 +365,10 @@ namespace AdeeboMeter
                     using (var tb = new SolidBrush(Theme.LvText(1))) using (var nw = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap }) g.DrawString(ub + "  ›", Draw.fBodyB, tb, new RectangleF(x + 14 * S, y + 8 * S, w - 28 * S, 20 * S), nw);
                     Act(overviewCanvas, ur, delegate { tab = "toolbox"; ShowTab(); EnsureToolbox(); OpenTool("winupdate"); }); y += 44 * S;
                 }
-                // needs attention
-                var attAll = M.Events.Recent(300).Where(e => e.Lv >= 1 && e.Kind != "verdict" && e.T > DateTime.Now.AddHours(-2)).ToList(); var att = attAll.Take(4).ToList();
-                g.DrawString(Kit.Sent("NEEDS ATTENTION  ·  LAST 2 HOURS"), Draw.fTiny, muted, x, y); y += 22 * S;
-                int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");   // a board host down 3 checks in a row, a certificate inside 30 days
-                if (att.Count == 0 && watching == 0) { g.DrawString(Voice.P("Nothing. Boring is good.", "Nothing in the last 2 hours."), Draw.fBody, muted, x, y); y += 28 * S; }
-                using (var nowrap = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
-                    foreach (var e in att)
-                    {
-                        g.DrawString(e.T.ToString("HH:mm", CultureInfo.CurrentCulture), Draw.fSmall, muted, x, y + 4 * S);
-                        Draw.LvDot(g, e.Lv, x + 52 * S, y + 7 * S, 10 * S, 10 * S);
-                        float tmw = Cfg.History ? 150 * S : 0;   // "See 14:05 ›" on every event: the Time machine at that minute
-                        g.DrawString(e.Text, Draw.fBody, ink, new RectangleF(x + 72 * S, y + 2 * S, w - 72 * S - tmw, 20 * S), nowrap);
-                        if (Cfg.History)
-                        {
-                            var ev = e; string tl = L.T("See") + " " + e.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " ›"; var tsz = g.MeasureString(tl, Draw.fSmall);
-                            var tlr = new RectangleF(x + w - tsz.Width, y + 4 * S, tsz.Width, 20 * S);
-                            using (var bl = new SolidBrush(Theme.BlueText)) g.DrawString(tl, Draw.fSmall, bl, tlr.X, tlr.Y);
-                            Act(overviewCanvas, tlr, delegate { OpenTimeAt(ev.T, L.T("Home") + " - " + ev.Text); });
-                        }
-                        var er = new RectangleF(x, y, w - tmw, 26 * S); Act(overviewCanvas, er, delegate { tab = "changes"; ShowTab(); }); Hint(overviewCanvas, er, "kind." + e.Kind);
-                        y += 26 * S; g.DrawLine(line, x, y, x + w, y);
-                    }
-                if (attAll.Count > att.Count)   // bug-hunt L-169: the rest are counted, one click away
-                {
-                    string more = L.T("and") + " " + (attAll.Count - att.Count) + " " + L.T("more in What changed");
-                    using (var lb = new SolidBrush(Theme.BlueText)) g.DrawString(more, Draw.fSmall, lb, x, y + 6 * S);
-                    var mr2 = new RectangleF(x, y + 2 * S, g.MeasureString(more, Draw.fSmall).Width, 22 * S); Act(overviewCanvas, mr2, delegate { tab = "changes"; ShowTab(); }); y += 26 * S;
-                }
-                y += 14 * S;
+                // 28 Nov (Adeeb): "Needs attention" is gone from Home - the verdict on top already says what's wrong now, and every
+                // event is in History › What changed. A watched host that's down still shows here (it's yours to act on).
+                int watching; y = PaintWatch(g, x, y, w, out watching); OvLap("watch");
+                if (watching > 0) y += 14 * S;
 
                 // your week, everything together (only once there's a record)
                 y = PaintWeek(g, x, y, w); OvLap("week");

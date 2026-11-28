@@ -5891,3 +5891,11 @@ the path, the hours, the message	la ruta, las horas, el mensaje
 Open What's wrong? and pick the problem you have.	Abre ¿Qué pasa? y elige el problema que tienes.
 Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	El informe para mi proveedor mide la ruta unos minutos, la compara con una semana de historial, enumera lo ya descartado (tu PC, el Wi-Fi, el router) y escribe un mensaje para pegar en el chat de soporte. Las direcciones privadas y el nombre de tu Wi-Fi quedan fuera.
 You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	Tienes la {0}. Comprobar ahora abre la web, que la compara con la más reciente; AdeeboMeter nunca comprueba por su cuenta.
+Check my PC	Revisar mi PC
+Speed, disk, battery, stability - one report	Velocidad, disco, batería, estabilidad: un solo informe
+Check my connection	Revisar mi conexión
+Wi-Fi, router, provider, names - where it breaks	Wi-Fi, router, proveedor, nombres: dónde falla
+Check a website	Revisar un sitio web
+One site or app, end to end	Un sitio o app, de punta a punta
+Proof your provider can't brush off	Una prueba que tu proveedor no podrá ignorar
+Check my PC - one report, everything that matters	Revisar mi PC: un solo informe con todo lo importante

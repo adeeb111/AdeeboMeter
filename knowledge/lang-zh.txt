@@ -5884,3 +5884,11 @@ the path, the hours, the message	路径、时段、消息
 Open What's wrong? and pick the problem you have.	打开“出什么问题了？”，选你遇到的问题。
 Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	给运营商的报告会测量几分钟路径，与一周的历史对照，列出已经排除的部分（你的电脑、Wi-Fi、路由器），并写好一条可以粘贴到客服聊天里的消息。私有地址和你的 Wi-Fi 名称不会包含在内。
 You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	你的版本是 {0}。“立即检查”会打开网站，与最新版本对比——AdeeboMeter 自己从不检查。
+Check my PC	检查我的电脑
+Speed, disk, battery, stability - one report	速度、硬盘、电池、稳定性——一份报告
+Check my connection	检查我的网络
+Wi-Fi, router, provider, names - where it breaks	Wi-Fi、路由器、运营商、域名——哪里出了问题
+Check a website	检查一个网站
+One site or app, end to end	一个网站或应用，从头到尾
+Proof your provider can't brush off	运营商无法搪塞的证据
+Check my PC - one report, everything that matters	检查我的电脑——一份报告，涵盖所有要点
