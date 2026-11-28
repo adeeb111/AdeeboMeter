@@ -43,7 +43,7 @@ namespace AdeeboMeter
         // move mode (Adeeb, 24 Nov): the widget stays click-through until you rest on it 1.5 s, or pick
         // Corner widget > Move widget. Then a dashed outline shows; drag moves it, a click opens the full window. It locks
         // again when the mouse leaves or after 8 s untouched.
-        bool moveOn, moveSpent, moveByTray, dragging, ghost; Point? dragFrom; Point dragOrigin, lastCur;
+        bool moveOn, moveSpent, moveByTray, dragging, ghost, hoverMoveOn; IntPtr pressFg; Point? dragFrom; Point dragOrigin, lastCur;
         DateTime hoverSince = DateTime.MinValue, moveTouched;
         DateTime lastCover = DateTime.MinValue;
         string hoverKey = ""; bool presenting; int uiTick, drawnVersion = -1; string drawnKey = "", lastChip = "", lastSpeed = "", lastOther = ""; int lastLevel = -1; DateTime speedAt = DateTime.MinValue, otherAt = DateTime.MinValue;   // the strip's two clocks (2 s / 5 s)
@@ -183,6 +183,7 @@ namespace AdeeboMeter
                     return;
                 }
                 Native.GetAsyncKeyState(0x01);   /* this press's "pressed since" is read here - a new one later means a new press (L-3) */
+                pressFg = Native.GetForegroundWindow();   // W-ML2: Alt+Tab between press and release means it wasn't a click
                 dragFrom = Cursor.Position; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = false;
             };
             // hunters14 CORE-L1: the wheel mid-drag drops the widget where it is, then locks and scrolls the app underneath (it was swallowed)
@@ -675,7 +676,8 @@ namespace AdeeboMeter
         {
             if (dragFrom == null) return;
             bool moved = dragging; dragFrom = null; dragging = false; moveTouched = Clock.Mono;
-            if (!moved) { if (fromUp) { Lock("click"); Trace("open full"); OpenFull(); } return; }   // a click, no drag: the full window
+            // a click, no drag: the full window - only when the button came up over the widget, with no Alt+Tab in between (W-ML2)
+            if (!moved) { if (fromUp && widget.Placed.Contains(Cursor.Position) && Native.GetForegroundWindow() == pressFg) { Lock("click"); Trace("open full"); OpenFull(); } else { Lock("click-elsewhere"); Trace("press released elsewhere - not a click"); } return; }
             SaveDrop(true);
         }
         // the drop's place: into the slot the drag started in (a game starting or ending mid-drag doesn't move it - L-3)
@@ -772,16 +774,22 @@ namespace AdeeboMeter
                 // 24 Nov (Adeeb: "tips keep changing every 2 seconds - a different tip every time, not every second"): one line per
                 // hover, picked when the hover starts and kept until you leave - what changed since you looked, else why this card is
                 // showing, else the next of a few short tips (a different one each hover). The dashed outline shows when it can move.
-                if (hovered && !wasHovered)
+                // 28 Nov (Adeeb, W-CALM-M1): one line, in this order - unlocked: how to move it; else why this card is showing;
+                // else what changed since you looked; tips only when nothing else applies. Picked when the hover starts (or the
+                // widget unlocks under the mouse) and kept until you leave.
+                string moveLine = Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter");
+                if (hovered && (!wasHovered || moveOn != hoverMoveOn))
                 {
-                    sinceLine = Corner.Since(M.Latest ?? new Snap()); string why = Corner.WhyLine();
-                    hoverLine = sinceLine != "" ? sinceLine : why != "" ? why : Cfg.WHint ? L.T(HoverTips[hoverTipN++ % HoverTips.Length]) : "";
+                    hoverMoveOn = moveOn;
+                    if (!wasHovered) sinceLine = Corner.Since(M.Latest ?? new Snap());
+                    string why = Corner.WhyLine();
+                    hoverLine = moveOn ? moveLine : why != "" ? why : sinceLine != "" ? sinceLine : Cfg.WHint ? L.T(HoverTips[hoverTipN++ % HoverTips.Length]) : "";
                 }
                 else if (!hovered && wasHovered) { Corner.Looked(); sinceLine = ""; hoverLine = ""; }
                 wasHovered = hovered;
                 var lines = new List<string>();
                 if (hovered) { if (hoverLine != "") lines.Add(hoverLine); }
-                else if (Cfg.WHint && moveOn) lines.Add(Cfg.WHideNear ? L.T("Drag to move · Esc or leaving it locks it · fades again when you leave") : L.T("Drag to move · Esc or leaving it locks it · a click opens AdeeboMeter"));   // moved from the tray, the mouse elsewhere
+                else if (moveOn) lines.Add(moveLine);   // moved from the tray, the mouse elsewhere (the move line shows even with tips off: it's how to use it)
                 string wh = string.Join("\n", lines);
                 if (wh != Draw.WidgetHint) { Draw.WidgetHint = wh; drawnKey = ""; }
                 M.HoverOpen = hovered;

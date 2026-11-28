@@ -31,6 +31,7 @@ namespace AdeeboMeter
     {
         [DllImport("gdi32.dll")] public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pdv, out uint pcFonts);
         [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vKey);   // the freeze watchdog: is a mouse button held right now
+        [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();   // W-ML2: a press and release across Alt+Tab is not a click
         [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
         // ---- the corner widget's move mode (hunters13 widget input, 24 Nov)
         [StructLayout(LayoutKind.Sequential)] struct CURSORINFO { public int cbSize, flags; public IntPtr hCursor; public int x, y; }
