@@ -131,6 +131,49 @@ namespace AdeeboMeter
         }
         // the pace that suits the answer: games want Gamer, a light look wants Penny
         internal static string SuggestedPreset(ICollection<string> uses) { return uses.Contains("game") ? "gamer" : uses.Count > 0 && uses.All(u => u == "check") ? "penny" : "balanced"; }
+        // ---------- the welcome (28 Nov, a user review: "hard to use for non-networking audiences"): four short cards on Home after
+        // setup - what it does, getting around, changing things, when something's wrong. Next / Back / Skip on every card; each
+        // links to its Learn lesson. Once only (Settings › General › "Show the welcome again" brings it back).
+        static readonly string[][] Welcome = {
+            new[] { "use-what", "What AdeeboMeter does", "Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them." },
+            new[] { "use-around", "Getting around", "Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it." },
+            new[] { "use-change", "Changing things", "Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag." },
+            new[] { "use-wrong", "When something's wrong", "A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider." } };
+        float PaintWelcome(Graphics g, float x, float y, float w)
+        {
+            int st = Math.Max(0, Math.Min(3, Cfg.WelcomeStep)); var c = Welcome[st];
+            float top = y, pad = 20 * S, tw = w - 2 * pad;
+            float th = g.MeasureString(L.T(c[2]), Draw.fBody, (int)tw).Height;
+            var card = new RectangleF(x, y, w, 150 * S + th);
+            Theme.Fill(g, card, 14 * S, Theme.Card); Theme.Stroke(g, card, 14 * S, Kit.Accent("home"), 1.5f * S);
+            y += 16 * S;
+            using (var m = new SolidBrush(Kit.Ink("home"))) g.DrawString(string.Format(L.T("Welcome · {0} of 4"), st + 1), Draw.fTiny, m, x + pad, y);
+            string sk = L.T("Skip"); var ss = g.MeasureString(sk, Draw.fBodyB); var skr = new RectangleF(x + w - ss.Width - pad, y - 4 * S, ss.Width + 4, 24 * S);
+            using (var b = new SolidBrush(Theme.Dark ? Theme.BlueDark : Theme.Blue)) g.DrawString(sk, Draw.fBodyB, b, skr.X, skr.Y);
+            Act(overviewCanvas, skr, delegate { Cfg.WelcomeStep = 4; Cfg.Save(); overviewCanvas.Invalidate(); });
+            y += 22 * S;
+            using (var ink = new SolidBrush(Theme.Ink)) g.DrawString(L.T(c[1]), Draw.fTitle, ink, x + pad, y); y += 38 * S;
+            using (var sub = new SolidBrush(Theme.Sub)) g.DrawString(L.T(c[2]), Draw.fBody, sub, new RectangleF(x + pad, y, tw, th + 4)); y += th + 18 * S;
+            // the dots: where you are in the four
+            for (int i = 0; i < 4; i++) Theme.Fill(g, new RectangleF(x + pad + i * 16 * S, y + 12 * S, i == st ? 22 * S : 8 * S, 8 * S), 4 * S, i == st ? Kit.Accent("home") : Theme.Line);
+            float bx = x + w - pad;
+            string nt = L.T(st == 3 ? "Done" : "Next"); var ns = g.MeasureString(nt, Draw.fBtn); var nr = new RectangleF(bx - ns.Width - 32 * S, y, ns.Width + 32 * S, 34 * S);
+            Theme.Fill(g, nr, 10 * S, Theme.Blue); using (var b = new SolidBrush(Theme.OnBlue)) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(nt, Draw.fBtn, b, nr, cf);
+            Act(overviewCanvas, nr, delegate { Cfg.WelcomeStep = st + 1; Cfg.Save(); overviewCanvas.Invalidate(); });
+            bx = nr.X - 10 * S;
+            if (st > 0)
+            {
+                string bt = L.T("Back"); var bs = g.MeasureString(bt, Draw.fBtn); var br = new RectangleF(bx - bs.Width - 28 * S, y, bs.Width + 28 * S, 34 * S);
+                Theme.Fill(g, br, 17 * S, Theme.Card); Theme.Stroke(g, br, 17 * S, Theme.Line, 1);
+                using (var b = new SolidBrush(Theme.Ink)) using (var cf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }) g.DrawString(bt, Draw.fBtn, b, br, cf);
+                Act(overviewCanvas, br, delegate { Cfg.WelcomeStep = st - 1; Cfg.Save(); overviewCanvas.Invalidate(); });
+                bx = br.X - 10 * S;
+            }
+            string lt = L.T("More in Learn ›"); var ls = g.MeasureString(lt, Draw.fBody); var lr = new RectangleF(bx - ls.Width - 8 * S, y + 7 * S, ls.Width + 4, 22 * S);
+            using (var b = new SolidBrush(Theme.BlueText)) g.DrawString(lt, Draw.fBody, b, lr.X, lr.Y);
+            string lid = c[0]; Act(overviewCanvas, lr, delegate { tab = "learn"; ShowTab(); SyncNav(); learnSel = "topic:" + lid; learnPkts = null; learnList.Invalidate(); learnInfo.Invalidate(); });
+            return card.Bottom + 16 * S;
+        }
         float PaintSetup(Graphics g, float x, float y, float w)
         {
             if (setupStep == 0) return PaintSetupUses(g, x, y, w);

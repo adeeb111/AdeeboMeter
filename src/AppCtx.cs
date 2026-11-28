@@ -307,6 +307,7 @@ namespace AdeeboMeter
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             // review 1.1.6 P1 #1: a file that says setupdone=0 is a fresh install whose questions are still open - not an upgrade
             bool pendingSetup = !first && !Cfg.SetupDone;
+            if (Cfg.WelcomeStep < 0) Cfg.WelcomeStep = first || pendingSetup ? 0 : 4;   // 28 Nov: the welcome cards are for new installs only
             // review 1.1.6 D1 #9 (and Adeeb: "it should open on that language"): a first start speaks the Windows display language
             // when AdeeboMeter has it; the language button at the top switches back in one click
             if (first) { string ui = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; if (L.Languages.Any(z => z[0] == ui)) Cfg.Lang = ui; }

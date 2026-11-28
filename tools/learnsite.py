@@ -6,13 +6,13 @@ import html, json, os, re, datetime
 
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 SITE = 'https://adeebometer.com/'
-KINDS = [('basics', 'The basics'), ('protocol', 'How the internet talks'), ('provider', 'Inside your provider'),
+KINDS = [('using', 'Using AdeeboMeter'), ('basics', 'The basics'), ('protocol', 'How the internet talks'), ('provider', 'Inside your provider'),
          ('mobile', 'Mobile, LTE and 5G'), ('windows', 'Your Windows PC'), ('apps', 'Apps on your PC'),
          ('crypto', 'Encryption and keys'), ('streaming', 'Streaming'), ('investing', 'Trading and investing')]
 KN = dict(KINDS)
 # the flat look (docs/ui.css, docs/ui.js): an icon and a short name for each group
-KIC = {'basics': 'layers', 'protocol': 'globe', 'provider': 'router', 'mobile': 'signal', 'windows': 'monitor', 'apps': 'apps', 'crypto': 'lock', 'streaming': 'stream', 'investing': 'chart'}
-KSHORT = {'basics': 'Basics', 'protocol': 'Protocols', 'provider': 'Provider', 'mobile': 'Mobile', 'windows': 'Windows', 'apps': 'Apps', 'crypto': 'Encryption', 'streaming': 'Streaming', 'investing': 'Trading'}
+KIC = {'using': 'apps', 'basics': 'layers', 'protocol': 'globe', 'provider': 'router', 'mobile': 'signal', 'windows': 'monitor', 'apps': 'apps', 'crypto': 'lock', 'streaming': 'stream', 'investing': 'chart'}
+KSHORT = {'using': 'Using it', 'basics': 'Basics', 'protocol': 'Protocols', 'provider': 'Provider', 'mobile': 'Mobile', 'windows': 'Windows', 'apps': 'Apps', 'crypto': 'Encryption', 'streaming': 'Streaming', 'investing': 'Trading'}
 def lrow(t): return (f'<a class="ui-row" href="{t["id"]}.html" data-id="{t["id"]}"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="{KIC.get(t.get("kind"), "book")}"></span>'
                      f'<span class="t"><b>{E(t["title"].split(" - ")[0])}</b><small>{E(KSHORT.get(t.get("kind"), ""))}</small></span><span data-ic="chev"></span></a>')
 E = lambda s: html.escape(s or '', quote=True)

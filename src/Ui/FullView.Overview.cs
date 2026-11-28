@@ -165,13 +165,18 @@ namespace AdeeboMeter
                 string pcSub = memHot ? Kit.Sent("CPU") + " " + Draw.Fmt(s0.Cpu, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%")
                                       : L.T("memory") + " " + Draw.Fmt(s0.Mem, "0", "%") + " · " + L.T("disk") + " " + Draw.Fmt(s0.Disk, "0", "%");
                 if (lvPc >= 1 && lvPc <= 2 && pcHidden) pcSub = L.T("hidden while it stays like this");
+                // 28 Nov (a user review: "hard to understand for non-networking audiences"): each reading says what it means for you,
+                // in plain words, under the number; the engineer's numbers stay with Settings › Extra numbers for engineers
+                Func<int, string, string, string, string> plain = (lv, ok, warn, bad) => lv == 0 ? L.T(ok) : lv == 1 ? L.T(warn) : lv == 2 ? L.T(bad) : "";
+                int lvGw = M.GwPing.Values(6).Length == 0 ? 3 : LvMs(M.GwPing, gw, 15, 50), lvNet = M.NetPing.Values(6).Length == 0 ? 3 : LvMs(M.NetPing, net, 80, 150), lvDns = double.IsNaN(dns) ? 3 : dns > 300 ? 1 : 0;
+                if (!Cfg.Details && !(lvPc >= 1 && lvPc <= 2 && pcHidden)) pcSub = plain(lvPc, "plenty of room to spare", "busy - things may feel slow", "very busy - close something heavy");
                 var tiles = new[] {
                     new[] { "This PC", pcMain, pcSub, lvPc.ToString(CultureInfo.InvariantCulture), "path.PC" },
                     // hunters10 M-1 (R2-076): nothing measured yet (or the check is off) is grey "not yet" - red "no answer" only after pings came back empty
-                    new[] { "Your router", M.GwPing.Values(6).Length == 0 ? L.T("not yet") : ms(gw), "", LvMs(M.GwPing, gw, 15, 50).ToString(CultureInfo.InvariantCulture), "path.LAN" },
-                    new[] { "The internet", M.NetPing.Values(6).Length == 0 ? L.T("not yet") : ms(net), "", LvMs(M.NetPing, net, 80, 150).ToString(CultureInfo.InvariantCulture), "path.Internet" },
-                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), "", double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
-                    new[] { "Your traffic", Draw.Pair(down, up), "", "3", "ov.TRAFFIC" } };
+                    new[] { "Your router", M.GwPing.Values(6).Length == 0 ? L.T("not yet") : ms(gw), plain(lvGw, "your home network is fine", "a little slow at home", "home network trouble"), LvMs(M.GwPing, gw, 15, 50).ToString(CultureInfo.InvariantCulture), "path.LAN" },
+                    new[] { "The internet", M.NetPing.Values(6).Length == 0 ? L.T("not yet") : ms(net), plain(lvNet, "the internet answers quickly", "slower than usual", "trouble reaching it"), LvMs(M.NetPing, net, 80, 150).ToString(CultureInfo.InvariantCulture), "path.Internet" },
+                    new[] { "Name lookups", double.IsNaN(dns) ? L.T("not yet") : ms(dns), plain(lvDns, "sites open without waiting", "new sites are slow to start", "sites may not open"), double.IsNaN(dns) ? "3" : dns > 300 ? "1" : "0", "path.DNS" },
+                    new[] { "Your traffic", Draw.Pair(down, up), L.T("what this PC uses right now"), "3", "ov.TRAFFIC" } };
                 var rects = PaintReadings(g, overviewCanvas, tiles, ix, ty, iw, cols, th);
                 if (rects.Length > 0) { var pr = rects[0]; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
                 string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
@@ -228,6 +233,7 @@ namespace AdeeboMeter
                 // never shown again (PLAN 11.7d)
                 // first open: the setup card alone, nothing else competing with it (23 Nov)
                 if (!Cfg.SetupDone) { y = PaintSetup(g, x, y, w); SetNeed(overviewCanvas, new Size(0, (int)(y + 20 * S))); return; }
+                if (Cfg.WelcomeStep >= 0 && Cfg.WelcomeStep < 4) y = PaintWelcome(g, x, y, w);   // 28 Nov: four short cards, once, after setup
                 if (!Cfg.SidebarTried && Cfg.Layout == "sidebar")
                 {
                     // hunters10 (display ML-1): the buttons are measured first and the question wraps into the room left, the card growing to fit -

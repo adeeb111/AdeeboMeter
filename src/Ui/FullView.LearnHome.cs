@@ -15,9 +15,10 @@ namespace AdeeboMeter
         TableLayoutPanel learnSplit; PillButton learnViewG, learnViewA; readonly List<PillButton> learnChips = new List<PillButton>(); Label learnTip;
         string learnGroup = "", learnFilter = "all";
         static readonly Dictionary<string, string> LearnIcons = new Dictionary<string, string>(StringComparer.Ordinal) {
-            { "basics", "star" }, { "protocol", "traffic" }, { "provider", "route" }, { "mobile", "phone" }, { "crypto", "lock" }, { "windows", "windows" },
+            { "using", "home" }, { "basics", "star" }, { "protocol", "traffic" }, { "provider", "route" }, { "mobile", "phone" }, { "crypto", "lock" }, { "windows", "windows" },
             { "apps", "app" }, { "streaming", "app" }, { "investing", "traffic" }, { "labs", "speed" }, { "games", "game" }, { "check", "check" }, { "paths", "go" } };
         static readonly string[][] LearnCards = {
+            new[] { "using", "Using AdeeboMeter", "What it does, getting around, changing things, and what to do when something is wrong." },
             new[] { "basics", "Start here", "How apps use the internet - in plain words." },
             new[] { "protocol", "How your packets talk", "DNS, DHCP, TCP, TLS, Wi-Fi... two lines and a picture each." },
             new[] { "provider", "Inside the internet", "BGP, OSPF and IS-IS, MPLS, L3VPNs, multicast TV, how Netflix and live football reach you." },

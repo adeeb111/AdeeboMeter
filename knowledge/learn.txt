@@ -1,7 +1,52 @@
 # Learn mode (short on purpose: two lines and a picture), the deep dives and the app stories. Format: see src/Knowledge/Knowledge.cs.
-# kind: basics | protocol | provider | mobile | crypto | windows | apps | streaming | investing.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
+# kind: using | basics | protocol | provider | mobile | crypto | windows | apps | streaming | investing.  ladder: "A > B: message | B > A: reply".  live: a capture filter for "See it live".
 # try: what to do while it records. Keys after == are the names a topic answers to (lower case for Windows processes).
 
+
+
+== use-what
+title: What AdeeboMeter does
+kind: using
+tag: Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?
+check: What do AdeeboMeter's five dots follow? | Your connection from this PC out to the internet | The five apps you use most | Your five fastest websites | Five days of history
+line: AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.
+breaks: Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.
+ladder: This PC > Wi-Fi: is the signal good? | Wi-Fi > Router: does it answer? | Router > Provider: does the internet answer? | Provider > You: one line - where it breaks, in plain words
+try: Rest the mouse on the corner widget for a moment - its card opens with the five dots.
+more: The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.
+
+== use-around
+title: Getting around
+kind: using
+tag: Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.
+check: Where do you look for this PC's hardware - memory, disks, battery? | My PC, then Hardware & health | Learn | The Toolbox's calculators | History
+line: The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".
+breaks: The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.
+ladder: Home > You: what's happening now, and what's wrong | Check > You: one site, end to end | My PC > You: hardware, apps, connections, Wi-Fi | History > You: replay any minute, what changed | Toolbox > You: every tool, by question
+try: Press Ctrl+K and type "hardware".
+more: The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.
+
+== use-change
+title: Changing things
+kind: using
+tag: Language, theme, the buddy, the widget, quiet hours - all in Settings.
+check: Where do you change the language, the theme or the buddy? | Settings | The Toolbox | History | The corner widget
+line: Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.
+breaks: The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.
+ladder: You > Settings: a different language | Settings > Window: redrawn at once | You > Tray icon: Move widget | Widget > You: dashed outline - drag it where you like
+try: Open Settings and change the buddy - its next line is in the new voice.
+more: A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.
+
+== use-wrong
+title: When something's wrong
+kind: using
+tag: From a red dot to a message your provider can't brush off.
+check: Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them? | Report for my ISP - the path hop by hop, the bad hours and a message to paste | A screenshot of the widget | Nothing - call them again | A speed test only
+line: When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.
+breaks: One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.
+ladder: Widget > You: red dot - the provider's side | You > What's wrong?: what do I do? | What's wrong? > You: the next step | You > Report for my ISP: build the proof | Report > Provider: the path, the hours, the message
+try: Open What's wrong? and pick the problem you have.
+more: Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.
 
 == dns
 title: DNS - the internet's phone book

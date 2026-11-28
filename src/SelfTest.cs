@@ -1923,7 +1923,7 @@ namespace AdeeboMeter
                     Views.Load(""); Cfg.View = "";
                     if (!Views.Switch("gamer") || Cfg.View != "gamer" || Cfg.Off("gamer") || !Cfg.Off("trade") || Cfg.Preset != "gamer" || Cfg.GameBgSec != 10) throw new InvalidOperationException("gamer view: " + Views.Current().Line());
                     Cfg.SetOff("trade", false); Views.Remember();   // the gamer wants to learn trading: Trading on, in the Gamer view
-                    if (!Cfg.Nav.StartsWith("home,gamer", StringComparison.Ordinal)) throw new InvalidOperationException("the Gamer view puts the Gamer Zone in the bar: " + Cfg.Nav);
+                    if (!Cfg.Nav.StartsWith("home,check,pc,gamer", StringComparison.Ordinal)) throw new InvalidOperationException("the Gamer view puts the Gamer Zone in the bar (after Home and the two groups, 28 Nov): " + Cfg.Nav);
                     foreach (var b in Views.BuiltIn) foreach (var sec in Cfg.Hideable) if (!Views.Default(b[0]).Hidden.Contains(sec) && Views.Default(b[0]).Nav.IndexOf(sec, StringComparison.Ordinal) < 0 && b[0] != "engineer") throw new InvalidOperationException(b[0] + " shows " + sec + " but not in its bar");
                     Views.Switch("engineer"); if (Cfg.Mode != "pro" || !Cfg.Details || Cfg.HiddenSecs != "") throw new InvalidOperationException("engineer view");
                     Views.Switch("gamer"); if (Cfg.Off("trade")) throw new InvalidOperationException("the Gamer view forgot Trading was turned on");
