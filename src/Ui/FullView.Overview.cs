@@ -134,7 +134,7 @@ namespace AdeeboMeter
             new[] { "tool:ispreport", "mail", "Report for my ISP", "Proof your provider can't brush off" } };
         float PaintQuickChecks(Graphics g, float x, float y, float w)
         {
-            int cols = w > 900 * S ? 4 : 2; float gap = 10 * S, cw = (w - (cols - 1) * gap) / cols, chh = 64 * S;
+            int cols = w > 900 * S ? 4 : 2; float gap = 10 * S, cw = (w - (cols - 1) * gap) / cols, chh = 78 * S;   /* 28 Nov: room for a second line - "one re..." at 125 %, every card cut in French */
             for (int i = 0; i < Quick.Length; i++)
             {
                 var q = Quick[i]; var r = new RectangleF(x + (i % cols) * (cw + gap), y + (i / cols) * (chh + gap), cw, chh);
@@ -144,7 +144,8 @@ namespace AdeeboMeter
                 using (var ink = new SolidBrush(Theme.Ink)) using (var mut = new SolidBrush(Theme.Muted)) using (var nf = new StringFormat { Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap | (rtl ? StringFormatFlags.DirectionRightToLeft : 0) })
                 {
                     g.DrawString(L.T(q[2]), Draw.fBodyB, ink, new RectangleF(tx, r.Y + 12 * S, tw, 22 * S), nf);
-                    g.DrawString(L.T(q[3]), Draw.fSmall, mut, new RectangleF(tx, r.Y + 34 * S, tw, 20 * S), nf);
+                    using (var df = new StringFormat { Trimming = StringTrimming.EllipsisWord, FormatFlags = StringFormatFlags.LineLimit | (rtl ? StringFormatFlags.DirectionRightToLeft : 0) })
+                        g.DrawString(L.T(q[3]), Draw.fSmall, mut, new RectangleF(tx, r.Y + 34 * S, tw, chh - 38 * S), df);   /* two lines at most */
                 }
                 string go = q[0]; Act(overviewCanvas, r, delegate { FixGo(go); });
             }
@@ -213,7 +214,8 @@ namespace AdeeboMeter
                 if (rects.Length > 0) { var pr = rects[0]; Act(overviewCanvas, pr, delegate { if (pcHidden) UnhideProblem(); else { tab = "procs"; ShowTab(); } }); }
                 string netLine = (kind == "Wi-Fi" ? L.T("On Wi-Fi") + (ssid != "" ? " \"" + ssid + "\"" : " " + L.T("(name hidden - location is off)")) + (sig >= 0 ? " · " + L.T("signal") + " " + sig + "%" : "") : L.T("On") + " " + kind) + (speed != "" ? " · " + L.T("link") + " " + speed : "") + (vpn ? " · " + L.T("VPN on") : "");
                 netLine += ". " + L.T("Router, internet and names measured by AdeeboMeter; traffic as Windows reports it.");
-                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fSmall, muted, new RectangleF(ix, ny + 4 * S, iw, 22 * S), nf);
+                bool nrtl = L.RunsRtl(netLine);   /* 28 Nov: Arabic read left to right had "1.2" and "Gb/s" split apart - right to left, still starting at the card's edge */
+                using (var nf = new StringFormat { FormatFlags = StringFormatFlags.NoWrap | (nrtl ? StringFormatFlags.DirectionRightToLeft : 0), Alignment = nrtl ? StringAlignment.Far : StringAlignment.Near, Trimming = StringTrimming.EllipsisCharacter }) g.DrawString(netLine, Draw.fSmall, muted, new RectangleF(ix, ny + 4 * S, iw, 22 * S), nf);
             }
         }
         // a row of readings (Home's card, the Time machine's minute): a dot and a label, the number big with its unit small beside
@@ -241,7 +243,7 @@ namespace AdeeboMeter
                         g.DrawString(num, nfont, vb, new RectangleF(px, tr.Y + 22 * S, cw - 20 * S, 36 * S), nf);
                         if (unit != "") g.DrawString(unit, Draw.fSmall, sub, new RectangleF(px + nw - 2 * S, tr.Y + 22 * S + nfont.GetHeight(g) - Draw.fSmall.GetHeight(g) - 3 * S, Math.Max(10, cw - 20 * S - nw), 20 * S), nf);
                     }
-                    if (t[2] != "") g.DrawString(t[2], Draw.fSmall, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf);
+                    if (t[2] != "") { var sfnt = g.MeasureString(t[2], Draw.fSmall).Width > cw - 20 * S ? Draw.fTiny : Draw.fSmall; g.DrawString(t[2], sfnt, muted, new RectangleF(px, tr.Y + 58 * S, cw - 20 * S, 20 * S), nf); }   /* 28 Nov: French "votre réseau domestique va bi..." - a size smaller before it cuts */
                     if (t.Length > 4 && t[4] != "") Hint(on, tr, t[4]);
                 }
             return rects;

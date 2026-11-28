@@ -5917,3 +5917,25 @@ Today's numbers.	Les chiffres du jour.
 what the numbers mean	ce que veulent dire les chiffres
 ALSO HERE	AUSSI ICI
 Points	Points
+By topic	Par sujet
+Go to a tool - type ping, DNS, certificate, port, Wi-Fi...	Aller à un outil - tapez ping, DNS, certificat, port, Wi-Fi...
+Takes {0}.	Durée : {0}.
+Press F1 on anything for what it means.	Appuyez sur F1 sur n'importe quoi pour savoir ce que ça veut dire.
+about 30-60 seconds	environ 30 à 60 secondes
+Not enough history yet: {0} of the 4 days it needs. The Doctor compares a few days before and after a change.	Pas encore assez d'historique : {0} des 4 jours nécessaires. Le Docteur réseau compare quelques jours avant et après un changement.
+Calm	Calme
+Choppy	Agité
+Stormy	Orageux
+{0} ms to the internet	{0} ms jusqu'à Internet
+wobbling {0} ms	variation de {0} ms
+no drops today	aucune coupure aujourd'hui
+1 drop today (last at {0})	1 coupure aujourd'hui (la dernière à {0})
+{0} drops today (last at {1})	{0} coupures aujourd'hui (la dernière à {1})
+Stormy: the internet has been out since {0}.	Orageux : Internet est coupé depuis {0}.
+Quick tip, boss: Esc, minimise, the X or Back to corner all take you back to the corner widget - I keep watching. Exit lives in the tray icon (right-click).	Petit conseil, patron : Échap, réduire, le X ou Retour au coin vous ramènent tous au widget du coin - je continue de surveiller. Pour quitter : l'icône dans la barre d'état (clic droit).
+App update	Mise à jour d'appli
+Bank of Canada rates turned into your currency, with open.er-api.com for the ones it doesn't list: free, no account. Fetched only while this page is open, at most once a day. Off until you turn it on.	Taux de la Banque du Canada convertis dans votre devise, avec open.er-api.com pour celles qu'elle ne publie pas : gratuit, sans compte. Récupérés seulement quand cette page est ouverte, au plus une fois par jour. Désactivé tant que vous ne l'activez pas.
+Beyond them	Au-delà
+The destination	La destination
+Their first hop	Leur premier saut
+Your home	Chez vous

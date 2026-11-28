@@ -5898,3 +5898,25 @@ Today's numbers.	今天的数据。
 what the numbers mean	这些数字的含义
 ALSO HERE	这里还有
 Points	积分
+By topic	按主题
+Go to a tool - type ping, DNS, certificate, port, Wi-Fi...	转到工具 - 输入 ping、DNS、证书、端口、Wi-Fi...
+Takes {0}.	需要{0}。
+Press F1 on anything for what it means.	在任何内容上按 F1 查看含义。
+about 30-60 seconds	约 30-60 秒
+Not enough history yet: {0} of the 4 days it needs. The Doctor compares a few days before and after a change.	历史记录还不够：已有 {0} 天，需要 4 天。网络医生会比较变更前后的几天。
+Calm	平稳
+Choppy	起伏
+Stormy	动荡
+{0} ms to the internet	到互联网 {0} ms
+wobbling {0} ms	抖动 {0} ms
+no drops today	今天没有断线
+1 drop today (last at {0})	今天断线 1 次（最后一次在 {0}）
+{0} drops today (last at {1})	今天断线 {0} 次（最后一次在 {1}）
+Stormy: the internet has been out since {0}.	动荡：互联网自 {0} 起中断。
+Quick tip, boss: Esc, minimise, the X or Back to corner all take you back to the corner widget - I keep watching. Exit lives in the tray icon (right-click).	小提示，老板：Esc、最小化、X 或“返回角落”都会回到角落小组件 - 我会继续监视。退出在托盘图标里（右键）。
+App update	应用更新
+Bank of Canada rates turned into your currency, with open.er-api.com for the ones it doesn't list: free, no account. Fetched only while this page is open, at most once a day. Off until you turn it on.	加拿大银行汇率换算成你的货币，它不提供的货币由 open.er-api.com 补充：免费，无需账户。仅在此页面打开时获取，每天最多一次。在你开启之前保持关闭。
+Beyond them	更远处
+The destination	目的地
+Their first hop	他们的第一跳
+Your home	你的家

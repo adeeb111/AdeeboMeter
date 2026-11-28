@@ -29,7 +29,8 @@ namespace AdeeboMeter
             {
                 string t = EvLog.Field(e.Xml, "updateTitle");
                 if (Defender(t)) continue;   // Defender's definitions arrive every day: they'd match any bad week, and they don't touch networking
-                l.Add(new Change { T = e.T, What = t != "" ? Short(t) : "a Windows update", Kind = "update" });
+                string app = StoreApp(t);   /* 28 Nov: Microsoft Store apps arrive through the same event - "9NKSQGP7F2NH-5319275A.WhatsAppDesktop" */
+                l.Add(new Change { T = e.T, What = app != null ? app + " (Microsoft Store app)" : t != "" ? Short(t) : "a Windows update", Kind = app != null ? "app" : "update" });
             }
             if (!string.IsNullOrEmpty(err)) LastErr = err;   /* review 1.1.6 P3 #15 */
             foreach (var e in EvLog.Recent("System", "Provider[@Name='Microsoft-Windows-UserPnp'] and EventID=20001", days * 24, 60, out err))
@@ -42,6 +43,14 @@ namespace AdeeboMeter
                 l.Add(new Change { T = e.T, What = "driver: " + Draw.Trunc(text, 90), Kind = "driver" });
             }
             return l.OrderBy(c => c.T).ToList();
+        }
+        // a Store package title -> the app's name: "9NKSQGP7F2NH-5319275A.WhatsAppDesktop" -> "WhatsAppDesktop", "9NBLGGH10PG8-MICROSOFT.PEOPLE" -> "People"; null when it isn't one
+        public static string StoreApp(string t)
+        {
+            var m = Regex.Match(t ?? "", @"^[0-9A-Z]{12}-(?:[^.\s]+\.)?([A-Za-z0-9][A-Za-z0-9.]*)$"); if (!m.Success) return null;
+            string n = m.Groups[1].Value; int dot = n.LastIndexOf('.'); if (dot >= 0 && dot < n.Length - 1) n = n.Substring(dot + 1);
+            if (n == n.ToUpperInvariant()) n = n.Substring(0, 1) + n.Substring(1).ToLowerInvariant();
+            return n;
         }
         public static bool Defender(string t) { return Regex.IsMatch(t ?? "", "Security Intelligence|Defender Antivirus|KB2267602|KB2461484", RegexOptions.IgnoreCase); }
         // "2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)" -> "KB5046617 (Cumulative Update)"

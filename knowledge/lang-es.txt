@@ -5905,3 +5905,25 @@ Today's numbers.	Las cifras de hoy.
 what the numbers mean	qué significan las cifras
 ALSO HERE	TAMBIÉN AQUÍ
 Points	Puntos
+By topic	Por tema
+Go to a tool - type ping, DNS, certificate, port, Wi-Fi...	Ir a una herramienta: escribe ping, DNS, certificado, puerto, Wi-Fi...
+Takes {0}.	Tarda {0}.
+Press F1 on anything for what it means.	Pulsa F1 sobre cualquier cosa para saber qué significa.
+about 30-60 seconds	unos 30-60 segundos
+Not enough history yet: {0} of the 4 days it needs. The Doctor compares a few days before and after a change.	Aún no hay suficiente historial: {0} de los 4 días que necesita. El Doctor de red compara unos días antes y después de un cambio.
+Calm	En calma
+Choppy	Inestable
+Stormy	Tormentoso
+{0} ms to the internet	{0} ms hasta internet
+wobbling {0} ms	oscila {0} ms
+no drops today	sin cortes hoy
+1 drop today (last at {0})	1 corte hoy (el último a las {0})
+{0} drops today (last at {1})	{0} cortes hoy (el último a las {1})
+Stormy: the internet has been out since {0}.	Tormentoso: internet está caído desde las {0}.
+Quick tip, boss: Esc, minimise, the X or Back to corner all take you back to the corner widget - I keep watching. Exit lives in the tray icon (right-click).	Consejo rápido, jefe: Esc, minimizar, la X o Volver a la esquina te devuelven al widget de la esquina; yo sigo vigilando. Para salir, usa el icono de la bandeja (clic derecho).
+App update	Actualización de app
+Bank of Canada rates turned into your currency, with open.er-api.com for the ones it doesn't list: free, no account. Fetched only while this page is open, at most once a day. Off until you turn it on.	Tipos del Banco de Canadá convertidos a tu moneda, con open.er-api.com para las que no publica: gratis, sin cuenta. Se consultan solo con esta página abierta, como mucho una vez al día. Desactivado hasta que lo actives.
+Beyond them	Más allá
+The destination	El destino
+Their first hop	Su primer salto
+Your home	Tu casa

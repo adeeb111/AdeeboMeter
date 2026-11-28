@@ -1219,7 +1219,7 @@ namespace AdeeboMeter
                 if (tbRows == null && !tbBusy && mtuHops == null)
                 {
                     string d = Duration(tbSel, Inputs());
-                    if (d != "") { string dl = "Takes " + d + ".  Press F1 on anything for what it means."; float dh = Draw.Measure(dl, Draw.fSmall, (int)w).Height; g.DrawString(dl, Draw.fSmall, muted, new RectangleF(x, y, w, dh + 4)); y += dh + 10 * S; }
+                    if (d != "") { string dl = L.T("Takes {0}.").Replace("{0}", L.T(d)) + "  " + L.T("Press F1 on anything for what it means."); float dh = Draw.Measure(dl, Draw.fSmall, (int)w).Height; g.DrawString(dl, Draw.fSmall, muted, new RectangleF(x, y, w, dh + 4)); y += dh + 10 * S; }
                 }
                 if (tbSel == "owners" && !Online.On)
                 {

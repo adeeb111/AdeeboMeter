@@ -420,11 +420,14 @@ namespace AdeeboMeter
         {
             double net = m.NetPing.Avg(10); var v = m.NetPing.Values(30).Where(x => !double.IsNaN(x)).ToList(); double jit = v.Count > 2 ? v.Zip(v.Skip(1), (a, b) => Math.Abs(a - b)).Average() : double.NaN;
             var recent = Outages.Last(m, 2).ToList(); var today = recent.Where(o => o.From.Date == DateTime.Today).ToList(); var now = recent.FirstOrDefault(o => o.Ongoing);   // bug-hunt ML-55: an outage that began before midnight is still an outage
-            if (now != null) return "Stormy: the internet has been out since " + now.From.ToString(now.From.Date == DateTime.Today ? "HH:mm" : "ddd HH:mm", CultureInfo.CurrentCulture) + ".";
+            /* 28 Nov: Home's line, in the app's language - each piece a whole phrase with {0} where the number goes */
+            Func<string, string, string> f1 = (t, a) => L.T(t).Replace("{0}", a);
+            if (now != null) return f1("Stormy: the internet has been out since {0}.", now.From.ToString(now.From.Date == DateTime.Today ? "HH:mm" : "ddd HH:mm", CultureInfo.CurrentCulture));
             if (double.IsNaN(net)) return "";
-            string drops = today.Count == 0 ? "no drops today" : today.Count + (today.Count == 1 ? " drop" : " drops") + " today (last at " + today[0].From.ToString("HH:mm", CultureInfo.CurrentCulture) + ")";
+            string last = today.Count == 0 ? "" : today[0].From.ToString("HH:mm", CultureInfo.CurrentCulture);
+            string drops = today.Count == 0 ? L.T("no drops today") : today.Count == 1 ? f1("1 drop today (last at {0})", last) : L.T("{0} drops today (last at {1})").Replace("{0}", today.Count.ToString(CultureInfo.CurrentCulture)).Replace("{1}", last);
             string word = today.Count >= 3 || net > 150 || jit > 40 ? "Stormy" : today.Count > 0 || net > 60 || jit > 15 ? "Choppy" : "Calm";
-            return word + ": " + net.ToString("0", CultureInfo.CurrentCulture) + " ms to the internet" + (double.IsNaN(jit) ? "" : ", wobbling " + jit.ToString("0", CultureInfo.CurrentCulture) + " ms") + ", " + drops + ".";
+            return L.T(word) + ": " + f1("{0} ms to the internet", net.ToString("0", CultureInfo.CurrentCulture)) + (double.IsNaN(jit) ? "" : ", " + f1("wobbling {0} ms", jit.ToString("0", CultureInfo.CurrentCulture))) + ", " + drops + ".";
         }
     }
 }

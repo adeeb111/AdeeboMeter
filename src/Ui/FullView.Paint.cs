@@ -115,11 +115,16 @@ namespace AdeeboMeter
             using (var ink = new SolidBrush(Theme.Ink)) using (var muted = new SolidBrush(Theme.Muted))
             {
                 g.DrawString(L.T("AdeeboMeter itself"), Draw.fBodyB, ink, x, y - 1 * S); x += g.MeasureString(L.T("AdeeboMeter itself"), Draw.fBodyB).Width + 14 * S;
-                if (selfMem == 0) SelfStats(); string st = selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU    " + string.Format(L.T("{0} MB of 99 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) + (live.Running && liveView != null ? "    + tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB) : "");
-                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub)) g.DrawString(st, Draw.fSmall, b, x, y);
+                if (selfMem == 0) SelfStats();
+                // 28 Nov (Arabic): each piece drawn on its own, a translated one right to left - one mixed string came out as "54 MB 99 ميزانية من MB"
+                var parts = new List<string> { selfCpu.ToString("0.0", CultureInfo.CurrentCulture) + "% CPU", string.Format(L.T("{0} MB of 99 MB budget"), (selfMem / 1048576.0).ToString("0", CultureInfo.CurrentCulture)) };
+                if (live.Running && liveView != null) parts.Add("+ tshark " + string.Format(L.T("{0} MB (live capture on)"), liveView.TsharkMB));
+                float px = x;
+                using (var b = new SolidBrush(selfMem > 80L * 1048576 ? Theme.Red : Theme.Sub))
+                    foreach (var part in parts) px = FooterText(g, part, b, px, y) + 16 * S;
                 // the right-hand line gives way to the numbers (Adeeb, 21 Nov: "0 MB of 99 MB budget is overlapping"):
                 // the longest version that fits after them, shorter ones on narrow windows, nothing when even the version won't fit
-                float left = x + g.MeasureString(st, Draw.fSmall).Width + 24 * S;
+                float left = px + 8 * S;
                 // anything AdeeboMeter has waited on for 5 s or more: named here with its seconds, gone when it ends (1.1.6 test day)
                 int more; var bz = Busy.Oldest(out more);
                 if (bz != null)
@@ -131,12 +136,20 @@ namespace AdeeboMeter
                         g.DrawString(note, Draw.fSmall, ab, new RectangleF(left, y, Math.Max(1, r.Width - 20 * S - left), 20 * S), sf);
                     return;
                 }
-                foreach (var right in new[] { L.T("Esc takes you back to the corner") + "     " + Program.Version, Program.Version })   // review CD-L4: the shortcut said once, where there's room
-                {
-                    var rs = g.MeasureString(right, Draw.fSmall); float rx = r.Width - rs.Width - 20 * S;
-                    if (rx >= left) { g.DrawString(right, Draw.fSmall, muted, rx, y); break; }
-                }
+                // review CD-L4: the shortcut said once, where there's room - the phrase and the version drawn apart (28 Nov, Arabic)
+                string esc = L.T("Esc takes you back to the corner"), ver = Program.Version;
+                float vw = g.MeasureString(ver, Draw.fSmall).Width, ew = g.MeasureString(esc, Draw.fSmall).Width, gap = 16 * S, vx = r.Width - vw - 20 * S;
+                if (vx - gap - ew >= left) FooterText(g, esc, muted, vx - gap - ew, y);
+                if (vx >= left) g.DrawString(ver, Draw.fSmall, muted, vx, y);
             }
+        }
+        // one footer piece at (x, y): right to left when its text is Arabic; returns where it ends
+        static float FooterText(Graphics g, string t, Brush b, float x, float y)
+        {
+            var sz = g.MeasureString(t, Draw.fSmall);
+            using (var sf = new StringFormat(StringFormatFlags.NoWrap | (L.RunsRtl(t) ? StringFormatFlags.DirectionRightToLeft : 0)))
+                g.DrawString(t, Draw.fSmall, b, new RectangleF(x, y, sz.Width + 2, sz.Height), sf);
+            return x + sz.Width;
         }
 
         void PaintSide(Graphics g, Rectangle r)

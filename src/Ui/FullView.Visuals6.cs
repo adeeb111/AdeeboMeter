@@ -131,6 +131,9 @@ namespace AdeeboMeter
                 case "ispreport":
                     {
                         var hops = res.Where(o => o[1].Contains("hop")).Select(o => Tuple.Create(Regex.Match(o[1], @"\((?:hop\s*)?(\d+)\)").Groups[1].Value, Regex.Replace(o[1], @"\s*\(.*\)", ""), VNum(o[2], @"([0-9.]+)\s*ms avg"), Regex.Replace(o[1], @"\s*\(.*\)", ""), Lv(o))).ToList();
+                        if (hops.Count == 0)   /* 28 Nov: before a run the road was an empty box - the stops the report covers, unmeasured */
+                            hops = new[] { Tuple.Create("1", L.T("This PC"), double.NaN, L.T("Your home"), 0), Tuple.Create("2", L.T("Your router"), double.NaN, L.T("Your home"), 0),
+                                           Tuple.Create("3", L.T("Their first hop"), double.NaN, L.T("Your provider"), 0), Tuple.Create("4", L.T("The destination"), double.NaN, L.T("Beyond them"), 0) }.ToList();
                         return HopRoad(g, x, y, w, st, "WHAT GOES IN THE REPORT FOR YOUR PROVIDER", hops, Or(Cut(RV("Finding"), 220), "The three places that matter to a provider: your router, their first hop, the destination."));
                     }
 

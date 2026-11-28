@@ -24,6 +24,7 @@ namespace AdeeboMeter
             public List<UpdateBreak.DayStat> Days = new List<UpdateBreak.DayStat>();
             public List<Item> Changes = new List<Item>();
             public Item Suspect; public string Why = "";
+            public string WhyT; public int DataDays;   /* 28 Nov: Why with {0} in place of the day count - the page translates this one (Why stays English for reports) */
             public DateTime At = DateTime.Now; public int Snapshots;
         }
 
@@ -145,9 +146,11 @@ namespace AdeeboMeter
             // are context, not suspects.
             foreach (var c in r.Changes.Where(z => z.Kind != "restart")) c.F = UpdateBreak.Compare(new UpdateBreak.Change { T = c.T, What = c.What, Kind = c.Kind }, UpdateBreak.Day);
             r.Suspect = r.Changes.Where(c => c.F != null && c.F.Lv >= 1 && c.F.Step).OrderByDescending(c => c.F.Lv).ThenByDescending(c => c.F.Stayed).ThenByDescending(c => c.T).FirstOrDefault();
-            int dataDays = r.Days.Count(d => !double.IsNaN(d.Ping));
+            int dataDays = r.Days.Count(d => !double.IsNaN(d.Ping)); r.DataDays = dataDays;
+            const string fewDays = "Not enough history yet: {0} of the 4 days it needs. The Doctor compares a few days before and after a change.";
+            if (Cfg.History && dataDays < 4) r.WhyT = fewDays;
             r.Why = !Cfg.History ? "History is off, so there's nothing to line changes up against. Turn it on in Settings › General."
-                  : dataDays < 4 ? "Not enough history yet - " + dataDays + " day(s). The Doctor needs a few days before and after a change."
+                  : dataDays < 4 ? fewDays.Replace("{0}", dataDays.ToString(CultureInfo.InvariantCulture))
                   : r.Suspect == null ? (r.Days.Skip(Math.Max(0, r.Days.Count - 3)).Any(d => d.Drops > 0) ? "Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC." : "Nothing changed just before things got worse - no suspect.")
                   : "";
             return r;

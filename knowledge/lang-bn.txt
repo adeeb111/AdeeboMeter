@@ -5905,3 +5905,25 @@ Today's numbers.	আজকের সংখ্যা।
 what the numbers mean	সংখ্যাগুলোর মানে
 ALSO HERE	এখানেও আছে
 Points	পয়েন্ট
+By topic	বিষয় অনুযায়ী
+Go to a tool - type ping, DNS, certificate, port, Wi-Fi...	একটি টুলে যান - ping, DNS, সার্টিফিকেট, পোর্ট, Wi-Fi লিখুন...
+Takes {0}.	সময় লাগে {0}।
+Press F1 on anything for what it means.	যেকোনো কিছুর মানে জানতে তার উপর F1 চাপুন।
+about 30-60 seconds	প্রায় 30-60 সেকেন্ড
+Not enough history yet: {0} of the 4 days it needs. The Doctor compares a few days before and after a change.	এখনও যথেষ্ট ইতিহাস নেই: দরকারি 4 দিনের মধ্যে {0} দিন। নেটওয়ার্ক ডাক্তার একটি পরিবর্তনের আগে ও পরে কয়েক দিন তুলনা করে।
+Calm	শান্ত
+Choppy	অস্থির
+Stormy	ঝড়ো
+{0} ms to the internet	ইন্টারনেট পর্যন্ত {0} ms
+wobbling {0} ms	{0} ms ওঠানামা
+no drops today	আজ কোনো বিচ্ছিন্নতা নেই
+1 drop today (last at {0})	আজ 1 বার বিচ্ছিন্ন (শেষবার {0}-এ)
+{0} drops today (last at {1})	আজ {0} বার বিচ্ছিন্ন (শেষবার {1}-এ)
+Stormy: the internet has been out since {0}.	ঝড়ো: {0} থেকে ইন্টারনেট বন্ধ।
+Quick tip, boss: Esc, minimise, the X or Back to corner all take you back to the corner widget - I keep watching. Exit lives in the tray icon (right-click).	ছোট্ট টিপ, বস: Esc, মিনিমাইজ, X বা কোণায় ফিরে যান - সবই আপনাকে কোণের উইজেটে ফিরিয়ে নেয়; আমি নজর রাখতে থাকি। বন্ধ করতে ট্রে আইকনে রাইট-ক্লিক করুন।
+App update	অ্যাপ আপডেট
+Bank of Canada rates turned into your currency, with open.er-api.com for the ones it doesn't list: free, no account. Fetched only while this page is open, at most once a day. Off until you turn it on.	ব্যাংক অফ কানাডার হার আপনার মুদ্রায় রূপান্তরিত, যেগুলো তারা দেয় না সেগুলোর জন্য open.er-api.com: বিনামূল্যে, অ্যাকাউন্ট ছাড়া। শুধু এই পাতা খোলা থাকলে আনা হয়, দিনে সর্বোচ্চ একবার। আপনি চালু না করা পর্যন্ত বন্ধ।
+Beyond them	তাদের পরে
+The destination	গন্তব্য
+Their first hop	তাদের প্রথম হপ
+Your home	আপনার বাড়ি

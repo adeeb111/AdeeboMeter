@@ -106,7 +106,8 @@ namespace AdeeboMeter
         {
             var r = new RectangleF(x, y, w, 120 * S); Paper.Desk(g, r);
             Paper.DeskTitle(g, x + 18 * S, y + 14 * S, MyMarket.Canada ? L.T("Currencies, commodities and Canada's rates") : L.T("Currencies and commodities"), null);
-            using (var ink = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : L.T("From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on."), Paper.Body, ink, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
+            using (var ink = new SolidBrush(Paper.Ink)) g.DrawString(Policy.NoOnline ? L.T("Off - your IT team turned online lookups off.") : MyMarket.Canada ? L.T("From the Bank of Canada: official, free, no account. Fetched only while this page is open, at most once after each day's update. Off until you turn it on.")
+                : L.T("Bank of Canada rates turned into your currency, with open.er-api.com for the ones it doesn't list: free, no account. Fetched only while this page is open, at most once a day. Off until you turn it on."),   /* 28 Nov: said "Bank of Canada" alone with United States picked */ Paper.Body, ink, new RectangleF(x + 18 * S, y + 50 * S, w - 220 * S, 60 * S));
             if (!Policy.NoOnline) { var br = Paper.Pill(g, L.T("Turn on"), x + w - 90 * S, y + 46 * S, Paper.Act); Act(tradeCanvas, br, delegate { Cfg.TradeFx = true; Cfg.Save(); tradeCanvas.Invalidate(); }); }
             return r.Bottom + 16 * S;
         }

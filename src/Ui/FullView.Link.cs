@@ -251,12 +251,15 @@ namespace AdeeboMeter
         }
             // ---------- neighbour wars: 7 days of who is on your air (read in the background, at most every 10 minutes)
         AirLog.Wars wars; DateTime warsAt = DateTime.MinValue; volatile bool warsBusy;
+        float warsTop = -1;   // where the section starts on screen, from the last paint
         float PaintWars(Graphics g, float x, float y, float w)
         {
+            warsTop = y + g.Transform.OffsetY;
             if (!warsBusy && (DateTime.UtcNow - warsAt).TotalMinutes > 10)
             {
                 warsBusy = true; warsAt = DateTime.UtcNow;
-                Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; wars = r; linkCanvas.Invalidate(); }); } catch (InvalidOperationException) { warsBusy = false; } });
+                // 28 Nov (self-test: 3.1 whole pages in 5 s after opening): the answer repaints only from this section down, and only when it changed
+                Task.Factory.StartNew(() => { AirLog.Wars r = null; try { r = AirLog.Analyse(AirLog.Load()); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("wars: " + e.Message); } try { BeginInvoke((Action)delegate { warsBusy = false; bool same = r == null && wars == null; wars = r; if (same) return; int top = (int)Math.Max(0, warsTop); if (warsTop < 0) linkCanvas.Invalidate(); else if (top >= linkCanvas.ClientSize.Height) linkCanvas.Invalidate(new Rectangle(0, linkCanvas.ClientSize.Height - 1, linkCanvas.ClientSize.Width, 1)); /* off screen: one line, so the paint still updates the scroll height */ else linkCanvas.Invalidate(new Rectangle(0, top, linkCanvas.ClientSize.Width, linkCanvas.ClientSize.Height - top)); }); } catch (InvalidOperationException) { warsBusy = false; } });
             }
             using (var mb = new SolidBrush(Theme.Muted)) g.DrawString(Kit.Sent("NEIGHBOUR WARS  ·  7 DAYS ON YOUR AIR"), Draw.fTiny, mb, x, y);
             Hint(linkCanvas, new RectangleF(x, y - 2 * S, w, 18 * S), "link.WARS"); y += 22 * S;

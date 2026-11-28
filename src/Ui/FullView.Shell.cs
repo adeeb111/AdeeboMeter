@@ -111,7 +111,7 @@ namespace AdeeboMeter
             foreach (var r in ShReadyScripts) { term.Write("    " + r[0].PadRight(24), ShGreen); term.Write(r[1] + "\n", ShDim); }
             term.Write("    " + "health-check.sh".PadRight(24), ShGreen); term.Write("the 10-second look: router, internet, names - stops at the first broken one\n", ShDim);
             term.Write("    " + "five-at-a-time.sh".PadRight(24), ShGreen); term.Write("five pings at once, merged into one file\n", ShDim);
-            term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  cd /data  then  nano my-check.sh  · keep any output with  > file.txt  (inside /data)\n\n", ShDim);
+            term.Write("  Your own: open /data puts the folder in File Explorer - paste a .sh there, or  cd /data  then  nano my-check.sh\n  Keep any output with  > file.txt  (inside /data)\n\n", ShDim);   /* 28 Nov: one long line wrapped mid-word ("fil" / "e.txt") */
             term.Write("  ls · cd pages · cd ~ · df -h · top · mtr 1.1.1.1 · parallel -j 5 ping {} 4 ::: 1.1.1.1 8.8.8.8 9.9.9.9\n", ShDim);
             term.Write("  " + L.T("help for everything · Tab completes · Ctrl+C stops · nothing here starts another program") + "\n", ShDim);
             term.Write("  " + L.T("To leave: Esc on an empty line, Ctrl+Tab, or Ctrl+1-7 for a page") + "\n\n", ShDim);

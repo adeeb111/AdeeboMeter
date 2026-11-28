@@ -1134,6 +1134,10 @@ namespace AdeeboMeter
                 var bad = new List<string>();
                 if (UpdateBreak.Short("2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)") != "KB5046617 (Cumulative Update)") bad.Add("KB name: " + UpdateBreak.Short("2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)"));
                 if (UpdateBreak.Short("Security Intelligence Update for Microsoft Defender Antivirus - KB2267602 (Version 1.421.1)") != "KB2267602 (Defender definitions)") bad.Add("Defender name");
+                /* 28 Nov: Store apps come through the same event - named as the app, never as a Windows update */
+                if (UpdateBreak.StoreApp("9NKSQGP7F2NH-5319275A.WhatsAppDesktop") != "WhatsAppDesktop") bad.Add("Store app: " + UpdateBreak.StoreApp("9NKSQGP7F2NH-5319275A.WhatsAppDesktop"));
+                if (UpdateBreak.StoreApp("9NBLGGH10PG8-MICROSOFT.PEOPLE") != "People") bad.Add("Store app in capitals: " + UpdateBreak.StoreApp("9NBLGGH10PG8-MICROSOFT.PEOPLE"));
+                if (UpdateBreak.StoreApp("2026-11 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5046617)") != null) bad.Add("a Windows update taken for a Store app");
                 var day0 = DateTime.Today.AddDays(-6); var c = new UpdateBreak.Change { T = day0.AddHours(3), What = "KB5046617", Kind = "update" };
                 // worse from the day after, and still worse today
                 Func<DateTime, UpdateBreak.DayStat> worse = d => new UpdateBreak.DayStat { D = d, Ping = d > day0 ? 62 : 21, Drops = d > day0 ? 3 : 0, Minutes = 1440 };

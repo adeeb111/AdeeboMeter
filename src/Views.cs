@@ -109,7 +109,7 @@ namespace AdeeboMeter
         public static string NameOf(string id)
         {
             var b = BuiltIn.FirstOrDefault(z => z[0] == id); if (b != null) return L.T(b[1]);
-            lock (k) { string[] v; return kept.TryGetValue(id, out v) ? v[0] : id; }
+            lock (k) { string[] v; return kept.TryGetValue(id, out v) ? (v[0] == "My setup" ? L.T(v[0]) : v[0]) : id; }   /* 28 Nov: the first view is saved as "My setup" in English - shown in the app's language */
         }
         // the views to offer: the ready-made ones (Builtin), then yours
         public static List<string[]> All()

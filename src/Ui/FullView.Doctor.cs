@@ -41,11 +41,11 @@ namespace AdeeboMeter
         }
         static string DocKind(string k)
         {
-            return k == "update" ? "Windows update" : k == "driver" ? "Driver" : k == "hardware" ? "Hardware" : k == "crash" ? "Crash" : k == "restart" ? "Restart" : k == "settings" ? "Settings" : k;
+            return k == "update" ? "Windows update" : k == "app" ? "App update" : k == "driver" ? "Driver" : k == "hardware" ? "Hardware" : k == "crash" ? "Crash" : k == "restart" ? "Restart" : k == "settings" ? "Settings" : k;
         }
         static Color DocKindColor(string k)
         {
-            return k == "update" ? Theme.Blue : k == "driver" ? Kit.Accent("toolbox") : k == "hardware" ? Kit.Accent("security") : k == "crash" ? Theme.Red : k == "restart" ? Theme.Grey : Kit.Accent("time");
+            return k == "update" || k == "app" ? Theme.Blue : k == "driver" ? Kit.Accent("toolbox") : k == "hardware" ? Kit.Accent("security") : k == "crash" ? Theme.Red : k == "restart" ? Theme.Grey : Kit.Accent("time");
         }
         void DocOpenDay(DateTime t)
         {
@@ -69,7 +69,7 @@ namespace AdeeboMeter
                 // ---- the suspect
                 {
                     var s = r.Suspect; int lv = s != null ? s.F.Lv : 3;
-                    string head = s != null ? string.Format(L.T("Most likely: {0}"), s.What) : L.T(r.Why);
+                    string head = s != null ? string.Format(L.T("Most likely: {0}"), s.What) : r.WhyT != null ? L.T(r.WhyT).Replace("{0}", r.DataDays.ToString(CultureInfo.CurrentCulture)) : L.T(r.Why);
                     string detail = s != null ? s.T.ToString("ddd d MMM, HH:mm", CultureInfo.CurrentCulture) + " · " + L.T(DocKind(s.Kind)) + " · " + s.F.Text : "";
                     float hh = Draw.Measure(head, Draw.fHead, (int)(w - 40 * S)).Height, dh = detail != "" ? Draw.Measure(detail, Draw.fBody, (int)(w - 40 * S)).Height : 0;
                     var card = new RectangleF(x, y, w, 20 * S + hh + (dh > 0 ? 8 * S + dh : 0) + (s != null ? 52 * S : 20 * S));
