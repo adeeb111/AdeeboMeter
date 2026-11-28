@@ -5767,3 +5767,8 @@ For each	প্রতিটির জন্য
 If it works	যদি কাজ করে
 Set	সেট
 Note	নোট
+8 broken networks. Find the fault with as few tools as you can.	৮টি নষ্ট নেটওয়ার্ক। যত কম টুল দিয়ে পারেন সমস্যাটি খুঁজুন।
+Multicast theater	মাল্টিকাস্ট থিয়েটার
+How one TV channel reaches many homes: IGMP, PIM and the copies.	একটি টিভি চ্যানেল কীভাবে অনেক বাড়িতে পৌঁছায়: IGMP, PIM আর কপি।
+Cellular: phone to internet	সেলুলার: ফোন থেকে ইন্টারনেট
+Attach, the data session and the tunnel - and what breaks where.	অ্যাটাচ, ডেটা সেশন আর টানেল - আর কোথায় কী নষ্ট হয়।

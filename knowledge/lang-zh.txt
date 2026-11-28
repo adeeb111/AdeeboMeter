@@ -5760,3 +5760,8 @@ For each	逐个
 If it works	如果成功
 Set	设置
 Note	备注
+8 broken networks. Find the fault with as few tools as you can.	8 个出故障的网络。用尽量少的工具找出问题。
+Multicast theater	组播剧场
+How one TV channel reaches many homes: IGMP, PIM and the copies.	一个电视频道如何到达许多家庭：IGMP、PIM 和复制。
+Cellular: phone to internet	蜂窝网络：从手机到互联网
+Attach, the data session and the tunnel - and what breaks where.	附着、数据会话和隧道，以及哪里会出问题。

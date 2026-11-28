@@ -5779,3 +5779,8 @@ For each	Pour chaque
 If it works	Si ça marche
 Set	Définir
 Note	Note
+8 broken networks. Find the fault with as few tools as you can.	8 réseaux en panne. Trouvez la panne avec le moins d’outils possible.
+Multicast theater	Théâtre multicast
+How one TV channel reaches many homes: IGMP, PIM and the copies.	Comment une chaîne TV atteint de nombreux foyers : IGMP, PIM et les copies.
+Cellular: phone to internet	Cellulaire : du téléphone à Internet
+Attach, the data session and the tunnel - and what breaks where.	L’attachement, la session de données et le tunnel - et ce qui casse où.

@@ -105,7 +105,11 @@ namespace AdeeboMeter
                 var starts = new[] {
                     new object[] { "pc", L.T("New diagram"), L.T("An empty page - pick devices and click to place them"), (Action)delegate { OpenLab(null, false, "new", false); } },
                     new object[] { "database", L.T("Open a file..."), L.T("A lab drawing someone sent you (.json)"), (Action)LabOpenFile },
-                    new object[] { "tool", L.T("Break it"), L.T("Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies"), (Action)delegate { OpenLab(null, true); } } };
+                    new object[] { "tool", L.T("Break it"), L.T("Pick a fault - DNS, MTU, loss, a wrong gateway - and watch where the packet dies"), (Action)delegate { OpenLab(null, true); } },
+                    // 1.1.7 (D3, D4): scored broken networks, and two scenes that play on the drawing - all simulated
+                    new object[] { "firewall", L.T("Challenges"), L.T("8 broken networks. Find the fault with as few tools as you can."), (Action)delegate { OpenLab(null, false, "chal", false); } },
+                    new object[] { "play", L.T("Multicast theater"), L.T("How one TV channel reaches many homes: IGMP, PIM and the copies."), (Action)delegate { OpenLab(null, false, "mcast", false); } },
+                    new object[] { "tower", L.T("Cellular: phone to internet"), L.T("Attach, the data session and the tunnel - and what breaks where."), (Action)delegate { OpenLab(null, false, "cell", false); } } };
                 int sc = w > 760 * S ? 3 : 1; float sw = (w - (sc - 1) * 14 * S) / sc, sh = 86 * S;
                 foreach (var st in starts) sh = Math.Max(sh, 42 * S + g.MeasureString((string)st[2], Draw.fSmall, (int)Math.Max(1, sw - 84 * S)).Height + 10 * S);
                 for (int i = 0; i < starts.Length; i++)

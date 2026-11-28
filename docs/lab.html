@@ -45,23 +45,28 @@ button:disabled{opacity:.45;cursor:default}
 #stage{flex:1;position:relative;min-width:0;background-color:var(--page);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:20px 20px;touch-action:none}
 #svg{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
 #side{width:300px;background:var(--bar);border-left:1px solid var(--line);padding:14px;overflow-y:auto;display:none;flex-direction:column;gap:10px}
-body.break #side{display:flex}body.break #tools{display:none}
+body.break #side,body.chal #side,body.show #side{display:flex}body.break #tools,body.chal #tools,body.show #tools{display:none}
+#side .box{display:none;flex-direction:column;gap:10px;flex:1}body.break #breakBox,body.chal #chalBox,body.show #showBox{display:flex}
+.ctools{display:flex;flex-wrap:wrap;gap:6px}.ctools .b{height:34px;padding:0 10px;font-size:12.5px}.clog{display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--card)}.clog p{font-size:12.5px!important}.clog b{color:var(--ink)}
+#side .score{color:var(--ink);font-weight:600}.fault[aria-disabled="true"]{opacity:.7;cursor:default}.fault:disabled{opacity:.6;cursor:default}.fault i.no{color:var(--red)}.fault.tvon[aria-pressed="true"]{border-color:var(--green);background:color-mix(in srgb,var(--green) 12%,var(--card))}
+.flow{stroke-dasharray:4 10;animation:fl .9s linear infinite}@keyframes fl{to{stroke-dashoffset:-14}}@media(prefers-reduced-motion:reduce){.flow{animation:none}}
 #side h2{margin:0;font-size:15px}#side p{margin:0;color:var(--sub);font-size:13px}
 #side label{font-size:12px;color:var(--mute);display:block;margin-bottom:3px}
 #side select{width:100%;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:0 8px}
 .fault{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:1px}
 .fault b{font-size:14px}.fault span{font-size:12px;color:var(--sub)}.fault[aria-pressed="true"]{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,var(--card))}
 .fault i{font-style:normal;color:var(--green);font-size:11.5px;font-weight:700}
+.catch{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--card)}.catch p{font-size:12.5px!important}.catch b{color:var(--ink)}
 #play{position:absolute;left:16px;right:16px;bottom:14px;display:none;gap:10px;align-items:center;background:var(--bar);border:1px solid var(--line);border-radius:16px;padding:8px 12px}
 body.break #play{display:flex}
 #play .bar{flex:1;height:8px;border-radius:9px;background:var(--line);overflow:hidden}#play .bar i{display:block;height:8px;background:var(--red);width:0}
 #say{position:absolute;left:16px;top:14px;max-width:520px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:none;font-size:13.5px}
 #say.show{display:block}#say b{display:block}#say.bad{border-color:var(--red)}#say em{display:block;font-style:normal;color:var(--green);margin-top:4px}
 #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--bar);border:1px solid var(--line);border-radius:10px;padding:6px 12px;color:var(--sub);font-size:12.5px;white-space:nowrap;pointer-events:none}
-body.break #hint{display:none}
+body.break #hint,body.chal #hint,body.show #hint{display:none}
 #edit{position:absolute;display:none;z-index:30}#edit input{height:32px;border-radius:8px;border:1px solid var(--blue);background:var(--card);padding:0 8px;width:190px}
 #zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:4px}
-body.break #zoom{top:auto;bottom:80px}
+body.break #zoom{top:auto;bottom:80px}body.chal #zoom,body.show #zoom{top:auto;bottom:14px}
 #home{position:absolute;top:56px;left:0;right:0;bottom:0;background:var(--page);overflow-y:auto;z-index:15;display:none;padding:26px clamp(16px,4vw,48px) 40px}
 body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
 #home h1{margin:0;font-size:26px}#home h1 b{color:var(--blue)}#home .lead{color:var(--sub);margin:4px 0 22px;max-width:720px}
@@ -84,7 +89,7 @@ body.home #home{display:block}body.home #zoom,body.home #hint{display:none}
  #wrap{flex-direction:column-reverse}#tools{width:auto;height:64px;border-right:0;border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px}
  #tools button{flex:0 0 58px;height:50px}#tools hr{display:none}
  #side{width:auto;max-height:42%;border-left:0;border-top:1px solid var(--line)}
- body.break #wrap{flex-direction:column}#say{right:16px;max-width:none}#hint{display:none}}
+ body.break #wrap,body.chal #wrap,body.show #wrap{flex-direction:column}#say{right:16px;max-width:none}#hint{display:none}}
 #top{height:108px;display:block;padding:0 12px}.top-main,.top-actions{display:flex;align-items:center;gap:8px;min-height:54px}.top-main #name{flex:1;max-width:360px;min-width:40px}.top-actions #saved{margin-right:auto;max-width:40%;white-space:normal}.top-actions .sp{display:none}#wrap,#home{top:108px}
 .menu>div{box-shadow:none;max-height:70vh;overflow-y:auto}.menu>div button{min-height:44px}.tile:hover:not([aria-disabled="true"]),.tile:focus-visible{transform:none;box-shadow:none}.tile .x{display:grid}
 .save-note{max-width:720px;color:var(--sub);font-size:13px;line-height:1.6}#selectionTools{position:absolute;left:16px;top:14px;display:flex;gap:8px;background:var(--bar);padding:6px;border:1px solid var(--line);border-radius:12px}#selectionTools[hidden]{display:none}body.home #selectionTools,body.break #selectionTools{display:none}
@@ -109,7 +114,7 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
   <select id="access" class="b" style="padding:0 8px" title="How your provider reaches your home - redraws the grey, not-measured part"><option value="fibre">Fibre</option><option value="cable">Cable (coax)</option><option value="dsl">DSL (phone line)</option></select></label>
  <button class="b i" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
  <button class="b i" id="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
- <div class="seg" role="group" aria-label="Mode"><button id="mDraw" aria-pressed="true">Draw</button><button id="mBreak" aria-pressed="false">Break it</button></div>
+ <div class="seg" role="group" aria-label="Mode"><button id="mDraw" aria-pressed="true">Draw</button><button id="mBreak" aria-pressed="false">Break it</button><button id="mChal" aria-pressed="false">Challenges</button></div>
  <div class="menu"><button class="b" id="exBtn" aria-haspopup="true" aria-expanded="false">Examples</button><div id="exMenu" hidden></div></div>
  <button class="b i" id="theme" title="Light / dark" aria-label="Light or dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
  <a class="b" id="getApp" href="/" hidden>AdeeboMeter</a>
@@ -127,12 +132,17 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
   <div id="edit"><input id="editIn" aria-label="Text"></div>
  </div>
  <aside id="side" aria-label="Break one thing">
+  <div id="breakBox" class="box">
   <h2>Break one thing</h2>
   <p>Pick where the packet starts and where it goes, pick a fault, then press Play. Nothing is sent - it all happens on this drawing.</p>
   <div><label for="from">From</label><select id="from"></select></div>
   <div><label for="to">To</label><select id="to"></select></div>
   <div id="faults" style="display:flex;flex-direction:column;gap:8px"></div>
+  <div id="fCatch" class="catch"></div>
   <p id="pts" style="margin-top:auto;border-top:1px solid var(--line);padding-top:10px">First time you watch a fault to the end: <b style="color:var(--amber)">+2 Adeebo Points</b> in the app.</p>
+  </div>
+  <div id="chalBox" class="box"></div>
+  <div id="showBox" class="box"></div>
  </aside>
 </div>
 <section id="home" aria-label="AdeeboLab start page">
@@ -140,6 +150,7 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
  <p class="lead">Your network playground. Build a diagram on your phone or computer, then try a simulated fault. No account. No installation.</p>
  <p class="save-note">Projects are cached only in this browser. Save a project file to keep it, or use a QR code to open a copy on another device. Clearing browser data can remove cached diagrams.</p>
  <h2>Start</h2><div class="tiles" id="hStart"></div>
+ <h2>Watch it work</h2><div class="tiles" id="hShow"></div>
  <h2 id="hViewsH">Your network, as AdeeboMeter sees it</h2><div class="tiles" id="hViews"></div>
  <h2 id="hMineH">On this browser</h2><div class="tiles" id="hMine"></div>
  <h2>Examples</h2><div class="tiles" id="hEx"></div>
@@ -283,6 +294,7 @@ dialog{max-width:440px;width:calc(100% - 24px);max-height:90dvh;overflow:auto;bo
 const G = {"pc":"M4.5 4h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 14.5v-9A1.5 1.5 0 0 1 4.5 4zM9 20h6M12 16v4","laptop":"M5 5h14a1 1 0 0 1 1 1v9H4V6a1 1 0 0 1 1-1zM2 18h20l-1.5 2h-17z","phone":"M8 2.5h8a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5zM11 18.5h2","wifi":"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 15.8a5 5 0 0 1 6.8 0M13.2 19a1.2 1.2 0 1 1-2.4 0a1.2 1.2 0 1 1 2.4 0","cpe":"M3 13h18v6H3zM6.5 16h.01M10 16h.01M17 16h1.5M8 13l-2-6M16 13l2-6","ont":"M4 9h16v8H4zM7 13h.01M10 13h.01M14 12.5h3v1h-3M8 9V6.5M16 9V6M7 20.5h10","olt":"M3 4h18v6H3zM3 14h18v6H3zM6 7h.01M9 7h.01M6 17h.01M9 17h.01M13 6.5h5M13 16.5h5M12 10v4","splitter":"M2.5 12h7M9.5 12l11-6.5M9.5 12h11M9.5 12l11 6.5M9.5 9.5v5","switch":"M2.5 9h19v6h-19zM6 12h.01M9 12h.01M12 12h.01M15 12h.01M8 3l-3 2 3 2M5 5h7M16 17l3 2-3 2M19 19h-7","server":"M4.5 3.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM4.5 13.5h15a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1zM7 7h.01M7 17h.01M11 7h6M11 17h6","internet":"M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5 7.5h14M5 16.5h14","cloud":"M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.7 4.7 0 0 0 7 18.5z","tower":"M12 9v12M8.5 21L12 9l3.5 12M9.6 17h4.8M13.4 7.5a1.4 1.4 0 1 1-2.8 0a1.4 1.4 0 1 1 2.8 0M8.2 4.2a5.5 5.5 0 0 0 0 6.6M15.8 4.2a5.5 5.5 0 0 1 0 6.6M5.6 2.2a9 9 0 0 0 0 10.6M18.4 2.2a9 9 0 0 1 0 10.6","database":"M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3","firewall":"M3 5.5h18v14H3zM3 10.2h18M3 14.8h18M8 5.5v4.7M14 5.5v4.7M11 10.2v4.6M17 10.2v4.6M6 10.2v4.6M8 14.8v4.7M14 14.8v4.7","loadbal":"M12 3v5M12 8L5 13M12 8l7 5M12 8v5M3 13h4v4H3zM10 13h4v4h-4zM17 13h4v4h-4z","users":"M12.5 7.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.3a3.2 3.2 0 0 1 0 6.2M18 14.3c2.2.6 3.5 2.6 3.5 5.7","house":"M3 11l9-7.5 9 7.5M5.5 9v11.5h13V9M10 20.5v-5h4v5","building":"M4 21V3.5h11V21M15 8.5h5V21M2.5 21h19M7 7h1M11 7h1M7 10.5h1M11 10.5h1M7 14h1M11 14h1M17.5 12h.5M17.5 15.5h.5M8.5 21v-3.5h2V21","rack":"M5 2.5h14v19H5zM7.5 6h9M7.5 9h9M7.5 12h9M7.5 15h9M7.5 18h9M15 6h.01M15 9h.01M15 12h.01","camera":"M3 8.5l12-4 2.5 6-12 4zM17.5 10.5l3-1M9 13l1.5 4h-6M4.5 17v4","iot":"M14 12a2 2 0 1 1-4 0a2 2 0 1 1 4 0M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8","lock":"M6 10.5h12v10H6zM8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5M12 14.5v2.5","cabinet":"M6 2.5h12a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-17a1 1 0 0 1 1-1zM5 8.5h14M5 14.5h14M9 5.5h3M9 11.5h3M9 17.5h3M16 11v1","roadside":"M7 3h10a1 1 0 0 1 1 1v9H6V4a1 1 0 0 1 1-1zM6 7.5h12M10 10h4M8 13v4.5M16 13v4.5M1.5 19h21M3 22h3M10.5 22h3M18 22h3","tv":"M3 5h18v11H3zM8 20h8M12 16v4","printer":"M7 8V3h10v5M7 17H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-3M7 14h10v7H7z","speaker":"M6 3h12v18H6zM12 13.5m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0M12 7v.01"};
 const $ = s => document.querySelector(s);
 const NS = "http://www.w3.org/2000/svg";
+let th = null, ch = null;   /* the playing scene and the open challenge (1.1.7) */
 const KEY = "adeebometer-lab:current", SOLVED = "adeebometer-lab:solved", FILES = "adeebometer-lab:files";
 /* ready-made drawings: AdeeboMeter writes them into its own copy of this page when it opens the lab (never fetched) */
 const AMV = /*AM_VIEWS*/null;
@@ -447,6 +459,7 @@ function draw(){
     g.appendChild(txt(t.x, t.y, t.t, {"text-anchor": "start", fill: s ? C.blue : C.ink, "font-size": fs, "data-t": "text", "data-id": t.id, style: "cursor:move"}));
     if (s && mode === "draw") g.appendChild(el("rect", {x: t.x + textW(t.t, fs) + 4, y: t.y - 4, width: 12, height: 12, rx: 3, fill: C.blue, "data-t": "tresize", "data-id": t.id, style: "cursor:ew-resize"})); });   /* drag it to make the text bigger or smaller */
   if (pk.dot) g.appendChild(pk.dot(C));
+  if (th) { const [u, o] = thLayer(C); g.insertBefore(u, g.firstChild); g.appendChild(o); }
   $("#undo").disabled = !undo.length; $("#redo").disabled = !redo.length;
 }
 
@@ -496,7 +509,7 @@ stage.addEventListener("pointerdown", e => {
   const dk = h ? h.t + ":" + h.id : "", now = Date.now();
   if (mode === "draw" && tool === "select" && h && dk === lastDown.k && now - lastDown.t < 450) { lastDown = {k: "", t: 0}; renameHit(h); return; }
   lastDown = {k: dk, t: now};
-  if (mode === "break") { drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; return; }
+  if (mode !== "draw") { drag = {pan: true, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y}; return; }
   if (tool === "delete") { if (h && !h.t.endsWith("resize")) change(() => remove(h)); return; }
   if (tool.startsWith("l:")) { if (h && h.t === "node") { if (!linkFrom) { linkFrom = h.id; draw(); } else if (linkFrom !== h.id) { const a = linkFrom; linkFrom = null;
       change(() => doc.links.push({id: uid("l"), a, b: h.id, kind: tool.slice(2), label: ""})); } } hint(); return; }
@@ -550,7 +563,7 @@ function bounds(){ let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infin
   doc.nodes.forEach(n => { add(n.x - 70, n.y - 40); add(n.x + 70, n.y + 70); }); doc.areas.forEach(a => { add(a.x, a.y); add(a.x + a.w, a.y + a.h); }); doc.texts.forEach(t => { add(t.x, t.y - 16); add(t.x + 8 * t.t.length, t.y + 4); });
   doc.ink.forEach(s => { for (let i = 0; i < s.p.length; i += 2) add(s.p[i], s.p[i + 1]); });
   return isFinite(x0) ? {x: x0 - 20, y: y0 - 20, w: x1 - x0 + 40, h: y1 - y0 + 40} : {x: 0, y: 0, w: 800, h: 500}; }
-function fit(){ const r = stage.getBoundingClientRect(), b = bounds(), pad = mode === "break" ? 70 : 20; const z = Math.min(2, Math.max(.25, Math.min(r.width / b.w, (r.height - pad) / b.h)));
+function fit(){ const r = stage.getBoundingClientRect(), b = bounds(), pad = mode !== "draw" ? 70 : 20; const z = Math.min(2, Math.max(.25, Math.min(r.width / b.w, (r.height - pad) / b.h)));
   view.z = z; view.x = (r.width - b.w * z) / 2 - b.x * z; view.y = (r.height - pad - b.h * z) / 2 - b.y * z + 6; draw(); }
 function remove(h){ if (h.t === "node") { doc.nodes = doc.nodes.filter(n => n.id !== h.id); doc.links = doc.links.filter(l => l.a !== h.id && l.b !== h.id); }
   const k = {link: "links", text: "texts", area: "areas", ink: "ink"}[h.t]; if (k) doc[k] = doc[k].filter(x => x.id !== h.id); sel = null; }
@@ -640,8 +653,14 @@ async function openSharedProject(token){
 
 /* ---------- Break it: one fault, the packet walks the path and stops where it fails */
 const FAULTS = [
- {id: "dns", n: "DNS times out", d: "names stop answering"}, {id: "loss", n: "Packet loss", d: "a link drops some packets"}, {id: "gateway", n: "Wrong gateway", d: "the PC points at the wrong box"},
- {id: "mtu", n: "MTU black hole", d: "big packets vanish"}, {id: "loop", n: "Routing loop", d: "TTL runs out"}, {id: "wifi", n: "Busy Wi-Fi", d: "airtime and retries"}];
+ {id: "dns", n: "DNS times out", d: "names stop answering", sym: "Every site says “server not found”, but a game that connects by address still works.", tool: "Check a destination → DNS lookup, or the Network Doctor."},
+ {id: "loss", n: "Packet loss", d: "a link drops some packets", sym: "Calls break up and games rubber-band, yet a speed test looks fine.", tool: "MTR in AdeeboShell, or Report for my ISP (the hop where loss starts)."},
+ {id: "gateway", n: "Wrong gateway", d: "the PC points at the wrong box", sym: "“No internet” even though Wi-Fi or the cable says connected.", tool: "Fix my connection in Check - it tests the gateway first."},
+ {id: "mtu", n: "MTU black hole", d: "big packets vanish", sym: "Small sites open, big pages half-load, downloads hang at 0%.", tool: "ping -f -l 1472 in AdeeboShell, and the MTU calculator."},
+ {id: "loop", n: "Routing loop", d: "TTL runs out", sym: "One site never loads for anybody at home; traceroute takes forever.", tool: "traceroute or MTR - the same two hops repeat."},
+ {id: "wifi", n: "Busy Wi-Fi", d: "airtime and retries", sym: "Ping jumps from 3 ms to 100 ms and back; on a cable it’s calm.", tool: "The Wi-Fi page - channels, signal and who shares your air."},
+ {id: "firewall", n: "Firewall rule", d: "one port is blocked", sym: "Web and video work, but the game can’t reach its matchmaking service.", tool: "Check a destination → Port test says “filtered”."},
+ {id: "duplex", n: "Duplex mismatch", d: "one cable argues with itself", sym: "Small things fine, big transfers crawl; speed tests oddly low.", tool: "Link speed shows 100 Mb/s on a gigabit cable; on a managed switch the SNMP tools show CRC errors."}];
 let fault = "mtu", pk = {steps: [], i: 0, timer: 0, dot: null}, pick = {from: null, to: null};
 const isRouter = n => n.k === "router" || n.k === "cpe" || n.k === "olt" || n.k === "switch" || n.k === "firewall" || n.k === "loadbal";
 const isEnd = n => /^(pc|laptop|phone)$/.test(n.k);
@@ -659,7 +678,9 @@ function buildFaults(){ const box = $("#faults"), done = solved(); box.textConte
   FAULTS.forEach(f => { const b = document.createElement("button"); b.className = "fault"; b.setAttribute("aria-pressed", String(f.id === fault));
     b.innerHTML = "<b></b><span></span>"; b.firstChild.textContent = f.n; b.children[1].textContent = f.d;
     if (done.includes(f.id)) { const i = document.createElement("i"); i.textContent = "✓ watched"; b.appendChild(i); }
-    b.onclick = () => { fault = f.id; buildFaults(); plan(); }; box.appendChild(b); }); }
+    b.onclick = () => { fault = f.id; buildFaults(); plan(); }; box.appendChild(b); });
+  const f = FAULTS.find(x => x.id === fault), c = $("#fCatch"); c.textContent = ""; if (!f) return;
+  [["You’d notice: ", f.sym], ["Caught by: ", f.tool]].forEach(([h, t]) => { const p = document.createElement("p"), b = document.createElement("b"); b.textContent = h; p.appendChild(b); p.appendChild(document.createTextNode(t)); c.appendChild(p); }); }
 /* each step: the packet goes from one stop to the next (at = [from index, to index]), or stops (x) with what it means */
 function plan(){ stop(); const p = path(pick.from, pick.to); pk = {steps: [], i: 0, timer: 0, dot: null, p};
   if (!p || p.ns.length < 2) { say("No path between these two - join them with a link in Draw.", "", true); draw(); num(); return; }
@@ -688,7 +709,17 @@ function plan(){ stop(); const p = path(pick.from, pick.to); pk = {steps: [], i:
     walk(0, wi, "", {}); go(wi, wi + .5, `${N[wi].name} waits for the air to be free - ${3} other devices are talking.`); go(wi + .5, wi, "No ack - the radio tries again at a slower rate.");
     go(wi, wi + 1, "Third try gets through: 2 ms became 38 ms."); walk(wi + 1, last, "", {});
     go(last, last, "", {x: true, soft: true, why: "Nothing was lost on the wire - the time went on waiting and retrying over the air. That’s jitter in games and calls.", fix: "Fix: move closer, use 5 GHz / a clear channel (AdeeboMeter’s Wi-Fi page picks one), or use a cable for games."}); }
-  draw(); num(); say(FAULTS.find(f => f.id === fault).n, "Press Play, or Step to go one move at a time.", false);
+  else if (fault === "firewall") { let fi = N.findIndex((n, j) => j > 0 && n.k === "firewall"); if (fi < 0) fi = home;
+    walk(0, last, "A ping goes all the way - the path itself is up.", {small: true}); go(last, last, "Now the game opens its own port: UDP 3074.");
+    walk(0, fi, "", {}); go(fi, fi + .4, `${nm(fi)} checks its rules: UDP 3074 isn’t on the allowed list.`);
+    go(fi + .4, fi + .4, "", {x: true, why: "The rule drops it silently - no error comes back, so the game waits and then says it can’t connect. Ping and web keep working.", fix: "Fix: allow the game in Windows Firewall or the router. Check a destination → Port test shows “filtered” until you do."}); }
+  else if (fault === "duplex") { const li = L.findIndex(l => !l.kind || l.kind === "cable");
+    if (li < 0) { say("There’s no cable link on this path.", " Duplex is about cables - draw one, or pick another fault.", true); draw(); num(); return; }
+    go(li, li, `The cable after ${nm(li)}: one end is set to 100 Mb/s half duplex, the other runs full duplex.`); walk(0, last, "A single small packet gets through - a quiet line has no problem.", {small: true});
+    walk(0, li, "Now a download: lots of packets at once.", {}); go(li, li + .5, "Both ends talk at the same time. The half-duplex end calls it a collision.");
+    go(li + .5, li, "It backs off and sends again - and again.");
+    go(li + .5, li + .5, "", {x: true, soft: true, why: "Small things work, big transfers crawl: CRC errors and late collisions pile up on that one cable.", fix: "Fix: set both ends to automatic, or swap the cable. AdeeboMeter’s link speed shows 100 Mb/s where it should say 1 Gb/s."}); }
+  draw(); num(); say(FAULTS.find(f => f.id === fault).n, " Simulation · press Play, or Step to go one move at a time.", false);
 }
 function posAt(v){ if (!pk.p) return {x: 0, y: 0}; const N = pk.p.ns, i = Math.floor(v), f = v - i, a = N[Math.min(i, N.length - 1)], b = N[Math.min(i + 1, N.length - 1)]; return {x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f}; }
 function say(b, t, bad, fix){ const s = $("#say"); s.className = "show" + (bad ? " bad" : ""); s.textContent = ""; const x = document.createElement("b"); x.textContent = b; s.appendChild(x);
@@ -699,7 +730,7 @@ function show(i, anim){ pk.i = i; num(); const s = pk.steps[i - 1];
   if (!s) { pk.dot = null; draw(); return; }
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, t0 = performance.now(), dur = anim && !reduce && s.a !== s.b ? 520 : 0;
   const mine = pk, tok = pk.tok = (pk.tok || 0) + 1;
-  const frame = now => { if (pk !== mine || pk.tok !== tok) return; const k = dur ? Math.min(1, (now - t0) / dur) : 1, v = s.a + (s.b - s.a) * k, p = posAt(v);
+  const frame = now => { if (pk !== mine || pk.tok !== tok) return; const k = dur ? Math.min(1, Math.max(0, (now - t0) / dur)) : 1, v = s.a + (s.b - s.a) * k, p = posAt(v);
     pk.dot = C => s.x ? el("g", {}, [el("circle", {cx: p.x, cy: p.y, r: 14, fill: s.soft ? C.amber : C.red, opacity: .25}), el("path", {d: `M${p.x - 7} ${p.y - 7}L${p.x + 7} ${p.y + 7}M${p.x + 7} ${p.y - 7}L${p.x - 7} ${p.y + 7}`, stroke: s.soft ? C.amber : C.red, "stroke-width": 3, "stroke-linecap": "round"})])
       : el("circle", {cx: p.x, cy: p.y, r: s.small ? 6 : 9, fill: C.blue, stroke: C.page, "stroke-width": 3});
     draw(); if (k < 1) requestAnimationFrame(frame); };
@@ -710,16 +741,141 @@ function stop(){ clearInterval(pk.timer); pk.timer = 0; $("#pPlay").textContent 
 function toggle(){ if (pk.timer) { stop(); return; } if (pk.i >= pk.steps.length) show(0); $("#pPlay").textContent = "Pause";
   const tick = () => { if (pk.i >= pk.steps.length) { stop(); return; } show(pk.i + 1, true); }; tick(); pk.timer = setInterval(tick, 1100); }
 $("#pPlay").onclick = toggle; $("#pStep").onclick = () => { stop(); if (pk.i < pk.steps.length) show(pk.i + 1, true); }; $("#pBack").onclick = () => { stop(); if (pk.i > 0) show(pk.i - 1, false); };
-function setMode(m){ mode = m; document.body.classList.toggle("break", m === "break"); $("#mDraw").setAttribute("aria-pressed", String(m === "draw")); $("#mBreak").setAttribute("aria-pressed", String(m === "break"));
+function setMode(m){ mode = m; ["break", "chal", "show"].forEach(k => document.body.classList.toggle(k, m === k)); [["#mDraw", "draw"], ["#mBreak", "break"], ["#mChal", "chal"]].forEach(([s, k]) => $(s).setAttribute("aria-pressed", String(m === k)));
   sel = null; linkFrom = null; hideEdit(); stop(); pk = {steps: [], i: 0, timer: 0, dot: null}; $("#say").className = "";
-  if (m === "break") { buildFaults(); fillPick(); } setTimeout(fit, 0); draw(); }
-$("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break");
+  if (m !== "show" && th) { clearTimeout(th.timer); th = null; } if (m !== "chal") ch = null;
+  if (m === "break") { buildFaults(); fillPick(); } if (m === "chal") buildChal(); setTimeout(fit, 0); draw(); }
+$("#mDraw").onclick = () => setMode("draw"); $("#mBreak").onclick = () => setMode("break"); $("#mChal").onclick = () => setMode("chal");
+/* ---------- Challenges: a broken network, a few tools, find what's wrong. Every result is simulated (1.1.7) */
+const CHAL = "adeebometer-lab:chal";
+const CHALS = [
+ {id: "halfload", n: "Pages half-load", ex: "gamer", f: "mtu", s: "Small sites open. Big pages stop halfway and downloads sit at 0%. Restarting the router didn’t help."},
+ {id: "notfound", n: "Server not found", ex: "streamer", f: "dns", s: "Every website says “server not found”. A game that connects straight to an address still works."},
+ {id: "spikes", n: "Evening lag spikes", ex: "gamer", f: "wifi", s: "The laptop’s ping jumps to 100 ms every few seconds after dinner. Plugged into the router it’s calm."},
+ {id: "newpc", n: "New PC, no internet", ex: "trader", f: "gateway", w: true, s: "Someone set this PC’s address by hand. Windows says “No internet”; the cable light is on."},
+ {id: "lobby", n: "Can’t join a lobby", ex: "gamer", f: "firewall", s: "Web and video are fine. The game says “unable to connect to matchmaking”."},
+ {id: "slowpc", n: "The slow office PC", ex: "trader", f: "duplex", w: true, s: "This PC on a cable gets 9 Mb/s. The laptop on Wi-Fi in the same room gets 300."},
+ {id: "calls", n: "Calls break up", ex: "streamer", f: "loss", s: "Voices drop words and video freezes for a second at a time. The speed test says 500 Mb/s."},
+ {id: "onesite", n: "One site, never", ex: "server", f: "loop", w: true, s: "One website never loads for anyone in the house. Everything else is fine."}];
+const CTOOLS = [["ping", "ping 1.1.1.1"], ["trace", "traceroute"], ["dns", "DNS lookup"], ["mtu", "ping -f -l 1472"], ["port", "Port test"], ["gw", "ipconfig"], ["wifi", "Wi-Fi page"], ["link", "Link speed"]];
+function cres(t, f, wired){ const R = {
+  ping: {_: "4 sent, 4 back · 12 ms average.", loss: "20 sent, 15 back · 25% lost.", gateway: "Destination host unreachable.", loop: "TTL expired in transit.", wifi: "4 back · 3 ms, 41 ms, 8 ms, 96 ms - very uneven.", duplex: "4 back · 1 ms. (Small packets, nothing big was sent.)"},
+  trace: {_: "9 hops, all answer, times climb smoothly to 12 ms.", loss: "Loss starts at hop 4 (the provider) and carries on to the end.", gateway: "Hop 1: * * * - nothing answers.", loop: "Hops 6 and 7 repeat - 10.20.0.1, 10.20.0.2, 10.20.0.1 … until hop 30.", wifi: "Hop 1 (your own router) already jumps between 2 and 80 ms."},
+  dns: {_: "Answer in 18 ms: 203.0.113.40.", dns: "Timed out - no answer after 2 s, three times.", gateway: "Timed out - the DNS server can’t be reached."},
+  mtu: {_: "Reply - full-size 1,500-byte packets pass.", mtu: "“Packet needs to be fragmented but DF set.” 1,464 passes; 1,472 doesn’t.", gateway: "Destination host unreachable."},
+  port: {_: "Open - the game server answered on UDP 3074.", firewall: "Filtered - nothing came back, not even a refusal.", gateway: "No route to the server.", loop: "No answer."},
+  gw: {_: "Gateway 192.168.1.1 · answers in 1 ms.", gateway: "Gateway 192.168.2.1 · no answer. Your router is 192.168.1.1."},
+  wifi: {_: wired ? "This PC is on a cable - no Wi-Fi in the way." : "Signal −52 dBm · 2 networks on your channel · retries 3%.", wifi: "Signal −71 dBm · 9 networks on your channel · retries 28%."},
+  link: {_: wired ? "Ethernet · 1 Gb/s." : "Wi-Fi 5 GHz · 866 Mb/s.", duplex: "Ethernet · 100 Mb/s - on a gigabit cable and port.", wifi: "Wi-Fi 2.4 GHz · 72 Mb/s, rising and falling."}};
+  return R[t][f] || R[t]._; }
+function best(){ try { return JSON.parse(store.get(CHAL) || "{}"); } catch (e) { return {}; } }
+function mk(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function startChal(c){ const d = fromExample(c.ex); applyAccess(d, store.get("adeebometer-lab:access") || "fibre"); d.name = "Challenge: " + c.n; openDoc(d);
+  ch = {c, score: 100, used: [], wrong: [], log: [], done: false}; setMode("chal"); say(c.n, " " + c.s, false); }
+function buildChal(){ const box = $("#chalBox"); box.textContent = "";
+  if (!ch) { box.appendChild(mk("h2", "", "Challenges")); box.appendChild(mk("p", "", "A broken network and a few tools. Find what’s wrong in as few moves as you can. Every result here is simulated."));
+    const b0 = best(); CHALS.forEach(c => { const b = mk("button", "fault"); b.appendChild(mk("b", "", c.n)); b.appendChild(mk("span", "", c.s));
+      if (b0[c.id]) b.appendChild(mk("i", "", "Best: " + b0[c.id] + " points")); b.onclick = () => startChal(c); box.appendChild(b); });
+    const h = mk("div", "fault"); h.setAttribute("aria-disabled", "true"); h.appendChild(mk("b", "", "Heist: Break the Adeebo Award")); h.appendChild(mk("span", "", "Mallory tries ten ways to fake an award card. Play it in the AdeeboMeter app, under Games.")); box.appendChild(h); return; }
+  const c = ch.c, back = mk("button", "b", "All challenges"); back.onclick = () => { ch = null; $("#say").className = ""; buildChal(); }; box.appendChild(back);
+  box.appendChild(mk("h2", "", c.n)); box.appendChild(mk("p", "", c.s));
+  box.appendChild(mk("p", "score", ch.done ? `Solved · ${ch.score} points` : `Score ${ch.score} · each tool −10, each wrong guess −25`));
+  const tg = mk("div", "ctools"); CTOOLS.forEach(([k, n]) => { const b = mk("button", "b", n); b.disabled = ch.done || ch.used.includes(k);
+    b.onclick = () => { ch.used.push(k); ch.score = Math.max(10, ch.score - 10); ch.log.push([n, cres(k, c.f, !!c.w)]); buildChal(); }; tg.appendChild(b); }); box.appendChild(tg);
+  if (ch.log.length) { const lg = mk("div", "clog"); ch.log.forEach(([n, r]) => { const p = mk("p"); p.appendChild(mk("b", "", n + ": ")); p.appendChild(document.createTextNode(r)); lg.appendChild(p); }); box.appendChild(lg); }
+  if (ch.done) { const w = mk("button", "b p", "Watch it happen"); w.onclick = () => { fault = c.f; setMode("break"); }; box.appendChild(w); return; }
+  box.appendChild(mk("h2", "", "What’s wrong?"));
+  FAULTS.forEach(f => { const b = mk("button", "fault"); b.appendChild(mk("b", "", f.n)); b.appendChild(mk("span", "", f.d)); const bad = ch.wrong.includes(f.id); b.disabled = bad; if (bad) b.appendChild(mk("i", "no", "Not this one"));
+    b.onclick = () => { if (f.id === c.f) { ch.done = true; const b0 = best(); if (!b0[c.id] || b0[c.id] < ch.score) { b0[c.id] = ch.score; store.set(CHAL, JSON.stringify(b0)); }
+        say("Solved - " + f.n + ".", " " + f.sym, false, "Caught by: " + f.tool); }
+      else { ch.wrong.push(f.id); ch.score = Math.max(10, ch.score - 25); say("Not " + f.n.toLowerCase() + ".", " Look at what the tools said again - which result is the odd one?", true); }
+      buildChal(); }; box.appendChild(b); }); }
+
+/* ---------- Watch it work: scenes that play step by step on the drawing. Simulation - nothing is sent (1.1.7) */
+function scene(nodes, links, areas, name){ const d = blank(); d.name = name; d.nodes = nodes.map(n => Object.assign({sub: "", st: ""}, n));
+  d.links = links.map(l => ({id: uid("l"), a: l[0], b: l[1], kind: l[2] || "cable", label: l[3] || ""})); d.areas = areas || []; return d; }
+const SCENES = {
+ mcast: () => scene([{id: "src", k: "server", name: "TV head-end", sub: "channel 239.1.1.1", x: 120, y: 260}, {id: "r1", k: "router", name: "Core router", sub: "makes the copies", x: 400, y: 260},
+   {id: "r2", k: "router", name: "Area router A", sub: "street A", x: 680, y: 150}, {id: "r3", k: "router", name: "Area router B", sub: "street B", x: 680, y: 380},
+   {id: "tv1", k: "tv", name: "TV 1", sub: "home 1", x: 950, y: 70}, {id: "tv2", k: "tv", name: "TV 2", sub: "home 2", x: 950, y: 230}, {id: "tv3", k: "tv", name: "TV 3", sub: "home 3", x: 950, y: 380}],
+   [["src", "r1", "fibre"], ["r1", "r2", "fibre"], ["r1", "r3", "fibre"], ["r2", "tv1"], ["r2", "tv2"], ["r3", "tv3"]], [A(30, 40, 760, 440, "Provider - simulation")], "Multicast theater"),
+ cell: () => scene([{id: "phone", k: "phone", name: "Phone", sub: "with a SIM", x: 100, y: 300}, {id: "tw", k: "tower", name: "Cell tower", sub: "eNodeB (4G) / gNB (5G)", x: 330, y: 300},
+   {id: "amf", k: "server", name: "MME / AMF", sub: "control: who you are", x: 580, y: 130}, {id: "udm", k: "database", name: "HSS / UDM", sub: "SIM records", x: 840, y: 60},
+   {id: "smf", k: "server", name: "SMF", sub: "sets up data sessions", x: 840, y: 210}, {id: "upf", k: "server", name: "P-GW / UPF", sub: "the door to the internet", x: 620, y: 420},
+   {id: "net", k: "internet", name: "Internet", x: 880, y: 420}, {id: "srv", k: "server", name: "Website", x: 1090, y: 420}],
+   [["phone", "tw", "cell", "radio"], ["tw", "amf", "fibre", "control"], ["amf", "udm", "fibre"], ["amf", "smf", "fibre"], ["smf", "upf", "fibre"], ["tw", "upf", "fibre", "GTP tunnel"], ["upf", "net"], ["net", "srv"]],
+   [A(260, 20, 700, 470, "Mobile provider - simulation")], "Cellular: phone to internet")};
+const CELL = [
+ {t: "The phone listens. Every tower broadcasts who it is and which networks it serves.", m: [["tw", "phone", "System info", "ctl"]]},
+ {t: "Radio connection (RRC): the phone asks the tower for a place on the air.", m: [["phone", "tw", "RRC request", "ctl"], ["tw", "phone", "RRC setup", "ctl"]]},
+ {t: "Registration (attach): the phone says who it is. The tower passes that to the core’s control part.", m: [["phone", "tw", "Register: SIM ID", "ctl"], ["tw", "amf", "", "ctl"]]},
+ {t: "The core looks the SIM up and gets a one-time challenge for it.", m: [["amf", "udm", "Who is this?", "ctl"], ["udm", "amf", "Challenge + keys", "ctl"]]},
+ {t: "Both sides prove who they are (AKA). From here the radio and the signalling are encrypted.", m: [["amf", "tw", "Challenge", "ctl"], ["tw", "phone", "", "ctl"], ["phone", "tw", "Answer", "ctl"], ["tw", "amf", "", "ctl"]]},
+ {t: "Data session (default bearer in 4G, PDU session in 5G): the core picks a gateway, builds a tunnel and gives the phone an IP address.", m: [["amf", "smf", "Session for this phone", "ctl"], ["smf", "upf", "Open a tunnel", "ctl"], ["smf", "amf", "IP 10.45.0.7 · DNS", "ctl"], ["amf", "tw", "", "ctl"], ["tw", "phone", "You’re on: 10.45.0.7", "ctl"]]},
+ {t: "Your packet: over the radio to the tower, inside a GTP tunnel to the gateway, then out to the internet.", m: [["phone", "tw", "Your packet", "data"], ["tw", "upf", "inside the tunnel", "data"], ["upf", "net", "", "data"], ["net", "srv", "", "data"]]},
+ {t: "The reply comes back the same way. After about 10 s with nothing to send, the radio goes idle to save battery - the session and the IP address stay.", m: [["srv", "net", "Reply", "data"], ["net", "upf", "", "data"], ["upf", "tw", "", "data"], ["tw", "phone", "", "data"]]}];
+const CELL_BREAKS = [["ok", "Everything works", "the normal journey"], ["nosig", "No signal", "no tower it can use"], ["reject", "SIM not allowed", "registration refused"], ["nodata", "Calls work, data doesn’t", "the data session fails"], ["slow", "Full bars, slow", "a busy cell"]];
+function cellSteps(b){ const s = CELL.slice(), at = (i, o) => s.slice(0, i).concat([Object.assign({}, s[i], o)]);
+  if (b === "nosig") return at(0, {m: [["tw", "phone", "System info", "bad"]], end: {x: "phone", why: "The phone hears no tower it can use: “No service” or SOS only. Nothing else can start.", fix: "Check: move near a window or outside. In a basement, Wi-Fi calling carries calls over your internet."}});
+  if (b === "reject") return at(3, {m: [["amf", "udm", "Who is this?", "ctl"], ["udm", "amf", "Not allowed", "bad"]], end: {x: "amf", why: "Registration is refused: the SIM isn’t active, the plan ended, or roaming is off. Bars can show, but the phone says “No service”.", fix: "Check: try the SIM in another phone, then call the provider."}});
+  if (b === "nodata") return at(5, {m: [["amf", "smf", "Session for “wrong.apn”", "ctl"], ["smf", "amf", "Unknown APN", "bad"]], end: {x: "smf", why: "Calls and texts work, but the data session (APN in 4G, DNN in 5G) is refused - so the phone never gets an IP address.", fix: "Check: reset the APN setting to the provider’s default, and that the plan includes data."}});
+  if (b === "slow") return at(6, {t: "Tonight 300 phones share this tower. Your packet waits for its turn on the air.", m: [["phone", "tw", "waiting for airtime…", "ctl"], ["tw", "upf", "Your packet", "data"]], end: {x: "tw", soft: true, why: "Full bars but slow: signal strength isn’t capacity. Everyone on that cell shares the radio’s time.", fix: "Check: a speed test at 3 am and at 8 pm. Wi-Fi at home takes the load off."}});
+  return s; }
+const MC_TV = {tv1: "r2", tv2: "r2", tv3: "r3"};
+function openScene(id){ if (!SCENES[id]) return; openDoc(SCENES[id]()); setMode("show");
+  th = {id, i: -1, msg: null, streams: [], x: null, on: {}, busy: false, auto: false, tok: 0, brk: "ok", steps: id === "cell" ? cellSteps("ok") : null};
+  say(id === "mcast" ? "One channel, many TVs." : "From power-on to your first packet.", id === "mcast" ? " Switch TVs on and off and watch the requests and the copies. Simulation - nothing is sent." : " Press Next or Play. Then break one thing and run it again. Simulation - nothing is sent.", false);
+  buildShow(); draw(); }
+function thRun(msgs, done){ const tok = th.tok = th.tok + 1, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; let i = 0, label = "";
+  const next = () => { if (!th || th.tok !== tok) return; if (i >= msgs.length) { th.msg = null; draw(); if (done) done(); return; }
+    const m = msgs[i++]; label = m[2] || label; th.msg = {a: m[0], b: m[1], label, kind: m[3], k: 0}; const t0 = performance.now(), dur = reduce ? 0 : 650;
+    const fr = now => { if (!th || th.tok !== tok) return; th.msg.k = dur ? Math.min(1, Math.max(0, (now - t0) / dur)) : 1;   /* the frame time can be a little before t0 */ draw(); if (th.msg.k < 1) requestAnimationFrame(fr); else setTimeout(next, reduce ? 700 : 140); };
+    requestAnimationFrame(fr); };
+  next(); }
+function thLayer(C){ const under = el("g", {"pointer-events": "none"}), over = el("g", {"pointer-events": "none"}), P = id => node(id);
+  th.streams.forEach(([a, b]) => { const x = P(a), y = P(b); if (x && y) under.appendChild(el("path", {d: `M${x.x} ${x.y} L${y.x} ${y.y}`, class: "flow", stroke: C.green, "stroke-width": 7, opacity: .45, "stroke-linecap": "round", fill: "none"})); });
+  if (th.x) { const n = P(th.x); if (n) over.appendChild(el("path", {d: `M${n.x - 9} ${n.y - 9}L${n.x + 9} ${n.y + 9}M${n.x + 9} ${n.y - 9}L${n.x - 9} ${n.y + 9}`, stroke: th.soft ? C.amber : C.red, "stroke-width": 3.5, "stroke-linecap": "round"})); }
+  const m = th.msg, a = m && P(m.a), b = m && P(m.b);
+  if (a && b) { const x = a.x + (b.x - a.x) * m.k, y = a.y + (b.y - a.y) * m.k, col = m.kind === "bad" ? C.red : m.kind === "data" ? C.blue : C.purple;
+    over.appendChild(el("circle", {cx: x, cy: y, r: 8, fill: col, stroke: C.page, "stroke-width": 3}));
+    if (m.label) over.appendChild(txt(x, y - 16, m.label, {fill: col, "font-size": 12.5, "font-weight": 700, stroke: C.page, "stroke-width": 4, "paint-order": "stroke"})); }
+  return [under, over]; }
+function cellStep(i){ const S = th.steps, s = S[i]; if (!s) return; clearTimeout(th.timer); th.i = i; th.x = null; th.soft = false;
+  say(`Step ${i + 1} of ${S.length}`, " " + s.t, false); buildShow();
+  thRun(s.m, () => { if (s.end) { th.x = s.end.x; th.soft = !!s.end.soft; th.auto = false; say(s.end.why, "", !s.end.soft, s.end.fix); draw(); buildShow(); }
+    else if (th.auto && i + 1 < S.length) th.timer = setTimeout(() => { if (th && th.auto) cellStep(i + 1); }, 1500); else { th.auto = false; buildShow(); } }); }
+function mcStreams(){ const s = [], rs = new Set(); Object.keys(MC_TV).forEach(tv => { if (th.on[tv]) { s.push([MC_TV[tv], tv]); rs.add(MC_TV[tv]); } }); rs.forEach(r => s.push(["r1", r])); if (rs.size) s.push(["src", "r1"]); return s; }
+function mcToggle(tv){ if (th.busy) return; const r = MC_TV[tv], others = Object.keys(MC_TV).some(t => t !== tv && MC_TV[t] === r && th.on[t]), name = node(tv).name, rn = node(r).name, want = !th.on[tv]; let msgs, t;
+  if (want) { msgs = [[tv, r, "IGMP join 239.1.1.1", "ctl"]]; if (!others) msgs.push([r, "r1", "PIM join", "ctl"]);
+    t = `${name} asks its router for the channel (IGMP - the home router passes it on). ` + (others ? `${rn} already gets the stream for another TV, so it just makes one more copy. Nothing new travels upstream.` : `Nobody behind ${rn} was watching, so it asks upstream with a PIM join, and the core adds this branch to the tree.`); }
+  else { msgs = [[tv, r, "IGMP leave", "ctl"], [r, tv, "Anyone else watching?", "ctl"]]; if (!others) msgs.push([r, "r1", "PIM prune", "ctl"]);
+    t = `${name} leaves (IGMP leave), and the router asks whether anyone else there still watches. ` + (others ? "Another TV does - the branch stays." : `Nobody does - ${rn} sends a PIM prune and the core stops sending down that branch.`); }
+  th.busy = true; say(name + (want ? " switches to the channel" : " switches off"), " " + t, false); buildShow();
+  thRun(msgs, () => { th.on[tv] = want; th.streams = mcStreams(); th.busy = false; buildShow(); draw(); }); }
+function buildShow(){ const box = $("#showBox"); box.textContent = ""; if (!th) return;
+  const home = mk("button", "b", "Back to start"); home.onclick = showHome; box.appendChild(home);
+  if (th.id === "mcast") { box.appendChild(mk("h2", "", "Multicast theater")); box.appendChild(mk("p", "", "IPTV and live streams on a provider network send one copy of a channel, and routers copy it only where the tree splits."));
+    Object.keys(MC_TV).forEach(tv => { const b = mk("button", "fault tvon"), on = !!th.on[tv]; b.setAttribute("aria-pressed", String(on)); b.disabled = th.busy;
+      b.appendChild(mk("b", "", node(tv).name)); b.appendChild(mk("span", "", on ? "watching 239.1.1.1 - press to switch off" : "off - press to watch the channel")); b.onclick = () => mcToggle(tv); box.appendChild(b); });
+    const n = Object.keys(MC_TV).filter(t => th.on[t]).length;
+    box.appendChild(mk("p", "score", n ? `Copies leaving the head-end: 1. Sent to each TV separately (unicast), it would be ${n}.` : "No TV is watching, so the head-end sends nothing down the tree."));
+    box.appendChild(mk("p", "", "Green = the stream. Purple dots = the requests that build and trim the tree.")); return; }
+  const S = th.steps; box.appendChild(mk("h2", "", "Cellular: phone to internet")); box.appendChild(mk("p", "", "How a phone or a 4G / 5G modem gets online, step by step."));
+  const row = mk("div", "ctools"), bk = mk("button", "b", "Back"), nx = mk("button", "b", "Next"), pl = mk("button", "b p", th.auto ? "Pause" : "Play");
+  bk.disabled = th.i <= 0; nx.disabled = th.i >= S.length - 1; bk.onclick = () => { th.auto = false; cellStep(th.i - 1); }; nx.onclick = () => { th.auto = false; cellStep(th.i + 1); };
+  pl.onclick = () => { if (th.auto) { th.auto = false; clearTimeout(th.timer); buildShow(); return; } th.auto = true; cellStep(th.i < 0 || th.i >= S.length - 1 ? 0 : th.i + 1); };
+  [bk, nx, pl].forEach(b => row.appendChild(b)); box.appendChild(row); box.appendChild(mk("p", "score", th.i < 0 ? `${S.length} steps` : `Step ${th.i + 1} of ${S.length}`));
+  box.appendChild(mk("h2", "", "Break one thing"));
+  CELL_BREAKS.forEach(([k, n, d]) => { const b = mk("button", "fault"); b.setAttribute("aria-pressed", String(th.brk === k)); b.appendChild(mk("b", "", n)); b.appendChild(mk("span", "", d));
+    b.onclick = () => { th.brk = k; th.steps = cellSteps(k); th.auto = true; th.tok++; cellStep(0); }; box.appendChild(b); });
+  box.appendChild(mk("p", "", "Purple = control messages, blue = your data, red = where it fails.")); }
+
 
 /* ---------- the start page: new, open, AdeeboMeter's own drawings of your network, your diagrams, examples */
-function openDoc(d, title){ hideEdit(); flushSaves(); $("#saveProject").disabled = false; $("#name").disabled = false; document.body.classList.remove("home"); if (mode === "break") setMode("draw");
+function openDoc(d, title){ hideEdit(); flushSaves(); $("#saveProject").disabled = false; $("#name").disabled = false; document.body.classList.remove("home"); if (mode !== "draw") setMode("draw");
   sel = null; linkFrom = null; undo = []; redo = []; doc = d; $("#name").value = doc.name; accessUi(); buildTools(); hint(); $("#say").className = ""; draw(); setTimeout(fit, 0);
   if (title && doc.note) say(title, " " + doc.note, false); $("#saved").textContent = doc.fid ? "Saved in this browser" : ""; }
-function showHome(){ hideEdit(); flushSaves(); $("#saveProject").disabled = true; $("#name").disabled = true; if (mode === "break") setMode("draw"); document.body.classList.add("home"); renderHome(); }
+function showHome(){ hideEdit(); flushSaves(); $("#saveProject").disabled = true; $("#name").disabled = true; if (mode !== "draw") setMode("draw"); document.body.classList.add("home"); renderHome(); }
 $("#homeBtn").onclick = showHome;
 const VIEWS = [["lan", "See my LAN", "cpe", "Every device on your network - address, MAC and maker (up to 50 drawn)"],
   ["path", "Path to anywhere", "internet", "Your last trace or MTR, hop by hop, red where loss is real"],
@@ -748,6 +904,10 @@ function renderHome(){ const C = COL();
   const st = $("#hStart"); st.textContent = "";
   tile(st, {big: true, title: "Start fresh", sub: "A blank canvas. Pick a device, then tap or click to place it.", go: () => { openDoc(blank()); saveNow(); }});
   tile(st, {icon: "database", col: C.purple, title: "Open project", sub: "Import a project file (.json) from this device", go: () => $("#openFile").click()});
+  const sh = $("#hShow"); sh.textContent = "";
+  tile(sh, {icon: "firewall", col: C.red, title: "Challenges", sub: "8 broken networks. Find the fault with as few tools as you can.", go: () => { if (document.body.classList.contains("home")) openDoc(doc); setMode("chal"); }});
+  tile(sh, {icon: "tv", col: C.green, title: "Multicast theater", sub: "How one TV channel reaches many homes: IGMP, PIM and the copies.", go: () => openScene("mcast")});
+  tile(sh, {icon: "tower", col: C.cell, title: "Cellular: phone to internet", sub: "Attach, the data session and the tunnel - and what breaks where.", go: () => openScene("cell")});
   const vw = $("#hViews"); vw.textContent = ""; vw.hidden = $("#hViewsH").hidden = !AMV;
   VIEWS.forEach(([k, n, ic, sub]) => { const d = AMV && AMV[k];
     tile(vw, {icon: ic, col: k === "lan" ? C.green : k === "path" ? C.blue : k === "wifi" ? C.wifi : k === "phone" ? C.cell : C.purple, title: n, off: !d,
@@ -770,6 +930,8 @@ $("#name").value = doc.name; buildTools(); hint(); accessUi();
 if (qPath && doc.measured) say("Your path, as AdeeboMeter measured it.", " White = measured, grey = the usual setup (not measured). Anything you add is purple.", false);
 setTimeout(fit, 0); addEventListener("resize", () => fit());
 if (qBreak) setMode("break");
+else if (/[?&]mode=chal/.test(location.search) || qView === "chal") setMode("chal");
+else if (qView === "mcast" || qView === "cell") openScene(qView);
 else if (qView && AMV && AMV[qView]) openView(qView);
 else if (qView === "new") openDoc(blank());   /* the app's AdeeboLab page chose these (1.1.6, 22 Nov): new, one of your diagrams, an example, a file */
 else if (qView === "file" && qArg) { const f = files().find(x => x.id === qArg); const d = f && valid(f.doc); if (d) { d.fid = f.id; openDoc(d); } else showHome(); }

@@ -5767,3 +5767,8 @@ For each	Para cada
 If it works	Si funciona
 Set	Fijar
 Note	Nota
+8 broken networks. Find the fault with as few tools as you can.	8 redes averiadas. Encuentra el fallo con el menor número de herramientas.
+Multicast theater	Teatro multicast
+How one TV channel reaches many homes: IGMP, PIM and the copies.	Cómo un canal de TV llega a muchos hogares: IGMP, PIM y las copias.
+Cellular: phone to internet	Celular: del teléfono a internet
+Attach, the data session and the tunnel - and what breaks where.	El registro, la sesión de datos y el túnel, y qué falla dónde.
