@@ -37,7 +37,7 @@
   var localizedPath = /^\/(fr|bn|es|ar)\//.exec(location.pathname);   // R2-086: Spanish and Arabic pages keep their own language
   var languagePrefix = localizedPath ? "/" + localizedPath[1] : "";
   var learnPath = languagePrefix + "/learn/";
-  var S = [['learn', learnPath, 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files']];
+  var S = [['learn', learnPath, 'book', 'Learn'], ['games', '/games.html', 'game', 'Games'], ['live', '/live.html', 'live', 'Live'], ['files', '/files.html', 'folder', 'Files'], ['check', '/check.html', 'signal', 'Check']];   // 1.1.7 (D10): the browser checkup
   var lesson = sec === 'learn' && !/\/learn\/(index\.html)?$/.test(location.pathname);
   var bar = document.createElement('header'); bar.className = 'ui-appbar';
   bar.innerHTML = '<a class="ui-back" href="' + (lesson ? learnPath : '/app.html') + '" aria-label="' + (lesson ? 'Back to Learn' : 'Back to the app') + '">' + ic('back', 26) + '</a>' +

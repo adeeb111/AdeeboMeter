@@ -1,9 +1,9 @@
 @import url("/base.css");
 /* Shared look for Learn, Games, Live and Files (with ui.js). Flat: solid surfaces, 1-px lines, blue for actions and the open
    section, soft section colours on icons only. Uses each page's own colour tokens (--page, --card, --line, --ink, --sub, --blue). */
-:root{--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0;--ui-blue:#1F6FEB}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}}
-:root[data-theme="dark"]{--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}
+:root{--c-check:#1A8A6E;--c-learn:#C2621F;--c-games:#A8459C;--c-live:#1F7DB8;--c-files:#6B4FD0;--ui-blue:#1F6FEB}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-check:#4FD1A8;--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}}
+:root[data-theme="dark"]{--c-check:#4FD1A8;--c-learn:#F2A66A;--c-games:#D98ACF;--c-live:#62B8EE;--c-files:#A48CEB;--ui-blue:#2F7BF6}
 html,body{overscroll-behavior-y:none}
 body[data-sec]{touch-action:manipulation;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 body[data-sec] main{padding-top:6px}

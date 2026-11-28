@@ -9,7 +9,7 @@
 (function () {
   var html = document.documentElement;
   if (self !== top) html.classList.add('inapp');
-  var m = /^\/(fr|es|ar|bn|zh)\//.exec(location.pathname), lang = m ? m[1] : 'en', pre = m ? '/' + m[1] : '';
+  var m = /^\/(fr|es|ar|bn|zh)\//.exec(location.pathname), lang = m ? m[1] : (/^(fr|es|ar|bn|zh)$/.test(html.getAttribute('data-lang') || '') ? html.getAttribute('data-lang') : 'en'), pre = m ? '/' + m[1] : '';   // data-lang: /get picks the visitor's language itself
   var T = {
     zh: {"theme":"深色或浅色","home":"主页","site":"网站","learn":"学习","blog":"博客","games":"游戏","live":"实时信息","more":"更多","files":"文件","phone":"手机应用","gaming":"游戏","streaming":"流媒体","trading":"交易","isp":"运营商报告","hof":"名人堂","privacy":"隐私","donate":"捐赠","download":"下载","dlTitle":"下载 AdeeboMeter","dlSub":"免费支持 Windows 10 和 11，无需管理员权限，不收集个人信息。","store":"Microsoft Store","storeSub":"已签名，由 Windows 保持更新。","direct":"直接下载","directSub":"下载 ZIP，解压运行，即可选择自行安装。","directVer":"版本 {v}","all":"全部版本与更新说明","phoneLink":"使用手机？打开手机应用","close":"关闭"},
     en: { theme: 'Dark or light', home: 'Home', site: 'Site', learn: 'Learn', blog: 'Blog', games: 'Games', live: 'Live', more: 'More', files: 'Files', phone: 'Mobile app', gaming: 'Gaming', streaming: 'Streaming', trading: 'Trading', isp: 'ISP report', hof: 'Hall of Fame', privacy: 'Privacy', donate: 'Donate', download: 'Download',
@@ -90,13 +90,82 @@
   }
   var closing = 0;
   function close(d) { if (!d.open || d.classList.contains('closing')) return; d.classList.add('closing'); closing = setTimeout(function () { closing = 0; d.classList.remove('closing'); d.close(); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 140); }
-  function open(from) {
+  function open(from, anyway) {
+    if (PHONE && SEND && !anyway && openSend()) return;   // D9: a phone gets "Send it to my PC" first
     latest(); var d = dialog();
     if (typeof d.showModal !== 'function') { location.href = (from && from.href) || RELEASES; return; }   // a very old browser: the link itself
     if (closing) { clearTimeout(closing); closing = 0; d.classList.remove('closing'); }   // hunters14 SITE-L2: reopened mid-close - it simply stays open
     if (!d.open) d.showModal(); d.querySelector('.dl-store').focus();
   }
   window.AdeeboMeterDownload = open;
+  // ---- 1.1.7 (D9): "Send it to my PC" - a phone can't install a Windows app, so on phones and tablets every Download offers
+  // ways to get the link to the PC instead: the phone's share sheet, their own mail app, a calendar reminder (.ics), or the short
+  // link to type. No server, nothing collected; ?via= on the link lets the page counts show which way people came back.
+  var PHONE = !html.classList.contains('inapp') && ((matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
+  var INAPPUA = /FBAN|FBAV|FB_IAB|Instagram|Line\//.test(navigator.userAgent);   // Facebook's and Instagram's browsers: no share sheet
+  var SEND = ({
+    en: { send: 'Send it to my PC', anyway: 'Download anyway', title: 'Get AdeeboMeter on your PC', sub: 'It’s a Windows app - take the link to your computer one of these ways.', share: 'Share', shareSub: 'WhatsApp, Messenger, email - send it to yourself', mail: 'Email it to me', mailSub: 'Opens your own mail app - nothing passes through us', remind: 'Remind me later', remindSub: 'A calendar reminder for tomorrow evening', copy: 'Copy the short link', copySub: 'Type it on your PC:', copied: 'Copied', meanwhile: 'Meanwhile, on this phone:', learn: 'Learn how your internet works', lab: 'Try the network lab', subj: 'AdeeboMeter for my PC', body: 'Install AdeeboMeter on my PC: ', ics: 'Install AdeeboMeter on your PC' },
+    fr: { send: 'L’envoyer sur mon PC', anyway: 'Télécharger quand même', title: 'AdeeboMeter sur votre PC', sub: 'C’est une application Windows - envoyez le lien à votre ordinateur d’une de ces façons.', share: 'Partager', shareSub: 'WhatsApp, Messenger, courriel - envoyez-le-vous', mail: 'Me l’envoyer par courriel', mailSub: 'Ouvre votre propre messagerie - rien ne passe par nous', remind: 'Me le rappeler plus tard', remindSub: 'Un rappel dans votre agenda demain soir', copy: 'Copier le lien court', copySub: 'Tapez-le sur votre PC :', copied: 'Copié', meanwhile: 'En attendant, sur ce téléphone :', learn: 'Comprendre votre connexion', lab: 'Essayer le labo réseau', subj: 'AdeeboMeter pour mon PC', body: 'Installer AdeeboMeter sur mon PC : ', ics: 'Installer AdeeboMeter sur votre PC' },
+    es: { send: 'Enviarlo a mi PC', anyway: 'Descargar de todos modos', title: 'AdeeboMeter en tu PC', sub: 'Es una app de Windows: lleva el enlace a tu ordenador de una de estas formas.', share: 'Compartir', shareSub: 'WhatsApp, Messenger, correo: envíatelo', mail: 'Enviármelo por correo', mailSub: 'Abre tu propia app de correo: nada pasa por nosotros', remind: 'Recordármelo más tarde', remindSub: 'Un recordatorio en tu calendario mañana por la tarde', copy: 'Copiar el enlace corto', copySub: 'Escríbelo en tu PC:', copied: 'Copiado', meanwhile: 'Mientras tanto, en este móvil:', learn: 'Aprende cómo funciona tu internet', lab: 'Prueba el laboratorio de redes', subj: 'AdeeboMeter para mi PC', body: 'Instalar AdeeboMeter en mi PC: ', ics: 'Instala AdeeboMeter en tu PC' },
+    ar: { send: 'أرسله إلى حاسوبي', anyway: 'نزّله على أي حال', title: 'AdeeboMeter على حاسوبك', sub: 'إنه تطبيق Windows - انقل الرابط إلى حاسوبك بإحدى هذه الطرق.', share: 'مشاركة', shareSub: 'واتساب أو ماسنجر أو البريد - أرسله لنفسك', mail: 'أرسله إلى بريدي', mailSub: 'يفتح تطبيق بريدك - لا شيء يمر عبرنا', remind: 'ذكّرني لاحقًا', remindSub: 'تذكير في التقويم مساء الغد', copy: 'انسخ الرابط القصير', copySub: 'اكتبه على حاسوبك:', copied: 'تم النسخ', meanwhile: 'وفي الأثناء، على هذا الهاتف:', learn: 'تعلّم كيف يعمل اتصالك', lab: 'جرّب مختبر الشبكات', subj: 'AdeeboMeter لحاسوبي', body: 'ثبّت AdeeboMeter على حاسوبي: ', ics: 'ثبّت AdeeboMeter على حاسوبك' },
+    bn: { send: 'আমার পিসিতে পাঠান', anyway: 'তবুও ডাউনলোড করুন', title: 'আপনার পিসিতে AdeeboMeter', sub: 'এটি একটি Windows অ্যাপ - এর যেকোনো একটি উপায়ে লিংকটা কম্পিউটারে নিন।', share: 'শেয়ার', shareSub: 'হোয়াটসঅ্যাপ, মেসেঞ্জার, ইমেইল - নিজেকে পাঠান', mail: 'আমাকে ইমেইল করুন', mailSub: 'আপনার নিজের মেইল অ্যাপ খোলে - আমাদের কাছে কিছু আসে না', remind: 'পরে মনে করিয়ে দিন', remindSub: 'কাল সন্ধ্যার জন্য ক্যালেন্ডার রিমাইন্ডার', copy: 'ছোট লিংক কপি করুন', copySub: 'পিসিতে টাইপ করুন:', copied: 'কপি হয়েছে', meanwhile: 'ততক্ষণ, এই ফোনে:', learn: 'আপনার ইন্টারনেট কীভাবে চলে শিখুন', lab: 'নেটওয়ার্ক ল্যাব চালিয়ে দেখুন', subj: 'আমার পিসির জন্য AdeeboMeter', body: 'আমার পিসিতে AdeeboMeter ইনস্টল করব: ', ics: 'আপনার পিসিতে AdeeboMeter ইনস্টল করুন' },
+    zh: { send: '发送到我的电脑', anyway: '仍然下载', title: '在电脑上使用 AdeeboMeter', sub: '这是一个 Windows 应用——用下面任一方法把链接带到你的电脑上。', share: '分享', shareSub: '微信、WhatsApp、邮件——发给自己', mail: '用邮件发给我', mailSub: '打开你自己的邮件应用——不经过我们', remind: '稍后提醒我', remindSub: '明天晚上的日历提醒', copy: '复制短链接', copySub: '在电脑上输入：', copied: '已复制', meanwhile: '同时，在这部手机上：', learn: '了解你的网络如何工作', lab: '试试网络实验室', subj: '电脑版 AdeeboMeter', body: '在我的电脑上安装 AdeeboMeter：', ics: '在你的电脑上安装 AdeeboMeter' }
+  })[lang] || null;
+  var GET = 'https://adeebometer.com/get';
+  function ico(d) { return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+  function opt(cls, svgd, b, s) { return '<button class="dl-opt ' + cls + '" type="button">' + ico(svgd) + '<span><b>' + esc(b) + '</b><small>' + esc(s) + '</small></span></button>'; }
+  function ics() {
+    var t = new Date(); t.setDate(t.getDate() + 1); t.setHours(19, 0, 0, 0); var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    var at = t.getFullYear() + p(t.getMonth() + 1) + p(t.getDate()) + 'T190000', now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AdeeboMeter//Send it to my PC//EN', 'BEGIN:VEVENT', 'UID:' + now + '-adeebometer', 'DTSTAMP:' + now, 'DTSTART:' + at, 'DURATION:PT15M',
+      'SUMMARY:' + SEND.ics, 'DESCRIPTION:' + GET + '?via=ics', 'URL:' + GET + '?via=ics', 'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:' + SEND.ics, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
+  function sendDialog() {
+    var d = document.getElementById('am-send'); if (d) return d;
+    d = document.createElement('dialog'); d.id = 'am-send'; d.className = 'am-dl am-send'; d.setAttribute('aria-labelledby', 'am-send-t'); if (lang === 'ar') d.dir = 'rtl';
+    var canShare = typeof navigator.share === 'function' && !INAPPUA;
+    d.innerHTML = '<div class="dl-card"><button class="dl-x" type="button" aria-label="' + esc(T.close) + '">' + ico('M6 6l12 12M18 6L6 18') + '</button>' +
+      '<img src="/img/logo.svg" width="40" height="40" alt=""><h2 id="am-send-t">' + esc(SEND.title) + '</h2><p class="dl-sub">' + esc(SEND.sub) + '</p>' +
+      (canShare ? opt('dl-store sd-share', 'M8.6 13.5l6.8 4M15.4 6.5l-6.8 4M18 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM9 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 19a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', SEND.share, SEND.shareSub) : '') +
+      opt((canShare ? '' : 'dl-store ') + 'sd-mail', 'M3 6h18v12H3zM3 7l9 6 9-6', SEND.mail, SEND.mailSub) +
+      opt('sd-ics', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M12 13v4M10 15h4', SEND.remind, SEND.remindSub) +
+      '<button class="dl-opt sd-copy" type="button">' + ico('M9 9h11v11H9zM5 15H4V4h11v1') + '<span><b>' + esc(SEND.copy) + '</b><small>' + esc(SEND.copySub) + '</small><strong class="sd-link" dir="ltr">adeebometer.com/get</strong></span></button>' +
+      '<p class="sd-mean">' + esc(SEND.meanwhile) + ' <a href="' + pre + '/learn/">' + esc(SEND.learn) + '</a> · <a href="/lab.html">' + esc(SEND.lab) + '</a></p>' +
+      '<p class="dl-foot"><a href="' + RELEASES + '" data-anyway>' + esc(SEND.anyway) + '</a></p></div>';
+    document.body.appendChild(d);
+    d.querySelector('.dl-x').addEventListener('click', function () { close(d); });
+    d.addEventListener('click', function (e) { if (e.target === d) close(d); });
+    d.addEventListener('cancel', function (e) { e.preventDefault(); close(d); });
+    var sh = d.querySelector('.sd-share'); if (sh) sh.addEventListener('click', function () { navigator.share({ title: 'AdeeboMeter', text: SEND.body, url: GET + '?via=share' }).catch(function () {}); });
+    d.querySelector('.sd-mail').addEventListener('click', function () { location.href = 'mailto:?subject=' + encodeURIComponent(SEND.subj) + '&body=' + encodeURIComponent(SEND.body + GET + '?via=mail'); });
+    d.querySelector('.sd-ics').addEventListener('click', function () { var a2 = document.createElement('a'); a2.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics()); a2.download = 'AdeeboMeter-reminder.ics'; document.body.appendChild(a2); a2.click(); a2.remove(); });
+    d.querySelector('.sd-copy').addEventListener('click', function () {
+      var b = this, done = function () { var s = b.querySelector('small'); s.textContent = SEND.copied; setTimeout(function () { s.textContent = SEND.copySub; }, 2000); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(GET + '?via=copy').then(done, function () {}); else done();
+    });
+    d.querySelector('[data-anyway]').addEventListener('click', function (e) { if (e.button !== 0 || e.ctrlKey || e.metaKey) return; e.preventDefault(); d.close(); open(null, true); });
+    return d;
+  }
+  function openSend() {
+    var d = sendDialog(); if (typeof d.showModal !== 'function') return false;
+    if (closing) { clearTimeout(closing); closing = 0; d.classList.remove('closing'); }
+    if (!d.open) d.showModal(); (d.querySelector('.dl-store') || d.querySelector('.dl-opt')).focus(); return true;
+  }
+  window.AdeeboMeterSend = openSend;
+  // the buttons themselves say it on phones; the hero keeps a small "Download anyway" under it
+  if (PHONE && SEND) {
+    var relabel = function () {
+      [].forEach.call(document.querySelectorAll('a.dl, a.sb-dl, a[data-download]'), function (el) {
+        if (el.closest('dialog') || el.hasAttribute('data-sent')) return; el.setAttribute('data-sent', '1');
+        var sp = el.querySelector('[data-i18n]') || el.querySelector('span');
+        if (sp) { sp.removeAttribute('data-i18n'); sp.textContent = SEND.send; } else el.textContent = SEND.send;
+      });
+      var hero = document.querySelector('.v4ctas a.dl'); if (hero && !document.querySelector('.dl-anyway')) { var any = document.createElement('a'); any.className = 'dl-anyway'; any.href = RELEASES; any.setAttribute('data-anyway', ''); any.textContent = SEND.anyway; hero.parentNode.insertBefore(any, hero.nextSibling); }
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', relabel); else relabel();
+    if (bar) relabel();
+  }
+
 
   // ---- what's new, in plain words (24 Nov: "Everything that changed" went to GitHub's CHANGELOG - that list is for the nerds)
   var NEW = {"en": {"t": "What's new in 1.1.6", "s": "In plain words.", "i": [["Speaks your language", "English, French, Spanish, Arabic and Bengali - switch with the globe button."], ["A calmer corner", "It brightens only when you rest the mouse on it, and never gets in your way."], ["Follow companies", "Pick from the big names and keep up to four on the widget."], ["A clearer report for your provider", "One page: what's wrong, where it starts, and a message ready to send."], ["For gamers, streamers and traders", "Game ping, dips in your streams, and the line to your broker."], ["Draw your network", "Break one piece and see what stops working."], ["Steadier everywhere", "Hundreds of fixes from testing on real PCs."]], "f": "Still free. No account, nothing about you collected."}, "fr": {"t": "Nouveautés de la 1.1.6", "s": "En mots simples.", "i": [["Parle votre langue", "Anglais, français, espagnol, arabe et bengali : changez avec le bouton globe."], ["Un coin plus calme", "Il ne s'éclaire que quand la souris s'y pose, et ne vous gêne jamais."], ["Suivez des entreprises", "Choisissez parmi les grands noms et gardez-en jusqu'à quatre sur le widget."], ["Un rapport plus clair pour votre fournisseur", "Une page : ce qui ne va pas, où ça commence, et un message prêt à envoyer."], ["Pour les joueurs, le streaming et le trading", "Le ping des jeux, les baisses de vos diffusions et la ligne vers votre courtier."], ["Dessinez votre réseau", "Cassez un élément et voyez ce qui cesse de fonctionner."], ["Plus stable partout", "Des centaines de corrections après des tests sur de vrais PC."]], "f": "Toujours gratuit. Pas de compte, rien sur vous n'est collecté."}, "es": {"t": "Novedades de la 1.1.6", "s": "En palabras sencillas.", "i": [["Habla tu idioma", "Inglés, francés, español, árabe y bengalí: cambia con el botón del globo."], ["Una esquina más tranquila", "Solo se ilumina cuando apoyas el ratón encima y nunca estorba."], ["Sigue empresas", "Elige entre los grandes nombres y deja hasta cuatro en el widget."], ["Un informe más claro para tu proveedor", "Una página: qué falla, dónde empieza y un mensaje listo para enviar."], ["Para jugadores, streaming y trading", "El ping de los juegos, las caídas de tus emisiones y la línea a tu bróker."], ["Dibuja tu red", "Rompe una pieza y mira qué deja de funcionar."], ["Más estable en todo", "Cientos de correcciones tras probarlo en PC reales."]], "f": "Sigue siendo gratis. Sin cuenta, sin recopilar nada sobre ti."}, "ar": {"t": "الجديد في 1.1.6", "s": "بكلمات بسيطة.", "i": [["يتحدث لغتك", "الإنجليزية والفرنسية والإسبانية والعربية والبنغالية - بدّل من زر الكرة الأرضية."], ["زاوية أهدأ", "لا تضيء إلا عندما تريح الفأرة عليها، ولا تعترض طريقك أبدًا."], ["تابع الشركات", "اختر من الأسماء الكبيرة واحتفظ بأربع منها على الأداة."], ["تقرير أوضح لمزوّد الخدمة", "صفحة واحدة: ما الخلل، وأين يبدأ، ورسالة جاهزة للإرسال."], ["للاعبين والبث والتداول", "زمن استجابة الألعاب، وانقطاعات البث، والخط إلى وسيطك."], ["ارسم شبكتك", "عطّل جزءًا واحدًا وشاهد ما الذي يتوقف."], ["أكثر ثباتًا في كل مكان", "مئات الإصلاحات بعد الاختبار على أجهزة حقيقية."]], "f": "ما زال مجانيًا. بلا حساب، ولا يجمع أي شيء عنك."}, "bn": {"t": "1.1.6-এ নতুন কী", "s": "সহজ ভাষায়।", "i": [["আপনার ভাষায় কথা বলে", "ইংরেজি, ফরাসি, স্প্যানিশ, আরবি ও বাংলা - গ্লোব বোতাম দিয়ে বদলান।"], ["আরও শান্ত কোণ", "মাউস একটু থামালে তবেই উজ্জ্বল হয়, কখনো পথ আটকায় না।"], ["কোম্পানি অনুসরণ করুন", "বড় নামগুলো থেকে বেছে নিন, উইজেটে চারটি পর্যন্ত রাখুন।"], ["ISP-র জন্য আরও পরিষ্কার রিপোর্ট", "এক পাতায়: কী সমস্যা, কোথা থেকে শুরু, আর পাঠানোর মতো তৈরি বার্তা।"], ["গেমার, স্ট্রিমার ও ট্রেডারদের জন্য", "গেমের পিং, স্ট্রিমের ড্রপ, আর ব্রোকার পর্যন্ত লাইন।"], ["আপনার নেটওয়ার্ক আঁকুন", "একটি অংশ ভাঙুন, দেখুন কী বন্ধ হয়ে যায়।"], ["সবখানে আরও স্থির", "আসল পিসিতে পরীক্ষার পর শত শত সংশোধন।"]], "f": "এখনও বিনামূল্যে। অ্যাকাউন্ট নেই, আপনার কিছুই সংগ্রহ করা হয় না।"}}[lang];
@@ -190,7 +259,7 @@
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     var el = e.target.closest && e.target.closest('a[data-download], a.dl, a.sb-dl, a[href="' + RELEASES + '"]');
-    if (!el || el.closest('#am-dl')) return;
-    e.preventDefault(); open(el);
+    if (!el || el.closest('#am-dl') || el.closest('#am-send')) return;
+    e.preventDefault(); open(el, el.hasAttribute('data-anyway'));
   });
 })();

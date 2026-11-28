@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es" data-language-route="/check.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Revisar mi conexión | AdeeboMeter</title>
+<meta name="description" content="Una revisión gratuita de tu conexión en cualquier navegador: móvil, Mac, Chromebook o un PC de trabajo bloqueado. Retardo, jitter, velocidad, retardo con carga, DNS e IPv6, en palabras sencillas. Nada que instalar, nada guardado.">
+<link rel="canonical" href="https://adeebometer.com/es/check.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--amber:#9A6700;--tint:#EEF4FF;--c-check:#1A8A6E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844;--c-check:#4FD1A8}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--amber:#D29922;--tint:#182844;--c-check:#4FD1A8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:880px;margin:0 auto;padding:20px 16px calc(80px + env(safe-area-inset-bottom))}
+a{color:var(--blue)}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}.card.wide{grid-column:1/-1}
+.card h2{font-size:16px;margin:0 0 4px;color:var(--sub);font-weight:600}
+.big{font-size:34px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.big small{font-size:16px;font-weight:600;color:var(--sub)}
+.say{margin:6px 0 0;font-size:15px}.mut{color:var(--sub);font-size:14px}
+.lv{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:1px 9px;margin-inline-start:8px;vertical-align:middle}
+.lv.g{background:rgba(45,164,78,.15);color:var(--green)}.lv.o{background:rgba(154,103,0,.15);color:var(--amber)}.lv.b{background:rgba(207,34,46,.14);color:var(--red)}
+.go{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 18px}
+.btn{font:inherit;font-weight:700;color:#fff;background:var(--blue);border:0;border-radius:999px;padding:12px 22px;cursor:pointer;min-height:46px;transition:transform 140ms cubic-bezier(.23,1,.32,1)}
+.btn.line{background:transparent;color:var(--blue);border:1px solid var(--line)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.55;cursor:default}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:10px 0 0}.bar i{display:block;height:6px;width:0;background:var(--c-check);transition:width 300ms ease-out}
+.next ul{margin:8px 0 0;padding-inline-start:20px}.next li{margin:6px 0}code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--tint);border-radius:6px;padding:1px 6px}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 20px;margin-top:12px}
+@media (max-width:640px){.cards{grid-template-columns:1fr}.big{font-size:30px}}
+</style>
+<link rel="stylesheet" href="/ui.css">
+<link rel="stylesheet" href="/sitebar.css">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/check.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/check.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/check.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/check.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/check.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/check.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/check.html">
+</head>
+<body data-sec="check">
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<header class="ui-head"><span class="ui-chip" style="--k:var(--c-check)" data-ic="signal" data-sz="28"></span><div><h1>Revisar mi conexión</h1><p>Tu conexión, medida desde este navegador. Nada que instalar, nada guardado.</p></div></header>
+<div class="go" id="go"></div>
+<p class="mut" id="datanote" hidden>¿Con datos móviles? La prueba ligera usa unos 5 MB y la completa unos 50 MB.</p>
+<div class="bar" id="bar" hidden><i></i></div>
+<div class="cards" id="res" hidden></div>
+<p class="mut" id="honest" hidden>La velocidad aquí es hasta el servidor de prueba más cercano, no la de tu plan, y una medición es solo una foto. Repítela cuando vaya lento y compara.</p>
+<section class="card wide next" id="next" hidden></section>
+<p class="mut">Medido con peticiones web a Cloudflare y Google, no un juego ni un ping: un navegador no puede hacerlos.</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  var T = {"title": "Revisar mi conexión", "meta": "Una revisión gratuita de tu conexión en cualquier navegador: móvil, Mac, Chromebook o un PC de trabajo bloqueado. Retardo, jitter, velocidad, retardo con carga, DNS e IPv6, en palabras sencillas. Nada que instalar, nada guardado.", "lead": "Tu conexión, medida desde este navegador. Nada que instalar, nada guardado.", "start": "Empezar la revisión", "light": "Prueba ligera (~5 MB)", "full": "Prueba completa (~50 MB)", "data": "¿Con datos móviles? La prueba ligera usa unos 5 MB y la completa unos 50 MB.", "again": "Repetir", "running": "Midiendo…", "s_lat": "Retardo y jitter", "s_down": "Descarga", "s_up": "Subida", "s_load": "Retardo con carga", "s_dns": "Nombres (DNS)", "s_v6": "IPv6", "s_video": "Vídeo", "good": "Bien", "ok": "Aceptable", "bad": "Mala", "lat_g": "Respuestas rápidas y estables: llamadas y juegos se sienten al instante.", "lat_o": "Bien para navegar y vídeo; los juegos rápidos pueden notarlo.", "lat_b": "Respuestas lentas o irregulares: las llamadas pueden cortarse y los juegos ir con retraso.", "load_g": "Se mantiene estable con la línea llena: una llamada no se entrecortará mientras alguien descarga.", "load_o": "Sube un poco con la línea llena: la mayoría de las llamadas aguantan.", "load_b": "Se dispara con la línea llena: las llamadas se entrecortan mientras alguien descarga (bufferbloat).", "dns_g": "Los nombres responden rápido.", "dns_b": "Las búsquedas de nombres son lentas o fallan: las páginas tardan en empezar.", "v6_y": "Sí: esta conexión tiene IPv6.", "v6_n": "Aquí no hay IPv6: todo sigue funcionando por IPv4.", "vid_4k": "El 4K debería ir fluido.", "vid_hd": "El HD va bien; el 4K puede bajar.", "vid_sd": "Calidad estándar; el HD puede cargar.", "vid_no": "El vídeo tendrá problemas.", "fail": "no se pudo medir desde este navegador", "why": "¿Qué es esto?", "honest": "La velocidad aquí es hasta el servidor de prueba más cercano, no la de tu plan, y una medición es solo una foto. Repítela cuando vaya lento y compara.", "cant": "Lo que un navegador no ve: tu señal Wi-Fi, tu router y tu dispositivo. Ese es el siguiente paso.", "next": "Siguiente paso", "win": "En este PC con Windows, AdeeboMeter lo ve todo (Wi-Fi, router, proveedor y apps) y dice de quién es la culpa.", "getfull": "Ver el panorama completo", "phone": "Los detalles del Wi-Fi están en Ajustes: en iPhone, Ajustes › Wi-Fi › la (i) junto a tu red; en Android, Ajustes › Red › Wi-Fi › tu red. Para el panorama completo, AdeeboMeter funciona en un PC con Windows.", "mac_h": "Tu Mac ya trae buenas herramientas: así se leen", "mac1": "Mantén Opción y pulsa el icono Wi-Fi: un RSSI (señal) de -50 a -65 dBm es bueno, por debajo de -75 es débil; ruido cerca de -90; Canal indica 2,4 o 5 GHz.", "mac2": "En Terminal, escribe networkQuality (macOS 12 o posterior): velocidad en ambos sentidos y Responsiveness; un RPM alto significa llamadas fluidas con la línea ocupada.", "mac3": "¿Se corta el Wi-Fi? Opción-clic en el icono Wi-Fi › Abrir Diagnóstico inalámbrico: registra lo que pasa y nombra la causa.", "cros": "En un Chromebook, los detalles del Wi-Fi están en Ajustes › Red › Wi-Fi › tu red. En Linux, nmcli dev wifi muestra las redes y su señal.", "sim": "Medido con peticiones web a Cloudflare y Google, no un juego ni un ping: un navegador no puede hacerlos."}, PRE = "/es", LEARN = {"lat": "speed-vs-delay.html", "load": "streaming-vs-calls.html", "dns": "dns.html", "v6": "ipv6.html", "video": "stream-4k.html", "down": "speed-vs-delay.html", "up": "speed-vs-delay.html"};
+  var API = "https://adeebometer-live.orkoadeeb.workers.dev", CF = "https://speed.cloudflare.com";
+  var $ = function (id) { return document.getElementById(id); }, ua = navigator.userAgent;
+  var PHONE = (matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 900) || /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+  var dev = /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? "phone" : /Macintosh|Mac OS X/.test(ua) ? "mac" : /CrOS|Linux/.test(ua) && !/Android/.test(ua) ? "cros" : "win";
+  var cell = navigator.connection && (navigator.connection.type === "cellular" || navigator.connection.saveData);
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function timed(url, opt, ms) { var c = typeof AbortController === "function" ? new AbortController() : null; if (c) setTimeout(function () { c.abort(); }, ms || 15000); opt = opt || {}; if (c) opt.signal = c.signal; opt.cache = "no-store"; return fetch(url, opt); }
+  function ping() { var s = performance.now(); return timed(API + "/ping?" + Math.random(), {}, 5000).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function () { return performance.now() - s; }, function () { return NaN; }); }
+  function pings(n) { var out = [], p = Promise.resolve(); for (var i = 0; i < n; i++) p = p.then(ping).then(function (v) { if (!isNaN(v)) out.push(v); }); return p.then(function () { return out; }); }
+  function med(a) { var b = a.slice().sort(function (x, y) { return x - y; }); return b.length ? b[Math.floor(b.length / 2)] : NaN; }
+  function down(bytes, n) { var s = performance.now(), got = 0, jobs = []; for (var i = 0; i < n; i++) jobs.push(timed(CF + "/__down?bytes=" + bytes + "&r=" + Math.random(), {}, 30000).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (b) { got += b.byteLength; }));
+    return Promise.all(jobs).then(function () { return got * 8 / ((performance.now() - s) / 1000) / 1e6; }, function () { return NaN; }); }
+  function up(bytes, n) { var s = performance.now(), body = new Uint8Array(bytes), jobs = []; for (var i = 0; i < n; i++) jobs.push(timed(CF + "/__up?r=" + Math.random(), { method: "POST", body: body }, 30000).then(function (r) { if (!r.ok) throw 0; }));
+    return Promise.all(jobs).then(function () { return bytes * n * 8 / ((performance.now() - s) / 1000) / 1e6; }, function () { return NaN; }); }
+  function dns() { var t = [], ok = 0, p = Promise.resolve();
+    for (var i = 0; i < 3; i++) p = p.then(function () { var s = performance.now(); return timed("https://dns.google/resolve?name=" + Math.random().toString(36).slice(2, 10) + ".adeebometer.com&type=A", {}, 6000).then(function (r) { return r.json(); }).then(function (j) { t.push(performance.now() - s); if (j && typeof j.Status === "number") ok++; }, function () {}); });
+    return p.then(function () { return { ms: med(t), ok: ok }; }); }
+  function v6() { return timed("https://api6.ipify.org?format=json", {}, 5000).then(function (r) { return r.ok; }, function () { return false; }); }
+  function card(k, title, big, lv, say) { return '<section class="card"><h2>' + esc(title) + (lv ? '<span class="lv ' + lv + '">' + esc(lv === "g" ? T.good : lv === "o" ? T.ok : T.bad) + "</span>" : "") + '</h2><div class="big">' + big + '</div><p class="say">' + esc(say) + '</p><p class="mut"><a href="' + PRE + "/learn/" + LEARN[k] + '">' + esc(T.why) + "</a></p></section>"; }
+  function n0(v) { return isNaN(v) ? "—" : (v >= 100 ? Math.round(v) : v.toFixed(1)).toLocaleString(); }
+  function next() {
+    var h = '<h2 style="color:var(--ink)">' + esc(T.next) + "</h2><p>" + esc(T.cant) + "</p>";
+    if (dev === "mac") h += "<p><b>" + esc(T.mac_h) + "</b></p><ul><li>" + esc(T.mac1) + "</li><li>" + esc(T.mac2).replace("networkQuality", "<code>networkQuality</code>") + "</li><li>" + esc(T.mac3) + "</li></ul>";
+    else if (dev === "phone") h += "<p>" + esc(T.phone) + '</p><a class="cta dl" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">' + esc(T.getfull) + "</a>";
+    else if (dev === "cros") h += "<p>" + esc(T.cros).replace("nmcli dev wifi", "<code>nmcli dev wifi</code>") + "</p>";
+    else h += "<p>" + esc(T.win) + '</p><a class="cta dl" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">' + esc(T.getfull) + "</a>";
+    $("next").innerHTML = h; $("next").hidden = false;
+  }
+  var busy = false;
+  function run(size) {
+    if (busy) return; busy = true; [].forEach.call(document.querySelectorAll("#go button"), function (b) { b.disabled = true; });
+    var bar = $("bar"), fill = bar.firstChild, R = {}; bar.hidden = false; fill.style.width = "4%"; $("res").hidden = true;
+    var step = function (p) { fill.style.width = p + "%"; };
+    var big = size === "full", db = big ? 10e6 : 1e6, ub = big ? 2e6 : 25e4;
+    pings(8).then(function (t) { R.lat = med(t); R.jit = t.length > 1 ? t.slice(1).reduce(function (a, v, i) { return a + Math.abs(v - t[i]); }, 0) / (t.length - 1) : NaN; step(20); return down(db, 4); })
+      .then(function (d) { R.down = d; step(45); return up(ub, 2); })
+      .then(function (u) { R.up = u; step(60);
+        // delay while busy: the same requests while a download fills the line
+        var load = down(db, 4), lp = wait(300).then(function () { return pings(6); }); return Promise.all([load, lp]).then(function (x) { R.loaded = med(x[1]); }); })
+      .then(function () { step(80); return dns(); })
+      .then(function (d) { R.dns = d; step(90); return v6(); })
+      .then(function (v) { R.v6 = v; step(100); show(R); })
+      .then(function () { busy = false; bar.hidden = true; buttons(true); }, function () { busy = false; bar.hidden = true; buttons(true); });
+  }
+  function show(R) {
+    var h = "", f = esc(T.fail);
+    var latLv = isNaN(R.lat) ? "" : R.lat < 40 && R.jit < 10 ? "g" : R.lat < 100 && R.jit < 30 ? "o" : "b";
+    h += card("lat", T.s_lat, isNaN(R.lat) ? "—" : Math.round(R.lat) + " <small>ms</small> · " + Math.round(R.jit) + " <small>ms</small>", latLv, isNaN(R.lat) ? T.fail : T["lat_" + latLv]);
+    var rise = R.loaded - R.lat, ldLv = isNaN(rise) ? "" : rise < 30 ? "g" : rise < 100 ? "o" : "b";
+    h += card("load", T.s_load, isNaN(rise) ? "—" : "+" + Math.max(0, Math.round(rise)) + " <small>ms</small>", ldLv, isNaN(rise) ? T.fail : T["load_" + ldLv]);
+    h += card("down", T.s_down, n0(R.down) + " <small>Mb/s</small>", "", isNaN(R.down) ? T.fail : "");
+    h += card("up", T.s_up, n0(R.up) + " <small>Mb/s</small>", "", isNaN(R.up) ? T.fail : "");
+    var vd = isNaN(R.down) ? "" : R.down >= 25 ? "4k" : R.down >= 8 ? "hd" : R.down >= 3 ? "sd" : "no";
+    h += card("video", T.s_video, vd === "" ? "—" : vd === "4k" ? "4K" : vd === "hd" ? "HD" : vd === "sd" ? "SD" : "—", vd === "" ? "" : vd === "4k" || vd === "hd" ? "g" : vd === "sd" ? "o" : "b", vd === "" ? T.fail : T["vid_" + vd]);
+    var offline = isNaN(R.lat) && isNaN(R.down);   // nothing answered at all: no verdicts, just "couldn't measure"
+    var dnsLv = isNaN(R.dns.ms) || offline ? "" : !R.dns.ok ? "b" : R.dns.ms < 80 ? "g" : R.dns.ms < 250 ? "o" : "b";
+    h += card("dns", T.s_dns, isNaN(R.dns.ms) ? "—" : Math.round(R.dns.ms) + " <small>ms</small>", dnsLv, dnsLv === "" ? T.fail : dnsLv === "b" ? T.dns_b : T.dns_g);
+    h += card("v6", T.s_v6, R.v6 ? "✓" : "—", R.v6 ? "g" : "", R.v6 ? T.v6_y : offline ? T.fail : T.v6_n);
+    $("res").innerHTML = h; $("res").hidden = false; $("honest").hidden = false; next();
+  }
+  function buttons(again) {
+    var g = $("go"); g.textContent = "";
+    var mk = function (label, size, line) { var b = document.createElement("button"); b.className = "btn" + (line ? " line" : ""); b.textContent = label; b.onclick = function () { run(size); }; g.appendChild(b); };
+    if (PHONE || cell) { mk(T.light, "light"); mk(T.full, "full", true); $("datanote").hidden = false; }
+    else mk(again ? T.again : T.start, "full");
+  }
+  buttons(false);
+})();
+</script>
+<script src="/ui.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 window.AdeeboMeterMessages = {
   "fr": {
+    "Check ↗": "Vérifier",
+    "Test your connection in this browser.": "Testez votre connexion dans ce navigateur.",
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} est sorti - vous avez la {mine}. Téléchargez-le ci-dessous et choisissez Mettre à jour.",
     "You’re ahead - {mine} is newer than the latest release ({v}).": "Vous êtes en avance - la {mine} est plus récente que la dernière version publiée ({v}).",
     "You’re up to date - {mine} is the latest version.": "Vous êtes à jour - la {mine} est la dernière version.",
@@ -4644,6 +4646,8 @@ window.AdeeboMeterMessages = {
     "A Windows process using CPU?": "Un processus Windows sollicite le processeur ?"
   },
   "es": {
+    "Check ↗": "Revisar",
+    "Test your connection in this browser.": "Prueba tu conexión en este navegador.",
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} ya está disponible - tienes la {mine}. Descárgala abajo y elige Actualizar.",
     "You’re ahead - {mine} is newer than the latest release ({v}).": "Vas por delante - la {mine} es más nueva que la última versión publicada ({v}).",
     "You’re up to date - {mine} is the latest version.": "Estás al día - la {mine} es la última versión.",
@@ -9415,6 +9419,8 @@ window.AdeeboMeterMessages = {
     "A Windows process using CPU?": "¿Un proceso de Windows está utilizando CPU?"
   },
   "ar": {
+    "Check ↗": "افحص",
+    "Test your connection in this browser.": "اختبر اتصالك في هذا المتصفح.",
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "صدر AdeeboMeter {v} - لديك {mine}. نزّله من الأسفل واختر تحديث.",
     "You’re ahead - {mine} is newer than the latest release ({v}).": "أنت متقدّم - الإصدار {mine} أحدث من آخر إصدار منشور ({v}).",
     "You’re up to date - {mine} is the latest version.": "لديك أحدث إصدار - {mine} هو الإصدار الأخير.",
@@ -14186,6 +14192,8 @@ window.AdeeboMeterMessages = {
     "A Windows process using CPU?": "هل تستخدم إحدى عمليات Windows المعالج؟"
   },
   "bn": {
+    "Check ↗": "চেক",
+    "Test your connection in this browser.": "এই ব্রাউজারে কানেকশন টেস্ট করুন।",
     "AdeeboMeter {v} is out - you have {mine}. Download it below and choose Update.": "AdeeboMeter {v} এসেছে - আপনার কাছে আছে {mine}। নিচ থেকে ডাউনলোড করে আপডেট বেছে নিন।",
     "You’re ahead - {mine} is newer than the latest release ({v}).": "আপনি এগিয়ে আছেন - {mine} সর্বশেষ প্রকাশিত সংস্করণের ({v}) চেয়ে নতুন।",
     "You’re up to date - {mine} is the latest version.": "আপনি হালনাগাদ আছেন - {mine} সর্বশেষ সংস্করণ।",
@@ -18830,6 +18838,8 @@ window.AdeeboMeterMessages = {
     "A Windows process using CPU?": "Windows-এর কোনো প্রসেস CPU ব্যবহার করছে?"
   },
   "zh": {
+    "Check ↗": "检查",
+    "Test your connection in this browser.": "在这个浏览器里测试你的网络。",
     "Language": "语言",
     "Automatic": "自动",
     "Home": "主页",
