@@ -44,15 +44,15 @@ namespace AdeeboMeter
             State s; string hideAll = "stream,trade,gamer";
             switch (id)
             {
-                case "everyday": s = new State { Hidden = hideAll, Widget = "speedstatus", Nav = "home,toolbox,time,learn" }; Pace(s, "penny"); break;
-                case "gamer": s = new State { Hidden = "stream,trade", Widget = "gamer", Nav = "home,gamer,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "streamer": s = new State { Hidden = "trade,gamer", Widget = "speedstatus", Nav = "home,stream,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "trader": s = new State { Hidden = "stream,gamer", Widget = "speedstatus", Nav = "home,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "engineer": s = new State { Mode = "pro", Hidden = "", Widget = "engineer", Details = true, Nav = "home,toolbox,dest,security,story,time,learn" }; Pace(s, "balanced"); break;
-                case "everything": s = new State { Mode = "pro", Hidden = "", Widget = "auto", Nav = "home,gamer,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "play-watch": s = new State { Hidden = "trade", Widget = "auto", Nav = "home,gamer,stream,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "play-trade": s = new State { Hidden = "stream", Widget = "auto", Nav = "home,gamer,trade,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "watch-trade": s = new State { Hidden = "gamer", Widget = "speedstatus", Nav = "home,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
+                case "everyday": s = new State { Hidden = hideAll, Widget = "speedstatus", Nav = "home,check,pc,toolbox,time,learn" }; Pace(s, "penny"); break;
+                case "gamer": s = new State { Hidden = "stream,trade", Widget = "gamer", Nav = "home,check,pc,gamer,toolbox,time,learn" }; Pace(s, "gamer"); break;
+                case "streamer": s = new State { Hidden = "trade,gamer", Widget = "speedstatus", Nav = "home,check,pc,stream,toolbox,time,learn" }; Pace(s, "balanced"); break;
+                case "trader": s = new State { Hidden = "stream,gamer", Widget = "speedstatus", Nav = "home,check,pc,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
+                case "engineer": s = new State { Mode = "pro", Hidden = "", Widget = "engineer", Details = true, Nav = "home,toolbox,check,pc,time,learn" }; Pace(s, "balanced"); break;
+                case "everything": s = new State { Mode = "pro", Hidden = "", Widget = "auto", Nav = "home,check,pc,gamer,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
+                case "play-watch": s = new State { Hidden = "trade", Widget = "auto", Nav = "home,check,pc,gamer,stream,toolbox,time,learn" }; Pace(s, "gamer"); break;
+                case "play-trade": s = new State { Hidden = "stream", Widget = "auto", Nav = "home,check,pc,gamer,trade,toolbox,time,learn" }; Pace(s, "gamer"); break;
+                case "watch-trade": s = new State { Hidden = "gamer", Widget = "speedstatus", Nav = "home,check,pc,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
                 default: return null;
             }
             return s;

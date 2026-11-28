@@ -499,23 +499,23 @@ namespace AdeeboMeter
         // 1.1.5: Home merges Overview, Monitor and Investigate (PLAN 11.11); Network story, Security and Check a destination
         // sit under More by default (FullView.Nav) - the order and what is on the bar are the user's
         static readonly string[][] Secs = {
-            new[] { "home", "Home", "overview", "guide", "conn", "link", "procs", "live", "health" },
+            // 28 Nov (Adeeb: "I couldn't find the hardware section"): grouped by what people look for - Home, Check, My PC,
+            // History, Learn - with the Toolbox and the view pages (Gamer, Streaming, Markets, Sports, Outlook) still their own
+            // entries: two ways in. Every page is still here; only where it lives changed.
+            new[] { "home", "Home", "overview", "guide" },
+            new[] { "check", "Check", "dest", "shell" },
+            new[] { "pc", "My PC", "health", "procs", "conn", "link", "live", "security" },
             new[] { "toolbox", "Toolbox", "toolbox" },
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "outlook", "Outlook", "outlook" },
-            new[] { "shell", "AdeeboShell", "shell" },
-            new[] { "lab", "AdeeboLab", "lab" },
             new[] { "stream", "Streaming", "stream" },
             new[] { "sports", "Sports", "sports" },
             new[] { "trade", "Markets", "trade" },
-            new[] { "time", "Time machine", "replay", "changes" },
-            new[] { "learn", "Learn", "learn", "windows" },
-            new[] { "story", "Network story", "travel" },
-            new[] { "security", "Security", "security" },
-            new[] { "dest", "Check a destination", "dest" } };
+            new[] { "time", "History", "replay", "changes", "travel" },
+            new[] { "learn", "Learn", "learn", "windows", "lab" } };
         // Simple mode shows only these sections; pages of the others still open when something links to them (a Fix a problem
         // answer that needs a Toolbox tool, say) - only their tab is hidden
-        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "gamer", "stream", "trade", "time", "learn" };   // Learn is in every view
+        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "check", "pc", "toolbox", "gamer", "stream", "trade", "sports", "learn" };   // 28 Nov: the groups, the Toolbox and the view pages
         void ApplyMode()
         {
             if (tabs == null) return;
@@ -532,7 +532,8 @@ namespace AdeeboMeter
         static readonly Dictionary<string, string[]> tabNames = new Dictionary<string, string[]> {
             { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
-            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Check" } }, { "health", new[] { "Health", "Health" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
+            { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Destination" } }, { "health", new[] { "Hardware & health", "Hardware" } },
+            { "shell", new[] { "AdeeboShell", "Shell" } }, { "lab", new[] { "AdeeboLab", "Lab" } }, { "security", new[] { "Security", "Security" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };

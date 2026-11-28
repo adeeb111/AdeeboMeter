@@ -300,6 +300,10 @@ namespace AdeeboMeter
             Func<string, string> sportsNav = nav0 => { var l = nav0.Split(',').ToList(); if (l.Remove("toolbox")) l.Insert(Math.Min(1, l.Count), "toolbox"); int si = l.IndexOf("stream"); if (si >= 0 && !l.Contains("sports") && l.Count(z => z.Trim() != "") < 8) l.Insert(si + 1, "sports"); else if (si >= 0 && !l.Contains("sports")) Program.Log("nav: Sports not added - the bar is full (it's in More)");   /* R2-042: a full bar keeps every tab you chose */ return Cfg.NavClean(string.Join(",", l)); };
             if (!first && !Cfg.NavSports) { Cfg.Nav = sportsNav(Cfg.Nav); Views.MigrateNav(sportsNav); }   // review 1.1.6 P1 #16: kept views too   // and Toolbox right after Home (Adeeb, 22 Nov) - once; Settings › Navigation can move it again
             Cfg.NavSports = true;
+            // 28 Nov: once, Check and My PC join a saved bar right after Home (in kept views too) - nothing else moves
+            Func<string, string> groupsNav = nav0 => { var l = Cfg.NavClean(nav0).Split(',').ToList(); int at = Math.Min(1, l.Count); foreach (var gId in new[] { "pc", "check" }) if (!l.Contains(gId)) l.Insert(at, gId); return Cfg.NavClean(string.Join(",", l)); };
+            if (!first && !Cfg.NavGroups) { Cfg.Nav = groupsNav(Cfg.Nav); Views.MigrateNav(groupsNav); }
+            Cfg.NavGroups = true;
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             // review 1.1.6 P1 #1: a file that says setupdone=0 is a fresh install whose questions are still open - not an upgrade
             bool pendingSetup = !first && !Cfg.SetupDone;

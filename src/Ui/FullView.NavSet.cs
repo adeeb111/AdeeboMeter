@@ -10,7 +10,7 @@ namespace AdeeboMeter
 {
     partial class FullView
     {
-        const string NavDefault = "home,outlook,toolbox,gamer,time,learn";
+        const string NavDefault = "home,check,pc,toolbox,gamer,time,learn";
 
         float PaintNavSettings(Graphics g, float x, float y, float w)
         {
@@ -92,7 +92,7 @@ namespace AdeeboMeter
                         string nm = Ask(L.T("Name your tab"), L.T("Work")); if (nm == null) return;
                         var l = MyTabs(); l.Add(new MineTab { Name = nm }); SaveMyTabs(l);
                         var ids = MyTabs(); string nid = ids.Count > 0 ? ids[ids.Count - 1].Id : null;
-                        if (nid != null) { var b2 = Cfg.NavClean(Cfg.Nav).Split(',').ToList(); if (b2.Count < 7) { b2.Add(nid); Cfg.Nav = Cfg.NavClean(string.Join(",", b2)); Cfg.Save(); } }
+                        if (nid != null) { var b2 = Cfg.NavClean(Cfg.Nav).Split(',').ToList(); if (b2.Count < 10) { b2.Add(nid); Cfg.Nav = Cfg.NavClean(string.Join(",", b2)); Cfg.Save(); } }
                         ApplyLayout(); settingsCanvas.Invalidate();
                     });
                     y += 46 * S;

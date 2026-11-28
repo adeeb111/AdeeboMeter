@@ -21,9 +21,9 @@ namespace AdeeboMeter
         {
             { "home", new[] { "Home", "home", "home" } }, { "outlook", new[] { "Outlook", "outlook", "outlook" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
             { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
-            { "learn", new[] { "Learn", "learn", "learn" } }, { "story", new[] { "Network story", "story", "story" } },
-            { "security", new[] { "Security", "shield", "security" } }, { "dest", new[] { "Check a destination", "dest", "dest" } },
-            { "calc", new[] { "Calculators", "calc", "calc" } }, { "lab", new[] { "AdeeboLab", "route", "learn" } }, { "shell", new[] { "AdeeboShell", "go", "home" } }, { "reports", new[] { "Reports", "report", "reports" } }
+            { "learn", new[] { "Learn", "learn", "learn" } },
+            { "check", new[] { "Check", "dest", "dest" } }, { "pc", new[] { "My PC", "cpu", "security" } },
+            { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }
         };
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }
         static string NavIcon(string id) { string[] i; return NavInfo.TryGetValue(id, out i) ? i[1] : "star"; }
@@ -53,11 +53,12 @@ namespace AdeeboMeter
             {
                 // 22 Nov (Adeeb: "why did Calculators open the Toolbox?"): their own page - the tiles of that one section, under its
                 // own title, without the Toolbox's chips; the Toolbox's own view setting is left as it was
-                case "lab": tab = "lab"; ShowTab(); break;   // AdeeboLab's own page in the app; a drawing opens in its window from there (Adeeb, 22 Nov)
                 case "calc": case "reports": tab = "toolbox"; ShowTab(); EnsureToolbox(); navOwn = id == "calc" ? "calc" : "report"; if (!EveryTool) { Cfg.TbView = "list"; ApplyTbView(); } ClearTbSearch(); ShowQuestions(navOwn); break;
                 default:
                     if (id.StartsWith("mine", StringComparison.Ordinal)) { curMine = id; tab = "mine"; ShowTab(); if (mineCanvas != null) mineCanvas.Invalidate(); break; }
-                    var def = Secs.FirstOrDefault(x => x[0] == id); if (def == null) return;
+                    var def = Secs.FirstOrDefault(x => x[0] == id);
+                    // 28 Nov: a page that used to be its own section (dest, shell, lab, security, story) opens straight to that page
+                    if (def == null) { string pageId = id == "story" ? "travel" : id; if (SecOf(pageId) == "") return; tab = pageId; ShowTab(); break; }
                     string pg; tab = lastIn.TryGetValue(id, out pg) ? pg : def[2];
                     if (id == "toolbox") { navOwn = ""; if (tbQ == "calc" || tbQ == "report") ShowQuestions(EveryTool ? "*" : ""); }
                     ShowTab(); break;

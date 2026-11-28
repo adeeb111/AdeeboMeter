@@ -21,6 +21,21 @@ namespace AdeeboMeter
         internal static readonly string[] SearchGroups = { "Tools", "Pages", "Fix a problem", "Settings", "Learn", "Terms", "Programs", "Today", "Sites" };
         internal static readonly string[] SearchExamples = { "port 443", "why is my game lagging", "wifi channel", "github.com", "dns", "mtu", "speed test", "who is on my network" };
 
+        static readonly Dictionary<string, string> PageWords = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "health", "hardware cpu processor memory ram disk ssd drive storage battery temperature heat fan gpu graphics specs usb bottleneck slow pc" },
+            { "procs", "apps programs processes running task manager what is using bandwidth upload download usage" },
+            { "conn", "connections ports sockets who is my pc talking to netstat open ports" },
+            { "link", "wifi wi-fi wireless signal channel router band 5ghz 2.4ghz ethernet cable adapter" },
+            { "live", "capture packets wireshark pcap sniff traffic" },
+            { "security", "firewall antivirus defender locks safe vpn exposed" },
+            { "dest", "check site website destination ping trace dns https certificate reach" },
+            { "shell", "terminal command line cmd powershell console script" },
+            { "lab", "lab simulate draw network diagram break playground" },
+            { "replay", "history yesterday replay time machine past" }, { "changes", "what changed drivers updates since" },
+            { "travel", "network story packet journey layers" }, { "windows", "inside windows services startup processes explained" },
+            { "guide", "problem fix wrong help broken troubleshoot" }, { "overview", "home today status" }
+        };
         List<PalItem> SearchItems()
         {
             var l = new List<PalItem>();
@@ -34,7 +49,10 @@ namespace AdeeboMeter
             foreach (var kv in tabNames)
             {
                 string t = kv.Key; if (NavInfo.ContainsKey(t)) continue;
-                add("Pages", L.T(kv.Value[0]), "", "go", "home", null, delegate { tab = t; ShowTab(); SyncNav(); });
+                string sec = SecOf(t); string where = sec != "" && sec != t ? L.T(NavName(sec)) : "";
+                add("Pages", L.T(kv.Value[0]), where, "go", sec == "" ? "home" : NavAccent(sec), null, delegate { tab = t; ShowTab(); SyncNav(); });
+                // 28 Nov (Adeeb: "even I couldn't find the hardware section"): the words people actually type find the page
+                string extra; if (PageWords.TryGetValue(t, out extra)) l[l.Count - 1].Words += " " + extra;
             }
             add("Pages", L.T("Settings"), "", "settings", "reports", null, delegate { tab = "settings"; ShowTab(); SyncNav(); });
             add("Pages", L.T("About"), "", "star", "home", null, delegate { tab = "about"; ShowTab(); SyncNav(); });
