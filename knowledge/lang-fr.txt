@@ -5939,3 +5939,4 @@ Beyond them	Au-delà
 The destination	La destination
 Their first hop	Leur premier saut
 Your home	Chez vous
+Free and open source under the GNU GPL v3: a shared copy keeps its source open. AdeeboMeter™ and its logo are Adeeb Khan's - a changed copy uses its own name.	Gratuit et open source sous licence GNU GPL v3 : une copie partagée garde son code source ouvert. AdeeboMeter™ et son logo appartiennent à Adeeb Khan - une copie modifiée porte son propre nom.

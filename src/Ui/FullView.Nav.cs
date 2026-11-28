@@ -22,7 +22,7 @@ namespace AdeeboMeter
             { "home", new[] { "Home", "home", "home" } }, { "outlook", new[] { "Outlook", "outlook", "outlook" } }, { "toolbox", new[] { "Toolbox", "tool", "toolbox" } },
             { "gamer", new[] { "Gamer", "game", "gamer" } }, { "stream", new[] { "Streaming", "app", "stream" } }, { "sports", new[] { "Sports", "star", "sports" } }, { "trade", new[] { "Markets", "traffic", "trade" } }, { "time", new[] { "Time machine", "time", "time" } },
             { "learn", new[] { "Learn", "learn", "learn" } },
-            { "check", new[] { "Check", "dest", "dest" } }, { "pc", new[] { "My PC", "cpu", "security" } },
+            { "check", new[] { "Check", "dest", "dest" } }, { "pc", new[] { "My PC", "cpu", "security" } }, { "shell", new[] { "Terminal", "shell", "toolbox" } },
             { "calc", new[] { "Calculators", "calc", "calc" } }, { "reports", new[] { "Reports", "report", "reports" } }
         };
         static string NavName(string id) { string[] i; if (NavInfo.TryGetValue(id, out i)) return i[0]; var t = MyTab(id); return t != null ? t.Name : id; }

@@ -28,6 +28,9 @@ namespace AdeeboMeter
             new[] { "cmd", "Tool", "toolbox" }, new[] { "say", "Say", "home" }, new[] { "wait", "Wait", "time" }, new[] { "repeat", "Repeat", "gamer" },
             new[] { "each", "For each", "stream" }, new[] { "if", "If it works", "trade" }, new[] { "set", "Set", "learn" }, new[] { "note", "Note", "calc" } };
 
+        // 28 Nov (perf): the monospace fonts, one each for the app's life (a control never disposes its Font - one leaked per window)
+        static Font shMono, flowMono;
+        static Font FlowMono { get { if (flowMono == null) flowMono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : "Consolas", 10f); return flowMono; } }
         // the Terminal | Flow switch above the shell (BuildShellPage calls this once)
         void ShellTabs(Panel page, Control term)
         {
@@ -63,7 +66,7 @@ namespace AdeeboMeter
             flowCanvas = new DB { Name = "flowCanvas", Dock = DockStyle.Fill, BackColor = Theme.Card, AutoScroll = true, TabStop = true };
             flowCanvas.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintFlow(e.Graphics); }; Wire(flowCanvas);
             flowCanvas.KeyDown += FlowKey; flowCanvas.MouseDown += delegate { flowCanvas.Focus(); };
-            flowText = new TextBox { Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Both, WordWrap = false, AcceptsTab = true, Font = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : "Consolas", 10f), BackColor = ShBg, ForeColor = ShFg, BorderStyle = BorderStyle.None };
+            flowText = new TextBox { Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Both, WordWrap = false, AcceptsTab = true, Font = FlowMono, BackColor = ShBg, ForeColor = ShFg, BorderStyle = BorderStyle.None };
             var ttimer = new Timer { Interval = 500 }; ttimer.Tick += delegate { ttimer.Stop(); if (!flowSync) { flow = FlowParse(flowText.Text); flowSel = null; flowCanvas.Invalidate(); } };
             flowText.TextChanged += delegate { if (flowSync) return; ttimer.Stop(); ttimer.Start(); };   // typing in the script: the blocks follow half a second later
             var right = new Panel { Dock = DockStyle.Fill, BackColor = ShBg, Padding = new Padding(Sc(10)) }; right.Controls.Add(flowText);

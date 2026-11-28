@@ -144,8 +144,10 @@ namespace AdeeboMeter
             p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90); p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
             p.CloseFigure(); return p;
         }
-        public static void Fill(Graphics g, RectangleF r, float rad, Color c) { using (var p = Round(r, rad)) using (var b = new SolidBrush(c)) g.FillPath(b, p); }
-        public static void Stroke(Graphics g, RectangleF r, float rad, Color c, float w) { using (var p = Round(r, rad)) using (var pen = new Pen(c, w)) g.DrawPath(pen, p); }
+        // 28 Nov (perf): a card outside what's being painted - scrolled away, or outside a partial repaint - costs nothing.
+        // The rounded fill was the biggest cost on most pages (45% of a draw on What's wrong?, 35% on Learn), mostly for cards nobody could see.
+        public static void Fill(Graphics g, RectangleF r, float rad, Color c) { if (r.Width <= 0 || r.Height <= 0 || !g.IsVisible(r)) return; using (var p = Round(r, rad)) using (var b = new SolidBrush(c)) g.FillPath(b, p); }
+        public static void Stroke(Graphics g, RectangleF r, float rad, Color c, float w) { if (!g.IsVisible(RectangleF.Inflate(r, w + 1, w + 1))) return; using (var p = Round(r, rad)) using (var pen = new Pen(c, w)) g.DrawPath(pen, p); }
 
         // The AdeeboMeter mark: a gauge (green, amber, red) with its needle, over a three-stop path. Same drawing as docs/img/logo.svg.
         public static void Logo(Graphics g, RectangleF r, bool arrows) { Logo(g, r, arrows, float.NaN, null); }
@@ -429,10 +431,16 @@ namespace AdeeboMeter
             fValue = Ui(UiDisp, 15 * S, UiDispStyle);
             fCardNum = Ui(UiDisp, 27 * S, UiDispStyle); fBtn = Ui(UiSemi, 13f * S, UiSemiStyle); fZ = new Font(tb, 5f * S, FontStyle.Bold, GraphicsUnit.Pixel);
             fInput = Ui(UiFam, 13.5f * S, UiFamStyle);
-            measureG = Graphics.FromImage(measureBmp); measureG.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; measureG.TextContrast = Contrast;   /* measured as the windows draw */
+            lock (measureBmp)   /* 28 Nov: the old one leaked a GDI+ object on every scale change - swapped under the same lock Measure uses */
+            {
+                var ng = Graphics.FromImage(measureBmp); ng.TextRenderingHint = TextRenderingHint.ClearTypeGridFit; ng.TextContrast = Contrast;   /* measured as the windows draw */
+                var old = measureG; measureG = ng; if (old != null) old.Dispose();
+            }
         }
         // pages measure the same text on every repaint - remember the answers (cleared when it gets big or the scale changes)
         static readonly Dictionary<string, SizeF> measured = new Dictionary<string, SizeF>(); static readonly Queue<string> measuredOrder = new Queue<string>();
+        // 28 Nov (perf): up to 3000 whole paragraphs stayed after the big window closed - only the window uses them
+        public static void ClearMeasured() { lock (measureBmp) { measured.Clear(); measuredOrder.Clear(); } }
         public static SizeF Measure(string t, Font f, int width)
         {
             t = t ?? ""; string key = f.Name + "|" + f.Size.ToString("R", CultureInfo.InvariantCulture) + "|" + (int)f.Style + "|" + width.ToString(CultureInfo.InvariantCulture) + "|" + t;   // the font's own name, size and style (its hash ignores the family)

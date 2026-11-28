@@ -74,6 +74,7 @@ namespace AdeeboMeter
         static TextureBrush dots; static float dotsAt = -1;
         public static void Ground(Graphics g, RectangleF r)
         {
+            r = RectangleF.Intersect(r, g.VisibleClipBounds); if (r.Width <= 0 || r.Height <= 0) return;   /* 28 Nov (perf): only what's being painted - the dotted fill over the whole tall page was 11-16% of a Sports or Markets draw */
             using (var b = new SolidBrush(Bg)) g.FillRectangle(b, r);
             if (!Cream || App) return;
             if (dots == null || dotsAt != S)

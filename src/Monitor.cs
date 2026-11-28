@@ -73,6 +73,8 @@ namespace AdeeboMeter
 
         public volatile bool HoverOpen;   /* the widget card is hovered: its detail cards need this second's numbers */
         DateTime lastFullSnap = DateTime.MinValue;
+        // something on screen names apps right now: the hover card, a call, or a widget style that lists them
+        bool AppsShown { get { return HoverOpen || CallLikely || Cfg.WidgetStyle == "speedapps" || Cfg.WidgetStyle == "engineer" || Cfg.WidgetStyle == "mine"; } }
         public volatile bool ViewOpen, ProcsTab;   // ProcsTab: the What's running tab is showing - keep the process list at 2 s       // engineer view open: probe faster, read processes more often
         public volatile Snap Latest = new Snap();
         public int Version;
@@ -238,7 +240,7 @@ namespace AdeeboMeter
                 {
                     bool fast = ViewOpen || CallLikely || (Streams.Active && Cfg.Preset != "penny");   // a stream playing counts like a call: the internet check every 5 s
                     // Every interval comes from Settings; the open engineer view (or a call) always gets the fast pace.
-                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? WakeStepSec(t0) : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : Cfg.AppsSec;
+                    int gwSec = Cfg.GwSec == 0 ? 0 : Waking(t0) && double.IsNaN(wakeGw) ? 1 : ViewOpen ? (Cfg.GwSec >= 30 ? 5 : 2) : Cfg.GwSec,   /* Penny stays light with the window open too */   /* just woke: every second until the router answers */   /* Off means off, view open or not */ netSec = Cfg.NetSec == 0 || Policy.NoInternetCheck ? 0 : Waking(t0) && !double.IsNaN(wakeGw) ? WakeStepSec(t0) : fast ? Math.Min(5, Cfg.NetSec) : Cfg.NetSec,   /* the open view or a call: every 5 s at most */   /* the internet check off means off, view open or not */ wifiSec = Cfg.WifiSec == 0 ? 0 : ViewOpen ? 10 : Cfg.WifiSec, appsSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? 2 : Cfg.AppsSec, procSec = Cfg.AppsSec == 0 ? 0 : ViewOpen ? (ProcsTab ? 2 : 4) : AppsShown ? Cfg.AppsSec : Math.Max(Cfg.AppsSec, 15);   /* 28 Nov (perf): with only a widget that shows no apps, every process's CPU time (~300 OpenProcess) at most every 15 s, not 5 */
                     GwSecNow = gwSec; NetSecNow = netSec;   // the pace the rings fill at (the overlay plots them by time)
                     if (gwSec > 0 && (t0 - lastGw).TotalSeconds >= gwSec - 0.2)
                     {

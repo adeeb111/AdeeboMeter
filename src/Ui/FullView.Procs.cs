@@ -33,8 +33,9 @@ namespace AdeeboMeter
         {
             lastProcs = DateTime.UtcNow;
             List<AppStat> l; lock (M.L) l = M.Apps;
+            bool same = l != null && ReferenceEquals(l, procs);   /* 28 Nov (perf): the sampler hands over a new list when it has new numbers - same list, nothing to redraw */
             procs = l ?? new List<AppStat>();
-            procList.Invalidate(); procInfo.Invalidate();
+            if (!same) { procList.Invalidate(); procInfo.Invalidate(); }
             if (procSel != null) LoadProcConns(procSel);
             // where unknown programs live (once per name, off the UI thread)
             var todo = procs.Where(a => Explain.Find(a.Name) == null && Explain.Find(Monitor.RawOf(a.Name)) == null && !procWhere.ContainsKey(a.Name)).Select(a => new KeyValuePair<string, int>(a.Name, a.Pid)).ToList();

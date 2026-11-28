@@ -46,7 +46,8 @@ using Microsoft.Win32;
 [assembly: System.Reflection.AssemblyTitle("AdeeboMeter")]
 [assembly: System.Reflection.AssemblyProduct("AdeeboMeter")]
 [assembly: System.Reflection.AssemblyDescription("Know what's wrong. Show anyone. An offline Windows network and PC companion.")]
-[assembly: System.Reflection.AssemblyCopyright("MIT License")]
+[assembly: System.Reflection.AssemblyCopyright("Copyright (c) 2026 Adeeb Khan - GNU GPL v3")]
+[assembly: System.Reflection.AssemblyTrademark("AdeeboMeter is a trademark of Adeeb Khan")]
 [assembly: System.Reflection.AssemblyVersion(AdeeboMeter.Program.FileVersion)]
 [assembly: System.Reflection.AssemblyFileVersion(AdeeboMeter.Program.FileVersion)]
 [assembly: System.Reflection.AssemblyInformationalVersion(AdeeboMeter.Program.Version)]
@@ -355,7 +356,7 @@ namespace AdeeboMeter
         // Weather (Adeeb, 14 Nov): off until you turn it on; the place is one you typed (never located); "lat;lon;name"
         public static volatile bool WeatherOn, WeatherF, WWeather;   /* WWeather: the widget shows it only if you ask (Adeeb, 24 Nov) */ public static volatile string WeatherPlace = "", WeatherAcc = "normal", WeatherGeo = "", WeatherApi = "";   // WeatherGeo/Api: another server than Open-Meteo's (24 Nov); empty = Open-Meteo
         public static volatile int Zoom = 100;   // the window's zoom in percent (80-175): Ctrl + / Ctrl - / Ctrl 0, Ctrl+wheel, right-click   // how the corner behaves: quiet (never changes by itself) / moments / view (Moments.cs)   // the view in use (Views.cs): everyday / gamer / streamer / trader / engineer / my-N
-        public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer" };
+        public static volatile string HiddenSecs = ""; public static readonly string[] Hideable = { "stream", "trade", "gamer", "sports" };   // 28 Nov: Sports too - its own view
         public static bool Off(string sec) { return ("," + HiddenSecs + ",").Contains("," + sec + ","); }
         static readonly char[] CommaOnly = { ',' };
         public static void SetOff(string sec, bool off) { var l = HiddenSecs.Split(CommaOnly, StringSplitOptions.RemoveEmptyEntries).Where(z => z != sec && Hideable.Contains(z)).ToList(); if (off) l.Add(sec); HiddenSecs = string.Join(",", l); }
@@ -376,7 +377,7 @@ namespace AdeeboMeter
         // shown as Simple with the choice on the home page); an upgrade from 1.1.4 keeps Pro - nothing it had disappears
         // navigation (PLAN 11.11): the tabs on the bar in order (the rest are under More), Classic tabs or the Sidebar, the
         // right-hand strip open or slim, the user's own tabs ("name=item;item" separated by "|"), the one-time Sidebar card seen
-        public static volatile string Nav = "home,check,pc,toolbox,stream,sports,trade,gamer,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
+        public static volatile string Nav = "home,check,pc,toolbox,shell,stream,sports,trade,gamer,time,learn", Layout = "sidebar", MyTabs = "", Searches = "", BuddyFace = "drawn", WUnits = "bits", WDir = "both", FmpEvery = "15";   // the speed widget: Mb/s or MB/s; both directions, download or upload
         public static volatile int WelcomeStep = -1;   // 28 Nov: the four welcome cards on Home - -1 not in the file yet, 0-3 the card shown, 4 done
         public static volatile bool WGraph = true, WTotal = true, SetupDone = true;   // SetupDone: false only on a fresh install until the 3 questions are answered or skipped   // Searches: the last few "Search anything" words, newest first, "|" between
         public static volatile bool SideOpen = true, SidebarTried; static bool mood2Seen;
@@ -426,16 +427,16 @@ namespace AdeeboMeter
             yield return "gmon=" + Policy.Keep("gmon", GameIds); yield return "gbg=" + GameBgSec; yield return "gsrv=" + GameBgServers; yield return "gdays=" + GameDays;
             yield return "gfast=" + (GameFast ? 1 : 0); yield return "buddy=" + (Buddy ? 1 : 0); yield return "outagebest=" + OutageBest; yield return "hat=" + BuddyHat; yield return "gauto=" + (GameAuto ? 1 : 0); yield return "gwidget=" + (GameWidget ? 1 : 0); yield return "wstyle=" + WidgetStyle; yield return "mode=" + Policy.Keep("mode", Mode); yield return "lang=" + Lang; yield return "tbview2=" + TbView; yield return "tbpins=" + TbPins; yield return "lview=" + LearnView; yield return "ovat=" + OverlayAt; yield return "speedsrv=" + SpeedServer; yield return "points=" + (Points ? 1 : 0);
             yield return "fmpevery=" + FmpEvery;   // 21 Nov: how often your FMP key is asked (60, 15, 5 or 1 minutes; 5 and 1 need a paid plan)
-            yield return "nav=" + Nav; yield return "navsports=1"; yield return "navgroups=1"; yield return "welcome=" + Math.Max(0, WelcomeStep).ToString(CultureInfo.InvariantCulture); yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "faithlast=" + AdeeboMeter.Lines.LastFaith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0); yield return "setupdone=" + (SetupDone ? 1 : 0);
+            yield return "nav=" + Nav; yield return "navsports=1"; yield return "navgroups=1"; yield return "navshell=1"; yield return "welcome=" + Math.Max(0, WelcomeStep).ToString(CultureInfo.InvariantCulture); yield return "layout=" + Layout; yield return "sideopen=" + (SideOpen ? 1 : 0); yield return "mytabs=" + MyTabs; yield return "sbtried=" + (SidebarTried ? 1 : 0); yield return "searches=" + Searches; yield return "mood2=" + AdeeboMeter.Lines.Mood; yield return "persona=" + AdeeboMeter.Lines.Persona; yield return "addr=" + AdeeboMeter.Lines.Addr; yield return "addrname=" + AdeeboMeter.Lines.Name; yield return "chatty=" + AdeeboMeter.Lines.Chat; yield return "faith=" + AdeeboMeter.Lines.Faith; yield return "faithlast=" + AdeeboMeter.Lines.LastFaith; yield return "bface=" + BuddyFace; yield return "wunits=" + WUnits; yield return "wdir=" + WDir; yield return "wgraph=" + (WGraph ? 1 : 0); yield return "wtotal=" + (WTotal ? 1 : 0); yield return "setupdone=" + (SetupDone ? 1 : 0);
             yield return "livemin=" + LiveMin; yield return "sniffsec=" + SniffSec; yield return "fade=" + Fade; yield return "dwell2=" + DwellMs; yield return "follow=" + (Follow ?? "");
             string[] pins; lock (Pins) pins = Pins.ToArray();
             foreach (var p in pins) yield return "pin=" + p;
         }
         public static readonly int[] OnlineChoices = { 5, 15, 30, 60, 120, 180 }, HistDayChoices = { 1, 3, 7, 14, 30, 60, 90, 180 }, CapChoices = { 0, 10, 25, 50, 100, 250, 500 };
-        public static readonly HashSet<string> Known = new HashSet<string> { "market", "marketccy", "marketex", "leagues", "wpos", "whidenear", "whint", "wsyms", "wmine", "wsports", "wpin", "wplan", "wposgame", "sportsevery", "wrain", "wsince", "wheld", "wback", "navsports", "navgroups", "welcome", "tbview2", "fmpevery", "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "dwell2", "follow", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "phonestandby", "linealert", "casualfri", "casualmoves", "hideprob", "hidenever", "setupstep", "wgeo", "wapi" };   // 1.1.6: Markets and Sports
+        public static readonly HashSet<string> Known = new HashSet<string> { "market", "marketccy", "marketex", "leagues", "wpos", "whidenear", "whint", "wsyms", "wmine", "wsports", "wpin", "wplan", "wposgame", "sportsevery", "wrain", "wsince", "wheld", "wback", "navsports", "navgroups", "navshell", "welcome", "tbview2", "fmpevery", "streams", "streams2", "faithlast", "hidden", "tradelive", "tradecrypto", "tradealert", "tradefx", "tradefx2", "tradevenue", "sports", "sportteams", "tradeeve", "view", "views", "corner", "weather", "wplace", "wacc", "wtempf", "wweather", "zoom", "tradehost", "trademode", "nav", "layout", "sideopen", "mytabs", "sbtried", "searches", "mood2", "persona", "addr", "addrname", "chatty", "faith", "bface", "wunits", "wdir", "wgraph", "wtotal", "setupdone", "mood", "crlrev", "buddy", "hat", "outagebest", "ovat", "lview", "preset", "gw", "net", "wifi", "apps", "call", "ipnames", "portal", "seentip", "details", "bigwidget", "wscreen", "history2", "histdays", "alerts", "quiet", "devalerts", "watch", "capgb", "onlinemin", "pinwatch", "livemin", "sniffsec", "fade", "dwell", "dwell2", "follow", "pin", "gmon", "gbg", "gsrv", "gdays", "gfast", "gauto", "gwidget", "wstyle", "mode", "lang", "tbview", "tbpins", "speedsrv", "points", "autostart", "widget", "serious", "theme", "fxlist", "paper", "kickremind", "phonestandby", "linealert", "casualfri", "casualmoves", "hideprob", "hidenever", "setupstep", "wgeo", "wapi" };   // 1.1.6: Markets and Sports
         // the bar: known section ids only, no repeats, Home always first, at most 7 (the rest go to More by themselves)
-        public static readonly string[] NavIds = { "home", "check", "pc", "toolbox", "stream", "sports", "trade", "gamer", "time", "learn", "calc" };   // 28 Nov: grouped (Check, My PC); the pages that were their own entries live in those groups   // 22 Nov: Outlook is on Home, Reports in the Toolbox ("Make a report") - not pages of their own
-        public static bool NavSports, NavGroups;   // NavGroups: Check and My PC joined a saved bar once (28 Nov)   // Sports became its own page (22 Nov): added once after Streaming in a saved bar
+        public static readonly string[] NavIds = { "home", "check", "pc", "toolbox", "shell", "stream", "sports", "trade", "gamer", "time", "learn", "calc" };   // 28 Nov: grouped (Check, My PC); the pages that were their own entries live in those groups   // 22 Nov: Outlook is on Home, Reports in the Toolbox ("Make a report") - not pages of their own
+        public static bool NavSports, NavGroups, NavShell;   // NavShell: the Terminal joined a saved bar once (28 Nov)   // NavGroups: Check and My PC joined a saved bar once (28 Nov)   // Sports became its own page (22 Nov): added once after Streaming in a saved bar
         public static string NavClean(string v)
         {
             var l = new List<string> { "home" };
@@ -443,7 +444,7 @@ namespace AdeeboMeter
             foreach (var t0 in given)
             {
                 // 28 Nov: the old entries map to the group they now live in
-                string t = t0 == "dest" || t0 == "shell" ? "check" : t0 == "security" ? "pc" : t0 == "story" ? "time" : t0 == "lab" ? "learn" : t0;
+                string t = t0 == "dest" ? "check" :   /* 28 Nov: "shell" is its own entry again (Adeeb) */ t0 == "security" ? "pc" : t0 == "story" ? "time" : t0 == "lab" ? "learn" : t0;
                 if ((NavIds.Contains(t) || (t.StartsWith("mine", StringComparison.Ordinal) && t.Length == 5 && t[4] >= '1' && t[4] <= '3')) && !l.Contains(t) && l.Count < 11) l.Add(t);
             }
             return string.Join(",", l);
@@ -559,6 +560,7 @@ namespace AdeeboMeter
                 case "nav": Nav = NavClean(v); break;
                 case "navsports": NavSports = v == "1"; break;
                 case "navgroups": NavGroups = v == "1"; break;
+                case "navshell": NavShell = v == "1"; break;
                 case "welcome": { int ws; if (int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out ws)) WelcomeStep = Math.Max(0, Math.Min(4, ws)); } break;
                 case "layout": Layout = v == "sidebar" ? "sidebar" : "classic"; break;
                 case "sideopen": SideOpen = v != "0"; break;

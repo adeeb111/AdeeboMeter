@@ -52,6 +52,14 @@ namespace AdeeboMeter
             LastDupes = dup; LastBad = bad;
             return d;
         }
+        // 28 Nov (Adeeb: Bengali stayed on buttons after going back to English): the current language's words -> their English
+        // keys, taken just before a switch, so captions made earlier can be put in the new language
+        public static Dictionary<string, string> Reverse()
+        {
+            var r = new Dictionary<string, string>(StringComparer.Ordinal); var m = map; if (m == null) return r;
+            foreach (var kv in m) if (kv.Value.Trim().Length > 0 && !r.ContainsKey(kv.Value)) r[kv.Value] = kv.Key;
+            return r;
+        }
         public static string T(string en)
         {
             var m = map; if (m == null || string.IsNullOrEmpty(en)) return en;

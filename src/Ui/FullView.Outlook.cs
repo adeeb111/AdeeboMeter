@@ -27,9 +27,13 @@ namespace AdeeboMeter
         void OutlookTick()
         {
             if (tab != "outlook" || outlookCanvas == null) return;
-            string k = DateTime.Now.Minute + "|" + System.Threading.Interlocked.Read(ref LineHours.Ver) + "|" + System.Threading.Interlocked.Read(ref Sports.Ver) + "|" + (M.Latest == null ? 0 : M.Latest.GetHashCode()) / 7;
-            if (k != outlookKey) { outlookKey = k; outlookCanvas.Invalidate(); }
+            // 28 Nov (perf): the old key used the sample's object hash - new every second - so the whole page redrew every second.
+            // Now the whole page when the minute or the slow data changes; otherwise only the two live cards (network, this PC)
+            string k = DateTime.Now.Minute + "|" + System.Threading.Interlocked.Read(ref LineHours.Ver) + "|" + System.Threading.Interlocked.Read(ref Sports.Ver);
+            if (k != outlookKey || olLive.IsEmpty) { outlookKey = k; outlookCanvas.Invalidate(); return; }
+            var lr = Rectangle.Round(olLive); lr.Inflate(2, 2); outlookCanvas.Invalidate(lr);
         }
+        RectangleF olLive = RectangleF.Empty;   // the live cards on screen, from the last paint
         void OlText(Graphics g, string t, Font f, Color c, float x, float y) { using (var b = new SolidBrush(c)) g.DrawString(t, f, b, x, y); }
         void OlTextR(Graphics g, string t, Font f, Color c, float right, float y) { var s = g.MeasureString(t, f); using (var b = new SolidBrush(c)) g.DrawString(t, f, b, right - s.Width, y); }
         RectangleF OlChip(Graphics g, string t, float right, float y, int lv)
@@ -88,6 +92,7 @@ namespace AdeeboMeter
             Paper.Spark(g, new RectangleF(nx + 20 * S, ny + 6 * S, cw - 40 * S, 36 * S), hist, Theme.Blue, true);
             // this PC
             var cr = new RectangleF(x + 2 * (cw + 16 * S), y, cw, ch); Kit.Box(g, cr); float cx = cr.X;
+            { var u = RectangleF.Union(nr, cr); u.Offset(g.Transform.OffsetX, g.Transform.OffsetY); olLive = u; }   /* OutlookTick repaints only these */
             double cpu, mem; lock (M.L) { cpu = M.Cpu.Avg(10); mem = M.Mem.Last; } var snap = M.Latest;
             int clv = double.IsNaN(cpu) ? 3 : cpu > 85 || mem > 92 ? 2 : cpu > 60 || mem > 85 ? 1 : 0;
             OlText(g, L.T("This PC"), Draw.fName, Theme.Ink, cx + 20 * S, y + 16 * S); OlChip(g, clv == 0 ? L.T("Fine") : clv == 1 ? L.T("Busy") : clv == 2 ? L.T("Struggling") : L.T("Checking"), cr.Right - 20 * S, y + 16 * S, clv);
@@ -149,7 +154,7 @@ namespace AdeeboMeter
             Func<Tuple<DateTime, DateTime>, string> TsxLine = nys => { var tsx = MarketData.Exchanges.FirstOrDefault(e => e.Name == "Toronto"); var ts = tsx == null ? null : MarketData.NextSession(tsx, DateTime.UtcNow); return ts == null || ts.Item1 == nys.Item1 ? L.T("Toronto keeps the same hours") : L.T("Toronto opens") + " " + ts.Item1.ToString(AdeeboMeter.Draw.Tt("dddd h:mm tt"), CultureInfo.CurrentCulture); };
             OlText(g, L.T("Coming up"), Draw.fName, Theme.Ink, ux + 20 * S, y + 16 * S);
             float uy = y + 54 * S;
-            Sports.Game next = null; if (Cfg.Sports) lock (Sports.k) next = SpNext(Sports.Games.ToList());
+            Sports.Game next = null; if (Cfg.Sports && !Cfg.Off("sports")) lock (Sports.k) next = SpNext(Sports.Games.ToList());
             var nyx = MarketData.Exchanges.First(e => e.Name == "New York"); var ses = MarketData.NextSession(nyx, DateTime.UtcNow); string nst = MarketData.State(nyx, DateTime.UtcNow);
             var rainAt = hours.Take(24).FirstOrDefault(h => h.Pop >= 50);
             var items = new List<string[]>();

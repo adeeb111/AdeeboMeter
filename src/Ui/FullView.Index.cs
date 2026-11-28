@@ -34,12 +34,16 @@ namespace AdeeboMeter
 
         // "SWITCHES & ROUTERS (SNMP)" -> "Switches & routers (SNMP)"
         static readonly string[] KeepCaps = { "SNMP", "DNS", "TLS", "HTTPS", "HTTP", "PC", "VPN", "TDM", "ISP", "IP", "LAN", "Wi-Fi", "IPv6", "TCP", "UDP" };
+        // 28 Nov (perf): worked out once per group - 16 patterns overflowed .NET's regex cache (15), so every paint re-parsed all of them
+        static readonly Dictionary<string, string> groupNames = new Dictionary<string, string>(StringComparer.Ordinal);
         static string GroupName(string g)
         {
             if (string.IsNullOrEmpty(g)) return "";
+            lock (groupNames) { string hit; if (groupNames.TryGetValue(g, out hit)) return hit; }
             string s = g.ToLowerInvariant(); s = char.ToUpperInvariant(s[0]) + s.Substring(1);
             foreach (var k in KeepCaps) s = Regex.Replace(s, @"\b" + Regex.Escape(k.ToLowerInvariant()) + @"\b", k);
             s = Regex.Replace(s, @"\bit maths\b", "IT maths");   // bug-hunt L-141: "IT" only where it means IT - "Is it reachable?" stays a word
+            lock (groupNames) { if (groupNames.Count < 200) groupNames[g] = s; }   /* a fixed set of groups - capped anyway */
             return s;
         }
         static string Answers(Tool t) { var te = Explain.Term("tb." + t.Id); return te != null && !string.IsNullOrEmpty(te.Tag) ? te.Tag : ""; }

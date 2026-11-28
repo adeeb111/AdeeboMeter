@@ -84,7 +84,7 @@ namespace AdeeboMeter
                     Act(streamCanvas, tbr, delegate { if (Policy.NoSpeed) { streamNote = L.T("Speed tests are turned off by your IT team."); streamCanvas.Invalidate(); return; } if (!SpeedTest.Busy && AskCard.Show(this, L.T("The 4K check runs a speed test: it downloads and uploads up to 1 GB for 20-30 seconds, and anything else on your line slows down while it runs. Start it?"), "AdeeboMeter", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return; stream4k = true; StartSpeed(); streamCanvas.Invalidate(); }); }
                 }
                 y += cardH + 12 * S;
-                var lm = Cfg.Sports ? Sports.LiveMine() : null; int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
+                var lm = Cfg.Sports && !Cfg.Off("sports") ? Sports.LiveMine() : null;   /* 28 Nov: no scores here when the view hides Sports */ int ageMin; lock (Sports.k) ageMin = (int)(DateTime.UtcNow - Sports.FetchedAt).TotalMinutes;
                 if (lm != null && ageMin <= 15)
                 {
                     int more = Sports.LiveMineCount() - 1;

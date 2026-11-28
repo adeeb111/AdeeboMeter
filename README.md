@@ -7,7 +7,7 @@
 <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
 <img alt="No admin" src="https://img.shields.io/badge/admin%20rights-none-2DA44E">
 <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-2DA44E">
-<a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-8250DF"></a>
+<a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-8250DF"></a>
 </p>
 
 <p align="center"><b>Free, local-first network troubleshooter and monitor for Windows 10 and 11 — no admin rights, no cloud.</b><br>Is it your PC, your Wi-Fi, your router, your ISP, DNS or the internet? One glance tells you.</p>
@@ -120,4 +120,14 @@ Read **[The Theory of Everything](docs/THEORY-OF-EVERYTHING.md)** — every part
 
 AdeeboMeter is free. If it saved you time, you can **[donate](https://paypal.me/adeeb1111)** to cover the cost to keep this app free and running: [$5](https://paypal.me/adeeb1111/5CAD) · [$10](https://paypal.me/adeeb1111/10CAD) · [$20](https://paypal.me/adeeb1111/20CAD) · [$50](https://paypal.me/adeeb1111/50CAD) · [other amount](https://paypal.me/adeeb1111) (PayPal, Canadian dollars).
 
-Created by Adeeb Khan · [MIT License](LICENSE) — free to use, change and share; keep the copyright notice.
+## License, name and logo
+
+Created by Adeeb Khan · Copyright © 2026 Adeeb Khan.
+
+- **From 1.1.7: [GNU GPL v3](LICENSE).** Free to use, change and share. If you share a changed copy, you share its
+  whole source under the GPL too, with the copyright notice — nobody can turn AdeeboMeter into a closed product.
+- **1.1.6 and earlier** stay under the [MIT License](LICENSE-MIT-up-to-1.1.6) they were released with.
+- **AdeeboMeter™ and its logo are Adeeb Khan's.** The license covers the code, not the name: a changed or rebuilt copy
+  needs its own name and logo, and mustn't look like it comes from AdeeboMeter. Rules: [NAME-AND-LOGO.md](NAME-AND-LOGO.md).
+- **Not in this repository, on purpose:** the Hall of Fame signing key. A build made from this code works fully, but
+  its award cards say "unofficial build".

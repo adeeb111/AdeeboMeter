@@ -5920,3 +5920,4 @@ Beyond them	更远处
 The destination	目的地
 Their first hop	他们的第一跳
 Your home	你的家
+Free and open source under the GNU GPL v3: a shared copy keeps its source open. AdeeboMeter™ and its logo are Adeeb Khan's - a changed copy uses its own name.	基于 GNU GPL v3 免费开源：分享的副本须保持源代码开放。AdeeboMeter™ 及其标志归 Adeeb Khan 所有 - 修改后的副本须使用自己的名称。

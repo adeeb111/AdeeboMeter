@@ -5927,3 +5927,4 @@ Beyond them	Más allá
 The destination	El destino
 Their first hop	Su primer salto
 Your home	Tu casa
+Free and open source under the GNU GPL v3: a shared copy keeps its source open. AdeeboMeter™ and its logo are Adeeb Khan's - a changed copy uses its own name.	Gratis y de código abierto con la licencia GNU GPL v3: una copia compartida mantiene su código abierto. AdeeboMeter™ y su logotipo son de Adeeb Khan: una copia modificada usa su propio nombre.

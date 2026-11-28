@@ -131,7 +131,7 @@ In PowerShell: ``Get-FileHash .\AdeeboMeter.exe`` — the hash must match.
 
 [Report a problem](https://github.com/adeeb111/AdeeboMeter/issues/new/choose) · [Ideas & questions](https://github.com/adeeb111/AdeeboMeter/discussions) · [Website & suggestion box](https://adeeb111.github.io/AdeeboMeter/#feedback) · [Full changelog](https://github.com/adeeb111/AdeeboMeter/blob/main/CHANGELOG.md)
 
-<sub>Created by Adeeb Khan · MIT License.</sub>
+<sub>Created by Adeeb Khan · GNU GPL v3 · AdeeboMeter™ and its logo are Adeeb Khan's.</sub>
 "@
 [IO.File]::WriteAllText((Join-Path $dist "RELEASE-NOTES-$ver.md"), $notes)
 Remove-Item -Recurse -Force $stage

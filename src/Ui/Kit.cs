@@ -158,6 +158,7 @@ namespace AdeeboMeter
         public static void Shadow(Graphics g, RectangleF r, float rad)
         {
             if (Theme.HighContrast) return;
+            if (!g.IsVisible(RectangleF.Inflate(r, 8 * S, 8 * S))) return;   /* 28 Nov (perf): a card that isn't being painted needs no shadow */
             // two soft layers (four cost twice the time for a difference nobody sees - PLAN 11.8a, 30 ms a page)
             int[] a = Theme.Dark ? new[] { 46, 18 } : new[] { 18, 8 };
             for (int i = 0; i < 2; i++)
@@ -317,6 +318,7 @@ namespace AdeeboMeter
                 {
                     case "home": g.DrawLines(p, new[] { new PointF(X(4), Y(11)), new PointF(X(12), Y(4)), new PointF(X(20), Y(11)) }); g.DrawLines(p, new[] { new PointF(X(6), Y(9.5f)), new PointF(X(6), Y(20)), new PointF(X(18), Y(20)), new PointF(X(18), Y(9.5f)) }); g.DrawRectangle(p, X(10), Y(14), 4 * u, 6 * u); break;
                     case "tool": g.DrawLine(p, X(5), Y(19), X(14), Y(10)); g.DrawArc(p, X(12), Y(3), 9 * u, 9 * u, 100, 290); break;
+                    case "shell": g.DrawRectangle(p, X(3), Y(5), 18 * u, 14 * u); g.DrawLines(p, new[] { new PointF(X(7), Y(9.5f)), new PointF(X(10), Y(12)), new PointF(X(7), Y(14.5f)) }); g.DrawLine(p, X(12), Y(15), X(17), Y(15)); break;   // 28 Nov: the Terminal's own entry - a window with a >_ prompt
                     case "game": g.DrawArc(p, X(3), Y(7), 18 * u, 11 * u, 0, 360); g.DrawLine(p, X(8), Y(10.5f), X(8), Y(14.5f)); g.DrawLine(p, X(6), Y(12.5f), X(10), Y(12.5f)); g.FillEllipse(b, X(15), Y(10), 2 * u, 2 * u); g.FillEllipse(b, X(17), Y(13), 2 * u, 2 * u); break;
                     case "outlook": g.DrawEllipse(p, X(3), Y(3), 9 * u, 9 * u); g.DrawLines(p, new[] { new PointF(X(9), Y(20)), new PointF(X(19), Y(20)) }); g.DrawArc(p, X(13), Y(11), 8 * u, 9 * u, 180, 270); g.DrawArc(p, X(7), Y(13), 8 * u, 7 * u, 90, 180); break;   // a sun behind a cloud (1.1.6 Outlook)
                     case "time": g.DrawEllipse(p, X(4), Y(4), 16 * u, 16 * u); g.DrawLines(p, new[] { new PointF(X(12), Y(8)), new PointF(X(12), Y(12)), new PointF(X(15), Y(14)) }); break;

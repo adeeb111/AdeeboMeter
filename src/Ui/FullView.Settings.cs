@@ -162,7 +162,7 @@ namespace AdeeboMeter
             add("Navigation", "Layout", TagPc, () => Cfg.Layout == "sidebar" ? AdeeboMeter.L.T("Sidebar: the sections down the left, with search and a live meter. Fold it to icons with the arrow.") : AdeeboMeter.L.T("Classic: tabs along the top, the health panel on the right."), SetLayoutOpts, () => Cfg.Layout == "sidebar" ? 1 : 0, i => SetLayout(i == 1 ? "sidebar" : "classic"), null, "layout sidebar classic tabs menu left top");
             foreach (var hs in Cfg.Hideable)
             {
-                string sec = hs, nm = sec == "stream" ? "Streaming" : sec == "trade" ? "Markets" : "Gamer";
+                string sec = hs, nm = sec == "stream" ? "Streaming" : sec == "trade" ? "Markets" : sec == "sports" ? "Sports" : "Gamer";
                 add("Navigation", "Show " + nm, TagPc, () => Cfg.Off(sec) ? AdeeboMeter.L.T("Off: hidden everywhere, and its background checks are stopped.") : AdeeboMeter.L.T("On: in the bar or under More - move it in the list below."), SetS10, () => Cfg.Off(sec) ? 1 : 0, i => { Cfg.SetOff(sec, i == 1); Cfg.Save(); if (i == 1 && tab != null && SecOf(tab) == sec) { tab = "overview"; ShowTab(); } ApplyLayout(); settingsCanvas.Invalidate(); }, null, "hide turn off section " + nm.ToLowerInvariant());
             }
             // Widget
@@ -629,6 +629,9 @@ namespace AdeeboMeter
                 string cred = AdeeboMeter.L.T("Credits") + ":  Barlow typeface, (c) The Barlow Project Authors, SIL Open Font License 1.1  ·  Twemoji faces, (c) Twitter, Inc and other contributors, CC-BY 4.0  ·  Weather data by Open-Meteo.com, CC BY 4.0  ·  "
                     + AdeeboMeter.L.T("Words of comfort: King James Version, Pickthall (1930), JPS (1917), Max Muller (1881), Edwin Arnold (1885), Macauliffe (1909) - all public domain.");
                 float chh = Draw.Measure(cred, Draw.fSmall, (int)w).Height; g.DrawString(cred, Draw.fSmall, muted, new RectangleF(x, y, w, chh + 4)); y += chh + 10 * S;
+                // 28 Nov: the license from 1.1.7, and the name (Adeeb: copies keep the code open and use their own name)
+                string lic = AdeeboMeter.L.T("Free and open source under the GNU GPL v3: a shared copy keeps its source open. AdeeboMeter™ and its logo are Adeeb Khan's - a changed copy uses its own name.");
+                float lh = Draw.Measure(lic, Draw.fSmall, (int)w).Height; g.DrawString(lic, Draw.fSmall, muted, new RectangleF(x, y, w, lh + 4)); y += lh + 10 * S;
             }
             var need = new Size(0, (int)(y + 20 * S)); SetNeed(aboutCanvas, need);
         }

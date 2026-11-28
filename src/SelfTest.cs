@@ -2178,6 +2178,8 @@ namespace AdeeboMeter
             });
             T("languages: embedded previews load and English stays the fallback", () =>
             {
+                // 28 Nov: a caption made in one language can be put back in English (Relabel on a language switch)
+                { string was = L.Code; try { L.Use("bn"); string bnWord = L.T("Run health check"); var back = L.Reverse(); string en0; if (bnWord == "Run health check" || !back.TryGetValue(bnWord, out en0) || en0 != "Run health check") throw new InvalidOperationException("reverse lookup: " + bnWord); L.Use("en"); if (L.Reverse().Count != 0) throw new InvalidOperationException("English has no reverse table"); } finally { L.Use(was); } }
                 // R2-102: every table, not only French - no line twice, none empty, no number lost (Bengali and Arabic digits count)
                 foreach (var lc in new[] { "fr", "es", "ar", "bn" })
                 {

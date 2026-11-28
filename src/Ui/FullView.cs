@@ -445,6 +445,9 @@ namespace AdeeboMeter
             learnSeen = "";    // AM-CG-254: reading time restarts when you come back - time away isn't reading
             if (tab != "settings" && wpics.Count > 0) { foreach (var b in wpics.Values) if (b != null) b.Dispose(); wpics.Clear(); }   // the widget previews (~5 MB) only live while Settings is open
             if (tab != "stream" && tab != "trade") WatchKit.Drop();   // the 90 days of records only live while their page is open
+            // 28 Nov (perf): the full-width charts (1-2 MB each at 150 %) only live while their page is open - redrawn on return
+            if (tab != "changes") { if (histBmp != null) { histBmp.Dispose(); histBmp = null; histKey = ""; } if (weekBmp != null) { weekBmp.Dispose(); weekBmp = null; weekKey = ""; } }
+            if (tab != "replay" && replayBmp != null) { replayBmp.Dispose(); replayBmp = null; replayKey = ""; }
             // one layout pass for the whole switch, not one per page shown or hidden
             if (leftPane != null) leftPane.SuspendLayout();
             try { ShowTab2(); FitBars(this); } finally { if (leftPane != null) leftPane.ResumeLayout(true); }
@@ -483,6 +486,9 @@ namespace AdeeboMeter
             doctorPage.Visible = tab == "doctor"; if (tab == "doctor") DoctorShown();
             overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook"; shellPage.Visible = tab == "shell"; labPage.Visible = tab == "lab"; if (tab == "lab") LabPageShown();
             if (tab == "replay") ReplayOpen();
+            // 28 Nov (perf): a hidden page's live spots and their painters (each holding that paint's data) go - its next paint makes them again
+            foreach (var c in liveSpots.Keys.Where(k => !k.Visible).ToList()) liveSpots.Remove(c);
+            foreach (var c in spotPainters.Keys.Where(k => !k.Visible).ToList()) spotPainters.Remove(c);
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
             SyncPointsBtn(); WatchUse(tab);
             string sec = SecOf(tab); if (sec != "") lastIn[sec] = tab;
@@ -504,9 +510,10 @@ namespace AdeeboMeter
             // History, Learn - with the Toolbox and the view pages (Gamer, Streaming, Markets, Sports, Outlook) still their own
             // entries: two ways in. Every page is still here; only where it lives changed.
             new[] { "home", "Home", "overview", "guide" },
-            new[] { "check", "Check", "dest", "shell" },
+            new[] { "check", "Check", "dest" },
             new[] { "pc", "My PC", "health", "doctor", "procs", "conn", "link", "live", "security" },
             new[] { "toolbox", "Toolbox", "toolbox" },
+            new[] { "shell", "Terminal", "shell" },   /* 28 Nov (Adeeb): the Terminal is its own entry, not inside Check */
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "outlook", "Outlook", "outlook" },
             new[] { "stream", "Streaming", "stream" },
@@ -516,7 +523,7 @@ namespace AdeeboMeter
             new[] { "learn", "Learn", "learn", "windows", "lab" } };
         // Simple mode shows only these sections; pages of the others still open when something links to them (a Fix a problem
         // answer that needs a Toolbox tool, say) - only their tab is hidden
-        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "check", "pc", "toolbox", "gamer", "stream", "trade", "sports", "learn" };   // 28 Nov: the groups, the Toolbox and the view pages
+        static readonly HashSet<string> SimpleSecs = new HashSet<string> { "home", "check", "pc", "toolbox", "shell", "gamer", "stream", "trade", "sports", "learn" };   // 28 Nov: the groups, the Toolbox and the view pages
         void ApplyMode()
         {
             if (tabs == null) return;
@@ -618,7 +625,8 @@ namespace AdeeboMeter
                 } if (tab == "changes") { var ne = M.Events.Recent(1); string ck = (ne.Count > 0 ? ne[0].T.Ticks + ne[0].Text : "") + "|" + DateTime.Now.Minute; if (ck != changesKey) { changesKey = ck; changesCanvas.Invalidate(); } } if (tab == "overview") OverviewTick(); NowTick(); }   /* What changed: only when an event arrives (and once a minute for its "x min ago") */
             if (pointsFlashUntil != DateTime.MinValue) { SyncPointsBtn(); if (DateTime.Now > pointsFlashUntil) pointsFlashUntil = DateTime.MinValue; }
             if (LearnPending && !learnTimed && (DateTime.Now - learnAt).TotalSeconds >= 15) { learnTimed = true; learnInfo.Invalidate(); }   // a topic being read: one repaint when the 15 s mark lands, not one a second
-            if ((DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" && procSel != null ? 2 : 10)) RefreshConns(false);   /* What's running needs the table only for the program picked (release check: the busiest idle page) */   // the full connection list only refreshes fast where it is shown
+            bool connsUsed = tab == "travel" || tab == "lab" || SecOf(tab) == "pc";   /* 28 Nov (perf): only these read the list (My PC's tab strip shows its count) - elsewhere the 10 s refresh (tables, DNS cache, a sort on this thread) was for nobody */
+            if (connsUsed && (DateTime.UtcNow - lastConns).TotalSeconds >= (tab == "conn" || tab == "travel" || tab == "procs" && procSel != null ? 2 : 10)) RefreshConns(false);   /* What's running needs the table only for the program picked (release check: the busiest idle page) */   // the full connection list only refreshes fast where it is shown
             if (++footTick % 2 == 0 || selfMem == 0) { SelfStats();   /* v8: "0 MB" until the second tick - read at once */ string fk = selfCpu.ToString("0", CultureInfo.InvariantCulture) + "|" + (selfMem >> 22) + "|" + live.Running + (liveView != null ? liveView.TsharkMB.ToString(CultureInfo.InvariantCulture) : ""); if (fk != footKey) { footKey = fk; footer.Invalidate(); } }
             if ((destRunning || pinRunning) && footTick % 2 == 0) destCanvas.Invalidate();   // bug-hunt ML-145: once a second is enough for a running check (its results repaint as they land)
             if (tbBusy && tab == "toolbox" && tbCanvas != null) { var rr = tbRun0; string tk = (rr == null ? "" : rr.Status + "|" + rr.Count) + "|" + HopsPrint(mtrHops) + "|" + HopsPrint(mtuHops);   /* 21 Nov: no more "every 2 s anyway" (the page flickered) - MTR's and MTU's hop tables are part of the key instead */ if (tk != tbBusyKey) { tbBusyKey = tk; tbCanvas.Invalidate(); } }   // a running tool: repaint when its status or its chart moves, not twice a second regardless

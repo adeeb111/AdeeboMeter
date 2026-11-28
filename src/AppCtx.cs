@@ -304,6 +304,10 @@ namespace AdeeboMeter
             Func<string, string> groupsNav = nav0 => { var l = Cfg.NavClean(nav0).Split(',').ToList(); int at = Math.Min(1, l.Count); foreach (var gId in new[] { "pc", "check" }) if (!l.Contains(gId)) l.Insert(at, gId); return Cfg.NavClean(string.Join(",", l)); };
             if (!first && !Cfg.NavGroups) { Cfg.Nav = groupsNav(Cfg.Nav); Views.MigrateNav(groupsNav); }
             Cfg.NavGroups = true;
+            // 28 Nov (Adeeb: "terminal should be outside, not inside Check"): once, the Terminal joins a saved bar right after the Toolbox
+            Func<string, string> shellNav = nav0 => { var l = Cfg.NavClean(nav0).Split(',').ToList(); if (!l.Contains("shell")) { int ti = l.IndexOf("toolbox"); l.Insert(ti >= 0 ? ti + 1 : l.Count, "shell"); } return Cfg.NavClean(string.Join(",", l)); };
+            if (!first && !Cfg.NavShell) { Cfg.Nav = shellNav(Cfg.Nav); Views.MigrateNav(shellNav); }
+            Cfg.NavShell = true;
             if (!first && keys == 0) first = true;   // only what the installer wrote (autostart): this is a first start, not an upgrade
             // review 1.1.6 P1 #1: a file that says setupdone=0 is a fresh install whose questions are still open - not an upgrade
             bool pendingSetup = !first && !Cfg.SetupDone;
@@ -453,9 +457,19 @@ namespace AdeeboMeter
                 full.FormClosed += delegate
                 {
                     full = null; M.ViewOpen = false; drawnKey = "";
-                    // closing the view frees its memory
-                    GC.Collect(); GC.WaitForPendingFinalizers();
-                    try { Native.SetProcessWorkingSetSize(Native.GetCurrentProcess(), (IntPtr)(-1), (IntPtr)(-1)); } catch { }
+                    // closing the view frees its memory - 28 Nov (perf): after WinForms has disposed it. FormClosed comes first, so a
+                    // collect here still found every page alive and freed nothing; the trim only paged it out
+                    try
+                    {
+                        marshal.BeginInvoke((Action)delegate
+                        {
+                            Draw.ClearMeasured();
+                            System.Runtime.GCSettings.LargeObjectHeapCompactionMode = System.Runtime.GCLargeObjectHeapCompactionMode.CompactOnce;
+                            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+                            try { Native.SetProcessWorkingSetSize(Native.GetCurrentProcess(), (IntPtr)(-1), (IntPtr)(-1)); } catch { }
+                        });
+                    }
+                    catch (InvalidOperationException) { }
                 };
             }
             M.ViewOpen = true; M.Nudge();

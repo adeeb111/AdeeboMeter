@@ -70,8 +70,17 @@ namespace AdeeboMeter
         internal void PickLanguage(string code)
         {
             if (!L.Languages.Any(l => l[0] == code)) return;
+            var back = L.Reverse();   // the old language's words, before it goes
             Cfg.Lang = code; Cfg.Save(); L.Use(Cfg.Lang);
+            Relabel(this, back);
             ApplyMode(); SyncPointsBtn(); SyncViewBtn(); SyncLangBtn(); SyncRestart(); PlaceTop(); Invalidate(true);
+        }
+        // every caption that was a translation goes to the new language now - buttons made while another language was on
+        // (My PC's buttons, Back to corner) kept it until a restart, and going back to the language it started in offered none
+        static void Relabel(Control c, Dictionary<string, string> back)
+        {
+            string en; if (back.Count > 0 && !string.IsNullOrEmpty(c.Text) && !(c is TextBoxBase) && back.TryGetValue(c.Text, out en)) c.Text = L.T(en);
+            foreach (Control k in c.Controls) Relabel(k, back);
         }
 
         // ---------- start again: a new copy waits for this one to let go, then opens this window

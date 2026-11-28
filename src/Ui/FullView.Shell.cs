@@ -73,7 +73,8 @@ namespace AdeeboMeter
         Panel BuildShellPage()
         {
             shellPage = new Panel { Dock = DockStyle.Fill, BackColor = ShBg, Visible = false };
-            var mono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : IsFont("Consolas") ? "Consolas" : FontFamily.GenericMonospace.Name, 10.5f);
+            if (shMono == null) shMono = new Font(IsFont("Cascadia Mono") ? "Cascadia Mono" : IsFont("Consolas") ? "Consolas" : FontFamily.GenericMonospace.Name, 10.5f);   /* 28 Nov (perf): one for the app's life, not one leaked per window */
+            var mono = shMono;
             term = new TermView(mono) { Dock = DockStyle.Fill, Bg = ShBg, Fg = ShFg };
             term.TermKey += ShKey; term.TermChar += ShChar; term.Paste = ShPaste;
             term.CopyScrub = ShScrub;

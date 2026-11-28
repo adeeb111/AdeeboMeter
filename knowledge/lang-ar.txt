@@ -5927,3 +5927,4 @@ Beyond them	ما بعدهم
 The destination	الوجهة
 Their first hop	أول قفزة لديهم
 Your home	منزلك
+Free and open source under the GNU GPL v3: a shared copy keeps its source open. AdeeboMeter™ and its logo are Adeeb Khan's - a changed copy uses its own name.	مجاني ومفتوح المصدر برخصة GNU GPL v3: النسخة المُشارَكة تبقى شيفرتها مفتوحة. AdeeboMeter™ وشعاره ملك لـ Adeeb Khan - والنسخة المعدّلة تحمل اسمها الخاص.

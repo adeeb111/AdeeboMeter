@@ -17,6 +17,7 @@ namespace AdeeboMeter
             new[] { "gamer", "Gamer", "The Gamer Zone and the games you add, watched. Their ping in the corner." },
             new[] { "streamer", "Streamer", "Streaming quality and whose fault a dip was. Speed + status in the corner." },
             new[] { "trader", "Trader", "Your line to your broker and its delay, on the Trading page. Speed + status in the corner." },
+            new[] { "sports", "Sports fan", "The teams you follow: live scores, what's next and the stream quality. The score in the corner." },   /* 28 Nov (Adeeb): Sports is its own view, not inside the others */
             new[] { "engineer", "Engineer", "Tools first: Details on, the PC-to-internet strip, the engineer's card in the corner." },
             new[] { "everything", "Everything", "Every page up front - gaming, streaming and trading too. The corner follows what you're doing." },
             new[] { "play-watch", "Gamer + Streamer", "Your games and your streams. The corner follows what you're doing." },
@@ -37,22 +38,24 @@ namespace AdeeboMeter
                 return new State { Mode = p[0] == "pro" ? "pro" : "simple", Hidden = string.Join(",", p[1].Split('+').Where(z => Cfg.Hideable.Contains(z)).Distinct()), Preset = p[2] == "penny" || p[2] == "gamer" || p[2] == "custom" ? p[2] : "balanced", Widget = WidgetOk(p[3]), Details = p[4] == "1", Call = p[5] == "1", Gw = n[0], Net = n[1], Wifi = n[2], Apps = n[3], GameBg = n[4], GameSrv = Math.Max(1, Math.Min(5, n[5])), Nav = p.Length > 12 && p[12] != "" ? Cfg.NavClean(p[12].Replace("+", ",")) : "" };
             }
         }
-        static string WidgetOk(string w) { return w == "everyday" || w == "gamer" || w == "calls" || w == "engineer" || w == "speed" || w == "speedstatus" || w == "speedapps" ? w : "auto"; }
+        static string WidgetOk(string w) { return w == "everyday" || w == "gamer" || w == "calls" || w == "engineer" || w == "speed" || w == "speedstatus" || w == "speedapps" || w == "sports" ? w : "auto"; }
         // a ready-made view as it starts (the person's changes are kept on top of it)
+        // 28 Nov (Adeeb: "why do I see sports in game and other places"): Sports is hideable now - shown only in its own view and in Everything
         public static State Default(string id)
         {
-            State s; string hideAll = "stream,trade,gamer";
+            State s; string hideAll = "stream,trade,gamer,sports";
             switch (id)
             {
-                case "everyday": s = new State { Hidden = hideAll, Widget = "speedstatus", Nav = "home,check,pc,toolbox,time,learn" }; Pace(s, "penny"); break;
-                case "gamer": s = new State { Hidden = "stream,trade", Widget = "gamer", Nav = "home,check,pc,gamer,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "streamer": s = new State { Hidden = "trade,gamer", Widget = "speedstatus", Nav = "home,check,pc,stream,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "trader": s = new State { Hidden = "stream,gamer", Widget = "speedstatus", Nav = "home,check,pc,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "engineer": s = new State { Mode = "pro", Hidden = "", Widget = "engineer", Details = true, Nav = "home,toolbox,check,pc,time,learn" }; Pace(s, "balanced"); break;
-                case "everything": s = new State { Mode = "pro", Hidden = "", Widget = "auto", Nav = "home,check,pc,gamer,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
-                case "play-watch": s = new State { Hidden = "trade", Widget = "auto", Nav = "home,check,pc,gamer,stream,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "play-trade": s = new State { Hidden = "stream", Widget = "auto", Nav = "home,check,pc,gamer,trade,toolbox,time,learn" }; Pace(s, "gamer"); break;
-                case "watch-trade": s = new State { Hidden = "gamer", Widget = "speedstatus", Nav = "home,check,pc,stream,trade,toolbox,time,learn" }; Pace(s, "balanced"); break;
+                case "everyday": s = new State { Hidden = hideAll, Widget = "speedstatus", Nav = "home,check,pc,toolbox,shell,time,learn" }; Pace(s, "penny"); break;
+                case "gamer": s = new State { Hidden = "stream,trade,sports", Widget = "gamer", Nav = "home,check,pc,gamer,toolbox,shell,time,learn" }; Pace(s, "gamer"); break;
+                case "streamer": s = new State { Hidden = "trade,gamer,sports", Widget = "speedstatus", Nav = "home,check,pc,stream,toolbox,shell,time,learn" }; Pace(s, "balanced"); break;
+                case "trader": s = new State { Hidden = "stream,gamer,sports", Widget = "speedstatus", Nav = "home,check,pc,trade,toolbox,shell,time,learn" }; Pace(s, "balanced"); break;
+                case "sports": s = new State { Hidden = "stream,trade,gamer", Widget = "sports", Nav = "home,check,pc,sports,toolbox,shell,time,learn" }; Pace(s, "balanced"); break;
+                case "engineer": s = new State { Mode = "pro", Hidden = "", Widget = "engineer", Details = true, Nav = "home,toolbox,shell,check,pc,time,learn" }; Pace(s, "balanced"); break;
+                case "everything": s = new State { Mode = "pro", Hidden = "", Widget = "auto", Nav = "home,check,pc,gamer,stream,trade,sports,toolbox,shell,time,learn" }; Pace(s, "balanced"); break;
+                case "play-watch": s = new State { Hidden = "trade,sports", Widget = "auto", Nav = "home,check,pc,gamer,stream,toolbox,shell,time,learn" }; Pace(s, "gamer"); break;
+                case "play-trade": s = new State { Hidden = "stream,sports", Widget = "auto", Nav = "home,check,pc,gamer,trade,toolbox,shell,time,learn" }; Pace(s, "gamer"); break;
+                case "watch-trade": s = new State { Hidden = "gamer,sports", Widget = "speedstatus", Nav = "home,check,pc,stream,trade,toolbox,shell,time,learn" }; Pace(s, "balanced"); break;
                 default: return null;
             }
             return s;
