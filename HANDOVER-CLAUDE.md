@@ -24,7 +24,8 @@ The goal of 1.1.7 (Adeeb, 28 Nov): **simplify**. Everything in PLAN-1.1.7 sectio
  5cc7fcfe  Check my PC report; 4 quick buttons on Home; "Needs attention" removed; checks share one evidence layer
  6862425d  ISP report: short message in the app's language + full English detail for the ISP's network team
  034045bf  plain names, shorter text, fewer doors on Home (below)
- ccf3dab7  website: the same plain names; Mono self-test helper in session-tools/; CLAUDE.md for Claude Code
+ ccf3dab7  website: the same plain names; Mono self-test helper in session-tools/
+ baa691be  CLAUDE.md for Claude Code
 ```
 
 ### The "simplify" pass (Adeeb: "people call this app AI slop")
@@ -66,9 +67,23 @@ Home now:  Verdict
 - Release-time counts: tools 232, Toolbox sections, Learn topics, self-test count in README/CHANGELOG/site.
 - Codex's open PRs #17, #26, #27, #28, #30 - untouched.
 
-### Needs a real Windows run (can't be seen from the container)
-Everything from 28 Nov that paints: Home quick buttons, Check my PC report, Doctor strip, Flow, PC tools (USB tree, EDID),
-Your market picker; the browser checkup's endpoints (speed.cloudflare.com, dns.google, ipify - blocked here).
+### Screens to check (28 Nov) - need a real Windows run
+Built from code only; nobody has looked at them on Windows yet. Open each with `AdeeboMeter.exe --view <name>`, check
+100 % and 150 % scaling, light and dark, English and one long language (French) plus Arabic (right to left):
+```
+--view overview            Home: 4 quick buttons, What's going on? tiles, "Also here" (4 tiles), no Full checkup card
+--view guide:full          Check my connection = the Full checkup report
+--view toolbox:mypc        Check my PC report (verdict first, 7 sections, each row opens its tool)
+--view toolbox:ispreport   Report for my ISP: short message in the app language + "For their network team"
+--view doctor              Network Doctor: 14-day strip, suspect, snapshot compare
+--view shell               Terminal, then click the Flow tab: blocks <-> script
+--view lab                 Network Lab: Failure Lab, Challenges, Multicast, Cellular
+--view toolbox:usbtree     also toolbox:edid, toolbox:disklat, toolbox:dlls, toolbox:handles
+--view trade               Markets with Your market (picker, Custom market)
+--view settings:q=Updates  Settings: Updates row (Check now opens the website)
+--view points              the renamed Points page
+```
+Also: the browser checkup's endpoints (speed.cloudflare.com, dns.google, ipify) can only be checked from a real browser.
 
 ## Adeeb's standing rules (follow exactly)
 - **Design first, wait for an explicit go.** Show mockups/ideas and wait; include a diagram when explaining a build.
