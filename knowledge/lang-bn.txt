@@ -5743,3 +5743,27 @@ Doctor	ডাক্তার
 History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	ইতিহাস বন্ধ, তাই পরিবর্তনের সাথে মেলানোর কিছু নেই। সেটিংস › সাধারণ-এ চালু করুন।
 Nothing changed just before things got worse - no suspect.	খারাপ হওয়ার ঠিক আগে কিছু বদলায়নি - কোনো সন্দেহভাজন নেই।
 Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	সমস্যা হয়েছে, কিন্তু ঠিক আগে কিছু বদলায়নি - এটি লাইন বা প্রোভাইডারের মনে হচ্ছে, এই পিসির নয়।
+# 28 Nov 2026: Flow
+(pick this block and add steps - they go inside)	(এই ব্লকটি বেছে ধাপ যোগ করুন - সেগুলো ভেতরে যাবে)
+Add a tool	একটি টুল যোগ করুন
+Add:	যোগ করুন:
+Click a block to pick it, double-click or Enter to change it. Ctrl+Up/Down moves it, Delete removes it. A new block goes after the picked one - or inside it, for Repeat, For each and If.	বেছে নিতে একটি ব্লকে ক্লিক করুন, বদলাতে ডাবল-ক্লিক বা Enter। Ctrl+উপর/নিচ সরায়, Delete মুছে ফেলে। নতুন ব্লক বেছে নেওয়াটির পরে যায় - অথবা পুনরাবৃত্তি, প্রতিটির জন্য আর যদি-তে ভেতরে।
+Empty - add a block from the row above, or Open a ready-made check.	খালি - ওপরের সারি থেকে একটি ব্লক যোগ করুন, অথবা একটি তৈরি চেক খুলুন।
+Flow - build with blocks	ফ্লো - ব্লক দিয়ে বানান
+New	নতুন
+Open...	খুলুন...
+Run ▶	চালান ▶
+Terminal	টার্মিনাল
+The same flow as an AdeeboShell script - edit either side	একই ফ্লো AdeeboShell স্ক্রিপ্ট হিসেবে - যেকোনো দিক বদলান
+if it didn't work:	কাজ না করলে:
+works?	কাজ করে?
+{0} seconds	{0} সেকেন্ড
+{0} times	{0} বার
+Tool	টুল
+Say	বলুন
+Wait	অপেক্ষা
+Repeat	পুনরাবৃত্তি
+For each	প্রতিটির জন্য
+If it works	যদি কাজ করে
+Set	সেট
+Note	নোট

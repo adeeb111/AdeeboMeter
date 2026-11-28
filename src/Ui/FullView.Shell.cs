@@ -80,6 +80,7 @@ namespace AdeeboMeter
             term.CopyAll = delegate { string t = term.SelectedText(); bool sel = t != ""; if (!sel) t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to copy yet"); return; } try { Clipboard.SetText(ShScrub(t).Replace("\n", "\r\n"));   /* round 6: Copy hides secrets too, like history and Save-log */ term.Flash(sel ? "Copied the selection" : "Copied the whole session"); } catch (Exception e) { if (!(e is System.Runtime.InteropServices.ExternalException)) throw; term.Flash("the clipboard is busy - try again"); } };
             term.SaveLog = delegate { string t = term.AllText(); if (t.Trim() == "") { term.Flash("nothing to save yet"); return; } try { string f = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AdeeboShell-session-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".txt"); for (int k = 2; File.Exists(f) && k < 100; k++) f = Path.Combine(Path.GetDirectoryName(f), Path.GetFileNameWithoutExtension(f).Split(new[] { " (" }, StringSplitOptions.None)[0] + " (" + k + ").txt");   /* review UI-5: never over an earlier save */ File.WriteAllText(f, ShScrub(t).Replace("\n", "\r\n"));   /* L-1: output lines too (env, echo $TOKEN) */ term.Flash("Saved: Documents\\" + Path.GetFileName(f)); } catch (Exception e) { if (!(e is IOException || e is UnauthorizedAccessException)) throw; term.Flash("couldn't save: " + e.Message); } };
             shellPage.Controls.Add(term);
+            ShellTabs(shellPage, term);   // 28 Nov: Terminal | Flow
             shellPage.VisibleChanged += delegate { if (shellPage.Visible) { if (shTools == null) { shTools = Tools2(); ThreadPool.QueueUserWorkItem(delegate { ShStarterScripts(); }); } if (term.AllText().Trim() == "") ShWelcome(); ShPrompt(); BeginInvoke((Action)delegate { term.Focus(); }); } };
             return shellPage;
         }
@@ -2640,7 +2641,7 @@ namespace AdeeboMeter
         }
         // ready-made scripts in /data/scripts, written once (yours to change - deleted ones come back on the next start)
         // name, what it does (the welcome screen lists these), the script
-        static readonly string[][] ShReadyScripts =
+        internal static readonly string[][] ShReadyScripts =
         {
             new[] { "network-check.sh", "your connection, step by step: join, router, internet, names, IPv6, Wi-Fi, the path (about 2 min)",
                 "# network-check.sh - your connection, step by step (about 2 minutes)\n# run it:  ./network-check.sh        keep it:  ./network-check.sh > network.txt\n\n" +

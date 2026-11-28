@@ -5736,3 +5736,27 @@ Doctor	医生
 History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	历史已关闭，无法与变化对照。请在设置 › 常规中打开。
 Nothing changed just before things got worse - no suspect.	情况变差之前没有任何变化——没有嫌疑。
 Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	出了问题，但之前没有任何变化——更像是线路或运营商的问题，而不是这台电脑。
+# 28 Nov 2026: Flow
+(pick this block and add steps - they go inside)	（选中此块再添加步骤——会放在里面）
+Add a tool	添加工具
+Add:	添加：
+Click a block to pick it, double-click or Enter to change it. Ctrl+Up/Down moves it, Delete removes it. A new block goes after the picked one - or inside it, for Repeat, For each and If.	点击一个块即可选中，双击或按 Enter 修改。Ctrl+上/下移动，Delete 删除。新块会放在选中块之后——如果选中的是“重复”“逐个”“如果”，就放在里面。
+Empty - add a block from the row above, or Open a ready-made check.	空的——从上面一行添加块，或打开一个现成的检查。
+Flow - build with blocks	流程——用积木搭建
+New	新建
+Open...	打开...
+Run ▶	运行 ▶
+Terminal	终端
+The same flow as an AdeeboShell script - edit either side	同一流程的 AdeeboShell 脚本——两边都可以编辑
+if it didn't work:	如果没成功：
+works?	成功？
+{0} seconds	{0} 秒
+{0} times	{0} 次
+Tool	工具
+Say	说
+Wait	等待
+Repeat	重复
+For each	逐个
+If it works	如果成功
+Set	设置
+Note	备注

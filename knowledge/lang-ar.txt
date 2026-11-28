@@ -5743,3 +5743,27 @@ Doctor	الطبيب
 History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	السجل متوقف، فلا شيء نقارن به التغييرات. شغّله من الإعدادات › عام.
 Nothing changed just before things got worse - no suspect.	لم يتغيّر شيء قبل أن يسوء الوضع مباشرة - لا مشتبه به.
 Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	ساء الوضع، لكن لم يسبقه تغيير مباشرة - يبدو أنها الخط أو المزوّد، لا هذا الجهاز.
+# 28 Nov 2026: Flow
+(pick this block and add steps - they go inside)	(اختر هذه الكتلة وأضف خطوات - ستدخل داخلها)
+Add a tool	أضف أداة
+Add:	أضف:
+Click a block to pick it, double-click or Enter to change it. Ctrl+Up/Down moves it, Delete removes it. A new block goes after the picked one - or inside it, for Repeat, For each and If.	انقر كتلة لتختارها، وانقر مرتين أو Enter لتغييرها. Ctrl+أعلى/أسفل ينقلها، وDelete يحذفها. الكتلة الجديدة تأتي بعد المختارة - أو داخلها في كرّر ولكل وإذا.
+Empty - add a block from the row above, or Open a ready-made check.	فارغ - أضف كتلة من الصف أعلاه، أو افتح فحصًا جاهزًا.
+Flow - build with blocks	المسار - ابنِ بالكتل
+New	جديد
+Open...	فتح...
+Run ▶	تشغيل ▶
+Terminal	الطرفية
+The same flow as an AdeeboShell script - edit either side	المسار نفسه كسكربت AdeeboShell - عدّل أي جانب
+if it didn't work:	إذا لم ينجح:
+works?	ينجح؟
+{0} seconds	{0} ثوانٍ
+{0} times	{0} مرات
+Tool	أداة
+Say	قل
+Wait	انتظر
+Repeat	كرّر
+For each	لكل
+If it works	إذا نجح
+Set	عيّن
+Note	ملاحظة

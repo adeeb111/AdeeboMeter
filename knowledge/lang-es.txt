@@ -5743,3 +5743,27 @@ Doctor	Doctor
 History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	El Historial está desactivado, así que no hay con qué comparar los cambios. Actívalo en Ajustes › General.
 Nothing changed just before things got worse - no suspect.	Nada cambió justo antes de que empeorara: no hay sospechoso.
 Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	Algo falló, pero no hubo cambios justo antes: parece la línea o el proveedor, no este PC.
+# 28 Nov 2026: Flow
+(pick this block and add steps - they go inside)	(elige este bloque y añade pasos: van dentro)
+Add a tool	Añadir una herramienta
+Add:	Añadir:
+Click a block to pick it, double-click or Enter to change it. Ctrl+Up/Down moves it, Delete removes it. A new block goes after the picked one - or inside it, for Repeat, For each and If.	Haz clic en un bloque para elegirlo; doble clic o Intro para cambiarlo. Ctrl+Arriba/Abajo lo mueve, Supr lo quita. Un bloque nuevo va tras el elegido, o dentro de él en Repetir, Para cada y Si.
+Empty - add a block from the row above, or Open a ready-made check.	Vacío: añade un bloque desde la fila de arriba o abre una comprobación lista.
+Flow - build with blocks	Flujo: construir con bloques
+New	Nuevo
+Open...	Abrir...
+Run ▶	Ejecutar ▶
+Terminal	Terminal
+The same flow as an AdeeboShell script - edit either side	El mismo flujo como script de AdeeboShell: edita cualquiera de los dos lados
+if it didn't work:	si no funcionó:
+works?	¿funciona?
+{0} seconds	{0} segundos
+{0} times	{0} veces
+Tool	Herramienta
+Say	Decir
+Wait	Esperar
+Repeat	Repetir
+For each	Para cada
+If it works	Si funciona
+Set	Fijar
+Note	Nota

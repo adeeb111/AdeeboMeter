@@ -292,6 +292,14 @@ namespace AdeeboMeter
                 var q = MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"name\":\"x\",\"price\":6812.4,\"changePercentage\":0.42,\"timestamp\":1763740800}]", sym);
                 if (q == null || q.Price != 6812.4 || q.Pct != 0.42 || q.When.Year != 2025) throw new InvalidOperationException("FMP quote");
                 if (MarketData.ParseFmp("[{\"symbol\":\"OTHER\",\"price\":1}]", sym) != null || MarketData.ParseFmp("{\"Error Message\":\"Invalid API KEY\"}", sym) != null || MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"price\":-5}]", sym) != null) throw new InvalidOperationException("FMP bad answers");
+                // Flow (28 Nov): every ready-made script survives script -> blocks -> script -> blocks unchanged
+                foreach (var rs in FullView.ShReadyScripts)
+                {
+                    var b1 = FullView.FlowParse(rs[2]); string s1 = FullView.FlowScript(b1); string s2 = FullView.FlowScript(FullView.FlowParse(s1));
+                    if (s1 != s2 || b1.Count == 0) throw new InvalidOperationException("flow round trip: " + rs[0]);
+                }
+                var fl = FullView.FlowParse("# check\nSITES=\"a b\"\nfor s in $SITES; do\n  if ping $s 3; then\n    echo \"ok\"\n  else\n    sleep 2\n  fi\ndone\nfor i in $(seq 1 4); do\n  dig x\ndone");
+                if (fl.Count != 4 || fl[0].Kind != "note" || fl[1].Kind != "set" || fl[2].Kind != "each" || fl[2].Kids[0].Kind != "if" || fl[2].Kids[0].Else[0].Kind != "wait" || fl[3].Kind != "repeat" || fl[3].Text != "4") throw new InvalidOperationException("flow parse: blocks");
                 // Network Doctor (28 Nov): a snapshot diff names what was added, removed and changed, in plain words
                 var dA = new List<string> { "App | Zoom | 5.1", "Firewall | Public | on", "Service | Spooler | automatic" }; var dB = new List<string> { "App | Zoom | 5.2", "Firewall | Public | off", "App | Steam | 2.0" };
                 var dd = Doctor.Diff(dA, dB);
