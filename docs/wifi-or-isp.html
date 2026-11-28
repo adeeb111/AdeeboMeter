@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar">
+<html lang="en" data-language-route="/wifi-or-isp.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -50,12 +50,14 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
+<script type="application/ld+json" id="wifi-tutorial-schema">{"@context":"https://schema.org","@type":"CreativeWork","name":"Is It Your Wi-Fi or Your Internet Provider? Check on Windows","genre":"Video tutorial","url":"https://www.youtube.com/watch?v=soEsOAInV-U","inLanguage":"en","datePublished":"2026-11-25","publisher":{"@type":"Organization","name":"AdeeboMeter"}}</script>
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/wifi-or-isp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/wifi-or-isp.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/wifi-or-isp.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/wifi-or-isp.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/wifi-or-isp.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/wifi-or-isp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/wifi-or-isp.html">
 </head>
 <body>
@@ -68,6 +70,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <ol class="path" aria-label="Where the trouble is in this example"><li class="ok">PC<small>fine</small></li><li class="warn">Wi-Fi<small>stalls</small></li><li class="ok">Router<small>answers</small></li><li>Provider</li><li>Far end</li></ol>
 <figcaption>Wi-Fi stalls, the cable doesn't: the trouble is between the laptop and the router, not past it.</figcaption>
 </figure>
+<!--wifi-video:start--><section class="example" id="wifi-video-tutorial" aria-labelledby="wifi-video-heading"><h2 id="wifi-video-heading">Watch the Wi-Fi and Ethernet comparison</h2><p>Compare the round trip to your router with the round trip to an internet server. A faster router response on Ethernet does not prove that your provider is at fault.</p><p>English audio · 1:21</p><p><a href="https://www.youtube.com/watch?v=soEsOAInV-U">Watch on YouTube</a></p></section><!--wifi-video:end-->
 <h2 id="checks">Run the checks</h2>
 <ol><li>Write down the time and make the problem happen again with the same site, call or download.</li><li>Try the same thing on a second device on the same Wi-Fi. On a phone, check it's on Wi-Fi, not mobile data.</li><li>Plug the PC into the router with a cable, turn its Wi-Fi off, and repeat while the slowdown is happening.</li></ol>
 <h2 id="readings">Reading it</h2>
@@ -87,6 +90,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <div class="sc-copy"><h2 id="sc-t">It already knows which stop slipped</h2><p>The everyday widget shows your PC, your router and the internet side by side, all day. When Wi-Fi is the weak link it says so - before you reach for a cable.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">Download for Windows - free</a><p class="sc-note">Windows 10 and 11 · no admin rights · nothing about you leaves your PC</p></div>
 <div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""><img src="/img/widgets/light-everyday-ok.png" width="264" height="222" alt=""></div>
 </section>
+<!--english-scenarios:start--><section class="example" id="connected-no-internet" aria-labelledby="connected-no-internet-heading"><h2 id="connected-no-internet-heading">Wi-Fi connected, but nothing loads?</h2><p>Check three stops: your router, a destination beyond it, then DNS name lookups. In AdeeboMeter, open Home → Today → I have no internet.</p><p>English audio · about 1 minute. In this demo the connection was up and the PC had high CPU usage; your results may differ.</p><p><a href="https://www.youtube.com/watch?v=bp-w00rHs60">Watch: Wi-Fi Connected but No Internet? 3 Checks on Windows</a> · <a href="/learn/dns.html">Understand DNS</a></p></section><nav aria-labelledby="scenario-guides-heading"><h2 id="scenario-guides-heading">Try a real scenario</h2><p><a href="/blog/wifi-disconnects-ethernet-works.html">Wi-Fi disconnects. Ethernet keeps working.</a></p><p><a href="/blog/internet-slow-every-evening.html">Internet slow every evening? Keep the comparison fair.</a></p></nav><!--english-scenarios:end-->
 </main>
 </body>
 </html>

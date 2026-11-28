@@ -107,3 +107,16 @@ figcaption{margin-top:10px;font-size:15px;color:var(--sub)}
 .sc-shots img:first-child{grid-row:span 2}
 @media (max-width:760px){.showcase{grid-template-columns:1fr}.sc-shots{max-width:440px}}
 main:not(.troubleshooting) .showcase{grid-template-columns:1fr}main:not(.troubleshooting) .sc-shots{max-width:560px}
+
+/* New guides use the same flat cards and gauge colours. */
+.command-map{padding:24px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
+.command-map h2{margin:0 0 18px;font-size:20px}
+.command-row{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:15px 0;border-bottom:1px solid var(--line);align-items:center}
+.command-row code{display:block;padding:12px;border-inline-start:4px solid var(--blue);overflow-wrap:anywhere}
+.command-status code{border-color:var(--ok)}.command-help code{border-color:var(--warn)}
+.command-row span{color:var(--sub)}
+@media(max-width:480px){.command-row{grid-template-columns:1fr;gap:8px}.path-fig{padding:20px 12px}.path li,.path small{overflow-wrap:anywhere}}
+html[dir="rtl"] main>ol:not(.posts)>li{padding:0 46px 0 0}
+html[dir="rtl"] main>ol:not(.posts)>li::before{left:auto;right:0}
+
+.blog-command{display:grid;gap:10px}.blog-command code{border-inline-start:3px solid var(--blue);padding:10px 14px}.blog-command code:first-child{border-color:var(--ok)}.blog-command code:last-child{border-color:var(--warn)}

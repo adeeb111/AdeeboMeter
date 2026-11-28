@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/hall-of-fame.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名人堂 — AdeeboMeter</title>
+<meta name="description" content="达到 500 Adeebo Points 并获得 Adeebo Award 的用户，以及积分获取、等级、学习路径和加入方式。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://adeebometer.com/zh/hall-of-fame.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="AdeeboMeter 名人堂">
+<meta property="og:description" content="达到 500 Adeebo Points 并获得 Adeebo Award 的用户，以及积分获取、等级、学习路径和加入方式。">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<!-- No fonts, trackers or pictures from anywhere else. A winner shows as a name, and a link to their profile only if they gave one. -->
+<script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="/base.css">
+<style>
+:root{--blue-s:color-mix(in srgb,var(--blue) 14%,var(--card));--green-s:color-mix(in srgb,var(--ok) 12%,var(--card));--gold:var(--warn);--gold-s:color-mix(in srgb,var(--warn) 16%,var(--card));--r-md:12px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--page);scroll-behavior:smooth}
+body{background:var(--page);color:var(--ink);font-size:17px;-webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden}
+a{color:var(--blue)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:20;background:var(--nav);-webkit-backdrop-filter:saturate(1.8) blur(14px);backdrop-filter:saturate(1.8) blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;font-size:17px;color:var(--ink);white-space:nowrap}
+.brand svg{width:26px;height:26px}
+.links{display:flex;align-items:center;gap:18px;font-size:14px}
+.links a{text-decoration:none;color:var(--sub)}.links a:hover{opacity:.6}
+.pill{display:inline-flex;align-items:center;min-height:48px;background:var(--face);color:#fff!important;text-decoration:none;font-weight:600;border-radius:12px;padding:0 22px;font-size:16px;white-space:nowrap;transition:transform .14s var(--ease-out),background-color .15s ease}
+@media (hover:hover){.pill:hover{background:var(--blue-d)}}.pill:active{transform:scale(.97)}
+.pill.ghost{background:var(--card);color:var(--ink)!important;border:1px solid var(--line)}@media (hover:hover){.pill.ghost:hover{background:var(--soft)}}
+@media (max-width:640px){.links a.hide-s{display:none}}
+.hero{padding:56px 0 28px;text-align:center}
+.star{width:64px;height:64px;display:block;margin:0 auto 14px}
+h1{font-size:clamp(40px,6vw,64px);letter-spacing:-.01em;line-height:1.02}
+.lead{color:var(--sub);font-size:clamp(16px,2.2vw,19px);max-width:640px;margin:14px auto 0}
+.cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+section{padding:30px 0}
+h2{font-size:clamp(24px,2.6vw,30px);line-height:1.15;margin-bottom:8px}
+h3{font-size:18px;margin:18px 0 6px}
+.sub{color:var(--sub);margin-bottom:16px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.winner{background:var(--face);color:#fff;border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;min-height:150px}
+.winner .k{font-size:14px;font-weight:600;color:#FCD34D}
+.winner .n{font-size:22px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere}
+.winner .p{color:rgba(255,255,255,.85);font-size:13.5px;white-space:nowrap}
+.winner .c{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12.5px;color:rgba(255,255,255,.7);margin-top:10px}
+.winner a{color:#FCD34D;font-size:13.5px;position:relative;z-index:1;overflow-wrap:anywhere;word-break:break-word}
+.empty{border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--sub)}
+.count{color:var(--muted);font-size:14px;margin-bottom:12px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:14px;font-weight:600;color:var(--sub);background:var(--soft)}
+tr:last-child td{border-bottom:none}
+td.pts{font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ranks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rank{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-size:14px}
+.rank b{margin-left:6px;color:var(--muted);font-weight:600}
+.rank.award{background:var(--gold-s);border-color:var(--gold);font-weight:700}
+.arrow{color:var(--muted)}
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.box h3{margin-top:0}
+.box ol,.box ul{padding-left:20px;color:var(--sub);font-size:14.5px}
+.box li{margin:3px 0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 44px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:30px;height:30px;border-radius:50%;background:var(--blue-s);color:var(--blue);font-weight:700;display:grid;place-items:center}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--sub);font-size:14.5px}
+code{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:.92em;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 5px}
+details{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--sub);margin-top:8px}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:13.5px;margin-top:20px}
+footer a{color:inherit}
+</style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/hall-of-fame.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/hall-of-fame.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/hall-of-fame.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/hall-of-fame.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/hall-of-fame.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/hall-of-fame.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<section class="hero"><div class="wrap">
+  <svg class="star" viewbox="0 0 100 100" aria-hidden="true"><path d="M50 4 L61.8 35.6 L95.6 37.2 L69.1 58.2 L78.2 90.8 L50 72.2 L21.8 90.8 L30.9 58.2 L4.4 37.2 L38.2 35.6 Z" fill="#FCD34D"></path></svg>
+  <h1>名人堂</h1>
+  <p class="lead">这里的每个人都达到了 <b>500 Adeebo Points</b>。他们尝试了几乎所有工具，阅读学习主题，回答检查问题并应对实验室挑战。这就是 <b>Adeebo Award</b>.</p>
+  <div class="cta"><a class="pill" href="#join">加入名人堂</a><a class="pill ghost" href="#how">Adeebo Points 的工作原理</a></div>
+</div></section>
+
+<section id="winners"><div class="wrap">
+  <h2>获奖者</h2>
+  <p class="count" id="count">加载中…</p>
+  <div class="grid" id="grid"></div>
+  <noscript><p class="empty">请开启 JavaScript 查看列表，也可阅读 <a href="/hall-of-fame.json">hall-of-fame.json</a>.</p></noscript>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>Adeebo Points 的工作原理</h2>
+  <p class="sub">Adeebo Points 是学习 AdeeboMeter 以及网络如何工作的小奖励。他们从一开始就开始了；你可以在“设置”&gt;“Adeebo Points”中将其关闭（保留你的总数）。每件商品均需付费 <b>一次</b>。积分被保留 <b>仅在你的电脑上</b> - 没有任何东西发送到任何地方，没有条纹，也没有提醒。按 <b>Adeebo</b> AdeeboMeter 顶部的按钮可查看你的排名、每条路径的进度以及带有 <b>前往</b> 这会带你直接到达那里。</p>
+
+  <h3>什么可以赚取积分</h3>
+  <table>
+    <thead><tr><th>这样做</th><th>积分</th><th>在哪里</th></tr></thead>
+    <tbody>
+      <tr><td>打开一个工具的 <b>示例</b>，然后实际运行该工具并得到结果</td><td class="pts">+2</td><td>工具箱 - 232 工具</td></tr>
+      <tr><td>…更长的测试（MTR、速度测试、iperf3、缓冲膨胀、ISP 报告、游戏比较、每跳 MTU）</td><td class="pts">+4</td><td>工具箱</td></tr>
+      <tr><td>运行标记为的工具 <b>回放</b> 再次，第一次运行后 10 分钟或更长时间 - 进行比较</td><td class="pts">+2</td><td>工具箱（ISP报告、游戏比较、之前/之后、证书比较、MTR）</td></tr>
+      <tr><td>读一读 <b>学习</b> 话题到最后</td><td class="pts">+2</td><td>学习 - 98 主题</td></tr>
+      <tr><td>回答一下主题吧 <b>测测自己</b> 第一次就问对了</td><td class="pts">+2</td><td>每个学习主题结束</td></tr>
+      <tr><td>认识一个 <b>实验室挑战</b></td><td class="pts">+4</td><td>学习 › 实验室 - 11 挑战</td></tr>
+      <tr><td>子网划分实践： <b>5 连续</b>， 然后 <b>10 连续</b></td><td class="pts">+3, +5</td><td>学习 › 实验室 › 子网划分实践</td></tr>
+      <tr><td><b>解释</b> 你自己的连接之一的分组旅程</td><td class="pts">+3</td><td>网络故事&gt;小包之旅（需要Wireshark）</td></tr>
+      <tr><td>第一次使用某个页面（点击或按键，而不仅仅是打开它）</td><td class="pts">+2</td><td>13页</td></tr>
+      <tr><td>完成一个 <b>学习路径</b></td><td class="pts">+10</td><td>阿迪博 › 学习路径</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin-top:10px">工具、学习主题、自测、实验和游戏总计约 1,000 分，因此 500 分意味着完成约一半内容。会发送测试流量或扫描网络的工具，包括流量发送器、ping 扫描和设备发现，不奖励积分，避免为了得分运行测试。</p>
+
+  <h3>行列</h3>
+  <div class="ranks">
+    <span class="rank">新手<b>0</b></span><span class="arrow">›</span>
+    <span class="rank">学习者<b>30</b></span><span class="arrow">›</span>
+    <span class="rank">排障能手<b>100</b></span><span class="arrow">›</span>
+    <span class="rank">专家<b>200</b></span><span class="arrow">›</span>
+    <span class="rank">网络侦探<b>300</b></span><span class="arrow">›</span>
+    <span class="rank">数据包达人<b>400</b></span><span class="arrow">›</span>
+    <span class="rank award">★ Adeebo Award<b>500</b></span>
+  </div>
+
+  <h3>学习路径</h3>
+  <p class="sub">按合理顺序列出的简短列表。在 Adeebo 页面上，每个路径都有一个进度条，单击它会将你带到尚未完成的下一步。</p>
+  <div class="cards3">
+    <div class="box"><h3>家庭用户 · +10</h3><ol>
+      <li>学习：用简单的话来说就是层次</li><li>了解：打开网站时会发生什么</li><li>学习：DNS</li><li>学习：DHCP</li><li>学习：Wi-Fi</li><li>了解：速度不是一个数字</li><li>了解：为什么你的电脑在你无所事事时会说话</li><li>使用 有什么问题吗？</li><li>工具：速度测试</li><li>工具：这个Wi-Fi可以用吗？</li><li>工具：为什么我的 USB 设备无法工作？</li><li>工具：Windows 更新破坏了什么？</li><li>实验室挑战：Wi-Fi 通话时间</li></ol></div>
+    <div class="box"><h3>玩家 · +10</h3><ol>
+      <li>学习：UDP</li><li>了解：速度不是一个数字</li><li>了解：流媒体与通话</li><li>使用玩家区（添加游戏）</li><li>工具：持续 ping</li><li>工具：为什么我的游戏滞后？</li><li>工具：负载下的延迟（缓冲区膨胀）</li><li>工具：Wi-Fi vs 电缆（一个游戏）</li><li>实验室挑战：缓冲膨胀</li><li>实验室挑战：呼叫的抖动缓冲区</li><li>实验室挑战：游戏延迟预算</li></ol></div>
+    <div class="box"><h3>网络工程师·+10</h3><ol>
+      <li>学习：TCP</li><li>学习：MTU</li><li>学习：NAT</li><li>学习：IPv6</li><li>学习：BGP</li><li>工具：港铁</li><li>工具：MTU 每跳</li><li>工具：子网计算器</li><li>工具：VLSM规划器</li><li>实验室挑战：TCP 拥塞控制</li><li>实验室挑战：MTU 和黑洞</li><li>实验室挑战：哪条路线获胜</li><li>子网划分：连续答对 10 题</li><li>解读数据包旅程</li></ol></div>
+  </div>
+
+  <h3>实验室的挑战</h3>
+  <p class="sub">Learn › 实验室中的每个实验室都以一项挑战结束。它是根据实验室自己的设置进行检查的，因此你在完成后就会看到 ✓。</p>
+  <table>
+    <thead><tr><th>实验室</th><th>挑战</th></tr></thead>
+    <tbody>
+      <tr><td>TCP 拥塞控制</td><td>制造一次超时（将点击效果设为严重丢包，再点击图表），观察慢启动重新开始。</td></tr>
+      <tr><td>丢包 → TCP 的速度上限</td><td>将往返时间设为至少 150 ms，再找出仍能让单次下载达到 25 Mbps 的丢包率。</td></tr>
+      <tr><td>缓冲膨胀</td><td>让备份持续占用至少 100% 的上传带宽，同时将 ping 降到 40 ms 以下。</td></tr>
+      <tr><td>通话的抖动缓冲区</td><td>在抖动至少 30 ms 时，用尽可能小的缓冲区让通话评分达到 4.0。</td></tr>
+      <tr><td>Wi-Fi 空口时间</td><td>保持远处的旧设备处于开启状态，并通过通话时间公平来拯救附近的笔记本电脑。</td></tr>
+      <tr><td>域名是怎么找到的</td><td>实际追踪一次域名解析，查看每台应答服务器。</td></tr>
+      <tr><td>NAT 与入站连接失败的原因</td><td>检查运营商是否还套了一层 NAT（CGNAT）。</td></tr>
+      <tr><td>MTU 与黑洞</td><td>制造一个黑洞，再在不关闭隧道的情况下修好它。</td></tr>
+      <tr><td>哪条路由会胜出</td><td>在你自己的路由表中查询三个不同的目的地。</td></tr>
+      <tr><td>游戏延迟预算</td><td>让 ping 保持在至少 30 ms，同时将总延迟预算降到 60 ms 以下。</td></tr>
+      <tr><td>QoS 队列</td><td>找到一个上传速率，让先到先服务也能将通话等待时间控制在 10 ms 以下。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>学习，然后检查自己</h3>
+  <div class="cards3">
+    <div class="box"><h3>学习一个主题</h3><p class="sub" style="margin:0">打开 <b>学习</b> 并选择一个主题。每一个都是两行和一张图片。滚动到末尾并停留至少 15 秒：+2。很多话题也有 <b>在我的电脑上观看直播</b>，它在你自己的 PC 上记录该协议的 10 秒（需要 Wireshark）。</p></div>
+    <div class="box"><h3>测测自己</h3><p class="sub" style="margin:0">每个主题都以一个问题和四个答案结束。第一次就对了：+2。错误：显示了正确的答案，但该问题没有任何回报 - 不是现在，也不是在重新启动后。这样猜测就没有什么好处。</p></div>
+    <div class="box"><h3>检查你的进度</h3><p class="sub" style="margin:0">这 <b>Adeebo</b> 顶部的按钮显示你的总分、你的排名、你距离下一个学习路径的距离、每个学习路径的进度以及完成后带有 ✓ 的每个功能。搜索它（“mtr”、“dns”、“wifi”）并按 <b>前往</b>.</p></div>
+  </div>
+</div></section>
+
+<section id="join"><div class="wrap">
+  <h2>加入名人堂</h2>
+  <p class="sub">达到500？以下是如何在此页面上显示你的姓名的方法。</p>
+  <ol class="steps">
+    <li><b>制作你的卡片。</b> 在 Adeebo 页面上，按 <b>制作我的奖卡</b> 并按照你希望的显示方式输入你的姓名。 AdeeboMeter 将图片保存到你的图片文件夹并复制其文本（名称、点、日期和声明代码），以便你可以粘贴它。</li>
+    <li><b>分享到任何你喜欢的地方</b> - LinkedIn、X、群聊。这是你的照片。</li>
+    <li><b>发送它。</b> 最简单：按 <b>送去名人堂</b> 在 AdeeboMeter 中，就在你的卡下方。或者在此处填写四行 - 无需账号。检查会立即运行；如果代码匹配，你将在几分钟内进入此页面。
+      <form id="hof" class="hof-form" onsubmit="return false" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-width:520px;margin-top:12px">
+        <input id="h-name" maxlength="40" placeholder="卡上的名字" required>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><input id="h-points" maxlength="6" inputmode="numeric" placeholder="积分（例如 512）"><input id="h-date" maxlength="10" placeholder="日期 (2026-11-12)"></div>
+        <input id="h-code" maxlength="30" placeholder="索赔代码 (ADB-XXXX-XXXX-XXXX-XXXX)">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><select id="h-where"><option value="">显示个人资料链接？ （选修的）</option><option>linkedin</option><option>x</option><option>instagram</option><option>bluesky</option><option>github</option></select><input id="h-handle" maxlength="40" placeholder="你的句柄在那里（可选）"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="hofHuman"></div>
+        <div class="cta" style="justify-content:flex-start"><button class="pill" id="h-send" type="button" disabled>发送我的卡</button> <a class="pill ghost" id="mail" href="#join">或者通过电子邮件发送</a></div>
+        <p class="sub" id="h-note" style="margin:0">此页面上仅显示你的姓名（以及句柄，如果你添加的话）。</p>
+      </form></li>
+  </ol>
+
+  <h3>如何检查卡</h3>
+  <div class="note">每张卡都有一个 <b>索赔代码</b> 喜欢 <code>ADB-7K3F-Q9XM-2PLD-…</code>。 AdeeboMeter 使用仅官方下载包含的密钥根据你的姓名、积分和日期进行生成。名人堂计算相同的代码。在图片编辑器中编辑的卡片或其他人的具有新名称的卡片不匹配。从源代码构建的 AdeeboMeter 没有密钥，因此它的卡片上写着“非官方构建”。
+  <br><br><b>老实说，代码证明了什么：</b> 这张卡从 AdeeboMeter 中出来时没有变化 - 并不是每一个点都被赢得了。 AdeeboMeter 是离线且开源的，你的积分保存在你的电脑上，所以意志坚定的人仍然可以作弊。 AdeeboMeter 只计算真正存在的项目（永远不会超过所有可以赚取的项目），检查会排除不可能的总数和同名的第二个条目，并且可以删除任何条目。这是庆祝活动，而不是证书。</div>
+
+  <h3>问题</h3>
+  <details><summary>AdeeboMeter 会将我的积分发送到任何地方吗？</summary><p>不会。AdeeboMeter 绝不会发送任何有关你积分的信息。它只保存一张图片，由你决定是否分享。</p></details>
+  <details><summary>此页面上有什么内容？</summary><p>你的姓名 - 以及你的 GitHub、LinkedIn、X、Instagram 或 Bluesky 个人资料的链接（如果你提供了句柄）。没有显示任何其他内容。积分、日期和索赔代码保留在页面后面的列表中（hall-of-fame.json），以便可以再次检查卡；关于你的任何其他信息都不会被保留。</p></details>
+  <details><summary>我可以被脱掉吗？</summary><p>可以，请在以下位置创建问题： <a href="https://github.com/adeeb111/AdeeboMeter/issues">GitHub</a><span id="rm-mail"> 或发送邮件</span> ，我们就会移除你的记录。</p></details>
+  <details><summary>我的代码不匹配。</summary><p>准确输入卡上的姓名、积分和日期，或粘贴复制的文本 AdeeboMeter。如果此后你获得了更多积分，请重新制作该卡并发送新卡。</p></details>
+  <details><summary>我在 500 之下 - 我在哪里？</summary><p>按 AdeeboMeter 中的 Adeebo 按钮。该栏显示你距离下一个排名有多远，每个学习路径显示还剩下什么。</p></details>
+</div></section>
+</main>
+
+<footer><div class="wrap">Adeeb Khan 开发 · <a href="/zh/">AdeeboMeter</a> · <a href="/zh/privacy.html">隐私</a></div></footer>
+
+<script>
+// the card form: sent to AdeeboMeter's relay, which files it for the same automatic check (no account needed)
+(function () {
+  var human = '', f = function (id) { return document.getElementById(id); }, send = f('h-send'), note = f('h-note');
+  function ready() { send.disabled = !(f('h-name').value.trim() && f('h-points').value.trim() && f('h-date').value.trim() && f('h-code').value.trim() && human); }
+  window.hofHuman = function (t) { human = t; ready(); };
+  // hunt-5: every try uses a new human check - one used (or lost with the network) can't be sent again; Send waits for the new one
+  function fresh() { human = ''; try { turnstile.reset(); } catch (e) {} ready(); }
+  ['h-name', 'h-points', 'h-date', 'h-code'].forEach(function (id) { f(id).addEventListener('input', ready); });
+  send.addEventListener('click', function () {
+    send.disabled = true; note.textContent = 'Sending…';
+    var card = { name: f('h-name').value, points: f('h-points').value, date: f('h-date').value, code: f('h-code').value, where: f('h-where').value, handle: f('h-handle').value };
+    fetch('https://adeebometer-relay.orkoadeeb.workers.dev/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'hof', from: 'site', card: card, turnstile: human }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; fresh(); })
+      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again in a moment.'; fresh(); });
+  });
+})();
+(function () {
+  // the address for cards sent by email (one place to change it)
+  var MAIL = 'HALL-OF-FAME-EMAIL';
+  var m = document.getElementById('mail');
+  if (MAIL.indexOf('@') > 0) m.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Adeebo Award - Hall of Fame');
+  else { m.style.display = 'none'; var rm = document.getElementById('rm-mail'); if (rm) rm.style.display = 'none'; }   // bug-hunt L-115: no address, no promise of one
+
+  var SITES = {
+    github: { name: 'GitHub', url: 'https://github.com/', rx: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/ },
+    linkedin: { name: 'LinkedIn', url: 'https://www.linkedin.com/in/', rx: /^[A-Za-z0-9-]{3,100}$/ },
+    x: { name: 'X', url: 'https://x.com/', rx: /^[A-Za-z0-9_]{1,15}$/ },
+    instagram: { name: 'Instagram', url: 'https://www.instagram.com/', rx: /^[A-Za-z0-9_.]{1,30}$/ },
+    bluesky: { name: 'Bluesky', url: 'https://bsky.app/profile/', rx: /^[A-Za-z0-9.-]{3,253}$/ }
+  };
+  // the winners: read from hall-of-fame.json (same site), every field written as text - never as HTML
+  var grid = document.getElementById('grid'), count = document.getElementById('count');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  fetch('/hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+    var all = (d && d.entries) || [], list = all.filter(function (w) { return !w.disputed; }), held = all.length - list.length;   // hunt-5: a disputed claim waits for review - not shown as a winner
+    list = list.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    if (!list.length) { count.textContent = ''; grid.appendChild(el('p', 'empty', 'No one yet - the first Adeebo Award is still out there. Will it be you?')); return; }
+    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.' + (held ? ' (' + held + ' more ' + (held === 1 ? 'claim is' : 'claims are') + ' being reviewed.)' : '');
+    list.forEach(function (w) {
+      var c = el('div', 'winner');
+      c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));
+      c.appendChild(el('div', 'n', String(w.name || '')));
+      // just the name - and a handle, if they gave one: the link is built here from a known site, never taken from the file
+      var sk = String(w.site || ''), site = Object.prototype.hasOwnProperty.call(SITES, sk) ? SITES[sk] : null, h = String(w.handle || '');
+      if (site && site.rx.test(h)) { var a = el('a', null, (w.site === 'linkedin' ? '' : '@') + h + ' on ' + site.name + ' ›'); a.href = site.url + encodeURIComponent(h); a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
+      grid.appendChild(c);
+    });
+  }).catch(function () { count.textContent = "Couldn't load the list right now - try again in a moment."; });
+})();
+</script>
+</body>
+</html>

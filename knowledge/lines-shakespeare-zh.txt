@@ -1,0 +1,106 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|早安，{addr}，吾守汝之网络。
+app.open|守望始矣，汝之数据包，吾当护之。
+all.good|一切安好，{addr}，诸线皆晴。
+all.good|汝之电脑、Wi-Fi 与网络，皆康健也。
+all.good|今夜无事扰动。
+pc.busy|汝之电脑劳苦甚矣，CPU 已达 {v}。
+pc.busy|过错在汝之电脑，不在网络。
+pc.busy|任务过多，压垮汝机，请释其一。
+wifi.drops|汝之 Wi-Fi 今日已遁去 {v} 次。
+wifi.drops|断线 {v} 次，请近汝之路由器，善哉 {addr}。
+net.none|无网络，哀哉，汝已断联。
+net.none|离线矣，寻线缆或 Wi-Fi。
+inet.slow|汝之路由器迅捷，迟缓在其外。
+inet.slow|汝宅安然，运营商却拖沓。
+inet.slow|延迟生于路由器之外。
+busy|吾劳作中……{v}
+busy|耐心，工作进行中。
+busy|稍候，稍候。
+idle|静谧时光，吾仍守望。
+idle|无新事可报。
+idle|万物皆息。
+search.empty|言吧，{addr}，何事扰汝？
+search.empty|说出汝之委屈。
+freeze|片刻（{v}），重担在肩。
+freeze|稍留片刻（{v}），吾正追赶。
+speedrunner|轻些，轻些！吾尚在上一事。
+speedrunner|一次只做一事，善哉 {addr}。
+back.again|汝归矣，期间发生 {v} 件事。
+back.again|欢迎归来，且听此事。
+dns.slow|名字姗姗来迟：DNS 耗时 {v}。
+dns.slow|查询拖延 {v}，服务器懒散。
+speed.great|下载 {v}，快如思绪。
+speed.great|下载 {v}，速度可嘉。
+speed.bloat|迅捷，然繁忙时却跌倒 {v}。
+speed.bloat|独行则快，群行则慢，延迟 {v}。
+game.lag|延迟源于汝之 Wi-Fi，非服务器也。
+game.lag|服务器无罪，汝之 Wi-Fi 动摇。
+game.good|Ping {v}，去吧。
+game.good|线路稳定，愿好运伴汝。
+vpn.on|汝之流量蒙面而行，VPN 已开启。
+vpn.on|汝乔装而行。
+vpn.slow|此伪装耗费 {v}。
+vpn.slow|VPN 为汝之旅程增添 {v}。
+portal|此 Wi-Fi 须汝于门前报名。
+portal|欲过此门，请先登录。
+gw.down|汝之路由器默然无言，请重启之。
+gw.down|路由器杳无音讯。
+isp.down|汝宅屹立，网络已断。
+isp.down|汝之运营商已中断。
+mtu.small|大包不得通过，MTU 为 {v}。
+mtu.small|此路狭窄：{v}。
+port.open|{v} 有回应。
+port.open|{v} 之门敞开。
+port.closed|{v} 默然无应。
+port.closed|{v} 之门紧闭。
+cert.ok|印信真实，证书有效。
+cert.ok|一把诚实的挂锁。
+cert.expired|彼之印信已于 {v} 过期。
+cert.expired|自 {v} 起已过期，此乃彼之疏忽。
+sec.ok|汝之墙垣坚固，检查通过。
+sec.ok|防线无一破绽。
+sec.issue|发现 {v} 处弱点，请修补之。
+sec.issue|检查揭示 {v} 处过失。
+mtr.lossy|于第 {v} 跳，汝之数据包遗失。
+mtr.lossy|丢失始于第 {v} 跳。
+mtr.clean|全程无丢失。
+mtr.clean|每一跳皆忠实。
+devices.found|{v} 台设备栖于汝之网络。
+devices.found|吾数得 {v} 台。
+encrypt.done|已封存，唯汝之友可读。
+encrypt.done|锁得牢牢的。
+decrypt.done|已打开，无人触动。
+decrypt.done|启封如初，未曾改动。
+points.earned|+{v} 分，做得好。
+points.earned|+{v} 分，汝之学识日增。
+award|五百分！Adeebo 奖归于汝。
+award|荣誉归于汝：Adeebo 奖。
+late.night|夜渐深，吾仍守望。
+late.night|夜矣，汝休憩，吾守望。
+morning|早安，夜静悄悄地过去了。
+morning|黎明，无事有异。
+update.suspect|自 {v} 更新以来，厄运降临。
+update.suspect|麻烦随 {v} 更新而来。
+call.on|汝正在议事，吾守望此通话。
+call.on|通话进行中，吾倾听有无过失。
+quiz.right|答得好，善哉 {addr}！
+quiz.wrong|唉，并非如此。
+game.streak|连续 {v} 次——大胜！
+game.timeup|时光已尽。
+market.open|市场之门敞开。
+storm.near|暴风雨将至——汝之连接或将动摇。
+stream.on|{v} 正在上演，流畅无碍。
+stream.on|戏正酣，未有半分踉跄。
+stream.dip|播放失了步。{v}
+stream.dip|舞台上略有停顿。{v}
+stream.none|今夜无人登台。
+stream.none|舞台空空，没有播放。
+trade.ok|你的券商连接迅捷可靠。
+trade.ok|券商应答既快又稳。
+trade.slow|券商迟缓，且停手片刻。
+trade.slow|通往券商的路行得缓慢。{v}
+trade.closed|市场闭门至九点半。
+trade.closed|市场已歇，你也休息至天明。
+view.switch|即刻前往 {v} 视图！
+view.switch|看，这便是 {v} 视图。

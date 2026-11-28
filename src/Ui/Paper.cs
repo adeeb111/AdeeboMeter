@@ -54,7 +54,7 @@ namespace AdeeboMeter
             if (fontsAt == S && fontsLang == L.Code && fontsApp == App) return;
             foreach (var f in new[] { Mast, MastSmall, Head1, Head2, Head3, Body, BodyB, Small, Italic, Big, Num, NumS }) if (f != null) f.Dispose();
             Mast = Draw.Serif(52 * S, true); MastSmall = Draw.Serif(34 * S, true); Head1 = Draw.Serif(40 * S, false); Head2 = Draw.Serif(22 * S, false); Head3 = Draw.Serif(17 * S, false); Big = Draw.Serif(34 * S, true); Num = new Font(Draw.UiFamilyName(), 30 * S, FontStyle.Bold, GraphicsUnit.Pixel); NumS = new Font(Draw.UiFamilyName(), 19 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            string body = L.IsRtl ? "Segoe UI" : L.Code == "bn" ? "Nirmala UI" : "Georgia";
+            string body = L.IsRtl || L.Code == "bn" || L.Code == "zh" ? Draw.LangFamily : "Georgia";
             Body = new Font(body, Draw.Px(15 * S), FontStyle.Regular, GraphicsUnit.Pixel); BodyB = new Font(body, Draw.Px(15 * S), FontStyle.Bold, GraphicsUnit.Pixel);
             Small = new Font(body, Draw.Px(13 * S), FontStyle.Regular, GraphicsUnit.Pixel); Italic = new Font(body, Draw.Px(17 * S), L.IsRtl ? FontStyle.Regular : FontStyle.Italic, GraphicsUnit.Pixel);
             if (App && !L.IsRtl && L.Code != "bn")

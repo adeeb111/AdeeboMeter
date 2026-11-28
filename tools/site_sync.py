@@ -9,7 +9,7 @@
 # window only. Runs last in tools/site.sh: the language scripts and learnsite.py rewrite pages before it.
 import os, re, sys
 root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs')
-SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html'}   # 24 Nov: the missing-page page has the bar too, so you can always get somewhere
+SKIP = {'app.html', 'r.html', 'remote.html', 'lab.html', 'shell.html'}   # 24 Nov: the missing-page page has the bar too, so you can always get somewhere
 BAR = '<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="{home}"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->'
 CSS = '<link rel="stylesheet" href="/sitebar.css">'
 # the theme rule the home page uses, on every page, before anything is drawn: a kept choice (am-theme) wins, otherwise dark.
@@ -43,10 +43,10 @@ def pages():
             if f.endswith('.html'): yield os.path.join(d, f)
 def sync(p):
     rel = os.path.relpath(p, root).replace(os.sep, '/'); name = os.path.basename(p)
-    if rel in SKIP: return None, []
+    if rel in SKIP or re.sub(r"^(?:fr|es|ar|bn|zh)/", "", rel) in {"app.html", "lab.html"}: return None, []
     s = open(p, encoding='utf-8').read(); t = s; did = []
-    m = re.match(r'(fr|es|ar|bn)/', rel); home = '/' + m.group(1) + '/' if m else '/'
-    is_home = rel in ('index.html', 'fr/index.html', 'es/index.html', 'ar/index.html', 'bn/index.html')
+    m = re.match(r'(fr|es|ar|bn|zh)/', rel); home = '/' + m.group(1) + '/' if m else '/'
+    is_home = rel in ('index.html', 'fr/index.html', 'es/index.html', 'ar/index.html', 'bn/index.html', 'zh/index.html')
     if CSS not in t: t = t.replace('</head>', CSS + '\n</head>', 1); did.append('sitebar.css')
     if not is_home:
         t2 = re.sub(r'<!--theme-->.*?<!--/theme-->\n?', '', t, flags=re.S)

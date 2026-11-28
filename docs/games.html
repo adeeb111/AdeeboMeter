@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-language-route="/games.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -60,6 +60,14 @@ footer{margin-top:40px;color:var(--sub);font-size:14px}
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
 <!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/games.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/games.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/games.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/games.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/games.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/games.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/games.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/games.html">
 </head>
 <body data-sec="games">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -95,9 +103,10 @@ function rnd(n){return Math.floor(Math.random()*n)}
 function best(g,v){var k="am-game-"+g;try{var b=+localStorage.getItem(k)||0;if(v!=null&&v>b){localStorage.setItem(k,v);return v}return b}catch(e){return 0}}
 function showBest(){[].forEach.call(document.querySelectorAll("[data-best]"),function(i){var b=best(i.getAttribute("data-best"));i.textContent=b?"Your best: "+b:""})}
 // one download, and only the game picked last starts when it arrives (AM-CG-324)
-function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d||!Array.isArray(d.topics)||!d.topics.length)throw new Error("no lessons");L=d.topics});/* FRESH-093: a bad answer isn't kept */Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
+function gameLearn(){var l=(document.documentElement.lang||"en").split("-")[0];return /^(fr|es|ar|bn)$/.test(l)?"/"+l+"/learn/":"/learn/"}
+function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("/kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d||!Array.isArray(d.topics)||!d.topics.length)throw new Error("no lessons");L=d.topics});/* FRESH-093: a bad answer isn't kept */Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
 /* FRESH-092: no questions in the lessons - say so instead of breaking */
-function noDeck(){clearInterval(timer);G.over=true;$("left").textContent="";$("tb").style.width="0";$("stage").innerHTML="<div class='end'><p class='q' tabindex='-1'>No questions to play right now</p><p class='sub'>The lessons didn't come with any. Try again later.</p><a class='go ghost' href='learn/'>Lessons</a></div>";focusStage(".q")}
+function noDeck(){clearInterval(timer);G.over=true;$("left").textContent="";$("tb").style.width="0";$("stage").innerHTML="<div class='end'><p class='q' tabindex='-1'>No questions to play right now</p><p class='sub'>The lessons didn't come with any. Try again later.</p><a class='go ghost' href='"+gameLearn()+"'>Lessons</a></div>";focusStage(".q")}
 /* FRESH-095: after an answer the buttons are disabled and replaced, so keyboard focus moves to the new question (or the score) */
 function focusStage(sel){var e=$("stage").querySelector(sel);if(e&&e.focus)try{e.focus({preventScroll:true})}catch(x){e.focus()}}
 function lessonId(t){return t.id.replace(/\s+/g,"-")}
@@ -125,12 +134,12 @@ function answer(b){
   if(ok)G.score+=G.g==="quiz"?10+Math.ceil(Math.max(0,G.until-now())/1500):1;
   G.streak=ok?(G.streak||0)+1:0;var V=window.AMV?AMV:null,vs=V?(ok?(G.streak>=3&&G.streak%3===0?V.line("game.streak",G.streak):V.line("quiz.right")):b?V.line("quiz.wrong"):V.line("game.timeup")):"";
   $("stage").querySelector(".say").innerHTML=esc(vs||(ok?"Right.":b?"Not quite.":"Time's up."));
-  if(G.g==="quiz"&&G.cur)$("stage").querySelector(".say").innerHTML+=" <a href='learn/"+lessonId(G.cur)+".html'>Read: "+esc(G.cur.title.split(" - ")[0])+"</a>";
+  if(G.g==="quiz"&&G.cur)$("stage").querySelector(".say").innerHTML+=" <a href='"+gameLearn()+lessonId(G.cur)+".html'>Read: "+esc(G.cur.title.split(" - ")[0])+"</a>";
   G.n++;bar();later(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
 function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
   $("left").textContent="";$("tb").style.width="0";
   $("stage").innerHTML="<div class='end'><span id='endface' style='display:inline-block' data-size='64'></span><p class='sub'>Your score</p><p class='big' tabindex='-1'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
-    (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='learn/'>Lessons</a></div>";
+    (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='"+gameLearn()+"'>Lessons</a></div>";
   focusStage(".big");
   $("again").onclick=function(){start(G.g)};if(window.AMV)AMV.face($("endface"),G.score>b&&G.score>0?"party":G.score>0?"happy":"calm");
   $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
@@ -152,7 +161,7 @@ function order(){if(!G.deck)G.deck=shuf(L.filter(function(t){var s=(t.ladder||""
   shuf(steps.map(function(s,i){return i})).forEach(function(i){var b=document.createElement("button");b.textContent=steps[i].replace(" > "," → ");b.onclick=function(){
     if(b.disabled)return;
     if(i===want){b.disabled=true;b.className="used";var li=document.createElement("li");li.textContent=b.textContent;$("pk").appendChild(li);want++;
-      if(want===steps.length){var pts=Math.max(1,steps.length*2-miss*2);G.score+=pts;$("stage").querySelector(".say").innerHTML=(miss?"Done.":"Perfect.")+" +"+pts+" · <a href='learn/"+lessonId(t)+".html'>See the lesson</a>";G.n++;bar();later(next,1800)}}
+      if(want===steps.length){var pts=Math.max(1,steps.length*2-miss*2);G.score+=pts;$("stage").querySelector(".say").innerHTML=(miss?"Done.":"Perfect.")+" +"+pts+" · <a href='"+gameLearn()+lessonId(t)+".html'>See the lesson</a>";G.n++;bar();later(next,1800)}}
     else{miss++;b.className="no";setTimeout(function(){if(!b.disabled)b.className=""},500)}};$("os").appendChild(b)})}
 
 // --- subnet sprint

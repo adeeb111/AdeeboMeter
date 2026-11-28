@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es" data-language-route="/hall-of-fame.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salón de la Fama — AdeeboMeter</title>
+<meta name="description" content="Quienes alcanzaron 500 Adeebo Points y el Adeebo Award: cómo ganar puntos, avanzar y participar.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://adeebometer.com/es/hall-of-fame.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Cuadro de honor de AdeeboMeter">
+<meta property="og:description" content="Quienes alcanzaron 500 Adeebo Points y el Adeebo Award: cómo ganar puntos, avanzar y participar.">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<!-- No fonts, trackers or pictures from anywhere else. A winner shows as a name, and a link to their profile only if they gave one. -->
+<script>try{var t=localStorage.getItem('am-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="/base.css">
+<style>
+:root{--blue-s:color-mix(in srgb,var(--blue) 14%,var(--card));--green-s:color-mix(in srgb,var(--ok) 12%,var(--card));--gold:var(--warn);--gold-s:color-mix(in srgb,var(--warn) 16%,var(--card));--r-md:12px;--r-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--page);scroll-behavior:smooth}
+body{background:var(--page);color:var(--ink);font-size:17px;-webkit-font-smoothing:antialiased;line-height:1.6;overflow-x:hidden}
+a{color:var(--blue)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:20;background:var(--nav);-webkit-backdrop-filter:saturate(1.8) blur(14px);backdrop-filter:saturate(1.8) blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none;font-size:17px;color:var(--ink);white-space:nowrap}
+.brand svg{width:26px;height:26px}
+.links{display:flex;align-items:center;gap:18px;font-size:14px}
+.links a{text-decoration:none;color:var(--sub)}.links a:hover{opacity:.6}
+.pill{display:inline-flex;align-items:center;min-height:48px;background:var(--face);color:#fff!important;text-decoration:none;font-weight:600;border-radius:12px;padding:0 22px;font-size:16px;white-space:nowrap;transition:transform .14s var(--ease-out),background-color .15s ease}
+@media (hover:hover){.pill:hover{background:var(--blue-d)}}.pill:active{transform:scale(.97)}
+.pill.ghost{background:var(--card);color:var(--ink)!important;border:1px solid var(--line)}@media (hover:hover){.pill.ghost:hover{background:var(--soft)}}
+@media (max-width:640px){.links a.hide-s{display:none}}
+.hero{padding:56px 0 28px;text-align:center}
+.star{width:64px;height:64px;display:block;margin:0 auto 14px}
+h1{font-size:clamp(40px,6vw,64px);letter-spacing:-.01em;line-height:1.02}
+.lead{color:var(--sub);font-size:clamp(16px,2.2vw,19px);max-width:640px;margin:14px auto 0}
+.cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+section{padding:30px 0}
+h2{font-size:clamp(24px,2.6vw,30px);line-height:1.15;margin-bottom:8px}
+h3{font-size:18px;margin:18px 0 6px}
+.sub{color:var(--sub);margin-bottom:16px;max-width:760px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.winner{background:var(--face);color:#fff;border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;min-height:150px}
+.winner .k{font-size:14px;font-weight:600;color:#FCD34D}
+.winner .n{font-size:22px;font-weight:700;margin:6px 0 2px;overflow-wrap:anywhere}
+.winner .p{color:rgba(255,255,255,.85);font-size:13.5px;white-space:nowrap}
+.winner .c{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:12.5px;color:rgba(255,255,255,.7);margin-top:10px}
+.winner a{color:#FCD34D;font-size:13.5px;position:relative;z-index:1;overflow-wrap:anywhere;word-break:break-word}
+.empty{border:1px dashed var(--line);border-radius:16px;padding:28px;text-align:center;color:var(--sub)}
+.count{color:var(--muted);font-size:14px;margin-bottom:12px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:14px;font-weight:600;color:var(--sub);background:var(--soft)}
+tr:last-child td{border-bottom:none}
+td.pts{font-weight:700;color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ranks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rank{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-size:14px}
+.rank b{margin-left:6px;color:var(--muted);font-weight:600}
+.rank.award{background:var(--gold-s);border-color:var(--gold);font-weight:700}
+.arrow{color:var(--muted)}
+.cards3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.box h3{margin-top:0}
+.box ol,.box ul{padding-left:20px;color:var(--sub);font-size:14.5px}
+.box li{margin:3px 0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 44px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:30px;height:30px;border-radius:50%;background:var(--blue-s);color:var(--blue);font-weight:700;display:grid;place-items:center}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--sub);font-size:14.5px}
+code{font-family:Consolas,"SF Mono",Menlo,monospace;font-size:.92em;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 5px}
+details{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 16px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--sub);margin-top:8px}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:13.5px;margin-top:20px}
+footer a{color:inherit}
+</style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="es_ES">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/hall-of-fame.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/hall-of-fame.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/hall-of-fame.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/hall-of-fame.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/hall-of-fame.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/hall-of-fame.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/hall-of-fame.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/es/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<section class="hero"><div class="wrap">
+  <svg class="star" viewbox="0 0 100 100" aria-hidden="true"><path d="M50 4 L61.8 35.6 L95.6 37.2 L69.1 58.2 L78.2 90.8 L50 72.2 L21.8 90.8 L30.9 58.2 L4.4 37.2 L38.2 35.6 Z" fill="#FCD34D"></path></svg>
+  <h1>Salón de la Fama</h1>
+  <p class="lead">Todos aquí alcanzaron <b>500 Adeebo Points</b>. Probaron casi todas las herramientas, leyeron Aprende, respondieron preguntas y superaron retos. Eso es el <b>Adeebo Award</b>.</p>
+  <div class="cta"><a class="pill" href="#join">Únete al Salón de la Fama</a><a class="pill ghost" href="#how">Cómo funcionan Adeebo Points</a></div>
+</div></section>
+
+<section id="winners"><div class="wrap">
+  <h2>Los ganadores</h2>
+  <p class="count" id="count">Cargando...</p>
+  <div class="grid" id="grid"></div>
+  <noscript><p class="empty">Activa JavaScript para ver la lista o consulta <a href="/hall-of-fame.json">hall-of-fame.json</a>.</p></noscript>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>Cómo funcionan Adeebo Points</h2>
+  <p class="sub">Adeebo Points es una pequeña recompensa por aprender AdeeboMeter y redes. Están activos por defecto. Puedes desactivarlos en Ajustes › Adeebo Points conservando el total. Cada elemento da puntos <b>una vez</b>. Los puntos se guardan <b>solo en tu PC</b> . No se envía nada, no hay rachas ni recordatorios. Pulsa el botón <b>Adeebo</b> de arriba en AdeeboMeter para ver rango, progreso de las rutas y funciones con un botón <b>Ir</b> que te lleva directamente.</p>
+
+  <h3>Qué da puntos</h3>
+  <table>
+    <thead><tr><th>Haz esto</th><th>puntos</th><th>Dónde</th></tr></thead>
+    <tbody>
+      <tr><td>Abre el <b>Ejemplo</b>de una herramienta y después ejecútala de verdad para obtener un resultado</td><td class="pts">+2</td><td>Herramientas: 232 herramientas</td></tr>
+      <tr><td>…las pruebas largas: MTR, velocidad, iperf3, bufferbloat, informe al proveedor, comparación de juegos y MTU por salto</td><td class="pts">+4</td><td>Herramientas</td></tr>
+      <tr><td>Ejecuta una herramienta marcada <b>Reproducir</b> otra vez, al menos 10 minutos después de la primera, para comparar</td><td class="pts">+2</td><td>Herramientas: informe al proveedor, juegos, antes/después, certificados y MTR</td></tr>
+      <tr><td>Lee un tema de <b>Aprender</b> hasta el final</td><td class="pts">+2</td><td>Aprende: 98 temas</td></tr>
+      <tr><td>Responde la pregunta de <b>Ponte a prueba</b> correctamente al primer intento</td><td class="pts">+2</td><td>Al final de cada tema de Aprende</td></tr>
+      <tr><td>Supera un <b>reto de laboratorio</b></td><td class="pts">+4</td><td>Aprende › Laboratorios: 11 retos</td></tr>
+      <tr><td>Práctica de subredes: <b>5 aciertos seguidos</b>, después <b>10 seguidos</b></td><td class="pts">+3, +5</td><td>Aprende › Laboratorios › Practica subredes</td></tr>
+      <tr><td><b>Explica</b> un recorrido de paquetes de una conexión tuya</td><td class="pts">+3</td><td>Historia de la red › recorrido de paquetes (necesita Wireshark)</td></tr>
+      <tr><td>Usa una página por primera vez, con un clic o tecla, no solo al abrirla</td><td class="pts">+2</td><td>13 páginas</td></tr>
+      <tr><td>Completa una <b>ruta de aprendizaje</b></td><td class="pts">+10</td><td>Adeebo › Rutas de aprendizaje</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin-top:10px">Hay unos 1.000 puntos entre herramientas, lecciones, preguntas, laboratorios y juegos: 500 es la mitad. Las herramientas que envían tráfico de prueba o buscan dispositivos no dan puntos.</p>
+
+  <h3>Los rangos</h3>
+  <div class="ranks">
+    <span class="rank">Principiante<b>0</b></span><span class="arrow">›</span>
+    <span class="rank">Aprendiz<b>30</b></span><span class="arrow">›</span>
+    <span class="rank">Solucionador<b>100</b></span><span class="arrow">›</span>
+    <span class="rank">Experto<b>200</b></span><span class="arrow">›</span>
+    <span class="rank">Detective de redes<b>300</b></span><span class="arrow">›</span>
+    <span class="rank">Experto en paquetes<b>400</b></span><span class="arrow">›</span>
+    <span class="rank award">★ Adeebo Award<b>500</b></span>
+  </div>
+
+  <h3>Las rutas de aprendizaje</h3>
+  <p class="sub">Una lista breve y ordenada. En Adeebo cada ruta tiene una barra de progreso y lleva al siguiente paso pendiente.</p>
+  <div class="cards3">
+    <div class="box"><h3>Usuario doméstico · +10</h3><ol>
+      <li>Aprende: Las capas, en palabras sencillas</li><li>Aprende: Qué pasa al abrir una web</li><li>Aprende: DNS</li><li>Aprende: DHCP</li><li>Aprende: Wi-Fi</li><li>Aprende: La velocidad no es un solo número</li><li>Aprende: Por qué habla el PC cuando no haces nada</li><li>Usa ¿Qué falla?</li><li>Herramienta: Prueba de velocidad</li><li>Herramienta: ¿Es seguro este Wi-Fi?</li><li>Herramienta: ¿Por qué no funciona mi USB?</li><li>Herramienta: ¿Qué rompió Windows Update?</li><li>Reto de laboratorio: tiempo de radio Wi-Fi</li></ol></div>
+    <div class="box"><h3>Videojuegos · +10</h3><ol>
+      <li>Aprende: UDP</li><li>Aprende: La velocidad no es un solo número</li><li>Aprende: Streaming frente a llamadas</li><li>Usa Zona de juegos y añade un juego</li><li>Herramienta: Ping continuo</li><li>Herramienta: ¿Por qué mi juego tiene lag?</li><li>Herramienta: Retraso con carga (bufferbloat)</li><li>Herramienta: Wi-Fi frente a cable (un juego)</li><li>Reto de laboratorio: Bufferbloat</li><li>Reto de laboratorio: Búfer de jitter de una llamada</li><li>Reto de laboratorio: Retraso total de un juego</li></ol></div>
+    <div class="box"><h3>Ingeniero de redes · +10</h3><ol>
+      <li>Aprende: TCP</li><li>Aprende: MTU</li><li>Aprende: NAT</li><li>Aprende: IPv6</li><li>Aprende: BGP</li><li>Herramienta: MTR</li><li>Herramienta: MTU por salto</li><li>Herramienta: Calculadora de subredes</li><li>Herramienta: Planificador VLSM</li><li>Reto de laboratorio: Control de congestión TCP</li><li>Reto de laboratorio: MTU y agujeros negros</li><li>Reto de laboratorio: Qué ruta gana</li><li>Subredes: 10 seguidos</li><li>Explica un recorrido de paquetes</li></ol></div>
+  </div>
+
+  <h3>Los retos de laboratorio</h3>
+  <p class="sub">Cada laboratorio termina con un reto. Se comprueba con los ajustes del propio laboratorio y aparece ✓ en cuanto lo logras.</p>
+  <table>
+    <thead><tr><th>LABORATORIO</th><th>RETO</th></tr></thead>
+    <tbody>
+      <tr><td>Control de congestión TCP</td><td>Provoca un tiempo de espera agotado (configura los clics como pérdida total y pulsa el gráfico). Mira cómo vuelve a empezar el arranque lento.</td></tr>
+      <tr><td>Pérdida → el máximo de TCP</td><td>Pon la ida y vuelta en 150 ms o más y encuentra la pérdida que aún permite descargar a 25 Mbps.</td></tr>
+      <tr><td>Bufferbloat</td><td>Mantén la copia de seguridad enviando al 100% o más y baja el ping de 40 ms.</td></tr>
+      <tr><td>El búfer de jitter de una llamada</td><td>Con un jitter de 30 ms o más, logra una puntuación de llamada de 4.0 con el menor búfer posible.</td></tr>
+      <tr><td>Tiempo de radio Wi-Fi</td><td>Mantén un dispositivo antiguo y lejano conectado y mejora los portátiles cercanos con reparto justo del tiempo de radio.</td></tr>
+      <tr><td>Cómo se encuentra un nombre</td><td>Sigue un nombre de verdad y mira cada servidor que respondió.</td></tr>
+      <tr><td>NAT y por qué falla el acceso entrante</td><td>Averigua si tu proveedor te sitúa tras una segunda NAT (CGNAT).</td></tr>
+      <tr><td>MTU y agujeros negros</td><td>Crea un agujero negro y arréglalo sin desactivar el túnel.</td></tr>
+      <tr><td>Qué ruta gana</td><td>Busca tres destinos distintos en tu tabla de rutas.</td></tr>
+      <tr><td>El retraso total de un juego</td><td>Mantén el ping en 30 ms o más y reduce el retraso total a menos de 60 ms.</td></tr>
+      <tr><td>Colas QoS</td><td>Encuentra una velocidad de subida con la que incluso la cola por orden de llegada retrase la llamada menos de 10 ms.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Aprende y ponte a prueba</h3>
+  <div class="cards3">
+    <div class="box"><h3>Aprende un tema</h3><p class="sub" style="margin:0">Abrir <b>Aprender</b> y elige un tema. Cada uno tiene dos líneas e imagen. Llega al final y permanece al menos 15 segundos: +2. Muchos también tienen <b>Verlo en vivo en mi PC</b>, que graba 10 segundos del protocolo en tu PC (requiere Wireshark).</p></div>
+    <div class="box"><h3>Ponte a prueba</h3><p class="sub" style="margin:0">Cada tema termina con una pregunta y cuatro respuestas. Acierto a la primera: +2. Si fallas, muestra la respuesta y no da puntos, ni ahora ni tras reiniciar. Así no recompensa adivinar.</p></div>
+    <div class="box"><h3>Consulta tu progreso</h3><p class="sub" style="margin:0">el <b>Adeebo</b> de arriba muestra total, rango, distancia al siguiente, progreso de rutas y cada función terminada con ✓. Busca “mtr”, “dns” o “wifi” y pulsa <b>Ir</b>.</p></div>
+  </div>
+</div></section>
+
+<section id="join"><div class="wrap">
+  <h2>Únete al Salón de la Fama</h2>
+  <p class="sub">¿Llegaste a 500? Así pones tu nombre en esta página.</p>
+  <ol class="steps">
+    <li><b>Crea tu tarjeta.</b> En Adeebo, pulsa <b>Crear mi tarjeta de premio</b> y escribe tu nombre como quieres mostrarlo. Guarda la imagen en Imágenes y copia nombre, puntos, fecha y código para pegar.</li>
+    <li><b>Compártela donde quieras</b> : LinkedIn, X o un chat. Es tu imagen.</li>
+    <li><b>Envíala.</b> Lo más fácil: pulsa <b>Enviar al Salón de la Fama</b> en AdeeboMeter, bajo tu tarjeta. O rellena las cuatro líneas aquí, sin cuenta. Se comprueba enseguida y, si coincide el código, apareces en unos minutos.
+      <form id="hof" class="hof-form" onsubmit="return false" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;max-width:520px;margin-top:12px">
+        <input id="h-name" maxlength="40" placeholder="Nombre en la tarjeta" required>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><input id="h-points" maxlength="6" inputmode="numeric" placeholder="Puntos (por ejemplo, 512)"><input id="h-date" maxlength="10" placeholder="Fecha (2026-11-12)"></div>
+        <input id="h-code" maxlength="30" placeholder="Código de validación (ADB-XXXX-XXXX-XXXX-XXXX)">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><select id="h-where"><option value="">¿Mostrar enlace de perfil? (opcional)</option><option>linkedin</option><option>x</option><option>instagram</option><option>bluesky</option><option>github</option></select><input id="h-handle" maxlength="40" placeholder="Tu usuario allí (opcional)"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAGBNu5prAsMYOThg" data-callback="hofHuman"></div>
+        <div class="cta" style="justify-content:flex-start"><button class="pill" id="h-send" type="button" disabled>Enviar mi tarjeta</button> <a class="pill ghost" id="mail" href="#join">O envíala por correo</a></div>
+        <p class="sub" id="h-note" style="margin:0">Solo se publica tu nombre y el usuario si lo añades.</p>
+      </form></li>
+  </ol>
+
+  <h3>Cómo se comprueba una tarjeta</h3>
+  <div class="note">Cada tarjeta tiene un <b>código de validación</b> como <code>ADB-7K3F-Q9XM-2PLD-…</code>. AdeeboMeter lo crea con nombre, puntos y fecha, usando una clave solo incluida en la descarga oficial. El Salón de la Fama calcula el mismo código. Una imagen editada o una tarjeta ajena con otro nombre no coincide. Una compilación propia no tiene clave y muestra “compilación no oficial”.
+  <br><br><b>Qué demuestra realmente el código:</b> que la tarjeta salió intacta de AdeeboMeter, no que se ganara cada punto. Es una app abierta sin conexión y los puntos están en tu PC: alguien decidido podría hacer trampa. Solo cuenta elementos existentes, rechaza totales imposibles y nombres repetidos, y permite retirar entradas. Es una celebración, no un certificado.</div>
+
+  <h3>Preguntas</h3>
+  <details><summary>¿AdeeboMeter envía mis puntos a algún sitio?</summary><p>No. Nunca envía información de tus puntos. Solo guarda una imagen y tú decides si compartirla.</p></details>
+  <details><summary>¿Qué se publica aquí?</summary><p>Tu nombre y, si lo das, enlace a GitHub, LinkedIn, X, Instagram o Bluesky. Nada más. Puntos, fecha y código quedan en hall-of-fame.json para volver a verificar la tarjeta. No se guarda nada más sobre ti.</p></details>
+  <details><summary>¿Puedo pedir que me quiten?</summary><p>Sí. Solicítalo en <a href="https://github.com/adeeb111/AdeeboMeter/issues">GitHub</a><span id="rm-mail"> o envía un correo</span> y se retirará tu nombre.</p></details>
+  <details><summary>Mi código no coincide.</summary><p>Escribe nombre, puntos y fecha exactamente como en la tarjeta, o pega el texto copiado. Si ganaste más puntos, crea y envía una nueva.</p></details>
+  <details><summary>Tengo menos de 500. ¿Cómo voy?</summary><p>Pulsa Adeebo en la app. La barra indica cuánto falta para el siguiente rango y cada ruta muestra los pasos pendientes.</p></details>
+</div></section>
+</main>
+
+<footer><div class="wrap">Creado por Adeeb Khan · <a href="/es/">AdeeboMeter</a> · <a href="/es/privacy.html">Privacidad</a></div></footer>
+
+<script>
+// the card form: sent to AdeeboMeter's relay, which files it for the same automatic check (no account needed)
+(function () {
+  var human = '', f = function (id) { return document.getElementById(id); }, send = f('h-send'), note = f('h-note');
+  function ready() { send.disabled = !(f('h-name').value.trim() && f('h-points').value.trim() && f('h-date').value.trim() && f('h-code').value.trim() && human); }
+  window.hofHuman = function (t) { human = t; ready(); };
+  // hunt-5: every try uses a new human check - one used (or lost with the network) can't be sent again; Send waits for the new one
+  function fresh() { human = ''; try { turnstile.reset(); } catch (e) {} ready(); }
+  ['h-name', 'h-points', 'h-date', 'h-code'].forEach(function (id) { f(id).addEventListener('input', ready); });
+  send.addEventListener('click', function () {
+    send.disabled = true; note.textContent = 'Sending…';
+    var card = { name: f('h-name').value, points: f('h-points').value, date: f('h-date').value, code: f('h-code').value, where: f('h-where').value, handle: f('h-handle').value };
+    fetch('https://adeebometer-relay.orkoadeeb.workers.dev/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'hof', from: 'site', card: card, turnstile: human }) })
+      .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+      .then(function (j) { note.textContent = j.ok ? 'Sent! If the code checks out, you\u2019re on this page in a couple of minutes.' : 'Couldn\u2019t send: ' + (j.why || 'try again in a minute') + '.'; fresh(); })
+      .catch(function () { note.textContent = 'Couldn\u2019t reach the server - try again in a moment.'; fresh(); });
+  });
+})();
+(function () {
+  // the address for cards sent by email (one place to change it)
+  var MAIL = 'HALL-OF-FAME-EMAIL';
+  var m = document.getElementById('mail');
+  if (MAIL.indexOf('@') > 0) m.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Adeebo Award - Hall of Fame');
+  else { m.style.display = 'none'; var rm = document.getElementById('rm-mail'); if (rm) rm.style.display = 'none'; }   // bug-hunt L-115: no address, no promise of one
+
+  var SITES = {
+    github: { name: 'GitHub', url: 'https://github.com/', rx: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/ },
+    linkedin: { name: 'LinkedIn', url: 'https://www.linkedin.com/in/', rx: /^[A-Za-z0-9-]{3,100}$/ },
+    x: { name: 'X', url: 'https://x.com/', rx: /^[A-Za-z0-9_]{1,15}$/ },
+    instagram: { name: 'Instagram', url: 'https://www.instagram.com/', rx: /^[A-Za-z0-9_.]{1,30}$/ },
+    bluesky: { name: 'Bluesky', url: 'https://bsky.app/profile/', rx: /^[A-Za-z0-9.-]{3,253}$/ }
+  };
+  // the winners: read from hall-of-fame.json (same site), every field written as text - never as HTML
+  var grid = document.getElementById('grid'), count = document.getElementById('count');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  fetch('/hall-of-fame.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+    var all = (d && d.entries) || [], list = all.filter(function (w) { return !w.disputed; }), held = all.length - list.length;   // hunt-5: a disputed claim waits for review - not shown as a winner
+    list = list.slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    if (!list.length) { count.textContent = ''; grid.appendChild(el('p', 'empty', 'No one yet - the first Adeebo Award is still out there. Will it be you?')); return; }
+    count.textContent = list.length + (list.length === 1 ? ' person has' : ' people have') + ' earned the Adeebo Award.' + (held ? ' (' + held + ' more ' + (held === 1 ? 'claim is' : 'claims are') + ' being reviewed.)' : '');
+    list.forEach(function (w) {
+      var c = el('div', 'winner');
+      c.appendChild(el('div', 'k', '★ ADEEBO AWARD'));
+      c.appendChild(el('div', 'n', String(w.name || '')));
+      // just the name - and a handle, if they gave one: the link is built here from a known site, never taken from the file
+      var sk = String(w.site || ''), site = Object.prototype.hasOwnProperty.call(SITES, sk) ? SITES[sk] : null, h = String(w.handle || '');
+      if (site && site.rx.test(h)) { var a = el('a', null, (w.site === 'linkedin' ? '' : '@') + h + ' on ' + site.name + ' ›'); a.href = site.url + encodeURIComponent(h); a.rel = 'noopener nofollow'; a.target = '_blank'; c.appendChild(a); }
+      grid.appendChild(c);
+    });
+  }).catch(function () { count.textContent = "Couldn't load the list right now - try again in a moment."; });
+})();
+</script>
+</body>
+</html>

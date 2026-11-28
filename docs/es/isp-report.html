@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar">
+<html lang="es" data-language-route="/isp-report.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -50,6 +50,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <script src="/locale.js"></script>
 <script src="/locale-surfaces.js"></script>
 <link rel="stylesheet" href="/sitebar.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","url":"https://adeebometer.com/es/isp-report.html","inLanguage":"es","subjectOf":[{"@type":"CreativeWork","name":"How to Read MTR Results on Windows | Packet Loss Explained","genre":"Video tutorial","url":"https://www.youtube.com/watch?v=5IEcPIedL2I","inLanguage":"en","datePublished":"2026-11-25","publisher":{"@type":"Organization","name":"AdeeboMeter"}},{"@type":"CreativeWork","name":"One Hop Shows Packet Loss. Is It Really a Problem?","genre":"Short video","url":"https://www.youtube.com/shorts/L8fN2w5TXWQ","inLanguage":"en","sameAs":"https://www.facebook.com/reel/1128060556600411","publisher":{"@type":"Organization","name":"AdeeboMeter"}}]}</script>
 <meta property="og:locale" content="es_ES">
 <link rel="alternate" hreflang="en" href="https://adeebometer.com/isp-report.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/isp-report.html">
@@ -57,6 +58,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/isp-report.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/isp-report.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/isp-report.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/isp-report.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/isp-report.html">
 </head>
 <body>
@@ -70,6 +72,7 @@ figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;heig
 <figcaption>El patrón que vale la pena enviar: limpio hasta tu router, y pérdida desde una parada dentro de la red de tu proveedor hasta el destino.</figcaption>
 </figure>
 <figure><img src="/img/isp-report-example.png" width="591" height="371" loading="lazy" alt="El informe de ejemplo de AdeeboMeter no muestra pérdidas en el router doméstico, pero sí desde un salto posterior hasta el destino."><figcaption>Un informe hecho por la app, con mediciones y direcciones simuladas. En el tuyo, lee primero la fila del router y la del destino.</figcaption></figure>
+<!--mtr-video:start--><section class="example" id="mtr-video-tutorial" aria-labelledby="mtr-video-heading"><h2 id="mtr-video-heading">Cómo leer un resultado MTR</h2><p lang="en">How to Read MTR Results on Windows | Packet Loss Explained</p><p>Compara un salto intermedio con el destino antes de atribuirle la pérdida de paquetes.</p><p>Audio en inglés · 2:22 · usa el ejemplo integrado</p><p><a href="https://www.youtube.com/watch?v=5IEcPIedL2I">Ver en YouTube</a></p><p lang="en">One Hop Shows Packet Loss. Is It Really a Problem?</p><p><a href="https://www.youtube.com/shorts/L8fN2w5TXWQ">Ver el Short</a> · <a href="https://www.facebook.com/reel/1128060556600411">Ver el vídeo en Facebook</a></p></section><!--mtr-video:end-->
 <h2 id="checks">Hacer el informe</h2>
 <ol><li>En AdeeboMeter para Windows, abre <strong>Herramientas</strong> y busca <strong>Informe para mi proveedor</strong>.</li><li>Escribe la dirección del servicio que falla o elige un juego que hayas añadido. Ejecútalo 1, 2 o 5 minutos mientras ocurre el problema.</li><li>Si puedes, repítelo con cable y una vez más cuando todo vaya bien. Revisa el informe antes de adjuntarlo a tu ticket.</li></ol>
 <h2 id="readings">Cómo leerlo</h2>

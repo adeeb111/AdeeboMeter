@@ -3,7 +3,7 @@
   // Live results and lesson progress are rendered after the initial page loads.
   var originals = new WeakMap();
   var attributes = new WeakMap();
-  var watched = ["placeholder", "aria-label"];
+  var watched = ["placeholder", "aria-label", "alt", "title"];
   var root;
   var originalTitle;
   var observer;
@@ -44,7 +44,7 @@
       else originals.delete(node);
       if (node.data !== rendered) node.data = rendered;
     }
-    root.querySelectorAll("[placeholder], [aria-label]").forEach(function (el) {
+    root.querySelectorAll("[placeholder], [aria-label], [alt], [title]").forEach(function (el) {
       var map = attributes.get(el) || {};
       watched.forEach(function (key) {
         var value = el.getAttribute(key);

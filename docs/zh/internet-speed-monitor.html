@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/internet-speed-monitor.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windows的免费网速监控器| AdeeboMeter</title>
+<meta name="description" content="用 AdeeboMeter 查看 Windows 实时下载与上传速度，检查流量用量，并通过本地历史回放连接变慢的时刻。">
+<link rel="canonical" href="https://adeebometer.com/zh/internet-speed-monitor.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AdeeboMeter">
+<meta property="og:url" content="https://adeebometer.com/zh/internet-speed-monitor.html">
+<meta property="og:title" content="Windows的免费网速监控器| AdeeboMeter">
+<meta property="og:description" content="仅看速度无法解释通话故障。一起观察速度和延迟，上传开始就延迟升高，说明线路已满载，而非损坏。">
+<meta property="og:image" content="https://adeebometer.com/media/trailer-poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="AdeeboMeter&#x27;s Windows overview with PC and network readings">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/internet-speed-monitor.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/internet-speed-monitor.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/internet-speed-monitor.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/internet-speed-monitor.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/internet-speed-monitor.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/internet-speed-monitor.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/internet-speed-monitor.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/internet-speed-monitor.html">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>Windows的免费网速监控器</h1>
+<p class="dek">仅看速度无法解释通话故障。一起观察速度和延迟，上传开始就延迟升高，说明线路已满载，而非损坏。</p>
+<ul class="meta"><li>需要：一个上传任务</li><li>约 10 分钟</li><li>阅读约 4 min</li></ul>
+<figure class="path-fig">
+<ol class="path" aria-label="本示例中延迟累积的位置"><li class="ok">电脑<small>空闲</small></li><li class="ok">Wi-Fi<small>正常</small></li><li class="warn">路由器<small>队列填满</small></li><li class="warn">运营商<small>延迟升高</small></li><li>远端</li></ol>
+<figcaption>大量上传填满路由器队列，其他数据包都要排队。暂停上传后，延迟便会下降。</figcaption>
+</figure>
+<h2 id="checks">运行检查</h2>
+<ol><li>开始前查看实时速度，了解空闲时的状态。</li><li>触发问题并记下时间，同时观察上传、下载、到路由器和到互联网的延迟。</li><li>在不会影响工作的前提下暂停其他大流量传输，再测一次，比较两次结果。</li></ol>
+<h2 id="readings">如何理解结果</h2>
+<ul class="next-checks">
+  <li><strong>0 Mb/s 空闲时</strong><span>正常，请开始需要测量的活动。</span></li>
+  <li><strong>上传时延迟突增</strong><span>线路已满载，暂停上传后重测。</span></li>
+  <li><strong>流量很少，延迟仍突增</strong><span>比较路由器与外网延迟，找出起点。</span></li>
+  <li><strong>一次下载很慢</strong><span>换个来源测试，可能是该服务器的问题。</span></li>
+</ul>
+<aside class="example" aria-labelledby="example"><h2 id="example">示例</h2><p>大型备份上传时通话就断音。记下时间，暂停备份后重新通话。若延迟恢复且规律重复，这条线索比单次测速更有用。</p></aside>
+<details class="guide-detail"><summary>实时速度、测速和流量用量是三种不同数值</summary>
+<p>实时速度表示当前传输速率，单位 Mb/s。测速衡量线路到某台测试服务器的容量。流量用量是累计数据，单位 MB 或 GB。排队会增加延迟，因此即使线路仍传输大量数据，通话也可能卡顿。更多内容见 <a href="/zh/learn/speed-vs-delay.html">速度与延迟</a>.</p>
+</details>
+<aside class="summary" aria-labelledby="takeaway"><h2 id="takeaway">保留什么</h2><p>记录时间、正在传输什么，以及延迟变化发生在路由器还是更远处。</p></aside>
+<p>开启历史后，AdeeboMeter 的时光机可回放过去几天中的任意一分钟。若多个服务同时卡住， <a href="/zh/wifi-or-isp.html">比较 Wi-Fi 与网线</a>.</p>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">速度和延迟，就在屏幕角落</h2><p>速度小组件显示下载、上传和最近一分钟图表，延迟升高时立即说明，让你看到是哪次上传影响了通话。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">下载 Windows - 免费</a><p class="sc-note">Windows 10 和 11 · 无需管理员权限 · 个人信息不离开本机</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-speed-ok.png" width="264" height="216" alt=""><img src="/img/widgets/dark-data-ok.png" width="264" height="208" alt=""></div>
+</section>
+</main>
+</body>
+</html>

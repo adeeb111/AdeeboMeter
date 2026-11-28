@@ -615,7 +615,7 @@ Crowding on your channel	আপনার চ্যানেলে ভিড়
 filled = strongest on your channel that day · ring = on your channel · dot = heard here	ভরা বৃত্ত = সেদিন আপনার চ্যানেলে সবচেয়ে জোরালো · বলয় = আপনার চ্যানেলে · বিন্দু = এখানে পাওয়া গেছে
 Journey	যাত্রা
 What did Windows Update break?	Windows Update কী বদলে সমস্যা করেছে?
-Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন পরীক্ষা। পেছনে, আপনার গেমগুলোর সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময়, প্রতি সেকেন্ডে 16টি পর্যন্ত সার্ভার।
+Checks close together. In the background, your games' best regions every 10 s (5 servers); while you play, up to 16 servers every second.	ঘন ঘন চেক। ব্যাকগ্রাউন্ডে গেমের সেরা অঞ্চল প্রতি 10 সেকেন্ডে (5টি সার্ভার); খেলার সময় সর্বোচ্চ 16টি সার্ভার প্রতি সেকেন্ডে।
 By goal	লক্ষ্য অনুযায়ী
 Everything	সবকিছু
 Games	গেম
@@ -936,7 +936,7 @@ HMAC-SHA256 only runs one way: seeing what comes out tells you nothing about the
 She sends Ada's real card again, to get Ada listed twice.	Ada-র নাম দুবার তোলার জন্য সে একই আসল কার্ড আবার পাঠায়।
 One entry per card and per name: the check answers 'already in the Hall of Fame' and adds nothing.	প্রতি কার্ড ও নামে একটি এন্ট্রি: যাচাই জানাবে «হল অব ফেমে আগে থেকেই আছেন», নতুন কিছু যোগ হবে না।
 She sends a card that claims 2,000 points.	সে 2,000 পয়েন্ট দাবি করা কার্ড পাঠায়।
-There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	মোটে প্রায় 1000 পয়েন্ট পাওয়া সম্ভব। অসম্ভব মোট দেখলেই কোড যাচাইয়ের আগেই ফিরিয়ে দেওয়া হয়।
+There are only about 1,000 points to earn in all. An impossible total is turned away before the code is even checked.	সব মিলিয়ে প্রায় 1,000 পয়েন্ট পাওয়া যায়। অসম্ভব মোট পয়েন্ট হলে কোড যাচাইয়ের আগেই বাতিল হয়।
 She types <script>alert(1)</script> as her name, hoping the website runs it.	ওয়েবসাইট কোড চালাবে ভেবে সে নাম হিসেবে <script>alert(1)</script> লেখে।
 Names are cleaned to letters, digits and a few marks before anything else, and the page shows every field as plain text - never as code.	আগেই নাম থেকে অক্ষর, সংখ্যা ও অনুমোদিত চিহ্ন ছাড়া সব বাদ দেওয়া হয়। পাতা প্রতিটি ঘর সাধারণ লেখা হিসেবে দেখায়, কখনো কোড হিসেবে নয়।
 She edits the points file on her own PC to 500, then makes a card the normal way.	সে নিজের পিসির পয়েন্ট ফাইল বদলে 500 করে, তারপর স্বাভাবিকভাবে কার্ড বানায়।
@@ -4102,7 +4102,7 @@ Restart	রিস্টার্ট
 3 months	3 মাস
 3 months:	3 মাস:
 A Friday evening summary in the corner	শুক্রবার সন্ধ্যায় কোণে একটি সারাংশ
-A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	পরিবর্তন মানে কানাডীয় ডলারে ওই মুদ্রার দাম কতটা নড়েছে। চার্ট দেখতে একটি সারিতে ক্লিক করুন।
+A change is how much that currency's price in Canadian dollars moved. Click a row to chart it.	পরিবর্তন মানে কানাডীয় ডলারে ওই মুদ্রার দাম কতটা বেড়েছে বা কমেছে। গ্রাফ দেখতে একটি সারিতে ক্লিক করুন।
 A check is already running - its report opens here when it's done.	একটি পরীক্ষা আগেই চলছে—শেষ হলে তার রিপোর্ট এখানে খুলবে।
 A month ago	এক মাস আগে
 A web page doesn't list its qualities. Paste the stream's own address for this table.	ওয়েব পেজ তার মান (কোয়ালিটি) জানায় না। এই টেবিলের জন্য স্ট্রিমের নিজের ঠিকানা পেস্ট করুন।
@@ -4120,9 +4120,9 @@ All closed now - here is the next trading day, from	এখন সব বন্�
 All in One Place	সব এক জায়গায়
 All world markets	বিশ্বের সব বাজার
 Amount	পরিমাণ
-An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	এটি একটি সূচক, প্রতি ব্যারেল বা আউন্সের দাম নয়: কানাডার একদল রপ্তানি কোন দিকে আর কতটা নড়ছে, তা দেখায়।
+An index, not a price per barrel or ounce: it shows which way a group of Canadian exports moves, and how far.	এটি একটি সূচক, প্রতি ব্যারেল বা আউন্সের দাম নয়। কানাডার কিছু রপ্তানি পণ্যের দাম কোন দিকে কতটা বদলেছে তা দেখায়।
 Asking the devices on your network who they are (about 8 s)...	আপনার নেটওয়ার্কের ডিভাইসগুলোকে জিজ্ঞেস করছি তারা কে (প্রায় 8 সেকেন্ড)...
-At kick-off: dry, most likely.	খেলা শুরুর সময়: সম্ভবত শুকনো।
+At kick-off: dry, most likely.	খেলা শুরুর সময় সম্ভবত বৃষ্টি হবে না।
 At kick-off: forecast unknown.	খেলা শুরুর সময়: পূর্বাভাস জানা নেই।
 At kick-off: rain likely.	খেলা শুরুর সময়: বৃষ্টির সম্ভাবনা।
 At the Bank of Canada's rate. Banks and exchange shops add a margin.	ব্যাংক অব কানাডার হারে। ব্যাংক ও মানি এক্সচেঞ্জ একটি মার্জিন যোগ করে।
@@ -4158,9 +4158,9 @@ Day	দিন
 Delay is usually around	দেরি সাধারণত প্রায়
 Detected type:	শনাক্ত করা ধরন:
 Different words, no words on your phone, or you didn't just scan the code? Press Don't allow - it isn't your phone.	শব্দ মিলছে না, ফোনে কোনো শব্দ নেই, নাকি আপনি এইমাত্র কোড স্ক্যান করেননি? «অনুমতি দেবেন না» চাপুন—এটি আপনার ফোন নয়।
-Draw your network, see the path, break one thing.	আপনার নেটওয়ার্ক আঁকুন, পথ দেখুন, একটা জিনিস ভাঙুন।
+Draw your network, see the path, break one thing.	নেটওয়ার্ক আঁকুন, পথ দেখুন, একটি সংযোগে সমস্যা তৈরি করে পরীক্ষা করুন।
 Drops this week	এই সপ্তাহের ড্রপ
-Dry	শুকনো
+Dry	বৃষ্টির সম্ভাবনা নেই
 During the test (Mb/s, one point a second)	পরীক্ষার সময় (Mb/s, প্রতি সেকেন্ডে একটি বিন্দু)
 EXAMPLE - NO DATED EVENTS IN THIS RESULT	উদাহরণ—এই ফলে তারিখসহ কোনো ঘটনা নেই
 EXAMPLE - RUN IT FOR YOURS	উদাহরণ—নিজেরটা দেখতে চালান
@@ -4168,10 +4168,10 @@ Each line says what it's based on. With too little history, it says so instead o
 Edition	সংস্করণ
 Energy index	জ্বালানি সূচক
 Example shows a finished result first; Open runs it	«উদাহরণ» আগে একটি শেষ হওয়া ফল দেখায়; «খুলুন» সেটি চালায়
-Expect the usual slow stretch:	স্বাভাবিক ধীর সময়টা আশা করুন:
+Expect the usual slow stretch:	সাধারণত যে সময়ে ধীর হয়:
 Facts from this week's numbers, not a forecast.	এই সপ্তাহের সংখ্যা থেকে তথ্য, পূর্বাভাস নয়।
 Fair	মোটামুটি
-Feels like:	অনুভূত:
+Feels like:	অনুভূত তাপমাত্রা:
 Fewer	কম
 Fine	ভালো
 Follow a team...	একটি দল অনুসরণ করুন...
@@ -4187,7 +4187,7 @@ Got as far as:	যতদূর পৌঁছেছে:
 Group · what's in it	গ্রুপ · এতে কী আছে
 HLS (.m3u8), DASH (.mpd) or a web page · the link stays on this PC	HLS (.m3u8), DASH (.mpd) বা একটি ওয়েব পেজ · লিংকটি এই পিসিতেই থাকে
 Headlines · BBC Sport	শিরোনাম · BBC Sport
-Healthy	সুস্থ
+Healthy	ঠিক আছে
 High	বেশি
 History is off	ইতিহাস বন্ধ
 History is off, so there's no replay of this minute (Settings › General › History).	ইতিহাস বন্ধ, তাই এই মিনিটের রিপ্লে নেই (সেটিংস › সাধারণ › ইতিহাস)।
@@ -4217,9 +4217,9 @@ Let remembered phones reconnect while AdeeboMeter runs	AdeeboMeter চলার 
 Live scores: add my key...	লাইভ স্কোর: আমার কী যোগ করুন...
 Live:	লাইভ:
 Look at the phone in your own hand: does it show the same words?	আপনার হাতের ফোনটি দেখুন: সেখানে কি একই শব্দ দেখাচ্ছে?
-Loonie Firms	লুনি শক্ত হলো
-Loonie Holds Steady	লুনি স্থির আছে
-Loonie Slips	লুনি পিছিয়ে পড়ল
+Loonie Firms	কানাডীয় ডলার শক্তিশালী হয়েছে
+Loonie Holds Steady	কানাডীয় ডলার স্থিতিশীল
+Loonie Slips	কানাডীয় ডলার দুর্বল হয়েছে
 Loonie {0} {1:0.0}% against the US dollar this week.	এই সপ্তাহে মার্কিন ডলারের বিপরীতে লুনি {0} {1:0.0}%।
 Loss, recent	প্যাকেট হারানো, সাম্প্রতিক
 Low	কম
@@ -4244,36 +4244,36 @@ New York	নিউ ইয়র্ক
 New York and Toronto	নিউ ইয়র্ক ও টরন্টো
 Next 12 hours	পরের 12 ঘণ্টা
 Next game	পরের খেলা
-Next open:	পরের খোলা:
+Next open:	আবার খুলবে:
 Next:	পরে:
 No IPv4 home range to compare on this PC's adapters.	এই পিসির অ্যাডাপ্টারে তুলনা করার মতো বাসার IPv4 রেঞ্জ নেই।
 No closings in the next six weeks.	পরের ছয় সপ্তাহে কোনো ছুটি নেই।
 No drops at this hour	এই সময়ে কোনো ড্রপ নেই
 No drops in the last 7 days.	গত 7 দিনে কোনো ড্রপ নেই।
-No finished games in today's feeds.	আজকের ফিডে কোনো শেষ হওয়া খেলা নেই।
+No finished games in today's feeds.	আজকের ফিডে শেষ হওয়া কোনো ম্যাচ নেই।
 No game in today's feeds	আজকের ফিডে কোনো খেলা নেই
 No game today for your teams	আজ আপনার দলগুলোর খেলা নেই
 No history yet for this day and hour - ask again after a few weeks.	এই দিন ও ঘণ্টার ইতিহাস এখনো নেই—কয়েক সপ্তাহ পর আবার জিজ্ঞেস করুন।
-No hour stands out: your line is about as quick all day.	কোনো ঘণ্টা আলাদা নয়: আপনার লাইন সারা দিন প্রায় একই রকম দ্রুত।
+No hour stands out: your line is about as quick all day.	দিনের কোনো সময় আলাদা নয়: সংযোগের গতি সারাদিন প্রায় একই থাকে।
 No rain expected in the next 24 hours.	পরের 24 ঘণ্টায় বৃষ্টির সম্ভাবনা নেই।
-No upcoming games in today's feeds.	আজকের ফিডে সামনে কোনো খেলা নেই।
+No upcoming games in today's feeds.	আজকের ফিডে আসন্ন কোনো ম্যাচ নেই।
 None yet: names or short codes work - Leafs, TOR, Arsenal, India.	এখনো নেই: নাম বা ছোট কোড দুটোই চলে—Leafs, TOR, Arsenal, India।
 Not enough history yet to show a pattern - ask again in a few days.	প্যাটার্ন দেখানোর মতো ইতিহাস এখনো নেই—কয়েক দিন পর আবার জিজ্ঞেস করুন।
 Not enough history yet to spot a pattern. Ask again in	প্যাটার্ন বোঝার মতো ইতিহাস এখনো নেই। আবার জিজ্ঞেস করুন
 Nothing live right now.	এখন কিছু লাইভ নেই।
-Nothing planned - follow a team or turn on the markets numbers.	কিছু পরিকল্পনা নেই—একটি দল অনুসরণ করুন বা বাজারের সংখ্যা চালু করুন।
+Nothing planned - follow a team or turn on the markets numbers.	আপাতত কিছু দেখানোর নেই। একটি দল ফলো করুন বা বাজারের তথ্য চালু করুন।
 Nothing running hot right now.	এখন কিছুই অতিরিক্ত চাপে নেই।
 Nothing to change: it should play as well as this stream allows.	কিছু বদলানোর নেই: এই স্ট্রিম যতটা ভালো চলতে পারে, ততটাই চলবে।
 Nothing to fix: every check came back fine.	ঠিক করার কিছু নেই: সব পরীক্ষা ঠিক এসেছে।
 Now	এখন
 Numbers only - AdeeboMeter never tells you what to buy or sell.	শুধু সংখ্যা—AdeeboMeter কখনো বলে না কী কিনবেন বা বেচবেন।
-OUTLOOK  ·  NOW AND NEXT	আউটলুক  ·  এখন ও পরে
+OUTLOOK  ·  NOW AND NEXT	পূর্বাভাস  ·  এখন ও পরে
 One of the row buys this much of the column.	সারির একটি একক দিয়ে কলামের এতটা কেনা যায়।
 Online checks are turned off by your IT team.	আপনার আইটি টিম অনলাইন পরীক্ষা বন্ধ রেখেছে।
 Only my teams	শুধু আমার দল
 Open-Meteo forecast	Open-Meteo পূর্বাভাস
 Opened from	যেখান থেকে খোলা
-Outlook for kick-off	খেলা শুরুর আউটলুক
+Outlook for kick-off	খেলা শুরুর পূর্বাভাস
 PC busy	পিসি ব্যস্ত
 PINNED	পিন করা
 PINNED MOMENTS	পিন করা মুহূর্ত
@@ -4305,14 +4305,14 @@ See all problems	সব সমস্যা দেখুন
 Server:	সার্ভার:
 Service board	সার্ভিস বোর্ড
 Show my path	আমার পথ দেখান
-Show my path in the Lab  ›	Lab-এ আমার পথ দেখান  ›
+Show my path in the Lab  ›	ল্যাবে আমার সংযোগের পথ দেখান  ›
 Some	কিছু
 Some drops	কিছু ড্রপ
 Some weeks lost packets at this hour	কোনো কোনো সপ্তাহে এই সময়ে প্যাকেট হারিয়েছে
 Something else? Type it in the search box (Ctrl+K).	অন্য কিছু? সার্চ বক্সে লিখুন (Ctrl+K)।
 Something is working the PC hard - see What's running.	কিছু একটা পিসিকে খুব খাটাচ্ছে—«কী চলছে» দেখুন।
 Sounds like	শুনে মনে হচ্ছে
-Stable	স্থির
+Stable	স্থিতিশীল
 Start with ($)	শুরুতে ($)
 Starts in:	শুরু হবে:
 Statistics Canada	Statistics Canada
@@ -4336,8 +4336,8 @@ The Week in Numbers	সপ্তাহটি সংখ্যায়
 The forecast is on its way...	পূর্বাভাস আসছে...
 The groups arrive from the Bank of Canada in a moment.	গ্রুপগুলো এক মুহূর্তে ব্যাংক অব কানাডা থেকে আসছে।
 The history arrives from the Bank of Canada in a moment.	ইতিহাস এক মুহূর্তে ব্যাংক অব কানাডা থেকে আসছে।
-The next day, in short	পরের দিন, সংক্ষেপে
-The numbers arrive after the first fetch.	প্রথমবার আনার পর সংখ্যা আসবে।
+The next day, in short	আগামী দিনের সংক্ষিপ্ত চিত্র
+The numbers arrive after the first fetch.	প্রথমবার তথ্য আনার পর সংখ্যাগুলো দেখাবে।
 The weather, your network and this PC: how things are now, and what the last few days say about the next one.	আবহাওয়া, আপনার নেটওয়ার্ক আর এই পিসি: এখন কেমন আছে, আর গত কয়েক দিন পরের দিন সম্পর্কে কী বলে।
 Their next game becomes this page's lead, with everything you need to watch it.	তাদের পরের খেলাই হবে এই পেজের প্রধান খবর, দেখার জন্য যা লাগে সবসহ।
 Their next game shows here as soon as it's in today's fixtures.	আজকের সূচিতে এলেই তাদের পরের খেলা এখানে দেখাবে।
@@ -4353,9 +4353,9 @@ Turn on Weather in Settings to see the weather for your place at kick-off.	খ�
 Turn on scores to see your teams' next game here.	আপনার দলগুলোর পরের খেলা এখানে দেখতে স্কোর চালু করুন।
 Type the new name first.	আগে নতুন নামটি লিখুন।
 Unpin	পিন সরান
-Unsteady	অস্থির
+Unsteady	অস্থিতিশীল
 Update:	আপডেট:
-Verdict	রায়
+Verdict	ফলাফল
 Video came in at:	ভিডিও এসেছে:
 WHAT'S GOING ON?  ·  TAP WHAT YOU SEE	কী হচ্ছে?  ·  যা দেখছেন তাতে চাপুন
 Watch out	সাবধান
@@ -4363,7 +4363,7 @@ Weather is off: your IT team turned online lookups off.	আবহাওয়া
 Week	সপ্তাহ
 Weighs on Commodities	পণ্যবাজারে চাপ ফেলছে
 What $100 buys now	এখন $100-এ যা কেনা যায়
-When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	জ্বালানির দাম বাড়লে কানাডীয় ডলারও প্রায়ই সঙ্গে বাড়ে। একই সময়ের দুটোই, শুরুতে 100 ধরে।
+When energy prices rise, the Canadian dollar often rises with them. Both over the same time, set to 100 at the start.	জ্বালানির দাম বাড়লে কানাডীয় ডলারও প্রায়ই বাড়ে। একই সময়ের দুটি গ্রাফ, দুটির শুরুর মানই 100 ধরা হয়েছে।
 When your internet is slowest	কখন আপনার ইন্টারনেট সবচেয়ে ধীর
 Which currency?	কোন মুদ্রা?
 Wind	বাতাস
@@ -4371,7 +4371,7 @@ Wind:	বাতাস:
 Windows trusts it	Windows এটিকে বিশ্বাস করে
 Windows' default: incoming blocked	Windows-এর ডিফল্ট: আসা ট্রাফিক বন্ধ
 Windows, Apple and Linux-style names	Windows, Apple ও Linux ধাঁচের নাম
-Would buffer	বাফার করবে
+Would buffer	মাঝে মাঝে থেমে লোড হবে
 YOUR WEEK IN TWO MINUTES	দুই মিনিটে আপনার সপ্তাহ
 Yearly growth (%)	বার্ষিক বৃদ্ধি (%)
 Years	বছর
@@ -4395,11 +4395,11 @@ a team you follow	আপনার অনুসরণ করা একটি দ�
 a trip, or money sent home	ভ্রমণ, বা দেশে পাঠানো টাকা
 a web server	একটি ওয়েব সার্ভার
 about 30 seconds	প্রায় 30 সেকেন্ড
-about 30 seconds · it downloads the real video to see what your line can carry	প্রায় 30 সেকেন্ড · আপনার লাইন কতটা বইতে পারে দেখতে আসল ভিডিও ডাউনলোড করে
+about 30 seconds · it downloads the real video to see what your line can carry	প্রায় 30 সেকেন্ড · সংযোগে কতটা ডেটা চলতে পারে, তা দেখতে আসল ভিডিও ডাউনলোড করে
 after (run it again)	পরে (আবার চালান)
 and by LLMNR / mDNS?	আর LLMNR / mDNS দিয়ে?
 and more on the Service board and in the Certificate calendar	আরও আছে সার্ভিস বোর্ড ও সার্টিফিকেটের ক্যালেন্ডারে
-any page, please - what time do you have?	যেকোনো পেজ, দয়া করে—আপনার কাছে কয়টা বাজে?
+any page, please - what time do you have?	যেকোনো একটি পেজ দিন—আপনার সার্ভারে এখন কয়টা বাজে?
 around	প্রায়
 arrived back here	এখানে ফিরে এসেছে
 as	হিসেবে
@@ -4590,7 +4590,7 @@ Line vs trading	লাইন বনাম ট্রেডিং
 A slow moment while you traded? The Time machine shows what your line did then.	ট্রেডের সময় ধীর মুহূর্ত? টাইম মেশিন দেখায় তখন আপনার লাইন কী করছিল।
 Lag spikes? Find out whose fault it is - your Wi-Fi, your line or the game's server.	ল্যাগ স্পাইক? জানুন দোষ কার—আপনার Wi-Fi, আপনার লাইন, নাকি গেমের সার্ভারের।
 Why it lags	কেন ল্যাগ হয়
-Before a ranked match: one check of Wi-Fi, background downloads and the line.	র‍্যাঙ্কড ম্যাচের আগে: Wi-Fi, পেছনের ডাউনলোড আর লাইনের এক পরীক্ষা।
+Before a ranked match: one check of Wi-Fi, background downloads and the line.	র‍্যাঙ্কড ম্যাচের আগে Wi-Fi, ব্যাকগ্রাউন্ড ডাউনলোড ও সংযোগ একবার চেক করুন।
 Ready to play?	খেলার জন্য তৈরি?
 Would a ping booster (GPN) actually help you? Measure it instead of guessing.	পিং বুস্টার (GPN) কি সত্যিই সাহায্য করবে? আন্দাজ না করে মেপে দেখুন।
 NO CONNECTION - check Home first	সংযোগ নেই—আগে হোম দেখুন
@@ -4653,7 +4653,7 @@ None ending within 30 days.	30 দিনের মধ্যে কোনোট�
 This PC's locks, your network and sites.	এই পিসির তালা, আপনার নেটওয়ার্ক আর সাইট।
 Your traffic layer by layer, real packets.	আপনার ট্রাফিক স্তর ধরে ধরে, আসল প্যাকেট।
 Protocols, Windows inside, every term.	প্রোটোকল, Windows-এর ভেতর, প্রতিটি শব্দ।
-Draw a network, break one thing. 	একটি নেটওয়ার্ক আঁকুন, একটা জিনিস ভাঙুন। 
+Draw a network, break one thing. 	নেটওয়ার্ক আঁকুন, একটি সংযোগে সমস্যা তৈরি করে দেখুন। 
  faults seen.	 টি ত্রুটি দেখা হয়েছে।
 Game servers live, lag spikes and whose fault.	গেম সার্ভার লাইভ, ল্যাগ স্পাইক আর দোষ কার।
 Is the stream ready - and why it stalled.	স্ট্রিম তৈরি কিনা—আর কেন আটকে গেল।
@@ -4719,7 +4719,7 @@ Calculators	ক্যালকুলেটর
 JITTER	জিটার
 LOSS	লস
 LINK	লিংক
-BACKGROUND	পেছনে
+BACKGROUND	ব্যাকগ্রাউন্ড
 updating	আপডেট হচ্ছে
 busy line	লাইন ব্যস্ত
 WAIT - 	অপেক্ষা করুন - 
@@ -5334,7 +5334,7 @@ I keep disconnecting	বারবার সংযোগ চলে যায়
 Reads today's drops, roams and changes and what the signal was doing just before.	আজকের বিচ্ছিন্নতা, রোমিং ও পরিবর্তন পড়ে, আর ঠিক তার আগে সিগন্যাল কী করছিল দেখে।
 Works at home, not on VPN or at work	বাসায় চলে, VPN-এ বা অফিসে চলে না
 Overlapping networks, proxy, the VPN's name rules, the MTU on the way, and the port itself.	একে অপরের ওপর পড়া নেটওয়ার্ক, প্রক্সি, VPN-এর নামের নিয়ম, পথের MTU আর পোর্ট নিজেই।
-Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপ, ড্রাইভার, জমে যাওয়া অ্যাপ আর ব্যাকগ্রাউন্ডের কাজ - এই ক্রমে।
+Processor, memory pressure, disk, heat, drivers, frozen apps and background jobs - in that order.	প্রসেসর, মেমরির চাপ, ডিস্ক, তাপমাত্রা, ড্রাইভার, আটকে থাকা অ্যাপ ও ব্যাকগ্রাউন্ড কাজ—এই ক্রমে।
 Network (SSID)	নেটওয়ার্ক (SSID)
 Access point (BSSID)	অ্যাক্সেস পয়েন্ট (BSSID)
 Band	ব্যান্ড
@@ -5438,7 +5438,7 @@ send your weather place to a different server: 	আপনার আবহাও�
 spikes	স্পাইক
 the TCP port must be 1 - 65535.	TCP পোর্ট 1 থেকে 65535 হতে হবে।
 the scores couldn't be reached - it tries again in 5 minutes	স্কোর পাওয়া যায়নি - 5 মিনিট পরে আবার চেষ্টা করবে
-turn the internet check on (a ping to 1.1.1.1 in the background)	ইন্টারনেট পরীক্ষা চালু করা (পটভূমিতে 1.1.1.1-এ পিং)
+turn the internet check on (a ping to 1.1.1.1 in the background)	ইন্টারনেট চেক চালু করুন (ব্যাকগ্রাউন্ডে 1.1.1.1-এ একটি পিং)
 waiting	অপেক্ষায়
 Market closed - the watch starts at 9:30 ET	বাজার বন্ধ - নজরদারি শুরু হবে 9:30 ET-এ
 Live watch is off	লাইভ নজরদারি বন্ধ

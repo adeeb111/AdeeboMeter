@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr-CA" data-language-route="/adeebolab-guide.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur réseau gratuit dans le navigateur : AdeeboLab | AdeeboMeter</title>
+<meta name="description" content="Dessinez un réseau dans AdeeboLab, choisissez une panne simulée et suivez un paquet pas à pas. Un simulateur réseau gratuit dans le navigateur, sans trafic réel envoyé.">
+<link rel="canonical" href="https://adeebometer.com/fr/adeebolab-guide.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Simulateur réseau gratuit dans le navigateur : AdeeboLab | AdeeboMeter">
+<meta property="og:description" content="Dessinez un réseau dans AdeeboLab, choisissez une panne simulée et suivez un paquet pas à pas. Un simulateur réseau gratuit dans le navigateur, sans trafic réel envoyé.">
+<meta property="og:url" content="https://adeebometer.com/fr/adeebolab-guide.html">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="fr_CA">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/adeebolab-guide.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/adeebolab-guide.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/adeebolab-guide.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/adeebolab-guide.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/adeebolab-guide.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/adeebolab-guide.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/adeebolab-guide.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/adeebolab-guide.html">
+<script type="application/ld+json" id="guide-faq-schema">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://adeebometer.com/fr/adeebolab-guide.html#faq","url":"https://adeebometer.com/fr/adeebolab-guide.html","inLanguage":"fr-CA","mainEntity":[{"@type":"Question","name":"AdeeboLab teste-t-il ma connexion réelle ?","acceptedAnswer":{"@type":"Answer","text":"Non. AdeeboLab simule des paquets sur un schéma. Il n’envoie aucun trafic réseau réel. Utilisez AdeeboMeter pour mesurer la connexion de votre PC Windows."}},{"@type":"Question","name":"Faut-il installer AdeeboLab ?","acceptedAnswer":{"@type":"Answer","text":"Non. Ouvrez le simulateur dans votre navigateur. Ses libellés et ses explications sont actuellement en anglais."}}]}</script>
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/fr/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<h1>Provoquez une panne. Voyez où ça bloque.</h1>
+<p class="dek">Essayez une panne sur un dessin avant d’examiner une vraie connexion. AdeeboLab simule le trajet ; il ne mesure pas votre réseau.</p>
+<ul class="meta"><li>Dans votre navigateur</li><li>Sans installation</li><li>2 min de lecture</li></ul>
+<figure class="path-fig"><ol class="path" aria-label="Un trajet de paquet simulé"><li class="bad">PC<small>mauvaise passerelle</small></li><li>Wi-Fi<small>liaison</small></li><li>Routeur<small>non atteint</small></li><li>Fournisseur<small>non atteint</small></li><li>Autre bout<small>non atteint</small></li></ol><figcaption>Une illustration pédagogique : dans cet exemple, la mauvaise passerelle bloque le paquet avant le fournisseur. Ce n’est pas une mesure de votre connexion.</figcaption></figure>
+<h2>Essayez une expérience de deux minutes</h2><ol><li>Ouvrez AdeeboLab et choisissez l’exemple Gamer. L’équipement du fournisseur est illustré, pas détecté.</li><li>Choisissez Break it, puis Wrong gateway. Gardez le même appareil de départ et la même destination.</li><li>Appuyez sur Play. Utilisez Step ou Step back pour suivre l’explication à votre rythme.</li><li>Essayez ensuite DNS times out. Observez la différence entre un échec DNS et un paquet qui ne peut pas quitter le PC.</li></ol>
+<p>Le simulateur utilise actuellement des libellés et des explications en anglais.</p>
+<p><a class="guide-cta" href="/lab.html">Ouvrir le simulateur réseau</a></p>
+<h2>Ce que montre l’expérience</h2><ul class="next-checks"><li><strong>Le paquet ne peut pas quitter le PC</strong><span>Dans cette simulation, commencez par le trajet local et les paramètres de passerelle.</span></li><li><strong>Les noms ne répondent plus</strong><span>Le DNS peut échouer alors que d’autres parties de la connexion fonctionnent encore.</span></li><li><strong>La vraie connexion est lente</strong><span>Utilisez une vraie mesure. Une panne simulée ne diagnostique ni votre PC, ni votre Wi-Fi, ni votre fournisseur.</span></li></ul>
+<details class="guide-detail" data-guide-faq><summary>AdeeboLab teste-t-il ma connexion réelle ?</summary><p>Non. AdeeboLab simule des paquets sur un schéma. Il n’envoie aucun trafic réseau réel. Utilisez AdeeboMeter pour mesurer la connexion de votre PC Windows.</p></details>
+<details class="guide-detail" data-guide-faq><summary>Faut-il installer AdeeboLab ?</summary><p>Non. Ouvrez le simulateur dans votre navigateur. Ses libellés et ses explications sont actuellement en anglais.</p></details>
+<aside class="summary"><h2>Un changement. Une explication.</h2><p>Gardez le même dessin et les mêmes extrémités en changeant la panne. La couche en échec devient plus facile à reconnaître.</p></aside>
+<p><a href="/fr/adeeboshell.html">Faire une vraie vérification avec AdeeboShell</a> <a href="/fr/wifi-or-isp.html">ou comparer le Wi-Fi avec un câble</a>.</p>
+<section class="end"><h2>Comprenez la panne. Puis vérifiez en vrai.</h2><p>Utilisez AdeeboLab pour comprendre et AdeeboMeter pour mesurer sur votre PC Windows.</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/download/v1.1.6/AdeeboMeter-1.1.6-win64.zip">Télécharger pour Windows, gratuitement</a></section>
+</main>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" data-language-route="/learn/boot-chain.html" data-language-variants="en bn fr es ar" dir="rtl">
+<html lang="ar" dir="rtl" data-language-route="/learn/boot-chain.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -63,20 +63,22 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"How Windows starts, from power to desktop","description":"Each one starts the next - and if certain ones die, Windows dies with them. Power on to desktop: firmware, Windows' loader, the kernel, then the core…","url":"https://adeebometer.com/learn/boot-chain.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"Your Windows PC","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/boot-chain.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"كيف يبدأ Windows، من الطاقة إلى سطح المكتب","description":"Each one starts the next - and if certain ones die, Windows dies with them. Power on to desktop: firmware, Windows' loader, the kernel, then the core…","url":"https://adeebometer.com/ar/learn/boot-chain.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"ar","isAccessibleForFree":true,"about":"جهاز الكمبيوتر الخاص بك Windows","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/ar/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/boot-chain.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/boot-chain.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/boot-chain.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/boot-chain.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/boot-chain.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/boot-chain.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/learn/boot-chain.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/boot-chain.html">
-<meta property="og:locale" content="ar_AR">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body data-sec="learn">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
-<main><a class="chip" href="/ar/learn/#windows">جهاز الكمبيوتر الخاص بك Windows</a>
+<main>
+<a class="chip" href="/ar/learn/#windows">جهاز الكمبيوتر الخاص بك Windows</a>
 <h1>كيف يبدأ Windows، من الطاقة إلى سطح المكتب</h1>
 <p class="tag">كل واحد يبدأ التالي - وإذا مات بعضهم، يموت Windows معهم.</p>
 <div class="card one"><p>التشغيل على سطح المكتب: البرمجيات الثابتة، محمول Windows، النواة، ثم العمليات الأساسية في ترتيب.</p></div>
@@ -97,7 +99,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>إنهم فيروسات</button>
 <button>إنهم يديرون الإنترنت</button>
 <p class="say" aria-live="polite"></p></div>
-<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/games.html">لعب الألعاب</a></p>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/ar/games.html">لعب الألعاب</a></p>
 <h2>المزيد في Windows</h2>
 <div class="ui-rows"><a class="ui-row" href="/ar/learn/svchost.html" data-id="svchost"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>svchost.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/lsass.html" data-id="lsass"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>lsass.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/csrss.html" data-id="csrss"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>csrss.exe</b><small>Windows</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/wininit.html" data-id="wininit"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="monitor"></span><span class="t"><b>wininit.exe</b><small>Windows</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="/ar/learn/nsa.html">← 5G NSA مقابل SA، ولماذا جهاز التوجيه الخاص بك يقول 5g ولكن يتصرف مثل 4 G</a><a href="/ar/learn/svchost.html">svchost.exe →</a></div>

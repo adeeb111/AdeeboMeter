@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hans" data-language-route="/blog/" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>故障排除博客 | AdeeboMeter</title>
+<meta name="description" content="实用 Windows 排查指南，涵盖网络变慢、Wi-Fi 断线、丢包和电脑变慢。">
+<link rel="canonical" href="https://adeebometer.com/zh/blog/">
+<meta property="og:title" content="故障排除博客 | AdeeboMeter">
+<meta property="og:description" content="变慢通常始于五处之一：电脑、Wi-Fi、路由器、运营商或远端。每篇指南用几分钟的测试检查其中一处。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/zh/blog/">
+<meta property="og:image" content="https://adeebometer.com/img/screenshot.png">
+<meta property="og:image:width" content="2200">
+<meta property="og:image:height" content="1240">
+<meta property="og:image:alt" content="AdeeboMeter showing PC, Wi-Fi, router and internet readings">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+/* Like the app and the main page: nothing loaded from anywhere else. */
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+a{color:var(--blue);overflow-wrap:anywhere}
+h1{font-size:32px;line-height:1.2;margin:0 0 6px}
+h2{font-size:20px;margin:36px 0 8px}
+.date{color:var(--sub);margin:0 0 24px}
+.short{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 18px;margin:0 0 8px}
+.short p{margin:0}
+ul{padding-left:22px}
+li{margin:6px 0}
+code{font:14px Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:48px;color:var(--sub);font-size:14px}
+.hero p{font-size:18px;color:var(--sub);margin:0 0 20px}
+.shot{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(27,35,48,.10);margin:8px 0 28px;display:block}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card h3{margin:0 0 4px;font-size:17px}.card p{margin:0;color:var(--sub)}
+.cta{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:12px 22px;margin:24px 12px 0 0}
+.more{display:inline-block;margin-top:24px}
+.others{margin-top:40px;color:var(--sub)}
+@media (max-width:640px){.grid{grid-template-columns:1fr}h1{font-size:28px}}
+figure{margin:1.25em 0} figure img{display:block;width:100%;max-width:591px;height:auto;border:1px solid var(--line);border-radius:10px} figcaption{color:var(--sub);font-size:14px;margin-top:8px}
+</style>
+<link rel="stylesheet" href="/guide.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="zh_CN">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/blog/">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/blog/">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/blog/">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/blog/">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/blog/">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/blog/">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/blog/">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/blog/">
+<link rel="stylesheet" href="/blog-index.css">
+</head>
+<body>
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/zh/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main class="troubleshooting">
+<header class="blog-head">
+<h1>为什么慢？</h1>
+<p class="dek">变慢通常始于五处之一：电脑、Wi-Fi、路由器、运营商或远端。每篇指南用几分钟的测试检查其中一处。</p>
+</header>
+<ol class="posts">
+<li><a href="/zh/wifi-or-isp.html"><div><h2>是 Wi-Fi 还是运营商的问题？</h2><p>用网线重复相同操作。有线流畅则说明问题在无线链路，而不是套餐。</p><ul class="meta"><li>测试：Wi-Fi 与网线对比</li><li>阅读约 4 min</li></ul></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><rect x="50" y="65" width="74" height="48" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><rect x="385" y="65" width="74" height="48" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M166 95q85-90 172 0M195 110q56-57 114 0" fill="none" stroke="var(--blue)" stroke-width="5"/><circle cx="252" cy="126" r="7" fill="var(--ok)"/><path d="M125 147H385" fill="none" stroke="var(--ok)" stroke-width="4"/></svg></a></li>
+<li><a href="/zh/internet-speed-monitor.html"><div><h2>有人上传时，网络为什么会变慢？</h2><p>同时观察速度和延迟。上传一开始延迟就升高，说明线路满载，而非损坏。</p><ul class="meta"><li>测试：上传时的延迟</li><li>阅读约 4 min</li></ul></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><path d="M48 148H466" fill="none" stroke="var(--sub)" stroke-width="4"/><rect x="70" y="118" width="32" height="30" rx="4" fill="var(--ok)"/><rect x="132" y="113" width="32" height="35" rx="4" fill="var(--ok)"/><rect x="194" y="111" width="32" height="37" rx="4" fill="var(--ok)"/><rect x="256" y="55" width="32" height="93" rx="4" fill="var(--warn)"/><rect x="318" y="33" width="32" height="115" rx="4" fill="var(--bad)"/><rect x="380" y="63" width="32" height="85" rx="4" fill="var(--warn)"/></svg></a></li>
+<li><a href="/zh/pc-monitoring.html"><div><h2>为什么我的电脑速度很慢？</h2><p>找出整体卡住时仍持续繁忙的应用，并判断瓶颈在处理器、内存还是磁盘。</p><ul class="meta"><li>测试：实时查看最繁忙应用</li><li>阅读约 3 min</li></ul></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><rect x="170" y="35" width="145" height="120" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M150 50H170" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M315 50H335" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M150 76H170" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M315 76H335" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M150 102H170" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M315 102H335" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M150 128H170" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M315 128H335" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M192 120h16l14-35 16 45 20-65 15 55h20" fill="none" stroke="var(--warn)" stroke-width="4"/></svg></a></li>
+<li><a href="/zh/isp-report.html"><div><h2>如何向运营商说明丢包从哪里开始？</h2><p>生成两分钟报告，标出首个丢包位置，附到工单中。</p><ul class="meta"><li>测试：给运营商的报告</li><li>阅读约 4 min</li></ul></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><rect x="110" y="25" width="82" height="112" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M128 50H173" fill="none" stroke="var(--sub)" stroke-width="4"/><path d="M128 67H173" fill="none" stroke="var(--sub)" stroke-width="4"/><path d="M128 84H173" fill="none" stroke="var(--sub)" stroke-width="4"/><path d="M240 130h30l20-35 20 35 20-70 20 70h50" fill="none" stroke="var(--bad)" stroke-width="4"/></svg></a></li>
+<li><a href="/zh/adeeboshell.html"><div><h2>如何用键盘检查网络？</h2><p>先在 AdeeboShell 中运行 status，再探索内置工具，无需离开应用。</p><ul class="meta"><li>试一试：三条内置命令</li><li>阅读约 3 min</li></ul></div><div class="blog-command" aria-hidden="true"><code dir="ltr">status</code><code dir="ltr">ls /tools</code><code dir="ltr">help ping</code></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><rect x="70" y="28" width="370" height="130" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M70 54H440" fill="none" stroke="var(--line)" stroke-width="4"/><circle cx="87" cy="42" r="4" fill="var(--bad)"/><circle cx="102" cy="42" r="4" fill="var(--warn)"/><circle cx="117" cy="42" r="4" fill="var(--ok)"/><path d="m95 78 14 12-14 12m29 0h24" stroke="var(--ok)" stroke-width="4" fill="none"/><path d="M175 90H275" fill="none" stroke="var(--sub)" stroke-width="4"/><path d="M95 123H215" fill="none" stroke="var(--blue)" stroke-width="4"/><path d="M230 123H350" fill="none" stroke="var(--ok)" stroke-width="4"/></svg></a></li>
+<li><a href="/zh/adeebolab-guide.html"><div><h2>数据包为什么会卡住？</h2><p>在 AdeeboLab 中更改一项模拟故障，逐步跟踪数据包。</p><ul class="meta"><li>试一试：浏览器网络模拟</li><li>阅读约 2 分钟</li></ul></div><svg class="card-art" viewBox="0 0 510 185" aria-hidden="true" focusable="false"><rect x="42" y="57" width="85" height="58" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M127 86H235" fill="none" stroke="var(--ok)" stroke-width="4"/><rect x="235" y="62" width="68" height="48" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><path d="M303 86L405 86" fill="none" stroke="var(--bad)" stroke-width="4" stroke-dasharray="8 7"/><rect x="405" y="40" width="55" height="92" rx="8" fill="var(--soft)" stroke="var(--blue)" stroke-width="3"/><circle cx="180" cy="86" r="7" fill="var(--ok)"/><path d="m342 74 24 24m0-24-24 24" stroke="var(--bad)" stroke-width="4"/></svg></a></li>
+</ol>
+<section class="end showcase" aria-labelledby="sc-t">
+<div class="sc-copy"><h2 id="sc-t">相同五个环节，就在屏幕角落</h2><p>工作时 AdeeboMeter 持续监测。变慢时，小组件直接指出 Wi-Fi、路由器或运营商等环节及数值，无需先打开指南。</p><a class="btn" data-download href="https://github.com/adeeb111/AdeeboMeter/releases/latest">下载 Windows - 免费</a><p class="sc-note">Windows 10 和 11 · 无需管理员权限 · 个人信息不离开本机</p></div>
+<div class="sc-shots" aria-hidden="true"><img src="/img/widgets/dark-everyday-ok.png" width="264" height="222" alt=""><img src="/img/widgets/dark-sports-ok.png" width="264" height="194" alt=""><img src="/img/widgets/dark-markets-ok.png" width="264" height="190" alt=""></div>
+</section>
+<!--blog-resources:start--><section class="example" aria-labelledby="blog-resources"><h2 id="blog-resources">探索更多</h2><ul class="next-checks"><li><a href="/zh/gaming.html">游戏</a></li><li><a href="/zh/streaming.html">流媒体</a></li><li><a href="/zh/trading.html">交易</a></li><li><a href="/zh/isp-report.html">运营商报告</a></li><li><a href="/zh/hall-of-fame.html">名人堂</a></li><li><a href="/img/poster.png">海报</a></li></ul></section><!--blog-resources:end-->
+</main>
+</body>
+</html>

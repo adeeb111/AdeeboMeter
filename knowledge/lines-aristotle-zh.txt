@@ -1,0 +1,57 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|{addr}，你好。让我们先观察，再推理，后行动。
+app.open|每个网络都追求某种善，让我们看看你的网络是否达到。
+all.good|一切各得其所，这就是它的卓越。
+all.good|不多不少，恰到好处，平衡得宜。
+pc.busy|电脑占用为{v}，过多过少都会坏事，恰到好处才好。
+pc.busy|原因在电脑本身，不在网络。
+wifi.drops|Wi-Fi 断了{v}次，距离可能是原因，靠近些吧。
+net.none|没有网络，先找第一因：网线或 Wi-Fi。
+inet.slow|路由器回应很快，所以延迟在它之外。
+busy|探问中……{v}
+idle|没有新情况，观察继续。
+search.empty|说出问题，我们自会找到能回答它的工具。
+freeze|稍等（{v}），窗口正在赶进度。
+speedrunner|一次只问一个，上一个尚未完成。
+back.again|欢迎回来，这是变了的地方，以及原因。
+dns.slow|解析名字很慢（{v}），问题在提问方式，不在线路。
+speed.great|下行{v}，足以胜任其用。
+speed.bloat|速度快，但满载时延迟上升{v}，排队过度之害。
+game.lag|卡顿始于你的 Wi-Fi，服务器并非原因。
+game.good|稳定在{v}，条件好，发挥才会好。
+vpn.on|VPN 已连接。
+vpn.slow|VPN 增加了{v}，以速度换取隐私。
+portal|这个 Wi-Fi 须先打开登录页。
+gw.down|路由器没有回应，这是首先要查的环节。
+isp.down|路由器正常，路由器之外的网络不正常，原因是运营商。
+mtu.small|大包超过{v}便丢失，路径的限度就是我们应守的中道。
+port.open|{v}有回应。
+port.closed|{v}拒绝了，或保持沉默。
+cert.ok|证书有效，而且可信。
+cert.expired|证书在{v}过期了。
+sec.ok|检查通过。
+sec.issue|有{v}件事需要注意。
+mtr.lossy|丢包始于第{v}跳，并一路持续，原因就在那里。
+mtr.clean|每一跳都没有丢包。
+devices.found|有{v}台设备在你的网络中。
+encrypt.done|已加密。
+decrypt.done|已打开，且未被改动。
+points.earned|+{v}分，习惯成就行家。
+award|500 分：Adeebo 奖，习惯成就卓越。
+late.night|夜深了，休息，是为了明日的理性更好地工作。
+morning|早上好，夜里无过。
+update.suspect|{v}那次更新后情况变糟了，先查最近的变化。
+call.on|通话中，我关注它的质量。
+stream.on|{v}播放流畅。
+stream.dip|直播卡了一下，{v}。
+stream.none|没有在播的东西。
+trade.ok|到券商的线路又快又稳。
+trade.slow|券商回应缓慢，行动之前请三思。
+trade.closed|市场收盘了，9:30 再开。
+view.switch|正在切换到{v}。
+quiz.right|答对了，知识当如此持有。
+quiz.wrong|不对，习惯成自然，再试一次。
+game.streak|连对{v}次，熟能生巧。
+game.timeup|时间已到。
+market.open|集市开张，可以交易了。
+storm.near|暴风雨临近，智者早做准备。

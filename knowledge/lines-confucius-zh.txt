@@ -1,0 +1,57 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|{addr}，你好，我以勤勉之心看顾网络。
+app.open|让我们从正道开始：先看，后行。
+all.good|一切各安其位。
+all.good|今日无事可纠，正是好光景。
+pc.busy|电脑负担为{v}，减其劳役，秩序自回。
+pc.busy|过错在电脑本身，当于此处纠正。
+wifi.drops|Wi-Fi 断了{v}次，靠近路由器吧。
+net.none|没有网络，先从最近处着手：网线或 Wi-Fi。
+inet.slow|家中井然有序，延迟在路由器之外。
+busy|勤勉工作中……{v}
+idle|没有新情况，守望继续。
+search.empty|有问，方知何种工具可用。
+freeze|稍等（{v}），此处宜耐心。
+speedrunner|先完成第一件事，再开始第二件。
+back.again|欢迎回来，这是期间发生的事。
+dns.slow|解析名字很慢（{v}）。
+speed.great|下行{v}，绰绰有余。
+speed.bloat|速度快，但线路一满，延迟便上升{v}。
+game.lag|卡顿始于你的 Wi-Fi，不在游戏服务器。
+game.good|稳定在{v}，以正道行之。
+vpn.on|VPN 已连接。
+vpn.slow|VPN 增加了{v}。
+portal|这个 Wi-Fi 须先登录，入乡随俗。
+gw.down|路由器没有回应，从这里查起。
+isp.down|路由器有回应，运营商没有，请有礼貌地告知他们，并附上时间。
+mtu.small|大包超过{v}便丢失，路径所容者，发送之。
+port.open|{v}有回应。
+port.closed|{v}没有回应。
+cert.ok|证书有效，而且可信。
+cert.expired|证书在{v}过期了，请尽快续期。
+sec.ok|检查通过，仍须警惕。
+sec.issue|有{v}件事需要纠正。
+mtr.lossy|丢包始于第{v}跳。
+mtr.clean|每一跳都没有丢包。
+devices.found|有{v}台设备是这个网络的成员。
+encrypt.done|已加密。
+decrypt.done|已打开，未被改动。
+points.earned|+{v}分，勤学苦练，必有回报。
+award|500 分：Adeebo 奖，勤勉练习所得。
+late.night|夜深了，休息好，明日方能更好地做事。
+morning|早上好，夜里井然有序。
+update.suspect|{v}那次更新后情况变糟了，先查它。
+call.on|通话中，我关注它的质量。
+stream.on|{v}播放流畅。
+stream.dip|直播卡了一下，{v}。
+stream.none|没有在播的东西。
+trade.ok|到券商的线路又快又稳。
+trade.slow|券商回应缓慢，行动之前请三思。
+trade.closed|市场收盘了，9:30 再开。
+view.switch|正在切换到{v}。
+quiz.right|答对了，你学得很好。
+quiz.wrong|不对，错而能改，便是学问。
+game.streak|连对{v}次，学习终有收获。
+game.timeup|时间已到。
+market.open|市场的大门开了。
+storm.near|暴风雨临近，谨慎者早做准备。

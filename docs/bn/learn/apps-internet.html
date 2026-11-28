@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bn" data-language-route="/learn/apps-internet.html" data-language-variants="en bn fr es ar">
+<html lang="bn" data-language-route="/learn/apps-internet.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -63,15 +63,16 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "LearningResource", "name": "How apps actually use the internet", "description": "Apps never touch the network - they ask Windows, through sockets. Apps never touch the network - they ask Windows for a connection (a", "url": "https://adeebometer.com/learn/apps-internet.html", "learningResourceType": "Lesson", "educationalLevel": "Beginner", "inLanguage": "en", "isAccessibleForFree": true, "about": "The basics", "isPartOf": {"@type": "WebSite", "name": "AdeeboMeter", "url": "https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/apps-internet.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"অ্যাপ কীভাবে ইন্টারনেট ব্যবহার করে","description":"Apps never touch the network - they ask Windows, through sockets. Apps never touch the network - they ask Windows for a connection (a","url":"https://adeebometer.com/bn/learn/apps-internet.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"bn","isAccessibleForFree":true,"about":"প্রাথমিক ধারণা","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/bn/"}}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="stylesheet" href="/sitebar.css">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/apps-internet.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/apps-internet.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/apps-internet.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/apps-internet.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/apps-internet.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/apps-internet.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/learn/apps-internet.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/apps-internet.html">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body data-sec="learn">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/bn/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
@@ -98,7 +99,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>ইমেইল পাঠায়</button>
 <button>Bluetooth ব্যবহার করে</button>
 <p class="say" aria-live="polite"></p></div>
-<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a><a class="cta ghost" href="/games.html">গেম খেলুন</a></p>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">Windows-এর জন্য AdeeboMeter নিন</a><a class="cta ghost" href="/bn/games.html">গেম খেলুন</a></p>
 <h2>প্রাথমিক ধারণার আরও পাঠ</h2>
 <div class="ui-rows"><a class="ui-row" href="/bn/learn/osi.html" data-id="osi"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>সহজ কথায় নেটওয়ার্কের স্তরগুলো</b><small>প্রাথমিক ধারণা</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/open-website.html" data-id="open-website"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>ওয়েবসাইট খুললে কী ঘটে</b><small>প্রাথমিক ধারণা</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/ports.html" data-id="ports"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>পোর্ট</b><small>প্রাথমিক ধারণা</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/bn/learn/speed-vs-delay.html" data-id="speed-vs-delay"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="layers"></span><span class="t"><b>গতি শুধু একটি সংখ্যা নয়</b><small>প্রাথমিক ধারণা</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="/bn/learn/open-website.html">← ওয়েবসাইট খুললে কী ঘটে</a><a href="/bn/learn/ports.html">পোর্ট →</a></div>

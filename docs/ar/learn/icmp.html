@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" data-language-route="/learn/icmp.html" data-language-variants="en bn fr es ar" dir="rtl">
+<html lang="ar" dir="rtl" data-language-route="/learn/icmp.html" data-language-variants="en bn fr es ar zh">
 <head>
 <!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
 <meta charset="utf-8">
@@ -63,23 +63,26 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 </style>
 <script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <link rel="stylesheet" href="/ui.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Ping and traceroute (ICMP)","description":"Are you there? How far? Which way? The network's own messages: ping asks 'are you there?', traceroute asks every router on the","url":"https://adeebometer.com/learn/icmp.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"en","isAccessibleForFree":true,"about":"How the internet talks","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/"}}</script>
-<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/icmp.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"خطة التنقل والسير (ICMP)","description":"Are you there? How far? Which way? The network's own messages: ping asks 'are you there?', traceroute asks every router on the","url":"https://adeebometer.com/ar/learn/icmp.html","learningResourceType":"Lesson","educationalLevel":"Beginner","inLanguage":"ar","isAccessibleForFree":true,"about":"كيف يتحدث الإنترنت","isPartOf":{"@type":"WebSite","name":"AdeeboMeter","url":"https://adeebometer.com/ar/"},"subjectOf":[{"@type":"CreativeWork","name":"How to Read MTR Results on Windows | Packet Loss Explained","genre":"Video tutorial","url":"https://www.youtube.com/watch?v=5IEcPIedL2I","inLanguage":"en","datePublished":"2026-11-25","publisher":{"@type":"Organization","name":"AdeeboMeter"}},{"@type":"CreativeWork","name":"One Hop Shows Packet Loss. Is It Really a Problem?","genre":"Short video","url":"https://www.youtube.com/shorts/L8fN2w5TXWQ","inLanguage":"en","sameAs":"https://www.facebook.com/reel/1128060556600411","publisher":{"@type":"Organization","name":"AdeeboMeter"}}]}</script>
+<script src="/locale-messages.js"></script><script src="/locale.js"></script><script src="/locale-surfaces.js"></script><link rel="stylesheet" href="/sitebar.css">
+<meta property="og:locale" content="ar_AR">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/learn/icmp.html">
 <link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/learn/icmp.html">
 <link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/learn/icmp.html">
 <link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/learn/icmp.html">
 <link rel="alternate" hreflang="es" href="https://adeebometer.com/es/learn/icmp.html">
 <link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/learn/icmp.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/learn/icmp.html">
 <link rel="alternate" hreflang="x-default" href="https://adeebometer.com/learn/icmp.html">
-<meta property="og:locale" content="ar_AR">
-<link rel="stylesheet" href="/sitebar.css">
 </head>
 <body data-sec="learn">
 <!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
-<main><a class="chip" href="/ar/learn/#protocol">كيف يتحدث الإنترنت</a>
+<main>
+<a class="chip" href="/ar/learn/#protocol">كيف يتحدث الإنترنت</a>
 <h1>خطة التنقل والسير (ICMP)</h1>
 <p class="tag">-هل أنتِ هناك؟ إلى أي مدى؟ أيّ طريق؟</p>
 <div class="card one"><p>رسائل الشبكة الخاصة: تطلب النقابة "هل أنت هناك؟"، تتطلب "تراسروت" كل جهاز توجيه في الطريق.</p></div>
+<!--mtr-video:start--><section class="card" id="mtr-video-tutorial" aria-labelledby="mtr-video-heading"><h2 id="mtr-video-heading">فهم نتيجة MTR</h2><p lang="en">How to Read MTR Results on Windows | Packet Loss Explained</p><p>قارن القفزة الوسيطة بالوجهة قبل نسبة فقد الحزم إلى تلك القفزة.</p><p>الصوت بالإنجليزية · 2:22 · يستخدم المثال المدمج</p><p><a href="https://www.youtube.com/watch?v=5IEcPIedL2I">شاهد على YouTube</a></p><p lang="en">One Hop Shows Packet Loss. Is It Really a Problem?</p><p><a href="https://www.youtube.com/shorts/L8fN2w5TXWQ">شاهد المقطع القصير</a> · <a href="https://www.facebook.com/reel/1128060556600411">شاهد مقطع Facebook</a></p></section><!--mtr-video:end-->
 <h2>كيف تجري المحادثة</h2>
 <div class="ladder"><div class="lanes" aria-hidden="true"><span>جهازك</span><span>الراوتر</span></div><ol aria-label="تبادل الرسائل بين جهازك والراوتر، بالترتيب">
 <li class="msg"><p><span class="sr">جهاز الكمبيوتر الخاص بك إلى جهاز التوجيه: </span>طلب الصوت (TTL 1)</p><div class="arrow" aria-hidden="true"></div></li>
@@ -97,7 +100,7 @@ input[type=search]{width:100%;font:inherit;color:var(--ink);background:var(--car
 <button>أي تطبيقات تستخدم الإنترنت</button>
 <button>شهادة الموقع</button>
 <p class="say" aria-live="polite"></p></div>
-<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/games.html">لعب الألعاب</a></p>
+<p class="ui-ctas"><a class="cta" href="https://apps.microsoft.com/detail/9PFGXJPL9CLJ">احصل على AdeeboMeter ل Windows</a><a class="cta ghost" href="/ar/games.html">لعب الألعاب</a></p>
 <h2>المزيد في البروتوكولات</h2>
 <div class="ui-rows"><a class="ui-row" href="/ar/learn/dns.html" data-id="dns"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DNS</b><small>البروتوكولات</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/dhcp.html" data-id="dhcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>DHCP</b><small>البروتوكولات</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/arp.html" data-id="arp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>ARP</b><small>البروتوكولات</small></span><span data-ic="chev"></span></a><a class="ui-row" href="/ar/learn/tcp.html" data-id="tcp"><span class="ui-chip sm" style="--k:var(--c-learn)" data-ic="globe"></span><span class="t"><b>TCP</b><small>البروتوكولات</small></span><span data-ic="chev"></span></a></div>
 <div class="pn"><a href="/ar/learn/http.html">← HTTP</a><a href="/ar/learn/ipv6.html">IPv6 وكيف يحصل جهاز الكمبيوتر الخاص بك على عناوينها →</a></div>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-language-route="/games.html" data-language-variants="en bn fr es ar zh">
+<head>
+<!--theme--><script>try{if(window.top===window.self){var t=localStorage.getItem("am-theme");if(!t||t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t||"dark")}}catch(e){}</script><!--/theme-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ألعاب الشبكات — اختبارات وتحدّي الشبكات الفرعية والمنافذ | AdeeboMeter</title>
+<meta name="description" content="ألعاب قصيرة مجانية لتعلّم الشبكات: عشرة أسئلة وترتيب الحوار وتحديات الشبكات الفرعية والمنافذ. تعمل على الهاتف بلا تسجيل.">
+<link rel="canonical" href="https://adeebometer.com/ar/games.html">
+<meta property="og:title" content="ألعاب الشبكات | AdeeboMeter">
+<meta property="og:description" content="ألعاب قصيرة مجانية لتعلّم الشبكات: عشرة أسئلة وترتيب الحوار وتحديات الشبكات الفرعية والمنافذ. تعمل على الهاتف بلا تسجيل.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adeebometer.com/ar/games.html">
+<meta property="og:image" content="https://adeebometer.com/img/social/games.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ألعاب الشبكات">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+:root{--ink:#1B2330;--sub:#4A5568;--line:#E3E8EF;--page:#FBFCFE;--card:#FFFFFF;--blue:#1F6FEB;--green:#2DA44E;--red:#CF222E;--tint:#EEF4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}}
+:root[data-theme="dark"]{--ink:#E6EAF0;--sub:#93A6C6;--line:#22355A;--page:#0B1426;--card:#121F38;--blue:#58A6FF;--green:#3FB950;--red:#F85149;--tint:#182844}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:20px 16px calc(56px + env(safe-area-inset-bottom))}
+a{color:var(--blue)}
+.top{display:flex;gap:14px;flex-wrap:wrap;font-size:15px;margin-bottom:18px}.top b{margin-right:auto}
+h1{font-size:28px;line-height:1.2;margin:0 0 6px}
+.tag{font-size:18px;color:var(--sub);margin:0 0 18px}
+.pick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pick button{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-height:88px}
+.pick b{display:block;color:var(--blue);font-size:17px}.pick span{display:block;color:var(--sub);font-size:14px}.pick i{display:block;font-style:normal;font-size:13px;color:var(--green);margin-top:4px}
+#game{display:none}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:600;margin:0 0 10px}
+.bar button{font:inherit;background:none;border:0;color:var(--blue);cursor:pointer;padding:6px 0}
+.time{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:0 0 14px}.time div{height:100%;background:var(--blue);width:100%;transition:width .25s linear}
+.q{font-size:19px;font-weight:600;margin:0 0 6px;overflow-wrap:anywhere}
+.sub{color:var(--sub);font-size:14px;margin:0 0 8px}
+.opts button{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer;min-height:46px;overflow-wrap:anywhere}
+.opts button.ok{border-color:var(--green);box-shadow:inset 4px 0 0 var(--green)}
+.opts button.no{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.opts button:disabled{cursor:default}
+.opts button.used{opacity:.35}
+.picked{counter-reset:n;margin:6px 0 4px;padding:0;list-style:none}
+.picked li{background:var(--tint);border-radius:8px;padding:7px 10px;margin:5px 0;font-size:15px;overflow-wrap:anywhere}
+.picked li.no{background:transparent;border:1px solid var(--red)}
+.say{font-weight:600;min-height:1.6em;margin:8px 0}
+.go{display:inline-block;font:inherit;font-weight:600;background:var(--blue);color:#fff;border:0;border-radius:999px;padding:11px 22px;margin:6px 10px 0 0;cursor:pointer;text-decoration:none}
+.ghost{background:transparent;color:var(--blue);border:1px solid var(--line)}
+.end{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center}
+.end .big{font-size:44px;font-weight:700;line-height:1.1}
+footer{margin-top:40px;color:var(--sub);font-size:14px}
+@media (max-width:520px){.pick{grid-template-columns:1fr}.pick button{min-height:0}}
+</style>
+<script>try{var t=localStorage.getItem("am-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="/ui.css">
+<script src="/locale-messages.js"></script>
+<script src="/locale.js"></script>
+<script src="/locale-surfaces.js"></script>
+<link rel="stylesheet" href="/sitebar.css">
+<!--pwa--><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#1155E0"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AdeeboMeter"><style>.inapp nav.top{display:none}a.brandl{display:inline-flex;align-items:center;gap:8px}a.brandl img{display:block}</style><script>if("serviceWorker"in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})</script><!--/pwa-->
+<meta property="og:locale" content="ar_AR">
+<link rel="alternate" hreflang="en" href="https://adeebometer.com/games.html">
+<link rel="alternate" hreflang="bn" href="https://adeebometer.com/bn/games.html">
+<link rel="alternate" hreflang="fr" href="https://adeebometer.com/fr/games.html">
+<link rel="alternate" hreflang="fr-CA" href="https://adeebometer.com/fr/games.html">
+<link rel="alternate" hreflang="es" href="https://adeebometer.com/es/games.html">
+<link rel="alternate" hreflang="ar" href="https://adeebometer.com/ar/games.html">
+<link rel="alternate" hreflang="zh-Hans" href="https://adeebometer.com/zh/games.html">
+<link rel="alternate" hreflang="x-default" href="https://adeebometer.com/games.html">
+</head>
+<body data-sec="games">
+<!--sitebar--><nav class="sitebar" id="sitebar" aria-label="Site"><a class="sb-brand" href="/ar/"><img src="/img/logo.svg" width="24" height="24" alt=""><span>Adeebo<b>Meter</b></span></a></nav><script src="/site.js"></script><!--/sitebar-->
+<main>
+<div id="menu">
+<header class="ui-head"><span class="ui-chip" style="--k:var(--c-games)" data-ic="game" data-sz="28"></span><div><h1>الألعاب</h1><p>جولات سريعة، حوالي دقيقة كل واحدة.</p></div></header>
+<button class="ui-hero" data-g="subnet"><b>السباق من تحت الشبكة</b><small>اختر شبكة الفرعية الصحيحة قبل أن تنتهي الساعة</small><small data-best="subnet"></small><span class="art" data-ic="net" data-sz="64"></span><span class="ui-play" data-ic="play" data-sz="18">العب</span></button>
+<h2 class="ui-h2">المزيد من الألعاب</h2>
+<div class="ui-rows">
+<button class="ui-row" data-g="ports"><span class="ui-chip sm" style="--k:var(--c-games)" data-ic="plug"></span><span class="t"><b>المباراة البحرية</b><small>طابق المنافذ مع الخدمات.</small><small data-best="ports"></small></span><span data-ic="chev"></span></button>
+<button class="ui-row" data-g="quiz"><span class="ui-chip sm" style="--k:var(--c-games)" data-ic="quiz"></span><span class="t"><b>السؤال السريع</b><small>10 أسئلة من الدروس.</small><small data-best="quiz"></small></span><span data-ic="chev"></span></button>
+<button class="ui-row" data-g="order"><span class="ui-chip sm" style="--k:var(--c-games)" data-ic="order"></span><span class="t"><b>ضعها في النظام</b><small>DNS، DHCP ، TLS - خطوة بخطوة.</small><small data-best="order"></small></span><span data-ic="chev"></span></button>
+</div>
+</div>
+<div id="game">
+<div class="bar"><span id="score"></span><span id="left"></span><button id="quit">توقف</button></div>
+<div class="time"><div id="tb"></div></div>
+<div id="stage"></div>
+</div>
+<div id="amv-pick-at" style="margin:18px 0 0"></div>
+<footer>النتائج تبقى على هذا الجهاز.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)}, L=null, G=null, timer=0, sids=0, Lp=null, pick="";
+// a steady clock (AM-CG-315) and one id per game, so a late callback never touches a newer game
+function now(){return performance.now()}
+function later(f,ms){var sid=G&&G.sid;setTimeout(function(){if(G&&G.sid===sid&&!G.over)f()},ms)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function rnd(n){return Math.floor(Math.random()*n)}
+function best(g,v){var k="am-game-"+g;try{var b=+localStorage.getItem(k)||0;if(v!=null&&v>b){localStorage.setItem(k,v);return v}return b}catch(e){return 0}}
+function showBest(){[].forEach.call(document.querySelectorAll("[data-best]"),function(i){var b=best(i.getAttribute("data-best"));i.textContent=b?"Your best: "+b:""})}
+// one download, and only the game picked last starts when it arrives (AM-CG-324)
+function gameLearn(){var l=(document.documentElement.lang||"en").split("-")[0];return /^(fr|es|ar|bn)$/.test(l)?"/"+l+"/learn/":"/learn/"}
+function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("/kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d||!Array.isArray(d.topics)||!d.topics.length)throw new Error("no lessons");L=d.topics});/* FRESH-093: a bad answer isn't kept */Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
+/* FRESH-092: no questions in the lessons - say so instead of breaking */
+function noDeck(){clearInterval(timer);G.over=true;$("left").textContent="";$("tb").style.width="0";$("stage").innerHTML="<div class='end'><p class='q' tabindex='-1'>No questions to play right now</p><p class='sub'>The lessons didn't come with any. Try again later.</p><a class='go ghost' href='"+gameLearn()+"'>Lessons</a></div>";focusStage(".q")}
+/* FRESH-095: after an answer the buttons are disabled and replaced, so keyboard focus moves to the new question (or the score) */
+function focusStage(sel){var e=$("stage").querySelector(sel);if(e&&e.focus)try{e.focus({preventScroll:true})}catch(x){e.focus()}}
+function lessonId(t){return t.id.replace(/\s+/g,"-")}
+
+// --- shared: a round with a clock
+function start(g){G={sid:++sids,g:g,score:0,n:0,left:g==="quiz"?10:g==="order"?5:0,secs:g==="quiz"?15:60};$("menu").style.display="none";$("tb").parentNode.style.display=g==="order"?"none":"";$("game").style.display="block";window.scrollTo(0,0);
+  if(g==="subnet"||g==="ports"){G.until=now()+60000;tick()} next()}
+/* FRESH-094: the clock and bar are drawn straight away, not 250 ms later */
+function tick(){clearInterval(timer);var f=function(){if(!G)return true;var ms=G.until-now();$("tb").style.width=Math.max(0,ms/(G.g==="quiz"?150:600))+"%";
+  if(G.g==="subnet"||G.g==="ports")$("left").textContent=Math.max(0,Math.ceil(ms/1000))+" s";
+  if(ms<=0){clearInterval(timer);if(G.g==="quiz")answer(null);else finish();return true}};if(!f())timer=setInterval(f,250)}
+function bar(){$("score").textContent="Score "+G.score;if(G.g==="quiz"||G.g==="order"){var T=G.g==="quiz"?10:5;$("left").textContent=Math.min(G.n+1,T)+" of "+T}}/* FRESH-091: never 11 of 10 */
+function next(){if(!G||G.over)return;if((G.g==="subnet"||G.g==="ports")&&now()>=G.until)return finish();if(G.g==="quiz"||G.g==="order"){if(G.n>=(G.g==="quiz"?10:5))return finish()}bar();({quiz:quiz,order:order,subnet:subnet,ports:ports})[G.g]()}
+function opts(q,sub,right,wrong,more){
+  var all=shuf([right].concat(wrong)),h="<p class='q'>"+esc(q)+"</p>"+(sub?"<p class='sub'>"+sub+"</p>":"")+"<div class='opts'>";
+  all.forEach(function(o){h+="<button data-ok='"+(o===right?1:0)+"'>"+esc(o)+"</button>"});
+  $("stage").innerHTML=h.replace("<p class='q'>","<p class='q' tabindex='-1'>")+"</div><p class='say' aria-live='polite'></p>"+(more||"");
+  focusStage(".q");
+  [].forEach.call($("stage").querySelectorAll(".opts button"),function(b){b.onclick=function(){answer(b)}})}
+function answer(b){
+  if(!G||G.over||G.answered===G.n)return;if(G.until&&now()>=G.until&&G.g!=="order"){if(G.g==="quiz")b=null;else return finish()}G.answered=G.n;
+  var bs=[].slice.call($("stage").querySelectorAll(".opts button")),ok=b&&b.getAttribute("data-ok")==="1";
+  if(G.g==="quiz")clearInterval(timer);
+  bs.forEach(function(x){x.disabled=true;if(x.getAttribute("data-ok")==="1")x.className="ok"});if(b&&!ok)b.className="no";
+  if(ok)G.score+=G.g==="quiz"?10+Math.ceil(Math.max(0,G.until-now())/1500):1;
+  G.streak=ok?(G.streak||0)+1:0;var V=window.AMV?AMV:null,vs=V?(ok?(G.streak>=3&&G.streak%3===0?V.line("game.streak",G.streak):V.line("quiz.right")):b?V.line("quiz.wrong"):V.line("game.timeup")):"";
+  $("stage").querySelector(".say").innerHTML=esc(vs||(ok?"Right.":b?"Not quite.":"Time's up."));
+  if(G.g==="quiz"&&G.cur)$("stage").querySelector(".say").innerHTML+=" <a href='"+gameLearn()+lessonId(G.cur)+".html'>Read: "+esc(G.cur.title.split(" - ")[0])+"</a>";
+  G.n++;bar();later(next,G.g==="quiz"?(ok?900:2200):ok?350:1200)}
+function finish(){clearInterval(timer);if(!G||G.over)return;G.over=true;var b=best(G.g),nb=best(G.g,G.score);
+  $("left").textContent="";$("tb").style.width="0";
+  $("stage").innerHTML="<div class='end'><span id='endface' style='display:inline-block' data-size='64'></span><p class='sub'>Your score</p><p class='big' tabindex='-1'>"+G.score+"</p><p>"+(G.score>b&&G.score>0?"New best on this device!":b?"Your best: "+nb:"")+"</p>"+
+    (window.AMV?"<p style='font-weight:600'>"+AMV.line(G.score>b&&G.score>0?"award":"points.earned",G.score)+"</p>":"")+"<button class='go' id='again'>Play again</button><button class='go ghost' id='share'>Share score</button><a class='go ghost' href='"+gameLearn()+"'>Lessons</a></div>";
+  focusStage(".big");
+  $("again").onclick=function(){start(G.g)};if(window.AMV)AMV.face($("endface"),G.score>b&&G.score>0?"party":G.score>0?"happy":"calm");
+  $("share").onclick=function(){var names={quiz:"the quick-fire network quiz",order:"Put it in order",subnet:"Subnet sprint",ports:"Port match"},t="I scored "+G.score+" in "+names[G.g]+" on AdeeboMeter - beat that: https://adeebometer.com/games.html";
+    if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$("share").textContent="Copied"})}}
+$("quit").onclick=function(){clearInterval(timer);G=null;$("game").style.display="none";$("menu").style.display="block";showBest()};
+[].forEach.call(document.querySelectorAll("[data-g]"),function(b){b.onclick=function(){var g=b.getAttribute("data-g");if(g==="quiz"||g==="order"){pick=g;lessons(function(){if(pick===g&&$("menu").style.display!=="none")start(g)})}else{pick="";start(g)}}});
+
+// --- quick-fire: the lessons' own quick-check questions
+function quiz(){if(!G.deck)G.deck=shuf(L.filter(function(t){return t.check&&t.check.split(" | ").length>=3}));
+  if(!G.deck.length)return noDeck();
+  var t=G.deck[G.n%G.deck.length],p=t.check.split(" | ");G.cur=t;G.until=now()+15000;tick();
+  opts(p[0],esc(t.title.split(" - ")[0]),p[1],p.slice(2))}
+
+// --- put it in order: the lessons' message ladders
+function order(){if(!G.deck)G.deck=shuf(L.filter(function(t){var s=(t.ladder||"").split(" | ");return s.length>=3&&s.length<=6}));
+  if(!G.deck.length)return noDeck();
+  var t=G.deck[G.n%G.deck.length],steps=t.ladder.split(" | "),want=0,miss=0;G.until=now()+60000;$("tb").style.width="100%";
+  $("stage").innerHTML="<p class='q'>"+esc(t.title.split(" - ")[0])+"</p><p class='sub'>Tap the messages in the order they happen.</p><ol class='picked' id='pk'></ol><div class='opts' id='os'></div><p class='say' aria-live='polite'></p>";
+  shuf(steps.map(function(s,i){return i})).forEach(function(i){var b=document.createElement("button");b.textContent=steps[i].replace(" > "," → ");b.onclick=function(){
+    if(b.disabled)return;
+    if(i===want){b.disabled=true;b.className="used";var li=document.createElement("li");li.textContent=b.textContent;$("pk").appendChild(li);want++;
+      if(want===steps.length){var pts=Math.max(1,steps.length*2-miss*2);G.score+=pts;$("stage").querySelector(".say").innerHTML=(miss?"Done.":"Perfect.")+" +"+pts+" · <a href='"+gameLearn()+lessonId(t)+".html'>See the lesson</a>";G.n++;bar();later(next,1800)}}
+    else{miss++;b.className="no";setTimeout(function(){if(!b.disabled)b.className=""},500)}};$("os").appendChild(b)})}
+
+// --- subnet sprint
+function ip(n){return[n>>>24,n>>>16&255,n>>>8&255,n&255].join(".")}
+function subnet(){var p=20+rnd(11),a=((10+rnd(200))<<24|rnd(256)<<16|rnd(256)<<8|rnd(256))>>>0,m=p===0?0:(~0<<(32-p))>>>0,net=(a&m)>>>0,bc=(net|~m)>>>0,hosts=Math.pow(2,32-p)-2,k=rnd(3),q,right,wrong=[];
+  if(k===0){q="Network address of "+ip(a)+"/"+p+"?";right=ip(net);[1,2,3].forEach(function(d){var w=p+d<=30?(a&((~0<<(32-p-d))>>>0))>>>0:net+Math.pow(2,32-p);w=ip(w>>>0);if(w!==right&&wrong.indexOf(w)<0)wrong.push(w)})}
+  else if(k===1){q="Broadcast address of "+ip(a)+"/"+p+"?";right=ip(bc);[bc-1,net,(bc+Math.pow(2,32-p))>>>0,(bc-Math.pow(2,31-p))>>>0].forEach(function(w){w=ip(w>>>0);if(w!==right&&wrong.indexOf(w)<0&&wrong.length<3)wrong.push(w)})}
+  else{q="How many usable hosts in a /"+p+"?";right=String(hosts);[hosts+2,hosts*2+2,Math.max(2,(hosts+2)/2-2),hosts-1].forEach(function(w){w=String(w);if(w!==right&&wrong.indexOf(w)<0&&wrong.length<3)wrong.push(w)})}
+  while(wrong.length<3)wrong.push(ip((net+(wrong.length+1)*256)>>>0));
+  opts(q,"",right,wrong.slice(0,3))}
+
+// --- port match
+var PORTS=[[20,"FTP data"],[21,"FTP"],[22,"SSH"],[23,"Telnet"],[25,"SMTP (mail between servers)"],[53,"DNS"],[67,"DHCP"],[80,"HTTP"],[110,"POP3"],[123,"NTP (time)"],[143,"IMAP"],[161,"SNMP"],[389,"LDAP"],[443,"HTTPS"],[445,"SMB (Windows file sharing)"],[514,"Syslog"],[587,"Mail submission"],[853,"DNS over TLS"],[1812,"RADIUS"],[3074,"Xbox Live"],[3389,"Remote Desktop"],[3478,"STUN (calls and games)"],[5060,"SIP (phone calls)"],[1935,"RTMP (stream upload)"],[49,"TACACS+"],[179,"BGP"],[5201,"iperf3"],[8080,"HTTP alternate"]];
+function ports(){var s=shuf(PORTS),r=s[0],w=s.slice(1,4);
+  if(rnd(2))opts("Which service uses port "+r[0]+"?","",r[1],w.map(function(x){return x[1]}));
+  else opts("Which port does "+r[1]+" use?","",String(r[0]),w.map(function(x){return String(x[0])}))}
+
+showBest();
+var h=location.hash.slice(1);if(h&&document.querySelector("[data-g='"+h+"']"))document.querySelector("[data-g='"+h+"']").click();
+})();
+</script>
+<script src="/voice.js"></script>
+<script>AMV.picker(document.getElementById("amv-pick-at"))</script>
+<script src="/ui.js"></script>
+</body>
+</html>

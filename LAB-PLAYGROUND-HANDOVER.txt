@@ -1,0 +1,34 @@
+AdeeboLab playground — 27 November 2026
+
+Owner requirements
+No accounts, ever. Users import/export project files. Browser caching is a convenience. Start fresh must open an empty project. QR codes can move a copy to another device. Marketing comes later.
+
+Behavior
+- Save project stays visible in the first toolbar row on phone and desktop. Ctrl/Cmd+S exports the editable JSON project, rather than only requesting browser persistence.
+- Project menu offers Start fresh, Open, Save, QR sharing and existing PNG/SVG exports.
+- Start fresh opens and caches a blank project; it does not erase other cached diagrams. Import assigns a separate local project ID, preserving existing cached work.
+- Home describes browser-only caching and file ownership. App-specific measured-network tiles are hidden on the public playground. They remain available when the Windows app supplies AM_VIEWS.
+- Selected-item Rename/Delete controls work without a hardware keyboard. Secondary tools scroll on narrow screens; Save/Project stay accessible.
+- No registration, cloud service, project upload or live collaboration was added. The existing connect-src 'none' policy remains intact.
+
+QR snapshots
+Project data is gzip-compressed where supported, encoded into the URL fragment and drawn using the site's own QR encoder. No third-party QR service is used. The fragment is not part of HTTP requests. A receiving browser validates the snapshot, assigns a new local ID and removes the fragment from the address after opening so refresh does not replay an old snapshot.
+Anyone with a code/link can read that snapshot. This is stated in the dialog. It is a copy, not live sync. Codes are limited to links of 1,500 characters for readability; detailed projects can use a copyable link up to the transfer limit or a project file. Older browsers without compression can use plain snapshots; browsers unable to decompress a received link are directed to files.
+Transfer links are bounded to 12,000 characters and decoded data to 2 MB. Invalid or oversized shared input preserves cached diagrams. Imports retain the existing document limits.
+
+Maintained sources
+tools/lab/lab.src.html — playground UI and document handling
+tools/lab/project-transfer.js — isolated snapshot codec
+tools/lab/build.py — inlines codec and existing docs/qr.js; preserves standalone app/file use
+docs/lab.html — generated output
+docs/adeebolab-guide.html — English project workflow inside translation-review markers
+
+Validation
+node tools/lab/check-project-transfer.cjs: Unicode round-trip, excluded source project ID, gzip and plain modes, QR capacity, malformed/oversized data and decompression-limit rejection, generated script syntax and unchanged no-network CSP.
+Browser: create/rename device; QR creation; open shared copy with label intact and fragment removed; export actual JSON file; Start fresh with zero devices; reimport exported file with device label restored. Checked responsive home/editor at 390px with matching viewport/scroll width. No physical phone camera scan was performed. Public page no longer shows disabled app-only tiles. Existing simulator behavior remains available.
+Run tools/lab/build.py and tools/site_cache.py after source changes. Repository CI and diff checks are part of PR verification.
+
+After owner merge
+Verify the HTTPS QR URL opens the new live playground and scan a small project using a real phone camera. Check Safari/Android download-to-Files behavior on physical devices. Recheck embedded Windows Lab launch. No outreach or launch marketing is included in this change.
+
+Website release scope: owner will take further product work to the devs. No C# source, Windows build or binary release is changed. The shared Lab HTML/build sources are documented so devs can review embedded-app behavior before their next release. AdeeboLab Playground is linked in the website menus and existing homepage feature tile.

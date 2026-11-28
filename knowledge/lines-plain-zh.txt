@@ -1,0 +1,137 @@
+# Simplified Chinese persona draft. Native review pending.
+app.open|AdeeboMeter 正在运行，一切都在监控中。
+app.open|就绪，正在检查你的电脑和网络。
+app.open|已启动，几秒后出第一批读数。
+app.open|正在角落里安静地盯着你的网络。
+app.open|回来了，正在检查电脑、Wi-Fi 和网络。
+all.good|一切安静，没啥要修的。
+all.good|一切看起来都正常。
+all.good|目前没有发现问题。
+all.good|电脑、Wi-Fi 和网络都正常。
+all.good|全部正常，不用你费心。
+pc.busy|你的电脑很忙，先关点东西再开新的。
+pc.busy|CPU 占用为{v}，某个程序占了大头。
+pc.busy|内存快满了，新应用会变慢。
+pc.busy|现在的瓶颈是你的电脑，不是网络。
+pc.busy|负载偏高，网络可能因此感觉变慢。
+wifi.drops|Wi-Fi 今天断开了{v}次。
+wifi.drops|你的 Wi-Fi 断了{v}次，看看断开前发生了什么。
+wifi.drops|今天 Wi-Fi 断了{v}次，通常是信号或漫游问题。
+wifi.drops|Wi-Fi 链路今天重置了{v}次。
+wifi.drops|今日 Wi-Fi 断线：{v}次，值得看一眼。
+net.none|没有连上任何网络。
+net.none|没有网络，插根网线或选个 Wi-Fi。
+net.none|完全没有连接，网络检查已暂停。
+net.none|已离线，目前什么都连不上网。
+net.none|没有网卡处于连接状态。
+inet.slow|延迟从路由器之外开始。
+inet.slow|你的路由器很快，慢的是外网。
+inet.slow|外网延迟为{v}，原因在你家网络之外。
+inet.slow|网速慢，很可能是运营商那边的问题。
+inet.slow|家里网络正常，外网慢。
+busy|正在处理……{v}
+busy|正在检查……{v}
+busy|还在处理，你可以继续用这个应用。
+busy|运行中，点“停止”可以取消。
+busy|测量中……快好了。
+idle|没啥新情况，还在盯着。
+idle|安静一阵子了。
+idle|最近一小时没有变化。
+idle|还在，还在盯着。
+idle|一切平稳，没啥要汇报的。
+search.empty|按名字或问题搜索工具。
+search.empty|输入问题，比如“慢”或“Wi-Fi”。
+search.empty|输入工具名，比如“mtu”或“dns”。
+search.empty|你想检查什么？
+search.empty|搜索，或者选下面一个问题。
+freeze|还在处理，窗口正在赶进度（{v}）。
+freeze|请稍等，正在赶进度（{v}）。
+freeze|忙了{v}，点击很快就能用了。
+freeze|重任务之后正在赶进度（{v}）。
+freeze|请稍等，马上回来（{v}）。
+speedrunner|上一个还没跑完。
+speedrunner|一次来一个，上次检查还在跑。
+speedrunner|给它一秒赶上进度。
+speedrunner|上次请求还在运行。
+speedrunner|先处理你上一次的点击。
+back.again|欢迎回来，这是变了的地方。
+back.again|回来了，自上次查看以来变了{v}处。
+back.again|欢迎回来，什么都没变。
+back.again|又回来了，一切都很安静。
+back.again|欢迎回来，看看你离开时发生了什么。
+dns.slow|解析名字有点慢（{v}）。
+dns.slow|DNS 有点慢，换个 DNS 服务器试试。
+speed.great|下载速度为{v}，很快。
+speed.great|又快又稳，干啥都够用。
+speed.bloat|速度快，但线路一满延迟就上升{v}。
+speed.bloat|下载会让线路变卡，这叫缓冲膨胀。
+game.lag|卡顿从你的 Wi-Fi 开始，不在游戏服务器。
+game.lag|Ping 尖峰和你的 Wi-Fi 信号下降吻合。
+game.good|游戏 Ping 稳定在{v}。
+game.good|适合竞技对战。
+vpn.on|VPN 已连接。
+vpn.on|流量正在走你的 VPN。
+vpn.slow|VPN 增加了{v}延迟。
+vpn.slow|走 VPN 慢，不走就正常。
+portal|这个 Wi-Fi 需要先打开登录页。
+portal|打开浏览器登录这个网络。
+gw.down|你的路由器没有回应。
+gw.down|路由器没有回应，重启它或检查网线。
+isp.down|路由器正常，但外网不通。
+isp.down|外网在路由器之外中断了，请查看运营商状态。
+mtu.small|大包被丢了，路径 MTU 为{v}。
+mtu.small|这条路装不下满尺寸的数据包。
+port.open|{v}开着，而且有回应。
+port.open|连接成功。
+port.closed|{v}拒绝了，或者没有回应。
+port.closed|连接失败，有东西把它挡住了。
+cert.ok|证书有效，而且可信。
+cert.ok|小锁检查通过。
+cert.expired|证书在{v}过期了。
+cert.expired|证书已无效，浏览器会警告。
+sec.ok|安全检查通过。
+sec.ok|没有发现安全问题。
+sec.issue|有{v}个安全事项需要注意。
+sec.issue|有些安全设置没开。
+mtr.lossy|丢包从第{v}跳开始。
+mtr.lossy|数据包在半路丢了，看看从哪一跳开始。
+mtr.clean|每一跳都没有丢包。
+mtr.clean|整条路都很干净。
+devices.found|在你的网络上看到了{v}台设备。
+devices.found|这是你的电脑打过交道的设备。
+encrypt.done|文件已加密。
+encrypt.done|已上锁，只有对的人能打开。
+decrypt.done|文件已打开，没有被改动过。
+decrypt.done|已解密并检查过。
+points.earned|+{v} Adeebo 积分。
+points.earned|你赚了{v}分。
+award|你达到 500 分了：Adeebo 奖。
+award|Adeebo 奖已解锁，去做你的卡片吧。
+late.night|很晚了，一切仍在监控中。
+late.night|深夜，一切安静。
+morning|早上好，夜里一切安静。
+morning|早上好，这是昨晚的情况。
+update.suspect|{v}那次 Windows 更新之后情况变糟了。
+update.suspect|最近的更新可能是原因。
+call.on|检测到通话，正在关注通话质量。
+call.on|通话中，正在跟踪抖动和丢包。
+stream.on|{v}播放流畅，正在盯着线路。
+stream.on|正在播{v}，目前没有卡顿。
+stream.dip|直播卡了一下，{v}。
+stream.dip|刚才卡了一下，{v}。
+stream.none|现在没有在播的东西。
+stream.none|没有在播的直播，你一开播我就会注意到。
+trade.ok|到券商的线路又快又稳。
+trade.ok|券商回应正常，不用等。
+trade.slow|到券商有点慢，下单前先等等。
+trade.slow|你的券商现在有点慢，{v}。
+trade.closed|市场收盘了，券商检查休眠至 9:30。
+trade.closed|市场已收盘，什么都没在检查。
+view.switch|正在切到{v}，你的相关设置正在恢复。
+view.switch|正在切换到{v}视图，请稍等。
+quiz.right|答对了。
+quiz.wrong|答错了。
+game.streak|连对{v}次。
+game.timeup|时间到。
+market.open|市场开盘了。
+storm.near|附近有暴风雨，连接可能会断。

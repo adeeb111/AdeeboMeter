@@ -1,0 +1,32 @@
+AdeeboShell Playground — developer handover (27 Nov 2026)
+
+Page: docs/shell.html, public route /shell.html. English only by owner request.
+Maintained source: tools/shell/{shell.src.html,core.js,ui.js}; build: python tools/shell/build.py.
+Build included in tools/site.sh. site_sync excludes this standalone page to preserve its strict CSP.
+
+What works
+- A bounded /data virtual text workspace: help, pwd, ls, cd, cat, echo, mkdir, touch, rm (files only), cp, wc, grep (literal text), sort, uniq, clear.
+- Quoted arguments, up to 8 pipeline stages, > file redirection. No shell expansion, general scripts, OS commands or external execution.
+- Tap files to edit; explicit Save file; warns before discarding unsaved edits.
+- localStorage key am-shell-playground-v1. Caching failures reported; export remains available.
+- Project JSON import/export. Import validates structure, paths, parent directories, file contents, size, count and scenario before replacing workspace. No imported text executes.
+- Start fresh dialog offers export first, then resets to zero files.
+- Simulated status/ping/dig/traceroute for 3 example scenarios; fixed demonstration destinations only. Outputs and simulation-derived pipelines retain Simulated label.
+- No network probes, account, backend, cloud workspace or new analytics. CSP connect-src none. Uses local site font/CSS assets.
+- Current Lab is linked as a separate playground; this version does not execute against the user's Lab drawing.
+
+Limits
+- 200,000 JSON characters of project state, 100 files and 100 directories (including root/data), 4,096 command characters, 60 visible command entries.
+- Basic ASCII filenames: letters, numbers, spaces, underscore, dot and hyphen. Text contents support Unicode.
+- JSON import checks file bytes <=800 KB before reading, then project-state limit.
+- This is a small command interpreter, not a full POSIX shell or a port of the Windows C# interpreter.
+- Native mobile keyboard/file-picker behavior still needs physical iPhone/Android testing. Responsive browser test passed at 390px.
+- No QR transfer yet in Shell; use project files to transfer. Lab QR behavior unchanged.
+
+Validation
+node tools/shell/check.cjs — workspace operations, pipeline output, simulation provenance, malformed imports/paths, limits, generated scripts and absence of network/eval APIs.
+python tools/ci_checks.py — all clean: 48 scripts parsed, 256 matching words agree.
+Real browser: create file, pipe to wc, scenario switch + dig, edit/save, actual project download, Start fresh blank, import downloaded JSON, reload and cat restored text. Desktop screenshot and 390px screenshot reviewed; terminal has no horizontal overflow.
+
+Website integration
+Homepage More + feature link; shared More menu links the English playground from every language; English Shell guide CTA; sitemap and offline list updated. Existing translated pages are preserved.
