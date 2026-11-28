@@ -861,13 +861,14 @@ namespace AdeeboMeter
         public static volatile bool CardHovered = true;   // set by the widget before it draws the card
         // the hint line (24 Nov): where the second, grey fun line used to be - how to move the widget, by its settings; "" = none
         public static volatile string WidgetHint = "";
-        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 10 * S; }
+        static float HintLineH(float inner) { return string.IsNullOrEmpty(WidgetHint) ? 0 : Measure(WidgetHint, fSmall, (int)inner).Height + 14 * S; }
         // 24 Nov (Adeeb: "writing on top of it doesn't feel natural"): the one hint line sits at the foot of the card, quiet grey under a
         // hairline - the card reads as itself, the hint is a footnote. H is the card's height; the room was counted into it
         static void HintLine(Graphics g, float pad, int H, float inner, float h)
         {
             if (h <= 0) return; float y = H - pad - h + 6 * S;
-            using (var lp = new Pen(Theme.Line, 1f)) g.DrawLine(lp, pad, y - 2 * S, pad + inner, y - 2 * S);
+            // calm L-1/L-7: a hairline you can see (scaled, a little stronger than the card's lines) with room above it
+            using (var lp = new Pen(Color.FromArgb(110, Theme.Muted), Math.Max(1f, S))) g.DrawLine(lp, pad, y - 2 * S, pad + inner, y - 2 * S);
             using (var sf = new StringFormat(L.IsRtl ? StringFormatFlags.DirectionRightToLeft : 0)) using (var b = new SolidBrush(Theme.Muted)) g.DrawString(WidgetHint, fSmall, b, new RectangleF(pad, y + 2 * S, inner, h), sf);
         }
         public static Bitmap Card(Snap s, Dictionary<string, RectangleF> hits)

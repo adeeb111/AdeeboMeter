@@ -190,7 +190,7 @@ namespace AdeeboMeter
             widget.MouseWheel += (s2, e2) => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("wheel"); Trace("replay wheel " + e2.Delta); Native.PassOn(0x020A, 0, e2.Delta); };
             widget.HWheel += d => { if (!moveOn) return; if (dragFrom != null) WidgetDrop(false); Lock("hwheel"); Trace("replay hwheel " + d); Native.PassOn(0x020E, 0, d); };
             // a finger on the unlocked widget drags it (the tray's Move widget unlocks it for touch)
-            widget.TouchGrab = p => { if (!moveOn) return false; dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; Trace("touch grab"); return true; };
+            widget.TouchGrab = p => { if (!moveOn || (dragFrom != null && !touchDrag)) return false;   /* B2 ML-1: a finger can't take over a mouse drag */ dragFrom = p; dragOrigin = widget.Placed.Location; dragging = false; dragGame = Corner.UseGamePos; moveTouched = Clock.Mono; touchDrag = true; Trace("touch grab"); return true; };
             widget.TouchDrag = p => { if (dragFrom == null || !touchDrag) return; int dx = p.X - dragFrom.Value.X, dy = p.Y - dragFrom.Value.Y; moveTouched = Clock.Mono; if (!dragging && Math.Abs(dx) + Math.Abs(dy) > 4 * Draw.Base) { dragging = true; if (detailWin.Placed.Width > 1) detailWin.Vanish(); } if (dragging) widget.MoveTo(dragOrigin.X + dx, dragOrigin.Y + dy); };
             widget.TouchUp = p => { if (!touchDrag) return; touchDrag = false; if (dragging) { dragFrom = null; SaveDrop(true); Lock("touch-drop"); } else { dragFrom = null; Lock("click"); Trace("open full (tap)"); OpenFull(); } };   // hunters14 CORE-ML2: a tap on the unlocked widget opens AdeeboMeter, like a click
             widget.MouseMove += (s2, e2) => WidgetDrag(); ResetWidget = ResetPos;
@@ -647,7 +647,8 @@ namespace AdeeboMeter
         {
             if (dragFrom == null || !moveOn) return;
             if (touchDrag) return;
-            // hunters14 CORE-ML1: a re-press may have been made in another app - it ends a drag in progress, but never counts as a click
+            // hunters14 CORE-ML1: a re-press may have been made in another app - it ends a drag in progress, but never counts as a click.
+            // B2 L-1: RePressed() stays ungated on purpose - it is what notices a release-and-press between two moves
             if (Control.MouseButtons != MouseButtons.Left || RePressed()) { WidgetDrop(false); return; }
             if ((Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc"); Lock("esc"); return; }   // ML-6: Esc puts it back - and ends move mode (hunters13 ML-3)
             var c = Cursor.Position; int dx = c.X - dragFrom.Value.X, dy = c.Y - dragFrom.Value.Y; moveTouched = Clock.Mono;
@@ -661,7 +662,7 @@ namespace AdeeboMeter
         static void UpLater(int vk, int upMsg, int data)
         {
             var t = new System.Windows.Forms.Timer { Interval = 15 }; var sw = Stopwatch.StartNew();
-            t.Tick += (o, e) => { if ((Native.GetAsyncKeyState(vk) & 0x8000) != 0 && sw.ElapsedMilliseconds < 10000) return; t.Stop(); t.Dispose(); Native.PassOn(upMsg, 0, data); Trace("replay up " + upMsg.ToString("X", System.Globalization.CultureInfo.InvariantCulture)); };
+            t.Tick += (o, e) => { bool held = (Native.GetAsyncKeyState(vk) & 0x8000) != 0; if (held && sw.ElapsedMilliseconds < 10000) return; t.Stop(); t.Dispose(); if (held) { Trace("replay up given up (still held after 10 s)"); return; } /* B2 L-2: never an up sent to whatever is under the cursor now */ Native.PassOn(upMsg, 0, data); Trace("replay up " + upMsg.ToString("X", System.Globalization.CultureInfo.InvariantCulture)); };
             t.Start();
         }
         string hoverLine = ""; int hoverTipN;
@@ -675,7 +676,7 @@ namespace AdeeboMeter
         void WidgetDrop(bool fromUp)
         {
             if (dragFrom == null) return;
-            bool moved = dragging; dragFrom = null; dragging = false; moveTouched = Clock.Mono;
+            bool moved = dragging; dragFrom = null; dragging = false; touchDrag = false; moveTouched = Clock.Mono;   /* B2 L-3 */
             // a click, no drag: the full window - only when the button came up over the widget, with no Alt+Tab in between (W-ML2)
             if (!moved) { if (fromUp && widget.Placed.Contains(Cursor.Position) && Native.GetForegroundWindow() == pressFg) { Lock("click"); Trace("open full"); OpenFull(); } else { Lock("click-elsewhere"); Trace("press released elsewhere - not a click"); } return; }
             SaveDrop(true);
@@ -708,6 +709,8 @@ namespace AdeeboMeter
         void OnUi()
         {
             StandbyTick(); TraceAsks();
+            // B2 ML-3: Esc with the button held but the mouse still - no move event comes, so the tick looks for it
+            if (dragFrom != null && !touchDrag && (Native.GetAsyncKeyState(0x1B) & 0x8000) != 0) { CancelDrag(); Trace("drag cancelled by Esc (still)"); Lock("esc"); }
             try
             {
                 uiTick++;
@@ -765,9 +768,10 @@ namespace AdeeboMeter
                 {
                     // 24 Nov (Adeeb: "it pops open too easily"): the open card brightens only after the same short rest as the
                     // folded chip - a mouse passing over the corner leaves it faded
+                    // calm ML-2: the short rest fills the same progress line as the covered chip, so the wait shows it's coming
                     dwell = 0;
                     if (!inside) { hovered = false; dwellStart = DateTime.MinValue; }
-                    else if (!hovered) { if (dwellStart == DateTime.MinValue) dwellStart = DateTime.UtcNow; if ((DateTime.UtcNow - dwellStart).TotalMilliseconds >= DWELL_MS) { hovered = true; dwellStart = DateTime.MinValue; } }
+                    else if (!hovered) { if (dwellStart == DateTime.MinValue) dwellStart = DateTime.UtcNow; double t = (DateTime.UtcNow - dwellStart).TotalMilliseconds; if (t >= DWELL_MS) { hovered = true; dwellStart = DateTime.MinValue; } else dwell = t / DWELL_MS; }
                 }
                 MoveMode(cur, inside);
                 // the hint line on the card, by the settings: unlocked - what a drag and a click do; resting on it - that it will unlock
