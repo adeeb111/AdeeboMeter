@@ -13,10 +13,18 @@ namespace AdeeboMeter
         static Thread thread; static CardForm card; static readonly object k = new object();
         static bool wanted;   // 21 Nov: a Hide that lands before the card's window exists still closes it (after sleep the card stayed up)
         public static volatile int Shown;   // how many times it appeared (the self-test reads it)
+        // 28 Nov (Adeeb: "Rerouting power (6 s)" stayed up over a video): a watchdog tick already running when the window closed
+        // could show a card after the last Hide, and nothing hid it again. Now the card only lives while it's being fed: no
+        // Show for 3 s means the window answered or went away, and it closes by itself. A closed window also refuses new cards.
+        static long lastFed; static volatile bool off;
+        public static void Off() { off = true; Hide(); }
+        public static void On() { off = false; }
 
         // called from the watchdog thread every second while the window is frozen
         public static void Show(Rectangle over, int seconds, string doing)
         {
+            if (off) return;
+            Interlocked.Exchange(ref lastFed, DateTime.UtcNow.Ticks);
             string line = Lines.Speaks("problem") ? Lines.Line("freeze", seconds + " s") : "";
             if (line == "") line = "Still working - the window is catching up (" + seconds + " s).";
             lock (k)
@@ -61,7 +69,11 @@ namespace AdeeboMeter
                 f = new Font(Draw.LangFamily, 13.5f * k, FontStyle.Regular, GraphicsUnit.Pixel); fb = new Font(Draw.LangFamily, 11f * k, FontStyle.Bold, GraphicsUnit.Pixel);
                 int w = (int)(420 * k), h = (int)(64 * k); if (over.Width <= 0) over = Screen.PrimaryScreen.WorkingArea;
                 Bounds = new Rectangle(over.X + (over.Width - w) / 2, over.Bottom - h - (int)(60 * k), w, h);
-                dot.Tick += delegate { phase = (phase + 1) % 3; Invalidate(); }; dot.Start();   // the only thing that moves: it says "alive"
+                dot.Tick += delegate
+                {
+                    phase = (phase + 1) % 3; Invalidate();
+                    if (off || DateTime.UtcNow.Ticks - Interlocked.Read(ref lastFed) > TimeSpan.TicksPerSecond * 3) Close();   // not fed for 3 s: gone
+                }; dot.Start();   // the only thing that moves: it says "alive"
             }
             protected override bool ShowWithoutActivation { get { return true; } }   // never steals focus from what you're typing in
             protected override CreateParams CreateParams { get { var cp = base.CreateParams; cp.ExStyle |= 0x08000000 | 0x80; cp.ClassStyle |= 0x20000; return cp; } }   // no-activate, tool window, drop shadow

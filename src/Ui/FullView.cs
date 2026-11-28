@@ -69,7 +69,7 @@ namespace AdeeboMeter
         {
             if (!jitWindow) { jitWindow = true; try { System.Runtime.ProfileOptimization.StartProfile("AdeeboMeter-window.jit"); } catch (Exception) { } }   // the window's own first-open compile, remembered too (Program.cs)
             Draw.Use(Draw.ViewScale);   // the window's zoom (the corner widget keeps the screen's own scale)
-            M = m; snap = m.Latest; Knowledge.Hold = true;
+            M = m; snap = m.Latest; Knowledge.Hold = true; FreezeCard.On();
             // freeze watchdog: the window answers a ping every second; if it doesn't for 2 s, the log says what it was doing
             watchdog = new System.Threading.Timer(delegate
             {
@@ -403,7 +403,7 @@ namespace AdeeboMeter
                 // WinForms makes a small copy of the window icon for each window; resetting the icon releases it now, not "someday".
                 try { ShowIcon = false; Icon = null; } catch { }
                 ReleaseExtras();   // the picture animation, calculator, journey, lab, replay and switch timers, and cached bitmaps (FullView.Export.cs)
-                Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); FreezeCard.Hide(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
+                Knowledge.Hold = false; if (watchdog != null) watchdog.Dispose(); FreezeCard.Off(); M.ProcsTab = false; timer.Stop(); timer.Dispose(); tipTimer.Stop(); tipTimer.Dispose();
                 try { if (tip.IsHandleCreated) tip.Close(); } catch { } tip.Dispose(); live.Dispose(); list.ReleaseAll(); procs = new List<AppStat>(); pinResults = null;
                 foreach (var l in subBtns.Values) foreach (var c in l) if (!c.IsDisposed) c.Dispose(); subBtns.Clear(); connSnap = new List<Conn>(); treeRows = null; treeBy = null; svcs = null; startups = null; realPkts = null; realDecode = null; chatPkts = null; learnPkts = null; m365Rows = null; routeTable = null; travelDest = null; guideRun = null; replayDay = null; if (tbRun0 != null) tbRun0.Stop = true; mtuHops = null; mtrHops = null; tbRows = null; if (replayBmp != null) { replayBmp.Dispose(); replayBmp = null; } };
             Load += delegate { ApplyTheme(); };

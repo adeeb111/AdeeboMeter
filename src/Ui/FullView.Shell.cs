@@ -1970,10 +1970,46 @@ namespace AdeeboMeter
             }
             if (pat == null) { Err(c, "usage: grep [-i -v -n -c -E -F -w -o -l -q -r] pattern [file...]"); return 2; }
             Regex rx; try { rx = ShRegex(pat, ere, fx, ic, word); } catch (ArgumentException e) { Err(c, "grep: " + pat + ": not a pattern (" + e.Message.Split('-').Last().Trim() + ")"); return 2; }
-            if (recurse) { var more = new List<string>(); foreach (var f in files.DefaultIfEmpty(".")) { string r = Real(Abs(f)); if (r != null && Directory.Exists(r)) { try { foreach (var x in Directory.EnumerateFiles(r, "*", SearchOption.AllDirectories).Take(20000)) more.Add(f.TrimEnd('/') + "/" + x.Substring(r.TrimEnd('\\').Length + 1).Replace('\\', '/')); } catch (UnauthorizedAccessException) { } } else more.Add(f); } files = more; }
-            if ((incl.Count > 0 || excl.Count > 0) && files.Count > 0) { Func<string, List<string>, bool> any = (f, gl) => { string nm = f.Substring(f.LastIndexOf('/') + 1); return gl.Any(g => Regex.IsMatch(nm, "^" + GlobRx(g) + "$", RegexOptions.IgnoreCase)); }; files = files.Where(f => (incl.Count == 0 || any(f, incl)) && !any(f, excl)).ToList(); if (files.Count == 0) return 1; }   // --include / --exclude: by file name
-            if (files.Count == 0) files.Add("-");
-            bool prefix = !noNames && (names || files.Count > 1);   // #62: which file matched
+            // #47 (28 Nov): -r walks folder by folder - a folder it can't read is named and skipped (its siblings are still
+            // searched), and reaching the file limit says so, so a "no match" is never shown as a complete search when it wasn't
+            var skipped = new List<string>(); bool capped = false; const int Cap = 20000;
+            if (recurse)
+            {
+                var more = new List<string>();
+                foreach (var f in files.DefaultIfEmpty("."))
+                {
+                    string r = Real(Abs(f)); if (r == null || !Directory.Exists(r)) { more.Add(f); continue; }
+                    string root = r.TrimEnd('\\'), shown = f.TrimEnd('/');
+                    var todo = new Stack<string>(); todo.Push(root);
+                    while (todo.Count > 0 && !capped)
+                    {
+                        if (c.Job != null && c.Job.Cancel) throw new ShCancel();
+                        string d = todo.Pop(); string rel = d.Length > root.Length ? d.Substring(root.Length + 1).Replace('\\', '/') + "/" : "";
+                        string[] fs, ds;
+                        try { fs = Directory.GetFiles(d); ds = Directory.GetDirectories(d); }
+                        catch (UnauthorizedAccessException) { skipped.Add(shown + "/" + rel.TrimEnd('/')); continue; }
+                        catch (IOException) { skipped.Add(shown + "/" + rel.TrimEnd('/')); continue; }
+                        catch (System.Security.SecurityException) { skipped.Add(shown + "/" + rel.TrimEnd('/')); continue; }
+                        Array.Sort(fs, StringComparer.OrdinalIgnoreCase); Array.Sort(ds, StringComparer.OrdinalIgnoreCase);
+                        foreach (var x in fs) { if (more.Count >= Cap) { capped = true; break; } more.Add(shown + "/" + rel + Path.GetFileName(x)); }
+                        for (int k = ds.Length - 1; k >= 0; k--)
+                        {
+                            FileAttributes at; try { at = File.GetAttributes(ds[k]); } catch { skipped.Add(shown + "/" + rel + Path.GetFileName(ds[k])); continue; }
+                            if ((at & FileAttributes.ReparsePoint) == 0) todo.Push(ds[k]);   // links and junctions aren't followed (no loops)
+                        }
+                    }
+                }
+                files = more;
+            }
+            Action tell = () =>
+            {
+                foreach (var s in skipped.Take(5)) Err(c, "grep: " + s + ": can't read this folder - skipped");
+                if (skipped.Count > 5) Err(c, "grep: " + (skipped.Count - 5) + " more folders couldn't be read - skipped");
+                if (capped) Err(c, "grep: stopped after " + Cap.ToString("N0") + " files - the search isn't complete (narrow it: a smaller folder, or --include=*.txt)");
+            };
+            if ((incl.Count > 0 || excl.Count > 0) && files.Count > 0) { Func<string, List<string>, bool> any = (f, gl) => { string nm = f.Substring(f.LastIndexOf('/') + 1); return gl.Any(g => Regex.IsMatch(nm, "^" + GlobRx(g) + "$", RegexOptions.IgnoreCase)); }; files = files.Where(f => (incl.Count == 0 || any(f, incl)) && !any(f, excl)).ToList(); if (files.Count == 0) { tell(); return skipped.Count > 0 || capped ? 2 : 1; } }   // --include / --exclude: by file name
+            if (files.Count == 0) { if (recurse) { tell(); return skipped.Count > 0 || capped ? 2 : 1; } files.Add("-"); }
+            bool prefix = !noNames && (names || recurse || files.Count > 1);   // #62: which file matched (always with -r, as GNU grep)
             int hits = 0, ex = 1;
             foreach (var f in files)
             {
@@ -1994,6 +2030,7 @@ namespace AdeeboMeter
                 if (list && here > 0) OL(c, f);
                 if (count) OL(c, (prefix ? f + ":" : "") + here);
             }
+            tell(); if (skipped.Count > 0 || capped) ex = 2;   // #47: an incomplete search is never a clean "no match"
             return ex == 2 ? 2 : hits > 0 ? 0 : ex;   // round 6 D2-12: an error is exit 2 even when something matched (GNU)
         }
         int CpMv(bool move, List<string> args, ShCtx c)
