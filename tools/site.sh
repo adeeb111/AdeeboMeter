@@ -13,4 +13,5 @@ python3 tools/site_languages.py # new families must include the language generat
 python3 tools/site_sync.py   # last: the one site bar on every page (the scripts above rewrite pages)
 python3 tools/navigation_layout.py # final menu and browser-playground layout
 python3 tools/blog_visuals.py # card index and contextual article illustrations
+python3 tools/traceroute_tutorial.py # published video and matching English guides
 python3 tools/site_cache.py  # hash the final pages, including all new language copies
