@@ -5668,3 +5668,45 @@ Crypto	加密货币
 Health	健康
 days of history are deleted for good - this can't be undone.	天的历史记录将被永久删除，无法撤销。
 Chinese (Simplified)	简体中文
+# 28 Nov 2026: simplify, prices, welcome
+(Ctrl+Alt+A taken)	（Ctrl+Alt+A 已被占用）
+Done. Turn them on to see the four cards on Home again.	已完成。打开后可在主页再次看到这四张卡片。
+From	来自
+Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only.	指数和期货需要 Financial Modeling Prep 密钥——Finnhub 和 Twelve Data 只提供公司股价。
+More in Learn ›	在“学习”中了解更多 ›
+Needs a free price key (Settings › Markets)	需要免费的报价密钥（设置 › 市场）
+Prices with your own price key, at its pace (Settings › Markets), in market hours only - 	使用你自己的报价密钥，按其频率（设置 › 市场），仅在交易时段 - 
+Showing on Home: four short cards on what AdeeboMeter does and how to get around.	显示在主页：四张简短卡片，介绍 AdeeboMeter 的功能和使用方法。
+That's the most you can follow - unfollow one to add another.	已达关注上限——取消关注一个才能添加新的。
+Ticker as typed:	按输入的代码：
+Type at least two letters, or a ticker like GOOGL.	请至少输入两个字母，或输入 GOOGL 这样的代码。
+Welcome · {0} of 4	欢迎 · 第 {0} 张，共 4 张
+Without a price key only currencies show (Bank of Canada, once a day).	没有报价密钥时只显示汇率（加拿大银行，每天一次）。
+delayed while markets are open	开市期间有延迟
+of 20 followed	/20 已关注
+what this PC uses right now	这台电脑当前的用量
+Welcome cards	欢迎卡片
+My PC	我的电脑
+Hardware & health	硬件与健康
+Hardware	硬件
+Shell	命令行
+Lab	实验室
+plenty of room to spare	资源充足
+busy - things may feel slow	较忙——可能会觉得慢
+very busy - close something heavy	非常忙——关掉一个占用大的程序
+your home network is fine	家庭网络正常
+a little slow at home	家里网络有点慢
+home network trouble	家庭网络有问题
+the internet answers quickly	互联网响应很快
+slower than usual	比平时慢
+trouble reaching it	难以连接
+sites open without waiting	网站打开不用等
+new sites are slow to start	新网站打开较慢
+sites may not open	网站可能打不开
+What AdeeboMeter does	AdeeboMeter 能做什么
+Changing things	更改设置
+When something's wrong	出问题时
+Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them.	五个圆点跟踪你从这台电脑到互联网的连接：这台电脑、Wi-Fi、路由器、运营商、互联网。绿色表示正常，琥珀色值得看一眼，红色就是问题所在。把鼠标停在角落小部件上即可看到。
+Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	主页告诉你正在发生什么。“检查”测试一个网站。“我的电脑”就是这台电脑：硬件、应用、连接、Wi-Fi。“历史”可回放任意一分钟。“工具箱”里有所有工具。找不到？按 Ctrl+K 输入即可。
+Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	设置在左侧底部：语言、主题、伙伴、角落小部件、免打扰时段。小部件从不接收点击——要移动它，把鼠标停在上面直到出现虚线框，再拖动。
+A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	红点会告诉你问题在哪。打开“出了什么问题？”用简单的话看下一步。如果问题反复出现，“给运营商的报告”会整理证据，并写好可以直接粘贴给运营商的消息。

@@ -5676,3 +5676,44 @@ Crypto	ক্রিপ্টো
 60 calls a minute - US shares	মিনিটে ৬০টি কল - মার্কিন শেয়ার
 800 calls a day - US shares and crypto	দিনে ৮০০টি কল - মার্কিন শেয়ার ও ক্রিপ্টো
 (Ctrl+Alt+A taken)	(Ctrl+Alt+A আগেই ব্যবহৃত)
+# 28 Nov 2026: simplify, prices, welcome
+Done. Turn them on to see the four cards on Home again.	শেষ। হোমে চারটি কার্ড আবার দেখতে চালু করুন।
+From	উৎস:
+Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only.	সূচক ও ফিউচারের জন্য Financial Modeling Prep কী লাগে - Finnhub ও Twelve Data শুধু কোম্পানির দাম দেয়।
+More in Learn ›	শিখুন-এ আরও ›
+Needs a free price key (Settings › Markets)	একটি ফ্রি দামের কী লাগবে (সেটিংস › বাজার)
+Prices with your own price key, at its pace (Settings › Markets), in market hours only - 	আপনার নিজের কী দিয়ে দাম, তার গতিতে (সেটিংস › বাজার), শুধু বাজার খোলার সময় - 
+Showing on Home: four short cards on what AdeeboMeter does and how to get around.	হোমে দেখাচ্ছে: AdeeboMeter কী করে আর কীভাবে ঘুরে দেখবেন - চারটি ছোট কার্ড।
+That's the most you can follow - unfollow one to add another.	এর বেশি অনুসরণ করা যায় না - আরেকটি যোগ করতে একটি বাদ দিন।
+Ticker as typed:	যেমন লিখেছেন সেই টিকার:
+Type at least two letters, or a ticker like GOOGL.	অন্তত দুটি অক্ষর লিখুন, অথবা GOOGL-এর মতো একটি টিকার।
+Welcome · {0} of 4	স্বাগতম · ৪-এর {0}
+Without a price key only currencies show (Bank of Canada, once a day).	দামের কী ছাড়া শুধু মুদ্রা দেখায় (ব্যাংক অব কানাডা, দিনে একবার)।
+delayed while markets are open	বাজার খোলা থাকলে দেরিতে আসে
+of 20 followed	/২০ অনুসরণে
+what this PC uses right now	এই পিসি এখন যা ব্যবহার করছে
+Welcome cards	স্বাগত কার্ড
+My PC	আমার পিসি
+Hardware & health	হার্ডওয়্যার ও স্বাস্থ্য
+Hardware	হার্ডওয়্যার
+Shell	শেল
+Lab	ল্যাব
+plenty of room to spare	যথেষ্ট জায়গা আছে
+busy - things may feel slow	ব্যস্ত - ধীর লাগতে পারে
+very busy - close something heavy	খুব ব্যস্ত - ভারী কিছু বন্ধ করুন
+your home network is fine	আপনার বাসার নেটওয়ার্ক ঠিক আছে
+a little slow at home	বাসায় একটু ধীর
+home network trouble	বাসার নেটওয়ার্কে সমস্যা
+the internet answers quickly	ইন্টারনেট দ্রুত সাড়া দিচ্ছে
+slower than usual	স্বাভাবিকের চেয়ে ধীর
+trouble reaching it	পৌঁছাতে সমস্যা
+sites open without waiting	সাইট অপেক্ষা ছাড়াই খোলে
+new sites are slow to start	নতুন সাইট খুলতে দেরি হয়
+sites may not open	সাইট নাও খুলতে পারে
+What AdeeboMeter does	AdeeboMeter কী করে
+Changing things	কিছু বদলানো
+When something's wrong	কিছু ভুল হলে
+Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them.	পাঁচটি বিন্দু এই পিসি থেকে ইন্টারনেট পর্যন্ত আপনার সংযোগ অনুসরণ করে: এই পিসি, ওয়াই-ফাই, রাউটার, প্রোভাইডার, ইন্টারনেট। সবুজ মানে ঠিক, হলুদ মানে একবার দেখুন, লাল মানে সমস্যা সেখানে। দেখতে কোণের উইজেটে মাউস রাখুন।
+Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	হোম বলে কী ঘটছে। যাচাই একটি সাইট পরীক্ষা করে। আমার পিসি হলো এই কম্পিউটার: হার্ডওয়্যার, অ্যাপ, সংযোগ, ওয়াই-ফাই। ইতিহাস যেকোনো মিনিট আবার দেখায়। টুলবক্সে সব টুল আছে। কিছু খুঁজে পাচ্ছেন না? Ctrl+K চেপে লিখুন।
+Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	সেটিংস বাঁ দিকের নিচে: ভাষা, থিম, সঙ্গী, কোণের উইজেট, নীরব সময়। উইজেট কখনো আপনার ক্লিক নেয় না - সরাতে মাউস রাখুন যতক্ষণ না ড্যাশ দেওয়া রেখা দেখা যায়, তারপর টানুন।
+A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	লাল বিন্দু বলে কোথায়। সহজ ভাষায় পরের ধাপ জানতে কী সমস্যা? খুলুন। সমস্যা বারবার ফিরে এলে, আমার ISP-এর জন্য রিপোর্ট প্রমাণ আর প্রোভাইডারকে পাঠানোর মতো একটি বার্তা তৈরি করে।

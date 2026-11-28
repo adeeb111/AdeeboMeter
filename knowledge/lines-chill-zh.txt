@@ -111,3 +111,16 @@ game.streak|连赢中，{addr}。
 game.timeup|时间到，都挺好。
 market.open|市场开了，慢慢来。
 storm.near|附近有风暴，连接可能会有点晃。
+# 28 Nov 2026: one line for every tool without its own
+tool.ok|这里一切都好。不用担心。
+tool.ok|很顺利。结果看起来正常。
+tool.ok|看过了。你没问题。
+tool.warn|大部分没问题。有一行值得看一眼。
+tool.warn|没有坏，不过看看黄色那一行。
+tool.warn|好了。下面有个小地方要看看。
+tool.fail|发现了一个问题。在红色那一行。
+tool.fail|这次不太顺利。看下面。
+tool.fail|有点不对劲。先看红色那一行。
+tool.done|给你。答案在下面。
+tool.done|帮你算好了。
+tool.done|好了。数字在下面。

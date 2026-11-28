@@ -5688,3 +5688,44 @@ Crypto	Crypto
 60 calls a minute - US shares	60 appels par minute - actions américaines
 800 calls a day - US shares and crypto	800 appels par jour - actions américaines et crypto
 (Ctrl+Alt+A taken)	(Ctrl+Alt+A déjà pris)
+# 28 Nov 2026: simplify, prices, welcome
+Done. Turn them on to see the four cards on Home again.	Terminé. Activez-les pour revoir les quatre cartes sur l'accueil.
+From	Depuis
+Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only.	Les indices et les contrats à terme demandent une clé Financial Modeling Prep - Finnhub et Twelve Data ne donnent que le cours des entreprises.
+More in Learn ›	Plus dans Apprendre ›
+Needs a free price key (Settings › Markets)	Demande une clé de prix gratuite (Paramètres › Marchés)
+Prices with your own price key, at its pace (Settings › Markets), in market hours only - 	Les cours avec votre propre clé, à son rythme (Paramètres › Marchés), seulement pendant les heures de marché - 
+Showing on Home: four short cards on what AdeeboMeter does and how to get around.	Sur l'accueil : quatre courtes cartes sur ce que fait AdeeboMeter et comment s'y retrouver.
+That's the most you can follow - unfollow one to add another.	C'est le maximum à suivre - arrêtez d'en suivre une pour en ajouter une autre.
+Ticker as typed:	Symbole tel que saisi :
+Type at least two letters, or a ticker like GOOGL.	Tapez au moins deux lettres, ou un symbole comme GOOGL.
+Welcome · {0} of 4	Bienvenue · {0} sur 4
+Without a price key only currencies show (Bank of Canada, once a day).	Sans clé de prix, seules les devises s'affichent (Banque du Canada, une fois par jour).
+delayed while markets are open	en différé pendant les heures de marché
+of 20 followed	sur 20 suivies
+what this PC uses right now	ce que ce PC utilise en ce moment
+Welcome cards	Cartes de bienvenue
+My PC	Mon PC
+Hardware & health	Matériel et santé
+Hardware	Matériel
+Shell	Shell
+Lab	Labo
+plenty of room to spare	largement de marge
+busy - things may feel slow	occupé - tout peut sembler lent
+very busy - close something heavy	très occupé - fermez quelque chose de lourd
+your home network is fine	votre réseau domestique va bien
+a little slow at home	un peu lent à la maison
+home network trouble	problème sur le réseau domestique
+the internet answers quickly	Internet répond vite
+slower than usual	plus lent que d'habitude
+trouble reaching it	difficile à joindre
+sites open without waiting	les sites s'ouvrent sans attendre
+new sites are slow to start	les nouveaux sites tardent à démarrer
+sites may not open	les sites peuvent ne pas s'ouvrir
+What AdeeboMeter does	Ce que fait AdeeboMeter
+Changing things	Changer les réglages
+When something's wrong	Quand quelque chose ne va pas
+Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them.	Cinq points suivent votre connexion, de ce PC jusqu'à Internet : ce PC, le Wi-Fi, votre routeur, votre fournisseur, Internet. Vert : tout va bien ; orange : à surveiller ; rouge : c'est là que se trouve le problème. Posez la souris sur le widget du coin pour les voir.
+Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	L'accueil vous dit ce qui se passe. Vérifier teste un site. Mon PC, c'est cet ordinateur : matériel, applis, connexions, Wi-Fi. Historique rejoue n'importe quelle minute. La boîte à outils contient tous les outils. Vous ne trouvez pas quelque chose ? Appuyez sur Ctrl+K et tapez-le.
+Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	Les paramètres sont en bas à gauche : langue, thème, compagnon, widget du coin, heures calmes. Le widget ne prend jamais vos clics - pour le déplacer, posez la souris dessus jusqu'au contour en pointillé, puis faites glisser.
+A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	Un point rouge indique où. Ouvrez Qu'est-ce qui ne va pas ? pour la prochaine étape en mots simples. Si le problème revient, Rapport pour mon fournisseur réunit les preuves et un message à coller pour votre fournisseur.

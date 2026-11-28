@@ -135,3 +135,16 @@ game.streak|连对{v}次。
 game.timeup|时间到。
 market.open|市场开盘了。
 storm.near|附近有暴风雨，连接可能会断。
+# 28 Nov 2026: one line for every tool without its own
+tool.ok|完成。没有发现问题。
+tool.ok|结束。结果看起来正常。
+tool.ok|都检查过了。这里没有问题。
+tool.warn|完成。有一项不太对——看黄色那一行。
+tool.warn|结束，有一个提醒。详情在下面。
+tool.warn|大部分正常。看看标记的那一行。
+tool.fail|完成。有项目失败了——看红色那一行。
+tool.fail|结束。下面有一个问题。
+tool.fail|这一项没有通过。红色那一行写着原因。
+tool.done|算好了。答案在下面。
+tool.done|完成。这是结果。
+tool.done|计算完成。数字在下面。

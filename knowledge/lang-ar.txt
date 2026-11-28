@@ -5676,3 +5676,44 @@ Crypto	العملات المشفرة
 60 calls a minute - US shares	60 طلبًا في الدقيقة - أسهم أمريكية
 800 calls a day - US shares and crypto	800 طلب يوميًا - أسهم أمريكية وعملات مشفرة
 (Ctrl+Alt+A taken)	(Ctrl+Alt+A مستخدم بالفعل)
+# 28 Nov 2026: simplify, prices, welcome
+Done. Turn them on to see the four cards on Home again.	تم. شغّلها لترى البطاقات الأربع في الرئيسية مرة أخرى.
+From	من
+Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only.	تحتاج المؤشرات والعقود الآجلة إلى مفتاح Financial Modeling Prep - يقدّم Finnhub وTwelve Data أسعار الشركات فقط.
+More in Learn ›	المزيد في تعلّم ›
+Needs a free price key (Settings › Markets)	يحتاج إلى مفتاح أسعار مجاني (الإعدادات › الأسواق)
+Prices with your own price key, at its pace (Settings › Markets), in market hours only - 	الأسعار بمفتاحك الخاص وبوتيرته (الإعدادات › الأسواق)، في ساعات التداول فقط - 
+Showing on Home: four short cards on what AdeeboMeter does and how to get around.	تظهر في الرئيسية: أربع بطاقات قصيرة عمّا يفعله AdeeboMeter وكيف تتنقّل فيه.
+That's the most you can follow - unfollow one to add another.	هذا أقصى ما يمكنك متابعته - ألغِ متابعة واحدة لتضيف أخرى.
+Ticker as typed:	الرمز كما كتبته:
+Type at least two letters, or a ticker like GOOGL.	اكتب حرفين على الأقل، أو رمزًا مثل GOOGL.
+Welcome · {0} of 4	مرحبًا · {0} من 4
+Without a price key only currencies show (Bank of Canada, once a day).	بدون مفتاح أسعار تظهر العملات فقط (بنك كندا، مرة يوميًا).
+delayed while markets are open	متأخرة أثناء فتح الأسواق
+of 20 followed	من 20 متابَعة
+what this PC uses right now	ما يستخدمه هذا الجهاز الآن
+Welcome cards	بطاقات الترحيب
+My PC	جهازي
+Hardware & health	العتاد والصحة
+Hardware	العتاد
+Shell	الطرفية
+Lab	المختبر
+plenty of room to spare	لديه متّسع كبير
+busy - things may feel slow	مشغول - قد تشعر بالبطء
+very busy - close something heavy	مشغول جدًا - أغلق شيئًا ثقيلًا
+your home network is fine	شبكة منزلك بخير
+a little slow at home	بطيء قليلًا في المنزل
+home network trouble	مشكلة في شبكة المنزل
+the internet answers quickly	الإنترنت يستجيب بسرعة
+slower than usual	أبطأ من المعتاد
+trouble reaching it	صعوبة في الوصول إليه
+sites open without waiting	المواقع تفتح بلا انتظار
+new sites are slow to start	المواقع الجديدة بطيئة في البدء
+sites may not open	قد لا تفتح المواقع
+What AdeeboMeter does	ما يفعله AdeeboMeter
+Changing things	تغيير الإعدادات
+When something's wrong	عندما يحدث خطأ
+Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them.	خمس نقاط تتبّع اتصالك من هذا الجهاز إلى الإنترنت: هذا الجهاز، والواي فاي، والراوتر، ومزوّد الخدمة، والإنترنت. الأخضر سليم، والكهرماني يستحق نظرة، والأحمر هو مكان المشكلة. أبقِ الفأرة على أداة الزاوية لتراها.
+Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	الرئيسية تخبرك بما يحدث. فحص يختبر موقعًا واحدًا. جهازي هو هذا الكمبيوتر: العتاد والتطبيقات والاتصالات والواي فاي. السجل يعيد أي دقيقة. صندوق الأدوات فيه كل الأدوات. لا تجد شيئًا؟ اضغط Ctrl+K واكتبه.
+Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	الإعدادات في أسفل الجانب الأيسر: اللغة والمظهر والرفيق وأداة الزاوية وساعات الهدوء. الأداة لا تأخذ نقراتك أبدًا - لتحريكها أبقِ الفأرة عليها حتى يظهر الإطار المنقّط ثم اسحبها.
+A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	النقطة الحمراء تخبرك أين. افتح ما المشكلة؟ لتعرف الخطوة التالية بكلمات بسيطة. إذا عادت المشكلة، يجمع تقرير لمزوّد الخدمة الدليل ورسالة يمكنك لصقها لمزوّدك.

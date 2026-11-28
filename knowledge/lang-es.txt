@@ -5676,3 +5676,44 @@ Crypto	Cripto
 60 calls a minute - US shares	60 llamadas por minuto: acciones de EE. UU.
 800 calls a day - US shares and crypto	800 llamadas al día: acciones de EE. UU. y cripto
 (Ctrl+Alt+A taken)	(Ctrl+Alt+A ya en uso)
+# 28 Nov 2026: simplify, prices, welcome
+Done. Turn them on to see the four cards on Home again.	Listo. Actívalas para volver a ver las cuatro tarjetas en Inicio.
+From	De
+Indexes and futures need a Financial Modeling Prep key - Finnhub and Twelve Data price companies only.	Los índices y futuros necesitan una clave de Financial Modeling Prep: Finnhub y Twelve Data solo dan precios de empresas.
+More in Learn ›	Más en Aprender ›
+Needs a free price key (Settings › Markets)	Necesita una clave de precios gratuita (Ajustes › Mercados)
+Prices with your own price key, at its pace (Settings › Markets), in market hours only - 	Precios con tu propia clave, a su ritmo (Ajustes › Mercados), solo en horario de mercado: 
+Showing on Home: four short cards on what AdeeboMeter does and how to get around.	En Inicio: cuatro tarjetas cortas sobre qué hace AdeeboMeter y cómo moverse.
+That's the most you can follow - unfollow one to add another.	Es el máximo que puedes seguir: deja de seguir una para añadir otra.
+Ticker as typed:	Símbolo tal como lo escribiste:
+Type at least two letters, or a ticker like GOOGL.	Escribe al menos dos letras, o un símbolo como GOOGL.
+Welcome · {0} of 4	Bienvenida · {0} de 4
+Without a price key only currencies show (Bank of Canada, once a day).	Sin clave de precios solo se muestran divisas (Banco de Canadá, una vez al día).
+delayed while markets are open	con retraso mientras los mercados están abiertos
+of 20 followed	de 20 seguidas
+what this PC uses right now	lo que este PC usa ahora mismo
+Welcome cards	Tarjetas de bienvenida
+My PC	Mi PC
+Hardware & health	Hardware y salud
+Hardware	Hardware
+Shell	Shell
+Lab	Lab
+plenty of room to spare	con margen de sobra
+busy - things may feel slow	ocupado: todo puede ir lento
+very busy - close something heavy	muy ocupado: cierra algo pesado
+your home network is fine	tu red de casa está bien
+a little slow at home	algo lento en casa
+home network trouble	problema en la red de casa
+the internet answers quickly	internet responde rápido
+slower than usual	más lento de lo normal
+trouble reaching it	cuesta llegar
+sites open without waiting	los sitios se abren sin esperar
+new sites are slow to start	los sitios nuevos tardan en empezar
+sites may not open	puede que los sitios no abran
+What AdeeboMeter does	Qué hace AdeeboMeter
+Changing things	Cambiar cosas
+When something's wrong	Cuando algo falla
+Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, your router, your provider, the internet. Green is fine, amber worth a look, red is where the problem is. Rest the mouse on the corner widget to see them.	Cinco puntos siguen tu conexión desde este PC hasta internet: este PC, el Wi-Fi, tu router, tu proveedor e internet. Verde está bien, ámbar merece un vistazo y rojo es donde está el problema. Deja el ratón sobre el widget de la esquina para verlos.
+Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	Inicio te dice qué pasa. Comprobar prueba un sitio. Mi PC es este ordenador: hardware, apps, conexiones, Wi-Fi. Historial reproduce cualquier minuto. La Caja de herramientas lo tiene todo. ¿No encuentras algo? Pulsa Ctrl+K y escríbelo.
+Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	Ajustes está abajo a la izquierda: idioma, tema, el compañero, el widget de la esquina, horas tranquilas. El widget nunca recibe tus clics: para moverlo, deja el ratón encima hasta que aparezca el contorno de puntos y arrástralo.
+A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	Un punto rojo dice dónde. Abre ¿Qué pasa? para el siguiente paso en palabras sencillas. Si el problema vuelve, Informe para mi proveedor reúne las pruebas y un mensaje para pegar a tu proveedor.
