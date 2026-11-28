@@ -5717,3 +5717,29 @@ Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, y
 Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	Inicio te dice qué pasa. Comprobar prueba un sitio. Mi PC es este ordenador: hardware, apps, conexiones, Wi-Fi. Historial reproduce cualquier minuto. La Caja de herramientas lo tiene todo. ¿No encuentras algo? Pulsa Ctrl+K y escríbelo.
 Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	Ajustes está abajo a la izquierda: idioma, tema, el compañero, el widget de la esquina, horas tranquilas. El widget nunca recibe tus clics: para moverlo, deja el ratón encima hasta que aparezca el contorno de puntos y arrástralo.
 A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	Un punto rojo dice dónde. Abre ¿Qué pasa? para el siguiente paso en palabras sencillas. Si el problema vuelve, Informe para mi proveedor reúne las pruebas y un mensaje para pegar a tu proveedor.
+# 28 Nov 2026: Network Doctor
+...and {0} more	...y {0} más
+A suspect, not proof: undo it if you can (roll back the driver, uninstall the update) and see if it gets better.	Un sospechoso, no una prueba: deshazlo si puedes (vuelve al controlador anterior, desinstala la actualización) y mira si mejora.
+After it:	Después:
+Blue: typical ping to the internet. Red bars: connection drops that day. A dot on top: something changed that day (red = the suspect). Click a day to replay it.	Azul: ping habitual a internet. Barras rojas: cortes de conexión ese día. Un punto arriba: algo cambió ese día (rojo = el sospechoso). Haz clic en un día para reproducirlo.
+Most likely: {0}	Lo más probable: {0}
+Network Doctor	Doctor de red
+No updates, drivers, hardware or settings changes in the last two weeks.	Sin cambios de actualizaciones, controladores, hardware o ajustes en las dos últimas semanas.
+Nothing changed between them.	Nada cambió entre ellos.
+Open that day in History	Abrir ese día en Historial
+Settings, apps and services - compared	Ajustes, apps y servicios: comparados
+Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	Las instantáneas se quedan en este PC (30 días), solo con el Historial activado. Lo que Windows oculta a un usuario normal simplemente no está en ellas.
+The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	El Doctor guarda una pequeña instantánea cada día (ajustes de red, apps, servicios, inicio, tareas programadas). Vuelve mañana para comparar.
+The last two weeks	Las dos últimas semanas
+What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	Lo que cambió en este PC (actualizaciones, controladores, hardware, reinicios, ajustes y apps) junto a cómo fue cada día. Señala un sospechoso con sus pruebas, nunca un veredicto.
+{0} compared with {1}	{0} comparado con {1}
+since yesterday	desde ayer
+since a week ago	desde hace una semana
+since the first snapshot	desde la primera instantánea
+Looking through two weeks of changes...	Revisando dos semanas de cambios...
+Windows update	Actualización de Windows
+Crash	Fallo
+Doctor	Doctor
+History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	El Historial está desactivado, así que no hay con qué comparar los cambios. Actívalo en Ajustes › General.
+Nothing changed just before things got worse - no suspect.	Nada cambió justo antes de que empeorara: no hay sospechoso.
+Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	Algo falló, pero no hubo cambios justo antes: parece la línea o el proveedor, no este PC.

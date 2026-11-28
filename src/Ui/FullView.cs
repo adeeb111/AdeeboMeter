@@ -308,7 +308,7 @@ namespace AdeeboMeter
 
             left.Controls.Add(BuildOverviewPage()); left.Controls.Add(BuildToolboxPage()); left.Controls.Add(BuildGuidePage()); left.Controls.Add(BuildReplayPage());
             left.Controls.Add(BuildTravelPage()); left.Controls.Add(BuildInsidePage()); left.Controls.Add(BuildLearnPage()); left.Controls.Add(BuildSecurityPage()); left.Controls.Add(BuildGamerPage()); left.Controls.Add(BuildStreamPage()); left.Controls.Add(BuildSportsPage()); left.Controls.Add(BuildTradePage()); left.Controls.Add(BuildOutlookPage()); left.Controls.Add(BuildShellPage()); left.Controls.Add(BuildLabPage());
-            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
+            left.Controls.Add(connPage); left.Controls.Add(linkPage); left.Controls.Add(procPage); left.Controls.Add(settingsPage); left.Controls.Add(aboutPage); left.Controls.Add(BuildPointsPage()); left.Controls.Add(BuildDoctorPage()); left.Controls.Add(BuildPhonePage()); left.Controls.Add(BuildMinePage()); left.Controls.Add(destPage); left.Controls.Add(healthPage); left.Controls.Add(changesPage); left.Controls.Add(livePage); left.Controls.Add(tabLine); left.Controls.Add(subTabs); left.Controls.Add(tabs);
             side = new DB { Name = "side", Dock = DockStyle.Fill, BackColor = Theme.Bg, Margin = new Padding(0), Tag = "bg" };
             side.Paint += delegate(object s, PaintEventArgs e) { Prep(e.Graphics); PaintSide(e.Graphics, side.ClientRectangle); }; Wire(side);
             body.Controls.Add(left, 0, 0); body.Controls.Add(side, 1, 0);
@@ -480,6 +480,7 @@ namespace AdeeboMeter
             travelPage.Visible = tab == "travel"; insidePage.Visible = tab == "windows"; learnPage.Visible = tab == "learn";
             // Review-1: coming back to What's wrong? opens at the verdict, not halfway down the last result
             bool enterGuide = tab == "guide" && !guidePage.Visible;
+            doctorPage.Visible = tab == "doctor"; if (tab == "doctor") DoctorShown();
             overviewPage.Visible = tab == "overview"; guidePage.Visible = tab == "guide"; if (enterGuide && guideCanvas != null) guideCanvas.AutoScrollPosition = Point.Empty; replayPage.Visible = tab == "replay"; if (tab == "toolbox") EnsureToolbox(); toolboxPage.Visible = tab == "toolbox"; securityPage.Visible = tab == "security"; gamerPage.Visible = tab == "gamer"; streamPage.Visible = tab == "stream"; sportsPage.Visible = tab == "sports"; tradePage.Visible = tab == "trade"; outlookPage.Visible = tab == "outlook"; shellPage.Visible = tab == "shell"; labPage.Visible = tab == "lab"; if (tab == "lab") LabPageShown();
             if (tab == "replay") ReplayOpen();
             if (tab != "settings" && tab != "about" && tab != "points") lastPage = tab;
@@ -504,7 +505,7 @@ namespace AdeeboMeter
             // entries: two ways in. Every page is still here; only where it lives changed.
             new[] { "home", "Home", "overview", "guide" },
             new[] { "check", "Check", "dest", "shell" },
-            new[] { "pc", "My PC", "health", "procs", "conn", "link", "live", "security" },
+            new[] { "pc", "My PC", "health", "doctor", "procs", "conn", "link", "live", "security" },
             new[] { "toolbox", "Toolbox", "toolbox" },
             new[] { "gamer", "Gamer", "gamer" },
             new[] { "outlook", "Outlook", "outlook" },
@@ -533,7 +534,7 @@ namespace AdeeboMeter
             { "overview", new[] { "Today", "Today" } },
             { "conn", new[] { "Connections", "Connections" } }, { "link", new[] { "Your Wi-Fi", "Wi-Fi" } }, { "procs", new[] { "What's running", "Running" } }, { "live", new[] { "Live capture", "Live" } },
             { "guide", new[] { "What's wrong?", "Problem" } }, { "dest", new[] { "Check a destination", "Destination" } }, { "health", new[] { "Hardware & health", "Hardware" } },
-            { "shell", new[] { "AdeeboShell", "Shell" } }, { "lab", new[] { "AdeeboLab", "Lab" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
+            { "shell", new[] { "AdeeboShell", "Shell" } }, { "lab", new[] { "AdeeboLab", "Lab" } }, { "doctor", new[] { "Network Doctor", "Doctor" } }, { "toolbox", new[] { "Toolbox", "Toolbox" } }, { "gamer", new[] { "Gamer Zone", "Gamer" } }, { "stream", new[] { "Streaming", "Streaming" } }, { "sports", new[] { "Sports", "Sports" } }, { "trade", new[] { "Markets", "Markets" } }, { "outlook", new[] { "Outlook", "Outlook" } }, { "security", new[] { "Security", "Security" } },
             { "travel", new[] { "Network story", "Story" } },
             { "replay", new[] { "Replay", "Replay" } }, { "changes", new[] { "What changed", "Changes" } },
             { "learn", new[] { "Topics", "Topics" } }, { "windows", new[] { "Inside Windows", "Windows" } }, { "phone", new[] { "Your phone", "Phone" } } };
@@ -789,7 +790,7 @@ namespace AdeeboMeter
             if (page == "tour") { DemoTour(sub); return; }
             // --view lang[:bn] opens the language card (with that tile under the mouse) - for screenshots
             if (page == "lang") { LangMenu(); if (sub != null) { langDebug = sub; langSheet.Invalidate(); } return; }
-            var known = new HashSet<string>(tabNames.Keys) { "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell", "lab" };
+            var known = new HashSet<string>(tabNames.Keys) { "doctor", "overview", "toolbox", "gamer", "stream", "sports", "trade", "replay", "learn", "security", "travel", "dest", "procs", "health", "link", "changes", "outlook", "conn", "windows", "phone", "live", "guide", "settings", "about", "points", "shell", "lab" };
             if (!known.Contains(page)) { Program.Log("--view: no page called \"" + page + "\" - opening Home"); Text = "AdeeboMeter - no page \"" + page + "\""; page = "overview"; }   // R2-196: a typo'd page name says so
             tab = page; ShowTab();
             if (page == "security" && sub == "run") SecRun(null);

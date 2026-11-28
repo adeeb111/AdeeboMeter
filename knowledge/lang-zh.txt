@@ -5710,3 +5710,29 @@ Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, y
 Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	主页告诉你正在发生什么。“检查”测试一个网站。“我的电脑”就是这台电脑：硬件、应用、连接、Wi-Fi。“历史”可回放任意一分钟。“工具箱”里有所有工具。找不到？按 Ctrl+K 输入即可。
 Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	设置在左侧底部：语言、主题、伙伴、角落小部件、免打扰时段。小部件从不接收点击——要移动它，把鼠标停在上面直到出现虚线框，再拖动。
 A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	红点会告诉你问题在哪。打开“出了什么问题？”用简单的话看下一步。如果问题反复出现，“给运营商的报告”会整理证据，并写好可以直接粘贴给运营商的消息。
+# 28 Nov 2026: Network Doctor
+...and {0} more	……还有 {0} 项
+A suspect, not proof: undo it if you can (roll back the driver, uninstall the update) and see if it gets better.	这只是嫌疑，不是证据：如果可以就撤销它（回滚驱动、卸载更新），看看是否好转。
+After it:	之后：
+Blue: typical ping to the internet. Red bars: connection drops that day. A dot on top: something changed that day (red = the suspect). Click a day to replay it.	蓝色：到互联网的常规延迟。红色柱：当天的断线次数。顶部的点：当天有变化（红色 = 嫌疑）。点击某天即可回放。
+Most likely: {0}	最可能：{0}
+Network Doctor	网络医生
+No updates, drivers, hardware or settings changes in the last two weeks.	最近两周没有更新、驱动、硬件或设置的变化。
+Nothing changed between them.	两者之间没有变化。
+Open that day in History	在历史中打开那一天
+Settings, apps and services - compared	设置、应用和服务——对比
+Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	快照只保存在这台电脑上（30 天），且仅在开启历史时保存。Windows 对普通用户隐藏的内容不会出现在其中。
+The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	网络医生每天保存一份小快照（网络设置、应用、服务、启动项、计划任务）。明天再来对比。
+The last two weeks	最近两周
+What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	这台电脑上的变化——更新、驱动、硬件、重启、设置和应用——与每天的网络状况对照。它会给出一个嫌疑及证据，从不下结论。
+{0} compared with {1}	{0} 与 {1} 对比
+since yesterday	自昨天
+since a week ago	自一周前
+since the first snapshot	自第一份快照
+Looking through two weeks of changes...	正在查看两周的变化……
+Windows update	Windows 更新
+Crash	崩溃
+Doctor	医生
+History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	历史已关闭，无法与变化对照。请在设置 › 常规中打开。
+Nothing changed just before things got worse - no suspect.	情况变差之前没有任何变化——没有嫌疑。
+Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	出了问题，但之前没有任何变化——更像是线路或运营商的问题，而不是这台电脑。

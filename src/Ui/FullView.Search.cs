@@ -34,6 +34,7 @@ namespace AdeeboMeter
             { "lab", "lab simulate draw network diagram break playground" },
             { "replay", "history yesterday replay time machine past" }, { "changes", "what changed drivers updates since" },
             { "travel", "network story packet journey layers" }, { "windows", "inside windows services startup processes explained" },
+            { "doctor", "doctor network doctor what changed broke after update driver crash restart suspect windows update correlation hardware change history startup scheduled tasks registry compare snapshot" },
             { "guide", "problem fix wrong help broken troubleshoot" }, { "overview", "home today status" }
         };
         List<PalItem> SearchItems()

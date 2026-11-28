@@ -5717,3 +5717,29 @@ Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, y
 Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	الرئيسية تخبرك بما يحدث. فحص يختبر موقعًا واحدًا. جهازي هو هذا الكمبيوتر: العتاد والتطبيقات والاتصالات والواي فاي. السجل يعيد أي دقيقة. صندوق الأدوات فيه كل الأدوات. لا تجد شيئًا؟ اضغط Ctrl+K واكتبه.
 Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	الإعدادات في أسفل الجانب الأيسر: اللغة والمظهر والرفيق وأداة الزاوية وساعات الهدوء. الأداة لا تأخذ نقراتك أبدًا - لتحريكها أبقِ الفأرة عليها حتى يظهر الإطار المنقّط ثم اسحبها.
 A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	النقطة الحمراء تخبرك أين. افتح ما المشكلة؟ لتعرف الخطوة التالية بكلمات بسيطة. إذا عادت المشكلة، يجمع تقرير لمزوّد الخدمة الدليل ورسالة يمكنك لصقها لمزوّدك.
+# 28 Nov 2026: Network Doctor
+...and {0} more	...و{0} أخرى
+A suspect, not proof: undo it if you can (roll back the driver, uninstall the update) and see if it gets better.	مشتبه به، لا دليل: تراجع عنه إن استطعت (أعد التعريف السابق، أزل التحديث) وانظر إن تحسّن الوضع.
+After it:	بعده:
+Blue: typical ping to the internet. Red bars: connection drops that day. A dot on top: something changed that day (red = the suspect). Click a day to replay it.	الأزرق: زمن الاستجابة المعتاد للإنترنت. الأشرطة الحمراء: انقطاعات الاتصال في ذلك اليوم. نقطة في الأعلى: تغيّر شيء في ذلك اليوم (الأحمر = المشتبه به). انقر يومًا لإعادة عرضه.
+Most likely: {0}	الأرجح: {0}
+Network Doctor	طبيب الشبكة
+No updates, drivers, hardware or settings changes in the last two weeks.	لا تحديثات أو تعريفات أو عتاد أو إعدادات تغيّرت خلال الأسبوعين الماضيين.
+Nothing changed between them.	لم يتغيّر شيء بينهما.
+Open that day in History	افتح ذلك اليوم في السجل
+Settings, apps and services - compared	الإعدادات والتطبيقات والخدمات - مقارنة
+Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	تبقى اللقطات على هذا الجهاز (30 يومًا)، فقط عندما يكون السجل مفعّلًا. ما يحجبه Windows عن المستخدم العادي ليس فيها ببساطة.
+The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	يحفظ الطبيب لقطة صغيرة كل يوم (إعدادات الشبكة والتطبيقات والخدمات وعناصر بدء التشغيل والمهام المجدولة). عد غدًا للمقارنة.
+The last two weeks	الأسبوعان الأخيران
+What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	ما تغيّر على هذا الجهاز - التحديثات والتعريفات والعتاد وإعادة التشغيل والإعدادات والتطبيقات - مقابل ما حدث في كل يوم. يسمّي مشتبهًا به مع دليله، لا حكمًا.
+{0} compared with {1}	{0} مقارنة بـ {1}
+since yesterday	منذ أمس
+since a week ago	منذ أسبوع
+since the first snapshot	منذ أول لقطة
+Looking through two weeks of changes...	أراجع تغييرات أسبوعين...
+Windows update	تحديث Windows
+Crash	تعطّل
+Doctor	الطبيب
+History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	السجل متوقف، فلا شيء نقارن به التغييرات. شغّله من الإعدادات › عام.
+Nothing changed just before things got worse - no suspect.	لم يتغيّر شيء قبل أن يسوء الوضع مباشرة - لا مشتبه به.
+Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	ساء الوضع، لكن لم يسبقه تغيير مباشرة - يبدو أنها الخط أو المزوّد، لا هذا الجهاز.

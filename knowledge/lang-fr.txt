@@ -5729,3 +5729,29 @@ Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, y
 Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	L'accueil vous dit ce qui se passe. Vérifier teste un site. Mon PC, c'est cet ordinateur : matériel, applis, connexions, Wi-Fi. Historique rejoue n'importe quelle minute. La boîte à outils contient tous les outils. Vous ne trouvez pas quelque chose ? Appuyez sur Ctrl+K et tapez-le.
 Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	Les paramètres sont en bas à gauche : langue, thème, compagnon, widget du coin, heures calmes. Le widget ne prend jamais vos clics - pour le déplacer, posez la souris dessus jusqu'au contour en pointillé, puis faites glisser.
 A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	Un point rouge indique où. Ouvrez Qu'est-ce qui ne va pas ? pour la prochaine étape en mots simples. Si le problème revient, Rapport pour mon fournisseur réunit les preuves et un message à coller pour votre fournisseur.
+# 28 Nov 2026: Network Doctor
+...and {0} more	...et {0} de plus
+A suspect, not proof: undo it if you can (roll back the driver, uninstall the update) and see if it gets better.	Un suspect, pas une preuve : annulez-le si possible (revenir au pilote précédent, désinstaller la mise à jour) et voyez si ça s'améliore.
+After it:	Après :
+Blue: typical ping to the internet. Red bars: connection drops that day. A dot on top: something changed that day (red = the suspect). Click a day to replay it.	Bleu : ping habituel vers Internet. Barres rouges : coupures ce jour-là. Un point en haut : quelque chose a changé ce jour-là (rouge = le suspect). Cliquez sur un jour pour le rejouer.
+Most likely: {0}	Le plus probable : {0}
+Network Doctor	Docteur réseau
+No updates, drivers, hardware or settings changes in the last two weeks.	Aucune mise à jour, aucun pilote, matériel ou réglage changé ces deux dernières semaines.
+Nothing changed between them.	Rien n'a changé entre les deux.
+Open that day in History	Ouvrir ce jour dans l'historique
+Settings, apps and services - compared	Réglages, applis et services - comparés
+Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	Les instantanés restent sur ce PC (30 jours), seulement si l'historique est activé. Ce que Windows cache à un utilisateur normal n'y figure tout simplement pas.
+The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	Le docteur garde un petit instantané chaque jour (réglages réseau, applis, services, démarrage, tâches planifiées). Revenez demain pour comparer.
+The last two weeks	Les deux dernières semaines
+What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	Ce qui a changé sur ce PC - mises à jour, pilotes, matériel, redémarrages, réglages et applis - mis en face de chaque journée. Il désigne un suspect avec ses preuves, jamais un verdict.
+{0} compared with {1}	{0} comparé à {1}
+since yesterday	depuis hier
+since a week ago	depuis une semaine
+since the first snapshot	depuis le premier instantané
+Looking through two weeks of changes...	Examen de deux semaines de changements...
+Windows update	Mise à jour Windows
+Crash	Plantage
+Doctor	Docteur
+History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	L'historique est désactivé : rien à mettre en face des changements. Activez-le dans Paramètres › Général.
+Nothing changed just before things got worse - no suspect.	Rien n'a changé juste avant que ça empire - pas de suspect.
+Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	Ça s'est dégradé, mais aucun changement juste avant - cela ressemble à la ligne ou au fournisseur, pas à ce PC.

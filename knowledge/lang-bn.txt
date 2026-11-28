@@ -5717,3 +5717,29 @@ Five dots follow your connection from this PC to the internet: this PC, Wi-Fi, y
 Home tells you what's happening. Check tests one site. My PC is this computer: hardware, apps, connections, Wi-Fi. History replays any minute. The Toolbox has every tool. Can't find something? Press Ctrl+K and type it.	হোম বলে কী ঘটছে। যাচাই একটি সাইট পরীক্ষা করে। আমার পিসি হলো এই কম্পিউটার: হার্ডওয়্যার, অ্যাপ, সংযোগ, ওয়াই-ফাই। ইতিহাস যেকোনো মিনিট আবার দেখায়। টুলবক্সে সব টুল আছে। কিছু খুঁজে পাচ্ছেন না? Ctrl+K চেপে লিখুন।
 Settings is at the bottom of the left side: language, theme, the buddy, the corner widget, quiet hours. The widget never takes your clicks - to move it, rest on it until the dashed outline shows, then drag.	সেটিংস বাঁ দিকের নিচে: ভাষা, থিম, সঙ্গী, কোণের উইজেট, নীরব সময়। উইজেট কখনো আপনার ক্লিক নেয় না - সরাতে মাউস রাখুন যতক্ষণ না ড্যাশ দেওয়া রেখা দেখা যায়, তারপর টানুন।
 A red dot says where. Open What's wrong? for the next step in plain words. If the problem keeps coming back, Report for my ISP builds the proof and a message you can paste to your provider.	লাল বিন্দু বলে কোথায়। সহজ ভাষায় পরের ধাপ জানতে কী সমস্যা? খুলুন। সমস্যা বারবার ফিরে এলে, আমার ISP-এর জন্য রিপোর্ট প্রমাণ আর প্রোভাইডারকে পাঠানোর মতো একটি বার্তা তৈরি করে।
+# 28 Nov 2026: Network Doctor
+...and {0} more	...আরও {0}টি
+A suspect, not proof: undo it if you can (roll back the driver, uninstall the update) and see if it gets better.	সন্দেহভাজন, প্রমাণ নয়: পারলে এটি ফিরিয়ে নিন (আগের ড্রাইভারে ফিরুন, আপডেট আনইনস্টল করুন) আর দেখুন ভালো হয় কি না।
+After it:	এরপরে:
+Blue: typical ping to the internet. Red bars: connection drops that day. A dot on top: something changed that day (red = the suspect). Click a day to replay it.	নীল: ইন্টারনেটে সাধারণ পিং। লাল বার: সেদিন সংযোগ বিচ্ছিন্ন। উপরে একটি বিন্দু: সেদিন কিছু বদলেছে (লাল = সন্দেহভাজন)। আবার দেখতে একটি দিনে ক্লিক করুন।
+Most likely: {0}	সম্ভবত: {0}
+Network Doctor	নেটওয়ার্ক ডাক্তার
+No updates, drivers, hardware or settings changes in the last two weeks.	গত দুই সপ্তাহে কোনো আপডেট, ড্রাইভার, হার্ডওয়্যার বা সেটিং বদলায়নি।
+Nothing changed between them.	দুটির মধ্যে কিছুই বদলায়নি।
+Open that day in History	ইতিহাসে সেই দিনটি খুলুন
+Settings, apps and services - compared	সেটিং, অ্যাপ ও সার্ভিস - তুলনা
+Snapshots stay on this PC (30 days), only while History is on. What Windows keeps from a normal user simply isn't in them.	স্ন্যাপশট এই পিসিতেই থাকে (৩০ দিন), শুধু ইতিহাস চালু থাকলে। Windows সাধারণ ব্যবহারকারীর কাছ থেকে যা লুকায় তা এতে থাকে না।
+The Doctor keeps a small snapshot each day (network settings, apps, services, startup items, scheduled tasks). Come back tomorrow to compare.	ডাক্তার প্রতিদিন একটি ছোট স্ন্যাপশট রাখে (নেটওয়ার্ক সেটিং, অ্যাপ, সার্ভিস, স্টার্টআপ, নির্ধারিত কাজ)। তুলনা করতে আগামীকাল আসুন।
+The last two weeks	গত দুই সপ্তাহ
+What changed on this PC - updates, drivers, hardware, restarts, settings and apps - lined up with how each day went. It names a suspect with its evidence, never a verdict.	এই পিসিতে কী বদলেছে - আপডেট, ড্রাইভার, হার্ডওয়্যার, রিস্টার্ট, সেটিং আর অ্যাপ - প্রতিটি দিন কেমন গেছে তার পাশে। এটি প্রমাণসহ একজন সন্দেহভাজনের নাম বলে, কখনো রায় দেয় না।
+{0} compared with {1}	{0}, {1}-এর সাথে তুলনা
+since yesterday	গতকাল থেকে
+since a week ago	এক সপ্তাহ আগে থেকে
+since the first snapshot	প্রথম স্ন্যাপশট থেকে
+Looking through two weeks of changes...	দুই সপ্তাহের পরিবর্তন দেখছি...
+Windows update	Windows আপডেট
+Crash	ক্র্যাশ
+Doctor	ডাক্তার
+History is off, so there's nothing to line changes up against. Turn it on in Settings › General.	ইতিহাস বন্ধ, তাই পরিবর্তনের সাথে মেলানোর কিছু নেই। সেটিংস › সাধারণ-এ চালু করুন।
+Nothing changed just before things got worse - no suspect.	খারাপ হওয়ার ঠিক আগে কিছু বদলায়নি - কোনো সন্দেহভাজন নেই।
+Things went wrong, but no change came just before it - this looks like the line or the provider, not this PC.	সমস্যা হয়েছে, কিন্তু ঠিক আগে কিছু বদলায়নি - এটি লাইন বা প্রোভাইডারের মনে হচ্ছে, এই পিসির নয়।

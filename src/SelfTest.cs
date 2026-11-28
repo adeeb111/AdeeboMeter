@@ -292,6 +292,10 @@ namespace AdeeboMeter
                 var q = MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"name\":\"x\",\"price\":6812.4,\"changePercentage\":0.42,\"timestamp\":1763740800}]", sym);
                 if (q == null || q.Price != 6812.4 || q.Pct != 0.42 || q.When.Year != 2025) throw new InvalidOperationException("FMP quote");
                 if (MarketData.ParseFmp("[{\"symbol\":\"OTHER\",\"price\":1}]", sym) != null || MarketData.ParseFmp("{\"Error Message\":\"Invalid API KEY\"}", sym) != null || MarketData.ParseFmp("[{\"symbol\":\"" + sym + "\",\"price\":-5}]", sym) != null) throw new InvalidOperationException("FMP bad answers");
+                // Network Doctor (28 Nov): a snapshot diff names what was added, removed and changed, in plain words
+                var dA = new List<string> { "App | Zoom | 5.1", "Firewall | Public | on", "Service | Spooler | automatic" }; var dB = new List<string> { "App | Zoom | 5.2", "Firewall | Public | off", "App | Steam | 2.0" };
+                var dd = Doctor.Diff(dA, dB);
+                if (dd.Count != 4 || !dd.Contains("+ App | Steam | 2.0") || !dd.Contains("~ App | Zoom | 5.1 -> 5.2") || !dd.Contains("- Service | Spooler | automatic") || Doctor.Plain("~ Firewall | Public | on -> off") != "Firewall changed: Public - on -> off") throw new InvalidOperationException("doctor diff: " + string.Join("; ", dd));
                 // PX-L4 (hunters15): the other two services' parsers, what each covers, crypto hours and big moves
                 var fh = MarketData.ParseFinnhub("{\"c\":231.5,\"dp\":-0.8,\"t\":1763740800}", "AAPL");
                 if (fh == null || fh.Price != 231.5 || fh.Pct != -0.8 || MarketData.ParseFinnhub("{\"c\":0,\"dp\":0}", "ZZZZ") != null) throw new InvalidOperationException("Finnhub quote");

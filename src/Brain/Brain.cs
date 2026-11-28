@@ -114,6 +114,7 @@ namespace AdeeboMeter
             if (t.Minute % 10 == 0) Task.Factory.StartNew(() => { try { Devices.Check(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("devices: " + e.Message); } });   // bug-hunt L-321: like AirLog below
             if (t.Minute == 5) Task.Factory.StartNew(() => { try { AirLog.Record(m); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("air: " + e.Message); } });   // neighbour wars: once an hour
             if (t.Minute == 20 && Cfg.History && (Cfg.Preset != "penny" || t.Hour == 12)) UpdateBreak.Background();   // what Windows Update changed: once an hour, in the background
+            if (t.Minute == 35 && Cfg.History) Task.Factory.StartNew(() => { try { Doctor.SnapToday(); } catch (Exception e) { if (e is OutOfMemoryException) throw; Program.Log("doctor: " + e.Message); } });   // Network Doctor's daily snapshot (once a day - it returns at once when today's exists)
         }
     }
 
