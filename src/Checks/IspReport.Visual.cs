@@ -57,12 +57,16 @@ namespace AdeeboMeter
             sb.Append("<section class=\"answer\"><p class=\"big\">" + X(v.Finding) + "</p>");
             // the stops: 0 fine, 1 worth a look, 2 where the problem is, -1 not seen
             int rl = router == null ? -1 : Loss(router) < 1 ? 0 : from != null && router.N >= from.N ? 2 : 1;
-            bool lossInIsp = from != null && isp != null && from.N >= isp.N && !(v.Owners.ContainsKey(from.Ip) && v.Owners.ContainsKey(isp.Ip) && v.Owners[from.Ip] != v.Owners[isp.Ip]) && v.Main.Hops.IndexOf(from) < v.FirstIsp + 3;
+            // ISP-ML1: when both owners are known, owner decides - loss at the provider's 4th hop or later is still the provider's;
+            // the 3-hop window is only the guess when ownership couldn't be looked up
+            bool ownersKnown = from != null && isp != null && v.Owners.ContainsKey(from.Ip) && v.Owners.ContainsKey(isp.Ip);
+            bool lossInIsp = from != null && isp != null && from.N >= isp.N && (ownersKnown ? v.Owners[from.Ip] == v.Owners[isp.Ip] : v.Main.Hops.IndexOf(from) < v.FirstIsp + 3);
             int il = isp == null ? -1 : lossInIsp ? 2 : 0;
             int el = end == null ? -1 : from != null ? 2 : Loss(end) >= 1 ? 1 : 0;
             var stops = new List<Tuple<string, string, string, int>> {
-                Tuple.Create("This PC", "measured here", "", 0),
-                Tuple.Create(v.Wifi ? "Wi-Fi" : "Cable", v.Wifi ? "a cable test rules it out" : "Wi-Fi not involved", "", v.Wifi ? 1 : 0),
+                // ISP-L1 / DAY1-L7: a stop is coloured only by what was measured - "This PC" by the ruled-out check, Wi-Fi by its signal
+                Tuple.Create("This PC", "measured here", v.Ruled != null && v.Ruled.Any(z => z.StartsWith("this PC", StringComparison.Ordinal)) ? "not busy" : "", v.Ruled != null && v.Ruled.Any(z => z.StartsWith("this PC", StringComparison.Ordinal)) ? 0 : -1),
+                Tuple.Create(v.Wifi ? "Wi-Fi" : "Cable", v.Wifi ? (v.Ruled != null && v.Ruled.Any(z => z.StartsWith("Wi-Fi signal", StringComparison.Ordinal)) ? "good signal" : "a cable test rules it out") : "Wi-Fi not involved", "", v.Wifi ? (v.Ruled != null && v.Ruled.Any(z => z.StartsWith("Wi-Fi signal", StringComparison.Ordinal)) ? 0 : 1) : 0),
                 Tuple.Create("Home router", router == null ? "not seen" : N1(Avg(router)) + " ms", router == null ? "" : "loss " + N1(Loss(router)) + "%" + (rl == 1 ? " · ignores probes" : ""), rl),
                 Tuple.Create("Provider", isp == null ? "not seen" : lossInIsp ? "loss starts, hop " + from.N : N1(Avg(isp)) + " ms", isp == null ? "" : lossInIsp ? v.Nm(from.Ip) : "first hop, loss " + N1(Loss(isp)) + "%", il),
                 Tuple.Create(endSilent ? "Last answer" : "Destination", end == null ? "no answer" : N1(Avg(end)) + " ms", end == null ? "" : "loss " + N1(Loss(end)) + "%" + (from != null && !lossInIsp ? " · from hop " + from.N : ""), el) };
@@ -83,8 +87,8 @@ namespace AdeeboMeter
             sb.Append("<div class=\"pb\"></div><section><h2>The path, hop by hop</h2><p class=\"cap\">Each row is a router on the way. The bar is the usual time; the thin line reaches the worst one. Loss is red only where it starts and carries on to the destination. A router that just ignores some probes shows amber - that isn't a problem.</p>" + PathSvg(v, hops, X) + "</section>");
 
             // ---------------------------------------------------------------- the run, probe by probe: which probes got no answer, stop by stop
-            string run = RunSvg(router, isp, end, v.Nm, X);
-            if (run != "") sb.Append("<section><h2>During the test</h2><p class=\"cap\">One probe a second to each stop. Each mark is one probe: grey answered, red got no answer. If the home router's row stays clean while the others lose probes, the home network is not the cause.</p>" + run + "</section>");
+            string run = RunSvg(router, isp, from, end, v.Nm, X);
+            if (run != "") sb.Append("<section><h2>During the test</h2><p class=\"cap\">Each mark is one probe: grey answered, red got no answer. If the home router's row stays clean while the others lose probes, the home network is not the cause.</p>" + run + "</section>");
 
             // ---------------------------------------------------------------- 3. when it happens
             sb.Append("<section><h2>When it happens</h2><p class=\"cap\">Loss by hour of day over the last 7 days, from " + X(v.Game != null ? v.Game.Name : ("the internet checks")) + ".</p>" + HourSvg(v.Heat));
@@ -168,12 +172,13 @@ namespace AdeeboMeter
 
         // the run, probe by probe: one row per stop (router, provider's first hop, destination), one mark per probe - grey answered,
         // red no answer. Reads at a glance where probes go missing; the old three wobbling lines were hard to read (24 Nov review)
-        static string RunSvg(PathTools.Hop router, PathTools.Hop isp, PathTools.Hop end, Func<string, string> nm, Func<string, string> X)
+        static string RunSvg(PathTools.Hop router, PathTools.Hop isp, PathTools.Hop from, PathTools.Hop end, Func<string, string> nm, Func<string, string> X)
         {
             var rows = new List<Tuple<string, List<double>>>();
             Func<PathTools.Hop, List<double>> H = h => { if (h == null) return null; lock (h.Hist) return h.Hist.ToList(); };
             if (router != null) rows.Add(Tuple.Create(("Home router"), H(router)));
             if (isp != null && isp != router) rows.Add(Tuple.Create(("Provider, first hop"), H(isp)));
+            if (from != null && from != isp && from != router && from != end) rows.Add(Tuple.Create(("Loss starts, hop") + " " + from.N, H(from)));   // ISP-ML2: the hop where it begins
             if (end != null && end != isp && end != router) rows.Add(Tuple.Create(("Destination"), H(end)));
             rows = rows.Where(r => r.Item2 != null && r.Item2.Count > 2).ToList(); if (rows.Count == 0) return "";
             int W = 860, lx = 170, rx = 150, rowH = 34, n = rows.Max(r => r.Item2.Count); double cw = (W - lx - rx) / (double)n;

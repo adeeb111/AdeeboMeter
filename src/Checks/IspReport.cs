@@ -102,7 +102,9 @@ namespace AdeeboMeter
             int firstIsp = main.Hops.FindIndex(Math.Max(0, gwIdx + 1), h => notHome(h));
             string verdict = PathTools.MtrVerdict(main.Hops);
             int start = StartOfLoss(main.Hops);
-            var router = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var end = main.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
+            // carry-over (hunters15): the home router is the gateway when it's on the path, else the first answering hop BEFORE the
+            // provider - never just "the first hop that answered", which can be the provider's when the router ignores probes
+            var router = gwIdx >= 0 && main.Hops[gwIdx].Sent > 0 && main.Hops[gwIdx].Lost < main.Hops[gwIdx].Sent ? main.Hops[gwIdx] : main.Hops.Take(firstIsp >= 0 ? firstIsp : 0).FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent); var end = main.Hops.LastOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);
             bool silentEnd = !main.Hops.Any(h => h.Reached && h.Sent > 0 && h.Lost < h.Sent);
             bool wifi; string ssid, dns; lock (m.L) { wifi = m.AdapterKind.IndexOf("Wi", StringComparison.OrdinalIgnoreCase) >= 0; ssid = m.Ssid; dns = m.DnsServer; }
 
@@ -177,7 +179,7 @@ namespace AdeeboMeter
             bool v6 = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Any(n => { try { return n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && n.GetIPProperties().UnicastAddresses.Any(u => u.Address.AddressFamily == AddressFamily.InterNetworkV6 && !u.Address.IsIPv6LinkLocal && !Private(u.Address)); } catch (System.Net.NetworkInformation.NetworkInformationException) { return false; } });   /* one failing adapter must not sink the report */
             rows.Add(R(3, "Addresses", "IPv4" + (v6 ? " and IPv6 (a public IPv6 address)" : " only - no public IPv6") + (pmtu > 0 ? " · adapter MTU " + pmtu : ""), "", "w"));
             var spd = SpeedTest.Last;
-            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + (double.IsNaN(spd.LoadDown) && double.IsNaN(spd.LoadUp) ? "-" : F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms")) + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
+            if (spd != null && (DateTime.Now - spd.T).TotalHours < 24) rows.Add(R(spd.Grade == "" || spd.Grade.StartsWith("A", StringComparison.Ordinal) ? 0 : spd.Grade == "B" ? 1 : 2, "Speed and queueing", SpeedTest.Mbps(spd.Down) + " down" + (spd.NoUpload ? "" : " / " + SpeedTest.Mbps(spd.Up) + " up") + " Mbps · ping " + F(spd.Idle, " ms") + " idle, " + (double.IsNaN(spd.LoadDown) && double.IsNaN(spd.LoadUp) ? "-" : F(Math.Max(double.IsNaN(spd.LoadDown) ? 0 : spd.LoadDown, double.IsNaN(spd.LoadUp) ? 0 : spd.LoadUp), " ms")) + " busy · grade " + (spd.Grade == "" ? "-" : spd.Grade) + " · " + spd.T.ToString("ddd d MMM, HH:mm", CultureInfo.CurrentCulture) + " to " + spd.Server, spd.Grade != "" && !spd.Grade.StartsWith("A", StringComparison.Ordinal) ? "The delay grows a lot when the line is full (bufferbloat) - that is the router's queue, usually fixed with Smart Queue / SQM on the router, not by the provider." : "", "m"));
             else rows.Add(R(3, "Speed and queueing", "not measured today - press Test my speed on the home page, then make the report again", "", "u"));
             if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase) && Policy.NoOnline) rows.Add(R(3, "Public IP", "not asked - online lookups are turned off by your IT team", "", "u"));   // review 1.1.6 P2 #10
             else if (string.Equals((withIp ?? "").Trim(), "yes", StringComparison.OrdinalIgnoreCase))
@@ -216,7 +218,7 @@ namespace AdeeboMeter
 
             // what's already ruled out - the first things a support desk asks you to check
             var ruled = new List<string>();
-            var hop1 = main.Hops.FirstOrDefault();
+            var hop1 = router;   // carry-over: the real home router, not whichever hop came first
             if (hop1 != null && hop1.Sent > 0 && Loss(hop1) < 1 && Avg(hop1) < 10) ruled.Add("the home network - the router answered every probe, in " + F(Avg(hop1), " ms"));
             int sig; lock (m.L) sig = m.WifiSignal;
             if (wifi && sig >= 60) ruled.Add("Wi-Fi signal (" + sig + "%)"); else if (!wifi) ruled.Add("Wi-Fi - measured on a cable");
@@ -286,7 +288,8 @@ namespace AdeeboMeter
                 // the page lists both directions: downstream power sits around 0 (-7 to +7 dBmV is normal), upstream (what the modem
                 // transmits) around +35 to +51 - judged apart. Uncorrectable errors are real data loss: thousands of them is a line problem.
                 var down = pwr.Where(v => v < 20).ToList(); var upP = pwr.Where(v => v >= 20).ToList(); pwr = down.Count > 0 ? down : pwr;
-                bool okSnr = snr.Count == 0 || snr.Min() >= 33, okPwr = (down.Count == 0 || (down.Min() >= -7 && down.Max() <= 7)) && (upP.Count == 0 || (upP.Min() >= 35 && upP.Max() <= 51)), okUnc = unc.Count == 0 || unc.Sum() < 10000;
+                // ISP-L4: the published acceptable ranges (DOCSIS 3.0): downstream -15 to +15 dBmV, upstream 35 to 52 dBmV, SNR 30 dB or more
+                bool okSnr = snr.Count == 0 || snr.Min() >= 30, okPwr = (down.Count == 0 || (down.Min() >= -15 && down.Max() <= 15)) && (upP.Count == 0 || (upP.Min() >= 35 && upP.Max() <= 52)), okUnc = unc.Count == 0 || unc.Sum() < 10000;
                 r.Add(R(okSnr && okPwr && okUnc ? 0 : 1, "Cable modem (192.168.100.1)", "SNR " + (snr.Count > 0 ? snr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " dB (lowest)" : "-") + " · power " + (pwr.Count > 0 ? pwr.Min().ToString("0.#", CultureInfo.InvariantCulture) + " to " + pwr.Max().ToString("0.#", CultureInfo.InvariantCulture) + " dBmV" : "-") + " · uncorrectable " + (unc.Count > 0 ? unc.Sum().ToString("0", CultureInfo.InvariantCulture) : "-"), !okSnr || !okPwr ? "Signal levels are outside the usual range - worth telling the provider (they can see the same numbers)." : !okUnc ? "Levels are fine, but thousands of uncorrectable errors mean data was lost on the line - tell the provider." : "The line's signal is in the normal range.", "m"));
                 return r;
             }
@@ -311,12 +314,20 @@ namespace AdeeboMeter
             }
             catch (Exception e) { if (!(e is WebException || e is IOException || e is NotSupportedException || e is UriFormatException)) throw; return null; }
         }
+        static string Runs(List<int> hours)
+        {
+            var parts = new List<string>(); int i = 0;
+            while (i < hours.Count) { int a = hours[i], b = a; while (i + 1 < hours.Count && hours[i + 1] == b + 1) { i++; b++; } parts.Add(a.ToString("00", CultureInfo.InvariantCulture) + ":00-" + ((b + 1) % 24).ToString("00", CultureInfo.InvariantCulture) + ":00"); i++; }
+            return string.Join(", ", parts);
+        }
         static string Message(string finding, List<Route> routes, Route main, int start, int firstIsp, bool wifi, Func<string, string> nm, Dictionary<int, double> heat)
         {
             var sb = new StringBuilder("Hi - ");
             var bad = heat.Where(kv => kv.Value >= 1).Select(kv => kv.Key).OrderBy(k => k).ToList();
-            if (bad.Count > 0) sb.Append("I see packet loss " + (bad.All(h => h >= 17 && h <= 23) ? "in the evenings (" + bad.First().ToString("00", CultureInfo.InvariantCulture) + ":00-" + (bad.Last() + 1).ToString("00", CultureInfo.InvariantCulture) + ":00)" : "at " + string.Join(", ", bad.Select(h => h.ToString("00", CultureInfo.InvariantCulture) + ":00"))) + " over the last week. ");
-            var rt = main.Hops.FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent);   // "my router answering normally" only when it was
+            // ISP-ML3: the bad hours exactly, as runs (18:00-20:00, 22:00-23:00) - never one span that claims the clean hours in between
+            if (bad.Count > 0) sb.Append("I see packet loss " + (bad.All(h => h >= 17 && h <= 23) ? "in the evenings (" : "at (") + Runs(bad) + ") over the last week. ");
+            var gw = firstIsp > 0 ? main.Hops.Take(firstIsp).FirstOrDefault(h => h.Sent > 0 && h.Lost < h.Sent) : null;
+            var rt = gw;   // "my router answering normally" only when the router itself was seen (carry-over: not the provider's first hop)
             bool routerFine = rt != null && Loss(rt) < 1 && !(start >= 0 && rt.N >= main.Hops[start].N);
             sb.Append(wifi ? "This was measured on Wi-Fi. " : routerFine ? "This was measured on a cable, with my router answering normally. " : "This was measured on a cable. ");
             if (start >= 0) sb.Append("The loss starts at hop " + main.Hops[start].N + " (" + nm(main.Hops[start].Ip) + ") and continues to the destination (" + main.Label + "). ");
