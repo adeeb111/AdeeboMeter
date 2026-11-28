@@ -38,7 +38,7 @@ namespace AdeeboMeter
         // tool id -> its topics
         internal static readonly Dictionary<string, string> ToolTopics = new Dictionary<string, string>(StringComparer.Ordinal) {
             { "afterstream", "media reports" }, { "allips", "dns" }, { "arp", "dhcp" }, { "arpwho", "lab dhcp" }, { "auth", "auth windows" },
-            { "avgcost", "calc media" }, { "b64", "keys calc" }, { "backup", "calc" }, { "bandwidth", "calc" }, { "battery", "hw" }, { "dlls", "windows" }, { "handles", "windows" }, { "envvars", "windows" }, { "usbtree", "hw" }, { "pcie", "hw calc" }, { "endurance", "hw calc" }, { "disklat", "hw" }, { "edid", "hw" }, { "bdp", "calc speed" },
+            { "avgcost", "calc media" }, { "b64", "keys calc" }, { "backup", "calc" }, { "bandwidth", "calc" }, { "battery", "hw" }, { "mypc", "hw windows reports" }, { "dlls", "windows" }, { "handles", "windows" }, { "envvars", "windows" }, { "usbtree", "hw" }, { "pcie", "hw calc" }, { "endurance", "hw calc" }, { "disklat", "hw" }, { "edid", "hw" }, { "bdp", "calc speed" },
             { "beforeafter", "reports" }, { "besttime", "media reports" }, { "bg", "windows" }, { "binhex", "calc" }, { "bloat", "speed" },
             { "bluetooth", "windows hw" }, { "board", "ports reports" }, { "capfc", "reports" }, { "cellular", "calc" }, { "certcal", "web reports" },
             { "certcmds", "web keys" }, { "certcmp", "web" }, { "certconv", "web keys" }, { "certfile", "web keys" }, { "certlive", "keys web" },

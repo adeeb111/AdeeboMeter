@@ -16,14 +16,16 @@ namespace AdeeboMeter
         // 28 Nov (Adeeb: "Rerouting power (6 s)" stayed up over a video): a watchdog tick already running when the window closed
         // could show a card after the last Hide, and nothing hid it again. Now the card only lives while it's being fed: no
         // Show for 3 s means the window answered or went away, and it closes by itself. A closed window also refuses new cards.
-        static long lastFed; static volatile bool off;
-        public static void Off() { off = true; Hide(); }
-        public static void On() { off = false; }
+        // Counted per window, not one flag: a second big window closing (the self-test's language pass, a window replaced by a
+        // new one) used to switch the card off for the one still open - its freezes then showed nothing.
+        static long lastFed; static int windows;
+        public static void Off() { int n = Interlocked.Decrement(ref windows); if (n < 0) Interlocked.CompareExchange(ref windows, 0, n); if (n <= 0) Hide(); }
+        public static void On() { Interlocked.Increment(ref windows); }
 
         // called from the watchdog thread every second while the window is frozen
         public static void Show(Rectangle over, int seconds, string doing)
         {
-            if (off) return;
+            if (Volatile.Read(ref windows) <= 0) return;
             Interlocked.Exchange(ref lastFed, DateTime.UtcNow.Ticks);
             string line = Lines.Speaks("problem") ? Lines.Line("freeze", seconds + " s") : "";
             if (line == "") line = "Still working - the window is catching up (" + seconds + " s).";
@@ -72,7 +74,7 @@ namespace AdeeboMeter
                 dot.Tick += delegate
                 {
                     phase = (phase + 1) % 3; Invalidate();
-                    if (off || DateTime.UtcNow.Ticks - Interlocked.Read(ref lastFed) > TimeSpan.TicksPerSecond * 3) Close();   // not fed for 3 s: gone
+                    if (Volatile.Read(ref windows) <= 0 || DateTime.UtcNow.Ticks - Interlocked.Read(ref lastFed) > TimeSpan.TicksPerSecond * 3) Close();   // not fed for 3 s: gone
                 }; dot.Start();   // the only thing that moves: it says "alive"
             }
             protected override bool ShowWithoutActivation { get { return true; } }   // never steals focus from what you're typing in

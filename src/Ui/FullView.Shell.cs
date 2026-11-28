@@ -1105,7 +1105,8 @@ namespace AdeeboMeter
         }
         static readonly string[][] ShRoots = { new[] { "pages", "AdeeboMeter - every page: cd into one, then  open" }, new[] { "tools", "AdeeboMeter - every tool by group: each one is a command" }, new[] { "data", "AdeeboMeter's own files - history, reports, recordings" }, new[] { "home", "your Windows folder (" + Environment.UserName + ") - read-only: look, and copy into /data" }, new[] { "mnt", "your drives (C: is /mnt/c) - read-only" }, new[] { "proc", "this PC as files - cpuinfo, meminfo, uptime, mounts" } };
         string ToolDir(string g) { return Regex.Replace(GroupName(g).ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-'); }
-        List<string> ShPageIds() { return Secs.Select(z => z[0]).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct().ToList(); }
+        /* 28 Nov: Secs became groups ({ group, its name, its pages... }) - list the groups and every page in them, so pages/shell is still there */
+        List<string> ShPageIds() { return Secs.Select(z => z[0]).Concat(Secs.SelectMany(z => z.Skip(2))).Concat(new[] { "calc", "reports", "lab", "settings", "about" }).Distinct().ToList(); }
         // what's in a virtual folder: (name, is a folder, a word about it)
         List<string[]> VirtualList(string v, out bool known)
         {
