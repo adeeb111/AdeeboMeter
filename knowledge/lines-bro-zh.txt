@@ -135,3 +135,11 @@ game.streak|连对{v}次，兄弟，太猛了。
 game.timeup|时间到，兄弟，表现不错。
 market.open|市场开盘了，兄弟。
 storm.near|暴风雨要来了，兄弟，Wi-Fi 可能会晃。
+tool.ok|查过了，兄弟。干干净净。
+tool.ok|这儿没毛病，兄弟。稳了。
+tool.warn|基本稳，兄弟。有一行有点怪。
+tool.warn|兄弟，瞅一眼黄色那一行。小事。
+tool.fail|兄弟，有东西挂了。红色那一行有料。
+tool.fail|不太妙，兄弟。看红色那一行。
+tool.done|算完了，兄弟。答案在下面。
+tool.done|搞定了，兄弟。给你。

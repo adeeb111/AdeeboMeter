@@ -111,3 +111,11 @@ game.streak|连胜{v}场！势不可挡！
 game.timeup|时间到！跑得真棒！
 market.open|钟声响了，市场开盘了！
 storm.near|风暴正在靠近，保持警惕！
+tool.ok|搞定！零问题！
+tool.ok|全都干净！冲！
+tool.warn|几乎完美！看一下黄色那一行就行！
+tool.warn|就差一点！有一行要看看！
+tool.fail|撞墙了！红色那一行显示在哪！
+tool.fail|失败了——但现在我们知道了！红色那一行！
+tool.done|砰！答案就在下面！
+tool.done|算完了！在这儿！

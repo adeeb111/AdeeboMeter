@@ -20,8 +20,9 @@ namespace AdeeboMeter
             if (serifHead != null && serifAt == S) return;   /* rebuilt when the window moves to a screen with another scale */
             foreach (var f in new[] { serifHead, serifLead, serifBody, serifSmall }) if (f != null) f.Dispose(); serifAt = S;
             // Georgia ships with Windows; if a PC lacks it, Windows picks its own serif
-            serifHead = new Font("Georgia", 26 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifLead = new Font("Georgia", 22 * S, FontStyle.Bold, GraphicsUnit.Pixel);
-            serifBody = new Font("Georgia", 15 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifSmall = new Font("Georgia", 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);
+            string sf = L.IsRtl || L.Code == "bn" || L.Code == "zh" ? Draw.LangFamily : "Georgia";   // 28 Nov: Georgia has no Chinese, Bengali or Arabic
+            serifHead = new Font(sf, 26 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifLead = new Font(sf, 22 * S, FontStyle.Bold, GraphicsUnit.Pixel);
+            serifBody = new Font(sf, 15 * S, FontStyle.Bold, GraphicsUnit.Pixel); serifSmall = new Font(sf, 13 * S, FontStyle.Regular, GraphicsUnit.Pixel);
         }
         Panel BuildSportsPage()
         {

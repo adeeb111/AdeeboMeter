@@ -369,8 +369,15 @@ namespace AdeeboMeter
         static string bengaliFontFamily;
         static string chineseFontFamily;
         public static string ChineseFontFamily { get { return chineseFontFamily ?? (chineseFontFamily = Fam("Microsoft YaHei UI", "Microsoft YaHei", "SimSun", "Segoe UI")); } }
+        // 28 Nov: a face that can draw this text - Chinese, Bengali or Arabic characters (a name, a translated line) get their
+        // script's font even where the design asked for Segoe UI or Georgia; GDI+ would otherwise draw empty boxes
+        public static string FamFor(string text, string fallback)
+        {
+            foreach (char c in text ?? "") { if (c >= 0x4E00 && c <= 0x9FFF || c >= 0x3000 && c <= 0x30FF || c >= 0xFF00 && c <= 0xFFEF) return ChineseFontFamily; if (c >= 0x0980 && c <= 0x09FF) return BengaliFontFamily; if (c >= 0x0600 && c <= 0x06FF) return Fam("Segoe UI", "Tahoma"); }
+            return fallback;
+        }
         public static string LangFamily { get { return L.Code == "bn" ? BengaliFontFamily : L.Code == "zh" ? ChineseFontFamily : "Segoe UI"; } }   /* review 1.1.6 U1 #16: report and freeze card */
-        static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
+        internal static string BengaliFontFamily { get { return bengaliFontFamily ?? (bengaliFontFamily = Fam("Nirmala UI", "Vrinda", "Segoe UI")); } }
         // 24 Nov (Adeeb: "very small fonts still have the pixelated issue"): ClearType grid-fitting snaps each letter to whole
         // pixels, and a size like 11.5 or 13.75 px (half sizes times 125%) leaves the strokes landing between pixels - the small
         // text came out uneven. Every size is now a whole pixel, and nothing goes under 12 px.

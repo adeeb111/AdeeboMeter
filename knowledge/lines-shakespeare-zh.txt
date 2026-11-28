@@ -104,3 +104,11 @@ trade.closed|市场闭门至九点半。
 trade.closed|市场已歇，你也休息至天明。
 view.switch|即刻前往 {v} 视图！
 view.switch|看，这便是 {v} 视图。
+tool.ok|一切安好，{addr}。未见差错。
+tool.ok|汝之检查已毕，一切健全。
+tool.warn|那黄色的一行，似有不妥之处。
+tool.warn|大体尚好；唯有一行令我忧心。
+tool.fail|唉，失败了。红色那一行道出缘由。
+tool.fail|有错，有错！请看红色那一行。
+tool.done|算术已毕。汝之答案在下方。
+tool.done|算得真切。看哪，在下方。

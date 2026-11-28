@@ -104,3 +104,11 @@ trade.closed|市场空间站离线至 9:30。
 trade.closed|交易港关闭，停靠至 9:30。
 view.switch|将舰桥切换到 {v}。
 view.switch|{v} 显示已上线。
+tool.ok|扫描完成。无异常。
+tool.ok|各层甲板一切正常。
+tool.warn|黄色那一行有传感器警告。
+tool.warn|大体正常。有一个读数被标记。
+tool.fail|船体破损。红色那一行显示位置。
+tool.fail|扫描失败。日志在红色那一行。
+tool.done|导航已计算。结果在下方。
+tool.done|计算完成，指挥官。见下方。

@@ -104,3 +104,11 @@ trade.closed|市场窗口已关闭，下一窗口为 9:30。
 trade.closed|9:30 前交易连接暂停检查。
 view.switch|将控制台切换至 {v}。
 view.switch|{v} 视图，收到。
+tool.ok|检查完毕。一切正常。
+tool.ok|可以发射。没有问题。
+tool.warn|黄色那一行亮了警示灯。请检查。
+tool.warn|基本正常。有一个读数偏离——标出的那一行。
+tool.fail|主警报。故障在红色那一行。
+tool.fail|检查失败。遥测数据在红色那一行。
+tool.done|计算完成。结果在下方。
+tool.done|数据已到。请看下方。

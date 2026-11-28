@@ -104,3 +104,11 @@ trade.closed|市场班次结束，9:30 复工。
 trade.closed|交易大厅关闭至 9:30。
 view.switch|将工作台切换到 {v}。
 view.switch|{v} 视图已就位。
+tool.ok|检验通过。每个仪表都在绿区。
+tool.ok|机器已检查。运转顺畅。
+tool.warn|有一个仪表读数偏高。看黄色那一行。
+tool.warn|大体顺畅。有个齿轮要上油——标出的那一行。
+tool.fail|有个零件坏了。红色那一行显示是哪个。
+tool.fail|生产线停了。故障在红色那一行。
+tool.done|用计算尺算好了。结果在下方。
+tool.done|数字已算出。请看下方。

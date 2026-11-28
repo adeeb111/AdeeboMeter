@@ -5835,3 +5835,59 @@ Shanghai	Shanghái
 Frankfurt	Fráncfort
 Tokyo	Tokio
 Warsaw	Varsovia
+Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?	Cinco puntos responden a una pregunta: ¿tu PC, tu Wi-Fi, tu router o tu proveedor?
+What do AdeeboMeter's five dots follow?	¿Qué siguen los cinco puntos de AdeeboMeter?
+Your connection from this PC out to the internet	Tu conexión desde este PC hasta internet
+The five apps you use most	Las cinco apps que más usas
+Your five fastest websites	Tus cinco webs más rápidas
+Five days of history	Cinco días de historial
+AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.	AdeeboMeter vigila tu conexión desde este PC hasta internet y dice, en una línea, dónde está el problema. El widget de la esquina lo muestra de un vistazo; la ventana completa tiene los detalles.
+Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.	Verde está bien, ámbar merece un vistazo, rojo es donde está el problema. Un punto gris aún no se ha comprobado.
+is the signal good?	¿la señal es buena?
+does it answer?	¿responde?
+does the internet answer?	¿responde internet?
+one line - where it breaks, in plain words	una línea: dónde falla, en palabras sencillas
+Rest the mouse on the corner widget for a moment - its card opens with the five dots.	Deja el ratón un momento sobre el widget de la esquina: se abre su tarjeta con los cinco puntos.
+The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.	El widget de la esquina se queda atenuado hasta que dejas el ratón encima, nunca recibe tus clics y se pliega en una pequeña pastilla cuando una ventana tapa su esquina. Haz clic en el icono de la bandeja (junto al reloj) para abrir la ventana completa o cambiar algo. Nada sobre ti o tu red sale de este PC salvo que tú lo envíes.
+Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.	Inicio para la respuesta, Revisar para un sitio, Mi PC para este ordenador, la Caja de herramientas para todo lo demás.
+Where do you look for this PC's hardware - memory, disks, battery?	¿Dónde miras el hardware de este PC: memoria, discos, batería?
+My PC, then Hardware & health	Mi PC y luego Hardware y salud
+The Toolbox's calculators	Las calculadoras de la Caja de herramientas
+The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".	El lado izquierdo agrupa las páginas según lo que buscas. ¿No encuentras algo? Pulsa Ctrl+K y escríbelo: «batería», «DNS», «quién está en mi red».
+The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.	Las páginas de tu vista (Gamer, Streaming, Mercados, Deportes) solo aparecen con esa vista activa: cámbiala en Inicio o en Ajustes.
+what's happening now, and what's wrong	lo que pasa ahora y lo que falla
+one site, end to end	un sitio, de punta a punta
+hardware, apps, connections, Wi-Fi	hardware, apps, conexiones, Wi-Fi
+replay any minute, what changed	repetir cualquier minuto, qué cambió
+every tool, by question	cada herramienta, por pregunta
+Press Ctrl+K and type "hardware".	Pulsa Ctrl+K y escribe «hardware».
+The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.	La Caja de herramientas tiene cada herramienta, ordenada por tu pregunta («¿soy yo o la red?», «¿por qué va lento mi juego?»). El Historial guarda un registro día a día que puedes repetir. Aprender (donde estás ahora) explica cómo funciona todo. Ajustes está siempre abajo del lado izquierdo.
+Language, theme, the buddy, the widget, quiet hours - all in Settings.	Idioma, tema, el compañero, el widget, horas tranquilas: todo en Ajustes.
+Where do you change the language, the theme or the buddy?	¿Dónde cambias el idioma, el tema o el compañero?
+The Toolbox	La Caja de herramientas
+Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.	Ajustes está abajo del lado izquierdo, o haz clic derecho en el icono de la bandeja. Cada cambio se aplica al instante.
+The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.	El widget nunca recibe clics, así que no puedes arrastrarlo sin querer. Para moverlo, deja el ratón encima hasta que aparezca un contorno discontinuo y arrástralo, o usa Mover widget en el menú de la bandeja.
+a different language	otro idioma
+Window	Ventana
+redrawn at once	redibujada al instante
+Tray icon	Icono de la bandeja
+dashed outline - drag it where you like	contorno discontinuo: arrástralo donde quieras
+Open Settings and change the buddy - its next line is in the new voice.	Abre Ajustes y cambia el compañero: su próxima frase sale con la nueva voz.
+A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.	Una vista (Diario, Gamer, Streaming, Trading, Diagnóstico) elige qué páginas se muestran y cada cuánto comprueba la app. Las horas tranquilas evitan avisos mientras duermes o trabajas. La app usa muy poco tu PC; Ajustes puede reducirlo aún más.
+From a red dot to a message your provider can't brush off.	De un punto rojo a un mensaje que tu proveedor no podrá ignorar.
+Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them?	Tu proveedor dice que el problema es tu Wi-Fi. ¿Qué te da AdeeboMeter para demostrarlo?
+Report for my ISP - the path hop by hop, the bad hours and a message to paste	El informe para mi proveedor: la ruta salto a salto, las malas horas y un mensaje para pegar
+A screenshot of the widget	Una captura del widget
+Nothing - call them again	Nada: vuelve a llamarlos
+A speed test only	Solo un test de velocidad
+When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.	Cuando un punto se pone rojo, la tarjeta del widget dice dónde. Abre la ventana completa y luego ¿Qué pasa? para el siguiente paso en palabras sencillas.
+One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.	Un momento lento no es una línea rota. Los problemas que vuelven (cada tarde, por ejemplo) son los que vale la pena reportar, y el Historial muestra cuándo pasan.
+red dot - the provider's side	punto rojo: lado del proveedor
+what do I do?	¿qué hago?
+the next step	el siguiente paso
+build the proof	reunir la prueba
+Report	Informe
+the path, the hours, the message	la ruta, las horas, el mensaje
+Open What's wrong? and pick the problem you have.	Abre ¿Qué pasa? y elige el problema que tienes.
+Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	El informe para mi proveedor mide la ruta unos minutos, la compara con una semana de historial, enumera lo ya descartado (tu PC, el Wi-Fi, el router) y escribe un mensaje para pegar en el chat de soporte. Las direcciones privadas y el nombre de tu Wi-Fi quedan fuera.
+You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	Tienes la {0}. Comprobar ahora abre la web, que la compara con la más reciente; AdeeboMeter nunca comprueba por su cuenta.

@@ -104,3 +104,11 @@ game.streak|连对 {v} 次！你是海上传奇。
 game.timeup|沙漏空了。
 market.open|市场开门了，看好你的金币。
 storm.near|风暴要来了，索具可能要响。
+tool.ok|船体结实，{addr}。没麻烦。
+tool.ok|全船查过了。井井有条。
+tool.warn|黄色那一行风浪大。看一眼。
+tool.warn|大体一帆风顺。有一行要看看。
+tool.fail|船漏了！红色那一行显示在哪。
+tool.fail|搁浅了。红色那一行说明原因。
+tool.done|航线已标好。答案在下面。
+tool.done|数过金币了。结果在下面。

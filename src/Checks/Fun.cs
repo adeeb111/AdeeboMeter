@@ -231,7 +231,7 @@ namespace AdeeboMeter
                     var face = new Snap(); face.Path = !w.History && w.Path != null ? w.Path : g.StartsWith("A", StringComparison.Ordinal) ? new[] { 0, 0, 0, 0, 0 } : g == "B" || g == "C" ? new[] { 0, 0, 1, 0, 0 } : new[] { 0, 0, 2, 0, 0 };
                     Draw.Buddy(gr, new RectangleF(Z - 400, 190, 300, 300), face, false, true);
                     float y = 560;
-                    using (var f3 = new Font("Segoe UI", 38, FontStyle.Regular, GraphicsUnit.Pixel)) using (var tb = new SolidBrush(Color.FromArgb(240, 240, 250)))
+                    using (var f3 = new Font(Draw.FamFor(string.Concat(burns), "Segoe UI"), 38, FontStyle.Regular, GraphicsUnit.Pixel)) using (var tb = new SolidBrush(Color.FromArgb(240, 240, 250)))
                         foreach (var b in burns) { var sz = gr.MeasureString(b, f3, Z - 144); if (y + sz.Height > Z - 110) break; gr.DrawString(b, f3, tb, new RectangleF(72, y, Z - 144, sz.Height + 4)); y += sz.Height + 22; }
                     using (var f4 = new Font("Segoe UI", 26, FontStyle.Regular, GraphicsUnit.Pixel)) using (var mb = new SolidBrush(Color.FromArgb(170, 170, 200)))
                         gr.DrawString("AdeeboMeter · measured on my PC, " + (w.History ? "last " + w.Days + (w.Days == 1 ? " day" : " days") : "just now") + " · no data left my PC to make this", f4, mb, 72, Z - 80);

@@ -104,3 +104,11 @@ trade.closed|市场已收盘，休息至 9:30。
 trade.closed|市场关闭，大家休息。
 view.switch|向 {v} 视图前进！
 view.switch|为大家呈上 {v} 视图。
+tool.ok|胜利！没有发现问题。
+tool.ok|为人民检查过了。一切畅通无阻。
+tool.warn|有一行在抵抗。看黄色那一行。
+tool.warn|大体团结。有一行需要关注。
+tool.fail|遇到封锁！红色那一行揭露了它。
+tool.fail|这项检查失守了。红色那一行指明原因。
+tool.done|人民的算术完成了。见下方。
+tool.done|为大家算好了。答案在下方。

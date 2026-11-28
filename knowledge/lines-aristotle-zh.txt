@@ -55,3 +55,11 @@ game.streak|连对{v}次，熟能生巧。
 game.timeup|时间已到。
 market.open|集市开张，可以交易了。
 storm.near|暴风雨临近，智者早做准备。
+tool.ok|它运作如其应然。毫无欠缺。
+tool.ok|经过审视，结果健全。此处无误。
+tool.warn|大体良好，但有一行偏离了中道。请看它。
+tool.warn|略有过与不及。标出的那一行指明了位置。
+tool.fail|有一处错误，且必有其因。红色那一行写明了它。
+tool.fail|此事未达其目的。请读红色那一行。
+tool.done|推理已毕。结论在下方。
+tool.done|由前提可得答案。见下方。

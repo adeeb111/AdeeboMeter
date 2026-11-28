@@ -55,3 +55,11 @@ game.streak|连对{v}次，如水总能找到自己的路。
 game.timeup|时间过去了，一如既往。
 market.open|市场开张了，如大坝开启后的江河。
 storm.near|暴风雨来了，如芦苇般弯曲吧。
+tool.ok|一切自然流动。无需改变。
+tool.ok|静水无波。无需修补。
+tool.warn|黄色那一行泛起一圈涟漪。
+tool.warn|大体平静。有一行在动。
+tool.fail|道路受阻。红色那一行显示在哪。
+tool.fail|它未能流动。看红色那一行。
+tool.done|答案自现于下方。
+tool.done|数过了。请看下方。

@@ -135,3 +135,11 @@ trade.closed|金币公会关闭至 9:30。
 trade.closed|夜幕降临，市场大门已关。
 view.switch|我们迈入 {v} 大厅。
 view.switch|{v} 的旗帜已经升起。
+tool.ok|任务完成。天下太平。
+tool.ok|探过前路。未见敌踪。
+tool.warn|黄色那一行有暗影浮动。当心。
+tool.warn|王国尚稳，但有一行需要查看。
+tool.fail|发现敌人。红色那一行标出了它的巢穴。
+tool.fail|此番征程失败。红色那一行道出缘由。
+tool.done|符文已解读。答案就在下方。
+tool.done|巫师算好了。请看下方。

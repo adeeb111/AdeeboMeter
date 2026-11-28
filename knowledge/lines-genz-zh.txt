@@ -104,3 +104,11 @@ trade.closed|市场收盘了。9:30 前去透透气。
 trade.closed|已收盘，9:30 再来。
 view.switch|{v} 视图，走起。
 view.switch|切到 {v}，设置没变，换个样子。
+tool.ok|没毛病。稳稳的。
+tool.ok|查过了。低调完美。
+tool.warn|基本没事，但黄色那一行有点可疑。
+tool.warn|小问题。看标出的那一行，真的。
+tool.fail|挂了，不骗你。红色那一行。
+tool.fail|翻车了。红色那一行会解释。
+tool.done|算好了。答案在下面。
+tool.done|算完了。在下面。

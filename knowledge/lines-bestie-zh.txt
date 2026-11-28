@@ -104,3 +104,11 @@ game.streak|连胜{v}场？！太厉害了。
 game.timeup|时间到！你已经超棒了。
 market.open|市场刚开盘。
 storm.near|附近有风暴，Wi-Fi要是闹脾气，那是天气的原因，不是你。
+tool.ok|都好着呢，{addr}！这里没问题。
+tool.ok|帮你查过了。没事，保证。
+tool.warn|基本没问题！看一眼黄色那一行就好。
+tool.warn|有一个小地方要看看，{addr}。下面标出来了。
+tool.fail|唉，有东西失败了。红色那一行写着。
+tool.fail|发现了一个问题，不过我们能搞定。先看红色那一行。
+tool.done|好啦！答案就在下面。
+tool.done|帮你算出来了，{addr}。看下面。

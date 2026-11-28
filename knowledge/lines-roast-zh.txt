@@ -111,3 +111,11 @@ game.streak|连胜{v}场，你是谁？
 game.timeup|时间到，时钟又赢了。
 market.open|市场开了，尽量别怪Wi-Fi。
 storm.near|风暴要来了，你的路由器马上要有意见了。
+tool.ok|没出问题。说实话，挺意外的。
+tool.ok|能用。别太习惯了。
+tool.warn|基本没事。黄色那一行在加戏。
+tool.warn|有一行表现不佳。下面标出来了。
+tool.fail|有东西失败了。红色那一行，老嫌疑犯了。
+tool.fail|你的设备掉链子了。红色那一行有证据。
+tool.done|帮你算好了，省得你动手。在下面。
+tool.done|算完了。不用谢。

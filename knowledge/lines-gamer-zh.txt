@@ -104,3 +104,11 @@ game.streak|{v} 连胜！正在带飞。
 game.timeup|时间到，本局结束。
 market.open|市场开盘了，新对局开始。
 storm.near|风暴来袭，延迟尖峰可能出现。
+tool.ok|GG。没发现问题。
+tool.ok|干净通关。没什么要修。
+tool.warn|基本干净。有一行黄色，看一下。
+tool.warn|标出的那一行中了个小减益。
+tool.fail|团灭。看红色那一行。
+tool.fail|这个挂了。红色那一行有原因。
+tool.done|计算完成。数字在下方。
+tool.done|数据算好了。结果在这。

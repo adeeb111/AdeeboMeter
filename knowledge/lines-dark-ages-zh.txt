@@ -104,3 +104,11 @@ trade.closed|集市关闭至 9:30。
 trade.closed|摊位已关，商人歇息至天明。
 view.switch|我们前往 {v} 厅！
 view.switch|听，已切换到 {v} 视图。
+tool.ok|斥候回报一切无恙。实在可疑。
+tool.ok|御用书记官已查验。一切妥当。
+tool.warn|陛下，黄色那一行有个小凶兆。
+tool.warn|大体无碍。宫廷弄臣标出了一行。
+tool.fail|坏消息，陛下。红色那一行说明一切。
+tool.fail|围城失败了。看红色那一行。
+tool.done|修士们算好了账。答案在下方。
+tool.done|烛光下算毕。结果在下方。

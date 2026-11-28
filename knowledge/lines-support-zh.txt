@@ -111,3 +111,11 @@ game.streak|连对 {v} 次，你越来越上手了。
 game.timeup|时间到了，你能尝试就已经很棒了。
 market.open|市场开盘了，慢慢来。
 storm.near|附近有风暴，如果网络晃一下，不是你的问题。
+tool.ok|全部完成。没有问题。
+tool.ok|查过了。你都设置好了。
+tool.warn|有一处要看看——黄色那一行。
+tool.warn|基本没问题。标出的那一行有个提示。
+tool.fail|有东西失败了。红色那一行会解释。
+tool.fail|这项没通过。先从红色那一行看起。
+tool.done|答案在这里，看下面。
+tool.done|都算好了。请看下面。

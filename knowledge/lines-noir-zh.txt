@@ -104,3 +104,11 @@ game.streak|连对 {v} 次，你很有一手。
 game.timeup|时间到了，总是这样。
 market.open|市场开门了，城市醒了。
 storm.near|风暴正在靠近，线路可能安静下来。
+tool.ok|这里没什么可疑的。结案。
+tool.ok|每条小巷都查过了。干净。
+tool.warn|黄色那一行有股不对劲的味道。
+tool.warn|基本干净。有一行在藏着什么。
+tool.fail|找到元凶了。红色那一行。
+tool.fail|事情变糟了。细节在红色那一行。
+tool.done|把数字过了一遍。答案在下面。
+tool.done|算了一下。这是我的结论。

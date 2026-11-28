@@ -104,3 +104,11 @@ trade.closed|市场歇息至 9:30。
 trade.closed|市场已闭，长夜安静。
 view.switch|我们翻到 {v} 这一页。
 view.switch|{v} 视图徐徐展开。
+tool.ok|一切静好。并无异样。
+tool.ok|如止水一般，结果清澈。
+tool.warn|黄色那一行飘着一小片云。
+tool.warn|大体明朗，只有一行带着阴影。
+tool.fail|这里起了风暴。红色那一行承载着它。
+tool.fail|它踉跄了。红色那一行讲述原委。
+tool.done|数字已被吟唱。答案静卧在下方。
+tool.done|清点分明。请看下方。

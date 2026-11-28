@@ -164,7 +164,7 @@ namespace AdeeboMeter
         {
             for (float z = size; ; z -= 4)
             {
-                var f = new Font("Segoe UI", z, FontStyle.Bold, GraphicsUnit.Pixel);
+                var f = new Font(Draw.FamFor(s, "Segoe UI"), z, FontStyle.Bold, GraphicsUnit.Pixel);   // a Chinese or Bengali name draws in its own script
                 if (g.MeasureString(s, f).Width <= maxW) return f;
                 if (z <= 18) return f;   // the whole name, always - smaller rather than cut: the claim is typed from the picture (32 characters fit at 16 px)
                 f.Dispose();

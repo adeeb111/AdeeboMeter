@@ -23,7 +23,7 @@ namespace AdeeboMeter
         static StreamOverlay open;
         readonly Monitor M; readonly Timer tick = new Timer { Interval = 1000 };
         bool green, png; Point down; byte[] lastPng; string lastKey = "";
-        readonly Font f1 = new Font("Segoe UI", 9f), f2 = new Font("Segoe UI Semibold", 20f);   // made once, not on every paint
+        readonly Font f1 = new Font(L.Code == "bn" || L.Code == "zh" ? Draw.LangFamily : "Segoe UI", 9f), f2 = new Font(L.Code == "bn" || L.Code == "zh" ? Draw.LangFamily : "Segoe UI Semibold", 20f);   // made once, not on every paint
         static int Sc(float v) { return (int)(v * Draw.S); }
         public static string PngPath { get { return Path.Combine(Program.DataDir, "overlay.png"); } }
 

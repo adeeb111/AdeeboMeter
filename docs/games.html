@@ -103,7 +103,7 @@ function rnd(n){return Math.floor(Math.random()*n)}
 function best(g,v){var k="am-game-"+g;try{var b=+localStorage.getItem(k)||0;if(v!=null&&v>b){localStorage.setItem(k,v);return v}return b}catch(e){return 0}}
 function showBest(){[].forEach.call(document.querySelectorAll("[data-best]"),function(i){var b=best(i.getAttribute("data-best"));i.textContent=b?"Your best: "+b:""})}
 // one download, and only the game picked last starts when it arrives (AM-CG-324)
-function gameLearn(){var l=(document.documentElement.lang||"en").split("-")[0];return /^(fr|es|ar|bn)$/.test(l)?"/"+l+"/learn/":"/learn/"}
+function gameLearn(){var l=(document.documentElement.lang||"en").split("-")[0];return /^(fr|es|ar|bn|zh)$/.test(l)?"/"+l+"/learn/":"/learn/"}
 function lessons(cb){if(L)return cb();if(!Lp)Lp=fetch("/kb/learn1.json",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){if(!d||!Array.isArray(d.topics)||!d.topics.length)throw new Error("no lessons");L=d.topics});/* FRESH-093: a bad answer isn't kept */Lp.then(function(){cb()}).catch(function(){Lp=null;$("menu").style.display="none";$("game").style.display="block";$("stage").innerHTML="<p class='say'>Couldn't load the lessons - check your connection and try again.</p>"})}
 /* FRESH-092: no questions in the lessons - say so instead of breaking */
 function noDeck(){clearInterval(timer);G.over=true;$("left").textContent="";$("tb").style.width="0";$("stage").innerHTML="<div class='end'><p class='q' tabindex='-1'>No questions to play right now</p><p class='sub'>The lessons didn't come with any. Try again later.</p><a class='go ghost' href='"+gameLearn()+"'>Lessons</a></div>";focusStage(".q")}

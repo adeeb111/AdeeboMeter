@@ -5828,3 +5828,59 @@ Shanghai	上海
 Frankfurt	法兰克福
 Tokyo	东京
 Warsaw	华沙
+Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?	五个圆点回答一个问题：问题出在你的电脑、Wi-Fi、路由器，还是运营商？
+What do AdeeboMeter's five dots follow?	AdeeboMeter 的五个圆点跟踪的是什么？
+Your connection from this PC out to the internet	从这台电脑到互联网的连接
+The five apps you use most	你最常用的五个应用
+Your five fastest websites	你最快的五个网站
+Five days of history	五天的历史记录
+AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.	AdeeboMeter 监视从这台电脑到互联网的连接，并用一句话说出问题在哪。角落小部件一眼就能看到；完整窗口里有详细信息。
+Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.	绿色表示正常，琥珀色值得看一眼，红色就是问题所在。灰色圆点表示还没检查。
+is the signal good?	信号好吗？
+does it answer?	它有回应吗？
+does the internet answer?	互联网有回应吗？
+one line - where it breaks, in plain words	一句话——哪里出了问题，说得明明白白
+Rest the mouse on the corner widget for a moment - its card opens with the five dots.	把鼠标在角落小部件上停一会儿——带五个圆点的卡片就会打开。
+The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.	角落小部件平时保持淡化，鼠标停在上面才会变亮；它从不接收你的点击，窗口挡住角落时会收成一个小圆片。点击托盘图标（时钟旁边）可打开完整窗口或更改设置。除非你自己发送，否则关于你和你网络的任何信息都不会离开这台电脑。
+Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.	要答案去首页，查网站去检查，看这台电脑去我的电脑，其他一切去工具箱。
+Where do you look for this PC's hardware - memory, disks, battery?	这台电脑的硬件——内存、硬盘、电池——在哪里看？
+My PC, then Hardware & health	我的电脑，然后是硬件与健康
+The Toolbox's calculators	工具箱里的计算器
+The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".	左侧按你要找的东西对页面分组。找不到？按 Ctrl+K 输入——“电池”“DNS”“谁在我的网络上”。
+The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.	你所选视图的页面（游戏、直播、市场、体育）只在该视图开启时显示——可在首页或设置中更换视图。
+what's happening now, and what's wrong	现在发生了什么，哪里不对
+one site, end to end	一个网站，从头到尾
+hardware, apps, connections, Wi-Fi	硬件、应用、连接、Wi-Fi
+replay any minute, what changed	回放任意一分钟，看看变了什么
+every tool, by question	所有工具，按问题分类
+Press Ctrl+K and type "hardware".	按 Ctrl+K，输入“硬件”。
+The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.	工具箱里有所有工具，按你的问题排序（“是我还是网络的问题？”“游戏为什么卡？”）。历史记录逐日保存，可以回放。学习（你现在所在的地方）解释一切如何运作。设置始终在左侧最下方。
+Language, theme, the buddy, the widget, quiet hours - all in Settings.	语言、主题、小伙伴、小部件、免打扰时段——全在设置里。
+Where do you change the language, the theme or the buddy?	在哪里更改语言、主题或小伙伴？
+The Toolbox	工具箱
+Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.	设置在左侧最下方，或右键单击托盘图标。每项更改都会立即生效。
+The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.	小部件从不接收点击，所以不会被误拖。要移动它，把鼠标停在上面直到出现虚线框，然后拖动——或使用托盘菜单中的“移动小部件”。
+a different language	换一种语言
+Window	窗口
+redrawn at once	立即重绘
+Tray icon	托盘图标
+dashed outline - drag it where you like	虚线框——拖到你喜欢的位置
+Open Settings and change the buddy - its next line is in the new voice.	打开设置，换一个小伙伴——它的下一句话就是新的语气。
+A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.	视图（日常、游戏、直播、交易、排障）决定显示哪些页面以及检查的频率。免打扰时段让你睡觉或工作时不受弹窗打扰。应用占用电脑资源很少，在设置里还能更少。
+From a red dot to a message your provider can't brush off.	从一个红点，到一条运营商无法搪塞的消息。
+Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them?	运营商说问题出在你的 Wi-Fi。AdeeboMeter 能给你什么拿给他们看？
+Report for my ISP - the path hop by hop, the bad hours and a message to paste	给运营商的报告——逐跳的路径、出问题的时段和一条可直接粘贴的消息
+A screenshot of the widget	小部件的截图
+Nothing - call them again	什么也没有——再打电话给他们
+A speed test only	只有一个测速
+When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.	圆点变红时，小部件的卡片会说明在哪里。打开完整窗口，再点“出什么问题了？”，用大白话告诉你下一步。
+One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.	偶尔慢一下不等于线路坏了。反复出现的问题——比如每天晚上——才值得报告，历史记录会显示它们何时发生。
+red dot - the provider's side	红点——在运营商那一侧
+what do I do?	我该怎么办？
+the next step	下一步
+build the proof	整理证据
+Report	报告
+the path, the hours, the message	路径、时段、消息
+Open What's wrong? and pick the problem you have.	打开“出什么问题了？”，选你遇到的问题。
+Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	给运营商的报告会测量几分钟路径，与一周的历史对照，列出已经排除的部分（你的电脑、Wi-Fi、路由器），并写好一条可以粘贴到客服聊天里的消息。私有地址和你的 Wi-Fi 名称不会包含在内。
+You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	你的版本是 {0}。“立即检查”会打开网站，与最新版本对比——AdeeboMeter 自己从不检查。

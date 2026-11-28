@@ -5847,3 +5847,59 @@ Shanghai	Shanghai
 Frankfurt	Francfort
 Tokyo	Tokyo
 Warsaw	Varsovie
+Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?	Cinq points répondent à une question : votre PC, votre Wi-Fi, votre routeur ou votre fournisseur ?
+What do AdeeboMeter's five dots follow?	Que suivent les cinq points d’AdeeboMeter ?
+Your connection from this PC out to the internet	Votre connexion, de ce PC jusqu’à Internet
+The five apps you use most	Les cinq applications que vous utilisez le plus
+Your five fastest websites	Vos cinq sites les plus rapides
+Five days of history	Cinq jours d’historique
+AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.	AdeeboMeter surveille votre connexion de ce PC jusqu’à Internet et dit, en une ligne, où se trouve un problème. Le widget du coin le montre d’un coup d’œil ; la grande fenêtre donne les détails.
+Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.	Vert, tout va bien ; orange, ça vaut un coup d’œil ; rouge, c’est là qu’est le problème. Un point gris n’a pas encore été vérifié.
+is the signal good?	le signal est-il bon ?
+does it answer?	répond-il ?
+does the internet answer?	Internet répond-il ?
+one line - where it breaks, in plain words	une ligne - où ça casse, en clair
+Rest the mouse on the corner widget for a moment - its card opens with the five dots.	Posez la souris un instant sur le widget du coin - sa fiche s’ouvre avec les cinq points.
+The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.	Le widget du coin reste estompé jusqu’à ce que vous y posiez la souris, ne prend jamais vos clics et se replie en petite pastille quand une fenêtre couvre son coin. Cliquez sur l’icône de la zone de notification (près de l’horloge) pour ouvrir la grande fenêtre ou changer quoi que ce soit. Rien sur vous ou votre réseau ne quitte ce PC, sauf si vous l’envoyez vous-même.
+Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.	Accueil pour la réponse, Vérifier pour un site, Mon PC pour cet ordinateur, la Boîte à outils pour tout le reste.
+Where do you look for this PC's hardware - memory, disks, battery?	Où regarder pour le matériel de ce PC - mémoire, disques, batterie ?
+My PC, then Hardware & health	Mon PC, puis Matériel et santé
+The Toolbox's calculators	Les calculatrices de la Boîte à outils
+The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".	Le côté gauche regroupe les pages selon ce que vous cherchez. Vous ne trouvez pas ? Appuyez sur Ctrl+K et tapez-le - « batterie », « DNS », « qui est sur mon réseau ».
+The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.	Les pages de votre vue (Joueur, Streaming, Marchés, Sports) n’apparaissent que si cette vue est active - changez de vue sur l’Accueil ou dans les Paramètres.
+what's happening now, and what's wrong	ce qui se passe maintenant, et ce qui ne va pas
+one site, end to end	un site, de bout en bout
+hardware, apps, connections, Wi-Fi	matériel, applications, connexions, Wi-Fi
+replay any minute, what changed	rejouer n’importe quelle minute, ce qui a changé
+every tool, by question	chaque outil, par question
+Press Ctrl+K and type "hardware".	Appuyez sur Ctrl+K et tapez « matériel ».
+The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.	La Boîte à outils contient chaque outil, classé selon votre question (« est-ce moi ou le réseau ? », « pourquoi mon jeu rame-t-il ? »). L’Historique garde un relevé jour par jour que vous pouvez rejouer. Apprendre (où vous êtes) explique comment tout fonctionne. Les Paramètres sont toujours en bas du côté gauche.
+Language, theme, the buddy, the widget, quiet hours - all in Settings.	Langue, thème, compagnon, widget, heures calmes - tout dans les Paramètres.
+Where do you change the language, the theme or the buddy?	Où changer la langue, le thème ou le compagnon ?
+The Toolbox	La Boîte à outils
+Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.	Les Paramètres sont en bas du côté gauche, ou faites un clic droit sur l’icône de la zone de notification. Chaque changement s’applique aussitôt.
+The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.	Le widget ne prend jamais les clics, vous ne pouvez donc pas le déplacer par erreur. Pour le déplacer, posez la souris dessus jusqu’à voir un contour pointillé, puis faites-le glisser - ou utilisez Déplacer le widget dans le menu de la zone de notification.
+a different language	une autre langue
+Window	Fenêtre
+redrawn at once	redessinée aussitôt
+Tray icon	Icône de la zone de notification
+dashed outline - drag it where you like	contour pointillé - glissez-le où vous voulez
+Open Settings and change the buddy - its next line is in the new voice.	Ouvrez les Paramètres et changez de compagnon - sa prochaine phrase est dans la nouvelle voix.
+A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.	Une vue (Quotidien, Joueur, Streaming, Trading, Dépannage) choisit les pages affichées et la fréquence des vérifications. Les heures calmes écartent les fenêtres pendant que vous dormez ou travaillez. L’application utilise très peu votre PC ; les Paramètres peuvent réduire encore.
+From a red dot to a message your provider can't brush off.	D’un point rouge à un message que votre fournisseur ne pourra pas écarter.
+Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them?	Votre fournisseur dit que le problème vient de votre Wi-Fi. Que vous donne AdeeboMeter pour le lui montrer ?
+Report for my ISP - the path hop by hop, the bad hours and a message to paste	Le rapport pour mon fournisseur - le chemin saut par saut, les mauvaises heures et un message à coller
+A screenshot of the widget	Une capture du widget
+Nothing - call them again	Rien - rappelez-les
+A speed test only	Seulement un test de débit
+When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.	Quand un point devient rouge, la fiche du widget dit où. Ouvrez la grande fenêtre, puis Qu’est-ce qui ne va pas ? pour l’étape suivante, en clair.
+One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.	Un moment lent n’est pas une ligne en panne. Les problèmes qui reviennent - tous les soirs, par exemple - sont ceux qui valent d’être signalés, et l’Historique montre quand ils arrivent.
+red dot - the provider's side	point rouge - côté fournisseur
+what do I do?	que faire ?
+the next step	l’étape suivante
+build the proof	monter la preuve
+Report	Rapport
+the path, the hours, the message	le chemin, les heures, le message
+Open What's wrong? and pick the problem you have.	Ouvrez Qu’est-ce qui ne va pas ? et choisissez votre problème.
+Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	Le rapport pour mon fournisseur mesure le chemin pendant quelques minutes, le compare à une semaine d’historique, liste ce qui est déjà écarté (votre PC, le Wi-Fi, le routeur) et rédige un message à coller dans une discussion avec le support. Les adresses privées et le nom de votre Wi-Fi sont exclus.
+You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	Vous avez la {0}. Vérifier maintenant ouvre le site, qui la compare à la plus récente - AdeeboMeter ne vérifie jamais de lui-même.

@@ -104,3 +104,11 @@ trade.closed|市场已收盘，9:30 恢复观测。
 trade.closed|9:30 前没有市场数据。
 view.switch|将仪器切换到 {v}。
 view.switch|{v} 视图。变量变了，方法不变。
+tool.ok|结果：在正常范围内。
+tool.ok|数据干净。无异常。
+tool.warn|有一个离群值。看黄色那一行。
+tool.warn|大体在范围内。有一个读数被标记。
+tool.fail|检测到异常。红色那一行。
+tool.fail|测试失败。观察结果在红色那一行。
+tool.done|计算完成。结果在下方。
+tool.done|计算完毕。请看下方。

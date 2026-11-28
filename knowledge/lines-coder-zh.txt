@@ -104,3 +104,11 @@ trade.closed|market.isOpen() == false。休眠至 9:30。
 trade.closed|市场已收盘。定时任务 9:30 恢复。
 view.switch|正在加载视图：{v}。
 view.switch|上下文切换至 {v}。设置已恢复。
+tool.ok|退出码 0。没有问题。
+tool.ok|所有检查通过。
+tool.warn|通过，但有警告。看黄色那一行。
+tool.warn|构建成功，一个警告。看标出的那一行。
+tool.fail|退出码 1。堆栈信息在红色那一行。
+tool.fail|测试失败。错误在红色那一行。
+tool.done|计算完成。输出在下方。
+tool.done|函数已返回。结果在下方。

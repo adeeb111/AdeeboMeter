@@ -111,3 +111,11 @@ trade.closed|市场已收盘。检查暂停至 9:30。
 trade.closed|已收盘。休息，9:30 再报到。
 view.switch|{v} 视图。立即切换。
 view.switch|切换到 {v}。跟上。
+tool.ok|查过了。没有问题。继续。
+tool.ok|检查完毕。一切达标。
+tool.warn|有一项不合规。看黄色那一行。
+tool.warn|基本合规。处理标出的那一行。
+tool.fail|失败。红色那一行。现在就看。
+tool.fail|这一项失败了。红色那一行说明了原因。
+tool.done|算好了。答案在下面。
+tool.done|完成。看下面的结果。

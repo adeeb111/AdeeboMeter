@@ -5835,3 +5835,59 @@ Shanghai	شنغهاي
 Frankfurt	فرانكفورت
 Tokyo	طوكيو
 Warsaw	وارسو
+Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?	خمس نقاط تجيب عن سؤال واحد: هل المشكلة في حاسوبك أم Wi-Fi أم جهاز التوجيه أم المزوّد؟
+What do AdeeboMeter's five dots follow?	ماذا تتابع نقاط AdeeboMeter الخمس؟
+Your connection from this PC out to the internet	اتصالك من هذا الحاسوب إلى الإنترنت
+The five apps you use most	التطبيقات الخمسة الأكثر استخدامًا
+Your five fastest websites	أسرع خمسة مواقع لديك
+Five days of history	خمسة أيام من السجل
+AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.	يراقب AdeeboMeter اتصالك من هذا الحاسوب إلى الإنترنت ويقول في سطر واحد أين المشكلة. تعرضها أداة الزاوية بنظرة، والنافذة الكاملة فيها التفاصيل.
+Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.	الأخضر سليم، والكهرماني يستحق نظرة، والأحمر هو مكان المشكلة. النقطة الرمادية لم تُفحص بعد.
+is the signal good?	هل الإشارة جيدة؟
+does it answer?	هل يجيب؟
+does the internet answer?	هل يجيب الإنترنت؟
+one line - where it breaks, in plain words	سطر واحد - أين ينقطع، بكلمات بسيطة
+Rest the mouse on the corner widget for a moment - its card opens with the five dots.	أبقِ الفأرة على أداة الزاوية لحظة - تنفتح بطاقتها بالنقاط الخمس.
+The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.	تبقى أداة الزاوية باهتة حتى تضع الفأرة عليها، ولا تأخذ نقراتك أبدًا، وتنطوي إلى شارة صغيرة عندما تغطي نافذة زاويتها. انقر أيقونة شريط المهام (بجانب الساعة) لفتح النافذة الكاملة أو تغيير أي شيء. لا شيء عنك أو عن شبكتك يغادر هذا الحاسوب إلا إذا أرسلته بنفسك.
+Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.	الرئيسية للإجابة، والفحص لموقع، وحاسوبي لهذا الجهاز، وصندوق الأدوات لكل ما عدا ذلك.
+Where do you look for this PC's hardware - memory, disks, battery?	أين تبحث عن عتاد هذا الحاسوب - الذاكرة والأقراص والبطارية؟
+My PC, then Hardware & health	حاسوبي، ثم العتاد والصحة
+The Toolbox's calculators	حاسبات صندوق الأدوات
+The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".	يجمع الجانب الأيسر الصفحات حسب ما تبحث عنه. لا تجد شيئًا؟ اضغط Ctrl+K واكتبه - «البطارية» أو «DNS» أو «من على شبكتي».
+The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.	صفحات طريقة العرض (اللاعب، البث، الأسواق، الرياضة) تظهر فقط عند تفعيلها - غيّر طريقة العرض من الرئيسية أو الإعدادات.
+what's happening now, and what's wrong	ما يحدث الآن، وما الخطأ
+one site, end to end	موقع واحد، من طرف إلى طرف
+hardware, apps, connections, Wi-Fi	العتاد والتطبيقات والاتصالات وWi-Fi
+replay any minute, what changed	إعادة أي دقيقة، وما الذي تغيّر
+every tool, by question	كل أداة، حسب السؤال
+Press Ctrl+K and type "hardware".	اضغط Ctrl+K واكتب «العتاد».
+The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.	يحتوي صندوق الأدوات على كل أداة مرتبة حسب سؤالك («هل المشكلة مني أم من الشبكة؟»، «لماذا تتأخر لعبتي؟»). يحتفظ السجل بتدوين يومي يمكنك إعادته. وتشرح صفحة التعلّم (حيث أنت الآن) كيف يعمل كل شيء. والإعدادات دائمًا أسفل الجانب الأيسر.
+Language, theme, the buddy, the widget, quiet hours - all in Settings.	اللغة والمظهر والرفيق والأداة وساعات الهدوء - كلها في الإعدادات.
+Where do you change the language, the theme or the buddy?	أين تغيّر اللغة أو المظهر أو الرفيق؟
+The Toolbox	صندوق الأدوات
+Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.	الإعدادات أسفل الجانب الأيسر، أو انقر بزر الفأرة الأيمن على أيقونة شريط المهام. كل تغيير يُطبّق فورًا.
+The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.	لا تأخذ الأداة النقرات أبدًا، لذا لا يمكنك سحبها خطأً. لتحريكها أبقِ الفأرة عليها حتى يظهر إطار منقّط ثم اسحبها - أو استخدم «نقل الأداة» من قائمة شريط المهام.
+a different language	لغة أخرى
+Window	النافذة
+redrawn at once	تُعاد رسمها فورًا
+Tray icon	أيقونة شريط المهام
+dashed outline - drag it where you like	إطار منقّط - اسحبها حيث تشاء
+Open Settings and change the buddy - its next line is in the new voice.	افتح الإعدادات وغيّر الرفيق - سطره التالي بالصوت الجديد.
+A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.	تختار طريقة العرض (اليومي، اللاعب، البث، التداول، استكشاف الأعطال) الصفحات الظاهرة وعدد مرات الفحص. وتُبعد ساعات الهدوء النوافذ المنبثقة أثناء نومك أو عملك. يستهلك التطبيق القليل جدًا من حاسوبك، ويمكن للإعدادات تقليله أكثر.
+From a red dot to a message your provider can't brush off.	من نقطة حمراء إلى رسالة لا يستطيع مزوّدك تجاهلها.
+Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them?	يقول مزوّدك إن المشكلة في Wi-Fi لديك. ماذا يقدّم لك AdeeboMeter لتريهم؟
+Report for my ISP - the path hop by hop, the bad hours and a message to paste	تقرير لمزوّدي - المسار قفزة بقفزة، والساعات السيئة، ورسالة للصق
+A screenshot of the widget	لقطة شاشة للأداة
+Nothing - call them again	لا شيء - اتصل بهم مجددًا
+A speed test only	اختبار سرعة فقط
+When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.	عندما تصبح نقطة حمراء تقول بطاقة الأداة أين. افتح النافذة الكاملة ثم «ما الخطأ؟» لمعرفة الخطوة التالية بكلمات بسيطة.
+One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.	لحظة بطء واحدة لا تعني خطًا معطّلًا. المشكلات التي تتكرر - كل مساء مثلًا - هي التي تستحق الإبلاغ، والسجل يبيّن متى تحدث.
+red dot - the provider's side	نقطة حمراء - من جهة المزوّد
+what do I do?	ماذا أفعل؟
+the next step	الخطوة التالية
+build the proof	جمع الدليل
+Report	التقرير
+the path, the hours, the message	المسار والساعات والرسالة
+Open What's wrong? and pick the problem you have.	افتح «ما الخطأ؟» واختر مشكلتك.
+Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	يقيس تقرير المزوّد المسار لبضع دقائق، ويقارنه بسجل أسبوع، ويسرد ما تم استبعاده (حاسوبك وWi-Fi وجهاز التوجيه)، ويكتب رسالة يمكنك لصقها في محادثة الدعم. تُستبعد العناوين الخاصة واسم شبكة Wi-Fi لديك.
+You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	لديك الإصدار {0}. «تحقق الآن» يفتح الموقع الذي يقارنه بالأحدث - لا يتحقق AdeeboMeter بنفسه أبدًا.

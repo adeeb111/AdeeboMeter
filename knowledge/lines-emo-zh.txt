@@ -111,3 +111,11 @@ trade.closed|市场已收盘。大家都能歇歇。
 trade.closed|关闭至 9:30。休息一下。
 view.switch|{v} 视图。换个心情。
 view.switch|切换到 {v}。我没意见。
+tool.ok|没出问题。这倒新鲜。
+tool.ok|挺好的。好得有点怪。
+tool.warn|基本还行。有一行不行。懂的。
+tool.warn|有点不对劲。黄色那一行懂我。
+tool.fail|有东西失败了。我早料到了。红色那一行。
+tool.fail|没成。红色那一行会解释。
+tool.done|算完了。答案在这，大概吧。
+tool.done|算出来了。在下面。

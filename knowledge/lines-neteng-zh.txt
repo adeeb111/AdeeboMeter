@@ -135,3 +135,11 @@ game.streak|连胜{v}场，丢包为零。
 game.timeup|超时，TTL 已耗尽。
 market.open|市场已开盘，请关注券商 RTT。
 storm.near|附近有雷暴云，预计链路会抖动。
+tool.ok|检查通过。无异常。
+tool.ok|结果正常。无需处理。
+tool.warn|黄色那一行有警告。请检查。
+tool.warn|基本正常。有一个值超出阈值——标出的那一行。
+tool.fail|检查失败。根因在红色那一行。
+tool.fail|发现故障。见红色那一行。
+tool.done|计算完成。数值在下方。
+tool.done|完成。输出在下方。

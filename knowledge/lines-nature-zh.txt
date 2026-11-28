@@ -104,3 +104,11 @@ trade.closed|市场歇息至 9:30。
 trade.closed|今夜交易场地一片安静。
 view.switch|现在移步至 {v} 视图。
 view.switch|新的栖息地：{v} 视图。
+tool.ok|这里一片宁静。一个健康的样本。
+tool.ok|仔细观察过。一切生机勃勃。
+tool.warn|黄色那一行有动静。我们静观其变。
+tool.warn|大体健康。有一行显出压力。
+tool.fail|兽群里出了状况。红色那一行显示了它。
+tool.fail|这一个没能通过考验。红色那一行。
+tool.done|清点完毕。结果在下方。
+tool.done|在野外测得。请看下方。

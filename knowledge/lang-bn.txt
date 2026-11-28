@@ -5835,3 +5835,59 @@ Shanghai	সাংহাই
 Frankfurt	ফ্রাঙ্কফুর্ট
 Tokyo	টোকিও
 Warsaw	ওয়ারশ
+Five dots answer one question: is it your PC, your Wi-Fi, your router or your provider?	পাঁচটি ডট একটি প্রশ্নের উত্তর দেয়: সমস্যা আপনার পিসি, ওয়াই-ফাই, রাউটার, না প্রোভাইডারে?
+What do AdeeboMeter's five dots follow?	AdeeboMeter-এর পাঁচটি ডট কী অনুসরণ করে?
+Your connection from this PC out to the internet	এই পিসি থেকে ইন্টারনেট পর্যন্ত আপনার কানেকশন
+The five apps you use most	আপনার সবচেয়ে বেশি ব্যবহৃত পাঁচটি অ্যাপ
+Your five fastest websites	আপনার সবচেয়ে দ্রুত পাঁচটি ওয়েবসাইট
+Five days of history	পাঁচ দিনের ইতিহাস
+AdeeboMeter watches your connection from this PC to the internet and says, in one line, where a problem is. The corner widget shows it at a glance; the full window has the details.	AdeeboMeter এই পিসি থেকে ইন্টারনেট পর্যন্ত কানেকশন নজরে রাখে আর এক লাইনে বলে সমস্যা কোথায়। কোণের উইজেট এক নজরে দেখায়; পুরো উইন্ডোতে বিস্তারিত।
+Green is fine, amber is worth a look, red is where the problem is. A grey dot hasn't been checked yet.	সবুজ মানে ঠিক আছে, হলুদ মানে একবার দেখুন, লাল মানে সমস্যা এখানেই। ধূসর ডট এখনও চেক হয়নি।
+is the signal good?	সিগন্যাল কি ভালো?
+does it answer?	উত্তর দিচ্ছে?
+does the internet answer?	ইন্টারনেট কি উত্তর দিচ্ছে?
+one line - where it breaks, in plain words	এক লাইন - কোথায় ভাঙছে, সহজ কথায়
+Rest the mouse on the corner widget for a moment - its card opens with the five dots.	কোণের উইজেটে মাউস একটু রাখুন - পাঁচটি ডটসহ কার্ড খুলবে।
+The corner widget stays faded until you rest the mouse on it, never takes your clicks, and folds to a small chip when a window covers its corner. Click the tray icon (by the clock) to open the full window or change anything. Nothing about you or your network leaves this PC unless you send it yourself.	কোণের উইজেট মাউস না রাখা পর্যন্ত ঝাপসা থাকে, কখনও ক্লিক নেয় না, আর কোনো উইন্ডো কোণ ঢাকলে ছোট চিপে গুটিয়ে যায়। পুরো উইন্ডো খুলতে বা কিছু বদলাতে ট্রে আইকনে (ঘড়ির পাশে) ক্লিক করুন। আপনি নিজে না পাঠালে আপনার বা নেটওয়ার্কের কিছুই এই পিসি ছাড়ে না।
+Home for the answer, Check for a site, My PC for this computer, the Toolbox for everything else.	উত্তরের জন্য হোম, সাইটের জন্য চেক, এই কম্পিউটারের জন্য আমার পিসি, বাকি সবকিছুর জন্য টুলবক্স।
+Where do you look for this PC's hardware - memory, disks, battery?	এই পিসির হার্ডওয়্যার - মেমরি, ডিস্ক, ব্যাটারি - কোথায় দেখবেন?
+My PC, then Hardware & health	আমার পিসি, তারপর হার্ডওয়্যার ও স্বাস্থ্য
+The Toolbox's calculators	টুলবক্সের ক্যালকুলেটর
+The left side groups the pages by what you're looking for. Can't find something? Press Ctrl+K and type it - "battery", "DNS", "who is on my network".	বাম পাশে পাতাগুলো আপনি যা খুঁজছেন সেই অনুযায়ী সাজানো। কিছু পাচ্ছেন না? Ctrl+K চেপে লিখুন - "ব্যাটারি", "DNS", "আমার নেটওয়ার্কে কে আছে"।
+The pages for your view (Gamer, Streaming, Markets, Sports) only show when that view is on - change the view on Home or in Settings.	আপনার ভিউয়ের পাতা (গেমার, স্ট্রিমিং, মার্কেটস, স্পোর্টস) শুধু সেই ভিউ চালু থাকলে দেখায় - হোম বা সেটিংসে ভিউ বদলান।
+what's happening now, and what's wrong	এখন কী ঘটছে, আর কী গোলমাল
+one site, end to end	একটি সাইট, শুরু থেকে শেষ
+hardware, apps, connections, Wi-Fi	হার্ডওয়্যার, অ্যাপ, কানেকশন, ওয়াই-ফাই
+replay any minute, what changed	যেকোনো মিনিট আবার দেখুন, কী বদলেছে
+every tool, by question	প্রতিটি টুল, প্রশ্ন অনুযায়ী
+Press Ctrl+K and type "hardware".	Ctrl+K চেপে "হার্ডওয়্যার" লিখুন।
+The Toolbox has every tool, sorted by the question you have ("is it me or the network?", "why is my game lagging?"). History keeps a day-by-day record you can replay. Learn (where you are now) explains how it all works. Settings is always at the bottom of the left side.	টুলবক্সে প্রতিটি টুল আছে, আপনার প্রশ্ন অনুযায়ী সাজানো ("সমস্যা আমার না নেটওয়ার্কের?", "গেম কেন ল্যাগ করছে?")। ইতিহাস দিনভিত্তিক রেকর্ড রাখে যা আবার দেখা যায়। শিখুন (আপনি এখন যেখানে) সব কীভাবে চলে বুঝিয়ে দেয়। সেটিংস সবসময় বাম পাশের নিচে।
+Language, theme, the buddy, the widget, quiet hours - all in Settings.	ভাষা, থিম, সঙ্গী, উইজেট, নীরব সময় - সব সেটিংসে।
+Where do you change the language, the theme or the buddy?	ভাষা, থিম বা সঙ্গী কোথায় বদলাবেন?
+The Toolbox	টুলবক্স
+Settings is at the bottom of the left side, or right-click the tray icon. Every change applies at once.	সেটিংস বাম পাশের নিচে, অথবা ট্রে আইকনে রাইট-ক্লিক করুন। প্রতিটি পরিবর্তন সঙ্গে সঙ্গে কাজ করে।
+The widget never takes clicks, so you can't drag it by accident. To move it, rest the mouse on it until a dashed outline appears, then drag - or use the tray menu's Move widget.	উইজেট কখনও ক্লিক নেয় না, তাই ভুল করে টেনে সরাতে পারবেন না। সরাতে মাউস রাখুন যতক্ষণ না ড্যাশ দেওয়া রেখা আসে, তারপর টানুন - অথবা ট্রে মেনুর Move widget ব্যবহার করুন।
+a different language	অন্য ভাষা
+Window	উইন্ডো
+redrawn at once	সঙ্গে সঙ্গে নতুন করে আঁকা
+Tray icon	ট্রে আইকন
+dashed outline - drag it where you like	ড্যাশ রেখা - যেখানে চান টেনে নিন
+Open Settings and change the buddy - its next line is in the new voice.	সেটিংস খুলে সঙ্গী বদলান - তার পরের লাইন নতুন সুরে।
+A view (Everyday, Gamer, Streaming, Trading, Troubleshooting) picks which pages show and how often the app checks. Quiet hours keep pop-ups away while you sleep or work. The app uses very little of your PC; Settings can make it use even less.	একটি ভিউ (প্রতিদিন, গেমার, স্ট্রিমিং, ট্রেডিং, সমস্যা সমাধান) ঠিক করে কোন পাতা দেখাবে আর অ্যাপ কত ঘন ঘন চেক করবে। নীরব সময় ঘুম বা কাজের সময় পপ-আপ দূরে রাখে। অ্যাপ পিসির খুব সামান্য ব্যবহার করে; সেটিংসে আরও কমানো যায়।
+From a red dot to a message your provider can't brush off.	একটি লাল ডট থেকে এমন বার্তা, যা প্রোভাইডার উড়িয়ে দিতে পারবে না।
+Your provider says the problem is your Wi-Fi. What does AdeeboMeter give you to show them?	প্রোভাইডার বলছে সমস্যা আপনার ওয়াই-ফাইয়ে। তাদের দেখাতে AdeeboMeter কী দেয়?
+Report for my ISP - the path hop by hop, the bad hours and a message to paste	আমার ISP-র জন্য রিপোর্ট - হপ ধরে পথ, খারাপ সময় আর পেস্ট করার বার্তা
+A screenshot of the widget	উইজেটের স্ক্রিনশট
+Nothing - call them again	কিছুই না - আবার ফোন করুন
+A speed test only	শুধু একটি স্পিড টেস্ট
+When a dot turns red, the widget's card says where. Open the full window, then What's wrong? for the next step in plain words.	কোনো ডট লাল হলে উইজেটের কার্ড বলে কোথায়। পুরো উইন্ডো খুলে What's wrong? দেখুন - পরের ধাপ সহজ কথায়।
+One slow moment isn't a broken line. Problems that come back - every evening, say - are the ones worth reporting, and History shows when they happen.	একবার ধীর হওয়া মানে লাইন নষ্ট নয়। যে সমস্যা বারবার ফেরে - ধরুন প্রতি সন্ধ্যায় - সেগুলোই রিপোর্ট করার মতো, আর ইতিহাস দেখায় কখন ঘটে।
+red dot - the provider's side	লাল ডট - প্রোভাইডারের দিকে
+what do I do?	আমি কী করব?
+the next step	পরের ধাপ
+build the proof	প্রমাণ তৈরি করুন
+Report	রিপোর্ট
+the path, the hours, the message	পথ, সময়, বার্তা
+Open What's wrong? and pick the problem you have.	What's wrong? খুলে আপনার সমস্যাটি বেছে নিন।
+Report for my ISP measures the path for a few minutes, lines it up with a week of history, lists what's already ruled out (your PC, Wi-Fi, router) and writes a message you can paste into a support chat. Private addresses and your Wi-Fi name are left out.	ISP রিপোর্ট কয়েক মিনিট পথ মাপে, এক সপ্তাহের ইতিহাসের সাথে মেলায়, কী কী বাদ দেওয়া গেছে (আপনার পিসি, ওয়াই-ফাই, রাউটার) তা তালিকা করে, আর সাপোর্ট চ্যাটে পেস্ট করার মতো বার্তা লেখে। প্রাইভেট ঠিকানা আর ওয়াই-ফাইয়ের নাম বাদ থাকে।
+You have {0}. Check now opens the website, which compares it with the newest - AdeeboMeter itself never checks on its own.	আপনার কাছে {0} আছে। এখনই দেখুন ওয়েবসাইট খোলে, যা সবচেয়ে নতুনটির সাথে তুলনা করে - AdeeboMeter নিজে কখনও চেক করে না।

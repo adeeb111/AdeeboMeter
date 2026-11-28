@@ -55,3 +55,11 @@ game.streak|连对 {v} 次，保持谦逊。
 game.timeup|时间到了，它从来不属于我们。
 market.open|市场开盘了，行动，不要反应。
 storm.near|风暴正在靠近，准备好，然后平静下来。
+tool.ok|一切安好。平静接受吧。
+tool.ok|未发现问题。继续。
+tool.warn|有一处小地方不对。看标出的那一行。
+tool.warn|大体安好。留意黄色那一行。
+tool.fail|它失败了。你能掌控的：红色那一行。
+tool.fail|一个问题，红色那一行写得明明白白。
+tool.done|算好了。答案在下方。
+tool.done|完成。看下方。
