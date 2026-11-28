@@ -335,12 +335,15 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
   To check on Windows: a full run, the chapter times against the recording, nothing popping over the tour (awards, tips).
 - Handovers updated: `HANDOVER-SEO.md`, `HANDOVER-CONTENT.md` (this week's changes, the tour, the channels).
 
-## Decisions for Adeeb (before or on Saturday)
-1. Widget hover line: which wins when several apply - why (takeover/hold), since (what changed), move (when unlocked)?
-   Suggested: unlocked -> the move line; else why; else since; tips only when nothing else.
-2. Pace buttons: hide "every minute / 5 min" unless the key's plan allows it, or keep them with an honest note?
-3. What's-new tiles on the home page: give all five a real widget picture, or none?
-4. The relay's `namespace_id`.
+## Decisions (Adeeb, 28 Nov)
+- **The goal of 1.1.7 is simplify.** Every new feature lands behind "More" in the simple sidebar (D8); nothing new
+  is added to the first screen a new user sees.
+1. Widget hover line: agreed - unlocked -> the move line; else why (takeover/hold); else since (what changed); tips only
+   when nothing else applies.
+2. Pace buttons: hide "every minute / 5 min" unless the key's plan allows it.
+3. What's-new tiles: a real widget picture on all five.
+4. The relay's `namespace_id`: later.
+5. Codex's bug reports (GitHub issues) are fixed alongside the must-fix bugs: #47 shell grep -r - done 28 Nov.
 
 ## Done when
 - Tester script on Adeeb's PC: all PASS, every page picture approved at 100 % and 150 %, dark and light.
