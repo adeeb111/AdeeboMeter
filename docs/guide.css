@@ -57,9 +57,9 @@ img{max-width:100%;height:auto}
 
 /* ---- inside an article */
 main>ol:not(.posts){counter-reset:step;list-style:none;padding:0;margin:0 0 1.2em}
-main>ol:not(.posts)>li{counter-increment:step;position:relative;padding:0 0 0 46px;margin:0 0 16px}
+main>ol:not(.posts)>li{counter-increment:step;position:relative;padding:0;padding-inline-start:46px;margin:0 0 16px}
 main>ol:not(.posts)>li::before{content:counter(step);position:absolute;left:0;top:0;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--soft);color:var(--ink);font:700 15px/1 "Barlow SC","Barlow",sans-serif}
-main>ul:not(.next-checks):not(.meta):not(.path){padding-left:1.2em}
+main>ul:not(.next-checks):not(.meta):not(.path){padding-left:0;padding-inline-start:1.2em}
 .next-checks{list-style:none;padding:0;margin:0 0 1.2em;border-top:1px solid var(--line)}
 .next-checks li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:4px 28px;padding:14px 0;border-bottom:1px solid var(--line);max-width:none}
 .next-checks strong{font-weight:700}

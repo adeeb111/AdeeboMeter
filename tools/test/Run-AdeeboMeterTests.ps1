@@ -6,7 +6,7 @@
   or, in a PowerShell window in that folder:
       powershell -ExecutionPolicy Bypass -File .\Run-AdeeboMeterTests.ps1
 
-  What it does (about 6 minutes, no admin needed, nothing installed):
+  What it does (10 to 30 minutes - the self-test alone can take up to 25; no admin needed, nothing installed):
     0. Asks Windows Defender to scan AdeeboMeter.exe first (scan only - nothing is moved); a detection stops the run.
     1. The app's own self-test (every check it has, the shell's commands included).
     2. Pictures of every corner-widget style, folded and open, in four network states, light and dark, 100% and 150%.
@@ -39,6 +39,9 @@ function Result([string]$name, [bool]$pass, [string]$detail) {
     Say ($(if ($pass) { 'PASS  ' } else { 'FAIL  ' }) + $name + $(if ($detail) { '  -  ' + $detail } else { '' })) $(if ($pass) { 'Green' } else { 'Red' })
 }
 function Note([string]$name, [string]$detail) { [void]$results.Add([pscustomobject]@{ Test = $name; Result = 'INFO'; Detail = $detail }); Say ('INFO  ' + $name + '  -  ' + $detail) 'Cyan' }
+# hunters15 T-ML5: one guard for the whole script - a step that throws is recorded as a FAIL and the script carries on, so your
+# own AdeeboMeter is always started again and the zip is always made
+trap { if ($_.Exception -is [System.Management.Automation.PipelineStoppedException]) { break }; Result 'Script step' $false ($_.InvocationInfo.ScriptLineNumber.ToString() + ': ' + $_.Exception.Message); continue }
 
 # a fresh test copy: the exe, the portable marker (all data stays in that folder) and a settings file so no first-run window shows
 function New-TestCopy([string]$dir, [string[]]$settings) {
@@ -101,20 +104,22 @@ Say ("Windows " + [Environment]::OSVersion.Version + ", PowerShell " + $PSVersio
 Say ("AdeeboMeter.exe " + (Get-Item $exeSrc).VersionInfo.FileVersion + ", " + [math]::Round((Get-Item $exeSrc).Length / 1MB, 1) + " MB, SHA-256 " + (Get-FileHash $exeSrc -Algorithm SHA256).Hash)
 
 # ---------------------------------------------------------------- 0. Defender's opinion of the exe, before anything runs
-$mp = Join-Path $env:ProgramFiles 'Windows Defender\MpCmdRun.exe'
-if (Test-Path $mp) {
+$mp = @((Join-Path $env:ProgramFiles 'Windows Defender\MpCmdRun.exe'), $(if ($env:ProgramW6432) { Join-Path $env:ProgramW6432 'Windows Defender\MpCmdRun.exe' })) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1   # hunters15 T-L3: 32-bit PowerShell sees the x86 folder
+if ($mp) {
     Say 'Step 0: Windows Defender scans AdeeboMeter.exe (scan only)...' 'Yellow'
     $scan = & $mp -Scan -ScanType 3 -File $exeSrc -DisableRemediation 2>&1 | Out-String
     Set-Content -Path (Join-Path $out 'defender-scan.txt') -Value $scan -Encoding UTF8
-    if ($LASTEXITCODE -eq 2) {
+    $threat = $scan -match 'found \d+ threats?' -and $scan -notmatch 'found no threats'
+    if ($LASTEXITCODE -eq 2 -and -not $threat) { Result 'Windows Defender scan' $false ('the scan itself failed (exit 2, no threat named) - see defender-scan.txt') }
+    elseif ($LASTEXITCODE -eq 2) {
         Result 'Windows Defender scan' $false (($scan -split "`n" | Where-Object { $_ -match 'Threat|found' } | Select-Object -First 3) -join ' ')
         Say 'Defender flags this exe - stopping here (nothing was run). Send the zip from your Desktop.' 'Red'
         $results | Export-Csv -Path (Join-Path $out 'results.csv') -NoTypeInformation -Encoding UTF8
         $zip0 = Join-Path ([Environment]::GetFolderPath('Desktop')) "AdeeboMeter-test-results-$stamp.zip"; Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip0 -Force
         Write-Host "Results: $zip0" -ForegroundColor Green; Read-Host 'Press Enter to close'; exit 2
     }
-    Result 'Windows Defender scan' ($LASTEXITCODE -eq 0) $(if ($LASTEXITCODE -ne 0) { "MpCmdRun exit $LASTEXITCODE" } else { 'no threats' })
-} else { Note 'Windows Defender scan' 'MpCmdRun.exe not found - another antivirus may be in charge' }
+    else { Result 'Windows Defender scan' ($LASTEXITCODE -eq 0) $(if ($LASTEXITCODE -ne 0) { "MpCmdRun exit $LASTEXITCODE" } else { 'no threats' }) }
+} else { Note 'Windows Defender scan' 'NOT RUN - MpCmdRun.exe not found (another antivirus may be in charge). Scan AdeeboMeter.exe by hand before trusting this run.' }
 
 # ---------------------------------------------------------------- 1. the self-test
 if (-not $SkipSelfTest) {
@@ -143,7 +148,7 @@ if (-not $SkipGallery) {
     if (Test-Path (Join-Path $gout 'widget-sizes.csv')) {
         $tall = @(Import-Csv (Join-Path $gout 'widget-sizes.csv') | Where-Object { $_.card_h -and [int]$_.card_h -ge 900 })
         Result 'No card hits the 900 px cap' ($tall.Count -eq 0) $(if ($tall.Count) { ($tall | Select-Object -First 6 | ForEach-Object { $_.theme + ' ' + $_.scale + ' ' + $_.style + ' ' + $_.state }) -join '; ' } else { '' })
-    }
+    } else { Result 'No card hits the 900 px cap' $false 'widget-sizes.csv was not written - the gallery stopped early' }   # hunters15 T-L7
 }
 
 # ---------------------------------------------------------------- 3. the live widget
@@ -189,7 +194,8 @@ if (-not $SkipLive) {
     function Key([byte]$vk, [bool]$down) { [W]::keybd_event($vk, 0, $(if ($down) { 0 } else { 2 }), [IntPtr]::Zero) }
     function Tap([byte]$vk) { Key $vk $true; Pump 150; Key $vk $false }
     function Mouse([int]$flags, [int]$data) { [W]::mouse_event($flags, 0, 0, $data, [IntPtr]::Zero) }
-    function Shot([string]$name) {
+    function Shot([string]$name) { try { ShotNow $name } catch { Note ('Picture ' + $name) ('not taken: ' + $_.Exception.Message) } }   # hunters15 T-ML6: a lost screen doesn't end the run
+    function ShotNow([string]$name) {
         $r = Rect; if (-not $r) { return }
         $b = [System.Drawing.Rectangle]::FromLTRB($r.X - 30, $r.Y - 30, $r.X + $r.W + 30, $r.Y + $r.H + 30)
         $b = [System.Drawing.Rectangle]::Intersect($b, [System.Windows.Forms.SystemInformation]::VirtualScreen); if ($b.Width -lt 2 -or $b.Height -lt 2) { return }
@@ -197,6 +203,16 @@ if (-not $SkipLive) {
         $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size); $g.Dispose(); $bmp.Save((Join-Path $out ("live-$name.png")), [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
     }
     function Unlocked() { $r = Rect; $r -and $r.Line -match 'unlocked=True' }
+    function Alive() { $app -and -not $app.HasExited }
+    # hunters15 T-ML1: a "nothing happened" check counts only when the widget was locked before it and the test copy is still alive
+    function Negative([string]$name, [int]$m, [bool]$wasLocked) {
+        if (-not (Alive)) { Result $name $false 'the test copy had stopped - absence proves nothing' }
+        elseif (-not $wasLocked) { Result $name $false 'it was already unlocked before this step - an earlier step failed to lock it' }
+        else { Result $name (-not (Seen $m ' unlock \w')) '' }
+    }
+    # hunters15 T-ML4: every injected touch is checked - a refused one fails the step instead of passing quietly
+    function T([int]$x, [int]$y, [bool]$down) { if (-not [W]::Touch($x, $y, $down)) { throw "Windows refused a simulated touch at $x,$y" } }
+    function TM([int]$x, [int]$y) { if (-not [W]::TouchMove($x, $y)) { throw "Windows refused a simulated touch move to $x,$y" } }
     function NewForm([System.Drawing.Rectangle]$b, [string]$text) {
         $f = New-Object System.Windows.Forms.Form; $f.FormBorderStyle = 'None'; $f.StartPosition = 'Manual'; $f.ShowInTaskbar = $false; $f.Bounds = $b; $f.BackColor = [System.Drawing.Color]::FromArgb(250, 240, 200); $f.Text = $text
         $f.Show(); Pump 300; return $f
@@ -221,17 +237,20 @@ if (-not $SkipLive) {
         $m = Mark; GoHome; Result 'Leaving it locks it again' (Seen $m 'lock gone') ''
 
         # --- a jump onto it, then a small one (what two finger taps do to the pointer): no unlock
-        $r = Rect; $m = Mark; [void][W]::SetCursorPos($r.CX, $r.CY); Pump 600; [void][W]::SetCursorPos($r.CX + 6, $r.CY + 4); Pump 3600
-        Result 'Two jumps onto it (like two taps) do not unlock it' (-not (Seen $m ' unlock \w')) ''
+        $r = Rect; $lk = -not (Unlocked); $m = Mark; [void][W]::SetCursorPos($r.CX, $r.CY); Pump 600; [void][W]::SetCursorPos($r.CX + 6, $r.CY + 4); Pump 3600
+        Negative 'Two jumps onto it (like two taps) do not unlock it' $m $lk
         GoHome
 
         # --- real finger taps, where Windows allows touch to be simulated
         try { [W]::TouchReady = [W]::InitializeTouchInjection(1, 3) } catch { [W]::TouchReady = $false }
         if ([W]::TouchReady) {
-            $r = Rect; $m = Mark
-            [void][W]::Touch($r.CX, $r.CY, $true); Pump 80; [void][W]::Touch($r.CX, $r.CY, $false); Pump 500
-            [void][W]::Touch($r.CX + 6, $r.CY + 4, $true); Pump 80; [void][W]::Touch($r.CX + 6, $r.CY + 4, $false); Pump 3600
-            Result 'Two finger taps do not unlock it' (-not (Seen $m ' unlock \w')) $(if (Seen $m 'touch cursor True') { 'Windows flagged the pointer as touch' } else { 'touch flag not seen - the two-step rule held it' })
+            $r = Rect; $lk = -not (Unlocked); $m = Mark
+            try {
+                T $r.CX $r.CY $true; Pump 80; T $r.CX $r.CY $false; Pump 500
+                T ($r.CX + 6) ($r.CY + 4) $true; Pump 80; T ($r.CX + 6) ($r.CY + 4) $false; Pump 3600
+                # T-ML4: without Windows' touch flag this was two mouse jumps again - said as not tested, never a PASS
+                if (Seen $m 'touch cursor True') { Negative 'Two finger taps do not unlock it' $m $lk } else { Note 'Two finger taps do not unlock it' 'NOT TESTED - Windows never flagged the pointer as touch; test by hand on a touchscreen' }
+            } catch { Result 'Two finger taps do not unlock it' $false $_.Exception.Message }
             Mouse 0x1 0; Mouse 0x0001 0; for ($i = 0; $i -lt 6; $i++) { [W]::mouse_event(0x0001, 3, 0, 0, [IntPtr]::Zero); Pump 30; [W]::mouse_event(0x0001, -3, 0, 0, [IntPtr]::Zero); Pump 30 }   # a mouse move: Windows shows the pointer again
             GoHome
         } else { Note 'Finger taps' 'Windows did not allow simulated touch here - test by hand on a touchscreen' }
@@ -279,8 +298,8 @@ if (-not $SkipLive) {
             Result 'Unlocked: the wheel locks it and scrolls the app underneath' ((Seen $m2 'replay wheel') -and (@($script:got | Where-Object { $_ -like 'wheel*' }).Count -gt 0)) ('the app got: ' + ($script:got -join ', '))
         } else { Result 'Unlocked: the wheel locks it and scrolls the app underneath' $false 'could not unlock it first' }
         GoHome
-        $r = Rect; $m = Mark; [void][W]::SetCursorPos($tb.X + 20, $tb.Y + 20); Pump 300; Mouse 0x2 0; Pump 100; Glide $r.CX $r.CY 30 40; Pump 3600
-        Result 'Resting with a button held (a drag in the app underneath) does not unlock it' (-not (Seen $m ' unlock \w')) ''
+        $r = Rect; $lk = -not (Unlocked); $m = Mark; [void][W]::SetCursorPos($tb.X + 20, $tb.Y + 20); Pump 300; Mouse 0x2 0; Pump 100; Glide $r.CX $r.CY 30 40; Pump 3600
+        Negative 'Resting with a button held (a drag in the app underneath) does not unlock it' $m $lk
         Mouse 0x4 0; Pump 200
         $target.Close(); $target = $null; GoHome
 
@@ -288,7 +307,8 @@ if (-not $SkipLive) {
         $m = Mark; Arrive (Rect)
         if (WaitFor $m 'unlock rest' 5000) { $m2 = Mark; Mouse 0x2 0; Pump 60; Mouse 0x4 0; Result 'Unlocked: a click opens AdeeboMeter' (WaitFor $m2 'open full' 1500) '' }
         else { Result 'Unlocked: a click opens AdeeboMeter' $false 'could not unlock it first' }
-        Pump 2500; Tap 0x1B; Pump 2000   # Esc: the full window goes back to the corner
+        Pump 2500; $m3 = Mark; Tap 0x1B   # Esc: the full window goes back to the corner - checked (hunters15 T-ML3): the widget draws again
+        if (-not (WaitFor $m3 ' rect ' 4000)) { Tap 0x1B; if (-not (WaitFor $m3 ' rect ' 4000)) { Result 'Esc closes the full window' $false 'the widget did not come back - the tray and finger checks below may fail for this reason' } else { Result 'Esc closes the full window' $true 'needed a second Esc (something was open on the page)' } } else { Result 'Esc closes the full window' $true '' }
 
         # --- tray > Move widget (the only unlock for touch) - asked for through the trace's file hook, the menu item's own code
         GoHome; $m = Mark; Set-Content -Path (Join-Path $live 'move-widget.now') -Value '' -Encoding ASCII
@@ -296,12 +316,17 @@ if (-not $SkipLive) {
         # --- a finger drag on the unlocked widget moves it, and a finger tap on it opens AdeeboMeter
         if ([W]::TouchReady -and (Seen $m 'unlock tray')) {
             $r = Rect; $m = Mark
-            [void][W]::Touch($r.CX, $r.CY, $true); Pump 80
-            for ($i = 1; $i -le 15; $i++) { [void][W]::TouchMove($r.CX - 10 * $i, $r.CY - 6 * $i); Pump 30 }
-            [void][W]::Touch($r.CX - 150, $r.CY - 90, $false); Pump 800
-            Result 'A finger drag moves it' ((Seen $m 'touch grab') -and (Seen $m 'drag saved')) ''
+            try {
+                T $r.CX $r.CY $true; Pump 80
+                for ($i = 1; $i -le 15; $i++) { TM ($r.CX - 10 * $i) ($r.CY - 6 * $i); Pump 30 }
+                T ($r.CX - 150) ($r.CY - 90) $false; Pump 800
+                $a2 = Rect; $mv = $a2 -and [math]::Abs(($r.X - $a2.X) - 150) -le 40 -and [math]::Abs(($r.Y - $a2.Y) - 90) -le 40   # hunters15 T-L1: where it went, not only that it was traced
+                Result 'A finger drag moves it' ((Seen $m 'touch grab') -and (Seen $m 'drag saved') -and $mv) $(if ($a2) { 'from ' + $r.X + ',' + $r.Y + ' to ' + $a2.X + ',' + $a2.Y } else { '' })
+            } catch { Result 'A finger drag moves it' $false $_.Exception.Message }
             $m = Mark; Set-Content -Path (Join-Path $live 'move-widget.now') -Value '' -Encoding ASCII
-            if (WaitFor $m 'unlock tray' 4000) { $r = Rect; $m2 = Mark; [void][W]::Touch($r.CX, $r.CY, $true); Pump 80; [void][W]::Touch($r.CX, $r.CY, $false); Result 'A finger tap on the unlocked widget opens AdeeboMeter' (WaitFor $m2 'open full' 2000) ''; Pump 2000; Tap 0x1B; Pump 1500 }
+            # hunters15 T-ML2: a still tap becomes a mouse click; a 2 px wobble (under the 4 px drag) makes it a real touch tap, and
+            # only the touch path's own trace counts
+            if (WaitFor $m 'unlock tray' 4000) { $r = Rect; $m2 = Mark; try { T $r.CX $r.CY $true; Pump 40; TM ($r.CX + 2) ($r.CY + 1); Pump 40; T ($r.CX + 2) ($r.CY + 1) $false; Result 'A finger tap on the unlocked widget opens AdeeboMeter' (WaitFor $m2 'open full \(tap\)' 2000) $(if (Seen $m2 'open full$') { 'opened as a mouse click, not the touch tap' } else { '' }) } catch { Result 'A finger tap on the unlocked widget opens AdeeboMeter' $false $_.Exception.Message }; Pump 2000; Tap 0x1B; Pump 1500 }
             else { Result 'A finger tap on the unlocked widget opens AdeeboMeter' $false 'could not unlock it first' }
             Mouse 0x1 0; for ($i = 0; $i -lt 6; $i++) { [W]::mouse_event(0x0001, 3, 0, 0, [IntPtr]::Zero); Pump 30; [W]::mouse_event(0x0001, -3, 0, 0, [IntPtr]::Zero); Pump 30 }
         } elseif (-not [W]::TouchReady) { Note 'Finger drag and tap' 'Windows did not allow simulated touch here - test by hand on a touchscreen' }
@@ -328,13 +353,23 @@ if (-not $SkipShots) {
         foreach ($p in @(Get-Process -Name 'AdeeboMeter' -ErrorAction SilentlyContinue)) { try { if (-not ($restart -contains $p.Path)) { $restart += $p.Path }; Stop-Process -Id $p.Id -Force } catch { } }
         Start-Sleep -Seconds 2
         $shotDir = Join-Path ([Environment]::GetFolderPath('Desktop')) "AdeeboMeter-website-pictures-$stamp"; New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
-        $sx = Join-Path $work 'shots'; New-Item -ItemType Directory -Force -Path $sx | Out-Null; Copy-Item $exeSrc (Join-Path $sx 'AdeeboMeter.exe') -Force   # no portable marker: it reads your real history
-        foreach ($pg in 'gamer', 'stream', 'trade') {
+        # no portable marker: it starts like your own AdeeboMeter, on your real data folder - it draws from your history, and like any
+        # normal start it may also send reports waiting in the outbox and add to the log (hunters15 T-L4: not "only reads")
+        $sx = Join-Path $work 'shots'; New-Item -ItemType Directory -Force -Path $sx | Out-Null; Copy-Item $exeSrc (Join-Path $sx 'AdeeboMeter.exe') -Force
+        foreach ($pg in 'gamer', 'stream', 'trade', 'health') {
             $f = Join-Path $sx "shot-$pg.png"; if (Test-Path $f) { Remove-Item $f -Force }
             $sp = Start-Process -FilePath (Join-Path $sx 'AdeeboMeter.exe') -ArgumentList "--dark --view shot:$pg" -WorkingDirectory $sx -PassThru
-            $t0 = Get-Date; while (-not (Test-Path $f) -and ((Get-Date) - $t0).TotalSeconds -lt 40) { Start-Sleep -Milliseconds 500 }
+            # hunters15 T-ML5: wait until the file has stopped growing - the app creates it before it has written it
+            $t0 = Get-Date; $last = -1; while (((Get-Date) - $t0).TotalSeconds -lt 40) { if (Test-Path $f) { $len = (Get-Item $f).Length; if ($len -gt 0 -and $len -eq $last) { break }; $last = $len }; Start-Sleep -Milliseconds 500 }
             Start-Sleep -Milliseconds 800; try { Stop-Process -Id $sp.Id -Force } catch { }; Start-Sleep -Seconds 2
-            if (Test-Path $f) { Copy-Item $f (Join-Path $shotDir "shot-$pg.png") -Force; $img = [System.Drawing.Image]::FromFile($f); Result ("Website picture: " + $pg) ($img.Width -ge 1200) ("" + $img.Width + 'x' + $img.Height + ' px'); $img.Dispose() }
+            if (Test-Path $f) {
+                try {
+                    Copy-Item $f (Join-Path $shotDir "shot-$pg.png") -Force; $img = New-Object System.Drawing.Bitmap $f
+                    # hunters15 T-L2: wide and tall enough, and not one flat colour (a blank or still-loading page)
+                    $cols = @{}; for ($yy = 0; $yy -lt $img.Height; $yy += [math]::Max(1, [int]($img.Height / 12))) { for ($xx = 0; $xx -lt $img.Width; $xx += [math]::Max(1, [int]($img.Width / 12))) { $cols[$img.GetPixel($xx, $yy).ToArgb()] = 1 } }
+                    Result ("Website picture: " + $pg) ($img.Width -ge 1200 -and $img.Height -ge 700 -and $cols.Count -ge 6) ("" + $img.Width + 'x' + $img.Height + ' px, ' + $cols.Count + ' colours sampled'); $img.Dispose()
+                } catch { Result ("Website picture: " + $pg) $false ('could not read the picture: ' + $_.Exception.Message) }
+            }
             else { Result ("Website picture: " + $pg) $false 'no picture after 40 s' }
         }
         Say "Website pictures: $shotDir - look at them before you send any." 'Green'
@@ -343,8 +378,8 @@ if (-not $SkipShots) {
 foreach ($p in $restart) { if ($p -and (Test-Path $p)) { try { Start-Process -FilePath $p; Say "Started your AdeeboMeter again ($p)." } catch { } } }
 
 # ---------------------------------------------------------------- the zip
-$pass = @($results | Where-Object { $_.Result -eq 'PASS' }).Count; $fail = @($results | Where-Object { $_.Result -eq 'FAIL' }).Count
-Say "Done: $pass passed, $fail failed." $(if ($fail) { 'Red' } else { 'Green' })
+$pass = @($results | Where-Object { $_.Result -eq 'PASS' }).Count; $fail = @($results | Where-Object { $_.Result -eq 'FAIL' }).Count; $info = @($results | Where-Object { $_.Result -ne 'PASS' -and $_.Result -ne 'FAIL' }).Count
+Say "Done: $pass passed, $fail failed, $info not tested or notes (see results.csv)." $(if ($fail) { 'Red' } elseif ($info) { 'Yellow' } else { 'Green' })   # hunters15 T-L5
 $results | Export-Csv -Path (Join-Path $out 'results.csv') -NoTypeInformation -Encoding UTF8
 $zip = Join-Path ([Environment]::GetFolderPath('Desktop')) "AdeeboMeter-test-results-$stamp.zip"
 Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip -Force

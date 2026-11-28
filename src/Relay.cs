@@ -26,7 +26,8 @@ namespace AdeeboMeter
         {
             var sb = new StringBuilder("{");
             Action<string, string> put = (k, v) => { if (sb.Length > 1) sb.Append(','); sb.Append('"').Append(k).Append("\":\"").Append(Esc(v)).Append('"'); };
-            put("kind", kind); put("from", "app"); put("version", Program.Version); put("title", title ?? ""); put("body", body ?? "");
+            put("kind", kind); put("from", "app"); put("version", Program.Version);
+            put("rid", Guid.NewGuid().ToString("N").Substring(0, 24));   // hunters15 R-ML1: kept in the outbox copy, so a resend is recognised, not filed twice put("title", title ?? ""); put("body", body ?? "");
             if (card != null) { sb.Append(",\"card\":{"); bool first = true; foreach (var kv in card) { if (!first) sb.Append(','); first = false; sb.Append('"').Append(Esc(kv.Key)).Append("\":\"").Append(Esc(kv.Value)).Append('"'); } sb.Append('}'); }
             return sb.Append('}').ToString();
         }

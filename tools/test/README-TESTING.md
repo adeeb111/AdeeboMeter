@@ -10,5 +10,5 @@
    `AdeeboMeter-website-pictures-<date>` on your Desktop, not into the zip - look at them before you send any.
 6. Send back the zip it puts on your Desktop: `AdeeboMeter-test-results-<date>.zip`.
 
-Nothing is installed. Steps 1-3 use test copies with their own data in a folder next to the script; step 4 only reads your history to draw the pictures.
+Nothing is installed. Steps 1-3 use test copies with their own data in a folder next to the script; step 4 starts AdeeboMeter on your real data folder to draw the pictures from your history (like a normal start, it may also send reports waiting in its outbox and add to its log).
 Skip parts with `-SkipLive`, `-SkipSelfTest`, `-SkipGallery` or `-SkipShots`.

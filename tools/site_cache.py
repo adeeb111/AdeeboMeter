@@ -13,6 +13,7 @@ if not match:
 core, extra = (json.loads(group) for group in match.groups())
 extra.extend("/" + name for name in ("adeeboshell.html", "adeebolab-guide.html", "shell.html"))
 extra.append("/media/wifi-or-provider-poster.jpg")  # the small local poster, not the full MP4
+extra.extend(["/img/tile-isp.webp", "/img/tile-lab.webp"])  # the home page tiles' real pictures (28 Nov)
 extra.append("/blog-articles.css")
 extra.append("/blog-index.css")
 extra.extend("/blog/" + p.name for p in sorted((DOCS / "blog").glob("*.html")) if p.name != "index.html")
