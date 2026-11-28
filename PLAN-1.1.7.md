@@ -318,6 +318,18 @@ never come back. Website only - can ship before 1.1.7 if Adeeb wants. No server,
 - Checks: Chrome, Safari (Mac and iPhone), Firefox, Facebook's in-app browser; 320 / 390 / 1280 px; Arabic mirrored.
 - A Mac app: Adeeb wants Mac as a focus (Mac users pay better) - planned separately in PLAN-MAC.md, not inside 1.1.7.
 
+### Status (28 Nov, evening) - everything in D is built and pushed on dev-1.1.7
+| Item | Commit | What's in | Left / not done |
+|---|---|---|---|
+| D1 Doctor | earlier | snapshots, 14-day strip, suspect | Windows visual check |
+| D2 Flow | 5fbf5098 | blocks <-> script, Run | Windows visual check |
+| D3 Lab | 2587ac07 | 8 faults with "you'd notice / caught by", Challenges (8, scored), Multicast theater | Heist stays in the app's Games (listed in Challenges) |
+| D4 Cellular | 2587ac07 | attach -> session -> tunnel, 4 ways to break it (in the Lab) | "deep detail behind more" not added |
+| D6 PC tools | 895888b9 | DLLs, handles, env/PATH, USB tree + power, PCIe + calculator, SSD life, disk latency, EDID, battery history | process tree, channels, throttling, bottleneck = existing tools reused; USB/EDID need a Windows run |
+| D7 Your market | f472dd53 | 11 presets + Custom, picker on the page and in Settings, rates in your currency, holidays (rules + tables), leagues per market, company cards | NFL/NBA/MLB, CBA, NPB, BPL cricket not wired (soccer only via ESPN); Shanghai 2027 holidays not published yet; tester-script pictures |
+| D9 Send to PC | 87455017 | phone sheet, /get | test in Facebook's in-app browser on a real phone |
+| D10 /check | 87455017 | 6 languages, device next steps, Mac tools | speed.cloudflare.com / dns.google / ipify reachability checked only from a real browser (blocked here) |
+
 ### Release notes for the site (28 Nov)
 - The four "Using AdeeboMeter" lessons are in the app (knowledge/learn.txt) and in tools/learnsite.py, but the website's
   Learn pages were NOT regenerated: running tools/site.sh or learnsite.py on its own rewrites ~500-670 committed pages
