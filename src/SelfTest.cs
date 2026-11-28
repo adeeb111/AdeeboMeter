@@ -300,6 +300,18 @@ namespace AdeeboMeter
                 }
                 var fl = FullView.FlowParse("# check\nSITES=\"a b\"\nfor s in $SITES; do\n  if ping $s 3; then\n    echo \"ok\"\n  else\n    sleep 2\n  fi\ndone\nfor i in $(seq 1 4); do\n  dig x\ndone");
                 if (fl.Count != 4 || fl[0].Kind != "note" || fl[1].Kind != "set" || fl[2].Kind != "each" || fl[2].Kids[0].Kind != "if" || fl[2].Kids[0].Else[0].Kind != "wait" || fl[3].Kind != "repeat" || fl[3].Text != "4") throw new InvalidOperationException("flow parse: blocks");
+                // PC insides (D6): the PE reader finds this exe's own imports; an EDID decodes; the battery history parses; PCIe maths; secrets stay hidden
+                var pe0 = PcInside.ReadPe(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                if (pe0.Error != "" || !pe0.Imports.Any(x => x.Equals("mscoree.dll", StringComparison.OrdinalIgnoreCase))) throw new InvalidOperationException("PE imports: " + pe0.Error + " " + string.Join(",", pe0.Imports));
+                var ed = new byte[256]; for (int i = 1; i < 7; i++) ed[i] = 0xFF; ed[8] = 0x10; ed[9] = 0xAC; ed[10] = 0xA5; ed[11] = 0x0A; ed[17] = 33; ed[18] = 1; ed[19] = 4; ed[20] = 0xB5; ed[21] = 60; ed[22] = 34;
+                int[] dtd = { 0x02, 0x3A, 0x80, 0x18, 0x71, 0x38, 0x2D, 0x40 }; for (int i = 0; i < dtd.Length; i++) ed[54 + i] = (byte)dtd[i];   // 1920 x 1080 at 60 Hz (148.5 MHz)
+                ed[75] = 0xFC; var nmB = Encoding.ASCII.GetBytes("DELL U2723Q\n "); Array.Copy(nmB, 0, ed, 77, nmB.Length); ed[93] = 0xFD; ed[95] = 48; ed[96] = 144;
+                ed[128] = 2; ed[129] = 3; ed[130] = 8; ed[132] = 0xE3; ed[133] = 6; ed[134] = 1; ed[135] = 3; ed[126] = 1;
+                var e0 = PcInside.ParseEdid(ed);
+                if (e0 == null || e0.Maker != "DEL" || e0.W != 1920 || e0.H != 1080 || Math.Abs(e0.Hz - 60) > 0.1 || e0.Name != "DELL U2723Q" || e0.MaxHz != 144 || !e0.Hdr || e0.Bits != 10 || e0.Year != 2023) throw new InvalidOperationException("EDID decode");
+                var bh = PcInside.CapacityHistory("<History><HistoryEntry LocalStartDate=\"2025-01-06\" StartDate=\"2025-01-06T00:00:00\" FullChargeCapacity=\"50000\" DesignCapacity=\"57000\" /><HistoryEntry StartDate=\"2025-11-03T00:00:00\" FullChargeCapacity=\"46000\" DesignCapacity=\"57000\" /></History>");
+                if (bh.Count != 2 || bh[1].Item2 != 46000 || PcInside.WearRows(bh).Count() < 2) throw new InvalidOperationException("battery history");
+                if (Math.Abs(PcInside.LaneGBs(3) * 4 - 3.94) > 0.01 || !PcInside.LooksSecret("GITHUB_TOKEN") || PcInside.LooksSecret("PATH") || PcInside.LooksSecret("PSModulePath")) throw new InvalidOperationException("pcie / secrets");
                 // Network Doctor (28 Nov): a snapshot diff names what was added, removed and changed, in plain words
                 var dA = new List<string> { "App | Zoom | 5.1", "Firewall | Public | on", "Service | Spooler | automatic" }; var dB = new List<string> { "App | Zoom | 5.2", "Firewall | Public | off", "App | Steam | 2.0" };
                 var dd = Doctor.Diff(dA, dB);

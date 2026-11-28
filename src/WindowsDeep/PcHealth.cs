@@ -253,6 +253,7 @@ namespace AdeeboMeter
                     rows.Add(R(h < 60 ? 2 : h < 80 ? 1 : 0, "Battery health" + tag, h.ToString("0", CultureInfo.CurrentCulture) + "% of its design capacity (" + (full / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " of " + (des / 1000).ToString("0.#", CultureInfo.CurrentCulture) + " Wh)", h < 80 ? "Worn - it lasts noticeably less than when new. Below about 60% a replacement makes sense." : "", "w"));
                     if (!double.IsNaN(cyc) && cyc > 0) rows.Add(R(3, "Charge cycles" + tag, cyc.ToString("0", CultureInfo.CurrentCulture), "", "w"));
                 }
+                rows.AddRange(PcInside.WearRows(PcInside.CapacityHistory(x)));   // 1.1.7 (D6): the report's own weekly record
             }
             catch (Exception e) { rows.Add(R(3, "Battery", "couldn't read: " + Draw.Trunc(e.Message, 60), "", "u")); }
             finally { try { File.Delete(f); } catch { } }

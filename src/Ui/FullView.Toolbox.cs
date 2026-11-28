@@ -262,7 +262,16 @@ namespace AdeeboMeter
                 T("laptop", "HARDWARE NERDS", "Used laptop check (before you buy)", "What the seller said (optional) - e.g. i5, 16GB, 512GB SSD, RTX 3050", (a, r) => HwTools.Laptop(M, a[0], r)),
                 T("screentest", "HARDWARE NERDS", "Screen test - dead pixels and bleed", null, (a, r) => HandsOn("screen")),
                 T("keytest", "HARDWARE NERDS", "Keyboard test - press every key", null, (a, r) => HandsOn("keys")),
-                T("soundtest", "HARDWARE NERDS", "Speakers, microphone and camera", null, (a, r) => HandsOn("sound")) };
+                T("soundtest", "HARDWARE NERDS", "Speakers, microphone and camera", null, (a, r) => HandsOn("sound")),
+                // 1.1.7 (D6): the PC's insides - read-only, no admin
+                T("dlls", "INSIDE WINDOWS", "Which DLLs does a program need?", "Program or DLL - a full path, or a name like notepad.exe", (a, r) => PcInside.Dlls(a[0])),
+                T("handles", "INSIDE WINDOWS", "Handles, GDI and USER objects (leak hunt)", null, (a, r) => PcInside.Handles(r)),
+                T("envvars", "INSIDE WINDOWS", "Environment variables and PATH", null, (a, r) => PcInside.Env()),
+                T("usbtree", "PARTS & LINKS", "USB tree and power budget", null, (a, r) => PcInside.Usb()),
+                T("pcie", "PARTS & LINKS", "PCIe links and calculator", "PCIe generation (optional) - e.g. 3 or 4|Lanes (optional) - 1, 2, 4, 8 or 16", (a, r) => PcInside.Pcie(a[0], a[1])),
+                T("endurance", "PARTS & LINKS", "How long will my SSD last?", "Rated TBW (optional) - from the drive's spec sheet, e.g. 600", (a, r) => PcInside.Endurance(a[0])),
+                T("disklat", "PARTS & LINKS", "Disk latency per disk (30 s)", null, (a, r) => PcInside.DiskLatency(r)),
+                T("edid", "PARTS & LINKS", "What my screens say about themselves (EDID)", null, (a, r) => PcInside.Edids()) };
             // grouped by the question you're asking, not by technology
             var pos = new Dictionary<string, int>();
             foreach (var grp in TbLayout) for (int i = 1; i < grp.Length; i++) pos[grp[i]] = pos.Count;
@@ -304,11 +313,13 @@ namespace AdeeboMeter
             new[] { "WINDOWS", "winev", "auth", "dc", "gpo", "certs", "fw", "listen", "events", "svcfail" },
             new[] { "KEYS & ENCRYPTION", "encrypt", "decrypt", "keys", "newkey", "recipients", "csrmake", "selfsigned", "certmatch", "certlive" },
             new[] { "CERTIFICATES & HTTPS", "https", "certfile", "chain", "pfx", "csr", "certconv", "hashf", "b64", "certcmds" },
+            new[] { "INSIDE WINDOWS", "dlls", "handles", "envvars" },
+            new[] { "PARTS & LINKS", "usbtree", "pcie", "endurance", "disklat", "edid" },
             new[] { "HARDWARE NERDS", "pcwhy", "hwmap", "feltslow", "hidden", "diskspeed", "ramcheck", "gpucheck", "cpuheld", "netcap", "laptop", "screentest", "keytest", "soundtest" },
             new[] { "THE PC", "usb", "winupdate", "tidy", "drivers", "pressure", "disk", "space", "bg", "crash", "leaks", "gpu", "changed", "battery", "bluetooth" } };
         static readonly Dictionary<string, string> GroupSection = new Dictionary<string, string> {
             { "PATH & ROUTING", "net" }, { "IS IT REACHABLE?", "net" }, { "SPEED & QUALITY", "net" }, { "NAMES & TIME", "net" }, { "COMPARE & WATCH", "net" }, { "GAMING", "net" }, { "OVER TIME", "net" }, { "PRIVACY & IPV6", "net" }, { "SHARE A DIAGNOSIS", "net" }, { "JUST FOR FUN", "net" }, { "NETWORK MATHS", "net" }, { "WIRELESS MATHS", "net" }, { "SERVERS & IT MATHS", "net" }, { "STREAMING & HOME MATHS", "net" }, { "VOICE & TDM MATHS", "net" }, { "MONEY & MARKETS MATHS", "net" }, { "COMMODITY MATHS", "net" }, { "GAMING MATHS", "net" },
-            { "THIS PC AND YOUR PHONE", "net" } /* bug-hunt L-220: on purpose - they compare the two connections */, { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
+            { "INSIDE WINDOWS", "pc" }, { "PARTS & LINKS", "hw" }, { "THIS PC AND YOUR PHONE", "net" } /* bug-hunt L-220: on purpose - they compare the two connections */, { "SWITCHES & ROUTERS (SNMP)", "dev" }, { "ON YOUR NETWORK", "dev" }, { "REMOTE ACCESS", "dev" }, { "BUILD A PACKET", "lab" }, { "TEST A COLLECTOR", "lab" }, { "LOAD & QUEUES", "lab" }, { "CERTIFICATES & HTTPS", "pc" }, { "KEYS & ENCRYPTION", "pc" }, { "WHY CAN'T IT JOIN?", "eng" }, { "REPLAY A CAPTURE", "eng" }, { "TRUST & MAIL", "eng" }, { "WINDOWS", "pc" }, { "THE PC", "health" }, { "HARDWARE NERDS", "hw" } };   // the PC checks live in Investigate › Health
         static readonly string[][] Sections = { new[] { "net", "Network", "The path, reachability, speed, names and time - from this PC to anywhere." }, new[] { "dev", "Devices", "Switches and routers over SNMP, what else is on your network, and remote access." }, new[] { "lab", "Traffic Lab", "Test traffic you build yourself - to one target, small and capped (10 packets a second, 1,000 at most), never a flood or a scan." }, new[] { "eng", "Engineer", "Why a PC can't join, RADIUS and 802.1X, capture replays, certificate and mail paths - offline or one request at a time." }, new[] { "hw", "Hardware nerds", "Every part of this PC against its own ceiling - disk, memory, graphics, processor, the link - how each one works, and what made it feel slow." }, new[] { "pc", "Windows", "Windows' own evidence: sign-in, the domain, policy, certificates and files, firewall and the event log. The PC itself (memory, disk, crashes...) is in Investigate › Health." } };
         // the SNMP views are one tool with tabs: one device and one set of credentials, many questions
         static readonly string[][] SnmpTabs = { new[] { "snmp", "Overview" }, new[] { "snmpsnap", "Snapshot" }, new[] { "snmpif", "Interfaces" }, new[] { "snmptraffic", "Traffic" }, new[] { "snmpcpu", "CPU & memory" }, new[] { "snmplldp", "Neighbours" }, new[] { "snmpsens", "Sensors" }, new[] { "snmpmac", "Find a MAC" }, new[] { "snmpvlan", "VLANs" }, new[] { "snmppoe", "PoE" }, new[] { "snmplag", "LAG" }, new[] { "snmpprn", "Printer" }, new[] { "snmpups", "UPS" }, new[] { "snmpwalk", "Walk" }, new[] { "mibs", "MIBs" } };
@@ -687,6 +698,7 @@ namespace AdeeboMeter
                 case "udpsend": if (!int.TryParse(a[2], out n)) n = 1; return RunSecs(Math.Max(1, Math.Min(1000, n)) / 10 + 1);
                 case "cloud": case "owners": case "ret": return "about 20-40 seconds";
                 case "ping6": return "about 10-30 seconds";
+                case "handles": return "about 25 seconds"; case "disklat": return "about 30 seconds";
                 case "space": return "up to 20 seconds on a big disk";
                 case "teams": return "about 10 seconds";
                 case "mibs": return "a moment - the first search after you add MIB files reads them once (a minute or two)";

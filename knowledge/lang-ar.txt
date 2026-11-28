@@ -5772,3 +5772,13 @@ Multicast theater	مسرح البث المتعدد
 How one TV channel reaches many homes: IGMP, PIM and the copies.	كيف تصل قناة تلفزيونية واحدة إلى منازل كثيرة: IGMP وPIM والنسخ.
 Cellular: phone to internet	الخلوي: من الهاتف إلى الإنترنت
 Attach, the data session and the tunnel - and what breaks where.	التسجيل وجلسة البيانات والنفق - وما الذي يتعطل وأين.
+Disk latency per disk (30 s)	زمن استجابة كل قرص (30 ث)
+Environment variables and PATH	متغيرات البيئة وPATH
+Handles, GDI and USER objects (leak hunt)	المقابض وكائنات GDI وUSER (تعقّب التسريبات)
+How long will my SSD last?	كم سيعيش قرص SSD لدي؟
+INSIDE WINDOWS	داخل Windows
+PARTS & LINKS	القطع والوصلات
+PCIe links and calculator	وصلات PCIe والحاسبة
+USB tree and power budget	شجرة USB وميزانية الطاقة
+What my screens say about themselves (EDID)	ما تقوله شاشاتي عن نفسها (EDID)
+Which DLLs does a program need?	ما ملفات DLL التي يحتاجها البرنامج؟

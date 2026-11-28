@@ -5765,3 +5765,13 @@ Multicast theater	组播剧场
 How one TV channel reaches many homes: IGMP, PIM and the copies.	一个电视频道如何到达许多家庭：IGMP、PIM 和复制。
 Cellular: phone to internet	蜂窝网络：从手机到互联网
 Attach, the data session and the tunnel - and what breaks where.	附着、数据会话和隧道，以及哪里会出问题。
+Disk latency per disk (30 s)	每个磁盘的延迟（30 秒）
+Environment variables and PATH	环境变量和 PATH
+Handles, GDI and USER objects (leak hunt)	句柄、GDI 和 USER 对象（查找泄漏）
+How long will my SSD last?	我的 SSD 能用多久？
+INSIDE WINDOWS	WINDOWS 内部
+PARTS & LINKS	部件与链路
+PCIe links and calculator	PCIe 链路和计算器
+USB tree and power budget	USB 树和供电预算
+What my screens say about themselves (EDID)	我的屏幕如何描述自己（EDID）
+Which DLLs does a program need?	一个程序需要哪些 DLL？

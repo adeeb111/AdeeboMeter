@@ -5772,3 +5772,13 @@ Multicast theater	Teatro multicast
 How one TV channel reaches many homes: IGMP, PIM and the copies.	Cómo un canal de TV llega a muchos hogares: IGMP, PIM y las copias.
 Cellular: phone to internet	Celular: del teléfono a internet
 Attach, the data session and the tunnel - and what breaks where.	El registro, la sesión de datos y el túnel, y qué falla dónde.
+Disk latency per disk (30 s)	Latencia por disco (30 s)
+Environment variables and PATH	Variables de entorno y PATH
+Handles, GDI and USER objects (leak hunt)	Handles, objetos GDI y USER (caza de fugas)
+How long will my SSD last?	¿Cuánto durará mi SSD?
+INSIDE WINDOWS	DENTRO DE WINDOWS
+PARTS & LINKS	COMPONENTES Y ENLACES
+PCIe links and calculator	Enlaces PCIe y calculadora
+USB tree and power budget	Árbol USB y presupuesto de energía
+What my screens say about themselves (EDID)	Lo que mis pantallas dicen de sí mismas (EDID)
+Which DLLs does a program need?	¿Qué DLL necesita un programa?
